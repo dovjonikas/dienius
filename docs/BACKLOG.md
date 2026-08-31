@@ -138,6 +138,16 @@ plainly what makes a trigger useful: a specific moment, not a feeling. That is t
 no validation blocks a vague entry, because the brief only really works if the person writing it
 means it, not because a field passed a pattern check.
 
+Known limitation, shipped deliberately rather than blocking on it: the board has no collapse and
+no cap. Four or five varied entries already measure roughly two screens of scroll below the task
+list at 375px, and that only grows as entries accumulate with no way to shorten the view. Left
+alone for now because there isn't a real month of use yet to say whether that actually becomes a
+problem, or what the right collapse behaviour would even be if it does - guessing at a cutoff or a
+show-more control without that evidence would be complexity standing in for a decision nobody has
+actually made yet, the same reasoning behind leaving night and shift days scored identically until
+a real case argues otherwise. Revisit once real usage shows the board actually getting long enough
+to need it.
+
 ## Tier 2 - brief features not built yet
 
 **Year strip.** GitHub-graph style row, one cell per day, filled by completion, coloured by day type.
@@ -159,6 +169,8 @@ Build: validate and normalise time input, visually separate anchored items from 
   the pre-paint script in `docs/THEMES.md`.
 - No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.
 - The calendar pointer drag has never been run on a real phone.
+- `TemplatesView`'s new-template and edit forms do not move focus into the name field when they
+  open. The if-then board had the same gap and had it fixed; this one is still open.
 
 ## Tier 4 - the portfolio layer
 
