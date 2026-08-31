@@ -54,6 +54,39 @@ punishes not having opened the app rather than describing anything that actually
 cost is a small amount of extra branching in the score type and every place that renders it, in
 exchange for not quietly guilt-tripping someone for a day they never engaged with.
 
+## Four day types, one scoring rule
+
+`Template.type` is `'full' | 'shift' | 'night' | 'rest'`, but `dayScore` only ever asks one
+question: is the day full, or not. Shift, night and rest all count only tasks marked `core` and
+ignore everything else, with no difference in behavior between them. A night shift and a day shift
+plausibly deserve different treatment - a night shift arguably leaves even less room for anything
+else - but nothing in the app yet knows what that difference should be, and inventing one without a
+real case behind it would have been complexity standing in for a decision nobody had actually made.
+
+Four values exist anyway because they name four kinds of day a person recognizes at a glance when
+picking a template, and because a planned feature (a GitHub-graph style year strip, colored per day)
+wants exactly this distinction to color by. The type is there to hang a real scoring difference on
+if one ever turns up; today it hangs a label and nothing else.
+
+## Manual tasks are never core
+
+A task typed into quick-add can never be marked core, on a shift, night, or rest day or any other.
+Core is set only on a template block, before the day starts - there is no control anywhere in the
+day view to mark an existing task core after the fact, and rolling a task forward to the next day
+clears its core flag rather than carrying it along (`rolloverUnfinished` in `src/lib/store.ts`,
+the same treatment `fromTemplate` already gets).
+
+The reasoning is the same in both places: core is supposed to mean "known to be unavoidable ahead of
+the day," not "urgent right now." Letting a task set on impulse, or one just pushed from yesterday,
+count as core would open the score back up to exactly the kind of inflation the whole feature exists
+to prevent - a bad day could turn any task into a "required" one just by typing it in.
+
+The cost is real, not just theoretical: a task that turns out to genuinely matter - flagged only
+after the day is already underway, or carried forward from an earlier one - has no way to register
+as required, so it can sit undone without moving a shift day's score at all. That is a real
+limitation of what "core" can express, not just a missing convenience, and it is tracked in
+`BACKLOG.md` to revisit once a real month of shift days shows whether it matters in practice.
+
 ## Templates instead of recurring tasks
 
 Most planners represent a repeating commitment as a recurring task: "every weekday, 09:00, standup."

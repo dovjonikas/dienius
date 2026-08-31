@@ -89,6 +89,16 @@ carries a small "core" note next to the fraction, and each core task carries a m
 so a reduced count reads as what it is instead of looking like the app dropped tasks. The calendar
 gets no new signal for day type - it already paints by template color and is close to full at
 375px, and a shift day's own template chip plus the score's own note already say what needs saying.
+`rolloverUnfinished` clears `core` on a pushed task, the same way it already clears `fromTemplate` -
+core describes a promise the day's own template made, not a property that should follow a task onto
+whatever day it lands on next.
+
+Known limitation, shipped deliberately rather than blocking on it: a task can only ever become core
+by being on a template block before the day starts. Nothing typed by hand, and nothing pushed
+forward from an earlier day, can register as required, so a task that turns out to genuinely matter
+mid-shift has no way to move a shift day's score even if it sits undone. Worth revisiting once a
+real month of shift days (starting this September) shows whether that gap actually matters in
+practice, or whether the push bound already covers it well enough on its own.
 
 ## Tier 2 - brief features not built yet
 
