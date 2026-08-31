@@ -40,7 +40,11 @@ export function defaultData(): AppData {
   return {
     templates: [],
     days: {},
-    settings: { theme: defaultThemeState(), enabledWidgets: [...DEFAULT_ENABLED_WIDGETS] },
+    settings: {
+      theme: defaultThemeState(),
+      enabledWidgets: [...DEFAULT_ENABLED_WIDGETS],
+      timelineExpanded: false,
+    },
     ifThens: [],
   }
 }
@@ -149,12 +153,18 @@ function isStoredTheme(x: unknown): x is StoredTheme {
   return isLegacyTheme(x) || isThemeState(x)
 }
 
-function isSettings(x: unknown): x is { theme: StoredTheme; enabledWidgets: string[] } {
+// timelineExpanded is checked only when present - a payload written before
+// the day view's timeline collapse existed has no such key at all, the
+// same absence-is-fine treatment ifThens gets a few lines below.
+// normalizeLoaded is what actually backfills it to false once validation
+// passes, matching defaultData()'s own collapsed-by-default choice.
+function isSettings(x: unknown): x is { theme: StoredTheme; enabledWidgets: string[]; timelineExpanded?: boolean } {
   if (!isRecord(x)) return false
   return (
     isStoredTheme(x.theme) &&
     Array.isArray(x.enabledWidgets) &&
-    x.enabledWidgets.every(w => typeof w === 'string')
+    x.enabledWidgets.every(w => typeof w === 'string') &&
+    isOptionalBoolean(x.timelineExpanded)
   )
 }
 
@@ -194,7 +204,7 @@ function isIfThenEntry(x: unknown): x is IfThenEntry {
 interface StoredAppData {
   templates: Template[]
   days: Record<string, DayPlan>
-  settings: { theme: StoredTheme; enabledWidgets: string[] }
+  settings: { theme: StoredTheme; enabledWidgets: string[]; timelineExpanded?: boolean }
   ifThens?: IfThenEntry[]
 }
 
@@ -232,7 +242,11 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
   return {
     ...data,
     ifThens: data.ifThens ?? [],
-    settings: { theme: migrateTheme(data.settings.theme), enabledWidgets },
+    settings: {
+      theme: migrateTheme(data.settings.theme),
+      enabledWidgets,
+      timelineExpanded: data.settings.timelineExpanded ?? false,
+    },
   }
 }
 

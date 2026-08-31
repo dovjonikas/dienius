@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { actions, MAX_PUSHES, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
@@ -44,6 +44,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
 
   const capacity = computeCapacity(day?.tasks ?? [], day?.dayType)
   const capacityLine = formatCapacityLine(capacity)
+  const timelineExpanded = data.settings.timelineExpanded
+  const timelineGridId = useId()
 
   function handleAdd() {
     const parsed = parseQuickAdd(input)
@@ -116,11 +118,38 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </div>
       )}
 
-      <TimelineGrid
-        tasks={day?.tasks ?? []}
-        templateColor={template?.color}
-        onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
-      />
+      {/* The grid's own disclosure, collapsed by default - see
+          docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
+          A sibling of the capacity line rather than nested inside it: that
+          line only ever states the arithmetic, with no action of its own
+          embedded in it - see the sentence's own comment above - and this
+          toggle is a separate control, not part of that sentence. A proper
+          disclosure, not a CSS-hidden panel: the region it names is only in
+          the DOM while open, so a screen reader never lands on a picture it
+          cannot currently see, and there is nothing extra to skip past
+          while it is closed. Only shown when there is actually something to
+          show - a day with no anchors has no grid to draw either way, see
+          TimelineGrid.tsx. */}
+      {capacity.anchorCount > 0 && (
+        <button
+          type="button"
+          className="timeline-toggle"
+          aria-expanded={timelineExpanded}
+          aria-controls={timelineGridId}
+          onClick={() => actions.setTimelineExpanded(!timelineExpanded)}
+        >
+          {timelineExpanded ? 'Hide timeline' : 'Show timeline'}
+        </button>
+      )}
+
+      {timelineExpanded && (
+        <TimelineGrid
+          id={timelineGridId}
+          tasks={day?.tasks ?? []}
+          templateColor={template?.color}
+          onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
+        />
+      )}
 
       <input
         className="quick-add"

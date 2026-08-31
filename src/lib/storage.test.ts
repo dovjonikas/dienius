@@ -501,3 +501,47 @@ test('validate rejects a ThemeState with an unknown mode or a non-string overrid
   localStorage.setItem(STORAGE_KEY, badOverride)
   expect(loadData().settings.theme.mode).toBe('system')
 })
+
+// timelineExpanded, docs/TIMELINE.md section 5 - a single app-wide choice
+// of whether the day view's timeline grid is shown, collapsed by default.
+
+test('a brand new install starts with the timeline grid collapsed', () => {
+  expect(loadData().settings.timelineExpanded).toBe(false)
+})
+
+test('a payload written before the timeline collapse existed has no timelineExpanded key and still loads, defaulting to collapsed', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  expect(loadData().settings.timelineExpanded).toBe(false)
+})
+
+test('a payload with the grid already expanded keeps that choice on load', () => {
+  const expanded = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'], timelineExpanded: true },
+  })
+  localStorage.setItem(STORAGE_KEY, expanded)
+  expect(loadData().settings.timelineExpanded).toBe(true)
+})
+
+test('validate rejects a non-boolean timelineExpanded', () => {
+  const bad = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [], timelineExpanded: 'yes' },
+  })
+  localStorage.setItem(STORAGE_KEY, bad)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
+test('importJson preserves an expanded timeline choice across export and re-import', () => {
+  const data = defaultData()
+  data.settings.timelineExpanded = true
+  const imported = importJson(exportJson(data))
+  expect(imported.settings.timelineExpanded).toBe(true)
+})

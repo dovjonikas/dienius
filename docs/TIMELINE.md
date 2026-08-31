@@ -86,13 +86,33 @@ without him ever typing a number into a task.
 
 ## 5. What the day view becomes
 
-Three zones, top to bottom, on one screen at 375px.
+Three zones, top to bottom, on one screen at 375px - plus a fourth thing, the grid's own disclosure,
+that decides whether zone 2 is actually on screen at all.
 
 **Zone 1 - the capacity line.** One sentence, the arithmetic above. Never red, never a warning icon.
-When floats exceed free time it says so plainly and offers one action: "trim". Trimming moves a float
-to tomorrow, which is the existing push mechanism with a new entry point.
+It only ever states the arithmetic - no "trim" or any other action is embedded in the sentence itself;
+which float moves to tomorrow, if any, is decided on that float's own row in the tray instead, so the
+app never pre-selects it.
 
-**Zone 2 - the grid.** Vertical hours. Two rules that separate it from every calendar:
+**The grid's disclosure - collapsed by default.** `docs/RESEARCH-ADHD.md` section 7 measured what
+shipping the grid at full height actually does to the screen: at 375x812 with a realistic day (a
+shift, an appointment, five floats) the grid alone ran 58 percent of the viewport, pushing the task
+list - the thing the owner opens the app to act on - below the fold. Visual working memory holds
+about four items, and a screen where the grid outweighs everything else is not showing more, it is
+showing noise with the task list buried in it. The grid still earns its place - it is worth keeping
+for how it makes the day read - but not the screen's first fold, and not by default.
+
+So zone 2 is real markup only while a plain toggle button just under the capacity line - "Show
+timeline" / "Hide timeline", a proper disclosure with `aria-expanded` and `aria-controls`, not a
+CSS-hidden panel - says it should be. Collapsed is the default a fresh install starts at and the
+default a payload from before this toggle existed migrates to, because the grid must never be the
+reason the fold fails again. The choice itself is a single app-wide setting
+(`settings.timelineExpanded`), not anything a day's own data carries: opening the grid once keeps it
+open on every day after, and closing it again keeps it closed, because deciding this fresh every
+morning is exactly the per-day decision this product refuses to add. A day with no anchors at all
+shows no toggle either - there is nothing behind it to open.
+
+**Zone 2 - the grid**, once opened. Vertical hours. Two rules that separate it from every calendar:
 
 - **It shows only the waking window that is actually in use** - first anchor minus an hour to last
   anchor plus an hour, not 00:00 to 23:59. A day with two anchors should be two blocks and some air,
@@ -110,6 +130,11 @@ push. Each item shows its size as a small chip if it has one. Dragging a float o
 dragging it back to the tray un-anchors it. Drag is a convenience, never the only path - a long-press
 menu does the same thing, because the calendar drag already has a documented history of not working
 on touch in this repo.
+
+Zone 3 sits directly under the disclosure in the markup, whether or not zone 2 is currently open -
+the grid, when collapsed, occupies no vertical space at all rather than reserving a slot for itself,
+which is what keeps quick-add and the first task in the tray on screen at 375x812 regardless of how
+tall a given day's grid would be if opened.
 
 ## 6. What replaces the if-then board
 

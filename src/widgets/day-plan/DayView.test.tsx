@@ -592,10 +592,99 @@ test('pressing Escape while editing a size cancels without changing it', async (
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
 })
 
+test('the timeline grid stays collapsed until its own toggle is opened, and the task list is present the whole time', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  const toggle = screen.getByRole('button', { name: /show timeline/i })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(container.querySelector('.timeline-grid-wrap')).toBeNull()
+
+  // The things the owner opens the app to act on are already there,
+  // whether or not the grid has ever been opened.
+  expect(screen.getByPlaceholderText(/add a task/i)).toBeInTheDocument()
+  expect(container.querySelector('.task-list')).toBeInTheDocument()
+})
+
+test('opening the timeline toggle reveals the grid and relabels itself', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: /show timeline/i }))
+
+  const toggle = screen.getByRole('button', { name: /hide timeline/i })
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
+  expect(within(container.querySelector('.timeline-grid-wrap')!).getByText('Shift')).toBeInTheDocument()
+
+  await user.click(toggle)
+  expect(screen.getByRole('button', { name: /show timeline/i })).toHaveAttribute('aria-expanded', 'false')
+  expect(container.querySelector('.timeline-grid-wrap')).toBeNull()
+})
+
+test('a day with no anchors shows no timeline toggle at all - there is nothing to expand', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /timeline/i })).not.toBeInTheDocument()
+})
+
+test('the timeline toggle stays open across a render once opened, since the choice is app-wide, not per day', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, timelineExpanded: true },
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByRole('button', { name: /hide timeline/i })).toHaveAttribute('aria-expanded', 'true')
+  expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
+})
+
+test('the timeline toggle names the region it controls, for assistive tech', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const toggle = screen.getByRole('button', { name: /show timeline/i })
+  const controlsId = toggle.getAttribute('aria-controls')
+  expect(controlsId).toBeTruthy()
+  // Nothing to point at yet while collapsed - the id is reused once the
+  // region actually mounts, not invented ahead of it.
+  expect(container.querySelector(`#${controlsId}`)).toBeNull()
+})
+
 test('tapping a gap and placing a float turns it into an anchor, live in the day view', async () => {
   const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
+    settings: { ...defaultData().settings, timelineExpanded: true },
     days: {
       '2026-09-01': {
         date: '2026-09-01',
