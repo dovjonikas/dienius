@@ -85,6 +85,26 @@ test('a fully finished day is complete', () => {
   expect(cell.complete).toBe(true)
 })
 
+test('an untemplated day with an unfinished task is planned but not complete', () => {
+  // This is the same blind spot the month grid had: a day with no template
+  // and no ring used to be indistinguishable from a genuinely empty day.
+  // `planned` is what lets a caller tell the two apart even while the day
+  // is not yet complete.
+  const days: Record<string, DayPlan> = {
+    '2026-06-15': { date: '2026-06-15', tasks: [{ id: '1', title: 'Gym', done: false }] },
+  }
+  const cell = buildYearCells(2026, days, []).find(c => c.key === '2026-06-15')!
+  expect(cell.planned).toBe(true)
+  expect(cell.complete).toBe(false)
+  expect(cell.templateColor).toBeUndefined()
+})
+
+test('a day with no stored plan is not planned', () => {
+  const cells = buildYearCells(2026, {}, [])
+  const cell = cells.find(c => c.key === '2026-06-15')!
+  expect(cell.planned).toBe(false)
+})
+
 test('a partly finished day is not complete', () => {
   const days: Record<string, DayPlan> = {
     '2026-06-15': {
@@ -166,6 +186,29 @@ test('formatYearCellLabel says completed for a finished templated day', () => {
   }
   const cell = buildYearCells(2026, days, [template]).find(c => c.key === '2026-06-15')!
   expect(formatYearCellLabel(cell)).toBe('June 15, 2026, Office day, completed')
+})
+
+test('formatYearCellLabel says an untemplated, unfinished day has unfinished tasks', () => {
+  const days: Record<string, DayPlan> = {
+    '2026-06-15': { date: '2026-06-15', tasks: [{ id: '1', title: 'Gym', done: false }] },
+  }
+  const cell = buildYearCells(2026, days, []).find(c => c.key === '2026-06-15')!
+  expect(formatYearCellLabel(cell)).toBe('June 15, 2026, has unfinished tasks')
+})
+
+test('formatYearCellLabel says a stamped, unfinished day has unfinished tasks alongside its template', () => {
+  const days: Record<string, DayPlan> = {
+    '2026-06-15': {
+      date: '2026-06-15',
+      templateId: 't1',
+      tasks: [
+        { id: '1', title: 'Gym', done: true },
+        { id: '2', title: 'Call the plumber', done: false },
+      ],
+    },
+  }
+  const cell = buildYearCells(2026, days, [template]).find(c => c.key === '2026-06-15')!
+  expect(formatYearCellLabel(cell)).toBe('June 15, 2026, Office day, has unfinished tasks')
 })
 
 test('formatYearCellLabel says completed with no template name when the day was hand-typed', () => {

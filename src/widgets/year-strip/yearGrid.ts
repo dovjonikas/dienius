@@ -12,11 +12,16 @@ import { dayScore } from '../day-plan/score'
  *
  * `complete` mirrors `dayScore`'s own definition of a finished day: every
  * counted task done, on a day that had at least one counted task in the
- * first place. A day with no plan, or a day with an unfinished task, is
- * both `complete: false` - the strip does not distinguish "never planned"
- * from "planned but not finished" any more than a colored, unfinished cell
- * should look like a failure. See `formatYearCellLabel` for how that shows
- * up in the accessible name, and `docs/DECISIONS.md` for why.
+ * first place. `planned` is `dayScore`'s own `planned` flag - true the
+ * moment the day has at least one counted task, whether or not a template
+ * put it there. A day with no plan at all has both `planned: false` and
+ * `complete: false`; a day with a real, unfinished task has `planned: true`
+ * and `complete: false` - `planned` is what lets the strip tell those two
+ * apart even though neither one is complete. Without it, a hand-planned
+ * day, a day a task was pushed onto, or a day whose template was later
+ * deleted rendered exactly like an empty one - see `formatYearCellLabel`
+ * for how the distinction reaches the accessible name, and
+ * `docs/DECISIONS.md` for why.
  */
 export interface YearCell {
   key: string
@@ -26,6 +31,7 @@ export interface YearCell {
   weekIndex: number
   templateColor?: string
   templateName?: string
+  planned: boolean
   complete: boolean
 }
 
@@ -67,6 +73,7 @@ export function buildYearCells(
       weekIndex,
       templateColor: template?.color,
       templateName: template?.name,
+      planned: score.planned,
       complete: score.planned && score.done === score.total,
     })
 
@@ -109,13 +116,17 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric',
 
 /**
  * The accessible name for one cell - a full date, plus the day's template
- * name and completion if either applies. Deliberately never mentions an
- * empty day's absence of a plan; there is nothing to announce about a day
- * with nothing on it beyond the date itself.
+ * name and completion state if either applies. Deliberately never mentions
+ * an empty day's absence of a plan; there is nothing to announce about a
+ * day with nothing on it beyond the date itself. A planned day that is not
+ * yet complete says so explicitly - "has unfinished tasks" - rather than
+ * relying on the visible marker alone, the same honesty the month grid's
+ * own cellLabel extends.
  */
 export function formatYearCellLabel(cell: YearCell): string {
   const parts = [cell.date.toLocaleDateString('en-US', DATE_FORMAT)]
   if (cell.templateName) parts.push(cell.templateName)
   if (cell.complete) parts.push('completed')
+  else if (cell.planned) parts.push('has unfinished tasks')
   return parts.join(', ')
 }

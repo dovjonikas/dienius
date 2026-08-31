@@ -27,10 +27,28 @@ function weeksOf(cells: MonthCell[]): MonthCell[][] {
 // a month apart read identically. The accessible name carries the full
 // date instead, plus the template name where the visible chip already
 // shows one, since a 10px chip is not the only place that information
-// needs to reach.
-function cellLabel(cell: MonthCell, templateName?: string): string {
-  const date = formatDayTitle(cell.key)
-  return templateName ? `${date}, ${templateName}` : date
+// needs to reach. It also carries whether the day has tasks at all and
+// whether they are finished - see the `cell-has-tasks` note below for why
+// that cannot be left to the cell's color alone.
+function cellLabel(cell: MonthCell, templateName: string | undefined, taskState: TaskState): string {
+  const parts = [formatDayTitle(cell.key)]
+  if (templateName) parts.push(templateName)
+  if (taskState === 'unfinished') parts.push('has unfinished tasks')
+  if (taskState === 'done') parts.push('tasks completed')
+  return parts.join(', ')
+}
+
+type TaskState = 'none' | 'unfinished' | 'done'
+
+// A cell built only from templateId cannot tell a genuinely empty day apart
+// from one that holds real, unstamped tasks - a hand-planned day, a day a
+// task was pushed onto, or a day whose template was later deleted. This is
+// what closes that gap: it looks at the day's actual tasks, independent of
+// whether a template happens to be stamped on top of them.
+function taskState(day: { tasks: { done: boolean }[] } | undefined): TaskState {
+  const tasks = day?.tasks ?? []
+  if (tasks.length === 0) return 'none'
+  return tasks.every(t => t.done) ? 'done' : 'unfinished'
 }
 
 interface CalendarViewProps {
@@ -195,12 +213,15 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
                 {week.map(cell => {
                   const templateId = effectiveTemplateId(cell.key)
                   const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
+                  const state = taskState(data.days[cell.key])
                   const classes = [
                     'cell',
                     cell.inMonth ? '' : 'outside',
                     cell.key === today ? 'today' : '',
                     cell.key in staged ? 'staged' : '',
                     template ? 'cell-has-template' : '',
+                    state !== 'none' ? 'cell-has-tasks' : '',
+                    state === 'done' ? 'cell-tasks-done' : '',
                   ].filter(Boolean).join(' ')
                   return (
                     <button
@@ -209,7 +230,7 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
                       data-date={cell.key}
                       className={classes}
                       style={template ? { background: template.color } : undefined}
-                      aria-label={cellLabel(cell, template?.name)}
+                      aria-label={cellLabel(cell, template?.name, state)}
                       aria-current={cell.key === today ? 'date' : undefined}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
                       onPointerEnter={() => handlePointerEnter(cell.key)}

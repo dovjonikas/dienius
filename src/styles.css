@@ -1115,6 +1115,7 @@ button.danger {
 }
 
 .cell {
+  position: relative;
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -1164,6 +1165,50 @@ button.danger {
   .calendar-grid { gap: 3px; }
   .cell { padding: 5px 1px; }
   .cell-template { display: none; }
+}
+
+/* A day that has tasks but nothing to color it (no template, or a template
+   later deleted) used to render exactly like an empty day - that was the
+   whole bug. A small dot in the corner is the minimum mark that survives a
+   ~44px cell and the width where the template name itself gets hidden
+   above, and it never carries the information alone: the same "has
+   unfinished tasks" / "tasks completed" state is spelled out honestly in
+   the cell's aria-label by cellLabel in CalendarView.tsx, so it reaches a
+   screen reader whether or not the dot itself is ever seen.
+   --safe-ink, not --text: this cell's own background is --surface, exactly
+   the case --safe-ink exists for - see the note on it in src/lib/theme.ts
+   and the override panel's use of it above. */
+.cell-has-tasks::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--safe-ink);
+}
+
+/* Same ring-vs-fill language the year strip uses for "complete": a hollow
+   ring instead of a solid dot means everything on the day is already done,
+   so a finished day does not compete for attention with one still waiting
+   on something. */
+.cell-has-tasks.cell-tasks-done::after {
+  background: transparent;
+  border: 1.5px solid var(--safe-ink);
+}
+
+/* A stamped cell's background is the template's own pastel, not --surface,
+   so --safe-ink (derived from --surface) is not guaranteed to read against
+   it - the same reason .cell-has-template .cell-num and .cell-template are
+   pinned dark above instead of using a token. Pin the dot the same way. */
+.cell-has-template.cell-has-tasks::after {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.cell-has-template.cell-has-tasks.cell-tasks-done::after {
+  background: transparent;
+  border-color: rgba(0, 0, 0, 0.7);
 }
 
 .stamp-actions {
@@ -1397,6 +1442,23 @@ button.danger {
 .year-cell.today {
   outline: 1.5px solid var(--accent);
   outline-offset: -1.5px;
+}
+
+/* A day with real, unfinished tasks and no template to color it used to
+   paint exactly like an empty one - the same blind spot the month grid had,
+   for the same reason: a cell built only from templateId cannot see a
+   hand-planned day, a day something was just pushed onto, or a day whose
+   template was later deleted. A cell this small (10px) has no room for a
+   corner mark, so the fill itself carries the signal here instead - mixed
+   from --safe-ink rather than any theme hue, so it stays a legible step
+   away from the plain "nothing here" fill in every preset, light or dark,
+   without being mistaken for a template's own pastel. The completed ring
+   above already covers a planned day that is finished, so this only
+   applies short of that - the two are never shown at once. See
+   formatYearCellLabel in yearGrid.ts for how the same distinction reaches
+   the accessible name. */
+.year-cell-planned {
+  background: color-mix(in srgb, var(--safe-ink) 45%, var(--border));
 }
 
 /* A ring, not a fill or a color change, so a completed day looks like a
