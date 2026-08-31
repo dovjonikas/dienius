@@ -14,6 +14,29 @@ function getFileInput(container: HTMLElement): HTMLInputElement {
   return container.querySelector('input[type="file"]') as HTMLInputElement
 }
 
+test('the theme gallery replaces the old preset-blind toggle - a room can be picked directly in Settings', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+
+  expect(screen.getByRole('button', { name: /Slate/ })).toHaveAttribute('aria-pressed', 'true')
+  await user.click(screen.getByRole('button', { name: /Sketchbook/ }))
+
+  expect(getData().settings.theme.presetId).toBe('sketchbook')
+  expect(screen.getByRole('button', { name: /Sketchbook/ })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: /Slate/ })).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('the mode control keeps working for the active preset, leaving one theme control, not two', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+
+  await user.click(screen.getByRole('button', { name: 'Dark' }))
+  expect(getData().settings.theme.mode).toBe('dark')
+  // Slate and Sketchbook both ship light and dark, so neither is disabled.
+  expect(screen.getByRole('button', { name: 'Light' })).not.toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Dark' })).not.toBeDisabled()
+})
+
 test('importing an invalid file shows an error and leaves existing data untouched', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Keep me')

@@ -3,6 +3,7 @@ import { todayKey } from './lib/dates'
 import { useAppData } from './lib/store'
 import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme'
 import { syncThemeColorMeta } from './lib/theme-color'
+import { syncManifestTheme } from './lib/manifest-sync'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
@@ -27,6 +28,7 @@ export function App() {
       const resolved = resolveTheme(data.settings.theme, systemPrefersDark())
       applyResolvedTheme(document.documentElement, resolved)
       syncThemeColorMeta(resolved.tokens.bg)
+      syncManifestTheme(resolved.tokens.bg)
     }
     applyTheme()
     // Only mode 'system' needs to keep watching - a fixed light or dark
