@@ -422,6 +422,9 @@ button.primary {
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   border: 2px solid transparent;
   border-radius: 999px;
   color: rgba(0, 0, 0, 0.65);
@@ -496,17 +499,26 @@ button.primary {
 
 .stamp-actions {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
-  justify-content: center;
   margin-top: 16px;
 }
 
-.stamp-actions button {
+.stamp-count { margin: 0; }
+
+.stamp-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.stamp-buttons button {
   border-radius: var(--radius);
   padding: 9px 24px;
 }
 
-.stamp-actions button:not(.primary) {
+.stamp-buttons button:not(.primary) {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);

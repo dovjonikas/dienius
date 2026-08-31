@@ -99,7 +99,8 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
     setStampTemplateId(null)
   }
 
-  const hasChanges = Object.keys(staged).length > 0
+  const stagedCount = Object.keys(staged).length
+  const hasChanges = stagedCount > 0
 
   return (
     <section
@@ -165,8 +166,13 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
 
       {hasChanges && (
         <div className="stamp-actions">
-          <button className="primary" onClick={save}>Save</button>
-          <button onClick={cancel}>Cancel</button>
+          <p className="muted stamp-count">
+            {stagedCount} {stagedCount === 1 ? 'day' : 'days'} staged
+          </p>
+          <div className="stamp-buttons">
+            <button className="primary" onClick={save}>Save</button>
+            <button onClick={cancel}>Cancel</button>
+          </div>
         </div>
       )}
 
