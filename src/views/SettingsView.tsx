@@ -13,8 +13,13 @@ export function SettingsView() {
     const a = document.createElement('a')
     a.href = url
     a.download = 'dienius-backup.json'
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    // WebKit's download handoff is asynchronous, so revoking the object URL
+    // in the same tick can produce an empty or failed download on iOS Safari.
+    // Deferring the revoke gives the browser time to start reading the blob.
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
   async function handleImport(file: File | undefined) {
@@ -24,6 +29,9 @@ export function SettingsView() {
       setImportError('')
     } catch {
       setImportError('That file is not a valid Dienius backup.')
+    } finally {
+      // Clear the input so picking the same file again still fires a change event.
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
