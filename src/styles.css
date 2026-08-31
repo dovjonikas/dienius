@@ -484,6 +484,13 @@ button.primary {
 
 .cell-num { font-size: 13px; font-weight: 600; }
 
+/* A stamped cell paints a pastel background inline from the template color,
+   which stays roughly the same lightness in both themes. The theme's own
+   text color (near-white in dark mode) would be unreadable against it, so
+   pin a dark number on stamped cells the same way .cell-template already
+   pins a dark label. Unstamped cells keep the theme's text color. */
+.cell-has-template .cell-num { color: rgba(0, 0, 0, 0.7); }
+
 .cell-template {
   font-size: 10px;
   line-height: 1.2;

@@ -145,6 +145,7 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
             cell.inMonth ? '' : 'outside',
             cell.key === today ? 'today' : '',
             cell.key in staged ? 'staged' : '',
+            template ? 'cell-has-template' : '',
           ].filter(Boolean).join(' ')
           return (
             <button
