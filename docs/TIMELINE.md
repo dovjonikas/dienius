@@ -163,21 +163,30 @@ push rule and no-guilt score that are already this app's own.
 2. **Done.** `capacity.ts` - pure functions: free gaps from anchors, total float size, the resulting
    sentence. Unit tested with no React anywhere near it, same as `score.ts`.
 
-   The window free time is measured against - the question section 3's own example raised without
-   answering - is **the span from the earliest anchor's start to the latest anchor's end, and
-   nothing else.** Not a fixed waking window (07:00-23:00 is wrong for a night shift), not something
-   read off the day's type (still an invented number, now hiding behind a setting). A window built
-   only from the day's own anchors needs no configuration at all, which is what section 9 actually
-   asks for: it degrades correctly with no special-casing - one anchor produces a window equal to its
-   own span (zero free time, zero gaps), and zero anchors produce no window, reported as `null` and
-   left out of the sentence rather than guessed at. An anchor with no `minutes` of its own still
-   marks its point on the timeline - it can still separate two real gaps - but contributes nothing to
-   the occupied total, the same "never invent a duration" rule section 4 already states.
-3. **Done.** The capacity line on the day view, one plain sentence at the top, plus the "trim" action
-   for the over case - a single tap that pushes the largest eligible float to tomorrow through the
-   same `pushTask` mechanism `rolloverUnfinished` already uses, bound by the same `MAX_PUSHES`. Never
-   red, never an icon, never a warning word; "about" appears exactly once, on the floats estimate,
-   since that is the one number built from guesses rather than clock time.
+   The window free time is measured against is **the calendar day itself - 00:00 to 24:00, always,
+   for every day.** An earlier version of this measured the span between the earliest and latest
+   anchor instead, on the theory that a fixed non-configurable rule was enough to satisfy section 9.
+   It was not: a single midday shift with real hours free before and after it reported "no free
+   time," and a morning-only anchor silently ignored an entire afternoon and evening - the anchor
+   span quietly stopped looking past whatever the anchors themselves happened to cover, which is
+   exactly the kind of confident-looking wrong answer this feature exists to prevent. The calendar
+   day fixes this without becoming a setting: every day genuinely has 1440 minutes, so there is
+   nothing to invent and nothing that can be wrong for anyone's schedule, night shift included. It
+   still degrades correctly on its own - zero anchors mean nothing is claimed at all, reported as
+   `null` rather than a fabricated "24h free," and one anchor spanning the whole day correctly leaves
+   nothing free with no special case needed. An anchor whose own `minutes` is unknown is treated with
+   the same honesty as an unsized float: it is left out of the occupied total and, because its true
+   length is unknown, it also blocks any free-time figure from being asserted at all - the app says
+   "free time isn't known" rather than guessing around a gap that anchor might actually run through.
+   An anchor that runs past midnight is clamped to the end of the calendar day, since a single day's
+   capacity has no way to know what tomorrow's plan looks like.
+3. **Done.** The capacity line on the day view, one plain sentence at the top. Never red, never an
+   icon, never a warning word; "about" appears exactly once, on the floats estimate, since that is
+   the one number built from guesses rather than clock time. The line only ever states the
+   arithmetic - it does not embed a "trim" action or pre-select which float would move. Each float's
+   own row carries a quiet "push to tomorrow" control instead, using the same `pushTask` mechanism
+   `rolloverUnfinished` already uses and bound by the same `MAX_PUSHES`, so which float actually moves
+   stays the owner's decision rather than the app's guess at it.
 4. The grid, read-only: anchors and labelled gaps, collapsed window.
 5. Gap interaction: tap a gap, pick a float that fits.
 6. If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab deleted.
