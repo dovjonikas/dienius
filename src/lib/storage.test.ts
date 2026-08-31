@@ -210,6 +210,75 @@ test('validate rejects a task or block whose core flag is not a boolean', () => 
   expect(loadData()).toEqual(defaultData())
 })
 
+test('a payload written before the if-then board existed has no ifThens key and still loads', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  const loaded = loadData()
+  expect(loaded.ifThens).toEqual([])
+})
+
+test('loading a payload from before the if-then board existed enables the widget on it, since there is no way to turn it off', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  expect(loadData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+})
+
+test('validate rejects an if-then entry missing an id, or with a non-string trigger or action', () => {
+  const missingId = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ trigger: 'I get home', action: 'Set a timer' }],
+  })
+  localStorage.setItem(STORAGE_KEY, missingId)
+  expect(loadData().ifThens).toEqual([])
+
+  const badTrigger = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ id: 'i1', trigger: 42, action: 'Set a timer' }],
+  })
+  localStorage.setItem(STORAGE_KEY, badTrigger)
+  expect(loadData().ifThens).toEqual([])
+})
+
+test('validate accepts a well-formed if-then entry, tagged or not', () => {
+  const good = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [
+      { id: 'i1', trigger: 'I get home and the kitchen is a mess', action: 'Set a ten minute timer for the sink', color: '#a7c4f5' },
+      { id: 'i2', trigger: 'It is 22:30', action: 'Phone goes on the charger in the hallway' },
+    ],
+  })
+  localStorage.setItem(STORAGE_KEY, good)
+  const loaded = loadData()
+  expect(loaded.ifThens).toHaveLength(2)
+  expect(loaded.ifThens[0].color).toBe('#a7c4f5')
+  expect(loaded.ifThens[1].color).toBeUndefined()
+})
+
+test('importJson backfills ifThens and the if-then widget for a legacy backup file', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  const imported = importJson(legacy)
+  expect(imported.ifThens).toEqual([])
+  expect(imported.settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+})
+
 test('a well-formed payload still passes validate', () => {
   const good = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', time: '09:00', title: 'Gym' }] }],

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, Template } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, Template } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -142,6 +142,25 @@ export const actions = {
 
   setTheme(theme: 'light' | 'dark'): void {
     commit({ ...data, settings: { ...data.settings, theme } })
+  },
+
+  addIfThen(input: { trigger: string; action: string; color?: string }): IfThenEntry {
+    const entry: IfThenEntry = {
+      id: crypto.randomUUID(),
+      trigger: input.trigger,
+      action: input.action,
+      color: input.color,
+    }
+    commit({ ...data, ifThens: [...data.ifThens, entry] })
+    return entry
+  },
+
+  updateIfThen(entry: IfThenEntry): void {
+    commit({ ...data, ifThens: data.ifThens.map(e => (e.id === entry.id ? entry : e)) })
+  },
+
+  deleteIfThen(id: string): void {
+    commit({ ...data, ifThens: data.ifThens.filter(e => e.id !== id) })
   },
 
   importData(text: string): void {
