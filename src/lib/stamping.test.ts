@@ -51,3 +51,61 @@ test('unknown template id leaves the day untouched', () => {
   const days = applyStamps({}, [workDay], { '2026-09-01': 'missing' })
   expect(days['2026-09-01']).toBeUndefined()
 })
+
+test('re-stamping the same template preserves done state of matching blocks', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  const gymId = stamped['2026-09-01'].tasks.find(t => t.title === 'Gym')!.id
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t =>
+    t.id === gymId ? { ...t, done: true } : t,
+  )
+  const restamped = applyStamps(stamped, [workDay], { '2026-09-01': 't1' })
+  const tasks = restamped['2026-09-01'].tasks
+  expect(tasks.find(t => t.title === 'Gym')?.done).toBe(true)
+  expect(tasks.find(t => t.title === 'Deep work')?.done).toBe(false)
+})
+
+test('re-stamping after a block is removed from the template drops its task', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t =>
+    t.title === 'Gym' ? { ...t, done: true } : t,
+  )
+  const shrunk: Template = { ...workDay, blocks: [workDay.blocks[1]] }
+  const restamped = applyStamps(stamped, [shrunk], { '2026-09-01': 't1' })
+  const titles = restamped['2026-09-01'].tasks.map(t => t.title)
+  expect(titles).toEqual(['Deep work'])
+})
+
+test('re-stamping after a block is added to the template arrives unchecked', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => ({ ...t, done: true }))
+  const grown: Template = {
+    ...workDay,
+    blocks: [...workDay.blocks, { id: 'b3', time: '18:00', title: 'Dinner' }],
+  }
+  const restamped = applyStamps(stamped, [grown], { '2026-09-01': 't1' })
+  const dinner = restamped['2026-09-01'].tasks.find(t => t.title === 'Dinner')
+  expect(dinner?.done).toBe(false)
+  expect(restamped['2026-09-01'].tasks.find(t => t.title === 'Gym')?.done).toBe(true)
+})
+
+test('re-stamping the same template still keeps manual tasks', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  stamped['2026-09-01'].tasks.push({ id: 'm1', title: 'Manual task', done: true })
+  const restamped = applyStamps(stamped, [workDay], { '2026-09-01': 't1' })
+  const manual = restamped['2026-09-01'].tasks.find(t => t.title === 'Manual task')
+  expect(manual?.done).toBe(true)
+  expect(manual?.fromTemplate).toBeFalsy()
+})
+
+test('applying a different template does not carry over done state', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => ({ ...t, done: true }))
+  const other: Template = {
+    id: 't2',
+    name: 'Rest day',
+    color: '#f5b0a7',
+    blocks: [{ id: 'c1', time: '09:00', title: 'Gym' }],
+  }
+  const restamped = applyStamps(stamped, [workDay, other], { '2026-09-01': 't2' })
+  expect(restamped['2026-09-01'].tasks.find(t => t.title === 'Gym')?.done).toBe(false)
+})
