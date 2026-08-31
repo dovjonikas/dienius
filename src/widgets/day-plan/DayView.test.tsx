@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayView } from './DayView'
-import { actions } from '../../lib/store'
+import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 
 beforeEach(() => {
@@ -32,6 +32,20 @@ test('rollover button moves unfinished tasks to tomorrow', async () => {
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   await user.click(screen.getByRole('button', { name: /move .* to tomorrow/i }))
   expect(screen.queryByText('Unfinished')).not.toBeInTheDocument()
+  const tomorrow = getData().days['2026-09-02']
+  expect(tomorrow?.tasks.map(t => t.title)).toEqual(['Unfinished'])
+})
+
+test('renders without crashing when a day points at a deleted template', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': { date: '2026-09-01', templateId: 'missing-template', tasks: [] },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByPlaceholderText(/add a task/i)).toBeInTheDocument()
+  expect(container.querySelector('.day-template')).toBeNull()
 })
 
 test('arrows navigate between days', async () => {
