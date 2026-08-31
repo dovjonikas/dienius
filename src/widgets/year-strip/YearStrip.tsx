@@ -172,6 +172,10 @@ export function YearStrip({ onOpenDay }: YearStripProps) {
               const isToday = cell.key === today
               const classNames = ['year-cell']
               if (cell.complete) classNames.push('year-cell-complete')
+              // A day that is planned but not yet complete, and has no
+              // template to color it, would otherwise look exactly like an
+              // empty day - the same gap fixed in the month grid.
+              else if (cell.planned && !cell.templateColor) classNames.push('year-cell-planned')
               if (isToday) classNames.push('today')
               return (
                 <button

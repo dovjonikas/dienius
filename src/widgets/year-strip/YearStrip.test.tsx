@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { YearStrip } from './YearStrip'
 import { actions, getData } from '../../lib/store'
@@ -101,6 +101,23 @@ test('a stamped, fully finished day is colored and marked complete', () => {
   const cell = within(grid).getByRole('button', { name: 'June 10, 2026, Office day, completed' })
   expect(cell).toHaveStyle({ background: '#a7c4f5' })
   expect(cell).toHaveClass('year-cell-complete')
+})
+
+test('an untemplated day with an unfinished task is marked as planned, not left looking empty', () => {
+  // The same bug the month grid had: a day with an unfinished task and no
+  // template used to render exactly like a day with nothing on it at all.
+  act(() => {
+    actions.addTask('2026-06-15', 'Water the plants')
+  })
+  render(<YearStrip onOpenDay={() => {}} />)
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const cell = within(grid).getByRole('button', { name: 'June 15, 2026, has unfinished tasks' })
+  expect(cell).toHaveClass('year-cell-planned')
+  expect(cell).not.toHaveClass('year-cell-complete')
+  expect(cell.style.background).toBe('')
+
+  const empty = within(grid).getByRole('button', { name: 'June 16, 2026' })
+  expect(empty).not.toHaveClass('year-cell-planned')
 })
 
 test('an unplanned day renders with no template color and no completion mark', () => {
