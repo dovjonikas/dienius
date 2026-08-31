@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { todayKey } from './lib/dates'
 import { useAppData } from './lib/store'
 import { SettingsView } from './views/SettingsView'
+import { TemplatesView } from './views/TemplatesView'
 import { DayView } from './widgets/day-plan/DayView'
 
 type View = 'day' | 'calendar' | 'templates' | 'settings'
@@ -46,7 +47,7 @@ export function App() {
       <main>
         {view === 'day' && <DayView date={selectedDate} onDateChange={setSelectedDate} />}
         {view === 'calendar' && <p>Calendar coming soon</p>}
-        {view === 'templates' && <p>Templates coming soon</p>}
+        {view === 'templates' && <TemplatesView />}
         {view === 'settings' && <SettingsView />}
       </main>
     </div>
