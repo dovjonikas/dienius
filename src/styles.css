@@ -687,6 +687,157 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   line-height: 1.5;
 }
 
+/* Zone 2 of the day view - docs/TIMELINE.md section 5 and step 4 of
+   section 8. Read only: see the doc comment on TimelineGrid.tsx for why
+   the whole thing is aria-hidden. The scroll container caps how tall the
+   grid can grow on a long waking window, so it never pushes the float
+   tray below it off the first screen entirely - a day gets air, not a
+   wall to scroll past, but it does not get to consume the whole page. */
+.timeline-grid-wrap { margin-bottom: 16px; }
+
+.timeline-grid-scroll {
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--edge);
+  background: var(--surface);
+}
+
+.timeline-grid {
+  position: relative;
+}
+
+/* GUTTER_PX in TimelineGrid.tsx - kept in sync by hand, the same way this
+   file already keeps a handful of other layout numbers next to their
+   component. */
+.timeline-hour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+
+.timeline-hour-label {
+  position: absolute;
+  top: -7px;
+  left: 0;
+  width: 44px;
+  padding-right: 6px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-hour-rule {
+  position: absolute;
+  left: 44px;
+  right: 0;
+  top: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* A gap is a real object, not blank space - see docs/TIMELINE.md section 5.
+   Not a button yet: step 5 adds the tap interaction. The dashed edge and
+   muted fill read as "not yet decided" rather than "occupied," so a gap
+   never competes visually with an anchor's own solid block. */
+.timeline-gap {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  margin: 2px 8px 2px 0;
+  background: color-mix(in srgb, var(--border) 35%, transparent);
+}
+
+.timeline-gap-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 8px;
+}
+
+/* An anchor: real position, real height, the day-type colour it came from.
+   The color itself is set inline per-anchor from the day's template;
+   text is pinned dark rather than drawn from --safe-ink, matching the
+   calendar cell's own reasoning two sections down in this file - a
+   template's pastel is not --surface, so a token tied to --surface is not
+   guaranteed to read against it. An anchor with no template color at all
+   (no template on the day) falls back to the card treatment below via
+   the plain .timeline-anchor rule, never an invented color. */
+.timeline-anchor {
+  position: absolute;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+
+.timeline-anchor-title,
+.timeline-anchor-time {
+  min-width: 0;
+}
+
+.timeline-anchor-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-anchor-time {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.75;
+}
+
+/* Colored anchors (from a template) pin dark text directly, the same
+   rgba(0, 0, 0) treatment .day-template and the calendar cells already
+   use on the same pastel palette - see the rule comment above. Applied by
+   its own class rather than an attribute selector on the inline color, so
+   it does not depend on how the browser happens to serialize a shorthand
+   style property back into the DOM. */
+.timeline-anchor-colored {
+  border-color: transparent;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* An anchor with no size yet has no honest height to draw - see
+   docs/TIMELINE.md's build order for step 4 and the comment on
+   UNSIZED_ANCHOR_MINUTES in timelineLayout.ts. Dashed, unfilled, and
+   explicit about it in its own label rather than a guessed block. */
+.timeline-anchor-unsized {
+  background: var(--surface);
+  border: 1.5px dashed var(--muted);
+}
+
+/* An anchor whose real end runs past the window's edge - still drawn with
+   its real time range, only the block itself stops short. The fade says
+   "there is more, off the bottom of this view" without a second sentence. */
+.timeline-anchor-clipped {
+  border-bottom: none;
+  mask-image: linear-gradient(to bottom, black 0%, black 85%, transparent 100%);
+}
+
+.timeline-note {
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .quick-add {
   width: 100%;
   background: var(--surface);
