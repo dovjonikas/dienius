@@ -401,6 +401,133 @@ const MOLESKINE: ThemePreset = {
 }
 
 /**
+ * Blueprint - deep blue ground, a white hairline grid, cyan ink, mono
+ * headers over a readable sans body. Dark only: the room's whole identity
+ * is the deep blue ground standing in for both "the surface" and "the
+ * dark mode" at once - a light Blueprint would just be Graph again, cool
+ * white with a technical grid, so no second variant was built. The
+ * unexpected touch: --shadow carries a cyan hairline glow (a 1px outline
+ * plus a soft cyan bloom) around every card, like a light table lit from
+ * beneath the drafting paper.
+ */
+const BLUEPRINT: ThemePreset = {
+  id: 'blueprint',
+  name: 'Blueprint',
+  modes: ['dark'],
+  dark: {
+    ruleStyle: 'squares',
+    tokens: {
+      bg: '#0d2b52',
+      surface: '#123464',
+      rule: 'rgba(255, 255, 255, 0.14)',
+      ruleSize: '22px',
+      grain: '0',
+      vignette: '0%',
+      border: '#2f5c95',
+      margin: '#00000000',
+      text: '#eaf2ff',
+      muted: '#9ab4dc',
+      accent: '#5fd4e8',
+      accentDim: '#1c4a68',
+      mark: '#ffd23f',
+      danger: '#ff8a75',
+      good: '#7fe0a8',
+      fontDisplay: SYSTEM_MONO,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '4px',
+      edge: SHARP_EDGE,
+      shadow: '0 0 0 1px rgba(95, 212, 232, 0.4), 0 0 10px rgba(95, 212, 232, 0.25)',
+    },
+  },
+}
+
+/**
+ * Terminal - true black, no ruling, mono everywhere, sharp corners, a
+ * green phosphor accent with an amber second mark colour. Dark only, the
+ * obvious case section 6 itself names: a light terminal is not a thing,
+ * and no second variant was built to be symmetrical. The unexpected touch
+ * is the phosphor glow itself - --shadow as a soft green bloom around
+ * every card rather than a drop shadow, the literal example section 8
+ * names for this preset.
+ */
+const TERMINAL: ThemePreset = {
+  id: 'terminal',
+  name: 'Terminal',
+  modes: ['dark'],
+  dark: {
+    ruleStyle: 'none',
+    tokens: {
+      bg: '#000000',
+      surface: '#0a0f0a',
+      rule: '#00000000',
+      ruleSize: '28px',
+      grain: '0',
+      vignette: '0%',
+      border: '#1c2a1c',
+      margin: '#00000000',
+      text: '#d7ffe0',
+      muted: '#6f9478',
+      accent: '#39ff6a',
+      accentDim: '#134022',
+      mark: '#ffb63f',
+      danger: '#ff5f56',
+      good: '#39ff6a',
+      fontDisplay: SYSTEM_MONO,
+      fontBody: SYSTEM_MONO,
+      fontMono: SYSTEM_MONO,
+      radius: '3px',
+      edge: SHARP_EDGE,
+      shadow: '0 0 6px rgba(57, 255, 106, 0.45), 0 0 1px rgba(57, 255, 106, 0.8)',
+    },
+  },
+}
+
+/**
+ * Newsprint - grey-white paper, the most visible grain of any preset,
+ * black ink, one red accent doing double duty as the highlighter too, a
+ * condensed headline face. Light only: a "dark newspaper" is not a
+ * physical object the way a dark Moleskine or dark legal pad are not.
+ * Deliberately a one-ink-and-one-red palette - no separate mark colour -
+ * which is itself the restraint section 8 asks for, not a shortfall. The
+ * unexpected touch: --shadow draws a hairline rule directly above and
+ * below every card, a masthead's double column rule, in place of a drop
+ * shadow. A true torn or perforated edge was considered and dropped - see
+ * the phase report for why hairline rules were built instead.
+ */
+const NEWSPRINT: ThemePreset = {
+  id: 'newsprint',
+  name: 'Newsprint',
+  modes: ['light'],
+  light: {
+    ruleStyle: 'none',
+    tokens: {
+      bg: '#e9e7e1',
+      surface: '#f2f0ea',
+      rule: '#00000000',
+      ruleSize: '28px',
+      grain: '0.035',
+      vignette: '3%',
+      border: '#c9c5ba',
+      margin: '#00000000',
+      text: '#1c1c1a',
+      muted: '#6b675e',
+      accent: '#b3261e',
+      accentDim: '#e9c6c2',
+      mark: '#b3261e',
+      danger: '#8a1f1f',
+      good: '#3d6b3f',
+      fontDisplay: SYSTEM_CONDENSED,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '4px',
+      edge: SHARP_EDGE,
+      shadow: '0 -1px 0 #1c1c1a, 0 1px 0 #1c1c1a, 0 2px 4px rgba(0, 0, 0, 0.08)',
+    },
+  },
+}
+
+/**
  * The full starter set from docs/THEMES.md section 6 - Slate and Sketchbook
  * from the architecture phase, plus the nine remaining presets this phase
  * adds. Every entry here is real gallery data: adding one more later needs
@@ -413,6 +540,9 @@ export const PRESETS: ThemePreset[] = [
   GRAPH,
   LEGAL_PAD,
   MOLESKINE,
+  BLUEPRINT,
+  TERMINAL,
+  NEWSPRINT,
 ]
 
 /** The preset a fresh install, or a payload with an unknown presetId, gets. */
