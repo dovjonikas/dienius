@@ -19,6 +19,16 @@
 - Design: minimal and calm. Generous whitespace, soft colors, one accent color, light + dark mode.
 - Working directory: `D:\Claude Code\Planner` (repo root, remote `https://github.com/Quicasha/dienius`).
 
+**Cross-platform requirements (iOS Safari, Android Chrome, desktop):**
+
+- Mobile-first CSS. Every view must be usable at 375px width without horizontal scroll.
+- All interactive controls are at least 44x44px on touch screens.
+- All text inputs use `font-size: 16px` or larger, otherwise iOS Safari zooms the page on focus.
+- Respect safe-area insets so content clears the iPhone notch and home indicator: the viewport meta tag must include `viewport-fit=cover` and layout padding must use `env(safe-area-inset-*)`.
+- No interaction may depend on hover alone; anything revealed on hover must also be reachable on touch.
+- Use pointer events (not mouse events) for the calendar drag, with `touch-action: none` on draggable cells so iOS does not scroll instead of stamping.
+- Use `-webkit-tap-highlight-color: transparent` and `overscroll-behavior-y: contain` so the app does not feel like a web page on iOS.
+
 ---
 
 ## File Structure
@@ -99,7 +109,9 @@ dist
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="A modular day planner built around reusable day templates." />
+    <meta name="theme-color" content="#fafaf8" />
     <title>Dienius</title>
   </head>
   <body>
@@ -213,13 +225,29 @@ export function App() {
 
 * { box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+
+input,
+button,
+textarea {
+  font-family: inherit;
+  font-size: 16px;
 }
 ```
+
+The `font-size: 16px` floor on inputs is deliberate: iOS Safari zooms the whole page when a focused input is smaller than that.
 
 - [ ] **Step 2: Install dependencies**
 
@@ -1088,7 +1116,8 @@ Append to `src/styles.css` (after the token block from Task 1):
 .app {
   max-width: 760px;
   margin: 0 auto;
-  padding: 0 20px 80px;
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
 
 .app-header {
@@ -1097,7 +1126,8 @@ Append to `src/styles.css` (after the token block from Task 1):
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 24px 0;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: 16px;
 }
 
 .brand {
@@ -1109,13 +1139,16 @@ Append to `src/styles.css` (after the token block from Task 1):
 nav {
   display: flex;
   gap: 4px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 nav button {
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: var(--radius);
   cursor: pointer;
@@ -1130,9 +1163,8 @@ nav button.active {
 }
 
 button {
-  font-family: inherit;
-  font-size: 14px;
   cursor: pointer;
+  min-height: 44px;
 }
 
 h2 { font-size: 20px; margin: 8px 0 16px; }
@@ -1487,9 +1519,7 @@ Append to `src/styles.css`:
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: inherit;
-  font-size: 15px;
-  padding: 12px 16px;
+  padding: 13px 16px;
   margin-bottom: 16px;
 }
 
@@ -1557,12 +1587,18 @@ Append to `src/styles.css`:
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 20px;
+  min-width: 44px;
   padding: 8px;
-  opacity: 0;
 }
 
-.task:hover .task-delete { opacity: 1; }
+/* Fade the delete button in on hover only where a real pointer exists.
+   On touch devices it stays visible, since there is no hover state. */
+@media (hover: hover) and (pointer: fine) {
+  .task-delete { opacity: 0; transition: opacity 0.15s; }
+  .task:hover .task-delete,
+  .task-delete:focus-visible { opacity: 1; }
+}
 
 .rollover {
   width: 100%;
@@ -1849,16 +1885,16 @@ button.primary {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 9px 12px;
+  padding: 11px 12px;
+  min-width: 0;
 }
 
-.palette { display: flex; gap: 8px; }
+.palette { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .swatch {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
   border-radius: 50%;
   border: 2px solid transparent;
   padding: 0;
@@ -1884,9 +1920,9 @@ button.primary {
   font-size: 16px;
 }
 
-.block-add { display: flex; gap: 8px; }
-.block-add input { flex: 1; }
-.block-add .time-input { flex: 0 0 76px; }
+.block-add { display: flex; gap: 8px; flex-wrap: wrap; }
+.block-add input { flex: 1 1 120px; }
+.block-add .time-input { flex: 0 0 82px; }
 .block-add button {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -2244,11 +2280,20 @@ Append to `src/styles.css`:
 
 .cell-template {
   font-size: 10px;
+  line-height: 1.2;
   color: rgba(0, 0, 0, 0.6);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* On narrow phones the template name does not fit inside a calendar cell,
+   so the cell color carries the meaning and the name is hidden. */
+@media (max-width: 420px) {
+  .calendar-grid { gap: 3px; }
+  .cell { padding: 5px 1px; }
+  .cell-template { display: none; }
 }
 
 .stamp-actions {
@@ -2278,12 +2323,18 @@ Run: `npm test -- --run` - Expected: all PASS.
 
 - [ ] **Step 5: Manual smoke test**
 
-Run the dev server and verify in the browser:
+Run the dev server and verify in the browser at desktop width:
 - Create a template with 2 blocks in Templates
 - Calendar: select the chip, click 3 days, drag across a week, Save
 - Days show the color and name; open a day, tasks are there
 - Check off a task (animation plays), add "14:00 Test" via quick add
 - Toggle dark mode in Settings
+
+Then switch the browser to a 375x812 mobile viewport (iPhone size) and verify:
+- No horizontal scrolling on any view
+- The delete button on a task is visible without hovering
+- Dragging across calendar cells stamps them instead of scrolling the page
+- Tapping a text input does not zoom the page
 
 - [ ] **Step 6: Commit**
 
