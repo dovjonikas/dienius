@@ -31,6 +31,11 @@
   --grain: 0;
   --vignette: 0%;
   --border: #e8e6e1;
+  /* A single vertical accent rule at a fixed offset from the left edge -
+     the legal pad's red margin line. Transparent by default; only Legal
+     Pad sets it to a real colour. See body::before below for the one
+     shared formula every preset draws this through. */
+  --margin: #00000000;
   /* Palette */
   --text: #2b2b2b;
   --muted: #8a8a85;
@@ -105,6 +110,7 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
+    linear-gradient(90deg, transparent 0 9px, var(--margin) 9px 11px, transparent 11px 100%),
     radial-gradient(1100px 460px at 50% -10%, color-mix(in srgb, var(--accent) var(--vignette), transparent), transparent 70%),
     repeating-linear-gradient(0deg, var(--rule-h) 0 1px, transparent 1px var(--rule-size)),
     repeating-linear-gradient(90deg, var(--rule-v) 0 1px, transparent 1px var(--rule-size)),
@@ -327,6 +333,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   inset: 0;
   pointer-events: none;
   background:
+    linear-gradient(90deg, transparent 0 5px, var(--pv-margin) 5px 7px, transparent 7px 100%),
     radial-gradient(160px 70px at 50% -10%, color-mix(in srgb, var(--pv-accent) var(--pv-vignette), transparent), transparent 70%),
     repeating-linear-gradient(0deg, var(--pv-rule-h) 0 1px, transparent 1px var(--pv-rule-size)),
     repeating-linear-gradient(90deg, var(--pv-rule-v) 0 1px, transparent 1px var(--pv-rule-size));

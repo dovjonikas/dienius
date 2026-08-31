@@ -27,7 +27,7 @@ export interface ResolvedTheme {
  * copy of this list must match. Order has no visual effect - it exists so
  * a diff of the two lists is easy to eyeball. */
 export const TOKEN_KEYS: (keyof ThemeTokens)[] = [
-  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border',
+  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
   'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
   'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ]
@@ -43,6 +43,7 @@ export const CSS_VAR_NAMES: Record<keyof ThemeTokens, string> = {
   grain: '--grain',
   vignette: '--vignette',
   border: '--border',
+  margin: '--margin',
   text: '--text',
   muted: '--muted',
   accent: '--accent',

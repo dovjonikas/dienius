@@ -29,6 +29,7 @@ export function buildPreviewStyle(tokens: ThemeTokens, ruleStyle: RuleStyle): Pr
     '--pv-grain': tokens.grain,
     '--pv-vignette': tokens.vignette,
     '--pv-border': tokens.border,
+    '--pv-margin': tokens.margin,
     '--pv-text': tokens.text,
     '--pv-muted': tokens.muted,
     '--pv-accent': tokens.accent,

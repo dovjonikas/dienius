@@ -8,6 +8,7 @@ test('buildPreviewStyle copies every surface and palette token the miniature pai
   expect(style['--pv-bg']).toBe(variant.tokens.bg)
   expect(style['--pv-surface']).toBe(variant.tokens.surface)
   expect(style['--pv-border']).toBe(variant.tokens.border)
+  expect(style['--pv-margin']).toBe(variant.tokens.margin)
   expect(style['--pv-text']).toBe(variant.tokens.text)
   expect(style['--pv-muted']).toBe(variant.tokens.muted)
   expect(style['--pv-accent']).toBe(variant.tokens.accent)

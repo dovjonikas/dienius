@@ -148,3 +148,24 @@ test('applyResolvedTheme on Slate leaves ruling transparent on both axes', () =>
   expect(root.style.getPropertyValue('--rule-h')).toBe('transparent')
   expect(root.style.getPropertyValue('--rule-v')).toBe('transparent')
 })
+
+// The margin rule (Legal pad's red vertical line) is a real surface token,
+// carried through applyResolvedTheme like any other - transparent for
+// every preset that has no use for it, a real colour only for Legal pad.
+test('--margin resolves and paints through the same pipeline as every other token', () => {
+  const root = document.createElement('div')
+  applyResolvedTheme(root, resolveTheme(state({ presetId: 'legal-pad', mode: 'light' }), false))
+  expect(root.style.getPropertyValue('--margin')).toBe(findPreset('legal-pad').light!.tokens.margin)
+  expect(root.style.getPropertyValue('--margin')).not.toBe('#00000000')
+})
+
+test('--margin stays transparent on every preset except Legal pad', () => {
+  const otherPresets = ['slate', 'sketchbook', 'graph', 'moleskine', 'blueprint', 'terminal', 'newsprint', 'receipt', 'ink-and-wash', 'midnight']
+  for (const id of otherPresets) {
+    const preset = findPreset(id)
+    for (const mode of preset.modes) {
+      const variant = mode === 'light' ? preset.light : preset.dark
+      expect(variant!.tokens.margin, `${id} ${mode}`).toBe('#00000000')
+    }
+  }
+})
