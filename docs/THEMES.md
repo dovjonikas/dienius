@@ -202,17 +202,34 @@ themes that are the same layout in a different hue.
 1. [x] Refactor tokens into the three layers and move the current light/dark into two presets.
 2. [x] `src/lib/themes.ts` with the preset type and the first three presets as data.
 3. [x] Resolution pipeline plus the inline pre-paint script in `index.html`.
-4. [ ] Theme gallery in Settings with real miniature previews.
+4. [x] Theme gallery in Settings with real miniature previews.
 5. [ ] Override panel with per-preset patches and reset.
-6. [ ] `theme-color` and manifest sync.
+6. [x] `theme-color` and manifest sync.
 7. [ ] The remaining presets.
 8. [x] Contrast unit test over the preset array.
 
 Steps 1, 2, 3 and 8 landed together as the architecture phase: the three-layer token structure,
 Slate and Sketchbook as data (both variants each), the full resolution pipeline including the
-pre-paint script, and the contrast check over the preset array. `theme-color` sync already existed
-before this phase and was updated to read the resolved `--bg` directly rather than a fixed
-light/dark lookup, but syncing the PWA manifest itself is still step 6, unstarted.
+pre-paint script, and the contrast check over the preset array.
+
+Step 4 landed next: the gallery grid in Settings (`src/views/ThemeGallery.tsx`,
+`src/views/ThemePreviewCard.tsx`), each card a miniature room built from `buildPreviewStyle` in
+`src/lib/theme-preview.ts` off the same `ThemeVariant` data the app itself resolves from - ruling,
+vignette, grain, accent chip and highlighter tag all present, scoped under `--pv-*` custom
+properties so a card never touches the live tokens painting the rest of the page. The old bare
+mode-only segmented control is gone; `src/views/ThemeModeControl.tsx` replaces it, still light/
+dark/system, now disabling whichever of light or dark the active preset does not ship rather than
+offering a broken variant - the one control this phase leaves in Settings, not two competing ones.
+
+Step 6 also landed: `theme-color` sync already existed before step 4 and reads the resolved `--bg`
+directly. `src/lib/manifest-sync.ts` adds the manifest half - it rewrites the `<link rel="manifest">`
+href to a blob url carrying the resolved background on every theme change. Read that file's own
+comment for the honest limit: an OS reads and caches a PWA's manifest once, at install time, for the
+splash screen it shows before the page paints - nothing a running page does can reach back into an
+already-installed home screen icon and change that. What this actually buys is real but narrower:
+the browser's install prompt reads the manifest link's current href at the moment of install, so a
+person who tries a theme and then installs (or reinstalls after switching) gets a splash screen and
+initial status bar that already match it.
 
 Steps 1 to 4 are what makes it feel like a different app. Everything after is polish that can land
 across separate sessions.
