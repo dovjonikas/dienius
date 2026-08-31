@@ -668,3 +668,131 @@ button.danger {
 }
 
 .stamp-hint { text-align: center; margin-top: 12px; }
+
+.if-then-board { margin-top: 28px; }
+
+.if-then-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.if-then-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.if-then-list { list-style: none; margin: 0; padding: 0; }
+
+/* The colored left edge is a reinforcing hint, never the only signal - the
+   tag's name is always rendered as text below, both on the card and on its
+   matching filter chip. */
+.if-then-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+
+.if-then-trigger {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.if-then-action {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.if-then-prefix {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 8px;
+}
+
+.if-then-tag {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.if-then-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.if-then-card-actions button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  padding: 6px 12px;
+}
+
+.if-then-card-actions button:hover { color: var(--text); }
+
+.if-then-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.if-then-form input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 11px 12px;
+}
+
+.if-then-hint {
+  margin: -4px 0 0;
+  font-size: 12px;
+}
+
+.if-then-card > .if-then-form {
+  margin-bottom: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.swatch-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--border);
+  color: var(--muted);
+  font-size: 18px;
+  background: var(--surface);
+}
+
+.swatch-none.selected {
+  border-style: solid;
+  border-color: var(--text);
+}
