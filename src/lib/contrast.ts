@@ -69,3 +69,18 @@ export function contrastRatio(hexA: string, hexB: string): number {
   const darker = Math.min(luminanceA, luminanceB)
   return (lighter + 0.05) / (darker + 0.05)
 }
+
+/**
+ * Picks whichever of pure black or pure white reads better against a given
+ * background - the general form of the ink-picking logic theme-preview.ts's
+ * markInk needs for the highlighter chip, and theme.ts's applyResolvedTheme
+ * needs for `--safe-ink` (see that file for why: it is the one foreground
+ * color the override panel's recovery controls use that a person can never
+ * break by hand-picking a text color, because it is derived from `--surface`
+ * at paint time rather than read from an overridable token).
+ */
+export function bestInk(background: string): string {
+  const withBlack = contrastRatio('#000000', background)
+  const withWhite = contrastRatio('#ffffff', background)
+  return withBlack >= withWhite ? '#000000' : '#ffffff'
+}

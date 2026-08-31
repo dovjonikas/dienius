@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { contrastRatio, parseHexColor, relativeLuminance } from './contrast'
+import { bestInk, contrastRatio, parseHexColor, relativeLuminance } from './contrast'
 
 test('parseHexColor reads both three and six digit hex', () => {
   expect(parseHexColor('#fff')).toEqual({ r: 255, g: 255, b: 255 })
@@ -36,4 +36,17 @@ test('contrastRatio of a color against itself is 1', () => {
 test('contrastRatio matches the known #767676 on white reference point', () => {
   expect(contrastRatio('#767676', '#ffffff')).toBeGreaterThanOrEqual(4.5)
   expect(contrastRatio('#777777', '#ffffff')).toBeLessThan(4.5)
+})
+
+test('bestInk picks black on a light background and white on a dark one', () => {
+  expect(bestInk('#ffffff')).toBe('#000000')
+  expect(bestInk('#14171c')).toBe('#ffffff')
+})
+
+test('bestInk always reads at least as well as the other choice would have', () => {
+  for (const background of ['#fafaf8', '#f4ecd8', '#191a1d', '#5b7cfa', '#a020f0']) {
+    const ink = bestInk(background)
+    const other = ink === '#000000' ? '#ffffff' : '#000000'
+    expect(contrastRatio(ink, background)).toBeGreaterThanOrEqual(contrastRatio(other, background))
+  }
 })
