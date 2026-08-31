@@ -198,8 +198,6 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task-list { list-style: none; margin: 0; padding: 0; }
 
 .task {
-  display: flex;
-  align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -208,13 +206,20 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   box-shadow: var(--shadow);
 }
 
+.task-row {
+  display: flex;
+  align-items: center;
+}
+
 .task label {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
   flex: 1;
   padding: 12px 0;
   cursor: pointer;
+  min-width: 0;
 }
 
 .task input[type='checkbox'] {
@@ -253,6 +258,11 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task-title { transition: opacity 0.2s; }
 .task.done .task-title { text-decoration: line-through; opacity: 0.45; }
 
+.task-pushed {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .task-delete {
   border: none;
   background: none;
@@ -263,11 +273,25 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* Fade the delete button in on hover only where a real pointer exists.
-   On touch devices it stays visible, since there is no hover state. */
+   On touch devices it stays visible, since there is no hover state. A
+   task at the push bound keeps it visible too - it is one of only two
+   real options at that point, not a stray action to discover on hover. */
 @media (hover: hover) and (pointer: fine) {
   .task-delete { opacity: 0; transition: opacity 0.15s; }
   .task:hover .task-delete,
-  .task-delete:focus-visible { opacity: 1; }
+  .task-delete:focus-visible,
+  .task-maxed .task-delete {
+    opacity: 1;
+  }
+}
+
+.task-maxed { border-color: var(--muted); }
+
+.task-maxed-note {
+  margin: 0;
+  padding: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .rollover {
@@ -281,6 +305,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .rollover:hover { color: var(--text); border-color: var(--muted); }
+
+.rollover-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
 
 .templates-header {
   display: flex;
