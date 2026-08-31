@@ -231,6 +231,32 @@ test('loading a payload from before the if-then board existed enables the widget
   expect(loadData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
 })
 
+// Migration must run exactly once per payload, not on every load. The
+// ifThens key's presence is what marks a payload as already migrated - see
+// normalizeLoaded in storage.ts. Without this, a future settings toggle
+// that lets someone turn the if-then widget off would find it silently
+// back on the next time the app loads.
+test('a payload that has already been migrated and had the widget removed from enabledWidgets does not get it added back', () => {
+  const alreadyMigrated = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+    ifThens: [],
+  })
+  localStorage.setItem(STORAGE_KEY, alreadyMigrated)
+  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
+})
+
+test('importJson leaves enabledWidgets untouched for a backup that has already been migrated', () => {
+  const alreadyMigrated = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+    ifThens: [],
+  })
+  expect(importJson(alreadyMigrated).settings.enabledWidgets).toEqual(['day-plan'])
+})
+
 test('validate rejects an if-then entry missing an id, or with a non-string trigger or action', () => {
   const missingId = JSON.stringify({
     templates: [],

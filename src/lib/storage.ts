@@ -130,12 +130,23 @@ export function validate(x: unknown): x is AppData {
 // Fills in what a payload from before the if-then board existed does not
 // have: an empty ifThens list, and the board's widget id added to whatever
 // enabledWidgets the payload already carries. The widget has no settings
-// control to turn it off, so upgrading a person's existing data to include
-// it is the same kind of default-on treatment a brand new install gets
-// from defaultData() - not a preference their old data ever expressed an
-// opinion about one way or the other.
-function normalizeLoaded(data: AppData): AppData {
-  const enabledWidgets = DEFAULT_ENABLED_WIDGETS.every(id => data.settings.enabledWidgets.includes(id))
+// control to turn it off yet, so upgrading a person's existing data to
+// include it is the same kind of default-on treatment a brand new install
+// gets from defaultData() - not a preference their old data ever expressed
+// an opinion about one way or the other.
+//
+// wasMigrated distinguishes "this payload predates ifThens entirely" from
+// "this payload already went through this function once, and enabledWidgets
+// is however it is now for a reason" - the ifThens key's own presence in the
+// raw payload is that signal, since it is added by this same function on
+// first load and then persisted by every subsequent save from here on. Once
+// a payload has been migrated, enabledWidgets is left exactly as it stands.
+// Without this check, a future settings toggle that lets someone turn the
+// if-then widget off would find it silently back on at their next app open,
+// because there would be no way to tell that apart from never having seen
+// the widget at all.
+function normalizeLoaded(data: AppData, wasMigrated: boolean): AppData {
+  const enabledWidgets = wasMigrated
     ? data.settings.enabledWidgets
     : [...new Set([...data.settings.enabledWidgets, ...DEFAULT_ENABLED_WIDGETS])]
   return {
@@ -150,7 +161,8 @@ export function loadData(): AppData {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultData()
     const parsed: unknown = JSON.parse(raw)
-    return validate(parsed) ? normalizeLoaded(parsed) : defaultData()
+    if (!validate(parsed)) return defaultData()
+    return normalizeLoaded(parsed, 'ifThens' in parsed)
   } catch {
     return defaultData()
   }
@@ -173,7 +185,7 @@ export function importJson(text: string): AppData {
   try {
     const parsed: unknown = JSON.parse(text)
     if (!validate(parsed)) throw new Error('invalid')
-    return normalizeLoaded(parsed)
+    return normalizeLoaded(parsed, 'ifThens' in parsed)
   } catch {
     throw new Error('Invalid Dienius backup file')
   }
