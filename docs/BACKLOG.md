@@ -64,6 +64,32 @@ for a person, the reasoning behind the design choices, the stack, and how to run
 why localStorage, why no accounts, why no streaks, why templates instead of recurring tasks, why a
 hand-rolled service worker - including the costs, not just the upside.
 
+**Day types on templates.** `Template.type` is `'full' | 'shift' | 'night' | 'rest'`, absent meaning
+`'full'` so every template saved before this shipped loads and scores exactly as it always did.
+Shift, night and rest all follow the same rule - not every value needed its own scoring behavior,
+just its own name for the day it describes. On a full day `dayScore` still counts every task, the
+same as before this feature existed. On any other type it counts only tasks marked `core` - the
+ones that genuinely had to happen - and ignores the rest entirely, so a shift day with one required
+block and nine optional ones scores against that one block, not ten. A non-full day with tasks but
+none of them core reports no plan at all, the same way an empty day always has: nothing required
+means nothing to measure, not a failed 0/0.
+
+`core` lives on both `TemplateBlock` and `Task`, copied from block to task at stamp time in
+`applyStamps`, and baked onto the day itself as `DayPlan.dayType` rather than looked up live from
+the template - so editing or deleting a template later never silently changes how an already-
+stamped day is scored. A manually typed quick-add task is never core: the things that had to happen
+are the ones planned ahead of time in the template, and letting a spur-of-the-moment task count
+toward a shift day's required total would work against the whole point of a reduced score. There's
+no second field on quick-add to change that, and none was added.
+
+The template editor gets a day type picker, a plain four-way segmented control. The per-block core
+toggle only appears once a template is anything other than a full day, so the common case - most
+templates are full days - stays exactly as clean as it was. On the day view, a non-full day's score
+carries a small "core" note next to the fraction, and each core task carries a matching quiet label,
+so a reduced count reads as what it is instead of looking like the app dropped tasks. The calendar
+gets no new signal for day type - it already paints by template color and is close to full at
+375px, and a shift day's own template chip plus the score's own note already say what needs saying.
+
 ## Tier 2 - brief features not built yet
 
 **If-then board.** Implementation intentions: IF (specific trigger) + THEN (one concrete move) +
@@ -71,10 +97,6 @@ optional colour tag. Card view with filter chips, editing one click away. The po
 hard moment, not typing.
 
 **Year strip.** GitHub-graph style row, one cell per day, filled by completion, coloured by day type.
-
-**Day types on templates.** Templates exist with colours but carry no type semantics (full / shift /
-night / rest). Needed before the September shifts so a 12-hour day does not render as a failed one.
-Build: `type` on `Template`, `core` flag on tasks, non-full days score core items only.
 
 **Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time (the
 team's own review flagged this as deferred). The brief says times are anchors: fix only what is
@@ -101,9 +123,8 @@ Build: validate and normalise time input, visually separate anchored items from 
 ## Suggested order for the next session
 
 1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. Day types and core tasks
-3. If-then board
-4. Year strip
-5. Debt clearing from Tier 3
+2. If-then board
+3. Year strip
+4. Debt clearing from Tier 3
 
 Item 1 turns a working todo into the product the brief describes. The rest are features and hygiene.

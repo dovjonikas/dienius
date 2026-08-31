@@ -34,6 +34,11 @@ with a time and a title. On the calendar, picking a template and then clicking o
 dates paints it onto those days; nothing commits until Save, so a drag across the wrong week is
 just Cancel, not cleanup.
 
+A template also carries a day type - full, shift, night, or rest - because a twelve-hour shift and
+an ordinary Tuesday aren't the same kind of day and shouldn't be measured as if they were. On
+anything but a full day, a block can be marked core: something that genuinely has to happen, as
+opposed to everything else that might.
+
 **A day view built for one thing: right now.** One input adds a task, with an optional leading time
 ("`14:00 Call mom`") to keep it at the top of the list. One tap finishes it. There's no priority
 field, no tags, no due-date picker - the fewer decisions between opening the app and a task
@@ -48,7 +53,10 @@ a todo list turns into a graveyard of things from three weeks ago that nobody's 
 **A score with nothing riding on it.** Next to the date, a plain fraction - done over planned for
 that day, nothing else. No percentage, no weekly average, no streak. A day with no plan shows no
 score at all, because there's nothing to measure - not a "0/0" quietly implying failure for a day
-that was never engaged with in the first place.
+that was never engaged with in the first place. On a shift, night, or rest day, the fraction counts
+only the tasks marked core, with a quiet label saying so - so a twelve-hour shift with one required
+block and a handful of optional ones scores against that one block, not against a full day's worth
+of tasks it never had room for.
 
 **Backup that's explicit.** Settings has an export and an import, both plain JSON. There's no
 account to lose access to and no sync to silently fail - just a file, made on purpose, that a
