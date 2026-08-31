@@ -72,6 +72,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           const classNames = ['task']
           if (task.done) classNames.push('done')
           if (atBound) classNames.push('task-maxed')
+          const badgeId = `push-badge-${task.id}`
+          const noteId = `push-note-${task.id}`
+          const describedBy = atBound ? noteId : pushCount > 0 ? badgeId : undefined
           return (
             <li key={task.id} className={classNames.join(' ')}>
               <div className="task-row">
@@ -80,13 +83,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                     type="checkbox"
                     checked={task.done}
                     aria-label={task.title}
+                    aria-describedby={describedBy}
                     onChange={() => actions.toggleTask(date, task.id)}
                   />
                   <span className="check" aria-hidden="true" />
                   {task.time && <span className="task-time">{task.time}</span>}
                   <span className="task-title">{task.title}</span>
                   {pushCount > 0 && !atBound && (
-                    <span className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
+                    <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
                   )}
                 </label>
                 <button
@@ -98,7 +102,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                 </button>
               </div>
               {atBound && (
-                <p className="task-maxed-note">Do it today, or let it go - deleting counts as a decision, not a failure.</p>
+                <p id={noteId} className="task-maxed-note">
+                  {`Pushed ${pushCountLabel(pushCount)} - do it today, or let it go. Deleting counts as a decision, not a failure.`}
+                </p>
               )}
             </li>
           )
@@ -113,7 +119,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </button>
       )}
       {pushableCount === 0 && heldCount > 0 && (
-        <p className="rollover-note">Nothing left to push - the rest need a decision today.</p>
+        <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
       )}
     </section>
   )

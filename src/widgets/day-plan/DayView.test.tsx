@@ -76,7 +76,14 @@ test('a task pushed once shows a quiet push count', () => {
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText(/pushed once/i)).toBeInTheDocument()
+  const badge = screen.getByText(/pushed once/i)
+  expect(badge).toBeInTheDocument()
+
+  // The push state must be announced along with the task, not only visible.
+  const checkbox = screen.getByRole('checkbox', { name: /once pushed/i })
+  const describedBy = checkbox.getAttribute('aria-describedby')
+  expect(describedBy).toBeTruthy()
+  expect(document.getElementById(describedBy!)).toBe(badge)
 })
 
 test('a task at the push bound offers do or delete instead of another push count badge', () => {
@@ -93,9 +100,18 @@ test('a task at the push bound offers do or delete instead of another push count
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText(/do it today, or let it go/i)).toBeInTheDocument()
-  expect(screen.getByRole('checkbox', { name: /maxed out/i })).toBeInTheDocument()
+  const note = screen.getByText(/do it today, or let it go/i)
+  expect(note).toBeInTheDocument()
+  // The note itself must carry the count - it is the only place a maxed
+  // task states it, since the separate quiet badge is not shown here.
+  expect(note).toHaveTextContent(/pushed twice/i)
   expect(screen.getByRole('button', { name: /let go of maxed out/i })).toBeInTheDocument()
+
+  // The note must be announced along with the task, not only visible.
+  const checkbox = screen.getByRole('checkbox', { name: /maxed out/i })
+  const describedBy = checkbox.getAttribute('aria-describedby')
+  expect(describedBy).toBeTruthy()
+  expect(document.getElementById(describedBy!)).toBe(note)
 })
 
 test('rollover button explains when some tasks moved and some stayed behind', async () => {
@@ -138,4 +154,6 @@ test('rollover button is not shown when every unfinished task is already at the 
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(screen.queryByRole('button', { name: /move .* to tomorrow/i })).not.toBeInTheDocument()
+  expect(screen.getByText(/waiting on a decision/i)).toBeInTheDocument()
+  expect(screen.queryByText(/need a decision today/i)).not.toBeInTheDocument()
 })
