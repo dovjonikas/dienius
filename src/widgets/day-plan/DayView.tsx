@@ -116,7 +116,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </div>
       )}
 
-      <TimelineGrid tasks={day?.tasks ?? []} templateColor={template?.color} />
+      <TimelineGrid
+        tasks={day?.tasks ?? []}
+        templateColor={template?.color}
+        onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
+      />
 
       <input
         className="quick-add"
@@ -210,6 +214,24 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                     onClick={() => actions.pushTask(date, task.id)}
                   >
                     push
+                  </button>
+                )}
+                {/* The undo for tapping a gap - see docs/TIMELINE.md
+                    section 5. Placing is easy to do by accident on a
+                    phone, so this sits on the task's own row rather than
+                    behind a setting or a fading toast: whatever anchored a
+                    task, this always turns it back into a float. Not
+                    gated on how the task got its time - a hand-typed
+                    anchor from quick-add un-anchors exactly the same way a
+                    gap-placed one does, since both are just a task with a
+                    time either way. */}
+                {task.time && !task.done && (
+                  <button
+                    className="task-unanchor"
+                    aria-label={`Remove time from ${task.title}`}
+                    onClick={() => actions.unanchorTask(date, task.id)}
+                  >
+                    remove time
                   </button>
                 )}
                 <button
