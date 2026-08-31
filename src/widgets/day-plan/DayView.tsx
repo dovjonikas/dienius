@@ -5,7 +5,7 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput, trimCandidate } from './capacity'
+import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -43,7 +43,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
 
   const capacity = computeCapacity(day?.tasks ?? [])
   const capacityLine = formatCapacityLine(capacity)
-  const trim = capacity.overMinutes && capacity.overMinutes > 0 ? trimCandidate(day?.tasks ?? []) : undefined
 
   function handleAdd() {
     const parsed = parseQuickAdd(input)
@@ -106,14 +105,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </button>
       </div>
 
+      {/* Purely informational - no embedded action. Being over is stated as
+          a fact; which float moves to tomorrow, if any, is decided on that
+          float's own row below, not pre-selected here. See
+          docs/TIMELINE.md section 8. */}
       {capacityLine && (
         <div className="capacity-line">
           <p>{capacityLine}</p>
-          {trim && (
-            <button className="trim-button" onClick={() => actions.pushTask(date, trim.id)}>
-              Trim {trim.title} to tomorrow
-            </button>
-          )}
         </div>
       )}
 
@@ -197,6 +195,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                     onClick={() => startSizeEdit(task)}
                   >
                     {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
+                  </button>
+                )}
+                {/* A float, not yet done, still eligible to move. Which one
+                    to push is the owner's call, not something the capacity
+                    line pre-selects - see the comment above it. */}
+                {!task.time && !task.done && pushCount < MAX_PUSHES && (
+                  <button
+                    className="task-push"
+                    aria-label={`Push ${task.title} to tomorrow`}
+                    onClick={() => actions.pushTask(date, task.id)}
+                  >
+                    push
                   </button>
                 )}
                 <button

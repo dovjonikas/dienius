@@ -114,17 +114,18 @@ export const actions = {
   /**
    * Pushes exactly one task to the next day - the same move
    * rolloverUnfinished makes for every unfinished task at once, offered
-   * here as its own entry point so a single float can be trimmed off an
-   * overloaded day without touching anything else on it. Bound by the same
-   * MAX_PUSHES rule: a task already at the bound is left in place and this
-   * returns false, so a caller can tell the push did not happen rather than
-   * assume it always does. See `trimCandidate` in `capacity.ts`, which
-   * picks which float this should be called on.
+   * here as its own entry point so one specific task can move without
+   * touching anything else on the day. The day view offers this per float,
+   * so the owner picks which one moves rather than the app choosing for
+   * them - see docs/TIMELINE.md section 8. Bound by the same MAX_PUSHES
+   * rule, and a done task is never eligible - pushing finished work to
+   * tomorrow makes no sense - so this returns false rather than acting in
+   * either case, the same way rolloverUnfinished silently excludes both.
    */
   pushTask(date: string, taskId: string): boolean {
     const day = data.days[date]
     const task = day?.tasks.find(t => t.id === taskId)
-    if (!task || (task.pushCount ?? 0) >= MAX_PUSHES) return false
+    if (!task || task.done || (task.pushCount ?? 0) >= MAX_PUSHES) return false
 
     const targetDate = addDays(date, 1)
     const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }

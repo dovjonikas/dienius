@@ -212,6 +212,16 @@ test('pushTask on a missing task or day does not throw and reports no push happe
   expect(actions.pushTask('2026-09-01', 'still-not-here')).toBe(false)
 })
 
+test('pushTask refuses a task that is already done, and leaves it in place', () => {
+  actions.addTask('2026-09-01', 'Finished')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.toggleTask('2026-09-01', id)
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(false)
+  expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Finished'])
+  expect(getData().days['2026-09-02']).toBeUndefined()
+})
+
 test('setTaskMinutes sets a size on a task that had none', () => {
   actions.addTask('2026-09-01', 'Guitar')
   const id = getData().days['2026-09-01'].tasks[0].id

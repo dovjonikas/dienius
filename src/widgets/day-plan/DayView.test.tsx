@@ -348,33 +348,43 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(
-    screen.getByText('Anchors take 6h10. Free: 5h50 across 3 gaps. Floats need about 5h50.'),
+    screen.getByText('Anchors take 6h10. Free: 17h50 across 5 gaps. Floats need about 5h50.'),
   ).toBeInTheDocument()
 })
 
-test('when floats exceed free time, the line states it plainly and offers to trim the largest one', async () => {
-  const user = userEvent.setup()
+test('a mid-day shift leaves real evening free time, not a false "no free time" claim', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 720 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('Anchors take 12h. Free: 12h across 2 gaps.')).toBeInTheDocument()
+  expect(screen.queryByText(/no free time/i)).not.toBeInTheDocument()
+})
+
+test('when floats exceed free time, the line states it plainly with no embedded action', async () => {
   actions.resetForTests({
     ...defaultData(),
     days: {
       '2026-09-01': {
         date: '2026-09-01',
         tasks: [
-          { id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 240 },
-          { id: 'evening', title: 'Evening', done: false, time: '15:00', minutes: 60 },
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
           { id: 'small', title: 'Small errand', done: false, minutes: 20 },
-          { id: 'big', title: 'Big errand', done: false, minutes: 140 },
+          { id: 'big', title: 'Big errand', done: false, minutes: 400 },
         ],
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText(/you are 40 min over/i)).toBeInTheDocument()
-
-  const trimButton = screen.getByRole('button', { name: /trim big errand to tomorrow/i })
-  await user.click(trimButton)
-  expect(screen.queryByText('Big errand')).not.toBeInTheDocument()
-  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Big errand'])
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('Anchors take 18h. Free: 6h across 1 gap. Floats need about 7h. You are 1h over.')).toBeInTheDocument()
+  // The capacity line itself carries no button - it only ever states the arithmetic.
+  expect(container.querySelector('.capacity-line button')).toBeNull()
 })
 
 test('the capacity line never uses an alarming word for the over case', () => {
@@ -384,8 +394,8 @@ test('the capacity line never uses an alarming word for the over case', () => {
       '2026-09-01': {
         date: '2026-09-01',
         tasks: [
-          { id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 240 },
-          { id: 'errand', title: 'Errand', done: false, minutes: 300 },
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
+          { id: 'errand', title: 'Errand', done: false, minutes: 500 },
         ],
       },
     },
@@ -394,22 +404,73 @@ test('the capacity line never uses an alarming word for the over case', () => {
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
 })
 
-test('the trim action does not offer a task that has already reached the push bound', () => {
+test('each float offers its own push-to-tomorrow control, so the owner picks which one moves', async () => {
+  const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
     days: {
       '2026-09-01': {
         date: '2026-09-01',
         tasks: [
-          { id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 },
-          { id: 'maxed', title: 'Maxed errand', done: false, minutes: 300, pushCount: 2 },
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
+          { id: 'small', title: 'Small errand', done: false, minutes: 20 },
+          { id: 'big', title: 'Big errand', done: false, minutes: 400 },
         ],
       },
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText(/you are/i)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /trim/i })).not.toBeInTheDocument()
+
+  // Both floats offer the control - the app never pre-selects the larger one.
+  expect(screen.getByRole('button', { name: 'Push Small errand to tomorrow' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Push Big errand to tomorrow' })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Push Small errand to tomorrow' }))
+  expect(screen.queryByText('Small errand')).not.toBeInTheDocument()
+  expect(screen.getByText('Big errand')).toBeInTheDocument()
+  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Small errand'])
+})
+
+test('an anchor never offers a push-to-tomorrow control - only floats do', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push shift to tomorrow/i })).not.toBeInTheDocument()
+})
+
+test('a float already at the push bound offers no push control', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'maxed', title: 'Maxed errand', done: false, minutes: 300, pushCount: 2 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push maxed errand to tomorrow/i })).not.toBeInTheDocument()
+})
+
+test('a done float offers no push control - there is nothing left to move', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'done', title: 'Finished errand', done: true, minutes: 30 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push finished errand to tomorrow/i })).not.toBeInTheDocument()
 })
 
 test('a task with no size shows a quiet control to set one, not a number', () => {
