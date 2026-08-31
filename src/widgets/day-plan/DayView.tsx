@@ -5,6 +5,7 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
+import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput, trimCandidate } from './capacity'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -20,6 +21,8 @@ export interface DayViewProps {
 export function DayView({ date, onDateChange }: DayViewProps) {
   const data = useAppData()
   const [input, setInput] = useState(() => consumeDraft(date))
+  const [sizeEditingId, setSizeEditingId] = useState<string | null>(null)
+  const [sizeDraft, setSizeDraft] = useState('')
   const day = data.days[date]
   const tasks = sortTasks(day?.tasks ?? [])
   const template = day?.templateId
@@ -38,6 +41,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       : `${score.done} of ${score.total} core tasks done`
     : undefined
 
+  const capacity = computeCapacity(day?.tasks ?? [])
+  const capacityLine = formatCapacityLine(capacity)
+  const trim = capacity.overMinutes && capacity.overMinutes > 0 ? trimCandidate(day?.tasks ?? []) : undefined
+
   function handleAdd() {
     const parsed = parseQuickAdd(input)
     if (!parsed) return
@@ -49,6 +56,25 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   function handleInputChange(text: string) {
     setInput(text)
     saveDraft(date, text)
+  }
+
+  function startSizeEdit(task: { id: string; minutes?: number }) {
+    setSizeEditingId(task.id)
+    setSizeDraft(task.minutes !== undefined ? String(task.minutes) : '')
+  }
+
+  function commitSizeEdit(taskId: string) {
+    const trimmed = sizeDraft.trim()
+    if (trimmed === '') {
+      actions.setTaskMinutes(date, taskId, undefined)
+    } else {
+      const parsed = parseMinutesInput(sizeDraft)
+      // A non-empty value that does not parse is left untouched rather
+      // than clearing a size that was already there - a stray keystroke
+      // should not silently erase a real estimate.
+      if (parsed !== undefined) actions.setTaskMinutes(date, taskId, parsed)
+    }
+    setSizeEditingId(null)
   }
 
   return (
@@ -79,6 +105,17 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           &rarr;
         </button>
       </div>
+
+      {capacityLine && (
+        <div className="capacity-line">
+          <p>{capacityLine}</p>
+          {trim && (
+            <button className="trim-button" onClick={() => actions.pushTask(date, trim.id)}>
+              Trim {trim.title} to tomorrow
+            </button>
+          )}
+        </div>
+      )}
 
       <input
         className="quick-add"
@@ -127,6 +164,41 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                     <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
                   )}
                 </label>
+                {sizeEditingId === task.id ? (
+                  <input
+                    className="task-size-input"
+                    inputMode="numeric"
+                    aria-label={`Size in minutes for ${task.title}`}
+                    value={sizeDraft}
+                    autoFocus
+                    onChange={e => setSizeDraft(e.target.value)}
+                    onBlur={() => commitSizeEdit(task.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') commitSizeEdit(task.id)
+                      if (e.key === 'Escape') {
+                        // Restore the draft to what it was before this edit
+                        // started, so that if the browser still fires a
+                        // blur as this input unmounts, the commit it
+                        // triggers is a harmless no-op rather than saving
+                        // whatever was left half-typed.
+                        setSizeDraft(task.minutes !== undefined ? String(task.minutes) : '')
+                        setSizeEditingId(null)
+                      }
+                    }}
+                  />
+                ) : (
+                  <button
+                    className={task.minutes !== undefined ? 'task-size' : 'task-size task-size-empty'}
+                    aria-label={
+                      task.minutes !== undefined
+                        ? `Change size for ${task.title}, currently ${formatDuration(task.minutes)}`
+                        : `Set size for ${task.title}`
+                    }
+                    onClick={() => startSizeEdit(task)}
+                  >
+                    {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
+                  </button>
+                )}
                 <button
                   className="task-delete"
                   aria-label={atBound ? `Let go of ${task.title}` : `Delete ${task.title}`}
