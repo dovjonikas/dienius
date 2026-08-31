@@ -163,23 +163,39 @@ push rule and no-guilt score that are already this app's own.
 2. **Done.** `capacity.ts` - pure functions: free gaps from anchors, total float size, the resulting
    sentence. Unit tested with no React anywhere near it, same as `score.ts`.
 
-   The window free time is measured against is **the calendar day itself - 00:00 to 24:00, always,
-   for every day.** An earlier version of this measured the span between the earliest and latest
-   anchor instead, on the theory that a fixed non-configurable rule was enough to satisfy section 9.
-   It was not: a single midday shift with real hours free before and after it reported "no free
-   time," and a morning-only anchor silently ignored an entire afternoon and evening - the anchor
-   span quietly stopped looking past whatever the anchors themselves happened to cover, which is
-   exactly the kind of confident-looking wrong answer this feature exists to prevent. The calendar
-   day fixes this without becoming a setting: every day genuinely has 1440 minutes, so there is
-   nothing to invent and nothing that can be wrong for anyone's schedule, night shift included. It
-   still degrades correctly on its own - zero anchors mean nothing is claimed at all, reported as
-   `null` rather than a fabricated "24h free," and one anchor spanning the whole day correctly leaves
-   nothing free with no special case needed. An anchor whose own `minutes` is unknown is treated with
-   the same honesty as an unsized float: it is left out of the occupied total and, because its true
-   length is unknown, it also blocks any free-time figure from being asserted at all - the app says
-   "free time isn't known" rather than guessing around a gap that anchor might actually run through.
-   An anchor that runs past midnight is clamped to the end of the calendar day, since a single day's
-   capacity has no way to know what tomorrow's plan looks like.
+   The window free time is measured against is **a fixed waking window: 07:00-23:00 for an ordinary
+   day, 13:00-24:00 for a `night`-type one.** Two earlier versions of this were both wrong. The
+   anchor span (first anchor's start to last anchor's end) failed by ignoring everything outside the
+   anchors themselves - a midday shift with real hours free before and after it reported "no free
+   time," and a morning-only anchor silently ignored an entire afternoon and evening. The calendar day
+   (00:00-24:00) fixed that but broke the feature the other way: it counted sleep as free time, so a
+   09:00-21:00 shift reported twelve hours free when most of that was the middle of the night, and
+   the overage line would as a result almost never fire - technically true, practically useless.
+
+   A fixed waking window is neither. It is not configured per day - section 9 still rules that out -
+   it is simply narrower than the full calendar day, the same way section 5's own grid window (first
+   anchor minus an hour to last anchor plus an hour) is narrower without being a setting. `dayType`
+   already exists on every day (`dayScore` already reads it the same way), so reading it here to pick
+   between two fixed windows asks the owner nothing new - it uses information already given once,
+   when the template was built. A night day's window starts later and runs to midnight rather than
+   stopping short of it: its own morning is spent asleep, recovering from or resting before a shift,
+   the same way an ordinary day's late night already is, and there is no pre-sleep wind-down to
+   exclude at the end the way there is for a normal day - the shift itself is the end of the day's
+   usable time. This is a coarse reading of one label, not a measurement of any specific person's
+   actual shift time, and is flagged as such in `capacity.ts`'s own comments; if a real month of night
+   days shows the bounds are off, the fix is to adjust the two numbers, not to make the window
+   configurable.
+
+   Anchors are clipped to the window rather than counted outside it: a shift that starts before the
+   window opens or runs past where it closes only contributes the portion that falls inside, and an
+   anchor entirely outside the window (a stray task logged for 03:00) contributes nothing. Clipping
+   means an anchor can never push free time negative, and it degrades correctly with no special
+   casing - zero anchors mean nothing is claimed, reported as `null` rather than a fabricated "16h
+   free," and a single anchor that fills or overruns the whole window correctly leaves nothing free.
+   An anchor whose own `minutes` is unknown is treated with the same honesty as an unsized float: it
+   is left out of the occupied total and, because its true length is unknown, it also blocks any
+   free-time figure from being asserted at all - the app says "free time isn't known" rather than
+   guessing around a gap that anchor might actually run through.
 3. **Done.** The capacity line on the day view, one plain sentence at the top. Never red, never an
    icon, never a warning word; "about" appears exactly once, on the floats estimate, since that is
    the one number built from guesses rather than clock time. The line only ever states the
