@@ -203,7 +203,46 @@ push rule and no-guilt score that are already this app's own.
    own row carries a quiet "push to tomorrow" control instead, using the same `pushTask` mechanism
    `rolloverUnfinished` already uses and bound by the same `MAX_PUSHES`, so which float actually moves
    stays the owner's decision rather than the app's guess at it.
-4. The grid, read-only: anchors and labelled gaps, collapsed window.
+4. **Done.** The grid, read-only: anchors and labelled gaps, collapsed window.
+
+   `timelineLayout.ts` (`src/widgets/day-plan/`) is the pure module - anchor position and height,
+   gap detection, and the display window itself, all unit tested with no React nearby, the same
+   posture `capacity.ts` and `score.ts` already take. `TimelineGrid.tsx` only turns that layout into
+   pixels; it does not compute one.
+
+   **This window is not `computeCapacity`'s window, and the two are meant to disagree at the
+   edges.** `computeCapacity` measures against a fixed waking window (07:00-23:00, or 13:00-24:00 on
+   a night day) - a real clock boundary its own arithmetic answers to. The grid instead crops to
+   where anchors actually are: first anchor's start minus one hour to last anchor's end plus one
+   hour, exactly as this section already specified. A day whose first anchor is at 09:00 draws a
+   window opening at 08:00 even though the capacity line's own window opened at 07:00 and would
+   report that missing hour as real free time - the grid does not draw it, because doing so would
+   mean either a fourth gap object dangling off the top edge with nothing on its other side, or
+   quietly padding the window back out toward 00:00-23:59, the wall of empty rows this section rules
+   out. The one-hour buffer on each edge is air for the eye, never a `TimelineGap` - only the
+   stretches strictly between two anchors become gap objects, matching this section's own example
+   ("a 90-minute hole between the shift and the gym"). A day with no anchors draws no grid at all -
+   nothing anchors a window, so there is nothing to crop to and nothing to show.
+
+   An anchor with no `minutes` has no honest height, so none is invented. It draws at its real start
+   time with a fixed placeholder height (a UI floor, not a duration guess) and a plain "size unknown"
+   label instead of a time range. Exactly like `computeCapacity`, one unsized anchor suppresses every
+   gap for that day - its real length is unknown, so it might run through what would otherwise look
+   like free time, and reporting a gap around it would be a guess dressed up as arithmetic. A quiet
+   note under the grid says gaps aren't shown when this happens.
+
+   Overlapping anchors are placed in side-by-side columns rather than drawn on top of each other, the
+   standard interval-graph packing a calendar view needs. An anchor clipped by the window's own edge
+   (a night shift running past midnight) still states its real time range, wrapped onto the next
+   day's clock, with only the drawn block itself stopping short and a soft fade saying so.
+
+   Entirely `aria-hidden`. Every anchor the grid draws is also an ordinary row in the task list
+   below it, already reachable with its title, time, checkbox and controls intact - the grid adds a
+   second, purely visual reading of the same information rather than a second, worse copy of an
+   interactive one, following the same reasoning `YearStrip.tsx` already documents for dropping a
+   half-true role rather than asserting one. When gap interaction arrives in step 5, the gap elements
+   that become genuinely interactive should be pulled out from under this wrapper and given their own
+   accessible name at that point.
 5. Gap interaction: tap a gap, pick a float that fits.
 6. If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab deleted.
 7. Drag between tray and grid, pointer-events, tested on a real phone before it is trusted.
