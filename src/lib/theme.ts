@@ -92,6 +92,21 @@ export function resolveMode(state: ThemeState, systemPrefersDark: boolean, avail
   return availableModes[0]
 }
 
+/**
+ * Merges an override patch onto one already-chosen preset variant - the
+ * last two steps of the pipeline, factored out so the gallery can resolve
+ * the exact same "preset plus that preset's own patch" result a card
+ * previews without a second, hand-written copy of this merge living next to
+ * resolveTheme's own. See ThemeGallery.tsx: a card previews through this
+ * function with the current preset and mode already known, the same way
+ * resolveTheme below does after it finishes preset and mode selection.
+ */
+export function resolveVariant(variant: ThemeVariant, patch: ThemeOverrides): { tokens: ThemeTokens; ruleStyle: RuleStyle } {
+  const tokens = applyOverrides(variant.tokens, patch)
+  const ruleStyle = isRuleStyle(patch.ruleStyle) ? patch.ruleStyle : variant.ruleStyle
+  return { tokens, ruleStyle }
+}
+
 /** Runs the full pipeline: defaults live inside each preset variant already
  * (every token is always present, see themes.test.ts), so this only has
  * preset selection, mode resolution and the override patch left to do. */
@@ -100,8 +115,7 @@ export function resolveTheme(state: ThemeState, systemPrefersDark: boolean): Res
   const mode = resolveMode(state, systemPrefersDark, preset.modes)
   const variant = (mode === 'dark' ? preset.dark : preset.light) as ThemeVariant
   const patch = state.overrides[preset.id] ?? {}
-  const tokens = applyOverrides(variant.tokens, patch)
-  const ruleStyle = isRuleStyle(patch.ruleStyle) ? patch.ruleStyle : variant.ruleStyle
+  const { tokens, ruleStyle } = resolveVariant(variant, patch)
   return { mode, tokens, ruleStyle }
 }
 

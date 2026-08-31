@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { applyResolvedTheme, CSS_VAR_NAMES, resolveMode, resolveTheme, ruleAxisColors, TOKEN_KEYS } from './theme'
+import { applyResolvedTheme, CSS_VAR_NAMES, resolveMode, resolveTheme, resolveVariant, ruleAxisColors, TOKEN_KEYS } from './theme'
 import { findPreset } from './themes'
 import type { ThemeState } from './types'
 
@@ -106,6 +106,21 @@ test('applyResolvedTheme writes every token as a css custom property and sets da
   expect(root.style.getPropertyValue('--rule-h')).toBe(resolved.tokens.rule)
   expect(root.style.getPropertyValue('--rule-v')).toBe(resolved.tokens.rule)
   expect(root.dataset.theme).toBe('dark')
+})
+
+test('resolveVariant is the same merge resolveTheme uses, callable with just a variant and a patch', () => {
+  const variant = findPreset('sketchbook').dark!
+  const resolved = resolveVariant(variant, { accent: '#e0553b' })
+  expect(resolved.tokens.accent).toBe('#e0553b')
+  expect(resolved.tokens.text).toBe(variant.tokens.text)
+  expect(resolved.ruleStyle).toBe(variant.ruleStyle)
+})
+
+test('resolveVariant honors a ruleStyle override the same way resolveTheme does', () => {
+  const variant = findPreset('sketchbook').dark!
+  const resolved = resolveVariant(variant, { ruleStyle: 'none' })
+  expect(resolved.ruleStyle).toBe('none')
+  expect(resolved.tokens.rule).toBe(variant.tokens.rule)
 })
 
 test('applyResolvedTheme on Slate leaves ruling transparent on both axes', () => {
