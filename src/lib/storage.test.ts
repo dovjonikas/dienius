@@ -181,6 +181,84 @@ test('validate rejects a task whose pushCount is not a non-negative integer', ()
   expect(loadData()).toEqual(salvagedLightData())
 })
 
+test('validate accepts a task and a template block with no minutes, same as before the field existed', () => {
+  const noMinutes = JSON.stringify({
+    templates: [
+      { id: 't1', name: 'Old template', color: '#8ab6f9', blocks: [{ id: 'b1', title: 'Gym' }] },
+    ],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'From before sizes existed', done: false }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, noMinutes)
+  const loaded = loadData()
+  expect(loaded.days['2026-09-01'].tasks[0].minutes).toBeUndefined()
+  expect(loaded.templates[0].blocks[0].minutes).toBeUndefined()
+})
+
+test('validate accepts a task and a template block with a whole-minute size', () => {
+  const sized = JSON.stringify({
+    templates: [
+      { id: 't1', name: 'Sized', color: '#8ab6f9', blocks: [{ id: 'b1', title: 'Gym', minutes: 90 }] },
+    ],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Guitar', done: false, minutes: 20 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, sized)
+  const loaded = loadData()
+  expect(loaded.days['2026-09-01'].tasks[0].minutes).toBe(20)
+  expect(loaded.templates[0].blocks[0].minutes).toBe(90)
+})
+
+test('validate rejects a task whose minutes is negative or fractional', () => {
+  const negative = JSON.stringify({
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Bad', done: false, minutes: -5 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, negative)
+  expect(loadData()).toEqual(salvagedLightData())
+
+  const fractional = JSON.stringify({
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Bad', done: false, minutes: 12.5 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, fractional)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
+test('validate rejects a template block whose minutes is not a number', () => {
+  const badBlock = JSON.stringify({
+    templates: [
+      { id: 't1', name: 'Bad', color: '#8ab6f9', blocks: [{ id: 'b1', title: 'Gym', minutes: '90' }] },
+    ],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badBlock)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
 test('a template written before day types existed loads with type undefined', () => {
   const legacy = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym' }] }],

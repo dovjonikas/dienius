@@ -306,6 +306,288 @@ test('a task pushed once on a shift day still shows both its core and pushed mar
   expect(screen.getByText(/pushed once/i)).toBeInTheDocument()
 })
 
+test('an empty day shows no capacity line at all', () => {
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByText(/anchors take|floats need/i)).not.toBeInTheDocument()
+})
+
+test('a day with only floats shows their total with no anchors or gaps claim', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'a', title: 'Publish video', done: false, minutes: 200 },
+          { id: 'b', title: 'Guitar', done: false, minutes: 20 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('Floats need about 3h40.')).toBeInTheDocument()
+})
+
+test('a fully sized day renders the exact capacity sentence from the anchors and floats it contains', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'shift', title: 'Shift', done: false, time: '07:00', minutes: 240 },
+          { id: 'gym', title: 'Gym', done: false, time: '11:30', minutes: 60 },
+          { id: 'call', title: 'Call', done: false, time: '14:00', minutes: 30 },
+          { id: 'dinner', title: 'Dinner prep', done: false, time: '17:20', minutes: 40 },
+          { id: 'video', title: 'Publish video', done: false, minutes: 200 },
+          { id: 'guitar', title: 'Guitar', done: false, minutes: 20 },
+          { id: 'grandma', title: 'Call grandma', done: false, minutes: 130 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(
+    screen.getByText('Anchors take 6h10. Free: 9h50 across 4 gaps. Floats need about 5h50.'),
+  ).toBeInTheDocument()
+})
+
+test('a mid-day shift leaves real free time within the window, not a false "no free time" claim', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 720 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('Anchors take 12h. Free: 4h across 2 gaps.')).toBeInTheDocument()
+  expect(screen.queryByText(/no free time/i)).not.toBeInTheDocument()
+})
+
+test('when floats exceed free time, the line states it plainly with no embedded action', async () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
+          { id: 'small', title: 'Small errand', done: false, minutes: 20 },
+          { id: 'big', title: 'Big errand', done: false, minutes: 400 },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // The shift runs 00:00-18:00; only the 07:00-18:00 portion falls inside
+  // the 07:00-23:00 window, leaving 18:00-23:00 (5h) free. It started
+  // before the window opened, so the sentence says the figure is only
+  // today's portion rather than implying the shift itself was 11 hours.
+  expect(
+    screen.getByText("Anchors take 11h within today's window. Free: 5h across 1 gap. Floats need about 7h. You are 2h over."),
+  ).toBeInTheDocument()
+  // The capacity line itself carries no button - it only ever states the arithmetic.
+  expect(container.querySelector('.capacity-line button')).toBeNull()
+})
+
+test('the capacity line never uses an alarming word for the over case', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
+          { id: 'errand', title: 'Errand', done: false, minutes: 500 },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText(/you are/i)).toBeInTheDocument()
+  expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
+})
+
+test('a night-type day uses the night window instead of the default one', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'night',
+        tasks: [{ id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // Only the 22:00-24:00 portion of the shift falls inside the night
+  // window (13:00-24:00); the default 07:00-23:00 window would have
+  // clipped it to just one hour instead of two. The shift itself runs
+  // eight hours, so the sentence flags the figure as today's portion
+  // rather than implying the shift was two hours long.
+  expect(screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap.")).toBeInTheDocument()
+})
+
+test('a night shift crossing midnight reads as a partial figure, not as the shift\'s real length', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'night',
+        tasks: [
+          { id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 },
+          { id: 'wind-down', title: 'Wind-down task', done: false, minutes: 30 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(
+    screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap. Floats need about 30 min."),
+  ).toBeInTheDocument()
+})
+
+test('each float offers its own push-to-tomorrow control, so the owner picks which one moves', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'shift', title: 'Shift', done: false, time: '00:00', minutes: 1080 },
+          { id: 'small', title: 'Small errand', done: false, minutes: 20 },
+          { id: 'big', title: 'Big errand', done: false, minutes: 400 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  // Both floats offer the control - the app never pre-selects the larger one.
+  expect(screen.getByRole('button', { name: 'Push Small errand to tomorrow' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Push Big errand to tomorrow' })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Push Small errand to tomorrow' }))
+  expect(screen.queryByText('Small errand')).not.toBeInTheDocument()
+  expect(screen.getByText('Big errand')).toBeInTheDocument()
+  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Small errand'])
+})
+
+test('an anchor never offers a push-to-tomorrow control - only floats do', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push shift to tomorrow/i })).not.toBeInTheDocument()
+})
+
+test('a float already at the push bound offers no push control', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'maxed', title: 'Maxed errand', done: false, minutes: 300, pushCount: 2 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push maxed errand to tomorrow/i })).not.toBeInTheDocument()
+})
+
+test('a done float offers no push control - there is nothing left to move', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'done', title: 'Finished errand', done: true, minutes: 30 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /push finished errand to tomorrow/i })).not.toBeInTheDocument()
+})
+
+test('a task with no size shows a quiet control to set one, not a number', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByRole('button', { name: 'Set size for Guitar' })).toBeInTheDocument()
+})
+
+test('setting a task size through its own control updates the task, not the quick-add flow', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: 'Set size for Guitar' }))
+  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.type(sizeInput, '20{Enter}')
+
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
+  expect(screen.getByRole('button', { name: /change size for guitar, currently 20 min/i })).toBeInTheDocument()
+  // The quick-add input is untouched by any of this - it stays one field, one Enter.
+  expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('')
+})
+
+test('an existing task size can be changed and cleared back to unsized', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.clear(sizeInput)
+  await user.keyboard('{Enter}')
+
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Set size for Guitar' })).toBeInTheDocument()
+})
+
+test('typing garbage into the size field leaves an existing size untouched', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.clear(sizeInput)
+  await user.type(sizeInput, 'abc{Enter}')
+
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
+})
+
+test('pressing Escape while editing a size cancels without changing it', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.clear(sizeInput)
+  await user.type(sizeInput, '99')
+  await user.keyboard('{Escape}')
+
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
+})
+
 test('rollover button is not shown when every unfinished task is already at the push bound', () => {
   actions.addTask('2026-09-01', 'Maxed task')
   const id = getData().days['2026-09-01'].tasks[0].id

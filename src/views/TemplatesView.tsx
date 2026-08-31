@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import type { DayType, Template } from '../lib/types'
+import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these.
@@ -26,6 +27,14 @@ interface DraftBlock {
   time: string
   title: string
   core: boolean
+  /**
+   * Kept as free-typed text, like `time`, and parsed only at save time -
+   * see `parseMinutesInput` in `capacity.ts`. This is the one place a size
+   * is normally set at all: stamping copies it onto every task the block
+   * produces, so sizing happens once per template rather than once per
+   * day. See docs/TIMELINE.md section 4.
+   */
+  minutes: string
 }
 
 interface Draft {
@@ -53,6 +62,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
+  const [blockMinutes, setBlockMinutes] = useState('')
   const nameRef = useRef<HTMLInputElement>(null)
 
   // Moves focus into the name field the moment the form appears, for both a
@@ -67,11 +77,15 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
     if (!blockTitle.trim()) return
     setDraft(d => ({
       ...d,
-      blocks: [...d.blocks, { time: blockTime.trim(), title: blockTitle.trim(), core: blockCore }],
+      blocks: [
+        ...d.blocks,
+        { time: blockTime.trim(), title: blockTitle.trim(), core: blockCore, minutes: blockMinutes.trim() },
+      ],
     }))
     setBlockTime('')
     setBlockTitle('')
     setBlockCore(false)
+    setBlockMinutes('')
   }
 
   function removeBlock(index: number) {
@@ -129,6 +143,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
           <li key={i}>
             <span className="task-time">{b.time || '--:--'}</span>
             <span className="block-title">{b.title}</span>
+            {b.minutes && <span className="task-size">{formatDuration(Number(b.minutes))}</span>}
             {draft.type !== 'full' && (
               <button
                 type="button"
@@ -157,6 +172,15 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
           placeholder="What happens"
           value={blockTitle}
           onChange={e => setBlockTitle(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && addBlock()}
+        />
+        <input
+          className="minutes-input"
+          inputMode="numeric"
+          aria-label="Size in minutes"
+          placeholder="min"
+          value={blockMinutes}
+          onChange={e => setBlockMinutes(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addBlock()}
         />
         {draft.type !== 'full' && (
@@ -194,7 +218,13 @@ export function TemplatesView() {
       name: t.name,
       color: t.color,
       type: t.type ?? 'full',
-      blocks: t.blocks.map(b => ({ id: b.id, time: b.time ?? '', title: b.title, core: b.core ?? false })),
+      blocks: t.blocks.map(b => ({
+        id: b.id,
+        time: b.time ?? '',
+        title: b.title,
+        core: b.core ?? false,
+        minutes: b.minutes !== undefined ? String(b.minutes) : '',
+      })),
     })
   }
 
@@ -213,6 +243,7 @@ export function TemplatesView() {
       time: b.time || undefined,
       title: b.title,
       core: b.core || undefined,
+      minutes: parseMinutesInput(b.minutes),
     }))
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)

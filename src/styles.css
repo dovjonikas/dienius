@@ -676,6 +676,17 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   color: rgba(0, 0, 0, 0.65);
 }
 
+/* The capacity line - see docs/TIMELINE.md section 8. Plain body text at
+   the same weight as everything around it: being over is information, not
+   a warning, so nothing here ever borrows --danger. */
+.capacity-line { margin-bottom: 16px; }
+
+.capacity-line p {
+  margin: 0 0 8px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
 .quick-add {
   width: 100%;
   background: var(--surface);
@@ -772,6 +783,52 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   letter-spacing: 0.03em;
 }
 
+.task-size {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.task-size:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.task-size-input {
+  width: 64px;
+  min-height: 44px;
+  flex-shrink: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 8px;
+}
+
+/* A float's own "push to tomorrow" control - see docs/TIMELINE.md section 8.
+   Deliberately worded and sized the same as task-size and task-delete: this
+   is where the choice of what moves actually lives, not a highlighted or
+   emphasized action, since the capacity line above never pre-selects it. */
+.task-push {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 44px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.task-push:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .task-delete {
   border: none;
   background: none;
@@ -781,14 +838,26 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 8px;
 }
 
-/* Fade the delete button in on hover only where a real pointer exists.
-   On touch devices it stays visible, since there is no hover state. A
-   task at the push bound keeps it visible too - it is one of only two
-   real options at that point, not a stray action to discover on hover. */
+/* Fade a task's quieter controls in on hover only where a real pointer
+   exists. On touch devices they stay visible, since there is no hover
+   state. A task at the push bound keeps its delete button visible too -
+   it is one of only two real options at that point, not a stray action to
+   discover on hover. An already-sized chip is left out of this group on
+   purpose: once a task has a size, that is information worth always
+   showing, not an action to tuck away. */
 @media (hover: hover) and (pointer: fine) {
-  .task-delete { opacity: 0; transition: opacity 0.15s; }
+  .task-delete,
+  .task-size-empty,
+  .task-push {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
   .task:hover .task-delete,
+  .task:hover .task-size-empty,
+  .task:hover .task-push,
   .task-delete:focus-visible,
+  .task-size-empty:focus-visible,
+  .task-push:focus-visible,
   .task-maxed .task-delete {
     opacity: 1;
   }
@@ -913,6 +982,7 @@ button.primary {
 .block-add { display: flex; gap: 8px; flex-wrap: wrap; }
 .block-add input { flex: 1 1 120px; }
 .block-add .time-input { flex: 0 0 82px; }
+.block-add .minutes-input { flex: 0 0 64px; }
 .block-add button {
   background: var(--bg);
   border: 1px solid var(--border);

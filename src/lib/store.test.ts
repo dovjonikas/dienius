@@ -175,6 +175,70 @@ test('a task written to storage before pushCount existed loads and pushes correc
   expect(moved.pushCount).toBe(1)
 })
 
+test('pushTask moves exactly one task to the next day, leaving the rest of the day untouched', () => {
+  actions.addTask('2026-09-01', 'Trim me')
+  actions.addTask('2026-09-01', 'Leave me')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(true)
+  expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Leave me'])
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.title).toBe('Trim me')
+  expect(moved.pushCount).toBe(1)
+})
+
+test('pushTask refuses to push a task already at the push bound, and leaves it in place', () => {
+  actions.addTask('2026-09-01', 'Maxed')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t => (t.id === id ? { ...t, pushCount: 2 } : t)),
+      },
+    },
+  })
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(false)
+  expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Maxed'])
+  expect(getData().days['2026-09-02']).toBeUndefined()
+})
+
+test('pushTask on a missing task or day does not throw and reports no push happened', () => {
+  expect(actions.pushTask('2026-09-01', 'nothing-here')).toBe(false)
+  actions.addTask('2026-09-01', 'Real task')
+  expect(actions.pushTask('2026-09-01', 'still-not-here')).toBe(false)
+})
+
+test('pushTask refuses a task that is already done, and leaves it in place', () => {
+  actions.addTask('2026-09-01', 'Finished')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.toggleTask('2026-09-01', id)
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(false)
+  expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Finished'])
+  expect(getData().days['2026-09-02']).toBeUndefined()
+})
+
+test('setTaskMinutes sets a size on a task that had none', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
+})
+
+test('setTaskMinutes changes an existing size, and clears it back to unsized with undefined', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  actions.setTaskMinutes('2026-09-01', id, 30)
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(30)
+  actions.setTaskMinutes('2026-09-01', id, undefined)
+  expect(getData().days['2026-09-01'].tasks[0].minutes).toBeUndefined()
+})
+
 test('addTemplate assigns ids and stamp applies it', () => {
   const t = actions.addTemplate({
     name: 'Work day',
