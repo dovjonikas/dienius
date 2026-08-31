@@ -1,24 +1,46 @@
+/**
+ * Theme tokens, in the three layers docs/THEMES.md section 2 defines. These
+ * are DEFAULTS - the values a fresh, unthemed page would use before any
+ * resolved preset is applied. In practice src/lib/theme.ts's pre-paint
+ * script and App.tsx's effect both write a full resolved token block onto
+ * :root as inline styles before or immediately after first paint, on every
+ * load, so these values are what a person only ever sees for an instant if
+ * that resolution somehow fails entirely - which is exactly why they are
+ * pinned to Slate light, the same values the app has always opened with.
+ *
+ * Do not add a [data-theme='dark'] override block here the way the old
+ * two-theme stylesheet did - presets are data now (src/lib/themes.ts), not
+ * CSS, and dataset.theme only records which mode resolved, for anything
+ * that still needs a light/dark switch at the CSS level rather than a
+ * token value (see the prefers-reduced-transparency rule below).
+ */
 :root {
+  /* Surface */
   --bg: #fafaf8;
   --surface: #ffffff;
+  --rule: #00000000;
+  --rule-h: transparent;
+  --rule-v: transparent;
+  --rule-size: 28px;
+  --grain: 0;
+  --vignette: 0%;
+  --border: #e8e6e1;
+  /* Palette */
   --text: #2b2b2b;
   --muted: #8a8a85;
-  --border: #e8e6e1;
   --accent: #5b7cfa;
+  --accent-dim: #c3cdfa;
+  --mark: #ffd54a;
   --danger: #d96c6c;
+  --good: #6fae6f;
+  /* Type and shape */
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace;
+  --font-hand: 'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'Chalkboard SE', cursive;
   --radius: 10px;
+  --edge: 10px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-[data-theme='dark'] {
-  --bg: #191a1d;
-  --surface: #222327;
-  --text: #e8e8e5;
-  --muted: #85858a;
-  --border: #33343a;
-  --accent: #7c94ff;
-  --danger: #e08a8a;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -44,13 +66,81 @@ html {
 }
 
 body {
+  position: relative;
+  z-index: 0;
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
+}
+
+/*
+ * The surface, per docs/THEMES.md section 5: ruling as repeating gradients,
+ * a soft accent-tinted vignette at the top, on a fixed full-screen layer
+ * behind the content rather than a scrolling background. iOS Safari repaints
+ * `background-attachment: fixed` on every scroll frame; a `position: fixed`
+ * pseudo-element does not need that property at all; because the element
+ * itself never moves, there is nothing for the compositor to repaint as the
+ * page scrolls past it. `pointer-events: none` keeps it out of the way of
+ * every tap, and the negative z-index on a positioned body keeps it behind
+ * this page's own content without needing a wrapper element around <main>.
+ *
+ * --rule-h and --rule-v are derived, not preset tokens themselves - see
+ * ruleAxisColors in src/lib/theme.ts. A preset with no ruling sets both to
+ * transparent, so this one formula draws none, one, or both axes with no
+ * conditional CSS of its own.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 460px at 50% -10%, color-mix(in srgb, var(--accent) var(--vignette), transparent), transparent 70%),
+    repeating-linear-gradient(0deg, var(--rule-h) 0 1px, transparent 1px var(--rule-size)),
+    repeating-linear-gradient(90deg, var(--rule-v) 0 1px, transparent 1px var(--rule-size)),
+    var(--bg);
+}
+
+/*
+ * Grain: one tiling SVG noise data URI, no images, blended over the surface
+ * at whatever strength --grain names. A separate pseudo-element from the
+ * one above because opacity applies to a whole element - grain needs its
+ * own so its strength never dims the ruling or the vignette next to it.
+ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+}
+
+/* A person who has asked for less transparency gets no grain layer at all,
+   rather than a faded one - see docs/THEMES.md section 7. */
+@media (prefers-reduced-transparency: reduce) {
+  body::after { display: none; }
+}
+
+/* The "turning a page" transition from docs/THEMES.md section 8: changing
+   mode or preset crossfades the colors that actually carry the theme
+   rather than snapping. Scoped to color-ish properties only, never layout
+   ones, so this never fights a resize or a scroll. Skipped entirely for
+   anyone who has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  body, body::before, body::after,
+  .app, .app * {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+  }
 }
 
 input,
@@ -78,6 +168,7 @@ textarea {
 }
 
 .brand {
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -119,7 +210,7 @@ button:disabled {
   opacity: 0.5;
 }
 
-h2 { font-size: 20px; margin: 8px 0 16px; }
+h2 { font-family: var(--font-display); font-size: 20px; margin: 8px 0 16px; }
 h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .settings-group { margin-bottom: 28px; }
@@ -224,7 +315,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   color: var(--text);
   padding: 13px 16px;
   margin-bottom: 16px;
@@ -242,7 +333,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   margin-bottom: 8px;
   padding: 0 8px 0 14px;
   box-shadow: var(--shadow);
@@ -383,7 +474,7 @@ button.primary {
 .template-editor {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   padding: 16px;
   margin-bottom: 20px;
   display: flex;
@@ -493,7 +584,7 @@ button.core-toggle.active {
   gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   padding: 12px 16px;
   margin-bottom: 8px;
 }
@@ -695,7 +786,7 @@ button.danger {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 4px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   padding: 14px 16px;
   margin-bottom: 8px;
   box-shadow: var(--shadow);
@@ -757,7 +848,7 @@ button.danger {
   gap: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--edge);
   padding: 16px;
   margin-bottom: 12px;
 }
