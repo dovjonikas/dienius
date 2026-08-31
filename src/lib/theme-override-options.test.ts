@@ -11,6 +11,7 @@ import {
   RULE_STYLE_OPTIONS,
   withOpacityPercent,
 } from './theme-override-options'
+import { findPreset } from './themes'
 
 test('every edge and font body option has a unique id and a non-empty value', () => {
   for (const options of [EDGE_OPTIONS, FONT_BODY_OPTIONS]) {
@@ -39,6 +40,15 @@ test('optionIdForValue finds the option matching a resolved token value', () => 
 
 test('optionIdForValue returns undefined for a value matching no option', () => {
   expect(optionIdForValue(EDGE_OPTIONS, '999px')).toBeUndefined()
+})
+
+test('every shipped preset\'s stock edge matches one of the Corners options - the control never has to show nothing selected for a real preset', () => {
+  for (const preset of [findPreset('slate'), findPreset('sketchbook')]) {
+    for (const mode of preset.modes) {
+      const variant = mode === 'light' ? preset.light! : preset.dark!
+      expect(optionIdForValue(EDGE_OPTIONS, variant.tokens.edge), `${preset.id} ${mode}`).toBeDefined()
+    }
+  }
 })
 
 test('clampRuleSize keeps spacing between the notebook-noise and paper-losing bounds', () => {

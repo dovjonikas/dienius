@@ -86,11 +86,15 @@ export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-
 // this is the literal value of --edge, every element already styled with
 // border-radius: var(--edge) picks it up with no component changes.
 // Exported alongside two siblings for the override panel's Corners control
-// (section 3: soft / sharp / hand-drawn) - soft is a gentle rounded rect
-// distinct from the small controls' own --radius, sharp is a crisp corner
-// no shipped preset uses yet but Graph, Terminal and Blueprint will.
+// (section 3: soft / sharp / hand-drawn) - sharp is a crisp corner no
+// shipped preset uses yet but Graph, Terminal and Blueprint will. Soft is
+// deliberately the same '10px' Slate already ships as its own --edge (equal
+// to --radius, a plain symmetric rounded rect) rather than a fourth,
+// invented value - a preset's own stock corner and the panel's "Soft"
+// option must mean the literal same thing, or the control shows nothing
+// selected on a preset that is, in fact, already soft.
 export const HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
-export const SOFT_EDGE = '16px'
+export const SOFT_EDGE = '10px'
 export const SHARP_EDGE = '4px'
 
 /**
