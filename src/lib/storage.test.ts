@@ -44,6 +44,45 @@ test('saveData returns false when localStorage.setItem throws', () => {
   spy.mockRestore()
 })
 
+test('loadData salvages a valid theme from a payload that otherwise fails validation', () => {
+  // Reproduces the disagreement between this and the pre-paint script in
+  // index.html: a valid dark theme sitting next to a malformed template.
+  // The script commits to dark before React mounts because it never looks
+  // past settings.theme; without this salvage, loadData() would discard
+  // the whole payload and hand React back the light default, reverting the
+  // page right after it mounted.
+  const partiallyCorrupt = JSON.stringify({
+    templates: [{}],
+    days: {},
+    settings: { theme: 'dark', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, partiallyCorrupt)
+  const loaded = loadData()
+  // The rest of the payload is still safely discarded.
+  expect(loaded.templates).toEqual([])
+  expect(loaded.days).toEqual({})
+  // But the theme the pre-paint script already committed to survives.
+  expect(loaded.settings.theme).toBe('dark')
+})
+
+test('loadData does not salvage an invalid theme value out of a corrupt payload', () => {
+  const corrupt = JSON.stringify({
+    templates: [{}],
+    days: {},
+    settings: { theme: 'sepia', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, corrupt)
+  expect(loadData().settings.theme).toBe('light')
+})
+
+test('loadData falls back to the light default when there is nothing salvageable at all', () => {
+  localStorage.setItem(STORAGE_KEY, '{not json')
+  expect(loadData().settings.theme).toBe('light')
+
+  localStorage.setItem(STORAGE_KEY, '[1,2,3]')
+  expect(loadData().settings.theme).toBe('light')
+})
+
 test('loadData falls back to defaults on schema mismatch', () => {
   localStorage.setItem(STORAGE_KEY, '{"hello": 1, "world": 2}')
   expect(loadData().templates).toEqual([])

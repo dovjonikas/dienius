@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Dienius" />
     <title>Dienius</title>
-    <script>
+    <script id="pre-paint-theme">
       // Sets the theme before React mounts, so a dark-mode user does not see
       // a frame of the light theme on load. App.tsx applies the same theme
       // to document.documentElement.dataset.theme in a useEffect once it
@@ -29,6 +29,14 @@
       // should ever be able to block the page from rendering - light is
       // the same default defaultData() in storage.ts already uses, so
       // falling through to it here is not a guess.
+      //
+      // loadData() in storage.ts can still disagree with this if it rejects
+      // the payload for a reason that has nothing to do with theme - a
+      // malformed template, say - unless it salvages settings.theme from an
+      // otherwise-invalid payload the same way this script reads it in
+      // isolation. That salvage is what keeps this script's guess honest;
+      // see loadData's own comment. src/preTheme.test.ts runs this exact
+      // script text against loadData() to keep the two from drifting apart.
       try {
         var raw = localStorage.getItem('dienius:data')
         if (raw && JSON.parse(raw).settings.theme === 'dark') {
