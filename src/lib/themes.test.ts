@@ -4,7 +4,7 @@ import { DEFAULT_PRESET_ID, findPreset, PRESETS } from './themes'
 const TOKEN_KEYS = [
   'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border',
   'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
-  'fontDisplay', 'fontBody', 'fontMono', 'fontHand', 'radius', 'edge', 'shadow',
+  'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ] as const
 
 test('there are at least the three presets this phase promises', () => {

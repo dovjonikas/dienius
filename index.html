@@ -46,23 +46,36 @@
         var DEFAULT_PRESET_ID = 'slate'
 
         // Mirrors the system font stacks in src/lib/themes.ts. No webfont
-        // is bundled in this phase - see that file's own comment.
+        // is bundled in this phase - see that file's own comment. No
+        // script, handwritten, or novelty face anywhere - see the same file
+        // for why: it costs legibility for someone who reads every screen
+        // with an ADHD brain, and a theme's personality belongs to the
+        // surface and palette, not the type.
         var SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
         var SYSTEM_MONO = "'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace"
-        var SYSTEM_HAND = "'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'Chalkboard SE', cursive"
+        var SYSTEM_SERIF_DISPLAY = "Iowan Old Style, 'Palatino Linotype', Palatino, Georgia, 'Book Antiqua', serif"
         var HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
 
-        // Mirrors PRESETS in src/lib/themes.ts, token for token. Every
-        // ThemeVariant there (tokens + ruleStyle) is copied here verbatim.
-        var PRESETS = {
-          slate: {
+        // Mirrors PRESETS in src/lib/themes.ts, token for token, as the same
+        // array-of-ids shape rather than an object keyed by id. That match
+        // matters, not just for consistency: an object keyed by an
+        // attacker-controlled presetId (say 'constructor') returns a real,
+        // truthy inherited value from Object.prototype instead of undefined,
+        // which is exactly the flash-then-revert bug this whole script
+        // exists to prevent. An array searched by id, the same way
+        // PRESETS.find(p => p.id === id) works in themes.ts, cannot be
+        // fooled that way - there is no property lookup for a poisoned key
+        // to hit.
+        var PRESETS = [
+          {
+            id: 'slate',
             modes: ['light', 'dark'],
             light: { ruleStyle: 'none', tokens: {
               bg: '#fafaf8', surface: '#ffffff', rule: '#00000000', ruleSize: '28px',
               grain: '0', vignette: '0%', border: '#e8e6e1',
               text: '#2b2b2b', muted: '#8a8a85', accent: '#5b7cfa', accentDim: '#c3cdfa',
               mark: '#ffd54a', danger: '#d96c6c', good: '#6fae6f',
-              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
               radius: '10px', edge: '10px', shadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
             } },
             dark: { ruleStyle: 'none', tokens: {
@@ -70,18 +83,19 @@
               grain: '0', vignette: '0%', border: '#33343a',
               text: '#e8e8e5', muted: '#85858a', accent: '#7c94ff', accentDim: '#3c4470',
               mark: '#e6c14a', danger: '#e08a8a', good: '#7fc47f',
-              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
               radius: '10px', edge: '10px', shadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
             } },
           },
-          sketchbook: {
+          {
+            id: 'sketchbook',
             modes: ['light', 'dark'],
             dark: { ruleStyle: 'squares', tokens: {
               bg: '#14171c', surface: '#1c202a', rule: 'rgba(130, 170, 255, 0.09)', ruleSize: '28px',
               grain: '0.025', vignette: '9%', border: '#2a2f3b',
               text: '#e8ecf5', muted: '#8b96b3', accent: '#6fa8ff', accentDim: '#2f4a80',
               mark: '#ffd23f', danger: '#e2776f', good: '#7fc98a',
-              fontDisplay: SYSTEM_HAND, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              fontDisplay: SYSTEM_SERIF_DISPLAY, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
               radius: '10px', edge: HAND_DRAWN_EDGE, shadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
             } },
             light: { ruleStyle: 'squares', tokens: {
@@ -89,10 +103,33 @@
               grain: '0.02', vignette: '6%', border: '#e6dcc5',
               text: '#2c2a24', muted: '#8a8270', accent: '#3f6fd6', accentDim: '#b9cdf2',
               mark: '#f5c331', danger: '#c85a52', good: '#4f8f57',
-              fontDisplay: SYSTEM_HAND, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              fontDisplay: SYSTEM_SERIF_DISPLAY, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
               radius: '10px', edge: HAND_DRAWN_EDGE, shadow: '0 2px 6px rgba(60, 40, 10, 0.18)',
             } },
           },
+        ]
+
+        // Mirrors findPreset in src/lib/themes.ts exactly: a linear search
+        // by id, falling back to the first (Slate) entry for an id that
+        // does not match any real preset - immune by construction to the
+        // Object.prototype collision a keyed-object lookup is vulnerable to.
+        function findPresetById(id) {
+          for (var i = 0; i < PRESETS.length; i++) {
+            if (PRESETS[i].id === id) return PRESETS[i]
+          }
+          return PRESETS[0]
+        }
+
+        // True only if key is an own property of obj - never a name obj
+        // merely inherits from Object.prototype ('constructor', 'toString',
+        // 'valueOf', 'hasOwnProperty' and the like). Plain bracket access
+        // like obj[key] does not make that distinction and will happily
+        // return Object.prototype's own real value for those names, which
+        // is exactly how the PRESETS lookup above used to break - guarding
+        // every other attacker-string-keyed lookup in this script with this
+        // closes the same class of bug everywhere it could still hide.
+        function hasOwn(obj, key) {
+          return Object.prototype.hasOwnProperty.call(obj, key)
         }
 
         // Mirrors CSS_VAR_NAMES in src/lib/theme.ts.
@@ -101,7 +138,7 @@
           grain: '--grain', vignette: '--vignette', border: '--border',
           text: '--text', muted: '--muted', accent: '--accent', accentDim: '--accent-dim',
           mark: '--mark', danger: '--danger', good: '--good',
-          fontDisplay: '--font-display', fontBody: '--font-body', fontMono: '--font-mono', fontHand: '--font-hand',
+          fontDisplay: '--font-display', fontBody: '--font-body', fontMono: '--font-mono',
           radius: '--radius', edge: '--edge', shadow: '--shadow',
         }
 
@@ -183,16 +220,20 @@
         }
 
         var themeState = readThemeState()
-        // Mirrors findPreset in src/lib/themes.ts: an unknown presetId
-        // resolves to the default preset, and the override patch below is
-        // then looked up by that same resolved id - the id actually
-        // rendered - not the unknown one that was asked for.
-        var presetId = PRESETS[themeState.presetId] ? themeState.presetId : DEFAULT_PRESET_ID
-        var preset = PRESETS[presetId]
+        // findPresetById resolves an unknown presetId to Slate by linear
+        // search, same as findPreset in src/lib/themes.ts - see that
+        // function's own comment above for why this is not a plain
+        // object-keyed lookup. The override patch below is then looked up
+        // by that same resolved id - the id actually rendered - not
+        // whatever unknown id was originally asked for, and guarded with
+        // hasOwn since overrides, unlike PRESETS, is a real dictionary
+        // keyed by arbitrary preset ids and cannot be swapped for an array.
+        var preset = findPresetById(themeState.presetId)
+        var presetId = preset.id
         var requestedMode = themeState.mode === 'system' ? (systemPrefersDark() ? 'dark' : 'light') : themeState.mode
         var mode = resolveMode(requestedMode, preset.modes)
         var variant = mode === 'dark' ? preset.dark : preset.light
-        var patch = themeState.overrides[presetId] || {}
+        var patch = hasOwn(themeState.overrides, presetId) ? themeState.overrides[presetId] : {}
 
         var root = document.documentElement
         for (var key in CSS_VAR_NAMES) {

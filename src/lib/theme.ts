@@ -28,7 +28,7 @@ export interface ResolvedTheme {
 export const TOKEN_KEYS: (keyof ThemeTokens)[] = [
   'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border',
   'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
-  'fontDisplay', 'fontBody', 'fontMono', 'fontHand', 'radius', 'edge', 'shadow',
+  'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ]
 
 /** The CSS custom property each token becomes. The one place this mapping
@@ -52,7 +52,6 @@ export const CSS_VAR_NAMES: Record<keyof ThemeTokens, string> = {
   fontDisplay: '--font-display',
   fontBody: '--font-body',
   fontMono: '--font-mono',
-  fontHand: '--font-hand',
   radius: '--radius',
   edge: '--edge',
   shadow: '--shadow',

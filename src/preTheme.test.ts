@@ -165,6 +165,45 @@ test('an unknown presetId falls back to Slate and agrees, ignoring overrides key
   expectAgreement()
 })
 
+// A presetId that happens to name a property every plain object inherits
+// from Object.prototype - 'constructor', 'toString', 'valueOf',
+// 'hasOwnProperty' - is not merely "unknown" the way 'not-a-real-preset'
+// above is. A naive PRESETS[presetId] lookup on an object keyed by id
+// returns Object.prototype's own real, truthy value for these names
+// instead of undefined, so a preset-lookup guard written as
+// `PRESETS[id] ? id : DEFAULT_PRESET_ID` is fooled into treating the
+// inherited value as a real preset - then breaks resolving `.modes` off
+// it, since Function.prototype has no such property. The outer try/catch
+// stops that from crashing the page, but resolution then applies nothing
+// at all, leaving :root at the static CSS defaults instead of a fully
+// resolved theme - a real regression of the flash this file exists to
+// catch, reproduced once already before PRESETS became an array searched
+// by id rather than an object indexed by it. Each of these must resolve
+// exactly like any other unknown id: fall back to Slate, and still agree.
+for (const collidingId of ['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__']) {
+  test(`a presetId of '${collidingId}' cannot be mistaken for a real preset via inherited Object.prototype properties`, () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      templates: [],
+      days: {},
+      settings: {
+        theme: {
+          presetId: collidingId,
+          overrides: { [collidingId]: { accent: '#ff00ff' } },
+          mode: 'dark',
+        },
+        enabledWidgets: [],
+      },
+      ifThens: [],
+    }))
+    runPrePaintScript()
+    // Falls back to Slate dark, not an empty or crashed token block.
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#191a1d')
+    expect(document.documentElement.style.getPropertyValue('--accent')).not.toBe('#ff00ff')
+    expectAgreement()
+  })
+}
+
 test('agree when the payload has a valid legacy dark theme string but a malformed template elsewhere', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [{}],

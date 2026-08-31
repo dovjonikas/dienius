@@ -36,7 +36,6 @@ export interface ThemeTokens {
   fontDisplay: string
   fontBody: string
   fontMono: string
-  fontHand: string
   radius: string
   edge: string
   shadow: string
@@ -60,15 +59,19 @@ export interface ThemePreset {
   dark?: ThemeVariant
 }
 
-// System stacks only - no webfont is bundled in this phase. A real
-// self-hosted handwritten face would read better than the system script
-// fonts below, but shipping one means bundling a font file and this build
-// has no source for one to vet and self-host; see the phase report. Every
-// stack ends in a generic family so a platform with none of the named
-// fonts still gets a same-genre fallback rather than the browser default.
+// System stacks only - no webfont is bundled in this phase. Every stack
+// ends in a generic family so a platform with none of the named fonts
+// still gets a same-genre fallback rather than the browser default.
+//
+// No script, handwritten, or novelty face anywhere, on any preset - text
+// must always read as a professional, highly legible planner. A header may
+// use a distinctive face only when it is a well-crafted, readable one; a
+// good serif is fair game, a script is not. See docs/THEMES.md section 6
+// item 1 for why this replaced the handwritten header face this phase
+// shipped with originally.
 const SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
 const SYSTEM_MONO = "'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace"
-const SYSTEM_HAND = "'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'Chalkboard SE', cursive"
+const SYSTEM_SERIF_DISPLAY = "Iowan Old Style, 'Palatino Linotype', Palatino, Georgia, 'Book Antiqua', serif"
 
 // The hand-drawn edge from docs/THEMES.md section 5, used as-is. Because
 // this is the literal value of --edge, every element already styled with
@@ -106,7 +109,6 @@ const SLATE: ThemePreset = {
       fontDisplay: SYSTEM_SANS,
       fontBody: SYSTEM_SANS,
       fontMono: SYSTEM_MONO,
-      fontHand: SYSTEM_HAND,
       radius: '10px',
       edge: '10px',
       shadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
@@ -132,7 +134,6 @@ const SLATE: ThemePreset = {
       fontDisplay: SYSTEM_SANS,
       fontBody: SYSTEM_SANS,
       fontMono: SYSTEM_MONO,
-      fontHand: SYSTEM_HAND,
       radius: '10px',
       edge: '10px',
       shadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
@@ -143,8 +144,10 @@ const SLATE: ThemePreset = {
 /**
  * Sketchbook - the reference theme. Both variants are a real surface, not a
  * fill: faint ruled squares, a trace of grain, an accent-tinted vignette at
- * the top, hand-drawn card edges, a handwritten face on headers only (body
- * text stays on the system stack, so long lists stay easy to read).
+ * the top, hand-drawn card edges. Its personality comes entirely from the
+ * surface and palette, not from decorative type - headers use a distinct
+ * but professional serif (SYSTEM_SERIF_DISPLAY), body text stays on the
+ * same system sans every preset uses, so long lists stay easy to scan.
  */
 const SKETCHBOOK: ThemePreset = {
   id: 'sketchbook',
@@ -167,10 +170,9 @@ const SKETCHBOOK: ThemePreset = {
       mark: '#ffd23f',
       danger: '#e2776f',
       good: '#7fc98a',
-      fontDisplay: SYSTEM_HAND,
+      fontDisplay: SYSTEM_SERIF_DISPLAY,
       fontBody: SYSTEM_SANS,
       fontMono: SYSTEM_MONO,
-      fontHand: SYSTEM_HAND,
       radius: '10px',
       edge: HAND_DRAWN_EDGE,
       shadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
@@ -193,10 +195,9 @@ const SKETCHBOOK: ThemePreset = {
       mark: '#f5c331',
       danger: '#c85a52',
       good: '#4f8f57',
-      fontDisplay: SYSTEM_HAND,
+      fontDisplay: SYSTEM_SERIF_DISPLAY,
       fontBody: SYSTEM_SANS,
       fontMono: SYSTEM_MONO,
-      fontHand: SYSTEM_HAND,
       radius: '10px',
       edge: HAND_DRAWN_EDGE,
       shadow: '0 2px 6px rgba(60, 40, 10, 0.18)',

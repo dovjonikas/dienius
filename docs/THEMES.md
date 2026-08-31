@@ -29,8 +29,17 @@ Tokens: `--text`, `--muted`, `--accent`, `--accent-dim`, `--mark` (the highlight
 `--good`, plus the template-colour swatch set.
 
 **Layer 3 - TYPE + SHAPE.** How it is drawn.
-Tokens: `--font-display`, `--font-body`, `--font-mono`, `--font-hand`, `--radius`, `--edge`
+Tokens: `--font-display`, `--font-body`, `--font-mono`, `--radius`, `--edge`
 (rounded rect vs hand-drawn irregular radius), `--shadow`.
+
+No script, handwritten, or novelty face on any token, ever - this reverses the `--font-hand` token
+this section originally specified. The owner reads every screen with an ADHD brain, and both he and
+an independent review flagged the same problem from opposite sides: it did not look like a
+professional planner, and the actual font stack backing it resolved to Comic Sans on most
+non-Apple devices. A theme's personality belongs to the surface and the palette, which is the part
+that was already carrying it - not to decorative type. A header may use a distinctive face only
+when it is a well-crafted, professional, highly readable one; a good serif or a good mono is fair
+game, a script is not.
 
 A **preset** is a named object that fills all three layers at once. A **user override** is a sparse
 patch on top: `{ accent: '#e0553b' }` and nothing else. Resolution order at paint time:
@@ -74,7 +83,8 @@ pre-filled:
 - Text
 - Ruling: none / lines / squares, plus its spacing and opacity
 - Corners: soft / sharp / hand-drawn
-- Type: system / rounded / mono / handwritten
+- Type: system / rounded / mono / serif (all professional, highly readable faces - no script or
+  novelty option; see section 2's note on why `--font-hand` was removed)
 
 Every control writes ONE token into `overrides`. A "Reset to preset" button clears the patch. A
 changed token shows a small dot next to its label so it is obvious what you moved.
@@ -132,7 +142,9 @@ Put the surface on a fixed full-screen pseudo-element behind the content instead
 Ship many and let him delete. Each one needs a real identity, not a hue rotation.
 
 1. **Sketchbook (dark)** - the journal's own. Near-black blue-grey paper, faint blue squares,
-   blue-pen accent, yellow highlighter, hand-drawn edges, one handwritten font for headers.
+   blue-pen accent, yellow highlighter, hand-drawn edges, a professional serif on headers only
+   (not a handwritten face - see section 2's note; the room's character comes from the paper and
+   the ink, the type just needs to stay out of the way and stay legible).
 2. **Sketchbook (light)** - cream paper, grey-blue squares, same blue pen, same marker.
 3. **Graph** - cool white, fine cyan squares, sharp corners, mono type throughout. Engineer's pad.
 4. **Legal pad** - warm yellow paper, horizontal blue lines, red left margin rule, dark ink.
