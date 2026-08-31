@@ -25,12 +25,26 @@ test('creates a template with a block', async () => {
   expect(saved[0].blocks[0]).toMatchObject({ time: '09:00', title: 'Gym' })
 })
 
-test('deletes a template', async () => {
+test('deleting a template requires a confirming second tap', async () => {
   const user = userEvent.setup()
   actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'Delete Old' }))
+  expect(getData().templates).toHaveLength(1)
+  await user.click(screen.getByRole('button', { name: 'Confirm delete Old' }))
   expect(getData().templates).toHaveLength(0)
+})
+
+test('the delete confirmation resets when focus moves elsewhere', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Delete Old' }))
+  expect(screen.getByRole('button', { name: 'Confirm delete Old' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Edit Old' }))
+  expect(getData().templates).toHaveLength(1)
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.getByRole('button', { name: 'Delete Old' })).toBeInTheDocument()
 })
 
 test('editing an existing template and saving updates it in place', async () => {

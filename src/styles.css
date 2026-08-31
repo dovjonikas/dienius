@@ -394,6 +394,11 @@ button.primary {
 
 .template-card button:hover { color: var(--text); }
 
+.template-card button.danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .calendar-nav {
   display: flex;
   align-items: center;

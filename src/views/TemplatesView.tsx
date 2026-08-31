@@ -26,8 +26,10 @@ export function TemplatesView() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   function startEdit(t: Template) {
+    setConfirmDeleteId(null)
     setDraft({
       id: t.id,
       name: t.name,
@@ -36,6 +38,15 @@ export function TemplatesView() {
     })
     setBlockTime('')
     setBlockTitle('')
+  }
+
+  function handleDeleteClick(t: Template) {
+    if (confirmDeleteId === t.id) {
+      actions.deleteTemplate(t.id)
+      setConfirmDeleteId(null)
+    } else {
+      setConfirmDeleteId(t.id)
+    }
   }
 
   function addBlock() {
@@ -91,6 +102,7 @@ export function TemplatesView() {
           <button
             className="primary"
             onClick={() => {
+              setConfirmDeleteId(null)
               setDraft(emptyDraft())
               setBlockTime('')
               setBlockTitle('')
@@ -170,8 +182,13 @@ export function TemplatesView() {
               </span>
             </div>
             <button aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>Edit</button>
-            <button aria-label={`Delete ${t.name}`} onClick={() => actions.deleteTemplate(t.id)}>
-              Delete
+            <button
+              aria-label={confirmDeleteId === t.id ? `Confirm delete ${t.name}` : `Delete ${t.name}`}
+              className={confirmDeleteId === t.id ? 'danger' : ''}
+              onClick={() => handleDeleteClick(t)}
+              onBlur={() => setConfirmDeleteId(prev => (prev === t.id ? null : prev))}
+            >
+              {confirmDeleteId === t.id ? 'Confirm?' : 'Delete'}
             </button>
           </li>
         ))}
