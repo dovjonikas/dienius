@@ -243,6 +243,189 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   color: #fff;
 }
 
+/*
+ * The theme gallery, docs/THEMES.md section 3 and 7: a 2-column grid at
+ * 375px, each card at least 150px tall so the surface is actually
+ * visible - one column is too slow to browse, three is too small to read.
+ * Grows to more columns only once there is real room for it; phone width
+ * stays two.
+ */
+.theme-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* auto-fit rather than a fixed column count past mobile width - a fixed
+   3rd column would sit empty with only two presets shipped today, and
+   auto-fit collapses any track with nothing in it instead of leaving a
+   visible gap, so this grows cleanly as the other nine presets from
+   docs/THEMES.md section 6 land without ever looking half-empty today. */
+@media (min-width: 640px) {
+  .theme-gallery { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+
+/*
+ * Card chrome - border, selection ring, name label - is styled with the
+ * app's own live tokens (--surface, --border, --accent, --text), not the
+ * --pv-* preview ones set inline per card. That is deliberate: the
+ * gallery's frame always matches whatever theme is actually active right
+ * now, while the room inside each card shows the candidate theme's own
+ * colours regardless of which one that is.
+ */
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  text-align: left;
+}
+
+.theme-card[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.theme-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * The room: a real scrap of the previewed surface, painted with the same
+ * formula body::before/body::after use on the actual page - ruling as
+ * repeating gradients, a top vignette, a trace of grain - just scoped to
+ * the --pv-* tokens this one card was given instead of the live :root
+ * ones. See buildPreviewStyle in src/lib/theme-preview.ts.
+ */
+.theme-card-room {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  background: var(--pv-bg);
+}
+
+.theme-card-room::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(160px 70px at 50% -10%, color-mix(in srgb, var(--pv-accent) var(--pv-vignette), transparent), transparent 70%),
+    repeating-linear-gradient(0deg, var(--pv-rule-h) 0 1px, transparent 1px var(--pv-rule-size)),
+    repeating-linear-gradient(90deg, var(--pv-rule-v) 0 1px, transparent 1px var(--pv-rule-size));
+}
+
+/* Same noise asset as body::after - not a second one, just reused at the
+   card's own scale. */
+.theme-card-room::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--pv-grain);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 90px 90px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .theme-card-room::after { display: none; }
+}
+
+.theme-card-heading {
+  position: relative;
+  font-family: var(--pv-font-display);
+  color: var(--pv-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.theme-card-body {
+  position: relative;
+  font-family: var(--pv-font-body);
+  color: var(--pv-muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+/* The task row (accent chip) and the highlighted item (the marker chip)
+   get their own line each - fitting both onto one row left no width for
+   the task's own title to read as more than a couple of letters before
+   ellipsis. */
+.theme-card-footer {
+  position: relative;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The accent chip's row: a scrap of a real task row, on the previewed
+   surface, edge and shadow - not a bare swatch. */
+.theme-card-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pv-surface);
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-edge);
+  box-shadow: var(--pv-shadow);
+  padding: 6px 8px;
+}
+
+.theme-card-chip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pv-accent);
+  flex-shrink: 0;
+}
+
+.theme-card-item {
+  font-family: var(--pv-font-body);
+  color: var(--pv-text);
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theme-card-mark {
+  align-self: flex-start;
+  font-family: var(--pv-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pv-mark-ink);
+  background: var(--pv-mark);
+  border-radius: 4px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.theme-card-name {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .row button,
