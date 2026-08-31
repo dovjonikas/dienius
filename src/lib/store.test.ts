@@ -429,6 +429,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
     settings: {
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'light' },
       enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
+      timelineExpanded: false,
     },
   })
   actions.setTheme('dark')
@@ -438,6 +439,19 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
   expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
   actions.setTheme('system')
   expect(getData().settings.theme.mode).toBe('system')
+})
+
+test('setTimelineExpanded flips whether the day view timeline grid is shown, leaving the rest of settings untouched', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'] },
+  })
+  expect(getData().settings.timelineExpanded).toBe(false)
+  actions.setTimelineExpanded(true)
+  expect(getData().settings.timelineExpanded).toBe(true)
+  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  actions.setTimelineExpanded(false)
+  expect(getData().settings.timelineExpanded).toBe(false)
 })
 
 test('setThemePreset changes only the preset id', () => {
@@ -453,6 +467,7 @@ test('setThemeOverride writes one token under the current preset id without dist
     settings: {
       theme: { presetId: 'sketchbook', overrides: { slate: { accent: '#111111' } }, mode: 'dark' },
       enabledWidgets: [],
+      timelineExpanded: false,
     },
   })
   actions.setThemeOverride('sketchbook', 'accent', '#e0553b')
@@ -474,6 +489,7 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
         mode: 'dark',
       },
       enabledWidgets: [],
+      timelineExpanded: false,
     },
   })
   actions.resetThemeOverrides('sketchbook')
@@ -490,6 +506,7 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
         mode: 'dark',
       },
       enabledWidgets: [],
+      timelineExpanded: false,
     },
   })
   actions.unsetThemeOverride('sketchbook', 'accent')
@@ -505,6 +522,7 @@ test('unsetThemeOverride drops the preset\'s own entry once its last token is re
     settings: {
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'dark' },
       enabledWidgets: [],
+      timelineExpanded: false,
     },
   })
   actions.unsetThemeOverride('sketchbook', 'accent')

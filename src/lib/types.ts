@@ -128,6 +128,18 @@ export interface ThemeState {
 export interface Settings {
   theme: ThemeState
   enabledWidgets: string[]
+  /**
+   * Whether the day view's timeline grid is currently shown, rather than
+   * collapsed behind its own disclosure under the capacity line - see
+   * docs/TIMELINE.md section 5. A single app-wide choice, not a per-day
+   * one: whether to look at the picture of the day is not a decision the
+   * owner should have to re-make every morning before the day can start,
+   * so opening it once keeps it open on every day after, until closed
+   * again. Defaults to false - collapsed - so the grid never claims the
+   * screen's first fold on its own; the capacity line above it already
+   * carries the same shape of the day in one sentence.
+   */
+  timelineExpanded: boolean
 }
 
 /**

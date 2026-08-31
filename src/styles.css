@@ -687,6 +687,31 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   line-height: 1.5;
 }
 
+/* The grid's own disclosure - docs/RESEARCH-ADHD.md section 7 and
+   docs/TIMELINE.md section 5. Collapsed by default, so this quiet control
+   is what a day with anchors shows instead of the grid itself: a proper
+   toggle (aria-expanded, aria-controls on DayView.tsx's own markup), sized
+   to the same 44px touch target every other control in the day view keeps
+   to, not a full-width button - opening the picture of the day is a minor,
+   optional action next to quick-add and the task list below it, not
+   something that should read as equally weighted with them. */
+.timeline-toggle {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--safe-ink);
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.timeline-toggle:hover { border-color: var(--muted); }
+
+.timeline-toggle[aria-expanded='true'] { border-color: var(--accent); }
+
 /* Zone 2 of the day view - docs/TIMELINE.md section 5 and step 4 of
    section 8. Read only: see the doc comment on TimelineGrid.tsx for why
    the whole thing is aria-hidden. The scroll container caps how tall the

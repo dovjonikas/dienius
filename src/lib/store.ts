@@ -250,6 +250,17 @@ export const actions = {
   },
 
   /**
+   * Shows or collapses the day view's timeline grid - see
+   * docs/TIMELINE.md section 5. A single app-wide setting rather than
+   * anything the day's own data carries, so opening the grid once keeps it
+   * open on every day after, and closing it again keeps it closed - the
+   * choice persists exactly like a theme preference, not like a task.
+   */
+  setTimelineExpanded(expanded: boolean): void {
+    commit({ ...data, settings: { ...data.settings, timelineExpanded: expanded } })
+  },
+
+  /**
    * Writes one token into the override patch for a preset, keyed by that
    * preset's own id so switching to a different room and back leaves this
    * patch exactly as it was - see docs/THEMES.md section 3. There is no

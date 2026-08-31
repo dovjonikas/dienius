@@ -63,6 +63,14 @@ const GAP_MIN_HEIGHT_PX = 44
 const GUTTER_PX = 44
 
 export interface TimelineGridProps {
+  /**
+   * Applied to the grid's own outer wrapper so the disclosure toggle that
+   * shows or hides it (see DayView.tsx) can point `aria-controls` at
+   * something real once the grid actually mounts. Optional so a caller
+   * with no need for one - a test, a future read-only embed - is not
+   * forced to invent an id it will never use.
+   */
+  id?: string
   tasks: Task[]
   /**
    * The day's own template color, if it has one - see `docs/TIMELINE.md`
@@ -93,6 +101,13 @@ export interface TimelineGridProps {
  * window relates to (and deliberately disagrees with, at the edges)
  * `computeCapacity`'s fixed waking window.
  *
+ * Mounted only while `DayView.tsx`'s own disclosure toggle has it open -
+ * this component itself knows nothing about that; it only accepts the
+ * `id` that toggle's `aria-controls` points at. See `docs/RESEARCH-ADHD.md`
+ * section 7 for why the grid does not get to stand in front of the task
+ * list by default, and `docs/TIMELINE.md` section 5 for the collapsed
+ * state itself.
+ *
  * The grid itself - hour marks and anchor blocks - stays `aria-hidden` and
  * unfocusable, exactly as step 4 left it: every anchor here is already an
  * ordinary, fully accessible row in the task list below, with its title,
@@ -109,7 +124,7 @@ export interface TimelineGridProps {
  * about it can ever swallow a tap meant for a gap button drawn underneath
  * or beside it.
  */
-export function TimelineGrid({ tasks, templateColor, onPlaceFloat }: TimelineGridProps) {
+export function TimelineGrid({ id, tasks, templateColor, onPlaceFloat }: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [openGapStart, setOpenGapStart] = useState<number | null>(null)
@@ -159,7 +174,7 @@ export function TimelineGrid({ tasks, templateColor, onPlaceFloat }: TimelineGri
   }
 
   return (
-    <div className="timeline-grid-wrap" ref={wrapRef} tabIndex={-1}>
+    <div id={id} className="timeline-grid-wrap" ref={wrapRef} tabIndex={-1}>
       <div className="timeline-grid-scroll">
         <div className="timeline-grid-layers" style={{ height: `${heightPx}px` }}>
           <div className="timeline-grid" aria-hidden="true">
