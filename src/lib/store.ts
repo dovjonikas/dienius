@@ -3,6 +3,9 @@ import type { AppData, DayPlan, DayType, IfThenEntry, Template, ThemeState } fro
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
+import { MAX_PUSHES } from './pushRules'
+
+export { MAX_PUSHES } from './pushRules'
 
 let data: AppData = loadData()
 let saveOk = true
@@ -39,14 +42,19 @@ function withDay(date: string, day: DayPlan): AppData {
   return { ...data, days: { ...data.days, [date]: day } }
 }
 
-/** A task can be pushed to the next day at most this many times. */
-export const MAX_PUSHES = 2
-
 export interface RolloverResult {
   /** Tasks moved to the next day, with pushCount incremented. */
   moved: number
   /** Tasks left in place because they had already reached MAX_PUSHES. */
   held: number
+}
+
+// Shared by rolloverUnfinished and pushTask below - both move a task to the
+// next day the same way, one pushing everything unfinished at once, the
+// other pushing exactly one. See the doc comment on rolloverUnfinished's
+// own mapping for why fromTemplate and core are cleared here.
+function pushedForward(task: DayPlan['tasks'][number]): DayPlan['tasks'][number] {
+  return { ...task, fromTemplate: false, pushCount: (task.pushCount ?? 0) + 1, core: undefined }
 }
 
 export const actions = {
@@ -91,12 +99,7 @@ export const actions = {
     // task is still genuinely necessary, the push bound already forces a
     // decision on it within two days - it does not need core to do that
     // job as well.
-    const moved = pushable.map(t => ({
-      ...t,
-      fromTemplate: false,
-      pushCount: (t.pushCount ?? 0) + 1,
-      core: undefined,
-    }))
+    const moved = pushable.map(pushedForward)
     commit({
       ...data,
       days: {
@@ -108,18 +111,67 @@ export const actions = {
     return { moved: moved.length, held }
   },
 
+  /**
+   * Pushes exactly one task to the next day - the same move
+   * rolloverUnfinished makes for every unfinished task at once, offered
+   * here as its own entry point so a single float can be trimmed off an
+   * overloaded day without touching anything else on it. Bound by the same
+   * MAX_PUSHES rule: a task already at the bound is left in place and this
+   * returns false, so a caller can tell the push did not happen rather than
+   * assume it always does. See `trimCandidate` in `capacity.ts`, which
+   * picks which float this should be called on.
+   */
+  pushTask(date: string, taskId: string): boolean {
+    const day = data.days[date]
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task || (task.pushCount ?? 0) >= MAX_PUSHES) return false
+
+    const targetDate = addDays(date, 1)
+    const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }
+    commit({
+      ...data,
+      days: {
+        ...data.days,
+        [date]: { ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) },
+        [targetDate]: { ...target, tasks: [...target.tasks, pushedForward(task)] },
+      },
+    })
+    return true
+  },
+
+  /**
+   * Sets, changes or clears a task's estimated size. Never invoked by the
+   * quick-add flow itself - see docs/TIMELINE.md section 9 - this is the
+   * separate, optional control a task's own row offers, so sizing a task
+   * is never a question the owner has to answer before the day can start.
+   * Passing undefined clears it back to unsized.
+   */
+  setTaskMinutes(date: string, taskId: string, minutes: number | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, minutes } : t)),
+    }))
+  },
+
   addTemplate(input: {
     name: string
     color: string
     type?: DayType
-    blocks: { time?: string; title: string; core?: boolean }[]
+    blocks: { time?: string; title: string; core?: boolean; minutes?: number }[]
   }): Template {
     const template: Template = {
       id: crypto.randomUUID(),
       name: input.name,
       color: input.color,
       type: input.type,
-      blocks: input.blocks.map(b => ({ id: crypto.randomUUID(), time: b.time, title: b.title, core: b.core })),
+      blocks: input.blocks.map(b => ({
+        id: crypto.randomUUID(),
+        time: b.time,
+        title: b.title,
+        core: b.core,
+        minutes: b.minutes,
+      })),
     }
     commit({ ...data, templates: [...data.templates, template] })
     return template
