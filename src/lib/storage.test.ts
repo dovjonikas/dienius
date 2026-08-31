@@ -127,6 +127,89 @@ test('validate rejects a task whose pushCount is not a non-negative integer', ()
   expect(loadData()).toEqual(defaultData())
 })
 
+test('a template written before day types existed loads with type undefined', () => {
+  const legacy = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym' }] }],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  const loaded = loadData()
+  expect(loaded.templates[0].type).toBeUndefined()
+  expect(loaded.templates[0].blocks[0].core).toBeUndefined()
+})
+
+test('a day plan written before day types existed loads with dayType undefined', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 'x1', title: 'Old task', done: false }] } },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  const loaded = loadData()
+  expect(loaded.days['2026-09-01'].dayType).toBeUndefined()
+  expect(loaded.days['2026-09-01'].tasks[0].core).toBeUndefined()
+})
+
+test('validate accepts a template with a known type and a task or block marked core', () => {
+  const good = JSON.stringify({
+    templates: [{
+      id: 't1', name: 'Night shift', color: '#c9b3f0', type: 'shift',
+      blocks: [{ id: 'b1', time: '19:00', title: 'Clock in', core: true }],
+    }],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01', templateId: 't1', dayType: 'shift',
+        tasks: [{ id: 'x1', title: 'Clock in', time: '19:00', done: false, fromTemplate: true, core: true }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, good)
+  const loaded = loadData()
+  expect(loaded.templates[0].type).toBe('shift')
+  expect(loaded.days['2026-09-01'].dayType).toBe('shift')
+  expect(loaded.days['2026-09-01'].tasks[0].core).toBe(true)
+})
+
+test('validate rejects a template with an unknown day type', () => {
+  const bad = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', type: 'weekend', blocks: [] }],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, bad)
+  expect(loadData()).toEqual(defaultData())
+})
+
+test('validate rejects a day plan with an unknown day type', () => {
+  const bad = JSON.stringify({
+    templates: [],
+    days: { '2026-09-01': { date: '2026-09-01', dayType: 'weekend', tasks: [] } },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, bad)
+  expect(loadData()).toEqual(defaultData())
+})
+
+test('validate rejects a task or block whose core flag is not a boolean', () => {
+  const badTask = JSON.stringify({
+    templates: [],
+    days: { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 'x1', title: 'Bad', done: false, core: 'yes' }] } },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badTask)
+  expect(loadData()).toEqual(defaultData())
+
+  const badBlock = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym', core: 1 }] }],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badBlock)
+  expect(loadData()).toEqual(defaultData())
+})
+
 test('a well-formed payload still passes validate', () => {
   const good = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', time: '09:00', title: 'Gym' }] }],
