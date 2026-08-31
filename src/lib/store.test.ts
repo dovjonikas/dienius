@@ -347,6 +347,44 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
   expect(getData().settings.theme.overrides).toEqual({ slate: { accent: '#111111' } })
 })
 
+test('unsetThemeOverride removes one token, leaving the preset\'s other overrides and other presets\' patches alone', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      theme: {
+        presetId: 'sketchbook',
+        overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b', mark: '#ffcc00' } },
+        mode: 'dark',
+      },
+      enabledWidgets: [],
+    },
+  })
+  actions.unsetThemeOverride('sketchbook', 'accent')
+  expect(getData().settings.theme.overrides).toEqual({
+    slate: { accent: '#111111' },
+    sketchbook: { mark: '#ffcc00' },
+  })
+})
+
+test('unsetThemeOverride drops the preset\'s own entry once its last token is removed', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'dark' },
+      enabledWidgets: [],
+    },
+  })
+  actions.unsetThemeOverride('sketchbook', 'accent')
+  expect(getData().settings.theme.overrides).toEqual({})
+})
+
+test('unsetThemeOverride is a no-op for a preset or token that was never overridden', () => {
+  actions.resetForTests(defaultData())
+  const before = getData()
+  actions.unsetThemeOverride('slate', 'accent')
+  expect(getData()).toBe(before)
+})
+
 test('importData replaces the whole store with the imported payload', () => {
   actions.addTask('2026-09-01', 'Will be replaced')
   const backup = defaultData()

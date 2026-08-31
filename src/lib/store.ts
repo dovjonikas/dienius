@@ -177,6 +177,29 @@ export const actions = {
     })
   },
 
+  /**
+   * Removes one token from a preset's override patch, leaving any other
+   * overridden tokens on that preset untouched. Used when a write would
+   * restore exactly the preset's own stock value for that token - see
+   * ThemeOverridePanel.tsx's setToken - so the patch stays sparse rather
+   * than accumulating no-op entries, and the changed-token dot never lights
+   * up on a token that no longer actually differs from the preset. Drops
+   * the preset's own entry out of overrides entirely once its patch is
+   * empty, the same shape resetThemeOverrides below leaves behind.
+   */
+  unsetThemeOverride(presetId: string, token: string): void {
+    const current = data.settings.theme.overrides[presetId]
+    if (!current || !(token in current)) return
+    const rest = Object.fromEntries(Object.entries(current).filter(([key]) => key !== token))
+    const overrides = { ...data.settings.theme.overrides }
+    if (Object.keys(rest).length > 0) {
+      overrides[presetId] = rest
+    } else {
+      delete overrides[presetId]
+    }
+    commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, overrides } } })
+  },
+
   /** Clears the override patch for one preset - the "Reset to preset" control. */
   resetThemeOverrides(presetId: string): void {
     const rest = Object.fromEntries(
