@@ -154,12 +154,30 @@ push rule and no-guilt score that are already this app's own.
 
 ## 8. Build order
 
-1. `minutes` on `Task` and `TemplateBlock`, plus the size chip in the template editor. Additive,
-   nothing else changes yet.
-2. `capacity.ts` - pure functions: free gaps from anchors, total float size, the resulting sentence.
-   Unit tested with no React anywhere near it, same as `score.ts`.
-3. The capacity line on the day view. Ship this alone and use it for a day - it may be most of the
-   value before any grid exists.
+1. **Done.** `minutes` on `Task` and `TemplateBlock`, plus the size chip in the template editor.
+   Additive, nothing else changed. A task's own size can also be set or changed after the fact
+   through a quiet control on its own row - never through quick-add, which stays one input and one
+   Enter. `validate()` in `storage.ts` accepts both shapes: absent minutes loads exactly as it did
+   before this field existed, and a present value must be a non-negative whole number or the payload
+   is rejected the same way a bad `pushCount` already was.
+2. **Done.** `capacity.ts` - pure functions: free gaps from anchors, total float size, the resulting
+   sentence. Unit tested with no React anywhere near it, same as `score.ts`.
+
+   The window free time is measured against - the question section 3's own example raised without
+   answering - is **the span from the earliest anchor's start to the latest anchor's end, and
+   nothing else.** Not a fixed waking window (07:00-23:00 is wrong for a night shift), not something
+   read off the day's type (still an invented number, now hiding behind a setting). A window built
+   only from the day's own anchors needs no configuration at all, which is what section 9 actually
+   asks for: it degrades correctly with no special-casing - one anchor produces a window equal to its
+   own span (zero free time, zero gaps), and zero anchors produce no window, reported as `null` and
+   left out of the sentence rather than guessed at. An anchor with no `minutes` of its own still
+   marks its point on the timeline - it can still separate two real gaps - but contributes nothing to
+   the occupied total, the same "never invent a duration" rule section 4 already states.
+3. **Done.** The capacity line on the day view, one plain sentence at the top, plus the "trim" action
+   for the over case - a single tap that pushes the largest eligible float to tomorrow through the
+   same `pushTask` mechanism `rolloverUnfinished` already uses, bound by the same `MAX_PUSHES`. Never
+   red, never an icon, never a warning word; "about" appears exactly once, on the floats estimate,
+   since that is the one number built from guesses rather than clock time.
 4. The grid, read-only: anchors and labelled gaps, collapsed window.
 5. Gap interaction: tap a gap, pick a float that fits.
 6. If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab deleted.
