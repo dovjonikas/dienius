@@ -203,10 +203,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* Only rendered on a day whose type is not full, so a core-only score
-   does not read as a smaller version of a normal day's count. */
+   does not read as a smaller version of a normal day's count. Sized to
+   match the day-score fraction it sits next to, not shrunk further - this
+   is information a person needs to take in at a glance, not a footnote. */
 .day-score-note {
   font-variant-numeric: normal;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .day-template {
@@ -304,10 +306,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* Shown per task only on a day whose type is not full, next to the ones
-   that count toward the score - see the day-score-note above it. */
+   that count toward the score - see the day-score-note above it. Matches
+   task-time's size rather than task-pushed's smaller one, since this is
+   the label that explains the score, not a secondary detail. */
 .task-core {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
