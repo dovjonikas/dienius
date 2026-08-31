@@ -24,6 +24,17 @@ export interface ThemeTokens {
   /** Vignette strength, a css percentage string, e.g. '7%'. */
   vignette: string
   border: string
+  /**
+   * A single vertical accent rule at a fixed offset from the left edge -
+   * the red margin line a legal pad rules onto every page. Added in the
+   * step 7 preset phase rather than bolted on as a per-theme selector: it
+   * is a genuine fifth surface mark alongside the ruling grid, transparent
+   * (`#00000000`) for every preset that has no margin rule of its own, so
+   * it costs nothing visually anywhere it is not used. See body::before
+   * and .theme-card-room::before in styles.css for the one shared formula
+   * every preset draws through.
+   */
+  margin: string
   // Palette
   text: string
   muted: string
@@ -81,6 +92,12 @@ export const SYSTEM_SERIF_DISPLAY = "Iowan Old Style, 'Palatino Linotype', Palat
 // generic family (Safari resolves it to SF Pro Rounded); every other
 // platform falls through to the same system sans the other options use.
 export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif"
+// A fifth stack, added for Newsprint's condensed headline type (section 6
+// item 8). Genuinely condensed on Windows and most Chrome OS/Android
+// builds, where 'Arial Narrow' and 'Roboto Condensed' both actually exist;
+// everywhere else it falls through to the same professional system sans
+// every other preset uses, never to a narrower novelty face.
+export const SYSTEM_CONDENSED = "'Arial Narrow', 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif"
 
 // The hand-drawn edge from docs/THEMES.md section 5, used as-is. Because
 // this is the literal value of --edge, every element already styled with
@@ -118,6 +135,7 @@ const SLATE: ThemePreset = {
       grain: '0',
       vignette: '0%',
       border: '#e8e6e1',
+      margin: '#00000000',
       text: '#2b2b2b',
       muted: '#8a8a85',
       accent: '#5b7cfa',
@@ -143,6 +161,7 @@ const SLATE: ThemePreset = {
       grain: '0',
       vignette: '0%',
       border: '#33343a',
+      margin: '#00000000',
       text: '#e8e8e5',
       muted: '#85858a',
       accent: '#7c94ff',
@@ -182,6 +201,7 @@ const SKETCHBOOK: ThemePreset = {
       grain: '0.025',
       vignette: '9%',
       border: '#2a2f3b',
+      margin: '#00000000',
       text: '#e8ecf5',
       muted: '#8b96b3',
       accent: '#6fa8ff',
@@ -207,6 +227,7 @@ const SKETCHBOOK: ThemePreset = {
       grain: '0.02',
       vignette: '6%',
       border: '#e6dcc5',
+      margin: '#00000000',
       text: '#2c2a24',
       muted: '#8a8270',
       accent: '#3f6fd6',
