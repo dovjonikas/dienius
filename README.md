@@ -66,6 +66,15 @@ only the tasks marked core, with a quiet label saying so - so a twelve-hour shif
 block and a handful of optional ones scores against that one block, not against a full day's worth
 of tasks it never had room for.
 
+**A year strip, without the streak.** The calendar tab has a Month/Year switch; Year shows a row of
+one cell per day, colored by that day's template, scrolling sideways on a phone rather than shrinking
+to fit. A cell only carries two signals: color, if the day had a plan, and a thin ring, if everything
+planned for that day got done - a day attempted but not finished looks exactly like a day just
+stamped and not yet touched, on purpose. An unplanned day is a plain neutral tile, the same as any
+other empty stretch on the grid, not a hole or a warning color. There's no total, no percentage, and
+nothing counting days in a row - see [`docs/DECISIONS.md`](docs/DECISIONS.md) for why a grid like
+this is the easiest feature in the app to get wrong.
+
 **Backup that's explicit.** Settings has an export and an import, both plain JSON. There's no
 account to lose access to and no sync to silently fail - just a file, made on purpose, that a
 person actually has.
@@ -136,6 +145,8 @@ src/
     day-plan/     the day view and its own pure modules: quick-add parsing, sort order,
                   draft autosave, and the day-score calculation
     if-then/      the if-then board, a second widget on the day view
+    year-strip/   the year-at-a-glance strip shown from the calendar tab, and the pure
+                  module that turns stored days into a year's worth of colored cells
     registry.ts    which widgets are enabled and shown on the day view
   App.tsx       tab navigation and the current view/date
 scripts/
@@ -150,7 +161,7 @@ as plain, independently tested functions rather than folded into the components 
 
 ## Testing and deployment
 
-157 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
+194 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
 pure logic modules directly and the views through user-facing interaction rather than
 implementation detail.
 
