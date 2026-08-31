@@ -21,12 +21,43 @@ ignore, and it updates live as tasks are checked off. Left off the calendar grid
 already carries a day number and a template color with no room to spare, and a fraction on top of
 that would make the month noisy rather than glanceable.
 
-## Tier 1 - without these it is not Dienius yet
+**PWA - offline and installable.** `public/manifest.webmanifest` with `display: standalone`, a
+subpath-safe `start_url`/`scope` (both `.`, resolved relative to the manifest's own URL so they
+survive the `/dienius/` project-page path without hardcoding it twice), and an icon set covering
+16/32 favicons, a 180 apple-touch-icon, 192 and 512 "any", and a 512 maskable icon with proper
+safe-zone padding. The mark is a small original geometric glyph - three rounded bars of decreasing
+width on a dark ink tile, reading as an agenda at a glance, with the shortest bar in the app's own
+accent blue.
 
-**PWA - offline and installable.** No `public/`, no manifest, no service worker. The brief said
-mobile and offline are not optional, and September shifts make that real. Daveedus has this and
-Dienius does not.
-Build: manifest, icon set, service worker, `display: standalone`, theme-color synced to the theme.
+`public/sw.js` is a hand-rolled service worker, not `vite-plugin-pwa`: the app is a handful of
+static files with no runtime caching strategy to speak of, so a dependency did not earn its place.
+`scripts/generate-sw.mjs` runs after `vite build`, hashes every built file's content, and writes that
+hash into the cache name plus a full precache list into the service worker - so a deploy where
+nothing changed keeps the same cache, and a deploy where anything changed (even just prose in
+`index.html`) gets a new one. `activate` deletes every cache that is not the current one, and both
+`install` and `activate` skip the waiting phase (`skipWaiting` / `clients.claim()`), so a new deploy
+takes over as soon as it is installed rather than waiting for every tab to close - the classic way a
+hand-rolled worker ends up pinning users to a stale cache forever. Navigations go network-first with
+a cached-shell fallback so an online visit always sees the latest `index.html`; everything else is
+cache-first. `src/pwa.ts` registers the worker (production builds only) and reloads the page once,
+guarded against a reload loop, when a new worker takes control mid-session.
+
+`<meta name="theme-color">` now follows the active theme instead of the light value pinned in
+`index.html`: `src/lib/theme-color.ts` mirrors the two `--bg` values from `styles.css` and
+`App.tsx`'s existing theme effect updates the tag alongside `document.documentElement.dataset.theme`.
+iOS gets its own treatment beyond the manifest: `apple-mobile-web-app-capable`,
+`apple-mobile-web-app-status-bar-style` set to `black-translucent` (the app already reserves
+`env(safe-area-inset-top)` and declares `viewport-fit=cover`, so content was already drawn for an
+edge-to-edge status bar), and `apple-mobile-web-app-title` for the name under the home screen icon.
+
+Verified against a real production build served from `/dienius/`, not the dev server: the manifest
+and every icon path resolve with the base path applied, the service worker registers with scope
+`/dienius/` and reaches `activated` with no waiting worker, and the app fully re-renders with the
+origin server killed outright. Rebuilding after a content change produced a new cache name, and
+`registration.update()` against the running tab installed the new worker, purged the old cache down
+to one entry, and reloaded the page onto the new version with no user action.
+
+## Tier 1 - without these it is not Dienius yet
 
 **README with screenshots.** There is no README. This is a public portfolio repo - an employer opens
 it and sees nothing. This single file carries more weight than any feature.
@@ -75,12 +106,11 @@ Build: validate and normalise time input, visually separate anchored items from 
 ## Suggested order for the next session
 
 1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. PWA (manifest, service worker, icons, theme-color)
-3. README with screenshots, plus LICENSE
-4. Day types and core tasks
-5. If-then board
-6. Year strip
-7. Debt clearing from Tier 3
+2. README with screenshots, plus LICENSE
+3. Day types and core tasks
+4. If-then board
+5. Year strip
+6. Debt clearing from Tier 3
 
-Items 1 to 3 turn a working todo into the product the brief describes and into something worth
+Items 1 and 2 turn a working todo into the product the brief describes and into something worth
 showing. The rest are features and hygiene.
