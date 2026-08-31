@@ -63,3 +63,16 @@ as a labelled free gap, on the reading that the spec's gap examples are all betw
 
 **Recommendation:** it looks right, but you would know in a second from using it. If that hour before
 your first anchor should read as usable free time, it is a small change.
+
+## 6. Placing a float sets it to the gap's own start, not somewhere within it
+
+`docs/TIMELINE.md` section 5 says tapping a gap offers the floats that fit and one tap places one,
+but does not say what time the placed float actually gets. I chose the gap's own start - it is the
+plainest, most predictable answer, matches how a person reads a gap top to bottom, and needs no
+second decision about where within the gap. The remainder of the gap, if any, stays free after it.
+
+**Recommendation:** it reads naturally in the browser - Guitar tapped into "1h free, 13:00 to 14:00"
+lands at 13:00 and leaves "40 min free, 13:20 to 14:00" behind it. If you would rather a placed float
+land at the gap's end instead (so the free remainder sits first, closer to whatever's already
+anchored before it), that is also a small, contained change - `handlePlace` in `TimelineGrid.tsx` is
+the only place that decision lives.

@@ -242,9 +242,18 @@ the grid adds a second, purely visual reading of the same information rather tha
 copy of an interactive one. This follows the same reasoning the year strip's own accessibility note
 above already documents for dropping a role that would only be half true, taken one step further
 because a fully accessible copy of the same content already exists elsewhere on the same page. Zero
-focusable elements live inside the grid, confirmed directly rather than assumed. Gap interaction in
-step 5 will need to pull the gap elements that become genuinely interactive out from under this
-wrapper and give each its own accessible name, rather than leaving the whole grid hidden by default.
+focusable elements live inside the grid, confirmed directly rather than assumed.
+
+**Gap interaction.** Step 5 pulled the gap elements out from under the `aria-hidden` wrapper above,
+exactly as flagged when it shipped. Each gap is now a real, focusable button with its own accessible
+name ("1h30 free, 13:00 to 14:30. Tap to place a float.") that opens a bottom sheet listing the
+floats that fit - a sized float fits when its own size is no larger than the gap's; an unsized one is
+offered separately, labelled "size unknown," never claimed to fit and never guessed at, matching
+`capacity.ts`'s own refusal to invent a duration. The sheet caps itself to four rows before asking
+for more, following the working-memory limit `docs/RESEARCH-ADHD.md` section 7 documents. Placing a
+float sets its `time` to the gap's own start and nothing else; a quiet "remove time" control on the
+task's own row in the list below undoes it without needing step 7's drag, which is still the only
+thing left in this area.
 
 ## Tier 2 - brief features not built yet
 

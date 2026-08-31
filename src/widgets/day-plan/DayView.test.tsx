@@ -592,6 +592,56 @@ test('pressing Escape while editing a size cancels without changing it', async (
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
 })
 
+test('tapping a gap and placing a float turns it into an anchor, live in the day view', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 },
+          { id: 'gym', title: 'Gym', done: false, time: '11:00', minutes: 30 },
+          { id: 'guitar', title: 'Guitar', done: false, minutes: 20 },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: /1h free/i }))
+  await user.click(screen.getByRole('button', { name: /place guitar, 20 min/i }))
+
+  expect(getData().days['2026-09-01'].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
+  const taskList = within(container.querySelector('.task-list')!)
+  expect(taskList.getByText('10:00')).toBeInTheDocument()
+  expect(taskList.getByRole('button', { name: 'Remove time from Guitar' })).toBeInTheDocument()
+})
+
+test('a placed float can be returned to the tray with its own undo control, no hunting for a setting', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: 'Remove time from Guitar' }))
+  expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
+  expect(screen.queryByRole('button', { name: /remove time from guitar/i })).not.toBeInTheDocument()
+})
+
+test('a float with no time offers no remove-time control - there is nothing to undo', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /remove time/i })).not.toBeInTheDocument()
+})
+
 test('rollover button is not shown when every unfinished task is already at the push bound', () => {
   actions.addTask('2026-09-01', 'Maxed task')
   const id = getData().days['2026-09-01'].tasks[0].id

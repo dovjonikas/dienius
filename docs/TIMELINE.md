@@ -243,7 +243,34 @@ push rule and no-guilt score that are already this app's own.
    half-true role rather than asserting one. When gap interaction arrives in step 5, the gap elements
    that become genuinely interactive should be pulled out from under this wrapper and given their own
    accessible name at that point.
-5. Gap interaction: tap a gap, pick a float that fits.
+5. **Done.** Gap interaction: tap a gap, pick a float that fits.
+
+   `gapPlacement.ts` is the pure logic - which floats fit a given gap, and what the picker shows
+   when it opens - unit tested with no React nearby, the same posture every other pure module in
+   this feature takes. A sized float fits when its own `minutes` is no larger than the gap's; equal
+   counts as fitting. An unsized float is never said to fit - `capacity.ts` already refuses to
+   invent a duration rather than guess one that could poison the arithmetic, and this is the same
+   refusal applied to one gap - so it is offered separately, under its own "size unknown" label,
+   rather than hidden outright or claimed to fit. A float larger than every gap is left out of
+   every picker entirely; there is nothing honest to say about it there. The picker caps what it
+   shows to four rows before asking - `docs/RESEARCH-ADHD.md` section 7, visual working memory
+   holds about four integrated objects - with a "show N more" step that reveals the rest in place
+   rather than a second screen.
+
+   Tapping a gap opens a bottom sheet (`GapPicker.tsx`), a real `role="dialog"` pulled out from
+   under the grid's own `aria-hidden` wrapper with its own accessible name, focus trap, and
+   Escape/scrim dismissal - the one part of step 4's note this step resolves. Placing a float sets
+   its `time` to the gap's own start; nothing else about the task changes, and the day's tasks are
+   the only state either the grid or the capacity line ever read, so both update immediately from
+   the same store write with no separate refresh path. A gap with nothing that fits still opens and
+   says so plainly rather than either a dead control or an empty list.
+
+   Undo does not wait for step 7's drag: any task with a `time` - however it got one - carries a
+   quiet "remove time" control on its own row in the task list, clearing `time` and nothing else.
+   It is not hidden behind a hover state the way `push` and `delete` are, since it exists
+   specifically so a placement made by accident on a phone is easy to reverse without hunting.
+   `actions.placeFloat` and `actions.unanchorTask` in `store.ts` are the two store actions
+   underneath both directions; step 7's drag calls the same two rather than inventing a third path.
 6. If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab deleted.
 7. Drag between tray and grid, pointer-events, tested on a real phone before it is trusted.
 

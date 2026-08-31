@@ -239,6 +239,75 @@ test('setTaskMinutes changes an existing size, and clears it back to unsized wit
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBeUndefined()
 })
 
+test('placeFloat gives a float a time, turning it into an anchor', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const result = actions.placeFloat('2026-09-01', id, '14:30')
+  expect(result).toBe(true)
+  expect(getData().days['2026-09-01'].tasks[0].time).toBe('14:30')
+})
+
+test('placeFloat leaves every other field on the task untouched', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  actions.placeFloat('2026-09-01', id, '14:30')
+  expect(getData().days['2026-09-01'].tasks[0]).toMatchObject({ title: 'Guitar', minutes: 20, done: false })
+})
+
+test('placeFloat refuses a task that already has a time, and leaves it in place', () => {
+  actions.addTask('2026-09-01', 'Shift', '09:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const result = actions.placeFloat('2026-09-01', id, '14:30')
+  expect(result).toBe(false)
+  expect(getData().days['2026-09-01'].tasks[0].time).toBe('09:00')
+})
+
+test('placeFloat on a missing task or day does not throw and reports no placement happened', () => {
+  expect(actions.placeFloat('2026-09-01', 'nothing-here', '14:00')).toBe(false)
+  actions.addTask('2026-09-01', 'Real task')
+  expect(actions.placeFloat('2026-09-01', 'still-not-here', '14:00')).toBe(false)
+})
+
+test('unanchorTask clears a task\'s time, returning it to the tray as a float', () => {
+  actions.addTask('2026-09-01', 'Call mom', '14:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const result = actions.unanchorTask('2026-09-01', id)
+  expect(result).toBe(true)
+  expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
+})
+
+test('unanchorTask leaves every other field on the task untouched', () => {
+  actions.addTask('2026-09-01', 'Call mom', '14:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskMinutes('2026-09-01', id, 20)
+  actions.unanchorTask('2026-09-01', id)
+  expect(getData().days['2026-09-01'].tasks[0]).toMatchObject({ title: 'Call mom', minutes: 20, done: false })
+})
+
+test('unanchorTask refuses a task that is already a float, and leaves it in place', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const result = actions.unanchorTask('2026-09-01', id)
+  expect(result).toBe(false)
+  expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
+})
+
+test('unanchorTask on a missing task or day does not throw and reports nothing happened', () => {
+  expect(actions.unanchorTask('2026-09-01', 'nothing-here')).toBe(false)
+  actions.addTask('2026-09-01', 'Real task', '09:00')
+  expect(actions.unanchorTask('2026-09-01', 'still-not-here')).toBe(false)
+})
+
+test('placeFloat followed by unanchorTask round-trips a task back to exactly its original shape', () => {
+  actions.addTask('2026-09-01', 'Guitar')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const before = getData().days['2026-09-01'].tasks[0]
+  actions.placeFloat('2026-09-01', id, '14:30')
+  actions.unanchorTask('2026-09-01', id)
+  expect(getData().days['2026-09-01'].tasks[0]).toEqual(before)
+})
+
 test('addTemplate assigns ids and stamp applies it', () => {
   const t = actions.addTemplate({
     name: 'Work day',
