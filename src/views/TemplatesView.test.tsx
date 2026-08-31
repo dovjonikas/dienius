@@ -10,6 +10,21 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+test('opening the new-template form moves focus into the name field', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  expect(screen.getByPlaceholderText('Template name')).toHaveFocus()
+})
+
+test('opening an existing template for editing moves focus into the name field', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Morning', color: '#f9d48a', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Morning' }))
+  expect(screen.getByPlaceholderText('Template name')).toHaveFocus()
+})
+
 test('creates a template with a block', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
