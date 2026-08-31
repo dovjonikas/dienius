@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
-import { defaultData } from './storage'
+import { defaultData, loadData, STORAGE_KEY } from './storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -54,6 +54,25 @@ test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it'
   expect(titles.filter(title => title === 'Gym')).toHaveLength(2)
 })
 
+test('pushCount survives a re-stamp of the day a pushed task landed on', () => {
+  const t = actions.addTemplate({
+    name: 'Work day',
+    color: '#8ab6f9',
+    blocks: [{ time: '09:00', title: 'Gym' }],
+  })
+  actions.stamp({ '2026-09-01': t.id })
+  actions.rolloverUnfinished('2026-09-01')
+  const pushed = getData().days['2026-09-02'].tasks.find(task => task.title === 'Gym')
+  expect(pushed?.pushCount).toBe(1)
+
+  // Re-stamping the day it landed on treats it as a manual task (fromTemplate
+  // is false after a push) and must leave it, and its pushCount, untouched.
+  actions.stamp({ '2026-09-02': t.id })
+  const afterRestamp = getData().days['2026-09-02'].tasks.filter(task => task.title === 'Gym')
+  expect(afterRestamp).toHaveLength(2)
+  expect(afterRestamp.find(task => task.fromTemplate === false)?.pushCount).toBe(1)
+})
+
 test('rolloverUnfinished increments pushCount on tasks it moves', () => {
   actions.addTask('2026-09-01', 'Not done')
   actions.rolloverUnfinished('2026-09-01')
@@ -89,6 +108,30 @@ test('rolloverUnfinished moves tasks below the bound and holds back tasks at the
   expect(result).toEqual({ moved: 1, held: 1 })
   expect(getData().days['2026-09-03'].tasks.map(t => t.title)).toEqual(['Maxed task'])
   expect(getData().days['2026-09-04'].tasks.map(t => t.title)).toEqual(['Fresh task'])
+})
+
+test('a task written to storage before pushCount existed loads and pushes correctly', () => {
+  const legacy = {
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'legacy-1', title: 'From before the field existed', done: false }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+
+  actions.resetForTests(loadData())
+  const loadedTask = getData().days['2026-09-01'].tasks[0]
+  expect(loadedTask.pushCount).toBeUndefined()
+
+  const result = actions.rolloverUnfinished('2026-09-01')
+  expect(result).toEqual({ moved: 1, held: 0 })
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.title).toBe('From before the field existed')
+  expect(moved.pushCount).toBe(1)
 })
 
 test('addTemplate assigns ids and stamp applies it', () => {
