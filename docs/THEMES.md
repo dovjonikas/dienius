@@ -205,7 +205,7 @@ themes that are the same layout in a different hue.
 4. [x] Theme gallery in Settings with real miniature previews.
 5. [x] Override panel with per-preset patches and reset.
 6. [x] `theme-color` and manifest sync.
-7. [ ] The remaining presets.
+7. [x] The remaining presets.
 8. [x] Contrast unit test over the preset array.
 
 Steps 1, 2, 3 and 8 landed together as the architecture phase: the three-layer token structure,
@@ -259,3 +259,37 @@ the app being genuinely his to reshape. The panel warns, honestly and by name, w
 the write - see `src/lib/theme-override-warnings.ts`, which runs the exact same 4.5:1 text / 3:1 accent
 thresholds theme-contrast.test.ts enforces at merge time, against both `--surface` and `--bg`, the
 moment a hand-picked color would fail them.
+
+Step 7 landed last: the nine remaining presets from section 6 - Graph, Legal pad, Moleskine,
+Blueprint, Terminal, Newsprint, Receipt, Ink and wash, Midnight - joining Slate and Sketchbook for an
+even dozen. Full detail, including each preset's own identity, its one unexpected touch, and the
+browser pass that checked every one of them at 375px and desktop, is in the phase report
+(`.superpowers/sdd/2026-08-31-dienius-mvp/themes-phase-d-report.md`). The short version:
+
+**Modes shipped, and why.** Graph ships both light and dark - a drafting table and a CAD screen at
+night are both real rooms for an engineer's grid, not one room with its colours inverted. Six presets
+ship one mode only, each an honest call rather than a manufactured symmetry: Legal pad, Moleskine,
+Newsprint, Receipt and Ink and wash are all physical paper products that are light by definition - a
+"dark legal pad" or "dark receipt" is not a real object, the same way section 6 itself already ruled
+out a light Terminal. Blueprint, Terminal and Midnight are dark only for the opposite reason - each
+one's whole identity depends on the dark ground (a blueprint's own deep blue, a CRT's black, a night
+sky), so a light variant would stop being that preset and start being a different one (a light
+Blueprint is just Graph again).
+
+**The one new token.** `--margin` joins the surface layer - a single vertical accent rule at a fixed
+offset from the left edge, transparent by default, a real colour only on Legal pad, drawn through one
+more shared gradient layer in `body::before`/`.theme-card-room::before` exactly like `--rule` already
+is. This was the one touch from section 8's own examples ("the red margin line on the legal pad") that
+genuinely could not be built as a value choice on an existing token - every other preset's unexpected
+touch (Terminal's phosphor glow, Blueprint's light-table glow, Graph's crisp drafting hairline,
+Moleskine's warm two-layer shadow, Newsprint's masthead rule, Ink and wash's soft diffuse wash,
+Midnight's violet bloom, Receipt's red stamp standing in for the highlighter role) rides entirely on
+`--shadow`, `--mark`, or a font/edge choice already in the system.
+
+**One limitation named rather than papered over.** Receipt's "narrow feel" (section 6 item 10) is only
+partly real - the mono type and tight ruling rhythm evoke it, but the app's own column width is not a
+themeable token in this architecture, so no preset can actually narrow the layout without a per-theme
+layout hack the assignment rules out. The phase report says this plainly rather than claiming the full
+effect.
+
+Build order is now complete.
