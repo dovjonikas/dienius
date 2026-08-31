@@ -426,6 +426,135 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border-top: 1px solid var(--border);
 }
 
+/*
+ * "Adjust this theme", docs/THEMES.md section 3 - a proper disclosure
+ * (aria-expanded on the toggle, the panel itself only in the DOM while
+ * open) rather than a form. Grouped under fieldset/legend so the four
+ * groups (Colors, Ruling, Corners, Type) read as a few decisions, not a
+ * flat wall of eight-plus controls - the exact thing the assignment warns
+ * reads as abandon-this-screen to an ADHD reader.
+ */
+.theme-overrides { margin-top: 4px; }
+
+.theme-overrides-toggle {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.theme-overrides-count {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.theme-overrides-panel {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.override-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.override-group legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 0 8px;
+}
+
+/* Two per row at 375px so a swatch stays a comfortable tap target rather
+   than four cramped into one row. */
+.override-color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.override-field label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.override-field input[type='color'] {
+  width: 100%;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* A visible, non-color signal that a token has been moved from its preset
+   default - never relies on color or shape alone, since every dot is also
+   paired with a visually-hidden "Changed from the preset default" string
+   read through aria-describedby. */
+.override-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.override-segmented-wrap .segmented {
+  width: 100%;
+}
+
+.override-segmented-wrap .segmented button {
+  flex: 1;
+  font-size: 13px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.override-ruling-detail {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.override-range label { margin-bottom: 2px; }
+
+.override-range-value {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.override-field input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+}
+
+.override-warning { margin: 0; }
+
+.theme-overrides-panel > button {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  padding: 8px 14px;
+}
+
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .row button,
