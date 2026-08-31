@@ -2,10 +2,12 @@ import { expect, test } from 'vitest'
 import { DEFAULT_PRESET_ID, findPreset, PRESETS } from './themes'
 
 const TOKEN_KEYS = [
-  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border',
+  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
   'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
   'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ] as const
+
+const FONT_KEYS = ['fontDisplay', 'fontBody', 'fontMono'] as const
 
 test('there are at least the three presets this phase promises', () => {
   expect(PRESETS.length).toBeGreaterThanOrEqual(2)
@@ -54,4 +56,29 @@ test('findPreset falls back to the default preset for an unknown id', () => {
 
 test('findPreset returns the matching preset for a known id', () => {
   expect(findPreset('sketchbook').id).toBe('sketchbook')
+})
+
+test('there are eleven presets - the two from the architecture phase plus the nine from section 6', () => {
+  expect(PRESETS.length).toBe(11)
+})
+
+test('preset names are unique', () => {
+  const names = PRESETS.map(p => p.name)
+  expect(new Set(names).size).toBe(names.length)
+})
+
+// docs/THEMES.md section 2: no script, handwritten or novelty face on any
+// token, on any preset, ever. theme-override-options.test.ts already checks
+// this for the panel's own four Type options - this checks every font token
+// every shipped preset actually carries, so a future preset cannot slip a
+// decorative face past that narrower check.
+test('no preset carries a script, handwritten or novelty font stack on any token', () => {
+  for (const preset of PRESETS) {
+    for (const mode of preset.modes) {
+      const variant = mode === 'light' ? preset.light : preset.dark
+      for (const key of FONT_KEYS) {
+        expect(variant!.tokens[key], `${preset.id} ${mode} ${key}`).not.toMatch(/comic sans|script|cursive|hand/i)
+      }
+    }
+  }
 })

@@ -528,6 +528,135 @@ const NEWSPRINT: ThemePreset = {
 }
 
 /**
+ * Receipt - off-white thermal paper, tight dot-matrix-spaced rules, mono
+ * type everywhere, one red stamp ink. Light only - thermal paper is never
+ * dark. The unexpected touch: the stamp red fills both the accent AND the
+ * mark role, so "what matters today" is not a yellow highlighter here but
+ * a literal red stamp over the line - a genuine reinterpretation of an
+ * existing token's job, not a new mechanism. Honest limitation, not
+ * papered over: "narrow feel" is evoked through the tight mono rhythm and
+ * a small radius, not an actual column-width change - layout is not a
+ * themeable token in this architecture, and adding one for a single
+ * preset was judged out of scope for this phase.
+ */
+const RECEIPT: ThemePreset = {
+  id: 'receipt',
+  name: 'Receipt',
+  modes: ['light'],
+  light: {
+    ruleStyle: 'lines',
+    tokens: {
+      bg: '#f6f4ee',
+      surface: '#fbfaf5',
+      rule: 'rgba(20, 20, 20, 0.08)',
+      ruleSize: '18px',
+      grain: '0.02',
+      vignette: '2%',
+      border: '#ded9c9',
+      margin: '#00000000',
+      text: '#1f1d18',
+      muted: '#7a7566',
+      accent: '#a5231b',
+      accentDim: '#eec9c5',
+      mark: '#a5231b',
+      danger: '#7a1812',
+      good: '#3f6b3f',
+      fontDisplay: SYSTEM_MONO,
+      fontBody: SYSTEM_MONO,
+      fontMono: SYSTEM_MONO,
+      radius: '2px',
+      edge: SHARP_EDGE,
+      shadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+    },
+  },
+}
+
+/**
+ * Ink and wash - white paper, one desaturated blue-grey accent, thin
+ * widely-spaced lines, deliberately no display face of its own. Light
+ * only, "white paper" by its own description in section 6. The unexpected
+ * touch: --shadow is a single very soft, very low-opacity, wide-blur wash
+ * rather than any hard edge or hairline - ink bleeding softly into wet
+ * paper - the deliberate opposite of Graph's crisp double line, so the
+ * two calmest and most technical rooms never read as the same trick
+ * twice.
+ */
+const INK_AND_WASH: ThemePreset = {
+  id: 'ink-and-wash',
+  name: 'Ink and wash',
+  modes: ['light'],
+  light: {
+    ruleStyle: 'lines',
+    tokens: {
+      bg: '#fbfbfa',
+      surface: '#ffffff',
+      rule: 'rgba(90, 110, 130, 0.10)',
+      ruleSize: '32px',
+      grain: '0.01',
+      vignette: '3%',
+      border: '#e2e4e6',
+      margin: '#00000000',
+      text: '#26292c',
+      muted: '#8b9096',
+      accent: '#4f6b7a',
+      accentDim: '#d7e0e4',
+      mark: '#e3d6b8',
+      danger: '#a85c52',
+      good: '#5f8a6a',
+      fontDisplay: SYSTEM_SANS,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '10px',
+      edge: SOFT_EDGE,
+      shadow: '0 10px 30px rgba(80, 100, 115, 0.10)',
+    },
+  },
+}
+
+/**
+ * Midnight - deep indigo, a faint star-field grain, violet ink, a strong
+ * top vignette standing in for moonlight. Dark only, the late-night one by
+ * definition - no light variant was attempted. The unexpected touch:
+ * --shadow is a soft violet bloom around every card, the same
+ * glow-not-shadow technique Terminal and Blueprint use, each in its own
+ * colour against its own ground (true black and green, deep blue and
+ * cyan, deep indigo and violet) - one shared technique across three
+ * atmospheric rooms, not the same room three times, since the surface and
+ * palette each carries a genuinely different colour story.
+ */
+const MIDNIGHT: ThemePreset = {
+  id: 'midnight',
+  name: 'Midnight',
+  modes: ['dark'],
+  dark: {
+    ruleStyle: 'none',
+    tokens: {
+      bg: '#141033',
+      surface: '#1c1744',
+      rule: '#00000000',
+      ruleSize: '28px',
+      grain: '0.03',
+      vignette: '10%',
+      border: '#332c66',
+      margin: '#00000000',
+      text: '#eae6ff',
+      muted: '#9d95c4',
+      accent: '#a68cff',
+      accentDim: '#3a2f70',
+      mark: '#ffd23f',
+      danger: '#ff7597',
+      good: '#7fe0b0',
+      fontDisplay: SYSTEM_SANS,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '12px',
+      edge: SOFT_EDGE,
+      shadow: '0 0 0 1px rgba(166, 140, 255, 0.25), 0 4px 20px rgba(120, 90, 255, 0.25)',
+    },
+  },
+}
+
+/**
  * The full starter set from docs/THEMES.md section 6 - Slate and Sketchbook
  * from the architecture phase, plus the nine remaining presets this phase
  * adds. Every entry here is real gallery data: adding one more later needs
@@ -543,6 +672,9 @@ export const PRESETS: ThemePreset[] = [
   BLUEPRINT,
   TERMINAL,
   NEWSPRINT,
+  RECEIPT,
+  INK_AND_WASH,
+  MIDNIGHT,
 ]
 
 /** The preset a fresh install, or a payload with an unknown presetId, gets. */
