@@ -97,6 +97,58 @@ test('re-stamping the same template still keeps manual tasks', () => {
   expect(manual?.fromTemplate).toBeFalsy()
 })
 
+test('stamping a typed template carries the type onto the day', () => {
+  const shift: Template = {
+    id: 't3',
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [
+      { id: 'b1', time: '19:00', title: 'Clock in', core: true },
+      { id: 'b2', time: '21:00', title: 'Break', core: false },
+    ],
+  }
+  const days = applyStamps({}, [shift], { '2026-09-01': 't3' })
+  const day = days['2026-09-01']
+  expect(day.dayType).toBe('shift')
+  expect(day.tasks.find(t => t.title === 'Clock in')?.core).toBe(true)
+  expect(day.tasks.find(t => t.title === 'Break')?.core).toBeFalsy()
+})
+
+test('stamping a template with no type leaves dayType absent, same as an old template', () => {
+  const days = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  expect(days['2026-09-01'].dayType).toBeUndefined()
+})
+
+test('clearing a stamp drops the day type along with the template', () => {
+  const shift: Template = {
+    id: 't3',
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [{ id: 'b1', time: '19:00', title: 'Clock in', core: true }],
+  }
+  const stamped = applyStamps({}, [shift], { '2026-09-01': 't3' })
+  const cleared = applyStamps(stamped, [shift], { '2026-09-01': null })
+  expect(cleared['2026-09-01'].dayType).toBeUndefined()
+})
+
+test('re-stamping updates core from the current block, not the prior task', () => {
+  const shift: Template = {
+    id: 't3',
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [{ id: 'b1', time: '19:00', title: 'Clock in', core: false }],
+  }
+  const stamped = applyStamps({}, [shift], { '2026-09-01': 't3' })
+  expect(stamped['2026-09-01'].tasks[0].core).toBeFalsy()
+
+  const nowCore: Template = { ...shift, blocks: [{ ...shift.blocks[0], core: true }] }
+  const restamped = applyStamps(stamped, [nowCore], { '2026-09-01': 't3' })
+  expect(restamped['2026-09-01'].tasks[0].core).toBe(true)
+})
+
 test('applying a different template does not carry over done state', () => {
   const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
   stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => ({ ...t, done: true }))

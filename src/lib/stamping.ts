@@ -36,9 +36,16 @@ export function applyStamps(
         title: b.title,
         done: match?.done ?? false,
         fromTemplate: true,
+        // Core comes from the template's current block, not the matched
+        // prior task - the same rule stamping already applies to title and
+        // time, so editing which blocks are core and re-stamping updates
+        // the day the same way editing a block's title does.
+        core: b.core,
       }
     })
-    next[date] = { date, templateId, tasks: [...templateTasks, ...manual] }
+    // dayType is copied from the template at this moment, not looked up
+    // live later - see the field's doc comment in types.ts.
+    next[date] = { date, templateId, dayType: template.type, tasks: [...templateTasks, ...manual] }
   }
   return next
 }

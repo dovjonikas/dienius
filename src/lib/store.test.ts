@@ -145,6 +145,36 @@ test('addTemplate assigns ids and stamp applies it', () => {
   expect(getData().days['2026-09-01'].tasks[0].title).toBe('Gym')
 })
 
+test('addTemplate carries the day type and stamping carries it and core through to the day', () => {
+  const t = actions.addTemplate({
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [
+      { time: '19:00', title: 'Clock in', core: true },
+      { time: '21:00', title: 'Break', core: false },
+    ],
+  })
+  expect(t.type).toBe('shift')
+  actions.stamp({ '2026-09-01': t.id })
+  const day = getData().days['2026-09-01']
+  expect(day.dayType).toBe('shift')
+  expect(day.tasks.find(task => task.title === 'Clock in')?.core).toBe(true)
+  expect(day.tasks.find(task => task.title === 'Break')?.core).toBeFalsy()
+})
+
+test('deleting a template after stamping it does not change the day type already baked onto the day', () => {
+  const t = actions.addTemplate({
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [{ time: '19:00', title: 'Clock in', core: true }],
+  })
+  actions.stamp({ '2026-09-01': t.id })
+  actions.deleteTemplate(t.id)
+  expect(getData().days['2026-09-01'].dayType).toBe('shift')
+})
+
 test('deleteTemplate removes the template but keeps stamped days', () => {
   const t = actions.addTemplate({ name: 'X', color: '#f9d48a', blocks: [] })
   actions.stamp({ '2026-09-01': t.id })

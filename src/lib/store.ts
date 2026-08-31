@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, Template } from './types'
+import type { AppData, DayPlan, DayType, Template } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -94,12 +94,18 @@ export const actions = {
     return { moved: moved.length, held }
   },
 
-  addTemplate(input: { name: string; color: string; blocks: { time?: string; title: string }[] }): Template {
+  addTemplate(input: {
+    name: string
+    color: string
+    type?: DayType
+    blocks: { time?: string; title: string; core?: boolean }[]
+  }): Template {
     const template: Template = {
       id: crypto.randomUUID(),
       name: input.name,
       color: input.color,
-      blocks: input.blocks.map(b => ({ id: crypto.randomUUID(), time: b.time, title: b.title })),
+      type: input.type,
+      blocks: input.blocks.map(b => ({ id: crypto.randomUUID(), time: b.time, title: b.title, core: b.core })),
     }
     commit({ ...data, templates: [...data.templates, template] })
     return template
