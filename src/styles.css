@@ -169,6 +169,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .day-title h2 { margin: 0; }
 .day-subtitle { color: var(--muted); font-size: 13px; }
 
+.day-score {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .day-template {
   display: inline-block;
   margin-left: 8px;

@@ -139,6 +139,34 @@ test('rollover button explains when some tasks moved and some stayed behind', as
   expect(screen.getByText('Maxed task')).toBeInTheDocument()
 })
 
+test('an empty day shows no score at all', () => {
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
+})
+
+test('a planned day shows done over total as a plain fraction', () => {
+  actions.addTask('2026-09-01', 'One')
+  actions.addTask('2026-09-01', 'Two')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('0/2')).toBeInTheDocument()
+})
+
+test('checking a task updates the score live', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'One')
+  actions.addTask('2026-09-01', 'Two')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('0/2')).toBeInTheDocument()
+  await user.click(screen.getByRole('checkbox', { name: /one/i }))
+  expect(screen.getByText('1/2')).toBeInTheDocument()
+})
+
+test('the score is announced to screen readers as a sentence, not a fraction', () => {
+  actions.addTask('2026-09-01', 'One')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByLabelText('0 of 1 done')).toBeInTheDocument()
+})
+
 test('rollover button is not shown when every unfinished task is already at the push bound', () => {
   actions.addTask('2026-09-01', 'Maxed task')
   const id = getData().days['2026-09-01'].tasks[0].id

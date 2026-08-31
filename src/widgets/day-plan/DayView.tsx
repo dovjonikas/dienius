@@ -3,6 +3,7 @@ import { actions, MAX_PUSHES, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
+import { dayScore, formatDayScore } from './score'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -27,6 +28,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const pushableCount = unfinishedTasks.filter(t => (t.pushCount ?? 0) < MAX_PUSHES).length
   const heldCount = unfinishedTasks.length - pushableCount
   const isToday = date === todayKey()
+  const score = dayScore(day?.tasks ?? [])
+  const formattedScore = formatDayScore(score)
+  const scoreLabel = score.planned ? `${score.done} of ${score.total} done` : undefined
 
   function handleAdd() {
     const parsed = parseQuickAdd(input)
@@ -44,6 +48,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         <div className="day-title">
           <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
           {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+          {formattedScore && (
+            <span className="day-score" aria-label={scoreLabel}>
+              {formattedScore}
+            </span>
+          )}
           {template && (
             <span className="day-template" style={{ background: template.color }}>
               {template.name}
