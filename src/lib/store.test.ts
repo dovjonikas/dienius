@@ -34,6 +34,26 @@ test('rolloverUnfinished moves unfinished tasks to the next day', () => {
   expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Not done'])
 })
 
+test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it', () => {
+  const t = actions.addTemplate({
+    name: 'Work day',
+    color: '#8ab6f9',
+    blocks: [{ time: '09:00', title: 'Gym' }],
+  })
+  actions.stamp({ '2026-09-01': t.id })
+  actions.rolloverUnfinished('2026-09-01')
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.title).toBe('Gym')
+  expect(moved.fromTemplate).toBe(false)
+
+  // Re-stamping the day it landed on must not wipe it, since it is no
+  // longer tied to a template.
+  actions.stamp({ '2026-09-02': t.id })
+  const titles = getData().days['2026-09-02'].tasks.map(task => task.title)
+  expect(titles).toContain('Gym')
+  expect(titles.filter(title => title === 'Gym')).toHaveLength(2)
+})
+
 test('addTemplate assigns ids and stamp applies it', () => {
   const t = actions.addTemplate({
     name: 'Work day',
