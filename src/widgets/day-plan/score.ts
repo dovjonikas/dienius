@@ -1,4 +1,4 @@
-import type { Task } from '../../lib/types'
+import type { DayType, Task } from '../../lib/types'
 
 /**
  * A day's score, computed only from that day's own tasks. There is no
@@ -20,12 +20,23 @@ export type DayScore =
  * rolled-over task reflects a choice already made about this day, not
  * something that landed on it automatically. Only an empty task list has
  * no plan.
+ *
+ * `dayType` defaults to 'full', the same as an unstamped day or a
+ * template saved before day types existed. On a full day every task
+ * counts, exactly as before this feature shipped. On any other type -
+ * shift, night, rest - only tasks marked `core` count, on the theory that
+ * a twelve-hour shift leaves no realistic room for the rest of a normal
+ * day's list, so nothing but what genuinely had to happen should be able
+ * to drag the score down. A non-full day with tasks but none of them
+ * core reports no plan, the same way an empty day does: there is nothing
+ * required today, so there is nothing to measure - not a failed 0/0.
  */
-export function dayScore(tasks: Task[]): DayScore {
-  if (tasks.length === 0) {
+export function dayScore(tasks: Task[], dayType: DayType = 'full'): DayScore {
+  const counted = dayType === 'full' ? tasks : tasks.filter(t => t.core)
+  if (counted.length === 0) {
     return { planned: false }
   }
-  return { planned: true, done: tasks.filter(t => t.done).length, total: tasks.length }
+  return { planned: true, done: counted.filter(t => t.done).length, total: counted.length }
 }
 
 /**

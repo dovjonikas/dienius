@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, Template } from './types'
+import type { AppData, DayPlan, DayType, Template } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -82,7 +82,21 @@ export const actions = {
     const targetDate = addDays(date, 1)
     const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }
     const movedIds = new Set(pushable.map(t => t.id))
-    const moved = pushable.map(t => ({ ...t, fromTemplate: false, pushCount: (t.pushCount ?? 0) + 1 }))
+    // core describes a promise a template made about the day it was
+    // stamped for, not a property of the task itself - the same reason
+    // fromTemplate is cleared here too. Carrying it forward unchanged
+    // would let a shift day's required task silently become a required
+    // task on whatever day it happens to land on next, including a rest
+    // day that is supposed to have nothing required at all. If a pushed
+    // task is still genuinely necessary, the push bound already forces a
+    // decision on it within two days - it does not need core to do that
+    // job as well.
+    const moved = pushable.map(t => ({
+      ...t,
+      fromTemplate: false,
+      pushCount: (t.pushCount ?? 0) + 1,
+      core: undefined,
+    }))
     commit({
       ...data,
       days: {
@@ -94,12 +108,18 @@ export const actions = {
     return { moved: moved.length, held }
   },
 
-  addTemplate(input: { name: string; color: string; blocks: { time?: string; title: string }[] }): Template {
+  addTemplate(input: {
+    name: string
+    color: string
+    type?: DayType
+    blocks: { time?: string; title: string; core?: boolean }[]
+  }): Template {
     const template: Template = {
       id: crypto.randomUUID(),
       name: input.name,
       color: input.color,
-      blocks: input.blocks.map(b => ({ id: crypto.randomUUID(), time: b.time, title: b.title })),
+      type: input.type,
+      blocks: input.blocks.map(b => ({ id: crypto.randomUUID(), time: b.time, title: b.title, core: b.core })),
     }
     commit({ ...data, templates: [...data.templates, template] })
     return template

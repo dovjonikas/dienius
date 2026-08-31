@@ -126,10 +126,19 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .segmented {
   display: inline-flex;
+  flex-wrap: wrap;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+}
+
+/* Four options instead of two need less padding to stay clear of a
+   horizontal scroll at 375px; wrapping above is the fallback if a very
+   narrow viewport still can't fit them in one row. */
+.day-type-picker .segmented button {
+  padding: 8px 12px;
+  font-size: 14px;
 }
 
 .segmented button {
@@ -191,6 +200,15 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Only rendered on a day whose type is not full, so a core-only score
+   does not read as a smaller version of a normal day's count. Sized to
+   match the day-score fraction it sits next to, not shrunk further - this
+   is information a person needs to take in at a glance, not a footnote. */
+.day-score-note {
+  font-variant-numeric: normal;
+  font-size: 13px;
 }
 
 .day-template {
@@ -287,6 +305,17 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   font-size: 12px;
 }
 
+/* Shown per task only on a day whose type is not full, next to the ones
+   that count toward the score - see the day-score-note above it. Matches
+   task-time's size rather than task-pushed's smaller one, since this is
+   the label that explains the score, not a secondary detail. */
+.task-core {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .task-delete {
   border: none;
   background: none;
@@ -373,6 +402,13 @@ button.primary {
 
 .palette { display: flex; gap: 8px; flex-wrap: wrap; }
 
+.day-type-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 /* The plan's spec called for 32x32 swatches; bumped to the 44x44 minimum
    touch target so they are comfortably tappable on a phone. The gap is
    trimmed to 8px so the row still fits without horizontal scroll at 375px. */
@@ -397,17 +433,25 @@ button.primary {
 .block-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
 }
 
+.block-list .block-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .block-list button {
-  margin-left: auto;
   border: none;
   background: none;
   color: var(--muted);
   font-size: 16px;
+  flex-shrink: 0;
 }
 
 .block-add { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -420,6 +464,25 @@ button.primary {
   color: var(--text);
   padding: 0 12px;
   white-space: nowrap;
+}
+
+/* Placed after the block-list and block-add button rules above so it
+   wins the specificity tie in both places it appears. */
+button.core-toggle {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+button.core-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .template-list { list-style: none; margin: 0; padding: 0; }

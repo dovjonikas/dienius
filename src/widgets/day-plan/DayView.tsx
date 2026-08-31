@@ -29,9 +29,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const pushableCount = unfinishedTasks.filter(t => (t.pushCount ?? 0) < MAX_PUSHES).length
   const heldCount = unfinishedTasks.length - pushableCount
   const isToday = date === todayKey()
-  const score = dayScore(day?.tasks ?? [])
+  const isFullDay = (day?.dayType ?? 'full') === 'full'
+  const score = dayScore(day?.tasks ?? [], day?.dayType)
   const formattedScore = formatDayScore(score)
-  const scoreLabel = score.planned ? `${score.done} of ${score.total} done` : undefined
+  const scoreLabel = score.planned
+    ? isFullDay
+      ? `${score.done} of ${score.total} done`
+      : `${score.done} of ${score.total} core tasks done`
+    : undefined
 
   function handleAdd() {
     const parsed = parseQuickAdd(input)
@@ -57,7 +62,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
           {formattedScore && (
             <span className="day-score">
-              <span aria-hidden="true">{formattedScore}</span>
+              <span aria-hidden="true">
+                {formattedScore}
+                {!isFullDay && <span className="day-score-note"> core</span>}
+              </span>
               <span className="visually-hidden">{scoreLabel}</span>
             </span>
           )}
@@ -91,7 +99,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           if (atBound) classNames.push('task-maxed')
           const badgeId = `push-badge-${task.id}`
           const noteId = `push-note-${task.id}`
-          const describedBy = atBound ? noteId : pushCount > 0 ? badgeId : undefined
+          const coreId = `core-badge-${task.id}`
+          const showCoreBadge = !isFullDay && !!task.core
+          const describedByIds = [
+            atBound ? noteId : pushCount > 0 ? badgeId : undefined,
+            showCoreBadge ? coreId : undefined,
+          ].filter((id): id is string => !!id)
+          const describedBy = describedByIds.length > 0 ? describedByIds.join(' ') : undefined
           return (
             <li key={task.id} className={classNames.join(' ')}>
               <div className="task-row">
@@ -106,6 +120,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                   <span className="check" aria-hidden="true" />
                   {task.time && <span className="task-time">{task.time}</span>}
                   <span className="task-title">{task.title}</span>
+                  {showCoreBadge && (
+                    <span id={coreId} className="task-core">core</span>
+                  )}
                   {pushCount > 0 && !atBound && (
                     <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
                   )}

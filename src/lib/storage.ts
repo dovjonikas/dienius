@@ -1,4 +1,6 @@
-import type { AppData, DayPlan, Settings, Task, Template, TemplateBlock } from './types'
+import type { AppData, DayPlan, DayType, Settings, Task, Template, TemplateBlock } from './types'
+
+const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 
 export const STORAGE_KEY = 'dienius:data'
 
@@ -22,6 +24,18 @@ function isOptionalPushCount(x: unknown): x is number | undefined {
   return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0)
 }
 
+function isOptionalBoolean(x: unknown): x is boolean | undefined {
+  return x === undefined || typeof x === 'boolean'
+}
+
+// Accepts both an absent type (a template saved before this field existed,
+// or a day never stamped) and any of the four known values. Anything else
+// - a typo, a hand-edited backup, a future value this build doesn't know
+// about - fails validation rather than being coerced into a guess.
+function isOptionalDayType(x: unknown): x is DayType | undefined {
+  return x === undefined || (typeof x === 'string' && DAY_TYPES.includes(x))
+}
+
 function isTask(x: unknown): x is Task {
   if (!isRecord(x)) return false
   return (
@@ -30,13 +44,19 @@ function isTask(x: unknown): x is Task {
     typeof x.done === 'boolean' &&
     isOptionalString(x.time) &&
     (x.fromTemplate === undefined || typeof x.fromTemplate === 'boolean') &&
-    isOptionalPushCount(x.pushCount)
+    isOptionalPushCount(x.pushCount) &&
+    isOptionalBoolean(x.core)
   )
 }
 
 function isTemplateBlock(x: unknown): x is TemplateBlock {
   if (!isRecord(x)) return false
-  return typeof x.id === 'string' && typeof x.title === 'string' && isOptionalString(x.time)
+  return (
+    typeof x.id === 'string' &&
+    typeof x.title === 'string' &&
+    isOptionalString(x.time) &&
+    isOptionalBoolean(x.core)
+  )
 }
 
 function isTemplate(x: unknown): x is Template {
@@ -46,7 +66,8 @@ function isTemplate(x: unknown): x is Template {
     typeof x.name === 'string' &&
     typeof x.color === 'string' &&
     Array.isArray(x.blocks) &&
-    x.blocks.every(isTemplateBlock)
+    x.blocks.every(isTemplateBlock) &&
+    isOptionalDayType(x.type)
   )
 }
 
@@ -55,6 +76,7 @@ function isDayPlan(x: unknown): x is DayPlan {
   return (
     typeof x.date === 'string' &&
     isOptionalString(x.templateId) &&
+    isOptionalDayType(x.dayType) &&
     Array.isArray(x.tasks) &&
     x.tasks.every(isTask)
   )

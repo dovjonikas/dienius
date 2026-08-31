@@ -203,6 +203,109 @@ test('the score is announced to screen readers as a sentence, not a fraction', (
   expect(visibleFraction).toHaveAttribute('aria-hidden', 'true')
 })
 
+test('a full day scores every task and shows no core annotation, even with a template stamped', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'full',
+        tasks: [
+          { id: 'a', title: 'Core one', done: true, core: true },
+          { id: 'b', title: 'Optional one', done: false },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('1/2')).toBeInTheDocument()
+  expect(screen.queryByText('core')).not.toBeInTheDocument()
+})
+
+test('a shift day scores only core tasks and says so next to the fraction', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'shift',
+        tasks: [
+          { id: 'a', title: 'Clock in', done: true, core: true },
+          { id: 'b', title: 'Clock out', done: false, core: true },
+          { id: 'c', title: 'Grab coffee', done: true },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText('1/2')).toBeInTheDocument()
+  const spoken = screen.getByText('1 of 2 core tasks done')
+  expect(spoken).toBeInTheDocument()
+  expect(spoken).not.toHaveAttribute('aria-hidden')
+})
+
+test('on a shift day, core tasks carry a visible and announced core marker and optional tasks do not', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'shift',
+        tasks: [
+          { id: 'a', title: 'Clock in', done: false, core: true },
+          { id: 'b', title: 'Grab coffee', done: false },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const badges = container.querySelectorAll('.task-core')
+  expect(badges).toHaveLength(1)
+
+  const checkbox = screen.getByRole('checkbox', { name: /clock in/i })
+  const describedBy = checkbox.getAttribute('aria-describedby')
+  expect(describedBy).toBeTruthy()
+  expect(document.getElementById(describedBy!.split(' ')[0])).toBe(badges[0])
+
+  const optionalCheckbox = screen.getByRole('checkbox', { name: /grab coffee/i })
+  expect(optionalCheckbox).not.toHaveAttribute('aria-describedby')
+})
+
+test('on a shift day with tasks but none of them core, no score shows at all', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'shift',
+        tasks: [{ id: 'a', title: 'Grab coffee', done: false }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
+  expect(screen.queryByText('core')).not.toBeInTheDocument()
+})
+
+test('a task pushed once on a shift day still shows both its core and pushed markers', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'shift',
+        tasks: [{ id: 'a', title: 'Clock in', done: false, core: true, pushCount: 1 }],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const checkbox = screen.getByRole('checkbox', { name: /clock in/i })
+  const describedBy = checkbox.getAttribute('aria-describedby')!.split(' ')
+  expect(describedBy).toHaveLength(2)
+  expect(container.querySelectorAll('.task-core')).toHaveLength(1)
+  expect(screen.getByText(/pushed once/i)).toBeInTheDocument()
+})
+
 test('rollover button is not shown when every unfinished task is already at the push bound', () => {
   actions.addTask('2026-09-01', 'Maxed task')
   const id = getData().days['2026-09-01'].tasks[0].id
