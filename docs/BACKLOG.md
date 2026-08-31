@@ -13,11 +13,15 @@ and a delete button that stays visible rather than waiting for hover, next to a 
 choice is fine either way. The rollover button says up front what it is about to do, including when
 some tasks are staying behind.
 
-## Tier 1 - without these it is not Dienius yet
+**No-guilt day score.** `dayScore` in `src/widgets/day-plan/score.ts` counts done over total from a
+day's own tasks and nothing else - no global target, nothing carried in from other days. An empty
+task list returns `{ planned: false }` rather than a zero, so an unplanned day formats to no score at
+all instead of "0/0". Shown on the day view as a plain fraction next to the date, quiet and easy to
+ignore, and it updates live as tasks are checked off. Left off the calendar grid: at 375px a cell
+already carries a day number and a template color with no room to spare, and a fraction on top of
+that would make the month noisy rather than glanceable.
 
-**No-guilt day score.** No scoring at all. Score = done/planned for THAT day's own plan. A day with
-no plan is a day with no plan, never a failed day. No streaks anywhere.
-Build: computed from the day's own tasks, shown as "4/6", never a percentage, never red.
+## Tier 1 - without these it is not Dienius yet
 
 **PWA - offline and installable.** No `public/`, no manifest, no service worker. The brief said
 mobile and offline are not optional, and September shifts make that real. Daveedus has this and
@@ -70,14 +74,13 @@ Build: validate and normalise time input, visually separate anchored items from 
 
 ## Suggested order for the next session
 
-1. No-guilt day score
-2. Theme system, steps 1-4 of `docs/THEMES.md`
-3. PWA (manifest, service worker, icons, theme-color)
-4. README with screenshots, plus LICENSE
-5. Day types and core tasks
-6. If-then board
-7. Year strip
-8. Debt clearing from Tier 3
+1. Theme system, steps 1-4 of `docs/THEMES.md`
+2. PWA (manifest, service worker, icons, theme-color)
+3. README with screenshots, plus LICENSE
+4. Day types and core tasks
+5. If-then board
+6. Year strip
+7. Debt clearing from Tier 3
 
-Items 1 to 4 turn a working todo into the product the brief describes and into something worth
+Items 1 to 3 turn a working todo into the product the brief describes and into something worth
 showing. The rest are features and hygiene.
