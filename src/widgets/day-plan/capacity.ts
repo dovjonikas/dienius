@@ -6,17 +6,26 @@ import type { DayType, Task } from '../../lib/types'
  * position, and never has to be scheduled to be done. This is the same
  * distinction docs/TIMELINE.md section 3 names; it already existed in the
  * data, this just gives it a consequence.
+ *
+ * Exported so the grid (step 4 of the same section) classifies tasks the
+ * same way the capacity line does, rather than re-deciding what an anchor
+ * is a second time.
  */
-function isAnchor(task: Task): boolean {
+export function isAnchor(task: Task): boolean {
   return task.time !== undefined
 }
 
-function timeToMinutes(time: string): number {
+/**
+ * Exported for the same reason as `isAnchor` - the grid turns a task's
+ * `time` string into a minute offset for layout using the exact same
+ * parsing the capacity arithmetic already relies on.
+ */
+export function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
 }
 
-interface Interval {
+export interface Interval {
   start: number
   end: number
 }
@@ -70,7 +79,11 @@ function anchorInterval(task: Task): Interval {
 // genuinely lands within the hours this feature measures - never a
 // negative amount, and never time the window has already decided not to
 // speak to. Returns null when nothing of the anchor survives the clip.
-function clipToWindow(interval: Interval, window: Interval): Interval | null {
+//
+// Exported: the grid clips anchors to its own, differently-derived window
+// with this exact function, rather than a second clipping rule that could
+// drift from this one.
+export function clipToWindow(interval: Interval, window: Interval): Interval | null {
   const start = Math.max(interval.start, window.start)
   const end = Math.min(interval.end, window.end)
   return start < end ? { start, end } : null
@@ -80,7 +93,10 @@ function clipToWindow(interval: Interval, window: Interval): Interval | null {
 // so a person double-booked for part of an hour is not counted as if that
 // hour happened twice. Two anchors that touch exactly (one ends the moment
 // the other starts) merge too - there is no real gap between them.
-function mergeIntervals(intervals: Interval[]): Interval[] {
+//
+// Exported for the grid's own gap computation - see the note on
+// `clipToWindow` above.
+export function mergeIntervals(intervals: Interval[]): Interval[] {
   if (intervals.length === 0) return []
   const sorted = [...intervals].sort((a, b) => a.start - b.start)
   const merged: Interval[] = [{ ...sorted[0] }]
@@ -93,6 +109,24 @@ function mergeIntervals(intervals: Interval[]): Interval[] {
     }
   }
   return merged
+}
+
+/**
+ * Walks a window left to right against a set of already-merged busy
+ * blocks and returns whatever is left over as gaps, including before the
+ * first block and after the last. Shared by `computeCapacity`'s own fixed
+ * waking window and, with a different window and a different rule about
+ * which of those gaps actually get shown, by the grid in `timelineLayout.ts`.
+ */
+export function gapsInWindow(merged: Interval[], window: Interval): Gap[] {
+  const gaps: Gap[] = []
+  let cursor = window.start
+  for (const block of merged) {
+    if (block.start > cursor) gaps.push({ start: cursor, end: block.start, minutes: block.start - cursor })
+    cursor = Math.max(cursor, block.end)
+  }
+  if (cursor < window.end) gaps.push({ start: cursor, end: window.end, minutes: window.end - cursor })
+  return gaps
 }
 
 /** One free stretch of time within the window, outside every sized anchor block. */
@@ -259,13 +293,7 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
     }
   }
 
-  const gaps: Gap[] = []
-  let cursor = window.start
-  for (const block of merged) {
-    if (block.start > cursor) gaps.push({ start: cursor, end: block.start, minutes: block.start - cursor })
-    cursor = Math.max(cursor, block.end)
-  }
-  if (cursor < window.end) gaps.push({ start: cursor, end: window.end, minutes: window.end - cursor })
+  const gaps = gapsInWindow(merged, window)
 
   const freeMinutes = gaps.reduce((sum, gap) => sum + gap.minutes, 0)
   const overMinutes = Math.max(0, floatsMinutes - freeMinutes)

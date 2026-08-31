@@ -6,6 +6,7 @@ import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
 import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
+import { TimelineGrid } from './TimelineGrid'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -114,6 +115,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           <p>{capacityLine}</p>
         </div>
       )}
+
+      <TimelineGrid tasks={day?.tasks ?? []} templateColor={template?.color} />
 
       <input
         className="quick-add"

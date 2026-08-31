@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayView } from './DayView'
 import { consumeDraft, saveDraft } from './draft'
@@ -14,10 +14,14 @@ beforeEach(() => {
 
 test('quick add creates a task on Enter', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), '14:00 Call mom{Enter}')
-  expect(screen.getByText('Call mom')).toBeInTheDocument()
-  expect(screen.getByText('14:00')).toBeInTheDocument()
+  // Scoped to the task list: the same anchor also appears in the read-only
+  // timeline grid above it, which is a second, aria-hidden picture of the
+  // exact same task rather than a separate one.
+  const taskList = within(container.querySelector('.task-list')!)
+  expect(taskList.getByText('Call mom')).toBeInTheDocument()
+  expect(taskList.getByText('14:00')).toBeInTheDocument()
 })
 
 test('a draft left over from before a reload is restored into the input', () => {

@@ -204,6 +204,48 @@ and, since a 10px cell cannot fit a template's name as text, by a small legend b
 naming every template that actually appears in the year on screen, next to its colour - the same
 pairing a template already gets everywhere else it shows up in the app.
 
+**The timeline grid (step 4 of `docs/TIMELINE.md`).** Zone 2 of the day view: a read-only vertical
+hour grid under the capacity line, anchors drawn at their real position with a real height, the free
+stretches between them drawn as labelled objects rather than blank space. `timelineLayout.ts` in
+`src/widgets/day-plan/` is the pure module - window, position, height and gap detection, unit tested
+with no React nearby - and `TimelineGrid.tsx` only renders what it computes.
+
+The grid's own window (first anchor's start minus an hour to last anchor's end plus an hour) is
+deliberately not `computeCapacity`'s fixed waking window, and the two are meant to disagree at the
+edges - see the note in `docs/TIMELINE.md`'s build order for the full reasoning. The one-hour buffer
+on each side is air for the eye, never a gap object; only the stretches strictly between two anchors
+become one. A day with no anchors draws no grid at all rather than an empty frame.
+
+An anchor with no `minutes` draws at its real start time with a fixed placeholder height - a UI floor,
+not a duration guess - and a plain "size unknown" label instead of a time range, and it suppresses
+every gap for that day the same way an unsized anchor already suppresses `computeCapacity`'s own free
+figure: its real length is unknown, so a gap drawn around it would be a guess wearing arithmetic's
+clothes. Overlapping anchors are placed in side-by-side columns through a standard interval-graph
+packing rather than drawn on top of each other, and an anchor clipped by the window's own edge (a
+night shift running past midnight) keeps stating its real time range, wrapped onto the next day's
+clock, with only the drawn block itself stopping short.
+
+A short anchor's card drops its time-range line below a fixed pixel threshold and shows only the
+title - two lines of text do not fit inside a five-minute block's honest, proportionally tiny height
+without either spilling past the card or the card growing past what its real duration earned, so the
+line most useful for scanning wins and the exact range stays one glance away in the task list below.
+
+An anchor's colour comes from the day's own template, the same pastel already used for its chip next
+to the date - a day with no template falls back to a neutral card rather than inventing a colour
+nothing chose. Text on a coloured anchor is pinned dark, not drawn from `--safe-ink`, matching the
+calendar cells' own reasoning: a template's pastel is not `--surface`, so a token tied to `--surface`
+is not guaranteed to read against it.
+
+Entirely `aria-hidden`. Every anchor the grid draws is also an ordinary row in the task list directly
+below it, already reachable by a screen reader with its title, time, checkbox and controls intact -
+the grid adds a second, purely visual reading of the same information rather than a second, worse
+copy of an interactive one. This follows the same reasoning the year strip's own accessibility note
+above already documents for dropping a role that would only be half true, taken one step further
+because a fully accessible copy of the same content already exists elsewhere on the same page. Zero
+focusable elements live inside the grid, confirmed directly rather than assumed. Gap interaction in
+step 5 will need to pull the gap elements that become genuinely interactive out from under this
+wrapper and give each its own accessible name, rather than leaving the whole grid hidden by default.
+
 ## Tier 2 - brief features not built yet
 
 **Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time (the
