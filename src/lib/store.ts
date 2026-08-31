@@ -39,6 +39,16 @@ function withDay(date: string, day: DayPlan): AppData {
   return { ...data, days: { ...data.days, [date]: day } }
 }
 
+/** A task can be pushed to the next day at most this many times. */
+export const MAX_PUSHES = 2
+
+export interface RolloverResult {
+  /** Tasks moved to the next day, with pushCount incremented. */
+  moved: number
+  /** Tasks left in place because they had already reached MAX_PUSHES. */
+  held: number
+}
+
 export const actions = {
   addTask(date: string, title: string, time?: string): void {
     const day = dayOf(date)
@@ -59,23 +69,29 @@ export const actions = {
     commit(withDay(date, { ...day, tasks: day.tasks.filter(t => t.id !== taskId) }))
   },
 
-  rolloverUnfinished(date: string): number {
+  rolloverUnfinished(date: string): RolloverResult {
     const day = data.days[date]
-    if (!day) return 0
+    if (!day) return { moved: 0, held: 0 }
     const unfinished = day.tasks.filter(t => !t.done)
-    if (unfinished.length === 0) return 0
+    if (unfinished.length === 0) return { moved: 0, held: 0 }
+
+    const pushable = unfinished.filter(t => (t.pushCount ?? 0) < MAX_PUSHES)
+    const held = unfinished.length - pushable.length
+    if (pushable.length === 0) return { moved: 0, held }
+
     const targetDate = addDays(date, 1)
     const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }
-    const moved = unfinished.map(t => ({ ...t, fromTemplate: false }))
+    const movedIds = new Set(pushable.map(t => t.id))
+    const moved = pushable.map(t => ({ ...t, fromTemplate: false, pushCount: (t.pushCount ?? 0) + 1 }))
     commit({
       ...data,
       days: {
         ...data.days,
-        [date]: { ...day, tasks: day.tasks.filter(t => t.done) },
+        [date]: { ...day, tasks: day.tasks.filter(t => !movedIds.has(t.id)) },
         [targetDate]: { ...target, tasks: [...target.tasks, ...moved] },
       },
     })
-    return moved.length
+    return { moved: moved.length, held }
   },
 
   addTemplate(input: { name: string; color: string; blocks: { time?: string; title: string }[] }): Template {

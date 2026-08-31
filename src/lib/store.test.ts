@@ -28,8 +28,8 @@ test('rolloverUnfinished moves unfinished tasks to the next day', () => {
   actions.addTask('2026-09-01', 'Not done')
   const doneId = getData().days['2026-09-01'].tasks[0].id
   actions.toggleTask('2026-09-01', doneId)
-  const moved = actions.rolloverUnfinished('2026-09-01')
-  expect(moved).toBe(1)
+  const result = actions.rolloverUnfinished('2026-09-01')
+  expect(result).toEqual({ moved: 1, held: 0 })
   expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Done thing'])
   expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Not done'])
 })
@@ -52,6 +52,43 @@ test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it'
   const titles = getData().days['2026-09-02'].tasks.map(task => task.title)
   expect(titles).toContain('Gym')
   expect(titles.filter(title => title === 'Gym')).toHaveLength(2)
+})
+
+test('rolloverUnfinished increments pushCount on tasks it moves', () => {
+  actions.addTask('2026-09-01', 'Not done')
+  actions.rolloverUnfinished('2026-09-01')
+  const task = getData().days['2026-09-02'].tasks[0]
+  expect(task.pushCount).toBe(1)
+
+  actions.rolloverUnfinished('2026-09-02')
+  const twicePushed = getData().days['2026-09-03'].tasks[0]
+  expect(twicePushed.pushCount).toBe(2)
+})
+
+test('rolloverUnfinished holds back a task that has already been pushed twice', () => {
+  actions.addTask('2026-09-01', 'Chronically postponed')
+  actions.rolloverUnfinished('2026-09-01')
+  actions.rolloverUnfinished('2026-09-02')
+  // Now at pushCount 2, sitting in 2026-09-03. A third rollover must not move it.
+  const result = actions.rolloverUnfinished('2026-09-03')
+  expect(result).toEqual({ moved: 0, held: 1 })
+  expect(getData().days['2026-09-03'].tasks.map(t => t.title)).toEqual(['Chronically postponed'])
+  expect(getData().days['2026-09-04']).toBeUndefined()
+})
+
+test('rolloverUnfinished moves tasks below the bound and holds back tasks at the bound in the same call', () => {
+  // Push "Maxed task" on its own for two days until it sits at the bound.
+  actions.addTask('2026-09-01', 'Maxed task')
+  actions.rolloverUnfinished('2026-09-01')
+  actions.rolloverUnfinished('2026-09-02')
+  expect(getData().days['2026-09-03'].tasks[0].pushCount).toBe(2)
+
+  // A fresh task joins it on the same day.
+  actions.addTask('2026-09-03', 'Fresh task')
+  const result = actions.rolloverUnfinished('2026-09-03')
+  expect(result).toEqual({ moved: 1, held: 1 })
+  expect(getData().days['2026-09-03'].tasks.map(t => t.title)).toEqual(['Maxed task'])
+  expect(getData().days['2026-09-04'].tasks.map(t => t.title)).toEqual(['Fresh task'])
 })
 
 test('addTemplate assigns ids and stamp applies it', () => {
