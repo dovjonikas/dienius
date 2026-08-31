@@ -15,6 +15,14 @@ const DAY_TYPES: { value: DayType; label: string }[] = [
 ]
 
 interface DraftBlock {
+  /**
+   * Present only for a block carried in from the template being edited.
+   * Absent for a block added during the current editing session, so save()
+   * knows to mint a fresh id for it rather than reuse one that was never
+   * assigned. Nothing reads TemplateBlock.id today, but a future block-
+   * level feature would otherwise see every id change on every edit.
+   */
+  id?: string
   time: string
   title: string
   core: boolean
@@ -45,7 +53,7 @@ export function TemplatesView() {
       name: t.name,
       color: t.color,
       type: t.type ?? 'full',
-      blocks: t.blocks.map(b => ({ time: b.time ?? '', title: b.title, core: b.core ?? false })),
+      blocks: t.blocks.map(b => ({ id: b.id, time: b.time ?? '', title: b.title, core: b.core ?? false })),
     })
     setBlockTime('')
     setBlockTitle('')
@@ -100,7 +108,11 @@ export function TemplatesView() {
           name: draft.name.trim(),
           color: draft.color,
           type: draft.type,
-          blocks: blocks.map(b => ({ id: crypto.randomUUID(), ...b })),
+          // A block carried over from the template being edited keeps its
+          // id; a block added during this session gets a fresh one. Losing
+          // ids on every save is harmless today - nothing reads them yet -
+          // but it would silently break any future feature keyed on them.
+          blocks: draft.blocks.map((b, i) => ({ ...blocks[i], id: b.id ?? crypto.randomUUID() })),
         })
       }
     } else {
