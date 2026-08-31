@@ -210,6 +210,56 @@ test('editing a template keeps each surviving block\'s id and mints a fresh one 
   expect([wakeId, showerId]).not.toContain(commuteId)
 })
 
+test('a block saved with a size carries it, so a stamped day arrives already sized', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
+  await user.type(screen.getByPlaceholderText('09:00'), '09:00')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+  await user.type(screen.getByPlaceholderText('min'), '90')
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Gym', minutes: 90 })
+})
+
+test('a block added with no size saves with minutes absent, not zero', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Guitar')
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].minutes).toBeUndefined()
+})
+
+test('editing an existing sized template loads its blocks with their sizes intact', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Morning',
+    color: '#f9d48a',
+    blocks: [{ time: '08:00', title: 'Wake up', minutes: 15 }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Morning' }))
+  expect(screen.getByText('15 min')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].minutes).toBe(15)
+})
+
+test('typing garbage into the block size field saves it as unsized rather than a bad number', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+  await user.type(screen.getByPlaceholderText('min'), 'abc')
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].minutes).toBeUndefined()
+})
+
 test('block-add fields do not leak between editing sessions', async () => {
   const user = userEvent.setup()
   actions.addTemplate({ name: 'A', color: '#f9d48a', blocks: [] })
@@ -218,8 +268,10 @@ test('block-add fields do not leak between editing sessions', async () => {
   await user.click(screen.getByRole('button', { name: 'Edit A' }))
   await user.type(screen.getByPlaceholderText('09:00'), '10:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Half-typed')
+  await user.type(screen.getByPlaceholderText('min'), '20')
   await user.click(screen.getByRole('button', { name: 'Cancel' }))
   await user.click(screen.getByRole('button', { name: 'Edit B' }))
   expect(screen.getByPlaceholderText('09:00')).toHaveValue('')
   expect(screen.getByPlaceholderText('What happens')).toHaveValue('')
+  expect(screen.getByPlaceholderText('min')).toHaveValue('')
 })
