@@ -4,13 +4,16 @@
 > Ordered by what the app is missing to BE the thing described in the brief, not by effort.
 > Themes have their own spec: `docs/THEMES.md`.
 
-## Tier 1 - without these it is not Dienius yet
+## Shipped since this was written
 
-**The push rule.** Missing entirely. `Task` has no `pushCount`, and `rolloverUnfinished` moves items
-with no counting. The brief's core anti-guilt mechanism: an item can be pushed twice; on the third
-it must be done or deleted, and deleting is a decision rather than a failure. Without it this is an
-ordinary todo where unfinished work piles up forever.
-Build: `pushCount` on `Task`, visible on the item, third push offers only do-or-delete.
+**The push rule.** `Task.pushCount` tracks how many times an item has moved to the next day.
+`rolloverUnfinished` moves anything under two pushes and leaves anything at two in place, and tells
+the caller how many of each. A task at the bound shows only do-or-delete: the checkbox to finish it,
+and a delete button that stays visible rather than waiting for hover, next to a line saying the
+choice is fine either way. The rollover button says up front what it is about to do, including when
+some tasks are staying behind.
+
+## Tier 1 - without these it is not Dienius yet
 
 **No-guilt day score.** No scoring at all. Score = done/planned for THAT day's own plan. A day with
 no plan is a day with no plan, never a failed day. No streaks anywhere.
@@ -67,15 +70,14 @@ Build: validate and normalise time input, visually separate anchored items from 
 
 ## Suggested order for the next session
 
-1. Push rule with `pushCount`
-2. No-guilt day score
-3. Theme system, steps 1-4 of `docs/THEMES.md`
-4. PWA (manifest, service worker, icons, theme-color)
-5. README with screenshots, plus LICENSE
-6. Day types and core tasks
-7. If-then board
-8. Year strip
-9. Debt clearing from Tier 3
+1. No-guilt day score
+2. Theme system, steps 1-4 of `docs/THEMES.md`
+3. PWA (manifest, service worker, icons, theme-color)
+4. README with screenshots, plus LICENSE
+5. Day types and core tasks
+6. If-then board
+7. Year strip
+8. Debt clearing from Tier 3
 
-Items 1 to 5 turn a working todo into the product the brief describes and into something worth
+Items 1 to 4 turn a working todo into the product the brief describes and into something worth
 showing. The rest are features and hygiene.
