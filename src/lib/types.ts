@@ -51,6 +51,11 @@ export interface Task {
    * `applyStamps` in `stamping.ts`. A task typed by hand through quick-add
    * is never core; see `docs/DECISIONS.md` for why. Meaningless on a full
    * day, where every task counts regardless.
+   *
+   * Cleared when a task is pushed to the next day by `rolloverUnfinished`,
+   * the same as `fromTemplate` - core is a promise the day's own template
+   * made, not a property that travels with the task onto a day it was
+   * never planned for.
    */
   core?: boolean
 }

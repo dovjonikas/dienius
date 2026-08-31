@@ -1,6 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
 import { defaultData, loadData, STORAGE_KEY } from './storage'
+import { dayScore } from '../widgets/day-plan/score'
 
 beforeEach(() => {
   localStorage.clear()
@@ -52,6 +53,32 @@ test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it'
   const titles = getData().days['2026-09-02'].tasks.map(task => task.title)
   expect(titles).toContain('Gym')
   expect(titles.filter(title => title === 'Gym')).toHaveLength(2)
+})
+
+test('rolloverUnfinished clears core, so a required task from a shift day does not become required on whatever day it lands on next', () => {
+  const shift = actions.addTemplate({
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [{ time: '19:00', title: 'File incident report', core: true }],
+  })
+  const rest = actions.addTemplate({
+    name: 'Rest day',
+    color: '#cde39e',
+    type: 'rest',
+    blocks: [],
+  })
+  actions.stamp({ '2026-09-01': shift.id, '2026-09-02': rest.id })
+  actions.rolloverUnfinished('2026-09-01')
+
+  const landed = getData().days['2026-09-02'].tasks.find(t => t.title === 'File incident report')
+  expect(landed?.core).toBeFalsy()
+
+  // The rest day it landed on still reports no plan: nothing on it is
+  // core, so the pushed task does not silently turn a rest day into one
+  // with a required task on it.
+  const score = dayScore(getData().days['2026-09-02'].tasks, getData().days['2026-09-02'].dayType)
+  expect(score).toEqual({ planned: false })
 })
 
 test('pushCount survives a re-stamp of the day a pushed task landed on', () => {
