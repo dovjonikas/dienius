@@ -148,9 +148,63 @@ actually made yet, the same reasoning behind leaving night and shift days scored
 a real case argues otherwise. Revisit once real usage shows the board actually getting long enough
 to need it.
 
-## Tier 2 - brief features not built yet
+**Year strip.** A GitHub-graph style row, one cell per day of a chosen year, colour drawn straight
+from `src/widgets/year-strip/yearGrid.ts` - a pure function separate from the component so the whole
+question of "what does this year look like" is unit tested on its own, with no rendering involved.
+An unplanned day carries no colour and no mark; a day with a plan is coloured by its template, the
+same colour it has everywhere else in the app; a day that finished everything it planned - every
+counted task, the same rule `dayScore` already uses - gets a thin ring, not a fill change, a
+different shade, or anything on a colour spectrum. There is nothing in between a coloured cell and a
+ringed one: a day attempted but not finished looks exactly like a day just stamped and not yet
+touched, on purpose - the strip does not grade how much of a day got done, only whether it did or
+did not get planned, and whether it did or did not get finished.
 
-**Year strip.** GitHub-graph style row, one cell per day, filled by completion, coloured by day type.
+That "no in-between" rule is the whole defense against this becoming a streak tracker. There is no
+current-streak or longest-streak value anywhere in `yearGrid.ts` or the component, no total, no
+percentage, no comparison to another month or another year - the words "total", "average", and
+"streak" do not appear anywhere in the feature's own copy, and a test asserts as much. An empty
+stretch - a real gap where the app went unused - renders as flat, neutral tiles in the same colour
+the grid's own background and borders already use, not a hole, not a different shade, not a warning
+colour. Seeded with a realistic year including deliberate multi-week gaps and checked in both themes
+at both a phone and a desktop width: the gaps are visible as a change in texture, which is the point
+of the whole feature, but they do not read as red, punished, or broken - they read as the same tile
+everything else on the grid is, just without anything painted on it.
+
+It lives inside the calendar tab, not the day view and not a widget in `src/widgets/registry.ts`.
+The registry is specifically the day view's widget list, and a year-at-a-glance strip is not
+something anyone needs while looking at today's tasks - the same reasoning that put the if-then
+board on the day view argues against putting this there too. It is also not a sixth - a fifth - nav
+tab: measured directly rather than assumed, the nav row does not internally wrap at 375px (it has no
+`flex-wrap` of its own), so a fifth tab would overflow the header rather than drop to a second line,
+worse than the wrapping the if-then board's placement decision was written to avoid. A small
+Month/Year segmented control - the same `.segmented` control the template editor's day-type picker
+already uses - sits at the top of the existing calendar view instead, switching between the month
+grid and the strip without adding anything to the app's navigation.
+
+375px is the hard part of a 365-cell grid, solved by letting the strip scroll sideways inside its
+own container instead of shrinking cells to fit or letting the page itself scroll. Measured directly
+in a real 375px viewport: the page's own `document.body` never exceeds the viewport width, while the
+strip's inner scroll container legitimately overflows and scrolls - confirmed both by the numbers
+(317px visible against 634px of content) and by seeing a visible native scrollbar under the grid.
+Cell size is fixed at 10px on every screen size rather than shrinking further on a phone: the grid
+was always going to need to scroll below a full year's width, so a smaller cell only bought back a
+little of that scrolling distance at the cost of a target that was already an accepted exception to
+the app's usual 44px minimum becoming even harder to aim at.
+
+Accessibility took the most rethinking. 365 real, focusable elements each carrying their own
+`aria-label` would technically not be "unlabelled," but it would still flood the page's tab order
+and be exactly the kind of screen-reader hostility a contribution graph is usually criticised for.
+The grid uses the same roving-tabindex pattern a native date picker uses instead: only one cell is
+ever a tab stop at a time (`tabIndex={0}` on exactly one, `-1` on the rest), arrow keys move that one
+stop a day (or a week) at a time, Home and End jump to January 1st and December 31st, and each
+cell's accessible name - built by `formatYearCellLabel`, also unit tested - states the date plus its
+template and completion only when either applies, never a bare "no plan" announcement for an empty
+day. Today's cell carries `aria-current="date"`. Colour is reinforced by shape (the completion ring)
+and, since a 10px cell cannot fit a template's name as text, by a small legend beneath the grid
+naming every template that actually appears in the year on screen, next to its colour - the same
+pairing a template already gets everywhere else it shows up in the app.
+
+## Tier 2 - brief features not built yet
 
 **Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time (the
 team's own review flagged this as deferred). The brief says times are anchors: fix only what is
@@ -179,7 +233,7 @@ Build: validate and normalise time input, visually separate anchored items from 
 ## Suggested order for the next session
 
 1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. Year strip
+2. Time anchors, not free text
 3. Debt clearing from Tier 3
 
 Item 1 turns a working todo into the product the brief describes. The rest are features and hygiene.

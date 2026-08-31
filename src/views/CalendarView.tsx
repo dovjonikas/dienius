@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { monthGrid, todayKey } from '../lib/dates'
+import { YearStrip } from '../widgets/year-strip/YearStrip'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -16,6 +17,7 @@ interface CalendarViewProps {
 export function CalendarView({ onOpenDay }: CalendarViewProps) {
   const data = useAppData()
   const now = new Date()
+  const [mode, setMode] = useState<'month' | 'year'>('month')
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
@@ -110,76 +112,101 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
       onPointerCancel={endPainting}
       onPointerMove={handlePointerMove}
     >
-      <div className="calendar-nav">
-        <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>&larr;</button>
-        <h2>{MONTHS[month]} {year}</h2>
-        <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
+      <div className="segmented" role="group" aria-label="Calendar view">
+        <button
+          type="button"
+          className={mode === 'month' ? 'active' : ''}
+          aria-pressed={mode === 'month'}
+          onClick={() => setMode('month')}
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          className={mode === 'year' ? 'active' : ''}
+          aria-pressed={mode === 'year'}
+          onClick={() => setMode('year')}
+        >
+          Year
+        </button>
       </div>
 
-      {data.templates.length > 0 && (
-        <div className="stamp-bar">
-          <span className="muted">Stamp:</span>
-          {data.templates.map(t => (
-            <button
-              key={t.id}
-              className={stampTemplateId === t.id ? 'chip selected' : 'chip'}
-              aria-pressed={stampTemplateId === t.id}
-              style={{ background: t.color }}
-              onClick={() => selectTemplate(t.id)}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="calendar-grid" role="grid">
-        {WEEKDAYS.map(d => (
-          <span key={d} className="weekday">{d}</span>
-        ))}
-        {cells.map(cell => {
-          const templateId = effectiveTemplateId(cell.key)
-          const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
-          const classes = [
-            'cell',
-            cell.inMonth ? '' : 'outside',
-            cell.key === today ? 'today' : '',
-            cell.key in staged ? 'staged' : '',
-            template ? 'cell-has-template' : '',
-          ].filter(Boolean).join(' ')
-          return (
-            <button
-              key={cell.key}
-              role="gridcell"
-              data-date={cell.key}
-              className={classes}
-              style={template ? { background: template.color } : undefined}
-              onPointerDown={e => handlePointerDown(cell.key, e)}
-              onPointerEnter={() => handlePointerEnter(cell.key)}
-              onClick={() => !stampTemplateId && onOpenDay(cell.key)}
-            >
-              <span className="cell-num">{Number(cell.key.slice(8))}</span>
-              {template && <span className="cell-template">{template.name}</span>}
-            </button>
-          )
-        })}
-      </div>
-
-      {hasChanges && (
-        <div className="stamp-actions">
-          <p className="muted stamp-count">
-            {stagedCount} {stagedCount === 1 ? 'day' : 'days'} staged
-          </p>
-          <div className="stamp-buttons">
-            <button className="primary" onClick={save}>Save</button>
-            <button onClick={cancel}>Cancel</button>
+      {mode === 'month' && (
+        <>
+          <div className="calendar-nav">
+            <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>&larr;</button>
+            <h2>{MONTHS[month]} {year}</h2>
+            <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
-        </div>
+
+          {data.templates.length > 0 && (
+            <div className="stamp-bar">
+              <span className="muted">Stamp:</span>
+              {data.templates.map(t => (
+                <button
+                  key={t.id}
+                  className={stampTemplateId === t.id ? 'chip selected' : 'chip'}
+                  aria-pressed={stampTemplateId === t.id}
+                  style={{ background: t.color }}
+                  onClick={() => selectTemplate(t.id)}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="calendar-grid" role="grid">
+            {WEEKDAYS.map(d => (
+              <span key={d} className="weekday">{d}</span>
+            ))}
+            {cells.map(cell => {
+              const templateId = effectiveTemplateId(cell.key)
+              const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
+              const classes = [
+                'cell',
+                cell.inMonth ? '' : 'outside',
+                cell.key === today ? 'today' : '',
+                cell.key in staged ? 'staged' : '',
+                template ? 'cell-has-template' : '',
+              ].filter(Boolean).join(' ')
+              return (
+                <button
+                  key={cell.key}
+                  role="gridcell"
+                  data-date={cell.key}
+                  className={classes}
+                  style={template ? { background: template.color } : undefined}
+                  onPointerDown={e => handlePointerDown(cell.key, e)}
+                  onPointerEnter={() => handlePointerEnter(cell.key)}
+                  onClick={() => !stampTemplateId && onOpenDay(cell.key)}
+                >
+                  <span className="cell-num">{Number(cell.key.slice(8))}</span>
+                  {template && <span className="cell-template">{template.name}</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          {hasChanges && (
+            <div className="stamp-actions">
+              <p className="muted stamp-count">
+                {stagedCount} {stagedCount === 1 ? 'day' : 'days'} staged
+              </p>
+              <div className="stamp-buttons">
+                <button className="primary" onClick={save}>Save</button>
+                <button onClick={cancel}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {stampTemplateId && !hasChanges && (
+            <p className="muted stamp-hint">Click or drag across days to stamp. Click a stamped day to clear it.</p>
+          )}
+        </>
       )}
 
-      {stampTemplateId && !hasChanges && (
-        <p className="muted stamp-hint">Click or drag across days to stamp. Click a stamped day to clear it.</p>
-      )}
+      {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}
     </section>
   )
 }

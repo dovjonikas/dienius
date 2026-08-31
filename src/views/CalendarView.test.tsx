@@ -10,6 +10,20 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+test('switching to the year view shows the year strip and hides the month grid', async () => {
+  const user = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} />)
+  expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Year' }))
+  expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Previous year' })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Month' }))
+  expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Previous year' })).not.toBeInTheDocument()
+})
+
 test('clicking a day outside stamp mode opens it', async () => {
   const user = userEvent.setup()
   let opened = ''

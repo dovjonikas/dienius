@@ -64,9 +64,45 @@ else - but nothing in the app yet knows what that difference should be, and inve
 real case behind it would have been complexity standing in for a decision nobody had actually made.
 
 Four values exist anyway because they name four kinds of day a person recognizes at a glance when
-picking a template, and because a planned feature (a GitHub-graph style year strip, colored per day)
-wants exactly this distinction to color by. The type is there to hang a real scoring difference on
-if one ever turns up; today it hangs a label and nothing else.
+picking a template, and because the year strip (`src/widgets/year-strip/`, colored per day) wants
+exactly this distinction to color by. The type is there to hang a real scoring difference on if one
+ever turns up; today it hangs a label and nothing else.
+
+## A year strip with no in-between
+
+The year strip (`src/widgets/year-strip/`) is the single feature in this codebase closest to
+becoming the thing the app is defined against. A row of one cell per day, colored by template, is
+one design decision away from a GitHub contribution graph - and a contribution graph is a streak
+tracker with the streak counter hidden, not shown. The idiom itself trains a reader to see an empty
+cell as a miss, because on GitHub it usually is one. Borrowing the idiom without also borrowing that
+reading took more restraint than building the grid did.
+
+The fix is that a cell only ever has two states worth telling apart, and there is nothing between
+them. `buildYearCells` in `yearGrid.ts` colors a cell by its template the moment the day has one,
+whether that day is freshly stamped and completely untouched or nine tasks out of ten done - both
+look identical, a plain colored square. The only thing added on top is a thin ring, and only when
+`dayScore` would call the day fully finished: every counted task done, the same completion `dayScore`
+already uses everywhere else. A day that is attempted but not finished never gets graded any
+differently from a day just planned and not yet started. Nothing on the grid tracks how much of a
+day got done - only whether it got planned, and whether it got finished - because the moment a
+partial score shows up on a cell, the grid stops describing texture and starts grading days against
+each other, which is exactly a streak's own currency.
+
+An unplanned day - no template, no hand-typed task, nothing - gets no color and no ring. It renders
+as a flat tile in the same neutral tone the grid's borders already use, the same tone whether the
+day is a single afternoon nobody used the app, or a three-week stretch it sat untouched entirely.
+There is no darker shade for "more empty," no warning color, no hollow outline standing in for a
+hole - the alternative most contribution-graph clones reach for, and the one that would have made an
+unplanned week look like a wound in the middle of the year. A large gap is still visible, because a
+gap is real information about the shape of a year and hiding it would defeat the point of the whole
+feature - but it is visible as an absence of texture, not as a shape of its own that draws the eye
+the way a bad color would.
+
+No number appears anywhere on the strip. No total days planned, no completion percentage, no count
+of how many were core-only shift days, no comparison of this year against last, no "best month."
+Every one of those would have been easy to compute from data the strip already has, and every one
+would have turned a picture into a scoreboard - a reason to feel behind that this app has spent
+every other feature deliberately declining to hand anyone.
 
 ## Manual tasks are never core
 
