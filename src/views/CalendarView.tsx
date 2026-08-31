@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { monthGrid, todayKey } from '../lib/dates'
+import { formatDayTitle, monthGrid, todayKey, type MonthCell } from '../lib/dates'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -9,6 +9,29 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
+
+// monthGrid always returns 6 complete weeks of 7 days, Monday first - see
+// dates.ts. Splitting it back into weeks here is what lets the grid wrap
+// each week in its own role="row", which role="grid" requires of a
+// role="gridcell" child.
+function weeksOf(cells: MonthCell[]): MonthCell[][] {
+  const weeks: MonthCell[][] = []
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7))
+  }
+  return weeks
+}
+
+// The visible cell only ever shows a bare day number, which is meaningless
+// out of context to a screen reader user jumping cell to cell - two "12"s
+// a month apart read identically. The accessible name carries the full
+// date instead, plus the template name where the visible chip already
+// shows one, since a 10px chip is not the only place that information
+// needs to reach.
+function cellLabel(cell: MonthCell, templateName?: string): string {
+  const date = formatDayTitle(cell.key)
+  return templateName ? `${date}, ${templateName}` : date
+}
 
 interface CalendarViewProps {
   onOpenDay: (date: string) => void
@@ -25,6 +48,7 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
   const painting = useRef<'apply' | 'erase' | null>(null)
 
   const cells = useMemo(() => monthGrid(year, month), [year, month])
+  const weeks = useMemo(() => weeksOf(cells), [cells])
   const today = todayKey()
 
   function shiftMonth(delta: number) {
@@ -156,36 +180,48 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
             </div>
           )}
 
-          <div className="calendar-grid" role="grid">
-            {WEEKDAYS.map(d => (
-              <span key={d} className="weekday">{d}</span>
+          <div className="calendar-grid" role="grid" aria-label={`${MONTHS[month]} ${year}`}>
+            {/* display: contents keeps this row invisible to the CSS grid
+                that lays cells out in seven columns across the whole
+                .calendar-grid, while still nesting it under the grid in the
+                DOM - which is what role="row" needs to be valid here. */}
+            <div role="row" style={{ display: 'contents' }}>
+              {WEEKDAYS.map(d => (
+                <span key={d} role="columnheader" className="weekday">{d}</span>
+              ))}
+            </div>
+            {weeks.map((week, i) => (
+              <div key={i} role="row" style={{ display: 'contents' }}>
+                {week.map(cell => {
+                  const templateId = effectiveTemplateId(cell.key)
+                  const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
+                  const classes = [
+                    'cell',
+                    cell.inMonth ? '' : 'outside',
+                    cell.key === today ? 'today' : '',
+                    cell.key in staged ? 'staged' : '',
+                    template ? 'cell-has-template' : '',
+                  ].filter(Boolean).join(' ')
+                  return (
+                    <button
+                      key={cell.key}
+                      role="gridcell"
+                      data-date={cell.key}
+                      className={classes}
+                      style={template ? { background: template.color } : undefined}
+                      aria-label={cellLabel(cell, template?.name)}
+                      aria-current={cell.key === today ? 'date' : undefined}
+                      onPointerDown={e => handlePointerDown(cell.key, e)}
+                      onPointerEnter={() => handlePointerEnter(cell.key)}
+                      onClick={() => !stampTemplateId && onOpenDay(cell.key)}
+                    >
+                      <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
+                      {template && <span className="cell-template" aria-hidden="true">{template.name}</span>}
+                    </button>
+                  )
+                })}
+              </div>
             ))}
-            {cells.map(cell => {
-              const templateId = effectiveTemplateId(cell.key)
-              const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
-              const classes = [
-                'cell',
-                cell.inMonth ? '' : 'outside',
-                cell.key === today ? 'today' : '',
-                cell.key in staged ? 'staged' : '',
-                template ? 'cell-has-template' : '',
-              ].filter(Boolean).join(' ')
-              return (
-                <button
-                  key={cell.key}
-                  role="gridcell"
-                  data-date={cell.key}
-                  className={classes}
-                  style={template ? { background: template.color } : undefined}
-                  onPointerDown={e => handlePointerDown(cell.key, e)}
-                  onPointerEnter={() => handlePointerEnter(cell.key)}
-                  onClick={() => !stampTemplateId && onOpenDay(cell.key)}
-                >
-                  <span className="cell-num">{Number(cell.key.slice(8))}</span>
-                  {template && <span className="cell-template">{template.name}</span>}
-                </button>
-              )
-            })}
           </div>
 
           {hasChanges && (

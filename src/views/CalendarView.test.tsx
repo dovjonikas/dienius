@@ -24,6 +24,39 @@ test('switching to the year view shows the year strip and hides the month grid',
   expect(screen.queryByRole('button', { name: 'Previous year' })).not.toBeInTheDocument()
 })
 
+test('the month grid wraps each week in a row, so gridcells never sit directly inside the grid', () => {
+  // role="grid" requires role="row" children wrapping the row="gridcell"
+  // buttons - this is a genuine two-dimensional calendar (weeks as visual
+  // rows, weekdays as visual columns, and the same axes for keyboard
+  // navigation), unlike the year strip, so the fix here is to complete the
+  // structure rather than drop it.
+  render(<CalendarView onOpenDay={() => {}} />)
+  const grid = screen.getByRole('grid')
+  const rows = screen.getAllByRole('row')
+  expect(rows.length).toBeGreaterThan(1)
+  for (const row of rows) {
+    expect(grid).toContainElement(row)
+  }
+  const gridcells = screen.getAllByRole('gridcell')
+  expect(gridcells).toHaveLength(42)
+  for (const cell of gridcells) {
+    expect(cell.closest('[role="row"]')).not.toBeNull()
+  }
+  // The header row names each weekday as a column header, not a bare cell.
+  expect(screen.getAllByRole('columnheader')).toHaveLength(7)
+})
+
+test('each day cell announces its full date, not just the bare day number', () => {
+  render(<CalendarView onOpenDay={() => {}} />)
+  const gridcells = screen.getAllByRole('gridcell')
+  // Every cell's accessible name is a real date, e.g. "Wednesday, June 3" -
+  // not the bare "3" a sighted user sees, which is meaningless out of the
+  // visual grid a screen reader user is not looking at.
+  for (const cell of gridcells) {
+    expect(cell.getAttribute('aria-label')).toMatch(/^\w+day, \w+ \d{1,2}/)
+  }
+})
+
 test('clicking a day outside stamp mode opens it', async () => {
   const user = userEvent.setup()
   let opened = ''
