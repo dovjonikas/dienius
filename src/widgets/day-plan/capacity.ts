@@ -1,4 +1,4 @@
-import type { Task } from '../../lib/types'
+import type { DayType, Task } from '../../lib/types'
 
 /**
  * A task with `time` is an anchor - it genuinely occupies that stretch of
@@ -21,19 +21,59 @@ interface Interval {
   end: number
 }
 
-/** Minutes in one calendar day - the fixed window everything below measures against. */
+/** Minutes in one calendar day. */
 const DAY_MINUTES = 24 * 60
 
-// An anchor that runs past midnight (a night shift stamped as, say, "23:00"
-// for 480 minutes) is clamped to the end of this calendar day. capacity.ts
-// only ever sees one day's tasks at a time - a DayPlan has no notion of
-// tomorrow's - so "does today fit" can only honestly account for the part
-// of the anchor that falls within today. The remainder is tomorrow's own
-// capacity to compute, separately, the next time that day is viewed.
+/**
+ * The window free time is measured against for an ordinary day: 07:00 to
+ * 23:00, 16 hours. Fixed and never configured - see `computeCapacity`'s
+ * own doc comment for why a window has to exist at all and why this is
+ * not the same mistake as a per-day setting.
+ */
+const DEFAULT_WINDOW: Interval = { start: 7 * 60, end: 23 * 60 }
+
+/**
+ * The window for a `night`-type day: 13:00 to 24:00, 11 hours. Shifted
+ * later than the default window, not just narrower, because a night
+ * shift's own morning is spent asleep - either recovering from the
+ * previous night or resting before the coming one - the same way a
+ * normal day's own late night is. It also runs to midnight rather than
+ * stopping short of it, since a night day has no equivalent of the
+ * default window's pre-sleep wind-down to exclude: the approach to the
+ * shift, or the shift itself, is the end of this day's usable time.
+ *
+ * This is a coarse read of one label, not a measurement of any specific
+ * person's actual schedule - it does not know when tonight's shift
+ * really starts, only that the day is a night one. It is still strictly
+ * better than applying the daytime window to a night day, which would be
+ * wrong in exactly the way section 2 already warns a fixed clock window
+ * can be. If a real month of night days shows this window is off, the
+ * fix is to adjust these two numbers, not to make the window
+ * configurable - the same posture docs/DECISIONS.md already takes on
+ * `dayType`'s coarseness elsewhere.
+ */
+const NIGHT_WINDOW: Interval = { start: 13 * 60, end: DAY_MINUTES }
+
+function windowFor(dayType: DayType): Interval {
+  return dayType === 'night' ? NIGHT_WINDOW : DEFAULT_WINDOW
+}
+
 function anchorInterval(task: Task): Interval {
   const start = timeToMinutes(task.time!)
-  const end = Math.min(DAY_MINUTES, start + task.minutes!)
-  return { start, end }
+  return { start, end: start + task.minutes! }
+}
+
+// Cuts an anchor's interval down to the part that actually falls inside
+// the window, discarding the rest rather than counting it. An anchor that
+// starts before the window, runs past its end, or falls entirely outside
+// it (the small hours of an ordinary day, say) contributes only what
+// genuinely lands within the hours this feature measures - never a
+// negative amount, and never time the window has already decided not to
+// speak to. Returns null when nothing of the anchor survives the clip.
+function clipToWindow(interval: Interval, window: Interval): Interval | null {
+  const start = Math.max(interval.start, window.start)
+  const end = Math.min(interval.end, window.end)
+  return start < end ? { start, end } : null
 }
 
 // Merges overlapping and back-to-back anchors into contiguous busy blocks,
@@ -55,7 +95,7 @@ function mergeIntervals(intervals: Interval[]): Interval[] {
   return merged
 }
 
-/** One free stretch of time within the day, outside every sized anchor block. */
+/** One free stretch of time within the window, outside every sized anchor block. */
 export interface Gap {
   start: number
   end: number
@@ -79,24 +119,24 @@ export interface Capacity {
   /** Anchors with a `time` but no `minutes` - their true length is unknown. */
   unsizedAnchorCount: number
   /**
-   * Total occupied time from the anchors whose size is actually known,
-   * merged so overlapping ones are not double-counted. `null` only when
-   * `anchorCount` is 0. Can be a real number - including 0 - even when
-   * `unsizedAnchorCount` is greater than 0, if some anchors are sized and
-   * others are not.
+   * Total occupied time, within the day's window, from the anchors whose
+   * size is actually known - merged so overlapping ones are not double-
+   * counted, and clipped so nothing outside the window is counted either.
+   * `null` only when `anchorCount` is 0. Can be a real number - including
+   * 0, if every sized anchor falls outside the window entirely - even
+   * when `unsizedAnchorCount` is greater than 0.
    */
   anchorsMinutes: number | null
   /**
-   * Free stretches within the calendar day, outside every sized anchor
-   * block. Only ever populated when every anchor is sized - see
-   * `freeMinutes`.
+   * Free stretches within the window, outside every sized anchor block.
+   * Only ever populated when every anchor is sized - see `freeMinutes`.
    */
   gaps: Gap[]
   /**
    * `null` when there are no anchors, or when any anchor's size is
    * unknown - in either case there is no trustworthy free-time figure to
-   * report. Otherwise the total minutes left in the day once every sized
-   * anchor's occupied time is removed.
+   * report. Otherwise the total minutes left in the window once every
+   * sized anchor's occupied time is removed.
    */
   freeMinutes: number | null
   floatsMinutes: number
@@ -109,28 +149,39 @@ export interface Capacity {
 }
 
 /**
- * Computes a day's capacity from its raw task list. Pure and synchronous,
- * no notion of "today" or the clock - the caller decides which day's
- * tasks to pass in.
+ * Computes a day's capacity from its raw task list and day type. Pure and
+ * synchronous, no notion of "today" or the clock - the caller decides
+ * which day's tasks to pass in. `dayType` defaults to 'full', the same
+ * default `dayScore` already uses for a day with no type of its own.
  *
- * The window free time is measured against is the calendar day itself -
- * 00:00 to 24:00, always, for every day. Not a fixed waking window (any
- * single clock range is wrong for someone's real day - 07:00-23:00 is
- * wrong for a night shift), not something read off the day's type (still
- * an invented number, just hidden behind a setting), and not the span
- * between the earliest and latest anchor either: that shape looked
- * config-free but was not honest - a single midday shift with real hours
- * free before and after it reported "no free time," and a morning-only
- * anchor silently ignored an entire afternoon and evening, because
- * nothing outside the anchors' own span was ever considered. The full day
- * is not an invented number - every day genuinely has 1440 minutes - so
- * there is nothing to configure and nothing that can be wrong for anyone's
- * schedule. It degrades correctly on its own: zero anchors mean the whole
- * day is unclaimed, which is reported as `null` rather than a fabricated
- * "24h free" (see `anchorCount` below), and a single anchor spanning the
- * entire day correctly leaves nothing free with no special case needed.
+ * Free time needs a window, and the window has been wrong twice before
+ * settling here. The calendar day (00:00-24:00) counted sleep as free
+ * time - a 09:00-21:00 shift reported twelve hours free, when most of
+ * that was the middle of the night, and the overage line would as a
+ * result almost never fire. The anchor span (first anchor's start to
+ * last anchor's end) failed the opposite way - a shift with real hours
+ * free before and after it reported no free time at all, because nothing
+ * outside the anchors' own span was ever considered.
+ *
+ * **The window is a fixed waking window, not configured per day and not
+ * derived from the day's own anchors: 07:00-23:00 for an ordinary day,
+ * 13:00-24:00 for a `night` one.** See `DEFAULT_WINDOW` and
+ * `NIGHT_WINDOW` above for the reasoning behind each. Using the day's own
+ * `dayType` is not one more decision the owner has to make - it is
+ * information already given once, when the template was built or the day
+ * was typed, the same way `dayScore` already reads it. Anchors are
+ * clipped to the window rather than counted outside it - a shift that
+ * starts before the window opens or runs past where it closes only
+ * contributes the portion that falls inside, and an anchor entirely
+ * outside the window (a stray task logged for 03:00) contributes nothing
+ * and does not distort the arithmetic.
+ *
+ * It degrades correctly on its own: zero anchors mean nothing is claimed,
+ * reported as `null` rather than a fabricated "16h free," and a single
+ * anchor that fills or overruns the whole window correctly leaves nothing
+ * free - clipping means an anchor can never push free time negative.
  */
-export function computeCapacity(tasks: Task[]): Capacity {
+export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capacity {
   const anchors = tasks.filter(isAnchor)
   const floats = tasks.filter(t => !isAnchor(t))
 
@@ -150,9 +201,14 @@ export function computeCapacity(tasks: Task[]): Capacity {
     }
   }
 
+  const window = windowFor(dayType)
   const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
   const unsizedAnchorCount = anchors.length - sizedAnchors.length
-  const merged = mergeIntervals(sizedAnchors.map(anchorInterval))
+  const clipped = sizedAnchors
+    .map(anchorInterval)
+    .map(interval => clipToWindow(interval, window))
+    .filter((interval): interval is Interval => interval !== null)
+  const merged = mergeIntervals(clipped)
   const anchorsMinutes = merged.reduce((sum, block) => sum + (block.end - block.start), 0)
 
   // At least one anchor's real length is unknown, so its true position on
@@ -175,12 +231,12 @@ export function computeCapacity(tasks: Task[]): Capacity {
   }
 
   const gaps: Gap[] = []
-  let cursor = 0
+  let cursor = window.start
   for (const block of merged) {
     if (block.start > cursor) gaps.push({ start: cursor, end: block.start, minutes: block.start - cursor })
     cursor = Math.max(cursor, block.end)
   }
-  if (cursor < DAY_MINUTES) gaps.push({ start: cursor, end: DAY_MINUTES, minutes: DAY_MINUTES - cursor })
+  if (cursor < window.end) gaps.push({ start: cursor, end: window.end, minutes: window.end - cursor })
 
   const freeMinutes = gaps.reduce((sum, gap) => sum + gap.minutes, 0)
   const overMinutes = Math.max(0, floatsMinutes - freeMinutes)

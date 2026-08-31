@@ -2,7 +2,14 @@ import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
 import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
 
-const DAY_MINUTES = 24 * 60
+// 07:00-23:00, matching DEFAULT_WINDOW in capacity.ts.
+const WINDOW_START = 7 * 60
+const WINDOW_END = 23 * 60
+const WINDOW_MINUTES = WINDOW_END - WINDOW_START
+
+// 13:00-24:00, matching NIGHT_WINDOW in capacity.ts.
+const NIGHT_START = 13 * 60
+const NIGHT_END = 24 * 60
 
 function anchor(title: string, time: string, minutes?: number): Task {
   return { id: title, title, done: false, time, minutes }
@@ -61,25 +68,49 @@ test('a completely empty day has no anchors, no floats, and nothing to compare',
   expect(capacity.overMinutes).toBeNull()
 })
 
-// --- computeCapacity: the window is the calendar day, not the anchor span --
+// --- computeCapacity: the window is a fixed waking window, not the whole day
 
-test('a single anchor leaves the rest of the calendar day free, not zero - the window is the whole day', () => {
-  const capacity = computeCapacity([anchor('Gym', '09:00', 90)])
+test('a single anchor within the window leaves the rest of the window free', () => {
+  const capacity = computeCapacity([anchor('Gym', '09:00', 90)]) // 09:00-10:30
   expect(capacity.anchorsMinutes).toBe(90)
-  expect(capacity.freeMinutes).toBe(DAY_MINUTES - 90)
-  // A gap before 09:00 and a gap after the gym block ends.
+  expect(capacity.freeMinutes).toBe(WINDOW_MINUTES - 90)
+  // A gap before 09:00 (from 07:00) and a gap after 10:30 (to 23:00).
   expect(capacity.gaps).toHaveLength(2)
 })
 
-test('an anchor starting at midnight has no leading gap, only a trailing one', () => {
-  const capacity = computeCapacity([anchor('Early shift', '00:00', 120)])
+test('an anchor starting exactly at the window open has no leading gap, only a trailing one', () => {
+  const capacity = computeCapacity([anchor('Early start', '07:00', 120)])
   expect(capacity.gaps).toHaveLength(1)
-  expect(capacity.gaps[0]).toEqual({ start: 120, end: DAY_MINUTES, minutes: DAY_MINUTES - 120 })
+  expect(capacity.gaps[0]).toEqual({ start: 540, end: WINDOW_END, minutes: WINDOW_END - 540 })
 })
 
-test('a single anchor spanning the entire calendar day leaves no free time and no special case is needed', () => {
-  const capacity = computeCapacity([anchor('Whole day', '00:00', DAY_MINUTES)])
-  expect(capacity.anchorsMinutes).toBe(DAY_MINUTES)
+test('an anchor that fills the entire window leaves no free time and no special case is needed', () => {
+  const capacity = computeCapacity([anchor('Whole window', '07:00', WINDOW_MINUTES)])
+  expect(capacity.anchorsMinutes).toBe(WINDOW_MINUTES)
+  expect(capacity.freeMinutes).toBe(0)
+  expect(capacity.gaps).toEqual([])
+})
+
+// --- computeCapacity: anchors are clipped to the window, never negative ----
+
+test('an anchor entirely before the window contributes nothing, and the whole window stays free', () => {
+  const capacity = computeCapacity([anchor('Too early', '05:00', 60)]) // 05:00-06:00, before 07:00
+  expect(capacity.anchorsMinutes).toBe(0)
+  expect(capacity.freeMinutes).toBe(WINDOW_MINUTES)
+  expect(capacity.gaps).toEqual([{ start: WINDOW_START, end: WINDOW_END, minutes: WINDOW_MINUTES }])
+})
+
+test('an anchor that runs past the window close is clipped there, never producing negative free time', () => {
+  const capacity = computeCapacity([anchor('Runs late', '22:00', 180)]) // would end at 01:00
+  // Only 22:00-23:00 (60 minutes) falls inside the 07:00-23:00 window.
+  expect(capacity.anchorsMinutes).toBe(60)
+  expect(capacity.freeMinutes).toBeGreaterThanOrEqual(0)
+  expect(capacity.freeMinutes).toBe(WINDOW_MINUTES - 60)
+})
+
+test('an anchor spanning before the window open and past its close is clipped to exactly the window', () => {
+  const capacity = computeCapacity([anchor('All day', '00:00', 24 * 60)])
+  expect(capacity.anchorsMinutes).toBe(WINDOW_MINUTES)
   expect(capacity.freeMinutes).toBe(0)
   expect(capacity.gaps).toEqual([])
 })
@@ -89,14 +120,13 @@ test('a single anchor spanning the entire calendar day leaves no free time and n
 test('back-to-back anchors with no gap between them merge into one block', () => {
   const capacity = computeCapacity([anchor('Shift', '09:00', 180), anchor('Gym', '12:00', 180)])
   expect(capacity.anchorsMinutes).toBe(360)
-  // No interior gap between 09:00 and 15:00 - only the boundary gaps before and after.
+  // No interior gap between 09:00 and 15:00 - only the window's own boundary gaps.
   expect(capacity.gaps.every(g => g.end <= 540 || g.start >= 900)).toBe(true)
-  expect(capacity.freeMinutes).toBe(DAY_MINUTES - 360)
 })
 
 test('overlapping anchors merge to the union of their time, not the sum of their durations', () => {
   // 09:00-12:00 and 11:00-13:00 overlap by an hour; the union is 09:00-13:00 (4h),
-  // not the naive sum of 3h + 2h = 5h, which would overstate how much of the day is occupied.
+  // not the naive sum of 3h + 2h = 5h, which would overstate how much of the window is occupied.
   const capacity = computeCapacity([anchor('Call', '09:00', 180), anchor('Meeting', '11:00', 120)])
   expect(capacity.anchorsMinutes).toBe(240)
 })
@@ -106,52 +136,35 @@ test('overlapping anchors out of chronological order still merge correctly', () 
   expect(capacity.anchorsMinutes).toBe(240)
 })
 
-// --- computeCapacity: several anchors with real interior and boundary gaps -
-
-test('several anchors produce both interior gaps between them and boundary gaps at the edges of the day', () => {
-  const tasks = [
-    anchor('Shift', '06:00', 240), // 06:00-10:00, 4h
-    anchor('Gym', '11:30', 60), // 11:30-12:30, 1h30 gap before
-    anchor('Call', '14:00', 30), // 14:00-14:30, 1h30 gap before
-    anchor('Dinner prep', '17:20', 40), // 17:20-18:00, 2h50 gap before
-  ]
-  const capacity = computeCapacity(tasks)
-  expect(capacity.anchorsMinutes).toBe(370) // 6h10
-  // 3 interior gaps (90 + 90 + 170) plus a leading gap (0-06:00) and a
-  // trailing gap (18:00-24:00) - 5 in total, not just the 3 between anchors.
-  expect(capacity.gaps).toHaveLength(5)
-  expect(capacity.freeMinutes).toBe(DAY_MINUTES - 370)
-})
-
 // --- computeCapacity: Finding 1 regressions - a mid-day or morning-only shift
 
-test('a mid-day shift leaves real free time before and after it, not "no free time" - reviewer case 1', () => {
+test('a mid-day shift leaves real free time before and after it within the window - reviewer case 1', () => {
   const capacity = computeCapacity([anchor('Shift', '09:00', 720)]) // 09:00-21:00, 12h
   expect(capacity.anchorsMinutes).toBe(720)
-  // 9h before 09:00, 3h after 21:00.
+  // 2h before 09:00 (from 07:00), 2h after 21:00 (to 23:00).
   expect(capacity.gaps).toEqual([
-    { start: 0, end: 540, minutes: 540 },
-    { start: 1260, end: 1440, minutes: 180 },
+    { start: WINDOW_START, end: 540, minutes: 120 },
+    { start: 1260, end: WINDOW_END, minutes: 120 },
   ])
-  expect(capacity.freeMinutes).toBe(720)
+  expect(capacity.freeMinutes).toBe(240)
 })
 
-test('a mid-day shift with a small float fits comfortably in the evening, not "over" - reviewer case 1', () => {
+test('a mid-day shift with a small float fits comfortably in the window, not "over" - reviewer case 1', () => {
   const capacity = computeCapacity([anchor('Shift', '09:00', 720), float('Errand', 35)])
-  expect(capacity.freeMinutes).toBe(720)
+  expect(capacity.freeMinutes).toBe(240)
   expect(capacity.overMinutes).toBe(0)
   expect(formatCapacityLine(capacity)).toBe(
-    'Anchors take 12h. Free: 12h across 2 gaps. Floats need about 35 min.',
+    'Anchors take 12h. Free: 4h across 2 gaps. Floats need about 35 min.',
   )
 })
 
-test('a morning-only anchor leaves the whole afternoon and evening free - reviewer case 2', () => {
+test('a morning-only anchor leaves the rest of the window free - reviewer case 2', () => {
   const capacity = computeCapacity([anchor('Shift', '07:00', 300), float('Errand', 35)]) // 07:00-12:00
   expect(capacity.anchorsMinutes).toBe(300)
-  expect(capacity.freeMinutes).toBe(DAY_MINUTES - 300)
+  expect(capacity.freeMinutes).toBe(WINDOW_MINUTES - 300)
   expect(capacity.overMinutes).toBe(0)
   expect(formatCapacityLine(capacity)).toBe(
-    'Anchors take 5h. Free: 19h across 2 gaps. Floats need about 35 min.',
+    'Anchors take 5h. Free: 11h across 1 gap. Floats need about 35 min.',
   )
 })
 
@@ -171,43 +184,61 @@ test('a done float still counts toward the size total - capacity describes the d
 // --- computeCapacity: exactly-fitting floats and the over case -------------
 
 test('floats that exactly use up the free time are not reported as over', () => {
-  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '15:00', 60), float('Errand', 1140)]
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 660)]
   const capacity = computeCapacity(tasks)
-  expect(capacity.freeMinutes).toBe(1140)
-  expect(capacity.floatsMinutes).toBe(1140)
+  expect(capacity.freeMinutes).toBe(660)
+  expect(capacity.floatsMinutes).toBe(660)
   expect(capacity.overMinutes).toBe(0)
 })
 
 test('floats that exceed free time report the exact overage', () => {
-  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '15:00', 60), float('Errand', 1200)]
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 700)]
   const capacity = computeCapacity(tasks)
-  expect(capacity.freeMinutes).toBe(1140)
-  expect(capacity.overMinutes).toBe(60)
+  expect(capacity.freeMinutes).toBe(660)
+  expect(capacity.overMinutes).toBe(40)
 })
 
-// --- computeCapacity: an anchor that crosses midnight (Finding 3) ----------
+// --- computeCapacity: the night window (Finding 1 follow-up) ---------------
 
-test('an anchor that runs past midnight is clamped to the end of this calendar day', () => {
-  // 23:00 for 3 hours would end at 02:00 the next day - only the 60 minutes
-  // before midnight belong to today's capacity.
-  const capacity = computeCapacity([anchor('Night shift', '23:00', 180)])
-  expect(capacity.anchorsMinutes).toBe(60)
-  expect(capacity.gaps).toEqual([{ start: 0, end: 1380, minutes: 1380 }])
-  expect(capacity.freeMinutes).toBe(1380)
-})
-
-test('an anchor starting mid-evening and running past midnight is clamped the same way', () => {
-  const capacity = computeCapacity([anchor('Late call', '23:30', 90)]) // would end at 01:00
-  expect(capacity.anchorsMinutes).toBe(30)
-})
-
-test('a night-shift anchor clamped at midnight still merges correctly with an earlier anchor', () => {
-  const tasks = [anchor('Wind down', '21:00', 60), anchor('Night shift', '23:00', 240)]
-  const capacity = computeCapacity(tasks)
-  // Wind down runs 21:00-22:00 and the night shift is clamped to 23:00-24:00 -
-  // two separate blocks with a real 1-hour gap between them.
+test('a night-shift anchor crossing midnight is clipped to the night window close, never negative', () => {
+  // 22:00 for 8 hours would run to 06:00 the next day - only 22:00-24:00
+  // (2 hours) falls within this calendar day's 13:00-24:00 night window.
+  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'night')
   expect(capacity.anchorsMinutes).toBe(120)
-  expect(capacity.gaps).toContainEqual({ start: 1320, end: 1380, minutes: 60 })
+  expect(capacity.freeMinutes).toBe(NIGHT_END - NIGHT_START - 120)
+  expect(capacity.gaps).toEqual([{ start: NIGHT_START, end: 22 * 60, minutes: 22 * 60 - NIGHT_START }])
+})
+
+test('the same night-shift anchor is clipped harder under the default window than under the night one', () => {
+  const tasks = [anchor('Night shift', '22:00', 480)]
+  const asFullDay = computeCapacity(tasks, 'full')
+  const asNight = computeCapacity(tasks, 'night')
+  // The default window closes at 23:00, so only one hour of the shift counts;
+  // the night window runs to midnight, so two hours do.
+  expect(asFullDay.anchorsMinutes).toBe(60)
+  expect(asNight.anchorsMinutes).toBe(120)
+})
+
+test('a night day with no anchors still defaults sensibly - no window special-casing needed', () => {
+  const capacity = computeCapacity([float('Snack', 10)], 'night')
+  expect(capacity.anchorsMinutes).toBeNull()
+  expect(capacity.floatsMinutes).toBe(10)
+})
+
+test('an anchor that fills the entire night window leaves no free time', () => {
+  const capacity = computeCapacity([anchor('Whole night', '13:00', NIGHT_END - NIGHT_START)], 'night')
+  expect(capacity.anchorsMinutes).toBe(NIGHT_END - NIGHT_START)
+  expect(capacity.freeMinutes).toBe(0)
+  expect(capacity.gaps).toEqual([])
+})
+
+test('a shift and rest day type use the same window as an ordinary day', () => {
+  const tasks = [anchor('Shift start', '09:00', 60)]
+  const shift = computeCapacity(tasks, 'shift')
+  const rest = computeCapacity(tasks, 'rest')
+  const full = computeCapacity(tasks, 'full')
+  expect(shift.freeMinutes).toBe(full.freeMinutes)
+  expect(rest.freeMinutes).toBe(full.freeMinutes)
 })
 
 // --- computeCapacity: unsized anchors (Finding 2) ---------------------------
@@ -215,10 +246,7 @@ test('a night-shift anchor clamped at midnight still merges correctly with an ea
 test('an anchor with no size contributes nothing to the occupied total and blocks the free-time figure entirely', () => {
   const capacity = computeCapacity([anchor('Call', '10:00', undefined), anchor('Shift', '14:00', 120)])
   expect(capacity.unsizedAnchorCount).toBe(1)
-  // The sized anchor's own duration is still known...
   expect(capacity.anchorsMinutes).toBe(120)
-  // ...but nothing about free time is asserted, because the call's real
-  // length is unknown and it might run through what looks like a gap.
   expect(capacity.freeMinutes).toBeNull()
   expect(capacity.gaps).toEqual([])
   expect(capacity.overMinutes).toBeNull()
@@ -254,9 +282,9 @@ test('an empty day produces no capacity line at all', () => {
   expect(formatCapacityLine(computeCapacity([]))).toBeNull()
 })
 
-test('a fully packed calendar day says so in plain words, not "0 gaps"', () => {
-  const capacity = computeCapacity([anchor('Whole day', '00:00', DAY_MINUTES)])
-  expect(formatCapacityLine(capacity)).toBe('Anchors take 24h. No free time left today.')
+test('a window entirely filled by anchors says so in plain words, not "0 gaps"', () => {
+  const capacity = computeCapacity([anchor('Whole window', '07:00', WINDOW_MINUTES)])
+  expect(formatCapacityLine(capacity)).toBe('Anchors take 16h. No free time left today.')
 })
 
 test('floats only, with no anchors, reports the float total with no free-time claim', () => {
@@ -280,28 +308,28 @@ test('a single unsized float uses the singular', () => {
 })
 
 test('anchors with no floats at all say nothing about floats', () => {
-  const tasks = [anchor('Shift', '06:00', 240), anchor('Gym', '11:30', 60)]
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60)]
   const line = formatCapacityLine(computeCapacity(tasks))
   expect(line).not.toMatch(/float/i)
 })
 
 test('a single gap uses the singular word "gap"', () => {
-  const capacity = computeCapacity([anchor('Early shift', '00:00', 120)])
+  const capacity = computeCapacity([anchor('Early start', '07:00', 120)])
   expect(formatCapacityLine(capacity)).toMatch(/across 1 gap\./)
   expect(formatCapacityLine(capacity)).not.toMatch(/1 gaps/)
 })
 
 test('never uses a warning word for the over case', () => {
-  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '15:00', 60), float('Errand', 1300)]
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 800)]
   const line = formatCapacityLine(computeCapacity(tasks))
   expect(line).toMatch(/you are/i)
   expect(line).not.toMatch(/warning|danger|alert|fail|!/i)
 })
 
 test('being over is stated plainly, with the word about only on the floats estimate', () => {
-  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '15:00', 60), float('Errand', 1200)]
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 700)]
   const line = formatCapacityLine(computeCapacity(tasks))
-  expect(line).toBe('Anchors take 5h. Free: 19h across 3 gaps. Floats need about 20h. You are 1h over.')
+  expect(line).toBe('Anchors take 5h. Free: 11h across 3 gaps. Floats need about 11h40. You are 40 min over.')
 })
 
 // --- parseMinutesInput ---------------------------------------------------------

@@ -335,7 +335,7 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
       '2026-09-01': {
         date: '2026-09-01',
         tasks: [
-          { id: 'shift', title: 'Shift', done: false, time: '06:00', minutes: 240 },
+          { id: 'shift', title: 'Shift', done: false, time: '07:00', minutes: 240 },
           { id: 'gym', title: 'Gym', done: false, time: '11:30', minutes: 60 },
           { id: 'call', title: 'Call', done: false, time: '14:00', minutes: 30 },
           { id: 'dinner', title: 'Dinner prep', done: false, time: '17:20', minutes: 40 },
@@ -348,11 +348,11 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(
-    screen.getByText('Anchors take 6h10. Free: 17h50 across 5 gaps. Floats need about 5h50.'),
+    screen.getByText('Anchors take 6h10. Free: 9h50 across 4 gaps. Floats need about 5h50.'),
   ).toBeInTheDocument()
 })
 
-test('a mid-day shift leaves real evening free time, not a false "no free time" claim', () => {
+test('a mid-day shift leaves real free time within the window, not a false "no free time" claim', () => {
   actions.resetForTests({
     ...defaultData(),
     days: {
@@ -363,7 +363,7 @@ test('a mid-day shift leaves real evening free time, not a false "no free time" 
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText('Anchors take 12h. Free: 12h across 2 gaps.')).toBeInTheDocument()
+  expect(screen.getByText('Anchors take 12h. Free: 4h across 2 gaps.')).toBeInTheDocument()
   expect(screen.queryByText(/no free time/i)).not.toBeInTheDocument()
 })
 
@@ -382,7 +382,9 @@ test('when floats exceed free time, the line states it plainly with no embedded 
     },
   })
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText('Anchors take 18h. Free: 6h across 1 gap. Floats need about 7h. You are 1h over.')).toBeInTheDocument()
+  // The shift runs 00:00-18:00; only the 07:00-18:00 portion falls inside
+  // the 07:00-23:00 window, leaving 18:00-23:00 (5h) free.
+  expect(screen.getByText('Anchors take 11h. Free: 5h across 1 gap. Floats need about 7h. You are 2h over.')).toBeInTheDocument()
   // The capacity line itself carries no button - it only ever states the arithmetic.
   expect(container.querySelector('.capacity-line button')).toBeNull()
 })
@@ -401,7 +403,26 @@ test('the capacity line never uses an alarming word for the over case', () => {
     },
   })
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByText(/you are/i)).toBeInTheDocument()
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
+})
+
+test('a night-type day uses the night window instead of the default one', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'night',
+        tasks: [{ id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // Only the 22:00-24:00 portion of the shift falls inside the night
+  // window (13:00-24:00); the default 07:00-23:00 window would have
+  // clipped it to just one hour instead of two.
+  expect(screen.getByText('Anchors take 2h. Free: 9h across 1 gap.')).toBeInTheDocument()
 })
 
 test('each float offers its own push-to-tomorrow control, so the owner picks which one moves', async () => {

@@ -41,7 +41,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       : `${score.done} of ${score.total} core tasks done`
     : undefined
 
-  const capacity = computeCapacity(day?.tasks ?? [])
+  const capacity = computeCapacity(day?.tasks ?? [], day?.dayType)
   const capacityLine = formatCapacityLine(capacity)
 
   function handleAdd() {
