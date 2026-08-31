@@ -34,6 +34,8 @@ export function TemplatesView() {
       color: t.color,
       blocks: t.blocks.map(b => ({ time: b.time ?? '', title: b.title })),
     })
+    setBlockTime('')
+    setBlockTitle('')
   }
 
   function addBlock() {
@@ -71,6 +73,14 @@ export function TemplatesView() {
       actions.addTemplate({ name: draft.name.trim(), color: draft.color, blocks })
     }
     setDraft(null)
+    setBlockTime('')
+    setBlockTitle('')
+  }
+
+  function cancel() {
+    setDraft(null)
+    setBlockTime('')
+    setBlockTitle('')
   }
 
   return (
@@ -78,7 +88,14 @@ export function TemplatesView() {
       <div className="templates-header">
         <h2>Templates</h2>
         {!draft && (
-          <button className="primary" onClick={() => setDraft(emptyDraft())}>
+          <button
+            className="primary"
+            onClick={() => {
+              setDraft(emptyDraft())
+              setBlockTime('')
+              setBlockTitle('')
+            }}
+          >
             New template
           </button>
         )}
@@ -96,6 +113,7 @@ export function TemplatesView() {
               <button
                 key={color}
                 aria-label={`Color ${color}`}
+                aria-pressed={draft.color === color}
                 className={draft.color === color ? 'swatch selected' : 'swatch'}
                 style={{ background: color }}
                 onClick={() => setDraft({ ...draft, color })}
@@ -130,7 +148,7 @@ export function TemplatesView() {
           </div>
           <div className="row">
             <button className="primary" onClick={save}>Save template</button>
-            <button onClick={() => setDraft(null)}>Cancel</button>
+            <button onClick={cancel}>Cancel</button>
           </div>
         </div>
       )}
@@ -149,7 +167,7 @@ export function TemplatesView() {
                 {t.blocks.length} {t.blocks.length === 1 ? 'block' : 'blocks'}
               </span>
             </div>
-            <button onClick={() => startEdit(t)}>Edit</button>
+            <button aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>Edit</button>
             <button aria-label={`Delete ${t.name}`} onClick={() => actions.deleteTemplate(t.id)}>
               Delete
             </button>
