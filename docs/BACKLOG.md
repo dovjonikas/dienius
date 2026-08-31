@@ -1,6 +1,6 @@
 # Dienius - backlog after the MVP
 
-> Written 2026-08-31 from a full review of the repo against `planner-app-brief.md`.
+> Written 2026-08-31 from a full review of the repo against the original product brief.
 > Ordered by what the app is missing to BE the thing described in the brief, not by effort.
 > Themes have their own spec: `docs/THEMES.md`.
 
@@ -57,12 +57,12 @@ origin server killed outright. Rebuilding after a content change produced a new 
 `registration.update()` against the running tab installed the new worker, purged the old cache down
 to one entry, and reloaded the page onto the new version with no user action.
 
-## Tier 1 - without these it is not Dienius yet
-
-**README with screenshots.** There is no README. This is a public portfolio repo - an employer opens
-it and sees nothing. This single file carries more weight than any feature.
-Build: what it is, why it exists, screenshots light and dark, phone and desktop, stack, how to run,
-and the reasoning behind the local-first choice.
+**README, LICENSE, and decisions doc.** `README.md` covers what the app is, a live demo link,
+screenshots (light and dark, desktop and phone) in `docs/screenshots/`, the features as they behave
+for a person, the reasoning behind the design choices, the stack, and how to run and test it.
+`LICENSE` is MIT. `docs/DECISIONS.md` explains the same choices for a reviewer instead of a user -
+why localStorage, why no accounts, why no streaks, why templates instead of recurring tasks, why a
+hand-rolled service worker - including the costs, not just the upside.
 
 ## Tier 2 - brief features not built yet
 
@@ -96,21 +96,14 @@ Build: validate and normalise time input, visually separate anchored items from 
 
 ## Tier 4 - the portfolio layer
 
-- LICENSE (MIT).
 - GitHub repo description and topics: "Dienius - decision-free day planner PWA".
-- Live demo link at the top of the README.
-- Screenshots: light and dark, phone and desktop.
-- `docs/DECISIONS.md` - why localStorage, why no accounts, why no streaks. Written for the person
-  reviewing the repo, not for the user.
 
 ## Suggested order for the next session
 
 1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. README with screenshots, plus LICENSE
-3. Day types and core tasks
-4. If-then board
-5. Year strip
-6. Debt clearing from Tier 3
+2. Day types and core tasks
+3. If-then board
+4. Year strip
+5. Debt clearing from Tier 3
 
-Items 1 and 2 turn a working todo into the product the brief describes and into something worth
-showing. The rest are features and hygiene.
+Item 1 turns a working todo into the product the brief describes. The rest are features and hygiene.
