@@ -202,12 +202,19 @@ test('deleting a template after stamping it does not change the day type already
   expect(getData().days['2026-09-01'].dayType).toBe('shift')
 })
 
-test('deleteTemplate removes the template but keeps stamped days', () => {
+test('deleteTemplate removes the template but keeps stamped days, templateId included', () => {
+  // A stamped day genuinely happened - deleting the template it was stamped
+  // from does not undo that. templateId is left dangling on purpose rather
+  // than cleared: every place that reads it (DayView, CalendarView,
+  // yearGrid) already resolves a missing template to "no template" instead
+  // of throwing, so clearing the reference would only erase real history to
+  // satisfy call sites that already handle its absence correctly.
   const t = actions.addTemplate({ name: 'X', color: '#f9d48a', blocks: [] })
   actions.stamp({ '2026-09-01': t.id })
   actions.deleteTemplate(t.id)
   expect(getData().templates).toHaveLength(0)
   expect(getData().days['2026-09-01']).toBeDefined()
+  expect(getData().days['2026-09-01'].templateId).toBe(t.id)
 })
 
 test('state persists to localStorage', () => {

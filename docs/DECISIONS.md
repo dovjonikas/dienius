@@ -123,6 +123,27 @@ as required, so it can sit undone without moving a shift day's score at all. Tha
 limitation of what "core" can express, not just a missing convenience, and it is tracked in
 `BACKLOG.md` to revisit once a real month of shift days shows whether it matters in practice.
 
+## A stamped day outlives its template
+
+Deleting a template does not touch any day it was already stamped onto. `deleteTemplate` in
+`src/lib/store.ts` only removes the template from the list - `DayPlan.templateId` on a day stamped
+from it is left exactly as it was, now pointing at a template that no longer exists.
+
+This follows the same reasoning as `dayType` and `core`: both are copied onto the day at the moment
+of stamping rather than looked up live, specifically so that editing or deleting a template later
+cannot silently rewrite what already happened. Clearing `templateId` on delete would break that
+consistency for no real gain - a stamped day is a fact about a date, not a live pointer that should
+go stale-safe the moment its source is gone. The alternative once considered - clearing the
+reference so nothing has to guard against it - was rejected because a stamped day earning a blank
+slate on deletion, while its tasks, its color history, and its score all stay put, would be the odd
+one out rather than the consistent choice.
+
+The cost is that every place that reads `templateId` - `DayView`, `CalendarView`,
+`src/widgets/year-strip/yearGrid.ts` - has to treat a template lookup that comes back empty as
+"no template" rather than assuming it always resolves. All three already did, before this was ever
+written down: a dangling `templateId` degrades to an uncolored, unlabeled day rather than crashing,
+which is pinned by tests in `store.test.ts`, `DayView.test.tsx`, and `yearGrid.test.ts`.
+
 ## Templates instead of recurring tasks
 
 Most planners represent a repeating commitment as a recurring task: "every weekday, 09:00, standup."
