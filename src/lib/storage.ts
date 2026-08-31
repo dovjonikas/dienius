@@ -8,6 +8,10 @@ const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 // written before it existed still gets it.
 const DEFAULT_ENABLED_WIDGETS = ['day-plan', 'if-then']
 
+// Also duplicated, deliberately and minimally, in the pre-paint script in
+// index.html - that script reads settings.theme straight out of this key
+// before React mounts, so it has to know the key and that one field's shape
+// on its own. Change either here and check the other still matches.
 export const STORAGE_KEY = 'dienius:data'
 
 export function defaultData(): AppData {
@@ -156,12 +160,33 @@ function normalizeLoaded(data: AppData, wasMigrated: boolean): AppData {
   }
 }
 
+// Reads settings.theme out of a payload that has already failed full
+// validation, without requiring anything else in it to be valid. Exists
+// because the pre-paint script in index.html makes this exact same narrow
+// read of raw storage before React ever mounts: it only ever looks at
+// settings.theme, so if a payload has a valid theme but something else
+// wrong with it - a malformed template, say - the script commits to that
+// theme on the very first paint. If loadData() then discarded the whole
+// payload and defaulted to light the normal way, the page would revert
+// right after mounting - a dark flash immediately followed by a light one,
+// worse than the flash this pair of fixes exists to prevent. Salvaging just
+// the theme here keeps the two in agreement without loadData() having to
+// trust anything else about a payload it has already rejected.
+function salvageTheme(x: unknown): Settings['theme'] | undefined {
+  if (!isRecord(x) || !isRecord(x.settings)) return undefined
+  return x.settings.theme === 'light' || x.settings.theme === 'dark' ? x.settings.theme : undefined
+}
+
 export function loadData(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultData()
     const parsed: unknown = JSON.parse(raw)
-    if (!validate(parsed)) return defaultData()
+    if (!validate(parsed)) {
+      const theme = salvageTheme(parsed)
+      const fallback = defaultData()
+      return theme ? { ...fallback, settings: { ...fallback.settings, theme } } : fallback
+    }
     return normalizeLoaded(parsed, 'ifThens' in parsed)
   } catch {
     return defaultData()

@@ -10,6 +10,21 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+test('opening the new-template form moves focus into the name field', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  expect(screen.getByPlaceholderText('Template name')).toHaveFocus()
+})
+
+test('opening an existing template for editing moves focus into the name field', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Morning', color: '#f9d48a', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Morning' }))
+  expect(screen.getByPlaceholderText('Template name')).toHaveFocus()
+})
+
 test('creates a template with a block', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
@@ -166,6 +181,33 @@ test('switching a template from shift back to full hides the core toggles withou
   expect(getData().templates[0].type).toBe('full')
   // The block itself, and its core flag, are untouched by the type switch.
   expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Clock in', core: true })
+})
+
+test('editing a template keeps each surviving block\'s id and mints a fresh one only for a block added during the edit', async () => {
+  const user = userEvent.setup()
+  const created = actions.addTemplate({
+    name: 'Morning',
+    color: '#f9d48a',
+    blocks: [
+      { time: '08:00', title: 'Wake up' },
+      { time: '08:30', title: 'Shower' },
+    ],
+  })
+  const [wakeId, showerId] = created.blocks.map(b => b.id)
+
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Morning' }))
+  await user.type(screen.getByPlaceholderText('09:00'), '09:00')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Commute')
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const saved = getData().templates[0]
+  expect(saved.blocks.find(b => b.title === 'Wake up')?.id).toBe(wakeId)
+  expect(saved.blocks.find(b => b.title === 'Shower')?.id).toBe(showerId)
+  const commuteId = saved.blocks.find(b => b.title === 'Commute')?.id
+  expect(commuteId).toBeTruthy()
+  expect([wakeId, showerId]).not.toContain(commuteId)
 })
 
 test('block-add fields do not leak between editing sessions', async () => {

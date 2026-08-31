@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { actions, getData } from './store'
+import { actions, getData, subscribe } from './store'
 import { defaultData, loadData, STORAGE_KEY } from './storage'
 import { dayScore } from '../widgets/day-plan/score'
 
@@ -22,6 +22,20 @@ test('toggleTask flips done', () => {
   expect(getData().days['2026-09-01'].tasks[0].done).toBe(true)
   actions.toggleTask('2026-09-01', id)
   expect(getData().days['2026-09-01'].tasks[0].done).toBe(false)
+})
+
+test('deleteTask removes only the matching task, leaving the rest of the day untouched', () => {
+  actions.addTask('2026-09-01', 'Keep')
+  actions.addTask('2026-09-01', 'Remove me')
+  const toRemove = getData().days['2026-09-01'].tasks[1].id
+  actions.deleteTask('2026-09-01', toRemove)
+  const remaining = getData().days['2026-09-01'].tasks
+  expect(remaining.map(t => t.title)).toEqual(['Keep'])
+})
+
+test('deleteTask on a day with no plan does not throw, and leaves no task behind', () => {
+  expect(() => actions.deleteTask('2026-09-01', 'nothing-here')).not.toThrow()
+  expect(getData().days['2026-09-01']?.tasks ?? []).toEqual([])
 })
 
 test('rolloverUnfinished moves unfinished tasks to the next day', () => {
@@ -202,12 +216,37 @@ test('deleting a template after stamping it does not change the day type already
   expect(getData().days['2026-09-01'].dayType).toBe('shift')
 })
 
-test('deleteTemplate removes the template but keeps stamped days', () => {
+test('updateTemplate replaces the template with the same id in place, leaving other templates untouched', () => {
+  const a = actions.addTemplate({ name: 'A', color: '#f9d48a', blocks: [] })
+  const b = actions.addTemplate({ name: 'B', color: '#a7c4f5', blocks: [] })
+  actions.updateTemplate({ ...a, name: 'A renamed', color: '#c9b3f0' })
+  const templates = getData().templates
+  expect(templates).toHaveLength(2)
+  expect(templates.find(t => t.id === a.id)).toMatchObject({ name: 'A renamed', color: '#c9b3f0' })
+  expect(templates.find(t => t.id === b.id)).toMatchObject({ name: 'B', color: '#a7c4f5' })
+})
+
+test('updateTemplate with an id that matches nothing leaves every template as it was', () => {
+  const a = actions.addTemplate({ name: 'A', color: '#f9d48a', blocks: [] })
+  actions.updateTemplate({ id: 'no-such-id', name: 'Ghost', color: '#c9b3f0', blocks: [] })
+  const templates = getData().templates
+  expect(templates).toHaveLength(1)
+  expect(templates[0]).toMatchObject({ id: a.id, name: 'A' })
+})
+
+test('deleteTemplate removes the template but keeps stamped days, templateId included', () => {
+  // A stamped day genuinely happened - deleting the template it was stamped
+  // from does not undo that. templateId is left dangling on purpose rather
+  // than cleared: every place that reads it (DayView, CalendarView,
+  // yearGrid) already resolves a missing template to "no template" instead
+  // of throwing, so clearing the reference would only erase real history to
+  // satisfy call sites that already handle its absence correctly.
   const t = actions.addTemplate({ name: 'X', color: '#f9d48a', blocks: [] })
   actions.stamp({ '2026-09-01': t.id })
   actions.deleteTemplate(t.id)
   expect(getData().templates).toHaveLength(0)
   expect(getData().days['2026-09-01']).toBeDefined()
+  expect(getData().days['2026-09-01'].templateId).toBe(t.id)
 })
 
 test('state persists to localStorage', () => {
@@ -249,4 +288,64 @@ test('deleteIfThen removes only the matching entry', () => {
   actions.deleteIfThen(a.id)
   expect(getData().ifThens).toHaveLength(1)
   expect(getData().ifThens[0].trigger).toBe('Trigger B')
+})
+
+test('setTheme updates the theme and leaves the rest of settings untouched', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'] },
+  })
+  actions.setTheme('dark')
+  expect(getData().settings.theme).toBe('dark')
+  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  actions.setTheme('light')
+  expect(getData().settings.theme).toBe('light')
+})
+
+test('importData replaces the whole store with the imported payload', () => {
+  actions.addTask('2026-09-01', 'Will be replaced')
+  const backup = defaultData()
+  backup.templates.push({ id: 't1', name: 'Imported', color: '#a7c4f5', blocks: [] })
+  actions.importData(JSON.stringify(backup))
+  expect(getData().templates).toHaveLength(1)
+  expect(getData().templates[0].name).toBe('Imported')
+  // The prior day's task is gone - import replaces the store, it does not merge.
+  expect(getData().days).toEqual({})
+})
+
+test('importData throws on an invalid payload and leaves the current store completely untouched', () => {
+  actions.addTask('2026-09-01', 'Must survive a bad import')
+  expect(() => actions.importData('not json')).toThrow('Invalid Dienius backup file')
+  expect(getData().days['2026-09-01'].tasks[0].title).toBe('Must survive a bad import')
+})
+
+test('subscribe is notified on every commit, and the returned function unsubscribes it', () => {
+  let calls = 0
+  const unsubscribe = subscribe(() => {
+    calls++
+  })
+  actions.addTask('2026-09-01', 'First')
+  expect(calls).toBe(1)
+  actions.addTask('2026-09-01', 'Second')
+  expect(calls).toBe(2)
+
+  unsubscribe()
+  actions.addTask('2026-09-01', 'Third')
+  expect(calls).toBe(2)
+})
+
+test('unsubscribing one listener does not affect another still subscribed', () => {
+  let a = 0
+  let b = 0
+  const unsubscribeA = subscribe(() => {
+    a++
+  })
+  subscribe(() => {
+    b++
+  })
+  actions.addTask('2026-09-01', 'One')
+  unsubscribeA()
+  actions.addTask('2026-09-01', 'Two')
+  expect(a).toBe(1)
+  expect(b).toBe(2)
 })
