@@ -155,6 +155,46 @@ export const actions = {
     }))
   },
 
+  /**
+   * Gives a float a `time`, which is what makes it an anchor - see
+   * docs/TIMELINE.md section 5 and `capacity.ts`'s own definition of
+   * `isAnchor`. This is the tap-a-gap path today; step 7's drag will call
+   * the same action rather than invent a second way to place a float.
+   * Refuses a task that already has a time - placing only ever moves a
+   * float out of the tray, never re-times something already anchored, so a
+   * stray double-tap on a race with another update cannot silently move an
+   * anchor out from under whatever is already showing for it. Refuses
+   * silently (returning false) exactly like `pushTask` does for its own
+   * guard, rather than throwing on a state the UI should not have offered
+   * in the first place.
+   */
+  placeFloat(date: string, taskId: string, time: string): boolean {
+    const day = data.days[date]
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task || task.time !== undefined) return false
+    commit(withDay(date, { ...day!, tasks: day!.tasks.map(t => (t.id === taskId ? { ...t, time } : t)) }))
+    return true
+  },
+
+  /**
+   * Clears a task's `time`, returning it to the tray as a float - the undo
+   * for `placeFloat` above, and the same action step 7's drag-back-to-tray
+   * will call. Nothing else about the task changes: its size, if it has
+   * one, survives being placed and undone, because undo is meant to be
+   * exactly reversible, not a second push. Refuses a task with no time to
+   * clear, the mirror image of `placeFloat`'s own guard.
+   */
+  unanchorTask(date: string, taskId: string): boolean {
+    const day = data.days[date]
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task || task.time === undefined) return false
+    commit(withDay(date, {
+      ...day!,
+      tasks: day!.tasks.map(t => (t.id === taskId ? { ...t, time: undefined } : t)),
+    }))
+    return true
+  },
+
   addTemplate(input: {
     name: string
     color: string
