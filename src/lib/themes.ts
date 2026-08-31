@@ -246,11 +246,174 @@ const SKETCHBOOK: ThemePreset = {
 }
 
 /**
- * The starter set. Three presets, each shipping both modes, is enough to
- * prove the architecture - the gallery, the override panel and the
- * remaining nine presets from docs/THEMES.md section 6 are later phases.
+ * Graph - the engineer's pad. Cool paper, a fine cyan grid, sharp corners,
+ * mono type throughout headings and body both - the one preset where the
+ * task list itself reads in a monospaced technical face, not just labels.
+ * The unexpected touch: --shadow carries a crisp two-line hairline (a flat
+ * outline plus a second offset rule, both at the border colour, zero blur)
+ * instead of a soft drop shadow - a drafting ruler's double line under
+ * every card, not a shadow at all. Both modes ship: the light room is a
+ * drafting table, the dark one a CAD screen at night, and the identity
+ * (grid, sharp corners, mono, the double hairline) survives the flip
+ * intact rather than being invented twice.
  */
-export const PRESETS: ThemePreset[] = [SLATE, SKETCHBOOK]
+const GRAPH: ThemePreset = {
+  id: 'graph',
+  name: 'Graph',
+  modes: ['light', 'dark'],
+  light: {
+    ruleStyle: 'squares',
+    tokens: {
+      bg: '#eef3f5',
+      surface: '#ffffff',
+      rule: 'rgba(0, 130, 160, 0.16)',
+      ruleSize: '20px',
+      grain: '0',
+      vignette: '0%',
+      border: '#c7d6da',
+      margin: '#00000000',
+      text: '#1a2226',
+      muted: '#5c6b70',
+      accent: '#0e7a90',
+      accentDim: '#bfe4ea',
+      mark: '#ffcf3d',
+      danger: '#c1443a',
+      good: '#2f8f5b',
+      fontDisplay: SYSTEM_MONO,
+      fontBody: SYSTEM_MONO,
+      fontMono: SYSTEM_MONO,
+      radius: '4px',
+      edge: SHARP_EDGE,
+      shadow: '0 0 0 1px #c7d6da, 0 3px 0 #c7d6da',
+    },
+  },
+  dark: {
+    ruleStyle: 'squares',
+    tokens: {
+      bg: '#10161a',
+      surface: '#161e23',
+      rule: 'rgba(70, 200, 220, 0.14)',
+      ruleSize: '20px',
+      grain: '0',
+      vignette: '0%',
+      border: '#2b3940',
+      margin: '#00000000',
+      text: '#e6f1f3',
+      muted: '#8fa3aa',
+      accent: '#3fd0e8',
+      accentDim: '#1f4650',
+      mark: '#ffcf3d',
+      danger: '#e2776f',
+      good: '#6fc98a',
+      fontDisplay: SYSTEM_MONO,
+      fontBody: SYSTEM_MONO,
+      fontMono: SYSTEM_MONO,
+      radius: '4px',
+      edge: SHARP_EDGE,
+      shadow: '0 0 0 1px #2b3940, 0 3px 0 #2b3940',
+    },
+  },
+}
+
+/**
+ * Legal pad - warm yellow paper, horizontal blue rules, dark ink, a red
+ * margin line down the left side. Light only: a legal pad is yellow paper
+ * by definition, and a "dark legal pad" is not a real object anyone would
+ * recognise, so no dark variant was built rather than inventing one to be
+ * symmetrical. The unexpected touch is the margin rule itself - the new
+ * `margin` surface token, drawn as a single vertical stripe at a fixed
+ * offset in body::before/.theme-card-room::before, the one detail this
+ * phase actually needed a new token for rather than a value choice on an
+ * existing one.
+ */
+const LEGAL_PAD: ThemePreset = {
+  id: 'legal-pad',
+  name: 'Legal pad',
+  modes: ['light'],
+  light: {
+    ruleStyle: 'lines',
+    tokens: {
+      bg: '#f6e9a4',
+      surface: '#fbf3c0',
+      rule: 'rgba(60, 90, 170, 0.32)',
+      ruleSize: '30px',
+      grain: '0.02',
+      vignette: '5%',
+      border: '#e0d190',
+      margin: '#d1483c',
+      text: '#2a2410',
+      muted: '#7a6f45',
+      accent: '#2c4fa0',
+      accentDim: '#c3d0ee',
+      mark: '#f2a93c',
+      danger: '#b3392b',
+      good: '#3f7d43',
+      fontDisplay: SYSTEM_SERIF_DISPLAY,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '6px',
+      edge: SHARP_EDGE,
+      shadow: '0 1px 2px rgba(40, 30, 0, 0.12)',
+    },
+  },
+}
+
+/**
+ * Moleskine - unruled ivory, no grid, a serif display face, generous
+ * roominess. The calm one. Light only: the identity is specifically ivory
+ * paper under a leather cover, not a dark-mode room, and a warm-brown
+ * "dark Moleskine" tried in the browser read as muddy rather than calm -
+ * see the phase report for that call. The unexpected touch: --shadow
+ * carries two layers, a tight warm contact line plus a soft warm ambient
+ * glow, instead of one flat drop shadow - a page lifting slightly off the
+ * desk, not a component with a shadow bolted on.
+ */
+const MOLESKINE: ThemePreset = {
+  id: 'moleskine',
+  name: 'Moleskine',
+  modes: ['light'],
+  light: {
+    ruleStyle: 'none',
+    tokens: {
+      bg: '#f3ede0',
+      surface: '#faf6ec',
+      rule: '#00000000',
+      ruleSize: '28px',
+      grain: '0.015',
+      vignette: '4%',
+      border: '#e4dcc8',
+      margin: '#00000000',
+      text: '#2e2a22',
+      muted: '#948a72',
+      accent: '#8a5a34',
+      accentDim: '#e3d2bd',
+      mark: '#e8b34a',
+      danger: '#a4483a',
+      good: '#5f7d4a',
+      fontDisplay: SYSTEM_SERIF_DISPLAY,
+      fontBody: SYSTEM_SANS,
+      fontMono: SYSTEM_MONO,
+      radius: '14px',
+      edge: SOFT_EDGE,
+      shadow: '0 1px 2px rgba(120, 90, 50, 0.15), 0 10px 24px rgba(120, 90, 50, 0.12)',
+    },
+  },
+}
+
+/**
+ * The full starter set from docs/THEMES.md section 6 - Slate and Sketchbook
+ * from the architecture phase, plus the nine remaining presets this phase
+ * adds. Every entry here is real gallery data: adding one more later needs
+ * no change to the gallery, the override panel, or the contrast gate, all
+ * three of which already iterate this array rather than naming presets.
+ */
+export const PRESETS: ThemePreset[] = [
+  SLATE,
+  SKETCHBOOK,
+  GRAPH,
+  LEGAL_PAD,
+  MOLESKINE,
+]
 
 /** The preset a fresh install, or a payload with an unknown presetId, gets. */
 export const DEFAULT_PRESET_ID = 'slate'

@@ -110,6 +110,50 @@
               radius: '10px', edge: HAND_DRAWN_EDGE, shadow: '0 2px 6px rgba(60, 40, 10, 0.18)',
             } },
           },
+          {
+            id: 'graph',
+            modes: ['light', 'dark'],
+            light: { ruleStyle: 'squares', tokens: {
+              bg: '#eef3f5', surface: '#ffffff', rule: 'rgba(0, 130, 160, 0.16)', ruleSize: '20px',
+              grain: '0', vignette: '0%', border: '#c7d6da', margin: '#00000000',
+              text: '#1a2226', muted: '#5c6b70', accent: '#0e7a90', accentDim: '#bfe4ea',
+              mark: '#ffcf3d', danger: '#c1443a', good: '#2f8f5b',
+              fontDisplay: SYSTEM_MONO, fontBody: SYSTEM_MONO, fontMono: SYSTEM_MONO,
+              radius: '4px', edge: SHARP_EDGE, shadow: '0 0 0 1px #c7d6da, 0 3px 0 #c7d6da',
+            } },
+            dark: { ruleStyle: 'squares', tokens: {
+              bg: '#10161a', surface: '#161e23', rule: 'rgba(70, 200, 220, 0.14)', ruleSize: '20px',
+              grain: '0', vignette: '0%', border: '#2b3940', margin: '#00000000',
+              text: '#e6f1f3', muted: '#8fa3aa', accent: '#3fd0e8', accentDim: '#1f4650',
+              mark: '#ffcf3d', danger: '#e2776f', good: '#6fc98a',
+              fontDisplay: SYSTEM_MONO, fontBody: SYSTEM_MONO, fontMono: SYSTEM_MONO,
+              radius: '4px', edge: SHARP_EDGE, shadow: '0 0 0 1px #2b3940, 0 3px 0 #2b3940',
+            } },
+          },
+          {
+            id: 'legal-pad',
+            modes: ['light'],
+            light: { ruleStyle: 'lines', tokens: {
+              bg: '#f6e9a4', surface: '#fbf3c0', rule: 'rgba(60, 90, 170, 0.32)', ruleSize: '30px',
+              grain: '0.02', vignette: '5%', border: '#e0d190', margin: '#d1483c',
+              text: '#2a2410', muted: '#7a6f45', accent: '#2c4fa0', accentDim: '#c3d0ee',
+              mark: '#f2a93c', danger: '#b3392b', good: '#3f7d43',
+              fontDisplay: SYSTEM_SERIF_DISPLAY, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
+              radius: '6px', edge: SHARP_EDGE, shadow: '0 1px 2px rgba(40, 30, 0, 0.12)',
+            } },
+          },
+          {
+            id: 'moleskine',
+            modes: ['light'],
+            light: { ruleStyle: 'none', tokens: {
+              bg: '#f3ede0', surface: '#faf6ec', rule: '#00000000', ruleSize: '28px',
+              grain: '0.015', vignette: '4%', border: '#e4dcc8', margin: '#00000000',
+              text: '#2e2a22', muted: '#948a72', accent: '#8a5a34', accentDim: '#e3d2bd',
+              mark: '#e8b34a', danger: '#a4483a', good: '#5f7d4a',
+              fontDisplay: SYSTEM_SERIF_DISPLAY, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO,
+              radius: '14px', edge: SOFT_EDGE, shadow: '0 1px 2px rgba(120, 90, 50, 0.15), 0 10px 24px rgba(120, 90, 50, 0.12)',
+            } },
+          },
         ]
 
         // Mirrors findPreset in src/lib/themes.ts exactly: a linear search
