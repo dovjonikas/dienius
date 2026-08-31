@@ -187,14 +187,20 @@ themes that are the same layout in a different hue.
 
 ## 9. Build order
 
-1. Refactor tokens into the three layers and move the current light/dark into two presets.
-2. `src/lib/themes.ts` with the preset type and the first three presets as data.
-3. Resolution pipeline plus the inline pre-paint script in `index.html`.
-4. Theme gallery in Settings with real miniature previews.
-5. Override panel with per-preset patches and reset.
-6. `theme-color` and manifest sync.
-7. The remaining presets.
-8. Contrast unit test over the preset array.
+1. [x] Refactor tokens into the three layers and move the current light/dark into two presets.
+2. [x] `src/lib/themes.ts` with the preset type and the first three presets as data.
+3. [x] Resolution pipeline plus the inline pre-paint script in `index.html`.
+4. [ ] Theme gallery in Settings with real miniature previews.
+5. [ ] Override panel with per-preset patches and reset.
+6. [ ] `theme-color` and manifest sync.
+7. [ ] The remaining presets.
+8. [x] Contrast unit test over the preset array.
+
+Steps 1, 2, 3 and 8 landed together as the architecture phase: the three-layer token structure,
+Slate and Sketchbook as data (both variants each), the full resolution pipeline including the
+pre-paint script, and the contrast check over the preset array. `theme-color` sync already existed
+before this phase and was updated to read the resolved `--bg` directly rather than a fixed
+light/dark lookup, but syncing the PWA manifest itself is still step 6, unstarted.
 
 Steps 1 to 4 are what makes it feel like a different app. Everything after is polish that can land
 across separate sessions.
