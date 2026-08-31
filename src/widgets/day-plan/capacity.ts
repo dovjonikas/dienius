@@ -1,5 +1,4 @@
 import type { Task } from '../../lib/types'
-import { MAX_PUSHES } from '../../lib/pushRules'
 
 /**
  * A task with `time` is an anchor - it genuinely occupies that stretch of
@@ -22,15 +21,19 @@ interface Interval {
   end: number
 }
 
-// An anchor with no minutes is not guessed at - see the rule in
-// docs/TIMELINE.md section 4. It still marks a real point in the day (it
-// has a `time`), so it is kept as a zero-width interval rather than
-// dropped: it contributes nothing to the occupied total, but it still sits
-// on the timeline and can still separate two gaps that would otherwise
-// have merged into one on either side of it.
+/** Minutes in one calendar day - the fixed window everything below measures against. */
+const DAY_MINUTES = 24 * 60
+
+// An anchor that runs past midnight (a night shift stamped as, say, "23:00"
+// for 480 minutes) is clamped to the end of this calendar day. capacity.ts
+// only ever sees one day's tasks at a time - a DayPlan has no notion of
+// tomorrow's - so "does today fit" can only honestly account for the part
+// of the anchor that falls within today. The remainder is tomorrow's own
+// capacity to compute, separately, the next time that day is viewed.
 function anchorInterval(task: Task): Interval {
   const start = timeToMinutes(task.time!)
-  return { start, end: start + (task.minutes ?? 0) }
+  const end = Math.min(DAY_MINUTES, start + task.minutes!)
+  return { start, end }
 }
 
 // Merges overlapping and back-to-back anchors into contiguous busy blocks,
@@ -52,7 +55,7 @@ function mergeIntervals(intervals: Interval[]): Interval[] {
   return merged
 }
 
-/** One free stretch of time between two anchor blocks. */
+/** One free stretch of time within the day, outside every sized anchor block. */
 export interface Gap {
   start: number
   end: number
@@ -60,21 +63,47 @@ export interface Gap {
 }
 
 /**
- * The result of comparing a day's anchors against its floats. Anchors and
- * free time are `null`, not zero, when there are no anchors at all - see
- * the window decision in docs/TIMELINE.md section 8. Zero is a real
- * answer ("no free time"); null means there is no window to measure in
- * the first place, and the two must never be confused.
+ * The result of comparing a day's anchors against its floats.
+ *
+ * `anchorsMinutes` and `freeMinutes` are `null`, not zero, only when there
+ * are no anchors at all - zero is a real answer ("no free time"); null
+ * means there is nothing to measure in the first place. When at least one
+ * anchor exists but its size is unknown, `freeMinutes` is also `null` -
+ * see `unsizedAnchorCount` below - because asserting a free-time figure
+ * around an anchor of unknown length would be a guess dressed up as
+ * arithmetic, which is exactly what this app refuses to do.
  */
 export interface Capacity {
+  /** Every task with a `time`, sized or not. */
+  anchorCount: number
+  /** Anchors with a `time` but no `minutes` - their true length is unknown. */
+  unsizedAnchorCount: number
+  /**
+   * Total occupied time from the anchors whose size is actually known,
+   * merged so overlapping ones are not double-counted. `null` only when
+   * `anchorCount` is 0. Can be a real number - including 0 - even when
+   * `unsizedAnchorCount` is greater than 0, if some anchors are sized and
+   * others are not.
+   */
   anchorsMinutes: number | null
+  /**
+   * Free stretches within the calendar day, outside every sized anchor
+   * block. Only ever populated when every anchor is sized - see
+   * `freeMinutes`.
+   */
   gaps: Gap[]
+  /**
+   * `null` when there are no anchors, or when any anchor's size is
+   * unknown - in either case there is no trustworthy free-time figure to
+   * report. Otherwise the total minutes left in the day once every sized
+   * anchor's occupied time is removed.
+   */
   freeMinutes: number | null
   floatsMinutes: number
   unsizedFloatCount: number
   /**
    * How far the floats exceed the free time, or 0 when they fit. `null`
-   * only when there is no window to compare against at all (no anchors).
+   * whenever `freeMinutes` is `null` - there is nothing to compare against.
    */
   overMinutes: number | null
 }
@@ -84,17 +113,22 @@ export interface Capacity {
  * no notion of "today" or the clock - the caller decides which day's
  * tasks to pass in.
  *
- * The window this measures against is the span from the earliest anchor's
- * start to the latest anchor's end, and nothing else - not a fixed waking
- * window, not a per-day-type setting. See docs/TIMELINE.md section 8 for
- * why: any other choice is either an invented constant that is wrong for
- * some real day (a fixed 07:00-23:00 is wrong for a night shift), or a
- * setting the owner would have to configure, which section 9 rules out.
- * A window derived purely from the day's own anchors needs no
- * configuration and degrades correctly on its own: one anchor produces a
- * window equal to its own span (zero free time, zero gaps, no special
- * case needed), and zero anchors produce no window at all, which is
- * reported as `null` rather than guessed at.
+ * The window free time is measured against is the calendar day itself -
+ * 00:00 to 24:00, always, for every day. Not a fixed waking window (any
+ * single clock range is wrong for someone's real day - 07:00-23:00 is
+ * wrong for a night shift), not something read off the day's type (still
+ * an invented number, just hidden behind a setting), and not the span
+ * between the earliest and latest anchor either: that shape looked
+ * config-free but was not honest - a single midday shift with real hours
+ * free before and after it reported "no free time," and a morning-only
+ * anchor silently ignored an entire afternoon and evening, because
+ * nothing outside the anchors' own span was ever considered. The full day
+ * is not an invented number - every day genuinely has 1440 minutes - so
+ * there is nothing to configure and nothing that can be wrong for anyone's
+ * schedule. It degrades correctly on its own: zero anchors mean the whole
+ * day is unclaimed, which is reported as `null` rather than a fabricated
+ * "24h free" (see `anchorCount` below), and a single anchor spanning the
+ * entire day correctly leaves nothing free with no special case needed.
  */
 export function computeCapacity(tasks: Task[]): Capacity {
   const anchors = tasks.filter(isAnchor)
@@ -104,22 +138,63 @@ export function computeCapacity(tasks: Task[]): Capacity {
   const unsizedFloatCount = floats.filter(t => t.minutes === undefined).length
 
   if (anchors.length === 0) {
-    return { anchorsMinutes: null, gaps: [], freeMinutes: null, floatsMinutes, unsizedFloatCount, overMinutes: null }
+    return {
+      anchorCount: 0,
+      unsizedAnchorCount: 0,
+      anchorsMinutes: null,
+      gaps: [],
+      freeMinutes: null,
+      floatsMinutes,
+      unsizedFloatCount,
+      overMinutes: null,
+    }
   }
 
-  const merged = mergeIntervals(anchors.map(anchorInterval))
+  const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
+  const unsizedAnchorCount = anchors.length - sizedAnchors.length
+  const merged = mergeIntervals(sizedAnchors.map(anchorInterval))
   const anchorsMinutes = merged.reduce((sum, block) => sum + (block.end - block.start), 0)
 
-  const gaps: Gap[] = []
-  for (let i = 1; i < merged.length; i++) {
-    const start = merged[i - 1].end
-    const end = merged[i].start
-    if (end > start) gaps.push({ start, end, minutes: end - start })
+  // At least one anchor's real length is unknown, so its true position on
+  // the timeline is unknown too - it might run through what would
+  // otherwise look like a free gap. Reporting a free-time figure here
+  // would be asserting something the app cannot actually verify, the same
+  // reasoning that already keeps an unsized float out of the float total
+  // rather than guessing it at zero.
+  if (unsizedAnchorCount > 0) {
+    return {
+      anchorCount: anchors.length,
+      unsizedAnchorCount,
+      anchorsMinutes,
+      gaps: [],
+      freeMinutes: null,
+      floatsMinutes,
+      unsizedFloatCount,
+      overMinutes: null,
+    }
   }
+
+  const gaps: Gap[] = []
+  let cursor = 0
+  for (const block of merged) {
+    if (block.start > cursor) gaps.push({ start: cursor, end: block.start, minutes: block.start - cursor })
+    cursor = Math.max(cursor, block.end)
+  }
+  if (cursor < DAY_MINUTES) gaps.push({ start: cursor, end: DAY_MINUTES, minutes: DAY_MINUTES - cursor })
+
   const freeMinutes = gaps.reduce((sum, gap) => sum + gap.minutes, 0)
   const overMinutes = Math.max(0, floatsMinutes - freeMinutes)
 
-  return { anchorsMinutes, gaps, freeMinutes, floatsMinutes, unsizedFloatCount, overMinutes }
+  return {
+    anchorCount: anchors.length,
+    unsizedAnchorCount: 0,
+    anchorsMinutes,
+    gaps,
+    freeMinutes,
+    floatsMinutes,
+    unsizedFloatCount,
+    overMinutes,
+  }
 }
 
 /**
@@ -149,17 +224,34 @@ export function formatDuration(minutes: number): string {
  * figures come from real clock times and are stated plainly. Being over
  * is stated as a fact, never as a warning: no red, no icon, no
  * exclamation mark, matching the same no-guilt principle as the day score.
+ *
+ * When any anchor's size is unknown, the line says so instead of stating a
+ * free-time figure it cannot back up - see `computeCapacity`. There is no
+ * "trim" action embedded here: this sentence only ever states the
+ * arithmetic. Choosing which float moves to tomorrow is offered on each
+ * float's own row instead, so the app never pre-selects it - see
+ * docs/TIMELINE.md section 8.
  */
 export function formatCapacityLine(capacity: Capacity): string | null {
   const sentences: string[] = []
 
-  if (capacity.anchorsMinutes !== null) {
-    sentences.push(`Anchors take ${formatDuration(capacity.anchorsMinutes)}.`)
-    if (capacity.gaps.length > 0) {
+  if (capacity.anchorCount > 0) {
+    const sizedAnchorCount = capacity.anchorCount - capacity.unsizedAnchorCount
+    if (sizedAnchorCount > 0) {
+      const unsizedNote = capacity.unsizedAnchorCount > 0 ? `, plus ${capacity.unsizedAnchorCount} unsized` : ''
+      sentences.push(`Anchors take ${formatDuration(capacity.anchorsMinutes!)}${unsizedNote}.`)
+    } else {
+      const word = capacity.unsizedAnchorCount === 1 ? 'anchor' : 'anchors'
+      sentences.push(`${capacity.unsizedAnchorCount} ${word} with no size yet.`)
+    }
+
+    if (capacity.unsizedAnchorCount > 0) {
+      sentences.push("Free time isn't known until every anchor has a size.")
+    } else if (capacity.gaps.length > 0) {
       const gapWord = capacity.gaps.length === 1 ? 'gap' : 'gaps'
       sentences.push(`Free: ${formatDuration(capacity.freeMinutes!)} across ${capacity.gaps.length} ${gapWord}.`)
     } else {
-      sentences.push('No free time between anchors.')
+      sentences.push('No free time left today.')
     }
   }
 
@@ -175,25 +267,6 @@ export function formatCapacityLine(capacity: Capacity): string | null {
   }
 
   return sentences.length > 0 ? sentences.join(' ') : null
-}
-
-/**
- * Picks the one float "trim" would move to tomorrow: the largest sized,
- * undone float that has not already reached the push bound. Largest,
- * because a single tap should close as much of the overage as it can.
- * Anchors are never eligible - trim only ever moves a float, never a
- * fixed commitment. Returns undefined when nothing is eligible, so the
- * caller knows to hide the trim action rather than offer one that would
- * either do nothing or silently exceed the push bound.
- */
-export function trimCandidate(tasks: Task[]): Task | undefined {
-  const eligible = tasks.filter(
-    t => !isAnchor(t) && !t.done && t.minutes !== undefined && (t.pushCount ?? 0) < MAX_PUSHES,
-  )
-  return eligible.reduce<Task | undefined>((largest, t) => {
-    if (!largest) return t
-    return (t.minutes ?? 0) > (largest.minutes ?? 0) ? t : largest
-  }, undefined)
 }
 
 /**
