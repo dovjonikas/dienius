@@ -703,8 +703,32 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   background: var(--surface);
 }
 
-.timeline-grid {
+/* The stacking context both the decorative grid and the real gap buttons
+   share, so one coordinate system - percent of the window, from
+   windowPercent - positions everything in both layers with no second
+   layout pass. See TimelineGrid.tsx's own comment for why gaps had to move
+   into a separate, non-hidden sibling rather than staying nested inside
+   the aria-hidden layer below. */
+.timeline-grid-layers {
   position: relative;
+}
+
+/* Hour marks and anchor blocks - unchanged from step 4, still aria-hidden
+   and still inert. pointer-events: none so this layer can visually sit
+   above or beside a gap button without ever swallowing the tap meant for
+   it - the two layers occupy the same box, but only .timeline-gaps below
+   is ever meant to catch a pointer. */
+.timeline-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The real, focusable gap layer step 5 adds - same box as .timeline-grid
+   above, sharing its coordinate system, but never hidden and never inert. */
+.timeline-gaps {
+  position: absolute;
+  inset: 0;
 }
 
 /* GUTTER_PX in TimelineGrid.tsx - kept in sync by hand, the same way this
@@ -738,18 +762,35 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* A gap is a real object, not blank space - see docs/TIMELINE.md section 5.
-   Not a button yet: step 5 adds the tap interaction. The dashed edge and
-   muted fill read as "not yet decided" rather than "occupied," so a gap
-   never competes visually with an anchor's own solid block. */
+   The one interactive element this grid draws: a real button, styled to
+   reset the browser's own button chrome. The dashed edge and muted fill
+   read as "not yet decided" rather than "occupied," so a gap never
+   competes visually with an anchor's own solid block. */
 .timeline-gap {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 2px 8px 2px 0;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
-  margin: 2px 8px 2px 0;
   background: color-mix(in srgb, var(--border) 35%, transparent);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timeline-gap:hover { border-color: var(--muted); }
+
+.timeline-gap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Open state - the sheet naming this gap is currently on screen. */
+.timeline-gap[aria-expanded='true'] {
+  border-style: solid;
+  border-color: var(--accent);
 }
 
 .timeline-gap-label {
@@ -836,6 +877,144 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   margin: 8px 2px 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* The sheet a tapped gap opens - docs/TIMELINE.md section 5, step 5. A
+   bottom sheet rather than an inline panel: the grid it opens from already
+   scrolls inside its own capped-height box, so anything expanding inline
+   there would either get clipped or fight that scroll container. Anchored
+   to the bottom of the viewport, not the gap's own position, so it reads
+   the same way regardless of where in a long grid the tapped gap happens
+   to sit. */
+.gap-picker-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.gap-picker {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 101;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--edge) var(--edge) 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.gap-picker:focus-visible,
+.gap-picker:focus {
+  outline: none;
+}
+
+.gap-picker-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gap-picker-title {
+  margin: 0;
+  padding-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gap-picker-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.gap-picker-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gap-picker-empty {
+  margin: 4px 0 8px;
+  color: var(--muted);
+}
+
+.gap-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gap-picker-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--edge);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  text-align: left;
+}
+
+.gap-picker-row:hover { border-color: var(--muted); }
+
+.gap-picker-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.gap-picker-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gap-picker-row-size {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gap-picker-more {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.gap-picker-more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .quick-add {
@@ -987,6 +1166,28 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   font-size: 20px;
   min-width: 44px;
   padding: 8px;
+}
+
+/* The undo for a gap placement - see docs/TIMELINE.md section 5 and the
+   comment on this button in DayView.tsx. Deliberately left out of the
+   hover-fade group below: everything else in that group is a quiet,
+   discoverable-on-demand action, but this one exists specifically so a
+   just-placed float is easy to undo without hunting, so it stays visible
+   the moment a task has a time rather than waiting for a hover or a tap
+   to reveal it. */
+.task-unanchor {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 44px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.task-unanchor:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* Fade a task's quieter controls in on hover only where a real pointer
