@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { todayKey } from './lib/dates'
 import { useAppData } from './lib/store'
+import { syncThemeColorMeta } from './lib/theme-color'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
@@ -22,6 +23,7 @@ export function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = data.settings.theme
+    syncThemeColorMeta(data.settings.theme)
   }, [data.settings.theme])
 
   function openDay(date: string) {
