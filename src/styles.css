@@ -394,10 +394,18 @@ button.primary {
 
 .template-card button:hover { color: var(--text); }
 
-.template-card button.danger {
+button.danger {
   border-color: var(--danger);
   color: var(--danger);
 }
+
+.crash {
+  padding-top: calc(40px + env(safe-area-inset-top));
+}
+
+.crash h2 { margin: 0 0 12px; }
+.crash p { color: var(--muted); line-height: 1.5; }
+.crash .row { margin-top: 20px; }
 
 .calendar-nav {
   display: flex;
