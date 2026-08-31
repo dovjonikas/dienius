@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { PALETTE_COLORS, paletteColorName } from '../../lib/colors'
 import type { IfThenEntry } from '../../lib/types'
@@ -19,18 +19,43 @@ interface IfThenFormProps {
   onCancel: () => void
 }
 
+// Only one of these is ever mounted at a time - either the "new entry" form
+// above the list, or one card's in-place edit form - so static ids are safe
+// and do not need to be made unique per entry.
+const TRIGGER_INPUT_ID = 'if-then-trigger-input'
+const ACTION_INPUT_ID = 'if-then-action-input'
+const TRIGGER_HINT_ID = 'if-then-trigger-hint'
+
 function IfThenForm({ draft, onChange, onSave, onCancel }: IfThenFormProps) {
+  const triggerRef = useRef<HTMLInputElement>(null)
+
+  // Moves focus into the form the moment it appears, for both a brand new
+  // entry and an in-place edit - otherwise a keyboard or screen reader user
+  // has no way to know the form opened at all and has to tab blindly to
+  // find it, which defeats the point of editing being "one click away".
+  useEffect(() => {
+    triggerRef.current?.focus()
+  }, [])
+
   return (
     <div className="if-then-form">
-      <span className="if-then-prefix">If</span>
+      <label className="visually-hidden" htmlFor={TRIGGER_INPUT_ID}>Trigger</label>
+      <span className="if-then-prefix" aria-hidden="true">If</span>
       <input
+        id={TRIGGER_INPUT_ID}
+        ref={triggerRef}
         placeholder="I get home and the kitchen is a mess"
         value={draft.trigger}
+        aria-describedby={TRIGGER_HINT_ID}
         onChange={e => onChange({ ...draft, trigger: e.target.value })}
       />
-      <p className="muted if-then-hint">A specific moment, not a feeling - where you are, what just happened.</p>
-      <span className="if-then-prefix">Then</span>
+      <p id={TRIGGER_HINT_ID} className="muted if-then-hint">
+        A specific moment, not a feeling - where you are, what just happened.
+      </p>
+      <label className="visually-hidden" htmlFor={ACTION_INPUT_ID}>Action</label>
+      <span className="if-then-prefix" aria-hidden="true">Then</span>
       <input
+        id={ACTION_INPUT_ID}
         placeholder="I set a timer for ten minutes and do only the sink"
         value={draft.action}
         onChange={e => onChange({ ...draft, action: e.target.value })}

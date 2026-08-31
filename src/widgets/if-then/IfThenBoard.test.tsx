@@ -144,3 +144,28 @@ test('a tag renders as visible text, not color alone', () => {
   render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
   expect(screen.getByText('Green')).toBeInTheDocument()
 })
+
+test('the trigger and action inputs have accessible names, not just example placeholders', async () => {
+  const user = userEvent.setup()
+  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  const triggerInput = screen.getByRole('textbox', { name: 'Trigger' })
+  const actionInput = screen.getByRole('textbox', { name: 'Action' })
+  expect(triggerInput).toHaveAttribute('placeholder', 'I get home and the kitchen is a mess')
+  expect(actionInput).toHaveAttribute('placeholder', 'I set a timer for ten minutes and do only the sink')
+})
+
+test('opening the new-entry form moves focus into the trigger field', async () => {
+  const user = userEvent.setup()
+  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  expect(screen.getByRole('textbox', { name: 'Trigger' })).toHaveFocus()
+})
+
+test('opening an in-place edit moves focus into the trigger field', async () => {
+  const user = userEvent.setup()
+  actions.addIfThen({ trigger: 'Existing trigger', action: 'Existing action' })
+  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Edit "Existing trigger"' }))
+  expect(screen.getByRole('textbox', { name: 'Trigger' })).toHaveFocus()
+})
