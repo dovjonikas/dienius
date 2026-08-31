@@ -4,7 +4,7 @@ import { useAppData } from './lib/store'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
-import { DayView } from './widgets/day-plan/DayView'
+import { WIDGETS } from './widgets/registry'
 
 type View = 'day' | 'calendar' | 'templates' | 'settings'
 
@@ -47,7 +47,10 @@ export function App() {
         </nav>
       </header>
       <main>
-        {view === 'day' && <DayView date={selectedDate} onDateChange={setSelectedDate} />}
+        {view === 'day' &&
+          WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
+            <w.Component key={w.id} date={selectedDate} onDateChange={setSelectedDate} />
+          ))}
         {view === 'calendar' && <CalendarView onOpenDay={openDay} />}
         {view === 'templates' && <TemplatesView />}
         {view === 'settings' && <SettingsView />}

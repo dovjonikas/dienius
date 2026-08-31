@@ -26,3 +26,11 @@ test('settings view toggles theme', async () => {
   await user.click(screen.getByRole('button', { name: 'Dark' }))
   expect(document.documentElement.dataset.theme).toBe('dark')
 })
+
+test('the day tab renders widgets through the registry, driven by enabledWidgets', () => {
+  const data = defaultData()
+  data.settings.enabledWidgets = []
+  actions.resetForTests(data)
+  render(<App />)
+  expect(screen.queryByPlaceholderText(/add a task/i)).not.toBeInTheDocument()
+})

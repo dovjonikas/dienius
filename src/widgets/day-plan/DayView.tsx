@@ -4,7 +4,7 @@ import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 
-interface DayViewProps {
+export interface DayViewProps {
   date: string
   onDateChange: (date: string) => void
 }
