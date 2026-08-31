@@ -38,6 +38,7 @@ export function App() {
             <button
               key={tab.view}
               className={view === tab.view ? 'active' : ''}
+              aria-current={view === tab.view ? 'page' : undefined}
               onClick={() => (tab.view === 'day' ? openDay(todayKey()) : setView(tab.view))}
             >
               {tab.label}

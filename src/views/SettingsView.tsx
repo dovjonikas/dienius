@@ -46,12 +46,14 @@ export function SettingsView() {
         <div className="segmented">
           <button
             className={data.settings.theme === 'light' ? 'active' : ''}
+            aria-pressed={data.settings.theme === 'light'}
             onClick={() => actions.setTheme('light')}
           >
             Light
           </button>
           <button
             className={data.settings.theme === 'dark' ? 'active' : ''}
+            aria-pressed={data.settings.theme === 'dark'}
             onClick={() => actions.setTheme('dark')}
           >
             Dark
