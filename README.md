@@ -44,6 +44,14 @@ opposed to everything else that might.
 field, no tags, no due-date picker - the fewer decisions between opening the app and a task
 existing on today, the more likely it actually gets typed in.
 
+**An if-then board for the moments that repeat.** An implementation intention is a trigger and a
+response decided ahead of time - "if I get home and the kitchen is a mess, then I set a timer for
+ten minutes and do only the sink" - so there is nothing left to decide once the trigger actually
+happens. Each entry is just that pair plus an optional colour tag, shown as a card with the trigger
+leading since that is what gets scanned for in the moment. There is no done checkbox and nothing
+counts how often one fired - it isn't a task, and measuring it would turn a coping tool into
+another thing to fail at.
+
 **A push rule with a real edge to it.** An unfinished task can be pushed to tomorrow, and pushed
 again - twice, and no further. On the third day, it stops offering "push" and instead asks
 directly: finish it, or let it go. The delete button on a task at that point is framed as a
@@ -122,10 +130,12 @@ src/
     stamping.ts      turns a template + a set of picked dates into day plans
     dates.ts         date-key helpers and the calendar month grid
     theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
+    colors.ts        the one named colour palette, shared by templates and if-then tags
   views/        the four full-page views: Calendar, Templates, Settings (Day lives in widgets/)
   widgets/
     day-plan/     the day view and its own pure modules: quick-add parsing, sort order,
                   draft autosave, and the day-score calculation
+    if-then/      the if-then board, a second widget on the day view
     registry.ts    which widgets are enabled and shown on the day view
   App.tsx       tab navigation and the current view/date
 scripts/
@@ -140,7 +150,7 @@ as plain, independently tested functions rather than folded into the components 
 
 ## Testing and deployment
 
-108 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
+157 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
 pure logic modules directly and the views through user-facing interaction rather than
 implementation detail.
 
