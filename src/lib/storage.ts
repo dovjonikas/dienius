@@ -8,6 +8,10 @@ const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 // written before it existed still gets it.
 const DEFAULT_ENABLED_WIDGETS = ['day-plan', 'if-then']
 
+// Also duplicated, deliberately and minimally, in the pre-paint script in
+// index.html - that script reads settings.theme straight out of this key
+// before React mounts, so it has to know the key and that one field's shape
+// on its own. Change either here and check the other still matches.
 export const STORAGE_KEY = 'dienius:data'
 
 export function defaultData(): AppData {
