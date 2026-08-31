@@ -78,8 +78,29 @@ export interface Settings {
   enabledWidgets: string[]
 }
 
+/**
+ * An implementation intention: a trigger decided on in advance, paired with
+ * the one concrete thing to do when it happens. Deliberately just those two
+ * strings plus an optional tag - nothing here is measured. No done flag, no
+ * count of how often it fired: turning one of these into a task would
+ * undo the reason it works, which is that the decision already happened
+ * and there is nothing left to track.
+ */
+export interface IfThenEntry {
+  id: string
+  trigger: string
+  action: string
+  /**
+   * A hex value from the shared palette in `src/lib/colors.ts`, same as
+   * `Template.color`. Optional - a tag is a way to group related entries,
+   * not a required field.
+   */
+  color?: string
+}
+
 export interface AppData {
   templates: Template[]
   days: Record<string, DayPlan>
   settings: Settings
+  ifThens: IfThenEntry[]
 }

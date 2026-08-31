@@ -215,3 +215,38 @@ test('state persists to localStorage', () => {
   const raw = localStorage.getItem('dienius:data')!
   expect(raw).toContain('Persist me')
 })
+
+test('addIfThen adds an entry with an optional color tag', () => {
+  const entry = actions.addIfThen({
+    trigger: 'I get home and the kitchen is a mess',
+    action: 'I set a timer for ten minutes and do only the sink',
+    color: '#a7c4f5',
+  })
+  expect(getData().ifThens).toHaveLength(1)
+  expect(getData().ifThens[0]).toMatchObject({
+    trigger: 'I get home and the kitchen is a mess',
+    action: 'I set a timer for ten minutes and do only the sink',
+    color: '#a7c4f5',
+  })
+  expect(entry.id).toBeTruthy()
+})
+
+test('addIfThen without a color leaves it undefined', () => {
+  actions.addIfThen({ trigger: 'It is 22:30', action: 'Phone goes on the charger' })
+  expect(getData().ifThens[0].color).toBeUndefined()
+})
+
+test('updateIfThen replaces the entry with the same id in place', () => {
+  const entry = actions.addIfThen({ trigger: 'Old trigger', action: 'Old action' })
+  actions.updateIfThen({ ...entry, trigger: 'New trigger', action: 'New action', color: '#f5b0a7' })
+  expect(getData().ifThens).toHaveLength(1)
+  expect(getData().ifThens[0]).toMatchObject({ trigger: 'New trigger', action: 'New action', color: '#f5b0a7' })
+})
+
+test('deleteIfThen removes only the matching entry', () => {
+  const a = actions.addIfThen({ trigger: 'Trigger A', action: 'Action A' })
+  actions.addIfThen({ trigger: 'Trigger B', action: 'Action B' })
+  actions.deleteIfThen(a.id)
+  expect(getData().ifThens).toHaveLength(1)
+  expect(getData().ifThens[0].trigger).toBe('Trigger B')
+})

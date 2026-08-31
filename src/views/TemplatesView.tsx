@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { actions, useAppData } from '../lib/store'
+import { PALETTE_COLORS } from '../lib/colors'
 import type { DayType, Template } from '../lib/types'
 
-export const TEMPLATE_COLORS = [
-  '#a7c4f5', '#f5b0a7', '#a7e3bd', '#f5db9e',
-  '#c9b3f0', '#f0b3d5', '#9ed9e8', '#cde39e',
-]
+// Kept as the same values PALETTE_COLORS has always had, so every template
+// saved before this shared module existed still matches one of these.
+export const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
 const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'full', label: 'Full day' },

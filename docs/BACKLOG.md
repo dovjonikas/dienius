@@ -100,11 +100,55 @@ mid-shift has no way to move a shift day's score even if it sits undone. Worth r
 real month of shift days (starting this September) shows whether that gap actually matters in
 practice, or whether the push bound already covers it well enough on its own.
 
-## Tier 2 - brief features not built yet
+**If-then board.** An implementation intention is a trigger and a response decided in advance, so
+there is nothing left to decide when the trigger actually arrives. `IfThenEntry` in
+`src/lib/types.ts` is just that: a trigger, an action, and an optional colour tag - no done flag,
+no count of how often it fired. An if-then pair is not a task, and nothing on the board measures
+it; adding a checkbox or a streak here would turn a coping tool into another thing to fail at.
 
-**If-then board.** Implementation intentions: IF (specific trigger) + THEN (one concrete move) +
-optional colour tag. Card view with filter chips, editing one click away. The point is recall in the
-hard moment, not typing.
+It lives on the day view rather than behind a fifth nav tab. The four existing tabs were checked at
+375px, not assumed: the nav row already wraps under the brand and the four buttons fill the wrapped
+row edge to edge with no spare width, so a fifth tab would either overflow or force an ugly second
+wrap. The widget registry in `src/widgets/registry.ts` - already built to hold a second module
+alongside the day plan - was the natural home instead, and it puts the board exactly where "recall
+in the hard moment" wants it: on the tab the app opens to, zero extra taps away. Unlike the day
+plan, the board is not something a person can turn off from Settings today, so it is auto-enabled
+for every existing install on upgrade the same way a brand new one gets it by default - there is no
+toggle yet to have an opinion for or against.
+
+Cards read trigger-first: the IF line is bold and leads, the THEN line sits under it in lighter
+weight, because the trigger is what a person scans for standing in the moment, not the response.
+Editing is one click away and in place - clicking Edit turns that exact card into its own inline
+form without a modal, so the rest of the board stays on screen and scrollable the whole time.
+Deleting takes the same two-tap confirm already used for templates.
+
+Colour tags reuse the exact same eight-colour palette templates already use (`PALETTE_COLORS` in
+the new `src/lib/colors.ts`, with `TEMPLATE_COLORS` now derived from it) rather than inventing a
+second one. The one addition the palette needed was a name per colour: a template's colour sits
+next to the template's own name, so colour there is reinforcement on top of text that already
+carries the meaning, but an if-then tag has no name of its own - the colour *is* the tag - so
+without a name attached to each swatch, a colourblind person or a screen reader user would have no
+way to know what an untagged colour meant. Every tag renders as visible name text on the card and
+on its filter chip, never as an unlabelled dot, and the palette's "no tag" option is its own
+dashed, labelled swatch rather than an implied default.
+
+The trigger and action inputs' placeholders are real, specific examples ("I get home and the
+kitchen is a mess", not "I feel unmotivated"), and a short line under the trigger field says
+plainly what makes a trigger useful: a specific moment, not a feeling. That is the whole nudge -
+no validation blocks a vague entry, because the brief only really works if the person writing it
+means it, not because a field passed a pattern check.
+
+Known limitation, shipped deliberately rather than blocking on it: the board has no collapse and
+no cap. Four or five varied entries already measure roughly two screens of scroll below the task
+list at 375px, and that only grows as entries accumulate with no way to shorten the view. Left
+alone for now because there isn't a real month of use yet to say whether that actually becomes a
+problem, or what the right collapse behaviour would even be if it does - guessing at a cutoff or a
+show-more control without that evidence would be complexity standing in for a decision nobody has
+actually made yet, the same reasoning behind leaving night and shift days scored identically until
+a real case argues otherwise. Revisit once real usage shows the board actually getting long enough
+to need it.
+
+## Tier 2 - brief features not built yet
 
 **Year strip.** GitHub-graph style row, one cell per day, filled by completion, coloured by day type.
 
@@ -125,6 +169,8 @@ Build: validate and normalise time input, visually separate anchored items from 
   the pre-paint script in `docs/THEMES.md`.
 - No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.
 - The calendar pointer drag has never been run on a real phone.
+- `TemplatesView`'s new-template and edit forms do not move focus into the name field when they
+  open. The if-then board had the same gap and had it fixed; this one is still open.
 
 ## Tier 4 - the portfolio layer
 
@@ -133,8 +179,7 @@ Build: validate and normalise time input, visually separate anchored items from 
 ## Suggested order for the next session
 
 1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. If-then board
-3. Year strip
-4. Debt clearing from Tier 3
+2. Year strip
+3. Debt clearing from Tier 3
 
 Item 1 turns a working todo into the product the brief describes. The rest are features and hygiene.
