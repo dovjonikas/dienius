@@ -1,6 +1,20 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, Settings, Task, Template, TemplateBlock } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
+const THEME_MODES: readonly string[] = ['light', 'dark', 'system']
+
+// Duplicated from themes.ts on purpose rather than imported - storage.ts
+// has no reason to depend on the preset data itself, only on the id a
+// fresh install should start with. See DEFAULT_PRESET_ID in themes.ts.
+const DEFAULT_PRESET_ID = 'slate'
+
+// A payload written before this phase has settings.theme as a plain
+// 'light' | 'dark' string. isSettings accepts both that legacy shape and
+// the new ThemeState object so an existing person's data still loads;
+// migrateTheme below is what actually upgrades it, called on every load
+// and import regardless of which shape validation just accepted.
+type LegacyTheme = 'light' | 'dark'
+type StoredTheme = LegacyTheme | ThemeState
 
 // Widgets that ship enabled for everyone, with no settings control to turn
 // them off. The if-then board is not an optional add-on a person opts into -
@@ -14,11 +28,19 @@ const DEFAULT_ENABLED_WIDGETS = ['day-plan', 'if-then']
 // on its own. Change either here and check the other still matches.
 export const STORAGE_KEY = 'dienius:data'
 
+// A brand new install has never expressed a light/dark preference, so it
+// gets the spec's own default of following the system live - unlike a
+// legacy payload being migrated below, which had an explicit choice on
+// disk already and keeps it. See docs/THEMES.md section 4.
+function defaultThemeState(): ThemeState {
+  return { presetId: DEFAULT_PRESET_ID, overrides: {}, mode: 'system' }
+}
+
 export function defaultData(): AppData {
   return {
     templates: [],
     days: {},
-    settings: { theme: 'light', enabledWidgets: [...DEFAULT_ENABLED_WIDGETS] },
+    settings: { theme: defaultThemeState(), enabledWidgets: [...DEFAULT_ENABLED_WIDGETS] },
     ifThens: [],
   }
 }
@@ -93,13 +115,45 @@ function isDayPlan(x: unknown): x is DayPlan {
   )
 }
 
-function isSettings(x: unknown): x is Settings {
+function isLegacyTheme(x: unknown): x is LegacyTheme {
+  return x === 'light' || x === 'dark'
+}
+
+function isThemeOverrides(x: unknown): x is ThemeOverrides {
+  return isRecord(x) && Object.values(x).every(v => typeof v === 'string')
+}
+
+function isThemeState(x: unknown): x is ThemeState {
   if (!isRecord(x)) return false
   return (
-    (x.theme === 'light' || x.theme === 'dark') &&
+    typeof x.presetId === 'string' &&
+    isRecord(x.overrides) &&
+    Object.values(x.overrides).every(isThemeOverrides) &&
+    typeof x.mode === 'string' &&
+    THEME_MODES.includes(x.mode)
+  )
+}
+
+function isStoredTheme(x: unknown): x is StoredTheme {
+  return isLegacyTheme(x) || isThemeState(x)
+}
+
+function isSettings(x: unknown): x is { theme: StoredTheme; enabledWidgets: string[] } {
+  if (!isRecord(x)) return false
+  return (
+    isStoredTheme(x.theme) &&
     Array.isArray(x.enabledWidgets) &&
     x.enabledWidgets.every(w => typeof w === 'string')
   )
+}
+
+// Upgrades a legacy 'light' | 'dark' string into the current ThemeState
+// shape, keeping the person's actual choice as an explicit mode rather than
+// resetting it to 'system' - only a genuinely fresh install gets that
+// default, see defaultThemeState above. A payload already in the new shape
+// passes through untouched.
+function migrateTheme(theme: StoredTheme): ThemeState {
+  return isLegacyTheme(theme) ? { presetId: DEFAULT_PRESET_ID, overrides: {}, mode: theme } : theme
 }
 
 function isIfThenEntry(x: unknown): x is IfThenEntry {
@@ -122,7 +176,18 @@ function isIfThenEntry(x: unknown): x is IfThenEntry {
 // it is every real backup on disk before this feature shipped - so its
 // absence must not fail the whole payload. normalizeLoaded below is what
 // actually backfills it once validation passes.
-export function validate(x: unknown): x is AppData {
+// The shape validate() actually accepts as input: everything AppData
+// requires, except settings.theme may still be the pre-migration
+// 'light' | 'dark' string. normalizeLoaded is what turns this into a real
+// AppData, by running every settings.theme through migrateTheme.
+interface StoredAppData {
+  templates: Template[]
+  days: Record<string, DayPlan>
+  settings: { theme: StoredTheme; enabledWidgets: string[] }
+  ifThens?: IfThenEntry[]
+}
+
+export function validate(x: unknown): x is StoredAppData {
   if (!isRecord(x)) return false
   if (!Array.isArray(x.templates) || !x.templates.every(isTemplate)) return false
   if (!isRecord(x.days) || !Object.values(x.days).every(isDayPlan)) return false
@@ -149,14 +214,14 @@ export function validate(x: unknown): x is AppData {
 // if-then widget off would find it silently back on at their next app open,
 // because there would be no way to tell that apart from never having seen
 // the widget at all.
-function normalizeLoaded(data: AppData, wasMigrated: boolean): AppData {
+function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
   const enabledWidgets = wasMigrated
     ? data.settings.enabledWidgets
     : [...new Set([...data.settings.enabledWidgets, ...DEFAULT_ENABLED_WIDGETS])]
   return {
     ...data,
     ifThens: data.ifThens ?? [],
-    settings: { ...data.settings, enabledWidgets },
+    settings: { theme: migrateTheme(data.settings.theme), enabledWidgets },
   }
 }
 
@@ -172,9 +237,10 @@ function normalizeLoaded(data: AppData, wasMigrated: boolean): AppData {
 // worse than the flash this pair of fixes exists to prevent. Salvaging just
 // the theme here keeps the two in agreement without loadData() having to
 // trust anything else about a payload it has already rejected.
-function salvageTheme(x: unknown): Settings['theme'] | undefined {
+function salvageTheme(x: unknown): ThemeState | undefined {
   if (!isRecord(x) || !isRecord(x.settings)) return undefined
-  return x.settings.theme === 'light' || x.settings.theme === 'dark' ? x.settings.theme : undefined
+  const theme = x.settings.theme
+  return isStoredTheme(theme) ? migrateTheme(theme) : undefined
 }
 
 export function loadData(): AppData {

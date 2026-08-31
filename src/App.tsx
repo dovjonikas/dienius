@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { todayKey } from './lib/dates'
 import { useAppData } from './lib/store'
+import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme'
 import { syncThemeColorMeta } from './lib/theme-color'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
@@ -22,8 +23,24 @@ export function App() {
   const [selectedDate, setSelectedDate] = useState(todayKey())
 
   useEffect(() => {
-    document.documentElement.dataset.theme = data.settings.theme
-    syncThemeColorMeta(data.settings.theme)
+    function applyTheme() {
+      const resolved = resolveTheme(data.settings.theme, systemPrefersDark())
+      applyResolvedTheme(document.documentElement, resolved)
+      syncThemeColorMeta(resolved.tokens.bg)
+    }
+    applyTheme()
+    // Only mode 'system' needs to keep watching - a fixed light or dark
+    // choice has nothing further to follow. matchMedia can throw or be
+    // absent in the same odd environments systemPrefersDark already
+    // guards against, so this listener is opt-in rather than assumed safe.
+    if (data.settings.theme.mode !== 'system') return
+    try {
+      const query = window.matchMedia('(prefers-color-scheme: dark)')
+      query.addEventListener('change', applyTheme)
+      return () => query.removeEventListener('change', applyTheme)
+    } catch {
+      return undefined
+    }
   }, [data.settings.theme])
 
   function openDay(date: string) {

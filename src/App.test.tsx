@@ -25,6 +25,19 @@ test('settings view toggles theme', async () => {
   await user.click(screen.getByRole('button', { name: 'Settings' }))
   await user.click(screen.getByRole('button', { name: 'Dark' }))
   expect(document.documentElement.dataset.theme).toBe('dark')
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#191a1d')
+})
+
+test('picking system mode resolves against the live OS preference and updates the resolved token block', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(screen.getByRole('button', { name: 'Settings' }))
+  await user.click(screen.getByRole('button', { name: 'System' }))
+  // jsdom has no real matchMedia, so systemPrefersDark() falls back to
+  // false the same way it does for a person whose browser lacks it too -
+  // the resolved theme should be light, not left at whatever it was before.
+  expect(document.documentElement.dataset.theme).toBe('light')
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#fafaf8')
 })
 
 test('the day tab renders widgets through the registry, driven by enabledWidgets', () => {

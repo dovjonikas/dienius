@@ -1,13 +1,27 @@
-import { beforeEach, expect, test, vi } from 'vitest'
+﻿import { beforeEach, expect, test, vi } from 'vitest'
 import { defaultData, loadData, saveData, importJson, exportJson, STORAGE_KEY } from './storage'
 
 beforeEach(() => localStorage.clear())
+
+// What loadData() falls back to for a payload that fails full validation
+// but still carries a salvageable theme.mode of 'light' next to whatever
+// is actually wrong with it - see salvageTheme in storage.ts. Distinct from
+// defaultData() itself: a truly empty install gets mode 'system', but a
+// payload that explicitly said 'light' keeps that explicit choice even
+// when something else in it is corrupt.
+function salvagedLightData() {
+  const fallback = defaultData()
+  return { ...fallback, settings: { ...fallback.settings, theme: { presetId: 'slate', overrides: {}, mode: 'light' as const } } }
+}
 
 test('loadData returns default data when storage is empty', () => {
   const data = loadData()
   expect(data.templates).toEqual([])
   expect(data.days).toEqual({})
-  expect(data.settings.theme).toBe('light')
+  // A fresh install has never expressed a preference, so it follows the
+  // system live rather than defaulting to a fixed light or dark - see
+  // docs/THEMES.md section 4.
+  expect(data.settings.theme).toEqual({ presetId: 'slate', overrides: {}, mode: 'system' })
 })
 
 test('saveData then loadData round-trips', () => {
@@ -61,8 +75,8 @@ test('loadData salvages a valid theme from a payload that otherwise fails valida
   // The rest of the payload is still safely discarded.
   expect(loaded.templates).toEqual([])
   expect(loaded.days).toEqual({})
-  // But the theme the pre-paint script already committed to survives.
-  expect(loaded.settings.theme).toBe('dark')
+  // But the mode the pre-paint script already committed to survives.
+  expect(loaded.settings.theme.mode).toBe('dark')
 })
 
 test('loadData does not salvage an invalid theme value out of a corrupt payload', () => {
@@ -72,22 +86,23 @@ test('loadData does not salvage an invalid theme value out of a corrupt payload'
     settings: { theme: 'sepia', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, corrupt)
-  expect(loadData().settings.theme).toBe('light')
+  // Nothing salvageable, so this is the ordinary fresh-install default.
+  expect(loadData().settings.theme.mode).toBe('system')
 })
 
-test('loadData falls back to the light default when there is nothing salvageable at all', () => {
+test('loadData falls back to the system-mode default when there is nothing salvageable at all', () => {
   localStorage.setItem(STORAGE_KEY, '{not json')
-  expect(loadData().settings.theme).toBe('light')
+  expect(loadData().settings.theme.mode).toBe('system')
 
   localStorage.setItem(STORAGE_KEY, '[1,2,3]')
-  expect(loadData().settings.theme).toBe('light')
+  expect(loadData().settings.theme.mode).toBe('system')
 })
 
 test('loadData falls back to defaults on schema mismatch', () => {
   localStorage.setItem(STORAGE_KEY, '{"hello": 1, "world": 2}')
   expect(loadData().templates).toEqual([])
   expect(loadData().days).toEqual({})
-  expect(loadData().settings.theme).toBe('light')
+  expect(loadData().settings.theme.mode).toBe('system')
 })
 
 test('a payload with the right top-level shape but empty inner objects is rejected', () => {
@@ -108,7 +123,7 @@ test('validate rejects a day whose tasks are malformed', () => {
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, malformed)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('validate rejects settings missing enabledWidgets or with a bad theme', () => {
@@ -118,7 +133,7 @@ test('validate rejects settings missing enabledWidgets or with a bad theme', () 
 
   const missingWidgets = JSON.stringify({ templates: [], days: {}, settings: { theme: 'light' } })
   localStorage.setItem(STORAGE_KEY, missingWidgets)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('validate accepts a task with no pushCount, defaulting it on read', () => {
@@ -150,7 +165,7 @@ test('validate rejects a task whose pushCount is not a non-negative integer', ()
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, negative)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 
   const fractional = JSON.stringify({
     templates: [],
@@ -163,7 +178,7 @@ test('validate rejects a task whose pushCount is not a non-negative integer', ()
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, fractional)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('a template written before day types existed loads with type undefined', () => {
@@ -218,7 +233,7 @@ test('validate rejects a template with an unknown day type', () => {
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, bad)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('validate rejects a day plan with an unknown day type', () => {
@@ -228,7 +243,7 @@ test('validate rejects a day plan with an unknown day type', () => {
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, bad)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('validate rejects a task or block whose core flag is not a boolean', () => {
@@ -238,7 +253,7 @@ test('validate rejects a task or block whose core flag is not a boolean', () => 
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, badTask)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 
   const badBlock = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym', core: 1 }] }],
@@ -246,7 +261,7 @@ test('validate rejects a task or block whose core flag is not a boolean', () => 
     settings: { theme: 'light', enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, badBlock)
-  expect(loadData()).toEqual(defaultData())
+  expect(loadData()).toEqual(salvagedLightData())
 })
 
 test('a payload written before the if-then board existed has no ifThens key and still loads', () => {
@@ -359,4 +374,52 @@ test('a well-formed payload still passes validate', () => {
   localStorage.setItem(STORAGE_KEY, good)
   expect(loadData().templates[0].name).toBe('Work')
   expect(loadData().days['2026-09-01'].tasks[0].title).toBe('Gym')
+})
+
+// The migration a real person's existing data goes through: their old
+// Settings.theme was a plain 'light' | 'dark' string, and it must survive
+// as an explicit mode rather than being silently reset to 'system' - only
+// a genuinely fresh install gets that default. See docs/THEMES.md section 4.
+test('a legacy light/dark theme string migrates into a ThemeState with that mode, on Slate, with no overrides', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  expect(loadData().settings.theme).toEqual({ presetId: 'slate', overrides: {}, mode: 'dark' })
+})
+
+test('a payload already in the new ThemeState shape passes validate and round-trips unchanged', () => {
+  const modern = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'system' },
+      enabledWidgets: ['day-plan'],
+    },
+    ifThens: [],
+  })
+  localStorage.setItem(STORAGE_KEY, modern)
+  expect(loadData().settings.theme).toEqual({
+    presetId: 'sketchbook',
+    overrides: { sketchbook: { accent: '#e0553b' } },
+    mode: 'system',
+  })
+})
+
+test('validate rejects a ThemeState with an unknown mode or a non-string override value', () => {
+  const badMode = JSON.stringify({
+    templates: [], days: {},
+    settings: { theme: { presetId: 'slate', overrides: {}, mode: 'sepia' }, enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badMode)
+  expect(loadData().settings.theme.mode).toBe('system')
+
+  const badOverride = JSON.stringify({
+    templates: [], days: {},
+    settings: { theme: { presetId: 'slate', overrides: { slate: { accent: 123 } }, mode: 'light' }, enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badOverride)
+  expect(loadData().settings.theme.mode).toBe('system')
 })

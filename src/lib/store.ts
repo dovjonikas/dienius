@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, Template } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, Template, ThemeState } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -140,8 +140,49 @@ export const actions = {
     commit({ ...data, days: applyStamps(data.days, data.templates, stamps) })
   },
 
-  setTheme(theme: 'light' | 'dark'): void {
-    commit({ ...data, settings: { ...data.settings, theme } })
+  /**
+   * Sets the light/dark/system mode without touching which preset is
+   * active or any override patch - mode and preset are independent axes,
+   * see docs/THEMES.md section 4. Kept under its original name since this
+   * is exactly what the Settings toggle already called before presets
+   * existed; setThemePreset and setThemeOverride below are the new
+   * controls the pipeline needed added alongside it.
+   */
+  setTheme(mode: ThemeState['mode']): void {
+    commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, mode } } })
+  },
+
+  setThemePreset(presetId: string): void {
+    commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, presetId } } })
+  },
+
+  /**
+   * Writes one token into the override patch for a preset, keyed by that
+   * preset's own id so switching to a different room and back leaves this
+   * patch exactly as it was - see docs/THEMES.md section 3. There is no
+   * override UI yet; this exists so the pipeline and storage already
+   * support one when the panel that calls it is built.
+   */
+  setThemeOverride(presetId: string, token: string, value: string): void {
+    const current = data.settings.theme.overrides[presetId] ?? {}
+    commit({
+      ...data,
+      settings: {
+        ...data.settings,
+        theme: {
+          ...data.settings.theme,
+          overrides: { ...data.settings.theme.overrides, [presetId]: { ...current, [token]: value } },
+        },
+      },
+    })
+  },
+
+  /** Clears the override patch for one preset - the "Reset to preset" control. */
+  resetThemeOverrides(presetId: string): void {
+    const rest = Object.fromEntries(
+      Object.entries(data.settings.theme.overrides).filter(([id]) => id !== presetId),
+    )
+    commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, overrides: rest } } })
   },
 
   addIfThen(input: { trigger: string; action: string; color?: string }): IfThenEntry {

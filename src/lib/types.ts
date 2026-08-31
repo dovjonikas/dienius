@@ -82,8 +82,34 @@ export interface DayPlan {
   tasks: Task[]
 }
 
+/**
+ * A sparse patch of theme tokens, keyed by CSS custom property name without
+ * its leading `--` (so `{ accent: '#e0553b' }` overrides just the accent).
+ * Values are always the literal string that will end up as a CSS custom
+ * property, never a resolved color chosen for a person - resolution reads
+ * this on top of a preset, not the other way around.
+ */
+export interface ThemeOverrides {
+  [token: string]: string
+}
+
+/**
+ * What Settings actually stores about theme. `presetId` and `mode` pick a
+ * room and whether its light is on; `overrides` is never applied directly -
+ * only `overrides[presetId]` is, so a person's hand-picked accent on
+ * Sketchbook survives switching to Slate and back, per preset, rather than
+ * bleeding across rooms or getting lost the moment they try something else.
+ * See `resolveTheme` in `theme.ts` for how these three combine with a
+ * preset's own token set into the values that actually paint the page.
+ */
+export interface ThemeState {
+  presetId: string
+  overrides: Record<string, ThemeOverrides>
+  mode: 'light' | 'dark' | 'system'
+}
+
 export interface Settings {
-  theme: 'light' | 'dark'
+  theme: ThemeState
   enabledWidgets: string[]
 }
 

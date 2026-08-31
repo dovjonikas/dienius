@@ -290,16 +290,61 @@ test('deleteIfThen removes only the matching entry', () => {
   expect(getData().ifThens[0].trigger).toBe('Trigger B')
 })
 
-test('setTheme updates the theme and leaves the rest of settings untouched', () => {
+test('setTheme updates the mode and leaves the rest of settings, and the rest of theme, untouched', () => {
   actions.resetForTests({
     ...defaultData(),
-    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'] },
+    settings: {
+      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'light' },
+      enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
+    },
   })
   actions.setTheme('dark')
-  expect(getData().settings.theme).toBe('dark')
+  expect(getData().settings.theme.mode).toBe('dark')
+  expect(getData().settings.theme.presetId).toBe('sketchbook')
+  expect(getData().settings.theme.overrides).toEqual({ sketchbook: { accent: '#e0553b' } })
   expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
-  actions.setTheme('light')
-  expect(getData().settings.theme).toBe('light')
+  actions.setTheme('system')
+  expect(getData().settings.theme.mode).toBe('system')
+})
+
+test('setThemePreset changes only the preset id', () => {
+  actions.resetForTests(defaultData())
+  actions.setThemePreset('sketchbook')
+  expect(getData().settings.theme.presetId).toBe('sketchbook')
+  expect(getData().settings.theme.mode).toBe(defaultData().settings.theme.mode)
+})
+
+test('setThemeOverride writes one token under the current preset id without disturbing other presets\' patches', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      theme: { presetId: 'sketchbook', overrides: { slate: { accent: '#111111' } }, mode: 'dark' },
+      enabledWidgets: [],
+    },
+  })
+  actions.setThemeOverride('sketchbook', 'accent', '#e0553b')
+  expect(getData().settings.theme.overrides).toEqual({
+    slate: { accent: '#111111' },
+    sketchbook: { accent: '#e0553b' },
+  })
+  actions.setThemeOverride('sketchbook', 'mark', '#ffcc00')
+  expect(getData().settings.theme.overrides.sketchbook).toEqual({ accent: '#e0553b', mark: '#ffcc00' })
+})
+
+test('resetThemeOverrides clears only the named preset\'s patch', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      theme: {
+        presetId: 'sketchbook',
+        overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b' } },
+        mode: 'dark',
+      },
+      enabledWidgets: [],
+    },
+  })
+  actions.resetThemeOverrides('sketchbook')
+  expect(getData().settings.theme.overrides).toEqual({ slate: { accent: '#111111' } })
 })
 
 test('importData replaces the whole store with the imported payload', () => {
