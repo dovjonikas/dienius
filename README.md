@@ -161,7 +161,7 @@ as plain, independently tested functions rather than folded into the components 
 
 ## Testing and deployment
 
-194 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
+209 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
 pure logic modules directly and the views through user-facing interaction rather than
 implementation detail.
 

@@ -213,18 +213,51 @@ Build: validate and normalise time input, visually separate anchored items from 
 
 ## Tier 3 - debts already logged in the ledger
 
-- Deleting a template leaves a dangling `templateId` on stamped days. Flagged in Task 5, still only
-  worked around in views. Fix at the source.
-- Template block ids regenerate on every edit. Harmless today, a trap for any block-level feature.
-- Deleting a template has no confirmation.
-- Saving a template with an empty name is a silent no-op, so the button looks broken.
-- Nav tabs and the theme control lack `aria-current` / `aria-pressed`.
-- Theme applied in `useEffect`, so dark-mode users see a one-frame light flash. Fixed for free by
-  the pre-paint script in `docs/THEMES.md`.
-- No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.
-- The calendar pointer drag has never been run on a real phone.
-- `TemplatesView`'s new-template and edit forms do not move focus into the name field when they
-  open. The if-then board had the same gap and had it fixed; this one is still open.
+Reviewed against the code on 2026-08-31. Several of these were already fixed in a later pass and
+never struck from this list; each one below says which.
+
+- ~~Deleting a template leaves a dangling `templateId` on stamped days. Flagged in Task 5, still
+  only worked around in views. Fix at the source.~~ Reviewed, not fixed - kept as-is on purpose. A
+  stamped day genuinely happened, and deleting the template it was stamped from should not rewrite
+  that, the same reasoning that already bakes `dayType` and `core` onto the day instead of looking
+  them up live. `DayView`, `CalendarView`, and `yearGrid` already treat a dangling `templateId` as
+  no template rather than crashing; the guards are the correct handling, not a workaround waiting on
+  a fix. Written up in `docs/DECISIONS.md` and pinned by a test in `store.test.ts` that checks
+  `templateId` directly rather than only the day's presence.
+- ~~Template block ids regenerate on every edit. Harmless today, a trap for any block-level
+  feature.~~ Fixed. `TemplatesView`'s save path now carries a surviving block's id forward from the
+  template being edited and mints a fresh one only for a block added during that session.
+- ~~Deleting a template has no confirmation.~~ Already fixed by the time of this review - `Delete`
+  requires a second confirming tap (`TemplatesView.tsx`), pinned by an existing test.
+- ~~Saving a template with an empty name is a silent no-op, so the button looks broken.~~ Already
+  fixed - `Save template` is `disabled` while the name is blank, so the button reads as unavailable
+  instead of doing nothing when pressed.
+- ~~Nav tabs and the theme control lack `aria-current` / `aria-pressed`.~~ Already fixed - the nav
+  tabs carry `aria-current="page"` and the theme buttons in Settings carry `aria-pressed`.
+- ~~Theme applied in `useEffect`, so dark-mode users see a one-frame light flash.~~ Fixed. An inline
+  script in `index.html` reads the persisted theme and sets `data-theme` on the root element before
+  the app's own script tag runs, the fix `docs/THEMES.md` specs. Verified by hand against a hard
+  reload with dark mode persisted; a unit test cannot observe a pre-paint script by its nature.
+- ~~No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.~~
+  Fixed - direct tests added in `store.test.ts` for all five, including `importData`'s throw path
+  and `subscribe`'s unsubscribe function.
+- ~~`TemplatesView`'s new-template and edit forms do not move focus into the name field when they
+  open. The if-then board had the same gap and had it fixed; this one is still open.~~ Fixed,
+  following the same pattern the if-then board already uses: the editor is its own component,
+  mounted fresh each time a draft opens, and focuses its name field on mount.
+- The calendar's month grid had `role="grid"` with `role="gridcell"` children and no `role="row"`
+  between them - not logged here before this review, found while re-checking the same defect that
+  was fixed on the year strip. Unlike the strip, a month calendar is genuinely two-dimensional with
+  the visual and keyboard axes in agreement, so the fix completes the structure (weeks wrapped in
+  `role="row"`, weekday headers as `role="columnheader"`) instead of dropping the grid roles the way
+  the strip did. Fixed, pinned by a test on the structure and one on each cell's accessible name.
+- **Standing task, not a defect - needs a real phone, so it stays open:** verify the calendar's
+  pointer-based stamp drag on actual iOS Safari and Android Chrome hardware, not just a desktop
+  browser's touch emulation. Check specifically: a touch-drag across cells stamps the whole swept
+  range the way a mouse drag does; a diagonal or fast drag does not drop cells the finger passed
+  over quickly; lifting the finger off the calendar section entirely (into the browser chrome, or
+  past the edge of the screen) still stops the paint instead of leaving it stuck on; and the drag
+  does not trigger the page's own scroll or a pull-to-refresh gesture while it is happening.
 
 ## Tier 4 - the portfolio layer
 
@@ -232,8 +265,9 @@ Build: validate and normalise time input, visually separate anchored items from 
 
 ## Suggested order for the next session
 
-1. Theme system, steps 1-4 of `docs/THEMES.md`
-2. Time anchors, not free text
-3. Debt clearing from Tier 3
+Tier 3 is now clear. What is left:
 
-Item 1 turns a working todo into the product the brief describes. The rest are features and hygiene.
+1. Theme system, steps 1-4 of `docs/THEMES.md` - the pre-paint script (step 3's other half) is
+   already done, but the preset architecture, the token layers, and the gallery are not.
+2. Time anchors, not free text
+3. The phone verification task carried over in Tier 3
