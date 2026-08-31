@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CalendarView } from './CalendarView'
 import { actions, getData } from '../lib/store'
@@ -174,6 +174,95 @@ test('cancel discards staged changes completely, leaving the store untouched', a
   expect(getData().days).toEqual({})
   expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument()
+})
+
+test('a day with an unfinished task and no template is visibly different from an empty day', () => {
+  // This is the bug as the owner found it: push a task to tomorrow, then
+  // look at the calendar. A cell built only from templateId cannot tell an
+  // untemplated day that holds a real task apart from one that holds
+  // nothing at all.
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  const target = cells[10]
+  const date = target.getAttribute('data-date') as string
+  const empty = cells[11]
+
+  expect(target.className).not.toContain('cell-has-tasks')
+
+  act(() => {
+    actions.addTask(date, 'Finish the report')
+  })
+
+  const updated = screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(updated).toHaveClass('cell-has-tasks')
+  expect(updated).not.toHaveClass('cell-tasks-done')
+  expect(updated).not.toHaveClass('cell-has-template')
+  expect(updated.getAttribute('aria-label')).toMatch(/unfinished/i)
+  // The neighboring, genuinely empty day still reads as empty.
+  expect(empty).not.toHaveClass('cell-has-tasks')
+})
+
+test('a day with only completed tasks and no template reads as done, not as unfinished', () => {
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  const date = cells[10].getAttribute('data-date') as string
+
+  act(() => {
+    actions.addTask(date, 'Water the plants')
+  })
+  const taskId = getData().days[date].tasks[0].id
+  act(() => {
+    actions.toggleTask(date, taskId)
+  })
+
+  const updated = screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(updated).toHaveClass('cell-has-tasks')
+  expect(updated).toHaveClass('cell-tasks-done')
+  expect(updated.getAttribute('aria-label')).not.toMatch(/unfinished/i)
+  expect(updated.getAttribute('aria-label')).toMatch(/complet/i)
+})
+
+test('a stamped day with an extra hand-added unfinished task still reads as unfinished', () => {
+  const t = actions.addTemplate({
+    name: 'Work day',
+    color: '#a7c4f5',
+    blocks: [{ time: '09:00', title: 'Gym' }],
+  })
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  const date = cells[10].getAttribute('data-date') as string
+
+  act(() => {
+    actions.stamp({ [date]: t.id })
+  })
+  const gymId = getData().days[date].tasks[0].id
+  act(() => {
+    actions.toggleTask(date, gymId)
+    actions.addTask(date, 'Call the plumber')
+  })
+
+  const updated = screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(updated).toHaveClass('cell-has-template')
+  expect(updated).toHaveClass('cell-has-tasks')
+  expect(updated).not.toHaveClass('cell-tasks-done')
+  expect(updated.getAttribute('aria-label')).toMatch(/unfinished/i)
+})
+
+test('a day whose template was deleted still shows its remaining tasks', () => {
+  const t = actions.addTemplate({ name: 'Work day', color: '#a7c4f5', blocks: [{ title: 'Gym' }] })
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  const date = cells[10].getAttribute('data-date') as string
+
+  act(() => {
+    actions.stamp({ [date]: t.id })
+    actions.deleteTemplate(t.id)
+  })
+
+  const updated = screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(updated).not.toHaveClass('cell-has-template')
+  expect(updated).toHaveClass('cell-has-tasks')
+  expect(updated.getAttribute('aria-label')).toMatch(/unfinished/i)
 })
 
 test('staged changes survive navigating to another month and back, and save applies them to the right date', async () => {
