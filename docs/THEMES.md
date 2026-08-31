@@ -203,7 +203,7 @@ themes that are the same layout in a different hue.
 2. [x] `src/lib/themes.ts` with the preset type and the first three presets as data.
 3. [x] Resolution pipeline plus the inline pre-paint script in `index.html`.
 4. [x] Theme gallery in Settings with real miniature previews.
-5. [ ] Override panel with per-preset patches and reset.
+5. [x] Override panel with per-preset patches and reset.
 6. [x] `theme-color` and manifest sync.
 7. [ ] The remaining presets.
 8. [x] Contrast unit test over the preset array.
@@ -233,3 +233,29 @@ initial status bar that already match it.
 
 Steps 1 to 4 are what makes it feel like a different app. Everything after is polish that can land
 across separate sessions.
+
+Step 5 landed next: "Adjust this theme" in `src/views/ThemeOverridePanel.tsx`, a collapsed-by-default
+disclosure below the mode control. It reads and writes through `actions.setThemeOverride`/
+`resetThemeOverrides`, which the architecture phase already built and left unused. Controls are
+grouped under four subheadings (Colors, Ruling, Corners, Type) rather than laid out as one flat list,
+and Ruling's spacing and opacity controls only render once a ruling style is actually chosen - both
+are there specifically to keep a panel that can reach nine individual controls from reading as the
+wall of controls section 3 warns against. Every control still writes exactly one token.
+
+Type offers `system / rounded / mono / serif`, not the `handwritten` option an earlier draft of this
+section named. This follows directly from section 2's rule, settled during the architecture phase's
+fix pass: no script, handwritten, or novelty face on any token, anywhere, ever - not because a
+handwritten face cannot look good, but because the owner reads every screen with an ADHD brain, and a
+script face already had to be pulled back out of Sketchbook once (see section 2's note) for failing
+that bar in practice on real devices. A user-facing font control that let someone pick a handwritten
+face back in would reopen exactly the readability problem the rest of the token system was rewritten
+to close. All four options this control does offer are the same known-good, professional stacks
+already proven inside `themes.ts` - nothing new was invented for the panel.
+
+A user can now set an accent or text color by hand, which means a user can now build a preset that
+fails the merge-time contrast gate on purpose or by accident. Silently allowing that contradicts "text
+must always look professional and stay highly readable"; hard-blocking the color picker contradicts
+the app being genuinely his to reshape. The panel warns, honestly and by name, without ever refusing
+the write - see `src/lib/theme-override-warnings.ts`, which runs the exact same 4.5:1 text / 3:1 accent
+thresholds theme-contrast.test.ts enforces at merge time, against both `--surface` and `--bg`, the
+moment a hand-picked color would fail them.
