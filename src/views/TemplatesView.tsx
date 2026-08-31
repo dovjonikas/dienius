@@ -147,7 +147,9 @@ export function TemplatesView() {
             <button onClick={addBlock}>Add block</button>
           </div>
           <div className="row">
-            <button className="primary" onClick={save}>Save template</button>
+            <button className="primary" disabled={!draft.name.trim()} onClick={save}>
+              Save template
+            </button>
             <button onClick={cancel}>Cancel</button>
           </div>
         </div>
