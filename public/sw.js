@@ -37,6 +37,15 @@ self.addEventListener('fetch', event => {
   const { request } = event
   if (request.method !== 'GET') return
 
+  // A ranged request answered with a cached, whole response would hand
+  // back far more than was asked for - and a 206 Partial Content response
+  // has response.ok === true, so it would otherwise get cached here and
+  // later served whole in place of a partial one. Leave these to the
+  // network entirely. The app has no audio or video today, so this is a
+  // defensive guard against a known service worker pitfall rather than
+  // something currently exercised.
+  if (request.headers.has('range')) return
+
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
