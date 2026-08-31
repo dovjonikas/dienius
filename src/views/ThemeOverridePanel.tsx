@@ -47,11 +47,26 @@ export function ThemeOverridePanel() {
   const changedCount = Object.keys(patch).length
 
   if (!variant) return null
-  const { tokens, ruleStyle } = resolveVariant(variant, patch)
+  // A plain, non-optional alias - narrowing the union above does not carry
+  // through into the nested function declarations below, so this gives
+  // setToken a value TypeScript (and a reader) can trust is always present.
+  const activeVariant = variant
+  const { tokens, ruleStyle } = resolveVariant(activeVariant, patch)
   const warnings = contrastWarnings(tokens)
 
+  // A write that lands back on exactly the preset's own stock value is not
+  // actually a change - unsetting the key instead keeps the patch sparse
+  // and keeps the changed-token dot honest (see finding 3: without this, a
+  // round trip like Mono then back to System left a no-op fontBody entry
+  // in the patch, with the dot still lit on a token that was not, in fact,
+  // changed anymore).
   function setToken(token: string, value: string) {
-    actions.setThemeOverride(theme.presetId, token, value)
+    const stock = token === 'ruleStyle' ? activeVariant.ruleStyle : activeVariant.tokens[token as keyof ThemeTokens]
+    if (stock === value) {
+      actions.unsetThemeOverride(theme.presetId, token)
+    } else {
+      actions.setThemeOverride(theme.presetId, token, value)
+    }
   }
 
   function isChanged(token: string): boolean {
@@ -149,7 +164,7 @@ export function ThemeOverridePanel() {
           </fieldset>
 
           {warnings.length > 0 && (
-            <p className="warning override-warning" role="status">
+            <p className="override-warning" role="status">
               {warnings.map(w => w.message).join(' ')}
             </p>
           )}
@@ -211,6 +226,14 @@ interface SegmentedFieldProps {
 
 function SegmentedField({ options, selectedId, changed, onSelect }: SegmentedFieldProps) {
   const descId = useId()
+  // A resolved value that matches none of the fixed options - not reachable
+  // through this panel's own three Corners/Type choices today, but possible
+  // from a hand-edited backup, or a future preset shipping a stock value
+  // this option set has not caught up with yet (see finding 2). Leaving
+  // every button unpressed in that case would silently claim "nothing is
+  // set" when something certainly is - naming it as custom instead is
+  // honest about what tapping an option would actually change.
+  const isCustom = selectedId === undefined
   return (
     <div className="override-segmented-wrap">
       <div className="segmented" aria-describedby={changed ? descId : undefined}>
@@ -227,6 +250,7 @@ function SegmentedField({ options, selectedId, changed, onSelect }: SegmentedFie
           </button>
         ))}
       </div>
+      {isCustom && <p className="override-custom-note">Currently a custom value, not one of these.</p>}
       {changed && (
         <span id={descId} className="visually-hidden">
           Changed from the preset default

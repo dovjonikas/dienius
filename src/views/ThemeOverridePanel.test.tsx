@@ -106,6 +106,28 @@ test('picking a corner option writes the edge token', async () => {
   expect(Object.keys(getData().settings.theme.overrides.slate ?? {})).toEqual(['edge'])
 })
 
+test('Corners is pre-filled correctly for Slate - its own stock edge matches Soft, not nothing', async () => {
+  const user = userEvent.setup()
+  render(<ThemeOverridePanel />)
+  await user.click(screen.getByRole('button', { name: /Adjust this theme/ }))
+  const cornersGroup = screen.getByRole('group', { name: 'Corners' })
+  expect(within(cornersGroup).getByRole('button', { name: 'Soft' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(cornersGroup).getByRole('button', { name: 'Sharp' })).toHaveAttribute('aria-pressed', 'false')
+  expect(within(cornersGroup).queryByText(/custom value/i)).not.toBeInTheDocument()
+})
+
+test('a segmented control names a resolved value honestly as custom when it matches none of the fixed options', async () => {
+  act(() => actions.setThemeOverride('slate', 'edge', '7px'))
+  const user = userEvent.setup()
+  render(<ThemeOverridePanel />)
+  await user.click(screen.getByRole('button', { name: /Adjust this theme/ }))
+  const cornersGroup = screen.getByRole('group', { name: 'Corners' })
+  for (const label of ['Soft', 'Sharp', 'Hand-drawn']) {
+    expect(within(cornersGroup).getByRole('button', { name: label })).toHaveAttribute('aria-pressed', 'false')
+  }
+  expect(within(cornersGroup).getByText(/custom value/i)).toBeInTheDocument()
+})
+
 test('picking a type option writes the font-body token, and none of the options is a script or novelty face', async () => {
   const user = userEvent.setup()
   render(<ThemeOverridePanel />)
@@ -146,4 +168,34 @@ test('setting an unreadable color is still allowed - the warning never blocks th
   await user.click(screen.getByRole('button', { name: /Adjust this theme/ }))
   act(() => actions.setThemeOverride('slate', 'text', '#fbfbfa'))
   expect(getData().settings.theme.overrides.slate).toEqual({ text: '#fbfbfa' })
+})
+
+test('a write that restores the preset\'s own value deletes the key instead of leaving a no-op patch entry', async () => {
+  const user = userEvent.setup()
+  render(<ThemeOverridePanel />)
+  await user.click(screen.getByRole('button', { name: /Adjust this theme/ }))
+  const typeGroup = screen.getByRole('group', { name: 'Type' })
+
+  await user.click(within(typeGroup).getByRole('button', { name: 'Mono' }))
+  expect(getData().settings.theme.overrides.slate).toEqual({ fontBody: expect.stringMatching(/mono/i) })
+
+  await user.click(within(typeGroup).getByRole('button', { name: 'System' }))
+  expect(getData().settings.theme.overrides.slate).toBeUndefined()
+  expect(within(typeGroup).getByRole('button', { name: 'System' })).not.toHaveAccessibleDescription(/changed/i)
+})
+
+test('the recovery path survives the broken-theme case: text set to match the paper', async () => {
+  const user = userEvent.setup()
+  render(<ThemeOverridePanel />)
+  await user.click(screen.getByRole('button', { name: /Adjust this theme/ }))
+
+  const slateLight = findPreset('slate').light!.tokens
+  act(() => actions.setThemeOverride('slate', 'text', slateLight.bg))
+
+  // The escape route itself must still be present and operable - reset
+  // clears the very override that just broke readability.
+  const resetButton = screen.getByRole('button', { name: 'Reset to preset' })
+  expect(resetButton).toBeEnabled()
+  await user.click(resetButton)
+  expect(getData().settings.theme.overrides.slate).toBeUndefined()
 })
