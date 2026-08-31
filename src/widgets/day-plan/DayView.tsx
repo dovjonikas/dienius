@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { actions, MAX_PUSHES, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
+import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
@@ -18,7 +19,7 @@ export interface DayViewProps {
 
 export function DayView({ date, onDateChange }: DayViewProps) {
   const data = useAppData()
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => consumeDraft(date))
   const day = data.days[date]
   const tasks = sortTasks(day?.tasks ?? [])
   const template = day?.templateId
@@ -37,6 +38,12 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     if (!parsed) return
     actions.addTask(date, parsed.title, parsed.time)
     setInput('')
+    clearDraft()
+  }
+
+  function handleInputChange(text: string) {
+    setInput(text)
+    saveDraft(date, text)
   }
 
   return (
@@ -69,7 +76,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         className="quick-add"
         placeholder="Add a task... try 14:00 Call mom"
         value={input}
-        onChange={e => setInput(e.target.value)}
+        onChange={e => handleInputChange(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleAdd()}
       />
 

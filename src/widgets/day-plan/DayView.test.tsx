@@ -2,11 +2,13 @@ import { beforeEach, expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayView } from './DayView'
+import { consumeDraft, saveDraft } from './draft'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
+  sessionStorage.clear()
   actions.resetForTests(defaultData())
 })
 
@@ -16,6 +18,31 @@ test('quick add creates a task on Enter', async () => {
   await user.type(screen.getByPlaceholderText(/add a task/i), '14:00 Call mom{Enter}')
   expect(screen.getByText('Call mom')).toBeInTheDocument()
   expect(screen.getByText('14:00')).toBeInTheDocument()
+})
+
+test('a draft left over from before a reload is restored into the input', () => {
+  saveDraft('2026-09-01', 'half-typed task')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('half-typed task')
+})
+
+test('typing saves a draft, and finishing the task clears it', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom')
+  expect(consumeDraft('2026-09-01')).toBe('Call mom')
+
+  // consumeDraft above already cleared it; put it back to prove submitting
+  // clears it too, not just consuming it once for this assertion.
+  saveDraft('2026-09-01', 'Call mom')
+  await user.type(screen.getByPlaceholderText(/add a task/i), '{Enter}')
+  expect(consumeDraft('2026-09-01')).toBe('')
+})
+
+test('a draft saved for a different day is not restored here', () => {
+  saveDraft('2026-09-02', 'wrong day')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('')
 })
 
 test('clicking a task toggles done', async () => {
