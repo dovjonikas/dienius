@@ -28,6 +28,24 @@ interface YearStripProps {
  * roving-tabindex pattern a calendar date grid would use: arrow keys move
  * a single focus point from day to day, and only the focused cell's date
  * (plus its template and completion, if any) is ever announced.
+ *
+ * Deliberately not `role="grid"`. That role requires `role="row"` children
+ * wrapping the cells, and this layout has no grouping that can honestly
+ * wear that label. The visual axes are rotated from an ordinary calendar:
+ * weeks run left to right as columns and weekdays run top to bottom as
+ * rows, the usual contribution-graph arrangement. But the keyboard scheme
+ * above is calendar-relative, not grid-relative - ArrowRight means "the
+ * next day," which usually moves straight down the same visual column
+ * (only sidestepping a column at a week boundary), and ArrowDown means
+ * "the next week," which moves sideways along the same visual row. That
+ * is the inverse of what `role="grid"` promises assistive technology:
+ * right moves within a row to the next column, down moves within a column
+ * to the next row. Grouping cells into `role="row"` by weekday would get
+ * the visual axis right and the keyboard axis backwards; grouping by week
+ * would get neither right. Asserting a structure the interaction does not
+ * honor is worse than asserting none, so the container is a plain
+ * `role="group"` around ordinary buttons, and the keyboard scheme is
+ * spelled out in the legend text below instead of implied by a role.
  */
 export function YearStrip({ onOpenDay }: YearStripProps) {
   const data = useAppData()
@@ -134,7 +152,7 @@ export function YearStrip({ onOpenDay }: YearStripProps) {
         <div className="year-grid-scroll">
           <div
             className="year-grid"
-            role="grid"
+            role="group"
             aria-label={`Days of ${year}`}
             aria-describedby="year-strip-legend"
             ref={gridRef}
@@ -159,7 +177,6 @@ export function YearStrip({ onOpenDay }: YearStripProps) {
                 <button
                   key={cell.key}
                   type="button"
-                  role="gridcell"
                   data-date={cell.key}
                   className={classNames.join(' ')}
                   style={{
@@ -192,7 +209,8 @@ export function YearStrip({ onOpenDay }: YearStripProps) {
 
       <p id="year-strip-legend" className="muted year-strip-legend">
         A colored cell had a plan for that day. A ringed cell means everything planned for that
-        day was done.
+        day was done. Once a day is focused, the arrow keys move to another day, and Home and End
+        jump to the first and last day of the year.
       </p>
     </section>
   )

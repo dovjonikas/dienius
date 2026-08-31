@@ -18,23 +18,23 @@ afterEach(() => {
 test('renders a grid labeled with the current year by default', () => {
   render(<YearStrip onOpenDay={() => {}} />)
   expect(screen.getByRole('heading', { name: '2026' })).toBeInTheDocument()
-  expect(screen.getByRole('grid', { name: 'Days of 2026' })).toBeInTheDocument()
+  expect(screen.getByRole('group', { name: 'Days of 2026' })).toBeInTheDocument()
 })
 
 test('clicking a day cell opens that day', async () => {
   const user = userEvent.setup()
   let opened = ''
   render(<YearStrip onOpenDay={d => (opened = d)} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  const cell = within(grid).getByRole('gridcell', { name: 'June 15, 2026' })
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const cell = within(grid).getByRole('button', { name: 'June 15, 2026' })
   await user.click(cell)
   expect(opened).toBe('2026-06-15')
 })
 
 test('only one cell is a tab stop; the rest are reachable by arrow keys', () => {
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  const cells = within(grid).getAllByRole('gridcell')
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const cells = within(grid).getAllByRole('button')
   const tabbable = cells.filter(c => c.getAttribute('tabindex') === '0')
   expect(tabbable).toHaveLength(1)
   // Today, since the strip opened on the current year.
@@ -44,38 +44,38 @@ test('only one cell is a tab stop; the rest are reachable by arrow keys', () => 
 test('arrow keys move the roving tab stop and DOM focus one day at a time', async () => {
   const user = userEvent.setup()
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  const start = within(grid).getByRole('gridcell', { name: 'June 15, 2026' })
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const start = within(grid).getByRole('button', { name: 'June 15, 2026' })
   start.focus()
   await user.keyboard('{ArrowRight}')
-  expect(within(grid).getByRole('gridcell', { name: 'June 16, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'June 16, 2026' })).toHaveFocus()
   await user.keyboard('{ArrowDown}')
-  expect(within(grid).getByRole('gridcell', { name: 'June 23, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'June 23, 2026' })).toHaveFocus()
   await user.keyboard('{ArrowLeft}')
-  expect(within(grid).getByRole('gridcell', { name: 'June 22, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'June 22, 2026' })).toHaveFocus()
   await user.keyboard('{ArrowUp}')
-  expect(within(grid).getByRole('gridcell', { name: 'June 15, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'June 15, 2026' })).toHaveFocus()
 })
 
 test('Home and End jump to the first and last day of the year', async () => {
   const user = userEvent.setup()
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  within(grid).getByRole('gridcell', { name: 'June 15, 2026' }).focus()
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  within(grid).getByRole('button', { name: 'June 15, 2026' }).focus()
   await user.keyboard('{Home}')
-  expect(within(grid).getByRole('gridcell', { name: 'January 1, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'January 1, 2026' })).toHaveFocus()
   await user.keyboard('{End}')
-  expect(within(grid).getByRole('gridcell', { name: 'December 31, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'December 31, 2026' })).toHaveFocus()
 })
 
 test('arrow keys do not cross into a year that is not rendered', async () => {
   const user = userEvent.setup()
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  within(grid).getByRole('gridcell', { name: 'December 31, 2026' }).focus()
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  within(grid).getByRole('button', { name: 'December 31, 2026' }).focus()
   await user.keyboard('{ArrowRight}')
   // Still on the same cell - there is no January 1st, 2027 cell to move to.
-  expect(within(grid).getByRole('gridcell', { name: 'December 31, 2026' })).toHaveFocus()
+  expect(within(grid).getByRole('button', { name: 'December 31, 2026' })).toHaveFocus()
 })
 
 test('previous and next year move the strip, resetting to January 1st for a non-current year', async () => {
@@ -83,8 +83,8 @@ test('previous and next year move the strip, resetting to January 1st for a non-
   render(<YearStrip onOpenDay={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Previous year' }))
   expect(screen.getByRole('heading', { name: '2025' })).toBeInTheDocument()
-  const grid = screen.getByRole('grid', { name: 'Days of 2025' })
-  const cells = within(grid).getAllByRole('gridcell')
+  const grid = screen.getByRole('group', { name: 'Days of 2025' })
+  const cells = within(grid).getAllByRole('button')
   const tabbable = cells.find(c => c.getAttribute('tabindex') === '0')
   expect(tabbable).toHaveAttribute('aria-label', 'January 1, 2025')
 })
@@ -97,16 +97,16 @@ test('a stamped, fully finished day is colored and marked complete', () => {
   actions.toggleTask('2026-06-10', taskId)
 
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  const cell = within(grid).getByRole('gridcell', { name: 'June 10, 2026, Office day, completed' })
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const cell = within(grid).getByRole('button', { name: 'June 10, 2026, Office day, completed' })
   expect(cell).toHaveStyle({ background: '#a7c4f5' })
   expect(cell).toHaveClass('year-cell-complete')
 })
 
 test('an unplanned day renders with no template color and no completion mark', () => {
   render(<YearStrip onOpenDay={() => {}} />)
-  const grid = screen.getByRole('grid', { name: 'Days of 2026' })
-  const cell = within(grid).getByRole('gridcell', { name: 'June 15, 2026' })
+  const grid = screen.getByRole('group', { name: 'Days of 2026' })
+  const cell = within(grid).getByRole('button', { name: 'June 15, 2026' })
   expect(cell).not.toHaveClass('year-cell-complete')
   expect(cell.style.background).toBe('')
 })
@@ -123,6 +123,26 @@ test('lists the distinct templates used this year as a named legend, not color a
 test('a year with nothing stamped shows no template legend', () => {
   render(<YearStrip onOpenDay={() => {}} />)
   expect(screen.queryByText(/day$/)).not.toBeInTheDocument()
+})
+
+test('never claims grid semantics it does not honor', () => {
+  // role="grid" requires role="row" children wrapping the cells; this
+  // layout has no grouping that is honest about both the visual axes
+  // (weeks as columns, weekdays as rows) and the calendar-relative
+  // keyboard scheme (right/left move by day, up/down move by week) at
+  // once, so it deliberately claims neither role. Pinned here so a future
+  // change cannot silently reintroduce a role="grid" that role="row"
+  // never follows.
+  const { container } = render(<YearStrip onOpenDay={() => {}} />)
+  expect(container.querySelector('[role="grid"]')).toBeNull()
+  expect(container.querySelector('[role="row"]')).toBeNull()
+  expect(container.querySelector('[role="gridcell"]')).toBeNull()
+
+  const group = screen.getByRole('group', { name: 'Days of 2026' })
+  expect(group).toHaveAttribute('aria-describedby', 'year-strip-legend')
+  // Cells inside are plain buttons, not gridcells.
+  const buttons = within(group).getAllByRole('button')
+  expect(buttons.length).toBeGreaterThan(300)
 })
 
 test('carries no aggregate numbers anywhere in its own text', () => {
