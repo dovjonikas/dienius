@@ -41,3 +41,17 @@ test('re-renders to reflect the newly selected preset as selected', async () => 
   expect(screen.getByRole('button', { name: /Sketchbook/ })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: /Slate/ })).toHaveAttribute('aria-pressed', 'false')
 })
+
+test('a card previews its own preset\'s stored override, not the stock preset color - the card never lies about the room', async () => {
+  actions.setThemeOverride('sketchbook', 'accent', '#ff6600')
+  render(<ThemeGallery />)
+  const card = screen.getByRole('button', { name: /Sketchbook/ })
+  expect(card.style.getPropertyValue('--pv-accent')).toBe('#ff6600')
+})
+
+test('an override on one preset never shows up on another preset\'s card', async () => {
+  actions.setThemeOverride('sketchbook', 'accent', '#ff6600')
+  render(<ThemeGallery />)
+  const slateCard = screen.getByRole('button', { name: /Slate/ })
+  expect(slateCard.style.getPropertyValue('--pv-accent')).not.toBe('#ff6600')
+})

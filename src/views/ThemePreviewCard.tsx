@@ -1,22 +1,26 @@
 import { buildPreviewStyle } from '../lib/theme-preview'
-import type { ThemePreset } from '../lib/themes'
+import type { RuleStyle, ThemeTokens } from '../lib/themes'
 
 interface ThemePreviewCardProps {
-  preset: ThemePreset
-  /** Which variant to render. The caller resolves this - typically via
-   * resolveMode against the preset's own `modes` - so a card is never
-   * asked to show a mode the preset does not actually ship. */
-  mode: 'light' | 'dark'
+  /** The preset's display name - also this button's whole accessible name. */
+  name: string
+  /** Fully resolved tokens for whatever this card should show right now -
+   * the caller has already merged the preset's own override patch on top
+   * of its stock variant (see ThemeGallery's use of resolveVariant), so
+   * this component never has to know about presets, modes or overrides at
+   * all, only what to paint. */
+  tokens: ThemeTokens
+  ruleStyle: RuleStyle
   selected: boolean
-  onSelect: (presetId: string) => void
+  onSelect: () => void
 }
 
 /**
- * One gallery card: a real miniature of the room this preset paints, not a
- * colour swatch. Every value on the card comes from the preset's own
- * `ThemeVariant` through `buildPreviewStyle` - there is no second, hand-
- * guessed copy of what a theme looks like, so a preset can never be
- * previewed as something it is not.
+ * One gallery card: a real miniature of the room these tokens paint, not a
+ * colour swatch. Every value on the card comes straight from the resolved
+ * tokens the caller hands it through buildPreviewStyle - there is no
+ * second, hand-guessed copy of what a theme looks like, so a card can never
+ * show something the tap it represents would not actually produce.
  *
  * The card itself (border, selection ring, footer label) is styled with
  * the app's own live tokens, not the `--pv-*` preview ones - so the
@@ -24,11 +28,8 @@ interface ThemePreviewCardProps {
  * now, while the room inside each card shows the candidate theme's own
  * colours regardless of which one that is.
  */
-export function ThemePreviewCard({ preset, mode, selected, onSelect }: ThemePreviewCardProps) {
-  const variant = mode === 'dark' ? preset.dark : preset.light
-  if (!variant) return null
-
-  const style = buildPreviewStyle(variant.tokens, variant.ruleStyle) as React.CSSProperties
+export function ThemePreviewCard({ name, tokens, ruleStyle, selected, onSelect }: ThemePreviewCardProps) {
+  const style = buildPreviewStyle(tokens, ruleStyle) as React.CSSProperties
 
   return (
     <button
@@ -36,7 +37,7 @@ export function ThemePreviewCard({ preset, mode, selected, onSelect }: ThemePrev
       className="theme-card"
       aria-pressed={selected}
       style={style}
-      onClick={() => onSelect(preset.id)}
+      onClick={onSelect}
     >
       {/* The room is a visual demonstration, not a description of this
           button - its sample copy ("Today", "Write the proposal"...) would
@@ -55,7 +56,7 @@ export function ThemePreviewCard({ preset, mode, selected, onSelect }: ThemePrev
           <span className="theme-card-mark">Due today</span>
         </span>
       </span>
-      <span className="theme-card-name">{preset.name}</span>
+      <span className="theme-card-name">{name}</span>
     </button>
   )
 }
