@@ -43,21 +43,21 @@ export function SettingsView() {
       )}
       <div className="settings-group">
         <h3>Theme</h3>
+        {/* Mode only, for now - which room (preset) is active is fixed at
+            Slate until the gallery from docs/THEMES.md's build order step 4
+            lands. Overrides are supported by the pipeline already, see
+            actions.setThemeOverride, but there is no panel to reach them yet. */}
         <div className="segmented">
-          <button
-            className={data.settings.theme === 'light' ? 'active' : ''}
-            aria-pressed={data.settings.theme === 'light'}
-            onClick={() => actions.setTheme('light')}
-          >
-            Light
-          </button>
-          <button
-            className={data.settings.theme === 'dark' ? 'active' : ''}
-            aria-pressed={data.settings.theme === 'dark'}
-            onClick={() => actions.setTheme('dark')}
-          >
-            Dark
-          </button>
+          {(['light', 'dark', 'system'] as const).map(mode => (
+            <button
+              key={mode}
+              className={data.settings.theme.mode === mode ? 'active' : ''}
+              aria-pressed={data.settings.theme.mode === mode}
+              onClick={() => actions.setTheme(mode)}
+            >
+              {mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'System'}
+            </button>
+          ))}
         </div>
       </div>
       <div className="settings-group">

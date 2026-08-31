@@ -1,31 +1,20 @@
-import type { Settings } from './types'
-
 /**
- * Mirrors the --bg values in styles.css for each theme. Kept as an explicit
- * map, rather than read from computed styles, so the browser chrome color
- * updates in the same tick as the theme itself with no dependency on
- * layout having happened yet.
- */
-const THEME_COLORS: Record<Settings['theme'], string> = {
-  light: '#fafaf8',
-  dark: '#191a1d',
-}
-
-export function themeColorFor(theme: Settings['theme']): string {
-  return THEME_COLORS[theme]
-}
-
-/**
- * Keeps <meta name="theme-color"> in sync with the active theme, so
- * Safari's browser chrome and the Android status bar and task switcher
+ * Keeps <meta name="theme-color"> in sync with the resolved theme's --bg,
+ * so Safari's browser chrome and the Android status bar and task switcher
  * match the app instead of showing the light color pinned in index.html
- * regardless of theme. This has no effect on the installed iOS PWA's
- * status bar - that is governed entirely by the static
+ * regardless of what is actually on screen. This has no effect on the
+ * installed iOS PWA's status bar - that is governed entirely by the static
  * apple-mobile-web-app-status-bar-style meta tag, which iOS does not let a
  * running page change.
+ *
+ * Takes the resolved background color directly rather than a theme name -
+ * with theme presets as data, there is no fixed enum of colors to look up
+ * any more, only whatever resolveTheme produced for whichever preset and
+ * mode are actually active. Syncing the manifest's own background_color
+ * and theme_color at runtime is a later phase; see docs/THEMES.md.
  */
-export function syncThemeColorMeta(theme: Settings['theme']): void {
+export function syncThemeColorMeta(bgColor: string): void {
   const meta = document.querySelector('meta[name="theme-color"]')
   if (!meta) return
-  meta.setAttribute('content', themeColorFor(theme))
+  meta.setAttribute('content', bgColor)
 }
