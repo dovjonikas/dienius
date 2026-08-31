@@ -82,6 +82,51 @@ test('validate rejects settings missing enabledWidgets or with a bad theme', () 
   expect(loadData()).toEqual(defaultData())
 })
 
+test('validate accepts a task with no pushCount, defaulting it on read', () => {
+  const noPushCount = JSON.stringify({
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'From before the field existed', done: false }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, noPushCount)
+  const loaded = loadData()
+  expect(loaded.days['2026-09-01'].tasks[0].pushCount).toBeUndefined()
+  expect(loaded.days['2026-09-01'].tasks[0].title).toBe('From before the field existed')
+})
+
+test('validate rejects a task whose pushCount is not a non-negative integer', () => {
+  const negative = JSON.stringify({
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Bad', done: false, pushCount: -1 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, negative)
+  expect(loadData()).toEqual(defaultData())
+
+  const fractional = JSON.stringify({
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Bad', done: false, pushCount: 1.5 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, fractional)
+  expect(loadData()).toEqual(defaultData())
+})
+
 test('a well-formed payload still passes validate', () => {
   const good = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', time: '09:00', title: 'Gym' }] }],

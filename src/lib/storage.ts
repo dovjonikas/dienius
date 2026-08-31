@@ -18,6 +18,10 @@ function isOptionalString(x: unknown): x is string | undefined {
   return x === undefined || typeof x === 'string'
 }
 
+function isOptionalPushCount(x: unknown): x is number | undefined {
+  return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0)
+}
+
 function isTask(x: unknown): x is Task {
   if (!isRecord(x)) return false
   return (
@@ -25,7 +29,8 @@ function isTask(x: unknown): x is Task {
     typeof x.title === 'string' &&
     typeof x.done === 'boolean' &&
     isOptionalString(x.time) &&
-    (x.fromTemplate === undefined || typeof x.fromTemplate === 'boolean')
+    (x.fromTemplate === undefined || typeof x.fromTemplate === 'boolean') &&
+    isOptionalPushCount(x.pushCount)
   )
 }
 
