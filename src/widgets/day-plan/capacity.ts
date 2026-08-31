@@ -128,6 +128,17 @@ export interface Capacity {
    */
   anchorsMinutes: number | null
   /**
+   * True when at least one sized anchor's real length, from its own
+   * `minutes`, is longer than the portion `clipToWindow` kept - a night
+   * shift that runs past the window's close, say. `anchorsMinutes` is
+   * still the correct figure for the window's own arithmetic, but a
+   * sentence that reports it as "the" length of that anchor would read as
+   * wrong to a person who knows their shift is longer - see
+   * `formatCapacityLine`, which qualifies the anchors clause when this is
+   * true rather than changing the number itself.
+   */
+  anchorsClippedByWindow: boolean
+  /**
    * Free stretches within the window, outside every sized anchor block.
    * Only ever populated when every anchor is sized - see `freeMinutes`.
    */
@@ -180,6 +191,14 @@ export interface Capacity {
  * reported as `null` rather than a fabricated "16h free," and a single
  * anchor that fills or overruns the whole window correctly leaves nothing
  * free - clipping means an anchor can never push free time negative.
+ *
+ * Clipping is correct arithmetic but can read as wrong on its own: a
+ * night shift clipped down to the two hours before midnight is genuinely
+ * only two hours of today's window, but a sentence that just says
+ * "Anchors take 2h" for an eight-hour shift looks like the app got the
+ * shift's length wrong, not like it scoped the day correctly. See
+ * `anchorsClippedByWindow` and `formatCapacityLine`, which say so rather
+ * than let a true number read as a mistake.
  */
 export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capacity {
   const anchors = tasks.filter(isAnchor)
@@ -193,6 +212,7 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
       anchorCount: 0,
       unsizedAnchorCount: 0,
       anchorsMinutes: null,
+      anchorsClippedByWindow: false,
       gaps: [],
       freeMinutes: null,
       floatsMinutes,
@@ -204,12 +224,20 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
   const window = windowFor(dayType)
   const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
   const unsizedAnchorCount = anchors.length - sizedAnchors.length
-  const clipped = sizedAnchors
-    .map(anchorInterval)
-    .map(interval => clipToWindow(interval, window))
-    .filter((interval): interval is Interval => interval !== null)
+  const rawIntervals = sizedAnchors.map(anchorInterval)
+  const clippedOrNull = rawIntervals.map(interval => clipToWindow(interval, window))
+  const clipped = clippedOrNull.filter((interval): interval is Interval => interval !== null)
   const merged = mergeIntervals(clipped)
   const anchorsMinutes = merged.reduce((sum, block) => sum + (block.end - block.start), 0)
+  // Compared against the raw, unclipped interval for each sized anchor in
+  // turn (not against the merged blocks) - merging two overlapping anchors
+  // into their union is already-accepted, separate honesty, not a
+  // truncation the window imposed, so it must never trip this flag.
+  const anchorsClippedByWindow = rawIntervals.some((interval, i) => {
+    const kept = clippedOrNull[i]
+    const keptMinutes = kept ? kept.end - kept.start : 0
+    return keptMinutes < interval.end - interval.start
+  })
 
   // At least one anchor's real length is unknown, so its true position on
   // the timeline is unknown too - it might run through what would
@@ -222,6 +250,7 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
       anchorCount: anchors.length,
       unsizedAnchorCount,
       anchorsMinutes,
+      anchorsClippedByWindow,
       gaps: [],
       freeMinutes: null,
       floatsMinutes,
@@ -245,6 +274,7 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
     anchorCount: anchors.length,
     unsizedAnchorCount: 0,
     anchorsMinutes,
+    anchorsClippedByWindow,
     gaps,
     freeMinutes,
     floatsMinutes,
@@ -294,8 +324,15 @@ export function formatCapacityLine(capacity: Capacity): string | null {
   if (capacity.anchorCount > 0) {
     const sizedAnchorCount = capacity.anchorCount - capacity.unsizedAnchorCount
     if (sizedAnchorCount > 0) {
+      // An anchor that runs past the window's close (a night shift, say)
+      // is genuinely longer than the figure below - it is only cut down
+      // to the part that falls in today's window, not shortened in
+      // reality. Saying so here keeps the number honest without a second
+      // sentence: the reader is not told an eight-hour shift is two hours
+      // long, only that two of its hours are today's.
+      const windowNote = capacity.anchorsClippedByWindow ? " within today's window" : ''
       const unsizedNote = capacity.unsizedAnchorCount > 0 ? `, plus ${capacity.unsizedAnchorCount} unsized` : ''
-      sentences.push(`Anchors take ${formatDuration(capacity.anchorsMinutes!)}${unsizedNote}.`)
+      sentences.push(`Anchors take ${formatDuration(capacity.anchorsMinutes!)}${windowNote}${unsizedNote}.`)
     } else {
       const word = capacity.unsizedAnchorCount === 1 ? 'anchor' : 'anchors'
       sentences.push(`${capacity.unsizedAnchorCount} ${word} with no size yet.`)

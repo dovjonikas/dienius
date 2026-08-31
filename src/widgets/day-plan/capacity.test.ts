@@ -241,6 +241,62 @@ test('a shift and rest day type use the same window as an ordinary day', () => {
   expect(rest.freeMinutes).toBe(full.freeMinutes)
 })
 
+// --- computeCapacity: saying so when an anchor is clipped, not just clipping it
+
+test('an anchor entirely inside the window is not flagged as clipped', () => {
+  const capacity = computeCapacity([anchor('Gym', '09:00', 90)])
+  expect(capacity.anchorsClippedByWindow).toBe(false)
+  expect(formatCapacityLine(capacity)).toBe('Anchors take 1h30. Free: 14h30 across 2 gaps.')
+})
+
+test('an anchor that runs past the window close is flagged as clipped, and the sentence says so', () => {
+  const capacity = computeCapacity([anchor('Runs late', '22:00', 180)]) // clipped from 3h down to 1h
+  expect(capacity.anchorsClippedByWindow).toBe(true)
+  expect(formatCapacityLine(capacity)).toMatch(/^Anchors take 1h within today's window\./)
+})
+
+test('an anchor that starts before the window opens is flagged as clipped too', () => {
+  const capacity = computeCapacity([anchor('Starts early', '06:00', 180)]) // clipped from 3h down to 2h
+  expect(capacity.anchorsClippedByWindow).toBe(true)
+  expect(capacity.anchorsMinutes).toBe(120)
+})
+
+test('an anchor entirely outside the window is flagged as clipped, even though it reports zero', () => {
+  const capacity = computeCapacity([anchor('Too early', '05:00', 60)])
+  expect(capacity.anchorsClippedByWindow).toBe(true)
+  expect(formatCapacityLine(capacity)).toMatch(/^Anchors take 0 min within today's window\./)
+})
+
+test('the clipped-window note appears before the unsized-anchor note, in one clause', () => {
+  const capacity = computeCapacity([anchor('Runs late', '22:00', 180), anchor('No size', '10:00', undefined)])
+  expect(formatCapacityLine(capacity)).toBe(
+    "Anchors take 1h within today's window, plus 1 unsized. Free time isn't known until every anchor has a size.",
+  )
+})
+
+test('two overlapping anchors merging into their union is not treated as a window clip', () => {
+  // 09:00-12:00 and 11:00-13:00 overlap and merge to 09:00-13:00 - both
+  // fall entirely inside the default window, so nothing was actually cut
+  // off by the window itself.
+  const capacity = computeCapacity([anchor('Call', '09:00', 180), anchor('Meeting', '11:00', 120)])
+  expect(capacity.anchorsClippedByWindow).toBe(false)
+})
+
+test('the night-shift anchor crossing midnight is flagged as clipped under the night window', () => {
+  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'night')
+  expect(capacity.anchorsClippedByWindow).toBe(true)
+})
+
+test('reviewer repro: an eight-hour night shift reads as clipped, not as a two-hour shift', () => {
+  const capacity = computeCapacity(
+    [anchor('Night shift', '22:00', 480), float('Wind-down task', 30)],
+    'night',
+  )
+  expect(formatCapacityLine(capacity)).toBe(
+    "Anchors take 2h within today's window. Free: 9h across 1 gap. Floats need about 30 min.",
+  )
+})
+
 // --- computeCapacity: unsized anchors (Finding 2) ---------------------------
 
 test('an anchor with no size contributes nothing to the occupied total and blocks the free-time figure entirely', () => {

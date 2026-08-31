@@ -383,8 +383,12 @@ test('when floats exceed free time, the line states it plainly with no embedded 
   })
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   // The shift runs 00:00-18:00; only the 07:00-18:00 portion falls inside
-  // the 07:00-23:00 window, leaving 18:00-23:00 (5h) free.
-  expect(screen.getByText('Anchors take 11h. Free: 5h across 1 gap. Floats need about 7h. You are 2h over.')).toBeInTheDocument()
+  // the 07:00-23:00 window, leaving 18:00-23:00 (5h) free. It started
+  // before the window opened, so the sentence says the figure is only
+  // today's portion rather than implying the shift itself was 11 hours.
+  expect(
+    screen.getByText("Anchors take 11h within today's window. Free: 5h across 1 gap. Floats need about 7h. You are 2h over."),
+  ).toBeInTheDocument()
   // The capacity line itself carries no button - it only ever states the arithmetic.
   expect(container.querySelector('.capacity-line button')).toBeNull()
 })
@@ -421,8 +425,30 @@ test('a night-type day uses the night window instead of the default one', () => 
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   // Only the 22:00-24:00 portion of the shift falls inside the night
   // window (13:00-24:00); the default 07:00-23:00 window would have
-  // clipped it to just one hour instead of two.
-  expect(screen.getByText('Anchors take 2h. Free: 9h across 1 gap.')).toBeInTheDocument()
+  // clipped it to just one hour instead of two. The shift itself runs
+  // eight hours, so the sentence flags the figure as today's portion
+  // rather than implying the shift was two hours long.
+  expect(screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap.")).toBeInTheDocument()
+})
+
+test('a night shift crossing midnight reads as a partial figure, not as the shift\'s real length', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'night',
+        tasks: [
+          { id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 },
+          { id: 'wind-down', title: 'Wind-down task', done: false, minutes: 30 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(
+    screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap. Floats need about 30 min."),
+  ).toBeInTheDocument()
 })
 
 test('each float offers its own push-to-tomorrow control, so the owner picks which one moves', async () => {
