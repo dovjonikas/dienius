@@ -164,7 +164,16 @@ test('checking a task updates the score live', async () => {
 test('the score is announced to screen readers as a sentence, not a fraction', () => {
   actions.addTask('2026-09-01', 'One')
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByLabelText('0 of 1 done')).toBeInTheDocument()
+
+  // The spoken sentence exists and is not itself hidden from assistive tech.
+  const spoken = screen.getByText('0 of 1 done')
+  expect(spoken).toBeInTheDocument()
+  expect(spoken).not.toHaveAttribute('aria-hidden')
+
+  // The visible fraction is hidden from assistive tech, so a screen reader
+  // reads the sentence above instead of "zero slash one".
+  const visibleFraction = screen.getByText('0/1')
+  expect(visibleFraction).toHaveAttribute('aria-hidden', 'true')
 })
 
 test('rollover button is not shown when every unfinished task is already at the push bound', () => {

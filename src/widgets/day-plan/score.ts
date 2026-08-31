@@ -15,8 +15,11 @@ export type DayScore =
 
 /**
  * A day counts as planned the moment it has any task in it, whether that
- * task came from a stamped template or was typed by hand. Only an empty
- * task list has no plan.
+ * task came from a stamped template, was typed by hand, or arrived by
+ * rollover. Rollover only ever happens on an explicit button press, so a
+ * rolled-over task reflects a choice already made about this day, not
+ * something that landed on it automatically. Only an empty task list has
+ * no plan.
  */
 export function dayScore(tasks: Task[]): DayScore {
   if (tasks.length === 0) {

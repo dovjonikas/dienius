@@ -49,8 +49,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
           {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
           {formattedScore && (
-            <span className="day-score" aria-label={scoreLabel}>
-              {formattedScore}
+            <span className="day-score">
+              <span aria-hidden="true">{formattedScore}</span>
+              <span className="visually-hidden">{scoreLabel}</span>
             </span>
           )}
           {template && (

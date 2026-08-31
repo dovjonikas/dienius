@@ -23,6 +23,22 @@
 
 * { box-sizing: border-box; }
 
+/* Keeps content in the accessibility tree and readable by screen readers
+   while removing it from the visual layout. Do not swap this for
+   `display: none` or `visibility: hidden` - those also remove it from the
+   accessibility tree, which defeats the point wherever it is used. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
