@@ -10,6 +10,7 @@
  * DOM exist; the pre-paint script cannot import it, and src/preTheme.test.ts
  * checks the script's own copy of this logic stays in step with it.
  */
+import { bestInk } from './contrast'
 import type { ThemeOverrides, ThemeState } from './types'
 import { findPreset, type RuleStyle, type ThemeTokens, type ThemeVariant } from './themes'
 
@@ -92,6 +93,21 @@ export function resolveMode(state: ThemeState, systemPrefersDark: boolean, avail
   return availableModes[0]
 }
 
+/**
+ * Merges an override patch onto one already-chosen preset variant - the
+ * last two steps of the pipeline, factored out so the gallery can resolve
+ * the exact same "preset plus that preset's own patch" result a card
+ * previews without a second, hand-written copy of this merge living next to
+ * resolveTheme's own. See ThemeGallery.tsx: a card previews through this
+ * function with the current preset and mode already known, the same way
+ * resolveTheme below does after it finishes preset and mode selection.
+ */
+export function resolveVariant(variant: ThemeVariant, patch: ThemeOverrides): { tokens: ThemeTokens; ruleStyle: RuleStyle } {
+  const tokens = applyOverrides(variant.tokens, patch)
+  const ruleStyle = isRuleStyle(patch.ruleStyle) ? patch.ruleStyle : variant.ruleStyle
+  return { tokens, ruleStyle }
+}
+
 /** Runs the full pipeline: defaults live inside each preset variant already
  * (every token is always present, see themes.test.ts), so this only has
  * preset selection, mode resolution and the override patch left to do. */
@@ -100,8 +116,7 @@ export function resolveTheme(state: ThemeState, systemPrefersDark: boolean): Res
   const mode = resolveMode(state, systemPrefersDark, preset.modes)
   const variant = (mode === 'dark' ? preset.dark : preset.light) as ThemeVariant
   const patch = state.overrides[preset.id] ?? {}
-  const tokens = applyOverrides(variant.tokens, patch)
-  const ruleStyle = isRuleStyle(patch.ruleStyle) ? patch.ruleStyle : variant.ruleStyle
+  const { tokens, ruleStyle } = resolveVariant(variant, patch)
   return { mode, tokens, ruleStyle }
 }
 
@@ -133,7 +148,17 @@ export function systemPrefersDark(): boolean {
 
 /** Writes a resolved theme onto an element as live CSS custom properties -
  * the last step of the pipeline. Also sets `dataset.theme` to the resolved
- * mode, which is all the pre-paint script sets before this ever runs. */
+ * mode, which is all the pre-paint script sets before this ever runs.
+ *
+ * `--safe-ink` is derived, not one of TOKEN_KEYS: it is whichever of black
+ * or white reads best against `--surface`. The override panel's recovery
+ * controls (the "Reset to preset" button, the "Adjust this theme" toggle,
+ * and each gallery card's own name label) read this instead of `--text` -
+ * `--surface` is never one of the four tokens the override panel exposes,
+ * so `--safe-ink` stays correct no matter what a person does to `--text`,
+ * including setting it to match the paper exactly. Computed fresh here
+ * rather than stored, the same way `--rule-h`/`--rule-v` are - see
+ * docs/THEMES.md's override panel section for the failure this closes. */
 export function applyResolvedTheme(root: HTMLElement, resolved: ResolvedTheme): void {
   for (const key of TOKEN_KEYS) {
     root.style.setProperty(CSS_VAR_NAMES[key], resolved.tokens[key])
@@ -141,5 +166,6 @@ export function applyResolvedTheme(root: HTMLElement, resolved: ResolvedTheme): 
   const { ruleH, ruleV } = ruleAxisColors(resolved.tokens, resolved.ruleStyle)
   root.style.setProperty('--rule-h', ruleH)
   root.style.setProperty('--rule-v', ruleV)
+  root.style.setProperty('--safe-ink', bestInk(resolved.tokens.surface))
   root.dataset.theme = resolved.mode
 }

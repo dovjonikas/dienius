@@ -42,6 +42,7 @@ function styleSnapshot(el: HTMLElement): Record<string, string> {
   for (const key of TOKEN_KEYS) snapshot[CSS_VAR_NAMES[key]] = el.style.getPropertyValue(CSS_VAR_NAMES[key])
   snapshot['--rule-h'] = el.style.getPropertyValue('--rule-h')
   snapshot['--rule-v'] = el.style.getPropertyValue('--rule-v')
+  snapshot['--safe-ink'] = el.style.getPropertyValue('--safe-ink')
   snapshot['theme'] = el.dataset.theme ?? ''
   return snapshot
 }
@@ -259,6 +260,29 @@ test('agree when a ThemeState override patch has a non-string value', () => {
 // read the same live matchMedia result, so this only proves that read is
 // wired the same way on both sides, not that it produces the same
 // arbitrary value.
+test('agrees on --safe-ink, including the broken-theme case where a text override matches the paper exactly', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: {
+        presetId: 'sketchbook',
+        overrides: { sketchbook: { text: '#f4ecd8' } },
+        mode: 'light',
+      },
+      enabledWidgets: [],
+    },
+  }))
+  runPrePaintScript()
+  // --surface is never one of the four tokens the override panel exposes,
+  // so --safe-ink must still be a real, high-contrast ink derived from it -
+  // not the broken --text value, and not empty.
+  const safeInk = document.documentElement.style.getPropertyValue('--safe-ink')
+  expect(['#000000', '#ffffff']).toContain(safeInk)
+  expect(safeInk).not.toBe('#f4ecd8')
+  expectAgreement()
+})
+
 test('agree on system mode following the live OS preference, both directions', () => {
   const original = window.matchMedia
   try {

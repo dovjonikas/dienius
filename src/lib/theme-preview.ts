@@ -12,7 +12,7 @@
  * ruling pattern, accent, or edge shape the app itself would not actually
  * paint for that preset and mode.
  */
-import { contrastRatio } from './contrast'
+import { bestInk } from './contrast'
 import { ruleAxisColors } from './theme'
 import type { RuleStyle, ThemeTokens } from './themes'
 
@@ -51,7 +51,5 @@ export function buildPreviewStyle(tokens: ThemeTokens, ruleStyle: RuleStyle): Pr
  * and a dark one both stay legible without a 22nd token just for this.
  */
 export function markInk(mark: string): string {
-  const withBlack = contrastRatio('#000000', mark)
-  const withWhite = contrastRatio('#ffffff', mark)
-  return withBlack >= withWhite ? '#000000' : '#ffffff'
+  return bestInk(mark)
 }

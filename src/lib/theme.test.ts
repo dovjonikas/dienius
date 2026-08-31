@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
-import { applyResolvedTheme, CSS_VAR_NAMES, resolveMode, resolveTheme, ruleAxisColors, TOKEN_KEYS } from './theme'
+import { applyResolvedTheme, CSS_VAR_NAMES, resolveMode, resolveTheme, resolveVariant, ruleAxisColors, TOKEN_KEYS } from './theme'
+import { contrastRatio } from './contrast'
 import { findPreset } from './themes'
 import type { ThemeState } from './types'
 
@@ -106,6 +107,39 @@ test('applyResolvedTheme writes every token as a css custom property and sets da
   expect(root.style.getPropertyValue('--rule-h')).toBe(resolved.tokens.rule)
   expect(root.style.getPropertyValue('--rule-v')).toBe(resolved.tokens.rule)
   expect(root.dataset.theme).toBe('dark')
+})
+
+test('resolveVariant is the same merge resolveTheme uses, callable with just a variant and a patch', () => {
+  const variant = findPreset('sketchbook').dark!
+  const resolved = resolveVariant(variant, { accent: '#e0553b' })
+  expect(resolved.tokens.accent).toBe('#e0553b')
+  expect(resolved.tokens.text).toBe(variant.tokens.text)
+  expect(resolved.ruleStyle).toBe(variant.ruleStyle)
+})
+
+test('resolveVariant honors a ruleStyle override the same way resolveTheme does', () => {
+  const variant = findPreset('sketchbook').dark!
+  const resolved = resolveVariant(variant, { ruleStyle: 'none' })
+  expect(resolved.ruleStyle).toBe('none')
+  expect(resolved.tokens.rule).toBe(variant.tokens.rule)
+})
+
+test('applyResolvedTheme derives --safe-ink from --surface, never from --text', () => {
+  const root = document.createElement('div')
+  applyResolvedTheme(root, resolveTheme(state({ presetId: 'slate', mode: 'light' }), false))
+  // Slate light's surface is near-white, so the safe ink is black.
+  expect(root.style.getPropertyValue('--safe-ink')).toBe('#000000')
+})
+
+test('--safe-ink stays readable against --surface even when a text override would make --text itself illegible', () => {
+  const root = document.createElement('div')
+  const base = findPreset('slate').light!.tokens
+  // The exact broken-theme repro: text set to match the paper.
+  const resolved = resolveTheme(state({ overrides: { slate: { text: base.bg } } }), false)
+  applyResolvedTheme(root, resolved)
+  const safeInk = root.style.getPropertyValue('--safe-ink')
+  expect(safeInk).not.toBe(resolved.tokens.text)
+  expect(contrastRatio(safeInk, resolved.tokens.surface)).toBeGreaterThanOrEqual(4.5)
 })
 
 test('applyResolvedTheme on Slate leaves ruling transparent on both axes', () => {

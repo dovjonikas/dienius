@@ -1,57 +1,43 @@
-import { useEffect, useState } from 'react'
-import { resolveMode, systemPrefersDark } from '../lib/theme'
+import { resolveMode, resolveVariant } from '../lib/theme'
 import { PRESETS } from '../lib/themes'
+import { useSystemPrefersDark } from '../lib/useSystemPrefersDark'
 import { actions, useAppData } from '../lib/store'
 import { ThemePreviewCard } from './ThemePreviewCard'
-
-/**
- * Tracks the live `prefers-color-scheme` result, the same way App.tsx's own
- * theme effect does, so a preset previewed while mode is 'system' shows
- * the variant that would actually paint right now rather than whatever it
- * was when the gallery first mounted. Wrapped in the same try/catch for
- * the same reason - matchMedia is not guaranteed to exist everywhere this
- * runs (jsdom in tests included, where it throws and this simply keeps the
- * initial systemPrefersDark() reading of false).
- */
-function useLiveSystemPrefersDark(): boolean {
-  const [dark, setDark] = useState(systemPrefersDark)
-
-  useEffect(() => {
-    try {
-      const query = window.matchMedia('(prefers-color-scheme: dark)')
-      const update = () => setDark(query.matches)
-      update()
-      query.addEventListener('change', update)
-      return () => query.removeEventListener('change', update)
-    } catch {
-      return undefined
-    }
-  }, [])
-
-  return dark
-}
 
 /**
  * The grid of preview cards from docs/THEMES.md section 3. Every preset in
  * `PRESETS` gets a card automatically - adding a thirteenth preset later
  * needs no change here, only a new entry in themes.ts.
+ *
+ * Each card resolves through the same "preset plus that preset's own
+ * override patch" pipeline the live page paints from (resolveVariant, the
+ * same function resolveTheme itself uses) rather than reading
+ * preset.light/preset.dark directly - so a preset that has been hand-tuned
+ * through the override panel is never previewed with its stock colors. A
+ * card that lied about the room was exactly the failure docs/THEMES.md was
+ * written to prevent.
  */
 export function ThemeGallery() {
   const data = useAppData()
   const theme = data.settings.theme
-  const prefersDark = useLiveSystemPrefersDark()
+  const prefersDark = useSystemPrefersDark()
 
   return (
     <div className="theme-gallery" role="group" aria-label="Theme">
       {PRESETS.map(preset => {
         const mode = resolveMode(theme, prefersDark, preset.modes)
+        const variant = mode === 'dark' ? preset.dark : preset.light
+        if (!variant) return null
+        const patch = theme.overrides[preset.id] ?? {}
+        const { tokens, ruleStyle } = resolveVariant(variant, patch)
         return (
           <ThemePreviewCard
             key={preset.id}
-            preset={preset}
-            mode={mode}
+            name={preset.name}
+            tokens={tokens}
+            ruleStyle={ruleStyle}
             selected={theme.presetId === preset.id}
-            onSelect={actions.setThemePreset}
+            onSelect={() => actions.setThemePreset(preset.id)}
           />
         )
       })}

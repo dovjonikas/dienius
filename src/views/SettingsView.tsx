@@ -4,6 +4,7 @@ import { exportJson } from '../lib/storage'
 import { findPreset } from '../lib/themes'
 import { ThemeGallery } from './ThemeGallery'
 import { ThemeModeControl } from './ThemeModeControl'
+import { ThemeOverridePanel } from './ThemeOverridePanel'
 
 export function SettingsView() {
   const data = useAppData()
@@ -47,15 +48,15 @@ export function SettingsView() {
       <div className="settings-group">
         <h3>Theme</h3>
         {/* Preset picks the room, mode says whether the light is on - see
-            docs/THEMES.md section 4. Overrides are supported by the pipeline
-            already, see actions.setThemeOverride, but there is no panel to
-            reach them yet - that is build order step 5, a later phase. */}
+            docs/THEMES.md section 4. "Adjust this theme" below lets a
+            person hand-tune the active room's own tokens - see section 3. */}
         <ThemeGallery />
         <ThemeModeControl
           mode={data.settings.theme.mode}
           availableModes={findPreset(data.settings.theme.presetId).modes}
           onChange={actions.setTheme}
         />
+        <ThemeOverridePanel />
       </div>
       <div className="settings-group">
         <h3>Data</h3>

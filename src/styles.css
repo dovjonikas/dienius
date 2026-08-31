@@ -22,6 +22,12 @@
   --rule-h: transparent;
   --rule-v: transparent;
   --rule-size: 28px;
+  /* Derived, not a preset token - see applyResolvedTheme in src/lib/theme.ts.
+     Whichever of black or white reads best against --surface, so the
+     override panel's recovery controls (Reset, the disclosure toggle, a
+     gallery card's own name label) stay legible no matter what a person
+     does to --text by hand. This default matches Slate light's own value. */
+  --safe-ink: #2b2b2b;
   --grain: 0;
   --vignette: 0%;
   --border: #e8e6e1;
@@ -421,9 +427,179 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--text);
+  /* --safe-ink, not --text: this label is how a person identifies which
+     room a card is (the accessible name too, see ThemePreviewCard), and it
+     must stay legible even when the *active* preset's own --text has been
+     overridden to something unreadable against --surface - see the override
+     panel's recovery-path note in src/lib/theme.ts. */
+  color: var(--safe-ink);
   background: var(--surface);
   border-top: 1px solid var(--border);
+}
+
+/*
+ * "Adjust this theme", docs/THEMES.md section 3 - a proper disclosure
+ * (aria-expanded on the toggle, the panel itself only in the DOM while
+ * open) rather than a form. Grouped under fieldset/legend so the four
+ * groups (Colors, Ruling, Corners, Type) read as a few decisions, not a
+ * flat wall of eight-plus controls - the exact thing the assignment warns
+ * reads as abandon-this-screen to an ADHD reader.
+ */
+.theme-overrides { margin-top: 4px; }
+
+.theme-overrides-toggle {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* --safe-ink: this toggle is part of the escape route out of a color a
+     person just picked - it must stay readable even when --text itself is
+     the thing that broke. See the same note on .theme-card-name above and
+     applyResolvedTheme in src/lib/theme.ts. */
+  color: var(--safe-ink);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.theme-overrides-count {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.theme-overrides-panel {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.override-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.override-group legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 0 8px;
+}
+
+/* Two per row at 375px so a swatch stays a comfortable tap target rather
+   than four cramped into one row. */
+.override-color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.override-field label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.override-field input[type='color'] {
+  width: 100%;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* A visible, non-color signal that a token has been moved from its preset
+   default - never relies on color or shape alone, since every dot is also
+   paired with a visually-hidden "Changed from the preset default" string
+   read through aria-describedby. */
+.override-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.override-segmented-wrap .segmented {
+  width: 100%;
+}
+
+.override-segmented-wrap .segmented button {
+  flex: 1;
+  font-size: 13px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.override-custom-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.override-ruling-detail {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.override-range label { margin-bottom: 2px; }
+
+.override-range-value {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.override-field input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+}
+
+/* Without this the range track/thumb (and, on some browsers, the color
+   swatch's own chrome) render in the browser's stock blue, which reads as
+   unfinished inside a panel whose whole point is theming. Broadly
+   supported, including iOS Safari, and changes nothing about either
+   control's native behavior. */
+.override-field input[type='color'],
+.override-field input[type='range'] {
+  accent-color: var(--accent);
+}
+
+/* A self-contained rule rather than reusing the shared .warning class -
+   .warning's own color is var(--danger), which is not itself overridable,
+   but this box also has to stay legible as a whole against whatever is
+   behind it, and it is the message telling a person their own colors do not
+   read well, so it gets the same --safe-ink/--surface treatment as the rest
+   of the recovery path rather than trusting an ambient background. */
+.override-warning {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  color: var(--safe-ink);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.theme-overrides-panel > button {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Reset to preset is the recovery control itself - same --safe-ink
+     reasoning as .theme-overrides-toggle above. */
+  color: var(--safe-ink);
+  padding: 8px 14px;
 }
 
 .row { display: flex; gap: 8px; flex-wrap: wrap; }

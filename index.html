@@ -219,6 +219,32 @@
           }
         }
 
+        // Mirrors relativeLuminance + contrastRatio + bestInk in
+        // src/lib/contrast.ts, just enough to derive --safe-ink before
+        // React mounts - see applyResolvedTheme in src/lib/theme.ts for why
+        // this exists and why it reads --surface, never --text.
+        function linearizeChannel(c) {
+          var p = c / 255
+          return p <= 0.03928 ? p / 12.92 : Math.pow((p + 0.055) / 1.055, 2.4)
+        }
+        function relativeLuminance(hex) {
+          var h = hex.replace('#', '')
+          var r = parseInt(h.slice(0, 2), 16)
+          var g = parseInt(h.slice(2, 4), 16)
+          var b = parseInt(h.slice(4, 6), 16)
+          return 0.2126 * linearizeChannel(r) + 0.7152 * linearizeChannel(g) + 0.0722 * linearizeChannel(b)
+        }
+        function contrastRatio(hexA, hexB) {
+          var a = relativeLuminance(hexA)
+          var b = relativeLuminance(hexB)
+          var lighter = Math.max(a, b)
+          var darker = Math.min(a, b)
+          return (lighter + 0.05) / (darker + 0.05)
+        }
+        function bestInk(background) {
+          return contrastRatio('#000000', background) >= contrastRatio('#ffffff', background) ? '#000000' : '#ffffff'
+        }
+
         var themeState = readThemeState()
         // findPresetById resolves an unknown presetId to Slate by linear
         // search, same as findPreset in src/lib/themes.ts - see that
@@ -248,6 +274,10 @@
         var axisColors = ruleAxisColors(ruleColor, ruleStyle)
         root.style.setProperty('--rule-h', axisColors.ruleH)
         root.style.setProperty('--rule-v', axisColors.ruleV)
+        // Derived from whatever --surface the loop above just wrote - never
+        // from --text, which is the one token an override can turn into the
+        // exact problem this exists to keep an escape route out of.
+        root.style.setProperty('--safe-ink', bestInk(root.style.getPropertyValue('--surface')))
         root.dataset.theme = mode
       } catch (e) {}
     </script>
