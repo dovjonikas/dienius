@@ -19,6 +19,39 @@ test('applying a template copies its blocks as tasks', () => {
   expect(day.tasks[0]).toMatchObject({ time: '09:00', title: 'Gym', done: false, fromTemplate: true })
 })
 
+test('a stamped day arrives already sized when its template blocks carry minutes', () => {
+  const sized: Template = {
+    id: 't4',
+    name: 'Full day',
+    color: '#8ab6f9',
+    blocks: [
+      { id: 'b1', time: '09:00', title: 'Gym', minutes: 90 },
+      { id: 'b2', title: 'Guitar', minutes: 20 },
+      { id: 'b3', title: 'No size on this one' },
+    ],
+  }
+  const days = applyStamps({}, [sized], { '2026-09-01': 't4' })
+  const tasks = days['2026-09-01'].tasks
+  expect(tasks.find(t => t.title === 'Gym')?.minutes).toBe(90)
+  expect(tasks.find(t => t.title === 'Guitar')?.minutes).toBe(20)
+  expect(tasks.find(t => t.title === 'No size on this one')?.minutes).toBeUndefined()
+})
+
+test('re-stamping updates minutes from the current block, not the prior task', () => {
+  const shift: Template = {
+    id: 't5',
+    name: 'Shift',
+    color: '#c9b3f0',
+    blocks: [{ id: 'b1', time: '19:00', title: 'Clock in', minutes: 480 }],
+  }
+  const stamped = applyStamps({}, [shift], { '2026-09-01': 't5' })
+  expect(stamped['2026-09-01'].tasks[0].minutes).toBe(480)
+
+  const resized: Template = { ...shift, blocks: [{ ...shift.blocks[0], minutes: 420 }] }
+  const restamped = applyStamps(stamped, [resized], { '2026-09-01': 't5' })
+  expect(restamped['2026-09-01'].tasks[0].minutes).toBe(420)
+})
+
 test('applying keeps manual tasks and replaces old template tasks', () => {
   const existing: DayPlan = {
     date: '2026-09-01',

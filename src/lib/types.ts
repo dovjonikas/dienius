@@ -20,6 +20,13 @@ export interface TemplateBlock {
    * blocks count toward the day's score. Absent or false is not core.
    */
   core?: boolean
+  /**
+   * Estimated size in minutes. Absent means unsized - see `capacity.ts` in
+   * `src/widgets/day-plan`. Sizes belong here, on the template block, so a
+   * stamped day arrives already sized and nobody has to type a number into
+   * a task by hand; see docs/TIMELINE.md section 4.
+   */
+  minutes?: number
 }
 
 export interface Template {
@@ -58,6 +65,16 @@ export interface Task {
    * never planned for.
    */
   core?: boolean
+  /**
+   * Estimated size in minutes. Absent means unsized, not zero - a task
+   * typed through quick-add never gets one automatically, since guessing a
+   * duration is worse than admitting it is not known. Usually arrives
+   * copied from the template block this task was stamped from, or set by
+   * hand afterward through the task's own size control. See `capacity.ts`
+   * for how anchors, floats and this field combine into the capacity line,
+   * and docs/TIMELINE.md section 4 for why a default is never invented.
+   */
+  minutes?: number
 }
 
 export interface DayPlan {

@@ -61,6 +61,15 @@ function isOptionalBoolean(x: unknown): x is boolean | undefined {
   return x === undefined || typeof x === 'boolean'
 }
 
+// Same rigor as isOptionalPushCount: absent is fine (unsized), but a
+// present value must be a real non-negative whole number of minutes.
+// Rejecting a fractional or negative value here rather than coercing it
+// keeps a corrupted field from silently poisoning the capacity arithmetic
+// in capacity.ts - see docs/TIMELINE.md section 4.
+function isOptionalMinutes(x: unknown): x is number | undefined {
+  return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0)
+}
+
 // Accepts both an absent type (a template saved before this field existed,
 // or a day never stamped) and any of the four known values. Anything else
 // - a typo, a hand-edited backup, a future value this build doesn't know
@@ -78,7 +87,8 @@ function isTask(x: unknown): x is Task {
     isOptionalString(x.time) &&
     (x.fromTemplate === undefined || typeof x.fromTemplate === 'boolean') &&
     isOptionalPushCount(x.pushCount) &&
-    isOptionalBoolean(x.core)
+    isOptionalBoolean(x.core) &&
+    isOptionalMinutes(x.minutes)
   )
 }
 
@@ -88,7 +98,8 @@ function isTemplateBlock(x: unknown): x is TemplateBlock {
     typeof x.id === 'string' &&
     typeof x.title === 'string' &&
     isOptionalString(x.time) &&
-    isOptionalBoolean(x.core)
+    isOptionalBoolean(x.core) &&
+    isOptionalMinutes(x.minutes)
   )
 }
 
