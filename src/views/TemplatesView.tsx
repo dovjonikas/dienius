@@ -1,31 +1,41 @@
 import { useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import type { Template } from '../lib/types'
+import type { DayType, Template } from '../lib/types'
 
 export const TEMPLATE_COLORS = [
   '#a7c4f5', '#f5b0a7', '#a7e3bd', '#f5db9e',
   '#c9b3f0', '#f0b3d5', '#9ed9e8', '#cde39e',
 ]
 
+const DAY_TYPES: { value: DayType; label: string }[] = [
+  { value: 'full', label: 'Full day' },
+  { value: 'shift', label: 'Shift' },
+  { value: 'night', label: 'Night' },
+  { value: 'rest', label: 'Rest' },
+]
+
 interface DraftBlock {
   time: string
   title: string
+  core: boolean
 }
 
 interface Draft {
   id?: string
   name: string
   color: string
+  type: DayType
   blocks: DraftBlock[]
 }
 
-const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], blocks: [] })
+const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'full', blocks: [] })
 
 export function TemplatesView() {
   const data = useAppData()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
+  const [blockCore, setBlockCore] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   function startEdit(t: Template) {
@@ -34,10 +44,12 @@ export function TemplatesView() {
       id: t.id,
       name: t.name,
       color: t.color,
-      blocks: t.blocks.map(b => ({ time: b.time ?? '', title: b.title })),
+      type: t.type ?? 'full',
+      blocks: t.blocks.map(b => ({ time: b.time ?? '', title: b.title, core: b.core ?? false })),
     })
     setBlockTime('')
     setBlockTitle('')
+    setBlockCore(false)
   }
 
   function handleDeleteClick(t: Template) {
@@ -53,10 +65,11 @@ export function TemplatesView() {
     if (!draft || !blockTitle.trim()) return
     setDraft({
       ...draft,
-      blocks: [...draft.blocks, { time: blockTime.trim(), title: blockTitle.trim() }],
+      blocks: [...draft.blocks, { time: blockTime.trim(), title: blockTitle.trim(), core: blockCore }],
     })
     setBlockTime('')
     setBlockTitle('')
+    setBlockCore(false)
   }
 
   function removeBlock(index: number) {
@@ -64,11 +77,20 @@ export function TemplatesView() {
     setDraft({ ...draft, blocks: draft.blocks.filter((_, i) => i !== index) })
   }
 
+  function toggleBlockCore(index: number) {
+    if (!draft) return
+    setDraft({
+      ...draft,
+      blocks: draft.blocks.map((b, i) => (i === index ? { ...b, core: !b.core } : b)),
+    })
+  }
+
   function save() {
     if (!draft || !draft.name.trim()) return
     const blocks = draft.blocks.map(b => ({
       time: b.time || undefined,
       title: b.title,
+      core: b.core || undefined,
     }))
     if (draft.id) {
       const existing = data.templates.find(t => t.id === draft.id)
@@ -77,21 +99,24 @@ export function TemplatesView() {
           ...existing,
           name: draft.name.trim(),
           color: draft.color,
+          type: draft.type,
           blocks: blocks.map(b => ({ id: crypto.randomUUID(), ...b })),
         })
       }
     } else {
-      actions.addTemplate({ name: draft.name.trim(), color: draft.color, blocks })
+      actions.addTemplate({ name: draft.name.trim(), color: draft.color, type: draft.type, blocks })
     }
     setDraft(null)
     setBlockTime('')
     setBlockTitle('')
+    setBlockCore(false)
   }
 
   function cancel() {
     setDraft(null)
     setBlockTime('')
     setBlockTitle('')
+    setBlockCore(false)
   }
 
   return (
@@ -106,6 +131,7 @@ export function TemplatesView() {
               setDraft(emptyDraft())
               setBlockTime('')
               setBlockTitle('')
+              setBlockCore(false)
             }}
           >
             New template
@@ -132,11 +158,41 @@ export function TemplatesView() {
               />
             ))}
           </div>
+          <div className="day-type-picker">
+            <span className="muted">Day type</span>
+            <div className="segmented" role="group" aria-label="Day type">
+              {DAY_TYPES.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={draft.type === opt.value ? 'active' : ''}
+                  aria-pressed={draft.type === opt.value}
+                  onClick={() => setDraft({ ...draft, type: opt.value })}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {draft.type !== 'full' && (
+            <p className="muted">Only blocks marked core count toward the score on this day type.</p>
+          )}
           <ul className="block-list">
             {draft.blocks.map((b, i) => (
               <li key={i}>
                 <span className="task-time">{b.time || '--:--'}</span>
-                <span>{b.title}</span>
+                <span className="block-title">{b.title}</span>
+                {draft.type !== 'full' && (
+                  <button
+                    type="button"
+                    aria-pressed={b.core}
+                    aria-label={b.core ? `${b.title} is core` : `Mark ${b.title} as core`}
+                    className={b.core ? 'core-toggle active' : 'core-toggle'}
+                    onClick={() => toggleBlockCore(i)}
+                  >
+                    Core
+                  </button>
+                )}
                 <button aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
                   &times;
                 </button>
@@ -156,6 +212,17 @@ export function TemplatesView() {
               onChange={e => setBlockTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addBlock()}
             />
+            {draft.type !== 'full' && (
+              <button
+                type="button"
+                aria-pressed={blockCore}
+                aria-label={blockCore ? 'New block is core' : 'Mark new block as core'}
+                className={blockCore ? 'core-toggle active' : 'core-toggle'}
+                onClick={() => setBlockCore(v => !v)}
+              >
+                Core
+              </button>
+            )}
             <button onClick={addBlock}>Add block</button>
           </div>
           <div className="row">
