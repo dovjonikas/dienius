@@ -14,34 +14,200 @@
     <meta name="apple-mobile-web-app-title" content="Dienius" />
     <title>Dienius</title>
     <script id="pre-paint-theme">
-      // Sets the theme before React mounts, so a dark-mode user does not see
-      // a frame of the light theme on load. App.tsx applies the same theme
-      // to document.documentElement.dataset.theme in a useEffect once it
-      // has loaded through the normal store path - this only needs to get
-      // there first, not replace that.
+      // Writes the resolved theme's whole token block onto :root before
+      // React mounts, so a person with Sketchbook dark saved does not see
+      // a frame of plain light Slate on load. App.tsx does the exact same
+      // resolve-and-apply once it has loaded through the normal store path
+      // (src/lib/theme.ts's resolveTheme + applyResolvedTheme) - this only
+      // needs to get there first, not replace that.
       //
-      // This duplicates two things from src/lib/storage.ts on purpose,
-      // kept to exactly this much: the storage key ('dienius:data') and the
-      // shape of the one field this needs (settings.theme). If either ever
-      // changes, this must change with it. Wrapped in try/catch because
-      // storage can be unavailable (private browsing, a disabled setting)
-      // or hold something that is not the JSON this expects, and neither
-      // should ever be able to block the page from rendering - light is
-      // the same default defaultData() in storage.ts already uses, so
-      // falling through to it here is not a guess.
+      // Before theming had presets, this only had to duplicate one string
+      // field. Now it duplicates real weight: the storage key, the preset
+      // token data from src/lib/themes.ts, and the resolution algorithm
+      // from src/lib/theme.ts. Kept to exactly this much on purpose, and
+      // kept loud - every section below is labeled with what it mirrors, so
+      // a change on one side is easy to spot as missing on the other.
+      // src/preTheme.test.ts runs this exact script text against the real
+      // loadData() + resolveTheme() + applyResolvedTheme() for every preset,
+      // every mode, and several corrupt-storage cases, and fails on any
+      // difference between the two - that test is what actually keeps this
+      // honest, not the comment.
       //
-      // loadData() in storage.ts can still disagree with this if it rejects
-      // the payload for a reason that has nothing to do with theme - a
-      // malformed template, say - unless it salvages settings.theme from an
-      // otherwise-invalid payload the same way this script reads it in
-      // isolation. That salvage is what keeps this script's guess honest;
-      // see loadData's own comment. src/preTheme.test.ts runs this exact
-      // script text against loadData() to keep the two from drifting apart.
+      // Wrapped in try/catch throughout because storage can be unavailable
+      // (private browsing, a disabled setting), hold something that is not
+      // the JSON this expects, or matchMedia can be missing - none of that
+      // may ever block the page from rendering. Falling through to no-op
+      // leaves :root exactly at the CSS defaults in styles.css, which are
+      // Slate light - the same default a fresh install resolves to anyway.
       try {
-        var raw = localStorage.getItem('dienius:data')
-        if (raw && JSON.parse(raw).settings.theme === 'dark') {
-          document.documentElement.dataset.theme = 'dark'
+        // Mirrors STORAGE_KEY in src/lib/storage.ts.
+        var STORAGE_KEY = 'dienius:data'
+        // Mirrors DEFAULT_PRESET_ID in src/lib/themes.ts.
+        var DEFAULT_PRESET_ID = 'slate'
+
+        // Mirrors the system font stacks in src/lib/themes.ts. No webfont
+        // is bundled in this phase - see that file's own comment.
+        var SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        var SYSTEM_MONO = "'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace"
+        var SYSTEM_HAND = "'Bradley Hand', 'Segoe Script', 'Comic Sans MS', 'Chalkboard SE', cursive"
+        var HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
+
+        // Mirrors PRESETS in src/lib/themes.ts, token for token. Every
+        // ThemeVariant there (tokens + ruleStyle) is copied here verbatim.
+        var PRESETS = {
+          slate: {
+            modes: ['light', 'dark'],
+            light: { ruleStyle: 'none', tokens: {
+              bg: '#fafaf8', surface: '#ffffff', rule: '#00000000', ruleSize: '28px',
+              grain: '0', vignette: '0%', border: '#e8e6e1',
+              text: '#2b2b2b', muted: '#8a8a85', accent: '#5b7cfa', accentDim: '#c3cdfa',
+              mark: '#ffd54a', danger: '#d96c6c', good: '#6fae6f',
+              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              radius: '10px', edge: '10px', shadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+            } },
+            dark: { ruleStyle: 'none', tokens: {
+              bg: '#191a1d', surface: '#222327', rule: '#ffffff00', ruleSize: '28px',
+              grain: '0', vignette: '0%', border: '#33343a',
+              text: '#e8e8e5', muted: '#85858a', accent: '#7c94ff', accentDim: '#3c4470',
+              mark: '#e6c14a', danger: '#e08a8a', good: '#7fc47f',
+              fontDisplay: SYSTEM_SANS, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              radius: '10px', edge: '10px', shadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
+            } },
+          },
+          sketchbook: {
+            modes: ['light', 'dark'],
+            dark: { ruleStyle: 'squares', tokens: {
+              bg: '#14171c', surface: '#1c202a', rule: 'rgba(130, 170, 255, 0.09)', ruleSize: '28px',
+              grain: '0.025', vignette: '9%', border: '#2a2f3b',
+              text: '#e8ecf5', muted: '#8b96b3', accent: '#6fa8ff', accentDim: '#2f4a80',
+              mark: '#ffd23f', danger: '#e2776f', good: '#7fc98a',
+              fontDisplay: SYSTEM_HAND, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              radius: '10px', edge: HAND_DRAWN_EDGE, shadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+            } },
+            light: { ruleStyle: 'squares', tokens: {
+              bg: '#f4ecd8', surface: '#fffaf0', rule: 'rgba(80, 100, 130, 0.12)', ruleSize: '28px',
+              grain: '0.02', vignette: '6%', border: '#e6dcc5',
+              text: '#2c2a24', muted: '#8a8270', accent: '#3f6fd6', accentDim: '#b9cdf2',
+              mark: '#f5c331', danger: '#c85a52', good: '#4f8f57',
+              fontDisplay: SYSTEM_HAND, fontBody: SYSTEM_SANS, fontMono: SYSTEM_MONO, fontHand: SYSTEM_HAND,
+              radius: '10px', edge: HAND_DRAWN_EDGE, shadow: '0 2px 6px rgba(60, 40, 10, 0.18)',
+            } },
+          },
         }
+
+        // Mirrors CSS_VAR_NAMES in src/lib/theme.ts.
+        var CSS_VAR_NAMES = {
+          bg: '--bg', surface: '--surface', rule: '--rule', ruleSize: '--rule-size',
+          grain: '--grain', vignette: '--vignette', border: '--border',
+          text: '--text', muted: '--muted', accent: '--accent', accentDim: '--accent-dim',
+          mark: '--mark', danger: '--danger', good: '--good',
+          fontDisplay: '--font-display', fontBody: '--font-body', fontMono: '--font-mono', fontHand: '--font-hand',
+          radius: '--radius', edge: '--edge', shadow: '--shadow',
+        }
+
+        // Mirrors isLegacyTheme + migrateTheme in src/lib/storage.ts.
+        function migrateTheme(theme) {
+          if (theme === 'light' || theme === 'dark') {
+            return { presetId: DEFAULT_PRESET_ID, overrides: {}, mode: theme }
+          }
+          return theme
+        }
+
+        // Mirrors isThemeState in src/lib/storage.ts, closely enough to
+        // reject the same malformed shapes it does.
+        function isValidThemeState(t) {
+          if (!t || typeof t !== 'object') return false
+          if (typeof t.presetId !== 'string') return false
+          if (!t.overrides || typeof t.overrides !== 'object') return false
+          for (var presetId in t.overrides) {
+            var patch = t.overrides[presetId]
+            if (!patch || typeof patch !== 'object') return false
+            for (var token in patch) {
+              if (typeof patch[token] !== 'string') return false
+            }
+          }
+          return t.mode === 'light' || t.mode === 'dark' || t.mode === 'system'
+        }
+
+        var DEFAULT_THEME_STATE = { presetId: DEFAULT_PRESET_ID, overrides: {}, mode: 'system' }
+
+        // Mirrors salvageTheme in src/lib/storage.ts: reads settings.theme
+        // out of a payload that may otherwise be entirely invalid, without
+        // requiring anything else in it to be valid - see that function's
+        // own comment for why. Always returns a usable ThemeState, falling
+        // back to a fresh install's own default on any failure - unparsable
+        // JSON included - rather than letting that failure skip resolution
+        // and applying entirely. A person with a corrupt payload still gets
+        // a fully painted default room, not a page left to the static CSS
+        // fallback alone.
+        function readThemeState() {
+          try {
+            var raw = localStorage.getItem(STORAGE_KEY)
+            if (!raw) return DEFAULT_THEME_STATE
+            var parsed = JSON.parse(raw)
+            var theme = parsed && typeof parsed === 'object' ? parsed.settings && parsed.settings.theme : undefined
+            if (theme === 'light' || theme === 'dark' || isValidThemeState(theme)) {
+              return migrateTheme(theme)
+            }
+            return DEFAULT_THEME_STATE
+          } catch (e) {
+            return DEFAULT_THEME_STATE
+          }
+        }
+
+        // Mirrors systemPrefersDark in src/lib/theme.ts.
+        function systemPrefersDark() {
+          try {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches
+          } catch (e) {
+            return false
+          }
+        }
+
+        // Mirrors resolveTheme's mode fallback in src/lib/theme.ts: the
+        // requested mode if the preset actually ships it, otherwise
+        // whichever mode it does ship.
+        function resolveMode(requested, availableModes) {
+          for (var i = 0; i < availableModes.length; i++) {
+            if (availableModes[i] === requested) return requested
+          }
+          return availableModes[0]
+        }
+
+        // Mirrors ruleAxisColors in src/lib/theme.ts.
+        function ruleAxisColors(rule, ruleStyle) {
+          return {
+            ruleH: ruleStyle === 'none' ? 'transparent' : rule,
+            ruleV: ruleStyle === 'squares' ? rule : 'transparent',
+          }
+        }
+
+        var themeState = readThemeState()
+        // Mirrors findPreset in src/lib/themes.ts: an unknown presetId
+        // resolves to the default preset, and the override patch below is
+        // then looked up by that same resolved id - the id actually
+        // rendered - not the unknown one that was asked for.
+        var presetId = PRESETS[themeState.presetId] ? themeState.presetId : DEFAULT_PRESET_ID
+        var preset = PRESETS[presetId]
+        var requestedMode = themeState.mode === 'system' ? (systemPrefersDark() ? 'dark' : 'light') : themeState.mode
+        var mode = resolveMode(requestedMode, preset.modes)
+        var variant = mode === 'dark' ? preset.dark : preset.light
+        var patch = themeState.overrides[presetId] || {}
+
+        var root = document.documentElement
+        for (var key in CSS_VAR_NAMES) {
+          var value = typeof patch[key] === 'string' && patch[key].length > 0 ? patch[key] : variant.tokens[key]
+          root.style.setProperty(CSS_VAR_NAMES[key], value)
+        }
+        var ruleStyle = patch.ruleStyle === 'none' || patch.ruleStyle === 'lines' || patch.ruleStyle === 'squares'
+          ? patch.ruleStyle
+          : variant.ruleStyle
+        // An overridden rule color must feed the axis derivation too.
+        var ruleColor = typeof patch.rule === 'string' && patch.rule.length > 0 ? patch.rule : variant.tokens.rule
+        var axisColors = ruleAxisColors(ruleColor, ruleStyle)
+        root.style.setProperty('--rule-h', axisColors.ruleH)
+        root.style.setProperty('--rule-v', axisColors.ruleV)
+        root.dataset.theme = mode
       } catch (e) {}
     </script>
   </head>
