@@ -408,6 +408,45 @@ fixed. No horizontal overflow on `document.body` at 375px, confirmed through `ge
 on the offer cards and their buttons, which meet the app's 44px minimum through the same base `button`
 rule every other button in the app already gets.
 
+**Timeline gap overlap, fixed.** An ADHD-user review found that a gap shorter than about 38 minutes
+drew its own 44px touch-target floor straight over the anchor card that followed it - the app's own
+"text stays highly readable" promise broken literally, two labels drawn on top of each other, on a
+shape of day (a short buffer between two blocks) that real shift schedules are full of. The cause was
+a layout that positioned every anchor and gap purely proportionally to real clock time and applied the
+44px floor only afterward, as a CSS `min-height` on the box - the floor could grow a box past its own
+proportional bottom edge, but nothing told the *next* element to move out of the way.
+
+`computeVerticalLayout` in `timelineLayout.ts` replaces that with a piecewise-linear map: clock time is
+split into the segments the grid actually draws - an anchor cluster (touching or overlapping anchors,
+whichever needs the taller floor), the real gap between one cluster and the next, and the one-hour
+buffer on each end - and every segment is guaranteed at least its own pixel floor before segments are
+stacked in order. A segment that already earns more than its floor from real time is left alone; one
+that does not is stretched to the floor, and the stretch pushes every later segment down by exactly the
+same amount, so nothing after a floored gap can ever be drawn underneath it. `TimelineGrid.tsx` now
+positions every hour mark, half-hour rule, anchor, gap and the current-time line from this one function
+instead of the old percent-of-window conversion, so everything on the grid still reads as one coordinate
+system. A day with any unsized anchor - which already suppresses every gap object for the whole day, its
+real end being unknown - reserves no floor for a gap that will never render a button, so that scenario's
+spacing is unchanged from before this fix.
+
+A second, smaller overlap turned up while verifying the first fix by measurement rather than by eye: the
+gap button's own `margin: 2px 8px 2px 0` shifted its rendered box two pixels past what the layout math
+promised - a vertical margin on an absolutely positioned element with an explicit `top` and `height`
+moves the margin-top edge without shrinking the box to compensate, silently eating two pixels into
+whatever came next. Fixed by dropping the vertical margin (`margin: 0 8px 0 0`), keeping only the
+horizontal breathing room against the scroll container's own edge.
+
+Verified by measurement, not by eye: rebuilt the exact case the review reported (two real 30-minute
+blocks, a short buffer between them) with 15, 25 and 35-minute gaps and read `getBoundingClientRect()`
+off the live DOM for the gap and the anchor immediately after it, in Slate, Terminal, Legal pad and Ink
+and wash, at both a desktop width and 375px. Every gap measured exactly 44px tall; the following
+anchor's own top matched the gap's bottom in every case, to the pixel - flush, never overlapping. No
+theme in `styles.css` scopes a rule to `.timeline-gap` or `.timeline-anchor`, so the geometry does not
+vary by preset by construction; the four themes checked live are a spot check on that fact, not a
+search for an exception. The gap stayed a real, focusable button throughout - confirmed it still opens
+its picker on click at 375px, `aria-expanded` flips to `"true"`, and `document.body` never exceeded the
+viewport width.
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time

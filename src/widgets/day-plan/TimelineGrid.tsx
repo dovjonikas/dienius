@@ -5,22 +5,24 @@ import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
   computeTimelineLayout,
+  computeVerticalLayout,
   currentMinutes,
   formatAnchorTimeRange,
   formatClock,
   halfHourMarks,
   hourMarks,
-  windowPercent,
 } from './timelineLayout'
 
 /**
- * Pixels per minute of window time. A display-density choice, not layout
- * maths - `windowPercent` in `timelineLayout.ts` owns the actual conversion
- * from a clock time to a position; this constant only decides how tall
- * one percentage point of the window ends up on screen. Chosen so a
- * typical few-hour gap still reads as air rather than collapsing to a
- * sliver, without a full waking-length day growing taller than a phone
- * screen can reasonably scroll.
+ * Pixels per minute of window time before any touch-target floor below is
+ * applied. A display-density choice, not layout maths - `computeVerticalLayout`
+ * in `timelineLayout.ts` owns the actual conversion from a clock time to a
+ * pixel position, including the floors that keep a short gap or anchor from
+ * ever being drawn under its neighbour; this constant only decides how tall
+ * one minute of real time ends up on screen before any floor can stretch it
+ * further. Chosen so a typical few-hour gap still reads as air rather than
+ * collapsing to a sliver, without a full waking-length day growing taller
+ * than a phone screen can reasonably scroll.
  */
 const PX_PER_MINUTE = 1.15
 
@@ -65,18 +67,22 @@ const COMPACT_HEIGHT_PX = 40
  * short the free stretch really is - the same floor `MIN_ANCHOR_HEIGHT`
  * applies to an unsized anchor, applied here so a 10-minute gap between two
  * back-to-back anchors is still a real, comfortably tappable 44px target
- * rather than a sliver a thumb cannot land on. Purely a hit-area floor: it
- * never changes `gap.minutes` or anything the picker inside it offers.
+ * rather than a sliver a thumb cannot land on. Never changes `gap.minutes`
+ * or anything the picker inside it offers - but unlike the sized-anchor
+ * floor above, this one is not just a rendering clamp: `computeVerticalLayout`
+ * reserves this many pixels for the gap and pushes everything after it down
+ * to match, which is what stops a floored gap from ever being drawn under
+ * the anchor that follows it. See that function's own doc comment for why.
  */
 const GAP_MIN_HEIGHT_PX = 44
 
 /**
- * Width of the hour-label column on the left of the grid. Anchors and
- * gaps are positioned in the remaining space via `calc()`, so the same
- * single coordinate system (percent of the window's total minutes, from
- * `windowPercent`) still drives both the vertical position and the
- * horizontal gutter, with no second layout pass. Kept in sync by hand
- * with the matching pixel value in styles.css.
+ * Width of the hour-label column on the left of the grid. Anchors and gaps
+ * are positioned in the remaining space via `calc()`, so the same single
+ * pixel coordinate system - from `computeVerticalLayout` - still drives
+ * both the vertical position and the horizontal gutter, with no second
+ * layout pass. Kept in sync by hand with the matching pixel value in
+ * styles.css.
  */
 const GUTTER_PX = 44
 
@@ -214,18 +220,29 @@ export function TimelineGrid({
   if (!layout.window) return null
 
   const { window, anchors, gaps, unsizedAnchorCount } = layout
-  const totalMinutes = window.end - window.start
-  const heightPx = Math.round(totalMinutes * PX_PER_MINUTE)
   const marks = hourMarks(window)
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
+
+  // See computeVerticalLayout's own doc comment: this is what stops a
+  // short gap's touch-target floor from ever being drawn over the anchor
+  // that follows it. A day with any unsized anchor draws no gap objects at
+  // all (see computeTimelineLayout), so no floor is reserved for a button
+  // that will never exist there.
+  const vertical = computeVerticalLayout(window, anchors, {
+    pxPerMinute: PX_PER_MINUTE,
+    sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
+    unsizedAnchorFloorPx: MIN_ANCHOR_HEIGHT,
+    gapFloorPx: unsizedAnchorCount > 0 ? 0 : GAP_MIN_HEIGHT_PX,
+  })
+  const heightPx = Math.round(vertical.totalHeightPx)
 
   // Only ever true against today's own window - see the `isToday` prop's
   // own doc comment. A day whose anchors are entirely in the past or
   // entirely in the future draws no line, the same honesty rule the rest
   // of this grid already follows for an empty or unsized day.
   const showNowLine = isToday && nowMinutes >= window.start && nowMinutes <= window.end
-  const nowTop = showNowLine ? windowPercent(window, nowMinutes) : null
+  const nowTop = showNowLine ? vertical.topPx(nowMinutes) : null
 
   function closeGap(gapStart: number) {
     pendingFocusGapStart.current = gapStart
@@ -246,7 +263,7 @@ export function TimelineGrid({
         <div className="timeline-grid-layers" style={{ height: `${heightPx}px` }}>
           <div className="timeline-grid" aria-hidden="true">
             {marks.map(mark => (
-              <div key={mark} className="timeline-hour" style={{ top: `${windowPercent(window, mark)}%` }}>
+              <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>
                 <span className="timeline-hour-label">{formatClock(mark)}</span>
                 <span className="timeline-hour-rule" />
               </div>
@@ -256,17 +273,22 @@ export function TimelineGrid({
               <div
                 key={`half-${mark}`}
                 className="timeline-half-hour-rule"
-                style={{ top: `${windowPercent(window, mark)}%` }}
+                style={{ top: `${vertical.topPx(mark)}px` }}
               />
             ))}
 
             {anchors.map(anchor => {
-              const top = windowPercent(window, anchor.startMinutes)
-              const bottom = anchor.sized ? windowPercent(window, anchor.endMinutes!) : undefined
-              const heightPercent = bottom !== undefined ? bottom - top : undefined
+              const top = vertical.topPx(anchor.startMinutes)
+              const bottom = anchor.sized ? vertical.topPx(anchor.endMinutes!) : undefined
+              const heightPx = bottom !== undefined ? bottom - top : undefined
               const minHeightPx = anchor.sized ? SIZED_MIN_HEIGHT_PX : MIN_ANCHOR_HEIGHT
-              const rawHeightPx = heightPercent !== undefined ? (heightPercent / 100) * heightPx : MIN_ANCHOR_HEIGHT
-              const blockHeightPx = Math.max(rawHeightPx, minHeightPx)
+              // The cluster this anchor belongs to already reserves at
+              // least minHeightPx of vertical room (computeVerticalLayout),
+              // so this Math.max is only ever a safety net for one member
+              // of a multi-column cluster whose own span is shorter than
+              // its longer column-mates - it can never push into whatever
+              // comes after the cluster as a whole.
+              const blockHeightPx = Math.max(heightPx ?? minHeightPx, minHeightPx)
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
@@ -283,8 +305,8 @@ export function TimelineGrid({
                   key={anchor.id}
                   className={classNames.join(' ')}
                   style={{
-                    top: `${top}%`,
-                    height: heightPercent !== undefined ? `${heightPercent}%` : undefined,
+                    top: `${top}px`,
+                    height: heightPx !== undefined ? `${heightPx}px` : undefined,
                     minHeight: `${minHeightPx}px`,
                     left: `calc(${GUTTER_PX}px + (100% - ${GUTTER_PX}px) * ${anchor.column * fraction})`,
                     width: `calc((100% - ${GUTTER_PX}px) * ${fraction} - 4px)`,
@@ -311,17 +333,16 @@ export function TimelineGrid({
                 rather than disappearing under one. */}
             {showNowLine && (
               <>
-                <div className="timeline-now-line" style={{ top: `${nowTop}%` }} />
-                <div className="timeline-now-dot" style={{ top: `${nowTop}%` }} />
+                <div className="timeline-now-line" style={{ top: `${nowTop}px` }} />
+                <div className="timeline-now-dot" style={{ top: `${nowTop}px` }} />
               </>
             )}
           </div>
 
           <div className="timeline-gaps">
             {gaps.map(gap => {
-              const top = windowPercent(window, gap.startMinutes)
-              const bottom = windowPercent(window, gap.endMinutes)
-              const rawHeightPx = ((bottom - top) / 100) * heightPx
+              const top = vertical.topPx(gap.startMinutes)
+              const bottom = vertical.topPx(gap.endMinutes)
               const isOpen = openGapStart === gap.startMinutes
               const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to place a float.`
               return (
@@ -335,9 +356,8 @@ export function TimelineGrid({
                   aria-expanded={isOpen}
                   onClick={() => setOpenGapStart(isOpen ? null : gap.startMinutes)}
                   style={{
-                    top: `${top}%`,
-                    height: `${Math.max(bottom - top, 0)}%`,
-                    minHeight: `${Math.max(rawHeightPx, GAP_MIN_HEIGHT_PX)}px`,
+                    top: `${top}px`,
+                    height: `${Math.max(bottom - top, GAP_MIN_HEIGHT_PX)}px`,
                     left: `${GUTTER_PX}px`,
                     width: `calc(100% - ${GUTTER_PX}px)`,
                   }}

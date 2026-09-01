@@ -227,16 +227,115 @@ function packCluster(blocks: TimelineAnchorBlock[], from: number, to: number): v
 }
 
 /**
- * Converts a clock-minutes value into a percentage position within the
- * window - the one piece of "time and duration into a position" maths the
- * component needs, kept here and tested rather than duplicated inline in
- * JSX. A block's height is the difference between its own start and end
- * percentages.
+ * Pixel positions for every clock-minutes value in the window, guaranteeing
+ * that an anchor cluster or a gap never draws shorter than its own touch-
+ * target floor - and, critically, that nothing after a floored segment can
+ * ever be positioned underneath it.
+ *
+ * The grid used to be laid out purely proportionally (a straight percent-
+ * of-window-minutes conversion), with a pixel floor applied afterward only
+ * as a CSS `min-height` on the rendered box. That floor could grow a box
+ * past where its own proportional bottom edge sat, but nothing told the
+ * *next* element to move - so a real gap shorter than about 38 minutes
+ * (44px / 1.15px-per-minute) drew its floored box straight over the anchor
+ * card that followed it. Short buffers under 38 minutes are common in a
+ * real shift schedule, so this was not a rare edge case.
+ *
+ * The fix is a piecewise-linear map instead of a straight proportional one:
+ * clock time is split into the same segments the grid actually draws -
+ * an anchor cluster (touching or overlapping anchors, packed into columns
+ * but sharing one vertical extent), the real gap between one cluster and
+ * the next, and the one-hour buffer on each end - and every segment is
+ * given at least its own pixel floor before segments are stacked in order.
+ * A segment that already earns more than its floor from real proportional
+ * time is left alone; one that does not is stretched to the floor, and the
+ * stretch pushes every later segment down by exactly the same amount. The
+ * result reads as an honest hour grid everywhere nothing is too short to
+ * draw, and as a grid that made deliberate room everywhere something was.
+ *
+ * `gapFloorPx` is passed in rather than hardcoded because a day with any
+ * unsized anchor never draws a gap object at all (its real end is unknown,
+ * so no gap around it can be trusted - see `computeTimelineLayout`'s own
+ * comment) - the caller passes 0 for that case so a floor is never
+ * reserved for a button that will never exist.
  */
-export function windowPercent(window: Interval, minutes: number): number {
-  const span = window.end - window.start
-  if (span <= 0) return 0
-  return ((minutes - window.start) / span) * 100
+export function computeVerticalLayout(
+  window: Interval,
+  anchors: TimelineAnchorBlock[],
+  opts: {
+    /** How many pixels one minute of window time earns before any floor is applied. */
+    pxPerMinute: number
+    /** Floor for a cluster containing only sized anchors. */
+    sizedAnchorFloorPx: number
+    /** Floor for a cluster containing at least one unsized anchor. */
+    unsizedAnchorFloorPx: number
+    /** Floor for the real, interior gap between two clusters. 0 when the day draws no gaps at all. */
+    gapFloorPx: number
+  },
+): { totalHeightPx: number; topPx: (minutes: number) => number } {
+  const clusters = buildAnchorClusters(anchors, opts.sizedAnchorFloorPx, opts.unsizedAnchorFloorPx)
+
+  const segments: Array<{ start: number; end: number; floorPx: number }> = []
+  if (clusters.length === 0) {
+    segments.push({ start: window.start, end: window.end, floorPx: 0 })
+  } else {
+    segments.push({ start: window.start, end: clusters[0].start, floorPx: 0 })
+    segments.push(clusters[0])
+    for (let i = 1; i < clusters.length; i++) {
+      segments.push({ start: clusters[i - 1].end, end: clusters[i].start, floorPx: opts.gapFloorPx })
+      segments.push(clusters[i])
+    }
+    segments.push({ start: clusters[clusters.length - 1].end, end: window.end, floorPx: 0 })
+  }
+
+  const breakpoints: Array<{ real: number; px: number }> = [{ real: segments[0].start, px: 0 }]
+  let px = 0
+  for (const seg of segments) {
+    const rawPx = Math.max(0, seg.end - seg.start) * opts.pxPerMinute
+    px += Math.max(rawPx, seg.floorPx)
+    breakpoints.push({ real: seg.end, px })
+  }
+
+  function topPx(minutes: number): number {
+    if (minutes <= breakpoints[0].real) return breakpoints[0].px
+    for (let i = 1; i < breakpoints.length; i++) {
+      const prev = breakpoints[i - 1]
+      const cur = breakpoints[i]
+      if (minutes <= cur.real) {
+        const span = cur.real - prev.real
+        if (span <= 0) return prev.px
+        return prev.px + ((minutes - prev.real) / span) * (cur.px - prev.px)
+      }
+    }
+    return breakpoints[breakpoints.length - 1].px
+  }
+
+  return { totalHeightPx: px, topPx }
+}
+
+// Anchors that touch or overlap in their drawn interval (see
+// `drawnInterval`) share one vertical extent on the grid regardless of how
+// many side-by-side columns they end up packed into - a cluster's own
+// floor is the largest floor any of its members need, so a short anchor
+// sharing a cluster with a longer one never has to fend for itself.
+function buildAnchorClusters(
+  anchors: TimelineAnchorBlock[],
+  sizedFloorPx: number,
+  unsizedFloorPx: number,
+): Array<{ start: number; end: number; floorPx: number }> {
+  const clusters: Array<{ start: number; end: number; floorPx: number }> = []
+  for (const block of anchors) {
+    const interval = drawnInterval(block)
+    const floorPx = block.sized ? sizedFloorPx : unsizedFloorPx
+    const last = clusters[clusters.length - 1]
+    if (last && interval.start <= last.end) {
+      last.end = Math.max(last.end, interval.end)
+      last.floorPx = Math.max(last.floorPx, floorPx)
+    } else {
+      clusters.push({ start: interval.start, end: interval.end, floorPx })
+    }
+  }
+  return clusters
 }
 
 /** Every whole hour mark that falls within the window, for the hour gridlines. */
