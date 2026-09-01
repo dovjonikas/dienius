@@ -1,5 +1,5 @@
 import { expect, test, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Task } from '../../lib/types'
 import { TimelineGrid } from './TimelineGrid'
@@ -240,4 +240,113 @@ test('a float exactly the size of the gap is offered and can be placed', async (
   await user.click(screen.getByRole('button', { name: /1h free/i }))
   await user.click(screen.getByRole('button', { name: /place guitar, 1h/i }))
   expect(onPlaceFloat).toHaveBeenCalledWith('Guitar', '10:00')
+})
+
+// --- visual rebuild: anchor material -------------------------------------
+
+test('a short sized anchor renders with the compact modifier class once its drawn height falls under the compact cutoff', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Call', '09:00', 5)]} />)
+  const block = container.querySelector('.timeline-anchor')!
+  expect(block).toHaveClass('timeline-anchor-compact')
+})
+
+test('a full-length sized anchor does not carry the compact modifier class', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 240)]} />)
+  const block = container.querySelector('.timeline-anchor')!
+  expect(block).not.toHaveClass('timeline-anchor-compact')
+})
+
+// --- visual rebuild: half-hour rules --------------------------------------
+
+test('half-hour rules render at every half-hour within the window, with no label of their own', () => {
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,
+  )
+  const halves = container.querySelectorAll('.timeline-half-hour-rule')
+  expect(halves.length).toBeGreaterThan(0)
+  halves.forEach(h => expect(h.textContent).toBe(''))
+})
+
+// --- visual rebuild: current-time indicator -------------------------------
+//
+// Each test below owns its own fake-timer lifecycle rather than a shared
+// beforeEach/afterEach, so the userEvent-driven tests elsewhere in this
+// file (which rely on real timers for their internal delays) are never
+// affected by these.
+
+test('draws a current-time indicator when the day is today and the clock falls inside the window', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 9, 30))
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
+    )
+    expect(container.querySelector('.timeline-now-line')).not.toBeNull()
+    expect(container.querySelector('.timeline-now-dot')).not.toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('draws no current-time indicator when isToday is not set, even if the clock would fall inside the window', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 9, 30))
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,
+    )
+    expect(container.querySelector('.timeline-now-line')).toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('draws no current-time indicator when the clock falls outside the drawn window', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 20, 0))
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
+    )
+    expect(container.querySelector('.timeline-now-line')).toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('the current-time indicator sits inside the aria-hidden decorative layer, never announced as content', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 9, 30))
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
+    )
+    const line = container.querySelector('.timeline-now-line')!
+    expect(line.closest('[aria-hidden="true"]')).not.toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('the current-time indicator moves when a minute-scale interval ticks, and stops updating after unmount', () => {
+  vi.useFakeTimers()
+  try {
+    vi.setSystemTime(new Date(2026, 7, 31, 9, 30))
+    const { container, unmount } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
+    )
+    const before = (container.querySelector('.timeline-now-line') as HTMLElement).style.top
+
+    act(() => {
+      vi.setSystemTime(new Date(2026, 7, 31, 9, 45))
+      vi.advanceTimersByTime(60_000)
+    })
+    const after = (container.querySelector('.timeline-now-line') as HTMLElement).style.top
+    expect(after).not.toBe(before)
+
+    unmount()
+    expect(() => act(() => vi.advanceTimersByTime(120_000))).not.toThrow()
+  } finally {
+    vi.useRealTimers()
+  }
 })

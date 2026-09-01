@@ -3,7 +3,15 @@ import type { Task } from '../../lib/types'
 import { formatDuration } from './capacity'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
-import { computeTimelineLayout, formatAnchorTimeRange, formatClock, hourMarks, windowPercent } from './timelineLayout'
+import {
+  computeTimelineLayout,
+  currentMinutes,
+  formatAnchorTimeRange,
+  formatClock,
+  halfHourMarks,
+  hourMarks,
+  windowPercent,
+} from './timelineLayout'
 
 /**
  * Pixels per minute of window time. A display-density choice, not layout
@@ -27,8 +35,18 @@ const MIN_ANCHOR_HEIGHT = 44
  * anchor - never a change to `task.minutes` itself, which stays whatever
  * it really is and is still what the card's own label states in full once
  * there is room to show it.
+ *
+ * 32, not 24. At 24 the floor never actually bound: `.timeline-anchor`'s
+ * own padding (6px top and bottom) plus a 13px/1.4 line-height title
+ * already need close to 30px of content box before the constant is ever
+ * reached, so a short anchor rendered a few pixels taller than the code
+ * implied rather than the honest 24px the constant claimed. 32px was
+ * checked against that same rendered box in the running app rather than
+ * assumed - see docs/RESEARCH-TIMELINE-UI.md section 5 point 3, which also
+ * covers `timeline-anchor-compact`'s tighter padding below, the other half
+ * of reconciling this floor with what the box model actually needs.
  */
-const SIZED_MIN_HEIGHT_PX = 24
+const SIZED_MIN_HEIGHT_PX = 32
 
 /**
  * Below this drawn height, a card drops its time-range line and shows only
@@ -113,6 +131,16 @@ export interface TimelineGridProps {
   dragOverGapStart?: number | null
   /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
   draggingTaskId?: string | null
+  /**
+   * True when the day this grid is drawing is today's own date - see
+   * DayView.tsx's own `isToday`. The current-time indicator only ever
+   * makes sense against today: "now" has no honest position on a day in
+   * the past or the future. Optional and defaults to false, so every
+   * existing caller (a read-only preview, most of this component's own
+   * tests) renders exactly as it did before this prop existed, with no
+   * indicator drawn.
+   */
+  isToday?: boolean
 }
 
 /**
@@ -153,12 +181,24 @@ export function TimelineGrid({
   onAnchorPointerDown,
   dragOverGapStart,
   draggingTaskId,
+  isToday = false,
 }: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [openGapStart, setOpenGapStart] = useState<number | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const pendingFocusGapStart = useRef<number | null>(null)
+  const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
+
+  // Coarse on purpose - see docs/RESEARCH-TIMELINE-UI.md section 5 point 7:
+  // a planner has no reason to animate every second, so this recomputes
+  // once a minute rather than driving a render loop. Skipped entirely when
+  // the grid is not drawing today, since nothing here would ever be shown.
+  useEffect(() => {
+    if (!isToday) return
+    const timer = setInterval(() => setNowMinutes(currentMinutes()), 60_000)
+    return () => clearInterval(timer)
+  }, [isToday])
 
   // Runs after every render, but only ever acts once - closeGap below sets
   // the pending value immediately before the render that removes the
@@ -187,7 +227,15 @@ export function TimelineGrid({
   const totalMinutes = window.end - window.start
   const heightPx = Math.round(totalMinutes * PX_PER_MINUTE)
   const marks = hourMarks(window)
+  const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
+
+  // Only ever true against today's own window - see the `isToday` prop's
+  // own doc comment. A day whose anchors are entirely in the past or
+  // entirely in the future draws no line, the same honesty rule the rest
+  // of this grid already follows for an empty or unsized day.
+  const showNowLine = isToday && nowMinutes >= window.start && nowMinutes <= window.end
+  const nowTop = showNowLine ? windowPercent(window, nowMinutes) : null
 
   function closeGap(gapStart: number) {
     pendingFocusGapStart.current = gapStart
@@ -214,6 +262,14 @@ export function TimelineGrid({
               </div>
             ))}
 
+            {halfMarks.map(mark => (
+              <div
+                key={`half-${mark}`}
+                className="timeline-half-hour-rule"
+                style={{ top: `${windowPercent(window, mark)}%` }}
+              />
+            ))}
+
             {anchors.map(anchor => {
               const top = windowPercent(window, anchor.startMinutes)
               const bottom = anchor.sized ? windowPercent(window, anchor.endMinutes!) : undefined
@@ -229,6 +285,7 @@ export function TimelineGrid({
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')
               if (anchor.clippedEnd) classNames.push('timeline-anchor-clipped')
               if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
+              if (compact) classNames.push('timeline-anchor-compact')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
               return (
@@ -256,6 +313,18 @@ export function TimelineGrid({
                 </div>
               )
             })}
+
+            {/* Painted last within this layer so the line reads across an
+                anchor's own colored fill too, matching how every calendar
+                examined for docs/RESEARCH-TIMELINE-UI.md draws it - "now"
+                stays visible even when it falls inside an occupied block,
+                rather than disappearing under one. */}
+            {showNowLine && (
+              <>
+                <div className="timeline-now-line" style={{ top: `${nowTop}%` }} />
+                <div className="timeline-now-dot" style={{ top: `${nowTop}%` }} />
+              </>
+            )}
           </div>
 
           <div className="timeline-gaps">

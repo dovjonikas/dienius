@@ -125,6 +125,38 @@ shows no toggle either - there is nothing behind it to open.
 Anchors show a title, their time range, and the day-type colour they came from. Nothing else fits at
 375px and nothing else is needed.
 
+**The material, rebuilt.** `docs/RESEARCH-TIMELINE-UI.md` examined what shipping calendar apps
+actually draw and found the grid's original visual language was a card-and-shadow one - the same
+edges and drop shadow every form field and list item in this app already uses - so nothing on screen
+told a person a block represented a slice of time rather than a piece of chrome. That research is now
+built:
+
+- A sized anchor with a template colour is a flat, borderless, shadowless fill - `docs/THEMES.md`
+  section 8 already named drop shadows on everything as one of the three things that kill this app's
+  design, and the grid's own `box-shadow: var(--shadow)` on every anchor was that rule being broken by
+  its own component. A sized anchor with no template colour keeps a plain 1px border instead, since it
+  has no fill of its own to separate it from the surface.
+- An unsized anchor keeps the dashed edge, now paired with a faint diagonal fill so "not yet sized"
+  reads as a considered pending state rather than an unstyled box. A gap lost its own dashed edge in
+  the same pass - it is now a plain tinted rectangle with no border - so "dashed" means exactly one
+  thing on the grid instead of two.
+- The hour column gained a lighter, unlabelled half-hour rule between each pair of hour marks, and the
+  scroll container gained 8px of top padding so the window's first hour label - which used to sit
+  half-clipped above the container's own edge whenever the window opened exactly on the hour, the
+  common case - is never cut off.
+- A current-time indicator (a thin line and a dot, both `var(--accent)`, never a hardcoded colour)
+  draws across the anchor and gap columns whenever the day being viewed is today and the clock falls
+  inside the drawn window. It recomputes once a minute, never continuously, and is entirely decorative
+  - it lives inside the same `aria-hidden` layer the hour marks and anchor blocks already sit in, so it
+  is never announced to assistive technology and never intercepts a tap.
+- Anchor content is top-aligned inside its own block rather than vertically centred, so a tall anchor's
+  title does not sit exactly where the current-time line is most likely to cross it - the moment the
+  block is actually happening.
+
+Full detail, including the exact values chosen and the reasoning behind each one, is in
+`docs/RESEARCH-TIMELINE-UI.md`; the phase's own verification is in
+`.superpowers/sdd/2026-08-31-dienius-mvp/timeline-visual-rebuild-report.md`.
+
 **Zone 3 - the float tray.** The current task list, unchanged in behaviour: quick add, check off,
 push. Each item shows its size as a small chip if it has one. Dragging a float onto a gap anchors it;
 dragging it back to the tray un-anchors it. Drag is a convenience, never the only path - a long-press
