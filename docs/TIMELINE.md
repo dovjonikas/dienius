@@ -296,7 +296,64 @@ push rule and no-guilt score that are already this app's own.
    specifically so a placement made by accident on a phone is easy to reverse without hunting.
    `actions.placeFloat` and `actions.unanchorTask` in `store.ts` are the two store actions
    underneath both directions; step 7's drag calls the same two rather than inventing a third path.
-6. If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab deleted.
+6. **Done.** If-then relocation: `dayTypes` and `when` fields, one rule on the day view, tab
+   deleted.
+
+   `docs/RESEARCH-ADHD.md` sections 1 and 2, written the same night as this section, raised the
+   stakes on this step specifically: implementation intentions are the best-evidenced mechanism in
+   the app (Gollwitzer and Sheeran 2006, d = 0.65 across 94 tests), the effect is larger still in
+   populations with impaired executive control, and Barkley's point-of-performance principle argues
+   directly against a rule filed in a tab nobody remembers to open. The 2025 update to that
+   meta-analysis also found effects are larger when a plan has been rehearsed at least once - a
+   direct argument for a rule seen daily on the screen already open, rather than one reviewed
+   nowhere at all.
+
+   `IfThenEntry` gains two optional fields and one piece of invisible scheduling metadata:
+   `dayTypes?: DayType[]` (absent means every day), `when?: 'morning' | 'day' | 'evening' | 'any'`
+   (absent and `'any'` mean the same thing - a rule saved through the app always writes the former),
+   and `lastSurfaced?: string`, a plain date key recording which day the rule was last chosen to
+   surface. That last field is scheduling metadata for rotation, never a use counter and never
+   rendered - `docs/RESEARCH-ADHD.md` section 12 rules out any measurement of an if-then rule by
+   name, and this records when the app last chose to show the rule, not whether it was read or
+   acted on.
+
+   `pickIfThenRule` in the new `src/widgets/if-then/select.ts` is the pure selection module, unit
+   tested the same way `capacity.ts` and `score.ts` already are. Eligibility is a strict filter, not
+   a soft ranking: a rule scoped to specific day types or a specific time band simply does not
+   surface outside them. Among what remains eligible, the most specific rule wins - a rule pinned to
+   this exact day type and band outranks one that applies everywhere - and ties break toward
+   whichever eligible rule has gone longest without a turn. A rule already chosen for the exact date
+   being viewed keeps being the pick for that date even after `lastSurfaced` is written, so rotation
+   moves from one day to the next and never flips mid-day.
+
+   `IfThenDayRule` (`src/widgets/if-then/DayRule.tsx`) is the quiet line itself, mounted directly
+   under the capacity line on the day view: same plain surface and border treatment the timeline
+   toggle already uses, `--safe-ink` for the text, each of the two lines capped to one row with an
+   ellipsis so a long trigger or action can never grow past the two lines this is budgeted for.
+   Tapping it opens `IfThenSheet`, a bottom-sheet dialog copying `GapPicker.tsx`'s own hand-rolled
+   dialog exactly - focus moves to the dialog on open, Escape and the scrim close it, Tab is
+   trapped - hosting the full, unmodified `IfThenBoard` list, which is where creating, editing and
+   deleting a rule all still live. `IfThenBoard` itself gained two small controls in its form: a
+   multi-select day-type row reusing the tag filter's own `.chip` pattern, and a single-select
+   time-of-day row reusing the template editor's own `.segmented` control - no third visual language
+   for the same two kinds of choice this app already has.
+
+   The board's old stacked section under the day plan is gone; `src/widgets/registry.ts` now lists
+   only `day-plan`. Real installs from before this step have `'if-then'` sitting in
+   `settings.enabledWidgets` with nothing left to open it - `normalizeLoaded` in `storage.ts` strips
+   that id out on every load, migrated or not, so nobody's data keeps carrying a reference to a
+   widget that no longer exists. `validate()` accepts an `IfThenEntry` with neither new field, the
+   same absence-is-fine treatment every other optional field in this app already gets.
+
+   Measured at 375x812 with a realistic seeded day (a 4-hour shift, an appointment, five floats,
+   five if-then rules across different day types and time bands): the first task sat at `top: 375`
+   before this step and `top: 454` after - the one quiet line added 79px, nowhere near the fold, and
+   the correctly-scoped rule (a night-only sleep-protocol trigger, on a seeded night day) was exactly
+   the one that surfaced. Checked in both a dark and a light theme; the day-type chips needed their
+   own themed background rather than the tag filter's bare `.chip` default, which falls back to the
+   browser's native button chrome and reads as an unstyled leftover against a dark surface - scoped
+   to `.if-then-scope-chips` rather than changed on `.chip` itself, so the tag pills and filter chips
+   elsewhere keep the look they already had.
 7. Drag between tray and grid, pointer-events, tested on a real phone before it is trusted.
 
 Steps 1 to 3 are the ones that change how the day feels. Everything after is the picture.

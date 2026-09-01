@@ -76,3 +76,18 @@ lands at 13:00 and leaves "40 min free, 13:20 to 14:00" behind it. If you would 
 land at the gap's end instead (so the free remainder sits first, closer to whatever's already
 anchored before it), that is also a small, contained change - `handlePlace` in `TimelineGrid.tsx` is
 the only place that decision lives.
+
+## 7. The if-then time bands split the day at noon and 18:00 - not tied to your actual shifts
+
+`docs/TIMELINE.md` section 6 asks for `when?: 'morning' | 'day' | 'evening' | 'any'` on a rule but
+does not say where the boundaries fall. `timeBandFor` in `src/widgets/if-then/select.ts` reads
+00:00-11:59 as morning, 12:00-17:59 as day, and 18:00-23:59 as evening - the same coarse,
+fixed-window posture `capacity.ts` already takes for the waking window, not a personalized reading of
+when your own shifts start or end. There is no separate "night" band, so the small hours after
+midnight read as morning here.
+
+**Recommendation:** it is a reasonable default and nothing about it is hard to change - only the two
+numbers in `timeBandFor` would move. Worth confirming once you have actually written an evening or
+morning rule and seen when it starts and stops showing up: if a "wind down" rule you meant for after
+a night shift ends up reading as tomorrow's morning instead of tonight's evening, that is the
+boundary to adjust.

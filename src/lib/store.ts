@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, Template, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Template, ThemeState } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -312,12 +312,20 @@ export const actions = {
     commit({ ...data, settings: { ...data.settings, theme: { ...data.settings.theme, overrides: rest } } })
   },
 
-  addIfThen(input: { trigger: string; action: string; color?: string }): IfThenEntry {
+  addIfThen(input: {
+    trigger: string
+    action: string
+    color?: string
+    dayTypes?: DayType[]
+    when?: IfThenWhen
+  }): IfThenEntry {
     const entry: IfThenEntry = {
       id: crypto.randomUUID(),
       trigger: input.trigger,
       action: input.action,
       color: input.color,
+      dayTypes: input.dayTypes,
+      when: input.when,
     }
     commit({ ...data, ifThens: [...data.ifThens, entry] })
     return entry
@@ -329,6 +337,20 @@ export const actions = {
 
   deleteIfThen(id: string): void {
     commit({ ...data, ifThens: data.ifThens.filter(e => e.id !== id) })
+  },
+
+  /**
+   * Records that `id` was the rule `pickIfThenRule` chose to surface for
+   * `date` - the rotation's own scheduling metadata, not a measurement of
+   * the rule. Called once per day from `IfThenDayRule`'s own effect, and
+   * only ever moves `lastSurfaced` forward to the date it was actually
+   * shown on; nothing about the rule's trigger, action or tags changes.
+   */
+  markIfThenSurfaced(id: string, date: string): void {
+    commit({
+      ...data,
+      ifThens: data.ifThens.map(e => (e.id === id ? { ...e, lastSurfaced: date } : e)),
+    })
   },
 
   importData(text: string): void {

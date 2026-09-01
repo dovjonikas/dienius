@@ -109,12 +109,9 @@ it; adding a checkbox or a streak here would turn a coping tool into another thi
 It lives on the day view rather than behind a fifth nav tab. The four existing tabs were checked at
 375px, not assumed: the nav row already wraps under the brand and the four buttons fill the wrapped
 row edge to edge with no spare width, so a fifth tab would either overflow or force an ugly second
-wrap. The widget registry in `src/widgets/registry.ts` - already built to hold a second module
-alongside the day plan - was the natural home instead, and it puts the board exactly where "recall
-in the hard moment" wants it: on the tab the app opens to, zero extra taps away. Unlike the day
-plan, the board is not something a person can turn off from Settings today, so it is auto-enabled
-for every existing install on upgrade the same way a brand new one gets it by default - there is no
-toggle yet to have an opinion for or against.
+wrap. It originally sat in the widget registry as its own stacked section under the day plan; see
+"If-then relocation" below for where it moved and why - the registry entry is gone, but the
+day-view-not-a-tab reasoning above still holds exactly as written.
 
 Cards read trigger-first: the IF line is bold and leads, the THEN line sits under it in lighter
 weight, because the trigger is what a person scans for standing in the moment, not the response.
@@ -138,15 +135,44 @@ plainly what makes a trigger useful: a specific moment, not a feeling. That is t
 no validation blocks a vague entry, because the brief only really works if the person writing it
 means it, not because a field passed a pattern check.
 
-Known limitation, shipped deliberately rather than blocking on it: the board has no collapse and
-no cap. Four or five varied entries already measure roughly two screens of scroll below the task
-list at 375px, and that only grows as entries accumulate with no way to shorten the view. Left
-alone for now because there isn't a real month of use yet to say whether that actually becomes a
-problem, or what the right collapse behaviour would even be if it does - guessing at a cutoff or a
-show-more control without that evidence would be complexity standing in for a decision nobody has
-actually made yet, the same reasoning behind leaving night and shift days scored identically until
-a real case argues otherwise. Revisit once real usage shows the board actually getting long enough
-to need it.
+**If-then relocation.** `docs/RESEARCH-ADHD.md`, written the night after the board first shipped,
+raised the stakes on where it lived: implementation intentions are the best-evidenced mechanism in
+the whole app (Gollwitzer and Sheeran 2006, d = 0.65), the effect is larger still in populations
+with impaired executive control, and Barkley's point-of-performance principle argues directly
+against a rule filed in a place a person has to remember to open - which is exactly the state they
+are not in when the trigger fires. The "no collapse, no cap" limitation noted above is now moot for
+a different reason than a scroll fix would have solved it: the board is no longer a section on the
+day view at all.
+
+`IfThenEntry` gained `dayTypes?: DayType[]` and `when?: 'morning' | 'day' | 'evening' | 'any'`, both
+absent-means-everything so every existing entry keeps behaving exactly as it did. `pickIfThenRule`
+(`src/widgets/if-then/select.ts`) is the pure selection function - eligibility is a strict filter
+("a night-shift rule surfaces only on night days" is a hard rule, not a nudge), the most specific
+eligible rule wins, and ties break toward whichever eligible rule has gone longest without a turn,
+tracked as a plain `lastSurfaced` date key on the entry itself rather than any kind of use counter -
+`docs/RESEARCH-ADHD.md` section 12 rules out measuring an if-then rule by name, and this is
+scheduling metadata, not a record of whether the rule was read or acted on. A rule already chosen
+for the date being viewed keeps being the pick for that date, so rotation moves day to day and never
+flips mid-visit.
+
+One quiet line - `IfThenDayRule` - sits directly under the capacity line on the day view: no color,
+no icon, each of its two lines capped to one row with an ellipsis. Tapping it opens the full board
+in a bottom sheet (`IfThenSheet`), copying `GapPicker.tsx`'s own dialog exactly rather than
+inventing a second modal pattern - creating, editing and deleting a rule all still happen exactly
+where they always did, just one tap further in instead of a scroll down the day view. The widget
+registry (`src/widgets/registry.ts`) now lists only `day-plan`; every real install still carries
+`'if-then'` in `settings.enabledWidgets` from the board's time as a registry entry, and
+`normalizeLoaded` in `storage.ts` strips that id out on load so nobody's data keeps a reference to a
+widget that no longer exists.
+
+Measured at 375x812 with a realistic day (a shift, an appointment, five floats) and five seeded
+if-then rules across different day types and time bands: the one quiet line added 79px under the
+capacity line - first task at `top: 375` without it, `top: 454` with it, nowhere near the 812px
+fold - and the correctly-scoped rule (a night-only trigger, on a seeded night day) was exactly the
+one that surfaced. Checked in both a dark and a light theme; the new day-type picker in the form
+needed its own themed chip background rather than the tag filter's bare `.chip`, which falls back to
+the browser's native button chrome and reads as an unstyled leftover on a dark surface - scoped to
+the new picker specifically so the tag pills and filter chips elsewhere are untouched.
 
 **Year strip.** A GitHub-graph style row, one cell per day of a chosen year, colour drawn straight
 from `src/widgets/year-strip/yearGrid.ts` - a pure function separate from the component so the whole

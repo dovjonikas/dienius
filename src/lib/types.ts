@@ -143,6 +143,17 @@ export interface Settings {
 }
 
 /**
+ * Which stretch of the day a rule's trigger belongs to - see
+ * `IfThenEntry.when` and `timeBandFor` in
+ * `src/widgets/if-then/select.ts`. `'any'` and absent mean the same thing
+ * (every band); both exist because a payload can carry either, but a rule
+ * saved or edited through the app always writes absent for "any", the same
+ * way an untagged entry always writes an absent `color` rather than a
+ * literal "none" value.
+ */
+export type IfThenWhen = 'morning' | 'day' | 'evening' | 'any'
+
+/**
  * An implementation intention: a trigger decided on in advance, paired with
  * the one concrete thing to do when it happens. Deliberately just those two
  * strings plus an optional tag - nothing here is measured. No done flag, no
@@ -160,6 +171,36 @@ export interface IfThenEntry {
    * not a required field.
    */
   color?: string
+  /**
+   * Which day types this rule surfaces on - see docs/TIMELINE.md section 6.
+   * Absent means every day, same as an entry written before this field
+   * existed: a night-shift rule only makes sense to show on a night day,
+   * but most rules have nothing to do with what kind of day it is, and
+   * those should keep surfacing regardless without their owner having to
+   * tick every box by hand.
+   */
+  dayTypes?: DayType[]
+  /**
+   * Which part of the day this rule's trigger belongs to. Absent (or
+   * `'any'`) means every part of the day - an evening wind-down rule has
+   * no business surfacing at 8am, but most rules are not tied to a
+   * particular hour and should not have to name one to keep working the
+   * way they always did.
+   */
+  when?: IfThenWhen
+  /**
+   * The date key (`YYYY-MM-DD`) this rule was last chosen to surface on
+   * the day view - scheduling metadata for `pickIfThenRule` in
+   * `src/widgets/if-then/select.ts`, never rendered and never a count.
+   * This is deliberately not a use counter: it exists only so rotation can
+   * favor whichever eligible rule has gone longest without a turn, the
+   * same "least-recently-shown" idea a round-robin queue already uses.
+   * Absent means never surfaced - see docs/RESEARCH-ADHD.md section 12,
+   * "any measurement of if-then rules" is explicitly ruled out, and this
+   * is not one: it records when the app last chose to show the rule, not
+   * whether the person read it, acted on it, or did anything at all.
+   */
+  lastSurfaced?: string
 }
 
 export interface AppData {

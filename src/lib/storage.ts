@@ -1,6 +1,7 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
+const IF_THEN_WHENS: readonly string[] = ['morning', 'day', 'evening', 'any']
 const THEME_MODES: readonly string[] = ['light', 'dark', 'system']
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -17,10 +18,19 @@ type LegacyTheme = 'light' | 'dark'
 type StoredTheme = LegacyTheme | ThemeState
 
 // Widgets that ship enabled for everyone, with no settings control to turn
-// them off. The if-then board is not an optional add-on a person opts into -
-// see IF_THEN_WIDGET_ID's use in normalizeWidgets below for how a backup
-// written before it existed still gets it.
-const DEFAULT_ENABLED_WIDGETS = ['day-plan', 'if-then']
+// them off.
+const DEFAULT_ENABLED_WIDGETS = ['day-plan']
+
+// The if-then board's old widget registry id, from when it rendered as its
+// own stacked section under the day plan - see docs/TIMELINE.md section 6.
+// It surfaces inline on the day view now (IfThenDayRule) rather than
+// through the widget registry, so this id no longer names anything in
+// `WIDGETS`. Kept here only so normalizeLoaded can strip it out of real
+// people's existing `enabledWidgets` lists below - every install from
+// before this change has it, since there was never a toggle to remove it
+// by hand, and leaving it in place would mean carrying a dead reference in
+// everyone's data forever for no reason.
+const LEGACY_IF_THEN_WIDGET_ID = 'if-then'
 
 // Also duplicated, deliberately and minimally, in the pre-paint script in
 // index.html - that script reads settings.theme straight out of this key
@@ -80,6 +90,19 @@ function isOptionalMinutes(x: unknown): x is number | undefined {
 // about - fails validation rather than being coerced into a guess.
 function isOptionalDayType(x: unknown): x is DayType | undefined {
   return x === undefined || (typeof x === 'string' && DAY_TYPES.includes(x))
+}
+
+// Same acceptance rule as isOptionalDayType, but for the array an if-then
+// entry carries - absent means every day, same as an entry written before
+// dayTypes existed; present must be a real array of known DayType values,
+// including an empty one (which is functionally the same as absent but
+// still a valid shape, not something worth rejecting).
+function isOptionalDayTypeArray(x: unknown): x is DayType[] | undefined {
+  return x === undefined || (Array.isArray(x) && x.every(v => typeof v === 'string' && DAY_TYPES.includes(v)))
+}
+
+function isOptionalIfThenWhen(x: unknown): x is IfThenWhen | undefined {
+  return x === undefined || (typeof x === 'string' && IF_THEN_WHENS.includes(x))
 }
 
 function isTask(x: unknown): x is Task {
@@ -183,7 +206,10 @@ function isIfThenEntry(x: unknown): x is IfThenEntry {
     typeof x.id === 'string' &&
     typeof x.trigger === 'string' &&
     typeof x.action === 'string' &&
-    isOptionalString(x.color)
+    isOptionalString(x.color) &&
+    isOptionalDayTypeArray(x.dayTypes) &&
+    isOptionalIfThenWhen(x.when) &&
+    isOptionalString(x.lastSurfaced)
   )
 }
 
@@ -218,27 +244,28 @@ export function validate(x: unknown): x is StoredAppData {
 }
 
 // Fills in what a payload from before the if-then board existed does not
-// have: an empty ifThens list, and the board's widget id added to whatever
-// enabledWidgets the payload already carries. The widget has no settings
-// control to turn it off yet, so upgrading a person's existing data to
-// include it is the same kind of default-on treatment a brand new install
-// gets from defaultData() - not a preference their old data ever expressed
-// an opinion about one way or the other.
+// have: an empty ifThens list. Older payloads may also carry
+// LEGACY_IF_THEN_WIDGET_ID in enabledWidgets, from when the board briefly
+// lived in the widget registry - that id is stripped out below regardless
+// of how the payload otherwise got here, so nobody's real data keeps
+// carrying a reference to a widget that no longer exists.
 //
 // wasMigrated distinguishes "this payload predates ifThens entirely" from
 // "this payload already went through this function once, and enabledWidgets
 // is however it is now for a reason" - the ifThens key's own presence in the
 // raw payload is that signal, since it is added by this same function on
 // first load and then persisted by every subsequent save from here on. Once
-// a payload has been migrated, enabledWidgets is left exactly as it stands.
-// Without this check, a future settings toggle that lets someone turn the
-// if-then widget off would find it silently back on at their next app open,
-// because there would be no way to tell that apart from never having seen
-// the widget at all.
+// a payload has been migrated, enabledWidgets is left exactly as it stands
+// apart from that one strip - a future settings toggle for some other
+// widget would find its own choice respected exactly the way this comment
+// used to promise for if-then, back when if-then still had a widget id to
+// turn off.
 function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
-  const enabledWidgets = wasMigrated
-    ? data.settings.enabledWidgets
-    : [...new Set([...data.settings.enabledWidgets, ...DEFAULT_ENABLED_WIDGETS])]
+  const enabledWidgets = (
+    wasMigrated
+      ? data.settings.enabledWidgets
+      : [...new Set([...data.settings.enabledWidgets, ...DEFAULT_ENABLED_WIDGETS])]
+  ).filter(id => id !== LEGACY_IF_THEN_WIDGET_ID)
   return {
     ...data,
     ifThens: data.ifThens ?? [],
