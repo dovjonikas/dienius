@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { readFileSync } from 'node:fs'
@@ -420,4 +420,86 @@ test('the current-time indicator moves when a minute-scale interval ticks, and s
   } finally {
     vi.useRealTimers()
   }
+})
+
+// --- wide-breakpoint density (fix-fill-viewport-height-report.md) --------
+//
+// jsdom's own getBoundingClientRect always reports 0 for every element -
+// there is no real layout engine underneath it - so useAvailableGridHeight
+// always measures `window.innerHeight - 0 - 24` here. That is still enough
+// to exercise the actual wiring end to end: a big window.innerHeight really
+// does draw a taller grid, a small one really does not draw denser than the
+// phone, and isWide=false (every existing caller, and the phone) never
+// measures anything regardless of window.innerHeight. Live browser
+// verification against a real, positioned grid is in the report.
+
+const ORIGINAL_INNER_HEIGHT = window.innerHeight
+
+afterEach(() => {
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: ORIGINAL_INNER_HEIGHT })
+})
+
+function setInnerHeight(value: number) {
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value })
+}
+
+function layersHeightPx(container: HTMLElement): number {
+  const layers = container.querySelector('.timeline-grid-layers') as HTMLElement
+  return parseFloat(layers.style.height)
+}
+
+test('isWide is false by default: window.innerHeight has no effect on the drawn height, matching the phone', () => {
+  const tasks = [anchor('Shift', '09:00', 240), anchor('Gym', '14:30', 60)]
+  setInnerHeight(800)
+  const short = render(<TimelineGrid tasks={tasks} />)
+  const shortHeight = layersHeightPx(short.container)
+  short.unmount()
+
+  setInnerHeight(4000)
+  const tall = render(<TimelineGrid tasks={tasks} />)
+  expect(layersHeightPx(tall.container)).toBe(shortHeight)
+})
+
+test('isWide with a generous window.innerHeight draws a genuinely taller grid than the same day at isWide=false', () => {
+  const tasks = [anchor('Shift', '09:00', 60)]
+  setInnerHeight(3000)
+  const narrow = render(<TimelineGrid tasks={tasks} />)
+  const narrowHeight = layersHeightPx(narrow.container)
+
+  const wide = render(<TimelineGrid tasks={tasks} isWide />)
+  expect(layersHeightPx(wide.container)).toBeGreaterThan(narrowHeight)
+})
+
+test('isWide never draws denser than the cap, however large window.innerHeight is', () => {
+  const tasks = [anchor('Call', '09:00', 30)]
+  setInnerHeight(20000)
+  const { container } = render(<TimelineGrid tasks={tasks} isWide />)
+  // Window is 30 (anchor) + 60 + 60 (the one-hour display buffer each
+  // side) = 150 minutes; the cap is PX_PER_MINUTE * 3 = 3.45px/minute.
+  expect(layersHeightPx(container)).toBeLessThanOrEqual(150 * 1.15 * 3 + 1)
+})
+
+test('isWide with a small window.innerHeight never draws thinner than isWide=false already does - the base density floors it', () => {
+  const tasks = [
+    anchor('Commute', '06:30', 30),
+    anchor('Wind down', '07:15', 30), // 15-minute gap, under the 38-minute overlap threshold
+  ]
+  setInnerHeight(0)
+  const wide = render(<TimelineGrid tasks={tasks} isWide />)
+  const wideHeight = layersHeightPx(wide.container)
+  wide.unmount()
+
+  const narrow = render(<TimelineGrid tasks={tasks} />)
+  expect(wideHeight).toBe(layersHeightPx(narrow.container))
+})
+
+test('a short gap still floors to the 44px touch target at isWide, exactly as it does at any width', () => {
+  const tasks = [
+    anchor('Commute', '06:30', 30),
+    anchor('Wind down', '07:15', 30), // 15-minute gap
+  ]
+  setInnerHeight(1200)
+  const { container } = render(<TimelineGrid tasks={tasks} isWide />)
+  const gapButton = container.querySelector('.timeline-gap') as HTMLElement
+  expect(parseFloat(gapButton.style.height)).toBeGreaterThanOrEqual(44)
 })

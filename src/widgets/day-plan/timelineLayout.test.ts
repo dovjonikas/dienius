@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
 import {
+  chooseWidePxPerMinute,
   computeTimelineLayout,
   computeVerticalLayout,
   currentMinutes,
@@ -398,4 +399,50 @@ test('computeTimelineLayout and computeVerticalLayout stay well under 100ms with
   const elapsed = performance.now() - t0
   expect(elapsed).toBeLessThan(100)
   expect(layout.anchors).toHaveLength(200)
+})
+
+// --- chooseWidePxPerMinute -------------------------------------------------
+//
+// The wide layout's own fix for docs/.../fix-fill-viewport-height-report.md:
+// on a phone the grid always draws at one fixed density (PX_PER_MINUTE in
+// TimelineGrid.tsx). At the wide breakpoint there is real, measurable room
+// below the grid that a fixed density leaves empty on a sparse day, and no
+// room at all to spare on a dense one - so the wide layout instead asks for
+// whichever density actually fills the space that is there, within two
+// hard limits: never thinner than the phone's own density (nothing gets
+// harder to read just because the window is wide), and never thinner than
+// computeVerticalLayout's own per-segment floors would already force it to
+// be regardless of what this function returns - that second guarantee is
+// computeVerticalLayout's job, not this one's; this function only ever
+// picks the raw density that feeds into it.
+
+const BASE = 1.15
+const MAX = BASE * 3
+
+test('never returns less than the base density, even when the available height implies a thinner one', () => {
+  // 300 window-minutes at 200px available implies 0.67px/minute - thinner
+  // than the phone's own 1.15, which must never happen: a wide screen is
+  // never allowed to draw a day more cramped than a narrow one already does.
+  expect(chooseWidePxPerMinute(BASE, 300, 200, MAX)).toBe(BASE)
+})
+
+test('returns the density the available height actually earns when it falls between the floor and the cap', () => {
+  // 300 window-minutes at 600px available is exactly 2px/minute - above the
+  // 1.15 floor, below the 3.45 cap, so nothing clamps it.
+  expect(chooseWidePxPerMinute(BASE, 300, 600, MAX)).toBe(2)
+})
+
+test('never returns more than the cap, even when the available height implies a much denser one', () => {
+  // 100 window-minutes at 5000px available implies 50px/minute - the cap
+  // exists so one sparse anchor on a very tall monitor does not draw as an
+  // absurdly oversized block.
+  expect(chooseWidePxPerMinute(BASE, 100, 5000, MAX)).toBe(MAX)
+})
+
+test('a zero-minute window falls back to the base density rather than dividing by zero', () => {
+  expect(chooseWidePxPerMinute(BASE, 0, 800, MAX)).toBe(BASE)
+})
+
+test('a negative available height (the grid measured below the fold entirely) still floors at the base density', () => {
+  expect(chooseWidePxPerMinute(BASE, 300, -50, MAX)).toBe(BASE)
 })
