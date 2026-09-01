@@ -2656,20 +2656,20 @@ button.danger {
    add no box, no spacing, and nothing for a screen reader to land on, so
    DayView.tsx can render them at every width with no isWide check of its
    own and the phone's DOM stays exactly what it always rendered in
-   sequence. Only at the wide breakpoint do they become real grid items. */
-.day-pane, .task-pane { display: contents; }
+   sequence. Only at the wide breakpoint do they become real grid items.
+   .day-header (step 4) is the same technique, wrapping day-nav and the
+   focus control so both can share the grid's "header" area. */
+.day-pane, .task-pane, .day-header { display: contents; }
 
 @media (min-width: 1024px) {
-  /* .day-view itself becomes the grid; .day-nav is the header row spanning
-     both panes. Two columns for now - day-pane and task-pane only. Step 5
-     adds a third (rail) column and its own grid-template-areas; step 4
-     adds the single-pane variants for dayLayoutFocus. Values match
-     docs/LAYOUT-WIDE.md section 5's own reasoning: day-pane needs the
-     grid's 44px gutter plus a comfortably readable anchor block (420px
-     minimum); task-pane needs a TaskRow's own content (checkbox, time,
-     title, size chip, actions button) to stay comfortable without
-     truncating the title (320px minimum), capped at 380px so it never
-     visually dominates the timeline it sits next to. */
+  /* .day-view itself becomes the grid. Two columns for now - day-pane and
+     task-pane only. Step 5 adds a third (rail) column and its own
+     grid-template-areas. Values match docs/LAYOUT-WIDE.md section 5's own
+     reasoning: day-pane needs the grid's 44px gutter plus a comfortably
+     readable anchor block (420px minimum); task-pane needs a TaskRow's own
+     content (checkbox, time, title, size chip, actions button) to stay
+     comfortable without truncating the title (320px minimum), capped at
+     380px so it never visually dominates the timeline it sits next to. */
   .day-view {
     display: grid;
     grid-template-columns: minmax(420px, 1fr) minmax(320px, 380px);
@@ -2677,11 +2677,6 @@ button.danger {
       "header header"
       "day    tasks";
     gap: 24px;
-  }
-
-  .day-view > .day-nav {
-    grid-area: header;
-    margin-bottom: 0;
   }
 
   .day-pane {
@@ -2692,6 +2687,38 @@ button.danger {
   .task-pane {
     grid-area: tasks;
     display: block;
+  }
+
+  /* Step 4: dayLayoutFocus's single-pane states. Only one of .day-pane /
+     .task-pane is ever mounted in either case (see DayView.tsx's own
+     showDayPane/showTaskPane), so the remaining pane just needs to take
+     over the whole "day tasks" span rather than sit in its own narrower
+     column. Step 5 folds the rail's own column into this same rule. */
+  .day-view.focus-calendar,
+  .day-view.focus-tasks {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "pane";
+  }
+  .day-view.focus-calendar .day-pane { grid-area: pane; }
+  .day-view.focus-tasks .task-pane { grid-area: pane; }
+
+  /* The header row: day-nav plus the focus control, side by side, wrapping
+     if the window is narrow enough at the breakpoint's own edge that they
+     cannot both fit on one line without crowding. */
+  .day-header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .day-header .day-nav {
+    flex: 1;
+    margin-bottom: 0;
   }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for

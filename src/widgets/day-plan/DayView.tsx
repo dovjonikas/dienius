@@ -305,33 +305,92 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined
 
+  // docs/LAYOUT-WIDE.md section 5, build step 4. dayLayoutFocus only has a
+  // visible effect once useIsWide() says there is more than one pane to
+  // redistribute between - below the breakpoint both panes always render,
+  // exactly as they do today, regardless of what this stored preference
+  // says. showDayPane/showTaskPane are true at every narrow width for
+  // that reason; only isWide narrows them, never the stored value alone.
+  const dayLayoutFocus = data.settings.dayLayoutFocus
+  const showDayPane = !isWide || dayLayoutFocus !== 'tasks'
+  const showTaskPane = !isWide || dayLayoutFocus !== 'calendar'
+  const dayViewClassName = ['day-view', isWide && dayLayoutFocus !== 'both' ? `focus-${dayLayoutFocus}` : '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <section className="day-view" data-tray-zone>
-      <div className="day-nav">
-        <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
-          &larr;
-        </button>
-        <div className="day-title">
-          <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
-          {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
-          {formattedScore && (
-            <span className="day-score">
-              <span aria-hidden="true">
-                {formattedScore}
-                {!isFullDay && <span className="day-score-note"> core</span>}
+    <section className={dayViewClassName} data-tray-zone>
+      {/* Groups day-nav with the focus control below so both can share the
+          grid's "header" area at the wide breakpoint - see styles.css.
+          Not new chrome of its own: `display: contents` below the
+          breakpoint, same technique as .day-pane/.task-pane, so day-nav's
+          own position in the phone DOM is unaffected by this wrapper
+          existing. */}
+      <div className="day-header">
+        <div className="day-nav">
+          <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
+            &larr;
+          </button>
+          <div className="day-title">
+            <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
+            {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+            {formattedScore && (
+              <span className="day-score">
+                <span aria-hidden="true">
+                  {formattedScore}
+                  {!isFullDay && <span className="day-score-note"> core</span>}
+                </span>
+                <span className="visually-hidden">{scoreLabel}</span>
               </span>
-              <span className="visually-hidden">{scoreLabel}</span>
-            </span>
-          )}
-          {template && (
-            <span className="day-template" style={{ background: template.color }}>
-              {template.name}
-            </span>
-          )}
+            )}
+            {template && (
+              <span className="day-template" style={{ background: template.color }}>
+                {template.name}
+              </span>
+            )}
+          </div>
+          <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
+            &rarr;
+          </button>
         </div>
-        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
-          &rarr;
-        </button>
+
+        {/* The "switch fully" request - docs/LAYOUT-WIDE.md section 3.2.
+            A width redistribution, not a navigation event: nothing about
+            the underlying day changes, and the unmounted pane's own data
+            is still computed from the same store regardless of which
+            option is selected. Never rendered at all below the
+            breakpoint - there is only ever one column there, so there is
+            nothing for it to redistribute. Persisted the same way
+            timelineExpanded is: one app-wide choice, not a per-day one,
+            so it is never asked again. */}
+        {isWide && (
+          <div className="day-layout-focus segmented" role="group" aria-label="Day layout focus">
+            <button
+              type="button"
+              className={dayLayoutFocus === 'both' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'both'}
+              onClick={() => actions.setDayLayoutFocus('both')}
+            >
+              Both
+            </button>
+            <button
+              type="button"
+              className={dayLayoutFocus === 'calendar' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'calendar'}
+              onClick={() => actions.setDayLayoutFocus('calendar')}
+            >
+              Calendar
+            </button>
+            <button
+              type="button"
+              className={dayLayoutFocus === 'tasks' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'tasks'}
+              onClick={() => actions.setDayLayoutFocus('tasks')}
+            >
+              Tasks
+            </button>
+          </div>
+        )}
       </div>
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line,
@@ -341,7 +400,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           `display: contents` (see styles.css), so it adds no box, no
           spacing and no accessibility-tree node of its own - the JSX order
           inside it is exactly the order these elements already rendered in,
-          so a phone's DOM is unaffected by this grouping existing at all. */}
+          so a phone's DOM is unaffected by this grouping existing at all.
+          Below the breakpoint showDayPane is always true (see its own
+          comment above); only step 4's Calendar/Tasks focus, at a wide
+          viewport, ever unmounts this. */}
+      {showDayPane && (
       <div className="day-pane">
         {/* Purely informational - no embedded action. Being over is stated
             as a fact; which float moves to tomorrow, if any, is decided on
@@ -399,20 +462,32 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           />
         )}
 
-        {/* Announces a drag-driven un-anchor, or a placement or removal made
-            through the actions menu, to screen reader users - the same way
-            TimelineGrid.tsx's own live region already covers the tap-a-gap
-            path. A separate region because these fire from gestures
-            TimelineGrid never sees: the drag can end outside the grid
-            entirely, and the menu is not part of it at all. */}
-        <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
       </div>
+      )}
+
+      {/* Announces a drag-driven un-anchor, or a placement or removal made
+          through the actions menu, to screen reader users - the same way
+          TimelineGrid.tsx's own live region already covers the tap-a-gap
+          path. A separate region because these fire from gestures
+          TimelineGrid never sees: the drag can end outside the grid
+          entirely, and the menu is not part of it at all. Deliberately
+          outside both panes and always mounted, unlike them: an actions-
+          menu placement can fire while dayLayoutFocus has unmounted
+          .day-pane (focus 'tasks'), and this announcement still needs
+          somewhere to land for a screen reader when that happens. Sitting
+          here between the two panes in the JSX keeps the flattened phone
+          DOM order exactly what it was before this region had its own
+          top-level position. */}
+      <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
 
       {/* The float tray - quick-add, the first-run/empty state, the task
           list, and the rollover button - grouped the same way and for the
           same reason as .day-pane above: `display: contents` below the
           breakpoint, a real grid column at it, no change to phone markup
-          either way. */}
+          either way. Below the breakpoint showTaskPane is always true (see
+          its own comment above); only step 4's Calendar/Tasks focus, at a
+          wide viewport, ever unmounts this. */}
+      {showTaskPane && (
       <div className="task-pane">
         <input
           className="quick-add"
@@ -470,6 +545,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
         )}
       </div>
+      )}
 
       {actionsSheetTask && (
         <TaskActionsSheet

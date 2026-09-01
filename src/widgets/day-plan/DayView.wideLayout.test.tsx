@@ -182,6 +182,101 @@ test('quick-add, the task list and the rollover button all land inside task-pane
 // see docs/LAYOUT-WIDE.md section 3.4. compareDocumentPosition is the
 // direct way to assert "A comes before B in the actual DOM", independent of
 // which wrapper each one is nested inside.
+// --- Step 4: dayLayoutFocus and the Both / Calendar / Tasks control -------
+
+function seedFocus(
+  focus: 'both' | 'calendar' | 'tasks',
+  tasks: Parameters<typeof actions.resetForTests>[0]['days'][string]['tasks'] = anchoredTasks,
+) {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, dayLayoutFocus: focus },
+    days: { [DATE]: { date: DATE, tasks } },
+  })
+}
+
+test('the Both / Calendar / Tasks control does not render at a narrow viewport', () => {
+  viewport = mockViewport(false)
+  seedFocus('both')
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(screen.queryByRole('group', { name: /day layout/i })).not.toBeInTheDocument()
+})
+
+test('at a wide viewport the control renders all three options, Both active by default', () => {
+  viewport = mockViewport(true)
+  seedFocus('both')
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+  const group = screen.getByRole('group', { name: /day layout/i })
+  const both = within(group).getByRole('button', { name: 'Both' })
+  const calendar = within(group).getByRole('button', { name: 'Calendar' })
+  const tasks = within(group).getByRole('button', { name: 'Tasks' })
+  expect(both).toHaveAttribute('aria-pressed', 'true')
+  expect(calendar).toHaveAttribute('aria-pressed', 'false')
+  expect(tasks).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('both panes render at a wide viewport when the stored focus is both', () => {
+  viewport = mockViewport(true)
+  seedFocus('both')
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+})
+
+test("a stored focus of 'calendar' unmounts the task pane at a wide viewport", () => {
+  viewport = mockViewport(true)
+  seedFocus('calendar')
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).not.toBeInTheDocument()
+  expect(container.querySelector('.day-view')).toHaveClass('focus-calendar')
+})
+
+test("a stored focus of 'tasks' unmounts the day pane at a wide viewport", () => {
+  viewport = mockViewport(true)
+  seedFocus('tasks')
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).not.toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+  expect(container.querySelector('.day-view')).toHaveClass('focus-tasks')
+})
+
+test("a stored focus other than 'both' has no effect at a narrow viewport - both panes still render", () => {
+  viewport = mockViewport(false)
+  seedFocus('calendar')
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+})
+
+test('clicking Calendar then Tasks then Both persists each choice through actions.setDayLayoutFocus, updating panes live', async () => {
+  const user = userEvent.setup()
+  viewport = mockViewport(true)
+  seedFocus('both')
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: 'Calendar' }))
+  expect(getData().settings.dayLayoutFocus).toBe('calendar')
+  expect(container.querySelector('.task-pane')).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Tasks' }))
+  expect(getData().settings.dayLayoutFocus).toBe('tasks')
+  expect(container.querySelector('.day-pane')).not.toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Both' }))
+  expect(getData().settings.dayLayoutFocus).toBe('both')
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+})
+
+test('a day with no anchors still lets the focus control switch to Calendar - the day pane (capacity line, if-then rule) is not just the grid', () => {
+  viewport = mockViewport(true)
+  seedFocus('both', [{ id: 'f1', title: 'Float', done: false, minutes: 20 }])
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+})
+
 test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list, rollover, in that order', () => {
   viewport = mockViewport(false)
   seed([{ id: 't1', title: 'Anchor', done: false, time: '09:00', minutes: 30 },

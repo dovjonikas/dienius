@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Template, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, Template, ThemeState } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -284,6 +284,16 @@ export const actions = {
    */
   setTimelineExpanded(expanded: boolean): void {
     commit({ ...data, settings: { ...data.settings, timelineExpanded: expanded } })
+  },
+
+  /**
+   * Changes which pane the wide day view gives the width to - see
+   * docs/LAYOUT-WIDE.md section 5. Mirrors setTimelineExpanded exactly: a
+   * single app-wide setting, flipped in isolation, so it persists like a
+   * theme preference rather than resetting per day.
+   */
+  setDayLayoutFocus(focus: Settings['dayLayoutFocus']): void {
+    commit({ ...data, settings: { ...data.settings, dayLayoutFocus: focus } })
   },
 
   /**

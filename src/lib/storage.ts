@@ -1,8 +1,9 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 const IF_THEN_WHENS: readonly string[] = ['morning', 'day', 'evening', 'any']
 const THEME_MODES: readonly string[] = ['light', 'dark', 'system']
+const DAY_LAYOUT_FOCUSES: readonly string[] = ['both', 'calendar', 'tasks']
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
 // has no reason to depend on the preset data itself, only on the id a
@@ -54,6 +55,7 @@ export function defaultData(): AppData {
       theme: defaultThemeState(),
       enabledWidgets: [...DEFAULT_ENABLED_WIDGETS],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
     ifThens: [],
   }
@@ -228,6 +230,14 @@ function isOptionalIfThenWhen(x: unknown): x is IfThenWhen | undefined {
   return x === undefined || (typeof x === 'string' && IF_THEN_WHENS.includes(x))
 }
 
+// Same acceptance rule as isOptionalIfThenWhen - a payload written before
+// dayLayoutFocus existed has no such key at all, which is not corruption,
+// see the comment on isSettings below. normalizeLoaded backfills it to
+// 'both' once validation passes.
+function isOptionalDayLayoutFocus(x: unknown): x is Settings['dayLayoutFocus'] | undefined {
+  return x === undefined || (typeof x === 'string' && DAY_LAYOUT_FOCUSES.includes(x))
+}
+
 function isTask(x: unknown): x is Task {
   if (!isRecord(x)) return false
   return (
@@ -301,18 +311,25 @@ function isStoredTheme(x: unknown): x is StoredTheme {
   return isLegacyTheme(x) || isThemeState(x)
 }
 
-// timelineExpanded is checked only when present - a payload written before
-// the day view's timeline collapse existed has no such key at all, the
+// timelineExpanded and dayLayoutFocus are checked only when present - a
+// payload written before either field existed has no such key at all, the
 // same absence-is-fine treatment ifThens gets a few lines below.
-// normalizeLoaded is what actually backfills it to false once validation
-// passes, matching defaultData()'s own collapsed-by-default choice.
-function isSettings(x: unknown): x is { theme: StoredTheme; enabledWidgets: string[]; timelineExpanded?: boolean } {
+// normalizeLoaded is what actually backfills them (to false and 'both'
+// respectively) once validation passes, matching defaultData()'s own
+// defaults.
+function isSettings(x: unknown): x is {
+  theme: StoredTheme
+  enabledWidgets: string[]
+  timelineExpanded?: boolean
+  dayLayoutFocus?: Settings['dayLayoutFocus']
+} {
   if (!isRecord(x)) return false
   return (
     isStoredTheme(x.theme) &&
     Array.isArray(x.enabledWidgets) &&
     x.enabledWidgets.every(w => typeof w === 'string') &&
-    isOptionalBoolean(x.timelineExpanded)
+    isOptionalBoolean(x.timelineExpanded) &&
+    isOptionalDayLayoutFocus(x.dayLayoutFocus)
   )
 }
 
@@ -355,7 +372,12 @@ function isIfThenEntry(x: unknown): x is IfThenEntry {
 interface StoredAppData {
   templates: Template[]
   days: Record<string, DayPlan>
-  settings: { theme: StoredTheme; enabledWidgets: string[]; timelineExpanded?: boolean }
+  settings: {
+    theme: StoredTheme
+    enabledWidgets: string[]
+    timelineExpanded?: boolean
+    dayLayoutFocus?: Settings['dayLayoutFocus']
+  }
   ifThens?: IfThenEntry[]
 }
 
@@ -398,6 +420,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       theme: migrateTheme(data.settings.theme),
       enabledWidgets,
       timelineExpanded: data.settings.timelineExpanded ?? false,
+      dayLayoutFocus: data.settings.dayLayoutFocus ?? 'both',
     },
   }
 }
