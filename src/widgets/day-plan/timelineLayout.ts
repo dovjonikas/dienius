@@ -249,6 +249,34 @@ export function hourMarks(window: Interval): number[] {
 }
 
 /**
+ * Every half-hour mark within the window, excluding the whole hours
+ * `hourMarks` already covers - a lighter, unlabelled rule at each one, per
+ * docs/RESEARCH-TIMELINE-UI.md section 5 point 4. Position within the day
+ * carries the information; a half-hour never gets its own text, only the
+ * hour does, so this stays a plain list of minute offsets for the caller to
+ * draw a rule at, not a labelled mark like `hourMarks`.
+ */
+export function halfHourMarks(window: Interval): number[] {
+  const marks: number[] = []
+  for (let m = Math.ceil(window.start / 30) * 30; m <= window.end; m += 30) {
+    if (m % 60 !== 0) marks.push(m)
+  }
+  return marks
+}
+
+/**
+ * The current wall-clock time as minutes since midnight, for the
+ * current-time indicator - see docs/RESEARCH-TIMELINE-UI.md section 5
+ * point 7. Takes an explicit `Date` (defaulting to `new Date()`) so the
+ * caller's interval-driven re-render is the only place real time enters,
+ * and so this stays trivially testable with a fixed clock the same way
+ * every other pure function in this module already is.
+ */
+export function currentMinutes(date: Date = new Date()): number {
+  return date.getHours() * 60 + date.getMinutes()
+}
+
+/**
  * Renders a clock-minutes value as "HH:MM", the same plain 24-hour format
  * every anchor's own `time` already uses. `DAY_MINUTES` itself (the night
  * window's own close) renders as "24:00" rather than wrapping to "00:00" -

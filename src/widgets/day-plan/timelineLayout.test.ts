@@ -1,6 +1,14 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
-import { computeTimelineLayout, formatAnchorTimeRange, formatClock, hourMarks, windowPercent } from './timelineLayout'
+import {
+  computeTimelineLayout,
+  currentMinutes,
+  formatAnchorTimeRange,
+  formatClock,
+  halfHourMarks,
+  hourMarks,
+  windowPercent,
+} from './timelineLayout'
 
 function anchor(id: string, time: string, minutes?: number): Task {
   return { id, title: id, done: false, time, minutes }
@@ -208,4 +216,31 @@ test('formatAnchorTimeRange renders an anchor ending exactly at midnight as 24:0
 
 test('formatAnchorTimeRange wraps an anchor that runs past midnight and says so', () => {
   expect(formatAnchorTimeRange(23 * 60, 180)).toBe('23:00 - 02:00 (next day)')
+})
+
+// --- halfHourMarks -----------------------------------------------------
+
+test('halfHourMarks lists every half-hour strictly within the window, never the hours themselves', () => {
+  const window = { start: 8 * 60, end: 10 * 60 }
+  expect(halfHourMarks(window)).toEqual([8 * 60 + 30, 9 * 60 + 30])
+})
+
+test('halfHourMarks starts at the first half-hour at or after a non-aligned window start', () => {
+  const window = { start: 8 * 60 + 45, end: 10 * 60 }
+  expect(halfHourMarks(window)).toEqual([9 * 60 + 30])
+})
+
+test('halfHourMarks is empty for a window shorter than one half-hour step', () => {
+  const window = { start: 8 * 60, end: 8 * 60 + 20 }
+  expect(halfHourMarks(window)).toEqual([])
+})
+
+// --- currentMinutes ------------------------------------------------------
+
+test('currentMinutes reads hours and minutes off the clock, ignoring seconds and the date', () => {
+  expect(currentMinutes(new Date(2026, 0, 15, 9, 30, 45))).toBe(9 * 60 + 30)
+})
+
+test('currentMinutes at midnight is 0', () => {
+  expect(currentMinutes(new Date(2026, 0, 15, 0, 0))).toBe(0)
 })

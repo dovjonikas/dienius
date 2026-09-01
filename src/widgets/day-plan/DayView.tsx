@@ -308,6 +308,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           onAnchorPointerDown={(taskId, e) => startDrag('anchor', taskId, e)}
           dragOverGapStart={dragOverGapStart}
           draggingTaskId={draggingTaskId}
+          isToday={isToday}
         />
       )}
 

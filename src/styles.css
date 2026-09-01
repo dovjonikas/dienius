@@ -762,6 +762,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border: 1px solid var(--border);
   border-radius: var(--edge);
   background: var(--surface);
+  /* Covers .timeline-hour-label's own -7px offset with a small margin, so
+     the window's first hour mark - which lands at top: 0% whenever the
+     window opens exactly on the hour, the common case - is never cut by
+     this container's own top edge. Confirmed against a real rendered
+     11px label, not assumed from the arithmetic alone - see
+     docs/RESEARCH-TIMELINE-UI.md section 5 point 1. */
+  padding-top: 8px;
 }
 
 /* The stacking context both the decorative grid and the real gap buttons
@@ -822,36 +829,54 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border-top: 1px solid var(--border);
 }
 
+/* Position between two hours is legible without a second number in the
+   gutter - see docs/RESEARCH-TIMELINE-UI.md section 5 point 4. No label of
+   its own; 45 percent is a starting point checked against a high-contrast
+   theme (Terminal) and a low-contrast one (Ink and wash), visibly lighter
+   than the hour rule's full var(--border) in both. */
+.timeline-half-hour-rule {
+  position: absolute;
+  left: 44px;
+  right: 0;
+  height: 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+}
+
 /* A gap is a real object, not blank space - see docs/TIMELINE.md section 5.
    The one interactive element this grid draws: a real button, styled to
-   reset the browser's own button chrome. The dashed edge and muted fill
-   read as "not yet decided" rather than "occupied," so a gap never
-   competes visually with an anchor's own solid block. */
+   reset the browser's own button chrome. Tint only, no border at rest -
+   dashed is reserved for "not yet sized" (.timeline-anchor-unsized below),
+   so the two meanings of "not fully decided" stop sharing one visual
+   treatment - see docs/RESEARCH-TIMELINE-UI.md section 5 point 5. */
 .timeline-gap {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 2px 8px 2px 0;
-  border: 1px dashed var(--border);
+  border: none;
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--border) 35%, transparent);
+  background: color-mix(in srgb, var(--border) 20%, transparent);
   font: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.timeline-gap:hover { border-color: var(--muted); }
+.timeline-gap:hover { background: color-mix(in srgb, var(--border) 32%, transparent); }
 
 .timeline-gap:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Open state - the sheet naming this gap is currently on screen. */
+/* Open state - the sheet naming this gap is currently on screen. An
+   explicit border rather than the resting rule's tint-only treatment: this
+   is an active interaction state, not the "occupied versus open" material
+   distinction section 5 point 5 is about, the same way a focus ring is
+   allowed where a resting border is not. */
 .timeline-gap[aria-expanded='true'] {
-  border-style: solid;
-  border-color: var(--accent);
+  border: 1.5px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .timeline-gap-label {
@@ -868,20 +893,43 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    template's pastel is not --surface, so a token tied to --surface is not
    guaranteed to read against it. An anchor with no template color at all
    (no template on the day) falls back to the card treatment below via
-   the plain .timeline-anchor rule, never an invented color. */
+   the plain .timeline-anchor rule, never an invented color.
+
+   No box-shadow here, on any anchor - docs/THEMES.md section 8 names drop
+   shadows on everything as one of the three things that kill this app's
+   own visual design, and the base rule used to violate its own law. A
+   sized anchor with a template color removes the border too, below, for a
+   flat filled block that reads as a slice of time rather than a form
+   field - see docs/RESEARCH-TIMELINE-UI.md section 5 point 2. This base
+   rule's own border stays for the one case that still needs an edge: a
+   sized anchor with no template to fill it. */
 .timeline-anchor {
   position: absolute;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* Top-aligned, not centered: a tall anchor's own title otherwise sits
+     at the block's vertical middle, which is exactly where the
+     current-time line crosses a task that is happening right now - the
+     one moment the indicator is most likely to be seen. Pinning content
+     to the top, the same placement Sunsama and Google Calendar both use
+     regardless of block height, keeps the line and the title from
+     reading as a strikethrough over each other. */
+  justify-content: flex-start;
   gap: 2px;
   padding: 6px 8px;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
   color: var(--text);
+}
+
+/* A short card's own content needs less room than the full 6px vertical
+   padding above claims - see SIZED_MIN_HEIGHT_PX's own comment in
+   TimelineGrid.tsx for why 32px, not the padding, is now the thing that
+   actually decides a short anchor's height. */
+.timeline-anchor.timeline-anchor-compact {
+  padding: 3px 8px;
 }
 
 .timeline-anchor-title,
@@ -911,18 +959,33 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    use on the same pastel palette - see the rule comment above. Applied by
    its own class rather than an attribute selector on the inline color, so
    it does not depend on how the browser happens to serialize a shorthand
-   style property back into the DOM. */
+   style property back into the DOM. No border, no shadow: Sunsama's own
+   event block and docs/THEMES.md section 8's own written rule agree on
+   this, and this is the one change that most removes the "form field"
+   reading a bordered, shadowed card had - see
+   docs/RESEARCH-TIMELINE-UI.md section 5 point 2. */
 .timeline-anchor-colored {
-  border-color: transparent;
+  border: none;
   color: rgba(0, 0, 0, 0.7);
 }
 
 /* An anchor with no size yet has no honest height to draw - see
    docs/TIMELINE.md's build order for step 4 and the comment on
-   UNSIZED_ANCHOR_MINUTES in timelineLayout.ts. Dashed, unfilled, and
-   explicit about it in its own label rather than a guessed block. */
+   UNSIZED_ANCHOR_MINUTES in timelineLayout.ts. Dashed stays here and only
+   here now that the gap has lost it - "not yet decided" reads as one
+   thing on this grid instead of two. The faint diagonal fill (plus the
+   surface color underneath it, so the block never depends on whatever
+   happens to be painted behind it) is what keeps a pending anchor from
+   reading as an unstyled leftover rather than a considered state - see
+   docs/RESEARCH-TIMELINE-UI.md section 5 point 6. */
 .timeline-anchor-unsized {
-  background: var(--surface);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--muted) 8%, transparent) 0 4px,
+      transparent 4px 8px
+    ),
+    var(--surface);
   border: 1.5px dashed var(--muted);
 }
 
@@ -967,9 +1030,40 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    the same time, but if they were, this one simply draws on top, which
    reads fine either way. */
 .timeline-gap.timeline-gap-drag-over {
-  border-style: solid;
-  border-color: var(--accent);
+  border: 1.5px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* Current-time indicator - docs/RESEARCH-TIMELINE-UI.md section 5 point 7.
+   var(--accent), never a hardcoded red: a fixed red would clash on Legal
+   pad, which already spends red on its own margin rule, and would simply
+   be wrong against Terminal's phosphor palette. Both live inside
+   .timeline-grid, which is already aria-hidden and pointer-events: none,
+   so the indicator is decorative by construction rather than needing its
+   own aria-hidden attribute - it is never announced and never intercepts
+   a tap. Position updates once a minute from TimelineGrid.tsx's own
+   interval, never continuously, so there is no transform or transition on
+   "top" for prefers-reduced-motion to need to disable - only the
+   color-transition rule further up this file applies here, and that rule
+   never touches position. */
+.timeline-now-line {
+  position: absolute;
+  left: 44px;
+  right: 0;
+  height: 1.5px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.timeline-now-dot {
+  position: absolute;
+  left: 40px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 /* The sheet a tapped gap opens - docs/TIMELINE.md section 5, step 5. A
