@@ -157,16 +157,35 @@ Full detail, including the exact values chosen and the reasoning behind each one
 `docs/RESEARCH-TIMELINE-UI.md`; the phase's own verification is in
 `.superpowers/sdd/2026-08-31-dienius-mvp/timeline-visual-rebuild-report.md`.
 
-**Zone 3 - the float tray.** The current task list, unchanged in behaviour: quick add, check off,
-push. Each item shows its size as a small chip if it has one. Dragging a float onto a gap anchors it;
-dragging it back to the tray un-anchors it. Drag is a convenience, never the only path - a long-press
-menu does the same thing, because the calendar drag already has a documented history of not working
-on touch in this repo.
+**Zone 3 - the float tray.** The task list: quick add, check off, push. Each item shows its size as a
+small chip if it has one. Placing a float into a gap, and un-anchoring one, both still work exactly as
+described above - tap a gap in the grid, or long-press a row - but no longer through a live drag
+gesture started from the row itself. See "The row got quieter" below for why, and
+`.superpowers/sdd/2026-08-31-dienius-mvp/fix-task-row-density-report.md` for the full account. An
+anchor's own block in the grid, once expanded, can still be dragged back onto the tray directly - that
+one direct-manipulation path stayed, since it costs nothing extra on the row.
 
 Zone 3 sits directly under the disclosure in the markup, whether or not zone 2 is currently open -
 the grid, when collapsed, occupies no vertical space at all rather than reserving a slot for itself,
 which is what keeps quick-add and the first task in the tray on screen at 375x812 regardless of how
 tall a given day's grid would be if opened.
+
+**The row got quieter.** Section 1's own list of what a task's row carries - check, time, title, size,
+push, remove time, delete, mark ongoing, the drag handle, the maxed note - kept growing one field at a
+time until a single anchored, pushed task cost close to a fifth of a phone screen and five tasks filled
+it. `docs/RESEARCH-ADHD.md` section 7 is explicit about why that is the wrong direction: visual
+working memory holds about four integrated objects, and ungrouped density is what actually hurts,
+not density itself. The fix sorts the row into what is scanned (check, time, title), what is read
+second (size, and at most one quiet mark for whichever push state applies), and what is acted on
+rarely - placing, removing time, pushing, marking ongoing, deleting - which all moved into the row's
+own actions menu (`TaskActionsSheet.tsx`, already built as step 7's long-press fallback), opened either
+by holding the row or by a small, always-visible menu button that needs no hover and no long press to
+find. The push bound's own do-or-delete sentence moved with it: still full text, still verbatim, now
+shown where the decision actually gets made instead of as permanent height on every row that reaches
+the bound. It stayed reachable by assistive technology at all times either way, through the same
+`aria-describedby` link the row always carried. The dedicated drag handle came off entirely - it was
+never more than a third way to do what the tap-a-gap picker and the actions menu already did on their
+own, and it was pointer-only, so removing it cost keyboard users nothing.
 
 ## 6. What replaces the if-then board
 

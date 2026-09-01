@@ -294,6 +294,15 @@ the oversized-float refusal, the bare-tap guard, normal page scrolling at 375px 
 expanded, and the long-press menu placing and un-anchoring correctly with the grid collapsed. Not
 verified on real touch hardware - see the standing item in Tier 3 below, now widened to cover this.
 
+**Update, row density pass:** the row's own drag handle described above - "a small drag handle per
+row" - was removed. See
+`.superpowers/sdd/2026-08-31-dienius-mvp/fix-task-row-density-report.md`: a float's row never had a
+second way to reach placement beyond that handle, but the actions menu this same pass built out
+(`TaskActionsSheet.tsx`) already offers placement directly, independent of the grid, so nothing lost
+reachability - only the live drag gesture itself is gone for a float. The anchor's own block inside the
+expanded grid still drags back to the tray exactly as described above; that half of this section is
+current. `dragDrop.ts`'s `resolveDrop` was simplified to match - it only ever resolves an anchor now.
+
 **Gap interaction.** Step 5 pulled the gap elements out from under the `aria-hidden` wrapper above,
 exactly as flagged when it shipped. Each gap is now a real, focusable button with its own accessible
 name ("1h30 free, 13:00 to 14:30. Tap to place a float.") that opens a bottom sheet listing the
