@@ -565,6 +565,139 @@ test('importJson backfills ifThens for a legacy backup file without adding a wid
   expect(imported.settings.enabledWidgets).toEqual(['day-plan'])
 })
 
+// --- color and CSS-value validation -------------------------------------
+//
+// Security finding: none of these validators used to check the string
+// looked anything like a color, so a crafted backup could set
+// Template.color, IfThenEntry.color, or a ThemeOverrides value to a CSS
+// url() and plant a real network beacon the moment the app rendered it -
+// verified live against a running page. Rejecting a bad value here fails
+// the whole payload's validate(), the same treatment an out-of-range
+// Task.minutes or an unknown DayType already gets - see the tests above for
+// both. Because loadData()/importJson only ever replace state after
+// validate() succeeds, a backup that fails this check changes nothing.
+
+test('validate rejects a template whose color is a CSS url() value rather than a real hex color', () => {
+  const beacon = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: 'url("https://attacker.example/beacon.png")', blocks: [] }],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, beacon)
+  expect(loadData().templates).toEqual([])
+})
+
+test('validate rejects an if-then entry whose color is a CSS url() value', () => {
+  const beacon = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', color: 'url(https://attacker.example/x)' }],
+  })
+  localStorage.setItem(STORAGE_KEY, beacon)
+  expect(loadData().ifThens).toEqual([])
+})
+
+test('validate accepts every hex color length CSS itself recognizes, on a template and an if-then tag', () => {
+  for (const hex of ['#abc', '#abcd', '#a7c4f5', '#a7c4f5ff']) {
+    const good = JSON.stringify({
+      templates: [{ id: 't1', name: 'Work', color: hex, blocks: [] }],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+      ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', color: hex }],
+    })
+    localStorage.setItem(STORAGE_KEY, good)
+    const loaded = loadData()
+    expect(loaded.templates[0]?.color).toBe(hex)
+    expect(loaded.ifThens[0]?.color).toBe(hex)
+  }
+})
+
+test('validate rejects template and if-then colors that are not hex at all - a name, a semicolon breakout attempt, an empty string', () => {
+  for (const bad of ['red', 'rgb(1,2,3)', 'blue; outline: 999px solid red', '', '#gggggg', '#1234567']) {
+    const badTemplate = JSON.stringify({
+      templates: [{ id: 't1', name: 'Work', color: bad, blocks: [] }],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+    })
+    localStorage.setItem(STORAGE_KEY, badTemplate)
+    expect(loadData().templates).toEqual([])
+  }
+})
+
+test('validate rejects a theme override color token set to a url() value', () => {
+  const beacon = JSON.stringify({
+    templates: [], days: {},
+    settings: {
+      theme: { presetId: 'slate', overrides: { slate: { accent: 'url(https://attacker.example/x)' } }, mode: 'light' },
+      enabledWidgets: [],
+    },
+  })
+  localStorage.setItem(STORAGE_KEY, beacon)
+  // The whole settings object fails, same as the existing bad-override test - falls back to system mode.
+  expect(loadData().settings.theme.mode).toBe('system')
+})
+
+test('validate rejects a theme override on bg, one of the tokens confirmed live to reach a background layer', () => {
+  const beacon = JSON.stringify({
+    templates: [], days: {},
+    settings: {
+      theme: { presetId: 'slate', overrides: { slate: { bg: 'url("https://attacker.example/beacon.png?id=1")' } }, mode: 'dark' },
+      enabledWidgets: [],
+    },
+  })
+  localStorage.setItem(STORAGE_KEY, beacon)
+  expect(loadData().settings.theme.mode).toBe('system')
+})
+
+test('validate accepts every legitimate non-color override token the app itself can write', () => {
+  const good = JSON.stringify({
+    templates: [], days: {},
+    settings: {
+      theme: {
+        presetId: 'slate',
+        overrides: {
+          slate: {
+            ruleSize: '24px',
+            edge: '225px 14px 255px 15px / 15px 255px 14px 225px',
+            fontBody: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+            grain: '0.03',
+            vignette: '7%',
+            shadow: '0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px #c7d6da',
+          },
+        },
+        mode: 'light',
+      },
+      enabledWidgets: [],
+    },
+  })
+  localStorage.setItem(STORAGE_KEY, good)
+  const loaded = loadData()
+  expect(loaded.settings.theme.overrides.slate).toEqual({
+    ruleSize: '24px',
+    edge: '225px 14px 255px 15px / 15px 255px 14px 225px',
+    fontBody: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+    grain: '0.03',
+    vignette: '7%',
+    shadow: '0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px #c7d6da',
+  })
+})
+
+test('validate rejects a url() value on every non-color override token category, not only the named color ones', () => {
+  const beaconValue = 'url(https://attacker.example/x)'
+  for (const token of ['ruleSize', 'edge', 'fontBody', 'grain', 'vignette', 'shadow']) {
+    const beacon = JSON.stringify({
+      templates: [], days: {},
+      settings: {
+        theme: { presetId: 'slate', overrides: { slate: { [token]: beaconValue } }, mode: 'light' },
+        enabledWidgets: [],
+      },
+    })
+    localStorage.setItem(STORAGE_KEY, beacon)
+    expect(loadData().settings.theme.mode).toBe('system')
+  }
+})
+
 test('a well-formed payload still passes validate', () => {
   const good = JSON.stringify({
     templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', time: '09:00', title: 'Gym' }] }],

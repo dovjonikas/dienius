@@ -67,6 +67,129 @@ function isOptionalString(x: unknown): x is string | undefined {
   return x === undefined || typeof x === 'string'
 }
 
+// --- Color and other CSS-value validation -------------------------------
+//
+// A crafted backup could set Template.color, IfThenEntry.color, or any
+// value inside a ThemeOverrides patch to a CSS url() value. None of these
+// strings are ever built into a "property: value;" text string this app
+// writes itself - they only ever reach the page through
+// CSSStyleDeclaration.setProperty or a React style object, and a live check
+// confirmed both reject a malformed combined declaration outright (a
+// semicolon-based breakout does not work here). What does work is a single
+// url() value landing somewhere a browser accepts one as a value on its
+// own - a background layer being the confirmed case - which fires a real
+// request and leaks the viewer's IP, user agent and timing to whoever
+// crafted the file. Validating here, at the one place every one of these
+// strings has to pass through before it is trusted, closes the whole class
+// rather than chasing every render site that happens to use one today.
+//
+// A bad value here fails the whole payload's validate(), the same
+// treatment an out-of-range Task.minutes or an unknown DayType already
+// gets - this file has never partially accepted a payload by silently
+// dropping the one field that failed, and a color is not a special case
+// that earns different treatment. Because loadData() and importJson() both
+// only ever replace state after validate() succeeds, a backup that fails
+// this check changes nothing - existing data stays exactly as it was, the
+// same as any other rejected import.
+
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+
+// Template.color and IfThenEntry.color: both are always one of the eight
+// hex values in PALETTE_COLORS in practice, chosen from a fixed swatch grid
+// with no free-text color field anywhere in the app - see colors.ts. This
+// accepts every length of hex color CSS itself recognizes (3, 4, 6 or 8
+// digits, the last two carrying alpha) rather than only the exact 6-digit
+// shape the palette happens to use today, so a genuinely hand-picked hex
+// value from an older export or another tool is not punished for a shape
+// the UI itself never needed.
+function isColor(x: unknown): x is string {
+  return typeof x === 'string' && HEX_COLOR_RE.test(x)
+}
+
+function isOptionalColor(x: unknown): x is string | undefined {
+  return x === undefined || isColor(x)
+}
+
+// The 21 keys ThemeTokens in themes.ts actually names, grouped by what a
+// legitimate value looks like - duplicated here rather than imported for
+// the same reason DEFAULT_PRESET_ID above is: this file only needs to know
+// the shape, not the values, and a hand-maintained list next to its own
+// validator is easier to audit at a glance than a cross-module reference.
+// Keep in sync with ThemeTokens in themes.ts.
+const COLOR_TOKEN_KEYS = new Set([
+  'bg', 'surface', 'rule', 'border', 'margin',
+  'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
+])
+const DIMENSION_TOKEN_KEYS = new Set(['ruleSize', 'radius', 'edge'])
+const FONT_TOKEN_KEYS = new Set(['fontDisplay', 'fontBody', 'fontMono'])
+
+const DIMENSION_PART_RE = /^-?\d+(?:\.\d+)?(?:px|em|rem|%)$/
+
+// edge alone can be a full CSS border-radius shorthand - four lengths and
+// an optional "/" group for the hand-drawn preset's own asymmetric corner
+// (see HAND_DRAWN_EDGE in themes.ts) - so this checks that every space- or
+// slash-separated piece is its own plain length, rather than expecting one
+// single value. A value built entirely from digits, a decimal point and a
+// known unit can never spell out a function call, with or without "url" in
+// it - there is no character left to write a "(" with.
+function isDimensionList(x: unknown): x is string {
+  if (typeof x !== 'string' || x.length === 0 || x.length > 100) return false
+  return x.split(/[\s/]+/).every(part => DIMENSION_PART_RE.test(part))
+}
+
+// grain: "a plain 0-1 number as a string" per its own doc comment on ThemeTokens.
+function isUnitInterval(x: unknown): x is string {
+  return typeof x === 'string' && /^(?:0|1|0?\.\d+)$/.test(x)
+}
+
+// vignette: "a css percentage string" per its own doc comment.
+function isPercent(x: unknown): x is string {
+  return typeof x === 'string' && /^\d+(?:\.\d+)?%$/.test(x)
+}
+
+// A font stack is letters, digits, spaces, hyphens, apostrophes and commas
+// only - real values look like "-apple-system, BlinkMacSystemFont, 'Segoe
+// UI', system-ui, sans-serif" (see SYSTEM_SANS in themes.ts). No
+// parenthesis is ever legitimate in a font-family value, so excluding it
+// outright leaves no way to write a function call regardless of what
+// letters surround it.
+function isFontStack(x: unknown): x is string {
+  return typeof x === 'string' && x.length > 0 && x.length <= 200 && /^[a-zA-Z0-9 ,'-]+$/.test(x)
+}
+
+// shadow: a real box-shadow value, e.g. "0 1px 3px rgba(0, 0, 0, 0.06)" or
+// several of those joined with commas (see every preset's own shadow in
+// themes.ts) - the one token whose legitimate grammar genuinely needs
+// parentheses. Only rgba()/rgb()/hsla()/hsl() calls are allowed to carry
+// them: every such call is stripped first, and whatever text is left must
+// contain no parenthesis at all, so a url() (or anything else) can never
+// hide either inside a fake function name or outside one.
+const SHADOW_FUNCTION_RE = /\b(?:rgba|rgb|hsla|hsl)\([\d.\s,%]*\)/gi
+function isShadow(x: unknown): x is string {
+  if (typeof x !== 'string' || x.length === 0 || x.length > 300) return false
+  const withoutFunctions = x.replace(SHADOW_FUNCTION_RE, '')
+  return !/[(){}]/.test(withoutFunctions) && /^[\d.,#a-zA-Z%\s-]*$/.test(withoutFunctions)
+}
+
+// One value inside a ThemeOverrides patch, keyed by which of the 21
+// ThemeTokens keys it claims to override. A key that names none of them -
+// a stale token from an older build, "ruleStyle" (carried in the same patch
+// object but validated here only as a plain bounded string, since
+// applyOverrides in theme.ts never writes it to a custom property - see
+// that function's own comment), a typo in a hand-edited backup - is
+// checked only as a bounded string: theme.ts's own applyOverrides already
+// ignores any key outside this list, so it never reaches a style attribute
+// or a custom property regardless of what it holds.
+function isOverrideValue(key: string, value: unknown): boolean {
+  if (COLOR_TOKEN_KEYS.has(key)) return isColor(value)
+  if (DIMENSION_TOKEN_KEYS.has(key)) return isDimensionList(value)
+  if (key === 'grain') return isUnitInterval(value)
+  if (key === 'vignette') return isPercent(value)
+  if (FONT_TOKEN_KEYS.has(key)) return isFontStack(value)
+  if (key === 'shadow') return isShadow(value)
+  return typeof value === 'string' && value.length <= 200
+}
+
 function isOptionalPushCount(x: unknown): x is number | undefined {
   return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0)
 }
@@ -137,7 +260,7 @@ function isTemplate(x: unknown): x is Template {
   return (
     typeof x.id === 'string' &&
     typeof x.name === 'string' &&
-    typeof x.color === 'string' &&
+    isColor(x.color) &&
     Array.isArray(x.blocks) &&
     x.blocks.every(isTemplateBlock) &&
     isOptionalDayType(x.type)
@@ -160,7 +283,7 @@ function isLegacyTheme(x: unknown): x is LegacyTheme {
 }
 
 function isThemeOverrides(x: unknown): x is ThemeOverrides {
-  return isRecord(x) && Object.values(x).every(v => typeof v === 'string')
+  return isRecord(x) && Object.entries(x).every(([key, v]) => isOverrideValue(key, v))
 }
 
 function isThemeState(x: unknown): x is ThemeState {
@@ -208,7 +331,7 @@ function isIfThenEntry(x: unknown): x is IfThenEntry {
     typeof x.id === 'string' &&
     typeof x.trigger === 'string' &&
     typeof x.action === 'string' &&
-    isOptionalString(x.color) &&
+    isOptionalColor(x.color) &&
     isOptionalDayTypeArray(x.dayTypes) &&
     isOptionalIfThenWhen(x.when) &&
     isOptionalString(x.lastSurfaced)

@@ -256,6 +256,97 @@ test('agree when a ThemeState override patch has a non-string value', () => {
   expectAgreement()
 })
 
+// Security regression: an override value that is a string but not a real
+// color for a color token - the crafted url() beacon the security audit
+// found - must be rejected by both sides identically. Before this fix, the
+// pre-paint script's own isValidThemeState only checked typeof, so it would
+// have written the raw url() straight onto :root before React ever mounted
+// - and kept doing so on every single page load, even after loadData()'s
+// own validation started rejecting the same payload, since this script
+// never shares that validator. expectAgreement() catches exactly this: the
+// two sides disagreeing (one painting the beacon, the other not) is a hard
+// failure here, not just a style flash.
+test('agree when a ThemeState override sets a color token to a CSS url() value - both sides reject it', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: {
+        presetId: 'slate',
+        overrides: { slate: { accent: 'url(https://attacker.example/beacon.png)' } },
+        mode: 'light',
+      },
+      enabledWidgets: [],
+    },
+  }))
+  runPrePaintScript()
+  expect(document.documentElement.style.getPropertyValue('--accent')).not.toContain('url')
+  expectAgreement()
+})
+
+// Same regression, on the token the audit actually reproduced the beacon
+// against live: --bg, painted straight into a background layer in
+// styles.css.
+test('agree when a ThemeState override sets bg to a CSS url() value - both sides reject it', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: {
+        presetId: 'slate',
+        overrides: { slate: { bg: 'url("https://attacker.example/beacon.png?id=1")' } },
+        mode: 'dark',
+      },
+      enabledWidgets: [],
+    },
+  }))
+  runPrePaintScript()
+  expect(document.documentElement.style.getPropertyValue('--bg')).not.toContain('url')
+  expectAgreement()
+})
+
+// Non-color tokens need the same live agreement, not just the color ones -
+// a font stack or a dimension list rejects a url() value exactly the same
+// way a color does, on both sides.
+test('agree when a ThemeState override sets a non-color token (fontBody) to a CSS url() value - both sides reject it', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: {
+        presetId: 'slate',
+        overrides: { slate: { fontBody: 'url(https://attacker.example/x)' } },
+        mode: 'light',
+      },
+      enabledWidgets: [],
+    },
+  }))
+  runPrePaintScript()
+  expect(document.documentElement.style.getPropertyValue('--font-body')).not.toContain('url')
+  expectAgreement()
+})
+
+// A legitimate non-color override - the hand-drawn edge's own multi-value
+// shorthand, which genuinely needs a "/" and several lengths - must still
+// be honored on both sides, not caught by an overly strict validator.
+test('agree when a ThemeState override sets edge to a legitimate multi-value shorthand', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: {
+        presetId: 'slate',
+        overrides: { slate: { edge: '225px 14px 255px 15px / 15px 255px 14px 225px' } },
+        mode: 'light',
+      },
+      enabledWidgets: [],
+    },
+  }))
+  runPrePaintScript()
+  expect(document.documentElement.style.getPropertyValue('--edge')).toBe('225px 14px 255px 15px / 15px 255px 14px 225px')
+  expectAgreement()
+})
+
 // system mode has nothing stored to disagree about directly - both sides
 // read the same live matchMedia result, so this only proves that read is
 // wired the same way on both sides, not that it produces the same

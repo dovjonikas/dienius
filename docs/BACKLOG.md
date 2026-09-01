@@ -447,6 +447,66 @@ search for an exception. The gap stayed a real, focusable button throughout - co
 its picker on click at 375px, `aria-expanded` flips to `"true"`, and `document.body` never exceeded the
 viewport width.
 
+**Unvalidated colors closed off as a beacon vector.** A security audit found that `Template.color`,
+`IfThenEntry.color`, and every value inside a `ThemeOverrides` patch were validated only as
+`typeof x === 'string'`, then landed unsanitized as literal CSS values - a crafted backup with a color
+of `url("https://attacker.example/x")` fired a real network request on import, confirmed live, leaking
+the viewer's IP, user agent and timing. No code execution and no CSS-breakout were possible - a
+semicolon-based attempt was tried live and rejected outright by both `CSSStyleDeclaration.setProperty`
+and React's own style object - so this was a tracking beacon, not a takeover, but a real and reachable
+one through the single most-trusted input path the app has.
+
+Fixed at the validation layer in `storage.ts` rather than at each render site, so a bad value never
+reaches storage in the first place. `Template.color` and `IfThenEntry.color` must now match
+`/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/` - every hex length CSS itself
+recognizes, matching every value `PALETTE_COLORS` in `colors.ts` or a native `<input type="color">`
+can ever actually produce. `ThemeOverrides` needed more care: it is a sparse patch across all 21
+`ThemeTokens` keys, and 9 of them are not colors at all - `ruleSize`/`radius`/`edge` are CSS length
+shorthands (`edge` alone can be the hand-drawn preset's own multi-value `"225px 14px 255px 15px / 15px
+255px 14px 225px"`), `grain` a plain 0-1 number, `vignette` a percentage, `fontDisplay`/`fontBody`/
+`fontMono` font stacks, and `shadow` a real `box-shadow` value with `rgba()` calls in it - a blanket
+hex-only check would have rejected every one of those as a false positive. Each of the 21 keys now has
+its own grammar (a hex color; a space/slash-separated list of plain lengths; a 0-1 decimal; a
+percentage; a letters-digits-spaces-hyphens-apostrophes-commas font stack with no parenthesis anywhere,
+so no function call - including `url()` - can ever be written; or, for `shadow`, every `rgba`/`rgb`/
+`hsla`/`hsl` call stripped out first, with whatever text is left required to contain no parenthesis at
+all), so a `url()` value is unrepresentable in any of the 21 rather than merely blocked in the color
+ones. A key naming none of the 21 - a stale token, a typo - is checked only as a bounded string, since
+`applyOverrides` in `theme.ts` already ignores anything outside this list and it never reaches a style
+attribute or a custom property regardless of what it holds.
+
+A backup that fails the check is rejected whole, exactly the same treatment an out-of-range
+`Task.minutes` or an unknown `DayType` already gets - this file has never partially accepted a payload
+by silently dropping the one field that failed, and a color earns no special case. Because
+`loadData()`/`importJson()` only ever replace state after `validate()` succeeds, a rejected import
+changes nothing; the app's own promise that a bad import never destroys existing data holds exactly as
+it did before this fix, now for this case too.
+
+The one place this needed a second, independent fix: `index.html`'s pre-paint script duplicates
+`storage.ts`'s own theme validation on purpose, to paint the persisted theme before React mounts - see
+`docs/DECISIONS.md`. It had the exact same `typeof === 'string'` gap, and because it reads raw
+`localStorage` directly rather than going through `storage.ts`, fixing `storage.ts` alone would not have
+closed it: anyone who had already imported a malicious backup before this patch would have kept getting
+the beacon fired on every single page load afterward, even though `loadData()` had started rejecting the
+same payload the moment React mounted - a flash-fix, not a real one. `index.html` now carries the same
+per-token grammar, `src/preTheme.test.ts` runs the real script text against both a bad-color and a
+legitimate-multi-value-edge case and asserts it agrees with the real pipeline in both, and a live check
+confirmed a crafted `url()` backup no longer paints on either side.
+
+Verified live end to end, not just by unit test: seeded real existing data, imported a crafted backup
+with `Template.color` set to a `url()` beacon through the actual file input Settings uses, and watched
+with a `PerformanceObserver` for any request naming the attacker's domain. None fired, "That file is not
+a valid Dienius backup." appeared, and the existing template was still exactly as it was. A second import
+of a legitimate backup carrying a hex accent override, the hand-drawn edge's multi-value shorthand, a
+real font stack, and an if-then tag color all succeeded with no false rejection, confirming the tightened
+validation does not reject anything the app itself would ever produce. Regression tests added in
+`src/lib/storage.test.ts` (a crafted color on a template and an if-then entry, every hex length accepted,
+non-hex rejected including a semicolon-breakout attempt, every legitimate non-color override token
+accepted, a `url()` value rejected on every override category) and `src/preTheme.test.ts` (the pre-paint
+script's own agreement with the real pipeline on a bad color, on `bg` specifically - the token the audit
+reproduced the beacon against live - on a bad non-color token, and on the legitimate multi-value edge
+case).
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time
