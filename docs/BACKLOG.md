@@ -638,7 +638,10 @@ never struck from this list; each one below says which.
   lifting the finger off the relevant section entirely (into the browser chrome, or past the edge of
   the screen) still stops the gesture instead of leaving it stuck on; none of these drags trigger the
   page's own scroll or a pull-to-refresh gesture while in progress; and a long-press on a task row
-  opens its menu without also scrolling the page or toggling the checkbox underneath it.
+  opens its menu without also scrolling the page or toggling the checkbox underneath it. The real
+  test for all of this arrives on its own: the owner is starting to use the app on his own phone
+  daily, which will exercise every one of these gestures on real hardware far more thoroughly than a
+  dedicated verification pass could.
 - ~~Four exported symbols nothing outside their own file imports: `SYSTEM_CONDENSED` in `themes.ts`,
   `TEMPLATE_COLORS` in `TemplatesView.tsx`, `gapsInWindow` in `capacity.ts`, `pushCountLabel` in
   `TaskRow.tsx`.~~ Decided per symbol rather than dropping `export` from all four reflexively. Three

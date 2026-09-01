@@ -795,10 +795,18 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* The real, focusable gap layer step 5 adds - same box as .timeline-grid
-   above, sharing its coordinate system, but never hidden and never inert. */
+   above, sharing its coordinate system, but never hidden and never inert.
+   pointer-events: none here for the same reason .timeline-grid carries it:
+   this wrapper's own empty area spans the full grid, painted after (so
+   stacked above) the decorative layer beside it - left at the default
+   auto, it would sit on top of and swallow every anchor underneath it
+   everywhere a gap button is not actually drawn, regardless of what that
+   anchor's own pointer-events says. Only .timeline-gap below opts back in,
+   on the one real, focusable button this layer exists to hold. */
 .timeline-gaps {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 /* GUTTER_PX in TimelineGrid.tsx - kept in sync by hand, the same way this
@@ -852,6 +860,9 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    treatment - see docs/RESEARCH-TIMELINE-UI.md section 5 point 5. */
 .timeline-gap {
   position: absolute;
+  /* .timeline-gaps, its parent, is pointer-events: none - see that rule's
+     own comment - so every real gap button opts back in for itself here. */
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1021,9 +1032,23 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    default scroll behaviour over its own area of the grid's scroll
    container. grab/grabbing on a pointer-only affordance is a plain,
    inexpensive cue - it costs nothing for a touch reader, who never sees a
-   cursor at all. */
+   cursor at all.
+
+   pointer-events: auto is the actual fix for the gesture never being
+   reachable at all: .timeline-anchor's own layer, .timeline-grid, is
+   aria-hidden and pointer-events: none on purpose, so the decorative grid
+   never swallows a tap meant for a gap button drawn beside it - see that
+   rule's own comment. Every anchor inherits that none, including this one,
+   so only a draggable anchor opts back in here, on this class alone: it is
+   the one thing in that layer with a real pointer gesture behind it, the
+   same reasoning that already pulled the gap buttons out into their own
+   non-hidden layer rather than leaving the whole grid interactive. A done
+   anchor, or any anchor rendered with no onAnchorPointerDown supplied at
+   all, never carries this class and stays exactly as inert as the rest of
+   the decorative layer around it. */
 .timeline-anchor-draggable {
   touch-action: none;
+  pointer-events: auto;
   cursor: grab;
 }
 

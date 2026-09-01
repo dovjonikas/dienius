@@ -1,6 +1,8 @@
 import { expect, test, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import type { Task } from '../../lib/types'
 import { TimelineGrid } from './TimelineGrid'
 
@@ -10,6 +12,29 @@ function anchor(id: string, time: string, minutes?: number, done = false): Task 
 
 function float(id: string, minutes?: number): Task {
   return { id, title: id, done: false, minutes }
+}
+
+// `fireEvent.pointerDown(block, ...)` above dispatches a synthetic event
+// straight at a known element reference - it proves the handler function
+// works, but never proves a real pointer could land on that element in the
+// first place. A real pointer resolves through the browser's own
+// pointer-events hit-testing before it reaches anything: an element (or an
+// aria-hidden ancestor of one) computing `pointer-events: none` is invisible
+// to it, and jsdom does not implement `document.elementFromPoint` at all to
+// catch that the usual way a live browser check would. What jsdom does
+// compute correctly - cascade and inheritance included - is `pointer-events`
+// itself, once the real stylesheet is actually loaded into it, which only
+// `main.tsx` normally does. Reading `styles.css` straight off disk here,
+// rather than a hand-copied fragment of it, means a future edit to the real
+// rule is exactly what these tests check against, not a snapshot that could
+// quietly drift out of sync with it.
+const REAL_STYLESHEET = readFileSync(resolve(__dirname, '../../styles.css'), 'utf-8')
+
+function withRealStylesheet(): () => void {
+  const style = document.createElement('style')
+  style.textContent = REAL_STYLESHEET
+  document.head.appendChild(style)
+  return () => style.remove()
 }
 
 test('renders nothing at all for a day with no anchors', () => {
@@ -200,6 +225,71 @@ test('a done anchor is never wired for drag - it has no undo control on its row 
 test('with no onAnchorPointerDown supplied, no anchor is ever wired for drag', () => {
   const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} />)
   expect(container.querySelector('.timeline-anchor')).not.toHaveClass('timeline-anchor-draggable')
+})
+
+// --- real pointer reachability --------------------------------------------
+//
+// The class of bug the tests above cannot see: a draggable anchor sits
+// inside `.timeline-grid`, an aria-hidden decorative layer that carries
+// `pointer-events: none` so it never swallows a tap meant for a gap button
+// drawn over or beside it (see that class's own comment in styles.css). A
+// real pointer resolves that inheritance before it ever reaches the anchor's
+// own `onPointerDown` - `fireEvent`/`userEvent` never do, so these three
+// checks read the actual cascaded `pointer-events` value instead, against
+// the real stylesheet loaded straight off disk (see `withRealStylesheet`
+// above).
+test('a draggable anchor computes pointer-events auto - a real pointer can reach it despite the aria-hidden layer around it', () => {
+  const restore = withRealStylesheet()
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} onAnchorPointerDown={vi.fn()} />,
+    )
+    const block = container.querySelector('.timeline-anchor-draggable')!
+    expect(getComputedStyle(block).pointerEvents).toBe('auto')
+  } finally {
+    restore()
+  }
+})
+
+test('a done, non-draggable anchor stays pointer-events none - only a draggable anchor opts back into the decorative layer', () => {
+  const restore = withRealStylesheet()
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Shift', '09:00', 60, true)]} onAnchorPointerDown={vi.fn()} />,
+    )
+    const block = container.querySelector('.timeline-anchor')!
+    expect(block).not.toHaveClass('timeline-anchor-draggable')
+    expect(getComputedStyle(block).pointerEvents).toBe('none')
+  } finally {
+    restore()
+  }
+})
+
+test('the gap layer does not blanket-capture the anchor underneath it - only its own gap buttons stay clickable', () => {
+  const restore = withRealStylesheet()
+  try {
+    const { container } = render(
+      <TimelineGrid
+        tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]}
+        onAnchorPointerDown={vi.fn()}
+      />,
+    )
+    const gapsLayer = container.querySelector('.timeline-gaps')!
+    const gapButton = gapsLayer.querySelector('.timeline-gap')!
+    // .timeline-gaps spans the same full box as the aria-hidden grid beside
+    // it (see the shared-coordinate-system comment on .timeline-grid-layers
+    // in styles.css) - if it stayed pointer-events: auto across its own
+    // empty area, it would sit on top of and swallow every anchor
+    // underneath it regardless of the anchor's own pointer-events value,
+    // exactly what document.elementFromPoint returned before this fix,
+    // confirmed live against the running app.
+    expect(getComputedStyle(gapsLayer).pointerEvents).toBe('none')
+    // Its own real, focusable buttons opt back in individually - the same
+    // pattern .timeline-anchor-draggable uses one layer down.
+    expect(getComputedStyle(gapButton).pointerEvents).toBe('auto')
+  } finally {
+    restore()
+  }
 })
 
 test('the anchor currently being dragged carries a dragging class', () => {
