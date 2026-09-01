@@ -61,7 +61,7 @@ test('rollover button moves unfinished tasks to tomorrow', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Unfinished')
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  await user.click(screen.getByRole('button', { name: /move .* to tomorrow/i }))
+  await user.click(screen.getByRole('button', { name: /push .* to tomorrow/i }))
   expect(screen.queryByText('Unfinished')).not.toBeInTheDocument()
   const tomorrow = getData().days['2026-09-02']
   expect(tomorrow?.tasks.map(t => t.title)).toEqual(['Unfinished'])
@@ -226,7 +226,10 @@ test('an ongoing task shows no push count, even after many more pushes than the 
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.queryByText(/pushed/i)).not.toBeInTheDocument()
+  // A precise match for the visible "pushed N" count mark, not the hidden
+  // exemption note below it - that note legitimately contains the word
+  // "pushed" as part of explaining what being ongoing exempts a task from.
+  expect(screen.queryByText(/^pushed (once|twice|\d+ times)$/i)).not.toBeInTheDocument()
 })
 
 test('an ordinary task under the bound shows neither the ongoing label nor the mark-ongoing control', () => {
@@ -254,7 +257,7 @@ test('rollover button explains when some tasks moved and some stayed behind', as
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  const button = screen.getByRole('button', { name: /move 1 to tomorrow/i })
+  const button = screen.getByRole('button', { name: /push 1 to tomorrow/i })
   expect(button).toHaveTextContent(/1 (is )?stay/i)
   await user.click(button)
   expect(screen.queryByText('Fresh task')).not.toBeInTheDocument()
@@ -420,7 +423,7 @@ test('a day with only floats shows their total with no anchors or gaps claim', (
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText('Floats need about 3h40.')).toBeInTheDocument()
+  expect(screen.getByText('Untimed tasks: about 3h40.')).toBeInTheDocument()
 })
 
 test('a fully sized day renders the exact capacity sentence from the anchors and floats it contains', () => {
@@ -443,7 +446,7 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(
-    screen.getByText('Anchors take 6h10. Free: 9h50 across 4 gaps. Floats need about 5h50.'),
+    screen.getByText('Timed tasks: 6h10. Free: 9h50 across 4 gaps. Untimed tasks: about 5h50.'),
   ).toBeInTheDocument()
 })
 
@@ -458,7 +461,7 @@ test('a mid-day shift leaves real free time within the window, not a false "no f
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByText('Anchors take 12h. Free: 4h across 2 gaps.')).toBeInTheDocument()
+  expect(screen.getByText('Timed tasks: 12h. Free: 4h across 2 gaps.')).toBeInTheDocument()
   expect(screen.queryByText(/no free time/i)).not.toBeInTheDocument()
 })
 
@@ -482,7 +485,7 @@ test('when floats exceed free time, the line states it plainly with no embedded 
   // before the window opened, so the sentence says the figure is only
   // today's portion rather than implying the shift itself was 11 hours.
   expect(
-    screen.getByText("Anchors take 11h within today's window. Free: 5h across 1 gap. Floats need about 7h. You are 2h over."),
+    screen.getByText("Timed tasks: 11h within today's window. Free: 5h across 1 gap. Untimed tasks: about 7h. You are 2h over."),
   ).toBeInTheDocument()
   // The capacity line itself carries no button - it only ever states the arithmetic.
   expect(container.querySelector('.capacity-line button')).toBeNull()
@@ -523,7 +526,7 @@ test('a night-type day uses the night window instead of the default one', () => 
   // clipped it to just one hour instead of two. The shift itself runs
   // eight hours, so the sentence flags the figure as today's portion
   // rather than implying the shift was two hours long.
-  expect(screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap.")).toBeInTheDocument()
+  expect(screen.getByText("Timed tasks: 2h within today's window. Free: 9h across 1 gap.")).toBeInTheDocument()
 })
 
 test('a night shift crossing midnight reads as a partial figure, not as the shift\'s real length', () => {
@@ -542,7 +545,7 @@ test('a night shift crossing midnight reads as a partial figure, not as the shif
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(
-    screen.getByText("Anchors take 2h within today's window. Free: 9h across 1 gap. Floats need about 30 min."),
+    screen.getByText("Timed tasks: 2h within today's window. Free: 9h across 1 gap. Untimed tasks: about 30 min."),
   ).toBeInTheDocument()
 })
 
@@ -810,7 +813,7 @@ test('tapping a gap and placing a float turns it into an anchor, live in the day
   expect(screen.getByRole('button', { name: 'Remove time from Guitar' })).toBeInTheDocument()
 })
 
-test('a placed float can be returned to the tray through its own menu, no hunting for a setting', async () => {
+test('a placed float can have its time removed through its own menu, no hunting for a setting', async () => {
   const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
@@ -851,7 +854,7 @@ test('rollover button is not shown when every unfinished task is already at the 
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.queryByRole('button', { name: /move .* to tomorrow/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /push .* to tomorrow/i })).not.toBeInTheDocument()
   expect(screen.getByText(/waiting on a decision/i)).toBeInTheDocument()
   expect(screen.queryByText(/need a decision today/i)).not.toBeInTheDocument()
 })
@@ -872,7 +875,7 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByRole('button', { name: /move 1 unfinished to tomorrow/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /push 1 unfinished to tomorrow/i })).toBeInTheDocument()
   expect(screen.queryByText(/waiting on a decision/i)).not.toBeInTheDocument()
 })
 

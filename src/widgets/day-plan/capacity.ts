@@ -233,7 +233,7 @@ export interface Capacity {
  * Clipping is correct arithmetic but can read as wrong on its own: a
  * night shift clipped down to the two hours before midnight is genuinely
  * only two hours of today's window, but a sentence that just says
- * "Anchors take 2h" for an eight-hour shift looks like the app got the
+ * "Timed tasks: 2h" for an eight-hour shift looks like the app got the
  * shift's length wrong, not like it scoped the day correctly. See
  * `anchorsClippedByWindow` and `formatCapacityLine`, which say so rather
  * than let a true number read as a mistake.
@@ -364,14 +364,14 @@ export function formatCapacityLine(capacity: Capacity): string | null {
       // long, only that two of its hours are today's.
       const windowNote = capacity.anchorsClippedByWindow ? " within today's window" : ''
       const unsizedNote = capacity.unsizedAnchorCount > 0 ? `, plus ${capacity.unsizedAnchorCount} unsized` : ''
-      sentences.push(`Anchors take ${formatDuration(capacity.anchorsMinutes!)}${windowNote}${unsizedNote}.`)
+      sentences.push(`Timed tasks: ${formatDuration(capacity.anchorsMinutes!)}${windowNote}${unsizedNote}.`)
     } else {
-      const word = capacity.unsizedAnchorCount === 1 ? 'anchor' : 'anchors'
+      const word = capacity.unsizedAnchorCount === 1 ? 'timed task' : 'timed tasks'
       sentences.push(`${capacity.unsizedAnchorCount} ${word} with no size yet.`)
     }
 
     if (capacity.unsizedAnchorCount > 0) {
-      sentences.push("Free time isn't known until every anchor has a size.")
+      sentences.push("Free time isn't known until every timed task has a size.")
     } else if (capacity.gaps.length > 0) {
       const gapWord = capacity.gaps.length === 1 ? 'gap' : 'gaps'
       sentences.push(`Free: ${formatDuration(capacity.freeMinutes!)} across ${capacity.gaps.length} ${gapWord}.`)
@@ -382,12 +382,12 @@ export function formatCapacityLine(capacity: Capacity): string | null {
 
   if (capacity.floatsMinutes > 0) {
     const unsized = capacity.unsizedFloatCount > 0 ? `, plus ${capacity.unsizedFloatCount} unsized` : ''
-    sentences.push(`Floats need about ${formatDuration(capacity.floatsMinutes)}${unsized}.`)
+    sentences.push(`Untimed tasks: about ${formatDuration(capacity.floatsMinutes)}${unsized}.`)
     if (capacity.overMinutes !== null && capacity.overMinutes > 0) {
       sentences.push(`You are ${formatDuration(capacity.overMinutes)} over.`)
     }
   } else if (capacity.unsizedFloatCount > 0) {
-    const floatWord = capacity.unsizedFloatCount === 1 ? 'float' : 'floats'
+    const floatWord = capacity.unsizedFloatCount === 1 ? 'untimed task' : 'untimed tasks'
     sentences.push(`${capacity.unsizedFloatCount} ${floatWord} with no size yet.`)
   }
 

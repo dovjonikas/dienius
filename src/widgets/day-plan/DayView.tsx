@@ -181,7 +181,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     if (outcome.action === 'unanchor') {
       const task = day?.tasks.find(t => t.id === outcome.taskId)
       if (actions.unanchorTask(date, outcome.taskId)) {
-        setDragAnnouncement(task ? `${task.title} returned to the tray.` : 'Returned to the tray.')
+        setDragAnnouncement(task ? `${task.title} no longer has a set time.` : 'No longer has a set time.')
       }
     }
   }
@@ -355,8 +355,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       {pushableCount > 0 && (
         <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
           {heldCount > 0
-            ? `Move ${pushableCount} to tomorrow - ${heldCount} staying here`
-            : `Move ${pushableCount} unfinished to tomorrow`}
+            ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
+            : `Push ${pushableCount} unfinished to tomorrow`}
         </button>
       )}
       {pushableCount === 0 && heldCount > 0 && (
@@ -374,7 +374,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           }}
           onUnanchor={taskId => {
             if (actions.unanchorTask(date, taskId)) {
-              setDragAnnouncement(`${actionsSheetTask.title} returned to the tray.`)
+              setDragAnnouncement(`${actionsSheetTask.title} no longer has a set time.`)
             }
           }}
           onPush={taskId => actions.pushTask(date, taskId)}

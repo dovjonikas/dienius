@@ -76,7 +76,7 @@ test('a gap renders as a real, focusable button outside the aria-hidden layer, n
   const { container } = render(
     <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,
   )
-  const gapButton = screen.getByRole('button', { name: /1h free, 10:00 to 11:00\. tap to place a float\./i })
+  const gapButton = screen.getByRole('button', { name: /1h free, 10:00 to 11:00\. tap to fill this time\./i })
   expect(gapButton.tagName).toBe('BUTTON')
   expect(container.querySelector('.timeline-grid')!.contains(gapButton)).toBe(false)
 })
@@ -102,14 +102,14 @@ test('a gap with nothing that fits still opens, and says so plainly instead of s
     <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30), float('Big errand', 400)]} />,
   )
   await user.click(screen.getByRole('button', { name: /1h free/i }))
-  expect(screen.getByText(/nothing in the tray fits here/i)).toBeInTheDocument()
+  expect(screen.getByText(/nothing fits here/i)).toBeInTheDocument()
 })
 
 test('a day with no floats at all still opens the gap and says nothing fits, rather than a dead control', async () => {
   const user = userEvent.setup()
   render(<TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />)
   await user.click(screen.getByRole('button', { name: /1h free/i }))
-  expect(screen.getByText(/nothing in the tray fits here/i)).toBeInTheDocument()
+  expect(screen.getByText(/nothing fits here/i)).toBeInTheDocument()
 })
 
 test('placing a float calls onPlaceFloat with the gap\'s own start time and closes the picker', async () => {

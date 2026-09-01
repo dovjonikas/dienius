@@ -344,7 +344,7 @@ export function TimelineGrid({
               const top = vertical.topPx(gap.startMinutes)
               const bottom = vertical.topPx(gap.endMinutes)
               const isOpen = openGapStart === gap.startMinutes
-              const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to place a float.`
+              const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to fill this time.`
               return (
                 <button
                   key={`gap-${gap.startMinutes}`}
@@ -371,7 +371,7 @@ export function TimelineGrid({
       </div>
 
       {unsizedAnchorCount > 0 && (
-        <p className="timeline-note">Gaps aren't shown - not every anchor above has a size yet.</p>
+        <p className="timeline-note">Gaps aren't shown - not every timed task above has a size yet.</p>
       )}
 
       <p className="visually-hidden" aria-live="polite">{announcement}</p>

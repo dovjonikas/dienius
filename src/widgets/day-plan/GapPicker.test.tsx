@@ -42,7 +42,7 @@ test('an unsized float is offered with a plain "size unknown" label', () => {
 test('nothing that fits shows a plain message and no list', () => {
   const offer: GapOffer = { fitting: [], unsized: [] }
   render(<GapPicker gapLabel="20 min free" offer={offer} onPlace={() => {}} onClose={() => {}} />)
-  expect(screen.getByText(/nothing in the tray fits here/i)).toBeInTheDocument()
+  expect(screen.getByText(/nothing fits here/i)).toBeInTheDocument()
   expect(screen.queryByRole('list')).not.toBeInTheDocument()
 })
 

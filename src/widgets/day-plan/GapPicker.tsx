@@ -92,7 +92,7 @@ export function GapPicker({ gapLabel, offer, onPlace, onClose }: GapPickerProps)
 
         <div className="gap-picker-body">
           {empty ? (
-            <p className="gap-picker-empty">Nothing in the tray fits here.</p>
+            <p className="gap-picker-empty">Nothing fits here.</p>
           ) : (
             <>
               <ul className="gap-picker-list">

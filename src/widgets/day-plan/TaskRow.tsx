@@ -146,7 +146,7 @@ export function TaskRow({
           ) : isUnbounded ? (
             <span id={stateId} className="task-state">
               ongoing
-              <span className="visually-hidden">, exempt from the push bound</span>
+              <span className="visually-hidden">, exempt from being pushed to tomorrow</span>
             </span>
           ) : showPushedMark ? (
             <span id={stateId} className="task-state">pushed {pushCountLabel(pushCount)}</span>
