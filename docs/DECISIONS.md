@@ -438,3 +438,35 @@ full reasoning where the feature itself is documented; this is the short record 
 - **The if-then line shows nothing when nothing is eligible today.** Matches the posture the capacity
   line and the timeline toggle already take elsewhere: a day with genuinely nothing to say says
   nothing, rather than manufacturing a placeholder.
+
+## The sleep window is explicit, greyed on the grid, and split by day type
+
+The fixed 07:00-23:00 waking window (13:00-24:00 on a night day) in `capacity.ts` was never configured
+per day, but it was also never visible - hours outside it were simply absent from the timeline grid, so
+neither the free-time figure nor its own shape on screen said why. `Settings.sleepWindow` and
+`Settings.nightSleepWindow` replace the two hardcoded constants with two set-once fields, each a
+bedtime/wake-time pair, both defaulting to the exact inverse of the windows they replace - an existing
+install that never opens Settings computes and draws identically to before.
+
+**Two windows, not one, because a day's own type already says which applies.** The alternative - one
+global sleep window used for every day - cannot represent a real night-shift worker's actual life: their
+daytime sleep hours are not a predictable offset from their ordinary night's sleep, they are a different
+schedule entirely, and only the owner can state it. `dayType` already exists precisely to carry this
+distinction; reading it here is not a new decision, the same reasoning `windowFor`'s original fixed
+`NIGHT_WINDOW` shift already rested on. What changed is that the night window is no longer a guess
+baked into the code - it is exactly as tunable as the ordinary one.
+
+**The grid greys the sleep window rather than cropping to it.** `TimelineGrid`'s own display window
+(anchor-buffered, independent of the capacity window - see `docs/TIMELINE.md` section 5's original
+reasoning) is pulled back toward the sleep boundary on either side, but only up to
+`SLEEP_BAND_EXTEND_MINUTES` (60, the same figure as the anchor buffer's own `DISPLAY_BUFFER_MINUTES`) -
+enough to make the wake/bedtime line legible with a real peek of grey behind it, never enough to redraw
+the whole night. Drawing the full sleep span was considered and rejected: on the phone it would add
+hours of dead pixels to a grid that already has to fit its floors; on a wide screen it would thin the
+`chooseWidePxPerMinute` density fed by the same window's total width, compressing the real anchors and
+gaps the grid exists to show clearly. The bounded peek gives the boundary without either cost.
+
+**A screen reader hears the boundary once, in plain text, not the band.** The greyed rectangle is
+decorative - `aria-hidden`, inside the grid's existing decorative layer - but the sleep window itself is
+real information, so one visually-hidden sentence states it plainly every time the grid renders,
+regardless of how much of the band today's anchors happen to leave room to show.
