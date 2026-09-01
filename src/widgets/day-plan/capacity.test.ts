@@ -154,7 +154,7 @@ test('a mid-day shift with a small float fits comfortably in the window, not "ov
   expect(capacity.freeMinutes).toBe(240)
   expect(capacity.overMinutes).toBe(0)
   expect(formatCapacityLine(capacity)).toBe(
-    'Anchors take 12h. Free: 4h across 2 gaps. Floats need about 35 min.',
+    'Timed tasks: 12h. Free: 4h across 2 gaps. Untimed tasks: about 35 min.',
   )
 })
 
@@ -164,7 +164,7 @@ test('a morning-only anchor leaves the rest of the window free - reviewer case 2
   expect(capacity.freeMinutes).toBe(WINDOW_MINUTES - 300)
   expect(capacity.overMinutes).toBe(0)
   expect(formatCapacityLine(capacity)).toBe(
-    'Anchors take 5h. Free: 11h across 1 gap. Floats need about 35 min.',
+    'Timed tasks: 5h. Free: 11h across 1 gap. Untimed tasks: about 35 min.',
   )
 })
 
@@ -246,13 +246,13 @@ test('a shift and rest day type use the same window as an ordinary day', () => {
 test('an anchor entirely inside the window is not flagged as clipped', () => {
   const capacity = computeCapacity([anchor('Gym', '09:00', 90)])
   expect(capacity.anchorsClippedByWindow).toBe(false)
-  expect(formatCapacityLine(capacity)).toBe('Anchors take 1h30. Free: 14h30 across 2 gaps.')
+  expect(formatCapacityLine(capacity)).toBe('Timed tasks: 1h30. Free: 14h30 across 2 gaps.')
 })
 
 test('an anchor that runs past the window close is flagged as clipped, and the sentence says so', () => {
   const capacity = computeCapacity([anchor('Runs late', '22:00', 180)]) // clipped from 3h down to 1h
   expect(capacity.anchorsClippedByWindow).toBe(true)
-  expect(formatCapacityLine(capacity)).toMatch(/^Anchors take 1h within today's window\./)
+  expect(formatCapacityLine(capacity)).toMatch(/^Timed tasks: 1h within today's window\./)
 })
 
 test('an anchor that starts before the window opens is flagged as clipped too', () => {
@@ -264,13 +264,13 @@ test('an anchor that starts before the window opens is flagged as clipped too', 
 test('an anchor entirely outside the window is flagged as clipped, even though it reports zero', () => {
   const capacity = computeCapacity([anchor('Too early', '05:00', 60)])
   expect(capacity.anchorsClippedByWindow).toBe(true)
-  expect(formatCapacityLine(capacity)).toMatch(/^Anchors take 0 min within today's window\./)
+  expect(formatCapacityLine(capacity)).toMatch(/^Timed tasks: 0 min within today's window\./)
 })
 
 test('the clipped-window note appears before the unsized-anchor note, in one clause', () => {
   const capacity = computeCapacity([anchor('Runs late', '22:00', 180), anchor('No size', '10:00', undefined)])
   expect(formatCapacityLine(capacity)).toBe(
-    "Anchors take 1h within today's window, plus 1 unsized. Free time isn't known until every anchor has a size.",
+    "Timed tasks: 1h within today's window, plus 1 unsized. Free time isn't known until every timed task has a size.",
   )
 })
 
@@ -293,7 +293,7 @@ test('reviewer repro: an eight-hour night shift reads as clipped, not as a two-h
     'night',
   )
   expect(formatCapacityLine(capacity)).toBe(
-    "Anchors take 2h within today's window. Free: 9h across 1 gap. Floats need about 30 min.",
+    "Timed tasks: 2h within today's window. Free: 9h across 1 gap. Untimed tasks: about 30 min.",
   )
 })
 
@@ -315,14 +315,14 @@ test('two unsized anchors report zero known occupied time and no free-time figur
   expect(capacity.anchorsMinutes).toBe(0)
   expect(capacity.freeMinutes).toBeNull()
   expect(formatCapacityLine(capacity)).toBe(
-    "2 anchors with no size yet. Free time isn't known until every anchor has a size.",
+    "2 timed tasks with no size yet. Free time isn't known until every timed task has a size.",
   )
 })
 
 test('a single unsized anchor uses the singular in the sentence', () => {
   const capacity = computeCapacity([anchor('Call', '10:00', undefined)])
   expect(formatCapacityLine(capacity)).toBe(
-    "1 anchor with no size yet. Free time isn't known until every anchor has a size.",
+    "1 timed task with no size yet. Free time isn't known until every timed task has a size.",
   )
 })
 
@@ -340,27 +340,27 @@ test('an empty day produces no capacity line at all', () => {
 
 test('a window entirely filled by anchors says so in plain words, not "0 gaps"', () => {
   const capacity = computeCapacity([anchor('Whole window', '07:00', WINDOW_MINUTES)])
-  expect(formatCapacityLine(capacity)).toBe('Anchors take 16h. No free time left today.')
+  expect(formatCapacityLine(capacity)).toBe('Timed tasks: 16h. No free time left today.')
 })
 
 test('floats only, with no anchors, reports the float total with no free-time claim', () => {
   const capacity = computeCapacity([float('Publish video', 200), float('Guitar', 20)])
-  expect(formatCapacityLine(capacity)).toBe('Floats need about 3h40.')
+  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h40.')
 })
 
 test('unsized floats are named in the sentence, not silently dropped', () => {
   const capacity = computeCapacity([float('Publish video', 200), float('No size yet')])
-  expect(formatCapacityLine(capacity)).toBe('Floats need about 3h20, plus 1 unsized.')
+  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h20, plus 1 unsized.')
 })
 
 test('floats that are entirely unsized cannot claim a total, so the sentence says so honestly', () => {
   const capacity = computeCapacity([float('No size yet'), float('Also no size')])
-  expect(formatCapacityLine(capacity)).toBe('2 floats with no size yet.')
+  expect(formatCapacityLine(capacity)).toBe('2 untimed tasks with no size yet.')
 })
 
 test('a single unsized float uses the singular', () => {
   const capacity = computeCapacity([float('No size yet')])
-  expect(formatCapacityLine(capacity)).toBe('1 float with no size yet.')
+  expect(formatCapacityLine(capacity)).toBe('1 untimed task with no size yet.')
 })
 
 test('anchors with no floats at all say nothing about floats', () => {
@@ -385,7 +385,7 @@ test('never uses a warning word for the over case', () => {
 test('being over is stated plainly, with the word about only on the floats estimate', () => {
   const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 700)]
   const line = formatCapacityLine(computeCapacity(tasks))
-  expect(line).toBe('Anchors take 5h. Free: 11h across 3 gaps. Floats need about 11h40. You are 40 min over.')
+  expect(line).toBe('Timed tasks: 5h. Free: 11h across 3 gaps. Untimed tasks: about 11h40. You are 40 min over.')
 })
 
 // --- parseMinutesInput ---------------------------------------------------------

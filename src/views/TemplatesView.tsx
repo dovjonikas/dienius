@@ -168,6 +168,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
       {draft.type !== 'full' && (
         <p className="muted">Only blocks marked core count toward the score on this day type.</p>
       )}
+      <p className="muted">Ongoing blocks never get pushed to tomorrow or need a decision.</p>
       <ul className="block-list">
         {draft.blocks.map((b, i) => (
           <li key={i}>
