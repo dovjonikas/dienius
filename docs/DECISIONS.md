@@ -349,3 +349,92 @@ eventually). That is judged an acceptable trade against interrupting someone's a
 since the worker has already taken over in the background regardless - nothing is lost by staying on
 the old page a while longer, and nothing is silently stuck forever the way the pre-existing risk this
 whole feature was built to close would have allowed.
+
+## Relatedness is the motivator local-first cannot serve
+
+Self-determination theory identifies three needs that sustain motivation, and is the best-evidenced
+account of what motivates people with ADHD specifically (Morsink et al. 2022): autonomy, competence,
+relatedness. Dienius serves the first two. Autonomy - the app never auto-schedules and never decides
+for the person, see "No accounts" above and every decision in this file that assumes the person stays
+in control of their own plan. Competence - the fraction, the capacity line, and the year strip's own
+ring all show real progress honestly, against no invented target.
+
+Relatedness it cannot serve at all. There is no account, no server, no way for one person's plan to be
+visible to another - that falls directly out of "localStorage, no backend" and "No accounts" above, not
+a separate gap. This was weighed and accepted, not missed: a social layer, a shared plan, a body
+double, anything that puts another person's presence in the app, would need exactly the account and
+server this app exists to avoid, for evidence that does not currently earn that cost - the closest
+research on body doubling is a null group-level EEG result and a virtual-reality study of twelve
+people. The instruction that follows from that is explicit and standing: never build a social layer.
+If the evidence for body doubling ever gets meaningfully stronger, that is a decision for a different
+app, not a quiet addition to this one.
+
+## The timeline grid changes how the day feels, not how much gets done
+
+No study compares a proportional-height time grid against the same information written as plain
+duration text, in ADHD populations or otherwise. The design is consistent with Barkley's
+externalisation principle - information has to be present at the point of performance, not filed
+somewhere to be remembered - and with the general cognitive-science literature on shared magnitude
+representations of time and space, but the specific claim that a proportional grid beats a labelled
+list is unstudied. Said plainly so it is never mistaken for something it is not.
+
+The closest real evidence is adjacent, not direct: Hallez and Vallier (2025), a controlled study of 44
+children, found visible timers significantly reduced anticipatory anxiety and inattentive behaviour -
+but task accuracy did not improve. Making time visible plausibly changes how a day feels. There is no
+evidence, from that study or any other, that it makes anyone finish more.
+
+The grid stays in the app on that basis, and no stronger one: it changes how the day feels, not how
+much gets done, and that is a good enough reason to have built it.
+
+## Standing rule: one element dominates the day view
+
+Visual working memory holds roughly four integrated objects (Luck and Vogel 1997; Cowan 2001), and in
+ADHD the visuospatial working-memory deficit is roughly twice the size of the verbal one (Martinussen
+et al. 2005) - the deficit lands hardest in exactly the channel a visual interface substitutes for. A
+screen with a dozen equally loud elements is not showing a dozen things, it is showing noise with
+about four things in it. Density itself is not the problem; ungrouped density is (Moacdieh and Sarter
+2015) - a well-organised dense screen outperforms a poorly organised sparse one.
+
+That is now a standing rule for the day view, not a one-off judgment made once and forgotten: one
+element dominates, and everything else supports it. If the timeline grid, or anything added after it,
+ever competes with the task list for attention, the task list wins - the grid is a secondary, quiet
+layer under the task list, never a peer to it.
+
+The rule exists because it was already broken once and had to be walked back. The timeline grid, at
+full height by default, ran 58 percent of the viewport at 375x812 with a realistic day on screen,
+pushing the task list - the thing the owner actually opens the app to act on - below the fold; see
+`docs/TIMELINE.md`'s note on the grid's disclosure. The fix was collapsing it behind a toggle, off by
+default. Any future addition to the day view - a second grid, a bigger capacity line, a wider if-then
+rule - answers to this rule before it ships, not after a review catches the same problem a second
+time.
+
+## Eight confirmations - built as documented, kept as built
+
+A handful of judgment calls made along the way, confirmed rather than reopened. Each already has its
+full reasoning where the feature itself is documented; this is the short record of the decision.
+
+- **The grid's outer padding stays air, not a labelled gap.** The hour before the first anchor and
+  after the last is breathing room for the eye, not a free-time gap a person could place a float
+  into - the spec's own gap examples are all between anchors, never at the window's outer edge.
+- **A placed float lands at the gap's own start.** The plainest, most predictable answer - it is how
+  a person reads a gap top to bottom, and it needs no second decision about where within the gap.
+  `handlePlace` in `TimelineGrid.tsx` is the one place this could change if it ever needs to.
+- **The if-then time bands split the day at noon and 18:00.** A coarse, fixed default, not a
+  personalised read of the owner's actual shifts - provisional as of September 2026, worth revisiting
+  once an evening or morning rule has actually been written and seen firing at the wrong end of a
+  shift.
+- **Dragging a float while the grid is collapsed auto-expands it.** Functionally identical to tapping
+  "Show timeline" first, triggered by the one gesture that actually needs the grid open, and it does
+  not turn the toggle into a per-day decision.
+- **Theme discovery gets one onboarding line, not a moved gallery.** The eleven themes stay under
+  Settings; the first-run state adds one sentence naming them, at the exact moment a new person is
+  deciding whether the app is worth their time. No tour, no second onboarding surface.
+- **A starter tapped on the day view stamps the date on screen, not always today.** Consistent with
+  how every other action on the day view already treats its date - quick-add, rollover, and every
+  task action act on whichever date is open, never assuming "today."
+- **The update banner is in English.** Matches every other string in the app - the owner's
+  "Atnaujinta" was given as an example of tone, not a request for Lithuanian, and the app has no other
+  Lithuanian anywhere to be consistent with.
+- **The if-then line shows nothing when nothing is eligible today.** Matches the posture the capacity
+  line and the timeline toggle already take elsewhere: a day with genuinely nothing to say says
+  nothing, rather than manufacturing a placeholder.
