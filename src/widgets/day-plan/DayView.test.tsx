@@ -973,3 +973,147 @@ test('a day that already has a hand-typed task never shows the starter offers, e
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Water the plants{Enter}')
   expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
 })
+
+// Selecting a task to see where it fits - the inverse of tapping a gap.
+// docs/TIMELINE.md sections 3, 5 and 9.
+
+test('tapping a float\'s title selects it and opens where it fits, without completing the task', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'meeting', title: 'Meeting', done: false, time: '09:00', minutes: 60 },
+          { id: 'gym', title: 'Gym', done: false, time: '18:00', minutes: 60 },
+          { id: 'guitar', title: 'Guitar practice', done: false, minutes: 20 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  const title = screen.getByRole('button', { name: 'Guitar practice' })
+  expect(title).toHaveAttribute('aria-pressed', 'false')
+  await user.click(title)
+
+  expect(title).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('checkbox', { name: 'Guitar practice' })).not.toBeChecked()
+  const dialog = screen.getByRole('dialog', { name: 'Guitar practice' })
+  expect(within(dialog).getAllByRole('listitem')).toHaveLength(3)
+})
+
+test('tapping an already-selected title deselects and closes the sheet', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar', undefined)
+  actions.setTaskMinutes('2026-09-01', getData().days['2026-09-01'].tasks[0].id, 20)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  const title = screen.getByRole('button', { name: 'Guitar' })
+  await user.click(title)
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+  await user.click(title)
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(title).toHaveAttribute('aria-pressed', 'false')
+  expect(title).toHaveFocus()
+})
+
+test('selecting a task opens the timeline if it was collapsed', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'meeting', title: 'Meeting', done: false, time: '09:00', minutes: 60 },
+          { id: 'guitar', title: 'Guitar', done: false, minutes: 20 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  expect(screen.getByRole('button', { name: 'Show timeline' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Guitar' }))
+  expect(screen.getByRole('button', { name: 'Hide timeline' })).toBeInTheDocument()
+  expect(getData().settings.timelineExpanded).toBe(true)
+})
+
+test('an anchor\'s title is never a selectable control - it already has a position', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'meeting', title: 'Meeting', done: false, time: '09:00', minutes: 60 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: 'Meeting' })).not.toBeInTheDocument()
+})
+
+test('a done float\'s title is never a selectable control - there is nothing left to place', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('checkbox', { name: 'Guitar' }))
+  expect(screen.queryByRole('button', { name: 'Guitar' })).not.toBeInTheDocument()
+})
+
+test('a task with no size says so plainly instead of an empty list', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Guitar')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Guitar' }))
+  expect(screen.getByText(/size isn't set/i)).toBeInTheDocument()
+})
+
+test('tapping a fitting gap places the task, ends the selection, and moves focus to the task list', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'meeting', title: 'Meeting', done: false, time: '09:00', minutes: 60 },
+          { id: 'gym', title: 'Gym', done: false, time: '18:00', minutes: 60 },
+          { id: 'guitar', title: 'Guitar practice', done: false, minutes: 20 },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: 'Guitar practice' }))
+  const dialog = screen.getByRole('dialog', { name: 'Guitar practice' })
+  await user.click(within(dialog).getByRole('button', { name: /10:00 to 18:00/ }))
+
+  expect(getData().days['2026-09-01'].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Guitar practice' })).not.toBeInTheDocument()
+  expect(container.querySelector('.task-list')).toHaveFocus()
+  expect(screen.getByText(/guitar practice placed at 10:00/i)).toBeInTheDocument()
+})
+
+test('a task that fits nowhere today says so plainly, without suggesting the day failed', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [
+          { id: 'work', title: 'Work', done: false, time: '07:00', minutes: 950 },
+          { id: 'errand', title: 'Big errand', done: false, minutes: 90 },
+        ],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Big errand' }))
+  expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
+})
