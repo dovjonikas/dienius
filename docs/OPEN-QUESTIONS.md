@@ -91,3 +91,38 @@ numbers in `timeBandFor` would move. Worth confirming once you have actually wri
 morning rule and seen when it starts and stops showing up: if a "wind down" rule you meant for after
 a night shift ends up reading as tomorrow's morning instead of tonight's evening, that is the
 boundary to adjust.
+
+## 8. Dragging a float while the grid is collapsed auto-expands it
+
+`docs/TIMELINE.md` section 8's drag step asks what should happen when someone tries to drag with the
+grid collapsed, without specifying an answer. I chose to expand the grid the instant the drag starts
+(only when there is at least one anchor for it to expand into) rather than leave the drag picked up
+with nowhere to go. This is functionally identical to the owner tapping "Show timeline" himself,
+just triggered by the one gesture that actually needs it, and it respects the existing rule that the
+toggle is one app-wide setting, not a per-day decision - it does not ask anything new, it just does
+what the existing control would have done anyway.
+
+**Recommendation:** it reads naturally in the browser - picking up a float while the grid is
+collapsed opens it immediately with the gap right there to drop onto. If you would rather dragging
+leave the grid alone and require an explicit tap first, `startDrag` in `DayView.tsx` is the only
+place this decision lives - dropping the `actions.setTimelineExpanded(true)` call there is the whole
+change. The long-press menu does not have this question at all: it lists a float's available gaps
+straight from the day's tasks regardless of whether the grid is open, which is arguably the better
+default for that path specifically.
+
+## 9. Step 7's drag was not verified on real touch hardware
+
+Every check in the step 7 report used synthetic `PointerEvent`s (including ones with
+`pointerType: 'touch'`) dispatched through a desktop browser's automation, plus jsdom unit tests. That
+exercises the exact code path a real touchscreen would trigger, but it is not the same as a real
+finger's own gesture recognition - which is precisely the thing that broke the calendar's first drag
+attempt in this repo, silently, until a review caught it. This drag reuses that same
+`elementFromPoint` + `touch-action` approach on purpose, but reusing a pattern is not the same as
+re-proving it works on hardware.
+
+**Recommendation:** the standing real-device item already in `docs/BACKLOG.md`'s Tier 3 (verify the
+calendar's stamp-drag on real iOS Safari and Android Chrome) should be widened to cover this step's
+two drags and its long-press menu at the same time, on the same pass over the same hardware. Nothing
+about this step should be trusted as touch-complete until that happens - it is not blocking, since the
+long-press menu and every existing tap path work regardless of whether the drag itself turns out to
+need a fix.

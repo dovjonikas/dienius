@@ -354,7 +354,61 @@ push rule and no-guilt score that are already this app's own.
    browser's native button chrome and reads as an unstyled leftover against a dark surface - scoped
    to `.if-then-scope-chips` rather than changed on `.chip` itself, so the tag pills and filter chips
    elsewhere keep the look they already had.
-7. Drag between tray and grid, pointer-events, tested on a real phone before it is trusted.
+7. **Done.** Drag between tray and grid, pointer-events, tested on a real phone before it is trusted.
+
+   Follows `CalendarView.tsx`'s own pointer approach exactly, since that component already solved
+   touch drag in this repo the hard way: release pointer capture on `pointerdown` so the browser
+   keeps delivering events to whatever is actually under the finger, track the current drop target
+   with `document.elementFromPoint` + `closest` during `pointermove` rather than `pointerenter`
+   (which never fires once a touch has captured the pointer to the element the gesture started on),
+   and clean up on document-level `pointerup`/`pointercancel` so a finger lifted anywhere - off the
+   day view entirely, past the edge of the screen - always ends the drag rather than leaving it stuck
+   on. `touch-action: none` is scoped to the smallest possible element rather than the whole row: a
+   small dedicated grip handle on each float and anchor row, and the anchor's own visual block inside
+   the grid, so the row's own tap-to-toggle area and the rest of the page keep the browser's default
+   scroll behaviour. A minimum-movement guard (8px) tells a genuine drag apart from a bare tap, which
+   matters specifically for an anchor block: it has no click behaviour of its own, so without the
+   guard a plain tap on it would resolve to "dropped on the tray" and un-anchor the task with nothing
+   actually dragged.
+
+   `dragDrop.ts`'s `resolveDrop` is the pure "what does dropping this here do" logic, unit tested with
+   no React nearby, the same posture every other pure module in this feature already takes. It reuses
+   `gapPlacement.ts`'s own fit rule (`canPlaceFloatInGap`, factored out of `offerForGap` rather than
+   re-derived) so a float can never be dropped where the tap-a-gap picker would refuse it. A float only
+   ever resolves to `place`, and only onto an allowed gap; an anchor only ever resolves to `unanchor`,
+   and only when dropped on the tray - dropped on a gap, it is refused rather than re-timing it, since
+   that is a third behaviour this drag was never asked to have.
+
+   A float picked up while the grid is collapsed has nothing to land on - the gaps it would drop onto
+   only exist once the grid is mounted. `DayView.tsx` expands it the moment the drag starts, exactly
+   what tapping "Show timeline" does by hand, rather than a silent pickup with no valid target. This is
+   a product call the spec left open, recorded in `docs/OPEN-QUESTIONS.md`. When there is no anchor at
+   all, there is nothing to expand into either, and the toggle itself is not shown - dragging a float
+   on such a day simply has nowhere to go, which the long-press menu below explains plainly rather than
+   leaving silent.
+
+   **The long-press menu** (`TaskActionsSheet.tsx`, opened via `useLongPress.ts`) is the touch-safe
+   fallback the spec calls for by name, and it is deliberately independent of the drag machinery: it
+   needs only a still pointer for 500ms, never sustained pointer capture or cross-element tracking, so
+   it keeps working even if drag itself fails on a real device the way the calendar's first attempt
+   did. For a float it lists every gap `canPlaceFloatInGap` allows, computed straight from
+   `computeTimelineLayout` - independent of whether the grid is currently expanded, which is what makes
+   it the sensible answer to a collapsed grid rather than only a drag fallback. For an anchor it offers
+   exactly one action, remove its time. A gesture that starts on a task's own `<label>` (its content,
+   not the small trailing action buttons) and would otherwise toggle it done on release is intercepted
+   via `onClickCapture` + `preventDefault()` in the capture phase, verified live in the browser (not
+   only in jsdom) - see the step's own report for the real-browser evidence.
+
+   Verified live in the browser, not only in unit tests: a real pointer sequence (no jsdom mocking)
+   dragged a float onto a gap and it placed at the gap's own start with the capacity line, grid and
+   task list all updating from the same store write; the reverse drag un-anchored a task back to the
+   tray; a bare tap on an anchor block changed nothing; an oversized float dropped on a gap was
+   refused; the page still scrolled normally at 375px with the grid expanded; and the long-press menu
+   opened and placed correctly with the grid collapsed, without expanding it. Not verified: real touch
+   hardware. Every check above used synthetic `PointerEvent`s with `pointerType: 'touch'` dispatched in
+   a desktop browser, which exercises the same code path but cannot reproduce a real touchscreen's own
+   gesture recognition (see `docs/BACKLOG.md`'s standing real-device item, which this step's own work
+   now shares with the calendar's stamp-drag) - flagged again in `docs/OPEN-QUESTIONS.md`.
 
 Steps 1 to 3 are the ones that change how the day feels. Everything after is the picture.
 
