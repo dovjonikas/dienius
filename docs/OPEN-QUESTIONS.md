@@ -155,3 +155,21 @@ quick-add, rollover, and every task action already act on whichever date is open
 "today." Always stamping today regardless of which date is on screen would surprise anyone who had
 already navigated forward before tapping an offer, and a second control asking "which day" would be
 exactly the kind of extra decision the brief asks not to introduce.
+
+## 12. The update notice's exact wording and placement are my calls, not yours
+
+`docs/DECISIONS.md`'s new "An installed copy tells you when it updates" section explains the
+reasoning; this is just flagging the two most subjective pieces of it in case you want them
+different. The copy is "An update is ready." with a single "Reload" button, in English (your brief's
+"Atnaujinta" was given as an example of tone, not a request for Lithuanian - the app has no other
+Lithuanian anywhere). Placement is a quiet fixed banner at the bottom of the screen, full-width on a
+phone, a floating pill from tablet width up, with no backdrop.
+
+**Recommendation:** both are small, contained changes if you want something else - the copy lives
+entirely in `src/UpdateNotice.tsx`, the placement entirely in the `.update-notice` rules in
+`src/styles.css`. I chose "ready" over "available" because it is more accurate: by the time anyone
+sees this, the new worker has already activated and claimed control in the background, it is not
+waiting on anything further to download. I chose a bottom banner over, say, a line in Settings
+because Settings is not somewhere a person opens by default and an update they never see is exactly
+the problem this feature exists to close - but a header pill next to the app name is not unreasonable
+either.
