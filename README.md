@@ -92,7 +92,7 @@ public/
   sw.js                  hand-rolled; generate-sw.mjs writes its cache name and precache list
 ```
 
-Logic that doesn't need a component - parsing, sorting, scoring, stamping, capacity, date math - is written as plain, independently tested functions rather than folded into the components that call them. 750 tests, run with Vitest and Testing Library, covering the pure modules directly and the views through user-facing interaction.
+Logic that doesn't need a component - parsing, sorting, scoring, stamping, capacity, date math - is written as plain, independently tested functions rather than folded into the components that call them. A large, growing suite, run with Vitest and Testing Library, covers the pure modules directly and the views through user-facing interaction - `npm test` reports the current count rather than a number here going stale with the next feature commit.
 
 The service worker in `public/sw.js` is hand-written rather than generated, and `scripts/generate-sw.mjs` versions its cache from a hash of the build output on every deploy, so an installed copy never gets stuck on stale files.
 

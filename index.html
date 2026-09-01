@@ -269,6 +269,58 @@
           return theme
         }
 
+        // Mirrors isColor, isDimensionList, isUnitInterval, isPercent,
+        // isFontStack, isShadow and isOverrideValue in src/lib/storage.ts.
+        // A backup with a color set to a CSS url() value fires a real
+        // network request the moment it is painted - verified live, see
+        // that file's own comment on this security fix for the full
+        // reasoning. isValidThemeState below used to accept any string
+        // here, which meant this script would still have painted a
+        // malicious value straight onto :root before React ever mounted,
+        // and kept doing so on every single page load, even after
+        // loadData() started rejecting the exact same payload - this
+        // script reads storage directly and shares nothing with that
+        // module's own validator unless it is kept in step by hand.
+        // src/preTheme.test.ts's own url()-value tests are what actually
+        // keep this honest.
+        var HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+        var COLOR_TOKEN_KEYS = { bg: 1, surface: 1, rule: 1, border: 1, margin: 1, text: 1, muted: 1, accent: 1, accentDim: 1, mark: 1, danger: 1, good: 1 }
+        var DIMENSION_TOKEN_KEYS = { ruleSize: 1, radius: 1, edge: 1 }
+        var FONT_TOKEN_KEYS = { fontDisplay: 1, fontBody: 1, fontMono: 1 }
+        var DIMENSION_PART_RE = /^-?\d+(?:\.\d+)?(?:px|em|rem|%)$/
+        function isDimensionList(v) {
+          if (typeof v !== 'string' || v.length === 0 || v.length > 100) return false
+          var parts = v.split(/[\s/]+/)
+          for (var i = 0; i < parts.length; i++) {
+            if (!DIMENSION_PART_RE.test(parts[i])) return false
+          }
+          return true
+        }
+        function isUnitInterval(v) {
+          return typeof v === 'string' && /^(?:0|1|0?\.\d+)$/.test(v)
+        }
+        function isPercent(v) {
+          return typeof v === 'string' && /^\d+(?:\.\d+)?%$/.test(v)
+        }
+        function isFontStack(v) {
+          return typeof v === 'string' && v.length > 0 && v.length <= 200 && /^[a-zA-Z0-9 ,'-]+$/.test(v)
+        }
+        var SHADOW_FUNCTION_RE = /\b(?:rgba|rgb|hsla|hsl)\([\d.\s,%]*\)/gi
+        function isShadow(v) {
+          if (typeof v !== 'string' || v.length === 0 || v.length > 300) return false
+          var withoutFunctions = v.replace(SHADOW_FUNCTION_RE, '')
+          return !/[(){}]/.test(withoutFunctions) && /^[\d.,#a-zA-Z%\s-]*$/.test(withoutFunctions)
+        }
+        function isValidOverrideValue(key, value) {
+          if (hasOwn(COLOR_TOKEN_KEYS, key)) return typeof value === 'string' && HEX_COLOR_RE.test(value)
+          if (hasOwn(DIMENSION_TOKEN_KEYS, key)) return isDimensionList(value)
+          if (key === 'grain') return isUnitInterval(value)
+          if (key === 'vignette') return isPercent(value)
+          if (hasOwn(FONT_TOKEN_KEYS, key)) return isFontStack(value)
+          if (key === 'shadow') return isShadow(value)
+          return typeof value === 'string' && value.length <= 200
+        }
+
         // Mirrors isThemeState in src/lib/storage.ts, closely enough to
         // reject the same malformed shapes it does.
         function isValidThemeState(t) {
@@ -279,7 +331,7 @@
             var patch = t.overrides[presetId]
             if (!patch || typeof patch !== 'object') return false
             for (var token in patch) {
-              if (typeof patch[token] !== 'string') return false
+              if (!isValidOverrideValue(token, patch[token])) return false
             }
           }
           return t.mode === 'light' || t.mode === 'dark' || t.mode === 'system'

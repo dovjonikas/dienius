@@ -408,6 +408,105 @@ fixed. No horizontal overflow on `document.body` at 375px, confirmed through `ge
 on the offer cards and their buttons, which meet the app's 44px minimum through the same base `button`
 rule every other button in the app already gets.
 
+**Timeline gap overlap, fixed.** An ADHD-user review found that a gap shorter than about 38 minutes
+drew its own 44px touch-target floor straight over the anchor card that followed it - the app's own
+"text stays highly readable" promise broken literally, two labels drawn on top of each other, on a
+shape of day (a short buffer between two blocks) that real shift schedules are full of. The cause was
+a layout that positioned every anchor and gap purely proportionally to real clock time and applied the
+44px floor only afterward, as a CSS `min-height` on the box - the floor could grow a box past its own
+proportional bottom edge, but nothing told the *next* element to move out of the way.
+
+`computeVerticalLayout` in `timelineLayout.ts` replaces that with a piecewise-linear map: clock time is
+split into the segments the grid actually draws - an anchor cluster (touching or overlapping anchors,
+whichever needs the taller floor), the real gap between one cluster and the next, and the one-hour
+buffer on each end - and every segment is guaranteed at least its own pixel floor before segments are
+stacked in order. A segment that already earns more than its floor from real time is left alone; one
+that does not is stretched to the floor, and the stretch pushes every later segment down by exactly the
+same amount, so nothing after a floored gap can ever be drawn underneath it. `TimelineGrid.tsx` now
+positions every hour mark, half-hour rule, anchor, gap and the current-time line from this one function
+instead of the old percent-of-window conversion, so everything on the grid still reads as one coordinate
+system. A day with any unsized anchor - which already suppresses every gap object for the whole day, its
+real end being unknown - reserves no floor for a gap that will never render a button, so that scenario's
+spacing is unchanged from before this fix.
+
+A second, smaller overlap turned up while verifying the first fix by measurement rather than by eye: the
+gap button's own `margin: 2px 8px 2px 0` shifted its rendered box two pixels past what the layout math
+promised - a vertical margin on an absolutely positioned element with an explicit `top` and `height`
+moves the margin-top edge without shrinking the box to compensate, silently eating two pixels into
+whatever came next. Fixed by dropping the vertical margin (`margin: 0 8px 0 0`), keeping only the
+horizontal breathing room against the scroll container's own edge.
+
+Verified by measurement, not by eye: rebuilt the exact case the review reported (two real 30-minute
+blocks, a short buffer between them) with 15, 25 and 35-minute gaps and read `getBoundingClientRect()`
+off the live DOM for the gap and the anchor immediately after it, in Slate, Terminal, Legal pad and Ink
+and wash, at both a desktop width and 375px. Every gap measured exactly 44px tall; the following
+anchor's own top matched the gap's bottom in every case, to the pixel - flush, never overlapping. No
+theme in `styles.css` scopes a rule to `.timeline-gap` or `.timeline-anchor`, so the geometry does not
+vary by preset by construction; the four themes checked live are a spot check on that fact, not a
+search for an exception. The gap stayed a real, focusable button throughout - confirmed it still opens
+its picker on click at 375px, `aria-expanded` flips to `"true"`, and `document.body` never exceeded the
+viewport width.
+
+**Unvalidated colors closed off as a beacon vector.** A security audit found that `Template.color`,
+`IfThenEntry.color`, and every value inside a `ThemeOverrides` patch were validated only as
+`typeof x === 'string'`, then landed unsanitized as literal CSS values - a crafted backup with a color
+of `url("https://attacker.example/x")` fired a real network request on import, confirmed live, leaking
+the viewer's IP, user agent and timing. No code execution and no CSS-breakout were possible - a
+semicolon-based attempt was tried live and rejected outright by both `CSSStyleDeclaration.setProperty`
+and React's own style object - so this was a tracking beacon, not a takeover, but a real and reachable
+one through the single most-trusted input path the app has.
+
+Fixed at the validation layer in `storage.ts` rather than at each render site, so a bad value never
+reaches storage in the first place. `Template.color` and `IfThenEntry.color` must now match
+`/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/` - every hex length CSS itself
+recognizes, matching every value `PALETTE_COLORS` in `colors.ts` or a native `<input type="color">`
+can ever actually produce. `ThemeOverrides` needed more care: it is a sparse patch across all 21
+`ThemeTokens` keys, and 9 of them are not colors at all - `ruleSize`/`radius`/`edge` are CSS length
+shorthands (`edge` alone can be the hand-drawn preset's own multi-value `"225px 14px 255px 15px / 15px
+255px 14px 225px"`), `grain` a plain 0-1 number, `vignette` a percentage, `fontDisplay`/`fontBody`/
+`fontMono` font stacks, and `shadow` a real `box-shadow` value with `rgba()` calls in it - a blanket
+hex-only check would have rejected every one of those as a false positive. Each of the 21 keys now has
+its own grammar (a hex color; a space/slash-separated list of plain lengths; a 0-1 decimal; a
+percentage; a letters-digits-spaces-hyphens-apostrophes-commas font stack with no parenthesis anywhere,
+so no function call - including `url()` - can ever be written; or, for `shadow`, every `rgba`/`rgb`/
+`hsla`/`hsl` call stripped out first, with whatever text is left required to contain no parenthesis at
+all), so a `url()` value is unrepresentable in any of the 21 rather than merely blocked in the color
+ones. A key naming none of the 21 - a stale token, a typo - is checked only as a bounded string, since
+`applyOverrides` in `theme.ts` already ignores anything outside this list and it never reaches a style
+attribute or a custom property regardless of what it holds.
+
+A backup that fails the check is rejected whole, exactly the same treatment an out-of-range
+`Task.minutes` or an unknown `DayType` already gets - this file has never partially accepted a payload
+by silently dropping the one field that failed, and a color earns no special case. Because
+`loadData()`/`importJson()` only ever replace state after `validate()` succeeds, a rejected import
+changes nothing; the app's own promise that a bad import never destroys existing data holds exactly as
+it did before this fix, now for this case too.
+
+The one place this needed a second, independent fix: `index.html`'s pre-paint script duplicates
+`storage.ts`'s own theme validation on purpose, to paint the persisted theme before React mounts - see
+`docs/DECISIONS.md`. It had the exact same `typeof === 'string'` gap, and because it reads raw
+`localStorage` directly rather than going through `storage.ts`, fixing `storage.ts` alone would not have
+closed it: anyone who had already imported a malicious backup before this patch would have kept getting
+the beacon fired on every single page load afterward, even though `loadData()` had started rejecting the
+same payload the moment React mounted - a flash-fix, not a real one. `index.html` now carries the same
+per-token grammar, `src/preTheme.test.ts` runs the real script text against both a bad-color and a
+legitimate-multi-value-edge case and asserts it agrees with the real pipeline in both, and a live check
+confirmed a crafted `url()` backup no longer paints on either side.
+
+Verified live end to end, not just by unit test: seeded real existing data, imported a crafted backup
+with `Template.color` set to a `url()` beacon through the actual file input Settings uses, and watched
+with a `PerformanceObserver` for any request naming the attacker's domain. None fired, "That file is not
+a valid Dienius backup." appeared, and the existing template was still exactly as it was. A second import
+of a legitimate backup carrying a hex accent override, the hand-drawn edge's multi-value shorthand, a
+real font stack, and an if-then tag color all succeeded with no false rejection, confirming the tightened
+validation does not reject anything the app itself would ever produce. Regression tests added in
+`src/lib/storage.test.ts` (a crafted color on a template and an if-then entry, every hex length accepted,
+non-hex rejected including a semicolon-breakout attempt, every legitimate non-color override token
+accepted, a `url()` value rejected on every override category) and `src/preTheme.test.ts` (the pre-paint
+script's own agreement with the real pipeline on a bad color, on `bg` specifically - the token the audit
+reproduced the beacon against live - on a bad non-color token, and on the legitimate multi-value edge
+case).
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time
@@ -478,7 +577,12 @@ never struck from this list; each one below says which.
 - ~~Theme applied in `useEffect`, so dark-mode users see a one-frame light flash.~~ Fixed. An inline
   script in `index.html` reads the persisted theme and sets `data-theme` on the root element before
   the app's own script tag runs, the fix `docs/THEMES.md` specs. Verified by hand against a hard
-  reload with dark mode persisted; a unit test cannot observe a pre-paint script by its nature.
+  reload with dark mode persisted, and `src/preTheme.test.ts` extracts that exact script by its `id`
+  attribute and runs it via `new Function()` against a growing set of scenarios - valid presets, corrupt
+  JSON, non-object JSON, invalid theme values, non-string and malformed override values, live
+  `matchMedia` for system mode - asserting its output agrees with the real `loadData()`/`resolveTheme()`/
+  `applyResolvedTheme()` pipeline every time. A unit test observing a pre-paint script's own text was the
+  gap once; it no longer is.
 - ~~No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.~~
   Fixed - direct tests added in `store.test.ts` for all five, including `importData`'s throw path
   and `subscribe`'s unsubscribe function.
@@ -503,6 +607,44 @@ never struck from this list; each one below says which.
   the screen) still stops the gesture instead of leaving it stuck on; none of these drags trigger the
   page's own scroll or a pull-to-refresh gesture while in progress; and a long-press on a task row
   opens its menu without also scrolling the page or toggling the checkbox underneath it.
+- ~~Four exported symbols nothing outside their own file imports: `SYSTEM_CONDENSED` in `themes.ts`,
+  `TEMPLATE_COLORS` in `TemplatesView.tsx`, `gapsInWindow` in `capacity.ts`, `pushCountLabel` in
+  `TaskRow.tsx`.~~ Decided per symbol rather than dropping `export` from all four reflexively. Three
+  were genuinely dead - `SYSTEM_CONDENSED` names Newsprint's own compiled `fontDisplay`, which the
+  override panel never exposes (only `fontBody` is overridable there); `TEMPLATE_COLORS` is a
+  values-only derivative of `PALETTE_COLORS` that the if-then board, the other feature drawing from the
+  same palette, imports directly instead; `pushCountLabel` has exactly one caller, `boundNote` in the
+  same file. `export` came off all three. The fourth, `gapsInWindow`, was a real gap rather than a false
+  positive: its own comment already claimed the grid's `computeInteriorGaps` shared it, which was not
+  true - that function reimplemented the same walk by hand. `computeInteriorGaps` now calls
+  `gapsInWindow` directly and filters out whichever of its edge gaps (before the first anchor, after the
+  last) do not belong on a grid that only ever draws the interior ones, so the comment's claim is true
+  and the export is no longer unused. Every existing gap test - touching anchors, overlapping anchors,
+  a single anchor, an unsized one suppressing gaps entirely - still passes unchanged, confirming the
+  refactor is behavior-preserving.
+- ~~Six culture nits from the security audit's Part 2.~~ Worked through individually rather than as a
+  block. A stale doc comment claiming code sharing that did not exist is the `gapsInWindow` item just
+  above - fixed there, not twice. `src/widgets/day-plan/draft.ts`'s one `catch { // ignore }` now
+  explains itself the same way its own file's other two catches already do. The one real `act()`
+  warning in `YearStrip.test.tsx` was tracked to its actual cause rather than guessed at: a raw
+  `.focus()` call in the "arrow keys do not cross into a year that is not rendered" test fires the
+  cell's own `onFocus` handler outside any `userEvent`-managed `act()` boundary, and every other test in
+  the file gets away with the same pattern only because the arrow press right after it triggers a real,
+  properly-wrapped state update that happens to flush the pending one along with it - here the press is
+  refused (there is no next year rendered) and never does. Wrapped the one `.focus()` call that needed
+  it; confirmed with a `console.error` spy that the warning is gone and confirmed by removing the wrap
+  again that it reliably comes back, rather than trusting an absence of output alone. `.github/workflows/
+  deploy.yml` now triggers on `pull_request` as well as `push`, with the `deploy` job itself gated to
+  `github.event_name == 'push'` so a PR - from a fork, in particular - can never push to GitHub Pages,
+  and the concurrency group scoped per branch/PR ref rather than one shared `pages` group so a PR run
+  cannot race the deploy pipeline. `README.md`'s hardcoded test count is gone - the sentence around it
+  already said what the suite covers without a number, and `npm test` reports the true count on demand
+  instead of a figure that goes stale with the next feature commit.
+
+  Left alone, on purpose: the audit's own Finding 2 additionally names a handful of `Props` interfaces
+  and similar type-only exports (`TaskRowProps`, `GapPickerProps`, `WidgetDef`, and others) as unused
+  outside their own file, and says plainly it would not spend a PR on them - types are erased at build
+  time, so an unused `export` on one costs nothing to leave. Agreed; none of those were touched.
 
 ## Tier 4 - the portfolio layer
 

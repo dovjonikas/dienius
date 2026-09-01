@@ -96,8 +96,13 @@ export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-
 // item 8). Genuinely condensed on Windows and most Chrome OS/Android
 // builds, where 'Arial Narrow' and 'Roboto Condensed' both actually exist;
 // everywhere else it falls through to the same professional system sans
-// every other preset uses, never to a narrower novelty face.
-export const SYSTEM_CONDENSED = "'Arial Narrow', 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif"
+// every other preset uses, never to a narrower novelty face. Not exported
+// like its four siblings above: those feed the override panel's Type
+// control (theme-override-options.ts), but that control only ever touches
+// `fontBody`, never `fontDisplay` - a condensed headline face is Newsprint's
+// own compiled choice, not one of the four options a person can pick from
+// there, so this has no legitimate use outside this file today.
+const SYSTEM_CONDENSED = "'Arial Narrow', 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif"
 
 // The hand-drawn edge from docs/THEMES.md section 5, used as-is. Because
 // this is the literal value of --edge, every element already styled with

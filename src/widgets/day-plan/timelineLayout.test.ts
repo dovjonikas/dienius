@@ -2,12 +2,12 @@ import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
 import {
   computeTimelineLayout,
+  computeVerticalLayout,
   currentMinutes,
   formatAnchorTimeRange,
   formatClock,
   halfHourMarks,
   hourMarks,
-  windowPercent,
 } from './timelineLayout'
 
 function anchor(id: string, time: string, minutes?: number): Task {
@@ -168,19 +168,6 @@ test('anchors are laid out in time order regardless of input order', () => {
   expect(layout.anchors.map(a => a.id)).toEqual(['Shift', 'Gym'])
 })
 
-// --- windowPercent -----------------------------------------------------
-
-test('windowPercent places the window start at 0 and the window end at 100', () => {
-  const window = { start: 8 * 60, end: 12 * 60 }
-  expect(windowPercent(window, 8 * 60)).toBe(0)
-  expect(windowPercent(window, 12 * 60)).toBe(100)
-})
-
-test('windowPercent places the midpoint at 50', () => {
-  const window = { start: 8 * 60, end: 12 * 60 }
-  expect(windowPercent(window, 10 * 60)).toBe(50)
-})
-
 // --- hourMarks -----------------------------------------------------------
 
 test('hourMarks lists every whole hour within the window', () => {
@@ -243,4 +230,135 @@ test('currentMinutes reads hours and minutes off the clock, ignoring seconds and
 
 test('currentMinutes at midnight is 0', () => {
   expect(currentMinutes(new Date(2026, 0, 15, 0, 0))).toBe(0)
+})
+
+// --- computeVerticalLayout -----------------------------------------------
+//
+// This is the fix for the audit finding: GAP_MIN_HEIGHT_PX (44px, a touch
+// target floor) used to be applied only as a CSS min-height on a box whose
+// top/height were still computed from raw proportional time. On a real
+// shift schedule a gap under about 38 minutes earns fewer than 44 raw
+// pixels, so the floor drew the gap's box straight over the next anchor's
+// card - two labels on top of each other. computeVerticalLayout replaces
+// pure time-proportional positioning with a piecewise-linear map: every
+// anchor cluster and every real gap gets at least its own floor in pixels,
+// and everything downstream of a stretched segment is displaced by exactly
+// the same amount, so nothing after it can ever be drawn underneath it.
+
+const OPTS = { pxPerMinute: 1.15, sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44 }
+
+test('a gap far above the floor is not inflated: positions match plain proportional math', () => {
+  const layout = computeTimelineLayout([anchor('Shift', '09:00', 240), anchor('Gym', '14:30', 60)])
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, OPTS)
+  const gap = layout.gaps[0]
+  const expectedTop = (gap.startMinutes - layout.window!.start) * OPTS.pxPerMinute
+  const expectedBottom = (gap.endMinutes - layout.window!.start) * OPTS.pxPerMinute
+  expect(vertical.topPx(gap.startMinutes)).toBeCloseTo(expectedTop, 5)
+  expect(vertical.topPx(gap.endMinutes)).toBeCloseTo(expectedBottom, 5)
+  const totalMinutes = layout.window!.end - layout.window!.start
+  expect(vertical.totalHeightPx).toBeCloseTo(totalMinutes * OPTS.pxPerMinute, 5)
+})
+
+test.each([15, 25, 35])(
+  'a %i-minute gap gets its full 44px floor and the following anchor never overlaps it',
+  gapMinutes => {
+    // Reproduces the audit's own case: two real 30-minute blocks with a
+    // short buffer between them, the common shape of a real shift change.
+    const layout = computeTimelineLayout([
+      anchor('Commute home', '06:30', 30),
+      anchor('Wind down and sleep', formatClock(7 * 60 + gapMinutes), 30),
+    ])
+    const vertical = computeVerticalLayout(layout.window!, layout.anchors, OPTS)
+    expect(layout.gaps).toHaveLength(1)
+    const gap = layout.gaps[0]
+    const gapTop = vertical.topPx(gap.startMinutes)
+    const gapBottom = vertical.topPx(gap.endMinutes)
+    expect(gapBottom - gapTop).toBeGreaterThanOrEqual(44)
+
+    const nextAnchor = layout.anchors.find(a => a.id === 'Wind down and sleep')!
+    const nextAnchorTop = vertical.topPx(nextAnchor.startMinutes)
+    // The next anchor starts exactly where the gap's own floored box ends -
+    // never earlier, which is what "overlap" would mean here.
+    expect(nextAnchorTop).toBe(gapBottom)
+  },
+)
+
+test('a gap right at the 38-minute threshold barely needs the floor, and clearing it does not', () => {
+  // 38 minutes raw is just under 44px at 1.15 px/min (43.7px); 39 minutes clears it.
+  const short = computeTimelineLayout([anchor('A', '09:00', 30), anchor('B', '10:08', 30)]) // 38-min gap
+  const long = computeTimelineLayout([anchor('A', '09:00', 30), anchor('B', '10:09', 30)]) // 39-min gap
+  const shortVertical = computeVerticalLayout(short.window!, short.anchors, OPTS)
+  const longVertical = computeVerticalLayout(long.window!, long.anchors, OPTS)
+  const shortGap = short.gaps[0]
+  const longGap = long.gaps[0]
+  expect(shortVertical.topPx(shortGap.endMinutes) - shortVertical.topPx(shortGap.startMinutes)).toBeCloseTo(44, 5)
+  expect(longVertical.topPx(longGap.endMinutes) - longVertical.topPx(longGap.startMinutes)).toBeGreaterThan(44)
+})
+
+test('an anchor shorter than its own floor still leaves room for whatever follows it', () => {
+  // A 5-minute anchor sandwiched between two others - its own drawn card is
+  // floored to 32px even though 5 real minutes only earns 5.75px, so the
+  // gap right after it must start no earlier than that floored bottom.
+  const layout = computeTimelineLayout([
+    anchor('Shift', '09:00', 60),
+    anchor('Quick call', '10:05', 5),
+    anchor('Gym', '11:00', 60),
+  ])
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, OPTS)
+  const quickCall = layout.anchors.find(a => a.id === 'Quick call')!
+  const callTop = vertical.topPx(quickCall.startMinutes)
+  const callBottom = vertical.topPx(quickCall.endMinutes!)
+  expect(callBottom - callTop).toBeGreaterThanOrEqual(32)
+
+  const gapAfterCall = layout.gaps.find(g => g.startMinutes === quickCall.endMinutes)!
+  const gapAfterTop = vertical.topPx(gapAfterCall.startMinutes)
+  expect(gapAfterTop).toBe(callBottom)
+})
+
+test('topPx is monotonically non-decreasing across a whole realistic day', () => {
+  const layout = computeTimelineLayout([
+    anchor('Commute home', '06:30', 30),
+    anchor('Wind down and sleep', '06:55', 30), // 10-min gap before, deliberately short
+    anchor('Errand', '09:00', 15),
+    anchor('Shift', '13:00', 480),
+  ])
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, OPTS)
+  const sampleMinutes: number[] = [layout.window!.start]
+  for (const a of layout.anchors) {
+    sampleMinutes.push(a.startMinutes)
+    if (a.endMinutes !== undefined) sampleMinutes.push(a.endMinutes)
+  }
+  sampleMinutes.push(layout.window!.end)
+  let previous = -Infinity
+  for (const m of sampleMinutes.sort((a, b) => a - b)) {
+    const top = vertical.topPx(m)
+    expect(top).toBeGreaterThanOrEqual(previous)
+    previous = top
+  }
+  expect(vertical.totalHeightPx).toBeGreaterThan(0)
+})
+
+test('a day with no anchors maps proportionally with no clusters to floor', () => {
+  const window = { start: 8 * 60, end: 12 * 60 }
+  const vertical = computeVerticalLayout(window, [], OPTS)
+  expect(vertical.topPx(window.start)).toBe(0)
+  expect(vertical.topPx(window.end)).toBeCloseTo((window.end - window.start) * OPTS.pxPerMinute, 5)
+})
+
+test('when any anchor is unsized, interior spacing is not artificially inflated for a gap that will never render', () => {
+  // computeTimelineLayout suppresses every TimelineGap object for the whole
+  // day once one anchor is unsized (its real end is unknown, so no gap
+  // around it can be trusted) - the vertical layout should not reserve a
+  // 44px floor for a gap that the grid will never draw a button for.
+  const layout = computeTimelineLayout([anchor('Shift', '09:00', 60), anchor('Mystery', '10:05')])
+  expect(layout.gaps).toEqual([])
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, { ...OPTS, gapFloorPx: 0 })
+  const shift = layout.anchors.find(a => a.id === 'Shift')!
+  const mystery = layout.anchors.find(a => a.id === 'Mystery')!
+  const shiftBottom = vertical.topPx(shift.endMinutes!)
+  const mysteryTop = vertical.topPx(mystery.startMinutes)
+  // Real gap here is only 5 minutes (5.75px) - with no gap floor reserved,
+  // the two stay close together rather than being pushed 44px apart for a
+  // button that does not exist.
+  expect(mysteryTop - shiftBottom).toBeLessThan(44)
 })

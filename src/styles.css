@@ -772,11 +772,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 /* The stacking context both the decorative grid and the real gap buttons
-   share, so one coordinate system - percent of the window, from
-   windowPercent - positions everything in both layers with no second
-   layout pass. See TimelineGrid.tsx's own comment for why gaps had to move
-   into a separate, non-hidden sibling rather than staying nested inside
-   the aria-hidden layer below. */
+   share, so one coordinate system - pixel offsets from computeVerticalLayout
+   in timelineLayout.ts, which floors a short cluster or gap to its own
+   touch-target minimum and pushes everything after it down to match -
+   positions everything in both layers with no second layout pass. See
+   TimelineGrid.tsx's own comment for why gaps had to move into a separate,
+   non-hidden sibling rather than staying nested inside the aria-hidden
+   layer below. */
 .timeline-grid-layers {
   position: relative;
 }
@@ -853,7 +855,16 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 2px 8px 2px 0;
+  /* Right margin only, for a little breathing room against the scroll
+     container's own edge - no top or bottom margin. computeVerticalLayout
+     in timelineLayout.ts promises the button's own border box occupies
+     exactly [top, top + height); a vertical margin on an absolutely
+     positioned element with an explicit top and height shifts only the
+     margin-top side of that box downward with nothing shrinking its
+     height to compensate, which used to eat a couple of pixels into
+     whatever the layout placed directly below - the same overlap this
+     component exists to prevent, just smaller. */
+  margin: 0 8px 0 0;
   border: none;
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--border) 20%, transparent);
