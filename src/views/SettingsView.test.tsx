@@ -212,3 +212,61 @@ test('a real forced localStorage failure shows the saving-failed warning, and it
     setItemSpy.mockRestore()
   }
 })
+
+// --- sleep window ------------------------------------------------------
+
+test('the sleep window fields show the default bedtime and wake times on a fresh install', () => {
+  render(<SettingsView />)
+  expect(screen.getByLabelText('Bedtime')).toHaveValue('23:00')
+  expect(screen.getByLabelText('Wake time')).toHaveValue('07:00')
+  expect(screen.getByLabelText('Bedtime on a night-shift day')).toHaveValue('00:00')
+  expect(screen.getByLabelText('Wake time on a night-shift day')).toHaveValue('13:00')
+})
+
+test('changing the bedtime field commits it to settings and leaves wake time untouched', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const bedtime = screen.getByLabelText('Bedtime')
+  await user.clear(bedtime)
+  await user.type(bedtime, '2230{Enter}')
+  expect(getData().settings.sleepWindow).toEqual({ start: '22:30', end: '07:00' })
+})
+
+test('changing the wake time field commits it to settings and leaves bedtime untouched', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const wake = screen.getByLabelText('Wake time')
+  await user.clear(wake)
+  await user.type(wake, '0615{Enter}')
+  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '06:15' })
+})
+
+test('changing the night-shift fields writes to nightSleepWindow, not the ordinary sleepWindow', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const nightBedtime = screen.getByLabelText('Bedtime on a night-shift day')
+  await user.clear(nightBedtime)
+  await user.type(nightBedtime, '0900{Enter}')
+  expect(getData().settings.nightSleepWindow).toEqual({ start: '09:00', end: '13:00' })
+  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+})
+
+test('clearing a sleep field to blank does not write an incomplete window to settings', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const bedtime = screen.getByLabelText('Bedtime')
+  await user.clear(bedtime)
+  await user.tab()
+  // The store still holds a complete, valid pair - never one real time
+  // and one blank.
+  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+})
+
+test('the sleep window fields step by 15 minutes with the up and down arrows, same as any other time field', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const wake = screen.getByLabelText('Wake time')
+  wake.focus()
+  await user.keyboard('{ArrowUp}')
+  expect(getData().settings.sleepWindow.end).toBe('07:15')
+})
