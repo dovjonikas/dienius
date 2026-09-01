@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
-import { exportJson } from '../lib/storage'
+import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { findPreset } from '../lib/themes'
 import { ThemeGallery } from './ThemeGallery'
 import { ThemeModeControl } from './ThemeModeControl'
@@ -10,6 +10,7 @@ export function SettingsView() {
   const data = useAppData()
   const fileRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState('')
+  const [confirmReset, setConfirmReset] = useState(false)
 
   function handleExport() {
     const blob = new Blob([exportJson(data)], { type: 'application/json' })
@@ -39,6 +40,24 @@ export function SettingsView() {
     }
   }
 
+  // Same shape as the crash screen's own reset in ErrorBoundary.tsx - a
+  // second confirming tap, then the storage key is removed and the page
+  // reloads. Reusing that exact pattern rather than a soft in-memory clear
+  // is deliberate: AppData is one JSON blob under one key, so removing the
+  // key and reloading is what actually leaves nothing behind - templates,
+  // every day's tasks, if-then rules, and any theme choices all live
+  // inside it, and a reload means the app comes back through the same
+  // loadData() path a fresh install goes through, landing on defaultData()
+  // rather than some other code path that has to be kept in sync with it.
+  function handleResetClick() {
+    if (confirmReset) {
+      localStorage.removeItem(STORAGE_KEY)
+      window.location.reload()
+    } else {
+      setConfirmReset(true)
+    }
+  }
+
   return (
     <section className="settings">
       <h2>Settings</h2>
@@ -61,7 +80,11 @@ export function SettingsView() {
       <div className="settings-group">
         <h3>Data</h3>
         <div className="row">
-          <button onClick={handleExport}>Export backup</button>
+          {/* Primary styling here is the same accent ErrorBoundary's own crash
+              screen gives its export button - the way out stays the visually
+              louder control, one tap, with the destructive one below needing
+              two and never taking the accent color until it is armed. */}
+          <button className="primary" onClick={handleExport}>Export backup</button>
           <button onClick={() => fileRef.current?.click()}>Import backup</button>
         </div>
         <input
@@ -72,6 +95,19 @@ export function SettingsView() {
           onChange={e => handleImport(e.target.files?.[0])}
         />
         {importError && <p className="warning">{importError}</p>}
+        <p className="muted">
+          Erase everything on this device - every template, every day's tasks, if-then rules, and any
+          theme changes you have made. Export a backup first if you want to keep a copy.
+        </p>
+        <div className="row">
+          <button
+            className={confirmReset ? 'danger' : ''}
+            onClick={handleResetClick}
+            onBlur={() => setConfirmReset(false)}
+          >
+            {confirmReset ? 'Confirm reset?' : 'Erase all data'}
+          </button>
+        </div>
       </div>
     </section>
   )

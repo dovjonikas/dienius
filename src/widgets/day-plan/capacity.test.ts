@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
-import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
+import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput, parseTimeInput, stepTime } from './capacity'
 
 // 07:00-23:00, matching DEFAULT_WINDOW in capacity.ts.
 const WINDOW_START = 7 * 60
@@ -408,4 +408,68 @@ test('parseMinutesInput rejects a negative, fractional, or non-numeric value', (
 
 test('parseMinutesInput rejects zero, since a task cannot take no time at all', () => {
   expect(parseMinutesInput('0')).toBeUndefined()
+})
+
+// --- parseTimeInput ---------------------------------------------------------
+
+test('parseTimeInput reads a colon-separated time, padding a single-digit hour', () => {
+  expect(parseTimeInput('9:30')).toBe('09:30')
+  expect(parseTimeInput('14:00')).toBe('14:00')
+  expect(parseTimeInput('  09:30  ')).toBe('09:30')
+})
+
+test('parseTimeInput reads bare digits with no colon, minutes as the last two', () => {
+  expect(parseTimeInput('0930')).toBe('09:30')
+  expect(parseTimeInput('930')).toBe('09:30')
+  expect(parseTimeInput('2300')).toBe('23:00')
+})
+
+test('parseTimeInput reads one or two bare digits as an hour with no minutes', () => {
+  expect(parseTimeInput('9')).toBe('09:00')
+  expect(parseTimeInput('14')).toBe('14:00')
+})
+
+test('parseTimeInput treats an empty or whitespace-only string as clearing the time', () => {
+  expect(parseTimeInput('')).toBeUndefined()
+  expect(parseTimeInput('   ')).toBeUndefined()
+})
+
+test('parseTimeInput rejects text that is not a time at all', () => {
+  expect(parseTimeInput('banana')).toBeUndefined()
+})
+
+test('parseTimeInput rejects an out-of-range hour, colon or bare-digit form', () => {
+  expect(parseTimeInput('25:00')).toBeUndefined()
+  expect(parseTimeInput('2500')).toBeUndefined()
+  expect(parseTimeInput('99')).toBeUndefined()
+})
+
+test('parseTimeInput rejects an out-of-range minute', () => {
+  expect(parseTimeInput('09:75')).toBeUndefined()
+  expect(parseTimeInput('0975')).toBeUndefined()
+})
+
+// --- stepTime ---------------------------------------------------------------
+
+test('stepTime moves forward and back by the given number of minutes', () => {
+  expect(stepTime('09:00', 15)).toBe('09:15')
+  expect(stepTime('09:15', -15)).toBe('09:00')
+})
+
+test('stepTime crosses an hour boundary in both directions', () => {
+  expect(stepTime('09:50', 15)).toBe('10:05')
+  expect(stepTime('10:05', -15)).toBe('09:50')
+})
+
+test('stepTime crosses midnight forward, wrapping back to the start of the day', () => {
+  expect(stepTime('23:50', 15)).toBe('00:05')
+})
+
+test('stepTime crosses midnight backward, wrapping to the end of the day', () => {
+  expect(stepTime('00:05', -15)).toBe('23:50')
+})
+
+test('stepTime supports a larger step, such as the hour jump held with a modifier key', () => {
+  expect(stepTime('09:00', 60)).toBe('10:00')
+  expect(stepTime('00:30', -60)).toBe('23:30')
 })

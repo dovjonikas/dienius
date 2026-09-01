@@ -3,6 +3,7 @@ import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import type { DayType, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
+import { TimeStepInput } from './TimeStepInput'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these.
@@ -143,7 +144,9 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
           <li key={i}>
             <span className="task-time">{b.time || '--:--'}</span>
             <span className="block-title">{b.title}</span>
-            {b.minutes && <span className="task-size">{formatDuration(Number(b.minutes))}</span>}
+            {parseMinutesInput(b.minutes) !== undefined && (
+              <span className="task-size">{formatDuration(parseMinutesInput(b.minutes)!)}</span>
+            )}
             {draft.type !== 'full' && (
               <button
                 type="button"
@@ -162,12 +165,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
         ))}
       </ul>
       <div className="block-add">
-        <input
-          className="time-input"
-          placeholder="09:00"
-          value={blockTime}
-          onChange={e => setBlockTime(e.target.value)}
-        />
+        <TimeStepInput value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
         <input
           placeholder="What happens"
           value={blockTitle}

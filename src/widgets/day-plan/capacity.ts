@@ -1,4 +1,5 @@
 import type { DayType, Task } from '../../lib/types'
+import { TIME_RE } from './parse'
 
 /**
  * A task with `time` is an anchor - it genuinely occupies that stretch of
@@ -404,4 +405,61 @@ export function parseMinutesInput(text: string): number | undefined {
   if (!/^\d+$/.test(trimmed)) return undefined
   const value = Number(trimmed)
   return value > 0 ? value : undefined
+}
+
+/**
+ * Parses free-typed text from a time field into a canonical "HH:MM", or
+ * undefined when the text does not describe a real clock time - including
+ * an empty field, which is read as "leave this a float" rather than an
+ * error, the same way an empty size field reads as "clear the size" in
+ * `parseMinutesInput` above.
+ *
+ * Accepts what a person is actually likely to type in a hurry:
+ * - a colon-separated time, one or two digit hour ("9:30", "09:30"),
+ *   reusing the exact hour/minute definition `parseQuickAdd` already
+ *   matches at the start of a quick-add line (`TIME_RE` in parse.ts), so
+ *   "a valid hour" and "a valid minute" are defined in one place, not two;
+ * - three or four bare digits with no colon ("930", "0930"), the last two
+ *   read as minutes and whatever is left as the hour;
+ * - one or two bare digits with no colon ("9", "14"), read as an hour on
+ *   its own with no minute component.
+ *
+ * Anything else - "banana", "25:00", "2500", a minute or hour out of range
+ * - returns undefined rather than being coerced into a guess. There is no
+ * error message for a rejected value: the caller's job is to revert
+ * quietly to whatever was last valid, not to nag someone mid-keystroke.
+ */
+export function parseTimeInput(text: string): string | undefined {
+  const trimmed = text.trim()
+  if (trimmed === '') return undefined
+
+  const colonMatch = TIME_RE.exec(trimmed)
+  if (colonMatch) return `${colonMatch[1].padStart(2, '0')}:${colonMatch[2]}`
+
+  if (!/^\d{1,4}$/.test(trimmed)) return undefined
+  if (trimmed.length <= 2) {
+    const hour = Number(trimmed)
+    return hour <= 23 ? `${trimmed.padStart(2, '0')}:00` : undefined
+  }
+  const hourPart = trimmed.slice(0, -2)
+  const minutePart = trimmed.slice(-2)
+  const hour = Number(hourPart)
+  const minute = Number(minutePart)
+  return hour <= 23 && minute <= 59 ? `${hourPart.padStart(2, '0')}:${minutePart}` : undefined
+}
+
+/**
+ * Moves a canonical "HH:MM" time forward or backward by `deltaMinutes`,
+ * wrapping around midnight in either direction rather than clamping at the
+ * edges of the day - a clock keeps turning, it does not stop at 23:59 or
+ * refuse to go earlier than 00:00. Used by the block-add time field's
+ * arrow-key and step-button handling; kept pure and separate from that
+ * component so the wraparound arithmetic is unit tested with no DOM
+ * involved.
+ */
+export function stepTime(time: string, deltaMinutes: number): string {
+  const wrapped = ((timeToMinutes(time) + deltaMinutes) % DAY_MINUTES + DAY_MINUTES) % DAY_MINUTES
+  const hour = Math.floor(wrapped / 60)
+  const minute = wrapped % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }

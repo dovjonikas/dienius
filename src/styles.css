@@ -1459,7 +1459,6 @@ button.primary {
 
 .block-add { display: flex; gap: 8px; flex-wrap: wrap; }
 .block-add input { flex: 1 1 120px; }
-.block-add .time-input { flex: 0 0 82px; }
 .block-add .minutes-input { flex: 0 0 64px; }
 .block-add button {
   background: var(--bg);
@@ -1469,6 +1468,43 @@ button.primary {
   padding: 0 12px;
   white-space: nowrap;
 }
+
+/* TimeStepInput: a text field plus two small step buttons, treated as one
+   unit within the .block-add row. The row already wraps at 375px
+   (flex-wrap above), so this is free to take the width it needs rather
+   than fight the title and size fields for it - it wraps onto its own line
+   on a narrow phone rather than any field shrinking to the point of being
+   unusable. align-items: stretch (the flex default, stated here for
+   clarity) is what keeps the step buttons the same height as the text
+   field beside them, the same stretching that already matches "Add block"
+   to the fields next to it. */
+.time-stepper {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.block-add .time-stepper .time-input { flex: none; width: 68px; }
+
+.time-stepper-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* Side by side, not stacked above/below: a stacked pair would either
+   split the app's own 44px touch-target minimum across two half-height
+   buttons, or double the height of the row's other fields to keep each
+   one full size. Side by side costs width instead, which the row already
+   has a release valve for - flex-wrap above - so nothing has to give on
+   height or on touch-target size to make room for it. */
+.time-step {
+  min-width: 44px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.time-step:hover { color: var(--text); }
 
 /* Placed after the block-list and block-add button rules above so it
    wins the specificity tie in both places it appears. */
