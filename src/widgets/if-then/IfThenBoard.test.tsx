@@ -10,8 +10,12 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+// Both strings below are typed a character at a time, and each keystroke
+// re-renders a controlled input. userEvent's default inter-event delay on top
+// of that pushes this past the 5s timeout under full-suite load. Dropping the
+// delay removes waiting, not coverage.
 test('creates an if-then entry with a tag', async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   await user.type(

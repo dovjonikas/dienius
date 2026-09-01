@@ -10,8 +10,12 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+// The year view renders 365 cells, so every accessible-name query after the
+// switch walks all of them. userEvent's default inter-event delay on top of
+// that pushes this past the 5s timeout under full-suite load. Dropping the
+// delay removes waiting, not coverage.
 test('switching to the year view shows the year strip and hides the month grid', async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   render(<CalendarView onOpenDay={() => {}} />)
   expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
 
