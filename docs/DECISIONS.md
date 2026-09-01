@@ -273,3 +273,79 @@ describes an empty install, since a boolean does not un-set itself just because 
 tracking got deleted. Computing it fresh means Settings' reset needed no special case at all - it
 already writes `defaultData()` back to storage and reloads, and the very next read reports a first
 run, for free.
+
+## An installed copy tells you when it updates, and asks before it reloads
+
+An earlier version of the service worker registration reloaded the page the instant a new deploy
+took control mid-session, silently. That closed the actual failure mode a hand-rolled worker exists
+to avoid - nobody stuck on a stale build forever - but opened a smaller, real one: a reload with no
+warning can land while someone is mid-keystroke, and "silently" also meant nobody who installed this
+to their home screen would ever know a new version had shipped at all, or trust that it had, without
+opening dev tools.
+
+**What happens on deploy.** Nothing beyond the existing build step - see "A hand-rolled service
+worker" above for the cache-versioning mechanics, unchanged by this. `scripts/generate-sw.mjs` still
+hashes the built output and writes a fresh `CACHE_NAME` into `sw.js` on every build that actually
+changed something; `install` still precaches under that name and calls `skipWaiting()`; `activate`
+still purges every other cache and calls `clients.claim()`. A new worker always wins control the
+moment it activates - there is no "waiting" state a person has to trigger by closing every tab, and
+no version of this worker that pins a browser to a stale cache indefinitely.
+
+**What changed is only what the open tab does with that moment.** `clients.claim()` firing is not
+something the page can prevent or delay - by the time `src/pwa.ts` hears about it, the new worker
+already controls every future request. What the page controls is whether *it* jumps to match right
+then. It no longer does automatically. `registerServiceWorker` in `src/pwa.ts` listens for
+`controllerchange` and, instead of calling `location.reload()`, raises a flag through a small
+listener set (`onUpdateReady`/`notifyUpdateReady`) that has exactly one subscriber today:
+`UpdateNotice`, mounted once at the bottom of `App.tsx`. The flag is raised at most once per page
+life (the same reload-once guard the old code had, now guarding a notice instead of a reload) - and
+never at all on the very first controller a browser ever claims for this app, which is a fresh
+install taking charge for the first time, not an update to announce. `hadController`, captured at
+module load before registration even starts, is what tells the two apart: if a controller already
+existed when the page loaded, this browser has run the app before and any further `controllerchange`
+is real news; if not, the page just installed its very first worker and there is nothing stale to
+report.
+
+**What the user sees.** A quiet fixed banner at the bottom of the screen: "An update is ready." and
+one button, "Reload." No backdrop, no dismiss control beyond acting or not - ignoring it is a
+complete, valid outcome, and the notice does not return, repeat, or expire once it has appeared. It
+carries `role="status"` (an implicit polite, atomic live region), so a screen reader announces it
+without interrupting whatever it was already reading and without anything pulling focus toward it -
+a person reaches the Reload button on their own next Tab press, never because the app moved focus
+there for them. It never intercepts a tap on the day view underneath it: `.update-notice` is a plain
+fixed element with no scrim, and it deliberately shares no z-index range with the app's actual
+sheets (`.gap-picker`, `.task-actions-sheet`) - it sits below both, so if a sheet happens to be open
+when an update lands, the sheet's own backdrop simply covers the notice instead of the two competing
+for attention, and the notice is exactly where it was once the sheet closes.
+
+**What the user has to do.** Nothing, ever, if they choose not to. Reloading is the one action
+available, and because reloading is now something a person does rather than something that happens
+to them, it cannot land mid-edit by construction - there is no code path left that reloads the page
+without a click on that specific button. This is also why the notice does not try to detect "is the
+user typing" or "is a sheet open" the way an automatic-reload design would have needed to: making
+the reload opt-in removes the entire class of problem rather than attempting to track it. The
+existing quick-add draft preservation (`src/widgets/day-plan/draft.ts`, `sessionStorage`, read-and-
+clear on mount) still matters here and is unchanged: it protects an in-progress quick-add across any
+reload, voluntary or accidental, including a tap on this button.
+
+**Copy is English**, matching every other string in the app and the repo-wide rule in this file's
+own header - the owner's brief used "Atnaujinta" (Lithuanian for "updated") only as an example of
+tone, not as a language requirement, and the app has no other Lithuanian anywhere to be consistent
+with.
+
+**Why a notice with an action, not a silent auto-reload with an after-the-fact acknowledgement.**
+Both were weighed. An automatic reload that announces itself afterward ("Updated.") keeps the app
+always current with no tap required, which reads as less friction on paper. But it only avoids
+interrupting an edit if something first correctly detects that an edit is in progress everywhere one
+can happen - typing in quick-add, a template title mid-edit, a settings field, an open sheet - and
+this app has no single place that tracks "is anything unsaved right now" across all of those; adding
+one just to gate a reload would be new, fragile state built solely to protect against a problem this
+design does not otherwise have. A notice the user acts on needs none of that: the reload literally
+cannot happen without the one click that means the person is not in the middle of anything else at
+that instant. The cost is real - a person who never notices or never taps the banner keeps running
+whatever build was active when they arrived, for that whole session, and only picks up the new one
+on their next natural reload (closing and reopening the PWA, which every installed copy does
+eventually). That is judged an acceptable trade against interrupting someone's actual work, especially
+since the worker has already taken over in the background regardless - nothing is lost by staying on
+the old page a while longer, and nothing is silently stuck forever the way the pre-existing risk this
+whole feature was built to close would have allowed.

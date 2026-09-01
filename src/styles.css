@@ -2356,3 +2356,77 @@ button.danger {
 .year-strip-legend {
   margin-top: 10px;
 }
+
+/* The update notice - src/UpdateNotice.tsx. A quiet fixed banner, not a
+   sheet: it has no backdrop and never blocks a tap on anything beneath
+   it, which a modal's scrim would. Sits below the z-index any bottom
+   sheet in this file uses (100/101, see .gap-picker-scrim and
+   .task-actions-scrim) so if one happens to be open when an update lands,
+   the sheet's own backdrop simply covers the notice rather than the two
+   competing for attention - it reappears once the sheet closes. */
+.update-notice {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto;
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--edge) var(--edge) 0 0;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  padding: 12px max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+@media (min-width: 560px) {
+  .update-notice {
+    left: 16px;
+    right: auto;
+    bottom: 16px;
+    border-radius: var(--edge);
+  }
+}
+
+.update-notice p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.update-notice button {
+  flex-shrink: 0;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.update-notice button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .update-notice {
+    animation: update-notice-in 220ms ease;
+  }
+}
+
+@keyframes update-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

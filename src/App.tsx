@@ -4,6 +4,7 @@ import { useAppData } from './lib/store'
 import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme'
 import { syncThemeColorMeta } from './lib/theme-color'
 import { syncManifestTheme } from './lib/manifest-sync'
+import { UpdateNotice } from './UpdateNotice'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
@@ -76,6 +77,7 @@ export function App() {
         {view === 'templates' && <TemplatesView />}
         {view === 'settings' && <SettingsView />}
       </main>
+      <UpdateNotice />
     </div>
   )
 }
