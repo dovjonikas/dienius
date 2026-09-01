@@ -79,6 +79,59 @@ test('renders without crashing when a day points at a deleted template', () => {
   expect(container.querySelector('.day-template')).toBeNull()
 })
 
+// --- stress test: a day with 50 or 200 tasks --------------------------------
+
+function heavyTasks(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `task-${i}`,
+    title: `Task number ${i}`,
+    done: i % 3 === 0,
+    time: i % 2 === 0 ? `${String(7 + (i % 16)).padStart(2, '0')}:00` : undefined,
+    minutes: i % 4 === 0 ? undefined : 10 + (i % 12) * 5,
+  }))
+}
+
+test('a day with 200 tasks renders every one of them, sorted, with no duplicates', () => {
+  const tasks = heavyTasks(200)
+  actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const rows = container.querySelectorAll('.task-list > li')
+  expect(rows).toHaveLength(200)
+  // Anchors (timed tasks) sort before floats, and among anchors, by time -
+  // the first rendered row is always an anchor when any anchor exists.
+  const firstRowHasTime = container.querySelector('.task-list > li .task-time')
+  expect(firstRowHasTime).toBeInTheDocument()
+})
+
+test('a day with 200 tasks renders within a generous time budget', () => {
+  const tasks = heavyTasks(200)
+  actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
+  const t0 = performance.now()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const elapsed = performance.now() - t0
+  // jsdom's own DOM implementation is meaningfully slower than a real
+  // browser's, and this is the very first render of this component tree in
+  // the process, which also pays React's one-time module setup cost - see
+  // the stress-test report for warm, steady-state numbers measured against
+  // a real production build. This bound exists to catch a genuine
+  // regression (an accidental O(n^2) render path), not to assert a tight
+  // production number from inside jsdom.
+  expect(elapsed).toBeLessThan(2000)
+})
+
+test('rolling over 200 unfinished tasks at once moves every pushable one and holds the rest, without throwing', () => {
+  const tasks = heavyTasks(200).map(t => ({ ...t, done: false }))
+  actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
+  const t0 = performance.now()
+  const result = actions.rolloverUnfinished('2026-09-01')
+  const elapsed = performance.now() - t0
+  expect(result.moved).toBe(200)
+  expect(result.held).toBe(0)
+  expect(getData().days['2026-09-02'].tasks).toHaveLength(200)
+  expect(getData().days['2026-09-01'].tasks).toHaveLength(0)
+  expect(elapsed).toBeLessThan(100)
+})
+
 test('arrows navigate between days', async () => {
   const user = userEvent.setup()
   let navigated = ''

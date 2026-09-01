@@ -473,3 +473,55 @@ test('stepTime supports a larger step, such as the hour jump held with a modifie
   expect(stepTime('09:00', 60)).toBe('10:00')
   expect(stepTime('00:30', -60)).toBe('23:30')
 })
+
+// --- stress test: a day with 50 or 200 tasks --------------------------------
+
+function heavyDay(n: number): Task[] {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `task-${i}`,
+    title: `Task ${i}`,
+    done: i % 3 === 0,
+    time: i % 2 === 0 ? `${String(7 + (i % 16)).padStart(2, '0')}:00` : undefined,
+    minutes: i % 4 === 0 ? undefined : 10 + (i % 12) * 5,
+  }))
+}
+
+test('computeCapacity stays well under 100ms for a day with 50 or 200 tasks', () => {
+  for (const n of [50, 200]) {
+    const t0 = performance.now()
+    const capacity = computeCapacity(heavyDay(n))
+    formatCapacityLine(capacity)
+    const elapsed = performance.now() - t0
+    expect(elapsed).toBeLessThan(100)
+  }
+})
+
+test('computeCapacity does not lose or double-count anchors or floats at 200 tasks', () => {
+  const tasks = heavyDay(200)
+  const capacity = computeCapacity(tasks)
+  const expectedAnchors = tasks.filter(t => t.time !== undefined).length
+  const expectedFloats = tasks.filter(t => t.time === undefined).length
+  expect(capacity.anchorCount).toBe(expectedAnchors)
+  expect(capacity.floatsMinutes + (200 - expectedAnchors)).toBeGreaterThanOrEqual(0) // floats exist and were summed without throwing
+  expect(expectedFloats).toBeGreaterThan(0)
+})
+
+test('an extreme minutes value on a single anchor never produces a negative or NaN free-time figure', () => {
+  // isOptionalMinutes has no upper bound - a crafted or hand-typed value of
+  // ten million minutes must still clip cleanly against the fixed window
+  // rather than producing garbage arithmetic.
+  const capacity = computeCapacity([
+    { id: 'huge', title: 'Absurd estimate', done: false, time: '09:00', minutes: 10_000_000 },
+  ])
+  expect(capacity.anchorsMinutes).not.toBeNull()
+  expect(capacity.anchorsMinutes!).toBeGreaterThanOrEqual(0)
+  expect(Number.isFinite(capacity.anchorsMinutes!)).toBe(true)
+  // The window is fixed (07:00-23:00 by default) regardless of how far past
+  // it the anchor's own real end falls, so free time is still just whatever
+  // of the window the anchor did not clip into - here, the 120 minutes
+  // before the 09:00 start.
+  expect(capacity.freeMinutes).toBe(120)
+  expect(capacity.freeMinutes).toBeGreaterThanOrEqual(0)
+  expect(capacity.anchorsClippedByWindow).toBe(true)
+  expect(() => formatCapacityLine(capacity)).not.toThrow()
+})

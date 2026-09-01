@@ -362,3 +362,40 @@ test('when any anchor is unsized, interior spacing is not artificially inflated 
   // button that does not exist.
   expect(mysteryTop - shiftBottom).toBeLessThan(44)
 })
+
+// --- stress test: an anchor with an absurd minutes value --------------------
+
+test('an anchor with ten million minutes still draws a bounded window, never past one calendar day', () => {
+  const layout = computeTimelineLayout([anchor('Absurd', '09:00', 10_000_000)])
+  expect(layout.window).not.toBeNull()
+  // DAY_MINUTES caps the window's own end regardless of how far past it the
+  // anchor's real, unclipped end falls.
+  expect(layout.window!.end).toBeLessThanOrEqual(24 * 60)
+  expect(layout.anchors[0].clippedEnd).toBe(true)
+  expect(layout.anchors[0].endMinutes).toBeLessThanOrEqual(24 * 60)
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, {
+    pxPerMinute: 1.15, sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44,
+  })
+  expect(Number.isFinite(vertical.totalHeightPx)).toBe(true)
+  expect(vertical.totalHeightPx).toBeGreaterThan(0)
+  // A day-long window at 1.15px/minute is at most a few thousand pixels -
+  // nowhere near what an unclamped ten-million-minute anchor would produce
+  // if the window were not bounded.
+  expect(vertical.totalHeightPx).toBeLessThan(5000)
+})
+
+// --- stress test: 200 anchors in one day ------------------------------------
+
+test('computeTimelineLayout and computeVerticalLayout stay well under 100ms with 200 anchors', () => {
+  const tasks: Task[] = Array.from({ length: 200 }, (_, i) =>
+    anchor(`task-${i}`, `${String(i % 24).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`, 10 + (i % 12) * 5),
+  )
+  const t0 = performance.now()
+  const layout = computeTimelineLayout(tasks)
+  computeVerticalLayout(layout.window!, layout.anchors, {
+    pxPerMinute: 1.15, sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44,
+  })
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(100)
+  expect(layout.anchors).toHaveLength(200)
+})
