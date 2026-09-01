@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { formatDayTitle, monthGrid, todayKey, type MonthCell } from '../lib/dates'
+import { monthGrid, todayKey, type MonthCell } from '../lib/dates'
+import { cellLabel, resolveTemplate, taskState } from '../lib/calendarCell'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -22,34 +23,10 @@ function weeksOf(cells: MonthCell[]): MonthCell[][] {
   return weeks
 }
 
-// The visible cell only ever shows a bare day number, which is meaningless
-// out of context to a screen reader user jumping cell to cell - two "12"s
-// a month apart read identically. The accessible name carries the full
-// date instead, plus the template name where the visible chip already
-// shows one, since a 10px chip is not the only place that information
-// needs to reach. It also carries whether the day has tasks at all and
-// whether they are finished - see the `cell-has-tasks` note below for why
-// that cannot be left to the cell's color alone.
-function cellLabel(cell: MonthCell, templateName: string | undefined, taskState: TaskState): string {
-  const parts = [formatDayTitle(cell.key)]
-  if (templateName) parts.push(templateName)
-  if (taskState === 'unfinished') parts.push('has unfinished tasks')
-  if (taskState === 'done') parts.push('tasks completed')
-  return parts.join(', ')
-}
-
-type TaskState = 'none' | 'unfinished' | 'done'
-
-// A cell built only from templateId cannot tell a genuinely empty day apart
-// from one that holds real, unstamped tasks - a hand-planned day, a day a
-// task was pushed onto, or a day whose template was later deleted. This is
-// what closes that gap: it looks at the day's actual tasks, independent of
-// whether a template happens to be stamped on top of them.
-function taskState(day: { tasks: { done: boolean }[] } | undefined): TaskState {
-  const tasks = day?.tasks ?? []
-  if (tasks.length === 0) return 'none'
-  return tasks.every(t => t.done) ? 'done' : 'unfinished'
-}
+// cellLabel, taskState and resolveTemplate moved to lib/calendarCell.ts -
+// docs/LAYOUT-WIDE.md section 5, build step 5 - so MiniCalendar.tsx can
+// share the exact same rules instead of re-deriving them. No behaviour
+// change here; this file just imports them back.
 
 interface CalendarViewProps {
   onOpenDay: (date: string) => void
@@ -232,7 +209,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
               <div key={i} role="row" style={{ display: 'contents' }}>
                 {week.map(cell => {
                   const templateId = effectiveTemplateId(cell.key)
-                  const template = templateId ? data.templates.find(t => t.id === templateId) : undefined
+                  const template = resolveTemplate(templateId, data.templates)
                   const state = taskState(data.days[cell.key])
                   const classes = [
                     'cell',
