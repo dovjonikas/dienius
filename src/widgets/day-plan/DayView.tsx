@@ -17,6 +17,7 @@ import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskGapOffers } from './TaskGapOffers'
 import { resolveDrop, type DropTarget } from './dragDrop'
+import { useIsWide } from '../../lib/viewport'
 
 export interface DayViewProps {
   date: string
@@ -58,6 +59,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const capacity = computeCapacity(day?.tasks ?? [], day?.dayType)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
+  // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
+  // grid mounts unconditionally, bypassing the phone's own disclosure - see
+  // isTimelineVisible below. This is a live device fact (useIsWide), never
+  // written to settings, so it cannot itself change what timelineExpanded
+  // stores; resizing back below the breakpoint restores whatever the
+  // phone's own choice already was.
+  const isWide = useIsWide()
+  const isTimelineVisible = timelineExpanded || isWide
   const timelineGridId = useId()
   // Derived straight from the data itself, not a stored flag - see
   // docs/DECISIONS.md, "offer without installing." True only while there is
@@ -268,7 +277,12 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     // disclosure button itself flips - see docs/TIMELINE.md section 5 - so
     // it behaves exactly like opening it by hand: it stays open afterward,
     // on this day and every one after, until the owner closes it again.
-    if (!timelineExpanded) actions.setTimelineExpanded(true)
+    // Only when the grid is not already visible, though - at a wide
+    // viewport isTimelineVisible is already true regardless of the stored
+    // setting (see docs/LAYOUT-WIDE.md section 5), and writing true here
+    // anyway would silently clobber the phone's own choice the next time
+    // this same install is opened narrow.
+    if (!isTimelineVisible) actions.setTimelineExpanded(true)
   }
 
   function closeSelection() {
@@ -348,8 +362,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           cannot currently see, and there is nothing extra to skip past
           while it is closed. Only shown when there is actually something to
           show - a day with no anchors has no grid to draw either way, see
-          TimelineGrid.tsx. */}
-      {capacity.anchorCount > 0 && (
+          TimelineGrid.tsx. Not rendered at all at the wide breakpoint -
+          docs/LAYOUT-WIDE.md section 5: the grid has its own column there,
+          so there is no fold left to protect and nothing this toggle would
+          do. */}
+      {capacity.anchorCount > 0 && !isWide && (
         <button
           type="button"
           className="timeline-toggle"
@@ -361,7 +378,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </button>
       )}
 
-      {timelineExpanded && (
+      {isTimelineVisible && (
         <TimelineGrid
           id={timelineGridId}
           tasks={day?.tasks ?? []}
