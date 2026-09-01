@@ -58,7 +58,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       : `${score.done} of ${score.total} core tasks done`
     : undefined
 
-  const capacity = computeCapacity(day?.tasks ?? [], day?.dayType)
+  const sleep = { sleepWindow: data.settings.sleepWindow, nightSleepWindow: data.settings.nightSleepWindow }
+  const capacity = computeCapacity(day?.tasks ?? [], day?.dayType, sleep)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
   // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
@@ -475,6 +476,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             draggingTaskId={draggingTaskId}
             isToday={isToday}
             isWide={isWide}
+            dayType={day?.dayType}
+            sleep={sleep}
           />
         )}
 
@@ -589,6 +592,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           task={selectedTask}
           tasks={day?.tasks ?? []}
           dayType={day?.dayType}
+          sleep={sleep}
           onPlace={placeSelected}
           onClose={closeSelection}
         />

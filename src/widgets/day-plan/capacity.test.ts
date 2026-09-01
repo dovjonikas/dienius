@@ -1,6 +1,15 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
-import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput, parseTimeInput, stepTime } from './capacity'
+import {
+  computeCapacity,
+  formatCapacityLine,
+  formatDuration,
+  parseMinutesInput,
+  parseTimeInput,
+  stepTime,
+  wakingWindow,
+  windowFor,
+} from './capacity'
 
 // 07:00-23:00, matching DEFAULT_WINDOW in capacity.ts.
 const WINDOW_START = 7 * 60
@@ -524,4 +533,115 @@ test('an extreme minutes value on a single anchor never produces a negative or N
   expect(capacity.freeMinutes).toBeGreaterThanOrEqual(0)
   expect(capacity.anchorsClippedByWindow).toBe(true)
   expect(() => formatCapacityLine(capacity)).not.toThrow()
+})
+
+// --- wakingWindow: the sleep-window setting, inverted into waking hours ----
+
+test('the default sleep window inverts to exactly the historical 07:00-23:00 waking window', () => {
+  expect(wakingWindow({ start: '23:00', end: '07:00' })).toEqual({ start: 7 * 60, end: 23 * 60 })
+})
+
+test('the default night sleep window inverts to exactly the historical 13:00-24:00 waking window', () => {
+  expect(wakingWindow({ start: '00:00', end: '13:00' })).toEqual({ start: 13 * 60, end: 24 * 60 })
+})
+
+test('a sleep window that wraps past midnight is the normal case and is handled directly', () => {
+  // Asleep 23:30 to 07:30 - bedtime later in the clock than wake time, the
+  // shape every real sleep window in this app has by default.
+  expect(wakingWindow({ start: '23:30', end: '07:30' })).toEqual({ start: 7 * 60 + 30, end: 23 * 60 + 30 })
+})
+
+test('a late bedtime and an early wake time both read naturally as one contiguous waking window', () => {
+  // Bedtime 22:30, wake 06:15 - an owner who goes to bed slightly earlier
+  // than the default and wakes slightly earlier too.
+  expect(wakingWindow({ start: '22:30', end: '06:15' })).toEqual({ start: 6 * 60 + 15, end: 22 * 60 + 30 })
+})
+
+test('a same-day sleep window (bedtime earlier in the day than wake time) is honoured, not rejected', () => {
+  // 01:00 to 05:00 - a short core sleep entirely within one calendar day
+  // rather than crossing midnight. Walking forward from wake (05:00) to the
+  // next bedtime (01:00) is a 20-hour waking window, which would run past
+  // midnight to 25:00 - clamped to the end of today instead, the same
+  // one-calendar-day rule the explicit clamp test below covers directly.
+  expect(wakingWindow({ start: '01:00', end: '05:00' })).toEqual({ start: 5 * 60, end: 24 * 60 })
+})
+
+test('equal bedtime and wake time fall back to a full day awake rather than a full day asleep', () => {
+  // The two readings of "both times equal" are equally arguable from the
+  // numbers alone - this app picks the less alarming one deliberately, see
+  // wakingWindow's own doc comment.
+  expect(wakingWindow({ start: '09:00', end: '09:00' })).toEqual({ start: 0, end: 24 * 60 })
+})
+
+test('an absurdly long sleep window still produces a small but honest waking window, not a rejection', () => {
+  // Asleep 08:00 to 07:59 - all but one minute of the day.
+  const window = wakingWindow({ start: '08:00', end: '07:59' })
+  expect(window.end - window.start).toBe(1)
+  expect(window).toEqual({ start: 7 * 60 + 59, end: 8 * 60 })
+})
+
+test('an absurdly short sleep window still produces an honest waking window, clamped to one calendar day', () => {
+  // Asleep 03:00 to 03:01 - one minute of sleep. Walking forward from wake
+  // (03:01) for the resulting 1439-minute waking stretch would run past
+  // midnight to 26:00 the next day; clamped to 24:00 instead, the same
+  // one-day rule as the explicit clamp test below - this app has no way to
+  // also show the still-awake 00:00-03:00 stretch on the same calendar day.
+  const window = wakingWindow({ start: '03:00', end: '03:01' })
+  expect(window).toEqual({ start: 3 * 60 + 1, end: 24 * 60 })
+})
+
+test('a waking window is never drawn past the end of the calendar day, even when the math implies it should', () => {
+  // Bedtime 01:00, wake 23:00 - forward from 23:00 to 01:00 the next day is
+  // a 2-hour waking window that would nominally run to 25:00; this app only
+  // ever represents one calendar day, so it is clamped at midnight instead.
+  const window = wakingWindow({ start: '01:00', end: '23:00' })
+  expect(window.end).toBe(24 * 60)
+  expect(window.start).toBe(23 * 60)
+})
+
+// --- windowFor: picking sleepWindow vs nightSleepWindow, and the default ---
+
+test('windowFor with no sleep settings supplied matches the historical fixed windows exactly', () => {
+  expect(windowFor('full')).toEqual({ start: 7 * 60, end: 23 * 60 })
+  expect(windowFor('shift')).toEqual({ start: 7 * 60, end: 23 * 60 })
+  expect(windowFor('rest')).toEqual({ start: 7 * 60, end: 23 * 60 })
+  expect(windowFor('night')).toEqual({ start: 13 * 60, end: 24 * 60 })
+})
+
+test('windowFor picks nightSleepWindow only for a night day, and sleepWindow for every other type', () => {
+  const sleep = {
+    sleepWindow: { start: '22:00', end: '06:00' },
+    nightSleepWindow: { start: '09:00', end: '17:00' },
+  }
+  expect(windowFor('full', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
+  expect(windowFor('shift', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
+  expect(windowFor('rest', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
+  expect(windowFor('night', sleep)).toEqual({ start: 17 * 60, end: 24 * 60 })
+})
+
+// --- computeCapacity: a custom sleep setting changes the arithmetic --------
+
+test('computeCapacity measures free time against a custom sleep window, not the historical default', () => {
+  const sleep = { sleepWindow: { start: '22:00', end: '06:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const capacity = computeCapacity(
+    [{ id: 'a', title: 'Gym', done: false, time: '07:00', minutes: 60 }],
+    'full',
+    sleep,
+  )
+  // Waking window is 06:00-22:00 (16h = 960 min); the gym takes 60, leaving 900.
+  expect(capacity.freeMinutes).toBe(900)
+})
+
+test('computeCapacity on a night day measures against nightSleepWindow, not sleepWindow', () => {
+  const sleep = {
+    sleepWindow: { start: '23:00', end: '07:00' },
+    nightSleepWindow: { start: '08:00', end: '15:00' },
+  }
+  const capacity = computeCapacity(
+    [{ id: 'a', title: 'Shift prep', done: false, time: '15:00', minutes: 30 }],
+    'night',
+    sleep,
+  )
+  // Waking window for the night default here is 15:00-24:00 (9h = 540 min).
+  expect(capacity.freeMinutes).toBe(540 - 30)
 })

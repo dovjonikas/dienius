@@ -1,5 +1,5 @@
 import type { DayType, Task } from '../../lib/types'
-import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Gap, type Interval } from './capacity'
+import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Gap, type Interval, type SleepSettings } from './capacity'
 
 /**
  * One float as it is offered inside a gap's picker - just enough to render
@@ -185,8 +185,18 @@ export type TaskGapMatch =
  * an empty day is real free time, the single largest gap this function
  * will ever return, exactly the waking window itself with nothing on
  * either side of it.
+ *
+ * `sleep` defaults to the same fixed-window fallback `windowFor` itself
+ * falls back to, so a caller that has not been handed the owner's actual
+ * sleep settings - most of this file's own tests - matches against exactly
+ * the window this app always used.
  */
-export function matchTaskToGaps(tasks: Task[], dayType: DayType | undefined, taskId: string): TaskGapMatch {
+export function matchTaskToGaps(
+  tasks: Task[],
+  dayType: DayType | undefined,
+  taskId: string,
+  sleep?: SleepSettings,
+): TaskGapMatch {
   const task = tasks.find(t => t.id === taskId)
   if (!task) return { kind: 'matched', gaps: [] }
   if (isAnchor(task)) return { kind: 'already-timed' }
@@ -196,7 +206,7 @@ export function matchTaskToGaps(tasks: Task[], dayType: DayType | undefined, tas
   const anchors = tasks.filter(isAnchor)
   if (anchors.some(a => a.minutes === undefined)) return { kind: 'unknown' }
 
-  const window = windowFor(dayType ?? 'full')
+  const window = windowFor(dayType ?? 'full', sleep)
   const named = anchors
     .map(a => ({
       title: a.title,

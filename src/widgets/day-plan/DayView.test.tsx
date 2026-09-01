@@ -503,6 +503,45 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
   ).toBeInTheDocument()
 })
 
+test('a custom sleep window setting changes the capacity line, not just the historical fixed window', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, sleepWindow: { start: '22:00', end: '06:00' } },
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'gym', title: 'Gym', done: false, time: '07:00', minutes: 60 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // Waking window is now 06:00-22:00 (16h); the gym takes 1h, leaving 15h
+  // free across the stretch before it (06:00-07:00) and after it (08:00-22:00).
+  expect(screen.getByText('Timed tasks: 1h. Free: 15h across 2 gaps.')).toBeInTheDocument()
+})
+
+test('a night day reads its capacity against nightSleepWindow, not the ordinary sleepWindow', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      ...defaultData().settings,
+      nightSleepWindow: { start: '09:00', end: '17:00' },
+    },
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        dayType: 'night',
+        tasks: [{ id: 'prep', title: 'Shift prep', done: false, time: '17:30', minutes: 30 }],
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // nightSleepWindow bedtime 09:00, wake 17:00 gives a waking window of
+  // 17:00-24:00 (7h, clamped at midnight); the 30-minute prep task leaves
+  // 6h30 free, split between the 30 minutes before it and the six hours after.
+  expect(screen.getByText('Timed tasks: 30 min. Free: 6h30 across 2 gaps.')).toBeInTheDocument()
+})
+
 test('a mid-day shift leaves real free time within the window, not a false "no free time" claim', () => {
   actions.resetForTests({
     ...defaultData(),

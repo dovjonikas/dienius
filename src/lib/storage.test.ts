@@ -1026,3 +1026,100 @@ test('a bad import never destroys existing data - repeated garbage imports leave
     expect(() => importJson(bad)).toThrow('Invalid Dienius backup file')
   }
 })
+
+// sleepWindow and nightSleepWindow - a single set-once setting per window,
+// defaulting to the exact inverse of the fixed 07:00-23:00 / 13:00-24:00
+// windows this app used before either setting existed, so an install that
+// never opens Settings sees no change - see docs/DECISIONS.md.
+
+test('a brand new install starts with the historical sleep window as an explicit default', () => {
+  expect(loadData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+  expect(loadData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+})
+
+test('a payload written before either sleep setting existed has no such key and still loads, defaulting exactly as a fresh install would', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'], timelineExpanded: false, dayLayoutFocus: 'both' },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  expect(loadData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+  expect(loadData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+})
+
+test('a payload with a custom sleep window already set keeps that choice on load', () => {
+  const payload = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: 'light',
+      enabledWidgets: ['day-plan'],
+      timelineExpanded: false,
+      dayLayoutFocus: 'both',
+      sleepWindow: { start: '22:00', end: '06:30' },
+      nightSleepWindow: { start: '09:00', end: '17:00' },
+    },
+  })
+  localStorage.setItem(STORAGE_KEY, payload)
+  expect(loadData().settings.sleepWindow).toEqual({ start: '22:00', end: '06:30' })
+  expect(loadData().settings.nightSleepWindow).toEqual({ start: '09:00', end: '17:00' })
+})
+
+test('validate rejects a sleepWindow that is not a real "HH:MM" time', () => {
+  for (const bad of [
+    { start: '25:00', end: '07:00' },
+    { start: '23:00', end: '7:00' },
+    { start: '23:00', end: '07:60' },
+    { start: 2300, end: '07:00' },
+    { start: '23:00' },
+    { end: '07:00' },
+    'not an object',
+  ]) {
+    const payload = JSON.stringify({
+      templates: [],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [], timelineExpanded: false, dayLayoutFocus: 'both', sleepWindow: bad },
+    })
+    localStorage.setItem(STORAGE_KEY, payload)
+    expect(loadData()).toEqual(salvagedLightData())
+  }
+})
+
+test('validate rejects a malformed nightSleepWindow the same way', () => {
+  const bad = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: 'light',
+      enabledWidgets: [],
+      timelineExpanded: false,
+      dayLayoutFocus: 'both',
+      nightSleepWindow: { start: '13:00', end: 'noon' },
+    },
+  })
+  localStorage.setItem(STORAGE_KEY, bad)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
+test('a malformed sleepWindow does not destroy the rest of an otherwise valid backup - the whole file is rejected, nothing partially applied', () => {
+  const data = defaultData()
+  const template = { id: 't1', name: 'Existing', color: '#a7c4f5', blocks: [] }
+  const payload = {
+    ...data,
+    templates: [template],
+    settings: { ...data.settings, sleepWindow: { start: '23:00', end: 'garbage' } },
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+  const loaded = loadData()
+  expect(loaded.templates).toEqual([])
+})
+
+test('importJson preserves a custom sleep window across export and re-import', () => {
+  const data = defaultData()
+  data.settings.sleepWindow = { start: '22:30', end: '06:15' }
+  data.settings.nightSleepWindow = { start: '08:00', end: '16:00' }
+  const imported = importJson(exportJson(data))
+  expect(imported.settings.sleepWindow).toEqual({ start: '22:30', end: '06:15' })
+  expect(imported.settings.nightSleepWindow).toEqual({ start: '08:00', end: '16:00' })
+})
