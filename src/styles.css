@@ -806,6 +806,21 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   left: 0;
   right: 0;
   background: color-mix(in srgb, var(--muted) 15%, transparent);
+  display: flex;
+  align-items: center;
+}
+
+/* Same quiet register as .timeline-gap-label just below - muted, small,
+   tabular numerals where it matters. left margin clears GUTTER_PX (the
+   hour-label column in TimelineGrid.tsx) so "Sleep" never sits under an
+   hour number; kept in sync by hand the same way that constant's own
+   comment already asks of every other rule that reaches for it. */
+.timeline-sleep-band-label {
+  margin-left: 44px;
+  padding-left: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* The real, focusable gap layer step 5 adds - same box as .timeline-grid

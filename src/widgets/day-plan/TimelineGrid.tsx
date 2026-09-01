@@ -339,17 +339,42 @@ export function TimelineGrid({
                 this setting replaced. Painted first in this layer so every
                 hour mark, half-hour rule, anchor and the now-line all draw
                 on top of it, exactly like a background wash rather than a
-                foreground element competing with them. Purely decorative to
-                a sighted eye - the one thing worth saying about the boundary
-                itself is said once, in plain text, by the visually-hidden
-                sentence below the grid rather than repeated per band. */}
-            {sleepBands.map(band => (
-              <div
-                key={`sleep-${band.start}`}
-                className="timeline-sleep-band"
-                style={{ top: `${vertical.topPx(band.start)}px`, height: `${vertical.topPx(band.end) - vertical.topPx(band.start)}px` }}
-              />
-            ))}
+                foreground element competing with them.
+
+                Carries its own small "Sleep" label, in the same quiet
+                register as a gap's own label (.timeline-gap-label) - a
+                greyed rectangle with nothing written on it reads as padding
+                or a rendering glitch, not "this is when I sleep," and a
+                shape alone was never going to say that on its own no matter
+                how it was tuned. The label is decorative, the same as the
+                band itself: this whole layer is already aria-hidden, and
+                this div repeats that explicitly rather than relying only on
+                the ancestor, so the choice reads as deliberate here rather
+                than inherited by accident. The one thing worth saying about
+                the actual boundary time is said once, in real text, by the
+                visually-hidden sentence below the grid - this label names
+                what the shape is, that sentence states when it is. */}
+            {sleepBands.map(band => {
+              const bandTop = vertical.topPx(band.start)
+              const bandHeightPx = vertical.topPx(band.end) - bandTop
+              return (
+                <div
+                  key={`sleep-${band.start}`}
+                  className="timeline-sleep-band"
+                  aria-hidden="true"
+                  style={{ top: `${bandTop}px`, height: `${bandHeightPx}px` }}
+                >
+                  {/* Omitted below COMPACT_HEIGHT_PX, the same cutoff a
+                      short sized anchor's own time range already uses -
+                      SLEEP_BAND_MIN_MINUTES normally earns well over this,
+                      but a bedtime pinned right at the edge of the
+                      calendar day can clamp a band down to a sliver with
+                      no room to letter, and the label should disappear
+                      before it starts spilling out of its own shape. */}
+                  {bandHeightPx >= COMPACT_HEIGHT_PX && <span className="timeline-sleep-band-label">Sleep</span>}
+                </div>
+              )
+            })}
 
             {marks.map(mark => (
               <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>

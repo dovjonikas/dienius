@@ -19,14 +19,31 @@ export const DAY_MINUTES = 24 * 60
 const DISPLAY_BUFFER_MINUTES = 60
 
 /**
- * How far `displayWindow` is ever pulled back into sleep hours to make the
- * wake/bedtime boundary legible - see `extendTowardSleepBoundary` below.
- * The same 60 minutes as `DISPLAY_BUFFER_MINUTES` above, deliberately: this
- * is the same "breathing room for the eye" idea that constant already
- * describes, just mirrored toward the sleep side of the day rather than
- * only ever applied on the awake side.
+ * How deep into sleep hours a sleep band is drawn, once it is drawn at all -
+ * see `extendTowardSleepBoundary` below. Picked so the band reads as an
+ * actual region of the day rather than a hairline at the grid's own edge: a
+ * short peek (the first version of this feature pulled back by 60 minutes
+ * only when the anchor buffer had not already crossed the boundary, which
+ * in the common case where it already had left the band exactly however
+ * deep the buffer's own edge happened to land - as little as 30 minutes,
+ * under 35px, read as padding or a rendering artifact rather than "this is
+ * when I sleep") is not enough on its own. 90 minutes (about 104px at the
+ * base density) is comfortably larger than the shortest anchor card this
+ * grid ever draws, so the band never reads as smaller than real content,
+ * while staying a fraction of a typical multi-hour sleep window - the day
+ * the band sits inside still dominates the grid, never the reverse.
  */
-const SLEEP_BAND_EXTEND_MINUTES = 60
+const SLEEP_BAND_MIN_MINUTES = 90
+
+/**
+ * The most `displayWindow` is ever pulled back through genuinely empty,
+ * anchor-free time just to *reach* the sleep boundary before the band's own
+ * depth is added on top - see `extendTowardSleepBoundary`. Kept equal to
+ * `SLEEP_BAND_MIN_MINUTES` so the rule reads as one idea instead of two
+ * independently tuned numbers: bridge up to 90 minutes of true gap to reach
+ * the boundary, then show up to another 90 minutes of band once there.
+ */
+const SLEEP_BAND_BRIDGE_CAP_MINUTES = 90
 
 /**
  * An anchor with no `minutes` has no honest duration to draw - see the
@@ -164,41 +181,58 @@ export interface TimelineLayout {
  * describes between this window and `computeCapacity`'s.
  */
 /**
- * Pulls `window` back toward `waking`'s own boundary on either side, so the
- * wake/bedtime line - and a real, visible amount of the sleep band on the
- * other side of it - is legible on an ordinary day, without redrawing the
- * whole night.
+ * Pulls one edge of `window` back toward `boundary` (the matching edge of
+ * the day's own waking window) far enough that the resulting sleep band is
+ * a real, legible region - `SLEEP_BAND_MIN_MINUTES` deep - rather than
+ * however much (or little) the anchor buffer happened to leave behind on
+ * its own.
  *
- * On each side, independently: if the anchor-buffered edge already sits
- * inside sleep hours (the buffer naturally reached that far - an anchor
- * close to the boundary already), it is left exactly as it was; there is
- * already real grey to show and nothing here needs to force more. If the
- * edge sits on the awake side, within `SLEEP_BAND_EXTEND_MINUTES` of the
- * boundary, it is pulled back to `SLEEP_BAND_EXTEND_MINUTES` past the
- * boundary - closing a small gap so the boundary itself, plus a real peek
- * of grey, both draw. If the edge is further from the boundary than that,
- * it is left untouched: bridging a multi-hour gap between where the day's
- * real content ends and where sleep starts would mean drawing a stretch of
- * pure empty space just to reach a line that is, at that distance, no
- * longer close to what is actually being shown - exactly the "wall of
- * empty rows" the anchor buffer itself already exists to avoid, and exactly
- * the risk of compressing a wide-screen day's real content that comes from
- * inflating `displayWindow`'s own total minutes for no real gain (see
- * `chooseWidePxPerMinute` in TimelineGrid.tsx, which divides available
- * pixels by this window's width).
+ * Two questions, answered separately:
+ *
+ * - **Is the band already deep enough?** `alreadyPastBoundary` is how far
+ *   `edge` already sits on the sleep side of `boundary` - zero if it has
+ *   not reached the boundary at all yet. Once that is at least
+ *   `SLEEP_BAND_MIN_MINUTES`, nothing here does anything: the buffer's own
+ *   position already earns a real band, sometimes a deeper one than the
+ *   minimum, and there is no reason to shrink it back down to exactly the
+ *   floor.
+ * - **Is the boundary close enough to reach at all?** `gapToBoundary` is
+ *   how far `edge` sits on the *awake* side of `boundary`, still needing to
+ *   be crossed before any band can start. Bridging that gap draws pure
+ *   empty space with nothing in it - real anchors on one side, the sleep
+ *   band on the other, nothing between - so it only happens up to
+ *   `SLEEP_BAND_BRIDGE_CAP_MINUTES`. Past that, the day's real content is
+ *   too far from this boundary to be worth forcing a band at all: the
+ *   "wall of empty rows" the anchor buffer itself already exists to avoid,
+ *   and the same risk of compressing a wide-screen day's real content that
+ *   comes from inflating `displayWindow`'s own total minutes for no real
+ *   gain (see `chooseWidePxPerMinute` in TimelineGrid.tsx, which divides
+ *   available pixels by this window's width).
+ *
+ * When both checks pass, the edge is pulled all the way to
+ * `SLEEP_BAND_MIN_MINUTES` past the boundary - not just far enough to close
+ * `gapToBoundary` - so every band this function ever draws is the same
+ * legible depth, regardless of exactly how close the anchors happened to
+ * land.
  */
+function extendEdgeTowardSleep(edge: number, boundary: number, direction: 'start' | 'end'): number {
+  const alreadyPastBoundary = direction === 'start' ? Math.max(0, boundary - edge) : Math.max(0, edge - boundary)
+  if (alreadyPastBoundary >= SLEEP_BAND_MIN_MINUTES) return edge
+
+  const gapToBoundary = direction === 'start' ? Math.max(0, edge - boundary) : Math.max(0, boundary - edge)
+  if (gapToBoundary > SLEEP_BAND_BRIDGE_CAP_MINUTES) return edge
+
+  return direction === 'start'
+    ? Math.max(0, boundary - SLEEP_BAND_MIN_MINUTES)
+    : Math.min(DAY_MINUTES, boundary + SLEEP_BAND_MIN_MINUTES)
+}
+
+/** Applies `extendEdgeTowardSleep` to both edges of `window` independently - see that function's own doc comment. */
 function extendTowardSleepBoundary(window: Interval, waking: Interval): Interval {
-  const gapToWake = window.start - waking.start
-  const start = gapToWake > 0 && gapToWake <= SLEEP_BAND_EXTEND_MINUTES
-    ? Math.max(0, waking.start - SLEEP_BAND_EXTEND_MINUTES)
-    : window.start
-
-  const gapToBed = waking.end - window.end
-  const end = gapToBed > 0 && gapToBed <= SLEEP_BAND_EXTEND_MINUTES
-    ? Math.min(DAY_MINUTES, waking.end + SLEEP_BAND_EXTEND_MINUTES)
-    : window.end
-
-  return { start, end }
+  return {
+    start: extendEdgeTowardSleep(window.start, waking.start, 'start'),
+    end: extendEdgeTowardSleep(window.end, waking.end, 'end'),
+  }
 }
 
 export function computeTimelineLayout(

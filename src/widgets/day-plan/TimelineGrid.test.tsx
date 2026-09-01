@@ -476,11 +476,11 @@ test('isWide never draws denser than the cap, however large window.innerHeight i
   const { container } = render(<TimelineGrid tasks={tasks} isWide />)
   // Anchor-buffered window is 30 (anchor) + 60 + 60 (the one-hour display
   // buffer each side) = 150 minutes, 08:00-10:30. The default wake time
-  // (07:00) is within SLEEP_BAND_EXTEND_MINUTES of the buffered start, so
-  // displayWindow - what is actually drawn - pulls back a further 60
-  // minutes to 06:00, for a total of 270 minutes; the cap is
-  // PX_PER_MINUTE * 3 = 3.45px/minute.
-  expect(layersHeightPx(container)).toBeLessThanOrEqual(270 * 1.15 * 3 + 1)
+  // (07:00) is within the sleep band's own bridge cap of the buffered
+  // start, so displayWindow - what is actually drawn - pulls all the way
+  // back to a full 90-minute band, to 05:30, for a total of 300 minutes;
+  // the cap is PX_PER_MINUTE * 3 = 3.45px/minute.
+  expect(layersHeightPx(container)).toBeLessThanOrEqual(300 * 1.15 * 3 + 1)
 })
 
 test('isWide with a small window.innerHeight never draws thinner than isWide=false already does - the base density floors it', () => {
@@ -512,12 +512,53 @@ test('a short gap still floors to the 44px touch target at isWide, exactly as it
 
 test('draws a greyed sleep band inside the aria-hidden decorative layer, not as a focusable element', () => {
   // Default wake time is 07:00; a shift starting at 09:00 buffers to 08:00,
-  // within the extend threshold, so a band draws just before the boundary.
+  // within the bridge cap, so a band draws just before the boundary.
   const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
   const band = container.querySelector('.timeline-sleep-band')
   expect(band).not.toBeNull()
   expect(band!.closest('[aria-hidden="true"]')).not.toBeNull()
   expect(band!.tagName).toBe('DIV')
+})
+
+test('the band carries its own aria-hidden explicitly, not only inherited from an ancestor', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
+  const band = container.querySelector('.timeline-sleep-band')
+  expect(band).toHaveAttribute('aria-hidden', 'true')
+})
+
+test('the band is drawn a full, legible depth, not a hairline sliver at the boundary', () => {
+  // Shift 09:00 for 2h: the default wake time is close enough to bridge, so
+  // the band pulls back to a full SLEEP_BAND_MIN_MINUTES (90) deep - well
+  // over the compact-label cutoff, and comfortably more than the ~35px a
+  // short peek used to draw.
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
+  const band = container.querySelector('.timeline-sleep-band') as HTMLElement
+  expect(parseFloat(band.style.height)).toBeCloseTo(90 * 1.15, 5)
+})
+
+test('the band names itself with a visible "Sleep" label, so it reads as sleep rather than padding', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
+  const label = container.querySelector('.timeline-sleep-band-label')
+  expect(label).not.toBeNull()
+  expect(label).toHaveTextContent('Sleep')
+  // Aria-hidden by inheritance from the band itself - it is not a second,
+  // separate thing a screen reader could encounter after the band.
+  expect(label!.closest('[aria-hidden="true"]')).not.toBeNull()
+})
+
+test('the band label is omitted once the band is clamped shorter than the compact cutoff', () => {
+  // A bedtime pinned at 23:59 with a wake time close enough to bridge to it
+  // clamps the resulting band to one minute at the end of the calendar day
+  // - nowhere near enough room to letter "Sleep" without spilling out of
+  // the shape it is supposed to label.
+  const sleep = { sleepWindow: { start: '23:59', end: '07:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Late task', '23:30', 20)]} sleep={sleep} />,
+  )
+  const band = container.querySelector('.timeline-sleep-band') as HTMLElement
+  expect(band).not.toBeNull()
+  expect(parseFloat(band.style.height)).toBeLessThan(40)
+  expect(band.querySelector('.timeline-sleep-band-label')).toBeNull()
 })
 
 test('draws no sleep band when the day is far from the sleep boundary on both sides', () => {
