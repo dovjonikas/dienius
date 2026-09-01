@@ -277,6 +277,72 @@ test('a day with no anchors still lets the focus control switch to Calendar - th
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
 })
 
+// --- Step 5: the rail (MiniCalendar first, TemplateRail second) ----------
+
+test('the rail does not render at a narrow viewport', () => {
+  viewport = mockViewport(false)
+  seed(anchoredTasks, false)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.rail')).not.toBeInTheDocument()
+})
+
+test('at a wide viewport the rail renders the mini calendar and, once templates exist, the template rail', () => {
+  viewport = mockViewport(true)
+  seed(anchoredTasks, false)
+  actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.rail .mini-calendar')).toBeInTheDocument()
+  expect(container.querySelector('.rail .template-rail')).toBeInTheDocument()
+})
+
+test('the rail stays visible regardless of dayLayoutFocus - it is not part of what the control redistributes', () => {
+  viewport = mockViewport(true)
+  seedFocus('calendar')
+  const { container, rerender } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.rail')).toBeInTheDocument()
+
+  seedFocus('tasks')
+  rerender(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.rail')).toBeInTheDocument()
+})
+
+test('clicking a mini-calendar cell navigates the day view via the same onDateChange DayView already receives', async () => {
+  const user = userEvent.setup()
+  viewport = mockViewport(true)
+  seed(anchoredTasks, false)
+  let picked: string | undefined
+  render(<DayView date={DATE} onDateChange={d => { picked = d }} />)
+  const cell = screen.getByRole('gridcell', { name: /September 15/ })
+  await user.click(cell)
+  expect(picked).toBe('2026-09-15')
+})
+
+test('tapping a template chip in the rail stamps the day currently open', async () => {
+  const user = userEvent.setup()
+  viewport = mockViewport(true)
+  seed(anchoredTasks, false)
+  const work = actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Work day' }))
+  expect(getData().days[DATE]?.templateId).toBe(work.id)
+})
+
+// Keyboard tab order must follow the visual order - rail, then header, then
+// whichever pane(s) are showing - docs/LAYOUT-WIDE.md section 6's own
+// verification pass.
+test('the rail sits before the header in the DOM, which sits before the panes', () => {
+  viewport = mockViewport(true)
+  seed(anchoredTasks, true)
+  actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const rail = container.querySelector('.rail')!
+  const header = container.querySelector('.day-header')!
+  const dayPane = container.querySelector('.day-pane')!
+  expect(rail).not.toBeNull()
+  expect(rail.compareDocumentPosition(header) & 4).toBe(4)
+  expect(header.compareDocumentPosition(dayPane) & 4).toBe(4)
+})
+
 test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list, rollover, in that order', () => {
   viewport = mockViewport(false)
   seed([{ id: 't1', title: 'Anchor', done: false, time: '09:00', minutes: 30 },

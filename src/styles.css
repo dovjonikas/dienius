@@ -2662,21 +2662,26 @@ button.danger {
 .day-pane, .task-pane, .day-header { display: contents; }
 
 @media (min-width: 1024px) {
-  /* .day-view itself becomes the grid. Two columns for now - day-pane and
-     task-pane only. Step 5 adds a third (rail) column and its own
-     grid-template-areas. Values match docs/LAYOUT-WIDE.md section 5's own
-     reasoning: day-pane needs the grid's 44px gutter plus a comfortably
-     readable anchor block (420px minimum); task-pane needs a TaskRow's own
-     content (checkbox, time, title, size chip, actions button) to stay
-     comfortable without truncating the title (320px minimum), capped at
-     380px so it never visually dominates the timeline it sits next to. */
+  /* .day-view itself becomes the grid - the full three-column layout from
+     docs/LAYOUT-WIDE.md section 5. Rail needs a template chip plus a
+     mini-calendar week row to stay legible (200px) without growing to
+     compete with the panes doing the actual work (240px cap); day-pane
+     needs the grid's 44px gutter plus a comfortably readable anchor block
+     (420px minimum); task-pane needs a TaskRow's own content (checkbox,
+     time, title, size chip, actions button) to stay comfortable without
+     truncating the title (320px minimum), capped at 380px so it never
+     visually dominates the timeline it sits next to. */
   .day-view {
     display: grid;
-    grid-template-columns: minmax(420px, 1fr) minmax(320px, 380px);
+    grid-template-columns: minmax(200px, 240px) minmax(420px, 1fr) minmax(320px, 380px);
     grid-template-areas:
-      "header header"
-      "day    tasks";
+      "rail header header"
+      "rail day    tasks";
     gap: 24px;
+  }
+
+  .rail {
+    grid-area: rail;
   }
 
   .day-pane {
@@ -2693,13 +2698,15 @@ button.danger {
      .task-pane is ever mounted in either case (see DayView.tsx's own
      showDayPane/showTaskPane), so the remaining pane just needs to take
      over the whole "day tasks" span rather than sit in its own narrower
-     column. Step 5 folds the rail's own column into this same rule. */
+     column. The rail keeps its own column in both states - it is not part
+     of what dayLayoutFocus redistributes, see docs/LAYOUT-WIDE.md
+     section 5. */
   .day-view.focus-calendar,
   .day-view.focus-tasks {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(200px, 240px) 1fr;
     grid-template-areas:
-      "header"
-      "pane";
+      "rail header"
+      "rail pane";
   }
   .day-view.focus-calendar .day-pane { grid-area: pane; }
   .day-view.focus-tasks .task-pane { grid-area: pane; }
@@ -2725,4 +2732,102 @@ button.danger {
      the phone's stacked layout) is deliberately left alone here - see
      docs/LAYOUT-WIDE.md section 5's own "optional, later" note. Raising it
      is a real, separately-valued change and out of scope for this pass. */
+}
+
+/* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only
+   ever mounted at the wide breakpoint (see DayView.tsx's own isWide
+   check), so nothing here needs a narrow-width default the way
+   .day-pane/.task-pane/.day-header do above. */
+@media (min-width: 1024px) {
+  .mini-calendar { margin-bottom: 20px; }
+
+  .mini-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .mini-calendar-nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+  }
+
+  .mini-calendar-nav button:hover { color: var(--text); }
+
+  .mini-calendar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .mini-weekday {
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  /* Deliberately escapes this app's usual `button { min-height: 44px }`
+     floor - see docs/OPEN-QUESTIONS.md. Seven columns inside the rail's
+     own 240px cap cannot reach 44px (7 * 44 = 308px, more than the whole
+     column) without either widening the rail past what section 5's own
+     reasoning budgeted it, or narrowing the day/task panes to make room -
+     both are real trade-offs the owner should weigh, not a call to make
+     silently in CSS. This keeps the grid square and legible at the width
+     actually available, flagged rather than hidden. */
+  .mini-cell {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+  }
+
+  .mini-cell.outside { opacity: 0.35; }
+  .mini-cell.today { border-color: var(--accent); border-width: 2px; }
+  /* The day currently open in DayView - a dashed ring rather than
+     .today's solid border, so the two read as related but distinct marks
+     when they land on different cells (today vs. a day being planned
+     ahead of or behind it). */
+  .mini-cell.viewing { outline: 2px dashed var(--accent); outline-offset: -2px; }
+  /* Same reasoning as .cell-has-template in the full calendar grid: a
+     stamped cell's inline background is a mid-lightness colour in both
+     themes, so the theme's own text colour (near-white in dark mode)
+     would be unreadable against it - pin a dark number instead. */
+  .mini-cell-has-template { color: rgba(0, 0, 0, 0.7); }
+
+  .mini-cell:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* TemplateRail - in place of Sunsama's CHANNELS list. Reuses .chip
+     directly (defined above, alongside the calendar's own stamp bar), so
+     its 44px touch target and focus ring are unaffected - unlike the mini
+     calendar above, nothing about this control's target size is
+     compromised by the rail's width; chips simply wrap onto more lines. */
+  .template-rail-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }

@@ -18,6 +18,8 @@ import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskGapOffers } from './TaskGapOffers'
 import { resolveDrop, type DropTarget } from './dragDrop'
 import { useIsWide } from '../../lib/viewport'
+import { MiniCalendar } from './MiniCalendar'
+import { TemplateRail } from './TemplateRail'
 
 export interface DayViewProps {
   date: string
@@ -320,6 +322,19 @@ export function DayView({ date, onDateChange }: DayViewProps) {
 
   return (
     <section className={dayViewClassName} data-tray-zone>
+      {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted
+          only when useIsWide() is true, regardless of dayLayoutFocus - the
+          rail is not part of what that control redistributes, see its own
+          comment below. First in the DOM (not just visually leftmost) so
+          keyboard tab order follows the visual order: rail, then header,
+          then whichever pane(s) are showing - see the wide-layout
+          verification pass in docs/LAYOUT-WIDE.md section 6. */}
+      {isWide && (
+        <div className="rail">
+          <MiniCalendar date={date} onDateChange={onDateChange} />
+          <TemplateRail date={date} />
+        </div>
+      )}
       {/* Groups day-nav with the focus control below so both can share the
           grid's "header" area at the wide breakpoint - see styles.css.
           Not new chrome of its own: `display: contents` below the
