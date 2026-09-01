@@ -577,7 +577,12 @@ never struck from this list; each one below says which.
 - ~~Theme applied in `useEffect`, so dark-mode users see a one-frame light flash.~~ Fixed. An inline
   script in `index.html` reads the persisted theme and sets `data-theme` on the root element before
   the app's own script tag runs, the fix `docs/THEMES.md` specs. Verified by hand against a hard
-  reload with dark mode persisted; a unit test cannot observe a pre-paint script by its nature.
+  reload with dark mode persisted, and `src/preTheme.test.ts` extracts that exact script by its `id`
+  attribute and runs it via `new Function()` against a growing set of scenarios - valid presets, corrupt
+  JSON, non-object JSON, invalid theme values, non-string and malformed override values, live
+  `matchMedia` for system mode - asserting its output agrees with the real `loadData()`/`resolveTheme()`/
+  `applyResolvedTheme()` pipeline every time. A unit test observing a pre-paint script's own text was the
+  gap once; it no longer is.
 - ~~No test coverage for `deleteTask`, `updateTemplate`, `setTheme`, `importData`, `subscribe`.~~
   Fixed - direct tests added in `store.test.ts` for all five, including `importData`'s throw path
   and `subscribe`'s unsubscribe function.
@@ -602,6 +607,44 @@ never struck from this list; each one below says which.
   the screen) still stops the gesture instead of leaving it stuck on; none of these drags trigger the
   page's own scroll or a pull-to-refresh gesture while in progress; and a long-press on a task row
   opens its menu without also scrolling the page or toggling the checkbox underneath it.
+- ~~Four exported symbols nothing outside their own file imports: `SYSTEM_CONDENSED` in `themes.ts`,
+  `TEMPLATE_COLORS` in `TemplatesView.tsx`, `gapsInWindow` in `capacity.ts`, `pushCountLabel` in
+  `TaskRow.tsx`.~~ Decided per symbol rather than dropping `export` from all four reflexively. Three
+  were genuinely dead - `SYSTEM_CONDENSED` names Newsprint's own compiled `fontDisplay`, which the
+  override panel never exposes (only `fontBody` is overridable there); `TEMPLATE_COLORS` is a
+  values-only derivative of `PALETTE_COLORS` that the if-then board, the other feature drawing from the
+  same palette, imports directly instead; `pushCountLabel` has exactly one caller, `boundNote` in the
+  same file. `export` came off all three. The fourth, `gapsInWindow`, was a real gap rather than a false
+  positive: its own comment already claimed the grid's `computeInteriorGaps` shared it, which was not
+  true - that function reimplemented the same walk by hand. `computeInteriorGaps` now calls
+  `gapsInWindow` directly and filters out whichever of its edge gaps (before the first anchor, after the
+  last) do not belong on a grid that only ever draws the interior ones, so the comment's claim is true
+  and the export is no longer unused. Every existing gap test - touching anchors, overlapping anchors,
+  a single anchor, an unsized one suppressing gaps entirely - still passes unchanged, confirming the
+  refactor is behavior-preserving.
+- ~~Six culture nits from the security audit's Part 2.~~ Worked through individually rather than as a
+  block. A stale doc comment claiming code sharing that did not exist is the `gapsInWindow` item just
+  above - fixed there, not twice. `src/widgets/day-plan/draft.ts`'s one `catch { // ignore }` now
+  explains itself the same way its own file's other two catches already do. The one real `act()`
+  warning in `YearStrip.test.tsx` was tracked to its actual cause rather than guessed at: a raw
+  `.focus()` call in the "arrow keys do not cross into a year that is not rendered" test fires the
+  cell's own `onFocus` handler outside any `userEvent`-managed `act()` boundary, and every other test in
+  the file gets away with the same pattern only because the arrow press right after it triggers a real,
+  properly-wrapped state update that happens to flush the pending one along with it - here the press is
+  refused (there is no next year rendered) and never does. Wrapped the one `.focus()` call that needed
+  it; confirmed with a `console.error` spy that the warning is gone and confirmed by removing the wrap
+  again that it reliably comes back, rather than trusting an absence of output alone. `.github/workflows/
+  deploy.yml` now triggers on `pull_request` as well as `push`, with the `deploy` job itself gated to
+  `github.event_name == 'push'` so a PR - from a fork, in particular - can never push to GitHub Pages,
+  and the concurrency group scoped per branch/PR ref rather than one shared `pages` group so a PR run
+  cannot race the deploy pipeline. `README.md`'s hardcoded test count is gone - the sentence around it
+  already said what the suite covers without a number, and `npm test` reports the true count on demand
+  instead of a figure that goes stale with the next feature commit.
+
+  Left alone, on purpose: the audit's own Finding 2 additionally names a handful of `Props` interfaces
+  and similar type-only exports (`TaskRowProps`, `GapPickerProps`, `WidgetDef`, and others) as unused
+  outside their own file, and says plainly it would not spend a PR on them - types are erased at build
+  time, so an unused `export` on one costs nothing to leave. Agreed; none of those were touched.
 
 ## Tier 4 - the portfolio layer
 

@@ -6,7 +6,10 @@ import { useLongPress } from './useLongPress'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
-export function pushCountLabel(count: number): string {
+// Not exported - boundNote below is the one other place a push count needs
+// to read as a word rather than a digit, and it already sits in this same
+// file, so nothing outside it has ever needed this on its own.
+function pushCountLabel(count: number): string {
   return PUSH_COUNT_WORDS[count] ?? `${count} times`
 }
 

@@ -8,8 +8,11 @@ import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimeStepInput } from './TimeStepInput'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
-// saved before this shared module existed still matches one of these.
-export const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
+// saved before this shared module existed still matches one of these. Not
+// exported - the if-then board, the other feature that draws from this same
+// palette, imports PALETTE_COLORS itself rather than this derived list, so
+// nothing outside this file has ever needed it.
+const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
 const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'full', label: 'Full day' },

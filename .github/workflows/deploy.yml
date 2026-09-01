@@ -3,6 +3,8 @@ name: Deploy
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -10,7 +12,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # Scoped per branch/PR rather than one shared "pages" group, now that
+  # pull requests run this workflow too - a PR build should only ever
+  # cancel an earlier run of the same PR, never race against or cancel the
+  # deploy pipeline running for main.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,6 +37,11 @@ jobs:
 
   deploy:
     needs: build
+    # Tests and build run on every pull request too (see the trigger above) -
+    # this is the one job that must not: a PR from an untrusted fork should
+    # never be able to push to GitHub Pages, and deploying unmerged code
+    # would defeat the point of review happening on the PR at all.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

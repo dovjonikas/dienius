@@ -82,7 +82,19 @@ test('arrow keys do not cross into a year that is not rendered', async () => {
   const user = userEvent.setup()
   render(<YearStrip onOpenDay={() => {}} />)
   const grid = screen.getByRole('group', { name: 'Days of 2026' })
-  within(grid).getByRole('button', { name: 'December 31, 2026' }).focus()
+  // A raw .focus() call triggers the cell's own onFocus handler
+  // (setActiveKey), a real state update outside any userEvent-managed
+  // act() boundary. Every other test in this file gets away without
+  // wrapping it because the arrow press right after moves to a real cell
+  // within the same year, and that subsequent, properly-wrapped update
+  // flushes this one along with it. Here the arrow press moves to
+  // 2027-01-01, which moveFocusTo refuses (there is no such year rendered)
+  // and returns without touching state at all - so this is the one test in
+  // the file where the raw focus() call's own update is never absorbed by
+  // a later one, and needs wrapping itself.
+  act(() => {
+    within(grid).getByRole('button', { name: 'December 31, 2026' }).focus()
+  })
   await user.keyboard('{ArrowRight}')
   // Still on the same cell - there is no January 1st, 2027 cell to move to.
   expect(within(grid).getByRole('button', { name: 'December 31, 2026' })).toHaveFocus()

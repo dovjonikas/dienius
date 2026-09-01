@@ -1,5 +1,5 @@
 import type { Task } from '../../lib/types'
-import { clipToWindow, isAnchor, mergeIntervals, timeToMinutes, type Interval } from './capacity'
+import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Interval } from './capacity'
 
 /**
  * Minutes in one calendar day - the grid never draws past this either.
@@ -406,8 +406,16 @@ export function formatAnchorTimeRange(startMinutes: number, minutes: number): st
 
 // Only the stretches strictly between two sized anchors - never before the
 // first or after the last, see the module comment above. Reuses
-// `mergeIntervals` and `clipToWindow` from capacity.ts rather than a
-// second merging rule.
+// `mergeIntervals` and `clipToWindow` from capacity.ts rather than a second
+// merging rule, and `gapsInWindow` for the walk-and-report step itself
+// rather than a second copy of that loop - `gapsInWindow` also reports the
+// gap before the first block and after the last, which `computeCapacity`
+// wants and this grid does not, so whichever of the two gaps it returns
+// touches either edge of the window exactly is dropped here rather than
+// drawn. An edge gap always has `start === window.start` or
+// `end === window.end` by construction (`gapsInWindow` measures both from
+// the window's own bounds); no interior gap - which only ever spans between
+// two real anchors - can ever coincide with either.
 function computeInteriorGaps(anchors: Task[], window: Interval): TimelineGap[] {
   const rawIntervals = anchors.map(a => {
     const start = timeToMinutes(a.time!)
@@ -418,11 +426,7 @@ function computeInteriorGaps(anchors: Task[], window: Interval): TimelineGap[] {
     .filter((interval): interval is Interval => interval !== null)
   const merged = mergeIntervals(clipped)
 
-  const gaps: TimelineGap[] = []
-  for (let i = 1; i < merged.length; i++) {
-    const start = merged[i - 1].end
-    const end = merged[i].start
-    if (end > start) gaps.push({ startMinutes: start, endMinutes: end, minutes: end - start })
-  }
-  return gaps
+  return gapsInWindow(merged, window)
+    .filter(g => g.start > window.start && g.end < window.end)
+    .map(g => ({ startMinutes: g.start, endMinutes: g.end, minutes: g.minutes }))
 }

@@ -63,6 +63,9 @@ export function clearDraft(): void {
   try {
     sessionStorage.removeItem(DRAFT_KEY)
   } catch {
-    // ignore
+    // Same best-effort reasoning as saveDraft above: sessionStorage can be
+    // unavailable (private browsing, a disabled setting), and failing to
+    // clear an already-placed draft is no worse than the draft never having
+    // been saved in the first place.
   }
 }

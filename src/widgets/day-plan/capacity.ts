@@ -115,9 +115,12 @@ export function mergeIntervals(intervals: Interval[]): Interval[] {
 /**
  * Walks a window left to right against a set of already-merged busy
  * blocks and returns whatever is left over as gaps, including before the
- * first block and after the last. Shared by `computeCapacity`'s own fixed
- * waking window and, with a different window and a different rule about
- * which of those gaps actually get shown, by the grid in `timelineLayout.ts`.
+ * first block and after the last. Used by `computeCapacity`'s own fixed
+ * waking window, and by `computeInteriorGaps` in `timelineLayout.ts` -
+ * the grid wants only the gaps strictly between two anchors, never the one
+ * before the first or after the last, so it filters out whichever of these
+ * gaps touches either edge of its own, differently-derived window exactly,
+ * rather than drawing every gap this function reports.
  */
 export function gapsInWindow(merged: Interval[], window: Interval): Gap[] {
   const gaps: Gap[] = []
