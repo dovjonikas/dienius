@@ -126,3 +126,32 @@ two drags and its long-press menu at the same time, on the same pass over the sa
 about this step should be trusted as touch-complete until that happens - it is not blocking, since the
 long-press menu and every existing tap path work regardless of whether the drag itself turns out to
 need a fix.
+
+## 10. Theme discovery: one line on the first screen, not a moved gallery
+
+The brief flagged that the eleven themes - the most immediately impressive thing in the app - sit
+behind Settings, several taps from the app's default screen. I did not move the gallery, add a fifth
+nav tab, or restructure Settings: `docs/BACKLOG.md`'s own year-strip entry already measured that a
+fifth tab overflows the 375px nav row rather than wrapping, and moving the theme section around
+inside Settings does not change how many taps away it is from Today, the tab the app actually opens
+on. Instead the first-run teaching state carries one added line: "There are also eleven color themes
+here, light and dark - see them under Settings." That puts the fact in front of a new person at the
+exact moment they are deciding whether the app is worth spending time on, at the cost of one sentence
+and nothing else - no tour, no coach mark, no second onboarding surface.
+
+**Recommendation:** this is a minimal, reversible choice, not a structural one - if you want the
+gallery reachable in fewer taps on every visit, not just the first, that is a bigger design decision
+(a compact preview on Settings' own top, a swatch in the header) that I did not make on your behalf.
+
+## 11. A starter tapped on the day view plans the date on screen, not always today
+
+The day view's teaching state can show on any date, since `isFirstRun` is a property of the whole
+install, not of one date - swiping forward while nothing has been planned yet still shows it.
+`handleUseStarter` stamps the exact date `DayView` was given, not `todayKey()`, so tapping an offer
+while three days out plans that day, not today.
+
+**Recommendation:** this matches how the rest of the day view already treats its date prop -
+quick-add, rollover, and every task action already act on whichever date is open, never assuming
+"today." Always stamping today regardless of which date is on screen would surprise anyone who had
+already navigated forward before tapping an offer, and a second control asking "which day" would be
+exactly the kind of extra decision the brief asks not to introduce.

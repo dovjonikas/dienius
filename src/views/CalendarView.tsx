@@ -53,9 +53,18 @@ function taskState(day: { tasks: { done: boolean }[] } | undefined): TaskState {
 
 interface CalendarViewProps {
   onOpenDay: (date: string) => void
+  /**
+   * Switches to the Templates tab - only used to point at it from the
+   * empty-templates message below. Optional so every existing render of
+   * this view (and every existing test) keeps working with no prop at
+   * all; the button that needs it simply falls back to doing nothing
+   * rather than the whole component requiring a wiring change everywhere
+   * it is used just to add one message.
+   */
+  onOpenTemplates?: () => void
 }
 
-export function CalendarView({ onOpenDay }: CalendarViewProps) {
+export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) {
   const data = useAppData()
   const now = new Date()
   const [mode, setMode] = useState<'month' | 'year'>('month')
@@ -195,6 +204,17 @@ export function CalendarView({ onOpenDay }: CalendarViewProps) {
                   {t.name}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Without this, an install with no templates yet just shows a
+              month grid with no stamp bar and no explanation for why - a
+              silent gap rather than a dead end that says what to do about
+              it. */}
+          {data.templates.length === 0 && (
+            <div className="stamp-bar-empty">
+              <p className="muted">No templates yet, so there is nothing here to stamp onto a day.</p>
+              <button type="button" onClick={onOpenTemplates}>Create a template</button>
             </div>
           )}
 

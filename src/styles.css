@@ -1221,6 +1221,84 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .empty { color: var(--muted); text-align: center; padding: 32px 0; }
 
+/* The first-run teaching state - see docs/DECISIONS.md, "offer without
+   installing." Left-aligned and un-centered, unlike .empty above: this is
+   read as running prose, not a short status line, so centering it would
+   only make it harder to read. */
+.first-run { padding: 16px 0 8px; }
+
+.first-run-lede {
+  margin: 0 0 16px;
+  color: var(--text);
+}
+
+.first-run-note {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Single column at 375px (each card comfortably clears the 240px minimum
+   before a second one would fit inside the app's own 343px content width),
+   opening into a real grid once there is room - see docs/BACKLOG.md for the
+   measurement this app's other multi-card layouts already follow. */
+.starter-offers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.starter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--edge);
+  padding: 14px 16px;
+}
+
+.starter-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.starter-card-head .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+.starter-card > .muted { margin: 0; }
+
+.starter-blocks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.starter-blocks li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.starter-block-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starter-card button.primary { margin-top: 4px; }
+
 .task-list { list-style: none; margin: 0; padding: 0; }
 
 .task {
@@ -1734,6 +1812,25 @@ button.danger {
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 12px;
+}
+
+.stamp-bar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stamp-bar-empty p { margin: 0; }
+
+.stamp-bar-empty button {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  min-height: 44px;
+  padding: 0 16px;
 }
 
 .chip {

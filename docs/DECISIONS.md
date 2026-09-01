@@ -226,3 +226,50 @@ same exemption a way to start on day one, for a task the owner already knows, wh
 template, is not going to resolve inside the bound - copied onto `Task.unbounded` at stamp time
 exactly the way `core` already is, and just as invisible at quick-add time, since template editing
 was never part of the moment a day starts.
+
+## Starter templates offer, they never install
+
+The first-run experience (`docs/RESEARCH-ADHD.md` section 11: a median 70 percent of ADHD-tool users
+discontinue within 100 days, sharpest right after acquisition, with confusing interfaces and setup
+cost among the recurring causes) needed a fix without touching the app's oldest rule: it ships empty,
+nothing pre-filled, no clutter the user did not ask for - see "No accounts" and every other decision
+in this file that assumes an install starts as `defaultData()` and stays that way until a person
+actually does something.
+
+The fix is a genuine third option between "ship it empty" and "ship it with fake data to seed and
+later wipe": an offer. `STARTER_TEMPLATES` in `src/lib/starterTemplates.ts` is inert data - three
+realistic day shapes, each with its actual blocks, never written to storage on their own. Nothing
+about loading the app, in any state, creates a single byte in `localStorage`. A person who clears
+storage and never taps anything gets exactly the same empty `AppData` they always would have. The
+templates only become real - a genuine, editable, deletable `Template` object indistinguishable from
+one built by hand in `TemplatesView` - the instant a person taps "Use this template," through the
+same `actions.addTemplate` the manual editor already calls. On the day view specifically, that same
+tap also stamps the new template onto the date being viewed, through the same `actions.stamp` the
+calendar's own stamp bar already calls - one tap, two ordinary store actions, no new code path either
+one goes through that a hand-built template and a hand-drawn stamp would not have gone through
+anyway.
+
+This is why "offer without installing" is not a contradiction with the ships-empty decision but the
+same decision applied one layer earlier: the rule was never "the user must build everything from
+nothing," it was "nothing exists until the user asks for it." A tap is asking. The three starters are
+themselves held to the same content bar the rest of the app's copy already keeps - a working day, a
+rest day, and a night shift are written as an actual person's day (specific titles, real times, a
+night shift that runs a genuine eight hours) rather than a "Task 1, Task 2" scaffold, because this is
+what a brand new person will assume the app is for. `docs/RESEARCH-ADHD.md` section 12 rules out a
+guided multi-step flow and any coach marks or tour; nothing here is a flow. A person can ignore the
+offers entirely and start from quick-add exactly as before, or open Templates and build one from
+scratch exactly as before - the offers are one more starting point sitting next to those two, not a
+replacement for either, and once tapped once the whole section is gone from every screen it ever
+appeared on, because the data that made it show has changed, not because a flag remembered a tour was
+seen.
+
+That last point is deliberate on its own: there is no `hasSeenOnboarding` flag anywhere.
+`isFirstRun` in `src/lib/onboarding.ts` is a pure read of `AppData` - true only while there is no
+template and no day holding a real task, false the moment either exists, true again the moment
+neither does. A stored flag would have been simpler to write and wrong in exactly the way the brief
+warned against: it is one more field to migrate forever, and a person who erases everything through
+Settings' "Erase all data" would have landed on a blank screen instead of the state that actually
+describes an empty install, since a boolean does not un-set itself just because the data it was
+tracking got deleted. Computing it fresh means Settings' reset needed no special case at all - it
+already writes `defaultData()` back to storage and reloads, and the very next read reports a first
+run, for free.

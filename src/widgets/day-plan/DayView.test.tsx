@@ -867,3 +867,45 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
   expect(screen.getByRole('button', { name: /move 1 unfinished to tomorrow/i })).toBeInTheDocument()
   expect(screen.queryByText(/waiting on a decision/i)).not.toBeInTheDocument()
 })
+
+test('a genuinely fresh install shows the starter offers instead of the plain empty line', () => {
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the night shift template/i })).toBeInTheDocument()
+  expect(screen.queryByText(/^nothing planned\./i)).not.toBeInTheDocument()
+})
+
+test('tapping a starter creates it as a real template and stamps it onto the day being viewed', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: /use the rest day template/i }))
+
+  const templates = getData().templates
+  expect(templates).toHaveLength(1)
+  expect(templates[0].name).toBe('Rest day')
+  expect(templates[0].type).toBe('rest')
+
+  const day = getData().days['2026-09-01']
+  expect(day.templateId).toBe(templates[0].id)
+  expect(day.tasks.length).toBe(templates[0].blocks.length)
+  expect(day.tasks.some(t => t.title === 'Take morning medication')).toBe(true)
+
+  // The teaching state is gone now that the day has real tasks on it - the
+  // rest of the day view (task list, quick add) takes over.
+  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+})
+
+test('once a template exists anywhere, an empty day falls back to the plain, non-teaching message', () => {
+  actions.addTemplate({ name: 'Existing', color: '#a7c4f5', blocks: [] })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+  expect(screen.getByText(/nothing planned/i)).toBeInTheDocument()
+})
+
+test('a day that already has a hand-typed task never shows the starter offers, even before any template exists', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'Water the plants{Enter}')
+  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+})
