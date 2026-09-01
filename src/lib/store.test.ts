@@ -151,6 +151,35 @@ test('rolloverUnfinished moves tasks below the bound and holds back tasks at the
   expect(getData().days['2026-09-04'].tasks.map(t => t.title)).toEqual(['Fresh task'])
 })
 
+test('rolloverUnfinished keeps moving a task marked unbounded past the push bound', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.rolloverUnfinished('2026-09-01')
+  actions.rolloverUnfinished('2026-09-02')
+  expect(getData().days['2026-09-03'].tasks[0].pushCount).toBe(2)
+
+  actions.setTaskUnbounded('2026-09-03', id, true)
+  const result = actions.rolloverUnfinished('2026-09-03')
+  expect(result).toEqual({ moved: 1, held: 0 })
+  const moved = getData().days['2026-09-04'].tasks[0]
+  expect(moved.pushCount).toBe(3)
+  expect(moved.unbounded).toBe(true)
+
+  // And it keeps going indefinitely, not just for one extra push.
+  const again = actions.rolloverUnfinished('2026-09-04')
+  expect(again).toEqual({ moved: 1, held: 0 })
+  expect(getData().days['2026-09-05'].tasks[0].pushCount).toBe(4)
+})
+
+test('rolloverUnfinished does not clear unbounded when pushing a task forward, unlike core', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskUnbounded('2026-09-01', id, true)
+  actions.rolloverUnfinished('2026-09-01')
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.unbounded).toBe(true)
+})
+
 test('a task written to storage before pushCount existed loads and pushes correctly', () => {
   const legacy = {
     templates: [],
@@ -206,6 +235,50 @@ test('pushTask refuses to push a task already at the push bound, and leaves it i
   expect(getData().days['2026-09-02']).toBeUndefined()
 })
 
+test('pushTask moves a task marked unbounded even though it is already past the push bound', () => {
+  actions.addTask('2026-09-01', 'Standing errand')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t =>
+          t.id === id ? { ...t, pushCount: 5, unbounded: true } : t,
+        ),
+      },
+    },
+  })
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(true)
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.pushCount).toBe(6)
+  expect(moved.unbounded).toBe(true)
+})
+
+test('a task written to storage before unbounded existed loads and pushes exactly as an ordinary task would', () => {
+  const legacy = {
+    templates: [],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'legacy-1', title: 'From before unbounded existed', done: false, pushCount: 2 }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(legacy))
+
+  actions.resetForTests(loadData())
+  const loadedTask = getData().days['2026-09-01'].tasks[0]
+  expect(loadedTask.unbounded).toBeUndefined()
+
+  // Already at the bound, and never marked unbounded - held, not moved.
+  const result = actions.rolloverUnfinished('2026-09-01')
+  expect(result).toEqual({ moved: 0, held: 1 })
+})
+
 test('pushTask on a missing task or day does not throw and reports no push happened', () => {
   expect(actions.pushTask('2026-09-01', 'nothing-here')).toBe(false)
   actions.addTask('2026-09-01', 'Real task')
@@ -237,6 +310,41 @@ test('setTaskMinutes changes an existing size, and clears it back to unsized wit
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(30)
   actions.setTaskMinutes('2026-09-01', id, undefined)
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBeUndefined()
+})
+
+test('setTaskUnbounded(true) marks a task exempt from the push bound', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskUnbounded('2026-09-01', id, true)
+  expect(getData().days['2026-09-01'].tasks[0].unbounded).toBe(true)
+})
+
+test('setTaskUnbounded(false) reverses the exemption, and stores no stray field for an ordinary task', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskUnbounded('2026-09-01', id, true)
+  actions.setTaskUnbounded('2026-09-01', id, false)
+  expect(getData().days['2026-09-01'].tasks[0].unbounded).toBeUndefined()
+})
+
+test('reversing unbounded on a task already past the bound puts it right back into do-or-delete territory', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t =>
+          t.id === id ? { ...t, pushCount: 2, unbounded: true } : t,
+        ),
+      },
+    },
+  })
+  actions.setTaskUnbounded('2026-09-01', id, false)
+  const result = actions.pushTask('2026-09-01', id)
+  expect(result).toBe(false)
 })
 
 test('placeFloat gives a float a time, turning it into an anchor', () => {
@@ -335,6 +443,21 @@ test('addTemplate carries the day type and stamping carries it and core through 
   expect(day.dayType).toBe('shift')
   expect(day.tasks.find(task => task.title === 'Clock in')?.core).toBe(true)
   expect(day.tasks.find(task => task.title === 'Break')?.core).toBeFalsy()
+})
+
+test('addTemplate carries a block\'s unbounded flag through to stamping, skipping the push bound from day one', () => {
+  const t = actions.addTemplate({
+    name: 'Ongoing project',
+    color: '#c9b3f0',
+    blocks: [
+      { time: '19:00', title: 'Standing item', unbounded: true },
+      { time: '21:00', title: 'Ordinary item' },
+    ],
+  })
+  actions.stamp({ '2026-09-01': t.id })
+  const day = getData().days['2026-09-01']
+  expect(day.tasks.find(task => task.title === 'Standing item')?.unbounded).toBe(true)
+  expect(day.tasks.find(task => task.title === 'Ordinary item')?.unbounded).toBeFalsy()
 })
 
 test('deleting a template after stamping it does not change the day type already baked onto the day', () => {

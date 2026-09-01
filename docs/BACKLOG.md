@@ -305,6 +305,49 @@ float sets its `time` to the gap's own start and nothing else; a quiet "remove t
 task's own row in the list below undoes it without needing step 7's drag, which is still the only
 thing left in this area.
 
+**Ongoing tasks - the push bound's third choice.** `docs/RESEARCH-PUSH-RULE.md`, written after the
+owner said the two-push bound is right for most tasks and wrong for some, found the bound itself is
+a design choice with no citation behind it - see the new section in `docs/DECISIONS.md` - and
+recommended widening the do-or-delete moment a task already hits at the bound into three choices
+instead of two, rather than asking anything new at quick-add.
+
+`Task.unbounded?: boolean` is the whole data model, absent meaning false like every other optional
+field on `Task`, so a task written before this shipped loads and pushes exactly as it did before.
+`isPushable` in the new `src/lib/pushRules.ts` is the one place that answers whether a task can
+still move - true under the bound, and true unconditionally once `unbounded` is set - and
+`rolloverUnfinished`, `pushTask`, the push button, and the rollover count on the day view all read
+it instead of each keeping their own copy of the comparison. `pushedForward` clears `core` on every
+push, same as before, but leaves `unbounded` alone: it is a fact about the kind of task this is, not
+a promise tied to the day it reached the bound on.
+
+The maxed-note that used to read "Pushed twice - do it today, or let it go" now offers a third
+branch: "Pushed twice - do it today, let it go, or mark it ongoing. Deleting counts as a decision,
+not a failure." Marking a task ongoing sets the flag through the new `setTaskUnbounded` action and
+shows a small, quiet, text-only label on the task's own row from then on - matching `core`'s own
+plain treatment, no colour, no icon - and that label doubles as its own undo: tapping it clears the
+flag with no confirmation step, the same weight as changing a task's size. Once a task is marked
+ongoing, `pushCount` keeps incrementing internally but stops being shown anywhere on that task's row
+- no count of how many times it has moved, no age, nothing that turns "this is standing" back into
+"this has been sitting here for a while," which would have quietly reintroduced the guilt the whole
+feature exists to remove.
+
+`TemplateBlock.unbounded?: boolean` gives the same exemption a way to start on day one, for a task
+the owner already knows, while building a template, is not going to resolve inside the bound -
+copied onto `Task.unbounded` in `applyStamps` at stamp time exactly the way `core` already is. Its
+toggle in the template editor is not gated on day type the way `core`'s is, since being a standing
+task has nothing to do with whether the day scores by core tasks only - it is a quiet second pill
+next to Core wherever Core already appears, and shown on its own on a full-day template where Core
+is hidden.
+
+Checked at 375px with a long task title, both the maxed-note's three-choice sentence and the
+template editor's block row (time, size, Core, Ongoing, remove, on a single block already carrying
+a long title): no horizontal overflow on either `document.body` or any individual element, measured
+directly through `getBoundingClientRect` rather than a screenshot, which this session's browser
+pane could not be trusted to render reliably. The mark-ongoing button, the reversible ongoing label,
+and pushing a task well past the bound were all exercised through real DOM `click()` calls and
+confirmed by reading the change straight back out of `localStorage`, not by trusting what rendered
+on screen.
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time

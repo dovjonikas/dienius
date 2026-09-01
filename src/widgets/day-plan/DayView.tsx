@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
-import { actions, MAX_PUSHES, useAppData } from '../../lib/store'
+import { actions, useAppData } from '../../lib/store'
+import { isPushable } from '../../lib/pushRules'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
@@ -39,7 +40,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     ? data.templates.find(t => t.id === day.templateId)
     : undefined
   const unfinishedTasks = tasks.filter(t => !t.done)
-  const pushableCount = unfinishedTasks.filter(t => (t.pushCount ?? 0) < MAX_PUSHES).length
+  const pushableCount = unfinishedTasks.filter(isPushable).length
   const heldCount = unfinishedTasks.length - pushableCount
   const isToday = date === todayKey()
   const isFullDay = (day?.dayType ?? 'full') === 'full'

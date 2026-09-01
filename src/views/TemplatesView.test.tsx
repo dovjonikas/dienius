@@ -131,6 +131,43 @@ test('the core toggle is not shown on a full-day template, so a block cannot be 
   expect(screen.queryByRole('button', { name: /mark new block as core/i })).not.toBeInTheDocument()
 })
 
+test('the ongoing toggle is shown on a full-day template too, unlike core - it has nothing to do with day type', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.type(screen.getByPlaceholderText('What happens'), 'Standing item')
+  expect(screen.getByRole('button', { name: /mark new block as ongoing/i })).toBeInTheDocument()
+})
+
+test('marking a new block ongoing saves that way, and an untouched block saves as bounded', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Ongoing project')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Standing item')
+  await user.click(screen.getByRole('button', { name: /mark new block as ongoing/i }))
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.type(screen.getByPlaceholderText('What happens'), 'Ordinary item')
+  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const saved = getData().templates[0]
+  expect(saved.blocks.find(b => b.title === 'Standing item')?.unbounded).toBe(true)
+  expect(saved.blocks.find(b => b.title === 'Ordinary item')?.unbounded).toBeFalsy()
+})
+
+test('editing a template loads each block\'s ongoing state', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Ongoing project',
+    color: '#c9b3f0',
+    blocks: [{ time: '19:00', title: 'Standing item', unbounded: true }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Ongoing project' }))
+  expect(screen.getByRole('button', { name: 'Standing item is ongoing' })).toBeInTheDocument()
+})
+
 test('picking a day type reveals the core toggle, and a block marked core saves that way', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)

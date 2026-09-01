@@ -1,5 +1,6 @@
 import type { Task } from '../../lib/types'
-import { actions, MAX_PUSHES } from '../../lib/store'
+import { actions } from '../../lib/store'
+import { isPushable } from '../../lib/pushRules'
 import { formatDuration } from './capacity'
 import { useLongPress } from './useLongPress'
 
@@ -61,7 +62,12 @@ export function TaskRow({
   onLongPressOpen,
 }: TaskRowProps) {
   const pushCount = task.pushCount ?? 0
-  const atBound = !task.done && pushCount >= MAX_PUSHES
+  const isUnbounded = !!task.unbounded
+  // isPushable already returns true for an unbounded task regardless of
+  // pushCount, so a task that has been marked ongoing never re-enters the
+  // maxed state just because pushCount keeps climbing - see its own doc
+  // comment in pushRules.ts.
+  const atBound = !task.done && !isPushable(task)
   // A long-press menu makes sense for anything drag also handles - a
   // not-done float (place it) or a not-done anchor (un-anchor it) - and
   // for nothing else, the same set `onDragHandlePointerDown` below is
@@ -76,10 +82,19 @@ export function TaskRow({
   const badgeId = `push-badge-${task.id}`
   const noteId = `push-note-${task.id}`
   const coreId = `core-badge-${task.id}`
+  const unboundedId = `unbounded-badge-${task.id}`
   const showCoreBadge = !isFullDay && !!task.core
+  // Once a task is marked ongoing, pushed-N-times stops being shown at all
+  // - see docs/DECISIONS.md. That count is exactly the kind of "how long
+  // has this been carried" measurement the feature exists to avoid once a
+  // task has already been declared standing rather than stalled; it only
+  // ever describes something worth deciding on for a task still under the
+  // bound.
+  const showPushedBadge = pushCount > 0 && !atBound && !isUnbounded
   const describedByIds = [
-    atBound ? noteId : pushCount > 0 ? badgeId : undefined,
+    atBound ? noteId : showPushedBadge ? badgeId : undefined,
     showCoreBadge ? coreId : undefined,
+    isUnbounded ? unboundedId : undefined,
   ].filter((id): id is string => !!id)
   const describedBy = describedByIds.length > 0 ? describedByIds.join(' ') : undefined
 
@@ -100,7 +115,7 @@ export function TaskRow({
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
-          {pushCount > 0 && !atBound && (
+          {showPushedBadge && (
             <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
           )}
         </label>
@@ -133,14 +148,50 @@ export function TaskRow({
         )}
         {/* A float, not yet done, still eligible to move. Which one
             to push is the owner's call, not something the capacity
-            line pre-selects - see the comment above it. */}
-        {!task.time && !task.done && pushCount < MAX_PUSHES && (
+            line pre-selects - see the comment above it. isPushable is
+            true past MAX_PUSHES for a task marked ongoing, so this stays
+            available for it exactly as it does for any other float. */}
+        {!task.time && !task.done && isPushable(task) && (
           <button
             className="task-push"
             aria-label={`Push ${task.title} to tomorrow`}
             onClick={() => actions.pushTask(date, task.id)}
           >
             push
+          </button>
+        )}
+        {/* The quiet, permanent label a task carries once it has answered
+            the push bound's third choice - see the maxed-note below and
+            docs/DECISIONS.md. Matches task-core's plain, textual treatment
+            deliberately: no colour, no icon, nothing that competes for
+            attention with a task that still needs a decision today. It
+            also doubles as its own undo - tapping it clears the flag,
+            with no confirmation step, since nothing is lost either way. */}
+        {isUnbounded && (
+          <button
+            id={unboundedId}
+            type="button"
+            className="task-unbounded-badge"
+            aria-label={`${task.title} is ongoing, exempt from the push bound. Tap to undo.`}
+            onClick={() => actions.setTaskUnbounded(date, task.id, false)}
+          >
+            ongoing
+          </button>
+        )}
+        {/* The third choice at the bound, alongside the checkbox (do it
+            today) and the delete button below (let it go) - see the
+            maxed-note and docs/DECISIONS.md. A task that is not actually
+            stalled, just standing, gets to say so here instead of being
+            forced into do-or-delete on every day it survives past the
+            bound. */}
+        {atBound && (
+          <button
+            type="button"
+            className="task-mark-unbounded"
+            aria-label={`Mark ${task.title} as ongoing, so it can keep being pushed`}
+            onClick={() => actions.setTaskUnbounded(date, task.id, true)}
+          >
+            mark ongoing
           </button>
         )}
         {/* The undo for tapping a gap - see docs/TIMELINE.md
@@ -193,7 +244,7 @@ export function TaskRow({
       </div>
       {atBound && (
         <p id={noteId} className="task-maxed-note">
-          {`Pushed ${pushCountLabel(pushCount)} - do it today, or let it go. Deleting counts as a decision, not a failure.`}
+          {`Pushed ${pushCountLabel(pushCount)} - do it today, let it go, or mark it ongoing. Deleting counts as a decision, not a failure.`}
         </p>
       )}
     </li>

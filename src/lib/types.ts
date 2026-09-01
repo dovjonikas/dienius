@@ -27,6 +27,16 @@ export interface TemplateBlock {
    * a task by hand; see docs/TIMELINE.md section 4.
    */
   minutes?: number
+  /**
+   * Marks a block as producing a standing task, one that is not expected
+   * to resolve within the push bound. Copied straight onto `Task.unbounded`
+   * at stamp time in `applyStamps`, exactly the way `core` is copied - so
+   * a task the owner already knows, while building the template, will
+   * outlive `MAX_PUSHES` can skip the bound from its very first day rather
+   * than earning the exemption the hard way by reaching it. Absent or
+   * false is an ordinary block, bound like any other.
+   */
+  unbounded?: boolean
 }
 
 export interface Template {
@@ -75,6 +85,28 @@ export interface Task {
    * and docs/TIMELINE.md section 4 for why a default is never invented.
    */
   minutes?: number
+  /**
+   * Marks this task as exempt from the push bound - `MAX_PUSHES` never
+   * applies to it, on this day or any day it is pushed to after. Absent
+   * means false, the same pattern every other optional field on `Task`
+   * already uses, so a task written to disk before this field existed
+   * loads and behaves exactly as it did before.
+   *
+   * Set two ways: by hand, from the third choice offered once a task
+   * reaches the push bound (see `TaskRow.tsx`'s maxed-note and
+   * `actions.setTaskUnbounded` in `store.ts`), or copied from
+   * `TemplateBlock.unbounded` at stamp time for a task foreseeably
+   * standing from day one.
+   *
+   * Unlike `core` and `fromTemplate`, this is deliberately not cleared
+   * when a task is pushed forward - see `pushedForward` in `store.ts`. It
+   * is a fact about the kind of task this is, not a promise a template
+   * made about one specific day, so it has to survive the exact move it
+   * exists to allow. It is reversible at any time through the same
+   * action that sets it, with no confirmation step - nothing is lost by
+   * flipping it either way.
+   */
+  unbounded?: boolean
 }
 
 export interface DayPlan {

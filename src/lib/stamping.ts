@@ -36,12 +36,14 @@ export function applyStamps(
         title: b.title,
         done: match?.done ?? false,
         fromTemplate: true,
-        // Core and minutes both come from the template's current block, not
-        // the matched prior task - the same rule stamping already applies
-        // to title and time, so editing a block's size and re-stamping
-        // updates the day the same way editing its title does.
+        // Core, minutes and unbounded all come from the template's current
+        // block, not the matched prior task - the same rule stamping
+        // already applies to title and time, so editing a block's size (or
+        // whether it is a standing task) and re-stamping updates the day
+        // the same way editing its title does.
         core: b.core,
         minutes: b.minutes,
+        unbounded: b.unbounded,
       }
     })
     // dayType is copied from the template at this moment, not looked up

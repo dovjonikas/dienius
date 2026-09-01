@@ -1283,13 +1283,58 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   outline-offset: 2px;
 }
 
+/* The quiet, permanent label a task carries once it has been marked
+   ongoing - see TaskRow.tsx's own comment and docs/DECISIONS.md. Same
+   quiet, textual treatment as task-core: no colour, no icon, nothing that
+   competes for a look at what still needs deciding today. Unlike
+   task-core it is also a real control, not just a label - tapping it
+   clears the flag - so it needs task-push's own touch target rather than
+   task-core's plain span. */
+.task-unbounded-badge {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 44px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.task-unbounded-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The third choice at the push bound, alongside the checkbox (do it) and
+   task-delete (let it go) below - see the maxed-note in TaskRow.tsx and
+   docs/DECISIONS.md. Left out of the hover-fade group below on purpose,
+   the same reason task-delete is: it is one of three equally legitimate
+   answers to the bound's own question, not a secondary action to
+   discover on hover. */
+.task-mark-unbounded {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  min-width: 44px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.task-mark-unbounded:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Fade a task's quieter controls in on hover only where a real pointer
    exists. On touch devices they stay visible, since there is no hover
-   state. A task at the push bound keeps its delete button visible too -
-   it is one of only two real options at that point, not a stray action to
-   discover on hover. An already-sized chip is left out of this group on
-   purpose: once a task has a size, that is information worth always
-   showing, not an action to tuck away. */
+   state. A task at the push bound keeps its delete button, and its
+   mark-ongoing button, visible too - they are two of the bound's three
+   real options, not a stray action to discover on hover. An already-sized
+   chip is left out of this group on purpose: once a task has a size, that
+   is information worth always showing, not an action to tuck away. */
 @media (hover: hover) and (pointer: fine) {
   .task-delete,
   .task-size-empty,
