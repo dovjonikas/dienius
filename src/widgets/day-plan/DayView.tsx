@@ -7,6 +7,7 @@ import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
 import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
 import { TimelineGrid } from './TimelineGrid'
+import { IfThenDayRule } from '../if-then/DayRule'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -117,6 +118,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           <p>{capacityLine}</p>
         </div>
       )}
+
+      {/* One quiet if-then rule, rotated in from the board that used to be
+          its own tab - see docs/TIMELINE.md section 6. Self-contained: it
+          reads its own data and renders nothing when there is no eligible
+          rule for today, the same way the capacity line above renders
+          nothing for an empty day. */}
+      <IfThenDayRule date={date} />
 
       {/* The grid's own disclosure, collapsed by default - see
           docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.

@@ -12,7 +12,7 @@ beforeEach(() => {
 
 test('creates an if-then entry with a tag', async () => {
   const user = userEvent.setup()
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   await user.type(
     screen.getByPlaceholderText(/I get home and the kitchen/i),
@@ -37,7 +37,7 @@ test('creates an if-then entry with a tag', async () => {
 
 test('the save button stays disabled until both trigger and action are filled in', async () => {
   const user = userEvent.setup()
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   await user.type(screen.getByPlaceholderText(/I get home and the kitchen/i), 'A trigger')
@@ -50,7 +50,7 @@ test('editing an entry happens in place, without hiding the rest of the board', 
   const user = userEvent.setup()
   actions.addIfThen({ trigger: 'Old trigger', action: 'Old action' })
   actions.addIfThen({ trigger: 'Other entry', action: 'Other action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
 
   await user.click(screen.getByRole('button', { name: 'Edit "Old trigger"' }))
   // The other card stays on screen while this one is being edited - no modal.
@@ -68,7 +68,7 @@ test('editing an entry happens in place, without hiding the rest of the board', 
 test('cancel discards the edit without touching stored data', async () => {
   const user = userEvent.setup()
   actions.addIfThen({ trigger: 'Untouched', action: 'Stays the same' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'Edit "Untouched"' }))
   const triggerInput = screen.getByDisplayValue('Untouched')
   await user.clear(triggerInput)
@@ -81,7 +81,7 @@ test('cancel discards the edit without touching stored data', async () => {
 test('deleting an entry requires a confirming second tap', async () => {
   const user = userEvent.setup()
   actions.addIfThen({ trigger: 'Delete me', action: 'Some action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'Delete "Delete me"' }))
   expect(getData().ifThens).toHaveLength(1)
   await user.click(screen.getByRole('button', { name: 'Confirm delete "Delete me"' }))
@@ -93,7 +93,7 @@ test('filter chips narrow the board to entries with the selected tag', async () 
   actions.addIfThen({ trigger: 'Blue one', action: 'Blue action', color: '#a7c4f5' })
   actions.addIfThen({ trigger: 'Coral one', action: 'Coral action', color: '#f5b0a7' })
   actions.addIfThen({ trigger: 'Untagged one', action: 'Untagged action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
 
   expect(screen.getByText('Blue one')).toBeInTheDocument()
   expect(screen.getByText('Coral one')).toBeInTheDocument()
@@ -116,18 +116,18 @@ test('filter chips narrow the board to entries with the selected tag', async () 
 
 test('the filter row is not shown when every entry falls into the same tag group', async () => {
   actions.addIfThen({ trigger: 'Only one', action: 'Only action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   expect(screen.queryByRole('group', { name: 'Filter by tag' })).not.toBeInTheDocument()
 })
 
 test('an empty board nudges toward writing a specific entry rather than a vague one', () => {
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   expect(screen.getByText(/no if-then entries yet/i)).toBeInTheDocument()
 })
 
 test('the trigger and action placeholders model a concrete, specific plan', async () => {
   const user = userEvent.setup()
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   expect(screen.getByPlaceholderText(/I get home and the kitchen is a mess/i)).toBeInTheDocument()
   expect(screen.getByPlaceholderText(/I set a timer for ten minutes/i)).toBeInTheDocument()
@@ -135,19 +135,19 @@ test('the trigger and action placeholders model a concrete, specific plan', asyn
 
 test('an entry carries no done checkbox or completion control of any kind', () => {
   actions.addIfThen({ trigger: 'Trigger', action: 'Action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
 })
 
 test('a tag renders as visible text, not color alone', () => {
   actions.addIfThen({ trigger: 'Tagged entry', action: 'Some action', color: '#a7e3bd' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   expect(screen.getByText('Green')).toBeInTheDocument()
 })
 
 test('the trigger and action inputs have accessible names, not just example placeholders', async () => {
   const user = userEvent.setup()
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   const triggerInput = screen.getByRole('textbox', { name: 'Trigger' })
   const actionInput = screen.getByRole('textbox', { name: 'Action' })
@@ -157,7 +157,7 @@ test('the trigger and action inputs have accessible names, not just example plac
 
 test('opening the new-entry form moves focus into the trigger field', async () => {
   const user = userEvent.setup()
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'New if-then' }))
   expect(screen.getByRole('textbox', { name: 'Trigger' })).toHaveFocus()
 })
@@ -165,7 +165,50 @@ test('opening the new-entry form moves focus into the trigger field', async () =
 test('opening an in-place edit moves focus into the trigger field', async () => {
   const user = userEvent.setup()
   actions.addIfThen({ trigger: 'Existing trigger', action: 'Existing action' })
-  render(<IfThenBoard date="2026-09-01" onDateChange={() => {}} />)
+  render(<IfThenBoard />)
   await user.click(screen.getByRole('button', { name: 'Edit "Existing trigger"' }))
   expect(screen.getByRole('textbox', { name: 'Trigger' })).toHaveFocus()
+})
+
+test('a new entry defaults to every day type and any time, with nothing toggled on', async () => {
+  const user = userEvent.setup()
+  render(<IfThenBoard />)
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  expect(screen.getByRole('button', { name: 'Full day' })).toHaveAttribute('aria-pressed', 'false')
+  expect(screen.getByRole('button', { name: 'Night' })).toHaveAttribute('aria-pressed', 'false')
+  expect(screen.getByRole('button', { name: 'Any time' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('picking day types and a time band saves them on the entry', async () => {
+  const user = userEvent.setup()
+  render(<IfThenBoard />)
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  await user.type(screen.getByPlaceholderText(/I get home and the kitchen/i), 'Shift starts')
+  await user.type(screen.getByPlaceholderText(/I set a timer for ten minutes/i), 'Lay out the sleep mask')
+  await user.click(screen.getByRole('button', { name: 'Night' }))
+  await user.click(screen.getByRole('button', { name: 'Evening' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+
+  const saved = getData().ifThens[0]
+  expect(saved.dayTypes).toEqual(['night'])
+  expect(saved.when).toBe('evening')
+  expect(screen.getByText('Night · Evening')).toBeInTheDocument()
+})
+
+test('toggling a day type back off returns the entry to applying every day', async () => {
+  const user = userEvent.setup()
+  render(<IfThenBoard />)
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  await user.type(screen.getByPlaceholderText(/I get home and the kitchen/i), 'Trigger')
+  await user.type(screen.getByPlaceholderText(/I set a timer for ten minutes/i), 'Action')
+  await user.click(screen.getByRole('button', { name: 'Night' }))
+  await user.click(screen.getByRole('button', { name: 'Night' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().ifThens[0].dayTypes).toBeUndefined()
+})
+
+test('an entry with no day type or time restriction shows no scope note on its card', () => {
+  actions.addIfThen({ trigger: 'Unrestricted', action: 'Unrestricted' })
+  render(<IfThenBoard />)
+  expect(screen.queryByText(/Full day|Shift|Night|Rest/)).not.toBeInTheDocument()
 })

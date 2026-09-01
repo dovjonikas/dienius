@@ -423,6 +423,30 @@ test('deleteIfThen removes only the matching entry', () => {
   expect(getData().ifThens[0].trigger).toBe('Trigger B')
 })
 
+test('addIfThen accepts dayTypes and when, and leaves them undefined when not given', () => {
+  const scoped = actions.addIfThen({
+    trigger: 'Shift starts',
+    action: 'Lay out the sleep mask',
+    dayTypes: ['night'],
+    when: 'evening',
+  })
+  expect(getData().ifThens.find(e => e.id === scoped.id)).toMatchObject({ dayTypes: ['night'], when: 'evening' })
+
+  actions.addIfThen({ trigger: 'Unscoped trigger', action: 'Unscoped action' })
+  const unscoped = getData().ifThens.find(e => e.trigger === 'Unscoped trigger')
+  expect(unscoped?.dayTypes).toBeUndefined()
+  expect(unscoped?.when).toBeUndefined()
+})
+
+test('markIfThenSurfaced sets lastSurfaced on only the matching entry', () => {
+  const a = actions.addIfThen({ trigger: 'Trigger A', action: 'Action A' })
+  actions.addIfThen({ trigger: 'Trigger B', action: 'Action B' })
+  actions.markIfThenSurfaced(a.id, '2026-09-01')
+  const [entryA, entryB] = getData().ifThens
+  expect(entryA.lastSurfaced).toBe('2026-09-01')
+  expect(entryB.lastSurfaced).toBeUndefined()
+})
+
 test('setTheme updates the mode and leaves the rest of settings, and the rest of theme, untouched', () => {
   actions.resetForTests({
     ...defaultData(),

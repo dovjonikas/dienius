@@ -353,14 +353,39 @@ test('a payload written before the if-then board existed has no ifThens key and 
   expect(loaded.ifThens).toEqual([])
 })
 
-test('loading a payload from before the if-then board existed enables the widget on it, since there is no way to turn it off', () => {
+test('loading a payload from before the if-then board existed leaves enabledWidgets untouched, with no phantom widget added', () => {
   const legacy = JSON.stringify({
     templates: [],
     days: {},
     settings: { theme: 'light', enabledWidgets: ['day-plan'] },
   })
   localStorage.setItem(STORAGE_KEY, legacy)
-  expect(loadData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
+})
+
+// The if-then board briefly lived in the widget registry, under the id
+// 'if-then' - see docs/TIMELINE.md section 6 for why it moved to a single
+// surfaced rule inline on the day view instead. Every real install from
+// that window has 'if-then' sitting in its enabledWidgets, since there was
+// never a settings toggle to remove it by hand; loading must not leave
+// that dead id in place forever.
+test('a leftover if-then widget id from before the relocation is stripped out on load, migrated or not', () => {
+  const unmigrated = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then'] },
+  })
+  localStorage.setItem(STORAGE_KEY, unmigrated)
+  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
+
+  const alreadyMigrated = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then'] },
+    ifThens: [],
+  })
+  localStorage.setItem(STORAGE_KEY, alreadyMigrated)
+  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
 })
 
 // Migration must run exactly once per payload, not on every load. The
@@ -426,7 +451,60 @@ test('validate accepts a well-formed if-then entry, tagged or not', () => {
   expect(loaded.ifThens[1].color).toBeUndefined()
 })
 
-test('importJson backfills ifThens and the if-then widget for a legacy backup file', () => {
+test('an if-then entry from before dayTypes and when existed loads exactly as it always did', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ id: 'i1', trigger: 'Old trigger', action: 'Old action' }],
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  const loaded = loadData()
+  expect(loaded.ifThens).toHaveLength(1)
+  expect(loaded.ifThens[0].dayTypes).toBeUndefined()
+  expect(loaded.ifThens[0].when).toBeUndefined()
+  expect(loaded.ifThens[0].lastSurfaced).toBeUndefined()
+})
+
+test('validate accepts a well-formed dayTypes array, when band, and lastSurfaced date on an if-then entry', () => {
+  const good = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [
+      { id: 'i1', trigger: 'Shift starts', action: 'Lay out the mask', dayTypes: ['shift', 'night'], when: 'evening', lastSurfaced: '2026-08-30' },
+    ],
+  })
+  localStorage.setItem(STORAGE_KEY, good)
+  const loaded = loadData()
+  expect(loaded.ifThens[0]).toMatchObject({
+    dayTypes: ['shift', 'night'],
+    when: 'evening',
+    lastSurfaced: '2026-08-30',
+  })
+})
+
+test('validate rejects an if-then entry with an unknown day type or when value', () => {
+  const badDayType = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', dayTypes: ['weekend'] }],
+  })
+  localStorage.setItem(STORAGE_KEY, badDayType)
+  expect(loadData().ifThens).toEqual([])
+
+  const badWhen = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', when: 'noon' }],
+  })
+  localStorage.setItem(STORAGE_KEY, badWhen)
+  expect(loadData().ifThens).toEqual([])
+})
+
+test('importJson backfills ifThens for a legacy backup file without adding a widget id for it', () => {
   const legacy = JSON.stringify({
     templates: [],
     days: {},
@@ -434,7 +512,7 @@ test('importJson backfills ifThens and the if-then widget for a legacy backup fi
   })
   const imported = importJson(legacy)
   expect(imported.ifThens).toEqual([])
-  expect(imported.settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+  expect(imported.settings.enabledWidgets).toEqual(['day-plan'])
 })
 
 test('a well-formed payload still passes validate', () => {

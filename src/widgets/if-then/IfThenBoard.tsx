@@ -1,16 +1,45 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { PALETTE_COLORS, paletteColorName } from '../../lib/colors'
-import type { IfThenEntry } from '../../lib/types'
-import type { DayViewProps } from '../day-plan/DayView'
+import type { DayType, IfThenEntry, IfThenWhen } from '../../lib/types'
 
 interface Draft {
   trigger: string
   action: string
   color?: string
+  dayTypes?: DayType[]
+  when?: IfThenWhen
 }
 
-const emptyDraft = (): Draft => ({ trigger: '', action: '', color: undefined })
+const emptyDraft = (): Draft => ({ trigger: '', action: '', color: undefined, dayTypes: undefined, when: undefined })
+
+const DAY_TYPE_OPTIONS: { value: DayType; label: string }[] = [
+  { value: 'full', label: 'Full day' },
+  { value: 'shift', label: 'Shift' },
+  { value: 'night', label: 'Night' },
+  { value: 'rest', label: 'Rest' },
+]
+
+// undefined stands for "any time" here, the same way it stands for "no
+// tag" on the color picker below - selecting it writes an absent `when`
+// rather than the literal string 'any', so a rule saved through the app
+// always takes the plainer of the two equivalent shapes.
+const WHEN_OPTIONS: { value: IfThenWhen | undefined; label: string }[] = [
+  { value: undefined, label: 'Any time' },
+  { value: 'morning', label: 'Morning' },
+  { value: 'day', label: 'Day' },
+  { value: 'evening', label: 'Evening' },
+]
+
+function dayTypesLabel(dayTypes: DayType[] | undefined): string | undefined {
+  if (!dayTypes || dayTypes.length === 0) return undefined
+  return dayTypes.map(dt => DAY_TYPE_OPTIONS.find(o => o.value === dt)?.label ?? dt).join(', ')
+}
+
+function whenLabel(when: IfThenWhen | undefined): string | undefined {
+  if (!when || when === 'any') return undefined
+  return WHEN_OPTIONS.find(o => o.value === when)?.label
+}
 
 interface IfThenFormProps {
   draft: Draft
@@ -36,6 +65,12 @@ function IfThenForm({ draft, onChange, onSave, onCancel }: IfThenFormProps) {
   useEffect(() => {
     triggerRef.current?.focus()
   }, [])
+
+  function toggleDayType(value: DayType) {
+    const current = draft.dayTypes ?? []
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value]
+    onChange({ ...draft, dayTypes: next.length > 0 ? next : undefined })
+  }
 
   return (
     <div className="if-then-form">
@@ -82,6 +117,43 @@ function IfThenForm({ draft, onChange, onSave, onCancel }: IfThenFormProps) {
           />
         ))}
       </div>
+      {/* Which days this rule is even eligible to surface on, and which
+          part of the day - see docs/TIMELINE.md section 6. Both default to
+          "every day, any time", so writing a rule works exactly as it
+          always has if these are never touched. */}
+      <div className="if-then-scope">
+        <span className="muted">Applies on</span>
+        <div className="if-then-scope-chips" role="group" aria-label="Day types this rule applies to">
+          {DAY_TYPE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              className={draft.dayTypes?.includes(opt.value) ? 'chip selected' : 'chip'}
+              aria-pressed={!!draft.dayTypes?.includes(opt.value)}
+              onClick={() => toggleDayType(opt.value)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="muted if-then-hint">Leave every option off to show this rule on every day.</p>
+      </div>
+      <div className="if-then-scope">
+        <span className="muted">Time of day</span>
+        <div className="segmented" role="group" aria-label="Time of day this rule applies to">
+          {WHEN_OPTIONS.map(opt => (
+            <button
+              key={opt.label}
+              type="button"
+              className={draft.when === opt.value ? 'active' : ''}
+              aria-pressed={draft.when === opt.value}
+              onClick={() => onChange({ ...draft, when: opt.value })}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="row">
         <button className="primary" disabled={!draft.trigger.trim() || !draft.action.trim()} onClick={onSave}>
           Save
@@ -92,10 +164,16 @@ function IfThenForm({ draft, onChange, onSave, onCancel }: IfThenFormProps) {
   )
 }
 
-// Ignores date/onDateChange - the if-then board is not about any one day,
-// but every widget on the day view is called with the same props today, so
-// this accepts the shape and simply does not use it.
-export function IfThenBoard(_props: DayViewProps) {
+/**
+ * The full if-then list: create, edit in place, delete, filter by tag.
+ * This used to be its own stacked section on the day view - see
+ * docs/TIMELINE.md section 6 for why it moved. It now only ever mounts
+ * inside `IfThenSheet`, opened by tapping the one rule `IfThenDayRule`
+ * surfaces there; this component itself does not know or care where it is
+ * rendered, and reads its own slice of the store rather than taking data
+ * as props.
+ */
+export function IfThenBoard() {
   const data = useAppData()
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [draft, setDraft] = useState<Draft>(emptyDraft())
@@ -110,7 +188,7 @@ export function IfThenBoard(_props: DayViewProps) {
 
   function startEdit(entry: IfThenEntry) {
     setConfirmDeleteId(null)
-    setDraft({ trigger: entry.trigger, action: entry.action, color: entry.color })
+    setDraft({ trigger: entry.trigger, action: entry.action, color: entry.color, dayTypes: entry.dayTypes, when: entry.when })
     setEditingId(entry.id)
   }
 
@@ -124,11 +202,11 @@ export function IfThenBoard(_props: DayViewProps) {
     const action = draft.action.trim()
     if (!trigger || !action) return
     if (editingId === 'new') {
-      actions.addIfThen({ trigger, action, color: draft.color })
+      actions.addIfThen({ trigger, action, color: draft.color, dayTypes: draft.dayTypes, when: draft.when })
     } else if (editingId) {
       const existing = data.ifThens.find(e => e.id === editingId)
       if (existing) {
-        actions.updateIfThen({ ...existing, trigger, action, color: draft.color })
+        actions.updateIfThen({ ...existing, trigger, action, color: draft.color, dayTypes: draft.dayTypes, when: draft.when })
       }
     }
     setEditingId(null)
@@ -238,6 +316,11 @@ export function IfThenBoard(_props: DayViewProps) {
                   <span className="if-then-tag" style={{ background: entry.color }}>
                     {paletteColorName(entry.color)}
                   </span>
+                )}
+                {(dayTypesLabel(entry.dayTypes) || whenLabel(entry.when)) && (
+                  <p className="if-then-scope-note">
+                    {[dayTypesLabel(entry.dayTypes), whenLabel(entry.when)].filter(Boolean).join(' · ')}
+                  </p>
                 )}
                 <div className="if-then-card-actions">
                   <button aria-label={`Edit "${entry.trigger}"`} onClick={() => startEdit(entry)}>
