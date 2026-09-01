@@ -348,6 +348,57 @@ and pushing a task well past the bound were all exercised through real DOM `clic
 confirmed by reading the change straight back out of `localStorage`, not by trusting what rendered
 on screen.
 
+**First-run experience.** A person who cleared storage and opened the app saw the brand, four nav
+tabs, today's date, quick-add, and one grey sentence naming templates without offering a path to one -
+measured directly against `docs/RESEARCH-ADHD.md` section 11's finding that the sharpest drop in
+ADHD-tool retention comes right after acquisition, with confusing interfaces and setup cost among the
+recurring causes. Fixed without reversing the app's own ships-empty rule - see the new "Starter
+templates offer, they never install" entry in `docs/DECISIONS.md` for the full reasoning.
+
+`isFirstRun` in the new `src/lib/onboarding.ts` reads `AppData` directly - true only while there is no
+template anywhere and no day holding a real task - rather than a stored flag, so it needs no
+migration and comes back on its own if a person erases everything. While it is true, the day view's
+empty state is replaced by three starter offers (`STARTER_TEMPLATES` in the new
+`src/lib/starterTemplates.ts`, rendered by `StarterOffers.tsx`): a working day, a rest day, and a
+night shift, each written as an actual person's day - real titles, real times, an eight-hour night
+shift - with the day type's own scoring rule already at work in the content, not just explained: the
+rest day has one core block (morning medication) among five that are not, and the night shift has one
+core block (the shift itself, 480 minutes) among five that are not, so tapping either one shows a
+reduced score without a sentence of explanation needed. One tap creates the template through the same
+`actions.addTemplate` the manual editor already calls and stamps it onto the date being viewed through
+the same `actions.stamp` the calendar's own stamp bar already calls - no third code path for either
+half of what the tap does. The templates list's own empty state offers the same three cards through
+the same component, minus the stamp - there is no single date to stamp there - and a person who
+already has any template never sees the offers on either screen again.
+
+The calendar's empty state got the smaller fix it actually needed: with no templates yet, the stamp
+bar used to just be absent, a silent gap rather than a dead end that says what to do about it. It now
+shows one sentence and a "Create a template" button that switches to the Templates tab (`onOpenTemplates`,
+a new optional prop threaded from `App.tsx`), rather than repeating the starter cards a third time.
+
+Where the eleven themes get discovered was reconsidered rather than left alone or restructured: no
+fifth nav tab (`docs/BACKLOG.md`'s own year-strip entry above already measured that the nav row
+overflows rather than wraps at 375px) and no relocation of the Settings section that already shows
+them. The first-run teaching state carries one line instead - "There are also eleven color themes
+here, light and dark - see them under Settings" - surfacing the fact at the one moment a new person is
+actually deciding whether the app is worth their time, without a tour or a second onboarding surface.
+Recorded as its own item in `docs/OPEN-QUESTIONS.md` since it is a judgment call, not a spec.
+
+No guided flow, no coach marks, no modal sequence anywhere in this: `docs/RESEARCH-ADHD.md` section 12
+names Sunsama's five-step morning ritual as the thing to avoid, and every path here - quick-add,
+Templates' own "New template," and now the starter offers - sits at the same single tap depth as
+before, with nothing that has to be dismissed before the app works.
+
+Timed by hand against a real build, storage cleared first: from an empty install to a fully planned,
+scored day with a real timeline and a real capacity line took one tap once the page had loaded, in
+both a light and a dark theme and at both 375px and desktop width, verified by reading the resulting
+template and day straight back out of `localStorage` rather than trusting only what rendered - the
+browser pane in this session went stale mid-session exactly as past sessions warned it might, caught
+by a `window.innerWidth` of `0` on a hidden tab that a fresh `preview_start` and an explicit resize
+fixed. No horizontal overflow on `document.body` at 375px, confirmed through `getBoundingClientRect`
+on the offer cards and their buttons, which meet the app's 44px minimum through the same base `button`
+rule every other button in the app already gets.
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time

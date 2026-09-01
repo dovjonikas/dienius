@@ -438,3 +438,30 @@ test('block-add fields do not leak between editing sessions', async () => {
   expect(screen.getByPlaceholderText('What happens')).toHaveValue('')
   expect(screen.getByPlaceholderText('min')).toHaveValue('')
 })
+
+test('with no templates saved, the empty state offers starter templates instead of a dead end', () => {
+  render(<TemplatesView />)
+  expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the night shift template/i })).toBeInTheDocument()
+})
+
+test('tapping a starter here adds it to the template list without stamping any day', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: /use the working day template/i }))
+
+  const templates = getData().templates
+  expect(templates).toHaveLength(1)
+  expect(templates[0].name).toBe('Working day')
+  expect(Object.keys(getData().days)).toHaveLength(0)
+  expect(screen.getByText('Working day')).toBeInTheDocument()
+  // The offers are gone now that a real template exists.
+  expect(screen.queryByRole('button', { name: /use the rest day template/i })).not.toBeInTheDocument()
+})
+
+test('once any template exists, the starter offers no longer show here', () => {
+  actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
+  render(<TemplatesView />)
+  expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
+})

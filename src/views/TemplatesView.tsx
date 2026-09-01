@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
+import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
 import type { DayType, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
+import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimeStepInput } from './TimeStepInput'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
@@ -280,6 +282,14 @@ export function TemplatesView() {
     }
   }
 
+  function useStarter(starter: StarterTemplate) {
+    // Unlike the day view's own handler, this only ever creates the
+    // template - there is no single date in view here to stamp it onto.
+    // Stamping happens afterward through the calendar's own stamp bar, the
+    // same as it would for a template built by hand.
+    actions.addTemplate(starterTemplateInput(starter))
+  }
+
   function saveDraft(next: Draft) {
     if (!next.name.trim()) return
     const blocks = next.blocks.map(b => ({
@@ -337,7 +347,12 @@ export function TemplatesView() {
       )}
 
       {!draft && data.templates.length === 0 && (
-        <p className="empty">No templates yet. Create one, then stamp it onto days in the calendar.</p>
+        <div className="first-run">
+          <p className="empty">
+            No templates yet. Start from one of these, or build your own with New template above.
+          </p>
+          <StarterOffers onUse={useStarter} />
+        </div>
       )}
 
       <ul className="template-list">

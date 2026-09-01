@@ -3,6 +3,8 @@ import type { Task } from '../../lib/types'
 import { actions, useAppData } from '../../lib/store'
 import { isPushable } from '../../lib/pushRules'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
+import { isFirstRun } from '../../lib/onboarding'
+import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
@@ -10,6 +12,7 @@ import { dayScore, formatDayScore } from './score'
 import { computeCapacity, formatCapacityLine, isAnchor, parseMinutesInput } from './capacity'
 import { TimelineGrid } from './TimelineGrid'
 import { IfThenDayRule } from '../if-then/DayRule'
+import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
 import { resolveDrop, type DragKind, type DropTarget } from './dragDrop'
@@ -56,6 +59,25 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
   const timelineGridId = useId()
+  // Derived straight from the data itself, not a stored flag - see
+  // docs/DECISIONS.md, "offer without installing." True only while there is
+  // genuinely nothing here yet: no template ever saved, no day that ever
+  // held a real task. The moment either exists, this - and the teaching
+  // state below - never shows again on its own, and comes back on its own
+  // if everything is erased.
+  const firstRun = isFirstRun(data)
+
+  function handleUseStarter(starter: StarterTemplate) {
+    // One tap does both things the offer promises: a real, editable
+    // template gets added to the templates list, and it is stamped onto
+    // the exact day being viewed - so tapping an offer on an empty day
+    // leaves that day genuinely planned, not just a template sitting
+    // unused elsewhere. actions.stamp reuses the same path the calendar's
+    // own stamp bar already commits through, not a second way to fill a
+    // day's tasks in from a template.
+    const template = actions.addTemplate(starterTemplateInput(starter))
+    actions.stamp({ [date]: template.id })
+  }
 
   function handleAdd() {
     const parsed = parseQuickAdd(input)
@@ -327,7 +349,22 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         onKeyDown={e => e.key === 'Enter' && handleAdd()}
       />
 
-      {tasks.length === 0 && <p className="empty">Nothing planned. Add a task above or stamp a template from the calendar.</p>}
+      {tasks.length === 0 && firstRun && (
+        <div className="first-run">
+          <p className="first-run-lede">
+            Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
+            of retyping it every morning. Tap one below to add it as a real template and set up today -
+            edit or delete it any time afterward.
+          </p>
+          <StarterOffers onUse={handleUseStarter} />
+          <p className="first-run-note">
+            There are also eleven color themes here, light and dark - see them under Settings.
+          </p>
+        </div>
+      )}
+      {tasks.length === 0 && !firstRun && (
+        <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
+      )}
 
       <ul className="task-list">
         {tasks.map(task => (

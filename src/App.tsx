@@ -72,7 +72,7 @@ export function App() {
           WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
             <w.Component key={w.id} date={selectedDate} onDateChange={setSelectedDate} />
           ))}
-        {view === 'calendar' && <CalendarView onOpenDay={openDay} />}
+        {view === 'calendar' && <CalendarView onOpenDay={openDay} onOpenTemplates={() => setView('templates')} />}
         {view === 'templates' && <TemplatesView />}
         {view === 'settings' && <SettingsView />}
       </main>

@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CalendarView } from './CalendarView'
@@ -293,4 +293,24 @@ test('staged changes survive navigating to another month and back, and save appl
   await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(getData().days[date].templateId).toBe(t.id)
   expect(getData().days[date].tasks[0].title).toBe('Gym')
+})
+
+test('with no templates saved, the calendar explains why there is nothing to stamp instead of just omitting the stamp bar', () => {
+  render(<CalendarView onOpenDay={() => {}} />)
+  expect(screen.queryByText('Stamp:')).not.toBeInTheDocument()
+  expect(screen.getByText(/no templates yet/i)).toBeInTheDocument()
+})
+
+test('the calendar empty-templates message offers a way to go build one', async () => {
+  const user = userEvent.setup()
+  const onOpenTemplates = vi.fn()
+  render(<CalendarView onOpenDay={() => {}} onOpenTemplates={onOpenTemplates} />)
+  await user.click(screen.getByRole('button', { name: /create a template/i }))
+  expect(onOpenTemplates).toHaveBeenCalledTimes(1)
+})
+
+test('once a template exists, the calendar empty-templates message is gone', () => {
+  actions.addTemplate({ name: 'Work day', color: '#a7c4f5', blocks: [] })
+  render(<CalendarView onOpenDay={() => {}} />)
+  expect(screen.queryByText(/no templates yet/i)).not.toBeInTheDocument()
 })
