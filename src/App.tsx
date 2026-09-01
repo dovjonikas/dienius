@@ -68,7 +68,7 @@ export function App() {
           ))}
         </nav>
       </header>
-      <main>
+      <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
           WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
             <w.Component key={w.id} date={selectedDate} onDateChange={setSelectedDate} />

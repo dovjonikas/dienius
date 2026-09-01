@@ -49,6 +49,26 @@ test('the day tab renders widgets through the registry, driven by enabledWidgets
   expect(screen.queryByPlaceholderText(/add a task/i)).not.toBeInTheDocument()
 })
 
+// --- .main-day - docs/LAYOUT-WIDE.md section 5, build step 1. Only the
+// Today tab's <main> may escape .app's own max-width at the wide
+// breakpoint; every other tab's wrapper is untouched by this document.
+
+test('the Today tab wraps its content in a main carrying main-day', () => {
+  const { container } = render(<App />)
+  expect(container.querySelector('main.main-day')).toBeInTheDocument()
+})
+
+test('every other tab keeps a plain main with no main-day class', async () => {
+  const user = userEvent.setup()
+  const { container } = render(<App />)
+  for (const tab of ['Calendar', 'Templates', 'Settings']) {
+    await user.click(screen.getByRole('button', { name: tab }))
+    const main = container.querySelector('main')
+    expect(main).not.toBeNull()
+    expect(main?.className).toBe('')
+  }
+})
+
 // --- stress test: every theme preset, with two years of stamped data loaded
 
 // Genuinely heavy, not artificially slow: the year strip renders roughly

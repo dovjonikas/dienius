@@ -2629,3 +2629,22 @@ button.danger {
     transform: translateY(0);
   }
 }
+
+/* ------------------------------------------------------------------------
+   Wide-screen day view - docs/LAYOUT-WIDE.md section 5. Everything in this
+   section is gated behind the same breakpoint the useIsWide() hook
+   (src/lib/viewport.ts) measures live, so nothing here can ever disagree
+   with what the DOM actually mounts: below 1024px none of this matches,
+   .main-day and .day-view-wide are never rendered in the first place, and
+   the day view is byte-for-byte the single column it has always been.
+   ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  /* Only the Today tab's <main> ever carries .main-day (see App.tsx) - a
+     day open on Calendar, Templates or Settings never does, so :has() here
+     only ever widens .app while the Today tab is the one showing. Escaping
+     .app's own max-width: 760px (set unconditionally above) needs the
+     ancestor itself to widen, not just this element - a child's max-width
+     can never exceed the box its parent already constrained it to. */
+  .app:has(.main-day) { max-width: 1600px; }
+  .main-day { max-width: 1600px; }
+}
