@@ -64,7 +64,12 @@ const DEFAULT_WINDOW: Interval = { start: 7 * 60, end: 23 * 60 }
  */
 const NIGHT_WINDOW: Interval = { start: 13 * 60, end: DAY_MINUTES }
 
-function windowFor(dayType: DayType): Interval {
+// Exported so a caller outside this module can measure something against
+// the same waking window `computeCapacity` uses, rather than re-deriving
+// the 07:00/23:00/13:00/24:00 figures a second time - see `matchTaskToGaps`
+// in gapPlacement.ts, which places a single selected task against exactly
+// this window rather than the grid's own differently-scoped display window.
+export function windowFor(dayType: DayType): Interval {
   return dayType === 'night' ? NIGHT_WINDOW : DEFAULT_WINDOW
 }
 

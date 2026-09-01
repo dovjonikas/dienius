@@ -1,5 +1,5 @@
-import type { Task } from '../../lib/types'
-import { isAnchor } from './capacity'
+import type { DayType, Task } from '../../lib/types'
+import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Gap, type Interval } from './capacity'
 
 /**
  * One float as it is offered inside a gap's picker - just enough to render
@@ -122,4 +122,111 @@ export function visibleRows(offer: GapOffer): GapFloatOption[] {
 /** Every row the picker has to offer, fitting first - what "show more" reveals. */
 export function allRows(offer: GapOffer): GapFloatOption[] {
   return [...offer.fitting, ...offer.unsized]
+}
+
+/**
+ * One gap from `matchTaskToGaps`, carrying the title of whatever anchor sits
+ * immediately on either side of it - "10:00 to 18:00" is a span of clock
+ * time; "between Meeting and Gym" is a place in the day. `undefined` on
+ * either side means the gap runs to the edge of the waking window itself
+ * (the start of the day, or its end) rather than up against another anchor.
+ */
+export interface GapWithContext extends Gap {
+  before: string | undefined
+  after: string | undefined
+}
+
+/**
+ * What selecting a single float and asking "where does this fit today"
+ * comes back with - the inverse of `offerForGap`'s "what fits this gap,"
+ * read the other way around the same arithmetic rather than a second copy
+ * of it. See docs/TIMELINE.md sections 3 and 9.
+ *
+ * - `no-size`: the task itself has no `minutes` - there is nothing to match
+ *   against a gap, the same refusal `capacity.ts` already makes rather than
+ *   guess a duration. Stated plainly by the caller rather than shown as an
+ *   empty list.
+ * - `already-timed`: the task is already an anchor, not a float - it has a
+ *   position, so "where could this go" no longer applies. The UI never
+ *   offers selection for an anchor to begin with; this is here so a
+ *   selection that outlives some other change to the same task (placed a
+ *   different way while still selected) still reads as a plain state
+ *   rather than a stale or crashing one - the same defensive reasoning as
+ *   an unrecognised `taskId`, which matches nothing rather than throwing.
+ * - `unknown`: some other anchor on the day has no size of its own, so its
+ *   real position on the timeline is unknown and could fall inside what
+ *   would otherwise look like free time - the exact reasoning
+ *   `computeCapacity` already applies to the whole day's own free-time
+ *   figure, applied here to one task's own match instead.
+ * - `matched`: every gap in the day's waking window the task's size fits
+ *   into, chronological, including none at all - a full day is a real,
+ *   expected outcome here, not an error.
+ */
+export type TaskGapMatch =
+  | { kind: 'no-size' }
+  | { kind: 'already-timed' }
+  | { kind: 'unknown' }
+  | { kind: 'matched'; gaps: GapWithContext[] }
+
+/**
+ * Finds every gap in `taskId`'s own day that its size fits into, bounded by
+ * the same fixed waking window `computeCapacity` measures the whole day
+ * against (`windowFor` in capacity.ts) - never a gap outside it, so this
+ * never offers 3am as a place for anything. Built from the same exported
+ * pieces `computeTimelineLayout` already uses for the grid's own,
+ * differently-scoped display window - `clipToWindow`, `mergeIntervals`,
+ * `gapsInWindow` - rather than a second copy of that arithmetic.
+ *
+ * Deliberately not built from `computeCapacity`'s own `gaps` field: that
+ * field is `[]` whenever there are zero anchors at all, because a capacity
+ * *sentence* has nothing to say about an empty day ("Free: Xh across Y
+ * gaps" needs at least one anchor to be a sentence worth writing in the
+ * first place). A *placement* question has no such reason to stay silent -
+ * an empty day is real free time, the single largest gap this function
+ * will ever return, exactly the waking window itself with nothing on
+ * either side of it.
+ */
+export function matchTaskToGaps(tasks: Task[], dayType: DayType | undefined, taskId: string): TaskGapMatch {
+  const task = tasks.find(t => t.id === taskId)
+  if (!task) return { kind: 'matched', gaps: [] }
+  if (isAnchor(task)) return { kind: 'already-timed' }
+  if (task.minutes === undefined) return { kind: 'no-size' }
+  const minutes = task.minutes
+
+  const anchors = tasks.filter(isAnchor)
+  if (anchors.some(a => a.minutes === undefined)) return { kind: 'unknown' }
+
+  const window = windowFor(dayType ?? 'full')
+  const named = anchors
+    .map(a => ({
+      title: a.title,
+      interval: clipToWindow({ start: timeToMinutes(a.time!), end: timeToMinutes(a.time!) + a.minutes! }, window),
+    }))
+    .filter((a): a is { title: string; interval: Interval } => a.interval !== null)
+
+  const merged = mergeIntervals(named.map(a => a.interval))
+  const allGaps = gapsInWindow(merged, window)
+
+  const gaps: GapWithContext[] = allGaps
+    .filter(g => canPlaceFloatInGap(minutes, g.minutes))
+    .map(g => ({
+      ...g,
+      before: named.find(a => a.interval.end === g.start)?.title,
+      after: named.find(a => a.interval.start === g.end)?.title,
+    }))
+
+  return { kind: 'matched', gaps }
+}
+
+/**
+ * The plain-language "what's on either side" clause for one gap from
+ * `matchTaskToGaps` - "between Meeting and Gym", "after Meeting", "before
+ * Gym" - or `undefined` when the gap touches neither: the whole waking
+ * window on a day with nothing anchored in it yet.
+ */
+export function describeGapNeighbors(gap: GapWithContext): string | undefined {
+  if (gap.before && gap.after) return `between ${gap.before} and ${gap.after}`
+  if (gap.before) return `after ${gap.before}`
+  if (gap.after) return `before ${gap.after}`
+  return undefined
 }

@@ -1,6 +1,14 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
-import { canPlaceFloatInGap, offerForGap, VISIBLE_ROW_LIMIT, visibleRows } from './gapPlacement'
+import {
+  canPlaceFloatInGap,
+  describeGapNeighbors,
+  matchTaskToGaps,
+  offerForGap,
+  VISIBLE_ROW_LIMIT,
+  visibleRows,
+  type GapWithContext,
+} from './gapPlacement'
 
 function float(id: string, minutes?: number, done = false): Task {
   return { id, title: id, done, minutes }
@@ -98,4 +106,119 @@ test('canPlaceFloatInGap refuses a sized float larger than the gap', () => {
 
 test('canPlaceFloatInGap allows an unsized float regardless of gap size', () => {
   expect(canPlaceFloatInGap(undefined, 5)).toBe(true)
+})
+
+// matchTaskToGaps - the inverse read of the same arithmetic: given one
+// selected task, every gap in its own day the task's size fits into.
+
+test('a float that fits several gaps gets every one of them, chronological', () => {
+  const tasks = [anchor('Meeting', '09:00', 60), anchor('Gym', '18:00', 60), float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  if (result.kind !== 'matched') throw new Error('expected matched')
+  expect(result.gaps.map(g => [g.start, g.end])).toEqual([
+    [7 * 60, 9 * 60],
+    [10 * 60, 18 * 60],
+    [19 * 60, 23 * 60],
+  ])
+})
+
+test('a float that fits exactly one gap gets only that one', () => {
+  const tasks = [anchor('Work', '07:00', 600), anchor('Errand', '17:05', 15), float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  if (result.kind !== 'matched') throw new Error('expected matched')
+  expect(result.gaps).toHaveLength(1)
+  expect(result.gaps[0]).toMatchObject({ start: 17 * 60 + 20, end: 23 * 60 })
+})
+
+test('a float too big for every gap that exists still reports them honestly - just none fit', () => {
+  const tasks = [
+    anchor('Morning shift', '07:00', 240), // 07:00-11:00
+    anchor('Afternoon shift', '11:30', 510), // 11:30-20:00, leaving a 30 min gap before it
+    anchor('Evening call', '20:30', 150), // 20:30-23:00, leaving a 30 min gap before it
+    float('Big errand', 90),
+    float('Guitar', 20),
+  ]
+  const result = matchTaskToGaps(tasks, 'full', 'Big errand')
+  if (result.kind !== 'matched') throw new Error('expected matched')
+  expect(result.gaps).toEqual([])
+
+  // The same day has two real 30-minute gaps - a smaller float does fit
+  // them, confirming the empty result above is about this float's own
+  // size, not a day that has genuinely nothing free.
+  const smaller = matchTaskToGaps(tasks, 'full', 'Guitar')
+  if (smaller.kind !== 'matched') throw new Error('expected matched')
+  expect(smaller.gaps.map(g => g.minutes)).toEqual([30, 30])
+})
+
+test('a float with no size cannot be matched', () => {
+  const tasks = [anchor('Meeting', '09:00', 60), float('Guitar')]
+  expect(matchTaskToGaps(tasks, 'full', 'Guitar')).toEqual({ kind: 'no-size' })
+})
+
+test('a task already anchored has nowhere left to match', () => {
+  const tasks = [anchor('Meeting', '09:00', 60)]
+  expect(matchTaskToGaps(tasks, 'full', 'Meeting')).toEqual({ kind: 'already-timed' })
+})
+
+test('a day entirely filled by anchors has no gaps at all - a real, plain outcome', () => {
+  const tasks = [anchor('Work', '07:00', 960), float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  expect(result).toEqual({ kind: 'matched', gaps: [] })
+})
+
+test('a gap exactly the size of the float fits - the boundary case itself', () => {
+  const tasks = [anchor('Morning', '07:00', 60), anchor('Evening', '09:30', 810), float('Guitar', 90)]
+  // Morning 07:00-08:00, gap 08:00-09:30 (90 minutes exactly), Evening 09:30-23:00.
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  if (result.kind !== 'matched') throw new Error('expected matched')
+  expect(result.gaps.map(g => g.minutes)).toEqual([90])
+})
+
+test('an empty day offers its whole waking window as one gap', () => {
+  const tasks = [float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  expect(result).toEqual({ kind: 'matched', gaps: [{ start: 7 * 60, end: 23 * 60, minutes: 16 * 60, before: undefined, after: undefined }] })
+})
+
+test('a night day is measured against the night window, not the default one', () => {
+  const tasks = [float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'night', 'Guitar')
+  expect(result).toEqual({ kind: 'matched', gaps: [{ start: 13 * 60, end: 24 * 60, minutes: 11 * 60, before: undefined, after: undefined }] })
+})
+
+test('an unsized anchor elsewhere in the day makes every match unknown, not a guess', () => {
+  const tasks = [anchor('Mystery shift', '09:00'), float('Guitar', 20)]
+  expect(matchTaskToGaps(tasks, 'full', 'Guitar')).toEqual({ kind: 'unknown' })
+})
+
+test('an unknown task id offers nothing rather than crashing', () => {
+  const tasks = [float('Guitar', 20)]
+  expect(matchTaskToGaps(tasks, 'full', 'does-not-exist')).toEqual({ kind: 'matched', gaps: [] })
+})
+
+test('gaps carry the anchor immediately before and after them', () => {
+  const tasks = [anchor('Meeting', '09:00', 60), anchor('Gym', '18:00', 60), float('Guitar', 20)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  if (result.kind !== 'matched') throw new Error('expected matched')
+  const [first, middle, last] = result.gaps
+  expect(first).toMatchObject({ before: undefined, after: 'Meeting' })
+  expect(middle).toMatchObject({ before: 'Meeting', after: 'Gym' })
+  expect(last).toMatchObject({ before: 'Gym', after: undefined })
+})
+
+function gapWith(before: string | undefined, after: string | undefined): GapWithContext {
+  return { start: 0, end: 0, minutes: 0, before, after }
+}
+
+test('describeGapNeighbors names both sides when both exist', () => {
+  expect(describeGapNeighbors(gapWith('Meeting', 'Gym'))).toBe('between Meeting and Gym')
+})
+
+test('describeGapNeighbors names only the side that exists', () => {
+  expect(describeGapNeighbors(gapWith('Meeting', undefined))).toBe('after Meeting')
+  expect(describeGapNeighbors(gapWith(undefined, 'Gym'))).toBe('before Gym')
+})
+
+test('describeGapNeighbors is undefined when the gap touches nothing on either side', () => {
+  expect(describeGapNeighbors(gapWith(undefined, undefined))).toBeUndefined()
 })
