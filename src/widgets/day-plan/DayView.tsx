@@ -334,125 +334,142 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         </button>
       </div>
 
-      {/* Purely informational - no embedded action. Being over is stated as
-          a fact; which float moves to tomorrow, if any, is decided on that
-          float's own row below, not pre-selected here. See
-          docs/TIMELINE.md section 8. */}
-      {capacityLine && (
-        <div className="capacity-line">
-          <p>{capacityLine}</p>
-        </div>
-      )}
+      {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line,
+          the if-then rule and the timeline grid group into one region - the
+          "picture of the day" - so the wide layout can give it its own
+          column. This div is not new chrome: below the breakpoint it is
+          `display: contents` (see styles.css), so it adds no box, no
+          spacing and no accessibility-tree node of its own - the JSX order
+          inside it is exactly the order these elements already rendered in,
+          so a phone's DOM is unaffected by this grouping existing at all. */}
+      <div className="day-pane">
+        {/* Purely informational - no embedded action. Being over is stated
+            as a fact; which float moves to tomorrow, if any, is decided on
+            that float's own row below, not pre-selected here. See
+            docs/TIMELINE.md section 8. */}
+        {capacityLine && (
+          <div className="capacity-line">
+            <p>{capacityLine}</p>
+          </div>
+        )}
 
-      {/* One quiet if-then rule, rotated in from the board that used to be
-          its own tab - see docs/TIMELINE.md section 6. Self-contained: it
-          reads its own data and renders nothing when there is no eligible
-          rule for today, the same way the capacity line above renders
-          nothing for an empty day. */}
-      <IfThenDayRule date={date} />
+        {/* One quiet if-then rule, rotated in from the board that used to be
+            its own tab - see docs/TIMELINE.md section 6. Self-contained: it
+            reads its own data and renders nothing when there is no eligible
+            rule for today, the same way the capacity line above renders
+            nothing for an empty day. */}
+        <IfThenDayRule date={date} />
 
-      {/* The grid's own disclosure, collapsed by default - see
-          docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
-          A sibling of the capacity line rather than nested inside it: that
-          line only ever states the arithmetic, with no action of its own
-          embedded in it - see the sentence's own comment above - and this
-          toggle is a separate control, not part of that sentence. A proper
-          disclosure, not a CSS-hidden panel: the region it names is only in
-          the DOM while open, so a screen reader never lands on a picture it
-          cannot currently see, and there is nothing extra to skip past
-          while it is closed. Only shown when there is actually something to
-          show - a day with no anchors has no grid to draw either way, see
-          TimelineGrid.tsx. Not rendered at all at the wide breakpoint -
-          docs/LAYOUT-WIDE.md section 5: the grid has its own column there,
-          so there is no fold left to protect and nothing this toggle would
-          do. */}
-      {capacity.anchorCount > 0 && !isWide && (
-        <button
-          type="button"
-          className="timeline-toggle"
-          aria-expanded={timelineExpanded}
-          aria-controls={timelineGridId}
-          onClick={() => actions.setTimelineExpanded(!timelineExpanded)}
-        >
-          {timelineExpanded ? 'Hide timeline' : 'Show timeline'}
-        </button>
-      )}
+        {/* The grid's own disclosure, collapsed by default - see
+            docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
+            A sibling of the capacity line rather than nested inside it: that
+            line only ever states the arithmetic, with no action of its own
+            embedded in it - see the sentence's own comment above - and this
+            toggle is a separate control, not part of that sentence. A proper
+            disclosure, not a CSS-hidden panel: the region it names is only in
+            the DOM while open, so a screen reader never lands on a picture it
+            cannot currently see, and there is nothing extra to skip past
+            while it is closed. Only shown when there is actually something to
+            show - a day with no anchors has no grid to draw either way, see
+            TimelineGrid.tsx. Not rendered at all at the wide breakpoint -
+            docs/LAYOUT-WIDE.md section 5: the grid has its own column there,
+            so there is no fold left to protect and nothing this toggle would
+            do. */}
+        {capacity.anchorCount > 0 && !isWide && (
+          <button
+            type="button"
+            className="timeline-toggle"
+            aria-expanded={timelineExpanded}
+            aria-controls={timelineGridId}
+            onClick={() => actions.setTimelineExpanded(!timelineExpanded)}
+          >
+            {timelineExpanded ? 'Hide timeline' : 'Show timeline'}
+          </button>
+        )}
 
-      {isTimelineVisible && (
-        <TimelineGrid
-          id={timelineGridId}
-          tasks={day?.tasks ?? []}
-          templateColor={template?.color}
-          onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
-          onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
-          draggingTaskId={draggingTaskId}
-          isToday={isToday}
-        />
-      )}
-
-      {/* Announces a drag-driven un-anchor, or a placement or removal made
-          through the actions menu, to screen reader users - the same way
-          TimelineGrid.tsx's own live region already covers the tap-a-gap
-          path. A separate region because these fire from gestures
-          TimelineGrid never sees: the drag can end outside the grid
-          entirely, and the menu is not part of it at all. */}
-      <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
-
-      <input
-        className="quick-add"
-        placeholder="Add a task... try 14:00 Call mom"
-        value={input}
-        onChange={e => handleInputChange(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && handleAdd()}
-      />
-
-      {tasks.length === 0 && firstRun && (
-        <div className="first-run">
-          <p className="first-run-lede">
-            Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
-            of retyping it every morning. Tap one below to add it as a real template and set up today -
-            edit or delete it any time afterward.
-          </p>
-          <StarterOffers onUse={handleUseStarter} />
-          <p className="first-run-note">
-            There are also eleven color themes here, light and dark - see them under Settings.
-          </p>
-        </div>
-      )}
-      {tasks.length === 0 && !firstRun && (
-        <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
-      )}
-
-      <ul className="task-list" ref={taskListRef} tabIndex={-1}>
-        {tasks.map(task => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            date={date}
-            isFullDay={isFullDay}
-            sizeEditingId={sizeEditingId}
-            sizeDraft={sizeDraft}
-            onStartSizeEdit={startSizeEdit}
-            onSizeDraftChange={setSizeDraft}
-            onCommitSizeEdit={commitSizeEdit}
-            onCancelSizeEdit={cancelSizeEdit}
-            onOpenActions={() => setActionsSheetTaskId(task.id)}
-            selected={selectedTaskId === task.id}
-            onToggleSelect={() => toggleSelect(task.id)}
+        {isTimelineVisible && (
+          <TimelineGrid
+            id={timelineGridId}
+            tasks={day?.tasks ?? []}
+            templateColor={template?.color}
+            onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
+            onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
+            draggingTaskId={draggingTaskId}
+            isToday={isToday}
           />
-        ))}
-      </ul>
+        )}
 
-      {pushableCount > 0 && (
-        <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
-          {heldCount > 0
-            ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
-            : `Push ${pushableCount} unfinished to tomorrow`}
-        </button>
-      )}
-      {pushableCount === 0 && heldCount > 0 && (
-        <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
-      )}
+        {/* Announces a drag-driven un-anchor, or a placement or removal made
+            through the actions menu, to screen reader users - the same way
+            TimelineGrid.tsx's own live region already covers the tap-a-gap
+            path. A separate region because these fire from gestures
+            TimelineGrid never sees: the drag can end outside the grid
+            entirely, and the menu is not part of it at all. */}
+        <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
+      </div>
+
+      {/* The float tray - quick-add, the first-run/empty state, the task
+          list, and the rollover button - grouped the same way and for the
+          same reason as .day-pane above: `display: contents` below the
+          breakpoint, a real grid column at it, no change to phone markup
+          either way. */}
+      <div className="task-pane">
+        <input
+          className="quick-add"
+          placeholder="Add a task... try 14:00 Call mom"
+          value={input}
+          onChange={e => handleInputChange(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+        />
+
+        {tasks.length === 0 && firstRun && (
+          <div className="first-run">
+            <p className="first-run-lede">
+              Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
+              of retyping it every morning. Tap one below to add it as a real template and set up today -
+              edit or delete it any time afterward.
+            </p>
+            <StarterOffers onUse={handleUseStarter} />
+            <p className="first-run-note">
+              There are also eleven color themes here, light and dark - see them under Settings.
+            </p>
+          </div>
+        )}
+        {tasks.length === 0 && !firstRun && (
+          <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
+        )}
+
+        <ul className="task-list" ref={taskListRef} tabIndex={-1}>
+          {tasks.map(task => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              date={date}
+              isFullDay={isFullDay}
+              sizeEditingId={sizeEditingId}
+              sizeDraft={sizeDraft}
+              onStartSizeEdit={startSizeEdit}
+              onSizeDraftChange={setSizeDraft}
+              onCommitSizeEdit={commitSizeEdit}
+              onCancelSizeEdit={cancelSizeEdit}
+              onOpenActions={() => setActionsSheetTaskId(task.id)}
+              selected={selectedTaskId === task.id}
+              onToggleSelect={() => toggleSelect(task.id)}
+            />
+          ))}
+        </ul>
+
+        {pushableCount > 0 && (
+          <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
+            {heldCount > 0
+              ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
+              : `Push ${pushableCount} unfinished to tomorrow`}
+          </button>
+        )}
+        {pushableCount === 0 && heldCount > 0 && (
+          <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+        )}
+      </div>
 
       {actionsSheetTask && (
         <TaskActionsSheet

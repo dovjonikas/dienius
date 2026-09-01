@@ -2635,8 +2635,9 @@ button.danger {
    section is gated behind the same breakpoint the useIsWide() hook
    (src/lib/viewport.ts) measures live, so nothing here can ever disagree
    with what the DOM actually mounts: below 1024px none of this matches,
-   .main-day and .day-view-wide are never rendered in the first place, and
-   the day view is byte-for-byte the single column it has always been.
+   .main-day never gets its expanded max-width, .day-pane/.task-pane stay
+   `display: contents`, and the day view is byte-for-byte the single column
+   it has always been.
    ------------------------------------------------------------------------ */
 @media (min-width: 1024px) {
   /* Only the Today tab's <main> ever carries .main-day (see App.tsx) - a
@@ -2647,4 +2648,54 @@ button.danger {
      can never exceed the box its parent already constrained it to. */
   .app:has(.main-day) { max-width: 1600px; }
   .main-day { max-width: 1600px; }
+}
+
+/* Step 3: day-pane / task-pane - docs/LAYOUT-WIDE.md section 5. Below the
+   breakpoint both wrappers are `display: contents`, unconditionally (not
+   inside the media query - this is the default, narrow-first rule): they
+   add no box, no spacing, and nothing for a screen reader to land on, so
+   DayView.tsx can render them at every width with no isWide check of its
+   own and the phone's DOM stays exactly what it always rendered in
+   sequence. Only at the wide breakpoint do they become real grid items. */
+.day-pane, .task-pane { display: contents; }
+
+@media (min-width: 1024px) {
+  /* .day-view itself becomes the grid; .day-nav is the header row spanning
+     both panes. Two columns for now - day-pane and task-pane only. Step 5
+     adds a third (rail) column and its own grid-template-areas; step 4
+     adds the single-pane variants for dayLayoutFocus. Values match
+     docs/LAYOUT-WIDE.md section 5's own reasoning: day-pane needs the
+     grid's 44px gutter plus a comfortably readable anchor block (420px
+     minimum); task-pane needs a TaskRow's own content (checkbox, time,
+     title, size chip, actions button) to stay comfortable without
+     truncating the title (320px minimum), capped at 380px so it never
+     visually dominates the timeline it sits next to. */
+  .day-view {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(320px, 380px);
+    grid-template-areas:
+      "header header"
+      "day    tasks";
+    gap: 24px;
+  }
+
+  .day-view > .day-nav {
+    grid-area: header;
+    margin-bottom: 0;
+  }
+
+  .day-pane {
+    grid-area: day;
+    display: block;
+  }
+
+  .task-pane {
+    grid-area: tasks;
+    display: block;
+  }
+
+  /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
+     the phone's stacked layout) is deliberately left alone here - see
+     docs/LAYOUT-WIDE.md section 5's own "optional, later" note. Raising it
+     is a real, separately-valued change and out of scope for this pass. */
 }

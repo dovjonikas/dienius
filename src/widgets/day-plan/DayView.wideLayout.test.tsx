@@ -146,3 +146,58 @@ test('selecting a task at a wide viewport does not persist timelineExpanded, sin
   await user.click(taskList.getByRole('button', { name: 'Float task' }))
   expect(getData().settings.timelineExpanded).toBe(false)
 })
+
+// --- Step 3: split into day-pane and task-pane ----------------------------
+
+test('day-pane and task-pane wrapper regions exist in the DOM at any viewport, narrow included', () => {
+  viewport = mockViewport(false)
+  seed(anchoredTasks, false)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  expect(container.querySelector('.day-pane')).toBeInTheDocument()
+  expect(container.querySelector('.task-pane')).toBeInTheDocument()
+})
+
+test('the capacity line, if-then rule and grid all land inside day-pane', () => {
+  viewport = mockViewport(true)
+  seed(anchoredTasks, true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const dayPane = container.querySelector('.day-pane')!
+  expect(dayPane.querySelector('.capacity-line')).not.toBeNull()
+  expect(dayPane.querySelector('.timeline-grid-wrap')).not.toBeNull()
+})
+
+test('quick-add, the task list and the rollover button all land inside task-pane', () => {
+  viewport = mockViewport(true)
+  seed([{ id: 'f1', title: 'Unfinished float', done: false, minutes: 20 }], false)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const taskPane = container.querySelector('.task-pane')!
+  expect(taskPane.querySelector('.quick-add')).not.toBeNull()
+  expect(taskPane.querySelector('.task-list')).not.toBeNull()
+  expect(taskPane.querySelector('.rollover')).not.toBeNull()
+})
+
+// The wrapper divs must not reorder anything relative to today's DOM - a
+// phone's DOM walk (day-nav, capacity line, if-then rule, timeline toggle,
+// quick-add, task list, rollover) has to come out exactly as it always has,
+// see docs/LAYOUT-WIDE.md section 3.4. compareDocumentPosition is the
+// direct way to assert "A comes before B in the actual DOM", independent of
+// which wrapper each one is nested inside.
+test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list, rollover, in that order', () => {
+  viewport = mockViewport(false)
+  seed([{ id: 't1', title: 'Anchor', done: false, time: '09:00', minutes: 30 },
+        { id: 'f1', title: 'Unfinished float', done: false, minutes: 20 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const order = [
+    container.querySelector('.day-nav')!,
+    container.querySelector('.capacity-line')!,
+    container.querySelector('.timeline-grid-wrap')!,
+    container.querySelector('.quick-add')!,
+    container.querySelector('.task-list')!,
+    container.querySelector('.rollover')!,
+  ]
+  for (let i = 0; i < order.length - 1; i++) {
+    expect(order[i]).not.toBeNull()
+    // DOCUMENT_POSITION_FOLLOWING = 4
+    expect(order[i].compareDocumentPosition(order[i + 1]) & 4).toBe(4)
+  }
+})
