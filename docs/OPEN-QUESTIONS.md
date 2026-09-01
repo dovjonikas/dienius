@@ -225,3 +225,37 @@ standard. If it turns out to matter in practice, the two honest fixes are (a) ra
 grid density on the rail specifically (fewer visible weeks, or a list instead of a grid) rather than
 shrinking the cells further. Both are visible, scoped changes to `MiniCalendar.tsx` and
 `.mini-calendar-grid`/`.mini-cell` in `styles.css` alone.
+
+## 15. Pre-existing bug found during wide-layout verification: the anchor drag-to-tray gesture cannot
+## actually be started by a real pointer
+
+Not something this branch touched or caused - found while doing the verification pass
+`docs/LAYOUT-WIDE.md` section 6 asks for ("confirm the anchor-to-tray drag still resolves correctly
+with the tray in its own column... worth verifying on a real wide layout, not assumed").
+
+`.timeline-anchor` blocks in `TimelineGrid.tsx` sit inside `<div className="timeline-grid"
+aria-hidden="true">`, and `styles.css` sets `.timeline-grid { pointer-events: none; }` so the
+decorative layer never swallows a tap meant for a gap button beneath it. Nothing re-enables
+`pointer-events: auto` on `.timeline-anchor` or `.timeline-anchor-draggable`, so in a real browser
+`getComputedStyle(anchor).pointerEvents` is `'none'` and `document.elementFromPoint` at an anchor's
+own coordinates returns `.timeline-gaps` underneath it, never the anchor. A real pointerdown on an
+anchor block never reaches its `onAnchorPointerDown` handler at all - confirmed live at
+`http://localhost:4173/dienius/`, a dispatched pointerdown/move/up sequence at an anchor's coordinates
+produces no drag announcement and does not un-anchor the task.
+
+This is invisible in `DayView.dragDrop.test.tsx` and its siblings because Testing Library's
+`fireEvent`/`userEvent` dispatch synthetic events directly to the target element, bypassing real
+pointer-events-based hit-testing entirely - the tests correctly exercise the handler function, they
+just never prove a real click can reach it. It is identical on `main` (confirmed with `git diff
+main..feature/wide-layout -- src/widgets/day-plan/TimelineGrid.tsx`, which is empty) and equally
+present on the phone today - this is not a wide-layout regression, it predates this branch and
+affects every viewport.
+
+**Recommendation:** add `pointer-events: auto;` to `.timeline-anchor-draggable` (the class already
+applied only when the gesture should work - `onAnchorPointerDown` exists, the source task exists, and
+it is not done), so only draggable anchors opt back into pointer events while the rest of the
+`.timeline-grid` layer stays inert as originally intended. I did not make this fix myself - it touches
+a file and a feature outside this document's scope, and deserves its own verification pass in a real
+browser rather than riding along inside a layout change. Filed as a background task
+(`task_4d948b75`, "Fix pointer-events:none blocking anchor drag-to-tray") for a session to pick up
+separately.
