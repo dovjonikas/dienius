@@ -6,8 +6,20 @@ import { useLongPress } from './useLongPress'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
-function pushCountLabel(count: number): string {
+export function pushCountLabel(count: number): string {
   return PUSH_COUNT_WORDS[count] ?? `${count} times`
+}
+
+/**
+ * The push bound's own do-or-delete sentence, unchanged from the copy that
+ * used to sit on every maxed row as its own paragraph - see
+ * docs/DECISIONS.md's push-bound section. It still exists verbatim; it now
+ * lives as the announced half of the row's quiet state mark (below) and as
+ * the actions menu's own opening line, rather than as permanent height on
+ * every row that reaches the bound.
+ */
+export function boundNote(pushCount: number): string {
+  return `Pushed ${pushCountLabel(pushCount)} - do it today, let it go, or mark it ongoing. Deleting counts as a decision, not a failure.`
 }
 
 export interface TaskRowProps {
@@ -21,31 +33,26 @@ export interface TaskRowProps {
   onCommitSizeEdit: (taskId: string) => void
   onCancelSizeEdit: (task: Task) => void
   /**
-   * True while this exact task is the one currently picked up by step 7's
-   * drag - see `DayView.tsx`. Purely a visual "lifted" state; the drop
-   * logic itself lives entirely in the caller.
+   * Opens the row's actions menu - the single home for everything on this
+   * task that is acted on rather than scanned: placing or un-anchoring,
+   * pushing, marking ongoing, and deleting. See docs/TIMELINE.md section 5
+   * and `TaskActionsSheet.tsx`. Always supplied, even for a done task,
+   * because delete has to stay reachable from somewhere - see the menu
+   * button below.
    */
-  dragging: boolean
-  /**
-   * Wired to the row's own drag handle - see the handle's own comment
-   * below for why it is a separate, small element rather than the whole
-   * row. Omitted (and the handle not rendered at all) for a done task,
-   * which is neither a placeable float nor an anchor worth un-anchoring.
-   */
-  onDragHandlePointerDown?: (e: React.PointerEvent) => void
-  /**
-   * Opens the long-press menu for this task - the touch-safe fallback
-   * that does not depend on drag working at all. Also omitted for a done
-   * task, for the same reason as the drag handle.
-   */
-  onLongPressOpen?: () => void
+  onOpenActions: () => void
 }
 
 /**
- * One row in the task list - extracted from `DayView.tsx` unchanged in
- * markup and behaviour, so `useLongPress` (a hook) can be called once per
- * row rather than inside the loop that used to render these inline, which
- * the rules of hooks do not allow.
+ * One row in the task list - kept deliberately light. The research behind
+ * this shape is docs/RESEARCH-ADHD.md section 7: visual working memory
+ * holds about four integrated objects, so a row that shows six loud
+ * controls is not showing six things, it is showing noise with one or two
+ * real things in it. What is left here is what gets scanned (the checkbox,
+ * time, title), what gets read second (duration, and at most one quiet
+ * state mark), and a single door - the actions menu - to everything that
+ * is acted on but rarely: placing, un-anchoring, pushing, marking ongoing,
+ * and deleting. See `TaskActionsSheet.tsx` for what is behind that door.
  */
 export function TaskRow({
   task,
@@ -57,9 +64,7 @@ export function TaskRow({
   onSizeDraftChange,
   onCommitSizeEdit,
   onCancelSizeEdit,
-  dragging,
-  onDragHandlePointerDown,
-  onLongPressOpen,
+  onOpenActions,
 }: TaskRowProps) {
   const pushCount = task.pushCount ?? 0
   const isUnbounded = !!task.unbounded
@@ -68,21 +73,19 @@ export function TaskRow({
   // maxed state just because pushCount keeps climbing - see its own doc
   // comment in pushRules.ts.
   const atBound = !task.done && !isPushable(task)
-  // A long-press menu makes sense for anything drag also handles - a
-  // not-done float (place it) or a not-done anchor (un-anchor it) - and
-  // for nothing else, the same set `onDragHandlePointerDown` below is
-  // wired for.
-  const longPressEligible = !task.done && !!onLongPressOpen
-  const longPress = useLongPress(() => onLongPressOpen?.())
+  // A long press makes sense for anything the actions menu can act on - a
+  // not-done float or a not-done anchor - and for nothing else. A done
+  // task still reaches the same menu, just through the always-visible menu
+  // button below rather than a hold gesture, since the only thing left to
+  // do with it (delete) does not need a hold to discover.
+  const longPressEligible = !task.done
+  const longPress = useLongPress(onOpenActions)
 
   const classNames = ['task']
   if (task.done) classNames.push('done')
   if (atBound) classNames.push('task-maxed')
-  if (dragging) classNames.push('dragging')
-  const badgeId = `push-badge-${task.id}`
-  const noteId = `push-note-${task.id}`
+  const stateId = `task-state-${task.id}`
   const coreId = `core-badge-${task.id}`
-  const unboundedId = `unbounded-badge-${task.id}`
   const showCoreBadge = !isFullDay && !!task.core
   // Once a task is marked ongoing, pushed-N-times stops being shown at all
   // - see docs/DECISIONS.md. That count is exactly the kind of "how long
@@ -90,11 +93,17 @@ export function TaskRow({
   // task has already been declared standing rather than stalled; it only
   // ever describes something worth deciding on for a task still under the
   // bound.
-  const showPushedBadge = pushCount > 0 && !atBound && !isUnbounded
+  const showPushedMark = pushCount > 0 && !atBound && !isUnbounded
+  // atBound, isUnbounded and showPushedMark were already mutually
+  // exclusive in the logic above (isPushable is unconditionally true for
+  // an unbounded task, and showPushedMark explicitly excludes both) - so
+  // this is genuinely "at most one" state, a single quiet mark rather than
+  // the three separate badges/buttons/paragraph this row used to carry for
+  // the same three states. core is the one independent axis and can still
+  // sit alongside it.
   const describedByIds = [
-    atBound ? noteId : showPushedBadge ? badgeId : undefined,
+    atBound || isUnbounded || showPushedMark ? stateId : undefined,
     showCoreBadge ? coreId : undefined,
-    isUnbounded ? unboundedId : undefined,
   ].filter((id): id is string => !!id)
   const describedBy = describedByIds.length > 0 ? describedByIds.join(' ') : undefined
 
@@ -115,9 +124,30 @@ export function TaskRow({
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
-          {showPushedBadge && (
-            <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
-          )}
+          {/* The one quiet mark for whichever of the three mutually
+              exclusive push states applies - see the comment on
+              showPushedMark above. Visibly short in every case; the
+              at-bound case additionally carries the full do-or-delete
+              sentence as a visually-hidden continuation of the same
+              element, so it is still announced in full even though it no
+              longer sits on screen as its own paragraph. The sentence
+              itself is also shown in full, not hidden, the moment the
+              actions menu opens for this task - see TaskActionsSheet.tsx -
+              so nothing about the bound's meaning was made harder to find,
+              only quieter until asked for. */}
+          {atBound ? (
+            <span id={stateId} className="task-state">
+              pushed {pushCountLabel(pushCount)}
+              <span className="visually-hidden"> - do it today, let it go, or mark it ongoing. Deleting counts as a decision, not a failure.</span>
+            </span>
+          ) : isUnbounded ? (
+            <span id={stateId} className="task-state">
+              ongoing
+              <span className="visually-hidden">, exempt from the push bound</span>
+            </span>
+          ) : showPushedMark ? (
+            <span id={stateId} className="task-state">pushed {pushCountLabel(pushCount)}</span>
+          ) : null}
         </label>
         {sizeEditingId === task.id ? (
           <input
@@ -146,107 +176,24 @@ export function TaskRow({
             {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
           </button>
         )}
-        {/* A float, not yet done, still eligible to move. Which one
-            to push is the owner's call, not something the capacity
-            line pre-selects - see the comment above it. isPushable is
-            true past MAX_PUSHES for a task marked ongoing, so this stays
-            available for it exactly as it does for any other float. */}
-        {!task.time && !task.done && isPushable(task) && (
-          <button
-            className="task-push"
-            aria-label={`Push ${task.title} to tomorrow`}
-            onClick={() => actions.pushTask(date, task.id)}
-          >
-            push
-          </button>
-        )}
-        {/* The quiet, permanent label a task carries once it has answered
-            the push bound's third choice - see the maxed-note below and
-            docs/DECISIONS.md. Matches task-core's plain, textual treatment
-            deliberately: no colour, no icon, nothing that competes for
-            attention with a task that still needs a decision today. It
-            also doubles as its own undo - tapping it clears the flag,
-            with no confirmation step, since nothing is lost either way. */}
-        {isUnbounded && (
-          <button
-            id={unboundedId}
-            type="button"
-            className="task-unbounded-badge"
-            aria-label={`${task.title} is ongoing, exempt from the push bound. Tap to undo.`}
-            onClick={() => actions.setTaskUnbounded(date, task.id, false)}
-          >
-            ongoing
-          </button>
-        )}
-        {/* The third choice at the bound, alongside the checkbox (do it
-            today) and the delete button below (let it go) - see the
-            maxed-note and docs/DECISIONS.md. A task that is not actually
-            stalled, just standing, gets to say so here instead of being
-            forced into do-or-delete on every day it survives past the
-            bound. */}
-        {atBound && (
-          <button
-            type="button"
-            className="task-mark-unbounded"
-            aria-label={`Mark ${task.title} as ongoing, so it can keep being pushed`}
-            onClick={() => actions.setTaskUnbounded(date, task.id, true)}
-          >
-            mark ongoing
-          </button>
-        )}
-        {/* The undo for tapping a gap - see docs/TIMELINE.md
-            section 5. Placing is easy to do by accident on a
-            phone, so this sits on the task's own row rather than
-            behind a setting or a fading toast: whatever anchored a
-            task, this always turns it back into a float. Not
-            gated on how the task got its time - a hand-typed
-            anchor from quick-add un-anchors exactly the same way a
-            gap-placed one does, since both are just a task with a
-            time either way. */}
-        {task.time && !task.done && (
-          <button
-            className="task-unanchor"
-            aria-label={`Remove time from ${task.title}`}
-            onClick={() => actions.unanchorTask(date, task.id)}
-          >
-            remove time
-          </button>
-        )}
+        {/* The single door to everything else this task can do - place or
+            un-anchor, push, mark ongoing, delete - see
+            docs/TIMELINE.md section 5 and TaskActionsSheet.tsx. Always
+            visible, never a hover reveal: this repo has already fixed that
+            class of bug once (see styles.css), and this button is now the
+            only path to some of what it opens, so it cannot be allowed to
+            regress into one. A real, focusable button - reachable and
+            operable with a keyboard exactly like every other control on
+            this row, not just a pointer gesture. */}
         <button
-          className="task-delete"
-          aria-label={atBound ? `Let go of ${task.title}` : `Delete ${task.title}`}
-          onClick={() => actions.deleteTask(date, task.id)}
+          type="button"
+          className="task-menu-button"
+          aria-label={`More actions for ${task.title}`}
+          onClick={onOpenActions}
         >
-          &times;
+          &#8942;
         </button>
-        {/* Step 7's drag source - see docs/TIMELINE.md section 5 and the
-            comment on `DayView.tsx`'s own drag wiring. A small dedicated
-            handle rather than the whole row: the row's own tap-to-toggle
-            target needs to stay scrollable with the page's default
-            touch-action, so only this handle carries `touch-action: none`
-            (in styles.css), the same disambiguation `docs/TIMELINE.md`
-            asks for, applied to the smallest possible area instead of the
-            whole row. Purely decorative and pointer-only - `aria-hidden`
-            because the two things it can do (place a float, un-anchor a
-            task) are both already fully reachable without it, through the
-            tap-a-gap picker, the "remove time" button above, and the
-            long-press menu this same row also offers. */}
-        {onDragHandlePointerDown && (
-          <span
-            className="task-drag-handle"
-            aria-hidden="true"
-            data-drag-handle={task.id}
-            onPointerDown={onDragHandlePointerDown}
-          >
-            &#8942;&#8942;
-          </span>
-        )}
       </div>
-      {atBound && (
-        <p id={noteId} className="task-maxed-note">
-          {`Pushed ${pushCountLabel(pushCount)} - do it today, let it go, or mark it ongoing. Deleting counts as a decision, not a failure.`}
-        </p>
-      )}
     </li>
   )
 }

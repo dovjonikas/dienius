@@ -41,57 +41,11 @@ function seed(tasks: Parameters<typeof actions.resetForTests>[0]['days'][string]
 const SHIFT = { id: 'shift', title: 'Shift', done: false, time: '09:00', minutes: 60 }
 const GYM = { id: 'gym', title: 'Gym', done: false, time: '11:00', minutes: 30 }
 
-test('dragging a float onto a gap places it, auto-expanding a collapsed grid', () => {
-  seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
+test('no task row carries a drag handle any more - only the grid\'s own anchor block starts a drag', () => {
+  seed([SHIFT, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
-
-  expect(screen.getByRole('button', { name: 'Show timeline' })).toBeInTheDocument()
-  const handle = container.querySelector('[data-drag-handle="guitar"]')!
-  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 0, clientY: 0 })
-
-  // Picked up while collapsed - the grid opens on its own so there is
-  // something to drop onto, the same as tapping "Show timeline" by hand.
-  expect(screen.getByRole('button', { name: 'Hide timeline' })).toBeInTheDocument()
-  const gapButton = screen.getByRole('button', { name: /1h free/i })
-
-  mockElementFromPoint(gapButton)
-  fireEvent.pointerMove(document, { pointerId: 1, clientX: 20, clientY: 20 })
-  expect(gapButton).toHaveClass('timeline-gap-drag-over')
-
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 20, clientY: 20 })
-
-  expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
-  // Placing Guitar at the gap's own start shrinks the gap (it now starts
-  // at 10:20), so the button we grabbed above is a stale, unmounted node
-  // - checking the live document is what actually proves the drag-over
-  // state was cleared rather than carried onto whatever gap remains.
-  expect(document.querySelector('.timeline-gap-drag-over')).toBeNull()
-})
-
-test('a float too big for the gap it is dropped on is refused - state stays untouched', () => {
-  seed([SHIFT, GYM, { id: 'deep-work', title: 'Deep work', done: false, minutes: 300 }], true)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
-
-  const handle = document.querySelector('[data-drag-handle="deep-work"]')!
-  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 0, clientY: 0 })
-  const gapButton = screen.getByRole('button', { name: /1h free/i })
-  mockElementFromPoint(gapButton)
-  fireEvent.pointerMove(document, { pointerId: 1, clientX: 20, clientY: 20 })
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 20, clientY: 20 })
-
-  expect(getData().days[DATE].tasks.find(t => t.id === 'deep-work')?.time).toBeUndefined()
-})
-
-test('dragging a float and releasing somewhere unrecognised leaves it untouched', () => {
-  seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
-
-  const handle = document.querySelector('[data-drag-handle="guitar"]')!
-  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 0, clientY: 0 })
-  mockElementFromPoint(document.body)
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 500, clientY: 500 })
-
-  expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBeUndefined()
+  expect(container.querySelector('[data-drag-handle]')).toBeNull()
+  expect(container.querySelector('.timeline-anchor')).toBeInTheDocument()
 })
 
 test('dragging an anchor block back onto the tray un-anchors it', () => {
@@ -103,7 +57,6 @@ test('dragging an anchor block back onto the tray un-anchors it', () => {
 
   const taskList = container.querySelector('.task-list')!
   mockElementFromPoint(taskList)
-  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 400 })
   fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 400 })
 
   expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBeUndefined()
@@ -122,52 +75,44 @@ test('a bare tap on an anchor block - pointerdown and pointerup with no real mov
   expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
 })
 
-test('an anchor dropped on a gap (not the tray) is refused - re-timing is not what this drag does', () => {
-  seed([SHIFT, GYM], true)
+test('pressing Escape mid-drag cancels it without changing anything', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
 
   const block = container.querySelector('.timeline-anchor')!
   fireEvent.pointerDown(block, { pointerId: 1, clientX: 0, clientY: 0 })
-  const gapButton = screen.getByRole('button', { name: /1h free/i })
-  mockElementFromPoint(gapButton)
-  fireEvent.pointerMove(document, { pointerId: 1, clientX: 30, clientY: 30 })
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 30, clientY: 30 })
-
-  expect(getData().days[DATE].tasks.find(t => t.id === 'shift')?.time).toBe('09:00')
-})
-
-test('pressing Escape mid-drag cancels it without changing anything', () => {
-  seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
-
-  const handle = container.querySelector('[data-drag-handle="guitar"]')!
-  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 0, clientY: 0 })
   fireEvent.keyDown(document, { key: 'Escape' })
 
-  const gapButton = screen.getByRole('button', { name: /1h free/i })
-  mockElementFromPoint(gapButton)
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 20, clientY: 20 })
+  const taskList = container.querySelector('.task-list')!
+  mockElementFromPoint(taskList)
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 20, clientY: 400 })
 
-  expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBeUndefined()
+  expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
 })
 
-test('with no anchors at all, a float still has a drag handle but nothing to drop onto - picking it up changes nothing', () => {
-  seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
+test('a done anchor never carries the grid\'s own drag wiring', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: true, time: '10:00', minutes: 20 }], true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
-
-  expect(screen.queryByRole('button', { name: /show timeline/i })).not.toBeInTheDocument()
-  const handle = container.querySelector('[data-drag-handle="guitar"]')!
-  fireEvent.pointerDown(handle, { pointerId: 1, clientX: 0, clientY: 0 })
-  mockElementFromPoint(null)
-  fireEvent.pointerUp(document, { pointerId: 1, clientX: 999, clientY: 999 })
-
-  expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBeUndefined()
+  expect(container.querySelector('.timeline-anchor')).not.toHaveClass('timeline-anchor-draggable')
 })
 
-test('a done task never carries a drag handle', () => {
+test('the row\'s menu button opens the same actions menu a long press does', async () => {
+  seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
+  expect(screen.getByRole('dialog', { name: 'Guitar' })).toBeInTheDocument()
+})
+
+test('a done task\'s menu button still opens the actions menu, offering only delete', async () => {
   seed([{ id: 'guitar', title: 'Guitar', done: true, minutes: 20 }])
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
-  expect(container.querySelector('[data-drag-handle="guitar"]')).toBeNull()
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
+  const dialog = screen.getByRole('dialog', { name: 'Guitar' })
+  expect(within(dialog).getByRole('button', { name: 'Delete Guitar' })).toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: /free/i })).not.toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: /push/i })).not.toBeInTheDocument()
 })
 
 test('long-pressing a float row opens the actions menu, and the checkbox is not toggled by the click that follows', () => {
@@ -186,7 +131,7 @@ test('long-pressing a float row opens the actions menu, and the checkbox is not 
   expect(checkbox).not.toBeChecked()
 })
 
-test('placing a float through the long-press menu works even while the grid is collapsed', () => {
+test('placing a float through the actions menu works even while the grid is collapsed', () => {
   vi.useFakeTimers()
   seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], false)
   render(<DayView date={DATE} onDateChange={() => {}} />)
@@ -218,13 +163,11 @@ test('long-pressing an anchor row opens a menu offering to remove its time', () 
   act(() => { vi.advanceTimersByTime(500) })
   fireEvent.pointerUp(label)
 
-  // Guitar's always-visible "Remove time" row control already carries the
-  // same accessible name, so this one is scoped to the dialog specifically.
   fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /remove time from guitar/i }))
   expect(getData().days[DATE].tasks.find(t => t.id === 'guitar')?.time).toBeUndefined()
 })
 
-test('a done task never opens the long-press menu', () => {
+test('a done task never opens its menu from a long press - only from the menu button', () => {
   vi.useFakeTimers()
   seed([{ id: 'guitar', title: 'Guitar', done: true, minutes: 20 }])
   render(<DayView date={DATE} onDateChange={() => {}} />)
@@ -236,4 +179,39 @@ test('a done task never opens the long-press menu', () => {
   fireEvent.pointerUp(label)
 
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('pushing a float through the actions menu moves it to tomorrow', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Push Guitar to tomorrow' }))
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(getData().days[DATE]?.tasks.find(t => t.id === 'guitar')).toBeUndefined()
+  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Guitar'])
+})
+
+test('marking a task ongoing through the actions menu clears the do-or-delete note on the row', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20, pushCount: 2 }])
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  expect(screen.getByText(/do it today, let it go, or mark it ongoing/i)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Mark Guitar as ongoing' }))
+
+  expect(getData().days[DATE].tasks[0].unbounded).toBe(true)
+  expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
+})
+
+test('deleting a task through the actions menu removes it', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
+  render(<DayView date={DATE} onDateChange={() => {}} />)
+
+  fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Guitar' }))
+
+  expect(screen.queryByText('Guitar')).not.toBeInTheDocument()
+  expect(getData().days[DATE]?.tasks ?? []).toHaveLength(0)
 })

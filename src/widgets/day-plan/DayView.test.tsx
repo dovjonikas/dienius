@@ -117,7 +117,8 @@ test('a task pushed once shows a quiet push count', () => {
   expect(document.getElementById(describedBy!)).toBe(badge)
 })
 
-test('a task at the push bound offers do or delete instead of another push count badge', () => {
+test('a task at the push bound carries a quiet mark on the row, and the full do-or-delete sentence in its menu', async () => {
+  const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Maxed out')
   const id = getData().days['2026-09-01'].tasks[0].id
   actions.resetForTests({
@@ -130,42 +131,29 @@ test('a task at the push bound offers do or delete instead of another push count
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  const note = screen.getByText(/do it today, let it go, or mark it ongoing/i)
-  expect(note).toBeInTheDocument()
-  // The note itself must carry the count - it is the only place a maxed
-  // task states it, since the separate quiet badge is not shown here.
-  expect(note).toHaveTextContent(/pushed twice/i)
-  expect(screen.getByRole('button', { name: /let go of maxed out/i })).toBeInTheDocument()
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // The row itself stays quiet: a short mark, not a separate paragraph.
+  expect(container.querySelector('p.task-maxed-note')).toBeNull()
+  const mark = screen.getByText(/pushed twice/i)
+  expect(mark).toBeInTheDocument()
 
-  // The note must be announced along with the task, not only visible.
+  // The mark must be announced along with the task, full sentence included -
+  // it never became invisible, only quieter until asked for.
   const checkbox = screen.getByRole('checkbox', { name: /maxed out/i })
   const describedBy = checkbox.getAttribute('aria-describedby')
   expect(describedBy).toBeTruthy()
-  expect(document.getElementById(describedBy!)).toBe(note)
+  expect(document.getElementById(describedBy!)).toBe(mark)
+  expect(mark).toHaveTextContent(/pushed twice - do it today, let it go, or mark it ongoing/i)
+
+  // The decision is made where its explanation now lives: the actions menu.
+  await user.click(screen.getByRole('button', { name: 'More actions for Maxed out' }))
+  const dialog = screen.getByRole('dialog', { name: 'Maxed out' })
+  expect(within(dialog).getByText(/pushed twice - do it today, let it go, or mark it ongoing/i)).toBeInTheDocument()
+  expect(within(dialog).getByRole('button', { name: 'Mark Maxed out as ongoing' })).toBeInTheDocument()
+  expect(within(dialog).getByRole('button', { name: 'Let go of Maxed out' })).toBeInTheDocument()
 })
 
-test('a task at the push bound offers a third choice - marking it ongoing - alongside do or delete', () => {
-  actions.addTask('2026-09-01', 'Maxed out')
-  const id = getData().days['2026-09-01'].tasks[0].id
-  actions.resetForTests({
-    ...getData(),
-    days: {
-      ...getData().days,
-      '2026-09-01': {
-        ...getData().days['2026-09-01'],
-        tasks: getData().days['2026-09-01'].tasks.map(t => (t.id === id ? { ...t, pushCount: 2 } : t)),
-      },
-    },
-  })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  // Reachable and labelled distinctly per task, not a generic "Mark ongoing".
-  expect(
-    screen.getByRole('button', { name: /mark maxed out as ongoing/i }),
-  ).toBeInTheDocument()
-})
-
-test('marking a maxed task ongoing clears the do-or-delete note and lets it keep being pushed', async () => {
+test('marking a maxed task ongoing through its menu clears the do-or-delete mark and lets it keep being pushed', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Standing task')
   const id = getData().days['2026-09-01'].tasks[0].id
@@ -180,15 +168,19 @@ test('marking a maxed task ongoing clears the do-or-delete note and lets it keep
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  await user.click(screen.getByRole('button', { name: /mark standing task as ongoing/i }))
+  await user.click(screen.getByRole('button', { name: 'More actions for Standing task' }))
+  await user.click(screen.getByRole('button', { name: 'Mark Standing task as ongoing' }))
 
   expect(getData().days['2026-09-01'].tasks[0].unbounded).toBe(true)
   expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
+  expect(screen.getByText('ongoing')).toBeInTheDocument()
+
   // Still pushable past the bound, right away.
-  expect(screen.getByRole('button', { name: /push standing task to tomorrow/i })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'More actions for Standing task' }))
+  expect(screen.getByRole('button', { name: 'Push Standing task to tomorrow' })).toBeInTheDocument()
 })
 
-test('an ongoing task carries a quiet, reversible label instead of the maxed note', async () => {
+test('an ongoing task carries a quiet, reversible mark instead of the maxed sentence', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Standing task')
   const id = getData().days['2026-09-01'].tasks[0].id
@@ -206,15 +198,16 @@ test('an ongoing task carries a quiet, reversible label instead of the maxed not
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
-  const badge = screen.getByRole('button', { name: /standing task is ongoing/i })
-  expect(badge).toBeInTheDocument()
+  const mark = screen.getByText('ongoing')
+  expect(mark).toBeInTheDocument()
 
-  // Reversible without hunting: the label itself is the undo control.
-  await user.click(badge)
+  // Reversible without hunting: one extra tap through the row's own menu.
+  await user.click(screen.getByRole('button', { name: 'More actions for Standing task' }))
+  await user.click(screen.getByRole('button', { name: 'Stop treating Standing task as ongoing' }))
   expect(getData().days['2026-09-01'].tasks[0].unbounded).toBeUndefined()
   // With pushCount still at the bound and unbounded now cleared, the
-  // do-or-delete note reappears - the choice was undone, not erased.
-  expect(screen.getByText(/do it today, let it go, or mark it ongoing/i)).toBeInTheDocument()
+  // do-or-delete mark reappears - the choice was undone, not erased.
+  expect(screen.getByText(/pushed/i)).toBeInTheDocument()
 })
 
 test('an ongoing task shows no push count, even after many more pushes than the bound', () => {
@@ -553,7 +546,7 @@ test('a night shift crossing midnight reads as a partial figure, not as the shif
   ).toBeInTheDocument()
 })
 
-test('each float offers its own push-to-tomorrow control, so the owner picks which one moves', async () => {
+test('each float offers its own push-to-tomorrow control through its menu, so the owner picks which one moves', async () => {
   const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
@@ -571,16 +564,20 @@ test('each float offers its own push-to-tomorrow control, so the owner picks whi
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
 
   // Both floats offer the control - the app never pre-selects the larger one.
+  await user.click(screen.getByRole('button', { name: 'More actions for Small errand' }))
   expect(screen.getByRole('button', { name: 'Push Small errand to tomorrow' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Close' }))
+  await user.click(screen.getByRole('button', { name: 'More actions for Big errand' }))
   expect(screen.getByRole('button', { name: 'Push Big errand to tomorrow' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Push Big errand to tomorrow' }))
 
-  await user.click(screen.getByRole('button', { name: 'Push Small errand to tomorrow' }))
-  expect(screen.queryByText('Small errand')).not.toBeInTheDocument()
-  expect(screen.getByText('Big errand')).toBeInTheDocument()
-  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Small errand'])
+  expect(screen.queryByText('Big errand')).not.toBeInTheDocument()
+  expect(screen.getByText('Small errand')).toBeInTheDocument()
+  expect(getData().days['2026-09-02']?.tasks.map(t => t.title)).toEqual(['Big errand'])
 })
 
-test('an anchor never offers a push-to-tomorrow control - only floats do', () => {
+test('an anchor never offers a push-to-tomorrow control - only floats do', async () => {
+  const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
     days: {
@@ -591,10 +588,12 @@ test('an anchor never offers a push-to-tomorrow control - only floats do', () =>
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'More actions for Shift' }))
   expect(screen.queryByRole('button', { name: /push shift to tomorrow/i })).not.toBeInTheDocument()
 })
 
-test('a float already at the push bound offers no push control', () => {
+test('a float already at the push bound offers no push control', async () => {
+  const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
     days: {
@@ -605,10 +604,12 @@ test('a float already at the push bound offers no push control', () => {
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'More actions for Maxed errand' }))
   expect(screen.queryByRole('button', { name: /push maxed errand to tomorrow/i })).not.toBeInTheDocument()
 })
 
-test('a done float offers no push control - there is nothing left to move', () => {
+test('a done float offers no push control - there is nothing left to move', async () => {
+  const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
     days: {
@@ -619,6 +620,7 @@ test('a done float offers no push control - there is nothing left to move', () =
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'More actions for Finished errand' }))
   expect(screen.queryByRole('button', { name: /push finished errand to tomorrow/i })).not.toBeInTheDocument()
 })
 
@@ -802,10 +804,13 @@ test('tapping a gap and placing a float turns it into an anchor, live in the day
   expect(getData().days['2026-09-01'].tasks.find(t => t.id === 'guitar')?.time).toBe('10:00')
   const taskList = within(container.querySelector('.task-list')!)
   expect(taskList.getByText('10:00')).toBeInTheDocument()
-  expect(taskList.getByRole('button', { name: 'Remove time from Guitar' })).toBeInTheDocument()
+  // Now an anchor, reachable through its own menu - one extra tap, not
+  // hunting, since the menu button sits right on the same row.
+  await user.click(taskList.getByRole('button', { name: 'More actions for Guitar' }))
+  expect(screen.getByRole('button', { name: 'Remove time from Guitar' })).toBeInTheDocument()
 })
 
-test('a placed float can be returned to the tray with its own undo control, no hunting for a setting', async () => {
+test('a placed float can be returned to the tray through its own menu, no hunting for a setting', async () => {
   const user = userEvent.setup()
   actions.resetForTests({
     ...defaultData(),
@@ -818,14 +823,17 @@ test('a placed float can be returned to the tray with its own undo control, no h
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
 
+  await user.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   await user.click(screen.getByRole('button', { name: 'Remove time from Guitar' }))
   expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
-  expect(screen.queryByRole('button', { name: /remove time from guitar/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
-test('a float with no time offers no remove-time control - there is nothing to undo', () => {
+test('a float with no time offers no remove-time control in its menu - there is nothing to undo', async () => {
+  const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar')
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   expect(screen.queryByRole('button', { name: /remove time/i })).not.toBeInTheDocument()
 })
 

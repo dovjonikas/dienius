@@ -202,25 +202,6 @@ test('with no onAnchorPointerDown supplied, no anchor is ever wired for drag', (
   expect(container.querySelector('.timeline-anchor')).not.toHaveClass('timeline-anchor-draggable')
 })
 
-test('the gap currently under a drag carries a drag-over class', () => {
-  const { container } = render(
-    <TimelineGrid
-      tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]}
-      dragOverGapStart={10 * 60}
-    />,
-  )
-  const gap = container.querySelector('.timeline-gap')!
-  expect(gap).toHaveClass('timeline-gap-drag-over')
-})
-
-test('no gap carries the drag-over class when nothing is being dragged over it', () => {
-  const { container } = render(
-    <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,
-  )
-  const gap = container.querySelector('.timeline-gap')!
-  expect(gap).not.toHaveClass('timeline-gap-drag-over')
-})
-
 test('the anchor currently being dragged carries a dragging class', () => {
   const { container } = render(
     <TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} draggingTaskId="Shift" />,
