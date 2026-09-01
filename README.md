@@ -1,122 +1,104 @@
-# Dienius
+<h1 align="center">Dienius</h1>
 
-A day planner built around reusable day templates, for people whose plan needs to be visible or it
-stops existing. No accounts, no server, no streaks. Everything lives in the browser.
+<p align="center">A day planner for a brain that needs the plan to be visible or it stops existing. No account, no server, no streaks.</p>
 
-**Live app: [quicasha.github.io/dienius](https://quicasha.github.io/dienius/)**
+<p align="center"><a href="https://quicasha.github.io/dienius/"><strong>Open the app</strong></a></p>
 
-<table>
-<tr>
-<td><img src="docs/screenshots/day-light-desktop.png" width="380" alt="Day view, light theme, showing a partly finished workday"></td>
-<td><img src="docs/screenshots/day-dark-desktop.png" width="380" alt="Day view, dark theme, showing a partly finished workday"></td>
-</tr>
-<tr>
-<td><img src="docs/screenshots/calendar-light-desktop.png" width="380" alt="Month calendar, light theme, with two templates stamped across the weeks"></td>
-<td><img src="docs/screenshots/calendar-dark-desktop.png" width="380" alt="Month calendar, dark theme, with two templates stamped across the weeks"></td>
-</tr>
-</table>
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="React 19 + TypeScript" src="https://img.shields.io/badge/React_19-TypeScript-61dafb.svg">
+  <img alt="PWA" src="https://img.shields.io/badge/PWA-offline--first-5a0fc8.svg">
+</p>
 
 <details>
-<summary>On a phone</summary>
-<p>
-<img src="docs/screenshots/day-light-mobile.png" width="190" alt="Day view, light theme, phone width">
-<img src="docs/screenshots/day-dark-mobile.png" width="190" alt="Day view, dark theme, phone width">
-<img src="docs/screenshots/calendar-light-mobile.png" width="190" alt="Calendar, light theme, phone width">
-<img src="docs/screenshots/calendar-dark-mobile.png" width="190" alt="Calendar, dark theme, phone width">
-</p>
+<summary><b>See it in action</b> - a working day, a stamped month, eleven themes</summary>
+<br>
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/day-slate.jpg" width="220" alt="Day view with the capacity line and the timeline open"><br><sub><b>Today</b></sub></td>
+    <td align="center"><img src="docs/screenshots/calendar-slate.jpg" width="220" alt="Month calendar with three templates stamped across September"><br><sub><b>Calendar</b></sub></td>
+    <td align="center"><img src="docs/screenshots/templates-sketchbook.jpg" width="220" alt="Template editor, Sketchbook theme, editing the Office day template"><br><sub><b>Templates</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/theme-gallery.jpg" width="220" alt="Theme gallery showing several of the eleven presets"><br><sub><b>Themes</b></sub></td>
+    <td align="center"><img src="docs/screenshots/year-strip-midnight.jpg" width="220" alt="Year strip, Midnight theme, one cell per day colored by template"><br><sub><b>Year</b></sub></td>
+    <td align="center"><img src="docs/screenshots/settings-midnight.jpg" width="220" alt="Settings, Midnight theme, export, import and erase"><br><sub><b>Settings</b></sub></td>
+  </tr>
+</table>
 </details>
+
+---
+
+## Install
+
+- **iPhone** - open the link in Safari → **Share** → **Add to Home Screen**
+- **Android** - open it in Chrome → **⋮** → **Install app**
+
+Takes half a minute. After that it runs full-screen and works fully offline.
 
 ## What it does
 
-**Templates, stamped onto days.** A template is a named, coloured list of time blocks - "Office
-day," "Rest day," whatever a person's week actually looks like. Building one is just adding blocks
-with a time and a title. On the calendar, picking a template and then clicking or dragging across
-dates paints it onto those days; nothing commits until Save, so a drag across the wrong week is
-just Cancel, not cleanup.
+- Reusable day templates - a named, colored set of time blocks stamped onto calendar dates by clicking or dragging; nothing commits until you save
+- A capacity line - one sentence saying whether today fits: what's anchored, how much free time is left across how many gaps, what the floats still need
+- A day timeline - anchored tasks at their real time and size, free gaps drawn as labeled regions, a line marking right now; collapsed until you open it
+- Push twice, then decide - an unfinished task can move to tomorrow twice; after that it's finish it, delete it, or mark it ongoing
+- A score with nothing riding on it - done over planned for today, nothing else; no percentage, no streak, no score on a day with no plan
+- Day types and core tasks, so a twelve-hour shift isn't scored like an ordinary Tuesday
+- If-then rules on the day view - one shown at a time, matched to the day's type and the time of day
+- A year strip - one cell per day, colored by template, a thin ring when everything planned got done
+- Eleven themes, light and dark - each a full palette, with per-theme overrides and a contrast check built into the test suite
 
-A template also carries a day type - full, shift, night, or rest - because a twelve-hour shift and
-an ordinary Tuesday aren't the same kind of day and shouldn't be measured as if they were. On
-anything but a full day, a block can be marked core: something that genuinely has to happen, as
-opposed to everything else that might.
+## Your data
 
-**A day view built for one thing: right now.** One input adds a task, with an optional leading time
-("`14:00 Call mom`") to keep it at the top of the list. One tap finishes it. There's no priority
-field, no tags, no due-date picker - the fewer decisions between opening the app and a task
-existing on today, the more likely it actually gets typed in.
+Everything is written straight to `localStorage`. There's no account and no server to lose access to.
 
-**An if-then board for the moments that repeat.** An implementation intention is a trigger and a
-response decided ahead of time - "if I get home and the kitchen is a mess, then I set a timer for
-ten minutes and do only the sink" - so there is nothing left to decide once the trigger actually
-happens. Each entry is just that pair plus an optional colour tag, shown as a card with the trigger
-leading since that is what gets scanned for in the moment. There is no done checkbox and nothing
-counts how often one fired - it isn't a task, and measuring it would turn a coping tool into
-another thing to fail at.
+- **Export / Import** - Settings has a plain JSON backup, both ways. It's a deliberate manual step, not an automatic one - a backup only exists when you actually made it
+- No sync between devices - clear site data on this one and it's gone unless you exported first
+- Updates install themselves the next time you open the app
 
-**A push rule with a real edge to it.** An unfinished task can be pushed to tomorrow, and pushed
-again - twice, and no further. On the third day, it stops offering "push" and instead asks
-directly: finish it, or let it go. The delete button on a task at that point is framed as a
-decision that's fine either way, not a failure state. The alternative - infinite rollover - is how
-a todo list turns into a graveyard of things from three weeks ago that nobody's going to do.
+---
 
-**A score with nothing riding on it.** Next to the date, a plain fraction - done over planned for
-that day, nothing else. No percentage, no weekly average, no streak. A day with no plan shows no
-score at all, because there's nothing to measure - not a "0/0" quietly implying failure for a day
-that was never engaged with in the first place. On a shift, night, or rest day, the fraction counts
-only the tasks marked core, with a quiet label saying so - so a twelve-hour shift with one required
-block and a handful of optional ones scores against that one block, not against a full day's worth
-of tasks it never had room for.
+## Under the hood
 
-**A year strip, without the streak.** The calendar tab has a Month/Year switch; Year shows a row of
-one cell per day, colored by that day's template, scrolling sideways on a phone rather than shrinking
-to fit. A cell only carries two signals: color, if the day had a plan, and a thin ring, if everything
-planned for that day got done - a day attempted but not finished looks exactly like a day just
-stamped and not yet touched, on purpose. An unplanned day is a plain neutral tile, the same as any
-other empty stretch on the grid, not a hole or a warning color. There's no total, no percentage, and
-nothing counting days in a row - see [`docs/DECISIONS.md`](docs/DECISIONS.md) for why a grid like
-this is the easiest feature in the app to get wrong.
+React 19 and TypeScript, built with Vite. No UI framework, no state management library - app state is one object behind a `useSyncExternalStore` store, persisted straight to `localStorage`. No backend of any kind.
 
-**Backup that's explicit.** Settings has an export and an import, both plain JSON. There's no
-account to lose access to and no sync to silently fail - just a file, made on purpose, that a
-person actually has.
+```
+src/
+  lib/
+    types.ts         AppData, Template, Task, DayPlan, Settings, IfThenEntry
+    storage.ts       load/save/validate against localStorage, export/import JSON
+    store.ts         the actions - addTask, stamp, rolloverUnfinished - and the push bound
+    stamping.ts      turns a template plus a set of picked dates into day plans
+    dates.ts         date-key helpers and the calendar month grid
+    colors.ts        the one color palette, shared by templates and if-then tags
+    themes.ts        the eleven theme presets, light and dark variants of each
+    theme.ts         resolves a preset plus its overrides into real CSS values
+    theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
+    contrast.ts      the WCAG contrast gate the override panel and tests both run
+    pushRules.ts     the two-push bound and the ongoing exemption
+  views/          Calendar, Templates, Settings, ThemeGallery, ThemeOverridePanel
+  widgets/
+    day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score
+    if-then/      the if-then board and its day-type/time-of-day rotation
+    year-strip/   the year-at-a-glance strip and the module that colors it
+    registry.ts   which widgets are enabled on the day view
+  App.tsx         tab navigation and the current view/date
+scripts/
+  generate-sw.mjs   runs after the production build; hashes the output and writes the
+                    versioned cache name and precache list into public/sw.js
+public/
+  manifest.webmanifest   PWA manifest
+  icons/                 app icons, including the maskable one
+  sw.js                  hand-rolled; generate-sw.mjs writes its cache name and precache list
+```
 
-**Works with the network off.** Installable as a PWA, with a service worker that caches the app
-shell so it opens the same way whether the connection is there or not.
+Logic that doesn't need a component - parsing, sorting, scoring, stamping, capacity, date math - is written as plain, independently tested functions rather than folded into the components that call them. 750 tests, run with Vitest and Testing Library, covering the pure modules directly and the views through user-facing interaction.
 
-**Light and dark**, switched in Settings, no flash of the wrong one on load.
+The service worker in `public/sw.js` is hand-written rather than generated, and `scripts/generate-sw.mjs` versions its cache from a hash of the build output on every deploy, so an installed copy never gets stuck on stale files.
 
-## Why it's built this way
+The reasoning behind the harder calls - why templates instead of recurring tasks, why the push bound stops at two, why there's no streak anywhere - is written out, including what each one costs, in [`docs/DECISIONS.md`](docs/DECISIONS.md). The evidence behind the if-then board and the push rule, and what the research says not to build, is in [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md).
 
-The premise underneath all of this: a plan that isn't visible doesn't exist, and a tool that
-demands upkeep gets abandoned within a week. Every constraint above follows from one of those two
-sentences.
-
-Templates instead of recurring-task rules because "every weekday at 9" is a rule that eventually
-meets a week that doesn't fit it, and reconciling the exception is exactly the kind of maintenance
-that gets a planner shelved. A template stamped by hand stays honest about what's actually true
-for that day, at the cost of a bit more clicking than a rule would need.
-
-The push rule stops at two because unlimited rollover isn't forgiveness, it's a way for a task to
-never have to be looked at again. A hard stop forces a decision - which, done or deleted, is
-progress either way - instead of letting a task drift for a month feeling technically still
-"planned."
-
-No streaks, and no score without a plan, for the same reason: a streak converts one off day into a
-reason to quit entirely, and a "0/0" for a day nobody opened the app is punishing absence as if it
-were failure. Both patterns are common in habit apps because they're effective at driving daily
-opens. They're also exactly wrong for someone whose days are already inconsistent by nature - the
-tool should absorb that inconsistency, not penalize it.
-
-No accounts and no backend because a login screen is friction between a person and the plan they
-need to see *now*, and because the whole feature set fits in one JSON blob with no server-side
-logic behind it - a backend would be infrastructure serving no purpose the browser doesn't already
-serve. The trade-offs of that choice, and the others above, are written out honestly - including
-the parts that cost something - in [`docs/DECISIONS.md`](docs/DECISIONS.md).
-
-## Stack and running it locally
-
-React 19 and TypeScript, built with Vite. No UI framework, no state management library - app state
-is one object behind a `useSyncExternalStore` store (`src/lib/store.ts`), persisted straight to
-`localStorage`. No backend of any kind.
+## Run locally
 
 ```bash
 npm install
@@ -128,51 +110,8 @@ npm run build     # typecheck, build, then generate the service worker
 
 Requires Node 22 or newer (see `.nvmrc`).
 
-## How the code is organized
-
-```
-src/
-  lib/          data model, persistence, the app store, and small pure helpers
-    types.ts       AppData, Template, Task, DayPlan, Settings
-    storage.ts      load/save/validate against localStorage, export/import JSON
-    store.ts         the actions (addTask, rolloverUnfinished, stamp, ...) and the push-rule bound
-    stamping.ts      turns a template + a set of picked dates into day plans
-    dates.ts         date-key helpers and the calendar month grid
-    theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
-    colors.ts        the one named colour palette, shared by templates and if-then tags
-  views/        the four full-page views: Calendar, Templates, Settings (Day lives in widgets/)
-  widgets/
-    day-plan/     the day view and its own pure modules: quick-add parsing, sort order,
-                  draft autosave, and the day-score calculation
-    if-then/      the if-then board, a second widget on the day view
-    year-strip/   the year-at-a-glance strip shown from the calendar tab, and the pure
-                  module that turns stored days into a year's worth of colored cells
-    registry.ts    which widgets are enabled and shown on the day view
-  App.tsx       tab navigation and the current view/date
-scripts/
-  generate-sw.mjs   runs after the production build; hashes the output and writes the
-                    versioned cache name and precache list into public/sw.js
-public/
-  manifest.webmanifest, icons/, sw.js   PWA assets
-```
-
-Logic that doesn't need a component - parsing, sorting, scoring, stamping, date math - is written
-as plain, independently tested functions rather than folded into the components that call them.
-
-## Testing and deployment
-
-209 tests across the codebase, run with `npm test` (Vitest, jsdom, Testing Library). They cover the
-pure logic modules directly and the views through user-facing interaction rather than
-implementation detail.
-
-Every push to `main` runs the full test suite, then builds - which typechecks before it bundles -
-and only deploys if both steps succeed. The build output goes to GitHub Pages via the workflow in
-`.github/workflows`.
+**Deploy** - push to `main`. GitHub Actions runs the full test suite, then builds - which typechecks before it bundles - and only publishes to GitHub Pages if both steps succeed. Workflow in `.github/workflows/deploy.yml`.
 
 ## License
 
 [MIT](LICENSE).
-
----
-
-What's not built yet, and why, is tracked in [`docs/BACKLOG.md`](docs/BACKLOG.md).
