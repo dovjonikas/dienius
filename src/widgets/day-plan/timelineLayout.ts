@@ -313,6 +313,52 @@ export function computeVerticalLayout(
   return { totalHeightPx: px, topPx }
 }
 
+/**
+ * Picks the pixels-per-minute density `computeVerticalLayout` should draw
+ * a wide-screen grid at, given how much vertical room is actually there.
+ *
+ * The phone always draws at one fixed density, because a phone's own
+ * viewport height barely covers a busy day to begin with - there is never
+ * genuine room to spare. A wide screen is different: `useAvailableGridHeight`
+ * measures real, unused pixels below a sparse day's grid, and this function
+ * turns that measurement into a density instead of leaving it as blank
+ * space under the last hour mark. `windowMinutes / availableHeightPx`
+ * inverted is the density that makes the drawn window exactly fill what is
+ * actually there - "the height that is actually there," in the owner's own
+ * words.
+ *
+ * Two hard limits, in the order they are checked:
+ *
+ * - **Never below `basePxPerMinute`.** A wide window must never draw a day
+ *   more cramped than the phone already does - if the available height
+ *   implies a thinner density than the phone's own (a very short window on
+ *   a very short screen), the phone's density wins. This is also what keeps
+ *   a dense day dense: `computeVerticalLayout`'s own per-segment floors
+ *   already guarantee no gap or anchor cluster draws under its touch-target
+ *   minimum regardless of what density is requested here - this floor on
+ *   the *base* density is a second, independent guarantee that the wide
+ *   layout's own baseline reading never gets thinner than the narrow
+ *   layout's, on top of that.
+ * - **Never above `maxPxPerMinute`.** Without a cap, one anchor alone on a
+ *   very tall monitor would divide a huge available height by a small
+ *   window and draw as an absurdly oversized block - filling the screen
+ *   was never a request to stretch a 30-minute call to 400 pixels tall.
+ *
+ * A `windowMinutes` of zero (defensive only - `computeTimelineLayout` never
+ * actually produces one) falls back to the base density rather than
+ * dividing by zero.
+ */
+export function chooseWidePxPerMinute(
+  basePxPerMinute: number,
+  windowMinutes: number,
+  availableHeightPx: number,
+  maxPxPerMinute: number,
+): number {
+  if (windowMinutes <= 0) return basePxPerMinute
+  const fitPxPerMinute = availableHeightPx / windowMinutes
+  return Math.min(maxPxPerMinute, Math.max(basePxPerMinute, fitPxPerMinute))
+}
+
 // Anchors that touch or overlap in their drawn interval (see
 // `drawnInterval`) share one vertical extent on the grid regardless of how
 // many side-by-side columns they end up packed into - a cluster's own

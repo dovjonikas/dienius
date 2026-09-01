@@ -2671,7 +2671,17 @@ button.danger {
      .app's own max-width: 760px (set unconditionally above) needs the
      ancestor itself to widen, not just this element - a child's max-width
      can never exceed the box its parent already constrained it to. */
-  .app:has(.main-day) { max-width: 1600px; }
+  /* .app's own padding-bottom (64px, unconditional - see above) is a
+     phone concern: room to scroll a tall page clear of a device's own
+     bottom chrome. Nothing about the Today tab needs that much air below
+     it at this width - see fix-fill-viewport-height-report.md, "more than
+     half the window is empty background." A plain 24px matches the gap
+     already used between the three columns below, rather than inventing a
+     second spacing value. Scoped by the same :has(.main-day) the max-width
+     override above already uses, so Calendar, Templates and Settings keep
+     the phone's own bottom padding unchanged at every width - this
+     document only ever touches the Today tab. */
+  .app:has(.main-day) { max-width: 1600px; padding-bottom: 24px; }
   .main-day { max-width: 1600px; }
 }
 
@@ -2754,9 +2764,43 @@ button.danger {
   }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
-     the phone's stacked layout) is deliberately left alone here - see
-     docs/LAYOUT-WIDE.md section 5's own "optional, later" note. Raising it
-     is a real, separately-valued change and out of scope for this pass. */
+     the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
+     as an "optional, later" change and fix-fill-viewport-height-report.md
+     is the one that made it: at this width the grid is a dedicated column,
+     not competing with a task list stacked below it, and TimelineGrid.tsx
+     now measures real vertical room and draws denser to use it
+     (useAvailableGridHeight, chooseWidePxPerMinute) - so the container
+     itself must be free to grow to match, rather than clipping that taller
+     drawing back down to a fixed height and reintroducing exactly the
+     internal scrollbar the owner reported. A day whose grid genuinely
+     needs more room than the viewport has left scrolls the page itself
+     instead - a single, ordinary scrollbar, not a small one hidden inside
+     a pane - which is the honest outcome for a day that truly does not
+     fit, not a regression. */
+  .timeline-grid-scroll {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* The task pane has the same "half the window is empty" problem the
+     grid did - a short list just stops partway down its own column. Once
+     .day-pane's own stretched grid makes the shared grid row taller than
+     the task list's natural content (CSS Grid's default row stretch
+     already gives every column that same row height), the list itself
+     grows to use its share of that height rather than leaving it as dead
+     air below the last row: a flex column with the list as the one
+     growing item pushes the rollover button (or the "nothing left to
+     push" note, when that is what is showing) down to sit right after it,
+     reading as anchored to the bottom of the pane rather than floating a
+     fixed distance under a short list. */
+  .task-pane {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .task-pane .task-list {
+    flex: 1 1 auto;
+  }
 }
 
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only

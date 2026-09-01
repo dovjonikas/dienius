@@ -4,6 +4,7 @@ import { formatDuration } from './capacity'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
+  chooseWidePxPerMinute,
   computeTimelineLayout,
   computeVerticalLayout,
   currentMinutes,
@@ -12,6 +13,7 @@ import {
   halfHourMarks,
   hourMarks,
 } from './timelineLayout'
+import { useAvailableGridHeight } from './useAvailableGridHeight'
 
 /**
  * Pixels per minute of window time before any touch-target floor below is
@@ -25,6 +27,20 @@ import {
  * than a phone screen can reasonably scroll.
  */
 const PX_PER_MINUTE = 1.15
+
+/**
+ * The densest a wide-screen grid is ever drawn at, regardless of how much
+ * vertical room `useAvailableGridHeight` measures. Without a cap, one
+ * anchor alone on a very tall monitor would divide a huge available height
+ * by a small window and draw as an absurdly oversized block - "use the
+ * height that is actually there" was never a request to stretch a
+ * 30-minute call to hundreds of pixels tall. Three times the phone's own
+ * density: generous enough that a genuinely sparse day visibly spreads out
+ * to use real extra room, conservative enough that a block still reads as
+ * a block rather than a slab. Judgment, not a measurement of any one
+ * screen - see fix-fill-viewport-height-report.md.
+ */
+const MAX_PX_PER_MINUTE_WIDE = PX_PER_MINUTE * 3
 
 const MIN_ANCHOR_HEIGHT = 44
 
@@ -138,6 +154,18 @@ export interface TimelineGridProps {
    * indicator drawn.
    */
   isToday?: boolean
+  /**
+   * True at the wide breakpoint - see `docs/LAYOUT-WIDE.md` section 5 and
+   * `useIsWide()` in `lib/viewport.ts`, which `DayView.tsx` passes straight
+   * through. Optional and defaults to false, so every existing caller (a
+   * read-only preview, most of this component's own tests) draws at the
+   * phone's fixed `PX_PER_MINUTE` exactly as it always has - only a caller
+   * that explicitly says the viewport is wide ever measures anything or
+   * draws denser than that. See `fix-fill-viewport-height-report.md` for
+   * why: the phone's own viewport height rarely has genuine room to spare,
+   * so it never pays for a measurement it would not act on.
+   */
+  isWide?: boolean
 }
 
 /**
@@ -178,6 +206,7 @@ export function TimelineGrid({
   onAnchorPointerDown,
   draggingTaskId,
   isToday = false,
+  isWide = false,
 }: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -185,6 +214,11 @@ export function TimelineGrid({
   const [announcement, setAnnouncement] = useState('')
   const pendingFocusGapStart = useRef<number | null>(null)
   const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
+  // Null until enabled and measured (or always null on the phone - see the
+  // hook's own doc comment) - chooseWidePxPerMinute below treats a null
+  // reading as "nothing available yet" (0px), which floors straight back
+  // to PX_PER_MINUTE, the same density the phone always draws at.
+  const availableHeightPx = useAvailableGridHeight(wrapRef, isWide)
 
   // Coarse on purpose - see docs/RESEARCH-TIMELINE-UI.md section 5 point 7:
   // a planner has no reason to animate every second, so this recomputes
@@ -224,13 +258,26 @@ export function TimelineGrid({
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
 
+  // At the wide breakpoint, draw denser than the phone's own fixed density
+  // whenever there is real, measured room to use it - see
+  // chooseWidePxPerMinute's own doc comment and fix-fill-viewport-height-
+  // report.md. Never below PX_PER_MINUTE (a wide screen must never draw a
+  // day more cramped than the phone already does) and never above
+  // MAX_PX_PER_MINUTE_WIDE. Off the wide breakpoint this is exactly
+  // PX_PER_MINUTE, unconditionally - isWide defaults to false and
+  // availableHeightPx is always null in that case, so nothing here can
+  // change what the phone draws.
+  const pxPerMinute = isWide
+    ? chooseWidePxPerMinute(PX_PER_MINUTE, window.end - window.start, availableHeightPx ?? 0, MAX_PX_PER_MINUTE_WIDE)
+    : PX_PER_MINUTE
+
   // See computeVerticalLayout's own doc comment: this is what stops a
   // short gap's touch-target floor from ever being drawn over the anchor
   // that follows it. A day with any unsized anchor draws no gap objects at
   // all (see computeTimelineLayout), so no floor is reserved for a button
   // that will never exist there.
   const vertical = computeVerticalLayout(window, anchors, {
-    pxPerMinute: PX_PER_MINUTE,
+    pxPerMinute,
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
     unsizedAnchorFloorPx: MIN_ANCHOR_HEIGHT,
     gapFloorPx: unsizedAnchorCount > 0 ? 0 : GAP_MIN_HEIGHT_PX,

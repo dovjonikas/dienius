@@ -362,3 +362,33 @@ test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list
     expect(order[i].compareDocumentPosition(order[i + 1]) & 4).toBe(4)
   }
 })
+
+// --- fix-fill-viewport-height-report.md: the grid stretches to fill real,
+// measured room at the wide breakpoint, rather than sitting inside a fixed
+// max-height cap with its own internal scrollbar. This only checks that
+// DayView actually passes isWide through to TimelineGrid - the grid's own
+// density arithmetic is TimelineGrid.test.tsx's job, and the real,
+// positioned-in-a-browser proof is in the report.
+
+const ORIGINAL_INNER_HEIGHT = window.innerHeight
+
+afterEach(() => {
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: ORIGINAL_INNER_HEIGHT })
+})
+
+test('at a wide viewport with real vertical room, the grid draws taller than the same day narrow', () => {
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 3000 })
+  seed(anchoredTasks, true) // expanded, so the narrow render below has a grid to compare against
+
+  viewport = mockViewport(false)
+  const narrow = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const narrowLayers = narrow.container.querySelector('.timeline-grid-layers') as HTMLElement
+  const narrowHeight = parseFloat(narrowLayers.style.height)
+  narrow.unmount()
+  viewport!.restore()
+
+  viewport = mockViewport(true)
+  const wide = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const wideLayers = wide.container.querySelector('.timeline-grid-layers') as HTMLElement
+  expect(parseFloat(wideLayers.style.height)).toBeGreaterThan(narrowHeight)
+})
