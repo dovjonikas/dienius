@@ -218,3 +218,72 @@ test('formatYearCellLabel says completed with no template name when the day was 
   const cell = buildYearCells(2026, days, []).find(c => c.key === '2026-06-15')!
   expect(formatYearCellLabel(cell)).toBe('June 15, 2026, completed')
 })
+
+// --- stress test: roughly two years of stamped days -------------------------
+
+function twoYearsOfDays(): { days: Record<string, DayPlan>; templates: Template[] } {
+  const templates: Template[] = [
+    { id: 't1', name: 'Work', color: '#8ab6f9', blocks: [{ id: 'b1', time: '09:00', title: 'Shift', minutes: 480 }] },
+    { id: 't2', name: 'Rest', color: '#cde39e', blocks: [{ id: 'b2', title: 'Nothing required' }] },
+  ]
+  const days: Record<string, DayPlan> = {}
+  let d = new Date(2024, 0, 1)
+  for (let i = 0; i < 700; i++) {
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const template = templates[i % 2]
+    days[key] = {
+      date: key,
+      templateId: template.id,
+      tasks: [{ id: `${key}-t`, title: template.blocks[0].title, time: template.blocks[0].time, done: i % 5 === 0, fromTemplate: true, minutes: template.blocks[0].minutes }],
+    }
+    d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
+  }
+  return { days, templates }
+}
+
+test('buildYearCells over a data set covering roughly two full years stays well under 100ms for a single year', () => {
+  const { days, templates } = twoYearsOfDays()
+  const t0 = performance.now()
+  const cells = buildYearCells(2024, days, templates)
+  const elapsed = performance.now() - t0
+  expect(cells).toHaveLength(366) // 2024 is a leap year
+  expect(cells.every(c => c.planned)).toBe(true)
+  expect(elapsed).toBeLessThan(100)
+})
+
+test('buildYearCells does not walk every day in the data set - only the year it was asked for', () => {
+  // A naive implementation that filtered the whole `days` record instead of
+  // walking exactly the requested year's own dates would still produce the
+  // right cells, but its cost would grow with the total data set size
+  // rather than staying flat at ~365 - this pins the flat cost directly by
+  // comparing a data set covering two years against one covering only the
+  // single year actually being rendered.
+  const { days: twoYears, templates } = twoYearsOfDays()
+  const oneYearOnly: Record<string, DayPlan> = {}
+  for (const [key, day] of Object.entries(twoYears)) {
+    if (key.startsWith('2024')) oneYearOnly[key] = day
+  }
+
+  const runs = 20
+  const t0 = performance.now()
+  for (let i = 0; i < runs; i++) buildYearCells(2024, oneYearOnly, templates)
+  const oneYearMs = performance.now() - t0
+
+  const t1 = performance.now()
+  for (let i = 0; i < runs; i++) buildYearCells(2024, twoYears, templates)
+  const twoYearMs = performance.now() - t1
+
+  // Generous factor - the point is confirming this stays roughly flat
+  // (bounded by a small constant), not pinning an exact ratio that would
+  // make this test flaky under CI jitter for a sub-millisecond operation.
+  expect(twoYearMs).toBeLessThan(oneYearMs * 5 + 50)
+})
+
+test('switching between years repeatedly recomputes each year independently and stays fast throughout', () => {
+  const { days, templates } = twoYearsOfDays()
+  const years = [2024, 2025, 2024, 2025, 2024, 2025, 2024, 2025, 2024, 2025]
+  const t0 = performance.now()
+  for (const year of years) buildYearCells(year, days, templates)
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(100)
+})

@@ -193,3 +193,50 @@ test('carries no aggregate numbers anywhere in its own text', () => {
   expect(text).not.toMatch(/\bstreak\b/i)
   expect(text).not.toMatch(/\bbest\b/i)
 })
+
+// --- stress test: two years of stamped days, and switching between years ---
+
+function stampTwoYears() {
+  const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Shift', minutes: 480 }] })
+  const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [{ title: 'Nothing required' }] })
+  const stamps: Record<string, string> = {}
+  let d = new Date(2024, 0, 1)
+  for (let i = 0; i < 700; i++) {
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    stamps[key] = i % 2 === 0 ? work.id : rest.id
+    d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
+  }
+  actions.stamp(stamps)
+  return { work, rest }
+}
+
+test('a year strip over roughly 700 stamped days across two templates renders every cell colored, within a generous time budget', () => {
+  stampTwoYears()
+  vi.setSystemTime(new Date(2024, 5, 15))
+  const t0 = performance.now()
+  render(<YearStrip onOpenDay={() => {}} />)
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(2000)
+  const grid = screen.getByRole('group', { name: 'Days of 2024' })
+  const colored = within(grid).getAllByRole('button').filter(b => (b as HTMLElement).style.background !== '')
+  // 2024 is a leap year and every day in it was stamped in the loop above.
+  expect(colored.length).toBe(366)
+})
+
+test('switching years several times in a row stays well within a generous time budget each time', () => {
+  stampTwoYears()
+  vi.setSystemTime(new Date(2024, 5, 15))
+  const { getByRole } = render(<YearStrip onOpenDay={() => {}} />)
+
+  for (let i = 0; i < 4; i++) {
+    const t0 = performance.now()
+    act(() => {
+      getByRole('button', { name: 'Previous year' }).click()
+    })
+    const elapsed = performance.now() - t0
+    // jsdom-specific bound, generous for the same reason noted on the
+    // DayView render budget test - see the stress-test report for warm,
+    // production-build numbers measured in a real browser.
+    expect(elapsed).toBeLessThan(2000)
+  }
+})
