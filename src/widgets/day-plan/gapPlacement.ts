@@ -59,13 +59,33 @@ export function offerForGap(tasks: Task[], gapMinutes: number): GapOffer {
   const floats = tasks.filter(t => !isAnchor(t) && !t.done)
 
   const fitting = floats
-    .filter((t): t is Task & { minutes: number } => t.minutes !== undefined && t.minutes <= gapMinutes)
+    .filter((t): t is Task & { minutes: number } => t.minutes !== undefined && canPlaceFloatInGap(t.minutes, gapMinutes))
     .sort((a, b) => a.minutes - b.minutes)
     .map(toOption)
 
   const unsized = floats.filter(t => t.minutes === undefined).map(toOption)
 
   return { fitting, unsized }
+}
+
+/**
+ * Whether dropping a float of this size onto a gap of this size is an
+ * allowed placement - the single yes/no rule behind `offerForGap`'s two
+ * lists, collapsed for callers that only need to know "can this go here,"
+ * not the full fitting/unsized split. Step 7's drag-and-drop
+ * (`dragDrop.ts`) and its long-press menu both call this rather than
+ * re-deriving the rule from `offerForGap`'s shape, so there is exactly one
+ * place "does this float fit" is decided.
+ *
+ * A sized float is allowed when it is no larger than the gap - equal
+ * counts as fitting, same as `offerForGap`. An unsized float is always
+ * allowed, for the same reason `offerForGap` lists it under its own "size
+ * unknown" heading instead of excluding it: its fit is unknown, not false,
+ * and refusing it here would make an obviously-short float like "call
+ * grandma" undroppable forever just because nobody ever timed it.
+ */
+export function canPlaceFloatInGap(minutes: number | undefined, gapMinutes: number): boolean {
+  return minutes === undefined || minutes <= gapMinutes
 }
 
 function toOption(task: Task): GapFloatOption {

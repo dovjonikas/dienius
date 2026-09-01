@@ -270,6 +270,30 @@ above already documents for dropping a role that would only be half true, taken 
 because a fully accessible copy of the same content already exists elsewhere on the same page. Zero
 focusable elements live inside the grid, confirmed directly rather than assumed.
 
+**Drag between the tray and the grid (step 7 of `docs/TIMELINE.md`).** Dragging a float onto a gap
+anchors it; dragging an anchor back onto the tray un-anchors it - both through the same
+`placeFloat`/`unanchorTask` store actions the tap-a-gap picker already uses, never a third path.
+Follows `CalendarView.tsx`'s own pointer technique exactly: release pointer capture on `pointerdown`,
+track the current target with `document.elementFromPoint` + `closest` on `pointermove` rather than
+`pointerenter`, clean up on document-level `pointerup`/`pointercancel`. `touch-action: none` sits only
+on a small drag handle per row and on the anchor's own block in the grid, never the whole row, so the
+page keeps scrolling normally everywhere else. `dragDrop.ts`'s `resolveDrop` is the pure drop-outcome
+logic, reusing `gapPlacement.ts`'s `canPlaceFloatInGap` rather than a second fit rule, so a drag can
+never place something the tap picker would have refused. A minimum-movement guard stops a bare tap on
+an anchor block from un-anchoring it by accident.
+
+A long-press menu (`TaskActionsSheet.tsx`, `useLongPress.ts`) does the same two things through a path
+that does not depend on drag working at all - the spec's own explicit requirement, given the
+calendar's drag had a documented history of not working on touch in this repo. It lists a float's
+available gaps straight from the day's own tasks regardless of whether the grid is expanded, which is
+also the answer to a collapsed grid: dragging auto-expands the grid so there is something to drop
+onto, and the long-press menu works without needing the grid open at all.
+
+Verified live in the browser with real, unmocked `PointerEvent` sequences: both drag directions,
+the oversized-float refusal, the bare-tap guard, normal page scrolling at 375px with the grid
+expanded, and the long-press menu placing and un-anchoring correctly with the grid collapsed. Not
+verified on real touch hardware - see the standing item in Tier 3 below, now widened to cover this.
+
 **Gap interaction.** Step 5 pulled the gap elements out from under the `aria-hidden` wrapper above,
 exactly as flagged when it shipped. Each gap is now a real, focusable button with its own accessible
 name ("1h30 free, 13:00 to 14:30. Tap to place a float.") that opens a bottom sheet listing the
@@ -328,13 +352,17 @@ never struck from this list; each one below says which.
   the visual and keyboard axes in agreement, so the fix completes the structure (weeks wrapped in
   `role="row"`, weekday headers as `role="columnheader"`) instead of dropping the grid roles the way
   the strip did. Fixed, pinned by a test on the structure and one on each cell's accessible name.
-- **Standing task, not a defect - needs a real phone, so it stays open:** verify the calendar's
-  pointer-based stamp drag on actual iOS Safari and Android Chrome hardware, not just a desktop
-  browser's touch emulation. Check specifically: a touch-drag across cells stamps the whole swept
-  range the way a mouse drag does; a diagonal or fast drag does not drop cells the finger passed
-  over quickly; lifting the finger off the calendar section entirely (into the browser chrome, or
-  past the edge of the screen) still stops the paint instead of leaving it stuck on; and the drag
-  does not trigger the page's own scroll or a pull-to-refresh gesture while it is happening.
+- **Standing task, not a defect - needs a real phone, so it stays open:** verify every pointer-based
+  drag in the app on actual iOS Safari and Android Chrome hardware, not just a desktop browser's touch
+  emulation. Originally the calendar's stamp drag alone; widened by step 7 of `docs/TIMELINE.md` to
+  cover its own two drags (float onto a gap, anchor back to the tray) and long-press menu at the same
+  time, since all of them share the same `elementFromPoint` + `touch-action` technique and the same
+  risk. Check specifically: a touch-drag across calendar cells stamps the whole swept range the way a
+  mouse drag does; a diagonal or fast drag does not drop cells or gaps the finger passed over quickly;
+  lifting the finger off the relevant section entirely (into the browser chrome, or past the edge of
+  the screen) still stops the gesture instead of leaving it stuck on; none of these drags trigger the
+  page's own scroll or a pull-to-refresh gesture while in progress; and a long-press on a task row
+  opens its menu without also scrolling the page or toggling the checkbox underneath it.
 
 ## Tier 4 - the portfolio layer
 

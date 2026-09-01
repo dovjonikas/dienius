@@ -1,24 +1,32 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { Task } from '../../lib/types'
 import { actions, MAX_PUSHES, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { computeCapacity, formatCapacityLine, formatDuration, parseMinutesInput } from './capacity'
+import { computeCapacity, formatCapacityLine, isAnchor, parseMinutesInput } from './capacity'
 import { TimelineGrid } from './TimelineGrid'
 import { IfThenDayRule } from '../if-then/DayRule'
-
-const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
-
-function pushCountLabel(count: number): string {
-  return PUSH_COUNT_WORDS[count] ?? `${count} times`
-}
+import { TaskRow } from './TaskRow'
+import { TaskActionsSheet } from './TaskActionsSheet'
+import { resolveDrop, type DragKind, type DropTarget } from './dragDrop'
+import { formatClock } from './timelineLayout'
 
 export interface DayViewProps {
   date: string
   onDateChange: (date: string) => void
 }
+
+/**
+ * How far the pointer has to move before a release counts as a genuine
+ * drop rather than a tap that merely started on a drag source - see the
+ * comment on `dragStartRef` below. Small enough that a real drag of even
+ * a few pixels still counts, large enough to absorb the jitter a finger
+ * or a mouse naturally has while holding still.
+ */
+const MIN_DRAG_DISTANCE_PX = 8
 
 export function DayView({ date, onDateChange }: DayViewProps) {
   const data = useAppData()
@@ -80,8 +88,148 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     setSizeEditingId(null)
   }
 
+  function cancelSizeEdit(task: Task) {
+    // Restore the draft to what it was before this edit started, so that
+    // if the browser still fires a blur as this input unmounts, the
+    // commit it triggers is a harmless no-op rather than saving whatever
+    // was left half-typed.
+    setSizeDraft(task.minutes !== undefined ? String(task.minutes) : '')
+    setSizeEditingId(null)
+  }
+
+  // Step 7's drag - docs/TIMELINE.md section 5: "dragging a float onto a
+  // gap anchors it; dragging it back to the tray un-anchors it." Follows
+  // CalendarView.tsx's own pointer approach exactly, since that component
+  // already solved touch drag in this repo the hard way: release pointer
+  // capture on pointerdown so the browser keeps delivering events to
+  // whatever is actually under the finger, track the current target with
+  // document.elementFromPoint + closest during pointermove rather than
+  // relying on pointerenter (which never fires once a touch has captured
+  // the pointer to the element the gesture started on), and clean up on
+  // document-level pointerup/pointercancel so a finger lifted anywhere -
+  // off the day view entirely, past the edge of the screen - always ends
+  // the drag instead of leaving it stuck on.
+  //
+  // A ref, not state, holds what is being dragged: it needs to be read
+  // synchronously inside the document listeners below without those
+  // listeners being re-subscribed on every render.
+  const dragRef = useRef<{ kind: DragKind; taskId: string } | null>(null)
+  // Where the drag started, so a release can be told apart from a mere
+  // tap - see the distance check in handleUp below. This matters most for
+  // an anchor block: it has no click behaviour of its own today (it is
+  // decorative), so without this guard a plain tap on it - pointerdown
+  // immediately followed by pointerup at the same spot, still over the
+  // block itself rather than any gap - would resolve to the tray target
+  // and un-anchor the task with no actual drag having happened. A float's
+  // own drop rule already only fires on a real gap, so it never needed
+  // this, but the guard applies to both for one consistent rule: nothing
+  // moves unless the pointer genuinely did.
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null)
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
+  const [dragOverGapStart, setDragOverGapStart] = useState<number | null>(null)
+  const [dragAnnouncement, setDragAnnouncement] = useState('')
+  const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
+
+  function endDrag() {
+    dragRef.current = null
+    dragStartRef.current = null
+    setDraggingTaskId(null)
+    setDragOverGapStart(null)
+  }
+
+  function startDrag(kind: DragKind, taskId: string, e: React.PointerEvent) {
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+    e.preventDefault()
+    dragRef.current = { kind, taskId }
+    dragStartRef.current = { x: e.clientX, y: e.clientY }
+    setDraggingTaskId(taskId)
+    // A float picked up while the grid is collapsed has nothing to land
+    // on - the gaps it would drop onto only exist once the grid is
+    // mounted. Expanding it here is the direct, sensible answer
+    // docs/TIMELINE.md section 8 asks for rather than a silent pickup
+    // with no valid target: it is exactly what tapping "Show timeline"
+    // does by hand, just triggered by the gesture that actually needs
+    // it. Recorded as a call in docs/OPEN-QUESTIONS.md since it is a
+    // real product choice, not one the spec spelled out. Skipped when
+    // there is no anchor at all - then there is no grid to expand into,
+    // and the toggle itself is not even shown (see the button above).
+    if (kind === 'float' && !timelineExpanded && capacity.anchorCount > 0) {
+      actions.setTimelineExpanded(true)
+    }
+  }
+
+  function targetAt(clientX: number, clientY: number): DropTarget {
+    const el = document.elementFromPoint(clientX, clientY)
+    if (!el) return null
+    const gapEl = el.closest<HTMLElement>('[data-gap-start]')
+    if (gapEl) {
+      const startMinutes = Number(gapEl.dataset.gapStart)
+      const endMinutes = Number(gapEl.dataset.gapEnd)
+      return { type: 'gap', startMinutes, gapMinutes: endMinutes - startMinutes }
+    }
+    if (el.closest('[data-tray-zone]')) return { type: 'tray' }
+    return null
+  }
+
+  function applyOutcome(outcome: ReturnType<typeof resolveDrop>) {
+    if (outcome.action === 'place') {
+      const time = formatClock(outcome.startMinutes)
+      const task = day?.tasks.find(t => t.id === outcome.taskId)
+      if (actions.placeFloat(date, outcome.taskId, time)) {
+        setDragAnnouncement(task ? `${task.title} placed at ${time}.` : 'Placed.')
+      }
+    } else if (outcome.action === 'unanchor') {
+      const task = day?.tasks.find(t => t.id === outcome.taskId)
+      if (actions.unanchorTask(date, outcome.taskId)) {
+        setDragAnnouncement(task ? `${task.title} returned to the tray.` : 'Returned to the tray.')
+      }
+    }
+  }
+
+  useEffect(() => {
+    function handleMove(e: PointerEvent) {
+      if (!dragRef.current) return
+      const target = targetAt(e.clientX, e.clientY)
+      setDragOverGapStart(target?.type === 'gap' ? target.startMinutes : null)
+    }
+    function handleUp(e: PointerEvent) {
+      if (!dragRef.current) return
+      const { kind, taskId } = dragRef.current
+      const start = dragStartRef.current
+      const movedEnough = !start || Math.hypot(e.clientX - start.x, e.clientY - start.y) >= MIN_DRAG_DISTANCE_PX
+      const target = movedEnough ? targetAt(e.clientX, e.clientY) : null
+      const outcome = resolveDrop(day?.tasks ?? [], kind, taskId, target)
+      endDrag()
+      applyOutcome(outcome)
+    }
+    function handleCancel() {
+      // A drag that goes nowhere - the gesture was cancelled by the
+      // browser, or interrupted some other way - leaves state untouched,
+      // never a half-placed or half-removed task.
+      endDrag()
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && dragRef.current) endDrag()
+    }
+    document.addEventListener('pointermove', handleMove)
+    document.addEventListener('pointerup', handleUp)
+    document.addEventListener('pointercancel', handleCancel)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointermove', handleMove)
+      document.removeEventListener('pointerup', handleUp)
+      document.removeEventListener('pointercancel', handleCancel)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, date, timelineExpanded, capacity.anchorCount])
+
+  const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
+
   return (
-    <section className="day-view">
+    <section className="day-view" data-tray-zone>
       <div className="day-nav">
         <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
           &larr;
@@ -156,8 +304,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           tasks={day?.tasks ?? []}
           templateColor={template?.color}
           onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
+          onAnchorPointerDown={(taskId, e) => startDrag('anchor', taskId, e)}
+          dragOverGapStart={dragOverGapStart}
+          draggingTaskId={draggingTaskId}
         />
       )}
+
+      {/* Announces a drag-driven placement or un-anchor to screen reader
+          users, the same way TimelineGrid.tsx's own live region already
+          covers the tap-a-gap path - a separate region because this one
+          fires from a gesture TimelineGrid never sees (the drop can land
+          outside the grid entirely, for the tray direction). */}
+      <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
 
       <input
         className="quick-add"
@@ -170,123 +328,25 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       {tasks.length === 0 && <p className="empty">Nothing planned. Add a task above or stamp a template from the calendar.</p>}
 
       <ul className="task-list">
-        {tasks.map(task => {
-          const pushCount = task.pushCount ?? 0
-          const atBound = !task.done && pushCount >= MAX_PUSHES
-          const classNames = ['task']
-          if (task.done) classNames.push('done')
-          if (atBound) classNames.push('task-maxed')
-          const badgeId = `push-badge-${task.id}`
-          const noteId = `push-note-${task.id}`
-          const coreId = `core-badge-${task.id}`
-          const showCoreBadge = !isFullDay && !!task.core
-          const describedByIds = [
-            atBound ? noteId : pushCount > 0 ? badgeId : undefined,
-            showCoreBadge ? coreId : undefined,
-          ].filter((id): id is string => !!id)
-          const describedBy = describedByIds.length > 0 ? describedByIds.join(' ') : undefined
-          return (
-            <li key={task.id} className={classNames.join(' ')}>
-              <div className="task-row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={task.done}
-                    aria-label={task.title}
-                    aria-describedby={describedBy}
-                    onChange={() => actions.toggleTask(date, task.id)}
-                  />
-                  <span className="check" aria-hidden="true" />
-                  {task.time && <span className="task-time">{task.time}</span>}
-                  <span className="task-title">{task.title}</span>
-                  {showCoreBadge && (
-                    <span id={coreId} className="task-core">core</span>
-                  )}
-                  {pushCount > 0 && !atBound && (
-                    <span id={badgeId} className="task-pushed">pushed {pushCountLabel(pushCount)}</span>
-                  )}
-                </label>
-                {sizeEditingId === task.id ? (
-                  <input
-                    className="task-size-input"
-                    inputMode="numeric"
-                    aria-label={`Size in minutes for ${task.title}`}
-                    value={sizeDraft}
-                    autoFocus
-                    onChange={e => setSizeDraft(e.target.value)}
-                    onBlur={() => commitSizeEdit(task.id)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') commitSizeEdit(task.id)
-                      if (e.key === 'Escape') {
-                        // Restore the draft to what it was before this edit
-                        // started, so that if the browser still fires a
-                        // blur as this input unmounts, the commit it
-                        // triggers is a harmless no-op rather than saving
-                        // whatever was left half-typed.
-                        setSizeDraft(task.minutes !== undefined ? String(task.minutes) : '')
-                        setSizeEditingId(null)
-                      }
-                    }}
-                  />
-                ) : (
-                  <button
-                    className={task.minutes !== undefined ? 'task-size' : 'task-size task-size-empty'}
-                    aria-label={
-                      task.minutes !== undefined
-                        ? `Change size for ${task.title}, currently ${formatDuration(task.minutes)}`
-                        : `Set size for ${task.title}`
-                    }
-                    onClick={() => startSizeEdit(task)}
-                  >
-                    {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
-                  </button>
-                )}
-                {/* A float, not yet done, still eligible to move. Which one
-                    to push is the owner's call, not something the capacity
-                    line pre-selects - see the comment above it. */}
-                {!task.time && !task.done && pushCount < MAX_PUSHES && (
-                  <button
-                    className="task-push"
-                    aria-label={`Push ${task.title} to tomorrow`}
-                    onClick={() => actions.pushTask(date, task.id)}
-                  >
-                    push
-                  </button>
-                )}
-                {/* The undo for tapping a gap - see docs/TIMELINE.md
-                    section 5. Placing is easy to do by accident on a
-                    phone, so this sits on the task's own row rather than
-                    behind a setting or a fading toast: whatever anchored a
-                    task, this always turns it back into a float. Not
-                    gated on how the task got its time - a hand-typed
-                    anchor from quick-add un-anchors exactly the same way a
-                    gap-placed one does, since both are just a task with a
-                    time either way. */}
-                {task.time && !task.done && (
-                  <button
-                    className="task-unanchor"
-                    aria-label={`Remove time from ${task.title}`}
-                    onClick={() => actions.unanchorTask(date, task.id)}
-                  >
-                    remove time
-                  </button>
-                )}
-                <button
-                  className="task-delete"
-                  aria-label={atBound ? `Let go of ${task.title}` : `Delete ${task.title}`}
-                  onClick={() => actions.deleteTask(date, task.id)}
-                >
-                  &times;
-                </button>
-              </div>
-              {atBound && (
-                <p id={noteId} className="task-maxed-note">
-                  {`Pushed ${pushCountLabel(pushCount)} - do it today, or let it go. Deleting counts as a decision, not a failure.`}
-                </p>
-              )}
-            </li>
-          )
-        })}
+        {tasks.map(task => (
+          <TaskRow
+            key={task.id}
+            task={task}
+            date={date}
+            isFullDay={isFullDay}
+            sizeEditingId={sizeEditingId}
+            sizeDraft={sizeDraft}
+            onStartSizeEdit={startSizeEdit}
+            onSizeDraftChange={setSizeDraft}
+            onCommitSizeEdit={commitSizeEdit}
+            onCancelSizeEdit={cancelSizeEdit}
+            dragging={draggingTaskId === task.id}
+            onDragHandlePointerDown={
+              task.done ? undefined : e => startDrag(isAnchor(task) ? 'anchor' : 'float', task.id, e)
+            }
+            onLongPressOpen={task.done ? undefined : () => setActionsSheetTaskId(task.id)}
+          />
+        ))}
       </ul>
 
       {pushableCount > 0 && (
@@ -298,6 +358,24 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       )}
       {pushableCount === 0 && heldCount > 0 && (
         <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+      )}
+
+      {actionsSheetTask && (
+        <TaskActionsSheet
+          task={actionsSheetTask}
+          tasks={day?.tasks ?? []}
+          onPlace={(taskId, time) => {
+            if (actions.placeFloat(date, taskId, time)) {
+              setDragAnnouncement(`${actionsSheetTask.title} placed at ${time}.`)
+            }
+          }}
+          onUnanchor={taskId => {
+            if (actions.unanchorTask(date, taskId)) {
+              setDragAnnouncement(`${actionsSheetTask.title} returned to the tray.`)
+            }
+          }}
+          onClose={() => setActionsSheetTaskId(null)}
+        />
       )}
     </section>
   )

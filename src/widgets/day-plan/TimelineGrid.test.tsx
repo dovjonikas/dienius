@@ -1,11 +1,11 @@
 import { expect, test, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Task } from '../../lib/types'
 import { TimelineGrid } from './TimelineGrid'
 
-function anchor(id: string, time: string, minutes?: number): Task {
-  return { id, title: id, done: false, time, minutes }
+function anchor(id: string, time: string, minutes?: number, done = false): Task {
+  return { id, title: id, done, time, minutes }
 }
 
 function float(id: string, minutes?: number): Task {
@@ -167,6 +167,65 @@ test('tapping an open gap again closes its own picker', async () => {
 test('a day with no anchors renders no gap buttons at all, same as it renders no grid', () => {
   render(<TimelineGrid tasks={[float('Guitar', 20)]} />)
   expect(screen.queryAllByRole('button')).toHaveLength(0)
+})
+
+// Step 7's drag: the visual anchor block becomes the pointer-drag source
+// for "drag an anchor back to the tray." It stays inside the aria-hidden
+// decorative layer - the accessible equivalent is the "remove time"
+// button on the task's own list row, unaffected by any of this - so
+// wiring a pointer handler onto it adds no new accessibility surface,
+// same reasoning as the rest of this layer's own doc comment.
+test('a not-done anchor carries the drag handle wiring: touch-action none and the pointerdown callback', () => {
+  const onAnchorPointerDown = vi.fn()
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} onAnchorPointerDown={onAnchorPointerDown} />,
+  )
+  const block = container.querySelector('.timeline-anchor')!
+  expect(block).toHaveClass('timeline-anchor-draggable')
+  fireEvent.pointerDown(block, { pointerId: 1 })
+  expect(onAnchorPointerDown).toHaveBeenCalledWith('Shift', expect.anything())
+})
+
+test('a done anchor is never wired for drag - it has no undo control on its row either', () => {
+  const onAnchorPointerDown = vi.fn()
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift', '09:00', 60, true)]} onAnchorPointerDown={onAnchorPointerDown} />,
+  )
+  const block = container.querySelector('.timeline-anchor')!
+  expect(block).not.toHaveClass('timeline-anchor-draggable')
+  fireEvent.pointerDown(block, { pointerId: 1 })
+  expect(onAnchorPointerDown).not.toHaveBeenCalled()
+})
+
+test('with no onAnchorPointerDown supplied, no anchor is ever wired for drag', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} />)
+  expect(container.querySelector('.timeline-anchor')).not.toHaveClass('timeline-anchor-draggable')
+})
+
+test('the gap currently under a drag carries a drag-over class', () => {
+  const { container } = render(
+    <TimelineGrid
+      tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]}
+      dragOverGapStart={10 * 60}
+    />,
+  )
+  const gap = container.querySelector('.timeline-gap')!
+  expect(gap).toHaveClass('timeline-gap-drag-over')
+})
+
+test('no gap carries the drag-over class when nothing is being dragged over it', () => {
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,
+  )
+  const gap = container.querySelector('.timeline-gap')!
+  expect(gap).not.toHaveClass('timeline-gap-drag-over')
+})
+
+test('the anchor currently being dragged carries a dragging class', () => {
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift', '09:00', 60)]} draggingTaskId="Shift" />,
+  )
+  expect(container.querySelector('.timeline-anchor')).toHaveClass('timeline-anchor-dragging')
 })
 
 test('a float exactly the size of the gap is offered and can be placed', async () => {

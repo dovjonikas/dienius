@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
-import { offerForGap, VISIBLE_ROW_LIMIT, visibleRows } from './gapPlacement'
+import { canPlaceFloatInGap, offerForGap, VISIBLE_ROW_LIMIT, visibleRows } from './gapPlacement'
 
 function float(id: string, minutes?: number, done = false): Task {
   return { id, title: id, done, minutes }
@@ -79,4 +79,23 @@ test('visibleRows places unsized rows after every fitting row', () => {
   const offer = offerForGap([float('Mystery'), float('Sized', 10)], 90)
   const rows = visibleRows(offer)
   expect(rows.map(r => r.id)).toEqual(['Sized', 'Mystery'])
+})
+
+// canPlaceFloatInGap is the single yes/no rule step 7's drag and long-press
+// menu both call, rather than re-deriving it from offerForGap's two-list
+// shape - see the doc comment on the function itself.
+test('canPlaceFloatInGap allows a sized float no larger than the gap', () => {
+  expect(canPlaceFloatInGap(20, 90)).toBe(true)
+})
+
+test('canPlaceFloatInGap allows a sized float exactly the size of the gap', () => {
+  expect(canPlaceFloatInGap(90, 90)).toBe(true)
+})
+
+test('canPlaceFloatInGap refuses a sized float larger than the gap', () => {
+  expect(canPlaceFloatInGap(91, 90)).toBe(false)
+})
+
+test('canPlaceFloatInGap allows an unsized float regardless of gap size', () => {
+  expect(canPlaceFloatInGap(undefined, 5)).toBe(true)
 })
