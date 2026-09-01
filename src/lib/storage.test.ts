@@ -342,6 +342,56 @@ test('validate rejects a task or block whose core flag is not a boolean', () => 
   expect(loadData()).toEqual(salvagedLightData())
 })
 
+test('a task or block written before unbounded existed loads with unbounded undefined', () => {
+  const legacy = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym' }] }],
+    days: { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 'x1', title: 'Old task', done: false }] } },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  const loaded = loadData()
+  expect(loaded.templates[0].blocks[0].unbounded).toBeUndefined()
+  expect(loaded.days['2026-09-01'].tasks[0].unbounded).toBeUndefined()
+})
+
+test('validate accepts a task or block marked unbounded', () => {
+  const good = JSON.stringify({
+    templates: [{
+      id: 't1', name: 'Ongoing', color: '#c9b3f0',
+      blocks: [{ id: 'b1', time: '19:00', title: 'Standing item', unbounded: true }],
+    }],
+    days: {
+      '2026-09-01': {
+        date: '2026-09-01',
+        tasks: [{ id: 'x1', title: 'Standing item', time: '19:00', done: false, pushCount: 5, unbounded: true }],
+      },
+    },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, good)
+  const loaded = loadData()
+  expect(loaded.templates[0].blocks[0].unbounded).toBe(true)
+  expect(loaded.days['2026-09-01'].tasks[0].unbounded).toBe(true)
+})
+
+test('validate rejects a task or block whose unbounded flag is not a boolean', () => {
+  const badTask = JSON.stringify({
+    templates: [],
+    days: { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 'x1', title: 'Bad', done: false, unbounded: 'yes' }] } },
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badTask)
+  expect(loadData()).toEqual(salvagedLightData())
+
+  const badBlock = JSON.stringify({
+    templates: [{ id: 't1', name: 'Work', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Gym', unbounded: 1 }] }],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [] },
+  })
+  localStorage.setItem(STORAGE_KEY, badBlock)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
 test('a payload written before the if-then board existed has no ifThens key and still loads', () => {
   const legacy = JSON.stringify({
     templates: [],

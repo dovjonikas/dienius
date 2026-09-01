@@ -182,6 +182,37 @@ test('re-stamping updates core from the current block, not the prior task', () =
   expect(restamped['2026-09-01'].tasks[0].core).toBe(true)
 })
 
+test('stamping a block marked unbounded copies the flag onto the task it produces', () => {
+  const withStanding: Template = {
+    id: 't5',
+    name: 'Ongoing project',
+    color: '#c9b3f0',
+    blocks: [
+      { id: 'b1', time: '19:00', title: 'Standing item', unbounded: true },
+      { id: 'b2', time: '21:00', title: 'Ordinary item' },
+    ],
+  }
+  const days = applyStamps({}, [withStanding], { '2026-09-01': 't5' })
+  const tasks = days['2026-09-01'].tasks
+  expect(tasks.find(t => t.title === 'Standing item')?.unbounded).toBe(true)
+  expect(tasks.find(t => t.title === 'Ordinary item')?.unbounded).toBeFalsy()
+})
+
+test('re-stamping updates unbounded from the current block, not the prior task', () => {
+  const template: Template = {
+    id: 't6',
+    name: 'Ongoing project',
+    color: '#c9b3f0',
+    blocks: [{ id: 'b1', time: '19:00', title: 'Standing item', unbounded: false }],
+  }
+  const stamped = applyStamps({}, [template], { '2026-09-01': 't6' })
+  expect(stamped['2026-09-01'].tasks[0].unbounded).toBeFalsy()
+
+  const nowUnbounded: Template = { ...template, blocks: [{ ...template.blocks[0], unbounded: true }] }
+  const restamped = applyStamps(stamped, [nowUnbounded], { '2026-09-01': 't6' })
+  expect(restamped['2026-09-01'].tasks[0].unbounded).toBe(true)
+})
+
 test('applying a different template does not carry over done state', () => {
   const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
   stamped['2026-09-01'].tasks = stamped['2026-09-01'].tasks.map(t => ({ ...t, done: true }))

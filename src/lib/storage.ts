@@ -115,7 +115,8 @@ function isTask(x: unknown): x is Task {
     (x.fromTemplate === undefined || typeof x.fromTemplate === 'boolean') &&
     isOptionalPushCount(x.pushCount) &&
     isOptionalBoolean(x.core) &&
-    isOptionalMinutes(x.minutes)
+    isOptionalMinutes(x.minutes) &&
+    isOptionalBoolean(x.unbounded)
   )
 }
 
@@ -126,7 +127,8 @@ function isTemplateBlock(x: unknown): x is TemplateBlock {
     typeof x.title === 'string' &&
     isOptionalString(x.time) &&
     isOptionalBoolean(x.core) &&
-    isOptionalMinutes(x.minutes)
+    isOptionalMinutes(x.minutes) &&
+    isOptionalBoolean(x.unbounded)
   )
 }
 

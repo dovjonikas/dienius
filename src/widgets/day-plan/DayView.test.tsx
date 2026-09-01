@@ -131,7 +131,7 @@ test('a task at the push bound offers do or delete instead of another push count
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  const note = screen.getByText(/do it today, or let it go/i)
+  const note = screen.getByText(/do it today, let it go, or mark it ongoing/i)
   expect(note).toBeInTheDocument()
   // The note itself must carry the count - it is the only place a maxed
   // task states it, since the separate quiet badge is not shown here.
@@ -143,6 +143,104 @@ test('a task at the push bound offers do or delete instead of another push count
   const describedBy = checkbox.getAttribute('aria-describedby')
   expect(describedBy).toBeTruthy()
   expect(document.getElementById(describedBy!)).toBe(note)
+})
+
+test('a task at the push bound offers a third choice - marking it ongoing - alongside do or delete', () => {
+  actions.addTask('2026-09-01', 'Maxed out')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t => (t.id === id ? { ...t, pushCount: 2 } : t)),
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // Reachable and labelled distinctly per task, not a generic "Mark ongoing".
+  expect(
+    screen.getByRole('button', { name: /mark maxed out as ongoing/i }),
+  ).toBeInTheDocument()
+})
+
+test('marking a maxed task ongoing clears the do-or-delete note and lets it keep being pushed', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t => (t.id === id ? { ...t, pushCount: 2 } : t)),
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: /mark standing task as ongoing/i }))
+
+  expect(getData().days['2026-09-01'].tasks[0].unbounded).toBe(true)
+  expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
+  // Still pushable past the bound, right away.
+  expect(screen.getByRole('button', { name: /push standing task to tomorrow/i })).toBeInTheDocument()
+})
+
+test('an ongoing task carries a quiet, reversible label instead of the maxed note', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t =>
+          t.id === id ? { ...t, pushCount: 6, unbounded: true } : t,
+        ),
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
+  const badge = screen.getByRole('button', { name: /standing task is ongoing/i })
+  expect(badge).toBeInTheDocument()
+
+  // Reversible without hunting: the label itself is the undo control.
+  await user.click(badge)
+  expect(getData().days['2026-09-01'].tasks[0].unbounded).toBeUndefined()
+  // With pushCount still at the bound and unbounded now cleared, the
+  // do-or-delete note reappears - the choice was undone, not erased.
+  expect(screen.getByText(/do it today, let it go, or mark it ongoing/i)).toBeInTheDocument()
+})
+
+test('an ongoing task shows no push count, even after many more pushes than the bound', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t =>
+          t.id === id ? { ...t, pushCount: 9, unbounded: true } : t,
+        ),
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByText(/pushed/i)).not.toBeInTheDocument()
+})
+
+test('an ordinary task under the bound shows neither the ongoing label nor the mark-ongoing control', () => {
+  actions.addTask('2026-09-01', 'Fresh')
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.queryByRole('button', { name: /is ongoing/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /mark .* as ongoing/i })).not.toBeInTheDocument()
 })
 
 test('rollover button explains when some tasks moved and some stayed behind', async () => {
@@ -748,4 +846,24 @@ test('rollover button is not shown when every unfinished task is already at the 
   expect(screen.queryByRole('button', { name: /move .* to tomorrow/i })).not.toBeInTheDocument()
   expect(screen.getByText(/waiting on a decision/i)).toBeInTheDocument()
   expect(screen.queryByText(/need a decision today/i)).not.toBeInTheDocument()
+})
+
+test('the rollover button counts a task marked ongoing as pushable, not held, even past the bound', () => {
+  actions.addTask('2026-09-01', 'Standing task')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.resetForTests({
+    ...getData(),
+    days: {
+      ...getData().days,
+      '2026-09-01': {
+        ...getData().days['2026-09-01'],
+        tasks: getData().days['2026-09-01'].tasks.map(t =>
+          t.id === id ? { ...t, pushCount: 4, unbounded: true } : t,
+        ),
+      },
+    },
+  })
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByRole('button', { name: /move 1 unfinished to tomorrow/i })).toBeInTheDocument()
+  expect(screen.queryByText(/waiting on a decision/i)).not.toBeInTheDocument()
 })

@@ -29,6 +29,15 @@ interface DraftBlock {
   title: string
   core: boolean
   /**
+   * Whether this block produces a standing task - one that should skip
+   * the push bound from the day it is stamped, rather than earning that
+   * exemption the hard way once it happens to reach `MAX_PUSHES` pushes.
+   * Unlike `core`, this has nothing to do with day type: a standing task
+   * is just as real on a full day as on a shift day, so the toggle for it
+   * is not gated on `draft.type` the way core's own toggle is below.
+   */
+  unbounded: boolean
+  /**
    * Kept as free-typed text, like `time`, and parsed only at save time -
    * see `parseMinutesInput` in `capacity.ts`. This is the one place a size
    * is normally set at all: stamping copies it onto every task the block
@@ -63,6 +72,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
+  const [blockUnbounded, setBlockUnbounded] = useState(false)
   const [blockMinutes, setBlockMinutes] = useState('')
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -80,12 +90,19 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
       ...d,
       blocks: [
         ...d.blocks,
-        { time: blockTime.trim(), title: blockTitle.trim(), core: blockCore, minutes: blockMinutes.trim() },
+        {
+          time: blockTime.trim(),
+          title: blockTitle.trim(),
+          core: blockCore,
+          unbounded: blockUnbounded,
+          minutes: blockMinutes.trim(),
+        },
       ],
     }))
     setBlockTime('')
     setBlockTitle('')
     setBlockCore(false)
+    setBlockUnbounded(false)
     setBlockMinutes('')
   }
 
@@ -97,6 +114,13 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
     setDraft(d => ({
       ...d,
       blocks: d.blocks.map((b, i) => (i === index ? { ...b, core: !b.core } : b)),
+    }))
+  }
+
+  function toggleBlockUnbounded(index: number) {
+    setDraft(d => ({
+      ...d,
+      blocks: d.blocks.map((b, i) => (i === index ? { ...b, unbounded: !b.unbounded } : b)),
     }))
   }
 
@@ -158,6 +182,17 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
                 Core
               </button>
             )}
+            {/* Not gated on draft.type, unlike Core above - a standing
+                task is just as real on a full day as on a shift day. */}
+            <button
+              type="button"
+              aria-pressed={b.unbounded}
+              aria-label={b.unbounded ? `${b.title} is ongoing` : `Mark ${b.title} as ongoing`}
+              className={b.unbounded ? 'core-toggle active' : 'core-toggle'}
+              onClick={() => toggleBlockUnbounded(i)}
+            >
+              Ongoing
+            </button>
             <button aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
               &times;
             </button>
@@ -192,6 +227,15 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
             Core
           </button>
         )}
+        <button
+          type="button"
+          aria-pressed={blockUnbounded}
+          aria-label={blockUnbounded ? 'New block is ongoing' : 'Mark new block as ongoing'}
+          className={blockUnbounded ? 'core-toggle active' : 'core-toggle'}
+          onClick={() => setBlockUnbounded(v => !v)}
+        >
+          Ongoing
+        </button>
         <button onClick={addBlock}>Add block</button>
       </div>
       <div className="row">
@@ -221,6 +265,7 @@ export function TemplatesView() {
         time: b.time ?? '',
         title: b.title,
         core: b.core ?? false,
+        unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
       })),
     })
@@ -241,6 +286,7 @@ export function TemplatesView() {
       time: b.time || undefined,
       title: b.title,
       core: b.core || undefined,
+      unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),
     }))
     if (next.id) {

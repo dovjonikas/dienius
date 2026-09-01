@@ -182,3 +182,47 @@ caching a partial or broken response (handled by only caching complete, non-rang
 responses). The cost is that those failure modes are now the project's own to get right and keep
 right, instead of a maintained dependency's - a hand-rolled cache is exactly the kind of code that
 quietly rots if nobody revisits it after a Vite upgrade changes how the build output looks.
+
+## The push bound is a design choice, not a finding - and it has one exemption
+
+`MAX_PUSHES` in `src/lib/pushRules.ts` is 2. Neither this file nor any commit that touched it ever
+cited a reason for choosing two rather than one, three, or five, and `docs/RESEARCH-PUSH-RULE.md`
+went looking for one and found nothing - the number was picked without a study behind it, and
+should be described as a guess from here on, not as a result. It does not rest on the Zeigarnik
+effect or on decision fatigue either, despite how naturally the copy around it ("closes an open
+loop," "one less thing to decide") might suggest one of those - `docs/RESEARCH-ADHD.md` sections 6
+and 9 found both mechanisms fail to replicate. What the bound can honestly rest on is narrower: the
+four-item working-memory ceiling a list that never sheds a stalled item silently competes for
+(section 7), and maintenance burden as a documented cause of planner abandonment (section 11). That
+is real, but it argues for forcing a decision on a task that has stalled - not for treating every
+task that survives two pushes as if it must have stalled.
+
+That gap is what `Task.unbounded` closes. A task pushed to the bound already told the owner
+something quick-add could never know at capture time: it survived two real days without being
+finished or abandoned. That is exactly the evidence a person needs to tell "this stalled" apart
+from "this is a standing thing I keep meaning to get to" - a task waiting on someone else, or one
+that was never going to resolve in two days by its nature. So the bound's own do-or-delete moment,
+which already exists and already interrupts the owner on exactly the tasks that reach it, gained a
+third branch instead of a new screen or a second question: do it, let it go, or mark it ongoing.
+Marking a task ongoing sets `unbounded`, which `isPushable` in `pushRules.ts` treats as an
+unconditional yes regardless of `pushCount` - the task keeps moving day to day exactly like one
+still under the bound, indefinitely, with no later, harder line waiting for it at five or ten
+pushes. Lally et al. (2010) is the reason there is no such line: missing an occurrence did not
+measurably disrupt habit formation in that study, so there is no evidence a later bound would be
+any "safer" than the one already in place, and adding one would just relocate the exact problem
+this feature exists to remove.
+
+The flag is deliberately the opposite of `core` in one respect: `rolloverUnfinished` clears `core`
+on every push because core is a promise a specific day's template made, not a property of the task
+itself, but it leaves `unbounded` untouched, because being a standing task is a fact about the kind
+of task it is, not about the day it happened to reach the bound on. It is also deliberately
+reversible with no confirmation step, the same weight as changing a task's size - marking something
+ongoing by mistake, or deciding later it was not standing after all, costs nothing to undo, through
+the same quiet label that set it in the first place. And deliberately unmeasured: `pushCount` still
+increments on an ongoing task, but nothing in the UI shows it once a task is marked ongoing, and
+nothing tracks or surfaces how long a task has stood - a visible count would just be the guilt this
+whole feature exists to remove, arriving through a side door. `TemplateBlock.unbounded` gives the
+same exemption a way to start on day one, for a task the owner already knows, while building the
+template, is not going to resolve inside the bound - copied onto `Task.unbounded` at stamp time
+exactly the way `core` already is, and just as invisible at quick-add time, since template editing
+was never part of the moment a day starts.

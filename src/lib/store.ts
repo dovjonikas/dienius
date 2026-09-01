@@ -3,7 +3,7 @@ import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Template, Them
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
-import { MAX_PUSHES } from './pushRules'
+import { isPushable } from './pushRules'
 
 export { MAX_PUSHES } from './pushRules'
 
@@ -52,7 +52,10 @@ export interface RolloverResult {
 // Shared by rolloverUnfinished and pushTask below - both move a task to the
 // next day the same way, one pushing everything unfinished at once, the
 // other pushing exactly one. See the doc comment on rolloverUnfinished's
-// own mapping for why fromTemplate and core are cleared here.
+// own mapping for why fromTemplate and core are cleared here. unbounded is
+// deliberately left untouched - see its own doc comment on Task in
+// types.ts - it is a fact about the kind of task this is, not a promise
+// tied to the day it was pushed from.
 function pushedForward(task: DayPlan['tasks'][number]): DayPlan['tasks'][number] {
   return { ...task, fromTemplate: false, pushCount: (task.pushCount ?? 0) + 1, core: undefined }
 }
@@ -83,7 +86,7 @@ export const actions = {
     const unfinished = day.tasks.filter(t => !t.done)
     if (unfinished.length === 0) return { moved: 0, held: 0 }
 
-    const pushable = unfinished.filter(t => (t.pushCount ?? 0) < MAX_PUSHES)
+    const pushable = unfinished.filter(isPushable)
     const held = unfinished.length - pushable.length
     if (pushable.length === 0) return { moved: 0, held }
 
@@ -97,8 +100,8 @@ export const actions = {
     // task on whatever day it happens to land on next, including a rest
     // day that is supposed to have nothing required at all. If a pushed
     // task is still genuinely necessary, the push bound already forces a
-    // decision on it within two days - it does not need core to do that
-    // job as well.
+    // decision on it - unbounded is the escape hatch from that decision,
+    // core is not, and the two stay separate for exactly this reason.
     const moved = pushable.map(pushedForward)
     commit({
       ...data,
@@ -117,15 +120,16 @@ export const actions = {
    * here as its own entry point so one specific task can move without
    * touching anything else on the day. The day view offers this per float,
    * so the owner picks which one moves rather than the app choosing for
-   * them - see docs/TIMELINE.md section 8. Bound by the same MAX_PUSHES
-   * rule, and a done task is never eligible - pushing finished work to
+   * them - see docs/TIMELINE.md section 8. Bound by the same `isPushable`
+   * check rolloverUnfinished uses, so a task marked unbounded keeps moving
+   * here too, and a done task is never eligible - pushing finished work to
    * tomorrow makes no sense - so this returns false rather than acting in
    * either case, the same way rolloverUnfinished silently excludes both.
    */
   pushTask(date: string, taskId: string): boolean {
     const day = data.days[date]
     const task = day?.tasks.find(t => t.id === taskId)
-    if (!task || task.done || (task.pushCount ?? 0) >= MAX_PUSHES) return false
+    if (!task || task.done || !isPushable(task)) return false
 
     const targetDate = addDays(date, 1)
     const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }
@@ -152,6 +156,27 @@ export const actions = {
     commit(withDay(date, {
       ...day,
       tasks: day.tasks.map(t => (t.id === taskId ? { ...t, minutes } : t)),
+    }))
+  },
+
+  /**
+   * Sets or clears whether a task is exempt from the push bound - the
+   * third choice offered once a task reaches `MAX_PUSHES`, and its own
+   * undo. Writes `undefined` rather than a literal `false` when clearing,
+   * the same absent-means-false convention `core` and every other
+   * optional flag on `Task` already follows, so a task that has never
+   * been marked ongoing does not carry a stray field around forever.
+   *
+   * Plain and reversible with no confirmation step, the same weight as
+   * `setTaskMinutes` above - marking a task ongoing by mistake, or
+   * deciding it is not standing after all, costs nothing to undo either
+   * way.
+   */
+  setTaskUnbounded(date: string, taskId: string, unbounded: boolean): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, unbounded: unbounded || undefined } : t)),
     }))
   },
 
@@ -199,7 +224,7 @@ export const actions = {
     name: string
     color: string
     type?: DayType
-    blocks: { time?: string; title: string; core?: boolean; minutes?: number }[]
+    blocks: { time?: string; title: string; core?: boolean; minutes?: number; unbounded?: boolean }[]
   }): Template {
     const template: Template = {
       id: crypto.randomUUID(),
@@ -212,6 +237,7 @@ export const actions = {
         title: b.title,
         core: b.core,
         minutes: b.minutes,
+        unbounded: b.unbounded,
       })),
     }
     commit({ ...data, templates: [...data.templates, template] })
