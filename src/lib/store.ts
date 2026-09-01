@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, Template, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, SleepWindow, Template, ThemeState } from './types'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -294,6 +294,25 @@ export const actions = {
    */
   setDayLayoutFocus(focus: Settings['dayLayoutFocus']): void {
     commit({ ...data, settings: { ...data.settings, dayLayoutFocus: focus } })
+  },
+
+  /**
+   * Sets the sleep window used on a full, shift or rest day - see
+   * `Settings.sleepWindow` and `windowFor` in `src/widgets/day-plan/capacity.ts`.
+   * A set-once setting the same way `setTimelineExpanded` and
+   * `setDayLayoutFocus` already are: changed here, in Settings, and never
+   * asked again per day - every day of the relevant type reads it live from
+   * this one place. Both fields are always written together, since a
+   * bedtime with no matching wake time (or the reverse) is not a shape this
+   * app can compute a window from.
+   */
+  setSleepWindow(window: SleepWindow): void {
+    commit({ ...data, settings: { ...data.settings, sleepWindow: window } })
+  },
+
+  /** The same idea as setSleepWindow, for a `night`-type day - see `Settings.nightSleepWindow`. */
+  setNightSleepWindow(window: SleepWindow): void {
+    commit({ ...data, settings: { ...data.settings, nightSleepWindow: window } })
   },
 
   /**

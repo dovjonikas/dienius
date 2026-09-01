@@ -157,9 +157,46 @@ export interface ThemeState {
   mode: 'light' | 'dark' | 'system'
 }
 
+/**
+ * A stretch of clock time spent asleep, stored the way a person actually
+ * thinks of it: when it starts (bedtime) and when it ends (wake time), each
+ * a canonical "HH:MM" - the same shape `TemplateBlock.time` already uses.
+ * `start` is almost always later in the day than `end` (23:00 to 07:00 is
+ * the ordinary case, sleep crossing midnight), but nothing here requires
+ * that - see `wakingWindow` in `src/widgets/day-plan/capacity.ts`, which is
+ * the one place this pair is turned into the day's actual waking hours and
+ * has to handle every combination, including an odd same-day one, without
+ * assuming the wrap.
+ */
+export interface SleepWindow {
+  start: string
+  end: string
+}
+
 export interface Settings {
   theme: ThemeState
   enabledWidgets: string[]
+  /**
+   * When the owner is normally asleep, on a full, shift or rest day - see
+   * `docs/DECISIONS.md`. Set once in Settings, never asked per day: the
+   * waking hours the capacity line, the timeline grid's greyed band and
+   * every gap in this app are measured against come from this, through
+   * `windowFor` in `capacity.ts`. Defaults to 23:00-07:00, the exact
+   * inverse of the fixed 07:00-23:00 window this setting replaces, so an
+   * existing person who never opens Settings sees no change at all.
+   */
+  sleepWindow: SleepWindow
+  /**
+   * The same idea, for a day whose type is `'night'` - see `windowFor`.
+   * Kept as its own independent setting rather than a fixed shift applied
+   * on top of `sleepWindow`, because a night shift's actual sleep hours are
+   * not a predictable offset from a day shift's - they are a different
+   * schedule entirely, one the owner is the only person who can state.
+   * Defaults to 00:00-13:00, the inverse of the fixed 13:00-24:00 window
+   * this setting replaces, so behaviour for a night day is also unchanged
+   * for anyone who has not set one.
+   */
+  nightSleepWindow: SleepWindow
   /**
    * Whether the day view's timeline grid is currently shown, rather than
    * collapsed behind its own disclosure under the capacity line - see

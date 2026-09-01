@@ -222,3 +222,18 @@ test('describeGapNeighbors names only the side that exists', () => {
 test('describeGapNeighbors is undefined when the gap touches nothing on either side', () => {
   expect(describeGapNeighbors(gapWith(undefined, undefined))).toBeUndefined()
 })
+
+// --- matchTaskToGaps: a custom sleep window changes which gaps are found ---
+
+test('matchTaskToGaps measures against a custom sleep window rather than the historical default', () => {
+  const tasks = [float('Guitar', 60)]
+  const sleep = { sleepWindow: { start: '22:00', end: '05:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar', sleep)
+  expect(result).toEqual({ kind: 'matched', gaps: [{ start: 5 * 60, end: 22 * 60, minutes: 17 * 60, before: undefined, after: undefined }] })
+})
+
+test('matchTaskToGaps with no sleep settings supplied matches the historical fixed window exactly', () => {
+  const tasks = [float('Guitar', 60)]
+  const result = matchTaskToGaps(tasks, 'full', 'Guitar')
+  expect(result).toEqual({ kind: 'matched', gaps: [{ start: 7 * 60, end: 23 * 60, minutes: 16 * 60, before: undefined, after: undefined }] })
+})

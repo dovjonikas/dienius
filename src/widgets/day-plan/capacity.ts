@@ -1,4 +1,4 @@
-import type { DayType, Task } from '../../lib/types'
+import type { DayType, SleepWindow, Task } from '../../lib/types'
 import { TIME_RE } from './parse'
 
 /**
@@ -35,42 +35,93 @@ export interface Interval {
 const DAY_MINUTES = 24 * 60
 
 /**
- * The window free time is measured against for an ordinary day: 07:00 to
- * 23:00, 16 hours. Fixed and never configured - see `computeCapacity`'s
- * own doc comment for why a window has to exist at all and why this is
- * not the same mistake as a per-day setting.
+ * The default for `Settings.sleepWindow`: asleep 23:00 to 07:00. Chosen
+ * specifically to be the exact inverse of the fixed 07:00-23:00 window this
+ * setting replaces - see `wakingWindow` below - so a person who never opens
+ * Settings gets the identical waking window this app has always used, byte
+ * for byte, not a fresh guess dressed up as a default.
  */
-const DEFAULT_WINDOW: Interval = { start: 7 * 60, end: 23 * 60 }
+export const DEFAULT_SLEEP_WINDOW: SleepWindow = { start: '23:00', end: '07:00' }
 
 /**
- * The window for a `night`-type day: 13:00 to 24:00, 11 hours. Shifted
- * later than the default window, not just narrower, because a night
- * shift's own morning is spent asleep - either recovering from the
- * previous night or resting before the coming one - the same way a
- * normal day's own late night is. It also runs to midnight rather than
- * stopping short of it, since a night day has no equivalent of the
- * default window's pre-sleep wind-down to exclude: the approach to the
- * shift, or the shift itself, is the end of this day's usable time.
- *
- * This is a coarse read of one label, not a measurement of any specific
- * person's actual schedule - it does not know when tonight's shift
- * really starts, only that the day is a night one. It is still strictly
- * better than applying the daytime window to a night day, which would be
- * wrong in exactly the way section 2 already warns a fixed clock window
- * can be. If a real month of night days shows this window is off, the
- * fix is to adjust these two numbers, not to make the window
- * configurable - the same posture docs/DECISIONS.md already takes on
- * `dayType`'s coarseness elsewhere.
+ * The default for `Settings.nightSleepWindow`: asleep from midnight to
+ * 13:00. Same reasoning as `DEFAULT_SLEEP_WINDOW` - this is the exact
+ * inverse of the fixed 13:00-24:00 window a `night`-type day used before
+ * this setting existed (see `wakingWindow`'s own doc comment for where that
+ * shift came from), not a new number.
  */
-const NIGHT_WINDOW: Interval = { start: 13 * 60, end: DAY_MINUTES }
+export const DEFAULT_NIGHT_SLEEP_WINDOW: SleepWindow = { start: '00:00', end: '13:00' }
+
+/** The two sleep settings `windowFor` needs to pick between, by day type. */
+export interface SleepSettings {
+  sleepWindow: SleepWindow
+  nightSleepWindow: SleepWindow
+}
+
+const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
+  sleepWindow: DEFAULT_SLEEP_WINDOW,
+  nightSleepWindow: DEFAULT_NIGHT_SLEEP_WINDOW,
+}
+
+/**
+ * Turns a sleep window - when it starts (bedtime) and when it ends (wake
+ * time) - into the day's actual waking window: everything outside sleep,
+ * within this one calendar day.
+ *
+ * Reads `start` as bedtime and `end` as wake time, and always measures the
+ * waking stretch forward from wake time to bedtime, wrapping past midnight
+ * if it has to (`(bedtime - wake + DAY_MINUTES) % DAY_MINUTES`). This is
+ * deliberately indifferent to which of the two clock values is numerically
+ * larger: 23:00 to 07:00 - sleep crossing midnight, the ordinary case for
+ * this app's own owner - and 00:00 to 13:00 - a same-day span, the night
+ * default above - both fall out of the identical formula with no special
+ * case for either shape, because both are really the same question ("how
+ * long from wake to bed, going forward"), just asked with different clock
+ * numbers.
+ *
+ * The result is clamped to `[0, DAY_MINUTES]`: this app represents one
+ * calendar day at a time (an anchor's own `time` cannot name "tomorrow"
+ * either, see `formatAnchorTimeRange`'s "(next day)" label), so a waking
+ * window that would otherwise cross midnight itself is cut off at the end
+ * of today rather than spilling into a second day this function has no way
+ * to represent.
+ *
+ * Two edge cases the owner is free to set, deliberately handled rather than
+ * rejected:
+ * - **Equal times** (bedtime and wake time the same) make the wrap formula
+ *   come out to a zero-minute waking window - "asleep all day" is one
+ *   reading, but just as plausibly the two fields were never actually
+ *   separated. Rather than pick the alarming reading, this falls back to a
+ *   full day awake (`{0, DAY_MINUTES}`) - the same "nothing has been carved
+ *   out" behaviour as if sleep tracking did not exist, which is the safer
+ *   failure mode for a value this ambiguous.
+ * - **An absurdly long sleep window** (bedtime 08:00, wake 07:59, say) is
+ *   simply honoured - a one-minute waking window, correct arithmetic for
+ *   what was actually typed. Nothing here rejects it; `computeCapacity` and
+ *   the grid's own touch-target floors already degrade gracefully around a
+ *   tiny or empty window the same way they do around a day with almost no
+ *   real anchors.
+ */
+export function wakingWindow(sleep: SleepWindow): Interval {
+  const bedtime = timeToMinutes(sleep.start)
+  const wake = timeToMinutes(sleep.end)
+  const wakingMinutes = ((bedtime - wake) % DAY_MINUTES + DAY_MINUTES) % DAY_MINUTES
+  if (wakingMinutes === 0) return { start: 0, end: DAY_MINUTES }
+  return { start: wake, end: Math.min(DAY_MINUTES, wake + wakingMinutes) }
+}
 
 // Exported so a caller outside this module can measure something against
-// the same waking window `computeCapacity` uses, rather than re-deriving
-// the 07:00/23:00/13:00/24:00 figures a second time - see `matchTaskToGaps`
-// in gapPlacement.ts, which places a single selected task against exactly
-// this window rather than the grid's own differently-scoped display window.
-export function windowFor(dayType: DayType): Interval {
-  return dayType === 'night' ? NIGHT_WINDOW : DEFAULT_WINDOW
+// the same waking window `computeCapacity` uses, rather than re-deriving it
+// a second time - see `matchTaskToGaps` in gapPlacement.ts, which places a
+// single selected task against exactly this window rather than the grid's
+// own differently-scoped display window, and `computeTimelineLayout` in
+// timelineLayout.ts, which draws the same boundary as a greyed band.
+// `sleep` defaults to `DEFAULT_SLEEP_SETTINGS` so every caller that has not
+// been handed the owner's actual settings - most of this file's own tests,
+// any code written before this setting existed - measures against exactly
+// the fixed window this app always used, unchanged.
+export function windowFor(dayType: DayType, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): Interval {
+  return wakingWindow(dayType === 'night' ? sleep.nightSleepWindow : sleep.sleepWindow)
 }
 
 function anchorInterval(task: Task): Interval {
@@ -217,13 +268,16 @@ export interface Capacity {
  * free before and after it reported no free time at all, because nothing
  * outside the anchors' own span was ever considered.
  *
- * **The window is a fixed waking window, not configured per day and not
- * derived from the day's own anchors: 07:00-23:00 for an ordinary day,
- * 13:00-24:00 for a `night` one.** See `DEFAULT_WINDOW` and
- * `NIGHT_WINDOW` above for the reasoning behind each. Using the day's own
- * `dayType` is not one more decision the owner has to make - it is
- * information already given once, when the template was built or the day
- * was typed, the same way `dayScore` already reads it. Anchors are
+ * **The window is a waking window derived from a sleep window set once in
+ * Settings, not configured per day and not derived from the day's own
+ * anchors: `sleepWindow` inverted for an ordinary day, `nightSleepWindow`
+ * inverted for a `night` one.** See `wakingWindow` and `windowFor` above -
+ * both default to the exact 07:00-23:00 / 13:00-24:00 figures this window
+ * always used before either setting existed, so a person who has not set
+ * one sees no change. Using the day's own `dayType` is not one more
+ * decision the owner has to make - it is information already given once,
+ * when the template was built or the day was typed, the same way
+ * `dayScore` already reads it. Anchors are
  * clipped to the window rather than counted outside it - a shift that
  * starts before the window opens or runs past where it closes only
  * contributes the portion that falls inside, and an anchor entirely
@@ -243,7 +297,11 @@ export interface Capacity {
  * `anchorsClippedByWindow` and `formatCapacityLine`, which say so rather
  * than let a true number read as a mistake.
  */
-export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capacity {
+export function computeCapacity(
+  tasks: Task[],
+  dayType: DayType = 'full',
+  sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS,
+): Capacity {
   const anchors = tasks.filter(isAnchor)
   const floats = tasks.filter(t => !isAnchor(t))
 
@@ -264,7 +322,7 @@ export function computeCapacity(tasks: Task[], dayType: DayType = 'full'): Capac
     }
   }
 
-  const window = windowFor(dayType)
+  const window = windowFor(dayType, sleep)
   const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
   const unsizedAnchorCount = anchors.length - sizedAnchors.length
   const rawIntervals = sizedAnchors.map(anchorInterval)

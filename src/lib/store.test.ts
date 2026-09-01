@@ -576,6 +576,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
   actions.resetForTests({
     ...defaultData(),
     settings: {
+      ...defaultData().settings,
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'light' },
       enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
       timelineExpanded: false,
@@ -624,6 +625,30 @@ test('setDayLayoutFocus changes only dayLayoutFocus, leaving the rest of setting
   expect(getData().settings.dayLayoutFocus).toBe('both')
 })
 
+// setSleepWindow / setNightSleepWindow - a set-once setting the same way as
+// the two above: changed once in Settings, read live by every day of the
+// matching type, never touching the rest of settings.
+
+test('setSleepWindow changes only sleepWindow, leaving nightSleepWindow and the rest of settings untouched', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then'], timelineExpanded: true },
+  })
+  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+  actions.setSleepWindow({ start: '22:30', end: '06:15' })
+  expect(getData().settings.sleepWindow).toEqual({ start: '22:30', end: '06:15' })
+  expect(getData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+  expect(getData().settings.timelineExpanded).toBe(true)
+})
+
+test('setNightSleepWindow changes only nightSleepWindow, leaving sleepWindow untouched', () => {
+  actions.resetForTests(defaultData())
+  actions.setNightSleepWindow({ start: '09:00', end: '17:00' })
+  expect(getData().settings.nightSleepWindow).toEqual({ start: '09:00', end: '17:00' })
+  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+})
+
 test('setThemePreset changes only the preset id', () => {
   actions.resetForTests(defaultData())
   actions.setThemePreset('sketchbook')
@@ -635,6 +660,7 @@ test('setThemeOverride writes one token under the current preset id without dist
   actions.resetForTests({
     ...defaultData(),
     settings: {
+      ...defaultData().settings,
       theme: { presetId: 'sketchbook', overrides: { slate: { accent: '#111111' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,
@@ -654,6 +680,7 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
   actions.resetForTests({
     ...defaultData(),
     settings: {
+      ...defaultData().settings,
       theme: {
         presetId: 'sketchbook',
         overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b' } },
@@ -672,6 +699,7 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
   actions.resetForTests({
     ...defaultData(),
     settings: {
+      ...defaultData().settings,
       theme: {
         presetId: 'sketchbook',
         overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b', mark: '#ffcc00' } },
@@ -693,6 +721,7 @@ test('unsetThemeOverride drops the preset\'s own entry once its last token is re
   actions.resetForTests({
     ...defaultData(),
     settings: {
+      ...defaultData().settings,
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,

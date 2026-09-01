@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 const IF_THEN_WHENS: readonly string[] = ['morning', 'day', 'evening', 'any']
@@ -9,6 +9,15 @@ const DAY_LAYOUT_FOCUSES: readonly string[] = ['both', 'calendar', 'tasks']
 // has no reason to depend on the preset data itself, only on the id a
 // fresh install should start with. See DEFAULT_PRESET_ID in themes.ts.
 const DEFAULT_PRESET_ID = 'slate'
+
+// Duplicated from capacity.ts's own DEFAULT_SLEEP_WINDOW/DEFAULT_NIGHT_SLEEP_WINDOW
+// rather than imported, for the same reason DEFAULT_PRESET_ID above is not
+// imported from themes.ts: this file only needs the two literal values a
+// fresh install starts with, not a dependency on a widget module. Each is
+// the exact inverse of the fixed waking window this setting replaces
+// (07:00-23:00, 13:00-24:00) - see that file's own comment for why.
+const DEFAULT_SLEEP_WINDOW: SleepWindow = { start: '23:00', end: '07:00' }
+const DEFAULT_NIGHT_SLEEP_WINDOW: SleepWindow = { start: '00:00', end: '13:00' }
 
 // A payload written before this phase has settings.theme as a plain
 // 'light' | 'dark' string. isSettings accepts both that legacy shape and
@@ -56,6 +65,8 @@ export function defaultData(): AppData {
       enabledWidgets: [...DEFAULT_ENABLED_WIDGETS],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
+      sleepWindow: { ...DEFAULT_SLEEP_WINDOW },
+      nightSleepWindow: { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },
     ifThens: [],
   }
@@ -238,6 +249,32 @@ function isOptionalDayLayoutFocus(x: unknown): x is Settings['dayLayoutFocus'] |
   return x === undefined || (typeof x === 'string' && DAY_LAYOUT_FOCUSES.includes(x))
 }
 
+// A real "HH:MM" clock time - two digits, a colon, two digits, hour 00-23,
+// minute 00-59. Stricter than isOptionalString already gets for Task.time
+// and TemplateBlock.time (a bare typeof check, unvalidated) because a
+// malformed sleep-window time does not stay contained to one task's own
+// row - it feeds straight into wakingWindow's arithmetic in capacity.ts,
+// where a NaN from a bad split would corrupt the capacity line, every gap
+// and the grid's own greyed band for the whole day, not just one field's
+// display.
+const TIME_STRING_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+
+function isTimeString(x: unknown): x is string {
+  return typeof x === 'string' && TIME_STRING_RE.test(x)
+}
+
+// Both fields required once a sleepWindow object is present at all - a
+// bedtime with no wake time (or the reverse) is not a shape this app can
+// use, so it fails the whole payload the same as any other malformed
+// field, rather than silently defaulting the missing half.
+function isSleepWindow(x: unknown): x is SleepWindow {
+  return isRecord(x) && isTimeString(x.start) && isTimeString(x.end)
+}
+
+function isOptionalSleepWindow(x: unknown): x is SleepWindow | undefined {
+  return x === undefined || isSleepWindow(x)
+}
+
 function isTask(x: unknown): x is Task {
   if (!isRecord(x)) return false
   return (
@@ -311,17 +348,23 @@ function isStoredTheme(x: unknown): x is StoredTheme {
   return isLegacyTheme(x) || isThemeState(x)
 }
 
-// timelineExpanded and dayLayoutFocus are checked only when present - a
-// payload written before either field existed has no such key at all, the
-// same absence-is-fine treatment ifThens gets a few lines below.
-// normalizeLoaded is what actually backfills them (to false and 'both'
-// respectively) once validation passes, matching defaultData()'s own
-// defaults.
+// timelineExpanded, dayLayoutFocus, sleepWindow and nightSleepWindow are all
+// checked only when present - a payload written before any of them existed
+// has no such key at all, the same absence-is-fine treatment ifThens gets a
+// few lines below. normalizeLoaded is what actually backfills them (to
+// false, 'both', and the two default sleep windows respectively) once
+// validation passes, matching defaultData()'s own defaults. A sleep window
+// that is present but malformed - the wrong type, or a string that is not a
+// real "HH:MM" - fails the whole payload exactly like a bad Template.color
+// already does, rather than silently substituting a default for a value
+// that was actually there.
 function isSettings(x: unknown): x is {
   theme: StoredTheme
   enabledWidgets: string[]
   timelineExpanded?: boolean
   dayLayoutFocus?: Settings['dayLayoutFocus']
+  sleepWindow?: SleepWindow
+  nightSleepWindow?: SleepWindow
 } {
   if (!isRecord(x)) return false
   return (
@@ -329,7 +372,9 @@ function isSettings(x: unknown): x is {
     Array.isArray(x.enabledWidgets) &&
     x.enabledWidgets.every(w => typeof w === 'string') &&
     isOptionalBoolean(x.timelineExpanded) &&
-    isOptionalDayLayoutFocus(x.dayLayoutFocus)
+    isOptionalDayLayoutFocus(x.dayLayoutFocus) &&
+    isOptionalSleepWindow(x.sleepWindow) &&
+    isOptionalSleepWindow(x.nightSleepWindow)
   )
 }
 
@@ -377,6 +422,8 @@ interface StoredAppData {
     enabledWidgets: string[]
     timelineExpanded?: boolean
     dayLayoutFocus?: Settings['dayLayoutFocus']
+    sleepWindow?: SleepWindow
+    nightSleepWindow?: SleepWindow
   }
   ifThens?: IfThenEntry[]
 }
@@ -421,6 +468,8 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       enabledWidgets,
       timelineExpanded: data.settings.timelineExpanded ?? false,
       dayLayoutFocus: data.settings.dayLayoutFocus ?? 'both',
+      sleepWindow: data.settings.sleepWindow ?? { ...DEFAULT_SLEEP_WINDOW },
+      nightSleepWindow: data.settings.nightSleepWindow ?? { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },
   }
 }
