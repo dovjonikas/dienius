@@ -465,3 +465,37 @@ test('once any template exists, the starter offers no longer show here', () => {
   render(<TemplatesView />)
   expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
 })
+
+// --- stress test: a template with 30 blocks ---------------------------------
+
+function blockInput(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    time: `${String(6 + Math.floor(i / 3)).padStart(2, '0')}:${String((i % 3) * 20).padStart(2, '0')}`,
+    title: `Block ${i}`,
+    minutes: 15 + (i % 5) * 10,
+  }))
+}
+
+test('a template with 30 blocks lists in the editor, opens within a generous time budget, and stamps a day with exactly 30 tasks', () => {
+  const template = actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(30) })
+  const t0 = performance.now()
+  render(<TemplatesView />)
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(2000)
+  expect(screen.getByText('30 blocks')).toBeInTheDocument()
+
+  actions.stamp({ '2026-09-01': template.id })
+  expect(getData().days['2026-09-01'].tasks).toHaveLength(30)
+  expect(getData().days['2026-09-01'].tasks.every(t => t.fromTemplate)).toBe(true)
+})
+
+test('opening the editor for a 30-block template shows every block, in order', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(30) })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Huge day' }))
+  const rows = document.querySelectorAll('.block-list li')
+  expect(rows).toHaveLength(30)
+  expect(rows[0].textContent).toContain('Block 0')
+  expect(rows[29].textContent).toContain('Block 29')
+})

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SettingsView } from './SettingsView'
 import { actions, getData } from '../lib/store'
@@ -185,5 +185,30 @@ test('export builds a download and defers revoking the object url', async () => 
     removeSpy.mockRestore()
     URL.createObjectURL = originalCreateObjectURL
     URL.revokeObjectURL = originalRevokeObjectURL
+  }
+})
+
+// --- stress test: localStorage full, forced -------------------------------
+
+test('a real forced localStorage failure shows the saving-failed warning, and it clears once storage has room again', async () => {
+  const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new DOMException('The quota has been exceeded.', 'QuotaExceededError')
+  })
+  try {
+    render(<SettingsView />)
+    expect(screen.queryByText(/saving to this browser failed/i)).not.toBeInTheDocument()
+
+    // A commit anywhere in the app - not just something SettingsView itself
+    // does - is what actually triggers the failed write this warning
+    // reports, so this reaches it the same way a real quota failure would:
+    // through an ordinary action, not by poking store internals directly.
+    act(() => actions.addTask('2026-09-01', 'Written while storage is full'))
+    expect(await screen.findByText(/saving to this browser failed/i)).toBeInTheDocument()
+
+    setItemSpy.mockRestore()
+    act(() => actions.addTask('2026-09-01', 'Written once there is room again'))
+    await waitFor(() => expect(screen.queryByText(/saving to this browser failed/i)).not.toBeInTheDocument())
+  } finally {
+    setItemSpy.mockRestore()
   }
 })

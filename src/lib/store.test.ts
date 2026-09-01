@@ -1,7 +1,9 @@
-import { beforeEach, expect, test } from 'vitest'
-import { actions, getData, subscribe } from './store'
+import { beforeEach, expect, test, vi } from 'vitest'
+import { actions, getData, getSaveOk, subscribe } from './store'
 import { defaultData, loadData, STORAGE_KEY } from './storage'
 import { dayScore } from '../widgets/day-plan/score'
+import { PRESETS } from './themes'
+import type { AppData } from './types'
 
 beforeEach(() => {
   localStorage.clear()
@@ -698,6 +700,148 @@ test('importData throws on an invalid payload and leaves the current store compl
   actions.addTask('2026-09-01', 'Must survive a bad import')
   expect(() => actions.importData('not json')).toThrow('Invalid Dienius backup file')
   expect(getData().days['2026-09-01'].tasks[0].title).toBe('Must survive a bad import')
+})
+
+// --- stress test: importing the same backup two and three times -----------
+//
+// SettingsView's Import backup is a full restore, not a merge - see
+// docs/DECISIONS.md's export/import round-trip note. Nothing here should
+// duplicate on a second or third import of the exact same file: each
+// import fully replaces the store (importJson -> commit(next)), so the end
+// state after N identical imports is byte-for-byte the same as after one.
+
+test('importing the same backup twice produces identical state, not duplicates', () => {
+  const backup = defaultData()
+  backup.templates.push({ id: 't1', name: 'Work', color: '#8ab6f9', blocks: [{ id: 'b1', title: 'Gym', time: '09:00' }] })
+  backup.days['2026-09-01'] = {
+    date: '2026-09-01',
+    templateId: 't1',
+    tasks: [{ id: 'x1', title: 'Gym', time: '09:00', done: false, fromTemplate: true }],
+  }
+  const json = JSON.stringify(backup)
+
+  actions.importData(json)
+  const afterFirst = getData()
+  actions.importData(json)
+  const afterSecond = getData()
+
+  expect(afterSecond).toEqual(afterFirst)
+  expect(afterSecond.templates).toHaveLength(1)
+  expect(afterSecond.days['2026-09-01'].tasks).toHaveLength(1)
+})
+
+test('importing the same backup three times still produces exactly one copy of everything in it', () => {
+  const backup = defaultData()
+  backup.templates.push({ id: 't1', name: 'Work', color: '#8ab6f9', blocks: [] })
+  backup.ifThens.push({ id: 'i1', trigger: 'Trigger', action: 'Action' })
+  const json = JSON.stringify(backup)
+
+  actions.importData(json)
+  actions.importData(json)
+  actions.importData(json)
+
+  expect(getData().templates).toHaveLength(1)
+  expect(getData().ifThens).toHaveLength(1)
+})
+
+test('importing a backup after making local changes discards the local changes, not merges them - a deliberate full restore', () => {
+  actions.addTask('2026-09-01', 'Added locally, not in the backup')
+  const backup = defaultData()
+  backup.templates.push({ id: 't1', name: 'From backup', color: '#8ab6f9', blocks: [] })
+  actions.importData(JSON.stringify(backup))
+  expect(getData().days['2026-09-01']).toBeUndefined()
+  expect(getData().templates).toHaveLength(1)
+})
+
+// --- stress test: localStorage full, forced -------------------------------
+//
+// SettingsView shows "Saving to this browser failed... export a backup"
+// when getSaveOk() is false. This is the store-level half of that promise:
+// a real forced setItem failure (not just reading the code) still leaves
+// every action working against in-memory state, and recovery is automatic
+// the moment storage has room again - nothing here requires the person to
+// reload or take any recovery action of their own.
+
+test('a forced localStorage failure during commit flips getSaveOk to false but keeps every action working in memory', () => {
+  const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new DOMException('The quota has been exceeded.', 'QuotaExceededError')
+  })
+  try {
+    expect(getSaveOk()).toBe(true)
+    actions.addTask('2026-09-01', 'Written while storage is full')
+    expect(getSaveOk()).toBe(false)
+    // The task is still there in memory even though the write failed - the
+    // app keeps working, it just could not persist this change.
+    expect(getData().days['2026-09-01'].tasks[0].title).toBe('Written while storage is full')
+
+    // Further actions keep working too, not just the one that first failed.
+    actions.addTask('2026-09-01', 'A second task, still in memory only')
+    expect(getData().days['2026-09-01'].tasks).toHaveLength(2)
+    expect(getSaveOk()).toBe(false)
+  } finally {
+    spy.mockRestore()
+  }
+})
+
+test('once localStorage has room again, the very next commit recovers and getSaveOk returns to true', () => {
+  const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new DOMException('The quota has been exceeded.', 'QuotaExceededError')
+  })
+  actions.addTask('2026-09-01', 'Fails to save')
+  expect(getSaveOk()).toBe(false)
+  spy.mockRestore()
+
+  actions.addTask('2026-09-01', 'Saves fine now that there is room')
+  expect(getSaveOk()).toBe(true)
+  const raw = localStorage.getItem(STORAGE_KEY)
+  expect(raw).toContain('Saves fine now that there is room')
+})
+
+// --- stress test: switching themes with a large data set loaded -----------
+//
+// The year strip's own `cells` is a useMemo keyed on `[year, data.days,
+// data.templates]` - it only recomputes when one of those three actually
+// changes reference. setTheme/setThemePreset write into `data.settings`
+// through an object spread that leaves `days` and `templates` referentially
+// untouched, so a theme change alone must never invalidate that memo. This
+// is what actually lets 11 preset switches over 700 stamped days stay cheap
+// (see the year-strip render benchmark in the stress-test report) - pinned
+// here at the store level, independent of any specific component's memo
+// wiring, so the guarantee holds regardless of which view reads theme data.
+
+test('changing the theme preset or mode never changes the object identity of days or templates', () => {
+  const t = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  actions.stamp({ '2026-09-01': t.id })
+  const daysBefore = getData().days
+  const templatesBefore = getData().templates
+
+  actions.setThemePreset('sketchbook')
+  actions.setTheme('dark')
+  actions.setTheme('light')
+  actions.setThemePreset('midnight')
+
+  expect(getData().days).toBe(daysBefore)
+  expect(getData().templates).toBe(templatesBefore)
+})
+
+test('switching all 11 presets and their modes completes in well under 100ms regardless of how much data is loaded', () => {
+  const templates = Array.from({ length: 50 }, (_, i) => ({
+    id: `t${i}`, name: `Template ${i}`, color: '#8ab6f9', blocks: [],
+  }))
+  const days: AppData['days'] = {}
+  for (let i = 0; i < 700; i++) {
+    const key = `2024-01-${String((i % 28) + 1).padStart(2, '0')}-${i}`
+    days[key] = { date: key, tasks: [{ id: `${key}-t`, title: 'Task', done: false }] }
+  }
+  actions.resetForTests({ ...defaultData(), templates, days })
+
+  const t0 = performance.now()
+  for (const preset of PRESETS) {
+    actions.setThemePreset(preset.id)
+    for (const mode of preset.modes) actions.setTheme(mode)
+  }
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(100)
 })
 
 test('subscribe is notified on every commit, and the returned function unsubscribes it', () => {

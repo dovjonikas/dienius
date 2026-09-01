@@ -318,3 +318,26 @@ test('once a template exists, the calendar empty-templates message is gone', () 
   render(<CalendarView onOpenDay={() => {}} />)
   expect(screen.queryByText(/no templates yet/i)).not.toBeInTheDocument()
 })
+
+// --- stress test: the month grid with roughly two years of stamped days ----
+
+test('the month calendar renders correctly with roughly two years of stamped days loaded, within a generous time budget', () => {
+  const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
+  const stamps: Record<string, string> = {}
+  let d = new Date(2024, 0, 1)
+  for (let i = 0; i < 700; i++) {
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    stamps[key] = i % 2 === 0 ? work.id : rest.id
+    d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
+  }
+  actions.stamp(stamps)
+
+  const t0 = performance.now()
+  render(<CalendarView onOpenDay={() => {}} />)
+  const elapsed = performance.now() - t0
+  expect(elapsed).toBeLessThan(2000)
+  // The month grid only ever draws its own 42 cells regardless of how much
+  // data exists elsewhere in the year.
+  expect(screen.getAllByRole('gridcell')).toHaveLength(42)
+})
