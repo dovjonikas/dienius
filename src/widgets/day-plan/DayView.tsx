@@ -15,6 +15,7 @@ import { IfThenDayRule } from '../if-then/DayRule'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
+import { TaskGapOffers } from './TaskGapOffers'
 import { resolveDrop, type DropTarget } from './dragDrop'
 
 export interface DayViewProps {
@@ -153,6 +154,20 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [dragAnnouncement, setDragAnnouncement] = useState('')
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
+  // The one task currently selected for "where does this fit" - see
+  // TaskRow.tsx's own title button and TaskGapOffers.tsx. Only ever one at
+  // a time: selecting a different task's title while one is already
+  // selected simply moves the selection rather than stacking sheets, since
+  // there is only ever one thing to decide about at once.
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  // Where focus lands once the sheet above closes - the same trigger's own
+  // title button when it still renders one, or the task list itself when
+  // it does not (placing a float turns it into an anchor, whose title is
+  // no longer a select button at all) - see the effect below, and
+  // TimelineGrid.tsx's own `pendingFocusGapStart` for the same pattern
+  // applied to a gap's own trigger.
+  const pendingSelectFocusRef = useRef<string | null>(null)
+  const taskListRef = useRef<HTMLUListElement>(null)
 
   function endDrag() {
     dragRef.current = null
@@ -217,7 +232,64 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day, date])
 
+  // Selecting a task and getting anything done to it are two different
+  // actions, and only one of them ends the selection on its own. If the
+  // selected task is finished (its own checkbox, independent of the title
+  // button next to it) or removed entirely while its sheet is open, "where
+  // does this fit" no longer means anything - clear it rather than leave a
+  // sheet open on a task that no longer needs placing.
+  useEffect(() => {
+    if (selectedTaskId && !tasks.some(t => t.id === selectedTaskId && !t.done)) {
+      setSelectedTaskId(null)
+    }
+  }, [tasks, selectedTaskId])
+
+  useEffect(() => {
+    if (pendingSelectFocusRef.current === null) return
+    const id = pendingSelectFocusRef.current
+    pendingSelectFocusRef.current = null
+    const trigger = document.querySelector<HTMLButtonElement>(`[data-select-task="${id}"]`)
+    if (trigger) trigger.focus()
+    else taskListRef.current?.focus()
+  })
+
+  function toggleSelect(taskId: string) {
+    if (selectedTaskId === taskId) {
+      pendingSelectFocusRef.current = taskId
+      setSelectedTaskId(null)
+      return
+    }
+    setSelectedTaskId(taskId)
+    // Opening the grid is a defensible side effect of selecting, not an
+    // extra decision of its own: the offers sheet below already works with
+    // the timeline collapsed, but the whole point of "open the calendar"
+    // in the brief is seeing the offer as a place in the day, not just a
+    // sentence about one. This flips the same app-wide setting the
+    // disclosure button itself flips - see docs/TIMELINE.md section 5 - so
+    // it behaves exactly like opening it by hand: it stays open afterward,
+    // on this day and every one after, until the owner closes it again.
+    if (!timelineExpanded) actions.setTimelineExpanded(true)
+  }
+
+  function closeSelection() {
+    pendingSelectFocusRef.current = selectedTaskId
+    setSelectedTaskId(null)
+  }
+
+  function placeSelected(taskId: string, time: string) {
+    const task = tasks.find(t => t.id === taskId)
+    if (actions.placeFloat(date, taskId, time)) {
+      setDragAnnouncement(task ? `${task.title} placed at ${time}.` : `Placed at ${time}.`)
+    }
+    // Placing always ends the selection, whether or not it actually moved
+    // anything - a refused placement (a race with some other update) has
+    // nothing left worth asking about either. See TaskGapOffers.tsx: one
+    // tap places it, and there is no confirmation step in between.
+    closeSelection()
+  }
+
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
+  const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined
 
   return (
     <section className="day-view" data-tray-zone>
@@ -334,7 +406,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
       )}
 
-      <ul className="task-list">
+      <ul className="task-list" ref={taskListRef} tabIndex={-1}>
         {tasks.map(task => (
           <TaskRow
             key={task.id}
@@ -348,6 +420,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             onCommitSizeEdit={commitSizeEdit}
             onCancelSizeEdit={cancelSizeEdit}
             onOpenActions={() => setActionsSheetTaskId(task.id)}
+            selected={selectedTaskId === task.id}
+            onToggleSelect={() => toggleSelect(task.id)}
           />
         ))}
       </ul>
@@ -381,6 +455,16 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
           onDelete={taskId => actions.deleteTask(date, taskId)}
           onClose={() => setActionsSheetTaskId(null)}
+        />
+      )}
+
+      {selectedTask && (
+        <TaskGapOffers
+          task={selectedTask}
+          tasks={day?.tasks ?? []}
+          dayType={day?.dayType}
+          onPlace={placeSelected}
+          onClose={closeSelection}
         />
       )}
     </section>

@@ -1,7 +1,7 @@
 import type { Task } from '../../lib/types'
 import { actions } from '../../lib/store'
 import { isPushable } from '../../lib/pushRules'
-import { formatDuration } from './capacity'
+import { formatDuration, isAnchor } from './capacity'
 import { useLongPress } from './useLongPress'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
@@ -44,6 +44,19 @@ export interface TaskRowProps {
    * button below.
    */
   onOpenActions: () => void
+  /**
+   * True while this task is the one selected for "where does this fit" -
+   * see `TaskGapOffers.tsx` and the module comment on the title button
+   * below. Only ever true for one row at a time; DayView.tsx owns which.
+   */
+  selected: boolean
+  /**
+   * Opens or closes "where does this fit" for this task - tapping the
+   * title again while already selected ends it, the same toggle either
+   * direction. Not called at all for a row that is not selectable (an
+   * anchor, or a task already done) - see `selectable` below.
+   */
+  onToggleSelect: () => void
 }
 
 /**
@@ -68,6 +81,8 @@ export function TaskRow({
   onCommitSizeEdit,
   onCancelSizeEdit,
   onOpenActions,
+  selected,
+  onToggleSelect,
 }: TaskRowProps) {
   const pushCount = task.pushCount ?? 0
   const isUnbounded = !!task.unbounded
@@ -83,6 +98,31 @@ export function TaskRow({
   // do with it (delete) does not need a hold to discover.
   const longPressEligible = !task.done
   const longPress = useLongPress(onOpenActions)
+  // Only a float still worth placing can be selected - an anchor already
+  // has a position, and a done task has nothing left to schedule. Tapping
+  // the title of anything else still does nothing, exactly as it always
+  // has - see the module comment below for why the title is the gesture at
+  // all rather than a new control.
+  const selectable = !task.done && !isAnchor(task)
+
+  // Selecting has to live somewhere that (a) is not the checkbox, so it
+  // cannot be mistaken for completing the task, and (b) is not the row's
+  // own actions menu, which already opens a sheet of its own and would
+  // make "select" one more thing buried behind "more actions" rather than
+  // the one-tap gesture the brief asks for. The title is the one part of
+  // the row that reads as "this task" without reading as an action on it -
+  // a real, focusable button rather than the plain span it used to be,
+  // still sitting inside the row's own label but never forwarding its
+  // click to the checkbox underneath, exactly the way TaskActionsSheet's
+  // own long-press menu already has to stop the label's default click
+  // forwarding once it fires. Pressing it again while already selected
+  // deselects - the same toggle either direction, and exactly as
+  // reversible as opening a picture and closing it again.
+  function handleSelectClick(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    onToggleSelect()
+  }
 
   const classNames = ['task']
   if (task.done) classNames.push('done')
@@ -123,7 +163,19 @@ export function TaskRow({
           />
           <span className="check" aria-hidden="true" />
           {task.time && <span className="task-time">{task.time}</span>}
-          <span className="task-title">{task.title}</span>
+          {selectable ? (
+            <button
+              type="button"
+              className="task-title task-title-select"
+              data-select-task={task.id}
+              aria-pressed={selected}
+              onClick={handleSelectClick}
+            >
+              {task.title}
+            </button>
+          ) : (
+            <span className="task-title">{task.title}</span>
+          )}
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
