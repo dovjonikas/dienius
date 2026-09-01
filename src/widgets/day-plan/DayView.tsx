@@ -9,14 +9,13 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { computeCapacity, formatCapacityLine, isAnchor, parseMinutesInput } from './capacity'
+import { computeCapacity, formatCapacityLine, parseMinutesInput } from './capacity'
 import { TimelineGrid } from './TimelineGrid'
 import { IfThenDayRule } from '../if-then/DayRule'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
-import { resolveDrop, type DragKind, type DropTarget } from './dragDrop'
-import { formatClock } from './timelineLayout'
+import { resolveDrop, type DropTarget } from './dragDrop'
 
 export interface DayViewProps {
   date: string
@@ -120,36 +119,38 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     setSizeEditingId(null)
   }
 
-  // Step 7's drag - docs/TIMELINE.md section 5: "dragging a float onto a
-  // gap anchors it; dragging it back to the tray un-anchors it." Follows
+  // Step 7's drag - docs/TIMELINE.md section 5: "dragging an anchor's own
+  // block in the grid back onto the tray un-anchors it." Follows
   // CalendarView.tsx's own pointer approach exactly, since that component
   // already solved touch drag in this repo the hard way: release pointer
   // capture on pointerdown so the browser keeps delivering events to
-  // whatever is actually under the finger, track the current target with
-  // document.elementFromPoint + closest during pointermove rather than
-  // relying on pointerenter (which never fires once a touch has captured
-  // the pointer to the element the gesture started on), and clean up on
-  // document-level pointerup/pointercancel so a finger lifted anywhere -
-  // off the day view entirely, past the edge of the screen - always ends
-  // the drag instead of leaving it stuck on.
+  // whatever is actually under the finger, and clean up on document-level
+  // pointerup/pointercancel so a finger lifted anywhere - off the day view
+  // entirely, past the edge of the screen - always ends the drag instead
+  // of leaving it stuck on.
+  //
+  // Placing a float by dragging it out of its own row used to be this same
+  // machinery's other direction, started from a small dedicated handle on
+  // every draggable row. It was removed along with that handle - see the
+  // comment on TaskRow.tsx's own actions-menu button - once the row's
+  // actions menu made a float placeable through a genuine one-extra-tap
+  // path that needs neither a live drag gesture nor the grid expanded, the
+  // same outcome the tap-a-gap picker already offered independently. Only
+  // an anchor's own visual block in the grid still starts a drag now; a
+  // float's row has nothing left that does.
   //
   // A ref, not state, holds what is being dragged: it needs to be read
-  // synchronously inside the document listeners below without those
-  // listeners being re-subscribed on every render.
-  const dragRef = useRef<{ kind: DragKind; taskId: string } | null>(null)
+  // synchronously inside the document listener below without that
+  // listener being re-subscribed on every render.
+  const dragRef = useRef<string | null>(null)
   // Where the drag started, so a release can be told apart from a mere
-  // tap - see the distance check in handleUp below. This matters most for
-  // an anchor block: it has no click behaviour of its own today (it is
-  // decorative), so without this guard a plain tap on it - pointerdown
-  // immediately followed by pointerup at the same spot, still over the
-  // block itself rather than any gap - would resolve to the tray target
-  // and un-anchor the task with no actual drag having happened. A float's
-  // own drop rule already only fires on a real gap, so it never needed
-  // this, but the guard applies to both for one consistent rule: nothing
-  // moves unless the pointer genuinely did.
+  // tap - see the distance check in handleUp below. An anchor block has no
+  // click behaviour of its own today (it is decorative), so without this
+  // guard a plain tap on it - pointerdown immediately followed by
+  // pointerup at the same spot - would resolve to the tray target and
+  // un-anchor the task with no actual drag having happened.
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
-  const [dragOverGapStart, setDragOverGapStart] = useState<number | null>(null)
   const [dragAnnouncement, setDragAnnouncement] = useState('')
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
 
@@ -157,53 +158,27 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     dragRef.current = null
     dragStartRef.current = null
     setDraggingTaskId(null)
-    setDragOverGapStart(null)
   }
 
-  function startDrag(kind: DragKind, taskId: string, e: React.PointerEvent) {
+  function startDrag(taskId: string, e: React.PointerEvent) {
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
     e.preventDefault()
-    dragRef.current = { kind, taskId }
+    dragRef.current = taskId
     dragStartRef.current = { x: e.clientX, y: e.clientY }
     setDraggingTaskId(taskId)
-    // A float picked up while the grid is collapsed has nothing to land
-    // on - the gaps it would drop onto only exist once the grid is
-    // mounted. Expanding it here is the direct, sensible answer
-    // docs/TIMELINE.md section 8 asks for rather than a silent pickup
-    // with no valid target: it is exactly what tapping "Show timeline"
-    // does by hand, just triggered by the gesture that actually needs
-    // it. Recorded as a call in docs/OPEN-QUESTIONS.md since it is a
-    // real product choice, not one the spec spelled out. Skipped when
-    // there is no anchor at all - then there is no grid to expand into,
-    // and the toggle itself is not even shown (see the button above).
-    if (kind === 'float' && !timelineExpanded && capacity.anchorCount > 0) {
-      actions.setTimelineExpanded(true)
-    }
   }
 
   function targetAt(clientX: number, clientY: number): DropTarget {
     const el = document.elementFromPoint(clientX, clientY)
     if (!el) return null
-    const gapEl = el.closest<HTMLElement>('[data-gap-start]')
-    if (gapEl) {
-      const startMinutes = Number(gapEl.dataset.gapStart)
-      const endMinutes = Number(gapEl.dataset.gapEnd)
-      return { type: 'gap', startMinutes, gapMinutes: endMinutes - startMinutes }
-    }
     if (el.closest('[data-tray-zone]')) return { type: 'tray' }
     return null
   }
 
   function applyOutcome(outcome: ReturnType<typeof resolveDrop>) {
-    if (outcome.action === 'place') {
-      const time = formatClock(outcome.startMinutes)
-      const task = day?.tasks.find(t => t.id === outcome.taskId)
-      if (actions.placeFloat(date, outcome.taskId, time)) {
-        setDragAnnouncement(task ? `${task.title} placed at ${time}.` : 'Placed.')
-      }
-    } else if (outcome.action === 'unanchor') {
+    if (outcome.action === 'unanchor') {
       const task = day?.tasks.find(t => t.id === outcome.taskId)
       if (actions.unanchorTask(date, outcome.taskId)) {
         setDragAnnouncement(task ? `${task.title} returned to the tray.` : 'Returned to the tray.')
@@ -212,42 +187,35 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   }
 
   useEffect(() => {
-    function handleMove(e: PointerEvent) {
-      if (!dragRef.current) return
-      const target = targetAt(e.clientX, e.clientY)
-      setDragOverGapStart(target?.type === 'gap' ? target.startMinutes : null)
-    }
     function handleUp(e: PointerEvent) {
       if (!dragRef.current) return
-      const { kind, taskId } = dragRef.current
+      const taskId = dragRef.current
       const start = dragStartRef.current
       const movedEnough = !start || Math.hypot(e.clientX - start.x, e.clientY - start.y) >= MIN_DRAG_DISTANCE_PX
       const target = movedEnough ? targetAt(e.clientX, e.clientY) : null
-      const outcome = resolveDrop(day?.tasks ?? [], kind, taskId, target)
+      const outcome = resolveDrop(day?.tasks ?? [], taskId, target)
       endDrag()
       applyOutcome(outcome)
     }
     function handleCancel() {
       // A drag that goes nowhere - the gesture was cancelled by the
       // browser, or interrupted some other way - leaves state untouched,
-      // never a half-placed or half-removed task.
+      // never a half-removed task.
       endDrag()
     }
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape' && dragRef.current) endDrag()
     }
-    document.addEventListener('pointermove', handleMove)
     document.addEventListener('pointerup', handleUp)
     document.addEventListener('pointercancel', handleCancel)
     document.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.removeEventListener('pointermove', handleMove)
       document.removeEventListener('pointerup', handleUp)
       document.removeEventListener('pointercancel', handleCancel)
       document.removeEventListener('keydown', handleKeyDown)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day, date, timelineExpanded, capacity.anchorCount])
+  }, [day, date])
 
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
 
@@ -327,18 +295,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           tasks={day?.tasks ?? []}
           templateColor={template?.color}
           onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
-          onAnchorPointerDown={(taskId, e) => startDrag('anchor', taskId, e)}
-          dragOverGapStart={dragOverGapStart}
+          onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
           draggingTaskId={draggingTaskId}
           isToday={isToday}
         />
       )}
 
-      {/* Announces a drag-driven placement or un-anchor to screen reader
-          users, the same way TimelineGrid.tsx's own live region already
-          covers the tap-a-gap path - a separate region because this one
-          fires from a gesture TimelineGrid never sees (the drop can land
-          outside the grid entirely, for the tray direction). */}
+      {/* Announces a drag-driven un-anchor, or a placement or removal made
+          through the actions menu, to screen reader users - the same way
+          TimelineGrid.tsx's own live region already covers the tap-a-gap
+          path. A separate region because these fire from gestures
+          TimelineGrid never sees: the drag can end outside the grid
+          entirely, and the menu is not part of it at all. */}
       <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
 
       <input
@@ -379,11 +347,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             onSizeDraftChange={setSizeDraft}
             onCommitSizeEdit={commitSizeEdit}
             onCancelSizeEdit={cancelSizeEdit}
-            dragging={draggingTaskId === task.id}
-            onDragHandlePointerDown={
-              task.done ? undefined : e => startDrag(isAnchor(task) ? 'anchor' : 'float', task.id, e)
-            }
-            onLongPressOpen={task.done ? undefined : () => setActionsSheetTaskId(task.id)}
+            onOpenActions={() => setActionsSheetTaskId(task.id)}
           />
         ))}
       </ul>
@@ -413,6 +377,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               setDragAnnouncement(`${actionsSheetTask.title} returned to the tray.`)
             }
           }}
+          onPush={taskId => actions.pushTask(date, taskId)}
+          onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
+          onDelete={taskId => actions.deleteTask(date, taskId)}
           onClose={() => setActionsSheetTaskId(null)}
         />
       )}

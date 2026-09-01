@@ -1023,17 +1023,6 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    for prefers-reduced-motion to need to turn off. */
 .timeline-anchor-dragging { opacity: 0.5; }
 
-/* The gap currently under an in-progress drag - purely a hover-style cue
-   so a person dragging a float can see where it will land before
-   releasing. Distinct from [aria-expanded='true'] (the tap-picker's own
-   "currently open" state): the two are not expected to ever be true at
-   the same time, but if they were, this one simply draws on top, which
-   reads fine either way. */
-.timeline-gap.timeline-gap-drag-over {
-  border: 1.5px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-}
-
 /* Current-time indicator - docs/RESEARCH-TIMELINE-UI.md section 5 point 7.
    var(--accent), never a hardcoded red: a fixed red would clash on Legal
    pad, which already spends red on its own margin rule, and would simply
@@ -1362,14 +1351,23 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task-title { transition: opacity 0.2s; }
 .task.done .task-title { text-decoration: line-through; opacity: 0.45; }
 
-.task-pushed {
+/* The one quiet mark for whichever push state applies - pushed N times,
+   ongoing, or at the bound - see TaskRow.tsx's own comment on
+   showPushedMark for why these three are mutually exclusive and therefore
+   collapse into a single element rather than the badge-plus-button-plus-
+   paragraph this row used to carry. Same plain, textual treatment as
+   task-core: no colour, no icon, nothing that competes for a look at what
+   actually needs deciding today. Never itself a control - what it used to
+   let you do directly (undo ongoing, mark ongoing) now lives in the
+   actions menu, where the bound's own explanation lives too. */
+.task-state {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* Shown per task only on a day whose type is not full, next to the ones
    that count toward the score - see the day-score-note above it. Matches
-   task-time's size rather than task-pushed's smaller one, since this is
+   task-time's size rather than task-state's smaller one, since this is
    the label that explains the score, not a secondary detail. */
 .task-core {
   color: var(--muted);
@@ -1405,167 +1403,48 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 8px;
 }
 
-/* A float's own "push to tomorrow" control - see docs/TIMELINE.md section 8.
-   Deliberately worded and sized the same as task-size and task-delete: this
-   is where the choice of what moves actually lives, not a highlighted or
-   emphasized action, since the capacity line above never pre-selects it. */
-.task-push {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 13px;
-  min-width: 44px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.task-push:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.task-delete {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 20px;
-  min-width: 44px;
-  padding: 8px;
-}
-
-/* The undo for a gap placement - see docs/TIMELINE.md section 5 and the
-   comment on this button in DayView.tsx. Deliberately left out of the
-   hover-fade group below: everything else in that group is a quiet,
-   discoverable-on-demand action, but this one exists specifically so a
-   just-placed float is easy to undo without hunting, so it stays visible
-   the moment a task has a time rather than waiting for a hover or a tap
-   to reveal it. */
-.task-unanchor {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 13px;
-  min-width: 44px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.task-unanchor:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* The quiet, permanent label a task carries once it has been marked
-   ongoing - see TaskRow.tsx's own comment and docs/DECISIONS.md. Same
-   quiet, textual treatment as task-core: no colour, no icon, nothing that
-   competes for a look at what still needs deciding today. Unlike
-   task-core it is also a real control, not just a label - tapping it
-   clears the flag - so it needs task-push's own touch target rather than
-   task-core's plain span. */
-.task-unbounded-badge {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  min-width: 44px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.task-unbounded-badge:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* The third choice at the push bound, alongside the checkbox (do it) and
-   task-delete (let it go) below - see the maxed-note in TaskRow.tsx and
-   docs/DECISIONS.md. Left out of the hover-fade group below on purpose,
-   the same reason task-delete is: it is one of three equally legitimate
-   answers to the bound's own question, not a secondary action to
-   discover on hover. */
-.task-mark-unbounded {
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: 13px;
-  min-width: 44px;
-  padding: 8px;
-  flex-shrink: 0;
-}
-
-.task-mark-unbounded:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Fade a task's quieter controls in on hover only where a real pointer
-   exists. On touch devices they stay visible, since there is no hover
-   state. A task at the push bound keeps its delete button, and its
-   mark-ongoing button, visible too - they are two of the bound's three
-   real options, not a stray action to discover on hover. An already-sized
-   chip is left out of this group on purpose: once a task has a size, that
-   is information worth always showing, not an action to tuck away. */
+/* Fade the size control in on hover only where a real pointer exists, but
+   only while it is still an empty "size" placeholder - once a task has a
+   size, that is information worth always showing, not an action to tuck
+   away. On touch devices it stays visible throughout, since there is no
+   hover state. */
 @media (hover: hover) and (pointer: fine) {
-  .task-delete,
-  .task-size-empty,
-  .task-push {
+  .task-size-empty {
     opacity: 0;
     transition: opacity 0.15s;
   }
-  .task:hover .task-delete,
   .task:hover .task-size-empty,
-  .task:hover .task-push,
-  .task-delete:focus-visible,
-  .task-size-empty:focus-visible,
-  .task-push:focus-visible,
-  .task-maxed .task-delete {
+  .task-size-empty:focus-visible {
     opacity: 1;
   }
 }
 
-/* Step 7's drag source - see docs/TIMELINE.md section 5 and the comment
-   on this element in TaskRow.tsx. A small dedicated handle rather than
-   the whole row: the row's own tap-to-toggle area needs to keep the
-   page's default touch-action so it stays scrollable, and touch-action
-   has to be set on whatever the drag gesture actually starts on, so only
-   this handle carries `none`. Muted and small, matching task-push and
-   task-unanchor's own quiet weight - it is a convenience on top of a
-   fully working tap and long-press path, never the loudest thing on the
-   row. */
-.task-drag-handle {
+/* The single door to everything else a task's row can do - place or
+   un-anchor, push, mark ongoing, delete - see docs/TIMELINE.md section 5
+   and the comment on this button in TaskRow.tsx. Always visible, never a
+   hover reveal, on any input: this repo has already fixed that class of
+   bug once, and this button is now the only path to some of what it
+   opens, so it cannot be allowed to regress into one. */
+.task-menu-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
   flex-shrink: 0;
+  border: none;
+  background: none;
   color: var(--muted);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
-  touch-action: none;
-  cursor: grab;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.task-drag-handle:active { cursor: grabbing; }
-
-/* The row currently picked up by a drag - a plain opacity dip, no
-   transform or motion, so this reads correctly for a
-   prefers-reduced-motion reader without a separate override: there is no
-   animation here to begin with, only the existing color transition
-   .app * already carries. */
-.task.dragging { opacity: 0.5; }
+.task-menu-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .task-maxed { border-color: var(--muted); }
-
-.task-maxed-note {
-  margin: 0;
-  padding: 0 0 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
 
 .rollover {
   width: 100%;
@@ -2303,9 +2182,26 @@ button.danger {
   outline-offset: 2px;
 }
 
+.task-actions-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .task-actions-empty {
   margin: 4px 0 8px;
   color: var(--muted);
+}
+
+/* The push bound's own do-or-delete sentence - unchanged copy, moved here
+   from a permanent paragraph on every maxed row. Plain body text, not a
+   warning: the bound is a normal, expected moment in this app's own
+   rhythm, not an error state, so nothing about its color or weight should
+   say otherwise. */
+.task-actions-note {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 14px;
 }
 
 .task-actions-list {

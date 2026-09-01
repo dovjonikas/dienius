@@ -120,15 +120,6 @@ export interface TimelineGridProps {
    * container behaves exactly as it always did.
    */
   onAnchorPointerDown?: (taskId: string, e: React.PointerEvent<HTMLDivElement>) => void
-  /**
-   * The gap currently under an in-progress drag, if any - purely a visual
-   * highlight so a person dragging a float can see where it will land
-   * before releasing. `DayView.tsx` recomputes this on every
-   * `pointermove` from the same `data-gap-start` this component already
-   * renders, the same `elementFromPoint` + `closest` technique
-   * `CalendarView.tsx`'s own stamp-drag uses.
-   */
-  dragOverGapStart?: number | null
   /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
   draggingTaskId?: string | null
   /**
@@ -179,7 +170,6 @@ export function TimelineGrid({
   templateColor,
   onPlaceFloat,
   onAnchorPointerDown,
-  dragOverGapStart,
   draggingTaskId,
   isToday = false,
 }: TimelineGridProps) {
@@ -333,15 +323,13 @@ export function TimelineGrid({
               const bottom = windowPercent(window, gap.endMinutes)
               const rawHeightPx = ((bottom - top) / 100) * heightPx
               const isOpen = openGapStart === gap.startMinutes
-              const isDragOver = dragOverGapStart === gap.startMinutes
               const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to place a float.`
               return (
                 <button
                   key={`gap-${gap.startMinutes}`}
                   type="button"
-                  className={isDragOver ? 'timeline-gap timeline-gap-drag-over' : 'timeline-gap'}
+                  className="timeline-gap"
                   data-gap-start={gap.startMinutes}
-                  data-gap-end={gap.endMinutes}
                   aria-label={label}
                   aria-haspopup="dialog"
                   aria-expanded={isOpen}
