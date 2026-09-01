@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SettingsView } from './SettingsView'
 import { actions, getData } from '../lib/store'
-import { defaultData } from '../lib/storage'
+import { STORAGE_KEY, defaultData, loadData } from '../lib/storage'
 
 beforeEach(() => {
   localStorage.clear()
@@ -86,6 +86,72 @@ test('picking the same file twice still triggers an import', async () => {
 
   await user.upload(input, badFile)
   expect(await screen.findByText('That file is not a valid Dienius backup.')).toBeInTheDocument()
+})
+
+function mockReload() {
+  const reload = vi.fn()
+  const originalLocation = window.location
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: { ...originalLocation, reload },
+  })
+  return { reload, restore: () => Object.defineProperty(window, 'location', { configurable: true, value: originalLocation }) }
+}
+
+test('erasing all data requires a second confirming tap before it clears storage and reloads', async () => {
+  const user = userEvent.setup()
+  actions.addTask('2026-09-01', 'Keep me for now')
+  const { reload, restore } = mockReload()
+
+  try {
+    render(<SettingsView />)
+    await user.click(screen.getByRole('button', { name: 'Erase all data' }))
+    expect(screen.getByRole('button', { name: 'Confirm reset?' })).toBeInTheDocument()
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+    expect(reload).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Confirm reset?' }))
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    expect(reload).toHaveBeenCalledTimes(1)
+  } finally {
+    restore()
+  }
+})
+
+test('the reset confirmation resets when focus moves elsewhere, the same as a template delete', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  await user.click(screen.getByRole('button', { name: 'Erase all data' }))
+  expect(screen.getByRole('button', { name: 'Confirm reset?' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Import backup' }))
+  expect(screen.getByRole('button', { name: 'Erase all data' })).toBeInTheDocument()
+})
+
+test('confirming the erase clears every part of storage, not just some of it, and a fresh load lands on the default state', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Morning', color: '#f9d48a', blocks: [{ time: '08:00', title: 'Wake up' }] })
+  actions.addTask('2026-09-01', 'A real task')
+  actions.setTheme('dark')
+  const { restore } = mockReload()
+
+  try {
+    render(<SettingsView />)
+    await user.click(screen.getByRole('button', { name: 'Erase all data' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm reset?' }))
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+    const fresh = loadData()
+    expect(fresh).toEqual(defaultData())
+  } finally {
+    restore()
+  }
+})
+
+test('export is the primary, single-tap control - the escape route stays easier to reach than the reset', async () => {
+  render(<SettingsView />)
+  expect(screen.getByRole('button', { name: 'Export backup' })).toHaveClass('primary')
+  expect(screen.getByRole('button', { name: 'Erase all data' })).not.toHaveClass('primary')
+  expect(screen.getByRole('button', { name: 'Erase all data' })).not.toHaveClass('danger')
 })
 
 test('export builds a download and defers revoking the object url', async () => {
