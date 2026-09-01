@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DayType, Task } from '../../lib/types'
-import { formatDuration } from './capacity'
+import { formatDuration, type SleepSettings } from './capacity'
 import { describeGapNeighbors, matchTaskToGaps, VISIBLE_ROW_LIMIT, type GapWithContext } from './gapPlacement'
 import { formatClock } from './timelineLayout'
 
@@ -10,6 +10,15 @@ export interface TaskGapOffersProps {
   /** The day's full task list - needed to compute which gaps exist at all. */
   tasks: Task[]
   dayType: DayType | undefined
+  /**
+   * The owner's sleep window settings, passed straight through to
+   * `matchTaskToGaps` so "where does this fit" is measured against the same
+   * waking window the grid and the capacity line already use - see
+   * `windowFor` in capacity.ts. Optional so a caller with nothing to pass
+   * (this component's own tests) still measures against the fixed fallback
+   * window `matchTaskToGaps` itself defaults to.
+   */
+  sleep?: SleepSettings
   /** Called with the task's own id and the clock time to place it at. The caller places it and ends the selection. */
   onPlace: (taskId: string, time: string) => void
   onClose: () => void
@@ -43,7 +52,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  * like `GapPicker.tsx` - see that constant's own doc comment in
  * gapPlacement.ts for why four is the number.
  */
-export function TaskGapOffers({ task, tasks, dayType, onPlace, onClose }: TaskGapOffersProps) {
+export function TaskGapOffers({ task, tasks, dayType, sleep, onPlace, onClose }: TaskGapOffersProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
 
@@ -76,7 +85,7 @@ export function TaskGapOffers({ task, tasks, dayType, onPlace, onClose }: TaskGa
     onPlace(task.id, formatClock(gap.start))
   }
 
-  const match = matchTaskToGaps(tasks, dayType, task.id)
+  const match = matchTaskToGaps(tasks, dayType, task.id, sleep)
 
   function renderBody() {
     switch (match.kind) {

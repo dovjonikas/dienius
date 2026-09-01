@@ -1,5 +1,5 @@
-import type { Task } from '../../lib/types'
-import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Interval } from './capacity'
+import type { DayType, Task } from '../../lib/types'
+import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
 
 /**
  * Minutes in one calendar day - the grid never draws past this either.
@@ -17,6 +17,16 @@ export const DAY_MINUTES = 24 * 60
  * it differs from `computeCapacity`'s fixed waking window.
  */
 const DISPLAY_BUFFER_MINUTES = 60
+
+/**
+ * How far `displayWindow` is ever pulled back into sleep hours to make the
+ * wake/bedtime boundary legible - see `extendTowardSleepBoundary` below.
+ * The same 60 minutes as `DISPLAY_BUFFER_MINUTES` above, deliberately: this
+ * is the same "breathing room for the eye" idea that constant already
+ * describes, just mirrored toward the sleep side of the day rather than
+ * only ever applied on the awake side.
+ */
+const SLEEP_BAND_EXTEND_MINUTES = 60
 
 /**
  * An anchor with no `minutes` has no honest duration to draw - see the
@@ -78,10 +88,32 @@ export interface TimelineGap {
 export interface TimelineLayout {
   /** Null when there are no anchors at all - nothing anchors a window, so there is nothing to draw. */
   window: Interval | null
+  /**
+   * `window`, extended toward the sleep boundary on either side when doing
+   * so is cheap enough to be worth it - see `extendTowardSleepBoundary`.
+   * This is what the grid actually draws hour marks, anchors and the greyed
+   * sleep band against; `window` itself stays exactly the anchor-buffered
+   * interval it always was, unaffected by this, since nothing about gap
+   * arithmetic needs the wider view. Null under the same condition as
+   * `window` - there is nothing to extend on a day with no anchors either.
+   */
+  displayWindow: Interval | null
   anchors: TimelineAnchorBlock[]
   /** Empty whenever any anchor is unsized, or there are fewer than two sized anchors - see the module comment. */
   gaps: TimelineGap[]
   unsizedAnchorCount: number
+  /**
+   * The stretches of `displayWindow` that fall outside the day's own waking
+   * window - what the grid greys out. Zero, one or two segments: one when
+   * `displayWindow` only reaches into sleep on one side (the ordinary case,
+   * a day that starts near wake time and ends well before bedtime, say),
+   * two when it reaches into both, zero when the sleep boundary is too far
+   * from the anchors for `displayWindow` to have been extended toward it at
+   * all. Always already clipped to `displayWindow` - see
+   * `extendTowardSleepBoundary`'s own doc comment for why a band is never
+   * drawn wider than a short peek past the boundary.
+   */
+  sleepBands: Interval[]
 }
 
 /**
@@ -116,12 +148,68 @@ export interface TimelineLayout {
  * like free time, so exactly like `computeCapacity`, an unsized anchor
  * suppresses every gap for the day rather than let one be drawn around a
  * span that anchor could actually occupy.
+ *
+ * **`displayWindow` and `sleepBands` are a second, later addition to this
+ * same window, not a replacement of the reasoning above.** `window` itself
+ * is untouched by either - gap arithmetic still runs against exactly the
+ * anchor-buffered interval this comment already describes. `displayWindow`
+ * is `window`, pulled back toward the day's own waking-window boundary
+ * (`windowFor` in capacity.ts, driven by `sleepWindow`/`nightSleepWindow`)
+ * whenever the anchors already leave the boundary within a short reach -
+ * see `extendTowardSleepBoundary` for the exact rule and why it is capped.
+ * The grid draws hour marks, anchors, gaps and the greyed sleep band all
+ * against `displayWindow`, so the two windows can differ - one more
+ * instance of this module's own window deliberately disagreeing with
+ * another at the edges, the same relationship this comment already
+ * describes between this window and `computeCapacity`'s.
  */
-export function computeTimelineLayout(tasks: Task[]): TimelineLayout {
+/**
+ * Pulls `window` back toward `waking`'s own boundary on either side, so the
+ * wake/bedtime line - and a real, visible amount of the sleep band on the
+ * other side of it - is legible on an ordinary day, without redrawing the
+ * whole night.
+ *
+ * On each side, independently: if the anchor-buffered edge already sits
+ * inside sleep hours (the buffer naturally reached that far - an anchor
+ * close to the boundary already), it is left exactly as it was; there is
+ * already real grey to show and nothing here needs to force more. If the
+ * edge sits on the awake side, within `SLEEP_BAND_EXTEND_MINUTES` of the
+ * boundary, it is pulled back to `SLEEP_BAND_EXTEND_MINUTES` past the
+ * boundary - closing a small gap so the boundary itself, plus a real peek
+ * of grey, both draw. If the edge is further from the boundary than that,
+ * it is left untouched: bridging a multi-hour gap between where the day's
+ * real content ends and where sleep starts would mean drawing a stretch of
+ * pure empty space just to reach a line that is, at that distance, no
+ * longer close to what is actually being shown - exactly the "wall of
+ * empty rows" the anchor buffer itself already exists to avoid, and exactly
+ * the risk of compressing a wide-screen day's real content that comes from
+ * inflating `displayWindow`'s own total minutes for no real gain (see
+ * `chooseWidePxPerMinute` in TimelineGrid.tsx, which divides available
+ * pixels by this window's width).
+ */
+function extendTowardSleepBoundary(window: Interval, waking: Interval): Interval {
+  const gapToWake = window.start - waking.start
+  const start = gapToWake > 0 && gapToWake <= SLEEP_BAND_EXTEND_MINUTES
+    ? Math.max(0, waking.start - SLEEP_BAND_EXTEND_MINUTES)
+    : window.start
+
+  const gapToBed = waking.end - window.end
+  const end = gapToBed > 0 && gapToBed <= SLEEP_BAND_EXTEND_MINUTES
+    ? Math.min(DAY_MINUTES, waking.end + SLEEP_BAND_EXTEND_MINUTES)
+    : window.end
+
+  return { start, end }
+}
+
+export function computeTimelineLayout(
+  tasks: Task[],
+  dayType: DayType = 'full',
+  sleep?: SleepSettings,
+): TimelineLayout {
   const anchors = tasks.filter(isAnchor).slice().sort((a, b) => a.time!.localeCompare(b.time!))
 
   if (anchors.length === 0) {
-    return { window: null, anchors: [], gaps: [], unsizedAnchorCount: 0 }
+    return { window: null, displayWindow: null, anchors: [], gaps: [], unsizedAnchorCount: 0, sleepBands: [] }
   }
 
   const unsizedAnchorCount = anchors.filter(a => a.minutes === undefined).length
@@ -173,7 +261,16 @@ export function computeTimelineLayout(tasks: Task[]): TimelineLayout {
 
   const gaps = unsizedAnchorCount > 0 ? [] : computeInteriorGaps(anchors, window)
 
-  return { window, anchors: blocks, gaps, unsizedAnchorCount }
+  const waking = windowFor(dayType, sleep)
+  const displayWindow = extendTowardSleepBoundary(window, waking)
+  const sleepBands = [
+    { start: 0, end: waking.start },
+    { start: waking.end, end: DAY_MINUTES },
+  ]
+    .map(segment => clipToWindow(segment, displayWindow))
+    .filter((segment): segment is Interval => segment !== null)
+
+  return { window, displayWindow, anchors: blocks, gaps, unsizedAnchorCount, sleepBands }
 }
 
 // The drawn interval used for both column placement and gap computation -

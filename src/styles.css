@@ -794,6 +794,20 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   pointer-events: none;
 }
 
+/* The sleep window, greyed rather than cropped away - see TimelineGrid.tsx's
+   own comment on where this layer sits. A flat tint using --muted, the same
+   token this grid already reaches for whenever it needs something quieter
+   than --border (the hour rule) or --text (a label) - see .timeline-gap-label
+   and .timeline-hour-label just below. color-mix keeps it a genuine wash
+   rather than a solid block: legible against every one of the eleven
+   presets' own --muted, light or dark, without a second per-theme rule. */
+.timeline-sleep-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+}
+
 /* The real, focusable gap layer step 5 adds - same box as .timeline-grid
    above, sharing its coordinate system, but never hidden and never inert.
    pointer-events: none here for the same reason .timeline-grid carries it:
@@ -1674,6 +1688,28 @@ button.primary {
 }
 
 .time-step:hover { color: var(--text); }
+
+/* Settings' own sleep-window controls - two TimeStepInput fields per row
+   (bedtime, wake time), wrapping at 375px the same way .block-add's own
+   row already does, so neither field is ever squeezed below a usable
+   width on the phone. */
+.sleep-window-fields {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.sleep-window-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sleep-window-label {
+  font-size: 12px;
+  color: var(--muted);
+}
 
 /* Placed after the block-list and block-add button rules above so it
    wins the specificity tie in both places it appears. */

@@ -474,9 +474,13 @@ test('isWide never draws denser than the cap, however large window.innerHeight i
   const tasks = [anchor('Call', '09:00', 30)]
   setInnerHeight(20000)
   const { container } = render(<TimelineGrid tasks={tasks} isWide />)
-  // Window is 30 (anchor) + 60 + 60 (the one-hour display buffer each
-  // side) = 150 minutes; the cap is PX_PER_MINUTE * 3 = 3.45px/minute.
-  expect(layersHeightPx(container)).toBeLessThanOrEqual(150 * 1.15 * 3 + 1)
+  // Anchor-buffered window is 30 (anchor) + 60 + 60 (the one-hour display
+  // buffer each side) = 150 minutes, 08:00-10:30. The default wake time
+  // (07:00) is within SLEEP_BAND_EXTEND_MINUTES of the buffered start, so
+  // displayWindow - what is actually drawn - pulls back a further 60
+  // minutes to 06:00, for a total of 270 minutes; the cap is
+  // PX_PER_MINUTE * 3 = 3.45px/minute.
+  expect(layersHeightPx(container)).toBeLessThanOrEqual(270 * 1.15 * 3 + 1)
 })
 
 test('isWide with a small window.innerHeight never draws thinner than isWide=false already does - the base density floors it', () => {
@@ -502,4 +506,61 @@ test('a short gap still floors to the 44px touch target at isWide, exactly as it
   const { container } = render(<TimelineGrid tasks={tasks} isWide />)
   const gapButton = container.querySelector('.timeline-gap') as HTMLElement
   expect(parseFloat(gapButton.style.height)).toBeGreaterThanOrEqual(44)
+})
+
+// --- the sleep window: greyed band and the accessible boundary sentence ---
+
+test('draws a greyed sleep band inside the aria-hidden decorative layer, not as a focusable element', () => {
+  // Default wake time is 07:00; a shift starting at 09:00 buffers to 08:00,
+  // within the extend threshold, so a band draws just before the boundary.
+  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
+  const band = container.querySelector('.timeline-sleep-band')
+  expect(band).not.toBeNull()
+  expect(band!.closest('[aria-hidden="true"]')).not.toBeNull()
+  expect(band!.tagName).toBe('DIV')
+})
+
+test('draws no sleep band when the day is far from the sleep boundary on both sides', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Lunch', '12:00', 60)]} />)
+  expect(container.querySelector('.timeline-sleep-band')).toBeNull()
+})
+
+test('a custom sleep window changes where the band draws, not just the historical default', () => {
+  // Asleep 20:00 to 10:00 - a custom window whose wake time (10:00) sits
+  // just before this task's own buffered start (09:30), so real grey
+  // already shows with no forced extension needed.
+  const sleep = { sleepWindow: { start: '20:00', end: '10:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Morning task', '10:30', 30)]} sleep={sleep} />,
+  )
+  const band = container.querySelector('.timeline-sleep-band') as HTMLElement
+  expect(band).not.toBeNull()
+  expect(parseFloat(band.style.height)).toBeGreaterThan(0)
+})
+
+test('a night day measures the sleep band against nightSleepWindow, not the ordinary sleepWindow', () => {
+  const sleep = {
+    sleepWindow: { start: '23:00', end: '07:00' },
+    nightSleepWindow: { start: '10:00', end: '18:00' },
+  }
+  const { container } = render(
+    <TimelineGrid tasks={[anchor('Shift prep', '18:30', 30)]} dayType="night" sleep={sleep} />,
+  )
+  // Buffered window starts at 17:30, before the 18:00 night wake time, so a
+  // real band already shows without any forced extension.
+  expect(container.querySelector('.timeline-sleep-band')).not.toBeNull()
+})
+
+test('states the sleep window in a visually-hidden sentence, once, regardless of what the visible band shows', () => {
+  render(<TimelineGrid tasks={[anchor('Lunch', '12:00', 60)]} />)
+  expect(screen.getByText('Asleep from 23:00 to 07:00.')).toHaveClass('visually-hidden')
+})
+
+test('the accessible sleep sentence follows a custom sleep window and the night setting', () => {
+  const sleep = {
+    sleepWindow: { start: '22:00', end: '06:00' },
+    nightSleepWindow: { start: '17:00', end: '09:00' },
+  }
+  render(<TimelineGrid tasks={[anchor('Shift', '10:00', 60)]} dayType="night" sleep={sleep} />)
+  expect(screen.getByText('Asleep from 17:00 to 09:00.')).toBeInTheDocument()
 })

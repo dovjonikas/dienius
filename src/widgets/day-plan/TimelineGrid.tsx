@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Task } from '../../lib/types'
-import { formatDuration } from './capacity'
+import type { DayType, Task } from '../../lib/types'
+import { formatDuration, windowFor, type SleepSettings } from './capacity'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
@@ -166,6 +166,23 @@ export interface TimelineGridProps {
    * so it never pays for a measurement it would not act on.
    */
   isWide?: boolean
+  /**
+   * The day's own type, if it has one - decides which of `sleep`'s two
+   * windows the grid's greyed sleep band and every position on it are
+   * measured against, exactly the way `computeCapacity` already picks
+   * between them for the capacity line - see `windowFor` in capacity.ts.
+   * Optional and defaults to `'full'`, the same default `computeCapacity`
+   * and `computeTimelineLayout` themselves use.
+   */
+  dayType?: DayType
+  /**
+   * The owner's sleep window settings - see `Settings.sleepWindow` and
+   * `Settings.nightSleepWindow` in types.ts. Optional so a caller with
+   * nothing to pass (a read-only preview, most of this component's own
+   * tests) still renders correctly: `windowFor` itself falls back to the
+   * exact fixed 07:00-23:00 / 13:00-24:00 windows this app always used.
+   */
+  sleep?: SleepSettings
 }
 
 /**
@@ -207,8 +224,10 @@ export function TimelineGrid({
   draggingTaskId,
   isToday = false,
   isWide = false,
+  dayType = 'full',
+  sleep,
 }: TimelineGridProps) {
-  const layout = computeTimelineLayout(tasks)
+  const layout = computeTimelineLayout(tasks, dayType, sleep)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [openGapStart, setOpenGapStart] = useState<number | null>(null)
   const [announcement, setAnnouncement] = useState('')
@@ -251,12 +270,18 @@ export function TimelineGrid({
     else wrapRef.current?.focus()
   })
 
-  if (!layout.window) return null
+  if (!layout.displayWindow) return null
 
-  const { window, anchors, gaps, unsizedAnchorCount } = layout
+  // displayWindow, not window, is what everything below is actually drawn
+  // against - window (the plain anchor-buffered interval, unextended) still
+  // drives computeTimelineLayout's own gap arithmetic, but has no further
+  // role once the layout comes back - see that function's own doc comment
+  // for why the two are meant to differ at the edges here too.
+  const { displayWindow: window, anchors, gaps, unsizedAnchorCount, sleepBands } = layout
   const marks = hourMarks(window)
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
+  const waking = windowFor(dayType, sleep)
 
   // At the wide breakpoint, draw denser than the phone's own fixed density
   // whenever there is real, measured room to use it - see
@@ -309,6 +334,23 @@ export function TimelineGrid({
       <div className="timeline-grid-scroll">
         <div className="timeline-grid-layers" style={{ height: `${heightPx}px` }}>
           <div className="timeline-grid" aria-hidden="true">
+            {/* The sleep window, greyed rather than cropped away - see
+                docs/OPEN-QUESTIONS.md's old entry on the fixed waking window
+                this setting replaced. Painted first in this layer so every
+                hour mark, half-hour rule, anchor and the now-line all draw
+                on top of it, exactly like a background wash rather than a
+                foreground element competing with them. Purely decorative to
+                a sighted eye - the one thing worth saying about the boundary
+                itself is said once, in plain text, by the visually-hidden
+                sentence below the grid rather than repeated per band. */}
+            {sleepBands.map(band => (
+              <div
+                key={`sleep-${band.start}`}
+                className="timeline-sleep-band"
+                style={{ top: `${vertical.topPx(band.start)}px`, height: `${vertical.topPx(band.end) - vertical.topPx(band.start)}px` }}
+              />
+            ))}
+
             {marks.map(mark => (
               <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>
                 <span className="timeline-hour-label">{formatClock(mark)}</span>
@@ -416,6 +458,18 @@ export function TimelineGrid({
           </div>
         </div>
       </div>
+
+      {/* The one thing worth saying about the greyed band above out loud -
+          see docs/RESEARCH-ADHD.md section 7 and the note on the band's own
+          layer: the band itself is decorative (a sighted eye already reads
+          grey against the hour grid), but the boundary it marks is real
+          information, said here once in plain text rather than announced
+          once per band or left for a screen reader to infer from color it
+          cannot perceive. Rendered every time the grid itself is, even on a
+          day whose display window happens not to reach the boundary today -
+          the setting is still true regardless of what today's anchors leave
+          room to show. */}
+      <p className="visually-hidden">Asleep from {formatClock(waking.end)} to {formatClock(waking.start)}.</p>
 
       {unsizedAnchorCount > 0 && (
         <p className="timeline-note">Gaps aren't shown - not every timed task above has a size yet.</p>

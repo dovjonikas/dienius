@@ -446,3 +446,89 @@ test('a zero-minute window falls back to the base density rather than dividing b
 test('a negative available height (the grid measured below the fold entirely) still floors at the base density', () => {
   expect(chooseWidePxPerMinute(BASE, 300, -50, MAX)).toBe(BASE)
 })
+
+// --- displayWindow and sleepBands: the greyed sleep band on the grid -------
+
+test('no anchors at all: displayWindow and sleepBands are empty, same as window', () => {
+  const layout = computeTimelineLayout([float('Guitar', 20)])
+  expect(layout.displayWindow).toBeNull()
+  expect(layout.sleepBands).toEqual([])
+})
+
+test('displayWindow extends back to peek past the wake boundary when the anchor buffer already comes close to it', () => {
+  // Shift 09:00 for 2h: anchor-buffered window is 08:00-12:00. The default
+  // wake time (07:00) is only 60 minutes earlier than that buffered start -
+  // within SLEEP_BAND_EXTEND_MINUTES - so displayWindow pulls back a further
+  // 60 minutes past 07:00, to 06:00, to make the boundary legible.
+  const layout = computeTimelineLayout([anchor('Shift', '09:00', 120)])
+  expect(layout.window).toEqual({ start: 8 * 60, end: 12 * 60 })
+  expect(layout.displayWindow).toEqual({ start: 6 * 60, end: 12 * 60 })
+  expect(layout.sleepBands).toEqual([{ start: 6 * 60, end: 7 * 60 }])
+})
+
+test('displayWindow is left untouched on the side where the anchors are far from the sleep boundary', () => {
+  // Dinner ending at 19:30, buffered to 20:30 - a 2.5-hour gap to the
+  // default 23:00 bedtime, well past SLEEP_BAND_EXTEND_MINUTES, so that
+  // edge is left exactly as the anchor buffer computed it rather than
+  // padding the grid with empty space just to reach the boundary.
+  const layout = computeTimelineLayout([anchor('Dinner', '18:00', 90)]) // 18:00-19:30
+  expect(layout.window).toEqual({ start: 17 * 60, end: 20 * 60 + 30 })
+  expect(layout.displayWindow).toEqual(layout.window)
+  expect(layout.sleepBands).toEqual([])
+})
+
+test('displayWindow extends toward the boundary on both sides independently when both are close', () => {
+  // A short midday task, buffered window 11:00-14:00, is far from both
+  // 07:00 and 23:00 - nothing extends. Use a night day instead, whose
+  // default waking window (13:00-24:00) puts the wake boundary close to an
+  // early-afternoon anchor and the bed boundary at midnight, close to a
+  // late one.
+  const layout = computeTimelineLayout(
+    [anchor('Wake up task', '14:00', 30), anchor('Late task', '23:30', 20)],
+    'night',
+  )
+  // window: min(14:00)-1h=13:00 to max(23:50)+1h clamped to 24:00
+  expect(layout.window).toEqual({ start: 13 * 60, end: 24 * 60 })
+  // Waking window for 'night' with no settings supplied is 13:00-24:00
+  // exactly, so both edges already sit exactly on the boundary - no
+  // extension needed and no band drawn, since there is nothing outside the
+  // waking window within the display window at all.
+  expect(layout.displayWindow).toEqual(layout.window)
+  expect(layout.sleepBands).toEqual([])
+})
+
+test('a day close to both the wake and bed boundary draws a sleep band on both ends', () => {
+  const layout = computeTimelineLayout([
+    anchor('Morning task', '08:30', 30), // buffered start 07:30, 30 min inside the 60-min extend threshold
+    anchor('Evening task', '21:00', 30), // buffered end 22:30, 30 min inside the threshold on the other side
+  ])
+  expect(layout.window).toEqual({ start: 7 * 60 + 30, end: 22 * 60 + 30 })
+  expect(layout.displayWindow).toEqual({ start: 6 * 60, end: 24 * 60 })
+  expect(layout.sleepBands).toEqual([
+    { start: 6 * 60, end: 7 * 60 },
+    { start: 23 * 60, end: 24 * 60 },
+  ])
+})
+
+test('sleepBands respects a custom sleep window rather than the historical default', () => {
+  const sleep = { sleepWindow: { start: '21:00', end: '09:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const layout = computeTimelineLayout([anchor('Shift', '10:00', 60)], 'full', sleep)
+  // Buffered window 09:00-12:00; wake time 09:00 is already at the buffered
+  // start (gap of 0, not > 0), so no extension is needed - the boundary is
+  // already exactly at the display window's own edge, with nothing to grey.
+  expect(layout.window).toEqual({ start: 9 * 60, end: 12 * 60 })
+  expect(layout.displayWindow).toEqual({ start: 9 * 60, end: 12 * 60 })
+  expect(layout.sleepBands).toEqual([])
+})
+
+test('sleepBands is empty on a night day using the night sleep setting, not the ordinary one', () => {
+  const sleep = {
+    sleepWindow: { start: '23:00', end: '07:00' },
+    nightSleepWindow: { start: '10:00', end: '18:00' },
+  }
+  const layout = computeTimelineLayout([anchor('Shift prep', '18:30', 30)], 'night', sleep)
+  // Waking window for night here is 18:00-24:00. Buffered display window is
+  // 17:30-19:00 (30-min anchor +/- 1h), which starts before wake time
+  // (18:00) - real grey already shows without any forced extension.
+  expect(layout.sleepBands).toEqual([{ start: 17 * 60 + 30, end: 18 * 60 }])
+})
