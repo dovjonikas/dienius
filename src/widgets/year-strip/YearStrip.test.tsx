@@ -41,24 +41,34 @@ test('only one cell is a tab stop; the rest are reachable by arrow keys', () => 
   expect(tabbable[0]).toHaveAttribute('aria-label', 'June 15, 2026')
 })
 
+// A year is 365 buttons. A `getByRole` name query computes the accessible name
+// for every one of them, and this test re-queries after each of four keystrokes,
+// which is what pushed it past the 5s timeout under full-suite load. Selecting
+// by `data-date` reads one attribute instead of walking the tree, and the
+// accessible names themselves are already covered by the tests above.
+function cellAt(grid: HTMLElement, date: string): HTMLElement {
+  const cell = grid.querySelector<HTMLElement>(`[data-date="${date}"]`)
+  if (!cell) throw new Error(`no year cell for ${date}`)
+  return cell
+}
+
 test('arrow keys move the roving tab stop and DOM focus one day at a time', async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   render(<YearStrip onOpenDay={() => {}} />)
   const grid = screen.getByRole('group', { name: 'Days of 2026' })
-  const start = within(grid).getByRole('button', { name: 'June 15, 2026' })
-  start.focus()
+  cellAt(grid, '2026-06-15').focus()
   await user.keyboard('{ArrowRight}')
-  expect(within(grid).getByRole('button', { name: 'June 16, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-06-16')).toHaveFocus()
   await user.keyboard('{ArrowDown}')
-  expect(within(grid).getByRole('button', { name: 'June 23, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-06-23')).toHaveFocus()
   await user.keyboard('{ArrowLeft}')
-  expect(within(grid).getByRole('button', { name: 'June 22, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-06-22')).toHaveFocus()
   await user.keyboard('{ArrowUp}')
-  expect(within(grid).getByRole('button', { name: 'June 15, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-06-15')).toHaveFocus()
 })
 
 test('Home and End jump to the first and last day of the year', async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup({ delay: null })
   render(<YearStrip onOpenDay={() => {}} />)
   const grid = screen.getByRole('group', { name: 'Days of 2026' })
   within(grid).getByRole('button', { name: 'June 15, 2026' }).focus()
