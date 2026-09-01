@@ -173,3 +173,26 @@ waiting on anything further to download. I chose a bottom banner over, say, a li
 because Settings is not somewhere a person opens by default and an update they never see is exactly
 the problem this feature exists to close - but a header pill next to the app name is not unreasonable
 either.
+
+## 13. With if-then entries that exist but none eligible today, the board still has no opener
+
+Fixed as part of full-loop verification: `IfThenDayRule` rendered nothing whenever no rule was
+eligible for the current day type and time band, and its own button was the only opener anywhere in
+the app for the if-then board - so an install with zero entries could never write its first rule.
+That specific case now shows a quiet "No if-then rules yet - add one" line instead, see
+`src/widgets/if-then/DayRule.tsx`.
+
+I deliberately left one related case alone: once real entries exist somewhere, but none of them is
+eligible for today's day type and time band, the day view still shows nothing at all, exactly as it
+did before this fix. On that day there is still no way to reach the board from the day view - only
+from a day where something happens to be eligible.
+
+**Recommendation:** this looks like the right call, not an oversight - the day view showing nothing
+when there is genuinely nothing to say for today matches the same posture the capacity line and
+timeline toggle already take, and reaching the board is never more than a day or two away in
+practice for anyone with more than one rule scoped to different times. If it turns out to matter -
+someone whose rules are all scoped to a day type they rarely use - the fix is the same shape as the
+one just made: add a second quiet opener for "entries exist, nothing eligible today" the same way the
+"nothing exists yet" one now works, rather than leaving Settings or Templates as the only route. I did
+not make that call for you since it trades a small amount of added text on an ordinary day against
+covering an edge case that may never come up.

@@ -15,9 +15,54 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-test('renders nothing when there are no if-then entries at all', () => {
-  const { container } = render(<IfThenDayRule date="2026-09-01" />)
-  expect(container).toBeEmptyDOMElement()
+test('offers a way to add the first if-then rule when none exist yet', async () => {
+  const user = userEvent.setup()
+  render(<IfThenDayRule date="2026-09-01" />)
+  const opener = screen.getByRole('button', { name: 'No if-then rules yet - add one' })
+  expect(opener).toBeInTheDocument()
+
+  // The only door into IfThenSheet with zero entries - without it, a
+  // fresh install could never write its first rule at all.
+  await user.click(opener)
+  expect(screen.getByRole('dialog', { name: 'If-then rules' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'New if-then' })).toBeInTheDocument()
+})
+
+test('the empty-state opener creates a real entry that surfaces afterward', async () => {
+  const user = userEvent.setup()
+  const { rerender } = render(<IfThenDayRule date="2026-09-01" />)
+  await user.click(screen.getByRole('button', { name: 'No if-then rules yet - add one' }))
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  await user.type(screen.getByPlaceholderText('I get home and the kitchen is a mess'), 'A trigger')
+  await user.type(screen.getByPlaceholderText('I set a timer for ten minutes and do only the sink'), 'An action')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  await user.click(screen.getByRole('button', { name: 'Close' }))
+
+  rerender(<IfThenDayRule date="2026-09-01" />)
+  expect(screen.getByRole('button', { name: /A trigger/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'No if-then rules yet - add one' })).not.toBeInTheDocument()
+})
+
+test('the sheet stays open after saving a first entry that is not eligible for the current moment', async () => {
+  const user = userEvent.setup()
+  // 09:00 - morning band, per the outer beforeEach - so an entry scoped to
+  // the evening is real but not eligible right now: writing it flips
+  // data.ifThens.length from zero to one without ever making `rule` itself
+  // non-null, the exact crossing that used to unmount the sheet mid-edit.
+  render(<IfThenDayRule date="2026-09-01" />)
+  await user.click(screen.getByRole('button', { name: 'No if-then rules yet - add one' }))
+  await user.click(screen.getByRole('button', { name: 'New if-then' }))
+  await user.type(screen.getByPlaceholderText('I get home and the kitchen is a mess'), 'Evening trigger')
+  await user.type(screen.getByPlaceholderText('I set a timer for ten minutes and do only the sink'), 'Evening action')
+  await user.click(screen.getByRole('button', { name: 'Evening' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+
+  // The sheet must still be open, with a real, still-usable "New if-then"
+  // control - not unmounted out from under whoever is still writing a
+  // second entry inside it.
+  expect(screen.getByRole('dialog', { name: 'If-then rules' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'New if-then' })).toBeInTheDocument()
+  expect(screen.getByText('Evening trigger')).toBeInTheDocument()
 })
 
 test('renders nothing when no entry is eligible for today', () => {
