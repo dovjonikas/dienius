@@ -940,6 +940,38 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   font-size: 13px;
 }
 
+/* Step 7's drag source for "drag an anchor back to the tray" - see
+   docs/TIMELINE.md section 5 and TimelineGrid.tsx's own comment on
+   onAnchorPointerDown. touch-action is only ever applied through this
+   class, so a done anchor (never wired for drag) keeps the browser's
+   default scroll behaviour over its own area of the grid's scroll
+   container. grab/grabbing on a pointer-only affordance is a plain,
+   inexpensive cue - it costs nothing for a touch reader, who never sees a
+   cursor at all. */
+.timeline-anchor-draggable {
+  touch-action: none;
+  cursor: grab;
+}
+
+.timeline-anchor-draggable:active { cursor: grabbing; }
+
+/* The anchor currently picked up - a plain opacity dip, matching
+   .task.dragging's own reasoning: no transform, so there is nothing here
+   for prefers-reduced-motion to need to turn off. */
+.timeline-anchor-dragging { opacity: 0.5; }
+
+/* The gap currently under an in-progress drag - purely a hover-style cue
+   so a person dragging a float can see where it will land before
+   releasing. Distinct from [aria-expanded='true'] (the tap-picker's own
+   "currently open" state): the two are not expected to ever be true at
+   the same time, but if they were, this one simply draws on top, which
+   reads fine either way. */
+.timeline-gap.timeline-gap-drag-over {
+  border-style: solid;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
 /* The sheet a tapped gap opens - docs/TIMELINE.md section 5, step 5. A
    bottom sheet rather than an inline panel: the grid it opens from already
    scrolls inside its own capped-height box, so anything expanding inline
@@ -1275,6 +1307,39 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
     opacity: 1;
   }
 }
+
+/* Step 7's drag source - see docs/TIMELINE.md section 5 and the comment
+   on this element in TaskRow.tsx. A small dedicated handle rather than
+   the whole row: the row's own tap-to-toggle area needs to keep the
+   page's default touch-action so it stays scrollable, and touch-action
+   has to be set on whatever the drag gesture actually starts on, so only
+   this handle carries `none`. Muted and small, matching task-push and
+   task-unanchor's own quiet weight - it is a convenience on top of a
+   fully working tap and long-press path, never the loudest thing on the
+   row. */
+.task-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-drag-handle:active { cursor: grabbing; }
+
+/* The row currently picked up by a drag - a plain opacity dip, no
+   transform or motion, so this reads correctly for a
+   prefers-reduced-motion reader without a separate override: there is no
+   animation here to begin with, only the existing color transition
+   .app * already carries. */
+.task.dragging { opacity: 0.5; }
 
 .task-maxed { border-color: var(--muted); }
 
@@ -1890,6 +1955,114 @@ button.danger {
    below something else, so the top margin it used to need as a standalone
    widget would just be dead space under the close button here. */
 .if-then-sheet .if-then-board { margin-top: 0; }
+
+/* The long-press menu step 7 adds - docs/TIMELINE.md section 5's touch-safe
+   fallback, independent of whether drag itself works. Same bottom-sheet
+   chrome as .gap-picker and .if-then-sheet, deliberately: this is the
+   third instance of the same "tap-and-hold something small, get a modal"
+   pattern in this app, and a third visual language for it would be a cost
+   with no benefit. */
+.task-actions-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.task-actions-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 101;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--edge) var(--edge) 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.task-actions-sheet:focus-visible,
+.task-actions-sheet:focus {
+  outline: none;
+}
+
+.task-actions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-actions-title {
+  margin: 0;
+  padding-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-actions-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.task-actions-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.task-actions-empty {
+  margin: 4px 0 8px;
+  color: var(--muted);
+}
+
+.task-actions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-actions-row {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--edge);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  text-align: left;
+}
+
+.task-actions-row:hover { border-color: var(--muted); }
+
+.task-actions-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
 
 /* The cell size is fixed rather than shrinking on a narrow phone - the
    grid already has to scroll horizontally at any width smaller than a
