@@ -112,7 +112,16 @@ export function weekCount(cells: YearCell[]): number {
   return cells[cells.length - 1].weekIndex + 1
 }
 
-const DATE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' }
+// A module-level formatter, built once, instead of the equivalent
+// `date.toLocaleDateString('en-US', DATE_FORMAT)` call this used to make -
+// every cell in the strip calls this during the same render (up to 366 of
+// them on a leap year), and `toLocaleDateString` constructs a fresh
+// Intl.DateTimeFormat internally on every single call rather than reusing
+// one, which measured as the single largest cost in a year switch under
+// CPU throttling (see performance-report.md). Reusing one instance is a
+// pure implementation detail - the formatted string this produces is
+// identical - so it changes nothing about what a screen reader announces.
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
 /**
  * The accessible name for one cell - a full date, plus the day's template
@@ -124,7 +133,7 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric',
  * own cellLabel extends.
  */
 export function formatYearCellLabel(cell: YearCell): string {
-  const parts = [cell.date.toLocaleDateString('en-US', DATE_FORMAT)]
+  const parts = [DATE_FORMAT.format(cell.date)]
   if (cell.templateName) parts.push(cell.templateName)
   if (cell.complete) parts.push('completed')
   else if (cell.planned) parts.push('has unfinished tasks')
