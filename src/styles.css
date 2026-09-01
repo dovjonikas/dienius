@@ -1362,6 +1362,43 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task-title { transition: opacity 0.2s; }
 .task.done .task-title { text-decoration: line-through; opacity: 0.45; }
 
+/* The title, for a float still worth placing, doubles as the control that
+   selects it for "where does this fit" - see TaskRow.tsx's own comment and
+   TaskGapOffers.tsx. A real button reset back to reading as plain text: no
+   border or background of its own at rest, so it looks exactly like the
+   plain span it replaces until a person actually reaches for it. */
+.task-title-select {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.task-title-select:hover { background: color-mix(in srgb, var(--border) 20%, transparent); }
+
+.task-title-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Selected - TaskGapOffers.tsx is currently open for this task. Outline
+   rather than border, and a background tint rather than a filled one, so
+   selecting never shifts the row's own layout the way a border would -
+   the same tinted treatment .timeline-gap[aria-expanded='true'] uses for
+   "this small control opened something," applied here without the layout
+   cost since this control sits in normal flow next to other row content. */
+.task-title-select[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1px;
+}
+
 /* The one quiet mark for whichever push state applies - pushed N times,
    ongoing, or at the bound - see TaskRow.tsx's own comment on
    showPushedMark for why these three are mutually exclusive and therefore
@@ -2241,6 +2278,157 @@ button.danger {
 .task-actions-row:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
+}
+
+/* The sheet a selected task opens - TaskGapOffers.tsx, the inverse of
+   GapPicker.tsx's own tap-a-gap sheet. Same bottom-sheet chrome as
+   .gap-picker, .if-then-sheet and .task-actions-sheet, deliberately: this
+   is the fourth instance of the same "tap something small, get a modal
+   with the fuller picture" pattern in this app, and a fourth visual
+   language for it would be a cost with no benefit. */
+.task-gap-offers-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.task-gap-offers {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 101;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: var(--edge) var(--edge) 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+
+.task-gap-offers:focus-visible,
+.task-gap-offers:focus {
+  outline: none;
+}
+
+.task-gap-offers-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-gap-offers-title {
+  margin: 0;
+  padding-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-gap-offers-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.task-gap-offers-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.task-gap-offers-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Every non-matched state - no size, already timed, some other anchor
+   unsized - and a matched task with nothing that fits, all read through
+   this one plain paragraph. None of them is an error: a full day is as
+   real an outcome as three open gaps, so nothing here is colored as a
+   warning. */
+.task-gap-offers-note {
+  margin: 4px 0 8px;
+  color: var(--muted);
+}
+
+.task-gap-offers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-gap-offers-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--edge);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.task-gap-offers-row:hover { border-color: var(--muted); }
+
+.task-gap-offers-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* "When" - the one line a person scanning three or four options actually
+   needs first, per docs/RESEARCH-ADHD.md section 7. */
+.task-gap-offers-row-time {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "How long, and what's either side of it" - read second, once "when" has
+   already answered whether this option is worth a look at all. */
+.task-gap-offers-row-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.task-gap-offers-more {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.task-gap-offers-more:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* The cell size is fixed rather than shrinking on a narrow phone - the
