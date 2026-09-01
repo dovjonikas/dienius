@@ -92,6 +92,27 @@ export interface TimelineGridProps {
    * calls, never inside this component.
    */
   onPlaceFloat?: (taskId: string, time: string) => void
+  /**
+   * Called on `pointerdown` for a not-done anchor's own visual block - the
+   * drag source for step 7's "drag an anchor back to the tray," wired by
+   * `DayView.tsx`. Optional so a caller with nothing to do about it (a
+   * read-only preview, most of this component's own tests) renders the
+   * grid exactly as before this prop existed. Omitting it also means no
+   * anchor carries `touch-action: none`, so the grid's own scroll
+   * container behaves exactly as it always did.
+   */
+  onAnchorPointerDown?: (taskId: string, e: React.PointerEvent<HTMLDivElement>) => void
+  /**
+   * The gap currently under an in-progress drag, if any - purely a visual
+   * highlight so a person dragging a float can see where it will land
+   * before releasing. `DayView.tsx` recomputes this on every
+   * `pointermove` from the same `data-gap-start` this component already
+   * renders, the same `elementFromPoint` + `closest` technique
+   * `CalendarView.tsx`'s own stamp-drag uses.
+   */
+  dragOverGapStart?: number | null
+  /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
+  draggingTaskId?: string | null
 }
 
 /**
@@ -124,7 +145,15 @@ export interface TimelineGridProps {
  * about it can ever swallow a tap meant for a gap button drawn underneath
  * or beside it.
  */
-export function TimelineGrid({ id, tasks, templateColor, onPlaceFloat }: TimelineGridProps) {
+export function TimelineGrid({
+  id,
+  tasks,
+  templateColor,
+  onPlaceFloat,
+  onAnchorPointerDown,
+  dragOverGapStart,
+  draggingTaskId,
+}: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [openGapStart, setOpenGapStart] = useState<number | null>(null)
@@ -194,10 +223,14 @@ export function TimelineGrid({ id, tasks, templateColor, onPlaceFloat }: Timelin
               const blockHeightPx = Math.max(rawHeightPx, minHeightPx)
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
               const fraction = 1 / anchor.columns
+              const sourceTask = tasks.find(t => t.id === anchor.id)
+              const draggable = !!onAnchorPointerDown && !!sourceTask && !sourceTask.done
               const classNames = ['timeline-anchor']
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')
               if (anchor.clippedEnd) classNames.push('timeline-anchor-clipped')
               if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
+              if (draggable) classNames.push('timeline-anchor-draggable')
+              if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
               return (
                 <div
                   key={anchor.id}
@@ -210,6 +243,7 @@ export function TimelineGrid({ id, tasks, templateColor, onPlaceFloat }: Timelin
                     width: `calc((100% - ${GUTTER_PX}px) * ${fraction} - 4px)`,
                     background: anchor.sized ? templateColor : undefined,
                   }}
+                  onPointerDown={draggable ? e => onAnchorPointerDown!(anchor.id, e) : undefined}
                 >
                   <span className="timeline-anchor-title">{anchor.title}</span>
                   {!compact && (
@@ -230,12 +264,13 @@ export function TimelineGrid({ id, tasks, templateColor, onPlaceFloat }: Timelin
               const bottom = windowPercent(window, gap.endMinutes)
               const rawHeightPx = ((bottom - top) / 100) * heightPx
               const isOpen = openGapStart === gap.startMinutes
+              const isDragOver = dragOverGapStart === gap.startMinutes
               const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to place a float.`
               return (
                 <button
                   key={`gap-${gap.startMinutes}`}
                   type="button"
-                  className="timeline-gap"
+                  className={isDragOver ? 'timeline-gap timeline-gap-drag-over' : 'timeline-gap'}
                   data-gap-start={gap.startMinutes}
                   data-gap-end={gap.endMinutes}
                   aria-label={label}
