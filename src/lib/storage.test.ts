@@ -808,6 +808,56 @@ test('importJson preserves an expanded timeline choice across export and re-impo
   expect(imported.settings.timelineExpanded).toBe(true)
 })
 
+// dayLayoutFocus, docs/LAYOUT-WIDE.md section 5 - a single app-wide choice
+// of which pane the wide day view gives the width to, defaulting to
+// 'both' (the state that shows the most by default, matching the pattern
+// timelineExpanded already established).
+
+test("a brand new install starts with dayLayoutFocus 'both'", () => {
+  expect(loadData().settings.dayLayoutFocus).toBe('both')
+})
+
+test('a payload written before dayLayoutFocus existed has no such key and still loads, defaulting to both', () => {
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: ['day-plan'], timelineExpanded: true },
+  })
+  localStorage.setItem(STORAGE_KEY, legacy)
+  expect(loadData().settings.dayLayoutFocus).toBe('both')
+})
+
+test('a payload with dayLayoutFocus already set to calendar or tasks keeps that choice on load', () => {
+  for (const focus of ['calendar', 'tasks'] as const) {
+    const payload = JSON.stringify({
+      templates: [],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: ['day-plan'], timelineExpanded: false, dayLayoutFocus: focus },
+    })
+    localStorage.setItem(STORAGE_KEY, payload)
+    expect(loadData().settings.dayLayoutFocus).toBe(focus)
+  }
+})
+
+test('validate rejects a dayLayoutFocus value that is not one of the three literal strings', () => {
+  const bad = JSON.stringify({
+    templates: [],
+    days: {},
+    settings: { theme: 'light', enabledWidgets: [], timelineExpanded: false, dayLayoutFocus: 'day' },
+  })
+  localStorage.setItem(STORAGE_KEY, bad)
+  expect(loadData()).toEqual(salvagedLightData())
+})
+
+test('importJson preserves a calendar/tasks focus choice across export and re-import', () => {
+  for (const focus of ['calendar', 'tasks'] as const) {
+    const data = defaultData()
+    data.settings.dayLayoutFocus = focus
+    const imported = importJson(exportJson(data))
+    expect(imported.settings.dayLayoutFocus).toBe(focus)
+  }
+})
+
 // --- stress test: garbage import ----------------------------------------
 //
 // Every case below either gets rejected (existing data on disk survives

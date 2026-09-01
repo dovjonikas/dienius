@@ -2629,3 +2629,205 @@ button.danger {
     transform: translateY(0);
   }
 }
+
+/* ------------------------------------------------------------------------
+   Wide-screen day view - docs/LAYOUT-WIDE.md section 5. Everything in this
+   section is gated behind the same breakpoint the useIsWide() hook
+   (src/lib/viewport.ts) measures live, so nothing here can ever disagree
+   with what the DOM actually mounts: below 1024px none of this matches,
+   .main-day never gets its expanded max-width, .day-pane/.task-pane stay
+   `display: contents`, and the day view is byte-for-byte the single column
+   it has always been.
+   ------------------------------------------------------------------------ */
+@media (min-width: 1024px) {
+  /* Only the Today tab's <main> ever carries .main-day (see App.tsx) - a
+     day open on Calendar, Templates or Settings never does, so :has() here
+     only ever widens .app while the Today tab is the one showing. Escaping
+     .app's own max-width: 760px (set unconditionally above) needs the
+     ancestor itself to widen, not just this element - a child's max-width
+     can never exceed the box its parent already constrained it to. */
+  .app:has(.main-day) { max-width: 1600px; }
+  .main-day { max-width: 1600px; }
+}
+
+/* Step 3: day-pane / task-pane - docs/LAYOUT-WIDE.md section 5. Below the
+   breakpoint both wrappers are `display: contents`, unconditionally (not
+   inside the media query - this is the default, narrow-first rule): they
+   add no box, no spacing, and nothing for a screen reader to land on, so
+   DayView.tsx can render them at every width with no isWide check of its
+   own and the phone's DOM stays exactly what it always rendered in
+   sequence. Only at the wide breakpoint do they become real grid items.
+   .day-header (step 4) is the same technique, wrapping day-nav and the
+   focus control so both can share the grid's "header" area. */
+.day-pane, .task-pane, .day-header { display: contents; }
+
+@media (min-width: 1024px) {
+  /* .day-view itself becomes the grid - the full three-column layout from
+     docs/LAYOUT-WIDE.md section 5. Rail needs a template chip plus a
+     mini-calendar week row to stay legible (200px) without growing to
+     compete with the panes doing the actual work (240px cap); day-pane
+     needs the grid's 44px gutter plus a comfortably readable anchor block
+     (420px minimum); task-pane needs a TaskRow's own content (checkbox,
+     time, title, size chip, actions button) to stay comfortable without
+     truncating the title (320px minimum), capped at 380px so it never
+     visually dominates the timeline it sits next to. */
+  .day-view {
+    display: grid;
+    grid-template-columns: minmax(200px, 240px) minmax(420px, 1fr) minmax(320px, 380px);
+    grid-template-areas:
+      "rail header header"
+      "rail day    tasks";
+    gap: 24px;
+  }
+
+  .rail {
+    grid-area: rail;
+  }
+
+  .day-pane {
+    grid-area: day;
+    display: block;
+  }
+
+  .task-pane {
+    grid-area: tasks;
+    display: block;
+  }
+
+  /* Step 4: dayLayoutFocus's single-pane states. Only one of .day-pane /
+     .task-pane is ever mounted in either case (see DayView.tsx's own
+     showDayPane/showTaskPane), so the remaining pane just needs to take
+     over the whole "day tasks" span rather than sit in its own narrower
+     column. The rail keeps its own column in both states - it is not part
+     of what dayLayoutFocus redistributes, see docs/LAYOUT-WIDE.md
+     section 5. */
+  .day-view.focus-calendar,
+  .day-view.focus-tasks {
+    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-areas:
+      "rail header"
+      "rail pane";
+  }
+  .day-view.focus-calendar .day-pane { grid-area: pane; }
+  .day-view.focus-tasks .task-pane { grid-area: pane; }
+
+  /* The header row: day-nav plus the focus control, side by side, wrapping
+     if the window is narrow enough at the breakpoint's own edge that they
+     cannot both fit on one line without crowding. */
+  .day-header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .day-header .day-nav {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
+     the phone's stacked layout) is deliberately left alone here - see
+     docs/LAYOUT-WIDE.md section 5's own "optional, later" note. Raising it
+     is a real, separately-valued change and out of scope for this pass. */
+}
+
+/* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only
+   ever mounted at the wide breakpoint (see DayView.tsx's own isWide
+   check), so nothing here needs a narrow-width default the way
+   .day-pane/.task-pane/.day-header do above. */
+@media (min-width: 1024px) {
+  .mini-calendar { margin-bottom: 20px; }
+
+  .mini-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .mini-calendar-nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+  }
+
+  .mini-calendar-nav button:hover { color: var(--text); }
+
+  .mini-calendar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .mini-weekday {
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  /* Deliberately escapes this app's usual `button { min-height: 44px }`
+     floor - see docs/OPEN-QUESTIONS.md. Seven columns inside the rail's
+     own 240px cap cannot reach 44px (7 * 44 = 308px, more than the whole
+     column) without either widening the rail past what section 5's own
+     reasoning budgeted it, or narrowing the day/task panes to make room -
+     both are real trade-offs the owner should weigh, not a call to make
+     silently in CSS. This keeps the grid square and legible at the width
+     actually available, flagged rather than hidden. */
+  .mini-cell {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+  }
+
+  .mini-cell.outside { opacity: 0.35; }
+  .mini-cell.today { border-color: var(--accent); border-width: 2px; }
+  /* The day currently open in DayView - a dashed ring rather than
+     .today's solid border, so the two read as related but distinct marks
+     when they land on different cells (today vs. a day being planned
+     ahead of or behind it). */
+  .mini-cell.viewing { outline: 2px dashed var(--accent); outline-offset: -2px; }
+  /* Same reasoning as .cell-has-template in the full calendar grid: a
+     stamped cell's inline background is a mid-lightness colour in both
+     themes, so the theme's own text colour (near-white in dark mode)
+     would be unreadable against it - pin a dark number instead. */
+  .mini-cell-has-template { color: rgba(0, 0, 0, 0.7); }
+
+  .mini-cell:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* TemplateRail - in place of Sunsama's CHANNELS list. Reuses .chip
+     directly (defined above, alongside the calendar's own stamp bar), so
+     its 44px touch target and focus ring are unaffected - unlike the mini
+     calendar above, nothing about this control's target size is
+     compromised by the rail's width; chips simply wrap onto more lines. */
+  .template-rail-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

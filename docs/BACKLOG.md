@@ -507,6 +507,38 @@ script's own agreement with the real pipeline on a bad color, on `bg` specifical
 reproduced the beacon against live - on a bad non-color token, and on the legitimate multi-value edge
 case).
 
+**Wide-screen layout (`docs/LAYOUT-WIDE.md`).** Built in the six steps that document's own section 6
+lays out, each its own commit on `feature/wide-layout`: widen the Today tab at a 1024px breakpoint
+(`src/lib/viewport.ts`'s `useIsWide()`), auto-show the timeline grid there without touching the
+phone's own `timelineExpanded` choice, split the day view into a `.day-pane` (capacity line, if-then
+rule, grid) and `.task-pane` (quick-add, task list, rollover) sharing a CSS grid, add
+`settings.dayLayoutFocus: 'both' | 'calendar' | 'tasks'` and a Both/Calendar/Tasks control that
+redistributes width without ever unmounting the underlying day's data, and a rail
+(`MiniCalendar.tsx`, `TemplateRail.tsx`) in place of Sunsama's CHANNELS/CALENDARS lists - a mini month
+grid for fast navigation and the templates list as coloured chips, restamping the open day on tap.
+`src/lib/calendarCell.ts` was extracted from `CalendarView.tsx` so the mini calendar could share its
+cell rules instead of re-deriving them.
+
+The phone is provably unchanged: every new region (`.day-pane`, `.task-pane`, `.day-header`) is
+`display: contents` below the breakpoint by default, not gated behind an `isWide` check, so the
+existing JSX order is what actually keeps the DOM identical; the rail and the focus control are
+genuinely unmounted below it, the same way the timeline grid itself already was. Measured directly:
+capacity line, quick-add and first-task positions at 375x812 are byte-identical to the pre-branch
+baseline across three day shapes (a realistic day, one long anchor, floats only) and two themes.
+
+One pre-existing bug was found during the verification pass (not caused by this work, identical on
+`main`): the anchor-block drag-back-to-tray gesture in the timeline grid cannot actually be started by
+a real pointer, because `.timeline-anchor` inherits `pointer-events: none` from its `aria-hidden`
+ancestor with no override - invisible in the test suite because Testing Library dispatches events
+directly to elements, bypassing real hit-testing. See `docs/OPEN-QUESTIONS.md` item 15 and background
+task `task_4d948b75` for the one-line fix (`pointer-events: auto` on `.timeline-anchor-draggable`),
+deliberately left out of this branch as unrelated, pre-existing, and affecting every viewport, not
+just the wide one.
+
+Also flagged, not fixed: the rail's own spec'd width (`minmax(200px, 240px)`) cannot fit a 7-column
+month grid at this app's usual 44px touch target - `MiniCalendar.tsx`'s cells measure roughly 33x33px
+live at every wide width. See `docs/OPEN-QUESTIONS.md` item 14.
+
 ## Tier 2 - brief features not built yet
 
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time

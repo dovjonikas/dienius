@@ -579,6 +579,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'light' },
       enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
   })
   actions.setTheme('dark')
@@ -603,6 +604,26 @@ test('setTimelineExpanded flips whether the day view timeline grid is shown, lea
   expect(getData().settings.timelineExpanded).toBe(false)
 })
 
+// setDayLayoutFocus - docs/LAYOUT-WIDE.md section 5, mirroring
+// setTimelineExpanded exactly: one app-wide setting, no other field
+// touched.
+
+test('setDayLayoutFocus changes only dayLayoutFocus, leaving the rest of settings untouched', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'], timelineExpanded: true },
+  })
+  expect(getData().settings.dayLayoutFocus).toBe('both')
+  actions.setDayLayoutFocus('calendar')
+  expect(getData().settings.dayLayoutFocus).toBe('calendar')
+  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  expect(getData().settings.timelineExpanded).toBe(true)
+  actions.setDayLayoutFocus('tasks')
+  expect(getData().settings.dayLayoutFocus).toBe('tasks')
+  actions.setDayLayoutFocus('both')
+  expect(getData().settings.dayLayoutFocus).toBe('both')
+})
+
 test('setThemePreset changes only the preset id', () => {
   actions.resetForTests(defaultData())
   actions.setThemePreset('sketchbook')
@@ -617,6 +638,7 @@ test('setThemeOverride writes one token under the current preset id without dist
       theme: { presetId: 'sketchbook', overrides: { slate: { accent: '#111111' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
   })
   actions.setThemeOverride('sketchbook', 'accent', '#e0553b')
@@ -639,6 +661,7 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
       },
       enabledWidgets: [],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
   })
   actions.resetThemeOverrides('sketchbook')
@@ -656,6 +679,7 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
       },
       enabledWidgets: [],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
   })
   actions.unsetThemeOverride('sketchbook', 'accent')
@@ -672,6 +696,7 @@ test('unsetThemeOverride drops the preset\'s own entry once its last token is re
       theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,
+      dayLayoutFocus: 'both',
     },
   })
   actions.unsetThemeOverride('sketchbook', 'accent')

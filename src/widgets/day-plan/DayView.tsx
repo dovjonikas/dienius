@@ -17,6 +17,9 @@ import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskGapOffers } from './TaskGapOffers'
 import { resolveDrop, type DropTarget } from './dragDrop'
+import { useIsWide } from '../../lib/viewport'
+import { MiniCalendar } from './MiniCalendar'
+import { TemplateRail } from './TemplateRail'
 
 export interface DayViewProps {
   date: string
@@ -58,6 +61,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const capacity = computeCapacity(day?.tasks ?? [], day?.dayType)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
+  // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
+  // grid mounts unconditionally, bypassing the phone's own disclosure - see
+  // isTimelineVisible below. This is a live device fact (useIsWide), never
+  // written to settings, so it cannot itself change what timelineExpanded
+  // stores; resizing back below the breakpoint restores whatever the
+  // phone's own choice already was.
+  const isWide = useIsWide()
+  const isTimelineVisible = timelineExpanded || isWide
   const timelineGridId = useId()
   // Derived straight from the data itself, not a stored flag - see
   // docs/DECISIONS.md, "offer without installing." True only while there is
@@ -268,7 +279,12 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     // disclosure button itself flips - see docs/TIMELINE.md section 5 - so
     // it behaves exactly like opening it by hand: it stays open afterward,
     // on this day and every one after, until the owner closes it again.
-    if (!timelineExpanded) actions.setTimelineExpanded(true)
+    // Only when the grid is not already visible, though - at a wide
+    // viewport isTimelineVisible is already true regardless of the stored
+    // setting (see docs/LAYOUT-WIDE.md section 5), and writing true here
+    // anyway would silently clobber the phone's own choice the next time
+    // this same install is opened narrow.
+    if (!isTimelineVisible) actions.setTimelineExpanded(true)
   }
 
   function closeSelection() {
@@ -291,86 +307,177 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined
 
+  // docs/LAYOUT-WIDE.md section 5, build step 4. dayLayoutFocus only has a
+  // visible effect once useIsWide() says there is more than one pane to
+  // redistribute between - below the breakpoint both panes always render,
+  // exactly as they do today, regardless of what this stored preference
+  // says. showDayPane/showTaskPane are true at every narrow width for
+  // that reason; only isWide narrows them, never the stored value alone.
+  const dayLayoutFocus = data.settings.dayLayoutFocus
+  const showDayPane = !isWide || dayLayoutFocus !== 'tasks'
+  const showTaskPane = !isWide || dayLayoutFocus !== 'calendar'
+  const dayViewClassName = ['day-view', isWide && dayLayoutFocus !== 'both' ? `focus-${dayLayoutFocus}` : '']
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <section className="day-view" data-tray-zone>
-      <div className="day-nav">
-        <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
-          &larr;
-        </button>
-        <div className="day-title">
-          <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
-          {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
-          {formattedScore && (
-            <span className="day-score">
-              <span aria-hidden="true">
-                {formattedScore}
-                {!isFullDay && <span className="day-score-note"> core</span>}
-              </span>
-              <span className="visually-hidden">{scoreLabel}</span>
-            </span>
-          )}
-          {template && (
-            <span className="day-template" style={{ background: template.color }}>
-              {template.name}
-            </span>
-          )}
+    <section className={dayViewClassName} data-tray-zone>
+      {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted
+          only when useIsWide() is true, regardless of dayLayoutFocus - the
+          rail is not part of what that control redistributes, see its own
+          comment below. First in the DOM (not just visually leftmost) so
+          keyboard tab order follows the visual order: rail, then header,
+          then whichever pane(s) are showing - see the wide-layout
+          verification pass in docs/LAYOUT-WIDE.md section 6. */}
+      {isWide && (
+        <div className="rail">
+          <MiniCalendar date={date} onDateChange={onDateChange} />
+          <TemplateRail date={date} />
         </div>
-        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
-          &rarr;
-        </button>
+      )}
+      {/* Groups day-nav with the focus control below so both can share the
+          grid's "header" area at the wide breakpoint - see styles.css.
+          Not new chrome of its own: `display: contents` below the
+          breakpoint, same technique as .day-pane/.task-pane, so day-nav's
+          own position in the phone DOM is unaffected by this wrapper
+          existing. */}
+      <div className="day-header">
+        <div className="day-nav">
+          <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
+            &larr;
+          </button>
+          <div className="day-title">
+            <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
+            {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+            {formattedScore && (
+              <span className="day-score">
+                <span aria-hidden="true">
+                  {formattedScore}
+                  {!isFullDay && <span className="day-score-note"> core</span>}
+                </span>
+                <span className="visually-hidden">{scoreLabel}</span>
+              </span>
+            )}
+            {template && (
+              <span className="day-template" style={{ background: template.color }}>
+                {template.name}
+              </span>
+            )}
+          </div>
+          <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
+            &rarr;
+          </button>
+        </div>
+
+        {/* The "switch fully" request - docs/LAYOUT-WIDE.md section 3.2.
+            A width redistribution, not a navigation event: nothing about
+            the underlying day changes, and the unmounted pane's own data
+            is still computed from the same store regardless of which
+            option is selected. Never rendered at all below the
+            breakpoint - there is only ever one column there, so there is
+            nothing for it to redistribute. Persisted the same way
+            timelineExpanded is: one app-wide choice, not a per-day one,
+            so it is never asked again. */}
+        {isWide && (
+          <div className="day-layout-focus segmented" role="group" aria-label="Day layout focus">
+            <button
+              type="button"
+              className={dayLayoutFocus === 'both' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'both'}
+              onClick={() => actions.setDayLayoutFocus('both')}
+            >
+              Both
+            </button>
+            <button
+              type="button"
+              className={dayLayoutFocus === 'calendar' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'calendar'}
+              onClick={() => actions.setDayLayoutFocus('calendar')}
+            >
+              Calendar
+            </button>
+            <button
+              type="button"
+              className={dayLayoutFocus === 'tasks' ? 'active' : ''}
+              aria-pressed={dayLayoutFocus === 'tasks'}
+              onClick={() => actions.setDayLayoutFocus('tasks')}
+            >
+              Tasks
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Purely informational - no embedded action. Being over is stated as
-          a fact; which float moves to tomorrow, if any, is decided on that
-          float's own row below, not pre-selected here. See
-          docs/TIMELINE.md section 8. */}
-      {capacityLine && (
-        <div className="capacity-line">
-          <p>{capacityLine}</p>
-        </div>
-      )}
+      {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line,
+          the if-then rule and the timeline grid group into one region - the
+          "picture of the day" - so the wide layout can give it its own
+          column. This div is not new chrome: below the breakpoint it is
+          `display: contents` (see styles.css), so it adds no box, no
+          spacing and no accessibility-tree node of its own - the JSX order
+          inside it is exactly the order these elements already rendered in,
+          so a phone's DOM is unaffected by this grouping existing at all.
+          Below the breakpoint showDayPane is always true (see its own
+          comment above); only step 4's Calendar/Tasks focus, at a wide
+          viewport, ever unmounts this. */}
+      {showDayPane && (
+      <div className="day-pane">
+        {/* Purely informational - no embedded action. Being over is stated
+            as a fact; which float moves to tomorrow, if any, is decided on
+            that float's own row below, not pre-selected here. See
+            docs/TIMELINE.md section 8. */}
+        {capacityLine && (
+          <div className="capacity-line">
+            <p>{capacityLine}</p>
+          </div>
+        )}
 
-      {/* One quiet if-then rule, rotated in from the board that used to be
-          its own tab - see docs/TIMELINE.md section 6. Self-contained: it
-          reads its own data and renders nothing when there is no eligible
-          rule for today, the same way the capacity line above renders
-          nothing for an empty day. */}
-      <IfThenDayRule date={date} />
+        {/* One quiet if-then rule, rotated in from the board that used to be
+            its own tab - see docs/TIMELINE.md section 6. Self-contained: it
+            reads its own data and renders nothing when there is no eligible
+            rule for today, the same way the capacity line above renders
+            nothing for an empty day. */}
+        <IfThenDayRule date={date} />
 
-      {/* The grid's own disclosure, collapsed by default - see
-          docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
-          A sibling of the capacity line rather than nested inside it: that
-          line only ever states the arithmetic, with no action of its own
-          embedded in it - see the sentence's own comment above - and this
-          toggle is a separate control, not part of that sentence. A proper
-          disclosure, not a CSS-hidden panel: the region it names is only in
-          the DOM while open, so a screen reader never lands on a picture it
-          cannot currently see, and there is nothing extra to skip past
-          while it is closed. Only shown when there is actually something to
-          show - a day with no anchors has no grid to draw either way, see
-          TimelineGrid.tsx. */}
-      {capacity.anchorCount > 0 && (
-        <button
-          type="button"
-          className="timeline-toggle"
-          aria-expanded={timelineExpanded}
-          aria-controls={timelineGridId}
-          onClick={() => actions.setTimelineExpanded(!timelineExpanded)}
-        >
-          {timelineExpanded ? 'Hide timeline' : 'Show timeline'}
-        </button>
-      )}
+        {/* The grid's own disclosure, collapsed by default - see
+            docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
+            A sibling of the capacity line rather than nested inside it: that
+            line only ever states the arithmetic, with no action of its own
+            embedded in it - see the sentence's own comment above - and this
+            toggle is a separate control, not part of that sentence. A proper
+            disclosure, not a CSS-hidden panel: the region it names is only in
+            the DOM while open, so a screen reader never lands on a picture it
+            cannot currently see, and there is nothing extra to skip past
+            while it is closed. Only shown when there is actually something to
+            show - a day with no anchors has no grid to draw either way, see
+            TimelineGrid.tsx. Not rendered at all at the wide breakpoint -
+            docs/LAYOUT-WIDE.md section 5: the grid has its own column there,
+            so there is no fold left to protect and nothing this toggle would
+            do. */}
+        {capacity.anchorCount > 0 && !isWide && (
+          <button
+            type="button"
+            className="timeline-toggle"
+            aria-expanded={timelineExpanded}
+            aria-controls={timelineGridId}
+            onClick={() => actions.setTimelineExpanded(!timelineExpanded)}
+          >
+            {timelineExpanded ? 'Hide timeline' : 'Show timeline'}
+          </button>
+        )}
 
-      {timelineExpanded && (
-        <TimelineGrid
-          id={timelineGridId}
-          tasks={day?.tasks ?? []}
-          templateColor={template?.color}
-          onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
-          onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
-          draggingTaskId={draggingTaskId}
-          isToday={isToday}
-        />
+        {isTimelineVisible && (
+          <TimelineGrid
+            id={timelineGridId}
+            tasks={day?.tasks ?? []}
+            templateColor={template?.color}
+            onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
+            onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
+            draggingTaskId={draggingTaskId}
+            isToday={isToday}
+          />
+        )}
+
+      </div>
       )}
 
       {/* Announces a drag-driven un-anchor, or a placement or removal made
@@ -378,63 +485,81 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           TimelineGrid.tsx's own live region already covers the tap-a-gap
           path. A separate region because these fire from gestures
           TimelineGrid never sees: the drag can end outside the grid
-          entirely, and the menu is not part of it at all. */}
+          entirely, and the menu is not part of it at all. Deliberately
+          outside both panes and always mounted, unlike them: an actions-
+          menu placement can fire while dayLayoutFocus has unmounted
+          .day-pane (focus 'tasks'), and this announcement still needs
+          somewhere to land for a screen reader when that happens. Sitting
+          here between the two panes in the JSX keeps the flattened phone
+          DOM order exactly what it was before this region had its own
+          top-level position. */}
       <p className="visually-hidden" aria-live="polite">{dragAnnouncement}</p>
 
-      <input
-        className="quick-add"
-        placeholder="Add a task... try 14:00 Call mom"
-        value={input}
-        onChange={e => handleInputChange(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && handleAdd()}
-      />
+      {/* The float tray - quick-add, the first-run/empty state, the task
+          list, and the rollover button - grouped the same way and for the
+          same reason as .day-pane above: `display: contents` below the
+          breakpoint, a real grid column at it, no change to phone markup
+          either way. Below the breakpoint showTaskPane is always true (see
+          its own comment above); only step 4's Calendar/Tasks focus, at a
+          wide viewport, ever unmounts this. */}
+      {showTaskPane && (
+      <div className="task-pane">
+        <input
+          className="quick-add"
+          placeholder="Add a task... try 14:00 Call mom"
+          value={input}
+          onChange={e => handleInputChange(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAdd()}
+        />
 
-      {tasks.length === 0 && firstRun && (
-        <div className="first-run">
-          <p className="first-run-lede">
-            Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
-            of retyping it every morning. Tap one below to add it as a real template and set up today -
-            edit or delete it any time afterward.
-          </p>
-          <StarterOffers onUse={handleUseStarter} />
-          <p className="first-run-note">
-            There are also eleven color themes here, light and dark - see them under Settings.
-          </p>
-        </div>
-      )}
-      {tasks.length === 0 && !firstRun && (
-        <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
-      )}
+        {tasks.length === 0 && firstRun && (
+          <div className="first-run">
+            <p className="first-run-lede">
+              Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
+              of retyping it every morning. Tap one below to add it as a real template and set up today -
+              edit or delete it any time afterward.
+            </p>
+            <StarterOffers onUse={handleUseStarter} />
+            <p className="first-run-note">
+              There are also eleven color themes here, light and dark - see them under Settings.
+            </p>
+          </div>
+        )}
+        {tasks.length === 0 && !firstRun && (
+          <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
+        )}
 
-      <ul className="task-list" ref={taskListRef} tabIndex={-1}>
-        {tasks.map(task => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            date={date}
-            isFullDay={isFullDay}
-            sizeEditingId={sizeEditingId}
-            sizeDraft={sizeDraft}
-            onStartSizeEdit={startSizeEdit}
-            onSizeDraftChange={setSizeDraft}
-            onCommitSizeEdit={commitSizeEdit}
-            onCancelSizeEdit={cancelSizeEdit}
-            onOpenActions={() => setActionsSheetTaskId(task.id)}
-            selected={selectedTaskId === task.id}
-            onToggleSelect={() => toggleSelect(task.id)}
-          />
-        ))}
-      </ul>
+        <ul className="task-list" ref={taskListRef} tabIndex={-1}>
+          {tasks.map(task => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              date={date}
+              isFullDay={isFullDay}
+              sizeEditingId={sizeEditingId}
+              sizeDraft={sizeDraft}
+              onStartSizeEdit={startSizeEdit}
+              onSizeDraftChange={setSizeDraft}
+              onCommitSizeEdit={commitSizeEdit}
+              onCancelSizeEdit={cancelSizeEdit}
+              onOpenActions={() => setActionsSheetTaskId(task.id)}
+              selected={selectedTaskId === task.id}
+              onToggleSelect={() => toggleSelect(task.id)}
+            />
+          ))}
+        </ul>
 
-      {pushableCount > 0 && (
-        <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
-          {heldCount > 0
-            ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
-            : `Push ${pushableCount} unfinished to tomorrow`}
-        </button>
-      )}
-      {pushableCount === 0 && heldCount > 0 && (
-        <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+        {pushableCount > 0 && (
+          <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
+            {heldCount > 0
+              ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
+              : `Push ${pushableCount} unfinished to tomorrow`}
+          </button>
+        )}
+        {pushableCount === 0 && heldCount > 0 && (
+          <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+        )}
+      </div>
       )}
 
       {actionsSheetTask && (

@@ -5,8 +5,11 @@
 > our own thing in place of Sunsama's CHANNELS and CALENDARS lists, and a way to switch fully between
 > a tasks view and a calendar view. Read `docs/TIMELINE.md` sections 2, 3, 5 and 9 first, and
 > `docs/RESEARCH-ADHD.md` sections 7 and 12 - this document does not repeat their reasoning, it
-> applies it to more screen space. No code changes here. This is a specification for a change that
-> should be built in the pieces listed at the end.
+> applies it to more screen space. This was a specification only when first written; it was then
+> built in full, in the six pieces section 6 lists, on `feature/wide-layout`. Section 6 marks each
+> step done. See `.superpowers/sdd/2026-08-31-dienius-mvp/feature-wide-layout-report.md` for the full
+> build report, and `docs/OPEN-QUESTIONS.md` items 14-15 for the two things flagged rather than
+> decided unilaterally during the build.
 
 ## 1. What the owner asked for
 
@@ -397,29 +400,52 @@ change and the grid-height change can be verified independently.
 
 ## 6. Build order
 
-Smallest useful step first, each one shippable and checkable on its own.
+Smallest useful step first, each one shippable and checkable on its own. All six are built, on
+`feature/wide-layout`, each its own commit - see the full report at
+`.superpowers/sdd/2026-08-31-dienius-mvp/feature-wide-layout-report.md`.
 
-1. **Widen the Today tab only.** `App.tsx`'s one-line class change plus `.main-day`'s `max-width` at
-   the breakpoint. No component changes. Immediately less wasted whitespace on a desktop browser, and
-   proves the breakpoint mechanism before anything depends on it.
-2. **Auto-show the grid at wide widths.** Add `useIsWide()`, bypass `timelineExpanded` and hide the
-   toggle above the breakpoint. Still one column. Verifies the viewport-gating logic in isolation
+1. **DONE - Widen the Today tab only.** `App.tsx`'s one-line class change plus `.main-day`'s
+   `max-width` at the breakpoint. No component changes. Immediately less wasted whitespace on a
+   desktop browser, and proves the breakpoint mechanism before anything depends on it. Built with
+   `.app:has(.main-day)` widening the app shell itself, since a child's `max-width` cannot exceed a
+   parent box that is still capped at 760px.
+2. **DONE - Auto-show the grid at wide widths.** Add `useIsWide()`, bypass `timelineExpanded` and hide
+   the toggle above the breakpoint. Still one column. Verifies the viewport-gating logic in isolation
    before the layout itself changes.
-3. **Split into day-pane and task-pane.** The core of the ask: capacity line, if-then rule, and grid on
-   one side, quick-add and the task list on the other, both visible at once. Wrapped in
+3. **DONE - Split into day-pane and task-pane.** The core of the ask: capacity line, if-then rule, and
+   grid on one side, quick-add and the task list on the other, both visible at once. Wrapped in
    `display: contents` below the breakpoint so the phone layout is provably untouched.
-4. **Add `dayLayoutFocus` and the Both/Calendar/Tasks control.** Delivers the "switch fully" request
-   directly. Cheapest to cut later if it turns out not to earn its place - see the note in section 3.2.
-5. **Add the rail: `MiniCalendar` first, `TemplateRail` second.** Two independent, read-mostly
+4. **DONE - Add `dayLayoutFocus` and the Both/Calendar/Tasks control.** Delivers the "switch fully"
+   request directly. Cheapest to cut later if it turns out not to earn its place - see the note in
+   section 3.2 - one setting, one control block, nothing else depends on it.
+5. **DONE - Add the rail: `MiniCalendar` first, `TemplateRail` second.** Two independent, read-mostly
    components; either can ship without the other and both degrade gracefully to "not rendered" below
-   the breakpoint.
-6. **Verification pass.** Re-run the same three day shapes `fix-day-view-hierarchy-report.md` used
-   (a realistic day, one long anchor with no floats, floats with no anchors), confirm the phone layout
-   is pixel-identical below 1024px in both a light and dark theme, confirm all three `dayLayoutFocus`
-   states render correctly in at least two themes, confirm the anchor-to-tray drag still resolves
-   correctly with the tray in its own column, confirm `GapPicker` and `TaskActionsSheet` still centre
-   correctly as overlays regardless of which columns are showing, and confirm the tab order follows
-   the visual order (rail, then header, then day pane, then task pane) for a keyboard user.
+   the breakpoint. `taskState`/`resolveTemplate`/`cellLabel` extracted to `src/lib/calendarCell.ts` so
+   `MiniCalendar` and `CalendarView` share one set of rules.
+6. **DONE - Verification pass.** Re-ran the same three day shapes `fix-day-view-hierarchy-report.md`
+   used (a realistic day, one long anchor with no floats, floats with no anchors); the phone layout is
+   pixel-identical below 1024px in both a light and dark theme (measured against a `main`-branch
+   baseline built in a separate worktree, not assumed); all three `dayLayoutFocus` states render
+   correctly in Slate and Legal pad; `GapPicker`, `TaskActionsSheet`, `TaskGapOffers` and `IfThenSheet`
+   all still span the full viewport and correctly trap focus regardless of which panes are showing,
+   confirmed live under both single-pane focus states; the tab order was confirmed live in a real
+   browser to follow rail, then header, then day pane, then task pane with no interleaving across all
+   67 focusable elements on a realistic day. The one thing this step did **not** confirm working: the
+   anchor-to-tray drag - see the concern below, this is a pre-existing bug unrelated to this branch.
 
 Steps 1-3 are what make the layout wide. Step 4 is the one place this document asks for a real product
 decision rather than only rearranging what already exists. Steps 5-6 are the picture and the proof.
+
+**One pre-existing bug found during step 6, not caused by this work:** the anchor-block drag-back-to-
+tray gesture (section 3.5) cannot actually be started by a real pointer in any browser, at any width -
+`.timeline-anchor` inherits `pointer-events: none` from its `aria-hidden` ancestor in `TimelineGrid.tsx`
+with nothing re-enabling it, so a real click or touch on an anchor block never reaches its handler; it
+only appeared to work because the test suite dispatches events directly to elements, bypassing real
+hit-testing. Confirmed identical on `main` (`git diff main..feature/wide-layout --
+src/widgets/day-plan/TimelineGrid.tsx` is empty). Deliberately not fixed on this branch - it touches a
+file and a feature outside this document's stated scope. See `docs/OPEN-QUESTIONS.md` item 15 and
+background task `task_4d948b75`.
+
+**One trade-off flagged, not fixed:** the rail's own `minmax(200px, 240px)` cannot fit a 7-column
+month grid at this app's usual 44px touch target - `MiniCalendar.tsx`'s cells measure roughly 33x33px
+live. See `docs/OPEN-QUESTIONS.md` item 14.

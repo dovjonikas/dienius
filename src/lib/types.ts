@@ -172,6 +172,22 @@ export interface Settings {
    * carries the same shape of the day in one sentence.
    */
   timelineExpanded: boolean
+  /**
+   * Which pane the wide day view (docs/LAYOUT-WIDE.md section 5) gives the
+   * width to - 'both' shows the day pane and task pane side by side,
+   * 'calendar' gives the day pane (capacity line, if-then rule, grid) the
+   * full remaining width and unmounts the task pane, 'tasks' does the
+   * reverse. A single app-wide choice, not a per-day one, following the
+   * exact pattern timelineExpanded already established: this is a
+   * width-redistribution preference, not a daily question, so it persists
+   * until changed rather than resetting. Defaults to 'both' - the state
+   * that shows the most by default - and only has a visible effect once
+   * useIsWide() says there is more than one pane to redistribute between;
+   * below that breakpoint the control that changes it is not rendered at
+   * all, and this field sits in storage with no effect on what's on
+   * screen.
+   */
+  dayLayoutFocus: 'both' | 'calendar' | 'tasks'
 }
 
 /**
