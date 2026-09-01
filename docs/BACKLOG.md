@@ -307,10 +307,47 @@ thing left in this area.
 
 ## Tier 2 - brief features not built yet
 
-**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time (the
-team's own review flagged this as deferred). The brief says times are anchors: fix only what is
+~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time
+(the team's own review flagged this as deferred). The brief says times are anchors: fix only what is
 really fixed, let the rest float.
-Build: validate and normalise time input, visually separate anchored items from floating ones.
+Build: validate and normalise time input, visually separate anchored items from floating ones.~~
+Fixed. `parseTimeInput` in `capacity.ts` is the one place a typed time is turned into a real value -
+a colon time ("9:30"), a bare-digit shorthand ("0930", "930"), or an hour on its own ("14") all
+normalise to a canonical "HH:MM"; anything else, including "banana" and an out-of-range "25:00",
+returns `undefined` and is discarded rather than stored. It shares its definition of a valid hour and
+minute with `parseQuickAdd` in `parse.ts` (`TIME_RE`) rather than defining the shape of a real time
+twice. An empty field still means a float, unchanged - this was never about requiring a time, only
+about rejecting a fake one.
+
+The template block editor's time field (`TimeStepInput.tsx`) is a custom text field rather than a
+native `<input type="time">` - the native control's picker UI cannot be restyled consistently across
+the app's eleven themes, and on iOS Safari it opens a full wheel picker on focus, slower for quick
+entry than typing "0930" directly on the exact device this field is mostly used from. Typing still
+works exactly as before and is normalised only on blur or Enter, never mid-keystroke, and never with
+an error message - an unparseable value is discarded silently, reverting to whatever was last valid.
+Arrow-key stepping is layered on top: Up and down move the time by 15 minutes, matching how templates
+are actually built (on the hour or the quarter, never the minute); Shift with either arrow jumps a
+full hour, for closing a bigger gap without counting presses, an accelerator that only exists for a
+keyboard for the modifier key it depends on. Two visible step buttons sit beside the field doing the
+same 15-minute move for a touch screen, which has no Shift key and, on iOS in particular, no arrow
+keys on its on-screen keyboard either - keyboard stepping alone would have been invisible on the exact
+phone this field is built for. Both buttons meet the app's 44px touch-target minimum. Stepping an
+empty field seeds it at 09:00, the field's own placeholder, rather than midnight or the current clock
+time, so the first press lands on the same value already shown as an example. Crossing midnight in
+either direction wraps rather than clamping, pinned by tests in `capacity.test.ts`
+(`stepTime`) alongside the rest of `TemplatesView.test.tsx`'s coverage of the field itself.
+
+The block's `min` duration field did not get the same stepper. `parseMinutesInput` already discarded
+an invalid value at save time before this change, so the "invalid can't be stored" half of the brief
+already held there; what it did not have was live stepping, and a duration does not have the same
+case for it a clock time does - there is no natural default to seed an empty field with, no wraparound,
+and a typical estimate (60, 90, 120 minutes) would take four to eight presses at a 15-minute step,
+working against the same time-cost-of-upkeep concern `docs/RESEARCH-ADHD.md` section 11 raises about
+planner abandonment generally. One real bug in that field's live preview was fixed regardless: the
+in-progress block list rendered a garbage size (e.g. `abc`) as `formatDuration(NaN)` - "NaNhNaN" -
+before a template was even saved. The preview now runs the same `parseMinutesInput` check the final
+save always used, so a bad size shows nothing rather than nonsense, without adding a stepper the field
+does not need.
 
 ## Tier 3 - debts already logged in the ledger
 
@@ -370,9 +407,8 @@ never struck from this list; each one below says which.
 
 ## Suggested order for the next session
 
-Tier 3 is now clear. What is left:
+Tier 3 is now clear, and time anchors are fixed. What is left:
 
 1. Theme system, steps 1-4 of `docs/THEMES.md` - the pre-paint script (step 3's other half) is
    already done, but the preset architecture, the token layers, and the gallery are not.
-2. Time anchors, not free text
-3. The phone verification task carried over in Tier 3
+2. The phone verification task carried over in Tier 3
