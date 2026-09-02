@@ -92,11 +92,15 @@ test('at a narrow viewport, the toggle still renders and the grid still stays ga
   expect(container.querySelector('.timeline-grid-wrap')).not.toBeInTheDocument()
 })
 
-test('a day with no anchors shows no grid at a wide viewport either', () => {
+// See emptyDayLayout: a day with nothing anchored draws the waking window
+// empty rather than nothing at all, at every viewport. On a wide screen the
+// old behaviour left a third of the page blank next to a full task list.
+test('a day with no anchors still shows the empty grid at a wide viewport', () => {
   viewport = mockViewport(true)
   seed([{ id: 'f1', title: 'Float', done: false, minutes: 20 }], false)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
-  expect(container.querySelector('.timeline-grid-wrap')).not.toBeInTheDocument()
+  expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
+  expect(container.querySelectorAll('.timeline-anchor')).toHaveLength(0)
 })
 
 test('resizing wide does not write timelineExpanded to true - the stored phone choice is untouched', () => {

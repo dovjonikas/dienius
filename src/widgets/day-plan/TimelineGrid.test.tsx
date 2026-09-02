@@ -37,9 +37,26 @@ function withRealStylesheet(): () => void {
   return () => style.remove()
 }
 
-test('renders nothing at all for a day with no anchors', () => {
+// This used to render nothing. A day with only untimed tasks had a blank
+// column beside a full list and nowhere to drop any of it, which is the one
+// thing that column is for - see emptyDayLayout. The grid is now drawn over
+// the waking window instead, empty, with one gap covering all of it.
+test('a day with no anchors still draws the waking window, empty', () => {
   const { container } = render(<TimelineGrid tasks={[float('Guitar', 20)]} />)
-  expect(container).toBeEmptyDOMElement()
+  expect(container.querySelector('.timeline-grid')).toBeInTheDocument()
+  expect(container.querySelectorAll('.timeline-anchor')).toHaveLength(0)
+})
+
+test('the empty grid says what to do rather than reporting sixteen hours free', () => {
+  render(<TimelineGrid tasks={[float('Guitar', 20)]} />)
+  expect(screen.getByRole('button', { name: /nothing placed yet/i })).toBeInTheDocument()
+  expect(screen.queryByText(/16h free/)).not.toBeInTheDocument()
+})
+
+test('the empty grid offers exactly one gap, spanning the whole waking window', () => {
+  const { container } = render(<TimelineGrid tasks={[float('Guitar', 20)]} />)
+  expect(container.querySelectorAll('.timeline-gap')).toHaveLength(1)
+  expect(container.querySelector('.timeline-gap')).toHaveAttribute('data-gap-start', String(7 * 60))
 })
 
 test('the grid itself is aria-hidden and carries no focusable element', () => {
@@ -189,9 +206,11 @@ test('tapping an open gap again closes its own picker', async () => {
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
-test('a day with no anchors renders no gap buttons at all, same as it renders no grid', () => {
+test('a day with no anchors offers its one gap as a real, tappable control', () => {
   render(<TimelineGrid tasks={[float('Guitar', 20)]} />)
-  expect(screen.queryAllByRole('button')).toHaveLength(0)
+  const gaps = screen.getAllByRole('button')
+  expect(gaps).toHaveLength(1)
+  expect(gaps[0]).toHaveAttribute('aria-haspopup', 'dialog')
 })
 
 // Step 7's drag: the visual anchor block becomes the pointer-drag source

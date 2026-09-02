@@ -6,6 +6,7 @@ import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
   computeTimelineLayout,
+  emptyDayLayout,
   computeVerticalLayout,
   currentMinutes,
   formatAnchorTimeRange,
@@ -309,7 +310,12 @@ export function TimelineGrid({
   onTaskContextMenu,
   sleep,
 }: TimelineGridProps) {
-  const layout = computeTimelineLayout(tasks, sleepProfileId, sleep)
+  // A day with nothing anchored still gets a grid - see emptyDayLayout.
+  // The alternative is a blank column beside a full task list, with nowhere
+  // to drop any of it.
+  const derived = computeTimelineLayout(tasks, sleepProfileId, sleep)
+  const layout = derived.displayWindow ? derived : emptyDayLayout(sleepProfileId, sleep)
+  const isEmptyDay = derived.displayWindow === null
   const wrapRef = useRef<HTMLDivElement>(null)
   const layersRef = useRef<HTMLDivElement>(null)
   const layoutRef = useRef<{
@@ -643,7 +649,7 @@ export function TimelineGrid({
                   type="button"
                   className="timeline-gap"
                   data-gap-start={gap.startMinutes}
-                  aria-label={label}
+                  aria-label={isEmptyDay ? 'Nothing placed yet. Tap to put a task on the clock.' : label}
                   aria-haspopup="dialog"
                   aria-expanded={isOpen}
                   onClick={() => setOpenGapStart(isOpen ? null : gap.startMinutes)}
@@ -654,8 +660,18 @@ export function TimelineGrid({
                     width: `calc(100% - ${GUTTER_PX}px)`,
                   }}
                 >
-                  {gap.minutes >= MIN_LABELLED_GAP_MINUTES && (
-                    <span className="timeline-gap-label" aria-hidden="true">{formatDuration(gap.minutes)} free</span>
+                  {/* On a day with nothing placed yet the single gap is the
+                      whole waking window, and "16h free" is a true but
+                      useless thing to say to somebody looking at nine untimed
+                      tasks. It says what to do instead. */}
+                  {isEmptyDay ? (
+                    <span className="timeline-gap-label timeline-gap-empty" aria-hidden="true">
+                      Nothing placed yet - tap anywhere to put something here
+                    </span>
+                  ) : (
+                    gap.minutes >= MIN_LABELLED_GAP_MINUTES && (
+                      <span className="timeline-gap-label" aria-hidden="true">{formatDuration(gap.minutes)} free</span>
+                    )
                   )}
                 </button>
               )

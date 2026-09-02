@@ -256,6 +256,37 @@ function extendTowardSleepBoundary(window: Interval, waking: Interval, anchors: 
   }
 }
 
+/**
+ * The layout for a day that has nothing anchored yet: the waking window,
+ * drawn empty, with one gap covering all of it.
+ *
+ * `computeTimelineLayout` deliberately returns a null window in that case -
+ * with no anchors there is nothing to derive a window *from*, and inventing
+ * one would be inventing an opinion about the day. But "nothing to derive"
+ * and "nothing to draw" turned out to be different questions. A day of
+ * untimed tasks had a blank column where the grid goes and no surface at all
+ * to drop one onto, which is the one thing that column exists for: the tasks
+ * are right there, and there was nowhere to put them.
+ *
+ * So the empty case is answered from the sleep schedule instead of from the
+ * anchors. That is not an opinion about the day - it is the same waking
+ * window the free-time figure has always been measured against, and the
+ * moment a first task is placed the ordinary anchor-derived layout takes
+ * over. Kept as its own function rather than folded into the one above so
+ * every existing caller and every test keeps the exact contract it had.
+ */
+export function emptyDayLayout(sleepProfileId?: string, sleep?: SleepSettings): TimelineLayout {
+  const waking = windowFor(sleepProfileId, sleep)
+  return {
+    window: waking,
+    displayWindow: waking,
+    anchors: [],
+    gaps: [{ startMinutes: waking.start, endMinutes: waking.end, minutes: waking.end - waking.start }],
+    unsizedAnchorCount: 0,
+    sleepBands: [],
+  }
+}
+
 export function computeTimelineLayout(
   tasks: Task[],
   sleepProfileId?: string,

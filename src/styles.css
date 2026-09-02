@@ -6710,3 +6710,17 @@ button.danger:focus-visible {
   color: var(--faint);
   font-size: var(--t-xs);
 }
+
+/* The label on the one gap an unplanned day has. Centred rather than pinned
+   to the top like a duration label, because it is addressed to somebody
+   looking at an empty column, not read off the edge of a real gap. */
+.timeline-gap-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+  color: var(--muted);
+  text-align: center;
+}

@@ -107,6 +107,15 @@ export function TimePicker({ value, onChange, ariaLabel, placeholder = '09:00', 
       setOpen(false)
       return
     }
+    // Enter commits. Without it a typed time only took on blur, so a field
+    // filled in and then submitted with the keyboard - the fastest way to
+    // build a template, and the way somebody actually does it - handed the
+    // form an empty time and produced a block with no time on it at all.
+    if (e.key === 'Enter') {
+      commit(draft)
+      setOpen(false)
+      return
+    }
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
     e.preventDefault()
     const size = e.shiftKey ? BIG_STEP_MINUTES : STEP_MINUTES
