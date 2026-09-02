@@ -738,7 +738,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 
 .segmented button.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 
 /*
@@ -2365,7 +2365,7 @@ textarea:focus {
 
 .time-picker-option[aria-selected='true'] {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-weight: 600;
 }
 
@@ -3342,7 +3342,7 @@ button.primary {
   background: var(--accent);
   border: none;
   border-radius: var(--r-control);
-  color: #fff;
+  color: var(--on-accent, #fff);
   padding: 9px 16px;
 }
 
@@ -3454,7 +3454,7 @@ button.core-toggle {
 button.core-toggle.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 
 .template-list { list-style: none; margin: 0; padding: 0; }
@@ -3614,10 +3614,14 @@ button.danger {
    pins a dark label. Unstamped cells keep the theme's text color. */
 .cell-has-template .cell-num { color: rgba(0, 0, 0, 0.7); }
 
+/* 0.6 alpha on a pastel measured 3.24:1 - under AA for 11px text, and the
+   only thing in a calendar cell that says which template it is. Taken to a
+   near-solid ink: the softness was buying nothing but illegibility, and the
+   cell already reads as quiet from its own pale fill. */
 .cell-template {
   font-size: var(--t-xs);
   line-height: 1.2;
-  color: rgba(0, 0, 0, 0.6);
+  color: rgba(0, 0, 0, 0.82);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4910,7 +4914,7 @@ nav button:active,
 .floating-clock-actions button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
   font-weight: 600;
 }
 
@@ -5246,11 +5250,15 @@ button.danger {
     color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
+/* --on-accent, not white. Every one of the eight accents this app offers is
+   a light pastel, and white text on the default indigo measured 2.42:1 - the
+   loudest button in the interface, failing AA by a wide margin. The ink is
+   derived from whichever accent is actually in force; see applyResolvedTheme. */
 .btn-primary,
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent, #fff);
 }
 
 .btn-primary:hover,
@@ -5283,7 +5291,7 @@ button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transpar
 .btn-danger.is-armed {
   background: var(--danger);
   border-color: var(--danger);
-  color: #fff;
+  color: var(--on-danger, #fff);
 }
 
 .btn-danger.is-armed:hover { background: color-mix(in srgb, var(--danger) 86%, #000); }
@@ -5357,7 +5365,7 @@ button.danger:focus-visible {
   background: var(--accent);
   border: none;
   border-radius: var(--r-control);
-  color: #fff;
+  color: var(--on-accent, #fff);
   padding: 8px 14px;
   font-size: var(--t-md);
 }
@@ -6939,4 +6947,42 @@ button.danger:focus-visible {
   .task-menu-button { width: 44px; }
 
   .quick-add { min-height: 44px; }
+}
+
+/* ------------------------------------------------------------------------
+   Scrollbars.
+
+   The browser's default is a light track and a mid-grey thumb, drawn from
+   the OS rather than the page - which on a near-black surface is the single
+   brightest thing on screen, sitting right beside the task list. Every other
+   surface in this app was painted deliberately; this one was left to the
+   platform and looked exactly like something nobody had finished.
+
+   Set once at the root, so every scroller in the app inherits it - the task
+   list, the timeline, the settings column, the detail sheet, the time
+   picker's own two columns. scrollbar-color is the standard property
+   (Firefox and Chromium); the WebKit block below is what Safari reads, and
+   both say the same thing rather than one of them being a fallback with a
+   different opinion.
+   ------------------------------------------------------------------------ */
+* {
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: content-box;
+  background-color: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 70%, transparent);
 }

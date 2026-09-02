@@ -194,5 +194,18 @@ export function applyResolvedTheme(root: HTMLElement, resolved: ResolvedTheme): 
   root.style.setProperty('--rule-h', ruleH)
   root.style.setProperty('--rule-v', ruleV)
   root.style.setProperty('--safe-ink', bestInk(resolved.tokens.surface))
+  // The ink that goes *on* the accent, wherever the accent is a fill - the
+  // primary button, a selected tab, a chosen swatch. It has to be derived
+  // rather than fixed, because the accent is one of eight the owner picks
+  // between and every one of them is a different lightness: white on this
+  // app's default indigo measured 2.42:1, which is the loudest button in the
+  // interface failing AA outright. Derived the same way --safe-ink already
+  // is, from whatever the accent actually resolved to, including an
+  // override - so an accent added later cannot reintroduce the problem.
+  root.style.setProperty('--on-accent', bestInk(resolved.tokens.accent))
+  // Same for the one fill --danger ever gets: the armed second tap of a
+  // destructive action. It is a soft red on every dark preset, and white on
+  // it reads no better than white on the accent did.
+  root.style.setProperty('--on-danger', bestInk(resolved.tokens.danger))
   root.dataset.theme = resolved.mode
 }
