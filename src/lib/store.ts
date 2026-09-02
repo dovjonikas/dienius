@@ -235,6 +235,36 @@ export const actions = {
     return true
   },
 
+  /**
+   * Moves an anchor to a different time, or resizes it - what dragging a
+   * block on the grid and pulling its bottom edge actually commit.
+   *
+   * Deliberately separate from `placeFloat`, which refuses a task that
+   * already has a time. That guard is right for placing (placing something
+   * twice is a bug), and wrong for moving (moving something is only ever
+   * done to a task that already has a position). Both fields are optional
+   * so one gesture can change one of them without restating the other, and
+   * a no-op call - the same time, the same size - still commits, which is
+   * what makes the undo below able to put a task back exactly as it was.
+   *
+   * Refuses a task that does not exist, or one with no time at all: an
+   * untimed task has no position to move and no edge to pull.
+   */
+  reshapeTask(date: string, taskId: string, next: { time?: string; minutes?: number }): boolean {
+    const day = data.days[date]
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task || task.time === undefined) return false
+    commit(withDay(date, {
+      ...day!,
+      tasks: day!.tasks.map(t =>
+        t.id === taskId
+          ? { ...t, time: next.time ?? t.time, minutes: next.minutes ?? t.minutes }
+          : t,
+      ),
+    }))
+    return true
+  },
+
   addTemplate(input: {
     name: string
     color: string

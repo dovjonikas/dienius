@@ -167,6 +167,19 @@ export interface TimelineGridProps {
    * container behaves exactly as it always did.
    */
   onAnchorPointerDown?: (taskId: string, e: React.PointerEvent<HTMLDivElement>) => void
+  /**
+   * Called on `pointerdown` for the grab strip along a sized anchor's bottom
+   * edge - the gesture that changes how long a task is by pulling it. Wired
+   * by `DayView` to the same drag machinery the move gesture uses, so the two
+   * share one Escape handler, one document-level listener pair and one undo.
+   *
+   * A plain div rather than a button, deliberately: everything inside
+   * `.timeline-grid` is decorative and unfocusable by construction (see this
+   * component's own doc comment), and a focusable control here would break
+   * that. A keyboard has the size control on the task's own card, which is
+   * the accessible path to the same change and always has been.
+   */
+  onAnchorResizePointerDown?: (taskId: string, e: React.PointerEvent<HTMLElement>) => void
   /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
   draggingTaskId?: string | null
   /**
@@ -176,6 +189,20 @@ export interface TimelineGridProps {
    * one is current. Optional, and meaningless on a day that is not today.
    */
   activeTaskId?: string | null
+  /**
+   * Publishes the grid's own pixel-to-clock mapping upward, once per layout.
+   *
+   * `DayView` owns the drag: it has the document-level pointer listeners, the
+   * Escape handling and the tray-drop detection already, and moving all of
+   * that down here would mean this component knowing about a tray that lives
+   * outside it. But the mapping between a pointer position and a time belongs
+   * to whatever actually drew the grid - it depends on the density this
+   * component measured and on the piecewise floors it laid out with - so it
+   * is handed over rather than recomputed from guesses on the other side.
+   * Called with null when the grid is about to stop drawing, so a stale
+   * mapping can never outlive the layout it came from.
+   */
+  onGeometry?: (geometry: GridGeometry | null) => void
   /**
    * True when the day this grid is drawing is today's own date - see
    * DayView.tsx's own `isToday`. The current-time indicator only ever
@@ -247,14 +274,24 @@ export interface TimelineGridProps {
  * about it can ever swallow a tap meant for a gap button drawn underneath
  * or beside it.
  */
+/** The one thing a drag needs from the grid - see `onGeometry`. */
+export interface GridGeometry {
+  /** Clock minutes at a viewport y position, clamped to the drawn window. */
+  minutesAtClientY: (clientY: number) => number
+  /** Where a clock time sits, in the same viewport coordinates. */
+  clientYAt: (minutes: number) => number
+}
+
 export function TimelineGrid({
   id,
   tasks,
   templateColor,
   onPlaceFloat,
   onAnchorPointerDown,
+  onAnchorResizePointerDown,
   draggingTaskId,
   activeTaskId,
+  onGeometry,
   isToday = false,
   isWide = false,
   dayType = 'full',
@@ -262,6 +299,26 @@ export function TimelineGrid({
 }: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks, dayType, sleep)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const layersRef = useRef<HTMLDivElement>(null)
+  const layoutRef = useRef<{
+    vertical: ReturnType<typeof computeVerticalLayout>
+    window: { start: number; end: number }
+  } | null>(null)
+  const geometryRef = useRef<GridGeometry>({
+    minutesAtClientY(clientY) {
+      const current = layoutRef.current
+      const box = layersRef.current?.getBoundingClientRect()
+      if (!current || !box) return 0
+      const raw = current.vertical.minutesAt(clientY - box.top)
+      return Math.min(current.window.end, Math.max(current.window.start, raw))
+    },
+    clientYAt(minutes) {
+      const current = layoutRef.current
+      const box = layersRef.current?.getBoundingClientRect()
+      if (!current || !box) return 0
+      return box.top + current.vertical.topPx(minutes)
+    },
+  })
   const [openGapStart, setOpenGapStart] = useState<number | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const pendingFocusGapStart = useRef<number | null>(null)
@@ -271,6 +328,13 @@ export function TimelineGrid({
   // reading as "nothing available yet" (0px), which floors straight back
   // to PX_PER_MINUTE, the same density the phone always draws at.
   const availableHeightPx = useAvailableGridHeight(wrapRef, isWide)
+
+  // Handed over once, and taken back on unmount so a mapping can never
+  // outlive the grid that produced it.
+  useEffect(() => {
+    onGeometry?.(geometryRef.current)
+    return () => onGeometry?.(null)
+  }, [onGeometry])
 
   // Coarse on purpose - see docs/RESEARCH-TIMELINE-UI.md section 5 point 7:
   // a planner has no reason to animate every second, so this recomputes
@@ -353,6 +417,15 @@ export function TimelineGrid({
   const heightPx = Math.round(vertical.totalHeightPx)
   const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX)
 
+  // The geometry object handed upward is created once and never replaced -
+  // see the onGeometry prop. What changes every render is this ref, which it
+  // reads through. Assigning a ref during render is a mutation, and it is the
+  // right one here: nothing subscribes to it, it is only ever read from a
+  // pointer handler that runs long after this render committed, and the
+  // alternative - publishing a fresh closure on every layout - would mean the
+  // parent re-subscribing on every tick of the clock.
+  layoutRef.current = { vertical, window }
+
   // Only ever true against today's own window - see the `isToday` prop's
   // own doc comment. A day whose anchors are entirely in the past or
   // entirely in the future draws no line, the same honesty rule the rest
@@ -376,7 +449,7 @@ export function TimelineGrid({
   return (
     <div id={id} className="timeline-grid-wrap" ref={wrapRef} tabIndex={-1}>
       <div className="timeline-grid-scroll">
-        <div className="timeline-grid-layers" style={{ height: `${heightPx}px` }}>
+        <div className="timeline-grid-layers" ref={layersRef} style={{ height: `${heightPx}px` }}>
           <div className="timeline-grid" aria-hidden="true">
             {/* The sleep window, greyed rather than cropped away - see
                 docs/OPEN-QUESTIONS.md's old entry on the fixed waking window
@@ -493,6 +566,15 @@ export function TimelineGrid({
                   onPointerDown={draggable ? e => onAnchorPointerDown!(anchor.id, e) : undefined}
                 >
                   <span className="timeline-anchor-title">{anchor.title}</span>
+                  {/* The grab strip, on a sized anchor only: an unsized one is
+                      not drawn at its real length, so pulling its edge would
+                      be editing a number that is not on screen. */}
+                  {draggable && anchor.sized && onAnchorResizePointerDown && (
+                    <span
+                      className="timeline-anchor-resize"
+                      onPointerDown={e => onAnchorResizePointerDown(anchor.id, e)}
+                    />
+                  )}
                   {!compact && (
                     <span className="timeline-anchor-time">
                       {anchor.sized

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
-import { actions, useAppData } from '../../lib/store'
+import { actions, getData, useAppData } from '../../lib/store'
 import { isPushable } from '../../lib/pushRules'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { isFirstRun } from '../../lib/onboarding'
@@ -9,9 +9,9 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, parseMinutesInput } from './capacity'
-import { currentMinutes, formatClock } from './timelineLayout'
-import { TimelineGrid } from './TimelineGrid'
+import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, parseMinutesInput, timeToMinutes } from './capacity'
+import { currentMinutes, formatClock, snapToStep, SNAP_MINUTES } from './timelineLayout'
+import { TimelineGrid, type GridGeometry } from './TimelineGrid'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
@@ -19,7 +19,7 @@ import { TaskGapOffers } from './TaskGapOffers'
 import { FocusView } from './FocusView'
 import { resolveDrop, type DropTarget } from './dragDrop'
 import { useIsWide } from '../../lib/viewport'
-import { CATEGORIES, DEFAULT_CATEGORY } from '../../lib/categories'
+import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel } from '../../lib/categories'
 import type { CategoryId } from '../../lib/categories'
 import { MiniCalendar } from './MiniCalendar'
 import { TemplateRail } from './TemplateRail'
@@ -53,6 +53,18 @@ const MIN_DRAG_DISTANCE_PX = 8
  * styles.css; if the two ever disagree, the shorter one is what is seen.
  */
 const DONE_LEAVE_MS = 420
+
+/**
+ * How long the undo offer stays on screen after a block is dragged or
+ * resized. Five seconds is long enough to notice a mistake and reach for it,
+ * short enough that it is gone before it becomes furniture. It dismisses
+ * itself rather than waiting to be closed: a bar that needs dismissing is a
+ * second thing to do after the thing you were already doing.
+ */
+const UNDO_MS = 5000
+
+/** The shortest a task can be pulled down to. One snap step - see SNAP_MINUTES. */
+const MIN_TASK_MINUTES = SNAP_MINUTES
 
 /**
  * How often the header's clock and the "what is happening now" mark are
@@ -124,6 +136,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // block and its card can never disagree about which task is current. Only
   // ever on today: "now" has no honest position on a day in the past or the
   // future - the same rule the grid's own time indicator already follows.
+  // Re-parsed on every keystroke. Cheap - one regex pass over a short string -
+  // and the alternative (parsing only on Enter) is what the chips exist to fix.
+  const draft = parseQuickAdd(input)
+
   const runningTask = isToday ? findActiveTask(day?.tasks ?? [], nowMinutes) : undefined
   const runningLeft = runningTask ? minutesLeft(runningTask, nowMinutes) : undefined
 
@@ -164,6 +180,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     const parsed = parseQuickAdd(input)
     if (!parsed) return
     actions.addTask(date, parsed.title, parsed.time, newCategory)
+    if (parsed.minutes !== undefined) {
+      const added = getData().days[date]?.tasks.at(-1)
+      if (added) actions.setTaskMinutes(date, added.id, parsed.minutes)
+    }
     setInput('')
     clearDraft()
   }
@@ -253,6 +273,22 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // pointerup at the same spot - would resolve to the tray target and
   // un-anchor the task with no actual drag having happened.
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
+  // What kind of drag is running, and what it needs to compute a new value.
+  // 'move' carries the distance from the block's own top edge to where it was
+  // grabbed, so the block follows the pointer instead of jumping its top to
+  // it; 'resize' carries the task's start, since the new length is measured
+  // from there. Both live in a ref for the same reason dragRef does - the
+  // document listener has to read them synchronously without being
+  // re-subscribed on every render.
+  const dragKindRef = useRef<'move' | 'resize' | null>(null)
+  const dragGrabRef = useRef<{ offsetPx: number; startMinutes: number }>({ offsetPx: 0, startMinutes: 0 })
+  const geometryRef = useRef<GridGeometry | null>(null)
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // The one reversible thing most recently done to a block, and the sentence
+  // that describes it. Only ever one: an undo stack for a gesture this
+  // forgiving is more machinery than the mistake is worth, and a second level
+  // of undo is a thing nobody finds anyway.
+  const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [dragAnnouncement, setDragAnnouncement] = useState('')
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
@@ -274,17 +310,97 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   function endDrag() {
     dragRef.current = null
     dragStartRef.current = null
+    dragKindRef.current = null
     setDraggingTaskId(null)
   }
 
-  function startDrag(taskId: string, e: React.PointerEvent) {
+  /**
+   * Arms an undo for something already committed, and starts its own
+   * countdown. Replacing an offer that is still showing is deliberate: the
+   * newest mistake is the one somebody is looking at, and stacking two bars
+   * would cover the thing they just changed.
+   */
+  function offerUndo(label: string, restore: () => void) {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    setUndo({ label, restore })
+    undoTimerRef.current = setTimeout(() => setUndo(null), UNDO_MS)
+  }
+
+  function dismissUndo() {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+    undoTimerRef.current = null
+    setUndo(null)
+  }
+
+  useEffect(() => () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
+  }, [])
+
+  function beginPointerDrag(taskId: string, kind: 'move' | 'resize', e: React.PointerEvent) {
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task?.time) return
+    // Release the capture the browser takes on pointerdown so it keeps
+    // delivering events to whatever is actually under the finger - the same
+    // technique CalendarView established for touch drag in this repo.
     if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
     e.preventDefault()
+    e.stopPropagation()
+    const startMinutes = timeToMinutes(task.time)
     dragRef.current = taskId
+    dragKindRef.current = kind
     dragStartRef.current = { x: e.clientX, y: e.clientY }
+    dragGrabRef.current = {
+      offsetPx: e.clientY - (geometryRef.current?.clientYAt(startMinutes) ?? e.clientY),
+      startMinutes,
+    }
     setDraggingTaskId(taskId)
+  }
+
+  function startDrag(taskId: string, e: React.PointerEvent) {
+    beginPointerDrag(taskId, 'move', e)
+  }
+
+  function startResize(taskId: string, e: React.PointerEvent) {
+    beginPointerDrag(taskId, 'resize', e)
+  }
+
+  /**
+   * Commits the end of a move or a resize, and arms its undo. Returns true
+   * when it actually changed something, so the caller knows not to also run
+   * the tray path.
+   *
+   * Both gestures snap - see SNAP_MINUTES - and both refuse a no-op: dropping
+   * a block back where it started should feel like nothing happened, not like
+   * an edit that happens to have the same value, and should certainly not
+   * offer to undo itself.
+   */
+  function commitPointerDrag(taskId: string, kind: 'move' | 'resize', clientY: number): boolean {
+    const geometry = geometryRef.current
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!geometry || !task?.time) return false
+
+    if (kind === 'move') {
+      const next = formatClock(Math.max(0, snapToStep(geometry.minutesAtClientY(clientY - dragGrabRef.current.offsetPx))))
+      if (next === task.time) return false
+      const previous = task.time
+      if (!actions.reshapeTask(date, taskId, { time: next })) return false
+      setDragAnnouncement(`${task.title} moved to ${next}.`)
+      offerUndo(`${task.title} moved to ${next}`, () => actions.reshapeTask(date, taskId, { time: previous }))
+      return true
+    }
+
+    const next = Math.max(MIN_TASK_MINUTES, snapToStep(geometry.minutesAtClientY(clientY) - dragGrabRef.current.startMinutes))
+    if (next === task.minutes) return false
+    const previous = task.minutes
+    if (!actions.reshapeTask(date, taskId, { minutes: next })) return false
+    setDragAnnouncement(`${task.title} is now ${formatDuration(next)}.`)
+    offerUndo(
+      `${task.title} resized to ${formatDuration(next)}`,
+      () => actions.reshapeTask(date, taskId, { minutes: previous ?? next }),
+    )
+    return true
   }
 
   function targetAt(clientX: number, clientY: number): DropTarget {
@@ -309,10 +425,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       const taskId = dragRef.current
       const start = dragStartRef.current
       const movedEnough = !start || Math.hypot(e.clientX - start.x, e.clientY - start.y) >= MIN_DRAG_DISTANCE_PX
+      const kind = dragKindRef.current ?? 'move'
       const target = movedEnough ? targetAt(e.clientX, e.clientY) : null
+      // The tray wins wherever the release actually lands on it: dropping a
+      // block back into the list means "this has no time any more", which is
+      // a different intention from moving it, and the two must not both fire.
       const outcome = resolveDrop(day?.tasks ?? [], taskId, target)
       endDrag()
-      applyOutcome(outcome)
+      if (outcome.action === 'unanchor') {
+        applyOutcome(outcome)
+        return
+      }
+      if (movedEnough) commitPointerDrag(taskId, kind, e.clientY)
     }
     function handleCancel() {
       // A drag that goes nowhere - the gesture was cancelled by the
@@ -408,12 +532,31 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const dayLayoutFocus = data.settings.dayLayoutFocus
   const showDayPane = !isWide || dayLayoutFocus !== 'tasks'
   const showTaskPane = !isWide || dayLayoutFocus !== 'calendar'
-  const dayViewClassName = ['day-view', isWide && dayLayoutFocus !== 'both' ? `focus-${dayLayoutFocus}` : '']
+  // Which of the three kinds of day this is. A day in the past is a record
+  // and a day in the future is a plan, and neither should read like today:
+  // the past has nothing left to hurry, and the future has no "now" to be
+  // late against. Only a class each, so the difference is entirely in tone -
+  // every control still works, because a day you cannot edit is a day you
+  // cannot fix.
+  const isPast = date < todayKey()
+  const isFuture = date > todayKey()
+  const dayViewClassName = [
+    'day-view',
+    isWide && dayLayoutFocus !== 'both' ? `focus-${dayLayoutFocus}` : '',
+    isPast ? 'day-past' : '',
+    isFuture ? 'day-future' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 
+  // Everything planned is finished. Worth saying in the header, because by
+  // then the task column is showing the cleared state and the timeline is
+  // fully drained - and without a word up here the day reads as empty rather
+  // than as finished, which is the one distinction the whole app turns on.
+  const dayCleared = score.planned && score.done === score.total
+
   return (
-    <section className={dayViewClassName} data-tray-zone>
+    <section className={dayViewClassName}>
       {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted
           only when useIsWide() is true, regardless of dayLayoutFocus - the
           rail is not part of what that control redistributes, see its own
@@ -474,15 +617,32 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         {isToday && (
           <div className="day-now">
             <span className="day-now-clock">{formatClock(nowMinutes)}</span>
-            {runningTask && (
+            {dayCleared ? (
               <>
                 <span className="day-now-sep" aria-hidden="true" />
-                <span className="day-now-task">{runningTask.title}</span>
-                {runningLeft !== undefined && (
-                  <span className="day-now-left">{formatDuration(runningLeft)} left</span>
-                )}
+                <span className="day-now-done">Day cleared</span>
               </>
+            ) : (
+              runningTask && (
+                <>
+                  <span className="day-now-sep" aria-hidden="true" />
+                  <span className="day-now-task">{runningTask.title}</span>
+                  {runningLeft !== undefined && (
+                    <span className="day-now-left">{formatDuration(runningLeft)} left</span>
+                  )}
+                </>
+              )
             )}
+          </div>
+        )}
+
+        {/* A day that is not today says which way it is, in one word, where
+            the clock would be. Without it the header is identical to today's
+            and the only thing distinguishing them is a date somebody has to
+            read and compare. */}
+        {!isToday && (
+          <div className="day-now">
+            <span className="day-when">{isPast ? 'Past' : 'Ahead'}</span>
           </div>
         )}
 
@@ -609,6 +769,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             templateColor={template?.color}
             onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
             onAnchorPointerDown={(taskId, e) => startDrag(taskId, e)}
+            onAnchorResizePointerDown={(taskId, e) => startResize(taskId, e)}
+            onGeometry={geometry => { geometryRef.current = geometry }}
             draggingTaskId={draggingTaskId}
             activeTaskId={runningTask?.id}
             isToday={isToday}
@@ -619,6 +781,28 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         )}
 
       </div>
+      )}
+
+      {/* One reversible change, offered back for five seconds - see offerUndo.
+          Fixed to the bottom of the window rather than placed in the layout,
+          because what it undoes could have happened anywhere on the grid and
+          the offer has to be findable without hunting for it. Its own text is
+          announced by the live region below, so a screen reader hears what
+          changed whether or not the bar is looked at. */}
+      {undo && (
+        <div className="undo-toast" role="status">
+          <span className="undo-toast-text">{undo.label}</span>
+          <button
+            type="button"
+            className="undo-toast-button"
+            onClick={() => {
+              undo.restore()
+              dismissUndo()
+            }}
+          >
+            Undo
+          </button>
+        </div>
       )}
 
       {/* Announces a drag-driven un-anchor, or a placement or removal made
@@ -644,7 +828,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           its own comment above); only step 4's Calendar/Tasks focus, at a
           wide viewport, ever unmounts this. */}
       {showTaskPane && (
-      <div className="task-pane">
+      // data-tray-zone marks where a block dropped from the grid means "this
+      // has no time any more". It used to sit on the whole day view, which
+      // made every square pixel of the screen the tray - fine while releasing
+      // a block was the only thing a drag could do, and wrong the moment
+      // dragging one could also move it in time. It is the task column, which
+      // is what the gesture was always described as: drag it back to the list.
+      <div className="task-pane" data-tray-zone>
         <div className="quick-add-block">
           <input
             className="quick-add"
@@ -653,6 +843,29 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             onChange={e => handleInputChange(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
+          {/* What the line was understood as, live, before Enter is pressed.
+              Quick-add accepts a leading time and a trailing duration inside
+              ordinary prose, which is fast to type and impossible to be sure
+              of - "Read 20 pages" must keep its 20 and "Read 20 min" must not.
+              Showing the parse removes the doubt at the moment it exists,
+              which is cheaper than an error afterwards. Nothing here is a
+              control: it is the input describing itself. */}
+          {draft && (
+            <div className="quick-add-chips" aria-live="polite">
+              {draft.time && <span className="quick-add-chip is-time">{draft.time}</span>}
+              {draft.minutes !== undefined && (
+                <span className="quick-add-chip is-size">{formatDuration(draft.minutes)}</span>
+              )}
+              <span
+                className="quick-add-chip is-cat"
+                style={{ ['--cat' as string]: categoryColor(newCategory) } as React.CSSProperties}
+              >
+                {categoryLabel(newCategory)}
+              </span>
+              <span className="quick-add-chip-title">{draft.title}</span>
+            </div>
+          )}
+
           {/* Which colour the next task gets, chosen before typing rather than
               asked about afterward - six swatches is one glance and one tap,
               where a follow-up dialog would be a second decision at exactly
@@ -691,9 +904,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         {tasks.length === 0 && !firstRun && (
           <div className="empty-state">
             <span className="empty-state-mark" aria-hidden="true" />
-            <p className="empty-state-title">Nothing planned yet</p>
+            <p className="empty-state-title">{isPast ? 'Nothing planned' : 'Nothing planned yet'}</p>
             <p className="empty-state-note">
-              Stamp a template from the rail or the calendar, or type the first thing above.
+              {isPast
+                ? 'This day went by without a plan. That is allowed.'
+                : 'Tap a template on the left to lay out the whole day, or type the first thing above.'}
             </p>
           </div>
         )}

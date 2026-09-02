@@ -403,7 +403,7 @@ export function computeVerticalLayout(
     /** Floor for the real, interior gap between two clusters. 0 when the day draws no gaps at all. */
     gapFloorPx: number
   },
-): { totalHeightPx: number; topPx: (minutes: number) => number } {
+): { totalHeightPx: number; topPx: (minutes: number) => number; minutesAt: (px: number) => number } {
   const clusters = buildAnchorClusters(anchors, opts.sizedAnchorFloorPx, opts.unsizedAnchorFloorPx)
 
   const segments: Array<{ start: number; end: number; floorPx: number }> = []
@@ -441,7 +441,48 @@ export function computeVerticalLayout(
     return breakpoints[breakpoints.length - 1].px
   }
 
-  return { totalHeightPx: px, topPx }
+  /**
+   * The inverse of `topPx` - what clock time a pixel offset lands on, which
+   * is what turns a pointer position into a time while a block is being
+   * dragged or its bottom edge pulled.
+   *
+   * Walks the same breakpoints in the same order, so a round trip through
+   * both is exact everywhere the map is proportional. It is deliberately not
+   * exact inside a segment that was stretched to its floor: several minutes
+   * there share the same handful of pixels, so the inverse can only pick one
+   * of them. That is a property of having floors at all, not a bug in the
+   * arithmetic - and it lands somewhere inside the right segment, which is
+   * all a drag needs before snapping.
+   */
+  function minutesAt(target: number): number {
+    if (target <= breakpoints[0].px) return breakpoints[0].real
+    for (let i = 1; i < breakpoints.length; i++) {
+      const prev = breakpoints[i - 1]
+      const cur = breakpoints[i]
+      if (target <= cur.px) {
+        const span = cur.px - prev.px
+        if (span <= 0) return prev.real
+        return prev.real + ((target - prev.px) / span) * (cur.real - prev.real)
+      }
+    }
+    return breakpoints[breakpoints.length - 1].real
+  }
+
+  return { totalHeightPx: px, topPx, minutesAt }
+}
+
+/**
+ * How far apart two positions a dragged block can be dropped at are. Five
+ * minutes, because that is the granularity a plan is actually made at -
+ * nobody means 14:23, and letting a drag produce it turns a tidy day into a
+ * list of times that look like measurements. Snapping also makes the gesture
+ * forgiving: the block lands where it was clearly aimed rather than exactly
+ * where the finger stopped.
+ */
+export const SNAP_MINUTES = 5
+
+export function snapToStep(minutes: number, step = SNAP_MINUTES): number {
+  return Math.round(minutes / step) * step
 }
 
 /**

@@ -691,3 +691,60 @@ check goes wrong - and computes the real ratio. Twenty-five text-on-surface pair
 at or above AA. Two failures it caught: a finished block's title at 4.3:1 in Light, and the Sleep band
 label at 4.14:1. Both are fixed rather than excused - being done is not a licence to make text
 unreadable, only quiet.
+
+---
+
+## Making it feel like something: motion, feedback, and the three kinds of day
+
+**One curve, two durations, everywhere.** Every control in the app now answers the pointer at the same
+speed on the same easing, taken from the motion tokens. That single fact is most of what separates
+software that feels like one piece from software that feels like several - and it is entirely invisible
+until it is missing. Nothing animated here touches layout: transform, opacity, colour and shadow only, so
+hovering across a busy grid never reflows anything and never moves the block being aimed at.
+
+**The checkmark is drawn, not faded in.** Two registered custom properties animate the tick's two strokes
+in sequence - the short one, then the long one - which is the order a hand draws a tick in, and is why it
+reads as a mark being made rather than an image appearing. `@property` is not universal, and where it is
+missing the properties are not animatable, so the keyframe cannot interpolate and the tick would never
+appear at all. That fails worse than not animating, so a feature query hands those browsers the finished
+mark statically.
+
+**Blocks can be moved and resized on the grid.** Dragging a block moves it in time; pulling the strip
+along its bottom edge changes how long it is. Both snap to five minutes, because that is the granularity
+a plan is actually made at - nobody means 14:23, and letting a drag produce it turns a tidy day into a
+list of times that look like measurements. Snapping also makes the gesture forgiving: the block lands
+where it was clearly aimed rather than exactly where the finger stopped.
+
+The grid publishes its own pixel-to-clock mapping upward rather than the drag guessing at one. `DayView`
+owns the gesture - it already has the document-level listeners, the Escape handling and the tray
+detection - but the mapping depends on the density the grid measured and the piecewise floors it laid out
+with, so it comes from the component that actually drew it. The mapping object is created once and reads
+through a ref, so the parent never re-subscribes as the clock ticks.
+
+**`data-tray-zone` moved, and that was a real bug.** It sat on the whole day view, which made every pixel
+of the screen the tray. That was harmless while releasing a block could only ever un-anchor it, and wrong
+the instant a drag could also move it: the first move committed and was then immediately overridden by an
+un-anchor, because the drop point was inside the tray by definition. It is now the task column, which is
+what the gesture was always described as - drag it back to the list.
+
+**One undo, for five seconds.** Long enough to notice a mistake and reach for it, short enough to be gone
+before it becomes furniture, and it dismisses itself: a bar that needs dismissing is a second thing to do
+after the thing you were already doing. Only ever one offer - an undo stack for a gesture this forgiving
+is more machinery than the mistake is worth, and a second level is a thing nobody finds anyway.
+
+**Quick-add shows its work.** The field accepts a leading time and a trailing duration inside ordinary
+prose, which is fast to type and impossible to be sure of. The parse now runs on every keystroke and the
+result appears as chips under the input, so nobody has to press Enter to find out how the line was read.
+The duration is anchored to the end of the string for a specific reason: "Read 20 pages" is a real task,
+and reading its 20 as a length would be worse than not supporting durations at all.
+
+**A day has three tenses and they no longer look identical.** Today has a clock, a now-line and a
+countdown. A past day is a record: the same layout at a lower voice, no rollover button, and an empty one
+says "this day went by without a plan - that is allowed" rather than inviting a plan for a day that is
+over. A future day is a plan: no now-line, nothing counting down, and its free gaps read as available
+rather than as missed. Nothing is ever disabled on any of them - a day you cannot fix is a day whose
+mistakes are permanent, and the entire push mechanic depends on being able to reach back.
+
+**And the day that is finished says so.** When everything planned is done, the header replaces the running
+task with "Day cleared". Without it, a finished day and a day nobody ever planned look the same in the one
+place people glance at first, which is the single distinction this whole app turns on.
