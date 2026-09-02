@@ -50,7 +50,13 @@ export interface Category {
  * unremarkable part of the day) without borrowing a meaning that is taken.
  */
 export const CATEGORIES: Category[] = [
-  { id: 'core', label: 'Focus', color: 'var(--cat-core)' },
+  // Labelled "Deep work" rather than "Focus": Focus is also the name of a
+  // running state in this app, with a bar, a button and a keyboard shortcut,
+  // and a card that said "Focus" in its meta line while a Focus session ran
+  // above it meant two different things at once. The id is untouched - every
+  // stored task and every template block holds 'core', and none of them had
+  // to change for this.
+  { id: 'core', label: 'Deep work', color: 'var(--cat-core)' },
   { id: 'routine', label: 'Routine', color: 'var(--cat-routine)' },
   { id: 'health', label: 'Health', color: 'var(--cat-health)' },
   { id: 'meal', label: 'Meals', color: 'var(--cat-meal)' },

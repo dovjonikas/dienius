@@ -1159,13 +1159,22 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   font-size: var(--t-sm);
 }
 
+/* The same shape the rail's own chips and the calendar's stamp bar use -
+   this was the last filled pastel pill in the app, and having one object
+   drawn two ways in two places is exactly the seam this pass is for. Not a
+   button here: on the header it is a label saying which template today came
+   from, and there is nothing to press. */
 .day-template {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
   margin-left: var(--s2);
-  padding: 2px 10px;
+  padding: 2px var(--s3);
+  border: 1px solid color-mix(in srgb, var(--chip, var(--accent)) 45%, var(--border));
   border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--chip, var(--accent)) 12%, var(--surface));
+  color: var(--text);
   font-size: var(--t-sm);
-  color: rgba(0, 0, 0, 0.65);
 }
 
 /* The capacity line - see docs/TIMELINE.md section 8. Plain body text at
@@ -6881,3 +6890,53 @@ button.danger:focus-visible {
 }
 
 .shortcuts-note { margin: 0; color: var(--faint); font-size: var(--t-sm); line-height: 1.5; }
+
+/* ------------------------------------------------------------------------
+   Touch targets, measured rather than assumed.
+
+   A phone pass over every visible control found five under 44px: the six
+   category swatches (18px, and 24 when selected), the size button on a task
+   card (51x25), the clock button in the header (36), the card's own actions
+   button (40 wide), and the quick-add field (39 tall).
+
+   None of them can simply grow - an 18px swatch made 44 would be a row of
+   six enormous dots, and the whole point of that row is that it is quiet.
+   So the mark stays the size it is and the target grows underneath it, as a
+   transparent pseudo-element centred on the control. Only on a coarse
+   pointer: a mouse hits 18px perfectly well, and on a desktop these
+   overlays would start eating clicks meant for their neighbours.
+   ------------------------------------------------------------------------ */
+@media (pointer: coarse) {
+  .category-swatch,
+  .task-size,
+  .clock-button,
+  .library-step,
+  .library-item-remove,
+  .subtask-remove {
+    position: relative;
+  }
+
+  .category-swatch::after,
+  .task-size::after,
+  .clock-button::after,
+  .library-step::after,
+  .library-item-remove::after,
+  .subtask-remove::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* The swatch row spaces out to match, so six 44px targets do not overlap
+     each other - an overlay that steals its neighbour's taps is worse than
+     the small target it replaced. */
+  .category-picker { gap: 14px; }
+
+  .task-menu-button { width: 44px; }
+
+  .quick-add { min-height: 44px; }
+}

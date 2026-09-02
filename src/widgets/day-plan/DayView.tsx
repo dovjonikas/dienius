@@ -648,7 +648,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
             {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
             {template && (
-              <span className="day-template" style={{ background: template.color }}>
+              <span
+                className="day-template"
+                style={{ ['--chip' as string]: template.color } as React.CSSProperties}
+              >
+                <span className="template-chip-dot" aria-hidden="true" />
                 {template.name}
               </span>
             )}
