@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
 import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall } from '../lib/install'
+import { clearSnapshots, listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type SnapshotMeta } from '../lib/snapshots'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
+import { addDays, todayKey } from '../lib/dates'
 import { clearClockTools } from '../lib/clockTools'
 import { findPreset } from '../lib/themes'
 
@@ -19,6 +21,22 @@ type SectionId = 'general' | 'sleep' | 'week' | 'nudges' | 'rules' | 'appearance
  * numbering (0 = Sunday), so nothing anywhere has to translate between a
  * label and a date - see `weekdayOf`.
  */
+/**
+ * "Today", "Yesterday", or the day and date - a snapshot list is read as
+ * "how far back does this go", and two words answer that faster than a date
+ * does for the two entries anybody actually reaches for.
+ */
+function formatSnapshotDate(snap: { date: string }): string {
+  const today = todayKey()
+  if (snap.date === today) return 'Today'
+  if (snap.date === addDays(today, -1)) return 'Yesterday'
+  return new Date(`${snap.date}T00:00:00`).toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 const WEEKDAYS: { value: number; label: string; full: string }[] = [
   { value: 1, label: 'Mon', full: 'Monday' },
   { value: 2, label: 'Tue', full: 'Tuesday' },
@@ -54,6 +72,22 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
     setInstallable(canInstall())
     setInstalled(isInstalled())
   }), [])
+
+  // Read once, when Settings opens. A list that refreshes itself would be
+  // watching a store that changes once a day.
+  const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([])
+  const [restoring, setRestoring] = useState<string | null>(null)
+
+  useEffect(() => {
+    void listSnapshots().then(setSnapshots)
+  }, [])
+
+  async function restoreSnapshot(date: string) {
+    const data = await readSnapshot(date)
+    if (!data) return
+    actions.resetForTests(data)
+    setRestoring(null)
+  }
 
   async function handleInstall() {
     await promptInstall()
@@ -117,6 +151,12 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
       // so "erase all data" has to clear that too, or a running timer would
       // outlive the erase and reappear on the fresh install.
       clearClockTools()
+      // The daily snapshots live in IndexedDB, under their own database -
+      // same reasoning. A copy of everything left behind by "remove
+      // everything on this device" is not a snapshot, it is a surprise.
+      // Not awaited: the reload below is the point, and a delete that has
+      // not finished by then finishes without anybody watching.
+      void clearSnapshots()
       window.location.reload()
     } else {
       setConfirmReset(true)
@@ -231,6 +271,45 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* A week of daily snapshots, in IndexedDB - see lib/snapshots.ts.
+                Not a replacement for the export above and not presented as
+                one: this covers the mistake somebody did not see coming,
+                which is the case a manual backup structurally cannot. */}
+            <div className="setting-block">
+              <div className="setting-label">
+                <span className="setting-name">Restore from a snapshot</span>
+                <span className="setting-desc">
+                  {snapshots.length === 0
+                    ? `A copy of everything is kept once a day, on this device, and the last ${SNAPSHOTS_KEPT} are held. The first one is taken today; there is nothing to restore yet.`
+                    : `Taken automatically, once a day, on this device. The last ${SNAPSHOTS_KEPT} are kept. Restoring replaces everything here with that day's copy.`}
+                </span>
+              </div>
+              {snapshots.length > 0 && (
+                <ul className="snapshot-list">
+                  {snapshots.map(snap => (
+                    <li key={snap.date}>
+                      <span className="snapshot-when">{formatSnapshotDate(snap)}</span>
+                      <span className="snapshot-size">
+                        {snap.taskCount} {snap.taskCount === 1 ? 'task' : 'tasks'}, {snap.templateCount}{' '}
+                        {snap.templateCount === 1 ? 'template' : 'templates'}
+                      </span>
+                      <button
+                        type="button"
+                        className={restoring === snap.date ? 'btn-danger is-armed' : 'btn-secondary'}
+                        onBlur={() => setRestoring(current => (current === snap.date ? null : current))}
+                        onClick={() => {
+                          if (restoring === snap.date) void restoreSnapshot(snap.date)
+                          else setRestoring(snap.date)
+                        }}
+                      >
+                        {restoring === snap.date ? 'Replace everything?' : 'Restore'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {/* The one place the keyboard layer is discoverable without

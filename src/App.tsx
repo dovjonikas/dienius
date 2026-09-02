@@ -5,6 +5,7 @@ import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme
 import { syncThemeColorMeta } from './lib/theme-color'
 import { syncManifestTheme } from './lib/manifest-sync'
 import { UpdateNotice } from './UpdateNotice'
+import { UndoToast } from './widgets/UndoToast'
 import { ClockPopover } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
 import { IntervalReminder } from './widgets/clock/IntervalReminder'
@@ -12,7 +13,8 @@ import { TaskReminder } from './widgets/clock/TaskReminder'
 import { FocusBar } from './widgets/clock/FocusBar'
 import { FocusView } from './widgets/day-plan/FocusView'
 import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
-import { actions as storeActions } from './lib/store'
+import { actions as storeActions, getData } from './lib/store'
+import { snapshotToday } from './lib/snapshots'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -86,6 +88,13 @@ export function App() {
   // whole reason those scales exist as tokens: changing how spacious or how
   // large the entire app is costs six declarations, and nothing anywhere else
   // has to know either setting exists.
+  // One snapshot a day, on first open - see lib/snapshots.ts. Fired once
+  // per mount and never awaited: it is a courtesy against a bad five
+  // minutes, and nothing about the app may wait on IndexedDB to answer.
+  useEffect(() => {
+    void snapshotToday(getData(), todayKey())
+  }, [])
+
   useEffect(() => {
     document.documentElement.dataset.density = data.settings.density
     document.documentElement.dataset.textScale = data.settings.textScale
@@ -328,6 +337,9 @@ export function App() {
           between tabs - a reminder that stops when you open Settings is not
           a reminder. */}
       <TaskReminder date={selectedDate} />
+      {/* One undo offer, app-wide - see lib/undo.ts. At the root because
+          what it undoes could have happened on any tab. */}
+      <UndoToast />
       <UpdateNotice />
     </div>
   )

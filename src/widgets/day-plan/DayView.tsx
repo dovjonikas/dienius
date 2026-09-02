@@ -18,6 +18,7 @@ import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
 import { YesterdayBanner } from './YesterdayBanner'
+import { offerUndo } from '../../lib/undo'
 import { TaskGapOffers } from './TaskGapOffers'
 import { clockTools } from '../../lib/clockTools'
 import { resolveDrop, type DropTarget } from './dragDrop'
@@ -57,15 +58,6 @@ const MIN_DRAG_DISTANCE_PX = 8
  * styles.css; if the two ever disagree, the shorter one is what is seen.
  */
 const DONE_LEAVE_MS = 420
-
-/**
- * How long the undo offer stays on screen after a block is dragged or
- * resized. Five seconds is long enough to notice a mistake and reach for it,
- * short enough that it is gone before it becomes furniture. It dismisses
- * itself rather than waiting to be closed: a bar that needs dismissing is a
- * second thing to do after the thing you were already doing.
- */
-const UNDO_MS = 5000
 
 /**
  * How close bedtime has to be before the header mentions it at all. Four
@@ -314,12 +306,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const dragKindRef = useRef<'move' | 'resize' | null>(null)
   const dragGrabRef = useRef<{ offsetPx: number; startMinutes: number }>({ offsetPx: 0, startMinutes: 0 })
   const geometryRef = useRef<GridGeometry | null>(null)
-  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // The one reversible thing most recently done to a block, and the sentence
-  // that describes it. Only ever one: an undo stack for a gesture this
-  // forgiving is more machinery than the mistake is worth, and a second level
-  // of undo is a thing nobody finds anyway.
-  const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [dragAnnouncement, setDragAnnouncement] = useState('')
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
@@ -360,26 +346,21 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   }
 
   /**
-   * Arms an undo for something already committed, and starts its own
-   * countdown. Replacing an offer that is still showing is deliberate: the
-   * newest mistake is the one somebody is looking at, and stacking two bars
-   * would cover the thing they just changed.
+   * Deleting a task, with the day it was on kept for five seconds.
+   *
+   * The whole day rather than the one task, because a task does not exist
+   * apart from its position in a list, and because deleting a repeat instance
+   * also writes a skip onto the day - putting the task back without the skip
+   * would restore it and immediately re-delete it on the next open. Restoring
+   * the day restores both, exactly.
    */
-  function offerUndo(label: string, restore: () => void) {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
-    setUndo({ label, restore })
-    undoTimerRef.current = setTimeout(() => setUndo(null), UNDO_MS)
+  function deleteWithUndo(taskId: string) {
+    const task = day?.tasks.find(t => t.id === taskId)
+    const before = day
+    actions.deleteTask(date, taskId)
+    if (!task || !before) return
+    offerUndo(`${task.title} deleted`, () => actions.replaceDay(date, before))
   }
-
-  function dismissUndo() {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
-    undoTimerRef.current = null
-    setUndo(null)
-  }
-
-  useEffect(() => () => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current)
-  }, [])
 
   function beginPointerDrag(taskId: string, kind: 'move' | 'resize', e: React.PointerEvent) {
     const task = day?.tasks.find(t => t.id === taskId)
@@ -905,28 +886,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       </div>
       )}
 
-      {/* One reversible change, offered back for five seconds - see offerUndo.
-          Fixed to the bottom of the window rather than placed in the layout,
-          because what it undoes could have happened anywhere on the grid and
-          the offer has to be findable without hunting for it. Its own text is
-          announced by the live region below, so a screen reader hears what
-          changed whether or not the bar is looked at. */}
-      {undo && (
-        <div className="undo-toast" role="status">
-          <span className="undo-toast-text">{undo.label}</span>
-          <button
-            type="button"
-            className="undo-toast-button"
-            onClick={() => {
-              undo.restore()
-              dismissUndo()
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      )}
-
       {/* Announces a drag-driven un-anchor, or a placement or removal made
           through the actions menu, to screen reader users - the same way
           TimelineGrid.tsx's own live region already covers the tap-a-gap
@@ -1198,7 +1157,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           }}
           onPush={taskId => actions.pushTask(date, taskId)}
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
-          onDelete={taskId => actions.deleteTask(date, taskId)}
+          onDelete={taskId => deleteWithUndo(taskId)}
           onOpenDetails={() => setDetailTaskId(actionsSheetTask.id)}
           onClose={() => setActionsSheetTaskId(null)}
         />
@@ -1224,7 +1183,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           onToggleDone={() => handleToggleDone(contextTask.id, contextTask.done)}
           onToggleHighlight={() => actions.toggleTaskHighlight(date, contextTask.id)}
           onPush={() => actions.pushTask(date, contextTask.id)}
-          onDelete={() => actions.deleteTask(date, contextTask.id)}
+          onDelete={() => deleteWithUndo(contextTask.id)}
           onClose={() => setContextMenu(null)}
         />
       )}

@@ -7374,3 +7374,44 @@ button.danger:focus-visible {
   .palette-scrim { padding-top: max(32px, 6vh); }
   .palette-input { font-size: var(--t-input); }
 }
+
+/* The snapshot list in Settings. A row per day: when, what is in it, and
+   the two-tap restore - the same arming pattern every destructive control
+   in this app uses, because replacing everything is one. */
+.snapshot-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.snapshot-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+  padding: var(--s2) 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.snapshot-when { flex: 0 0 auto; color: var(--text); font-size: var(--t-sm); font-weight: 600; }
+.snapshot-size { flex: 1 1 auto; min-width: 0; color: var(--muted); font-size: var(--t-sm); }
+
+/* The undo toast gained a dismiss, now that it can be armed from anywhere
+   rather than only by a drag somebody was already watching. */
+.undo-toast-dismiss {
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.undo-toast-dismiss:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }

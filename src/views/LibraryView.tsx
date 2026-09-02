@@ -11,6 +11,7 @@ import {
 } from '../lib/library'
 import type { LibraryItem, LibraryList } from '../lib/types'
 import { useListReorder } from './useListReorder'
+import { offerUndo } from '../lib/undo'
 
 /**
  * The Library: lists of things worked through a unit at a time.
@@ -175,6 +176,13 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
     setDraft('')
   }
 
+  /** Removing an item, with the whole list kept for five seconds. */
+  function removeItem(itemId: string, title: string) {
+    const before = list
+    actions.deleteLibraryItem(list.id, itemId)
+    offerUndo(`${title} removed from ${list.name}`, () => actions.replaceLibraryList(before))
+  }
+
   return (
     <div className="library-list">
       <div className="library-list-head">
@@ -258,6 +266,7 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
             over={reorder.overIndex === index && reorder.draggingId !== null && reorder.draggingId !== item.id}
             onGripPointerDown={e => reorder.start(item.id, index, e)}
             onNudge={by => nudge(item.id, index, by)}
+            onRemove={() => removeItem(item.id, item.title)}
             onOpenDay={onOpenDay}
           />
         ))}
@@ -290,7 +299,7 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
                     type="button"
                     className="library-item-remove"
                     aria-label={`Remove ${item.title}`}
-                    onClick={() => actions.deleteLibraryItem(list.id, item.id)}
+                    onClick={() => removeItem(item.id, item.title)}
                   >
                     &times;
                   </button>
@@ -313,10 +322,11 @@ interface ItemRowProps {
   over: boolean
   onGripPointerDown: (e: React.PointerEvent) => void
   onNudge: (by: number) => void
+  onRemove: () => void
   onOpenDay?: (date: string) => void
 }
 
-function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge, onOpenDay }: ItemRowProps) {
+function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge, onRemove, onOpenDay }: ItemRowProps) {
   const [scheduling, setScheduling] = useState(false)
   const [already, setAlready] = useState<string | null>(null)
   const percent = progressPercent(item)
@@ -431,7 +441,7 @@ function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge
           type="button"
           className="library-item-remove"
           aria-label={`Remove ${item.title}`}
-          onClick={() => actions.deleteLibraryItem(list.id, item.id)}
+          onClick={onRemove}
         >
           &times;
         </button>

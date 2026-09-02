@@ -1,4 +1,5 @@
-import { actions, useAppData } from '../../lib/store'
+import { actions, getData, useAppData } from '../../lib/store'
+import { offerUndo } from '../../lib/undo'
 
 export interface TemplateRailProps {
   /** The day currently open in the day view - restamped on tap. */
@@ -22,6 +23,21 @@ export function TemplateRail({ date }: TemplateRailProps) {
   if (data.templates.length === 0) return null
   const currentTemplateId = data.days[date]?.templateId
 
+  /**
+   * Stamping is the one action here that can silently overwrite work: a day
+   * already half filled in is replaced by the template's own blocks. It has
+   * to be reversible, and the whole day is what has to come back - the blocks
+   * that arrived, the ones that were replaced, and the templateId that says
+   * where the day came from.
+   */
+  function stampWithUndo(templateId: string, name: string) {
+    const before = getData().days[date]
+    actions.stamp({ [date]: templateId })
+    offerUndo(`Stamped ${name}`, () =>
+      before ? actions.replaceDay(date, before) : actions.replaceDay(date, { date, tasks: [] }),
+    )
+  }
+
   return (
     <div className="template-rail">
       <h3>Templates</h3>
@@ -33,7 +49,7 @@ export function TemplateRail({ date }: TemplateRailProps) {
             className={t.id === currentTemplateId ? 'template-chip selected' : 'template-chip'}
             aria-pressed={t.id === currentTemplateId}
             style={{ ['--chip' as string]: t.color } as React.CSSProperties}
-            onClick={() => actions.stamp({ [date]: t.id })}
+            onClick={() => stampWithUndo(t.id, t.name)}
           >
             <span className="template-chip-dot" aria-hidden="true" />
             {t.name}

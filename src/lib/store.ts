@@ -186,6 +186,29 @@ export const actions = {
     return shouldStamp || added
   },
 
+  /**
+   * Puts a whole day back exactly as it was. The one thing undo needs that
+   * no ordinary action can express: a task does not exist apart from its
+   * position in a list, and deleting a repeat instance also writes a skip
+   * onto the day, so restoring the task without the skip would restore it
+   * and immediately re-delete it on the next open.
+   */
+  replaceDay(date: string, day: DayPlan): void {
+    commit(withDay(date, day))
+  },
+
+  /**
+   * Puts a whole library list back as it was, for the same reason
+   * `replaceDay` exists: an item's place in the order is part of what it is,
+   * and deleting one also clears the bindings on every task that pointed at
+   * it. Only the list is restored here - a task's binding is not, because a
+   * day already lived is not something an undo on another tab should reach
+   * back into.
+   */
+  replaceLibraryList(list: LibraryList): void {
+    commit(withLibrary(data.library.map(l => (l.id === list.id ? list : l))))
+  },
+
   setWeekdayTemplate(weekday: number, templateId: string | undefined): void {
     const next = { ...data.settings.weekdayTemplates }
     if (templateId) next[weekday] = templateId
