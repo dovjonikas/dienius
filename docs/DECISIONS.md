@@ -253,8 +253,8 @@ This is why "offer without installing" is not a contradiction with the ships-emp
 same decision applied one layer earlier: the rule was never "the user must build everything from
 nothing," it was "nothing exists until the user asks for it." A tap is asking. The three starters are
 themselves held to the same content bar the rest of the app's copy already keeps - a working day, a
-rest day, and a night shift are written as an actual person's day (specific titles, real times, a
-night shift that runs a genuine eight hours) rather than a "Task 1, Task 2" scaffold, because this is
+rest day, and an overnight shift are written as an actual person's day (specific titles, real
+times, a shift that runs a genuine eight hours) rather than a "Task 1, Task 2" scaffold, because this is
 what a brand new person will assume the app is for. `docs/RESEARCH-ADHD.md` section 12 rules out a
 guided multi-step flow and any coach marks or tour; nothing here is a flow. A person can ignore the
 offers entirely and start from quick-add exactly as before, or open Templates and build one from
@@ -439,22 +439,37 @@ full reasoning where the feature itself is documented; this is the short record 
   line and the timeline toggle already take elsewhere: a day with genuinely nothing to say says
   nothing, rather than manufacturing a placeholder.
 
-## The sleep window is explicit, greyed on the grid, and split by day type
+## Sleep is a named list of schedules, greyed on the grid, chosen per day
 
-The fixed 07:00-23:00 waking window (13:00-24:00 on a night day) in `capacity.ts` was never configured
-per day, but it was also never visible - hours outside it were simply absent from the timeline grid, so
-neither the free-time figure nor its own shape on screen said why. `Settings.sleepWindow` and
-`Settings.nightSleepWindow` replace the two hardcoded constants with two set-once fields, each a
-bedtime/wake-time pair, both defaulting to the exact inverse of the windows they replace - an existing
-install that never opens Settings computes and draws identically to before.
+The fixed 07:00-23:00 waking window in `capacity.ts` was never configured per day, but it was also
+never visible - hours outside it were simply absent from the timeline grid, so neither the free-time
+figure nor its own shape on screen said why. `Settings.sleepProfiles` replaces the hardcoded constants
+with a named list that is never empty: one schedule, a bedtime/wake-time pair, defaulting to the exact
+inverse of the window it replaces - an existing install that never opens Settings computes and draws
+identically to before.
 
-**Two windows, not one, because a day's own type already says which applies.** The alternative - one
-global sleep window used for every day - cannot represent a real night-shift worker's actual life: their
-daytime sleep hours are not a predictable offset from their ordinary night's sleep, they are a different
-schedule entirely, and only the owner can state it. `dayType` already exists precisely to carry this
-distinction; reading it here is not a new decision, the same reasoning `windowFor`'s original fixed
-`NIGHT_WINDOW` shift already rested on. What changed is that the night window is no longer a guess
-baked into the code - it is exactly as tunable as the ordinary one.
+**A list somebody writes, not a pair of slots the app decided on.** The first version of this setting
+shipped two fields: an ordinary window and a second one labelled "night shift", selected automatically
+by `dayType === 'night'`. Both halves of that were wrong. It assumed that everybody who works unusual
+hours works *nights*, and that everybody who works nights works the same ones - and it charged the
+concept to every single install, including the overwhelming majority who have one set of hours and will
+never have another. A list fixes both: most people see one schedule and never learn there could be a
+second, and the person who genuinely lives two lives names them and says which is which. The picker on
+the day header and in the template editor appears only once a second schedule exists, so until then the
+app never says the word "schedule" at all.
+
+**A day points at a schedule by id, and inherits its template's until it does.** `DayPlan.sleepProfileId`
+and `Template.sleepProfileId` are both optional and both mean "the first one" when absent, so nothing
+has to be backfilled. An id that names nothing - the schedule was deleted - resolves to the first
+schedule rather than throwing or emptying the day: see `sleepProfileWindow`. Deleting a schedule also
+clears it off every day and template that referenced it, so a day never sits on a dangling id waiting to
+be surprised by a later one that reuses it.
+
+**The migration only hands out a second schedule to somebody who was actually using one.** Every install
+that ever existed carries a `nightSleepWindow`, because it was a field rather than a choice. Carrying
+all of them forward would give a second schedule to people who never worked a night in their lives, so
+`migrateSleepProfiles` creates one only when that window was both changed from the shipped default *and*
+some template or day was actually typed as a night.
 
 **The grid greys the sleep window rather than cropping to it.** `TimelineGrid`'s own display window
 (anchor-buffered, independent of the capacity window - see `docs/TIMELINE.md` section 5's original

@@ -55,6 +55,8 @@ export interface Template {
   name: string
   color: string
   blocks: TemplateBlock[]
+  /** Which sleep schedule days stamped from this template use - see `SleepProfile`. */
+  sleepProfileId?: string
   /**
    * Absent means 'full' - a template saved before this field existed
    * loads and scores exactly as it always did.
@@ -149,6 +151,13 @@ export interface DayPlan {
    */
   templateId?: string
   /**
+   * Which sleep schedule this day is measured against, when it is not the
+   * default - see `SleepProfile`. A day inherits its template's choice at
+   * stamp time and can override it afterwards, because the day you actually
+   * had is the one that knows whether you slept normally.
+   */
+  sleepProfileId?: string
+  /**
    * Copied from the template's type at the moment of stamping, not looked
    * up live - so editing or deleting the template afterward does not
    * silently change how an already-stamped day is scored. Absent means
@@ -208,6 +217,27 @@ export interface ReminderSettings {
   text: string
 }
 
+/**
+ * One named sleep schedule. There is always at least one; the first in the
+ * list is the default and the only one most people will ever have.
+ *
+ * This replaces the pair of fixed windows the app used to carry - an ordinary
+ * one and a hardcoded "night shift" one. That pairing was wrong in both
+ * directions: it assumed everybody who works nights works the same nights,
+ * and it gave everybody who does not a setting they could never use. A list
+ * of named schedules says the true thing instead, which is that some people
+ * have one and some have several, and nobody but the owner knows which.
+ *
+ * Until there are two, nothing anywhere in the app mentions profiles at all -
+ * the day header and the template editor only offer a choice once there is
+ * genuinely a choice to make.
+ */
+export interface SleepProfile {
+  id: string
+  name: string
+  window: SleepWindow
+}
+
 export interface Settings {
   theme: ThemeState
   enabledWidgets: string[]
@@ -220,18 +250,13 @@ export interface Settings {
    * inverse of the fixed 07:00-23:00 window this setting replaces, so an
    * existing person who never opens Settings sees no change at all.
    */
-  sleepWindow: SleepWindow
   /**
-   * The same idea, for a day whose type is `'night'` - see `windowFor`.
-   * Kept as its own independent setting rather than a fixed shift applied
-   * on top of `sleepWindow`, because a night shift's actual sleep hours are
-   * not a predictable offset from a day shift's - they are a different
-   * schedule entirely, one the owner is the only person who can state.
-   * Defaults to 00:00-13:00, the inverse of the fixed 13:00-24:00 window
-   * this setting replaces, so behaviour for a night day is also unchanged
-   * for anyone who has not set one.
+   * Every sleep schedule, in order. Never empty: `normalizeLoaded` guarantees
+   * a first entry, so every reader can treat `sleepProfiles[0]` as the
+   * default without checking.
    */
-  nightSleepWindow: SleepWindow
+  sleepProfiles: SleepProfile[]
+
   /**
    * Whether the day view's timeline grid is currently shown, rather than
    * collapsed behind its own disclosure under the capacity line - see

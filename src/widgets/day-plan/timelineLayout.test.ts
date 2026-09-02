@@ -479,16 +479,19 @@ test('displayWindow is left untouched on the side where the anchors are far from
 })
 
 test('an edge that already sits exactly on the boundary still earns a full band, not a zero-depth one', () => {
-  // A night day whose default waking window (13:00-24:00) happens to land
-  // exactly on the anchor-buffered window's own edges: neither edge has
-  // crossed into sleep hours at all yet (zero depth), but the boundary
-  // itself needs no bridging (the gap to it is exactly zero), so both
-  // edges still pull back a full 90-minute band rather than being treated
-  // as "close enough already" the way the first version of this feature
-  // would have.
+  // A schedule whose waking window (13:00-24:00) happens to land exactly on
+  // the anchor-buffered window's own edges: neither edge has crossed into
+  // sleep hours at all yet (zero depth), but the boundary itself needs no
+  // bridging (the gap to it is exactly zero), so both edges still pull back
+  // a full 90-minute band rather than being treated as "close enough
+  // already" the way the first version of this feature would have.
   const layout = computeTimelineLayout(
     [anchor('Wake up task', '14:00', 30), anchor('Late task', '23:30', 20)],
-    'night',
+    'shift',
+    { profiles: [
+      { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+      { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } },
+    ] },
   )
   // window: min(14:00)-1h=13:00 to max(23:50)+1h clamped to 24:00
   expect(layout.window).toEqual({ start: 13 * 60, end: 24 * 60 })
@@ -514,7 +517,7 @@ test('a day close to both the wake and bed boundary draws a full-depth sleep ban
 })
 
 test('sleepBands respects a custom sleep window rather than the historical default', () => {
-  const sleep = { sleepWindow: { start: '21:00', end: '09:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '21:00', end: '09:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
   const layout = computeTimelineLayout([anchor('Shift', '10:00', 60)], 'full', sleep)
   // Buffered window 09:00-12:00; wake time is 09:00, exactly the buffered
   // start (zero gap to bridge), so the start edge pulls back a full 90
@@ -526,11 +529,8 @@ test('sleepBands respects a custom sleep window rather than the historical defau
 })
 
 test('sleepBands measures a night day against the night sleep setting, not the ordinary one', () => {
-  const sleep = {
-    sleepWindow: { start: '23:00', end: '07:00' },
-    nightSleepWindow: { start: '10:00', end: '18:00' },
-  }
-  const layout = computeTimelineLayout([anchor('Shift prep', '18:30', 30)], 'night', sleep)
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '10:00', end: '18:00' } }] }
+  const layout = computeTimelineLayout([anchor('Shift prep', '18:30', 30)], 'shift', sleep)
   // Waking window for night here is 18:00-24:00. The buffered display
   // window already reaches 30 minutes into sleep (17:30 against an 18:00
   // wake time) - short of the 90-minute floor, so the start edge pulls

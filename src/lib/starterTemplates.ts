@@ -47,9 +47,9 @@ const [BLUE, , GREEN, , LAVENDER] = PALETTE_COLORS
  * each one is written as an actual day rather than a scaffold of "Task 1,
  * Task 2." A working day is scored on everything, the way a full day
  * always has been in this app; the other two are scored only on their core
- * blocks - one required thing on the rest day, one shift itself on the
- * night day - so tapping either one also shows what a reduced score looks
- * like without a word of explanation needed.
+ * blocks - one required thing on the rest day, the shift itself on the
+ * overnight day - so tapping either one also shows what a reduced score
+ * looks like without a word of explanation needed.
  */
 export const STARTER_TEMPLATES: StarterTemplate[] = [
   {
@@ -86,8 +86,8 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     ],
   },
   {
-    id: 'night-shift',
-    name: 'Night shift',
+    id: 'overnight-shift',
+    name: 'Overnight shift',
     color: LAVENDER.value,
     type: 'night',
     description: 'Anchored around the shift itself. Everything else only counts if it happens.',

@@ -68,7 +68,7 @@ test('starterTemplateInput maps straight onto actions.addTemplate and produces a
   })
 })
 
-test('the three starters cover the three named shapes: a working day, a rest day, a night shift', () => {
+test('the three starters cover the three named shapes: a working day, a rest day, an overnight shift', () => {
   const types = STARTER_TEMPLATES.map(s => s.type).sort()
   expect(types).toEqual(['full', 'night', 'rest'])
 })

@@ -1,4 +1,4 @@
-import type { DayType, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
 
 /**
@@ -180,7 +180,7 @@ export interface TimelineLayout {
  * is untouched by either - gap arithmetic still runs against exactly the
  * anchor-buffered interval this comment already describes. `displayWindow`
  * is `window`, pulled back toward the day's own waking-window boundary
- * (`windowFor` in capacity.ts, driven by `sleepWindow`/`nightSleepWindow`)
+ * (`windowFor` in capacity.ts, driven by the day's own sleep schedule)
  * whenever the anchors already leave the boundary within a short reach -
  * see `extendTowardSleepBoundary` for the exact rule and why it is capped.
  * The grid draws hour marks, anchors, gaps and the greyed sleep band all
@@ -258,7 +258,7 @@ function extendTowardSleepBoundary(window: Interval, waking: Interval, anchors: 
 
 export function computeTimelineLayout(
   tasks: Task[],
-  dayType: DayType = 'full',
+  sleepProfileId?: string,
   sleep?: SleepSettings,
 ): TimelineLayout {
   const anchors = tasks.filter(isAnchor).slice().sort((a, b) => a.time!.localeCompare(b.time!))
@@ -316,7 +316,7 @@ export function computeTimelineLayout(
 
   const gaps = unsizedAnchorCount > 0 ? [] : computeInteriorGaps(anchors, window)
 
-  const waking = windowFor(dayType, sleep)
+  const waking = windowFor(sleepProfileId, sleep)
   const displayWindow = extendTowardSleepBoundary(window, waking, {
     start: Math.min(...starts),
     end: Math.max(...effectiveEndsForWindow),

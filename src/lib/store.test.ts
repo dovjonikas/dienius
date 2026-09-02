@@ -629,24 +629,51 @@ test('setDayLayoutFocus changes only dayLayoutFocus, leaving the rest of setting
 // the two above: changed once in Settings, read live by every day of the
 // matching type, never touching the rest of settings.
 
-test('setSleepWindow changes only sleepWindow, leaving nightSleepWindow and the rest of settings untouched', () => {
+test('setSleepProfileWindow changes one schedule and nothing else in settings', () => {
   actions.resetForTests({
     ...defaultData(),
     settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then'], timelineExpanded: true },
   })
-  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
-  actions.setSleepWindow({ start: '22:30', end: '06:15' })
-  expect(getData().settings.sleepWindow).toEqual({ start: '22:30', end: '06:15' })
-  expect(getData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+  expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '23:00', end: '07:00' })
+  actions.setSleepProfileWindow('default', { start: '22:30', end: '06:15' })
+  expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '22:30', end: '06:15' })
   expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
   expect(getData().settings.timelineExpanded).toBe(true)
 })
 
-test('setNightSleepWindow changes only nightSleepWindow, leaving sleepWindow untouched', () => {
+test('a second schedule is seeded from the default rather than from nothing', () => {
   actions.resetForTests(defaultData())
-  actions.setNightSleepWindow({ start: '09:00', end: '17:00' })
-  expect(getData().settings.nightSleepWindow).toEqual({ start: '09:00', end: '17:00' })
-  expect(getData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
+  actions.setSleepProfileWindow('default', { start: '22:00', end: '06:00' })
+  actions.addSleepProfile('Shift')
+  const profiles = getData().settings.sleepProfiles
+  expect(profiles).toHaveLength(2)
+  expect(profiles[1].name).toBe('Shift')
+  expect(profiles[1].window).toEqual({ start: '22:00', end: '06:00' })
+})
+
+// Deleting a schedule has to take every reference to it with it - a day left
+// pointing at a deleted id would resolve to the default by accident rather
+// than by decision.
+test('deleting a schedule clears it off every day and template that used it', () => {
+  actions.resetForTests(defaultData())
+  actions.addSleepProfile('Shift')
+  const shift = getData().settings.sleepProfiles[1].id
+  const template = actions.addTemplate({ name: 'Nights', color: '#a7c4f5', blocks: [] })
+  actions.updateTemplate({ ...getData().templates[0], sleepProfileId: shift })
+  actions.addTask('2026-09-01', 'Clock in')
+  actions.setDaySleepProfile('2026-09-01', shift)
+
+  actions.deleteSleepProfile(shift)
+
+  expect(getData().settings.sleepProfiles).toHaveLength(1)
+  expect(getData().templates.find(t => t.id === template.id)?.sleepProfileId).toBeUndefined()
+  expect(getData().days['2026-09-01'].sleepProfileId).toBeUndefined()
+})
+
+test('the first schedule can never be deleted - something has to be the default', () => {
+  actions.resetForTests(defaultData())
+  actions.deleteSleepProfile('default')
+  expect(getData().settings.sleepProfiles).toHaveLength(1)
 })
 
 test('setThemePreset changes only the preset id', () => {

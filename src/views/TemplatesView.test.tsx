@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
 import { actions, getData } from '../lib/store'
@@ -347,7 +347,7 @@ test('clearing an already-typed time leaves the block a float, not an error', as
   expect(getData().templates[0].blocks[0].time).toBeUndefined()
 })
 
-test('the arrow keys step the block time by 15 minutes, seeding an empty field on the first press', async () => {
+test('the arrow keys step the block time by five minutes, seeding an empty field on the first press', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'New template' }))
@@ -356,7 +356,7 @@ test('the arrow keys step the block time by 15 minutes, seeding an empty field o
   await user.keyboard('{ArrowUp}')
   expect(timeField).toHaveValue('09:00')
   await user.keyboard('{ArrowUp}')
-  expect(timeField).toHaveValue('09:15')
+  expect(timeField).toHaveValue('09:05')
   await user.keyboard('{ArrowDown}')
   expect(timeField).toHaveValue('09:00')
 })
@@ -366,12 +366,12 @@ test('the arrow keys step across an hour boundary and, with Shift held, by a ful
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'New template' }))
   const timeField = screen.getByPlaceholderText('09:00')
-  await user.type(timeField, '09:50')
+  await user.type(timeField, '09:55')
   timeField.focus()
   await user.keyboard('{ArrowUp}')
-  expect(timeField).toHaveValue('10:05')
+  expect(timeField).toHaveValue('10:00')
   await user.keyboard('{Shift>}{ArrowUp}{/Shift}')
-  expect(timeField).toHaveValue('11:05')
+  expect(timeField).toHaveValue('11:00')
 })
 
 test('the arrow keys wrap across midnight in both directions', async () => {
@@ -379,25 +379,27 @@ test('the arrow keys wrap across midnight in both directions', async () => {
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'New template' }))
   const timeField = screen.getByPlaceholderText('09:00')
-  await user.type(timeField, '23:50')
+  await user.type(timeField, '23:55')
   timeField.focus()
   await user.keyboard('{ArrowUp}')
-  expect(timeField).toHaveValue('00:05')
+  expect(timeField).toHaveValue('00:00')
   await user.keyboard('{ArrowDown}')
-  expect(timeField).toHaveValue('23:50')
+  expect(timeField).toHaveValue('23:55')
 })
 
-test('the step buttons beside the field move the time the same way the arrow keys do', async () => {
+// The block-add row used to carry its own stepper, with a pair of step
+// buttons where this dropdown is now. It is the same TimePicker every other
+// time field in the app uses since - one control, one set of habits, rather
+// than a second one that happened to be written for this row first.
+test('the dropdown beside the field sets a time in two taps', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'New template' }))
   const timeField = screen.getByPlaceholderText('09:00')
-  await user.click(screen.getByRole('button', { name: 'Block time: move 15 minutes later' }))
-  expect(timeField).toHaveValue('09:00')
-  await user.click(screen.getByRole('button', { name: 'Block time: move 15 minutes later' }))
-  expect(timeField).toHaveValue('09:15')
-  await user.click(screen.getByRole('button', { name: 'Block time: move 15 minutes earlier' }))
-  expect(timeField).toHaveValue('09:00')
+  await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '14' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Minute' })).getByRole('option', { name: '30' }))
+  expect(timeField).toHaveValue('14:30')
 })
 
 test('a time committed straight to the block-add row is used even without leaving the field first', async () => {
@@ -443,7 +445,7 @@ test('with no templates saved, the empty state offers starter templates instead 
   render(<TemplatesView />)
   expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the night shift template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the overnight shift template/i })).toBeInTheDocument()
 })
 
 test('tapping a starter here adds it to the template list without stamping any day', async () => {

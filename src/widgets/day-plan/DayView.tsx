@@ -157,8 +157,12 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const runningTask = isToday ? findActiveTask(day?.tasks ?? [], nowMinutes) : undefined
   const runningLeft = runningTask ? minutesLeft(runningTask, nowMinutes) : undefined
 
-  const sleep = { sleepWindow: data.settings.sleepWindow, nightSleepWindow: data.settings.nightSleepWindow }
-  const capacity = computeCapacity(day?.tasks ?? [], day?.dayType, sleep)
+  // Which schedule this day is measured against: its own if it has one, else
+  // whatever its template chose, else the default.
+  const daySleepProfileId = day?.sleepProfileId ?? template?.sleepProfileId
+  const sleepProfiles = data.settings.sleepProfiles
+  const sleep = { profiles: data.settings.sleepProfiles }
+  const capacity = computeCapacity(day?.tasks ?? [], daySleepProfileId, sleep)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
   // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
@@ -582,7 +586,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // SLEEP_NOTICE_MINUTES. Measured against the same waking window the grid
   // greys and the capacity line counts against, so the three can never
   // disagree about when the day ends.
-  const untilSleep = isToday ? minutesUntilSleep(nowMinutes, windowFor(day?.dayType ?? 'full', sleep)) : null
+  const untilSleep = isToday ? minutesUntilSleep(nowMinutes, windowFor(daySleepProfileId, sleep)) : null
   const showSleep = untilSleep !== null && untilSleep <= SLEEP_NOTICE_MINUTES
 
   return (
@@ -634,6 +638,30 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             &rarr;
           </button>
         </div>
+
+        {/* Which hours this particular day is measured against. Hidden
+            entirely while there is only one schedule, which is the case for
+            nearly everybody and always the case on a fresh install - a
+            picker with one option is a question with one answer. The day
+            inherits its template's schedule until somebody overrides it
+            here, and the override is stored on the day, so changing the
+            template later does not silently rewrite days already lived. */}
+        {sleepProfiles.length > 1 && (
+          <label className="day-schedule">
+            <span className="visually-hidden">Sleep schedule for this day</span>
+            <select
+              className="setting-select"
+              value={daySleepProfileId ?? sleepProfiles[0].id}
+              onChange={e => actions.setDaySleepProfile(date, e.target.value)}
+            >
+              {sleepProfiles.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {/* What is happening right now, in real text: the clock, the task
             running against it, and how much of it is left. This is the line
@@ -813,7 +841,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             activeTaskId={runningTask?.id}
             isToday={isToday}
             isWide={isWide}
-            dayType={day?.dayType}
+            sleepProfileId={daySleepProfileId}
             sleep={sleep}
           />
         )}
@@ -1113,7 +1141,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         <TaskGapOffers
           task={selectedTask}
           tasks={day?.tasks ?? []}
-          dayType={day?.dayType}
+          sleepProfileId={daySleepProfileId}
           sleep={sleep}
           onPlace={placeSelected}
           onClose={closeSelection}

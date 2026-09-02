@@ -506,7 +506,7 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
 test('a custom sleep window setting changes the capacity line, not just the historical fixed window', () => {
   actions.resetForTests({
     ...defaultData(),
-    settings: { ...defaultData().settings, sleepWindow: { start: '22:00', end: '06:00' } },
+    settings: { ...defaultData().settings, sleepProfiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }] },
     days: {
       '2026-09-01': {
         date: '2026-09-01',
@@ -520,23 +520,28 @@ test('a custom sleep window setting changes the capacity line, not just the hist
   expect(screen.getByText('Timed tasks: 1h. Free: 15h across 2 gaps.')).toBeInTheDocument()
 })
 
-test('a night day reads its capacity against nightSleepWindow, not the ordinary sleepWindow', () => {
+// Day type no longer selects a sleep window; a named schedule does, and a
+// day points at one of its own.
+test('a day on a second sleep schedule reads its capacity against that schedule', () => {
   actions.resetForTests({
     ...defaultData(),
     settings: {
       ...defaultData().settings,
-      nightSleepWindow: { start: '09:00', end: '17:00' },
+      sleepProfiles: [
+        { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+        { id: 'shift', name: 'Shift', window: { start: '09:00', end: '17:00' } },
+      ],
     },
     days: {
       '2026-09-01': {
         date: '2026-09-01',
-        dayType: 'night',
+        sleepProfileId: 'shift',
         tasks: [{ id: 'prep', title: 'Shift prep', done: false, time: '17:30', minutes: 30 }],
       },
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  // nightSleepWindow bedtime 09:00, wake 17:00 gives a waking window of
+  // The Shift schedule bedtime 09:00, wake 17:00 gives a waking window of
   // 17:00-24:00 (7h, clamped at midnight); the 30-minute prep task leaves
   // 6h30 free, split between the 30 minutes before it and the six hours after.
   expect(screen.getByText('Timed tasks: 30 min. Free: 6h30 across 2 gaps.')).toBeInTheDocument()
@@ -601,33 +606,47 @@ test('the capacity line never uses an alarming word for the over case', () => {
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
 })
 
-test('a night-type day uses the night window instead of the default one', () => {
+test('a day set to a second schedule is measured against that schedule, not the default', () => {
   actions.resetForTests({
     ...defaultData(),
+    settings: {
+      ...defaultData().settings,
+      sleepProfiles: [
+        { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+        { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } },
+      ],
+    },
     days: {
       '2026-09-01': {
         date: '2026-09-01',
-        dayType: 'night',
+        sleepProfileId: 'shift',
         tasks: [{ id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 }],
       },
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  // Only the 22:00-24:00 portion of the shift falls inside the night
-  // window (13:00-24:00); the default 07:00-23:00 window would have
-  // clipped it to just one hour instead of two. The shift itself runs
+  // Only the 22:00-24:00 portion of the shift falls inside the Shift
+  // schedule (waking 13:00-24:00); the default 07:00-23:00 window would
+  // have clipped it to one hour instead of two. The shift itself runs
   // eight hours, so the sentence flags the figure as today's portion
   // rather than implying the shift was two hours long.
   expect(screen.getByText("Timed tasks: 2h within today's window. Free: 9h across 1 gap.")).toBeInTheDocument()
 })
 
-test('a night shift crossing midnight reads as a partial figure, not as the shift\'s real length', () => {
+test('an overnight shift reads as a partial figure, not as its own full length', () => {
   actions.resetForTests({
     ...defaultData(),
+    settings: {
+      ...defaultData().settings,
+      sleepProfiles: [
+        { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+        { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } },
+      ],
+    },
     days: {
       '2026-09-01': {
         date: '2026-09-01',
-        dayType: 'night',
+        sleepProfileId: 'shift',
         tasks: [
           { id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 },
           { id: 'wind-down', title: 'Wind-down task', done: false, minutes: 30 },
@@ -975,7 +994,7 @@ test('a genuinely fresh install shows the starter offers instead of the plain em
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /use the night shift template/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /use the overnight shift template/i })).toBeInTheDocument()
   expect(screen.queryByText(/^nothing planned\./i)).not.toBeInTheDocument()
 })
 

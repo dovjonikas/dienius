@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, Settings, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, Settings, SleepProfile, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
@@ -16,6 +16,10 @@ const DEFAULT_PRESET_ID = 'dark'
 // for the same reason DEFAULT_PRESET_ID is: this file only needs the literal
 // a fresh install starts with.
 const DEFAULT_REMINDER: Settings['reminder'] = { enabled: false, everyMinutes: 20, text: 'Stand up, drink water' }
+
+// Duplicated from capacity.ts for the same reason DEFAULT_SLEEP_WINDOW is.
+const DEFAULT_SLEEP_PROFILE_ID = 'default'
+const DEFAULT_SLEEP_PROFILE_NAME = 'Sleep schedule'
 
 // Duplicated from capacity.ts's own DEFAULT_SLEEP_WINDOW/DEFAULT_NIGHT_SLEEP_WINDOW
 // rather than imported, for the same reason DEFAULT_PRESET_ID above is not
@@ -75,8 +79,7 @@ export function defaultData(): AppData {
       density: 'comfortable',
       textScale: 'm',
       reminder: { ...DEFAULT_REMINDER },
-      sleepWindow: { ...DEFAULT_SLEEP_WINDOW },
-      nightSleepWindow: { ...DEFAULT_NIGHT_SLEEP_WINDOW },
+      sleepProfiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: DEFAULT_SLEEP_PROFILE_NAME, window: { ...DEFAULT_SLEEP_WINDOW } }],
     },
     ifThens: [],
     inbox: [],
@@ -274,6 +277,27 @@ function isOptionalTextScale(x: unknown): x is Settings['textScale'] | undefined
 // reminder every zero minutes is a loop, and one every three days is not a
 // reminder. The text is length-capped for the same reason every other free
 // string in this file is - a backup is an untrusted document.
+function isSleepProfile(x: unknown): x is SleepProfile {
+  if (!isRecord(x)) return false
+  return (
+    typeof x.id === 'string' &&
+    x.id.length > 0 &&
+    typeof x.name === 'string' &&
+    x.name.length > 0 &&
+    x.name.length <= 60 &&
+    isSleepWindow(x.window)
+  )
+}
+
+function isOptionalSleepProfiles(x: unknown): x is SleepProfile[] | undefined {
+  if (x === undefined) return true
+  if (!Array.isArray(x) || x.length === 0 || !x.every(isSleepProfile)) return false
+  // Two schedules with the same id would make which one a day points at a
+  // matter of array order - the same reason preset ids are checked for
+  // uniqueness in themes.test.ts.
+  return new Set(x.map(p => p.id)).size === x.length
+}
+
 function isOptionalReminder(x: unknown): x is Settings['reminder'] | undefined {
   if (x === undefined) return true
   if (!isRecord(x)) return false
@@ -421,6 +445,7 @@ function isSettings(x: unknown): x is {
   density?: Settings['density']
   textScale?: Settings['textScale']
   reminder?: Settings['reminder']
+  sleepProfiles?: SleepProfile[]
   sleepWindow?: SleepWindow
   nightSleepWindow?: SleepWindow
 } {
@@ -435,7 +460,8 @@ function isSettings(x: unknown): x is {
     isOptionalTextScale(x.textScale) &&
     isOptionalReminder(x.reminder) &&
     isOptionalSleepWindow(x.sleepWindow) &&
-    isOptionalSleepWindow(x.nightSleepWindow)
+    isOptionalSleepWindow(x.nightSleepWindow) &&
+    isOptionalSleepProfiles(x.sleepProfiles)
   )
 }
 
@@ -486,6 +512,7 @@ interface StoredAppData {
     density?: Settings['density']
     textScale?: Settings['textScale']
     reminder?: Settings['reminder']
+    sleepProfiles?: SleepProfile[]
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
   }
@@ -520,6 +547,44 @@ export function validate(x: unknown): x is StoredAppData {
 // widget would find its own choice respected exactly the way this comment
 // used to promise for if-then, back when if-then still had a widget id to
 // turn off.
+/**
+ * Turns whatever a payload carries about sleep into the profile list.
+ *
+ * Three cases. A payload already on profiles keeps them. A payload from
+ * before profiles existed becomes one default schedule from its own
+ * `sleepWindow`, plus - and only plus - a second one from its
+ * `nightSleepWindow` if that window was both changed from the shipped
+ * default and actually used by something. A payload with neither gets the
+ * shipped default.
+ *
+ * The "actually used" test is what keeps this honest. Every install that has
+ * ever existed carries a `nightSleepWindow`, because it was a field rather
+ * than a choice; carrying all of them forward would give a second schedule to
+ * thousands of people who never worked a night in their lives, and the whole
+ * point of profiles is that the second one only appears for somebody who
+ * needs it. So it survives only if some template or some already-planned day
+ * was actually typed as a night.
+ */
+function migrateSleepProfiles(data: StoredAppData): SleepProfile[] {
+  if (data.settings.sleepProfiles && data.settings.sleepProfiles.length > 0) {
+    return data.settings.sleepProfiles
+  }
+  const base: SleepProfile = {
+    id: DEFAULT_SLEEP_PROFILE_ID,
+    name: DEFAULT_SLEEP_PROFILE_NAME,
+    window: data.settings.sleepWindow ?? { ...DEFAULT_SLEEP_WINDOW },
+  }
+  const night = data.settings.nightSleepWindow
+  if (!night) return [base]
+  const unchanged = night.start === DEFAULT_NIGHT_SLEEP_WINDOW.start && night.end === DEFAULT_NIGHT_SLEEP_WINDOW.end
+  if (unchanged) return [base]
+  const used =
+    data.templates.some(t => t.type === 'night') ||
+    Object.values(data.days).some(d => d.dayType === 'night')
+  if (!used) return [base]
+  return [base, { id: 'shift', name: 'Shift', window: night }]
+}
+
 function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
   const enabledWidgets = (
     wasMigrated
@@ -538,8 +603,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       density: data.settings.density ?? 'comfortable',
       textScale: data.settings.textScale ?? 'm',
       reminder: data.settings.reminder ?? { ...DEFAULT_REMINDER },
-      sleepWindow: data.settings.sleepWindow ?? { ...DEFAULT_SLEEP_WINDOW },
-      nightSleepWindow: data.settings.nightSleepWindow ?? { ...DEFAULT_NIGHT_SLEEP_WINDOW },
+      sleepProfiles: migrateSleepProfiles(data),
     },
   }
 }

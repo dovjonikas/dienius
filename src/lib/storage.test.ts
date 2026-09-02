@@ -1027,14 +1027,16 @@ test('a bad import never destroys existing data - repeated garbage imports leave
   }
 })
 
-// sleepWindow and nightSleepWindow - a single set-once setting per window,
-// defaulting to the exact inverse of the fixed 07:00-23:00 / 13:00-24:00
-// windows this app used before either setting existed, so an install that
-// never opens Settings sees no change - see docs/DECISIONS.md.
+// Sleep schedules - a named list, never empty, whose first entry is the
+// default. It replaces the pair of fixed windows (an ordinary one and a
+// hardcoded night-shift one) the app used to carry; the first schedule still
+// defaults to the exact inverse of the historical 07:00-23:00 window, so an
+// install that never opens Settings sees no change - see docs/DECISIONS.md.
 
-test('a brand new install starts with the historical sleep window as an explicit default', () => {
-  expect(loadData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
-  expect(loadData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+test('a brand new install starts with one schedule, at the historical hours', () => {
+  expect(loadData().settings.sleepProfiles).toEqual([
+    { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+  ])
 })
 
 test('a payload written before either sleep setting existed has no such key and still loads, defaulting exactly as a fresh install would', () => {
@@ -1044,8 +1046,46 @@ test('a payload written before either sleep setting existed has no such key and 
     settings: { theme: 'light', enabledWidgets: ['day-plan'], timelineExpanded: false, dayLayoutFocus: 'both' },
   })
   localStorage.setItem(STORAGE_KEY, legacy)
-  expect(loadData().settings.sleepWindow).toEqual({ start: '23:00', end: '07:00' })
-  expect(loadData().settings.nightSleepWindow).toEqual({ start: '00:00', end: '13:00' })
+  expect(loadData().settings.sleepProfiles).toEqual([
+    { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+  ])
+})
+
+// The migration's one interesting decision - see migrateSleepProfiles. Every
+// install that ever existed carries a nightSleepWindow, because it was a field
+// rather than a choice, so carrying all of them forward would hand a second
+// schedule to everybody who never worked a night in their life.
+test('a stored night window that was never used does not become a second schedule', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [],
+    days: {},
+    settings: {
+      theme: 'dark',
+      enabledWidgets: ['day-plan'],
+      sleepWindow: { start: '22:00', end: '06:00' },
+      nightSleepWindow: { start: '09:00', end: '17:00' },
+    },
+  }))
+  expect(loadData().settings.sleepProfiles).toEqual([
+    { id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } },
+  ])
+})
+
+test('a stored night window that was changed and actually used becomes a Shift schedule', () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    templates: [{ id: 't1', name: 'Nights', color: '#a7c4f5', type: 'night', blocks: [] }],
+    days: {},
+    settings: {
+      theme: 'dark',
+      enabledWidgets: ['day-plan'],
+      sleepWindow: { start: '23:00', end: '07:00' },
+      nightSleepWindow: { start: '09:00', end: '17:00' },
+    },
+  }))
+  expect(loadData().settings.sleepProfiles).toEqual([
+    { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+    { id: 'shift', name: 'Shift', window: { start: '09:00', end: '17:00' } },
+  ])
 })
 
 test('a payload with a custom sleep window already set keeps that choice on load', () => {
@@ -1057,13 +1097,17 @@ test('a payload with a custom sleep window already set keeps that choice on load
       enabledWidgets: ['day-plan'],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
-      sleepWindow: { start: '22:00', end: '06:30' },
-      nightSleepWindow: { start: '09:00', end: '17:00' },
+      sleepProfiles: [
+        { id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:30' } },
+        { id: 'shift', name: 'Shift', window: { start: '09:00', end: '17:00' } },
+      ],
     },
   })
   localStorage.setItem(STORAGE_KEY, payload)
-  expect(loadData().settings.sleepWindow).toEqual({ start: '22:00', end: '06:30' })
-  expect(loadData().settings.nightSleepWindow).toEqual({ start: '09:00', end: '17:00' })
+  expect(loadData().settings.sleepProfiles).toEqual([
+    { id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:30' } },
+    { id: 'shift', name: 'Shift', window: { start: '09:00', end: '17:00' } },
+  ])
 })
 
 test('validate rejects a sleepWindow that is not a real "HH:MM" time', () => {
@@ -1115,11 +1159,12 @@ test('a malformed sleepWindow does not destroy the rest of an otherwise valid ba
   expect(loaded.templates).toEqual([])
 })
 
-test('importJson preserves a custom sleep window across export and re-import', () => {
+test('importJson preserves every sleep schedule across export and re-import', () => {
   const data = defaultData()
-  data.settings.sleepWindow = { start: '22:30', end: '06:15' }
-  data.settings.nightSleepWindow = { start: '08:00', end: '16:00' }
+  data.settings.sleepProfiles = [
+    { id: 'default', name: 'Sleep schedule', window: { start: '22:30', end: '06:15' } },
+    { id: 'shift', name: 'Shift', window: { start: '08:00', end: '16:00' } },
+  ]
   const imported = importJson(exportJson(data))
-  expect(imported.settings.sleepWindow).toEqual({ start: '22:30', end: '06:15' })
-  expect(imported.settings.nightSleepWindow).toEqual({ start: '08:00', end: '16:00' })
+  expect(imported.settings.sleepProfiles).toEqual(data.settings.sleepProfiles)
 })

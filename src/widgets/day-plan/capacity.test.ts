@@ -11,6 +11,10 @@ import {
   windowFor,
 } from './capacity'
 
+// A second, named sleep schedule - what used to be the app's one hardcoded
+// night-shift window, now just one entry in a list somebody made.
+const NIGHT_SLEEP = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
+
 // 07:00-23:00, matching DEFAULT_WINDOW in capacity.ts.
 const WINDOW_START = 7 * 60
 const WINDOW_END = 23 * 60
@@ -212,16 +216,16 @@ test('floats that exceed free time report the exact overage', () => {
 test('a night-shift anchor crossing midnight is clipped to the night window close, never negative', () => {
   // 22:00 for 8 hours would run to 06:00 the next day - only 22:00-24:00
   // (2 hours) falls within this calendar day's 13:00-24:00 night window.
-  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'night')
+  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'shift', NIGHT_SLEEP)
   expect(capacity.anchorsMinutes).toBe(120)
   expect(capacity.freeMinutes).toBe(NIGHT_END - NIGHT_START - 120)
   expect(capacity.gaps).toEqual([{ start: NIGHT_START, end: 22 * 60, minutes: 22 * 60 - NIGHT_START }])
 })
 
-test('the same night-shift anchor is clipped harder under the default window than under the night one', () => {
+test('the same overnight anchor is clipped harder under the default schedule than under the second one', () => {
   const tasks = [anchor('Night shift', '22:00', 480)]
-  const asFullDay = computeCapacity(tasks, 'full')
-  const asNight = computeCapacity(tasks, 'night')
+  const asFullDay = computeCapacity(tasks, undefined, NIGHT_SLEEP)
+  const asNight = computeCapacity(tasks, 'shift', NIGHT_SLEEP)
   // The default window closes at 23:00, so only one hour of the shift counts;
   // the night window runs to midnight, so two hours do.
   expect(asFullDay.anchorsMinutes).toBe(60)
@@ -229,13 +233,13 @@ test('the same night-shift anchor is clipped harder under the default window tha
 })
 
 test('a night day with no anchors still defaults sensibly - no window special-casing needed', () => {
-  const capacity = computeCapacity([float('Snack', 10)], 'night')
+  const capacity = computeCapacity([float('Snack', 10)], 'shift', NIGHT_SLEEP)
   expect(capacity.anchorsMinutes).toBeNull()
   expect(capacity.floatsMinutes).toBe(10)
 })
 
 test('an anchor that fills the entire night window leaves no free time', () => {
-  const capacity = computeCapacity([anchor('Whole night', '13:00', NIGHT_END - NIGHT_START)], 'night')
+  const capacity = computeCapacity([anchor('Whole night', '13:00', NIGHT_END - NIGHT_START)], 'shift', NIGHT_SLEEP)
   expect(capacity.anchorsMinutes).toBe(NIGHT_END - NIGHT_START)
   expect(capacity.freeMinutes).toBe(0)
   expect(capacity.gaps).toEqual([])
@@ -243,9 +247,9 @@ test('an anchor that fills the entire night window leaves no free time', () => {
 
 test('a shift and rest day type use the same window as an ordinary day', () => {
   const tasks = [anchor('Shift start', '09:00', 60)]
-  const shift = computeCapacity(tasks, 'shift')
-  const rest = computeCapacity(tasks, 'rest')
-  const full = computeCapacity(tasks, 'full')
+  const shift = computeCapacity(tasks, undefined)
+  const rest = computeCapacity(tasks, undefined)
+  const full = computeCapacity(tasks, undefined)
   expect(shift.freeMinutes).toBe(full.freeMinutes)
   expect(rest.freeMinutes).toBe(full.freeMinutes)
 })
@@ -292,14 +296,15 @@ test('two overlapping anchors merging into their union is not treated as a windo
 })
 
 test('the night-shift anchor crossing midnight is flagged as clipped under the night window', () => {
-  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'night')
+  const capacity = computeCapacity([anchor('Night shift', '22:00', 480)], 'shift', NIGHT_SLEEP)
   expect(capacity.anchorsClippedByWindow).toBe(true)
 })
 
 test('reviewer repro: an eight-hour night shift reads as clipped, not as a two-hour shift', () => {
   const capacity = computeCapacity(
     [anchor('Night shift', '22:00', 480), float('Wind-down task', 30)],
-    'night',
+    'shift',
+    NIGHT_SLEEP,
   )
   expect(formatCapacityLine(capacity)).toBe(
     "Timed tasks: 2h within today's window. Free: 9h across 1 gap. Untimed tasks: about 30 min.",
@@ -541,7 +546,10 @@ test('the default sleep window inverts to exactly the historical 07:00-23:00 wak
   expect(wakingWindow({ start: '23:00', end: '07:00' })).toEqual({ start: 7 * 60, end: 23 * 60 })
 })
 
-test('the default night sleep window inverts to exactly the historical 13:00-24:00 waking window', () => {
+// The window the app's old hardcoded second slot produced. Kept as a test of
+// wakingWindow's own arithmetic, which is unchanged - what went away is the
+// idea that one such window is built in for everybody.
+test('a midnight-to-13:00 sleep window inverts to exactly a 13:00-24:00 waking window', () => {
   expect(wakingWindow({ start: '00:00', end: '13:00' })).toEqual({ start: 13 * 60, end: 24 * 60 })
 })
 
@@ -599,49 +607,47 @@ test('a waking window is never drawn past the end of the calendar day, even when
   expect(window.start).toBe(23 * 60)
 })
 
-// --- windowFor: picking sleepWindow vs nightSleepWindow, and the default ---
+// --- windowFor: resolving a named schedule, and the default ---------------
 
-test('windowFor with no sleep settings supplied matches the historical fixed windows exactly', () => {
-  expect(windowFor('full')).toEqual({ start: 7 * 60, end: 23 * 60 })
-  expect(windowFor('shift')).toEqual({ start: 7 * 60, end: 23 * 60 })
-  expect(windowFor('rest')).toEqual({ start: 7 * 60, end: 23 * 60 })
-  expect(windowFor('night')).toEqual({ start: 13 * 60, end: 24 * 60 })
+test('windowFor with no sleep settings supplied matches the historical fixed window exactly', () => {
+  expect(windowFor(undefined)).toEqual({ start: 7 * 60, end: 23 * 60 })
 })
 
-test('windowFor picks nightSleepWindow only for a night day, and sleepWindow for every other type', () => {
-  const sleep = {
-    sleepWindow: { start: '22:00', end: '06:00' },
-    nightSleepWindow: { start: '09:00', end: '17:00' },
-  }
-  expect(windowFor('full', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
-  expect(windowFor('shift', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
-  expect(windowFor('rest', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
-  expect(windowFor('night', sleep)).toEqual({ start: 17 * 60, end: 24 * 60 })
+test('windowFor resolves the schedule it is given, and falls back to the first for anything else', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }, { id: 'shift', name: 'Shift', window: { start: '09:00', end: '17:00' } }] }
+  expect(windowFor(undefined, sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
+  expect(windowFor('default', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
+  expect(windowFor('shift', sleep)).toEqual({ start: 17 * 60, end: 24 * 60 })
+})
+
+// A day or a template can outlive the schedule it pointed at - somebody
+// deletes the one they set up for a job they no longer have. The honest answer
+// then is "your usual hours", not a crash or an empty day.
+test('windowFor falls back to the first schedule for an id that names nothing', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }] }
+  expect(windowFor('deleted-long-ago', sleep)).toEqual({ start: 6 * 60, end: 22 * 60 })
 })
 
 // --- computeCapacity: a custom sleep setting changes the arithmetic --------
 
 test('computeCapacity measures free time against a custom sleep window, not the historical default', () => {
-  const sleep = { sleepWindow: { start: '22:00', end: '06:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
   const capacity = computeCapacity(
     [{ id: 'a', title: 'Gym', done: false, time: '07:00', minutes: 60 }],
-    'full',
+    undefined,
     sleep,
   )
   // Waking window is 06:00-22:00 (16h = 960 min); the gym takes 60, leaving 900.
   expect(capacity.freeMinutes).toBe(900)
 })
 
-test('computeCapacity on a night day measures against nightSleepWindow, not sleepWindow', () => {
-  const sleep = {
-    sleepWindow: { start: '23:00', end: '07:00' },
-    nightSleepWindow: { start: '08:00', end: '15:00' },
-  }
+test('computeCapacity on a day set to a second schedule measures against that schedule', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '08:00', end: '15:00' } }] }
   const capacity = computeCapacity(
     [{ id: 'a', title: 'Shift prep', done: false, time: '15:00', minutes: 30 }],
-    'night',
+    'shift',
     sleep,
   )
-  // Waking window for the night default here is 15:00-24:00 (9h = 540 min).
+  // The Shift schedule gives a waking window of 15:00-24:00 (9h = 540 min).
   expect(capacity.freeMinutes).toBe(540 - 30)
 })

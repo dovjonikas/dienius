@@ -3,10 +3,10 @@ import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, type CategoryId } from '..
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { DayType, Template } from '../lib/types'
+import type { DayType, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
-import { TimeStepInput } from './TimeStepInput'
+import { TimePicker } from './TimePicker'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these. Not
@@ -18,7 +18,7 @@ const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'full', label: 'Full day' },
   { value: 'shift', label: 'Shift' },
-  { value: 'night', label: 'Night' },
+  { value: 'night', label: 'Overnight' },
   { value: 'rest', label: 'Rest' },
 ]
 
@@ -60,6 +60,10 @@ interface Draft {
   name: string
   color: string
   type: DayType
+  /** Which sleep schedule days built from this template are measured against.
+   *  Undefined means the first one, which is what nearly every template wants
+   *  and the only thing that exists until somebody adds a second. */
+  sleepProfileId?: string
   blocks: DraftBlock[]
 }
 
@@ -67,6 +71,10 @@ const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'f
 
 interface TemplateEditorProps {
   initial: Draft
+  /** Every schedule Settings currently holds. One is the normal case; the
+   *  picker below appears only once there are two, so a person who never set
+   *  up a second never sees the concept at all. */
+  sleepProfiles: SleepProfile[]
   onSave: (draft: Draft) => void
   onCancel: () => void
 }
@@ -75,7 +83,7 @@ interface TemplateEditorProps {
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, onSave, onCancel }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
@@ -177,6 +185,23 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
       {draft.type !== 'full' && (
         <p className="muted">Only blocks marked core count toward the score on this day type.</p>
       )}
+      {sleepProfiles.length > 1 && (
+        <div className="day-type-picker">
+          <span className="muted">Sleep schedule</span>
+          <select
+            className="setting-select"
+            aria-label="Sleep schedule"
+            value={draft.sleepProfileId ?? sleepProfiles[0].id}
+            onChange={e => setDraft({ ...draft, sleepProfileId: e.target.value })}
+          >
+            {sleepProfiles.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <p className="muted">Ongoing blocks never get pushed to tomorrow or need a decision.</p>
       <ul className="block-list">
         {draft.blocks.map((b, i) => (
@@ -216,7 +241,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
         ))}
       </ul>
       <div className="block-add">
-        <TimeStepInput value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
+        <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
         <input
           placeholder="What happens"
           value={blockTitle}
@@ -293,6 +318,7 @@ export function TemplatesView() {
       name: t.name,
       color: t.color,
       type: t.type ?? 'full',
+      sleepProfileId: t.sleepProfileId,
       blocks: t.blocks.map(b => ({
         id: b.id,
         time: b.time ?? '',
@@ -340,6 +366,7 @@ export function TemplatesView() {
           name: next.name.trim(),
           color: next.color,
           type: next.type,
+          sleepProfileId: next.sleepProfileId,
           // A block carried over from the template being edited keeps its
           // id; a block added during this session gets a fresh one. Losing
           // ids on every save is harmless today - nothing reads them yet -
@@ -348,7 +375,13 @@ export function TemplatesView() {
         })
       }
     } else {
-      actions.addTemplate({ name: next.name.trim(), color: next.color, type: next.type, blocks })
+      actions.addTemplate({
+        name: next.name.trim(),
+        color: next.color,
+        type: next.type,
+        sleepProfileId: next.sleepProfileId,
+        blocks,
+      })
     }
     setDraft(null)
   }
@@ -372,6 +405,7 @@ export function TemplatesView() {
 
       {draft && (
         <TemplateEditor
+          sleepProfiles={data.settings.sleepProfiles}
           key={draft.id ?? 'new'}
           initial={draft}
           onSave={saveDraft}

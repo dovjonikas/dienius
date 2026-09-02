@@ -2184,6 +2184,255 @@ textarea:focus {
   background: var(--surface);
 }
 
+/* ------------------------------------------------------------------------
+   TimePicker - the one time control in the app, see views/TimePicker.tsx.
+
+   Drawn as a single object: the border lives on the wrapper, the field and
+   its caret sit flush inside it, and only the outer corners are rounded. The
+   same trick .time-stepper already uses, for the same reason - a field with
+   a button parked beside it reads as two controls and lines up with neither.
+   ------------------------------------------------------------------------ */
+.time-picker {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* Lifted only while the panel is open. Without it the picker on one settings
+   row is painted over by the fields on the row below it, which come later in
+   the document - the z-index on the panel alone only orders it against its
+   own siblings. */
+.time-picker:has(.time-picker-panel) { z-index: 40; }
+
+.time-picker-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .time-picker-field:hover { border-color: color-mix(in srgb, var(--muted) 40%, var(--border)); }
+}
+
+/* The ring goes on the wrapper rather than the input, so tabbing to the field
+   and tabbing to its caret both light the whole control - which is what the
+   control actually is. */
+.time-picker-field:focus-within {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.time-picker .time-input {
+  width: 82px;
+  min-height: 38px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  text-align: center;
+  font-size: var(--t-input);
+  font-variant-numeric: tabular-nums;
+}
+
+.time-picker .time-input:focus {
+  outline: none;
+  background: none;
+  border-color: transparent;
+}
+
+.time-picker-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .time-picker-toggle:hover {
+    background: color-mix(in srgb, var(--border) 45%, transparent);
+    color: var(--text);
+  }
+}
+
+.time-picker-toggle:focus-visible { outline: none; }
+
+.time-picker-caret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.time-picker-toggle[aria-expanded='true'] .time-picker-caret { transform: rotate(180deg); }
+
+/* Two columns, each its own scroller. Anchored to the field rather than the
+   viewport, and given the highest of the three elevations because it is the
+   one thing on screen that has to sit over everything, including a card that
+   is already raised. */
+.time-picker-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  gap: var(--s1);
+  padding: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised, var(--surface));
+  box-shadow: var(--e2), 0 12px 28px -8px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .time-picker-panel { animation: time-picker-in var(--dur-fast) var(--ease) both; }
+}
+
+@keyframes time-picker-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.time-picker-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 216px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.time-picker-option {
+  min-width: 46px;
+  min-height: 30px;
+  padding: 0 var(--s2);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .time-picker-option:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
+}
+
+.time-picker-option[aria-selected='true'] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.time-picker-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Under the wide breakpoint the panel can run off the right edge of a narrow
+   settings column, so it hangs off the right of the field instead. */
+@media (max-width: 599px) {
+  .time-picker-panel { left: auto; right: 0; }
+}
+
+/* The name of a schedule, edited in place. A field that has to read as a
+   heading until it is touched - a boxed input where every other row shows a
+   plain label would make the second schedule look like a different kind of
+   thing from the first. */
+.setting-name-input {
+  width: 100%;
+  max-width: 220px;
+  padding: 4px var(--s2);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--border) 30%, transparent);
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.setting-name-input:hover { border-color: var(--border); }
+
+/* A plain text button, because removing a schedule is a small, reversible
+   correction to a list, not the destructive act .btn-danger is shaped for -
+   see the button system above. It still carries the danger colour so it is
+   never mistaken for the field beside it. */
+.setting-remove {
+  align-self: flex-start;
+  min-height: 0;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setting-remove:hover { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+
+.setting-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* A dropdown is a field too. Left out of the rule above only because a
+   <select> cannot be matched by input type, it renders the browser's own
+   white chrome unless it is told otherwise, and every one in this app sits on
+   a dark surface. appearance:none takes the native arrow with it, so the
+   caret is drawn back on as a background image - a plain two-line chevron
+   that inherits the text colour through a currentColor-coloured mask would
+   need a wrapper element, and a data URI here keeps it to one rule. */
+select {
+  min-width: 0;
+  padding: var(--s2) calc(var(--s3) + 18px) var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background-color: var(--bg);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 14px center, right 9px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-sm);
+  appearance: none;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+/* The list itself is the one part the page cannot style on any engine, so it
+   is at least told which way round the colours go - without this, an open
+   dropdown on Dark is white on some platforms and unreadable on others. */
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  select:hover { border-color: color-mix(in srgb, var(--muted) 40%, var(--border)); }
+}
+
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+/* The day's own schedule picker sits in the header row beside the date, so it
+   is sized down to sit under the title rather than compete with it. */
+.day-schedule { display: flex; align-items: center; }
+.day-schedule select { min-height: 30px; padding-top: 2px; padding-bottom: 2px; font-size: var(--t-xs); }
+
 /* A stepper is one control, not a field with two buttons parked next to it.
    The three parts share a border and sit flush, and only the outer corners
    are rounded - so it reads as a single object the way a native spinner does,

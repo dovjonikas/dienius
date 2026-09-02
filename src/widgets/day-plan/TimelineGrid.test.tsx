@@ -551,7 +551,7 @@ test('the band label is omitted once the band is clamped shorter than the compac
   // clamps the resulting band to one minute at the end of the calendar day
   // - nowhere near enough room to letter "Sleep" without spilling out of
   // the shape it is supposed to label.
-  const sleep = { sleepWindow: { start: '23:59', end: '07:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:59', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
   const { container } = render(
     <TimelineGrid tasks={[anchor('Late task', '23:30', 20)]} sleep={sleep} />,
   )
@@ -570,7 +570,7 @@ test('a custom sleep window changes where the band draws, not just the historica
   // Asleep 20:00 to 10:00 - a custom window whose wake time (10:00) sits
   // just before this task's own buffered start (09:30), so real grey
   // already shows with no forced extension needed.
-  const sleep = { sleepWindow: { start: '20:00', end: '10:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '20:00', end: '10:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
   const { container } = render(
     <TimelineGrid tasks={[anchor('Morning task', '10:30', 30)]} sleep={sleep} />,
   )
@@ -579,13 +579,12 @@ test('a custom sleep window changes where the band draws, not just the historica
   expect(parseFloat(band.style.height)).toBeGreaterThan(0)
 })
 
-test('a night day measures the sleep band against nightSleepWindow, not the ordinary sleepWindow', () => {
-  const sleep = {
-    sleepWindow: { start: '23:00', end: '07:00' },
-    nightSleepWindow: { start: '10:00', end: '18:00' },
-  }
+// A day set to a second sleep schedule measures against that schedule, not
+// the default. Day type used to select this; a named schedule does now.
+test('a day on a second sleep schedule measures its band against that schedule', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '10:00', end: '18:00' } }] }
   const { container } = render(
-    <TimelineGrid tasks={[anchor('Shift prep', '18:30', 30)]} dayType="night" sleep={sleep} />,
+    <TimelineGrid tasks={[anchor('Shift prep', '18:30', 30)]} sleepProfileId="shift" sleep={sleep} />,
   )
   // Buffered window starts at 17:30, before the 18:00 night wake time, so a
   // real band already shows without any forced extension.
@@ -597,11 +596,8 @@ test('states the sleep window in a visually-hidden sentence, once, regardless of
   expect(screen.getByText('Asleep from 23:00 to 07:00.')).toHaveClass('visually-hidden')
 })
 
-test('the accessible sleep sentence follows a custom sleep window and the night setting', () => {
-  const sleep = {
-    sleepWindow: { start: '22:00', end: '06:00' },
-    nightSleepWindow: { start: '17:00', end: '09:00' },
-  }
-  render(<TimelineGrid tasks={[anchor('Shift', '10:00', 60)]} dayType="night" sleep={sleep} />)
+test('the accessible sleep sentence follows whichever schedule the day is on', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }, { id: 'shift', name: 'Shift', window: { start: '17:00', end: '09:00' } }] }
+  render(<TimelineGrid tasks={[anchor('Shift', '10:00', 60)]} sleepProfileId="shift" sleep={sleep} />)
   expect(screen.getByText('Asleep from 17:00 to 09:00.')).toBeInTheDocument()
 })

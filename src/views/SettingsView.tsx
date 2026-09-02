@@ -6,49 +6,9 @@ import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
 import { AppearanceControls } from './AppearanceControls'
-import { TimeStepInput } from './TimeStepInput'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
-
-/**
- * One bedtime or wake-time field, wrapping `TimeStepInput` for the sleep
- * window controls below. `TimeStepInput` itself treats a cleared field as
- * "this is a float now" - a legitimate final state for the task-time field
- * it was built for, where `onChange('')` is exactly what the caller wants.
- * A sleep window has no such state: `Settings.sleepWindow` and
- * `nightSleepWindow` always need both a real bedtime and a real wake time,
- * so an empty commit here is refused rather than written. `resetKey`, bumped
- * only on a refusal, remounts `TimeStepInput` with a fresh internal draft so
- * its own display snaps back to the still-current, unchanged value instead
- * of sitting blank - `TimeStepInput`'s own revert-on-blur only fires for
- * text that fails to parse as a time at all, never for a deliberately empty
- * one, so this is the one case it cannot recover from by itself.
- */
-function SleepTimeField({
-  value,
-  ariaLabel,
-  onChange,
-}: {
-  value: string
-  ariaLabel: string
-  onChange: (next: string) => void
-}) {
-  const [resetKey, setResetKey] = useState(0)
-  return (
-    <TimeStepInput
-      key={resetKey}
-      value={value}
-      ariaLabel={ariaLabel}
-      onChange={next => {
-        if (next === '') {
-          setResetKey(k => k + 1)
-          return
-        }
-        onChange(next)
-      }}
-    />
-  )
-}
+import { TimePicker } from './TimePicker'
 
 type SectionId = 'general' | 'sleep' | 'nudges' | 'rules' | 'appearance'
 
@@ -229,64 +189,83 @@ export function SettingsView() {
 
           <div className="settings-group" id="settings-sleep">
             <h3>Sleep</h3>
-            {/* A set-once setting, not a per-day question - see
-                docs/DECISIONS.md and actions.setSleepWindow's own doc comment.
-                Drawn as a greyed band on the timeline grid and measured into
-                the capacity line and every gap - see windowFor in capacity.ts -
-                rather than the fixed 07:00-23:00 window this replaces. */}
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">Sleep window</span>
-                <span className="setting-desc">
-                  When you are normally asleep. The timeline greys it out and free time is measured
-                  around it, on every day from now on - you will not be asked again.
-                </span>
-              </div>
-              <div className="setting-control">
-                <div className="sleep-window-field">
-                  <span className="sleep-window-label">Bedtime</span>
-                  <SleepTimeField
-                    value={data.settings.sleepWindow.start}
-                    ariaLabel="Bedtime"
-                    onChange={start => actions.setSleepWindow({ ...data.settings.sleepWindow, start })}
-                  />
+            {/* A named list rather than the pair of fixed windows this used
+                to be - an ordinary one and a hardcoded second one for a shift
+                the app had decided everybody worked. Each schedule is drawn as
+                a greyed band on the timeline grid and measured into the
+                capacity line and every gap - see windowFor in capacity.ts. */}
+            {data.settings.sleepProfiles.map((profile, index) => (
+              <div className="setting-row" key={profile.id}>
+                <div className="setting-label">
+                  {index === 0 ? (
+                    <span className="setting-name">{profile.name}</span>
+                  ) : (
+                    <input
+                      className="setting-name-input"
+                      aria-label={'Name of schedule ' + (index + 1)}
+                      value={profile.name}
+                      maxLength={60}
+                      onChange={e => actions.renameSleepProfile(profile.id, e.target.value)}
+                    />
+                  )}
+                  <span className="setting-desc">
+                    {index === 0
+                      ? 'When you are normally asleep. The timeline greys it out and free time is measured around it, on every day from now on.'
+                      : 'Used on days and templates set to this schedule. Everything else keeps the default above.'}
+                  </span>
+                  {/* Sits in the label column, not beside the two time fields:
+                      with it in the control the second row's fields no longer
+                      lined up with the first row's, and two rows of the same
+                      thing that do not line up read as two different things. */}
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      className="setting-remove"
+                      aria-label={'Remove schedule ' + (index + 1)}
+                      onClick={() => actions.deleteSleepProfile(profile.id)}
+                    >
+                      Remove this schedule
+                    </button>
+                  )}
                 </div>
-                <div className="sleep-window-field">
-                  <span className="sleep-window-label">Wake time</span>
-                  <SleepTimeField
-                    value={data.settings.sleepWindow.end}
-                    ariaLabel="Wake time"
-                    onChange={end => actions.setSleepWindow({ ...data.settings.sleepWindow, end })}
-                  />
+                <div className="setting-control">
+                  <div className="sleep-window-field">
+                    <span className="sleep-window-label">Bedtime</span>
+                    <TimePicker
+                      value={profile.window.start}
+                      ariaLabel={index === 0 ? 'Bedtime' : 'Bedtime for ' + profile.name}
+                      required
+                      onChange={start => actions.setSleepProfileWindow(profile.id, { ...profile.window, start })}
+                    />
+                  </div>
+                  <div className="sleep-window-field">
+                    <span className="sleep-window-label">Wake time</span>
+                    <TimePicker
+                      value={profile.window.end}
+                      ariaLabel={index === 0 ? 'Wake time' : 'Wake time for ' + profile.name}
+                      required
+                      onChange={end => actions.setSleepProfileWindow(profile.id, { ...profile.window, end })}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
 
+            {/* One schedule is the normal case, and until there are two the
+                app never says the word "profile" anywhere - the day header and
+                the template editor only offer a choice once there is one. */}
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Night-shift sleep window</span>
+                <span className="setting-name">Another schedule</span>
                 <span className="setting-desc">
-                  Used instead on a day typed as a night shift. Real sleep hours around a night shift
-                  are not a fixed offset from a day shift, so this gets its own setting.
+                  For hours that are genuinely a different life - a rota that runs overnight, a week
+                  abroad. Days and templates can then pick which one they are measured against.
                 </span>
               </div>
               <div className="setting-control">
-                <div className="sleep-window-field">
-                  <span className="sleep-window-label">Bedtime</span>
-                  <SleepTimeField
-                    value={data.settings.nightSleepWindow.start}
-                    ariaLabel="Bedtime on a night-shift day"
-                    onChange={start => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, start })}
-                  />
-                </div>
-                <div className="sleep-window-field">
-                  <span className="sleep-window-label">Wake time</span>
-                  <SleepTimeField
-                    value={data.settings.nightSleepWindow.end}
-                    ariaLabel="Wake time on a night-shift day"
-                    onChange={end => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, end })}
-                  />
-                </div>
+                <button type="button" className="btn-secondary" onClick={() => actions.addSleepProfile('Shift')}>
+                  Add another schedule
+                </button>
               </div>
             </div>
           </div>

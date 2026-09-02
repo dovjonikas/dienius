@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { DayType, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 import { formatDuration, type SleepSettings } from './capacity'
 import { describeGapNeighbors, matchTaskToGaps, VISIBLE_ROW_LIMIT, type GapWithContext } from './gapPlacement'
 import { formatClock } from './timelineLayout'
@@ -9,7 +9,8 @@ export interface TaskGapOffersProps {
   task: Task
   /** The day's full task list - needed to compute which gaps exist at all. */
   tasks: Task[]
-  dayType: DayType | undefined
+  /** Which sleep schedule this day is measured against - see `SleepProfile`. */
+  sleepProfileId: string | undefined
   /**
    * The owner's sleep window settings, passed straight through to
    * `matchTaskToGaps` so "where does this fit" is measured against the same
@@ -52,7 +53,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  * like `GapPicker.tsx` - see that constant's own doc comment in
  * gapPlacement.ts for why four is the number.
  */
-export function TaskGapOffers({ task, tasks, dayType, sleep, onPlace, onClose }: TaskGapOffersProps) {
+export function TaskGapOffers({ task, tasks, sleepProfileId, sleep, onPlace, onClose }: TaskGapOffersProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
 
@@ -85,7 +86,7 @@ export function TaskGapOffers({ task, tasks, dayType, sleep, onPlace, onClose }:
     onPlace(task.id, formatClock(gap.start))
   }
 
-  const match = matchTaskToGaps(tasks, dayType, task.id, sleep)
+  const match = matchTaskToGaps(tasks, sleepProfileId, task.id, sleep)
 
   function renderBody() {
     switch (match.kind) {

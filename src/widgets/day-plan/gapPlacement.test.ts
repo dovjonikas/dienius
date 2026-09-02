@@ -10,6 +10,10 @@ import {
   type GapWithContext,
 } from './gapPlacement'
 
+// A second, named sleep schedule - what used to be the app's one hardcoded
+// night-shift window, now just one entry in a list somebody made.
+const NIGHT_SLEEP = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
+
 function float(id: string, minutes?: number, done = false): Task {
   return { id, title: id, done, minutes }
 }
@@ -182,7 +186,7 @@ test('an empty day offers its whole waking window as one gap', () => {
 
 test('a night day is measured against the night window, not the default one', () => {
   const tasks = [float('Guitar', 20)]
-  const result = matchTaskToGaps(tasks, 'night', 'Guitar')
+  const result = matchTaskToGaps(tasks, 'shift', 'Guitar', NIGHT_SLEEP)
   expect(result).toEqual({ kind: 'matched', gaps: [{ start: 13 * 60, end: 24 * 60, minutes: 11 * 60, before: undefined, after: undefined }] })
 })
 
@@ -227,7 +231,7 @@ test('describeGapNeighbors is undefined when the gap touches nothing on either s
 
 test('matchTaskToGaps measures against a custom sleep window rather than the historical default', () => {
   const tasks = [float('Guitar', 60)]
-  const sleep = { sleepWindow: { start: '22:00', end: '05:00' }, nightSleepWindow: { start: '00:00', end: '13:00' } }
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '05:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
   const result = matchTaskToGaps(tasks, 'full', 'Guitar', sleep)
   expect(result).toEqual({ kind: 'matched', gaps: [{ start: 5 * 60, end: 22 * 60, minutes: 17 * 60, before: undefined, after: undefined }] })
 })

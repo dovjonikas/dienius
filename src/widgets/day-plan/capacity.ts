@@ -1,4 +1,4 @@
-import type { DayType, SleepWindow, Task } from '../../lib/types'
+import type { SleepProfile, SleepWindow, Task } from '../../lib/types'
 import { TIME_RE } from './parse'
 
 /**
@@ -35,7 +35,7 @@ export interface Interval {
 const DAY_MINUTES = 24 * 60
 
 /**
- * The default for `Settings.sleepWindow`: asleep 23:00 to 07:00. Chosen
+ * The hours the first sleep schedule starts on: asleep 23:00 to 07:00. Chosen
  * specifically to be the exact inverse of the fixed 07:00-23:00 window this
  * setting replaces - see `wakingWindow` below - so a person who never opens
  * Settings gets the identical waking window this app has always used, byte
@@ -43,24 +43,16 @@ const DAY_MINUTES = 24 * 60
  */
 export const DEFAULT_SLEEP_WINDOW: SleepWindow = { start: '23:00', end: '07:00' }
 
-/**
- * The default for `Settings.nightSleepWindow`: asleep from midnight to
- * 13:00. Same reasoning as `DEFAULT_SLEEP_WINDOW` - this is the exact
- * inverse of the fixed 13:00-24:00 window a `night`-type day used before
- * this setting existed (see `wakingWindow`'s own doc comment for where that
- * shift came from), not a new number.
- */
-export const DEFAULT_NIGHT_SLEEP_WINDOW: SleepWindow = { start: '00:00', end: '13:00' }
+/** The id every install's first, always-present sleep schedule carries. */
+export const DEFAULT_SLEEP_PROFILE_ID = 'default'
 
-/** The two sleep settings `windowFor` needs to pick between, by day type. */
+/** The schedules `windowFor` picks between. Never empty - see `Settings.sleepProfiles`. */
 export interface SleepSettings {
-  sleepWindow: SleepWindow
-  nightSleepWindow: SleepWindow
+  profiles: SleepProfile[]
 }
 
 const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
-  sleepWindow: DEFAULT_SLEEP_WINDOW,
-  nightSleepWindow: DEFAULT_NIGHT_SLEEP_WINDOW,
+  profiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: 'Sleep schedule', window: DEFAULT_SLEEP_WINDOW }],
 }
 
 /**
@@ -120,8 +112,21 @@ export function wakingWindow(sleep: SleepWindow): Interval {
 // been handed the owner's actual settings - most of this file's own tests,
 // any code written before this setting existed - measures against exactly
 // the fixed window this app always used, unchanged.
-export function windowFor(dayType: DayType, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): Interval {
-  return wakingWindow(dayType === 'night' ? sleep.nightSleepWindow : sleep.sleepWindow)
+export function windowFor(profileId: string | undefined, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): Interval {
+  return wakingWindow(sleepProfileWindow(profileId, sleep))
+}
+
+/**
+ * The window a given schedule id names, falling back to the first schedule.
+ *
+ * An id that names nothing resolves to the default rather than failing: a day
+ * or a template can outlive the schedule it pointed at - somebody deletes the
+ * one they set up for a job they no longer have - and the honest answer then
+ * is "you sleep at your usual hours", not a crash or an empty day.
+ */
+export function sleepProfileWindow(profileId: string | undefined, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): SleepWindow {
+  const profiles = sleep.profiles.length > 0 ? sleep.profiles : DEFAULT_SLEEP_SETTINGS.profiles
+  return (profileId ? profiles.find(p => p.id === profileId) : undefined)?.window ?? profiles[0].window
 }
 
 function anchorInterval(task: Task): Interval {
@@ -270,11 +275,10 @@ export interface Capacity {
  *
  * **The window is a waking window derived from a sleep window set once in
  * Settings, not configured per day and not derived from the day's own
- * anchors: `sleepWindow` inverted for an ordinary day, `nightSleepWindow`
- * inverted for a `night` one.** See `wakingWindow` and `windowFor` above -
- * both default to the exact 07:00-23:00 / 13:00-24:00 figures this window
- * always used before either setting existed, so a person who has not set
- * one sees no change. Using the day's own `dayType` is not one more
+ * anchors: the sleep schedule the day points at, inverted.** See
+ * `wakingWindow` and `windowFor` above - both default to the exact
+ * 07:00-23:00 figures this window always used before the setting existed, so
+ * a person who has not set one sees no change. Using the day's own `dayType` is not one more
  * decision the owner has to make - it is information already given once,
  * when the template was built or the day was typed, the same way
  * `dayScore` already reads it. Anchors are
@@ -299,7 +303,7 @@ export interface Capacity {
  */
 export function computeCapacity(
   tasks: Task[],
-  dayType: DayType = 'full',
+  sleepProfileId?: string,
   sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS,
 ): Capacity {
   const anchors = tasks.filter(isAnchor)
@@ -322,7 +326,7 @@ export function computeCapacity(
     }
   }
 
-  const window = windowFor(dayType, sleep)
+  const window = windowFor(sleepProfileId, sleep)
   const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
   const unsizedAnchorCount = anchors.length - sizedAnchors.length
   const rawIntervals = sizedAnchors.map(anchorInterval)

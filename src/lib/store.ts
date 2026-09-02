@@ -269,6 +269,7 @@ export const actions = {
     name: string
     color: string
     type?: DayType
+    sleepProfileId?: string
     blocks: { time?: string; title: string; core?: boolean; minutes?: number; unbounded?: boolean }[]
   }): Template {
     const template: Template = {
@@ -276,6 +277,7 @@ export const actions = {
       name: input.name,
       color: input.color,
       type: input.type,
+      sleepProfileId: input.sleepProfileId,
       blocks: input.blocks.map(b => ({
         id: crypto.randomUUID(),
         time: b.time,
@@ -396,22 +398,70 @@ export const actions = {
   },
 
   /**
-   * Sets the sleep window used on a full, shift or rest day - see
-   * `Settings.sleepWindow` and `windowFor` in `src/widgets/day-plan/capacity.ts`.
-   * A set-once setting the same way `setTimelineExpanded` and
-   * `setDayLayoutFocus` already are: changed here, in Settings, and never
-   * asked again per day - every day of the relevant type reads it live from
-   * this one place. Both fields are always written together, since a
-   * bedtime with no matching wake time (or the reverse) is not a shape this
-   * app can compute a window from.
+   * Changes the hours of one sleep schedule - see `Settings.sleepProfiles`.
+   * Both ends are always written together: a bedtime with no matching wake
+   * time, or the reverse, is not a shape this app can compute a window from.
    */
-  setSleepWindow(window: SleepWindow): void {
-    commit({ ...data, settings: { ...data.settings, sleepWindow: window } })
+  setSleepProfileWindow(id: string, window: SleepWindow): void {
+    commit({
+      ...data,
+      settings: {
+        ...data.settings,
+        sleepProfiles: data.settings.sleepProfiles.map(p => (p.id === id ? { ...p, window } : p)),
+      },
+    })
   },
 
-  /** The same idea as setSleepWindow, for a `night`-type day - see `Settings.nightSleepWindow`. */
-  setNightSleepWindow(window: SleepWindow): void {
-    commit({ ...data, settings: { ...data.settings, nightSleepWindow: window } })
+  renameSleepProfile(id: string, name: string): void {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    commit({
+      ...data,
+      settings: {
+        ...data.settings,
+        sleepProfiles: data.settings.sleepProfiles.map(p => (p.id === id ? { ...p, name: trimmed } : p)),
+      },
+    })
+  },
+
+  /**
+   * Adds a schedule, seeded from the default one rather than from nothing -
+   * a second schedule is almost always a variation on the first, and an
+   * empty pair of fields is a form to fill in rather than a thing to adjust.
+   */
+  addSleepProfile(name: string): void {
+    const base = data.settings.sleepProfiles[0]
+    const profile = { id: crypto.randomUUID(), name: name.trim() || 'New schedule', window: { ...base.window } }
+    commit({ ...data, settings: { ...data.settings, sleepProfiles: [...data.settings.sleepProfiles, profile] } })
+  },
+
+  /**
+   * Removes a schedule, and every reference to it. The first one can never be
+   * deleted: something has to be the default, and a day pointing at nothing
+   * would have no hours at all. Days and templates that used the deleted one
+   * fall back to the default in the same commit rather than being left
+   * pointing at an id that resolves to it by accident - the fallback in
+   *  is a safety net, not a storage strategy.
+   */
+  deleteSleepProfile(id: string): void {
+    if (data.settings.sleepProfiles.length < 2 || data.settings.sleepProfiles[0].id === id) return
+    const days = Object.fromEntries(
+      Object.entries(data.days).map(([key, day]) =>
+        day.sleepProfileId === id ? [key, { ...day, sleepProfileId: undefined }] : [key, day],
+      ),
+    )
+    commit({
+      ...data,
+      days,
+      templates: data.templates.map(t => (t.sleepProfileId === id ? { ...t, sleepProfileId: undefined } : t)),
+      settings: { ...data.settings, sleepProfiles: data.settings.sleepProfiles.filter(p => p.id !== id) },
+    })
+  },
+
+  /** Which schedule one already-planned day is measured against. */
+  setDaySleepProfile(date: string, profileId: string | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, { ...day, sleepProfileId: profileId }))
   },
 
   /**

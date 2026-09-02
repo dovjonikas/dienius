@@ -1,4 +1,4 @@
-import type { DayType, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Gap, type Interval, type SleepSettings } from './capacity'
 
 /**
@@ -193,7 +193,7 @@ export type TaskGapMatch =
  */
 export function matchTaskToGaps(
   tasks: Task[],
-  dayType: DayType | undefined,
+  sleepProfileId: string | undefined,
   taskId: string,
   sleep?: SleepSettings,
 ): TaskGapMatch {
@@ -206,7 +206,7 @@ export function matchTaskToGaps(
   const anchors = tasks.filter(isAnchor)
   if (anchors.some(a => a.minutes === undefined)) return { kind: 'unknown' }
 
-  const window = windowFor(dayType ?? 'full', sleep)
+  const window = windowFor(sleepProfileId, sleep)
   const named = anchors
     .map(a => ({
       title: a.title,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { DayType, Task } from '../../lib/types'
+import type { Task } from '../../lib/types'
 import { formatDuration, windowFor, type SleepSettings } from './capacity'
 import { categoryColor } from '../../lib/categories'
 import { GapPicker } from './GapPicker'
@@ -233,13 +233,13 @@ export interface TimelineGridProps {
    * Optional and defaults to `'full'`, the same default `computeCapacity`
    * and `computeTimelineLayout` themselves use.
    */
-  dayType?: DayType
+  /** Which sleep schedule this day is measured against - see `SleepProfile`. */
+  sleepProfileId?: string
   /**
-   * The owner's sleep window settings - see `Settings.sleepWindow` and
-   * `Settings.nightSleepWindow` in types.ts. Optional so a caller with
-   * nothing to pass (a read-only preview, most of this component's own
-   * tests) still renders correctly: `windowFor` itself falls back to the
-   * exact fixed 07:00-23:00 / 13:00-24:00 windows this app always used.
+   * The owner's sleep schedules - see `Settings.sleepProfiles` in types.ts.
+   * Optional so a caller with nothing to pass (a read-only preview, most of
+   * this component's own tests) still renders correctly: `windowFor` itself
+   * falls back to the exact fixed 07:00-23:00 window this app always used.
    */
   sleep?: SleepSettings
 }
@@ -294,10 +294,10 @@ export function TimelineGrid({
   onGeometry,
   isToday = false,
   isWide = false,
-  dayType = 'full',
+  sleepProfileId,
   sleep,
 }: TimelineGridProps) {
-  const layout = computeTimelineLayout(tasks, dayType, sleep)
+  const layout = computeTimelineLayout(tasks, sleepProfileId, sleep)
   const wrapRef = useRef<HTMLDivElement>(null)
   const layersRef = useRef<HTMLDivElement>(null)
   const layoutRef = useRef<{
@@ -378,7 +378,7 @@ export function TimelineGrid({
   const marks = hourMarks(window)
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
-  const waking = windowFor(dayType, sleep)
+  const waking = windowFor(sleepProfileId, sleep)
 
   // At the wide breakpoint, draw denser than the phone's own fixed density
   // whenever there is real, measured room to use it - see
