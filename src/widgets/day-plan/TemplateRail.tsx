@@ -30,11 +30,12 @@ export function TemplateRail({ date }: TemplateRailProps) {
           <button
             key={t.id}
             type="button"
-            className={t.id === currentTemplateId ? 'chip selected' : 'chip'}
+            className={t.id === currentTemplateId ? 'template-chip selected' : 'template-chip'}
             aria-pressed={t.id === currentTemplateId}
-            style={{ background: t.color }}
+            style={{ ['--chip' as string]: t.color } as React.CSSProperties}
             onClick={() => actions.stamp({ [date]: t.id })}
           >
+            <span className="template-chip-dot" aria-hidden="true" />
             {t.name}
           </button>
         ))}

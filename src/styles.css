@@ -38,7 +38,7 @@
      them is pure white. */
   --text: #e2e2e0;
   --muted: #a3a5a6;
-  --faint: #717375;
+  --faint: #8a8e91;
   --accent: #8aa4f2;
   --accent-dim: #38406a;
   --mark: #d9b15f;
@@ -1166,8 +1166,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 
 .capacity-line p {
   margin: 0;
-  color: var(--faint);
-  font-size: var(--t-xs);
+  color: var(--muted);
+  font-size: var(--t-sm);
   line-height: 1.5;
   letter-spacing: 0.01em;
 }
@@ -1439,7 +1439,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    panel, which put the emphasis of the whole grid on the parts of the day with
    nothing in them. */
 .timeline-gap-label {
-  color: var(--faint);
+  color: var(--muted);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   padding: var(--s1) var(--s2);
@@ -6600,7 +6600,12 @@ button.danger:focus-visible {
   padding: 1px var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 50%, transparent);
-  color: var(--muted);
+  /* A step toward the content ink rather than plain --muted. These three sit
+     on a tinted pill, which lifts the background out from under them - at
+     --muted they measured 4.02, 4.36 and 4.43 on Light, all under AA. Mixed
+     rather than hard-coded so it moves the right way in every theme: toward
+     white on a dark one, toward black on a light one. */
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -6639,3 +6644,69 @@ button.danger:focus-visible {
    control beside 13px type reads as the main event rather than a tick. */
 .subtask .check { width: 18px; height: 18px; border-width: 1.5px; }
 .subtask .check::after { left: 5px; top: 2px; }
+
+/* The template chips in the rail. They used to be their own colour, filled
+   edge to edge - which made two decorative pills the brightest surfaces on a
+   dark screen, louder than the day they are there to stamp. Everything else
+   in this app carries its colour as a small mark against a calm surface, and
+   these are not the exception: the template's colour is a dot, the chip is a
+   quiet outlined pill, and the one currently stamped is the one that fills. */
+.template-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 36px;
+  padding: 5px var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-sm);
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.template-chip-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: var(--r-round);
+  background: var(--chip, var(--accent));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .template-chip:hover { border-color: color-mix(in srgb, var(--chip, var(--accent)) 60%, var(--border)); }
+}
+
+.template-chip.selected {
+  border-color: color-mix(in srgb, var(--chip, var(--accent)) 70%, var(--border));
+  background: color-mix(in srgb, var(--chip, var(--accent)) 14%, var(--surface));
+  font-weight: 600;
+}
+
+.template-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.library-schedule-note {
+  padding: 3px var(--s2);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+/* The template card's own two quiet lines. The preview is the one that earns
+   the row: it says what the template is, which is the only question this
+   list is ever asked. */
+.template-preview {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-meta {
+  color: var(--faint);
+  font-size: var(--t-xs);
+}

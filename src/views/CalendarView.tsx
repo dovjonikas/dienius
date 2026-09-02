@@ -173,11 +173,12 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
               {data.templates.map(t => (
                 <button
                   key={t.id}
-                  className={stampTemplateId === t.id ? 'chip selected' : 'chip'}
+                  className={stampTemplateId === t.id ? 'template-chip selected' : 'template-chip'}
                   aria-pressed={stampTemplateId === t.id}
-                  style={{ background: t.color }}
+                  style={{ ['--chip' as string]: t.color } as React.CSSProperties}
                   onClick={() => selectTemplate(t.id)}
                 >
+                  <span className="template-chip-dot" aria-hidden="true" />
                   {t.name}
                 </button>
               ))}

@@ -307,10 +307,19 @@ interface ItemRowProps {
 
 function ItemRow({ list, item, index, dragging, onDragStart, onDragEnd, onDropAt, onOpenDay }: ItemRowProps) {
   const [scheduling, setScheduling] = useState(false)
+  const [already, setAlready] = useState<string | null>(null)
   const percent = progressPercent(item)
 
-  function schedule(date: string) {
-    actions.scheduleLibraryItem(date, list.id, item.id)
+  // A refused schedule says so and stays put rather than silently doing
+  // nothing or quietly adding a second identical card - see
+  // actions.scheduleLibraryItem. Not a toast: the answer belongs on the row
+  // that was tapped, where the eye already is.
+  function schedule(date: string, label: string) {
+    if (!actions.scheduleLibraryItem(date, list.id, item.id)) {
+      setAlready(label)
+      return
+    }
+    setAlready(null)
     setScheduling(false)
     onOpenDay?.(date)
   }
@@ -368,13 +377,28 @@ function ItemRow({ list, item, index, dragging, onDragStart, onDragEnd, onDropAt
       <div className="library-item-actions">
         {scheduling ? (
           <div className="library-schedule" role="group" aria-label={`Schedule ${item.title}`}>
-            <button type="button" onClick={() => schedule(todayKey())}>
-              Today
-            </button>
-            <button type="button" onClick={() => schedule(addDays(todayKey(), 1))}>
-              Tomorrow
-            </button>
-            <button type="button" onClick={() => setScheduling(false)} aria-label="Cancel scheduling">
+            {already ? (
+              <span className="library-schedule-note" role="status">
+                Already on {already}
+              </span>
+            ) : (
+              <>
+                <button type="button" onClick={() => schedule(todayKey(), 'today')}>
+                  Today
+                </button>
+                <button type="button" onClick={() => schedule(addDays(todayKey(), 1), 'tomorrow')}>
+                  Tomorrow
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setScheduling(false)
+                setAlready(null)
+              }}
+              aria-label="Cancel scheduling"
+            >
               &times;
             </button>
           </div>

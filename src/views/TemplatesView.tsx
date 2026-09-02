@@ -15,6 +15,9 @@ import { TimePicker } from './TimePicker'
 // nothing outside this file has ever needed it.
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
+/** How many block titles a template card previews before it says "+n more". */
+const PREVIEW_BLOCKS = 4
+
 const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'full', label: 'Full day' },
   { value: 'shift', label: 'Shift' },
@@ -466,8 +469,25 @@ export function TemplatesView() {
             <span className="dot" style={{ background: t.color }} />
             <div className="template-info">
               <strong>{t.name}</strong>
-              <span className="muted">
+              {/* "4 blocks" is the least informative summary a template could
+                  give: the whole question somebody has in front of this list
+                  is which template this is, and the answer is what is in it.
+                  The first few titles, in order, with the day type when it is
+                  not an ordinary one - which is what they would have opened
+                  the editor to find out. */}
+              <span className="template-preview">
+                {t.blocks.length === 0
+                  ? 'Empty - nothing in it yet'
+                  : t.blocks
+                      .slice(0, PREVIEW_BLOCKS)
+                      .map(b => b.title)
+                      .join(' · ') + (t.blocks.length > PREVIEW_BLOCKS ? ` +${t.blocks.length - PREVIEW_BLOCKS} more` : '')}
+              </span>
+              <span className="template-meta">
                 {t.blocks.length} {t.blocks.length === 1 ? 'block' : 'blocks'}
+                {t.type && t.type !== 'full' && ` · ${DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type}`}
+                {t.sleepProfileId && data.settings.sleepProfiles.length > 1 &&
+                  ` · ${data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? ''}`}
               </span>
             </div>
             <button aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>Edit</button>

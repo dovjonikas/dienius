@@ -351,12 +351,22 @@ export const actions = {
   /**
    * Puts a session on this item onto a day, already bound and already named
    * after it. The two-tap path from the Library: pick the item, pick the day.
+   *
+   * Returns false and writes nothing when that day already has an unfinished
+   * session on the same item. Two identical cards is not a plan for reading
+   * twice, it is the same tap landing twice, and the day is the one place in
+   * this app where a duplicate is never what somebody meant. A day where the
+   * session is already *done* is a different case and does add a second one:
+   * a second sitting on the same book is a real thing to plan.
    */
-  scheduleLibraryItem(date: string, listId: string, itemId: string, minutes?: number): void {
+  scheduleLibraryItem(date: string, listId: string, itemId: string, minutes?: number): boolean {
     const list = data.library.find(l => l.id === listId)
     const item = list?.items.find(i => i.id === itemId)
-    if (!list || !item) return
+    if (!list || !item) return false
     const day = dayOf(date)
+    if (day.tasks.some(t => !t.done && t.libraryRef?.listId === listId && t.libraryRef.itemId === itemId)) {
+      return false
+    }
     const task: Task = {
       id: crypto.randomUUID(),
       title: item.title,
@@ -366,6 +376,7 @@ export const actions = {
       libraryRef: { listId, itemId },
     }
     commit(withDay(date, { ...day, tasks: [...day.tasks, task] }))
+    return true
   },
 
   rolloverUnfinished(date: string): RolloverResult {

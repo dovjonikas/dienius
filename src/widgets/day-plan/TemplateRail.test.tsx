@@ -17,14 +17,17 @@ test('renders nothing when there are no templates yet', () => {
   expect(container).toBeEmptyDOMElement()
 })
 
+// The template's colour arrives as a custom property rather than as the
+// chip's own background: it paints a dot now, not the whole pill. See the
+// .template-chip block in styles.css for why.
 test('renders one chip per template, coloured and named', () => {
   actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
   actions.addTemplate({ name: 'Rest day', color: '#cde39e', blocks: [] })
   render(<TemplateRail date={DATE} />)
   const work = screen.getByRole('button', { name: 'Work day' })
   const rest = screen.getByRole('button', { name: 'Rest day' })
-  expect(work).toHaveStyle({ background: '#8ab6f9' })
-  expect(rest).toHaveStyle({ background: '#cde39e' })
+  expect(work.style.getPropertyValue('--chip')).toBe('#8ab6f9')
+  expect(rest.style.getPropertyValue('--chip')).toBe('#cde39e')
 })
 
 test('the currently-stamped template renders selected; the rest do not', () => {
