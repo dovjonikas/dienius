@@ -230,6 +230,12 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* The room for a scrollbar is always reserved, whether or not one is
+     showing. Without it every tab that scrolls is fifteen pixels narrower
+     than every tab that does not, and switching between them shifts the
+     whole page sideways - the single most noticeable jump in the app, and
+     the one nobody can name while it is happening. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -318,12 +324,36 @@ textarea {
   font-size: var(--t-input);
 }
 
+/* One shell for every tab. The header has to sit in exactly the same place
+   whichever tab is showing, which means the shell cannot change width when
+   the view does - so the shell is one width and each view constrains its own
+   content inside it. Today used to widen the shell to 1600 and Settings to
+   1080 while Calendar sat at 760, and every switch between them moved the
+   header, the brand and the tabs. */
 .app {
-  max-width: 760px;
+  max-width: 1600px;
+  min-height: 100dvh;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--s6) + env(safe-area-inset-bottom));
 }
+
+/* Views that are documents rather than a fixed-height day get their own
+   reading width, centred inside the shell. The shell itself never moves. */
+.settings,
+.calendar,
+.templates {
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+.calendar,
+.templates { max-width: 860px; }
+
+main { flex: 1 1 auto; min-height: 0; }
 
 .app-header {
   display: flex;
@@ -349,23 +379,55 @@ nav {
   justify-content: flex-end;
 }
 
+/* Quiet text, not chips. A filled pill on the active tab is a lot of paint
+   for a fact the page already makes obvious, and it made the tab row the
+   second-loudest thing on every screen. What is left is a difference in
+   brightness, plus a thin accent rule under the tab you are on.
+
+   The underline is a pseudo-element rather than a border, and the padding
+   and font are identical in all three states - so nothing here changes size
+   on hover or on activation, and the row cannot shift as it is used. */
 nav button {
+  position: relative;
   border: none;
   background: none;
   color: var(--muted);
-  font-size: var(--t-input);
+  font-size: var(--t-md);
   min-height: 44px;
   padding: var(--s2) var(--s3);
   border-radius: var(--r-control);
   cursor: pointer;
 }
 
+nav button::after {
+  content: '';
+  position: absolute;
+  left: var(--s3);
+  right: var(--s3);
+  bottom: 6px;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
 nav button:hover { color: var(--text); }
 
-nav button.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--e1);
+nav button.active { color: var(--text); font-weight: 600; }
+
+nav button.active::after { opacity: 1; }
+
+/* Bold on the active tab would make it wider than it was a moment ago and
+   nudge everything after it. The text is pre-sized to its own bold width, so
+   the row is laid out once and never moves. */
+nav button::before {
+  content: attr(data-label);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  font-weight: 600;
 }
 
 button {
@@ -605,7 +667,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    this one view, exactly the way the Today tab's own shell is: Templates and
    Calendar keep the reading width they were designed at. */
 @media (min-width: 1024px) {
-  .app:has(.settings) { max-width: 1080px; }
+  /* The settings view constrains itself, above - nothing here touches the
+     shell, so the header does not move when this tab is opened. */
 }
 
 /* The board still carries its own "If-then" heading, because it is also
@@ -4867,10 +4930,8 @@ nav button:active,
      widen, not just this element - a child's max-width can never exceed the
      box its parent already constrained it to. */
   .app:has(.main-day) {
-    max-width: 1600px;
     height: 100dvh;
-    display: flex;
-    flex-direction: column;
+    min-height: 0;
     padding-bottom: var(--s4);
   }
 
@@ -4881,7 +4942,6 @@ nav button:active,
      restated at each level, because each level is itself a flex or grid
      item of the level above. */
   .main-day {
-    max-width: 1600px;
     flex: 1 1 auto;
     min-height: 0;
   }
@@ -5042,14 +5102,17 @@ nav button:active,
 
   /* Thinner at this width than on a phone, where the top padding is also
      clearing a notch. The room goes to the day underneath it. */
-  .app:has(.main-day) .app-header {
+  /* One header height for every tab, not a tighter one for Today. It was
+     scoped to the day view to buy that view eighteen vertical pixels, and the
+     price was the header changing height on every tab switch - the kind of
+     movement that is invisible in a screenshot and obvious in use. Every tab
+     gets the tighter header now, and the day view keeps its pixels anyway. */
+  .app-header {
     padding-top: max(14px, env(safe-area-inset-top));
     padding-bottom: var(--s2);
   }
 
-  /* The brand sits at the scale head everywhere; nothing about a wide window
-     makes the app name a different size than it is on a phone. */
-  .app:has(.main-day) nav button { min-height: 34px; padding: 6px 12px; font-size: var(--t-md); }
+  nav button { min-height: 34px; padding: 6px 12px; }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged

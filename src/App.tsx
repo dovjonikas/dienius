@@ -75,6 +75,11 @@ export function App() {
             <button
               key={tab.view}
               className={view === tab.view ? 'active' : ''}
+              // The label again, as an attribute. The stylesheet renders it a
+              // second time at bold weight and zero height, so every tab is
+              // already as wide as its own active state and the row cannot
+              // shift when one of them becomes bold.
+              data-label={tab.label}
               aria-current={view === tab.view ? 'page' : undefined}
               onClick={() => (tab.view === 'day' ? openDay(todayKey()) : setView(tab.view))}
             >
