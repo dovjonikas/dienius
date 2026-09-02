@@ -146,17 +146,13 @@ export function TimeStepInput({ value, onChange, placeholder, ariaLabel }: TimeS
           className="time-step"
           aria-label={`${ariaLabel}: move 15 minutes later`}
           onClick={() => step(STEP_MINUTES)}
-        >
-          &#9650;
-        </button>
+         />
         <button
           type="button"
-          className="time-step"
+          className="time-step is-down"
           aria-label={`${ariaLabel}: move 15 minutes earlier`}
           onClick={() => step(-STEP_MINUTES)}
-        >
-          &#9660;
-        </button>
+         />
       </span>
       <span id={descriptionId} className="visually-hidden">
         Type a time, or use the up and down arrow keys, or the buttons beside this field, to move it

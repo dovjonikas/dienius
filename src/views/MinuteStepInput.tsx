@@ -89,12 +89,8 @@ export function MinuteStepInput({ value, onChange, placeholder = 'min', ariaLabe
         onKeyDown={handleKeyDown}
       />
       <div className="time-stepper-buttons">
-        <button type="button" className="time-step" aria-label={`${ariaLabel} up`} onClick={() => step(STEP)}>
-          &#9650;
-        </button>
-        <button type="button" className="time-step" aria-label={`${ariaLabel} down`} onClick={() => step(-STEP)}>
-          &#9660;
-        </button>
+        <button type="button" className="time-step" aria-label={`${ariaLabel} up`} onClick={() => step(STEP)} />
+        <button type="button" className="time-step is-down" aria-label={`${ariaLabel} down`} onClick={() => step(-STEP)} />
       </div>
     </div>
   )

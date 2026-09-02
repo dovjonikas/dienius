@@ -624,9 +624,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    on each stepper is untouched - see .time-step's own comment - they simply
    sit tight against the field they change instead of floating 4px off it. */
 .setting-control .time-stepper { gap: 6px; }
-.setting-control .time-input { width: 84px; text-align: center; }
-.setting-control .time-step { min-width: 36px; }
-
 /* Two fields per row here rather than the stacked label-above-field the
    phone uses, so bedtime and wake time read as one range. */
 .setting-control .sleep-window-field {
@@ -2041,12 +2038,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   outline-offset: 2px;
 }
 
+/* The one field that keeps a surface of its own: it is the first thing in the
+   task column and reads as a card to type into rather than as a slot in a
+   form. Everything else about it now comes from the base rule above. */
 .quick-add {
   width: 100%;
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  color: var(--text);
   padding: 13px 16px;
   margin-bottom: var(--s4);
 }
@@ -2206,6 +2204,154 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 }
 
 .starter-card button.primary { margin-top: var(--s1); }
+
+/* ------------------------------------------------------------------------
+   Form controls: one definition of what a field looks like.
+
+   This stylesheet used to carry six of them - .template-editor input,
+   .block-add input, .if-then-form input, .quick-add, .setting-text-input and
+   .task-size-input - each written for the screen it first appeared on. They
+   agreed by accident and diverged in the details, and the moment a component
+   built for one screen was reused on another it rendered as a bare white
+   browser input, because none of those selectors reached it. That is not a
+   styling bug, it is a missing rule, and this is the rule.
+
+   Everything text-shaped is covered: text, number, time, search, and an input
+   with no type at all. The five that are not text-shaped - checkbox, radio,
+   file, range and colour - are excluded by name rather than by an allow-list,
+   so a field added later is styled by default and has to opt out on purpose
+   rather than being forgotten by default.
+   ------------------------------------------------------------------------ */
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+textarea {
+  min-width: 0;
+  padding: 10px var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color'])::placeholder,
+textarea::placeholder {
+  color: var(--faint);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):hover,
+  textarea:hover {
+    border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
+  }
+}
+
+/* One focus ring for every field. Inset, so it never changes the size of the
+   control and never nudges what is beside it. */
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):focus,
+textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/* A stepper is one control, not a field with two buttons parked next to it.
+   The three parts share a border and sit flush, and only the outer corners
+   are rounded - so it reads as a single object the way a native spinner does,
+   without inheriting a native spinner's unstylable chrome. */
+.time-stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.time-stepper:focus-within { border-color: var(--accent); }
+
+.time-stepper .time-input,
+.time-stepper .minutes-input {
+  width: 76px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-stepper .time-input:focus,
+.time-stepper .minutes-input:focus {
+  outline: none;
+  background: none;
+}
+
+.time-stepper-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-left: 1px solid var(--border);
+}
+
+/* Two half-height buttons stacked, which is what a spinner is. The pair still
+   clears the 44px the app holds for a touch target between them, and each is
+   40px wide - a chevron is a small mark and needs the width, not the height.
+   The old side-by-side pair needed 88px of a row that never had it, which is
+   how they ended up looking bolted on. */
+.time-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-height: 0;
+  height: 50%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.time-step + .time-step { border-top: 1px solid var(--border); }
+
+.time-step:hover {
+  background: color-mix(in srgb, var(--border) 45%, transparent);
+  color: var(--text);
+}
+
+.time-step:active { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+.time-step:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The chevron itself: two borders of a rotated box, the same technique the
+   checkmark, the Done caret and the rollover arrow all use. Replaces the
+   triangle glyphs those buttons used to print as text, which rendered at a
+   different weight in every font stack and never matched anything else. */
+.time-step::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border: solid currentColor;
+  border-width: 1.5px 1.5px 0 0;
+  transform: translateY(1.5px) rotate(-45deg);
+}
+
+.time-step.is-down::before { transform: translateY(-1.5px) rotate(135deg); }
+
+/* Per-context deltas only, from here down - width and flow, never colour or
+   border. Anything that needs more than that is a different control and
+   should say so. */
+.block-add .time-stepper .time-input { width: 68px; }
+.setting-control .time-stepper .time-input,
+.setting-control .time-stepper .minutes-input { width: 84px; }
 
 .task-list { list-style: none; margin: 0; padding: 0; }
 
@@ -2737,10 +2883,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   width: 64px;
   min-height: 32px;
   flex-shrink: 0;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
   padding: var(--s2);
 }
 
@@ -2982,15 +3124,6 @@ button.primary {
   gap: var(--s3);
 }
 
-.template-editor input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
-  padding: 11px 12px;
-  min-width: 0;
-}
-
 .palette { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .day-type-picker {
@@ -3056,43 +3189,6 @@ button.primary {
   padding: 0 12px;
   white-space: nowrap;
 }
-
-/* TimeStepInput: a text field plus two small step buttons, treated as one
-   unit within the .block-add row. The row already wraps at 375px
-   (flex-wrap above), so this is free to take the width it needs rather
-   than fight the title and size fields for it - it wraps onto its own line
-   on a narrow phone rather than any field shrinking to the point of being
-   unusable. align-items: stretch (the flex default, stated here for
-   clarity) is what keeps the step buttons the same height as the text
-   field beside them, the same stretching that already matches "Add block"
-   to the fields next to it. */
-.time-stepper {
-  display: flex;
-  gap: var(--s1);
-  flex: 0 0 auto;
-}
-
-.block-add .time-stepper .time-input { flex: none; width: 68px; }
-
-.time-stepper-buttons {
-  display: flex;
-  gap: var(--s1);
-}
-
-/* Side by side, not stacked above/below: a stacked pair would either
-   split the app's own 44px touch-target minimum across two half-height
-   buttons, or double the height of the row's other fields to keep each
-   one full size. Side by side costs width instead, which the row already
-   has a release valve for - flex-wrap above - so nothing has to give on
-   height or on touch-target size to make room for it. */
-.time-step {
-  min-width: 44px;
-  padding: 0;
-  font-size: var(--t-md);
-  line-height: 1;
-}
-
-.time-step:hover { color: var(--text); }
 
 /* Settings' own sleep-window controls - two TimeStepInput fields per row
    (bedtime, wake time), wrapping at 375px the same way .block-add's own
@@ -3474,14 +3570,6 @@ button.danger {
   border-radius: var(--r-card);
   padding: var(--s4);
   margin-bottom: var(--s3);
-}
-
-.if-then-form input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
-  padding: 11px 12px;
 }
 
 .if-then-hint {
@@ -4450,7 +4538,7 @@ nav button:active,
 .floating-clock.at-top-left { left: var(--s4); top: calc(var(--s4) + env(safe-area-inset-top)); }
 
 @media (prefers-reduced-motion: no-preference) {
-  .floating-clock { animation: undo-in var(--dur) var(--ease) both; }
+  .floating-clock { animation: float-in var(--dur) var(--ease) both; }
 }
 
 /* Once it has rung out it keeps a slow pulse until somebody says Done. It is
@@ -4462,6 +4550,17 @@ nav button:active,
 
 @media (prefers-reduced-motion: no-preference) {
   .floating-clock.is-up { animation: clock-pulse 1.6s var(--ease) infinite; }
+}
+
+/* Its own entrance, not the undo bar's. That one is centred and carries a
+   permanent translateX(-50%) in its keyframes, which with fill-mode both left
+   the widget parked half its own width off whichever corner it was pinned to -
+   far enough at the left-hand corners that moving it looked like it did
+   nothing at all. A shared keyframe between two elements positioned by
+   different rules was never going to survive; this one only moves on y. */
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes clock-pulse {
@@ -4778,17 +4877,7 @@ nav button:active,
    as a bare browser input. */
 .setting-text-input {
   width: min(260px, 60vw);
-  padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  background: var(--bg);
-  color: var(--text);
   font-size: var(--t-sm);
-}
-
-.setting-text-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
 }
 
 /* The update notice - src/UpdateNotice.tsx. A quiet fixed banner, not a
