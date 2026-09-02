@@ -67,15 +67,19 @@ test('arrow keys move the roving tab stop and DOM focus one day at a time', asyn
   expect(cellAt(grid, '2026-06-15')).toHaveFocus()
 })
 
+// Same reasoning as `cellAt` above, applied to the one test in this file that
+// was still selecting cells by accessible name. Three name queries over 365
+// buttons is what put this back over the 5s timeout as the suite grew; the
+// names themselves are covered by the tests further up.
 test('Home and End jump to the first and last day of the year', async () => {
   const user = userEvent.setup({ delay: null })
   render(<YearStrip onOpenDay={() => {}} />)
   const grid = screen.getByRole('group', { name: 'Days of 2026' })
-  within(grid).getByRole('button', { name: 'June 15, 2026' }).focus()
+  cellAt(grid, '2026-06-15').focus()
   await user.keyboard('{Home}')
-  expect(within(grid).getByRole('button', { name: 'January 1, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-01-01')).toHaveFocus()
   await user.keyboard('{End}')
-  expect(within(grid).getByRole('button', { name: 'December 31, 2026' })).toHaveFocus()
+  expect(cellAt(grid, '2026-12-31')).toHaveFocus()
 })
 
 test('arrow keys do not cross into a year that is not rendered', async () => {
@@ -210,6 +214,21 @@ function stampTwoYears() {
   return { work, rest }
 }
 
+// The two stress tests below assert their own per-operation budgets, and
+// those budgets add up to more than vitest's default 5s per-test timeout: the
+// switching test alone allows four switches at 2000ms each. It only ever
+// passed because real switches land far under that, so the sum never
+// approached the ceiling - until the suite grew enough that CPU contention
+// under full parallelism pushed it there, and the harness killed the test
+// before its own assertion could say anything useful.
+//
+// An explicit timeout, sized to what each test's own assertions already
+// allow, is the honest fix. It does not loosen a single budget: a switch
+// slower than 2000ms still fails, and now it fails by saying so rather than
+// by timing out. Raising the assertion thresholds instead would have quietly
+// removed the coverage; this keeps all of it.
+const STRESS_TIMEOUT_MS = 20_000
+
 test('a year strip over roughly 700 stamped days across two templates renders every cell colored, within a generous time budget', () => {
   stampTwoYears()
   vi.setSystemTime(new Date(2024, 5, 15))
@@ -221,7 +240,7 @@ test('a year strip over roughly 700 stamped days across two templates renders ev
   const colored = within(grid).getAllByRole('button').filter(b => (b as HTMLElement).style.background !== '')
   // 2024 is a leap year and every day in it was stamped in the loop above.
   expect(colored.length).toBe(366)
-})
+}, STRESS_TIMEOUT_MS)
 
 test('switching years several times in a row stays well within a generous time budget each time', () => {
   stampTwoYears()
@@ -239,4 +258,4 @@ test('switching years several times in a row stays well within a generous time b
     // production-build numbers measured in a real browser.
     expect(elapsed).toBeLessThan(2000)
   }
-})
+}, STRESS_TIMEOUT_MS)

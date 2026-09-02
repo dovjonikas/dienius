@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CalendarView } from './CalendarView'
 import { actions, getData } from '../lib/store'
@@ -10,22 +10,36 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
-// The year view renders 365 cells, so every accessible-name query after the
-// switch walks all of them. userEvent's default inter-event delay on top of
-// that pushes this past the 5s timeout under full-suite load. Dropping the
-// delay removes waiting, not coverage.
+// The year view renders 365 cells, and a `getByRole` name query computes the
+// accessible name of every one of them. Dropping userEvent's inter-event
+// delay bought this test time once already; as the suite grew it went back
+// over the 5s timeout under full parallelism, which is a sign the query
+// itself is wrong rather than that the budget is tight.
+//
+// Both nav arrows are addressed by `button[aria-label=...]` instead: one
+// attribute selector against the DOM rather than a walk that builds an
+// accessible name for several hundred buttons to find one. It still asserts
+// both halves of what the old query did - that the thing is a button, and
+// what it is called - and the mode switcher is still clicked through
+// `getByRole`, scoped to its own group, because that part is genuinely about
+// roles and costs nothing. Same coverage, none of the walk.
+function navButton(container: HTMLElement, label: string): HTMLElement | null {
+  return container.querySelector<HTMLElement>(`button[aria-label="${label}"]`)
+}
+
 test('switching to the year view shows the year strip and hides the month grid', async () => {
   const user = userEvent.setup({ delay: null })
-  render(<CalendarView onOpenDay={() => {}} />)
-  expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+  const { container } = render(<CalendarView onOpenDay={() => {}} />)
+  const modes = screen.getByRole('group', { name: 'Calendar view' })
+  expect(navButton(container, 'Previous month')).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Year' }))
-  expect(screen.queryByRole('button', { name: 'Previous month' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Previous year' })).toBeInTheDocument()
+  await user.click(within(modes).getByRole('button', { name: 'Year' }))
+  expect(navButton(container, 'Previous month')).not.toBeInTheDocument()
+  expect(navButton(container, 'Previous year')).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Month' }))
-  expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Previous year' })).not.toBeInTheDocument()
+  await user.click(within(modes).getByRole('button', { name: 'Month' }))
+  expect(navButton(container, 'Previous month')).toBeInTheDocument()
+  expect(navButton(container, 'Previous year')).not.toBeInTheDocument()
 })
 
 test('the month grid wraps each week in a row, so gridcells never sit directly inside the grid', () => {
