@@ -6961,7 +6961,13 @@ button.danger:focus-visible {
   .clock-button,
   .library-step,
   .library-item-remove,
-  .subtask-remove {
+  .subtask-remove,
+  .library-list-edit,
+  .library-item-schedule,
+  .library-item-reopen,
+  .accent-swatch,
+  .switch,
+  .task-title-select {
     position: relative;
   }
 
@@ -6970,7 +6976,13 @@ button.danger:focus-visible {
   .clock-button::after,
   .library-step::after,
   .library-item-remove::after,
-  .subtask-remove::after {
+  .subtask-remove::after,
+  .library-list-edit::after,
+  .library-item-schedule::after,
+  .library-item-reopen::after,
+  .accent-swatch::after,
+  .switch::after,
+  .task-title-select::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -6984,10 +6996,17 @@ button.danger:focus-visible {
      each other - an overlay that steals its neighbour's taps is worse than
      the small target it replaced. */
   .category-picker { gap: 14px; }
+  .accent-picker { gap: 14px; }
 
   .task-menu-button { width: 44px; }
 
   .quick-add { min-height: 44px; }
+
+  /* A dropdown is a control a finger has to hit too. 35px is the height a
+     select gets from its own padding and line box; every button beside it is
+     38 or more, and a row where the field is visibly shorter than the button
+     next to it reads as unfinished as well as being harder to press. */
+  select { min-height: 40px; }
 }
 
 /* ------------------------------------------------------------------------
@@ -7415,3 +7434,22 @@ button.danger:focus-visible {
 }
 
 .undo-toast-dismiss:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+
+.review-block-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.review-peak { flex-shrink: 0; color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+
+/* A day with nothing on it. Two pixels of --border rather than an empty
+   column, so zero looks like zero and not like a rendering fault. */
+.review-bar-zero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+/* The four figures sit on a shared baseline: a two-line note under one of
+   them was stretching its row and leaving the other three floating. */
+.review-figures dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--s1); }

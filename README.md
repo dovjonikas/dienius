@@ -34,6 +34,10 @@ contents, so an installed copy can never get stuck on stale files.
 ## What it does
 
 - Reusable day templates - a named, colored set of time blocks stamped onto calendar dates by clicking or dragging; nothing commits until you save
+- A template per weekday, so a new day opens already set up - a stamp by hand always wins, and deleting what arrived leaves it deleted
+- Repeating tasks that actually repeat - daily, weekdays or weekly, generated onto each day as real tasks you can tick, move and edit, with "just this day" and "every day it repeats" as a standing choice rather than a dialog
+- What yesterday left, said once: one row, one tap to move it forward. Never moved on its own overnight
+- A review of the week or the month - done per day, deep work per day, key tasks set against key tasks finished, what you read or watched, and a streak. Every figure computed from the days themselves, so there is nothing recorded that can drift from the plan it describes
 - A capacity line - one sentence saying whether today fits: what's anchored, how much free time is left across how many gaps, what the floats still need
 - A day timeline - anchored tasks at their real time and size, free gaps drawn as labeled regions, a line marking right now; collapsed until you open it
 - Push twice, then decide - an unfinished task can move to tomorrow twice; after that it's finish it, delete it, or mark it ongoing
@@ -49,6 +53,7 @@ contents, so an installed copy can never get stuck on stale files.
 - Sleep as a named schedule, not an assumption - one by default, and as many as somebody genuinely lives; a day or a template points at one, and the app never says the word until there are two to choose between
 - An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
 - A keyboard layer - single keys for the things done most often, and a card behind `?` that lists them. None of them fire while you are typing in a box, except Escape, which is usually how you leave the box
+- Ctrl-K / Cmd-K - one box for running a command and for finding a thing: tasks, notes and library items, or a date typed in words. No search index, because a linear scan over the whole store costs less than the keystroke that triggered it
 - A year strip - one cell per day, colored by template, a thin ring when everything planned got done
 - Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
@@ -57,6 +62,8 @@ contents, so an installed copy can never get stuck on stale files.
 Everything is written straight to `localStorage`. There's no account and no server to lose access to.
 
 - **Export / Import** - Settings has a plain JSON backup, both ways. It is a deliberate manual step, not an automatic one - a backup only exists when you actually made it. A backup written by any earlier version still imports; every field added since is filled in with its default rather than rejected
+- **Daily snapshots** - a full copy is kept once a day in IndexedDB, the last seven held, restorable from Settings. This covers the case a manual backup structurally cannot: the mistake you did not see coming. Erasing all data takes them with it
+- **Undo** - deleting a task, removing a library item and stamping a template are all reversible for five seconds
 - A running timer is the one thing deliberately kept out of the backup - it lives under its own key, because a timer with ninety seconds left is not a plan worth restoring from last Tuesday
 - No sync between devices - clear site data on this one and it's gone unless you exported first
 - Updates install themselves the next time you open the app
@@ -82,11 +89,17 @@ src/
     library.ts       the library's own arithmetic - units, progress, the typed line
     shortcuts.ts     the keyboard layer, and the two rules that make bare keys safe
     install.ts       holds the one install prompt a browser will hand over
+    repeats.ts       which days a series owes, and what an instance carries
+    review.ts        the week and month statistics, all derived, nothing stored
+    search.ts        the palette's linear scan, and typing a date in words
+    snapshots.ts     the daily IndexedDB copies
+    undo.ts          one app-wide undo offer, five seconds
     theme.ts         resolves a preset plus its overrides into real CSS values
     theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
     contrast.ts      the WCAG contrast gate the theme tests run
     pushRules.ts     the two-push bound and the ongoing exemption
-  views/          Calendar, Templates, Library, Settings, TimePicker, ShortcutsOverlay
+  views/          Calendar, Templates, Library, Review, Settings, CommandPalette,
+                  TimePicker, ShortcutsOverlay
   widgets/
     day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score, the task detail sheet
     if-then/      the if-then board and its day-type/time-of-day rotation

@@ -127,6 +127,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
             valueOf={d => d.done}
             capOf={d => d.total}
             label={d => `${d.done} of ${d.total} done`}
+            peakLabel={`${peak} ${peak === 1 ? 'task' : 'tasks'}`}
             onOpenDay={onOpenDay}
           />
 
@@ -136,6 +137,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
             peak={peakFocus}
             valueOf={d => d.focusMinutes}
             label={d => (d.focusMinutes > 0 ? formatDuration(d.focusMinutes) : 'none')}
+            peakLabel={formatDuration(peakFocus)}
             onOpenDay={onOpenDay}
           />
 
@@ -180,6 +182,8 @@ interface ChartProps {
   /** The full height of the bar, when there is a planned total behind it. */
   capOf?: (day: DayStat) => number
   label: (day: DayStat) => string
+  /** What the tallest bar is worth, in words. Without it the bars have no scale. */
+  peakLabel: string
   onOpenDay?: (date: string) => void
 }
 
@@ -194,10 +198,17 @@ interface ChartProps {
  * Each column is a button, because the obvious thing to want after looking at
  * a bad Tuesday is to open Tuesday.
  */
-function Chart({ title, days, peak, valueOf, capOf, label, onOpenDay }: ChartProps) {
+function Chart({ title, days, peak, valueOf, capOf, label, peakLabel, onOpenDay }: ChartProps) {
   return (
     <div className="review-block">
-      <h3>{title}</h3>
+      <div className="review-block-head">
+        <h3>{title}</h3>
+        {/* Bars drawn against the week's own peak have no scale at all
+            without this: three bars at full height mean ninety minutes or
+            nine hours and the picture is identical. One number fixes it,
+            where an axis would add four. */}
+        <span className="review-peak">tallest: {peakLabel}</span>
+      </div>
       <div className="review-chart">
         {days.map(day => {
           const value = valueOf(day)
@@ -212,6 +223,10 @@ function Chart({ title, days, peak, valueOf, capOf, label, onOpenDay }: ChartPro
               onClick={() => onOpenDay?.(day.date)}
             >
               <span className="review-bar-track" aria-hidden="true">
+                {/* A day with nothing on it draws a hairline rather than
+                    nothing, so an empty column reads as zero rather than as
+                    a column that failed to render. */}
+                {cap === 0 && <span className="review-bar-zero" />}
                 {/* The planned total sits behind the done count, so a day
                     where two of nine got done reads differently from one
                     where two of two did - the same distinction the day
