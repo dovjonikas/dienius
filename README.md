@@ -107,6 +107,8 @@ Logic that doesn't need a component - parsing, sorting, scoring, stamping, capac
 
 The service worker in `public/sw.js` is hand-written rather than generated, and `scripts/generate-sw.mjs` versions its cache from a hash of the build output on every deploy, so an installed copy never gets stuck on stale files.
 
+A map of the whole thing - the data model, how state flows, which file to open for which job - is [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 The reasoning behind the harder calls - why templates instead of recurring tasks, why the push bound stops at two, why there's no streak anywhere - is written out, including what each one costs, in [`docs/DECISIONS.md`](docs/DECISIONS.md). The evidence behind the if-then board and the push rule, and what the research says not to build, is in [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md).
 
 ## Run locally

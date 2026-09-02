@@ -35,22 +35,39 @@ function notify(): void {
 export function watchInstallPrompt(): void {
   if (typeof window === 'undefined') return
   if (watching) return
-  watching = true
-  window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault()
-    deferred = event as BeforeInstallPromptEvent
-    notify()
-  })
+  watching = new AbortController()
+  const { signal } = watching
+
+  window.addEventListener(
+    'beforeinstallprompt',
+    event => {
+      event.preventDefault()
+      deferred = event as BeforeInstallPromptEvent
+      notify()
+    },
+    { signal },
+  )
   // Fired once the install actually completes, on the page that triggered it
   // and on any other open copy. Dropping the held event here is what stops
   // Settings offering to install something that already is.
-  window.addEventListener('appinstalled', () => {
-    deferred = null
-    notify()
-  })
+  window.addEventListener(
+    'appinstalled',
+    () => {
+      deferred = null
+      notify()
+    },
+    { signal },
+  )
 }
 
-let watching = false
+/**
+ * The controller for the two window listeners, held so `resetInstallForTests`
+ * can genuinely undo them. A flag alone flipped back to false and left the
+ * listeners attached, so a second `watchInstallPrompt` added a second pair -
+ * which never happens in the app, where it is called once, and happens in
+ * every test after the first.
+ */
+let watching: AbortController | null = null
 
 export function canInstall(): boolean {
   return deferred !== null
@@ -101,9 +118,10 @@ export function onInstallAvailabilityChange(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
-/** Test seam: forgets the held event and every listener. */
+/** Test seam: forgets the held event, both window listeners, and every subscriber. */
 export function resetInstallForTests(): void {
   deferred = null
-  watching = false
+  watching?.abort()
+  watching = null
   listeners.clear()
 }

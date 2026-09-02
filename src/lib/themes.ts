@@ -100,14 +100,6 @@ export interface ThemePreset {
 // rather than inventing a second set a preset does not actually use.
 export const SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
 export const SYSTEM_MONO = "'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace"
-export const SYSTEM_SERIF_DISPLAY = "Iowan Old Style, 'Palatino Linotype', Palatino, Georgia, 'Book Antiqua', serif"
-// A fourth, professional stack for the override panel's Type control -
-// no preset ships this today, but "rounded" is one of the four options
-// docs/THEMES.md section 3 names, and it needs to be a real, legible face
-// like the other three, not a placeholder. ui-rounded is a genuine CSS
-// generic family (Safari resolves it to SF Pro Rounded); every other
-// platform falls through to the same system sans the other options use.
-export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif"
 // A fifth stack, added for Newsprint's condensed headline type (section 6
 // item 8). Genuinely condensed on Windows and most Chrome OS/Android
 // builds, where 'Arial Narrow' and 'Roboto Condensed' both actually exist;
@@ -130,9 +122,12 @@ export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-
 // invented value - a preset's own stock corner and the panel's "Soft"
 // option must mean the literal same thing, or the control shows nothing
 // selected on a preset that is, in fact, already soft.
+// The one shape a preset still names for itself. The two that stood beside
+// it - SOFT_EDGE and SHARP_EDGE - existed only for the override panel's Edge
+// control, which went with the panel in the v1.0 theme rework; storage.ts
+// still refers to this one by name in the comment explaining why a border
+// radius may contain slashes and spaces.
 export const HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
-export const SOFT_EDGE = '10px'
-export const SHARP_EDGE = '4px'
 
 
 /**
