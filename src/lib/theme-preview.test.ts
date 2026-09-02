@@ -3,7 +3,7 @@ import { buildPreviewStyle, markInk } from './theme-preview'
 import { findPreset } from './themes'
 
 test('buildPreviewStyle copies every surface and palette token the miniature paints with', () => {
-  const variant = findPreset('sketchbook').dark!
+  const variant = findPreset('midnight').dark!
   const style = buildPreviewStyle(variant.tokens, variant.ruleStyle)
   expect(style['--pv-bg']).toBe(variant.tokens.bg)
   expect(style['--pv-surface']).toBe(variant.tokens.surface)
@@ -24,21 +24,21 @@ test('buildPreviewStyle copies every surface and palette token the miniature pai
 })
 
 test('buildPreviewStyle derives both ruling axes for a squares preset, same as the real page', () => {
-  const variant = findPreset('sketchbook').light!
+  const variant = findPreset('light').light!
   const style = buildPreviewStyle(variant.tokens, 'squares')
   expect(style['--pv-rule-h']).toBe(variant.tokens.rule)
   expect(style['--pv-rule-v']).toBe(variant.tokens.rule)
 })
 
 test('buildPreviewStyle draws only the horizontal axis for a lines preset', () => {
-  const variant = findPreset('sketchbook').light!
+  const variant = findPreset('light').light!
   const style = buildPreviewStyle(variant.tokens, 'lines')
   expect(style['--pv-rule-h']).toBe(variant.tokens.rule)
   expect(style['--pv-rule-v']).toBe('transparent')
 })
 
-test('buildPreviewStyle draws neither ruling axis for a plain preset, like Slate', () => {
-  const variant = findPreset('slate').light!
+test('buildPreviewStyle draws neither ruling axis for a theme with no ruling, which is all of them', () => {
+  const variant = findPreset('light').light!
   const style = buildPreviewStyle(variant.tokens, variant.ruleStyle)
   expect(style['--pv-rule-h']).toBe('transparent')
   expect(style['--pv-rule-v']).toBe('transparent')
@@ -55,7 +55,7 @@ test('markInk picks white ink for a dark mark color', () => {
 test('markInk always returns a color that reads at least 4.5:1 against the mark it was given, across every shipped preset', () => {
   // Exercises the actual preset data rather than made-up colors, so a
   // future preset with an unusual mark color is covered automatically.
-  const presets = [findPreset('slate'), findPreset('sketchbook')]
+  const presets = [findPreset('dark'), findPreset('light'), findPreset('midnight')]
   for (const preset of presets) {
     for (const mode of preset.modes) {
       const variant = mode === 'light' ? preset.light! : preset.dark!

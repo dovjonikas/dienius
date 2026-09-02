@@ -312,6 +312,20 @@ export const actions = {
   },
 
   /**
+   * How much air the interface spends, and how big its type is. Both are
+   * device preferences rather than theme choices - see their own comments in
+   * types.ts - so they live in settings beside the other app-wide switches
+   * rather than inside a preset's override patch, and survive changing theme.
+   */
+  setDensity(density: Settings['density']): void {
+    commit({ ...data, settings: { ...data.settings, density } })
+  },
+
+  setTextScale(textScale: Settings['textScale']): void {
+    commit({ ...data, settings: { ...data.settings, textScale } })
+  },
+
+  /**
    * Sets the sleep window used on a full, shift or rest day - see
    * `Settings.sleepWindow` and `windowFor` in `src/widgets/day-plan/capacity.ts`.
    * A set-once setting the same way `setTimelineExpanded` and

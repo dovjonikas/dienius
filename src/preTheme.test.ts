@@ -63,12 +63,12 @@ function expectAgreement() {
   expect(prePaintSnapshot).toEqual(expectedSnapshot)
 }
 
-test('agree on a clean, fully valid dark Slate payload', () => {
+test('agree on a clean, fully valid Dark payload', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [],
     days: {},
     settings: {
-      theme: { presetId: 'slate', overrides: {}, mode: 'dark' },
+      theme: { presetId: 'dark', overrides: {}, mode: 'dark' },
       enabledWidgets: [],
     },
     ifThens: [],
@@ -78,12 +78,12 @@ test('agree on a clean, fully valid dark Slate payload', () => {
   expectAgreement()
 })
 
-test('agree on a clean, fully valid light Slate payload', () => {
+test('agree on a clean, fully valid Light payload', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [],
     days: {},
     settings: {
-      theme: { presetId: 'slate', overrides: {}, mode: 'light' },
+      theme: { presetId: 'light', overrides: {}, mode: 'light' },
       enabledWidgets: [],
     },
     ifThens: [],
@@ -93,14 +93,14 @@ test('agree on a clean, fully valid light Slate payload', () => {
   expectAgreement()
 })
 
-test('agree on Sketchbook dark with an accent override applied', () => {
+test('agree on Midnight with an accent override applied', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [],
     days: {},
     settings: {
       theme: {
-        presetId: 'sketchbook',
-        overrides: { sketchbook: { accent: '#e0553b' } },
+        presetId: 'midnight',
+        overrides: { midnight: { accent: '#e0553b' } },
         mode: 'dark',
       },
       enabledWidgets: [],
@@ -112,18 +112,25 @@ test('agree on Sketchbook dark with an accent override applied', () => {
   expectAgreement()
 })
 
-test('agree on Sketchbook light, and that its ruling actually differs from Slate\'s none', () => {
+// Every shipped theme now draws no ruling at all - the ruled-paper presets
+// were cut, see themes.ts. The machinery is still there and still shared
+// between this script and resolveTheme, so what is worth checking is that
+// both sides still agree about that, and that an override asking for ruling
+// is still honoured identically by both. Same coverage of the same code path,
+// against a preset that exists.
+test('agree that a shipped theme draws no ruling on either side', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [],
     days: {},
     settings: {
-      theme: { presetId: 'sketchbook', overrides: {}, mode: 'light' },
+      theme: { presetId: 'light', overrides: {}, mode: 'light' },
       enabledWidgets: [],
     },
     ifThens: [],
   }))
   runPrePaintScript()
-  expect(document.documentElement.style.getPropertyValue('--rule-v')).not.toBe('transparent')
+  expect(document.documentElement.style.getPropertyValue('--rule-v')).toBe('transparent')
+  expect(document.documentElement.style.getPropertyValue('--rule-h')).toBe('transparent')
   expectAgreement()
 })
 
@@ -133,8 +140,8 @@ test('a ruleStyle override in the patch is honored and still agrees', () => {
     days: {},
     settings: {
       theme: {
-        presetId: 'sketchbook',
-        overrides: { sketchbook: { ruleStyle: 'lines' } },
+        presetId: 'dark',
+        overrides: { dark: { ruleStyle: 'lines', rule: '#334455' } },
         mode: 'dark',
       },
       enabledWidgets: [],
@@ -147,7 +154,7 @@ test('a ruleStyle override in the patch is honored and still agrees', () => {
   expectAgreement()
 })
 
-test('an unknown presetId falls back to Slate and agrees, ignoring overrides keyed to the unknown id', () => {
+test('an unknown presetId falls back to Dark and agrees, ignoring overrides keyed to the unknown id', () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     templates: [],
     days: {},
@@ -180,7 +187,7 @@ test('an unknown presetId falls back to Slate and agrees, ignoring overrides key
 // resolved theme - a real regression of the flash this file exists to
 // catch, reproduced once already before PRESETS became an array searched
 // by id rather than an object indexed by it. Each of these must resolve
-// exactly like any other unknown id: fall back to Slate, and still agree.
+// exactly like any other unknown id: fall back to Dark, and still agree.
 for (const collidingId of ['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__']) {
   test(`a presetId of '${collidingId}' cannot be mistaken for a real preset via inherited Object.prototype properties`, () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -197,9 +204,9 @@ for (const collidingId of ['constructor', 'toString', 'valueOf', 'hasOwnProperty
       ifThens: [],
     }))
     runPrePaintScript()
-    // Falls back to Slate dark, not an empty or crashed token block.
+    // Falls back to Dark, not an empty or crashed token block.
     expect(document.documentElement.dataset.theme).toBe('dark')
-    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#191a1d')
+    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#121417')
     expect(document.documentElement.style.getPropertyValue('--accent')).not.toBe('#ff00ff')
     expectAgreement()
   })
@@ -248,7 +255,7 @@ test('agree when a ThemeState override patch has a non-string value', () => {
     templates: [],
     days: {},
     settings: {
-      theme: { presetId: 'slate', overrides: { slate: { accent: 123 } }, mode: 'light' },
+      theme: { presetId: 'dark', overrides: { dark: { accent: 123 } }, mode: 'light' },
       enabledWidgets: [],
     },
   }))
@@ -272,8 +279,8 @@ test('agree when a ThemeState override sets a color token to a CSS url() value -
     days: {},
     settings: {
       theme: {
-        presetId: 'slate',
-        overrides: { slate: { accent: 'url(https://attacker.example/beacon.png)' } },
+        presetId: 'dark',
+        overrides: { dark: { accent: 'url(https://attacker.example/beacon.png)' } },
         mode: 'light',
       },
       enabledWidgets: [],
@@ -293,8 +300,8 @@ test('agree when a ThemeState override sets bg to a CSS url() value - both sides
     days: {},
     settings: {
       theme: {
-        presetId: 'slate',
-        overrides: { slate: { bg: 'url("https://attacker.example/beacon.png?id=1")' } },
+        presetId: 'dark',
+        overrides: { dark: { bg: 'url("https://attacker.example/beacon.png?id=1")' } },
         mode: 'dark',
       },
       enabledWidgets: [],
@@ -314,8 +321,8 @@ test('agree when a ThemeState override sets a non-color token (fontBody) to a CS
     days: {},
     settings: {
       theme: {
-        presetId: 'slate',
-        overrides: { slate: { fontBody: 'url(https://attacker.example/x)' } },
+        presetId: 'dark',
+        overrides: { dark: { fontBody: 'url(https://attacker.example/x)' } },
         mode: 'light',
       },
       enabledWidgets: [],
@@ -335,8 +342,8 @@ test('agree when a ThemeState override sets edge to a legitimate multi-value sho
     days: {},
     settings: {
       theme: {
-        presetId: 'slate',
-        overrides: { slate: { edge: '225px 14px 255px 15px / 15px 255px 14px 225px' } },
+        presetId: 'dark',
+        overrides: { dark: { edge: '225px 14px 255px 15px / 15px 255px 14px 225px' } },
         mode: 'light',
       },
       enabledWidgets: [],
@@ -357,8 +364,8 @@ test('agrees on --safe-ink, including the broken-theme case where a text overrid
     days: {},
     settings: {
       theme: {
-        presetId: 'sketchbook',
-        overrides: { sketchbook: { text: '#f4ecd8' } },
+        presetId: 'midnight',
+        overrides: { midnight: { text: '#f4ecd8' } },
         mode: 'light',
       },
       enabledWidgets: [],
@@ -391,7 +398,7 @@ test('agree on system mode following the live OS preference, both directions', (
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         templates: [],
         days: {},
-        settings: { theme: { presetId: 'sketchbook', overrides: {}, mode: 'system' }, enabledWidgets: [] },
+        settings: { theme: { presetId: 'midnight', overrides: {}, mode: 'system' }, enabledWidgets: [] },
       }))
       runPrePaintScript()
       expect(document.documentElement.dataset.theme).toBe(prefersDark ? 'dark' : 'light')

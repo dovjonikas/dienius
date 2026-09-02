@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SettingsView } from './SettingsView'
 import { actions, getData } from '../lib/store'
@@ -14,27 +14,52 @@ function getFileInput(container: HTMLElement): HTMLInputElement {
   return container.querySelector('input[type="file"]') as HTMLInputElement
 }
 
-test('the theme gallery replaces the old preset-blind toggle - a room can be picked directly in Settings', async () => {
+test('a theme can be picked directly in Settings', async () => {
   const user = userEvent.setup()
   render(<SettingsView />)
 
-  expect(screen.getByRole('button', { name: /Slate/ })).toHaveAttribute('aria-pressed', 'true')
-  await user.click(screen.getByRole('button', { name: /Sketchbook/ }))
+  expect(screen.getByRole('button', { name: /Dark/ })).toHaveAttribute('aria-pressed', 'true')
+  await user.click(screen.getByRole('button', { name: /Midnight/ }))
 
-  expect(getData().settings.theme.presetId).toBe('sketchbook')
-  expect(screen.getByRole('button', { name: /Sketchbook/ })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.getByRole('button', { name: /Slate/ })).toHaveAttribute('aria-pressed', 'false')
+  expect(getData().settings.theme.presetId).toBe('midnight')
+  expect(screen.getByRole('button', { name: /Midnight/ })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: /Dark/ })).toHaveAttribute('aria-pressed', 'false')
 })
 
-test('the mode control keeps working for the active preset, leaving one theme control, not two', async () => {
+// The Light / Dark / System control is gone - with three fixed themes it had
+// no job left, since light or dark is now the theme itself. What survives of
+// it is the only part that was ever a preference rather than a restatement of
+// the gallery: whether to follow the device. Turning it off pins whatever
+// theme is currently chosen, so switching the system afterwards changes
+// nothing.
+test('matching the system is a switch, and turning it off pins the current theme', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+  const match = screen.getByRole('switch', { name: 'Match system appearance' })
+
+  expect(match).toHaveAttribute('aria-checked', 'true')
+  await user.click(match)
+  expect(getData().settings.theme.mode).toBe('dark')
+  expect(screen.getByRole('switch', { name: 'Match system appearance' })).toHaveAttribute('aria-checked', 'false')
+
+  await user.click(screen.getByRole('switch', { name: 'Match system appearance' }))
+  expect(getData().settings.theme.mode).toBe('system')
+})
+
+test('accent, density and text size are all offered, and each writes where it belongs', async () => {
   const user = userEvent.setup()
   render(<SettingsView />)
 
-  await user.click(screen.getByRole('button', { name: 'Dark' }))
-  expect(getData().settings.theme.mode).toBe('dark')
-  // Slate and Sketchbook both ship light and dark, so neither is disabled.
-  expect(screen.getByRole('button', { name: 'Light' })).not.toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Dark' })).not.toBeDisabled()
+  // Accent is a per-theme override patch; density and text size are app-wide
+  // settings - see AppearanceControls.tsx for why they are stored differently.
+  await user.click(within(screen.getByRole('group', { name: 'Accent colour' })).getByRole('button', { name: 'Teal' }))
+  expect(getData().settings.theme.overrides.dark?.accent).toBe('#5fb3b8')
+
+  await user.click(within(screen.getByRole('group', { name: 'Density' })).getByRole('button', { name: 'Compact' }))
+  expect(getData().settings.density).toBe('compact')
+
+  await user.click(within(screen.getByRole('group', { name: 'Text size' })).getByRole('button', { name: 'Large text' }))
+  expect(getData().settings.textScale).toBe('l')
 })
 
 test('importing an invalid file shows an error and leaves existing data untouched', async () => {

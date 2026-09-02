@@ -16,7 +16,16 @@
 export interface ThemeTokens {
   // Surface
   bg: string
+  /** The card and panel surface - one step above the page. */
   surface: string
+  /**
+   * One step above that again: anything covering a card - a sheet, a popover,
+   * the focus screen. Depth on a dark theme comes from a lighter surface, not
+   * a heavier shadow, so this is a real third step rather than a synonym for
+   * `surface`. On a light theme, where the card is already white, it is the
+   * same value and the shadow does the work instead.
+   */
+  surfaceRaised: string
   rule: string
   ruleSize: string
   /** Grain opacity, a plain 0-1 number as a string, e.g. '0.03'. */
@@ -38,6 +47,13 @@ export interface ThemeTokens {
   // Palette
   text: string
   muted: string
+  /**
+   * The third and quietest ink - disabled controls, a placeholder, anything
+   * present but not currently meaningful. Deliberately below the AA threshold
+   * for body text and only ever used where that is the point: text at this
+   * weight is never something a person has to read.
+   */
+  faint: string
   accent: string
   accentDim: string
   mark: string
@@ -102,7 +118,6 @@ export const SYSTEM_ROUNDED = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-
 // `fontBody`, never `fontDisplay` - a condensed headline face is Newsprint's
 // own compiled choice, not one of the four options a person can pick from
 // there, so this has no legitimate use outside this file today.
-const SYSTEM_CONDENSED = "'Arial Narrow', 'Roboto Condensed', 'Segoe UI', system-ui, sans-serif"
 
 // The hand-drawn edge from docs/THEMES.md section 5, used as-is. Because
 // this is the literal value of --edge, every element already styled with
@@ -119,515 +134,146 @@ export const HAND_DRAWN_EDGE = '225px 14px 255px 15px / 15px 255px 14px 225px'
 export const SOFT_EDGE = '10px'
 export const SHARP_EDGE = '4px'
 
-/**
- * Slate - the neutral fallback. This is the app's original light and dark
- * theme, carried into the new token structure without changing a single
- * value: same backgrounds, same ink, same accent, same shadow. No ruling,
- * no grain, no vignette, soft symmetric corners - a room that stays out of
- * the way, exactly as docs/THEMES.md section 6 describes it.
- */
-const SLATE: ThemePreset = {
-  id: 'slate',
-  name: 'Slate',
-  modes: ['light', 'dark'],
-  light: {
-    ruleStyle: 'none',
-    tokens: {
-      bg: '#fafaf8',
-      surface: '#ffffff',
-      rule: '#00000000',
-      ruleSize: '28px',
-      grain: '0',
-      vignette: '0%',
-      border: '#e8e6e1',
-      margin: '#00000000',
-      text: '#2b2b2b',
-      muted: '#8a8a85',
-      accent: '#5b7cfa',
-      accentDim: '#c3cdfa',
-      mark: '#ffd54a',
-      danger: '#d96c6c',
-      good: '#6fae6f',
-      fontDisplay: SYSTEM_SANS,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '10px',
-      edge: '10px',
-      shadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
-    },
-  },
-  dark: {
-    ruleStyle: 'none',
-    tokens: {
-      bg: '#191a1d',
-      surface: '#222327',
-      rule: '#ffffff00',
-      ruleSize: '28px',
-      grain: '0',
-      vignette: '0%',
-      border: '#33343a',
-      margin: '#00000000',
-      text: '#e8e8e5',
-      muted: '#85858a',
-      accent: '#7c94ff',
-      accentDim: '#3c4470',
-      mark: '#e6c14a',
-      danger: '#e08a8a',
-      good: '#7fc47f',
-      fontDisplay: SYSTEM_SANS,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '10px',
-      edge: '10px',
-      shadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
-    },
-  },
-}
 
 /**
- * Sketchbook - the reference theme. Both variants are a real surface, not a
- * fill: faint ruled squares, a trace of grain, an accent-tinted vignette at
- * the top, hand-drawn card edges. Its personality comes entirely from the
- * surface and palette, not from decorative type - headers use a distinct
- * but professional serif (SYSTEM_SERIF_DISPLAY), body text stays on the
- * same system sans every preset uses, so long lists stay easy to scan.
+ * Three themes, and the reasoning behind cutting the other eight.
+ *
+ * This app shipped eleven presets: Sketchbook, Graph, Legal pad, Moleskine,
+ * Blueprint, Terminal, Newsprint, Receipt, Ink and wash, plus Slate and
+ * Midnight. Every one of them worked and passed its contrast gate. They were
+ * still the wrong thing to ship. A theme picker with eleven rooms in it is a
+ * toy - it says the app is a demo of what surfaces are possible rather than a
+ * tool somebody uses every morning, and nine of the eleven were novelty
+ * choices nobody keeps past the first afternoon. The ruled paper, the grain,
+ * the vignette and the margin rule all went with them.
+ *
+ * What is left is the choice people actually make: dark, light, or darker.
+ *
+ * All three are built to the same principles, and the principles are what
+ * matter more than the numbers:
+ *
+ * - **The base is never pure.** Not #000 and not #fff. A pure black page
+ *   makes every surface above it look like a hole punched in the screen, and
+ *   a pure white one is a lamp pointed at the reader. Both are why an
+ *   interface reads as unfinished.
+ * - **Elevation is a lighter surface, not a heavier shadow.** Page, card,
+ *   and the things that sit over a card each get their own step: the further
+ *   from the page something is, the lighter it is. Depth without a single
+ *   dark halo, which is what shadows on dark backgrounds always become.
+ * - **Text is never pure white either.** Full white on a dark ground
+ *   vibrates and is genuinely tiring to read at length. The values below are
+ *   the opaque equivalents of white at 87 / 60 / 38 percent over each theme's
+ *   own card surface, so the ratios are exactly the ones those opacities
+ *   would give - while staying real colours, which every piece of contrast
+ *   arithmetic in this codebase needs them to be.
+ * - **Borders are barely there.** Enough to separate two surfaces, never
+ *   enough to draw a grid over the page.
+ * - **Colour is quieter in the dark.** A saturated hue that reads as
+ *   confident on white shouts on near-black, so the dark themes take their
+ *   accents desaturated and lightened, and the light theme is allowed to be
+ *   the more colourful of the two.
+ *
+ * Every one of them ships exactly one mode. That is deliberate: with three
+ * fixed themes, "light or dark" is no longer a second axis crossed with the
+ * first, it is the choice itself. Following the system is still possible and
+ * is handled one level up - see `resolveTheme` in theme.ts.
  */
-const SKETCHBOOK: ThemePreset = {
-  id: 'sketchbook',
-  name: 'Sketchbook',
-  modes: ['light', 'dark'],
-  dark: {
-    ruleStyle: 'squares',
-    tokens: {
-      bg: '#14171c',
-      surface: '#1c202a',
-      rule: 'rgba(130, 170, 255, 0.09)',
-      ruleSize: '28px',
-      grain: '0.025',
-      vignette: '9%',
-      border: '#2a2f3b',
-      margin: '#00000000',
-      text: '#e8ecf5',
-      muted: '#8b96b3',
-      accent: '#6fa8ff',
-      accentDim: '#2f4a80',
-      mark: '#ffd23f',
-      danger: '#e2776f',
-      good: '#7fc98a',
-      fontDisplay: SYSTEM_SERIF_DISPLAY,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '10px',
-      edge: HAND_DRAWN_EDGE,
-      shadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-    },
-  },
-  light: {
-    ruleStyle: 'squares',
-    tokens: {
-      bg: '#f4ecd8',
-      surface: '#fffaf0',
-      rule: 'rgba(80, 100, 130, 0.12)',
-      ruleSize: '28px',
-      grain: '0.02',
-      vignette: '6%',
-      border: '#e6dcc5',
-      margin: '#00000000',
-      text: '#2c2a24',
-      muted: '#8a8270',
-      accent: '#3f6fd6',
-      accentDim: '#b9cdf2',
-      mark: '#f5c331',
-      danger: '#c85a52',
-      good: '#4f8f57',
-      fontDisplay: SYSTEM_SERIF_DISPLAY,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '10px',
-      edge: HAND_DRAWN_EDGE,
-      shadow: '0 2px 6px rgba(60, 40, 10, 0.18)',
-    },
-  },
-}
+
+/** No paper texture on any of the three - see the note above. */
+const NO_SURFACE = {
+  rule: '#00000000',
+  ruleSize: '28px',
+  grain: '0',
+  vignette: '0%',
+  margin: '#00000000',
+} as const
+
+const TYPE_AND_SHAPE = {
+  fontDisplay: SYSTEM_SANS,
+  fontBody: SYSTEM_SANS,
+  fontMono: SYSTEM_MONO,
+  radius: '10px',
+  edge: '12px',
+} as const
 
 /**
- * Graph - the engineer's pad. Cool paper, a fine cyan grid, sharp corners,
- * mono type throughout headings and body both - the one preset where the
- * task list itself reads in a monospaced technical face, not just labels.
- * The unexpected touch: --shadow carries a crisp two-line hairline (a flat
- * outline plus a second offset rule, both at the border colour, zero blur)
- * instead of a soft drop shadow - a drafting ruler's double line under
- * every card, not a shadow at all. Both modes ship: the light room is a
- * drafting table, the dark one a CAD screen at night, and the identity
- * (grid, sharp corners, mono, the double hairline) survives the flip
- * intact rather than being invented twice.
+ * Dark - the default, and the one this app is designed in.
+ *
+ * #121417 rather than black: a dark grey with a trace of warmth in it, so the
+ * page reads as a material rather than as an absence. Cards sit six percent
+ * lighter, and anything covering a card sits six percent lighter again, which
+ * is what carries depth here - the shadow token is almost incidental.
  */
-const GRAPH: ThemePreset = {
-  id: 'graph',
-  name: 'Graph',
-  modes: ['light', 'dark'],
-  light: {
-    ruleStyle: 'squares',
-    tokens: {
-      bg: '#eef3f5',
-      surface: '#ffffff',
-      rule: 'rgba(0, 130, 160, 0.16)',
-      ruleSize: '20px',
-      grain: '0',
-      vignette: '0%',
-      border: '#c7d6da',
-      margin: '#00000000',
-      text: '#1a2226',
-      muted: '#5c6b70',
-      accent: '#0e7a90',
-      accentDim: '#bfe4ea',
-      mark: '#ffcf3d',
-      danger: '#c1443a',
-      good: '#2f8f5b',
-      fontDisplay: SYSTEM_MONO,
-      fontBody: SYSTEM_MONO,
-      fontMono: SYSTEM_MONO,
-      radius: '4px',
-      edge: SHARP_EDGE,
-      shadow: '0 0 0 1px #c7d6da, 0 3px 0 #c7d6da',
-    },
-  },
-  dark: {
-    ruleStyle: 'squares',
-    tokens: {
-      bg: '#10161a',
-      surface: '#161e23',
-      rule: 'rgba(70, 200, 220, 0.14)',
-      ruleSize: '20px',
-      grain: '0',
-      vignette: '0%',
-      border: '#2b3940',
-      margin: '#00000000',
-      text: '#e6f1f3',
-      muted: '#8fa3aa',
-      accent: '#3fd0e8',
-      accentDim: '#1f4650',
-      mark: '#ffcf3d',
-      danger: '#e2776f',
-      good: '#6fc98a',
-      fontDisplay: SYSTEM_MONO,
-      fontBody: SYSTEM_MONO,
-      fontMono: SYSTEM_MONO,
-      radius: '4px',
-      edge: SHARP_EDGE,
-      shadow: '0 0 0 1px #2b3940, 0 3px 0 #2b3940',
-    },
-  },
-}
-
-/**
- * Legal pad - warm yellow paper, horizontal blue rules, dark ink, a red
- * margin line down the left side. Light only: a legal pad is yellow paper
- * by definition, and a "dark legal pad" is not a real object anyone would
- * recognise, so no dark variant was built rather than inventing one to be
- * symmetrical. The unexpected touch is the margin rule itself - the new
- * `margin` surface token, drawn as a single vertical stripe at a fixed
- * offset in body::before/.theme-card-room::before, the one detail this
- * phase actually needed a new token for rather than a value choice on an
- * existing one.
- */
-const LEGAL_PAD: ThemePreset = {
-  id: 'legal-pad',
-  name: 'Legal pad',
-  modes: ['light'],
-  light: {
-    ruleStyle: 'lines',
-    tokens: {
-      bg: '#f6e9a4',
-      surface: '#fbf3c0',
-      rule: 'rgba(60, 90, 170, 0.32)',
-      ruleSize: '30px',
-      grain: '0.02',
-      vignette: '5%',
-      border: '#e0d190',
-      margin: '#d1483c',
-      text: '#2a2410',
-      muted: '#7a6f45',
-      accent: '#2c4fa0',
-      accentDim: '#c3d0ee',
-      mark: '#f2a93c',
-      danger: '#b3392b',
-      good: '#3f7d43',
-      fontDisplay: SYSTEM_SERIF_DISPLAY,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '6px',
-      edge: SHARP_EDGE,
-      shadow: '0 1px 2px rgba(40, 30, 0, 0.12)',
-    },
-  },
-}
-
-/**
- * Moleskine - unruled ivory, no grid, a serif display face, generous
- * roominess. The calm one. Light only: the identity is specifically ivory
- * paper under a leather cover, not a dark-mode room, and a warm-brown
- * "dark Moleskine" tried in the browser read as muddy rather than calm -
- * see the phase report for that call. The unexpected touch: --shadow
- * carries two layers, a tight warm contact line plus a soft warm ambient
- * glow, instead of one flat drop shadow - a page lifting slightly off the
- * desk, not a component with a shadow bolted on.
- */
-const MOLESKINE: ThemePreset = {
-  id: 'moleskine',
-  name: 'Moleskine',
-  modes: ['light'],
-  light: {
-    ruleStyle: 'none',
-    tokens: {
-      bg: '#f3ede0',
-      surface: '#faf6ec',
-      rule: '#00000000',
-      ruleSize: '28px',
-      grain: '0.015',
-      vignette: '4%',
-      border: '#e4dcc8',
-      margin: '#00000000',
-      text: '#2e2a22',
-      muted: '#948a72',
-      accent: '#8a5a34',
-      accentDim: '#e3d2bd',
-      mark: '#e8b34a',
-      danger: '#a4483a',
-      good: '#5f7d4a',
-      fontDisplay: SYSTEM_SERIF_DISPLAY,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '14px',
-      edge: SOFT_EDGE,
-      shadow: '0 1px 2px rgba(120, 90, 50, 0.15), 0 10px 24px rgba(120, 90, 50, 0.12)',
-    },
-  },
-}
-
-/**
- * Blueprint - deep blue ground, a white hairline grid, cyan ink, mono
- * headers over a readable sans body. Dark only: the room's whole identity
- * is the deep blue ground standing in for both "the surface" and "the
- * dark mode" at once - a light Blueprint would just be Graph again, cool
- * white with a technical grid, so no second variant was built. The
- * unexpected touch: --shadow carries a cyan hairline glow (a 1px outline
- * plus a soft cyan bloom) around every card, like a light table lit from
- * beneath the drafting paper.
- */
-const BLUEPRINT: ThemePreset = {
-  id: 'blueprint',
-  name: 'Blueprint',
-  modes: ['dark'],
-  dark: {
-    ruleStyle: 'squares',
-    tokens: {
-      bg: '#0d2b52',
-      surface: '#123464',
-      rule: 'rgba(255, 255, 255, 0.14)',
-      ruleSize: '22px',
-      grain: '0',
-      vignette: '0%',
-      border: '#2f5c95',
-      margin: '#00000000',
-      text: '#eaf2ff',
-      muted: '#9ab4dc',
-      accent: '#5fd4e8',
-      accentDim: '#1c4a68',
-      mark: '#ffd23f',
-      danger: '#ff8a75',
-      good: '#7fe0a8',
-      fontDisplay: SYSTEM_MONO,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '4px',
-      edge: SHARP_EDGE,
-      shadow: '0 0 0 1px rgba(95, 212, 232, 0.4), 0 0 10px rgba(95, 212, 232, 0.25)',
-    },
-  },
-}
-
-/**
- * Terminal - true black, no ruling, mono everywhere, sharp corners, a
- * green phosphor accent with an amber second mark colour. Dark only, the
- * obvious case section 6 itself names: a light terminal is not a thing,
- * and no second variant was built to be symmetrical. The unexpected touch
- * is the phosphor glow itself - --shadow as a soft green bloom around
- * every card rather than a drop shadow, the literal example section 8
- * names for this preset.
- */
-const TERMINAL: ThemePreset = {
-  id: 'terminal',
-  name: 'Terminal',
+const DARK: ThemePreset = {
+  id: 'dark',
+  name: 'Dark',
   modes: ['dark'],
   dark: {
     ruleStyle: 'none',
     tokens: {
-      bg: '#000000',
-      surface: '#0a0f0a',
-      rule: '#00000000',
-      ruleSize: '28px',
-      grain: '0',
-      vignette: '0%',
-      border: '#1c2a1c',
-      margin: '#00000000',
-      text: '#d7ffe0',
-      muted: '#6f9478',
-      accent: '#39ff6a',
-      accentDim: '#134022',
-      mark: '#ffb63f',
-      danger: '#ff5f56',
-      good: '#39ff6a',
-      fontDisplay: SYSTEM_MONO,
-      fontBody: SYSTEM_MONO,
-      fontMono: SYSTEM_MONO,
-      radius: '3px',
-      edge: SHARP_EDGE,
-      shadow: '0 0 6px rgba(57, 255, 106, 0.45), 0 0 1px rgba(57, 255, 106, 0.8)',
+      ...NO_SURFACE,
+      ...TYPE_AND_SHAPE,
+      bg: '#121417',
+      surface: '#1a1d21',
+      surfaceRaised: '#23272c',
+      border: '#2a2d31',
+      text: '#e2e2e0',
+      muted: '#a3a5a6',
+      faint: '#717375',
+      accent: '#8aa4f2',
+      accentDim: '#38406a',
+      mark: '#d9b15f',
+      danger: '#d99191',
+      good: '#85be92',
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.45)',
     },
   },
 }
 
 /**
- * Newsprint - grey-white paper, the most visible grain of any preset,
- * black ink, one red accent doing double duty as the highlighter too, a
- * condensed headline face. Light only: a "dark newspaper" is not a
- * physical object the way a dark Moleskine or dark legal pad are not.
- * Deliberately a one-ink-and-one-red palette - no separate mark colour -
- * which is itself the restraint section 8 asks for, not a shortfall. The
- * unexpected touch: --shadow draws a hairline rule directly above and
- * below every card, a masthead's double column rule, in place of a drop
- * shadow. A true torn or perforated edge was considered and dropped - see
- * the phase report for why hairline rules were built instead.
+ * Light - warm off-white paper, not a spotlight.
+ *
+ * The page is #f6f5f2 and cards are pure white, which is the inversion that
+ * makes light mode work: white stops being the background and becomes the
+ * elevation, so a card is legible as a card without needing a border loud
+ * enough to see. Ink is #2a2d31, never black - maximum contrast is not the
+ * same thing as maximum readability, and the difference is exactly the glare.
  */
-const NEWSPRINT: ThemePreset = {
-  id: 'newsprint',
-  name: 'Newsprint',
+const LIGHT: ThemePreset = {
+  id: 'light',
+  name: 'Light',
   modes: ['light'],
   light: {
     ruleStyle: 'none',
     tokens: {
-      bg: '#e9e7e1',
-      surface: '#f2f0ea',
-      rule: '#00000000',
-      ruleSize: '28px',
-      grain: '0.035',
-      vignette: '3%',
-      border: '#c9c5ba',
-      margin: '#00000000',
-      text: '#1c1c1a',
-      muted: '#6b675e',
-      accent: '#b3261e',
-      accentDim: '#e9c6c2',
-      mark: '#b3261e',
-      danger: '#8a1f1f',
-      good: '#3d6b3f',
-      fontDisplay: SYSTEM_CONDENSED,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '4px',
-      edge: SHARP_EDGE,
-      shadow: '0 -1px 0 #1c1c1a, 0 1px 0 #1c1c1a, 0 2px 4px rgba(0, 0, 0, 0.08)',
-    },
-  },
-}
-
-/**
- * Receipt - off-white thermal paper, tight dot-matrix-spaced rules, mono
- * type everywhere, one red stamp ink. Light only - thermal paper is never
- * dark. The unexpected touch: the stamp red fills both the accent AND the
- * mark role, so "what matters today" is not a yellow highlighter here but
- * a literal red stamp over the line - a genuine reinterpretation of an
- * existing token's job, not a new mechanism. Honest limitation, not
- * papered over: "narrow feel" is evoked through the tight mono rhythm and
- * a small radius, not an actual column-width change - layout is not a
- * themeable token in this architecture, and adding one for a single
- * preset was judged out of scope for this phase.
- */
-const RECEIPT: ThemePreset = {
-  id: 'receipt',
-  name: 'Receipt',
-  modes: ['light'],
-  light: {
-    ruleStyle: 'lines',
-    tokens: {
-      bg: '#f6f4ee',
-      surface: '#fbfaf5',
-      rule: 'rgba(20, 20, 20, 0.08)',
-      ruleSize: '18px',
-      grain: '0.02',
-      vignette: '2%',
-      border: '#ded9c9',
-      margin: '#00000000',
-      text: '#1f1d18',
-      muted: '#7a7566',
-      accent: '#a5231b',
-      accentDim: '#eec9c5',
-      mark: '#a5231b',
-      danger: '#7a1812',
-      good: '#3f6b3f',
-      fontDisplay: SYSTEM_MONO,
-      fontBody: SYSTEM_MONO,
-      fontMono: SYSTEM_MONO,
-      radius: '2px',
-      edge: SHARP_EDGE,
-      shadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
-    },
-  },
-}
-
-/**
- * Ink and wash - white paper, one desaturated blue-grey accent, thin
- * widely-spaced lines, deliberately no display face of its own. Light
- * only, "white paper" by its own description in section 6. The unexpected
- * touch: --shadow is a single very soft, very low-opacity, wide-blur wash
- * rather than any hard edge or hairline - ink bleeding softly into wet
- * paper - the deliberate opposite of Graph's crisp double line, so the
- * two calmest and most technical rooms never read as the same trick
- * twice.
- */
-const INK_AND_WASH: ThemePreset = {
-  id: 'ink-and-wash',
-  name: 'Ink and wash',
-  modes: ['light'],
-  light: {
-    ruleStyle: 'lines',
-    tokens: {
-      bg: '#fbfbfa',
+      ...NO_SURFACE,
+      ...TYPE_AND_SHAPE,
+      bg: '#f6f5f2',
       surface: '#ffffff',
-      rule: 'rgba(90, 110, 130, 0.10)',
-      ruleSize: '32px',
-      grain: '0.01',
-      vignette: '3%',
-      border: '#e2e4e6',
-      margin: '#00000000',
-      text: '#26292c',
-      muted: '#8b9096',
-      accent: '#4f6b7a',
-      accentDim: '#d7e0e4',
-      mark: '#e3d6b8',
-      danger: '#a85c52',
-      good: '#5f8a6a',
-      fontDisplay: SYSTEM_SANS,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '10px',
-      edge: SOFT_EDGE,
-      shadow: '0 10px 30px rgba(80, 100, 115, 0.10)',
+      surfaceRaised: '#ffffff',
+      border: '#e6e4df',
+      text: '#2a2d31',
+      muted: '#6b7075',
+      faint: '#a0a4a8',
+      accent: '#4666e0',
+      accentDim: '#c7d0f7',
+      mark: '#efc14e',
+      danger: '#c4534f',
+      good: '#4e9663',
+      shadow: '0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.04)',
     },
   },
 }
 
 /**
- * Midnight - deep indigo, a faint star-field grain, violet ink, a strong
- * top vignette standing in for moonlight. Dark only, the late-night one by
- * definition - no light variant was attempted. The unexpected touch:
- * --shadow is a soft violet bloom around every card, the same
- * glow-not-shadow technique Terminal and Blueprint use, each in its own
- * colour against its own ground (true black and green, deep blue and
- * cyan, deep indigo and violet) - one shared technique across three
- * atmospheric rooms, not the same room three times, since the surface and
- * palette each carries a genuinely different colour story.
+ * Midnight - the same theme as Dark, taken down to where an OLED panel
+ * actually switches its pixels off.
+ *
+ * Not a different design, a different base. Everything about how the three
+ * surface steps relate, and every text ratio, is identical to Dark - only the
+ * floor moves, from #121417 to #0b0c0f. Kept as its own theme rather than a
+ * toggle inside Dark because on an LCD it is worse, not better, and that is a
+ * choice about a screen rather than a preference about a look.
  */
 const MIDNIGHT: ThemePreset = {
   id: 'midnight',
@@ -636,55 +282,44 @@ const MIDNIGHT: ThemePreset = {
   dark: {
     ruleStyle: 'none',
     tokens: {
-      bg: '#141033',
-      surface: '#1c1744',
-      rule: '#00000000',
-      ruleSize: '28px',
-      grain: '0.03',
-      vignette: '10%',
-      border: '#332c66',
-      margin: '#00000000',
-      text: '#eae6ff',
-      muted: '#9d95c4',
-      accent: '#a68cff',
-      accentDim: '#3a2f70',
-      mark: '#ffd23f',
-      danger: '#ff7597',
-      good: '#7fe0b0',
-      fontDisplay: SYSTEM_SANS,
-      fontBody: SYSTEM_SANS,
-      fontMono: SYSTEM_MONO,
-      radius: '12px',
-      edge: SOFT_EDGE,
-      shadow: '0 0 0 1px rgba(166, 140, 255, 0.25), 0 4px 20px rgba(120, 90, 255, 0.25)',
+      ...NO_SURFACE,
+      ...TYPE_AND_SHAPE,
+      bg: '#0b0c0f',
+      surface: '#14161a',
+      surfaceRaised: '#1d2025',
+      border: '#212429',
+      text: '#e0e1e2',
+      muted: '#9ea1a4',
+      faint: '#6c6f73',
+      accent: '#7fa0f0',
+      accentDim: '#2e3760',
+      mark: '#d4ac5c',
+      danger: '#d68c8c',
+      good: '#7fba8c',
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.6)',
     },
   },
 }
 
-/**
- * The full starter set from docs/THEMES.md section 6 - Slate and Sketchbook
- * from the architecture phase, plus the nine remaining presets this phase
- * adds. Every entry here is real gallery data: adding one more later needs
- * no change to the gallery, the override panel, or the contrast gate, all
- * three of which already iterate this array rather than naming presets.
- */
-export const PRESETS: ThemePreset[] = [
-  SLATE,
-  SKETCHBOOK,
-  GRAPH,
-  LEGAL_PAD,
-  MOLESKINE,
-  BLUEPRINT,
-  TERMINAL,
-  NEWSPRINT,
-  RECEIPT,
-  INK_AND_WASH,
-  MIDNIGHT,
-]
+export const PRESETS: ThemePreset[] = [DARK, LIGHT, MIDNIGHT]
 
 /** The preset a fresh install, or a payload with an unknown presetId, gets. */
-export const DEFAULT_PRESET_ID = 'slate'
+export const DEFAULT_PRESET_ID = 'dark'
 
+/**
+ * The theme used when the system asks for light and the chosen one cannot
+ * provide it - see `resolveTheme`. Named rather than inlined because two
+ * places need to agree on it: the resolver here, and the pre-paint script in
+ * index.html that runs before any of this module exists.
+ */
+export const SYSTEM_LIGHT_PRESET_ID = 'light'
+
+/**
+ * Any id this build no longer ships - one of the eight deleted themes, a
+ * typo, a hand-edited backup - resolves to the default rather than failing.
+ * Nothing has to migrate for that to work; a stored `presetId` of
+ * 'sketchbook' simply renders as Dark from the next load onward.
+ */
 export function findPreset(id: string): ThemePreset {
-  return PRESETS.find(p => p.id === id) ?? SLATE
+  return PRESETS.find(p => p.id === id) ?? DARK
 }

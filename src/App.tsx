@@ -46,6 +46,17 @@ export function App() {
     }
   }, [data.settings.theme])
 
+  // Density and text scale are two attributes on the root, not two sets of
+  // token values written per element - styles.css carries one small block for
+  // each, overriding the spacing and type scales at their source. That is the
+  // whole reason those scales exist as tokens: changing how spacious or how
+  // large the entire app is costs six declarations, and nothing anywhere else
+  // has to know either setting exists.
+  useEffect(() => {
+    document.documentElement.dataset.density = data.settings.density
+    document.documentElement.dataset.textScale = data.settings.textScale
+  }, [data.settings.density, data.settings.textScale])
+
   function openDay(date: string) {
     setSelectedDate(date)
     setView('day')

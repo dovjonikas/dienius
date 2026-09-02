@@ -9,7 +9,7 @@ const DAY_LAYOUT_FOCUSES: readonly string[] = ['both', 'calendar', 'tasks']
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
 // has no reason to depend on the preset data itself, only on the id a
 // fresh install should start with. See DEFAULT_PRESET_ID in themes.ts.
-const DEFAULT_PRESET_ID = 'slate'
+const DEFAULT_PRESET_ID = 'dark'
 
 // Duplicated from capacity.ts's own DEFAULT_SLEEP_WINDOW/DEFAULT_NIGHT_SLEEP_WINDOW
 // rather than imported, for the same reason DEFAULT_PRESET_ID above is not
@@ -66,6 +66,8 @@ export function defaultData(): AppData {
       enabledWidgets: [...DEFAULT_ENABLED_WIDGETS],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
+      density: 'comfortable',
+      textScale: 'm',
       sleepWindow: { ...DEFAULT_SLEEP_WINDOW },
       nightSleepWindow: { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },
@@ -250,6 +252,16 @@ function isOptionalDayLayoutFocus(x: unknown): x is Settings['dayLayoutFocus'] |
   return x === undefined || (typeof x === 'string' && DAY_LAYOUT_FOCUSES.includes(x))
 }
 
+// Density and text scale, same absence-is-fine rule as everything above -
+// a backup written before Appearance offered them simply has neither key.
+function isOptionalDensity(x: unknown): x is Settings['density'] | undefined {
+  return x === undefined || x === 'comfortable' || x === 'compact'
+}
+
+function isOptionalTextScale(x: unknown): x is Settings['textScale'] | undefined {
+  return x === undefined || x === 's' || x === 'm' || x === 'l'
+}
+
 // A real "HH:MM" clock time - two digits, a colon, two digits, hour 00-23,
 // minute 00-59. Stricter than isOptionalString already gets for Task.time
 // and TemplateBlock.time (a bare typeof check, unvalidated) because a
@@ -375,6 +387,8 @@ function isSettings(x: unknown): x is {
   enabledWidgets: string[]
   timelineExpanded?: boolean
   dayLayoutFocus?: Settings['dayLayoutFocus']
+  density?: Settings['density']
+  textScale?: Settings['textScale']
   sleepWindow?: SleepWindow
   nightSleepWindow?: SleepWindow
 } {
@@ -385,6 +399,8 @@ function isSettings(x: unknown): x is {
     x.enabledWidgets.every(w => typeof w === 'string') &&
     isOptionalBoolean(x.timelineExpanded) &&
     isOptionalDayLayoutFocus(x.dayLayoutFocus) &&
+    isOptionalDensity(x.density) &&
+    isOptionalTextScale(x.textScale) &&
     isOptionalSleepWindow(x.sleepWindow) &&
     isOptionalSleepWindow(x.nightSleepWindow)
   )
@@ -434,6 +450,8 @@ interface StoredAppData {
     enabledWidgets: string[]
     timelineExpanded?: boolean
     dayLayoutFocus?: Settings['dayLayoutFocus']
+    density?: Settings['density']
+    textScale?: Settings['textScale']
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
   }
@@ -480,6 +498,8 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       enabledWidgets,
       timelineExpanded: data.settings.timelineExpanded ?? false,
       dayLayoutFocus: data.settings.dayLayoutFocus ?? 'both',
+      density: data.settings.density ?? 'comfortable',
+      textScale: data.settings.textScale ?? 'm',
       sleepWindow: data.settings.sleepWindow ?? { ...DEFAULT_SLEEP_WINDOW },
       nightSleepWindow: data.settings.nightSleepWindow ?? { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },

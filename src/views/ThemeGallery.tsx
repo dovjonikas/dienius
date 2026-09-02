@@ -36,6 +36,7 @@ export function ThemeGallery() {
             name={preset.name}
             tokens={tokens}
             ruleStyle={ruleStyle}
+            mode={mode}
             selected={theme.presetId === preset.id}
             onSelect={() => actions.setThemePreset(preset.id)}
           />

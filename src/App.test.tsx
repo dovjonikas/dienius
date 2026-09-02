@@ -20,25 +20,36 @@ test('renders brand and nav tabs', () => {
   expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()
 })
 
-test('settings view toggles theme', async () => {
+// Light and dark are themes now rather than modes within a theme, so picking
+// one is picking a card in the gallery - see themes.ts. Same assertion as
+// before at the level that matters: a choice in Settings resolves all the way
+// through to the live token block on :root.
+test('picking a theme in settings paints its whole token block', async () => {
   const user = userEvent.setup()
   render(<App />)
   await user.click(screen.getByRole('button', { name: 'Settings' }))
-  await user.click(screen.getByRole('button', { name: 'Dark' }))
-  expect(document.documentElement.dataset.theme).toBe('dark')
-  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#191a1d')
+  await user.click(screen.getByRole('button', { name: /Light/ }))
+  expect(document.documentElement.dataset.theme).toBe('light')
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#f6f5f2')
 })
 
-test('picking system mode resolves against the live OS preference and updates the resolved token block', async () => {
+test('matching the system resolves against the live OS preference, and turning it off pins the chosen theme', async () => {
   const user = userEvent.setup()
   render(<App />)
-  await user.click(screen.getByRole('button', { name: 'Settings' }))
-  await user.click(screen.getByRole('button', { name: 'System' }))
-  // jsdom has no real matchMedia, so systemPrefersDark() falls back to
-  // false the same way it does for a person whose browser lacks it too -
-  // the resolved theme should be light, not left at whatever it was before.
+  // A fresh install already matches the system. jsdom has no real matchMedia,
+  // so systemPrefersDark() falls back to false the same way it does for a
+  // person whose browser lacks it - and with every theme single-mode,
+  // following a light system means resolving to the Light theme rather than
+  // to a light variant of the chosen one.
   expect(document.documentElement.dataset.theme).toBe('light')
-  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#fafaf8')
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#f6f5f2')
+
+  await user.click(screen.getByRole('button', { name: 'Settings' }))
+  await user.click(screen.getByRole('switch', { name: 'Match system appearance' }))
+
+  // Off pins whatever theme is actually chosen - Dark, on a fresh install.
+  expect(document.documentElement.dataset.theme).toBe('dark')
+  expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#121417')
 })
 
 test('the day tab renders widgets through the registry, driven by enabledWidgets', () => {

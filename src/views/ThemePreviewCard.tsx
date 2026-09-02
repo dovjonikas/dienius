@@ -11,6 +11,14 @@ interface ThemePreviewCardProps {
    * all, only what to paint. */
   tokens: ThemeTokens
   ruleStyle: RuleStyle
+  /**
+   * Which mode these tokens are - the card carries it as a data attribute so
+   * the miniature timeline inside it picks up the category colours for the
+   * theme being previewed rather than the one currently painting the page.
+   * The two sets live in styles.css and nowhere else; see the shared selector
+   * list there.
+   */
+  mode: 'light' | 'dark'
   selected: boolean
   onSelect: () => void
 }
@@ -28,13 +36,14 @@ interface ThemePreviewCardProps {
  * now, while the room inside each card shows the candidate theme's own
  * colours regardless of which one that is.
  */
-export function ThemePreviewCard({ name, tokens, ruleStyle, selected, onSelect }: ThemePreviewCardProps) {
+export function ThemePreviewCard({ name, tokens, ruleStyle, mode, selected, onSelect }: ThemePreviewCardProps) {
   const style = buildPreviewStyle(tokens, ruleStyle) as React.CSSProperties
 
   return (
     <button
       type="button"
       className="theme-card"
+      data-pv-mode={mode}
       aria-pressed={selected}
       style={style}
       onClick={onSelect}
@@ -46,14 +55,29 @@ export function ThemePreviewCard({ name, tokens, ruleStyle, selected, onSelect }
           accessible name is just the preset's name below, which stays
           visible and unhidden - the same text a sighted person reads. */}
       <span className="theme-card-room" aria-hidden="true">
-        <span className="theme-card-heading">Today</span>
-        <span className="theme-card-body">Plan the morning routine</span>
+        <span className="theme-card-head">
+          <span className="theme-card-heading">Today</span>
+          <span className="theme-card-bar">
+            <span className="theme-card-bar-fill" />
+          </span>
+        </span>
+        {/* An actual slice of the timeline, with three category blocks and the
+            now-line across them - because that is what a person is choosing
+            between, and the old miniature (a heading, a line of body copy and
+            a chip) could not tell them whether a day would read well in this
+            theme. */}
+        <span className="theme-card-timeline">
+          <span className="theme-card-block" data-cat="core" />
+          <span className="theme-card-block" data-cat="meal" />
+          <span className="theme-card-now" />
+          <span className="theme-card-block" data-cat="health" />
+        </span>
         <span className="theme-card-footer">
           <span className="theme-card-row">
             <span className="theme-card-chip" />
             <span className="theme-card-item">Write the proposal</span>
           </span>
-          <span className="theme-card-mark">Due today</span>
+          <span className="theme-card-mark">14:20</span>
         </span>
       </span>
       <span className="theme-card-name">{name}</span>

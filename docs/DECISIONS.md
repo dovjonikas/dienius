@@ -619,3 +619,75 @@ control down the other, so every switch in the app reads the same way instead of
 arrangement of label, paragraph and button. One scrolling document rather than four swappable panels:
 find-on-page reaches every setting, nothing has to be remembered as "behind the other tab", and someone
 looking for one switch sees what else exists on the way to it.
+
+---
+
+## Three themes, and why eight good ones had to go
+
+Dienius shipped eleven presets: Sketchbook, Graph, Legal pad, Moleskine, Blueprint, Terminal, Newsprint,
+Receipt, Ink and wash, plus Slate and Midnight. Every one worked, every one passed its contrast gate, and
+several were genuinely nice. They were still the wrong thing to ship. A theme picker with eleven rooms in
+it says the app is a demonstration of what surfaces are possible rather than a tool somebody opens every
+morning, and nine of the eleven were choices nobody keeps past the first afternoon. What is left is the
+choice people actually make: dark, light, or darker.
+
+The ruled paper, the grain, the vignette and the margin rule went with them. The machinery that draws all
+four survives, because it is generic and shared with the pre-paint script, and every shipped theme simply
+sets it to nothing - removing it would have meant gutting the token model and forty tests for no
+user-visible gain.
+
+**Nothing migrates, and that is by design.** findPreset has always fallen back for an unknown id, so a
+stored presetId of sketchbook renders as Dark from the next load onward without a migration step that
+could itself go wrong. Pinned by a test that walks all eight deleted ids.
+
+**Dark is a material, not an absence.** #121417, a dark grey with a trace of warmth, not #000. On a pure
+black page every surface above it reads as a hole punched in the screen. Cards sit six percent lighter
+and anything covering a card six percent lighter again - depth carried by a third surface step rather
+than by shadow, because a shadow on a dark ground is just a darker dark. That third step is a new token,
+surfaceRaised, and it is the one structural change the token model needed.
+
+**Text is not pure white either.** Full white on near-black vibrates and is tiring to read at length. The
+three inks are the opaque equivalents of white at 87, 60 and 38 percent over each theme's own card
+surface - so the ratios are exactly what those opacities give, while staying real colours, which every
+piece of contrast arithmetic in this codebase needs them to be. The third, faint, is deliberately below
+the AA threshold and used only where text is present but not meant to be read.
+
+**Light inverts what white is for.** The page is #f6f5f2 and cards are pure white, so white stops being
+the background and becomes the elevation - a card reads as a card without a border loud enough to see.
+Ink is #2a2d31, never black: maximum contrast is not the same thing as maximum readability, and the
+difference between them is exactly the glare.
+
+**Colour is quieter in the dark, and the categories know it.** The six category colours moved out of
+categories.ts and into two blocks in styles.css - one dark, one light, keyed on the resolved mode.
+categoryColor() now hands out a var() reference rather than a hex, so the cascade answers the question
+and nothing in JavaScript has to know which theme is in force. A gallery preview card overrides the same
+six variables inside its own subtree, which is how a card previewing Light shows light category colours
+while sitting on a dark page.
+
+**Light or dark stopped being a mode.** With three fixed themes it is the choice itself, so every theme
+ships exactly one mode and the Light / Dark / System control is gone. What survives is the only part of
+it that was ever a preference rather than a restatement of the gallery: whether to follow the device.
+That now swaps the whole theme, and only ever in one direction - toward Light when the system asks for
+light and the chosen theme has none. Somebody who picked Midnight picked it for their screen, not for the
+time of day, and switching them to Dark every evening would quietly undo that.
+
+**Adjust this theme became three settings instead of twenty-one.** The old panel let a person set any
+theme token to any value they could type, which is a theming engine rather than a setting: it could
+produce text the same colour as the paper, needed a live contrast warning and a Reset button to dig out
+of, and nobody used it twice. It is replaced by Accent (eight curated colours, every one pre-checked
+against all three surfaces, which is why the contrast warning is gone rather than hidden), Density
+(Comfortable / Compact) and Text size (S / M / L). Accent is stored as a per-theme override patch, the
+same mechanism as before, so coral on Dark and default on Light are remembered separately. Density and
+text size are not: they are facts about the screen and the eyes in front of it, and it would be strange
+for either to change when the sun goes down.
+
+Both of those last two work by overriding the spacing and type scales at their source - six declarations
+each, and nothing anywhere else in the app knows either setting exists. That is the entire payoff for
+having built the scales in the first place.
+
+**Measured, not eyeballed.** A probe walks the composited background behind every piece of text on the
+day view - through gradients, translucent bands and opacity, which is where the naive version of this
+check goes wrong - and computes the real ratio. Twenty-five text-on-surface pairs, all three themes, all
+at or above AA. Two failures it caught: a finished block's title at 4.3:1 in Light, and the Sleep band
+label at 4.14:1. Both are fixed rather than excused - being done is not a licence to make text
+unreadable, only quiet.

@@ -12,7 +12,7 @@ beforeEach(() => localStorage.clear())
 // when something else in it is corrupt.
 function salvagedLightData() {
   const fallback = defaultData()
-  return { ...fallback, settings: { ...fallback.settings, theme: { presetId: 'slate', overrides: {}, mode: 'light' as const } } }
+  return { ...fallback, settings: { ...fallback.settings, theme: { presetId: 'dark', overrides: {}, mode: 'light' as const } } }
 }
 
 test('loadData returns default data when storage is empty', () => {
@@ -22,7 +22,7 @@ test('loadData returns default data when storage is empty', () => {
   // A fresh install has never expressed a preference, so it follows the
   // system live rather than defaulting to a fixed light or dark - see
   // docs/THEMES.md section 4.
-  expect(data.settings.theme).toEqual({ presetId: 'slate', overrides: {}, mode: 'system' })
+  expect(data.settings.theme).toEqual({ presetId: 'dark', overrides: {}, mode: 'system' })
 })
 
 test('saveData then loadData round-trips', () => {
@@ -630,7 +630,7 @@ test('validate rejects a theme override color token set to a url() value', () =>
   const beacon = JSON.stringify({
     templates: [], days: {},
     settings: {
-      theme: { presetId: 'slate', overrides: { slate: { accent: 'url(https://attacker.example/x)' } }, mode: 'light' },
+      theme: { presetId: 'dark', overrides: { dark: { accent: 'url(https://attacker.example/x)' } }, mode: 'light' },
       enabledWidgets: [],
     },
   })
@@ -643,7 +643,7 @@ test('validate rejects a theme override on bg, one of the tokens confirmed live 
   const beacon = JSON.stringify({
     templates: [], days: {},
     settings: {
-      theme: { presetId: 'slate', overrides: { slate: { bg: 'url("https://attacker.example/beacon.png?id=1")' } }, mode: 'dark' },
+      theme: { presetId: 'dark', overrides: { dark: { bg: 'url("https://attacker.example/beacon.png?id=1")' } }, mode: 'dark' },
       enabledWidgets: [],
     },
   })
@@ -656,9 +656,9 @@ test('validate accepts every legitimate non-color override token the app itself 
     templates: [], days: {},
     settings: {
       theme: {
-        presetId: 'slate',
+        presetId: 'dark',
         overrides: {
-          slate: {
+          dark: {
             ruleSize: '24px',
             edge: '225px 14px 255px 15px / 15px 255px 14px 225px',
             fontBody: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
@@ -674,7 +674,7 @@ test('validate accepts every legitimate non-color override token the app itself 
   })
   localStorage.setItem(STORAGE_KEY, good)
   const loaded = loadData()
-  expect(loaded.settings.theme.overrides.slate).toEqual({
+  expect(loaded.settings.theme.overrides.dark).toEqual({
     ruleSize: '24px',
     edge: '225px 14px 255px 15px / 15px 255px 14px 225px',
     fontBody: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
@@ -690,7 +690,7 @@ test('validate rejects a url() value on every non-color override token category,
     const beacon = JSON.stringify({
       templates: [], days: {},
       settings: {
-        theme: { presetId: 'slate', overrides: { slate: { [token]: beaconValue } }, mode: 'light' },
+        theme: { presetId: 'dark', overrides: { dark: { [token]: beaconValue } }, mode: 'light' },
         enabledWidgets: [],
       },
     })
@@ -727,7 +727,7 @@ test('a legacy light/dark theme string migrates into a ThemeState with that mode
     settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
   })
   localStorage.setItem(STORAGE_KEY, legacy)
-  expect(loadData().settings.theme).toEqual({ presetId: 'slate', overrides: {}, mode: 'dark' })
+  expect(loadData().settings.theme).toEqual({ presetId: 'dark', overrides: {}, mode: 'dark' })
 })
 
 test('a payload already in the new ThemeState shape passes validate and round-trips unchanged', () => {
@@ -735,15 +735,15 @@ test('a payload already in the new ThemeState shape passes validate and round-tr
     templates: [],
     days: {},
     settings: {
-      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'system' },
+      theme: { presetId: 'midnight', overrides: { midnight: { accent: '#e0553b' } }, mode: 'system' },
       enabledWidgets: ['day-plan'],
     },
     ifThens: [],
   })
   localStorage.setItem(STORAGE_KEY, modern)
   expect(loadData().settings.theme).toEqual({
-    presetId: 'sketchbook',
-    overrides: { sketchbook: { accent: '#e0553b' } },
+    presetId: 'midnight',
+    overrides: { midnight: { accent: '#e0553b' } },
     mode: 'system',
   })
 })
@@ -751,14 +751,14 @@ test('a payload already in the new ThemeState shape passes validate and round-tr
 test('validate rejects a ThemeState with an unknown mode or a non-string override value', () => {
   const badMode = JSON.stringify({
     templates: [], days: {},
-    settings: { theme: { presetId: 'slate', overrides: {}, mode: 'sepia' }, enabledWidgets: [] },
+    settings: { theme: { presetId: 'dark', overrides: {}, mode: 'sepia' }, enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, badMode)
   expect(loadData().settings.theme.mode).toBe('system')
 
   const badOverride = JSON.stringify({
     templates: [], days: {},
-    settings: { theme: { presetId: 'slate', overrides: { slate: { accent: 123 } }, mode: 'light' }, enabledWidgets: [] },
+    settings: { theme: { presetId: 'dark', overrides: { dark: { accent: 123 } }, mode: 'light' }, enabledWidgets: [] },
   })
   localStorage.setItem(STORAGE_KEY, badOverride)
   expect(loadData().settings.theme.mode).toBe('system')

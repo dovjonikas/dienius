@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { findPreset } from '../lib/themes'
+
 import { ThemeGallery } from './ThemeGallery'
-import { ThemeModeControl } from './ThemeModeControl'
-import { ThemeOverridePanel } from './ThemeOverridePanel'
+import { AppearanceControls } from './AppearanceControls'
 import { TimeStepInput } from './TimeStepInput'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 
@@ -310,33 +310,53 @@ export function SettingsView() {
             {/* Preset picks the room, mode says whether the light is on - see
                 docs/THEMES.md section 4. "Adjust this theme" below lets a
                 person hand-tune the active room's own tokens - see section 3. */}
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">Light or dark</span>
-                <span className="setting-desc">
-                  System follows whatever this device is set to, and changes with it during the day.
-                </span>
-              </div>
-              <div className="setting-control">
-                <ThemeModeControl
-                  mode={data.settings.theme.mode}
-                  availableModes={findPreset(data.settings.theme.presetId).modes}
-                  onChange={actions.setTheme}
-                />
-              </div>
-            </div>
-
             <div className="setting-block">
               <div className="setting-label">
                 <span className="setting-name">Theme</span>
                 <span className="setting-desc">
-                  Eleven rooms, each with its own surface, palette and type. Every one is checked for
-                  readable contrast in both light and dark before it ships.
+                  Three, and every one of them is a theme somebody would actually keep. All text on
+                  all surfaces is checked against WCAG AA before either ships.
                 </span>
               </div>
               <ThemeGallery />
-              <ThemeOverridePanel />
             </div>
+
+            {/* "Match system" replaces the old Light / Dark / System control,
+                which no longer had a job: with three fixed themes, light or
+                dark is the theme, not a mode within one. What is left of the
+                idea is the only part that was ever really a preference -
+                whether to follow the device - and it swaps the whole theme
+                rather than a variant. See presetFor in theme.ts, including
+                why it only ever overrides toward light. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Match system appearance</span>
+                <span className="setting-desc">
+                  Use Light while this device is in light mode, and your chosen dark theme while it
+                  is in dark mode - switching with it during the day.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.theme.mode === 'system'}
+                  aria-label="Match system appearance"
+                  onClick={() =>
+                    actions.setTheme(
+                      data.settings.theme.mode === 'system'
+                        ? findPreset(data.settings.theme.presetId).modes[0]
+                        : 'system',
+                    )
+                  }
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <AppearanceControls />
           </div>
         </div>
       </div>

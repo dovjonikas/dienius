@@ -2,17 +2,15 @@ import { expect, test } from 'vitest'
 import { DEFAULT_PRESET_ID, findPreset, PRESETS } from './themes'
 
 const TOKEN_KEYS = [
-  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
-  'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
+  'bg', 'surface', 'surfaceRaised', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
+  'text', 'muted', 'faint', 'accent', 'accentDim', 'mark', 'danger', 'good',
   'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ] as const
 
 const FONT_KEYS = ['fontDisplay', 'fontBody', 'fontMono'] as const
 
-test('there are at least the three presets this phase promises', () => {
-  expect(PRESETS.length).toBeGreaterThanOrEqual(2)
-  expect(PRESETS.map(p => p.id)).toContain('slate')
-  expect(PRESETS.map(p => p.id)).toContain('sketchbook')
+test('the three themes this app ships are the three it ships', () => {
+  expect(PRESETS.map(p => p.id)).toEqual(['dark', 'light', 'midnight'])
 })
 
 test('preset ids are unique', () => {
@@ -43,11 +41,17 @@ test('every declared variant carries a value for every token this phase defines'
   }
 })
 
-test('Slate and Sketchbook both ship a light and a dark variant', () => {
-  for (const id of ['slate', 'sketchbook']) {
-    const preset = findPreset(id)
-    expect(preset.modes).toEqual(expect.arrayContaining(['light', 'dark']))
+// Every theme is single-mode by design - with three fixed themes, light or
+// dark is the choice itself rather than a second axis crossed with it. Pinned
+// here because it is load-bearing: presetFor in theme.ts follows the system by
+// swapping the theme, which only makes sense while this holds.
+test('every theme ships exactly one mode', () => {
+  for (const preset of PRESETS) {
+    expect(preset.modes.length, preset.id).toBe(1)
   }
+  expect(findPreset('light').modes).toEqual(['light'])
+  expect(findPreset('dark').modes).toEqual(['dark'])
+  expect(findPreset('midnight').modes).toEqual(['dark'])
 })
 
 test('findPreset falls back to the default preset for an unknown id', () => {
@@ -55,11 +59,17 @@ test('findPreset falls back to the default preset for an unknown id', () => {
 })
 
 test('findPreset returns the matching preset for a known id', () => {
-  expect(findPreset('sketchbook').id).toBe('sketchbook')
+  expect(findPreset('midnight').id).toBe('midnight')
 })
 
-test('there are eleven presets - the two from the architecture phase plus the nine from section 6', () => {
-  expect(PRESETS.length).toBe(11)
+// The eight novelty presets were cut - see the note at the top of themes.ts.
+// Their ids are what a real person still has in storage, so what matters is
+// not that they are gone but that they land somewhere sensible when they turn
+// up, which they will, on every existing install.
+test('an id from one of the deleted themes resolves to the default rather than failing', () => {
+  for (const gone of ['slate', 'sketchbook', 'graph', 'legal-pad', 'moleskine', 'blueprint', 'terminal', 'newsprint', 'receipt', 'ink-and-wash']) {
+    expect(findPreset(gone).id, gone).toBe(DEFAULT_PRESET_ID)
+  }
 })
 
 test('preset names are unique', () => {

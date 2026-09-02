@@ -577,7 +577,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
     ...defaultData(),
     settings: {
       ...defaultData().settings,
-      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'light' },
+      theme: { presetId: 'midnight', overrides: { midnight: { accent: '#e0553b' } }, mode: 'light' },
       enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
@@ -585,8 +585,8 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
   })
   actions.setTheme('dark')
   expect(getData().settings.theme.mode).toBe('dark')
-  expect(getData().settings.theme.presetId).toBe('sketchbook')
-  expect(getData().settings.theme.overrides).toEqual({ sketchbook: { accent: '#e0553b' } })
+  expect(getData().settings.theme.presetId).toBe('midnight')
+  expect(getData().settings.theme.overrides).toEqual({ midnight: { accent: '#e0553b' } })
   expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
   actions.setTheme('system')
   expect(getData().settings.theme.mode).toBe('system')
@@ -651,8 +651,8 @@ test('setNightSleepWindow changes only nightSleepWindow, leaving sleepWindow unt
 
 test('setThemePreset changes only the preset id', () => {
   actions.resetForTests(defaultData())
-  actions.setThemePreset('sketchbook')
-  expect(getData().settings.theme.presetId).toBe('sketchbook')
+  actions.setThemePreset('midnight')
+  expect(getData().settings.theme.presetId).toBe('midnight')
   expect(getData().settings.theme.mode).toBe(defaultData().settings.theme.mode)
 })
 
@@ -661,19 +661,19 @@ test('setThemeOverride writes one token under the current preset id without dist
     ...defaultData(),
     settings: {
       ...defaultData().settings,
-      theme: { presetId: 'sketchbook', overrides: { slate: { accent: '#111111' } }, mode: 'dark' },
+      theme: { presetId: 'midnight', overrides: { dark: { accent: '#111111' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
   })
-  actions.setThemeOverride('sketchbook', 'accent', '#e0553b')
+  actions.setThemeOverride('midnight', 'accent', '#e0553b')
   expect(getData().settings.theme.overrides).toEqual({
-    slate: { accent: '#111111' },
-    sketchbook: { accent: '#e0553b' },
+    dark: { accent: '#111111' },
+    midnight: { accent: '#e0553b' },
   })
-  actions.setThemeOverride('sketchbook', 'mark', '#ffcc00')
-  expect(getData().settings.theme.overrides.sketchbook).toEqual({ accent: '#e0553b', mark: '#ffcc00' })
+  actions.setThemeOverride('midnight', 'mark', '#ffcc00')
+  expect(getData().settings.theme.overrides.midnight).toEqual({ accent: '#e0553b', mark: '#ffcc00' })
 })
 
 test('resetThemeOverrides clears only the named preset\'s patch', () => {
@@ -682,8 +682,8 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
     settings: {
       ...defaultData().settings,
       theme: {
-        presetId: 'sketchbook',
-        overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b' } },
+        presetId: 'midnight',
+        overrides: { dark: { accent: '#111111' }, midnight: { accent: '#e0553b' } },
         mode: 'dark',
       },
       enabledWidgets: [],
@@ -691,8 +691,8 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
       dayLayoutFocus: 'both',
     },
   })
-  actions.resetThemeOverrides('sketchbook')
-  expect(getData().settings.theme.overrides).toEqual({ slate: { accent: '#111111' } })
+  actions.resetThemeOverrides('midnight')
+  expect(getData().settings.theme.overrides).toEqual({ dark: { accent: '#111111' } })
 })
 
 test('unsetThemeOverride removes one token, leaving the preset\'s other overrides and other presets\' patches alone', () => {
@@ -701,8 +701,8 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
     settings: {
       ...defaultData().settings,
       theme: {
-        presetId: 'sketchbook',
-        overrides: { slate: { accent: '#111111' }, sketchbook: { accent: '#e0553b', mark: '#ffcc00' } },
+        presetId: 'midnight',
+        overrides: { dark: { accent: '#111111' }, midnight: { accent: '#e0553b', mark: '#ffcc00' } },
         mode: 'dark',
       },
       enabledWidgets: [],
@@ -710,10 +710,10 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
       dayLayoutFocus: 'both',
     },
   })
-  actions.unsetThemeOverride('sketchbook', 'accent')
+  actions.unsetThemeOverride('midnight', 'accent')
   expect(getData().settings.theme.overrides).toEqual({
-    slate: { accent: '#111111' },
-    sketchbook: { mark: '#ffcc00' },
+    dark: { accent: '#111111' },
+    midnight: { mark: '#ffcc00' },
   })
 })
 
@@ -722,20 +722,20 @@ test('unsetThemeOverride drops the preset\'s own entry once its last token is re
     ...defaultData(),
     settings: {
       ...defaultData().settings,
-      theme: { presetId: 'sketchbook', overrides: { sketchbook: { accent: '#e0553b' } }, mode: 'dark' },
+      theme: { presetId: 'midnight', overrides: { midnight: { accent: '#e0553b' } }, mode: 'dark' },
       enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
   })
-  actions.unsetThemeOverride('sketchbook', 'accent')
+  actions.unsetThemeOverride('midnight', 'accent')
   expect(getData().settings.theme.overrides).toEqual({})
 })
 
 test('unsetThemeOverride is a no-op for a preset or token that was never overridden', () => {
   actions.resetForTests(defaultData())
   const before = getData()
-  actions.unsetThemeOverride('slate', 'accent')
+  actions.unsetThemeOverride('dark', 'accent')
   expect(getData()).toBe(before)
 })
 
@@ -869,7 +869,7 @@ test('changing the theme preset or mode never changes the object identity of day
   const daysBefore = getData().days
   const templatesBefore = getData().templates
 
-  actions.setThemePreset('sketchbook')
+  actions.setThemePreset('midnight')
   actions.setTheme('dark')
   actions.setTheme('light')
   actions.setThemePreset('midnight')

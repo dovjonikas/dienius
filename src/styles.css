@@ -15,42 +15,89 @@
  * token value (see the prefers-reduced-transparency rule below).
  */
 :root {
-  /* Surface */
-  --bg: #fafaf8;
-  --surface: #ffffff;
+  /* Surface. Three steps, not two: the page, the cards on it, and whatever
+     covers a card. On a dark theme that third step is what carries depth -
+     see the note at the top of src/lib/themes.ts. */
+  --bg: #121417;
+  --surface: #1a1d21;
+  --surface-raised: #23272c;
   --rule: #00000000;
   --rule-h: transparent;
   --rule-v: transparent;
   --rule-size: 28px;
   /* Derived, not a preset token - see applyResolvedTheme in src/lib/theme.ts.
      Whichever of black or white reads best against --surface, so the
-     override panel's recovery controls (Reset, the disclosure toggle, a
-     gallery card's own name label) stay legible no matter what a person
-     does to --text by hand. This default matches Slate light's own value. */
-  --safe-ink: #2b2b2b;
+     recovery controls in Appearance stay legible no matter what a person
+     does to --text by hand. This default matches Dark's own value. */
+  --safe-ink: #ffffff;
   --grain: 0;
   --vignette: 0%;
-  --border: #e8e6e1;
-  /* A single vertical accent rule at a fixed offset from the left edge -
-     the legal pad's red margin line. Transparent by default; only Legal
-     Pad sets it to a real colour. See body::before below for the one
-     shared formula every preset draws this through. */
+  --border: #2a2d31;
   --margin: #00000000;
-  /* Palette */
-  --text: #2b2b2b;
-  --muted: #8a8a85;
-  --accent: #5b7cfa;
-  --accent-dim: #c3cdfa;
-  --mark: #ffd54a;
-  --danger: #d96c6c;
-  --good: #6fae6f;
+  /* Palette. Three inks, in descending weight - see themes.ts on why none of
+     them is pure white. */
+  --text: #e2e2e0;
+  --muted: #a3a5a6;
+  --faint: #717375;
+  --accent: #8aa4f2;
+  --accent-dim: #38406a;
+  --mark: #d9b15f;
+  --danger: #d99191;
+  --good: #85be92;
   /* Type and shape */
   --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace;
   --radius: 10px;
-  --edge: 10px;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --edge: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+/**
+ * Category colours - src/lib/categories.ts owns which categories exist and
+ * what they are called; this owns what they look like.
+ *
+ * They live here rather than in the preset data because they are the one part
+ * of the palette that is not a theme choice: Meals means the same thing in
+ * every theme, and a person switching from Dark to Light is not asking for
+ * their day to be re-coded. What does change is how loud a hue has to be to
+ * read, and that is exactly what a two-block override handles - the values
+ * below are the dark set, and the light set is one block down. Nothing in
+ * JavaScript has to know which is in force; categoryColor() hands out
+ * var(--cat-core) and the cascade answers.
+ *
+ * Dark: desaturated and lightened. A hue that reads as confident on white
+ * shouts on near-black, and six of them shouting is the "everything is loud"
+ * failure this whole system exists to avoid.
+ */
+/* The second selector in each list is a gallery preview card, which needs the
+   category colours of the theme it is previewing rather than the one currently
+   painting the page - so it overrides the same six variables inside its own
+   subtree. Listed together rather than written twice: one set of values, two
+   places that can be in either mode. */
+:root,
+.theme-card[data-pv-mode='dark'] {
+  --cat-core: #7aa2f7;
+  --cat-routine: #a98bd6;
+  --cat-health: #6fbf94;
+  --cat-meal: #dda15e;
+  --cat-commute: #5eb0b8;
+  --cat-personal: #d489b6;
+}
+
+/* Light: the same six hues with real saturation put back. On white a muted
+   pastel reads as washed out rather than calm, which is the opposite problem
+   to the one above and needs the opposite answer. Keyed on the resolved mode
+   (applyResolvedTheme writes dataset.theme), so it follows the theme without
+   any preset having to carry six more tokens. */
+:root[data-theme='light'],
+.theme-card[data-pv-mode='light'] {
+  --cat-core: #3d6ad6;
+  --cat-routine: #7f5fc4;
+  --cat-health: #2f8f5f;
+  --cat-meal: #c07a22;
+  --cat-commute: #1f8794;
+  --cat-personal: #b8558c;
 }
 
 /**
@@ -125,6 +172,42 @@
   --dur-fast: 150ms;
   --dur: 200ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Density and text size - Settings, Appearance. Both work by overriding the
+   scales at their source rather than by touching a single component, which is
+   the payoff for having scales at all: the entire app gets tighter or larger
+   in six declarations, and nothing anywhere else knows either setting exists.
+
+   Compact is roughly three quarters of Comfortable at the sizes that matter,
+   with the smallest steps held where they are - two pixels of separation
+   cannot usefully become one and a half. */
+:root[data-density='compact'] {
+  --s0: 2px;
+  --s1: 3px;
+  --s2: 6px;
+  --s3: 9px;
+  --s4: 12px;
+  --s6: 18px;
+  --s8: 24px;
+}
+
+/* Text size scales all four steps together, so the ratios between them - and
+   therefore the whole visual hierarchy - are identical at every setting. Only
+   --t-input is held at 16px regardless: below it, iOS Safari zooms the page
+   when a field takes focus, and that is a bug rather than a preference. */
+:root[data-text-scale='s'] {
+  --t-xs: 10px;
+  --t-sm: 12px;
+  --t-md: 14px;
+  --t-lg: 18px;
+}
+
+:root[data-text-scale='l'] {
+  --t-xs: 12px;
+  --t-sm: 14.5px;
+  --t-md: 17px;
+  --t-lg: 23px;
 }
 
 * { box-sizing: border-box; }
@@ -434,6 +517,88 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   .settings-nav-item.active { border: none; }
 }
 
+/* The accent swatches in Appearance - eight curated colours, no picker. See
+   AppearanceControls.tsx for why that is the whole control. Default is the
+   one without a --swatch of its own: it shows the live accent, because that
+   is literally what it sets the app back to. */
+.accent-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.accent-swatch {
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border-radius: var(--r-round);
+  border: 2px solid transparent;
+  background: var(--swatch, var(--accent));
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+.accent-swatch:hover { transform: scale(1.12); }
+
+.accent-swatch.selected {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch, var(--accent));
+}
+
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Default carries a small diagonal so it is distinguishable from whichever
+   coloured swatch happens to match the current accent. */
+.accent-swatch[data-accent='default'] {
+  background: linear-gradient(135deg, var(--accent) 0 48%, var(--surface-raised) 48% 52%, var(--accent) 52% 100%);
+}
+
+/* A real switch, not a checkbox with a label - role="switch" with
+   aria-checked, so it announces as on or off rather than as checked. */
+.switch {
+  position: relative;
+  width: 46px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-round);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  transition: transform var(--dur) var(--ease);
+}
+
+.switch[aria-checked='true'] .switch-thumb { transform: translateX(18px); background: #fff; }
+
+.switch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch-thumb, .accent-swatch { transition: none; }
+}
+
 /* Settings is a two-column layout now, and 760px - a width chosen for a
    phone-shaped single column of prose - leaves the control column too narrow
    to hold a pair of time steppers beside a description. Scoped by :has() to
@@ -613,12 +778,61 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   line-height: 1.2;
 }
 
-.theme-card-body {
+/* The heading and the day's progress on one line, exactly the way the real
+   header does it - the miniature is a fragment of Today, not an abstract
+   arrangement of the theme's colours. */
+.theme-card-head {
   position: relative;
-  font-family: var(--pv-font-body);
-  color: var(--pv-muted);
-  font-size: var(--t-sm);
-  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.theme-card-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--pv-border) 80%, transparent);
+  overflow: hidden;
+}
+
+.theme-card-bar-fill {
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pv-accent);
+}
+
+/* A slice of the timeline: three category blocks with their solid left edges,
+   and the now-line crossing them. Small enough to be a texture rather than a
+   diagram, which is the point - what a person judges from a card is whether a
+   day of blocks will read calmly in this theme, and that is a question about
+   texture. */
+.theme-card-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0;
+}
+
+.theme-card-block {
+  height: 11px;
+  border-radius: 3px;
+  border-left: 3px solid var(--cat);
+  background: color-mix(in srgb, var(--cat) 22%, var(--pv-surface));
+}
+
+.theme-card-block[data-cat='core'] { --cat: var(--cat-core); width: 100%; }
+.theme-card-block[data-cat='meal'] { --cat: var(--cat-meal); width: 76%; }
+.theme-card-block[data-cat='health'] { --cat: var(--cat-health); width: 88%; }
+
+.theme-card-now {
+  height: 1.5px;
+  margin: 1px 0;
+  border-radius: var(--r-pill);
+  background: var(--pv-mark);
 }
 
 /* The task row (accent chip) and the highlighted item (the marker chip)
@@ -666,6 +880,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 }
 
 .theme-card-mark {
+  font-variant-numeric: tabular-nums;
   align-self: flex-start;
   font-family: var(--pv-font-body);
   font-size: var(--t-xs);
@@ -1167,7 +1382,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .timeline-sleep-band-label {
   margin-left: 44px;
   padding-left: 6px;
-  color: var(--muted);
+  /* Not plain --muted: this label sits on the greyed band rather than on the
+     card surface --muted was balanced against, and measured 4.14:1 there in
+     Light, just under AA. Pulled a third of the way toward --text, which puts
+     it over in all three themes while still reading as the quietest thing on
+     the grid. */
+  color: color-mix(in srgb, var(--text) 34%, var(--muted));
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
@@ -1432,10 +1652,17 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    goes quiet as it is worked through, which is the whole reward. */
 .timeline-anchor-done {
   filter: grayscale(0.92);
-  opacity: 0.55;
+  /* 0.6, not 0.55. At 0.55 a finished block's own title measured 4.3:1 in
+     Light - just under AA, and "already done" is not a licence to make text
+     unreadable, only quiet. The desaturation above is what actually carries
+     the finished state; the opacity is a second, smaller voice on top of it
+     and can afford to give a little back. */
+  opacity: 0.6;
 }
 
-.timeline-anchor-done .timeline-anchor-title { color: var(--muted); }
+.timeline-anchor-done .timeline-anchor-title {
+  color: color-mix(in srgb, var(--text) 30%, var(--muted));
+}
 
 .timeline-anchor-done .timeline-anchor-title {
   text-decoration: line-through;

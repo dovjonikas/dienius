@@ -12,7 +12,7 @@
  */
 import { bestInk } from './contrast'
 import type { ThemeOverrides, ThemeState } from './types'
-import { findPreset, type RuleStyle, type ThemeTokens, type ThemeVariant } from './themes'
+import { findPreset, SYSTEM_LIGHT_PRESET_ID, type RuleStyle, type ThemeTokens, type ThemeVariant } from './themes'
 
 export interface ResolvedTheme {
   /** The mode actually rendered - may differ from ThemeState.mode when
@@ -27,8 +27,8 @@ export interface ResolvedTheme {
  * copy of this list must match. Order has no visual effect - it exists so
  * a diff of the two lists is easy to eyeball. */
 export const TOKEN_KEYS: (keyof ThemeTokens)[] = [
-  'bg', 'surface', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
-  'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
+  'bg', 'surface', 'surfaceRaised', 'rule', 'ruleSize', 'grain', 'vignette', 'border', 'margin',
+  'text', 'muted', 'faint', 'accent', 'accentDim', 'mark', 'danger', 'good',
   'fontDisplay', 'fontBody', 'fontMono', 'radius', 'edge', 'shadow',
 ]
 
@@ -38,6 +38,7 @@ export const TOKEN_KEYS: (keyof ThemeTokens)[] = [
 export const CSS_VAR_NAMES: Record<keyof ThemeTokens, string> = {
   bg: '--bg',
   surface: '--surface',
+  surfaceRaised: '--surface-raised',
   rule: '--rule',
   ruleSize: '--rule-size',
   grain: '--grain',
@@ -46,6 +47,7 @@ export const CSS_VAR_NAMES: Record<keyof ThemeTokens, string> = {
   margin: '--margin',
   text: '--text',
   muted: '--muted',
+  faint: '--faint',
   accent: '--accent',
   accentDim: '--accent-dim',
   mark: '--mark',
@@ -109,11 +111,35 @@ export function resolveVariant(variant: ThemeVariant, patch: ThemeOverrides): { 
   return { tokens, ruleStyle }
 }
 
+/**
+ * Which preset is actually rendered, which is not always the one that was
+ * picked.
+ *
+ * Every theme this app ships is single-mode - "light or dark" is the choice
+ * itself now, not a second axis crossed with it (see themes.ts). That leaves
+ * "follow the system" with nothing to act on at the mode level, so it acts at
+ * the preset level instead: with `mode: 'system'`, a light system gets the
+ * Light theme and a dark system gets whichever dark theme was picked.
+ *
+ * Keeping the picked preset when the system is dark is the part worth being
+ * deliberate about. Somebody who chose Midnight chose it for their screen, not
+ * for the time of day, and switching them to Dark every evening would quietly
+ * undo that. So system-following only ever overrides the choice in one
+ * direction: toward light, when the system asks for light and the chosen
+ * theme has no light to give.
+ */
+function presetFor(state: ThemeState, systemPrefersDark: boolean) {
+  const picked = findPreset(state.presetId)
+  if (state.mode !== 'system') return picked
+  if (systemPrefersDark) return picked.modes.includes('dark') ? picked : findPreset('dark')
+  return picked.modes.includes('light') ? picked : findPreset(SYSTEM_LIGHT_PRESET_ID)
+}
+
 /** Runs the full pipeline: defaults live inside each preset variant already
  * (every token is always present, see themes.test.ts), so this only has
  * preset selection, mode resolution and the override patch left to do. */
 export function resolveTheme(state: ThemeState, systemPrefersDark: boolean): ResolvedTheme {
-  const preset = findPreset(state.presetId)
+  const preset = presetFor(state, systemPrefersDark)
   const mode = resolveMode(state, systemPrefersDark, preset.modes)
   const variant = (mode === 'dark' ? preset.dark : preset.light) as ThemeVariant
   const patch = state.overrides[preset.id] ?? {}

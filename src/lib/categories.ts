@@ -10,13 +10,17 @@
  * once, and a palette that has to be looked up is a legend, not a signal. See
  * docs/RESEARCH-ADHD.md section 7 on how few things can be held at a glance.
  *
- * The colours themselves are fixed hex values rather than theme tokens, the
- * same way `Template.color` already is. A category means the same thing in
- * every one of the eleven presets, and the day would read differently in each
- * one if these followed the theme. They are drawn as a soft wash (about a
- * fifth of the colour, over whatever surface the theme provides) with the full
- * strength kept for a 3px edge, so they stay legible in light and dark without
- * a second set of values, and never compete with the text sitting on them.
+ * The colour itself is a CSS custom property, not a literal, and that is the
+ * whole trick. Which categories exist and what they are called is decided
+ * here; what they look like is decided in styles.css, which carries one set of
+ * values for dark themes and one for light. A category means the same thing in
+ * every theme - somebody switching from Dark to Light is not asking for their
+ * day to be re-coded - but how loud a hue has to be to read is completely
+ * different on near-black than on white, and only the stylesheet knows which
+ * is in force. Nothing in this module, and nothing that calls it, has to.
+ *
+ * They are drawn as a soft wash with the full strength kept for a 4px edge, so
+ * they stay legible in both without competing with the text sitting on them.
  */
 export type CategoryId = 'core' | 'routine' | 'health' | 'meal' | 'commute' | 'personal'
 
@@ -24,11 +28,18 @@ export interface Category {
   id: CategoryId
   /** Shown next to the swatch wherever one is offered - colour is never the only signal. */
   label: string
+  /**
+   * A `var(--cat-*)` reference, not a hex value - see the note above. Every
+   * call site assigns it straight to a `--cat` custom property, so a
+   * reference resolves exactly where a literal used to, one cascade step
+   * later and with the current theme taken into account.
+   */
   color: string
 }
 
 /**
- * Six hues, spread as far apart as six can be while all staying this quiet.
+ * Six hues, spread as far apart as six can be while all staying quiet. The
+ * actual values live in styles.css, twice - once for dark, once for light.
  *
  * Commute is the one that is not what it first looks like it should be. The
  * obvious colour for travel is a neutral grey, and it was one - until finished
@@ -39,12 +50,12 @@ export interface Category {
  * unremarkable part of the day) without borrowing a meaning that is taken.
  */
 export const CATEGORIES: Category[] = [
-  { id: 'core', label: 'Focus', color: '#7aa2f7' },
-  { id: 'routine', label: 'Routine', color: '#a98bd6' },
-  { id: 'health', label: 'Health', color: '#6fbf94' },
-  { id: 'meal', label: 'Meals', color: '#dda15e' },
-  { id: 'commute', label: 'Commute', color: '#5eb0b8' },
-  { id: 'personal', label: 'Personal', color: '#d489b6' },
+  { id: 'core', label: 'Focus', color: 'var(--cat-core)' },
+  { id: 'routine', label: 'Routine', color: 'var(--cat-routine)' },
+  { id: 'health', label: 'Health', color: 'var(--cat-health)' },
+  { id: 'meal', label: 'Meals', color: 'var(--cat-meal)' },
+  { id: 'commute', label: 'Commute', color: 'var(--cat-commute)' },
+  { id: 'personal', label: 'Personal', color: 'var(--cat-personal)' },
 ]
 
 /**

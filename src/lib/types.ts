@@ -252,6 +252,22 @@ export interface Settings {
    * screen.
    */
   dayLayoutFocus: 'both' | 'calendar' | 'tasks'
+  /**
+   * How much air the interface spends - see the spacing scale in styles.css.
+   * Comfortable is the scale as designed; Compact multiplies it down, which
+   * is what a fourteen-inch laptop and a nine-task day actually want. Not a
+   * theme token: a preset owns colour and type family, and how far apart two
+   * things sit is a decision about this device, not about which room you are
+   * in, so it must survive switching themes.
+   */
+  density: 'comfortable' | 'compact'
+  /**
+   * A multiplier on the whole type scale, not a font-size for one element.
+   * Every size in the app comes from four tokens, so scaling those four is
+   * the entire feature - nothing has to be re-laid-out, and the hierarchy
+   * between them is preserved exactly at every setting.
+   */
+  textScale: 's' | 'm' | 'l'
 }
 
 /**
