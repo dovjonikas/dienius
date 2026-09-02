@@ -19,17 +19,19 @@ import { ShortcutsOverlay } from './views/ShortcutsOverlay'
 import { shortcutKeyFor } from './lib/shortcuts'
 import { addDays } from './lib/dates'
 import { LibraryView } from './views/LibraryView'
+import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { WIDGETS } from './widgets/registry'
 
-type View = 'day' | 'calendar' | 'templates' | 'library' | 'settings'
+type View = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'settings'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'day', label: 'Today' },
   { view: 'calendar', label: 'Calendar' },
   { view: 'templates', label: 'Templates' },
   { view: 'library', label: 'Library' },
+  { view: 'review', label: 'Review' },
   { view: 'settings', label: 'Settings' },
 ]
 
@@ -162,6 +164,9 @@ export function App() {
           setView('library')
           break
         case '5':
+          setView('review')
+          break
+        case '6':
           setView('settings')
           break
         case 'f': {
@@ -243,6 +248,7 @@ export function App() {
         {view === 'calendar' && <CalendarView onOpenDay={openDay} onOpenTemplates={() => setView('templates')} />}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
+        {view === 'review' && <ReviewView onOpenDay={openDay} />}
         {view === 'settings' && <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} />}
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by

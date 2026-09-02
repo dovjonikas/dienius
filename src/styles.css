@@ -4617,8 +4617,25 @@ button.danger {
      or a large text setting can never push the page sideways again. */
   .app-header nav button { padding-left: var(--s2); padding-right: var(--s2); font-size: var(--t-sm); }
   .app-header nav button::after { left: var(--s2); right: var(--s2); }
-  .app-header nav { overflow-x: auto; scrollbar-width: none; }
+  .app-header nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* A fade at the trailing edge, so a clipped tab reads as "there is more
+       this way" rather than as a rendering fault. Only ever visible when
+       there is genuinely something past the edge - a mask over a row that
+       fits does nothing. */
+    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
+  }
   .app-header nav::-webkit-scrollbar { display: none; }
+
+  /* Six tabs at 13px are 393px wide, which clips the last one on a 390px
+     phone. Four pixels of padding either side buys the 48 that makes the
+     whole row fit - and the row still scrolls, so a seventh tab or a large
+     text setting degrades to a scroll rather than to a clip. */
+  @media (max-width: 430px) {
+    .app-header nav button { padding-left: var(--s1); padding-right: var(--s1); }
+    .app-header nav button::after { left: var(--s1); right: var(--s1); }
+  }
 }
 
 /* A clock face drawn from a circle and two borders, like every other mark in
@@ -7073,3 +7090,163 @@ button.danger:focus-visible {
    repeats" says what it does; "All" would not. */
 .task-detail-scope { flex-wrap: wrap; width: 100%; }
 .task-detail-scope button { flex: 1 1 auto; font-size: var(--t-sm); }
+
+/* ------------------------------------------------------------------------
+   Review - ReviewView.tsx.
+
+   A page of figures and two bar rows. Deliberately the same card-on-a-page
+   shape as Templates and Library: it is another place you go to look at
+   something rather than to do something, and it should feel like the same
+   kind of room.
+   ------------------------------------------------------------------------ */
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) var(--s7);
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s4);
+}
+
+.review-header h2 { margin: 0; font-size: var(--t-lg); }
+
+.review-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.review-nav button {
+  width: 38px;
+  height: 38px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+}
+
+.review-nav button:hover:not(:disabled) { border-color: var(--muted); }
+.review-nav button:disabled { opacity: 0.35; }
+
+.review-range { color: var(--text); font-size: var(--t-md); font-weight: 600; }
+
+.review-empty { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: 1.6; }
+
+/* Four figures across, dropping to two on a phone. Same shape as the day
+   digest, which is the other place in this app that states a few numbers
+   small and together rather than one at a time. */
+.review-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s4);
+  margin: 0;
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-figures dt {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-figures dd {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-figure-note { color: var(--muted); font-size: var(--t-sm); font-weight: 400; }
+
+.review-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.review-block h3 { margin: 0; font-size: var(--t-md); }
+
+/* One column per day. Boxes with a height, not a chart - see the Chart
+   comment in ReviewView.tsx for why there are no axes here. */
+.review-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 108px;
+}
+
+.review-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s1);
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+}
+
+.review-bar:hover:not(:disabled) { background: color-mix(in srgb, var(--border) 35%, transparent); }
+
+.review-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.review-bar-track {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--r-chip);
+}
+
+.review-bar-planned,
+.review-bar-done {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--r-chip);
+  transition: height var(--dur) var(--ease);
+}
+
+.review-bar-planned { background: color-mix(in srgb, var(--border) 85%, transparent); }
+.review-bar-done { background: color-mix(in srgb, var(--accent) 70%, transparent); }
+
+.review-bar-day {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-align: center;
+}
+
+.review-library { display: flex; flex-direction: column; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.review-library li { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.review-library-name { color: var(--text); font-size: var(--t-sm); }
+.review-library-units { color: var(--muted); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 599px) {
+  .review { padding: var(--s4) var(--s3) var(--s7); }
+  .review-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
