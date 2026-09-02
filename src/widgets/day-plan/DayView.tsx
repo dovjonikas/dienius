@@ -1044,7 +1044,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               onClick={() => setDoneOpen(open => !open)}
             >
               <span className="done-caret" aria-hidden="true" />
-              Done ({doneTasks.length})
+              Done
+              <span className="inbox-badge">{doneTasks.length}</span>
             </button>
             <ul className="task-list task-list-done" id={doneListId}>
               {doneTasks.map(task => (

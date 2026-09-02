@@ -36,14 +36,23 @@ const DISPLAY_BUFFER_MINUTES = 60
 const SLEEP_BAND_MIN_MINUTES = 90
 
 /**
- * The most `displayWindow` is ever pulled back through genuinely empty,
- * anchor-free time just to *reach* the sleep boundary before the band's own
- * depth is added on top - see `extendTowardSleepBoundary`. Kept equal to
- * `SLEEP_BAND_MIN_MINUTES` so the rule reads as one idea instead of two
- * independently tuned numbers: bridge up to 90 minutes of true gap to reach
- * the boundary, then show up to another 90 minutes of band once there.
+ * How far the last real anchor may sit from the sleep boundary and still have
+ * a band drawn for it.
+ *
+ * Two hours, measured from the anchor itself rather than from the buffered
+ * edge of the window. Measuring from the buffer spent the allowance twice -
+ * the buffer is already an hour of deliberately empty time, so a cap of 90 on
+ * top of it drew up to two and a half hours of nothing before the band even
+ * started. On a real evening (last task ending 20:33, bedtime 23:00) that
+ * gave a quarter of the grid's height to a stretch with nothing in it, which
+ * is precisely the wall of empty rows this cap exists to prevent.
+ *
+ * Two hours is the line because it is roughly how long after waking a first
+ * task lands, and how long before bed a last one ends, on a day that has any
+ * shape at all. Further than that and the boundary is not part of the day
+ * being drawn; it is just a fact about the clock.
  */
-const SLEEP_BAND_BRIDGE_CAP_MINUTES = 90
+const SLEEP_BAND_BRIDGE_CAP_MINUTES = 120
 
 /**
  * An anchor with no `minutes` has no honest duration to draw - see the
@@ -215,11 +224,23 @@ export interface TimelineLayout {
  * legible depth, regardless of exactly how close the anchors happened to
  * land.
  */
-function extendEdgeTowardSleep(edge: number, boundary: number, direction: 'start' | 'end'): number {
+function extendEdgeTowardSleep(
+  edge: number,
+  boundary: number,
+  direction: 'start' | 'end',
+  anchorEdge: number,
+): number {
   const alreadyPastBoundary = direction === 'start' ? Math.max(0, boundary - edge) : Math.max(0, edge - boundary)
   if (alreadyPastBoundary >= SLEEP_BAND_MIN_MINUTES) return edge
 
-  const gapToBoundary = direction === 'start' ? Math.max(0, edge - boundary) : Math.max(0, boundary - edge)
+  // Measured from the last real anchor, not from the buffered edge. Measuring
+  // from the buffer let the cap be spent twice: the buffer is already an hour
+  // of deliberately empty time, so a 90-minute bridge on top of it drew up to
+  // two and a half hours of nothing, then added a 90-minute band under that.
+  // On a day ending at 20:33 with an 23:00 bedtime the grid gave a quarter of
+  // its height to a stretch with nothing in it - which is exactly the wall of
+  // empty rows this cap exists to prevent, produced by the cap itself.
+  const gapToBoundary = direction === 'start' ? Math.max(0, anchorEdge - boundary) : Math.max(0, boundary - anchorEdge)
   if (gapToBoundary > SLEEP_BAND_BRIDGE_CAP_MINUTES) return edge
 
   return direction === 'start'
@@ -228,10 +249,10 @@ function extendEdgeTowardSleep(edge: number, boundary: number, direction: 'start
 }
 
 /** Applies `extendEdgeTowardSleep` to both edges of `window` independently - see that function's own doc comment. */
-function extendTowardSleepBoundary(window: Interval, waking: Interval): Interval {
+function extendTowardSleepBoundary(window: Interval, waking: Interval, anchors: Interval): Interval {
   return {
-    start: extendEdgeTowardSleep(window.start, waking.start, 'start'),
-    end: extendEdgeTowardSleep(window.end, waking.end, 'end'),
+    start: extendEdgeTowardSleep(window.start, waking.start, 'start', anchors.start),
+    end: extendEdgeTowardSleep(window.end, waking.end, 'end', anchors.end),
   }
 }
 
@@ -296,7 +317,10 @@ export function computeTimelineLayout(
   const gaps = unsizedAnchorCount > 0 ? [] : computeInteriorGaps(anchors, window)
 
   const waking = windowFor(dayType, sleep)
-  const displayWindow = extendTowardSleepBoundary(window, waking)
+  const displayWindow = extendTowardSleepBoundary(window, waking, {
+    start: Math.min(...starts),
+    end: Math.max(...effectiveEndsForWindow),
+  })
   const sleepBands = [
     { start: 0, end: waking.start },
     { start: waking.end, end: DAY_MINUTES },

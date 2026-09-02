@@ -381,7 +381,7 @@ button:disabled {
 h2 { font-family: var(--font-display); font-size: var(--t-lg); margin: 8px 0 16px; }
 h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
-.settings-group { margin-bottom: 28px; }
+.settings-group { margin-bottom: var(--s6); }
 
 /* Settings as a modern app settings screen: a list of sections down one side,
    the settings themselves down the other. One scrolling document rather than
@@ -395,7 +395,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 
 .settings-nav {
   display: flex;
-  gap: 6px;
+  gap: var(--s2);
   overflow-x: auto;
   padding-bottom: var(--s1);
   /* A horizontal strip on a phone, where a fixed side column would take a
@@ -406,7 +406,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .settings-nav-item {
   flex: 0 0 auto;
   min-height: 36px;
-  padding: 6px 14px;
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: none;
@@ -458,7 +458,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .setting-label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s1);
   /* Takes the row's slack but gives up its own width before the control
      does - a description can wrap onto another line and still be read; a
      time stepper squeezed to half its width cannot be used. 240px is the
@@ -623,7 +623,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 /* The time field and its two steppers, read as one control. The 44px target
    on each stepper is untouched - see .time-step's own comment - they simply
    sit tight against the field they change instead of floating 4px off it. */
-.setting-control .time-stepper { gap: 6px; }
+.setting-control .time-stepper { gap: var(--s2); }
 /* Two fields per row here rather than the stacked label-above-field the
    phone uses, so bedtime and wake time read as one range. */
 .setting-control .sleep-window-field {
@@ -810,7 +810,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--s1);
   margin: 2px 0;
 }
 
@@ -845,7 +845,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 /* The accent chip's row: a scrap of a real task row, on the previewed
@@ -853,7 +853,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .theme-card-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s2);
   background: var(--pv-surface);
   border: 1px solid var(--pv-border);
   border-radius: var(--pv-edge);
@@ -900,176 +900,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   /* --safe-ink, not --text: this label is how a person identifies which
      room a card is (the accessible name too, see ThemePreviewCard), and it
      must stay legible even when the *active* preset's own --text has been
-     overridden to something unreadable against --surface - see the override
-     panel's recovery-path note in src/lib/theme.ts. */
+     overridden to something unreadable against --surface - see the note on
+     --safe-ink in src/lib/theme.ts. Accent is the only token a person can
+     change now, and it is picked from eight pre-checked colours, but the
+     guarantee costs nothing and outlives whatever the picker offers next. */
   color: var(--safe-ink);
   background: var(--surface);
   border-top: 1px solid var(--border);
-}
-
-/*
- * "Adjust this theme", docs/THEMES.md section 3 - a proper disclosure
- * (aria-expanded on the toggle, the panel itself only in the DOM while
- * open) rather than a form. Grouped under fieldset/legend so the four
- * groups (Colors, Ruling, Corners, Type) read as a few decisions, not a
- * flat wall of eight-plus controls - the exact thing the assignment warns
- * reads as abandon-this-screen to an ADHD reader.
- */
-.theme-overrides { margin-top: var(--s1); }
-
-.theme-overrides-toggle {
-  width: 100%;
-  text-align: left;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  /* --safe-ink: this toggle is part of the escape route out of a color a
-     person just picked - it must stay readable even when --text itself is
-     the thing that broke. See the same note on .theme-card-name above and
-     applyResolvedTheme in src/lib/theme.ts. */
-  color: var(--safe-ink);
-  padding: 10px 14px;
-  font-size: var(--t-md);
-  font-weight: 600;
-}
-
-.theme-overrides-count {
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.theme-overrides-panel {
-  margin-top: var(--s3);
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.override-group {
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.override-group legend {
-  font-size: var(--t-sm);
-  font-weight: 600;
-  color: var(--muted);
-  padding: 0 0 8px;
-}
-
-/* Two per row at 375px so a swatch stays a comfortable tap target rather
-   than four cramped into one row. */
-.override-color-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--s3);
-}
-
-.override-field label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--t-sm);
-  color: var(--text);
-  margin-bottom: 6px;
-}
-
-.override-field input[type='color'] {
-  width: 100%;
-  height: 44px;
-  padding: var(--s0);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  background: var(--surface);
-}
-
-/* A visible, non-color signal that a token has been moved from its preset
-   default - never relies on color or shape alone, since every dot is also
-   paired with a visually-hidden "Changed from the preset default" string
-   read through aria-describedby. */
-.override-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-round);
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
-.override-segmented-wrap .segmented {
-  width: 100%;
-}
-
-.override-segmented-wrap .segmented button {
-  flex: 1;
-  font-size: var(--t-sm);
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.override-custom-note {
-  margin: 6px 0 0;
-  font-size: var(--t-sm);
-  color: var(--muted);
-}
-
-.override-ruling-detail {
-  margin-top: var(--s3);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.override-range label { margin-bottom: var(--s0); }
-
-.override-range-value {
-  font-size: var(--t-sm);
-  color: var(--muted);
-}
-
-.override-field input[type='range'] {
-  width: 100%;
-  min-height: 44px;
-}
-
-/* Without this the range track/thumb (and, on some browsers, the color
-   swatch's own chrome) render in the browser's stock blue, which reads as
-   unfinished inside a panel whose whole point is theming. Broadly
-   supported, including iOS Safari, and changes nothing about either
-   control's native behavior. */
-.override-field input[type='color'],
-.override-field input[type='range'] {
-  accent-color: var(--accent);
-}
-
-/* A self-contained rule rather than reusing the shared .warning class -
-   .warning's own color is var(--danger), which is not itself overridable,
-   but this box also has to stay legible as a whole against whatever is
-   behind it, and it is the message telling a person their own colors do not
-   read well, so it gets the same --safe-ink/--surface treatment as the rest
-   of the recovery path rather than trusting an ambient background. */
-.override-warning {
-  margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--danger);
-  color: var(--safe-ink);
-  border-radius: var(--r-control);
-  padding: 10px 14px;
-  font-size: var(--t-md);
-}
-
-.theme-overrides-panel > button {
-  align-self: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  /* Reset to preset is the recovery control itself - same --safe-ink
-     reasoning as .theme-overrides-toggle above. */
-  color: var(--safe-ink);
-  padding: 8px 14px;
 }
 
 .row { display: flex; gap: var(--s2); flex-wrap: wrap; }
@@ -1087,7 +924,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
   border-radius: var(--r-control);
-  padding: 10px 14px;
+  padding: var(--s2) var(--s3);
   font-size: var(--t-md);
 }
 
@@ -1121,13 +958,17 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .day-progress {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
   margin-bottom: var(--s4);
 }
 
+/* A fixed 160px rather than a share of whatever is left. As a flexible track
+   it was either a 420px loading bar or, once the header stopped stretching
+   it, a 30px stub - and a progress bar that changes length depending on how
+   long the day name is is not a progress bar. */
 .day-progress-track {
-  flex: 1;
-  min-width: 60px;
+  flex: 0 0 160px;
+  min-width: 160px;
   height: 6px;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 70%, transparent);
@@ -1262,9 +1103,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 
 .capacity-line p {
   margin: 0;
-  color: var(--muted);
-  font-size: var(--t-sm);
+  color: var(--faint);
+  font-size: var(--t-xs);
   line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
 /* The one if-then rule surfaced on the day view - docs/TIMELINE.md
@@ -1287,7 +1129,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   color: var(--safe-ink);
-  padding: 10px 14px;
+  padding: var(--s2) var(--s3);
   margin-bottom: var(--s4);
 }
 
@@ -1402,7 +1244,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    comment already asks of every other rule that reaches for it. */
 .timeline-sleep-band-label {
   margin-left: 44px;
-  padding-left: 6px;
+  padding-left: var(--s2);
   /* Not plain --muted: this label sits on the greyed band rather than on the
      card surface --muted was balanced against, and measured 4.14:1 there in
      Light, just under AA. Pulled a third of the way toward --text, which puts
@@ -1443,7 +1285,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   top: -7px;
   left: 0;
   width: 44px;
-  padding-right: 6px;
+  padding-right: var(--s2);
   text-align: right;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -1488,7 +1330,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   pointer-events: auto;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: var(--s3);
   /* Right margin only, for a little breathing room against the scroll
      container's own edge - no top or bottom margin. computeVerticalLayout
      in timelineLayout.ts promises the button's own border box occupies
@@ -1528,9 +1371,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
+/* Left-aligned and quiet: a gap label annotates the empty space, it does not
+   announce it. Centred and at --t-sm it was the loudest small text in the
+   panel, which put the emphasis of the whole grid on the parts of the day with
+   nothing in them. */
 .timeline-gap-label {
-  color: var(--muted);
-  font-size: var(--t-sm);
+  color: var(--faint);
+  font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   padding: var(--s1) var(--s2);
 }
@@ -1672,13 +1519,31 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    colour meaning exactly one thing - this is still live - so the day visibly
    goes quiet as it is worked through, which is the whole reward. */
 .timeline-anchor-done {
+  /* 0.72, not 0.6. Desaturation is what says finished; the opacity on top of
+     it was tuned before the themes were rebuilt, and against the new surfaces
+     the two together took a two-hour block down to almost exactly the panel
+     colour. A morning of work is still part of the shape of the day, and a
+     grid whose first half looks empty is telling a lie about it. */
   filter: grayscale(0.92);
   /* 0.6, not 0.55. At 0.55 a finished block's own title measured 4.3:1 in
      Light - just under AA, and "already done" is not a licence to make text
      unreadable, only quiet. The desaturation above is what actually carries
      the finished state; the opacity is a second, smaller voice on top of it
      and can afford to give a little back. */
-  opacity: 0.6;
+  opacity: 0.72;
+}
+
+/* Finished blocks keep an edge, in grey. Without one they lose the single
+   mark that makes a block read as a block rather than as a gap. */
+.timeline-anchor-done { border-left-color: var(--faint); }
+
+/* Flat, not the gradient a live block carries. The gradient exists to give the
+   eye somewhere to pick the colour up, which a finished block has no need of -
+   and on a long one it produced a bright inner edge that made two finished
+   hours the heaviest object on the grid. Backwards: the largest thing on a day
+   should be the largest thing still to do. */
+.timeline-anchor-done.timeline-anchor-cat {
+  background: color-mix(in srgb, var(--cat) 12%, var(--surface));
 }
 
 .timeline-anchor-done .timeline-anchor-title {
@@ -2225,7 +2090,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
 textarea {
   min-width: 0;
-  padding: 10px var(--s3);
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
   background: var(--bg);
@@ -2494,13 +2359,16 @@ textarea:focus {
 .category-picker {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--s2);
   flex-wrap: wrap;
 }
 
+/* Unselected swatches sit back so the chosen one wins on size as well as on
+   the ring - a row of seven near-identical dots with one faintly outlined is
+   a puzzle, not a control. */
 .category-swatch {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   min-height: 0;
   padding: 0;
   border-radius: var(--r-round);
@@ -2512,6 +2380,8 @@ textarea:focus {
 .category-swatch:hover { background: var(--cat); }
 
 .category-swatch.selected {
+  width: 24px;
+  height: 24px;
   background: var(--cat);
   border-color: color-mix(in srgb, var(--cat) 45%, var(--surface));
   box-shadow: 0 0 0 2px var(--cat);
@@ -2615,10 +2485,19 @@ textarea:focus {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 2px 10px;
+  gap: var(--s0) var(--s2);
   padding-left: 34px;
   min-height: 20px;
 }
+
+/* The size sits at the far end of the meta line rather than trailing the rest
+   of it. A card is 380px wide and a task title is rarely half that, so every
+   card had a wide blank strip down its right side and the column read as
+   under-filled. Anchoring one fact to each end gives the card two edges
+   instead of one, which is the difference between a column and text that
+   stops early. */
+.task-meta .task-size,
+.task-meta .task-size-input { margin-left: auto; }
 
 .task input[type='checkbox'] {
   position: absolute;
@@ -2801,7 +2680,7 @@ textarea:focus {
   border: none;
   min-height: 0;
   margin: -5px -6px;
-  padding: 5px 6px;
+  padding: var(--s1) var(--s2);
   border-radius: var(--r-control);
   font: inherit;
   color: inherit;
@@ -2966,13 +2845,18 @@ textarea:focus {
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
+/* The Done fold and the Inbox fold are the same control with different
+   contents, and they now say so: one shape, one height, one caret, and a
+   count in a badge on both rather than parentheses on one and a pill on the
+   other. Two folds that look like two different components is the kind of
+   detail nobody names and everybody notices. */
 .done-toggle {
   display: flex;
   align-items: center;
   gap: var(--s2);
   width: 100%;
   min-height: 36px;
-  padding: 6px 4px;
+  padding: var(--s2) var(--s1);
   background: none;
   border: none;
   color: var(--muted);
@@ -3018,9 +2902,9 @@ textarea:focus {
   background: none;
   box-shadow: none;
   border-color: color-mix(in srgb, var(--border) 55%, transparent);
-  padding-top: 6px;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+  margin-bottom: var(--s2);
 }
 
 /* Deliberately the quietest control in the pane, and no longer the widest
@@ -3118,7 +3002,7 @@ button.primary {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   padding: var(--s4);
-  margin-bottom: 20px;
+  margin-bottom: var(--s4);
   display: flex;
   flex-direction: column;
   gap: var(--s3);
@@ -3129,7 +3013,7 @@ button.primary {
 .day-type-picker {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--s2);
   flex-wrap: wrap;
 }
 
@@ -3158,7 +3042,7 @@ button.primary {
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: 6px 0;
+  padding: var(--s2) 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -3194,13 +3078,6 @@ button.primary {
    (bedtime, wake time), wrapping at 375px the same way .block-add's own
    row already does, so neither field is ever squeezed below a usable
    width on the phone. */
-.sleep-window-fields {
-  display: flex;
-  gap: var(--s4);
-  flex-wrap: wrap;
-  margin-bottom: var(--s3);
-}
-
 .sleep-window-field {
   display: flex;
   flex-direction: column;
@@ -3269,7 +3146,7 @@ button.danger {
 
 .crash h2 { margin: 0 0 12px; }
 .crash p { color: var(--muted); line-height: 1.5; }
-.crash .row { margin-top: 20px; }
+.crash .row { margin-top: var(--s4); }
 
 .calendar-nav {
   display: flex;
@@ -3401,7 +3278,7 @@ button.danger {
 /* On narrow phones the template name does not fit inside a calendar cell,
    so the cell color carries the meaning and the name is hidden. */
 @media (max-width: 420px) {
-  .calendar-grid { gap: 3px; }
+  .calendar-grid { gap: var(--s1); }
   .cell { padding: 5px 1px; }
   .cell-template { display: none; }
 }
@@ -3416,7 +3293,8 @@ button.danger {
    screen reader whether or not the dot itself is ever seen.
    --safe-ink, not --text: this cell's own background is --surface, exactly
    the case --safe-ink exists for - see the note on it in src/lib/theme.ts
-   and the override panel's use of it above. */
+   and the theme card's own name label above, which uses it for the same
+   reason. */
 .cell-has-tasks::after {
   content: '';
   position: absolute;
@@ -3479,7 +3357,7 @@ button.danger {
 
 .stamp-hint { text-align: center; margin-top: var(--s3); }
 
-.if-then-board { margin-top: 28px; }
+.if-then-board { margin-top: var(--s6); }
 
 .if-then-header {
   display: flex;
@@ -3537,7 +3415,7 @@ button.danger {
 
 .if-then-tag {
   display: inline-block;
-  margin-top: 10px;
+  margin-top: var(--s2);
   padding: 2px 10px;
   border-radius: var(--r-pill);
   font-size: var(--t-sm);
@@ -3548,7 +3426,7 @@ button.danger {
   display: flex;
   gap: var(--s2);
   justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: var(--s2);
 }
 
 .if-then-card-actions button {
@@ -3564,7 +3442,7 @@ button.danger {
 .if-then-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s2);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -3598,7 +3476,7 @@ button.danger {
 .if-then-scope-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 /* .chip's own default background is the browser's native button chrome -
@@ -3625,7 +3503,7 @@ button.danger {
    some days or at some hour reads as what it is at a glance without
    competing with the trigger and action text above it. */
 .if-then-scope-note {
-  margin: 6px 0 0;
+  margin: var(--s2) 0 0;
   font-size: var(--t-sm);
   color: var(--muted);
 }
@@ -3941,7 +3819,7 @@ button.danger {
   align-items: flex-start;
   gap: var(--s0);
   min-height: 44px;
-  padding: 10px 14px;
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
@@ -3991,12 +3869,12 @@ button.danger {
    to tell apart and harder to tap, without actually avoiding the scroll. */
 .year-strip {
   --year-cell: 10px;
-  margin-top: 28px;
+  margin-top: var(--s6);
 }
 
 .year-scroll {
   display: flex;
-  gap: 6px;
+  gap: var(--s2);
 }
 
 .year-weekdays {
@@ -4094,8 +3972,8 @@ button.danger {
 .year-template-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 14px;
+  gap: var(--s2);
+  margin-top: var(--s3);
 }
 
 .year-legend-chip {
@@ -4107,7 +3985,7 @@ button.danger {
 }
 
 .year-strip-legend {
-  margin-top: 10px;
+  margin-top: var(--s2);
 }
 
 /* The focus countdown - src/widgets/day-plan/FocusView.tsx. A whole screen
@@ -4126,7 +4004,7 @@ button.danger {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: var(--s6);
   padding: max(24px, env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
   background: var(--bg);
 }
@@ -4742,34 +4620,12 @@ nav button:active,
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-.inbox-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  width: 100%;
-  min-height: 36px;
-  padding: var(--s2) var(--s1);
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  text-align: left;
-  border-radius: var(--r-control);
-}
-
-.inbox-toggle:hover { color: var(--text); }
-
-.inbox-toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .inbox-section.open .done-caret { transform: rotate(90deg); }
 
 /* The count, which is what this fold says most of the time. */
 .inbox-badge {
   min-width: 20px;
-  padding: 0 6px;
+  padding: 0 var(--s2);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--text);
@@ -5006,7 +4862,7 @@ nav button:active,
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding-bottom: 20px;
+    padding-bottom: var(--s4);
   }
 
   /* min-height: 0 on every link in this chain. A flex item's default
@@ -5151,10 +5007,13 @@ nav button:active,
 
   .day-header .day-nav > button { width: 36px; height: 36px; min-height: 36px; }
 
+  /* Hugs what is beside it rather than filling the slack. Given the row's
+     spare width it stretched to 420px and floated between the now strip and
+     the focus control with a hole on each side, which read as a loading bar
+     rather than as a day. */
   .day-header .day-progress {
-    flex: 1 1 200px;
+    flex: 0 0 auto;
     margin-bottom: 0;
-    max-width: 420px;
   }
 
   .day-header .day-layout-focus { margin-left: auto; }
@@ -5176,7 +5035,7 @@ nav button:active,
      clearing a notch. The room goes to the day underneath it. */
   .app:has(.main-day) .app-header {
     padding-top: max(14px, env(safe-area-inset-top));
-    padding-bottom: 10px;
+    padding-bottom: var(--s2);
   }
 
   /* The brand sits at the scale head everywhere; nothing about a wide window
@@ -5232,7 +5091,7 @@ nav button:active,
   .task-pane {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--s2);
   }
 
   /* The open list takes the column's slack and, only if a day is genuinely
@@ -5282,7 +5141,7 @@ nav button:active,
   /* A little more air between cards where there is height to spend it - the
      short-screen block further down takes it back on a laptop, which is the
      one place the arithmetic actually needs it. */
-  .task-pane .task { margin-bottom: 10px; }
+  .task-pane .task { margin-bottom: var(--s2); }
 }
 
 /* A wide but short window - a 1366x768 laptop is the ordinary case, and the
@@ -5306,7 +5165,7 @@ nav button:active,
      a card ends up almost exactly as tall as the control it contains. */
   .task-pane .task {
     padding: var(--s1) var(--s1) var(--s1) var(--s3);
-    margin-bottom: 5px;
+    margin-bottom: var(--s1);
   }
 
   .task-pane .task-title { font-size: var(--t-md); line-height: 1.3; }
@@ -5315,8 +5174,8 @@ nav button:active,
   .task-pane .task-size,
   .task-pane .task-state { font-size: var(--t-sm); }
   .task-pane .task-size { padding: 2px 6px; margin: -2px -6px; }
-  .task-pane .quick-add { padding: 9px 14px; min-height: 0; }
-  .task-pane .quick-add-block { gap: 6px; }
+  .task-pane .quick-add { padding: var(--s2) var(--s3); min-height: 0; }
+  .task-pane .quick-add-block { gap: var(--s2); }
   .task-pane .category-swatch { width: 18px; height: 18px; }
   .task-pane .done-toggle { min-height: 30px; padding: var(--s1); }
   .task-pane .rollover { padding: var(--s2); min-height: 38px; }
@@ -5337,7 +5196,15 @@ nav button:active,
 
 /* The rail's lower half - see DayDigest.tsx. Only ever mounted at the wide
    breakpoint, like the rest of the rail. */
-.day-digest { margin-top: var(--s6); }
+/* The rail is one column, not three stacked widgets. The digest is separated
+   from the templates above it by the same hairline every other section break
+   in this app uses, so the three read as parts of one thing rather than as a
+   pile - which is most of the difference between a sidebar and a leftover. */
+.day-digest {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
 
 .rail-heading {
   font-size: var(--t-xs);
@@ -5364,11 +5231,20 @@ nav button:active,
   box-shadow: var(--e1);
 }
 
+/* The time gets the category colour as a small filled chip. At the rail's
+   width a 4px edge on a 60px-tall card is almost nothing, so the card was
+   reading as a grey rectangle with grey text in it - and the one thing it
+   exists to say is which thing is coming. */
 .up-next-time {
+  align-self: flex-start;
+  padding: 1px var(--s2);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--cat, var(--muted)) 22%, transparent);
+  color: color-mix(in srgb, var(--cat, var(--muted)) 30%, var(--text));
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  font-weight: 600;
 }
 
 .up-next-title {
@@ -5476,7 +5352,7 @@ nav button:active,
    check), so nothing here needs a narrow-width default the way
    .day-pane/.task-pane/.day-header do above. */
 @media (min-width: 1024px) {
-  .mini-calendar { margin-bottom: 20px; }
+  .mini-calendar { margin-bottom: var(--s4); }
 
   .mini-calendar-nav {
     display: flex;

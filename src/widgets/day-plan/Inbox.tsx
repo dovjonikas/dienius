@@ -35,7 +35,7 @@ export function Inbox({ date }: InboxProps) {
     <div className={open ? 'inbox-section open' : 'inbox-section'}>
       <button
         type="button"
-        className="inbox-toggle"
+        className="done-toggle"
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen(o => !o)}
