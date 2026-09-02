@@ -16,10 +16,20 @@
 
 ## Install
 
-- **iPhone** - open the link in Safari → **Share** → **Add to Home Screen**
-- **Android** - open it in Chrome → **⋮** → **Install app**
+- **iPhone / iPad** - open the link in Safari → **Share** → **Add to Home Screen**
+- **Android** - open it in Chrome → **⋮** → **Install app**, or use **Install on this device** in the app's own Settings
+- **Desktop** - Chrome and Edge show an install icon in the address bar; **Install on this device** in Settings does the same thing
 
-Takes half a minute. After that it runs full-screen and works fully offline.
+Takes half a minute. After that it runs full-screen with no browser around it,
+works with no connection at all, and keeps its data on that device. Settings
+says which of the three cases you are in rather than showing a button that
+might do nothing - iOS has no programmatic install, so there it tells you
+where the Share button is instead.
+
+A new version installs itself in the background and says so with a quiet
+"Reload" notice rather than swapping the page out from under you. Nothing is
+cached across versions: every build's cache is named after a hash of its own
+contents, so an installed copy can never get stuck on stale files.
 
 ## What it does
 
@@ -33,8 +43,12 @@ Takes half a minute. After that it runs full-screen and works fully offline.
 - One screen, no scrolling - at the wide breakpoint the whole day fits the window, the grid drawing at whatever density that takes rather than overflowing
 - What is happening now, in three places at once - a line across the timeline, a ring on the running block and its card, and the clock, the task and what is left of it in the header
 - Focus - one task, its own planned time, a ring and a way out. Not a pomodoro: there is no length to choose and no timer to start, so closing it loses nothing
-- A timer and a stopwatch that survive a refresh - stored as an instant and a length rather than a countdown, running as a floating widget on every tab, and able to tell you a timer finished eight minutes ago
+- A timer and a stopwatch that survive a refresh - stored as an instant and a length rather than a countdown, running as a floating widget on every tab, and able to tell you a timer finished eight minutes ago. It keeps time in a tab nobody is looking at, and puts the countdown in the tab title
+- Task detail - one place for everything a card deliberately does not show: the exact minute with five-minute nudges, a note, sub-steps, a simple repeat, and the three-a-day "key task" mark. A panel on a wide screen, a bottom sheet you can swipe away on a phone, and a real right-click menu for the things done often
+- A library - lists of things worked through a unit at a time, and the unit is the list's own word: chapters, episodes, lessons, sessions. A session on one goes onto a day in two taps, and ticking it off advances the book. A template block can bind to a list, so Tuesday's reading hour arrives already naming the actual book
+- Sleep as a named schedule, not an assumption - one by default, and as many as somebody genuinely lives; a day or a template points at one, and the app never says the word until there are two to choose between
 - An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
+- A keyboard layer - single keys for the things done most often, and a card behind `?` that lists them. None of them fire while you are typing in a box, except Escape, which is usually how you leave the box
 - A year strip - one cell per day, colored by template, a thin ring when everything planned got done
 - Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
@@ -65,13 +79,16 @@ src/
     themes.ts        the three themes and the principles all of them are built to
     categories.ts    the six task categories; the colours themselves live in styles.css
     clockTools.ts    the timer and the stopwatch, under their own storage key
+    library.ts       the library's own arithmetic - units, progress, the typed line
+    shortcuts.ts     the keyboard layer, and the two rules that make bare keys safe
+    install.ts       holds the one install prompt a browser will hand over
     theme.ts         resolves a preset plus its overrides into real CSS values
     theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
     contrast.ts      the WCAG contrast gate the theme tests run
     pushRules.ts     the two-push bound and the ongoing exemption
-  views/          Calendar, Templates, Settings, ThemeGallery, AppearanceControls
+  views/          Calendar, Templates, Library, Settings, TimePicker, ShortcutsOverlay
   widgets/
-    day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score
+    day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score, the task detail sheet
     if-then/      the if-then board and its day-type/time-of-day rotation
     year-strip/   the year-at-a-glance strip and the module that colors it
     clock/        the timer popover, the floating widget and the focus-work nudge
