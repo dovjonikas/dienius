@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { getData } from './lib/store'
 import { exportJson, STORAGE_KEY } from './lib/storage'
+import { clearClockTools } from './lib/clockTools'
 
 interface Props {
   children: ReactNode
@@ -46,6 +47,10 @@ export class ErrorBoundary extends Component<Props, State> {
   handleResetClick = (): void => {
     if (this.state.confirmReset) {
       localStorage.removeItem(STORAGE_KEY)
+      // The clock tools keep their own key - see clockTools.ts - so the two
+      // paths that erase everything both have to clear it, or a running timer
+      // survives an erase it was supposed to be part of.
+      clearClockTools()
       window.location.reload()
     } else {
       this.setState({ confirmReset: true })

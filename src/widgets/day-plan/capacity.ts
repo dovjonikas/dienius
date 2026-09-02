@@ -449,6 +449,25 @@ export function nextTask(tasks: Task[], nowMinutes: number): Task | undefined {
   return best
 }
 
+/**
+ * How long until bedtime, in minutes, wrapping past midnight.
+ *
+ * Returns null once bedtime has already passed for tonight and the wake time
+ * has not yet come round - that is, while you are inside the sleep window.
+ * The app has nothing useful to say about how long until sleep at two in the
+ * morning except that you are late, and it does not say that.
+ */
+export function minutesUntilSleep(nowMinutes: number, waking: Interval): number | null {
+  const asleep = waking.start <= waking.end
+    ? nowMinutes < waking.start || nowMinutes >= waking.end
+    : nowMinutes >= waking.end && nowMinutes < waking.start
+  if (asleep) return null
+  const until = waking.end - nowMinutes
+  return until >= 0 ? until : until + DAY_IN_MINUTES
+}
+
+const DAY_IN_MINUTES = 24 * 60
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60

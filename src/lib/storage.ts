@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, Settings, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
@@ -10,6 +10,12 @@ const DAY_LAYOUT_FOCUSES: readonly string[] = ['both', 'calendar', 'tasks']
 // has no reason to depend on the preset data itself, only on the id a
 // fresh install should start with. See DEFAULT_PRESET_ID in themes.ts.
 const DEFAULT_PRESET_ID = 'dark'
+
+// Off, every twenty minutes, and a sentence about the two things a body
+// actually needs during a long block. Duplicated here rather than imported
+// for the same reason DEFAULT_PRESET_ID is: this file only needs the literal
+// a fresh install starts with.
+const DEFAULT_REMINDER: Settings['reminder'] = { enabled: false, everyMinutes: 20, text: 'Stand up, drink water' }
 
 // Duplicated from capacity.ts's own DEFAULT_SLEEP_WINDOW/DEFAULT_NIGHT_SLEEP_WINDOW
 // rather than imported, for the same reason DEFAULT_PRESET_ID above is not
@@ -68,10 +74,12 @@ export function defaultData(): AppData {
       dayLayoutFocus: 'both',
       density: 'comfortable',
       textScale: 'm',
+      reminder: { ...DEFAULT_REMINDER },
       sleepWindow: { ...DEFAULT_SLEEP_WINDOW },
       nightSleepWindow: { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },
     ifThens: [],
+    inbox: [],
   }
 }
 
@@ -262,6 +270,29 @@ function isOptionalTextScale(x: unknown): x is Settings['textScale'] | undefined
   return x === undefined || x === 's' || x === 'm' || x === 'l'
 }
 
+// The interval is bounded on both ends rather than merely "a number": a
+// reminder every zero minutes is a loop, and one every three days is not a
+// reminder. The text is length-capped for the same reason every other free
+// string in this file is - a backup is an untrusted document.
+function isOptionalReminder(x: unknown): x is Settings['reminder'] | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  return (
+    typeof x.enabled === 'boolean' &&
+    typeof x.everyMinutes === 'number' &&
+    Number.isInteger(x.everyMinutes) &&
+    x.everyMinutes >= 1 &&
+    x.everyMinutes <= 240 &&
+    typeof x.text === 'string' &&
+    x.text.length <= 120
+  )
+}
+
+function isInboxItem(x: unknown): x is InboxItem {
+  if (!isRecord(x)) return false
+  return typeof x.id === 'string' && typeof x.text === 'string' && typeof x.captured === 'string'
+}
+
 // A real "HH:MM" clock time - two digits, a colon, two digits, hour 00-23,
 // minute 00-59. Stricter than isOptionalString already gets for Task.time
 // and TemplateBlock.time (a bare typeof check, unvalidated) because a
@@ -389,6 +420,7 @@ function isSettings(x: unknown): x is {
   dayLayoutFocus?: Settings['dayLayoutFocus']
   density?: Settings['density']
   textScale?: Settings['textScale']
+  reminder?: Settings['reminder']
   sleepWindow?: SleepWindow
   nightSleepWindow?: SleepWindow
 } {
@@ -401,6 +433,7 @@ function isSettings(x: unknown): x is {
     isOptionalDayLayoutFocus(x.dayLayoutFocus) &&
     isOptionalDensity(x.density) &&
     isOptionalTextScale(x.textScale) &&
+    isOptionalReminder(x.reminder) &&
     isOptionalSleepWindow(x.sleepWindow) &&
     isOptionalSleepWindow(x.nightSleepWindow)
   )
@@ -452,10 +485,12 @@ interface StoredAppData {
     dayLayoutFocus?: Settings['dayLayoutFocus']
     density?: Settings['density']
     textScale?: Settings['textScale']
+    reminder?: Settings['reminder']
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
   }
   ifThens?: IfThenEntry[]
+  inbox?: InboxItem[]
 }
 
 export function validate(x: unknown): x is StoredAppData {
@@ -464,6 +499,7 @@ export function validate(x: unknown): x is StoredAppData {
   if (!isRecord(x.days) || !Object.values(x.days).every(isDayPlan)) return false
   if (!isSettings(x.settings)) return false
   if (x.ifThens !== undefined && (!Array.isArray(x.ifThens) || !x.ifThens.every(isIfThenEntry))) return false
+  if (x.inbox !== undefined && (!Array.isArray(x.inbox) || !x.inbox.every(isInboxItem))) return false
   return true
 }
 
@@ -493,6 +529,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
   return {
     ...data,
     ifThens: data.ifThens ?? [],
+    inbox: data.inbox ?? [],
     settings: {
       theme: migrateTheme(data.settings.theme),
       enabledWidgets,
@@ -500,6 +537,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       dayLayoutFocus: data.settings.dayLayoutFocus ?? 'both',
       density: data.settings.density ?? 'comfortable',
       textScale: data.settings.textScale ?? 'm',
+      reminder: data.settings.reminder ?? { ...DEFAULT_REMINDER },
       sleepWindow: data.settings.sleepWindow ?? { ...DEFAULT_SLEEP_WINDOW },
       nightSleepWindow: data.settings.nightSleepWindow ?? { ...DEFAULT_NIGHT_SLEEP_WINDOW },
     },

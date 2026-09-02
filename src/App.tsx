@@ -5,6 +5,9 @@ import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme
 import { syncThemeColorMeta } from './lib/theme-color'
 import { syncManifestTheme } from './lib/manifest-sync'
 import { UpdateNotice } from './UpdateNotice'
+import { ClockPopover } from './widgets/clock/ClockPopover'
+import { FloatingClock } from './widgets/clock/FloatingClock'
+import { IntervalReminder } from './widgets/clock/IntervalReminder'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
@@ -22,6 +25,7 @@ const TABS: { view: View; label: string }[] = [
 export function App() {
   const data = useAppData()
   const [view, setView] = useState<View>('day')
+  const [clockOpen, setClockOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(todayKey())
 
   useEffect(() => {
@@ -78,6 +82,23 @@ export function App() {
             </button>
           ))}
         </nav>
+        {/* The way in to the timer and the stopwatch. In the header rather
+            than on the day view, because both are used while doing something
+            other than planning - which is also why the running widget lives at
+            the app root and not inside a tab. */}
+        <div className="clock-launcher">
+          <button
+            type="button"
+            className={clockOpen ? 'clock-button active' : 'clock-button'}
+            aria-haspopup="dialog"
+            aria-expanded={clockOpen}
+            aria-label="Timer and stopwatch"
+            onClick={() => setClockOpen(open => !open)}
+          >
+            <span className="clock-button-face" aria-hidden="true" />
+          </button>
+          {clockOpen && <ClockPopover onClose={() => setClockOpen(false)} />}
+        </div>
       </header>
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
@@ -88,6 +109,11 @@ export function App() {
         {view === 'templates' && <TemplatesView />}
         {view === 'settings' && <SettingsView />}
       </main>
+      {/* Both mounted at the root, outside <main>, so neither is torn down by
+          moving between tabs - a timer that stops when you open Settings is
+          not a timer. */}
+      <FloatingClock />
+      <IntervalReminder date={selectedDate} />
       <UpdateNotice />
     </div>
   )

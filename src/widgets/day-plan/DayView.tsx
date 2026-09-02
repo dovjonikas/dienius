@@ -9,7 +9,7 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, parseMinutesInput, timeToMinutes } from './capacity'
+import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, minutesUntilSleep, parseMinutesInput, timeToMinutes, windowFor } from './capacity'
 import { currentMinutes, formatClock, snapToStep, SNAP_MINUTES } from './timelineLayout'
 import { TimelineGrid, type GridGeometry } from './TimelineGrid'
 import { StarterOffers } from '../onboarding/StarterOffers'
@@ -24,6 +24,7 @@ import type { CategoryId } from '../../lib/categories'
 import { MiniCalendar } from './MiniCalendar'
 import { TemplateRail } from './TemplateRail'
 import { DayDigest } from './DayDigest'
+import { Inbox } from './Inbox'
 
 export interface DayViewProps {
   date: string
@@ -63,6 +64,18 @@ const DONE_LEAVE_MS = 420
  */
 const UNDO_MS = 5000
 
+/**
+ * How close bedtime has to be before the header mentions it at all. Four
+ * hours is roughly when what is left of the evening starts being a real
+ * constraint on what can still be started; before that it is a number about
+ * nothing, and a number about nothing shown all day is noise that teaches
+ * people to stop reading the header.
+ */
+const SLEEP_NOTICE_MINUTES = 4 * 60
+
+/** Below this, the same number stops being information and starts being a nudge. */
+const SLEEP_URGENT_MINUTES = 30
+
 /** The shortest a task can be pulled down to. One snap step - see SNAP_MINUTES. */
 const MIN_TASK_MINUTES = SNAP_MINUTES
 
@@ -93,6 +106,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // that most tasks typed in one sitting belong together - carrying that
   // across days would be a guess about tomorrow instead.
   const [newCategory, setNewCategory] = useState<CategoryId>(DEFAULT_CATEGORY)
+  // Which of the two things Enter does. A mode rather than a second field:
+  // one input with one cursor, and the thing being typed goes wherever the
+  // toggle says, so capturing costs a tap once rather than a decision every
+  // time about which box to aim at.
+  const [captureMode, setCaptureMode] = useState<'task' | 'inbox'>('task')
   // Which task the full-screen countdown is open on, if any. Held by id
   // rather than by the task object so that finishing it - or having it change
   // underneath, from another tab writing the same storage key - resolves
@@ -177,6 +195,16 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   }
 
   function handleAdd() {
+    if (captureMode === 'inbox') {
+      // Straight in, exactly as typed - no parsing, because an inbox item is
+      // not a task yet and a time or a duration in it is just part of the
+      // note somebody wrote to themselves.
+      if (!input.trim()) return
+      actions.addInboxItem(input)
+      setInput('')
+      clearDraft()
+      return
+    }
     const parsed = parseQuickAdd(input)
     if (!parsed) return
     actions.addTask(date, parsed.title, parsed.time, newCategory)
@@ -555,6 +583,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // than as finished, which is the one distinction the whole app turns on.
   const dayCleared = score.planned && score.done === score.total
 
+  // Only on today, and only once bedtime is close enough to matter - see
+  // SLEEP_NOTICE_MINUTES. Measured against the same waking window the grid
+  // greys and the capacity line counts against, so the three can never
+  // disagree about when the day ends.
+  const untilSleep = isToday ? minutesUntilSleep(nowMinutes, windowFor(day?.dayType ?? 'full', sleep)) : null
+  const showSleep = untilSleep !== null && untilSleep <= SLEEP_NOTICE_MINUTES
+
   return (
     <section className={dayViewClassName}>
       {/* The rail - docs/LAYOUT-WIDE.md section 5, build step 5. Mounted
@@ -617,6 +652,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         {isToday && (
           <div className="day-now">
             <span className="day-now-clock">{formatClock(nowMinutes)}</span>
+            {showSleep && (
+              <span
+                className={untilSleep <= SLEEP_URGENT_MINUTES ? 'day-sleep is-soon' : 'day-sleep'}
+                title="Time until your sleep window starts"
+              >
+                Sleep in {formatDuration(untilSleep)}
+              </span>
+            )}
             {dayCleared ? (
               <>
                 <span className="day-now-sep" aria-hidden="true" />
@@ -836,9 +879,27 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       // is what the gesture was always described as: drag it back to the list.
       <div className="task-pane" data-tray-zone>
         <div className="quick-add-block">
+          <div className="capture-mode segmented" role="group" aria-label="What Enter does">
+            <button
+              type="button"
+              className={captureMode === 'task' ? 'active' : ''}
+              aria-pressed={captureMode === 'task'}
+              onClick={() => setCaptureMode('task')}
+            >
+              Task
+            </button>
+            <button
+              type="button"
+              className={captureMode === 'inbox' ? 'active' : ''}
+              aria-pressed={captureMode === 'inbox'}
+              onClick={() => setCaptureMode('inbox')}
+            >
+              Inbox
+            </button>
+          </div>
           <input
             className="quick-add"
-            placeholder="Add a task... try 14:00 Call mom"
+            placeholder={captureMode === 'inbox' ? 'Catch a thought, decide later...' : 'Add a task... try 14:00 Call mom'}
             value={input}
             onChange={e => handleInputChange(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
@@ -850,7 +911,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               Showing the parse removes the doubt at the moment it exists,
               which is cheaper than an error afterwards. Nothing here is a
               control: it is the input describing itself. */}
-          {draft && (
+          {draft && captureMode === 'task' && (
             <div className="quick-add-chips" aria-live="polite">
               {draft.time && <span className="quick-add-chip is-time">{draft.time}</span>}
               {draft.minutes !== undefined && (
@@ -872,6 +933,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               the moment the thought is meant to be leaving your head. Each is
               a real toggle button carrying its own name, so the choice is
               reachable and readable without relying on the colour. */}
+          {captureMode === 'task' && (
           <div className="category-picker" role="group" aria-label="Category for the next task">
             {CATEGORIES.map(c => (
               <button
@@ -886,6 +948,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               />
             ))}
           </div>
+          )}
         </div>
 
         {tasks.length === 0 && firstRun && (
@@ -1004,6 +1067,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             </ul>
           </div>
         )}
+
+        {/* Everything caught and not yet decided about - see Inbox.tsx. Under
+            the Done fold, because both are places things go rather than places
+            work happens, and the open list stays the only thing above them. */}
+        <Inbox date={date} />
 
         {pushableCount > 0 && (
           <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>

@@ -347,6 +347,46 @@ export const actions = {
    * types.ts - so they live in settings beside the other app-wide switches
    * rather than inside a preset's override patch, and survive changing theme.
    */
+  /**
+   * Catches one line of text with nothing else attached - see `InboxItem`.
+   * Newest first, because an inbox is read from the top and the thing just
+   * written is the thing most likely to still matter.
+   */
+  addInboxItem(text: string): void {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const item = { id: crypto.randomUUID(), text: trimmed, captured: new Date().toISOString() }
+    commit({ ...data, inbox: [item, ...data.inbox] })
+  },
+
+  deleteInboxItem(id: string): void {
+    commit({ ...data, inbox: data.inbox.filter(i => i.id !== id) })
+  },
+
+  /**
+   * Turns an inbox item into a real task on a real day, and removes it from
+   * the inbox in the same commit - one action, not "add it and then remember
+   * to clear it". Untimed unless a time is given: the whole point of the
+   * inbox is that deciding when was postponed, and being made to decide now
+   * would just move the friction rather than remove it.
+   */
+  scheduleInboxItem(id: string, date: string, time?: string): boolean {
+    const item = data.inbox.find(i => i.id === id)
+    if (!item) return false
+    const day = dayOf(date)
+    const task = { id: crypto.randomUUID(), title: item.text, time, done: false }
+    commit({
+      ...data,
+      days: { ...data.days, [date]: { ...day, tasks: [...day.tasks, task] } },
+      inbox: data.inbox.filter(i => i.id !== id),
+    })
+    return true
+  },
+
+  setReminder(reminder: Settings['reminder']): void {
+    commit({ ...data, settings: { ...data.settings, reminder } })
+  },
+
   setDensity(density: Settings['density']): void {
     commit({ ...data, settings: { ...data.settings, density } })
   },

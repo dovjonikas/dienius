@@ -748,3 +748,76 @@ mistakes are permanent, and the entire push mechanic depends on being able to re
 **And the day that is finished says so.** When everything planned is done, the header replaces the running
 task with "Day cleared". Without it, a finished day and a day nobody ever planned look the same in the one
 place people glance at first, which is the single distinction this whole app turns on.
+
+---
+
+## The utility dock: a timer, a stopwatch, an inbox, and one nudge
+
+Four things that have nothing to do with planning a day and everything to do with getting through one.
+They share a rule: each is either invisible or one tap away, and none of them is ever a second place where
+work lives.
+
+**The timer stores an instant and a length, never a countdown.** A running timer keeps only when it
+started and how long it is; the number on screen is derived on every tick. That is what makes it survive
+a refresh, a backgrounded tab that stops getting frames, a phone that sleeps, and the service worker
+reloading the page mid-session - all of which quietly desynchronise a stored "seconds remaining" that
+something has to keep decrementing. It is also why opening the app after a timer already ran out can say
+"finished 8 minutes ago" instead of finding a stale zero.
+
+**It lives under its own storage key, not in the backup.** Everything in `dienius:data` is a plan -
+something written down and worth getting back from an export. A timer with ninety seconds left on it is
+neither, and importing one from last Tuesday would be strange. Both paths that erase everything now clear
+it too, so "erase all data" still means all of it.
+
+**One timer and one stopwatch, deliberately.** Concurrent timers is a feature request with a real cost:
+every surface showing one has to become a list, and the floating widget stops being glanceable. There is
+no version of a day plan where two countdowns at once is the simple answer.
+
+**The widget moves by tapping, not by dragging.** A drag has to be told apart from a scroll, has to work
+with a finger and a mouse, and has to decide what happens when it is dropped between two corners. One tap
+that walks it round the four corners does the same job - getting it off whatever it is covering - with
+none of that, and behaves identically on both inputs.
+
+**The sound is synthesised, not loaded.** Two sine tones a fifth apart, gain ramped to silence rather
+than cut, because an abruptly-ended tone clicks. No audio file to bundle, cache, or have go missing
+offline. Every part of it is wrapped: `AudioContext` does not exist everywhere and a browser that has not
+seen a user gesture will refuse to start one, and a missing chime is not a failure worth surfacing when
+the widget is already saying the same thing on screen.
+
+**Only the tab that watched it run out makes a noise.** The stored `rungOut` flag is what a reload reads
+to know the difference between a timer still counting and one waiting to be acknowledged - so the app
+opened an hour later shows the finished state silently instead of alarming about something long past.
+
+**Notification permission is asked at the first Start, not on load.** A prompt on page load is a prompt
+about nothing and gets denied on reflex; a prompt at the moment somebody starts a fifteen-minute timer
+explains itself. Nothing is blocked on the answer - the widget and the sound are the primary signal, and
+the notification is only what reaches somebody who has switched tabs.
+
+**Sleep shows up in the header four hours out, and not before.** Before that it is a number about
+nothing, and a number about nothing displayed all day teaches people to stop reading the header. Under
+thirty minutes it stops being information and takes the accent. Measured against the same waking window
+the grid greys and the capacity line counts against, so the three can never disagree about when the day
+ends.
+
+**The inbox is a mode on the field that is already there.** One input with one cursor, and a toggle that
+says where the next Enter goes - capturing costs a tap once rather than a decision every time about which
+box to aim at. The text goes in exactly as typed, with no parsing: an inbox item is not a task yet, and a
+time inside it is part of the note somebody wrote to themselves.
+
+Two ways out and no more: put it on this day, or delete it. Which day, what time, how long and what kind
+are all decisions the inbox exists to let somebody postpone, and asking any of them here would put the
+friction straight back in. Once it is a task, every one of those questions already has a control on the
+card.
+
+**The nudge can only speak during work somebody already called work.** Off by default, and the condition
+is the whole design. An app that interrupts on a fixed schedule interrupts during dinner and gets turned
+off inside a week. This one fires only while a task the owner themselves marked as Focus is running, on
+today, which is exactly the situation where losing an hour without moving is a real thing that happens -
+and the only situation where an interruption is doing somebody a favour. It counts from the start of the
+task rather than from when the feature was switched on, so the first one lands inside the work rather
+than twenty minutes after the app happened to be opened.
+
+**And a duration is never typed into a bare number input.** `MinuteStepInput` is a sibling of the existing
+time field with the same manners - type freely, or step with the arrow keys and the two buttons - kept
+separate rather than folded in as a mode, because that component's whole behaviour is about clock times
+and none of it means anything for a length.

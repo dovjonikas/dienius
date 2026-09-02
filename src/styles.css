@@ -4265,6 +4265,532 @@ nav button:active,
   .day-nav > button:active { transform: none; }
 }
 
+/* ------------------------------------------------------------------------
+   The utility dock: the timer, the stopwatch, the inbox and the nudge. All
+   four are built from the same tokens as everything else and share the card's
+   own radius and elevation - a floating widget that looks like it belongs to
+   a different application is a floating widget people close.
+   ------------------------------------------------------------------------ */
+
+.clock-launcher { position: relative; }
+
+/* A clock face drawn from a circle and two borders, like every other mark in
+   this app. No icon font, nothing to load. */
+.clock-button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+}
+
+.clock-button:hover { color: var(--text); }
+
+.clock-button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--e1);
+}
+
+.clock-button-face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 17px;
+  height: 17px;
+  margin: -8.5px 0 0 -8.5px;
+  border: 1.5px solid currentColor;
+  border-radius: var(--r-round);
+}
+
+.clock-button-face::before,
+.clock-button-face::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  background: currentColor;
+  transform-origin: bottom center;
+}
+
+.clock-button-face::before { width: 1.5px; height: 5px; margin-left: -0.75px; }
+.clock-button-face::after { width: 1.5px; height: 3.5px; margin-left: -0.75px; transform: rotate(90deg); }
+
+.clock-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.clock-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: none;
+  background: none;
+  padding: 0;
+  min-height: 0;
+  cursor: default;
+}
+
+.clock-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--s2));
+  z-index: 41;
+  width: min(300px, calc(100vw - var(--s6)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .clock-popover { animation: popover-in var(--dur) var(--ease) both; }
+}
+
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.clock-tabs { width: 100%; }
+.clock-tabs button { flex: 1; }
+
+.clock-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.clock-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s2);
+}
+
+.clock-preset {
+  min-height: 38px;
+  padding: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.clock-preset:hover { border-color: var(--accent); transform: translateY(-1px); }
+.clock-preset:active { transform: none; }
+
+.clock-preset:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.clock-custom {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.clock-custom .primary { flex: 1; min-height: 38px; }
+
+.clock-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+}
+
+.clock-reading {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.clock-actions {
+  display: flex;
+  gap: var(--s2);
+}
+
+.clock-actions button { flex: 1; min-height: 38px; border-radius: var(--r-control); }
+
+/* The running tool, in a corner of the window, on every tab. */
+.floating-clock {
+  position: fixed;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3) var(--s2) var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+  max-width: min(92vw, 340px);
+}
+
+.floating-clock.at-bottom-right { right: var(--s4); bottom: calc(var(--s4) + env(safe-area-inset-bottom)); }
+.floating-clock.at-bottom-left { left: var(--s4); bottom: calc(var(--s4) + env(safe-area-inset-bottom)); }
+.floating-clock.at-top-right { right: var(--s4); top: calc(var(--s4) + env(safe-area-inset-top)); }
+.floating-clock.at-top-left { left: var(--s4); top: calc(var(--s4) + env(safe-area-inset-top)); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .floating-clock { animation: undo-in var(--dur) var(--ease) both; }
+}
+
+/* Once it has rung out it keeps a slow pulse until somebody says Done. It is
+   the only thing in this app that asks for attention rather than waiting for
+   it, and it earned that by having been asked for. */
+.floating-clock.is-up {
+  border-color: color-mix(in srgb, var(--mark) 60%, var(--border));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .floating-clock.is-up { animation: clock-pulse 1.6s var(--ease) infinite; }
+}
+
+@keyframes clock-pulse {
+  0%, 100% { box-shadow: var(--e2), 0 0 0 0 color-mix(in srgb, var(--mark) 40%, transparent); }
+  50% { box-shadow: var(--e2), 0 0 0 8px color-mix(in srgb, var(--mark) 0%, transparent); }
+}
+
+.floating-clock-move {
+  width: 22px;
+  min-height: 0;
+  height: 34px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--faint);
+  flex-shrink: 0;
+}
+
+.floating-clock-move:hover { color: var(--muted); }
+
+.floating-clock-move:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-chip);
+}
+
+/* Six dots, the universal pick-this-up mark, drawn with a repeating gradient
+   rather than six elements. */
+.floating-clock-grip {
+  display: block;
+  width: 8px;
+  height: 14px;
+  margin: 0 auto;
+  background-image: radial-gradient(currentColor 1px, transparent 1.2px);
+  background-size: 4px 4px;
+}
+
+.floating-clock-ring { width: 34px; height: 34px; flex-shrink: 0; }
+.floating-clock-ring svg { width: 100%; height: 100%; display: block; }
+
+.floating-clock-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border) 90%, transparent);
+  stroke-width: 5;
+}
+
+.floating-clock-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 500ms linear;
+}
+
+.floating-clock.is-up .floating-clock-fill { stroke: var(--mark); }
+
+.floating-clock-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.floating-clock-label {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.floating-clock-reading {
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.floating-clock-actions {
+  display: flex;
+  gap: var(--s1);
+  margin-left: var(--s1);
+}
+
+.floating-clock-actions button {
+  min-height: 30px;
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.floating-clock-actions button:hover { color: var(--text); border-color: var(--muted); }
+
+.floating-clock-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.floating-clock-actions button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The nudge. Deliberately the quietest floating thing here: it arrives
+   unasked, so it gets no colour, no ring, and no sound louder than a tap. */
+.reminder-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--s6) + env(safe-area-inset-top));
+  z-index: 46;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s2) var(--s2) var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+  transform: translateX(-50%);
+  max-width: min(92vw, 420px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reminder-toast { animation: reminder-in var(--dur) var(--ease) both; }
+}
+
+@keyframes reminder-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.reminder-toast-text {
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.reminder-toast-close {
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.reminder-toast-close:hover { color: var(--text); }
+
+/* Which of the two things Enter does - see captureMode in DayView. Sits above
+   the field it changes the meaning of, small, so it reads as a label on the
+   input rather than as navigation. */
+.capture-mode {
+  align-self: flex-start;
+}
+
+.capture-mode button {
+  padding: var(--s1) var(--s3);
+  min-height: 28px;
+  font-size: var(--t-xs);
+}
+
+/* Everything caught and not yet decided about - see Inbox.tsx. Same fold as
+   the Done section, and the same reasoning: a place things go, not a place
+   work happens. */
+.inbox-section {
+  margin-top: var(--s1);
+  padding-top: var(--s1);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.inbox-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 36px;
+  padding: var(--s2) var(--s1);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  text-align: left;
+  border-radius: var(--r-control);
+}
+
+.inbox-toggle:hover { color: var(--text); }
+
+.inbox-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.inbox-section.open .done-caret { transform: rotate(90deg); }
+
+/* The count, which is what this fold says most of the time. */
+.inbox-badge {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+  line-height: 18px;
+}
+
+.inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.inbox-section:not(.open) .inbox-list { display: none; }
+
+.inbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s1) var(--s2) var(--s3);
+  border-radius: var(--r-control);
+}
+
+.inbox-item + .inbox-item { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
+
+.inbox-item-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+
+.inbox-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-shrink: 0;
+}
+
+.inbox-item-plan {
+  min-height: 28px;
+  padding: var(--s1) var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.inbox-item-plan:hover { color: var(--text); border-color: var(--accent); }
+
+.inbox-item-delete {
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.inbox-item-delete:hover { color: var(--danger); }
+
+.inbox-item-delete.danger {
+  width: auto;
+  padding: 0 var(--s2);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+  font-size: var(--t-xs);
+}
+
+.inbox-item-plan:focus-visible,
+.inbox-item-delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Bedtime, once it is close enough to matter - see SLEEP_NOTICE_MINUTES. */
+.day-sleep {
+  flex-shrink: 0;
+  padding: 1px var(--s2);
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.day-sleep.is-soon {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text);
+}
+
+/* A plain text setting, styled like every other control here rather than left
+   as a bare browser input. */
+.setting-text-input {
+  width: min(260px, 60vw);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.setting-text-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
 /* The update notice - src/UpdateNotice.tsx. A quiet fixed banner, not a
    sheet: it has no backdrop and never blocks a tap on anything beneath
    it, which a modal's scrim would. Sits below the z-index any bottom

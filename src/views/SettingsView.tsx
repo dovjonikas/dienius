@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
+import { clearClockTools } from '../lib/clockTools'
 import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
 import { AppearanceControls } from './AppearanceControls'
 import { TimeStepInput } from './TimeStepInput'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
+import { MinuteStepInput } from './MinuteStepInput'
 
 /**
  * One bedtime or wake-time field, wrapping `TimeStepInput` for the sleep
@@ -48,11 +50,12 @@ function SleepTimeField({
   )
 }
 
-type SectionId = 'general' | 'sleep' | 'rules' | 'appearance'
+type SectionId = 'general' | 'sleep' | 'nudges' | 'rules' | 'appearance'
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'sleep', label: 'Sleep' },
+  { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
   { id: 'appearance', label: 'Appearance' },
 ]
@@ -113,6 +116,10 @@ export function SettingsView() {
   function handleResetClick() {
     if (confirmReset) {
       localStorage.removeItem(STORAGE_KEY)
+      // The timer and stopwatch live under their own key - see clockTools.ts -
+      // so "erase all data" has to clear that too, or a running timer would
+      // outlive the erase and reappear on the fresh install.
+      clearClockTools()
       window.location.reload()
     } else {
       setConfirmReset(true)
@@ -282,6 +289,80 @@ export function SettingsView() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="settings-group" id="settings-nudges">
+            <h3>Nudges</h3>
+            {/* Off by default, and deliberately not a plain interval timer -
+                see IntervalReminder.tsx. It can only speak while a task the
+                owner marked as Focus is actually running, which is the one
+                situation where being interrupted is a favour. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Nudge during focus work</span>
+                <span className="setting-desc">
+                  A quiet reminder while a Focus task is running, and only then - never during a meal,
+                  a commute, or an evening off.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.reminder.enabled}
+                  aria-label="Nudge during focus work"
+                  onClick={() =>
+                    actions.setReminder({ ...data.settings.reminder, enabled: !data.settings.reminder.enabled })
+                  }
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {data.settings.reminder.enabled && (
+              <>
+                <div className="setting-row">
+                  <div className="setting-label">
+                    <span className="setting-name">How often</span>
+                    <span className="setting-desc">
+                      Counted from when the task started, so the first one lands inside the work rather
+                      than whenever the app happened to be opened.
+                    </span>
+                  </div>
+                  <div className="setting-control">
+                    <MinuteStepInput
+                      value={String(data.settings.reminder.everyMinutes)}
+                      ariaLabel="Minutes between nudges"
+                      onChange={next => {
+                        const minutes = Number(next)
+                        if (!Number.isFinite(minutes) || minutes < 1) return
+                        actions.setReminder({ ...data.settings.reminder, everyMinutes: minutes })
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="setting-row">
+                  <div className="setting-label">
+                    <span className="setting-name">What it says</span>
+                    <span className="setting-desc">
+                      The useful reminder is a different sentence for everybody.
+                    </span>
+                  </div>
+                  <div className="setting-control">
+                    <input
+                      className="setting-text-input"
+                      aria-label="Nudge text"
+                      maxLength={120}
+                      value={data.settings.reminder.text}
+                      onChange={e => actions.setReminder({ ...data.settings.reminder, text: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="settings-group" id="settings-rules">

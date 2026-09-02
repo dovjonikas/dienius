@@ -200,6 +200,14 @@ export interface SleepWindow {
   end: string
 }
 
+export interface ReminderSettings {
+  enabled: boolean
+  /** How often, in minutes. Kept as a plain number so the control can offer a few sensible ones. */
+  everyMinutes: number
+  /** What it says. Editable, because the useful reminder is a different sentence for everybody. */
+  text: string
+}
+
 export interface Settings {
   theme: ThemeState
   enabledWidgets: string[]
@@ -260,6 +268,13 @@ export interface Settings {
    * things sit is a decision about this device, not about which room you are
    * in, so it must survive switching themes.
    */
+  /**
+   * The nudge that fires while a Focus task is running - see
+   * `IntervalReminder`. Off by default and off for everybody who never turns
+   * it on: an app that interrupts you unasked is an app people mute, and this
+   * one only ever speaks during work somebody already told it was work.
+   */
+  reminder: ReminderSettings
   density: 'comfortable' | 'compact'
   /**
    * A multiplier on the whole type scale, not a font-size for one element.
@@ -331,9 +346,31 @@ export interface IfThenEntry {
   lastSurfaced?: string
 }
 
+/**
+ * One line of text caught before it had anywhere to go.
+ *
+ * The inbox exists because the moment a thought arrives is almost never the
+ * moment to decide what day it belongs on, and being asked to decide is
+ * exactly what makes people stop writing things down. An item has no date, no
+ * time, no size and no category - deliberately nothing to fill in. It becomes
+ * a real task, on a real day, when someone chooses to make it one.
+ */
+export interface InboxItem {
+  id: string
+  text: string
+  /** When it was caught, as an ISO instant - the only order an inbox has. */
+  captured: string
+}
+
 export interface AppData {
   templates: Template[]
   days: Record<string, DayPlan>
   settings: Settings
   ifThens: IfThenEntry[]
+  /**
+   * Absent in every payload written before the inbox existed, which
+   * `normalizeLoaded` backfills to an empty list - the same treatment
+   * `ifThens` already gets.
+   */
+  inbox: InboxItem[]
 }
