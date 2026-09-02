@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
+import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall } from '../lib/install'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { clearClockTools } from '../lib/clockTools'
 import { findPreset } from '../lib/themes'
@@ -24,6 +25,25 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 const SECTION_ACTIVE_OFFSET_PX = 120
 
 export function SettingsView() {
+  // Two facts the browser owns rather than the store: whether an install
+  // offer is currently held (Chromium fires it when it feels like it, and
+  // withdraws it after an install), and whether this page is already running
+  // as an installed app. Subscribed rather than read once, because the offer
+  // can arrive seconds after the page does.
+  const [installable, setInstallable] = useState(canInstall)
+  const [installed, setInstalled] = useState(isInstalled)
+
+  useEffect(() => onInstallAvailabilityChange(() => {
+    setInstallable(canInstall())
+    setInstalled(isInstalled())
+  }), [])
+
+  async function handleInstall() {
+    await promptInstall()
+    setInstallable(canInstall())
+    setInstalled(isInstalled())
+  }
+
   const data = useAppData()
   const fileRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState('')
@@ -166,6 +186,35 @@ export function SettingsView() {
               onChange={e => handleImport(e.target.files?.[0])}
             />
             {importError && <p className="warning">{importError}</p>}
+
+            {/* Install. Three honest states rather than a button that is
+                sometimes a lie: already installed, installable right now, or
+                a browser that has no programmatic install at all - which is
+                iOS Safari, the one this app's owner actually uses. That case
+                gets the sentence rather than a hidden row, because "you
+                cannot" and "here is how" are different answers and only one
+                of them is useful. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Install on this device</span>
+                <span className="setting-desc">
+                  {installed
+                    ? 'Already installed. It opens like any other app, works with no connection, and keeps its data on this device.'
+                    : installable
+                      ? 'Adds Dienius to this device so it opens on its own, without a browser around it. Nothing is uploaded - it is the same app, the same data.'
+                      : 'On iPhone and iPad: the Share button, then Add to Home Screen. Other browsers offer it from their own menu once they are ready to.'}
+                </span>
+              </div>
+              <div className="setting-control">
+                {installed ? (
+                  <span className="setting-state">Installed</span>
+                ) : (
+                  <button type="button" className="btn-secondary" disabled={!installable} onClick={handleInstall}>
+                    {installable ? 'Install' : 'Not available here'}
+                  </button>
+                )}
+              </div>
+            </div>
 
             <div className="setting-row">
               <div className="setting-label">

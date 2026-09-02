@@ -6536,7 +6536,12 @@ button.danger:focus-visible {
     max-height: 86dvh;
     border-radius: var(--r-card) var(--r-card) 0 0;
     border-bottom: none;
+    /* The home indicator sits over the bottom edge of a standalone iOS app,
+       and this sheet reaches it. The inset goes on the scrolling body rather
+       than the panel so the last field can still be scrolled clear of it. */
+    padding-bottom: env(safe-area-inset-bottom);
   }
+  .task-detail-body { padding-left: max(var(--s4), env(safe-area-inset-left)); padding-right: max(var(--s4), env(safe-area-inset-right)); }
   @media (prefers-reduced-motion: no-preference) {
     .task-detail { animation: sheet-in var(--dur) var(--ease) both; }
   }
@@ -6723,4 +6728,13 @@ button.danger:focus-visible {
   padding: var(--s4);
   color: var(--muted);
   text-align: center;
+}
+
+/* A setting whose value is a fact rather than a control - see the install
+   row. Same size and weight as the button beside it would be, so a row that
+   has nothing to press does not read as a row that is missing something. */
+.setting-state {
+  padding: 0 var(--s3);
+  color: var(--muted);
+  font-size: var(--t-sm);
 }
