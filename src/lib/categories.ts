@@ -27,12 +27,23 @@ export interface Category {
   color: string
 }
 
+/**
+ * Six hues, spread as far apart as six can be while all staying this quiet.
+ *
+ * Commute is the one that is not what it first looks like it should be. The
+ * obvious colour for travel is a neutral grey, and it was one - until finished
+ * work started draining to grey to show a day going quiet. Once grey means
+ * "done", nothing else in the system is allowed to be grey, or every commute
+ * on the grid reads as already behind you. Teal is the least saturated hue
+ * left that is unmistakably a hue, which keeps the intent (this is the plain,
+ * unremarkable part of the day) without borrowing a meaning that is taken.
+ */
 export const CATEGORIES: Category[] = [
   { id: 'core', label: 'Focus', color: '#7aa2f7' },
-  { id: 'routine', label: 'Routine', color: '#9d8bd6' },
+  { id: 'routine', label: 'Routine', color: '#a98bd6' },
   { id: 'health', label: 'Health', color: '#6fbf94' },
   { id: 'meal', label: 'Meals', color: '#dda15e' },
-  { id: 'commute', label: 'Commute', color: '#8d939e' },
+  { id: 'commute', label: 'Commute', color: '#5eb0b8' },
   { id: 'personal', label: 'Personal', color: '#d489b6' },
 ]
 

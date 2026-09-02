@@ -23,6 +23,7 @@ import { CATEGORIES, DEFAULT_CATEGORY } from '../../lib/categories'
 import type { CategoryId } from '../../lib/categories'
 import { MiniCalendar } from './MiniCalendar'
 import { TemplateRail } from './TemplateRail'
+import { DayDigest } from './DayDigest'
 
 export interface DayViewProps {
   date: string
@@ -424,6 +425,16 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         <div className="rail">
           <MiniCalendar date={date} onDateChange={onDateChange} />
           <TemplateRail date={date} />
+          {/* What is coming and how the day is going - see DayDigest.tsx. Last
+              in the rail, under the two things that navigate, because it is
+              the one part of this column you read rather than act on. */}
+          <DayDigest
+            tasks={day?.tasks ?? []}
+            capacity={capacity}
+            score={score}
+            nowMinutes={nowMinutes}
+            isToday={isToday}
+          />
         </div>
       )}
       {/* Groups day-nav with the focus control below so both can share the
@@ -678,7 +689,29 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           </div>
         )}
         {tasks.length === 0 && !firstRun && (
-          <p className="empty">Nothing planned. Stamp a template from the calendar, or add a task above.</p>
+          <div className="empty-state">
+            <span className="empty-state-mark" aria-hidden="true" />
+            <p className="empty-state-title">Nothing planned yet</p>
+            <p className="empty-state-note">
+              Stamp a template from the rail or the calendar, or type the first thing above.
+            </p>
+          </div>
+        )}
+
+        {/* Everything on the day is finished. Worth its own state rather than
+            an empty list: an empty list looks like a day that was never
+            planned, and this is the opposite of that. Nothing here suggests
+            adding more - the quick-add above is right there for anyone who
+            wants to, and a planner that answers "you are done" with "here is
+            what else you could do" is one people stop finishing days in. */}
+        {openTasks.length === 0 && doneTasks.length > 0 && (
+          <div className="empty-state empty-state-cleared">
+            <span className="empty-state-check" aria-hidden="true" />
+            <p className="empty-state-title">Day cleared</p>
+            <p className="empty-state-note">
+              {doneTasks.length === 1 ? 'One task, finished.' : `All ${doneTasks.length} tasks, finished.`}
+            </p>
+          </div>
         )}
 
         <ul className="task-list" ref={taskListRef} tabIndex={-1}>
@@ -759,6 +792,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
 
         {pushableCount > 0 && (
           <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
+            {/* A real arrow, drawn in CSS rather than loaded as an icon or
+                pasted in as an emoji - see the checkbox tick and the Done
+                caret for the same approach. Decorative: the button's own words
+                already say where things are going. */}
+            <span className="rollover-icon" aria-hidden="true" />
             {heldCount > 0
               ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
               : `Push ${pushableCount} unfinished to tomorrow`}

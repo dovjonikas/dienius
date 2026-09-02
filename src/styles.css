@@ -53,6 +53,80 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
+/**
+ * Structural tokens - the ones that are NOT part of the theme system above.
+ *
+ * The three-layer theme (docs/THEMES.md) owns colour, type family and the two
+ * base radii, and every preset is free to change all of it. What it does not
+ * own is rhythm: how far apart two things sit, how many distinct text sizes
+ * exist, how many levels of lift a surface can have. Those were scattered as
+ * literals across this file - a card at 8px from its neighbour and another at
+ * 10px, a label at 12px and another at 12.5px - and mismatches like that are
+ * the single loudest thing that makes an interface read as a prototype rather
+ * than a product. Nobody notices the rule; everybody notices its absence.
+ *
+ * These are plain CSS variables on :root and deliberately not theme tokens.
+ * applyResolvedTheme (src/lib/theme.ts) writes only the theme token names as
+ * inline styles, so nothing here can ever be overwritten by a preset, an
+ * override or a backup, and no preset can accidentally make the app spacious
+ * in one room and cramped in another.
+ */
+:root {
+  /* Spacing. One geometric-ish scale; every margin, padding and gap in the
+     app comes from it. --s0 exists so "half a step" has a name rather than
+     being written as a bare 2px in six places. */
+  --s0: 2px;
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s6: 24px;
+  --s8: 32px;
+
+  /* Radius. Built on the theme's own --radius and --edge rather than
+     replacing them, so a preset can still round its own corners, while every
+     card in the app is guaranteed to round by the same amount as every other
+     card. Which one a rule reaches for is now a question about what kind of
+     thing it is, not a coin toss. */
+  --r-chip: 6px;
+  --r-control: var(--radius);
+  --r-card: var(--edge);
+  --r-pill: 999px;
+  --r-round: 50%;
+
+  /* Type. Four sizes, and that is the whole scale - see docs/DECISIONS.md.
+     A fifth size is almost never information, it is just a decision nobody
+     wrote down. --t-input is not a step in it: 16px is the threshold below
+     which iOS Safari zooms the page on focus, so form controls are pinned
+     there regardless of what the scale would otherwise say. */
+  --t-xs: 11px;
+  --t-sm: 13px;
+  --t-md: 15px;
+  --t-lg: 20px;
+  --t-input: 16px;
+  /* Also not a step in the scale: this sizes a glyph drawn as text - the
+     vertical dots of an actions menu, the slashed circle of the no-tag
+     swatch - where the number is picking how big a small piece of art is,
+     not how readable a line of prose is. Two of them, named once. */
+  --t-glyph: 18px;
+
+  /* Elevation. Three levels, each with a job: a card sitting on the page, a
+     card lifted under the pointer, and something covering the page. Anything
+     that needs a fourth is really asking for a different layout. --e1 defers
+     to the theme, which sets its own resting shadow per preset. */
+  --e1: var(--shadow);
+  --e2: 0 4px 14px -4px rgba(0, 0, 0, 0.28);
+  --e3: 0 -4px 16px rgba(0, 0, 0, 0.12);
+
+  /* Motion. Two durations and one curve. Everything that moves in this app
+     moves at one of these, so the whole interface feels like it has a single
+     temperament rather than a dozen. The curve decelerates hard: things
+     arrive quickly and settle, which reads as responsive rather than floaty. */
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
 * { box-sizing: border-box; }
 
 /* Keeps content in the accessibility tree and readable by screen readers
@@ -150,7 +224,7 @@ body::after {
 @media (prefers-reduced-motion: no-preference) {
   body, body::before, body::after,
   .app, .app * {
-    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+    transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   }
 }
 
@@ -158,7 +232,7 @@ input,
 button,
 textarea {
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--t-input);
 }
 
 .app {
@@ -173,21 +247,21 @@ textarea {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--s3);
   padding-top: calc(20px + env(safe-area-inset-top));
-  padding-bottom: 16px;
+  padding-bottom: var(--s4);
 }
 
 .brand {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: var(--t-lg);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 nav {
   display: flex;
-  gap: 4px;
+  gap: var(--s1);
   flex: 1;
   justify-content: flex-end;
 }
@@ -196,10 +270,10 @@ nav button {
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 16px;
+  font-size: var(--t-input);
   min-height: 44px;
-  padding: 8px 12px;
-  border-radius: var(--radius);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-control);
   cursor: pointer;
 }
 
@@ -208,7 +282,7 @@ nav button:hover { color: var(--text); }
 nav button.active {
   background: var(--surface);
   color: var(--text);
-  box-shadow: var(--shadow);
+  box-shadow: var(--e1);
 }
 
 button {
@@ -221,8 +295,8 @@ button:disabled {
   opacity: 0.5;
 }
 
-h2 { font-family: var(--font-display); font-size: 20px; margin: 8px 0 16px; }
-h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+h2 { font-family: var(--font-display); font-size: var(--t-lg); margin: 8px 0 16px; }
+h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .settings-group { margin-bottom: 28px; }
 
@@ -232,7 +306,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .settings-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: var(--s4);
   align-items: start;
 }
 
@@ -240,7 +314,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: var(--s1);
   /* A horizontal strip on a phone, where a fixed side column would take a
      third of the width to hold four words. */
   -webkit-overflow-scrolling: touch;
@@ -251,10 +325,10 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   min-height: 36px;
   padding: 6px 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: none;
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--t-md);
   white-space: nowrap;
 }
 
@@ -282,7 +356,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px 24px;
+  gap: var(--s3) var(--s6);
   padding: 16px 0;
   border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
@@ -312,24 +386,24 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   max-width: 46ch;
 }
 
-.setting-block .setting-label { margin-bottom: 12px; }
+.setting-block .setting-label { margin-bottom: var(--s3); }
 
 .setting-name {
-  font-size: 15px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--text);
 }
 
 .setting-desc {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
 
 .setting-control {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s3);
   flex-wrap: wrap;
   flex-shrink: 0;
 }
@@ -337,7 +411,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 @media (min-width: 760px) {
   .settings-layout {
     grid-template-columns: 168px minmax(0, 1fr);
-    gap: 32px;
+    gap: var(--s8);
   }
 
   /* Sticky rather than fixed, so it scrolls with the page until it reaches
@@ -347,14 +421,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
     top: 16px;
     flex-direction: column;
     overflow: visible;
-    gap: 2px;
+    gap: var(--s0);
   }
 
   .settings-nav-item {
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--r-control);
     text-align: left;
-    padding: 8px 12px;
+    padding: var(--s2) var(--s3);
   }
 
   .settings-nav-item.active { border: none; }
@@ -375,7 +449,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    drops back to being a label for the New button beside it rather than a
    second title for the same thing. */
 .settings .if-then-header h2 {
-  font-size: 14px;
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--muted);
   margin: 0;
@@ -391,11 +465,11 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 /* Two fields per row here rather than the stacked label-above-field the
    phone uses, so bedtime and wake time read as one range. */
 .setting-control .sleep-window-field {
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .setting-control .sleep-window-label {
-  font-size: 12px;
+  font-size: var(--t-sm);
   color: var(--muted);
 }
 
@@ -404,7 +478,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   flex-wrap: wrap;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   overflow: hidden;
 }
 
@@ -412,15 +486,15 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    horizontal scroll at 375px; wrapping above is the fallback if a very
    narrow viewport still can't fit them in one row. */
 .day-type-picker .segmented button {
-  padding: 8px 12px;
-  font-size: 14px;
+  padding: var(--s2) var(--s3);
+  font-size: var(--t-md);
 }
 
 .segmented button {
   border: none;
   background: none;
   color: var(--muted);
-  padding: 8px 16px;
+  padding: var(--s2) var(--s4);
 }
 
 .segmented button.active {
@@ -438,8 +512,8 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .theme-gallery {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
 }
 
 /* auto-fit rather than a fixed column count past mobile width - a fixed
@@ -465,7 +539,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   min-height: 150px;
   padding: 0;
   border: 2px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   background: var(--surface);
   overflow: hidden;
   text-align: left;
@@ -495,7 +569,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 12px 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   overflow: hidden;
   background: var(--pv-bg);
 }
@@ -534,7 +608,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   position: relative;
   font-family: var(--pv-font-display);
   color: var(--pv-text);
-  font-size: 15px;
+  font-size: var(--t-md);
   font-weight: 600;
   line-height: 1.2;
 }
@@ -543,7 +617,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   position: relative;
   font-family: var(--pv-font-body);
   color: var(--pv-muted);
-  font-size: 12px;
+  font-size: var(--t-sm);
   line-height: 1.3;
 }
 
@@ -575,7 +649,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .theme-card-chip {
   width: 14px;
   height: 14px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--pv-accent);
   flex-shrink: 0;
 }
@@ -583,7 +657,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .theme-card-item {
   font-family: var(--pv-font-body);
   color: var(--pv-text);
-  font-size: 12px;
+  font-size: var(--t-sm);
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -594,18 +668,18 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .theme-card-mark {
   align-self: flex-start;
   font-family: var(--pv-font-body);
-  font-size: 11px;
+  font-size: var(--t-xs);
   font-weight: 600;
   color: var(--pv-mark-ink);
   background: var(--pv-mark);
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   padding: 3px 8px;
   white-space: nowrap;
 }
 
 .theme-card-name {
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: var(--s2) var(--s3);
+  font-size: var(--t-sm);
   font-weight: 600;
   /* --safe-ink, not --text: this label is how a person identifies which
      room a card is (the accessible name too, see ThemePreviewCard), and it
@@ -625,21 +699,21 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
  * flat wall of eight-plus controls - the exact thing the assignment warns
  * reads as abandon-this-screen to an ADHD reader.
  */
-.theme-overrides { margin-top: 4px; }
+.theme-overrides { margin-top: var(--s1); }
 
 .theme-overrides-toggle {
   width: 100%;
   text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   /* --safe-ink: this toggle is part of the escape route out of a color a
      person just picked - it must stay readable even when --text itself is
      the thing that broke. See the same note on .theme-card-name above and
      applyResolvedTheme in src/lib/theme.ts. */
   color: var(--safe-ink);
   padding: 10px 14px;
-  font-size: 14px;
+  font-size: var(--t-md);
   font-weight: 600;
 }
 
@@ -649,7 +723,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .theme-overrides-panel {
-  margin-top: 12px;
+  margin-top: var(--s3);
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -662,7 +736,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .override-group legend {
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-weight: 600;
   color: var(--muted);
   padding: 0 0 8px;
@@ -673,14 +747,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .override-color-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .override-field label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--t-sm);
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -688,9 +762,9 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .override-field input[type='color'] {
   width: 100%;
   height: 44px;
-  padding: 2px;
+  padding: var(--s0);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   background: var(--surface);
 }
 
@@ -701,7 +775,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .override-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--accent);
   flex-shrink: 0;
 }
@@ -712,7 +786,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .override-segmented-wrap .segmented button {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--t-sm);
   padding: 8px 10px;
   display: flex;
   align-items: center;
@@ -722,21 +796,21 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .override-custom-note {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: var(--t-sm);
   color: var(--muted);
 }
 
 .override-ruling-detail {
-  margin-top: 12px;
+  margin-top: var(--s3);
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.override-range label { margin-bottom: 2px; }
+.override-range label { margin-bottom: var(--s0); }
 
 .override-range-value {
-  font-size: 12px;
+  font-size: var(--t-sm);
   color: var(--muted);
 }
 
@@ -766,29 +840,29 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   background: var(--surface);
   border: 1px solid var(--danger);
   color: var(--safe-ink);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   padding: 10px 14px;
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .theme-overrides-panel > button {
   align-self: flex-start;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   /* Reset to preset is the recovery control itself - same --safe-ink
      reasoning as .theme-overrides-toggle above. */
   color: var(--safe-ink);
   padding: 8px 14px;
 }
 
-.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .row button,
 .settings-group > button {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   padding: 8px 14px;
 }
@@ -796,32 +870,32 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .warning {
   background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   padding: 10px 14px;
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .day-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
 }
 
 .day-nav > button {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   width: 44px;
   height: 44px;
-  font-size: 16px;
+  font-size: var(--t-input);
 }
 
 .day-title { text-align: center; }
 .day-title h2 { margin: 0; }
-.day-subtitle { color: var(--muted); font-size: 13px; }
+.day-subtitle { color: var(--muted); font-size: var(--t-sm); }
 
 /* The progress meter beside the date - a bar and the same plain fraction
    that used to trail the title. Full width on a phone, where it sits on its
@@ -832,14 +906,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: var(--s4);
 }
 
 .day-progress-track {
   flex: 1;
   min-width: 60px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 70%, transparent);
   overflow: hidden;
 }
@@ -869,13 +943,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .day-now {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--s2);
   min-width: 0;
 }
 
 .day-now-clock {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: var(--t-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -885,14 +959,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .day-now-sep {
   width: 3px;
   height: 3px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--muted);
   align-self: center;
   flex-shrink: 0;
 }
 
 .day-now-task {
-  font-size: 14px;
+  font-size: var(--t-md);
   font-weight: 500;
   color: var(--text);
   overflow: hidden;
@@ -907,17 +981,17 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .day-now-left {
   flex-shrink: 0;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 20%, transparent);
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .day-score {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -928,15 +1002,15 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    is information a person needs to take in at a glance, not a footnote. */
 .day-score-note {
   font-variant-numeric: normal;
-  font-size: 13px;
+  font-size: var(--t-sm);
 }
 
 .day-template {
   display: inline-block;
-  margin-left: 8px;
+  margin-left: var(--s2);
   padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-sm);
   color: rgba(0, 0, 0, 0.65);
 }
 
@@ -948,12 +1022,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    not a warning, so nothing here borrows --danger), one line of muted type
    directly above the picture it describes. The height it used to claim went
    to the grid, which is what actually had to fit on one screen. */
-.capacity-line { margin-bottom: 8px; }
+.capacity-line { margin-bottom: var(--s2); }
 
 .capacity-line p {
   margin: 0;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--t-sm);
   line-height: 1.5;
 }
 
@@ -970,15 +1044,15 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--s0);
   width: 100%;
   text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   color: var(--safe-ink);
   padding: 10px 14px;
-  margin-bottom: 16px;
+  margin-bottom: var(--s4);
 }
 
 .day-rule:hover { border-color: var(--muted); }
@@ -989,7 +1063,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--t-md);
   line-height: 1.4;
 }
 
@@ -1005,13 +1079,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-bottom: 16px;
+  margin-bottom: var(--s4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--safe-ink);
   padding: 8px 14px;
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .timeline-toggle:hover { border-color: var(--muted); }
@@ -1024,7 +1098,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    grid can grow on a long waking window, so it never pushes the float
    tray below it off the first screen entirely - a day gets air, not a
    wall to scroll past, but it does not get to consume the whole page. */
-.timeline-grid-wrap { margin-bottom: 16px; }
+.timeline-grid-wrap { margin-bottom: var(--s4); }
 
 .timeline-grid-scroll {
   max-height: min(58vh, 520px);
@@ -1035,7 +1109,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
      docs/DECISIONS.md on the calm pass. Everything in this stylesheet that
      draws a line now earns it by separating two things that would otherwise
      be confused; a container that is already a different colour does not. */
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   background: var(--surface);
   /* Covers .timeline-hour-label's own -7px offset with a small margin, so
      the window's first hour mark - which lands at top: 0% whenever the
@@ -1043,7 +1117,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
      this container's own top edge. Confirmed against a real rendered
      11px label, not assumed from the arithmetic alone - see
      docs/RESEARCH-TIMELINE-UI.md section 5 point 1. */
-  padding-top: 8px;
+  padding-top: var(--s2);
 }
 
 /* The stacking context both the decorative grid and the real gap buttons
@@ -1094,7 +1168,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   margin-left: 44px;
   padding-left: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1131,7 +1205,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding-right: 6px;
   text-align: right;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1185,7 +1259,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
      component exists to prevent, just smaller. */
   margin: 0 8px 0 0;
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   /* Barely there at rest. A gap is the absence of something, and drawing it
      as a filled panel made empty time look like a third kind of block sitting
      between the real ones. It brightens under the pointer, where it becomes a
@@ -1215,9 +1289,9 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .timeline-gap-label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
-  padding: 4px 8px;
+  padding: var(--s1) var(--s2);
 }
 
 /* An anchor: real position, real height, the day-type colour it came from.
@@ -1250,9 +1324,9 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
      regardless of block height, keeps the line and the title from
      reading as a strikethrough over each other. */
   justify-content: flex-start;
-  gap: 2px;
+  gap: var(--s0);
   padding: 6px 8px;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
@@ -1272,7 +1346,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .timeline-anchor-title {
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -1280,7 +1354,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .timeline-anchor-time {
-  font-size: 11px;
+  font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
@@ -1302,9 +1376,29 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    an older backup) still gets the template's own colour inline, exactly as
    before - see TimelineGrid.tsx. */
 .timeline-anchor-cat {
-  background: color-mix(in srgb, var(--cat) 20%, var(--surface));
-  border-left: 3px solid var(--cat);
+  /* Two layers, not one. A single flat mix of category and surface reads as
+     one dark mass at any strength that keeps the title legible - which is
+     what "everything is blue" actually was. A gradient from a slightly
+     stronger tint at the left edge to a weaker one across the block gives
+     the eye a place to pick the colour up (right beside the solid edge, where
+     it is already looking) without ever raising the wash under the text. */
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--cat) 30%, var(--surface)) 0,
+      color-mix(in srgb, var(--cat) 17%, var(--surface)) 120px,
+      color-mix(in srgb, var(--cat) 15%, var(--surface)) 100%
+    );
+  border-left: 4px solid var(--cat);
   color: var(--text);
+}
+
+/* The title takes a little of the category colour too, mixed far enough
+   toward the text colour to stay comfortably readable on the wash under it.
+   Checked against the extremes of both modes: the palest category (Meals)
+   on the lightest surface, and the darkest (Commute) on the darkest. */
+.timeline-anchor-cat .timeline-anchor-title {
+  color: color-mix(in srgb, var(--cat) 22%, var(--text));
 }
 
 /* Colored anchors (from a template) pin dark text directly, the same
@@ -1330,9 +1424,18 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    here - the colored-anchor rule below sets background from an inline style
    on the element itself, so this rule overrides only what CSS can, and the
    inline fill is muted separately by the opacity on the block as a whole. */
+/* Finished work drains of colour. grayscale() rather than a lower opacity
+   alone: opacity fades a block toward the background but keeps its hue, so
+   ten faded blocks still read as ten colours, and by evening the grid is a
+   pale rainbow of things that no longer matter. Desaturating instead leaves
+   colour meaning exactly one thing - this is still live - so the day visibly
+   goes quiet as it is worked through, which is the whole reward. */
 .timeline-anchor-done {
-  opacity: 0.5;
+  filter: grayscale(0.92);
+  opacity: 0.55;
 }
+
+.timeline-anchor-done .timeline-anchor-title { color: var(--muted); }
 
 .timeline-anchor-done .timeline-anchor-title {
   text-decoration: line-through;
@@ -1369,7 +1472,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .timeline-note {
   margin: 8px 2px 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
 }
 
 /* The block that is happening right now. Lifted rather than recoloured: it
@@ -1450,7 +1553,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   left: 40px;
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--mark);
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -1467,10 +1570,10 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   left: 2px;
   transform: translateY(-50%);
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   background: var(--mark);
   color: rgba(0, 0, 0, 0.78);
-  font-size: 10px;
+  font-size: var(--t-xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
@@ -1505,11 +1608,11 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
   background: var(--surface);
   border-top: 1px solid var(--border);
-  border-radius: var(--edge) var(--edge) 0 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: var(--e3);
   padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
 }
@@ -1523,13 +1626,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .gap-picker-title {
   margin: 0;
-  padding-top: 8px;
-  font-size: 15px;
+  padding-top: var(--s2);
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--text);
 }
@@ -1539,10 +1642,10 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 20px;
+  font-size: var(--t-lg);
   line-height: 1;
 }
 
@@ -1562,7 +1665,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .gap-picker-row {
@@ -1570,14 +1673,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
   min-height: 44px;
   padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   background: var(--surface);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--t-md);
   text-align: left;
 }
 
@@ -1597,18 +1700,18 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .gap-picker-row-size {
   flex-shrink: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .gap-picker-more {
   align-self: flex-start;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: var(--s2) var(--s3);
   border: none;
   background: none;
   color: var(--accent);
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .gap-picker-more:focus-visible {
@@ -1620,10 +1723,10 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   color: var(--text);
   padding: 13px 16px;
-  margin-bottom: 16px;
+  margin-bottom: var(--s4);
 }
 
 .quick-add:focus {
@@ -1631,7 +1734,78 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   outline-offset: -1px;
 }
 
-.empty { color: var(--muted); text-align: center; padding: 32px 0; }
+.empty { color: var(--muted); text-align: center; padding: var(--s8) 0; }
+
+/* The two states a task column can be in with nothing in it, and they are not
+   the same state. "Nothing planned yet" is a beginning; "Day cleared" is an
+   ending, and showing an ending as an empty box throws away the one moment
+   the whole app is built to produce. Both get a shape, a line and a note, at
+   the same size and in the same place, so switching between them reads as the
+   day changing rather than the layout changing. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s8) var(--s4);
+  text-align: center;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty-state-note {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* An empty ring - a day with an outline and nothing in it yet. */
+.empty-state-mark {
+  width: 40px;
+  height: 40px;
+  border: 2px dashed color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: var(--r-round);
+}
+
+/* The same ring, closed and filled, with the app's own checkmark inside it -
+   the mark every finished task on the day made, once, at full size. */
+.empty-state-check {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-round);
+  background: color-mix(in srgb, var(--good) 20%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--good) 45%, transparent);
+}
+
+.empty-state-check::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 11px;
+  width: 9px;
+  height: 17px;
+  border: solid var(--good);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .empty-state-cleared { animation: empty-state-in var(--dur) var(--ease) both; }
+}
+
+@keyframes empty-state-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* The first-run teaching state - see docs/DECISIONS.md, "offer without
    installing." Left-aligned and un-centered, unlike .empty above: this is
@@ -1647,7 +1821,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .first-run-note {
   margin: 16px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
 }
 
 /* Single column at 375px (each card comfortably clears the 240px minimum
@@ -1660,27 +1834,27 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .starter-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
   background: var(--surface);
   border: 1px solid var(--border);
   border-left-width: 3px;
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   padding: 14px 16px;
 }
 
 .starter-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
 }
 
-.starter-card-head .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.starter-card-head .dot { width: 12px; height: 12px; border-radius: var(--r-round); flex-shrink: 0; }
 
 .starter-card > .muted { margin: 0; }
 
@@ -1690,14 +1864,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .starter-blocks li {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--s2);
+  font-size: var(--t-sm);
 }
 
 .starter-block-title {
@@ -1709,7 +1883,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   white-space: nowrap;
 }
 
-.starter-card button.primary { margin-top: 4px; }
+.starter-card button.primary { margin-top: var(--s1); }
 
 .task-list { list-style: none; margin: 0; padding: 0; }
 
@@ -1721,11 +1895,11 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .task {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
-  margin-bottom: 8px;
+  border-radius: var(--r-card);
+  margin-bottom: var(--s2);
   padding: 9px 4px 9px 14px;
-  box-shadow: var(--shadow);
-  transition: border-color 0.15s, background 0.15s, opacity 0.2s;
+  box-shadow: var(--e1);
+  transition: border-color var(--dur-fast) var(--ease), background 0.15s, opacity var(--dur) var(--ease);
 }
 
 .task:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
@@ -1745,19 +1919,35 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
-  border-radius: var(--edge) 0 0 var(--edge);
+  /* 4px, matching the block on the timeline exactly. The two marks are meant
+     to be recognised as the same mark, and a 3px edge beside a 4px one reads
+     as two different things that happen to be similar. */
+  width: 4px;
+  border-radius: var(--r-card) 0 0 var(--r-card);
   background: var(--cat);
 }
 
-.task.done::before { opacity: 0.35; }
+/* The same draining as the block - see .timeline-anchor-done. */
+.task.done::before {
+  filter: grayscale(0.92);
+  opacity: 0.4;
+}
 
 /* The category's name, in the meta line - colour is never the only signal
    here, the same rule the if-then tags and the year strip's legend follow. */
+/* The category name carries a trace of its own colour rather than being
+   plain muted grey, which is what lets a card be identified from the meta
+   line alone when the 4px edge is out of the corner of the eye. Mixed 30%
+   into --muted, never into --text: this is a label, and it must not compete
+   with the title above it. Checked to stay above 4.5:1 on --surface for all
+   six categories in both modes - the palest of them, Meals, is the one that
+   sets the ceiling on that number. */
 .task-cat-name {
-  color: var(--muted);
-  font-size: 12.5px;
+  color: color-mix(in srgb, var(--cat, var(--muted)) 30%, var(--muted));
+  font-size: var(--t-sm);
 }
+
+.task.done .task-cat-name { color: var(--muted); }
 
 /* The card that is currently running. Same treatment as its block on the
    timeline - a ring in the now colour over whatever category colour it
@@ -1765,16 +1955,16 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    losing what it was already saying. */
 .task-active {
   border-color: color-mix(in srgb, var(--mark) 55%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mark) 45%, transparent), var(--shadow);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mark) 45%, transparent), var(--e1);
   background: color-mix(in srgb, var(--mark) 5%, var(--surface));
 }
 
 .task-left {
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 20%, transparent);
   color: var(--text);
-  font-size: 12px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1788,13 +1978,13 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   justify-self: end;
   align-self: center;
   min-height: 30px;
-  margin-right: 4px;
-  padding: 4px 12px;
+  margin-right: var(--s1);
+  padding: var(--s1) var(--s3);
   border: 1px solid color-mix(in srgb, var(--mark) 55%, var(--border));
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--mark) 16%, transparent);
   color: var(--text);
-  font-size: 12.5px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
@@ -1845,10 +2035,10 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   height: 22px;
   min-height: 0;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   border: 2px solid transparent;
   background: color-mix(in srgb, var(--cat) 55%, transparent);
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: background var(--dur-fast) var(--ease), border-color 0.15s, transform 0.15s;
 }
 
 .category-swatch:hover { background: var(--cat); }
@@ -1870,7 +2060,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .quick-add-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 /* A template block's own colour, in the editor's list - the same 3px mark the
@@ -1883,7 +2073,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   top: 6px;
   bottom: 6px;
   width: 3px;
-  border-radius: 2px;
+  border-radius: var(--r-pill);
   background: var(--cat);
 }
 
@@ -1894,14 +2084,14 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
     "label menu"
     "meta  menu";
   align-items: center;
-  column-gap: 4px;
+  column-gap: var(--s1);
 }
 
 .task-check {
   grid-area: label;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s3);
   cursor: pointer;
   min-width: 0;
 }
@@ -1932,8 +2122,8 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   height: 24px;
   flex-shrink: 0;
   border: 2px solid color-mix(in srgb, var(--muted) 55%, var(--border));
-  border-radius: 7px;
-  transition: background 0.15s, border-color 0.15s;
+  border-radius: var(--r-chip);
+  transition: background var(--dur-fast) var(--ease), border-color 0.15s;
 }
 
 /* The tick itself, drawn as two borders of a rotated box rather than an icon
@@ -2003,7 +2193,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .task-time {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
 }
@@ -2013,12 +2203,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    Allowed to wrap onto a second line rather than truncate: a task whose name
    is cut off is a task you have to open something to identify. */
 .task-title {
-  font-size: 15px;
+  font-size: var(--t-md);
   font-weight: 500;
   line-height: 1.35;
   color: var(--text);
   min-width: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur) var(--ease);
 }
 
 .task.done .task-title { text-decoration: line-through; opacity: 0.45; }
@@ -2046,7 +2236,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   min-height: 0;
   margin: -5px -6px;
   padding: 5px 6px;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   font: inherit;
   color: inherit;
   text-align: left;
@@ -2084,7 +2274,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    actions menu, where the bound's own explanation lives too. */
 .task-state {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--t-sm);
 }
 
 /* Shown per task only on a day whose type is not full, next to the ones
@@ -2093,7 +2283,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    the label that explains the score, not a secondary detail. */
 .task-core {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -2107,12 +2297,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   min-height: 0;
   padding: 4px 6px;
   margin: -4px -6px;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   flex-shrink: 0;
 }
 
@@ -2129,9 +2319,9 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   flex-shrink: 0;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
-  padding: 8px;
+  padding: var(--s2);
 }
 
 /* Fade the size control in on hover only where a real pointer exists, but
@@ -2142,7 +2332,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 @media (hover: hover) and (pointer: fine) {
   .task-size-empty {
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--dur-fast) var(--ease);
   }
   .task:hover .task-size-empty,
   .task-size-empty:focus-visible {
@@ -2156,7 +2346,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
      whole time. */
   .task-menu-button {
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity var(--dur-fast) var(--ease);
   }
 
   .task:hover .task-menu-button,
@@ -2190,7 +2380,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 18px;
+  font-size: var(--t-glyph);
   line-height: 1;
 }
 
@@ -2209,24 +2399,24 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    boundary - below this line is finished, above it is not - without reading
    as a heading competing with the open list. */
 .done-section {
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: var(--s1);
+  padding-top: var(--s1);
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
 .done-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
   width: 100%;
   min-height: 36px;
   padding: 6px 4px;
   background: none;
   border: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   text-align: left;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
 }
 
 .done-toggle:hover { color: var(--text); }
@@ -2245,7 +2435,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border-style: solid;
   border-width: 4px 0 4px 6px;
   border-color: transparent transparent transparent currentColor;
-  transition: transform 0.18s ease;
+  transition: transform var(--dur) var(--ease);
 }
 
 .done-section.open .done-caret { transform: rotate(90deg); }
@@ -2260,7 +2450,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    would, which visibility or a zero height would not. */
 .done-section:not(.open) .task-list-done { display: none; }
 
-.task-list-done { margin-top: 2px; }
+.task-list-done { margin-top: var(--s0); }
 
 .task-list-done .task {
   background: none;
@@ -2276,21 +2466,64 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    the day's conclusion - the thing you are meant to press - when what it
    actually does is give up on nine tasks. It is a real action and it stays
    reachable; it just stops being the loudest suggestion on the screen. */
+/* A tidy secondary button: a real bordered control with an arrow, not a bare
+   link and not the full-width dashed slab it was before that. A link read as
+   navigation when it is an action on nine tasks; a full-width button read as
+   the thing you are meant to press. This is what it actually is - one of
+   several things you could do, at the end of the list. */
 .rollover {
   align-self: flex-start;
-  margin-top: 12px;
-  background: none;
-  border: none;
-  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  padding: var(--s2) var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
   color: var(--muted);
-  padding: 8px 10px;
-  font-size: 13px;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
-  text-underline-offset: 3px;
+  font-size: var(--t-sm);
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 
-.rollover:hover { color: var(--text); text-decoration-color: currentColor; }
+.rollover:hover {
+  color: var(--text);
+  border-color: var(--muted);
+  transform: translateY(-1px);
+}
+
+.rollover:active { transform: none; }
+
+/* An arrow drawn from a chevron plus a rule - the same borders-of-a-rotated-
+   box technique the checkmark and the Done caret use, so this app still loads
+   no icon font and no SVG sprite for any of its marks. */
+.rollover-icon {
+  position: relative;
+  width: 14px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.rollover-icon::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4.5px;
+  width: 11px;
+  border-top: 1.5px solid currentColor;
+}
+
+.rollover-icon::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  top: 1.5px;
+  width: 7px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+}
 
 .rollover:focus-visible {
   outline: 2px solid var(--accent);
@@ -2300,7 +2533,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .rollover-note {
   margin: 12px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   text-align: center;
 }
 
@@ -2313,7 +2546,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 button.primary {
   background: var(--accent);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: #fff;
   padding: 9px 16px;
 }
@@ -2321,24 +2554,24 @@ button.primary {
 .template-editor {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
-  padding: 16px;
+  border-radius: var(--r-card);
+  padding: var(--s4);
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .template-editor input {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   padding: 11px 12px;
   min-width: 0;
 }
 
-.palette { display: flex; gap: 8px; flex-wrap: wrap; }
+.palette { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .day-type-picker {
   display: flex;
@@ -2354,7 +2587,7 @@ button.primary {
   width: 44px;
   height: 44px;
   min-height: 44px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   border: 2px solid transparent;
   padding: 0;
 }
@@ -2371,7 +2604,7 @@ button.primary {
 .block-list li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
 }
@@ -2388,17 +2621,17 @@ button.primary {
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 16px;
+  font-size: var(--t-input);
   flex-shrink: 0;
 }
 
-.block-add { display: flex; gap: 8px; flex-wrap: wrap; }
+.block-add { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .block-add input { flex: 1 1 120px; }
 .block-add .minutes-input { flex: 0 0 64px; }
 .block-add button {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   padding: 0 12px;
   white-space: nowrap;
@@ -2415,7 +2648,7 @@ button.primary {
    to the fields next to it. */
 .time-stepper {
   display: flex;
-  gap: 4px;
+  gap: var(--s1);
   flex: 0 0 auto;
 }
 
@@ -2423,7 +2656,7 @@ button.primary {
 
 .time-stepper-buttons {
   display: flex;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 /* Side by side, not stacked above/below: a stacked pair would either
@@ -2435,7 +2668,7 @@ button.primary {
 .time-step {
   min-width: 44px;
   padding: 0;
-  font-size: 14px;
+  font-size: var(--t-md);
   line-height: 1;
 }
 
@@ -2447,19 +2680,19 @@ button.primary {
    width on the phone. */
 .sleep-window-fields {
   display: flex;
-  gap: 16px;
+  gap: var(--s4);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--s3);
 }
 
 .sleep-window-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .sleep-window-label {
-  font-size: 12px;
+  font-size: var(--t-sm);
   color: var(--muted);
 }
 
@@ -2469,10 +2702,10 @@ button.core-toggle {
   flex: 0 0 auto;
   border: 1px solid var(--border);
   background: var(--bg);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   color: var(--muted);
-  font-size: 12px;
-  padding: 4px 12px;
+  font-size: var(--t-sm);
+  padding: var(--s1) var(--s3);
   white-space: nowrap;
 }
 
@@ -2487,22 +2720,22 @@ button.core-toggle.active {
 .template-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s3);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
-  padding: 12px 16px;
-  margin-bottom: 8px;
+  border-radius: var(--r-card);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s2);
 }
 
-.template-card .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.template-card .dot { width: 14px; height: 14px; border-radius: var(--r-round); flex-shrink: 0; }
 .template-info { display: flex; flex-direction: column; flex: 1; }
-.muted { color: var(--muted); font-size: 13px; }
+.muted { color: var(--muted); font-size: var(--t-sm); }
 
 .template-card button {
   background: none;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--muted);
   padding: 6px 12px;
 }
@@ -2526,17 +2759,17 @@ button.danger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: var(--s3);
 }
 
 .calendar-nav button {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   width: 44px;
   height: 44px;
-  font-size: 16px;
+  font-size: var(--t-input);
 }
 
 .calendar-nav button:focus-visible {
@@ -2549,17 +2782,17 @@ button.danger {
 .stamp-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--s3);
 }
 
 .stamp-bar-empty {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
 }
 
 .stamp-bar-empty p { margin: 0; }
@@ -2567,7 +2800,7 @@ button.danger {
 .stamp-bar-empty button {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   min-height: 44px;
   padding: 0 16px;
@@ -2578,9 +2811,9 @@ button.danger {
   align-items: center;
   min-height: 44px;
   border: 2px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   color: rgba(0, 0, 0, 0.65);
-  font-size: 13px;
+  font-size: var(--t-sm);
   padding: 5px 12px;
 }
 
@@ -2594,12 +2827,12 @@ button.danger {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .weekday {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--t-sm);
   text-align: center;
   padding: 4px 0;
 }
@@ -2611,10 +2844,10 @@ button.danger {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 2px;
+  gap: var(--s0);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   padding: 6px 2px;
   overflow: hidden;
@@ -2630,7 +2863,7 @@ button.danger {
   outline-offset: 2px;
 }
 
-.cell-num { font-size: 13px; font-weight: 600; }
+.cell-num { font-size: var(--t-sm); font-weight: 600; }
 
 /* A stamped cell paints a pastel background inline from the template color,
    which stays roughly the same lightness in both themes. The theme's own
@@ -2640,7 +2873,7 @@ button.danger {
 .cell-has-template .cell-num { color: rgba(0, 0, 0, 0.7); }
 
 .cell-template {
-  font-size: 10px;
+  font-size: var(--t-xs);
   line-height: 1.2;
   color: rgba(0, 0, 0, 0.6);
   max-width: 100%;
@@ -2675,7 +2908,7 @@ button.danger {
   right: 4px;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
   background: var(--safe-ink);
 }
 
@@ -2705,20 +2938,20 @@ button.danger {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--s2);
+  margin-top: var(--s4);
 }
 
 .stamp-count { margin: 0; }
 
 .stamp-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--s2);
   justify-content: center;
 }
 
 .stamp-buttons button {
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   padding: 9px 24px;
 }
 
@@ -2728,7 +2961,7 @@ button.danger {
   color: var(--text);
 }
 
-.stamp-hint { text-align: center; margin-top: 12px; }
+.stamp-hint { text-align: center; margin-top: var(--s3); }
 
 .if-then-board { margin-top: 28px; }
 
@@ -2736,15 +2969,15 @@ button.danger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: var(--s3);
 }
 
 .if-then-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: var(--s3);
 }
 
 .if-then-list { list-style: none; margin: 0; padding: 0; }
@@ -2756,22 +2989,22 @@ button.danger {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 4px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   padding: 14px 16px;
-  margin-bottom: 8px;
-  box-shadow: var(--shadow);
+  margin-bottom: var(--s2);
+  box-shadow: var(--e1);
 }
 
 .if-then-trigger {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--t-input);
   font-weight: 600;
   line-height: 1.4;
 }
 
 .if-then-action {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: var(--t-md);
   line-height: 1.4;
   color: var(--text);
 }
@@ -2779,25 +3012,25 @@ button.danger {
 .if-then-prefix {
   display: inline-block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--t-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-right: 8px;
+  margin-right: var(--s2);
 }
 
 .if-then-tag {
   display: inline-block;
   margin-top: 10px;
   padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-sm);
   color: rgba(0, 0, 0, 0.65);
 }
 
 .if-then-card-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--s2);
   justify-content: flex-end;
   margin-top: 10px;
 }
@@ -2805,7 +3038,7 @@ button.danger {
 .if-then-card-actions button {
   background: none;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--muted);
   padding: 6px 12px;
 }
@@ -2818,22 +3051,22 @@ button.danger {
   gap: 10px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge);
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: var(--r-card);
+  padding: var(--s4);
+  margin-bottom: var(--s3);
 }
 
 .if-then-form input {
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: var(--text);
   padding: 11px 12px;
 }
 
 .if-then-hint {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: var(--t-sm);
 }
 
 .if-then-card > .if-then-form {
@@ -2851,7 +3084,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .if-then-scope-chips {
@@ -2885,7 +3118,7 @@ button.danger {
    competing with the trigger and action text above it. */
 .if-then-scope-note {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: var(--t-sm);
   color: var(--muted);
 }
 
@@ -2895,7 +3128,7 @@ button.danger {
   justify-content: center;
   border: 2px dashed var(--border);
   color: var(--muted);
-  font-size: 18px;
+  font-size: var(--t-glyph);
   background: var(--surface);
 }
 
@@ -2930,8 +3163,8 @@ button.danger {
   overflow-y: auto;
   background: var(--surface);
   border-top: 1px solid var(--border);
-  border-radius: var(--edge) var(--edge) 0 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: var(--e3);
   padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
 }
@@ -2951,10 +3184,10 @@ button.danger {
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 20px;
+  font-size: var(--t-lg);
   line-height: 1;
 }
 
@@ -2994,11 +3227,11 @@ button.danger {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
   background: var(--surface);
   border-top: 1px solid var(--border);
-  border-radius: var(--edge) var(--edge) 0 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: var(--e3);
   padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
 }
@@ -3012,13 +3245,13 @@ button.danger {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .task-actions-title {
   margin: 0;
-  padding-top: 8px;
-  font-size: 15px;
+  padding-top: var(--s2);
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -3031,10 +3264,10 @@ button.danger {
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 20px;
+  font-size: var(--t-lg);
   line-height: 1;
 }
 
@@ -3046,7 +3279,7 @@ button.danger {
 .task-actions-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .task-actions-empty {
@@ -3062,7 +3295,7 @@ button.danger {
 .task-actions-note {
   margin: 0 0 4px;
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .task-actions-list {
@@ -3071,7 +3304,7 @@ button.danger {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .task-actions-row {
@@ -3079,10 +3312,10 @@ button.danger {
   min-height: 44px;
   padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   background: var(--surface);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--t-md);
   text-align: left;
 }
 
@@ -3119,11 +3352,11 @@ button.danger {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--s3);
   background: var(--surface);
   border-top: 1px solid var(--border);
-  border-radius: var(--edge) var(--edge) 0 0;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: var(--e3);
   padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
 }
@@ -3137,13 +3370,13 @@ button.danger {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .task-gap-offers-title {
   margin: 0;
-  padding-top: 8px;
-  font-size: 15px;
+  padding-top: var(--s2);
+  font-size: var(--t-md);
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -3156,10 +3389,10 @@ button.danger {
   width: 44px;
   height: 44px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 20px;
+  font-size: var(--t-lg);
   line-height: 1;
 }
 
@@ -3171,7 +3404,7 @@ button.danger {
 .task-gap-offers-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 /* Every non-matched state - no size, already timed, some other anchor
@@ -3190,7 +3423,7 @@ button.danger {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s2);
 }
 
 .task-gap-offers-row {
@@ -3198,11 +3431,11 @@ button.danger {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--s0);
   min-height: 44px;
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: var(--edge);
+  border-radius: var(--r-card);
   background: var(--surface);
   color: var(--text);
   text-align: left;
@@ -3218,7 +3451,7 @@ button.danger {
 /* "When" - the one line a person scanning three or four options actually
    needs first, per docs/RESEARCH-ADHD.md section 7. */
 .task-gap-offers-row-time {
-  font-size: 15px;
+  font-size: var(--t-md);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3226,17 +3459,17 @@ button.danger {
    already answered whether this option is worth a look at all. */
 .task-gap-offers-row-detail {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
 }
 
 .task-gap-offers-more {
   align-self: flex-start;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: var(--s2) var(--s3);
   border: none;
   background: none;
   color: var(--accent);
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .task-gap-offers-more:focus-visible {
@@ -3261,12 +3494,12 @@ button.danger {
 .year-weekdays {
   display: grid;
   grid-template-rows: 14px repeat(7, var(--year-cell));
-  gap: 2px;
+  gap: var(--s0);
   flex: 0 0 20px;
 }
 
 .year-weekdays span {
-  font-size: 9px;
+  font-size: var(--t-xs);
   line-height: var(--year-cell);
   color: var(--muted);
 }
@@ -3289,13 +3522,13 @@ button.danger {
 .year-grid {
   display: grid;
   grid-template-rows: 14px repeat(7, var(--year-cell));
-  gap: 2px;
+  gap: var(--s0);
 }
 
 .year-month-label {
   align-self: end;
-  padding-bottom: 2px;
-  font-size: 9px;
+  padding-bottom: var(--s0);
+  font-size: var(--t-xs);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -3311,7 +3544,7 @@ button.danger {
   height: var(--year-cell);
   padding: 0;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--r-pill);
   background: var(--border);
 }
 
@@ -3360,8 +3593,8 @@ button.danger {
 .year-legend-chip {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-sm);
   color: rgba(0, 0, 0, 0.65);
 }
 
@@ -3396,13 +3629,13 @@ button.danger {
   right: 16px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s2);
   padding: 8px 14px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .focus-close:hover { color: var(--text); border-color: var(--muted); }
@@ -3417,9 +3650,9 @@ button.danger {
    be a guess. */
 .focus-close-hint {
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--border) 60%, transparent);
-  font-size: 11px;
+  font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3470,7 +3703,7 @@ button.danger {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: var(--s1);
 }
 
 .focus-count-number {
@@ -3485,17 +3718,17 @@ button.danger {
 
 .focus-count-unit {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .focus-done {
   min-width: 200px;
-  padding: 12px 32px;
+  padding: var(--s3) var(--s8);
   border: none;
-  border-radius: 999px;
-  font-size: 16px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-input);
   font-weight: 600;
 }
 
@@ -3515,13 +3748,13 @@ button.danger {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--s3);
   margin: 0 auto;
   max-width: 520px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--edge) var(--edge) 0 0;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  box-shadow: var(--e3);
   padding: 12px max(16px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))
     max(16px, env(safe-area-inset-left));
 }
@@ -3531,13 +3764,13 @@ button.danger {
     left: 16px;
     right: auto;
     bottom: 16px;
-    border-radius: var(--edge);
+    border-radius: var(--r-card);
   }
 }
 
 .update-notice p {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--t-md);
   color: var(--text);
 }
 
@@ -3545,10 +3778,10 @@ button.danger {
   flex-shrink: 0;
   background: var(--accent);
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--r-control);
   color: #fff;
   padding: 8px 14px;
-  font-size: 14px;
+  font-size: var(--t-md);
 }
 
 .update-notice button:focus-visible {
@@ -3753,7 +3986,7 @@ button.danger {
 
   .day-header .day-nav {
     flex: 0 0 auto;
-    gap: 8px;
+    gap: var(--s2);
     margin-bottom: 0;
   }
 
@@ -3784,7 +4017,7 @@ button.danger {
      the solid accent .segmented uses everywhere else, and shorter, so the
      header stays one thin line. Scoped to this one control; the same
      component in Settings and Templates is unchanged. */
-  .day-layout-focus button { padding: 6px 12px; min-height: 32px; font-size: 13px; }
+  .day-layout-focus button { padding: 6px 12px; min-height: 32px; font-size: var(--t-sm); }
 
   .day-layout-focus button.active {
     background: color-mix(in srgb, var(--accent) 18%, transparent);
@@ -3798,8 +4031,9 @@ button.danger {
     padding-bottom: 10px;
   }
 
-  .app:has(.main-day) .brand { font-size: 18px; }
-  .app:has(.main-day) nav button { min-height: 34px; padding: 6px 12px; font-size: 14px; }
+  /* The brand sits at the scale head everywhere; nothing about a wide window
+     makes the app name a different size than it is on a phone. */
+  .app:has(.main-day) nav button { min-height: 34px; padding: 6px 12px; font-size: var(--t-md); }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
@@ -3923,21 +4157,21 @@ button.danger {
      out of the padding around that button rather than out of the button, and
      a card ends up almost exactly as tall as the control it contains. */
   .task-pane .task {
-    padding: 4px 4px 4px 12px;
+    padding: var(--s1) var(--s1) var(--s1) var(--s3);
     margin-bottom: 5px;
   }
 
-  .task-pane .task-title { font-size: 14.5px; line-height: 1.3; }
-  .task-pane .task-meta { min-height: 16px; gap: 2px 8px; }
+  .task-pane .task-title { font-size: var(--t-md); line-height: 1.3; }
+  .task-pane .task-meta { min-height: 16px; gap: var(--s0) var(--s2); }
   .task-pane .task-time,
   .task-pane .task-size,
-  .task-pane .task-state { font-size: 12px; }
+  .task-pane .task-state { font-size: var(--t-sm); }
   .task-pane .task-size { padding: 2px 6px; margin: -2px -6px; }
   .task-pane .quick-add { padding: 9px 14px; min-height: 0; }
   .task-pane .quick-add-block { gap: 6px; }
   .task-pane .category-swatch { width: 18px; height: 18px; }
-  .task-pane .done-toggle { min-height: 30px; padding: 4px; }
-  .task-pane .rollover { padding: 8px; min-height: 38px; }
+  .task-pane .done-toggle { min-height: 30px; padding: var(--s1); }
+  .task-pane .rollover { padding: var(--s2); min-height: 38px; }
 }
 
 /* The last of it, and the one part that needs a second condition. A card on a
@@ -3953,6 +4187,142 @@ button.danger {
   .task-pane .task-menu-button { min-height: 40px; }
 }
 
+/* The rail's lower half - see DayDigest.tsx. Only ever mounted at the wide
+   breakpoint, like the rest of the rail. */
+.day-digest { margin-top: var(--s6); }
+
+.rail-heading {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--s2);
+}
+
+/* The next thing, as a small card with the same category edge every task card
+   in the app carries, so it is recognisably the same object seen early. */
+.up-next {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s0);
+  padding: var(--s2) var(--s3);
+  padding-left: var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--cat, var(--border));
+  border-radius: var(--r-card);
+  box-shadow: var(--e1);
+}
+
+.up-next-time {
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.up-next-title {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.up-next-meta {
+  font-size: var(--t-xs);
+  color: color-mix(in srgb, var(--cat, var(--muted)) 30%, var(--muted));
+}
+
+.up-next-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+}
+
+/* The ring and the three figures, side by side. One shape and three numbers,
+   all small - the whole block is meant to be taken in without reading, which
+   is why it is a row and not a list. */
+.digest-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.digest-ring {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.digest-ring svg { width: 100%; height: 100%; display: block; }
+
+.digest-ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border) 80%, transparent);
+  stroke-width: 6;
+}
+
+.digest-ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .digest-ring-fill { transition: none; }
+}
+
+.digest-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--t-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.digest-figures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: 0;
+  min-width: 0;
+}
+
+.digest-figures > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.digest-figures dt {
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.digest-figures dd {
+  margin: 0;
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only
    ever mounted at the wide breakpoint (see DayView.tsx's own isWide
    check), so nothing here needs a narrow-width default the way
@@ -3964,22 +4334,22 @@ button.danger {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: var(--s2);
+    margin-bottom: var(--s2);
   }
 
   .mini-calendar-nav button {
     background: none;
     border: none;
     color: var(--muted);
-    padding: 4px 8px;
-    border-radius: var(--radius);
+    padding: var(--s1) var(--s2);
+    border-radius: var(--r-control);
   }
 
   .mini-calendar-nav button:hover { color: var(--text); }
 
   .mini-calendar-title {
-    font-size: 13px;
+    font-size: var(--t-sm);
     font-weight: 600;
     color: var(--text);
   }
@@ -3987,12 +4357,12 @@ button.danger {
   .mini-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    gap: var(--s0);
   }
 
   .mini-weekday {
     color: var(--muted);
-    font-size: 10px;
+    font-size: var(--t-xs);
     text-align: center;
     padding: 2px 0;
   }
@@ -4014,9 +4384,9 @@ button.danger {
     justify-content: center;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--r-chip);
     color: var(--text);
-    font-size: 11px;
+    font-size: var(--t-xs);
     font-variant-numeric: tabular-nums;
     padding: 0;
   }
@@ -4047,6 +4417,6 @@ button.danger {
   .template-rail-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--s2);
   }
 }

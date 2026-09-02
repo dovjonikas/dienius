@@ -430,6 +430,25 @@ export function minutesLeft(task: Task, nowMinutes: number): number | undefined 
   return Math.max(1, Math.ceil(end - nowMinutes))
 }
 
+/**
+ * The next timed thing that has not happened yet - what the rail's Up next
+ * card shows. Earliest start strictly after `nowMinutes`, skipping anything
+ * already done. Undefined once the last one has started, which is a real
+ * answer and is shown as one rather than papered over.
+ */
+export function nextTask(tasks: Task[], nowMinutes: number): Task | undefined {
+  let best: Task | undefined
+  let bestStart = Infinity
+  for (const task of tasks) {
+    if (task.done || !isAnchor(task)) continue
+    const start = timeToMinutes(task.time!)
+    if (start <= nowMinutes || start >= bestStart) continue
+    best = task
+    bestStart = start
+  }
+  return best
+}
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60
