@@ -10,22 +10,7 @@
   <img alt="PWA" src="https://img.shields.io/badge/PWA-offline--first-5a0fc8.svg">
 </p>
 
-<details>
-<summary><b>See it in action</b> - a working day, a stamped month, eleven themes</summary>
-<br>
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/day-slate.jpg" width="220" alt="Day view with the capacity line and the timeline open"><br><sub><b>Today</b></sub></td>
-    <td align="center"><img src="docs/screenshots/calendar-slate.jpg" width="220" alt="Month calendar with three templates stamped across September"><br><sub><b>Calendar</b></sub></td>
-    <td align="center"><img src="docs/screenshots/templates-sketchbook.jpg" width="220" alt="Template editor, Sketchbook theme, editing the Office day template"><br><sub><b>Templates</b></sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/screenshots/theme-gallery.jpg" width="220" alt="Theme gallery showing several of the eleven presets"><br><sub><b>Themes</b></sub></td>
-    <td align="center"><img src="docs/screenshots/year-strip-midnight.jpg" width="220" alt="Year strip, Midnight theme, one cell per day colored by template"><br><sub><b>Year</b></sub></td>
-    <td align="center"><img src="docs/screenshots/settings-midnight.jpg" width="220" alt="Settings, Midnight theme, export, import and erase"><br><sub><b>Settings</b></sub></td>
-  </tr>
-</table>
-</details>
+<p align="center"><sub>Screenshots are being re-taken after the v1.0 interface rebuild - the live app above is the current one.</sub></p>
 
 ---
 
@@ -44,15 +29,21 @@ Takes half a minute. After that it runs full-screen and works fully offline.
 - Push twice, then decide - an unfinished task can move to tomorrow twice; after that it's finish it, delete it, or mark it ongoing
 - A score with nothing riding on it - done over planned for today, nothing else; no percentage, no streak, no score on a day with no plan
 - Day types and core tasks, so a twelve-hour shift isn't scored like an ordinary Tuesday
-- If-then rules on the day view - one shown at a time, matched to the day's type and the time of day
+- Six task categories, one colour each - the same colour on the timeline block and on the card, so the eye pairs them without reading either; finished work drains to grey, so the day visibly goes quiet as it is worked through
+- One screen, no scrolling - at the wide breakpoint the whole day fits the window, the grid drawing at whatever density that takes rather than overflowing
+- What is happening now, in three places at once - a line across the timeline, a ring on the running block and its card, and the clock, the task and what is left of it in the header
+- Focus - one task, its own planned time, a ring and a way out. Not a pomodoro: there is no length to choose and no timer to start, so closing it loses nothing
+- A timer and a stopwatch that survive a refresh - stored as an instant and a length rather than a countdown, running as a floating widget on every tab, and able to tell you a timer finished eight minutes ago
+- An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
 - A year strip - one cell per day, colored by template, a thin ring when everything planned got done
-- Eleven themes, light and dark - each a full palette, with per-theme overrides and a contrast check built into the test suite
+- Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
 ## Your data
 
 Everything is written straight to `localStorage`. There's no account and no server to lose access to.
 
-- **Export / Import** - Settings has a plain JSON backup, both ways. It's a deliberate manual step, not an automatic one - a backup only exists when you actually made it
+- **Export / Import** - Settings has a plain JSON backup, both ways. It is a deliberate manual step, not an automatic one - a backup only exists when you actually made it. A backup written by any earlier version still imports; every field added since is filled in with its default rather than rejected
+- A running timer is the one thing deliberately kept out of the backup - it lives under its own key, because a timer with ninety seconds left is not a plan worth restoring from last Tuesday
 - No sync between devices - clear site data on this one and it's gone unless you exported first
 - Updates install themselves the next time you open the app
 
@@ -71,16 +62,19 @@ src/
     stamping.ts      turns a template plus a set of picked dates into day plans
     dates.ts         date-key helpers and the calendar month grid
     colors.ts        the one color palette, shared by templates and if-then tags
-    themes.ts        the eleven theme presets, light and dark variants of each
+    themes.ts        the three themes and the principles all of them are built to
+    categories.ts    the six task categories; the colours themselves live in styles.css
+    clockTools.ts    the timer and the stopwatch, under their own storage key
     theme.ts         resolves a preset plus its overrides into real CSS values
     theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
-    contrast.ts      the WCAG contrast gate the override panel and tests both run
+    contrast.ts      the WCAG contrast gate the theme tests run
     pushRules.ts     the two-push bound and the ongoing exemption
-  views/          Calendar, Templates, Settings, ThemeGallery, ThemeOverridePanel
+  views/          Calendar, Templates, Settings, ThemeGallery, AppearanceControls
   widgets/
     day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score
     if-then/      the if-then board and its day-type/time-of-day rotation
     year-strip/   the year-at-a-glance strip and the module that colors it
+    clock/        the timer popover, the floating widget and the focus-work nudge
     registry.ts   which widgets are enabled on the day view
   App.tsx         tab navigation and the current view/date
 scripts/

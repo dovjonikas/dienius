@@ -63,3 +63,31 @@ inheritance in `TimelineGrid.tsx`) is fixed as of branch `fix/anchor-drag-pointe
 `.superpowers/sdd/2026-08-31-dienius-mvp/fix-anchor-drag-pointer-events-report.md` for the
 reproduction, root cause and fix. No longer open; removed from this list rather than left here
 answered, matching how the previous thirteen items were handled above.
+
+## 3. The README has no screenshots, because the ones it had were of a different app
+
+The gallery pointed at six images taken before the interface rebuild: eleven themes, the Sketchbook
+preset, the old stacked day layout, the old settings screen. Every one of them now shows something that
+does not exist. Leaving them would have been worse than removing them - a portfolio page whose pictures
+disagree with the link above them is a page that raises a question rather than answering one - so they
+are gone, and the README says plainly that they are being re-taken.
+
+**Recommendation:** you take them, and it takes five minutes. Six shots at 1920x1080 cover it: Today in
+Dark with a real day part-finished, the same day in Light, the Focus screen, Settings scrolled to
+Appearance, the phone at 390 wide, and an evening with everything cleared. Put them in
+`docs/screenshots/` and restore the `<details>` gallery block that used to sit under the badges - the
+markup is in the git history at the commit before v1.0. The reason this is yours rather than mine is
+that a screenshot of your own real day is worth more on a portfolio page than a screenshot of a fixture
+I seeded, and only one of us has the former.
+
+## 4. Real touch hardware, still not tested
+
+Standing item, unchanged and now larger: the block drag, the resize strip along a block's bottom edge,
+the long-press actions menu, the calendar's paint-across-dates gesture, and the floating widget's
+corner button have all been built and verified with synthesised pointer events in a desktop browser.
+None of them has been touched by an actual finger.
+
+Everything in that list is designed for touch - `touch-action: none` is scoped to the exact elements
+that start a gesture and nowhere else, every target that can hold 44px does, and the two that cannot are
+items 1 and 2 above - but design is not evidence. One morning of using this on the phone it was written
+for will find more than another week of building will.

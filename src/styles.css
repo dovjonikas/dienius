@@ -4238,7 +4238,16 @@ nav button:active,
    a different application is a floating widget people close.
    ------------------------------------------------------------------------ */
 
-.clock-launcher { position: relative; }
+/* On a phone the brand, four tabs and this button do not fit on one line, and
+   the button was the thing that wrapped - landing alone on a row of its own
+   under the tabs, with a hole above the day. Two deliberate rows instead: the
+   name and the button, then the tabs across the full width. */
+.clock-launcher { position: relative; order: 1; }
+
+@media (max-width: 599px) {
+  .app-header nav { order: 2; flex-basis: 100%; justify-content: flex-start; }
+  .app-header .brand { flex: 1; }
+}
 
 /* A clock face drawn from a circle and two borders, like every other mark in
    this app. No icon font, nothing to load. */
@@ -5122,6 +5131,32 @@ nav button:active,
   .task-pane .quick-add-block { flex: 0 0 auto; }
   .task-pane .quick-add { margin-bottom: 0; }
   .task-pane .done-section { flex: 0 0 auto; margin-top: 0; }
+
+  /* The first-run invitation is three full template cards, which is taller
+     than the column - and unlike the task list it had nothing telling it to
+     scroll inside the shell, so it pushed the whole page past 100dvh on the
+     very first screen a new person sees. */
+  .task-pane .first-run {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  /* A first run has no day yet: no anchors, so no grid, and the middle column
+     is an empty third of the screen with the invitation stranded beside it.
+     Until there is something to draw there, the day column collapses and the
+     invitation gets the width - the same layout the Tasks focus already
+     produces, applied automatically for the one state that always needs it. */
+  .day-view:has(.first-run) {
+    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-areas:
+      "rail header"
+      "rail cap"
+      "rail tasks";
+  }
+
+  .day-view:has(.first-run) .day-pane { display: none; }
 
   /* The end-of-day action, held at the bottom of the column by the auto
      margin rather than trailing the list. It is the last thing you do with a

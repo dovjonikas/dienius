@@ -54,7 +54,7 @@ const DEFAULT_TIME = '09:00'
  * stepped with the arrow keys (or the two buttons beside it) without
  * typing at all. Deliberately not a native `<input type="time">`: that
  * would give arrow-stepping for free, but its picker UI cannot be
- * restyled consistently across this app's eleven themes, and on iOS
+ * restyled consistently across this app's themes, and on iOS
  * Safari it opens a full wheel picker on focus, which is slower for quick
  * entry than typing "0930" directly - worse than what this replaces, on
  * the exact device this field is mostly used from.

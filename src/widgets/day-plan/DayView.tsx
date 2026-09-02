@@ -960,7 +960,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             </p>
             <StarterOffers onUse={handleUseStarter} />
             <p className="first-run-note">
-              There are also eleven color themes here, light and dark - see them under Settings.
+              Dark, Light and Midnight are all under Settings, along with an accent colour and how
+              spacious you want everything.
             </p>
           </div>
         )}

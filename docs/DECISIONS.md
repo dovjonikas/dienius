@@ -821,3 +821,68 @@ than twenty minutes after the app happened to be opened.
 time field with the same manners - type freely, or step with the arrow keys and the two buttons - kept
 separate rather than folded in as a mode, because that component's whole behaviour is about clock times
 and none of it means anything for a length.
+
+---
+
+## v1.0: the seams between three waves of work
+
+Three passes had been built largely independently - the interface polish, the theme rebuild, and the
+utility dock - and the point of this one was to find where they did not meet. Fourteen seams, all of the
+same shape: something written for one screen that broke the moment it appeared on another.
+
+**Six definitions of what a text field looks like.** `.template-editor input`, `.block-add input`,
+`.if-then-form input`, `.quick-add`, `.setting-text-input` and `.task-size-input`, each written for the
+screen it first appeared on, agreeing by accident and diverging in the details. None of them reached a
+component reused elsewhere - which is why the minute field in the new timer popover rendered as a bare
+white browser input on a dark page. Now styled once, by type, with the five non-text input types
+excluded by name, so a field added later is styled by default and has to opt out on purpose.
+
+**The stepper was a field with two buttons parked beside it.** Field and buttons now share a border and
+sit flush, and the steps stack the way a spinner does - the side-by-side pair needed 88px of a row that
+never had it. The triangle glyphs printed as text became chevrons drawn from borders, like every other
+mark in the app.
+
+**The floating timer sat half its own width off its corner**, because it reused the undo bar's entrance
+keyframe - which is centred and carries a permanent `translateX(-50%)` under fill-mode `both`. Far
+enough at the left-hand corners that the move button appeared to do nothing.
+
+**Nineteen orphaned CSS rules** for the deleted override panel, plus four comments still describing it,
+and two more pointing readers at it for reasoning that had moved.
+
+**Forty-six spacing declarations off the scale** - 9px, 10px, 13px, 14px, 20px, 28px - left over from
+before the scale existed. Rounded onto it, ties tighter.
+
+**The evening hole.** The sleep-band bridge measured its allowance from the already-buffered edge of the
+window rather than from the last real anchor, so it spent that allowance twice: an hour of buffer plus
+ninety minutes of bridge plus ninety of band gave a quarter of the grid to a stretch with nothing in it.
+That is exactly the wall of empty rows the cap exists to prevent, produced by the cap itself.
+
+**Finished blocks had drained past quiet into invisible** - the opacity was tuned before the themes were
+rebuilt, and against the new surfaces two hours of finished work rendered at almost exactly the panel
+colour.
+
+**The Done fold and the Inbox fold were two different components** doing the same job, one with a count
+in parentheses and one with a pill.
+
+**The first run pushed the page past the shell.** Three full template cards are taller than the column,
+and unlike the task list nothing told them to scroll - so the very first screen a new person saw was the
+one screen that did not fit. The day column also collapses on a first run, because there is no day to
+draw there yet and the invitation was stranded beside an empty third of the screen.
+
+**The clock button wrapped to a row of its own on a phone**, landing alone under the tabs with a hole
+above the day.
+
+**Stale copy**: the first-run note still offered "eleven color themes".
+
+**And three more from the visual rounds** - a progress bar that was either a 420px loading bar or a 30px
+stub depending on the length of the day name, gap labels that had become the loudest small text in the
+panel, and cards blank down their right side.
+
+**What was checked rather than assumed.** A full export/import round trip is byte-identical and keeps
+the theme with its per-theme accent, density, text scale, the reminder, the inbox, the if-thens and
+every task category. A backup written before any of these three waves imports cleanly, with every field
+added since filled in at its default. Seven corrupt or hostile payloads are refused, including a `url()`
+beacon inside an accent override and an out-of-range reminder interval. Corrupt storage loads as a clean
+default rather than a white screen. And a day with twelve anchors and twenty cards re-measures and
+re-renders eight times in 0.7 milliseconds, which is what makes a clock that ticks every thirty seconds
+free.
