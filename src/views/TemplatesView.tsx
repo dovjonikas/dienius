@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, type CategoryId } from '../lib/categories'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
@@ -32,6 +33,8 @@ interface DraftBlock {
   id?: string
   time: string
   title: string
+  /** Which of `CATEGORIES` colours the task this block stamps - see `categories.ts`. */
+  category: CategoryId
   core: boolean
   /**
    * Whether this block produces a standing task - one that should skip
@@ -79,6 +82,11 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
   const [blockCore, setBlockCore] = useState(false)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
   const [blockMinutes, setBlockMinutes] = useState('')
+  // Sticks between blocks on purpose: a template is usually built in runs of
+  // the same kind of thing (three work blocks, then two meals), so carrying
+  // the last choice forward is right far more often than resetting to the
+  // default would be. Every other field of the block-add row clears on add.
+  const [blockCategory, setBlockCategory] = useState<CategoryId>(DEFAULT_CATEGORY)
   const nameRef = useRef<HTMLInputElement>(null)
 
   // Moves focus into the name field the moment the form appears, for both a
@@ -98,6 +106,7 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
         {
           time: blockTime.trim(),
           title: blockTitle.trim(),
+          category: blockCategory,
           core: blockCore,
           unbounded: blockUnbounded,
           minutes: blockMinutes.trim(),
@@ -171,7 +180,8 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
       <p className="muted">Ongoing blocks never get pushed to tomorrow or need a decision.</p>
       <ul className="block-list">
         {draft.blocks.map((b, i) => (
-          <li key={i}>
+          <li key={i} style={{ ['--cat' as string]: categoryColor(b.category) } as React.CSSProperties}>
+            <span className="block-cat-edge" aria-hidden="true" />
             <span className="task-time">{b.time || '--:--'}</span>
             <span className="block-title">{b.title}</span>
             {parseMinutesInput(b.minutes) !== undefined && (
@@ -222,6 +232,23 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
           onChange={e => setBlockMinutes(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addBlock()}
         />
+        {/* Same six swatches as quick-add on the day view, for the same
+            reason - a template is where most tasks actually get their colour,
+            since a stamped day arrives already sorted. */}
+        <div className="category-picker" role="group" aria-label="Category for the new block">
+          {CATEGORIES.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              className={c.id === blockCategory ? 'category-swatch selected' : 'category-swatch'}
+              style={{ ['--cat' as string]: c.color } as React.CSSProperties}
+              aria-pressed={c.id === blockCategory}
+              aria-label={c.label}
+              title={c.label}
+              onClick={() => setBlockCategory(c.id)}
+            />
+          ))}
+        </div>
         {draft.type !== 'full' && (
           <button
             type="button"
@@ -270,6 +297,7 @@ export function TemplatesView() {
         id: b.id,
         time: b.time ?? '',
         title: b.title,
+        category: b.category ?? DEFAULT_CATEGORY,
         core: b.core ?? false,
         unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
@@ -299,6 +327,7 @@ export function TemplatesView() {
     const blocks = next.blocks.map(b => ({
       time: b.time || undefined,
       title: b.title,
+      category: b.category,
       core: b.core || undefined,
       unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),

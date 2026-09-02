@@ -538,3 +538,84 @@ with no eligible rule that line was an empty prompt occupying the part of the sc
 "what am I doing now" in two seconds. Every rule already written is still there and `IfThenBoard` is
 still the one place they are authored; only where they live moved. `IfThenDayRule` is kept, tested and
 currently unmounted - parked for a design worth giving it, not deleted.
+
+---
+
+## The calm pass: colour that means something, and a screen that says what is happening now
+
+Everything on the day view was the same blue. A timeline where every block is one colour is a timeline
+that only tells you *when*, never *what*, and the eye has to read every label to learn anything. This
+pass gives the day a small vocabulary of colour, marks the one moment that is actually now, and takes a
+line off almost everything else.
+
+**Six categories, not more.** `src/lib/categories.ts`: Focus, Routine, Health, Meals, Commute,
+Personal. The number is the whole design. A colour system earns its place only if a day can be taken in
+without reading it - roughly how much of today is work, whether anything was left for the body, whether
+meals got planned at all - and past about six hues nobody holds the meanings at once and it becomes a
+legend to look up. Fixed hex values rather than theme tokens, exactly as `Template.color` already is: a
+category means the same thing in all eleven presets, and the same day would read differently in each if
+these followed the theme.
+
+**A wash on the block, an edge on the card.** The timeline draws about a fifth of the colour mixed
+against the surface, with full strength kept for a 3px left edge; the card in the list gets only the
+edge. That asymmetry is deliberate. On the grid a colour is a *quantity* - the area it covers is how
+much of the day it took - so it has to fill. In the list it is only an *identity*, so it gets the
+smallest mark that still pairs the two, and a column of nine cards stays one calm column instead of six
+competing ones. Every category also carries its name in the meta line: colour is never the only signal.
+
+**Nothing already on disk is recoloured.** A task with no category - written before this existed, or
+restored from an older backup - draws exactly as it always did, in the day's own template colour. The
+category arrives from the template block it was stamped from, or from the swatch row under quick-add;
+the starter templates all carry them, so a first-run day is coloured from the first tap rather than
+teaching that the colours mean nothing.
+
+**"Now" is the theme's highlighter, not the accent.** The current-time line used to be `--accent`, with
+a comment explaining why it must never be a hardcoded red. Both halves of that reasoning still hold and
+the conclusion changed anyway: categories put a blue almost exactly the accent's own hue on every Focus
+block, and an indicator the colour of the blocks it crosses is not an indicator. `--mark` is the
+highlighter every preset already defines, warm and loud in all of them, and nothing else on the grid
+uses it - so "now" is the one thing on the day drawn in that colour, which is also what it means. The
+line carries the clock time on a filled chip in the gutter, because it lands wherever the minute falls,
+often straight on top of an hour label.
+
+**One task is current, and three places say so.** `activeTask` in `capacity.ts` picks it: timed, sized,
+not done, containing the clock, later start wins where two overlap. Its block gets a ring in the now
+colour over whatever category colour it already had - "current" and "what kind" are two signals that
+never overwrite each other - its card gets the same ring plus a countdown, and the header states it in
+plain text: `15:21 · Meetings · 39 min left`. Deliberately narrow about all three conditions: an unsized
+task has no known end, so claiming it is still running would be an invention, and a finished task is
+not what you are doing whatever the clock says.
+
+**Focus is a countdown, not a pomodoro.** `FocusView.tsx` is one task, the time left on its own planned
+block, a ring, and a way out. There is no length to choose and no timer to start, which is the entire
+difference: a pomodoro asks you to decide how long to work and then contradicts the plan you already
+made. It also means closing it loses nothing - there is no timer state, only a screen. When the planned
+time runs out the ring completes and the number stops; nothing flashes and nothing is marked. Overrunning
+a block is ordinary, and a planner that treats it as failure is one people stop opening - see
+`docs/RESEARCH-ADHD.md` section 12.
+
+**Fewer lines, and the ones left mean something.** The grid lost its container border - a box already
+told apart by its own surface colour does not need an outline as well - the hour rules dropped to 62% of
+`--border` and the half-hours to 28%, and a gap is transparent at rest instead of a filled panel, since
+drawing empty time as a block made it look like a third kind of content between the real ones. A gap
+under thirty minutes keeps its full 44px target and loses its label: half an hour is roughly the
+smallest stretch a real task fits in, which makes it the line between "free time" and "the space between
+things", and labelling every ten-minute hole buries the two or three usable ones among a dozen that are
+not.
+
+**The dot menu fades in on hover, and this is not the bug this repo already fixed.** That bug made a
+control unreachable on touch, where there is no hover state at all. The rule is gated on
+`(hover: hover) and (pointer: fine)`, so a phone or tablet gets exactly what it always got - the button,
+visible, always - and it is opacity rather than display, so the button keeps its box, its place in the
+tab order and its focus behaviour on a mouse-driven window too. Only the column of nine identical
+dot-menus goes quiet.
+
+**The rollover stopped being the loudest suggestion on screen.** A full-width dashed button at the
+bottom read as the day's conclusion - the thing you are meant to press - when what it actually does is
+give up on nine tasks. It is now a quiet underlined link, still exactly as reachable.
+
+**Settings is a settings screen.** A section list down one side, and rows of name, description and
+control down the other, so every switch in the app reads the same way instead of each inventing its own
+arrangement of label, paragraph and button. One scrolling document rather than four swappable panels:
+find-on-page reaches every setting, nothing has to be remembered as "behind the other tab", and someone
+looking for one switch sees what else exists on the way to it.

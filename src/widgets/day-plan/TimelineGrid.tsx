@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DayType, Task } from '../../lib/types'
 import { formatDuration, windowFor, type SleepSettings } from './capacity'
+import { categoryColor } from '../../lib/categories'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
@@ -112,6 +113,20 @@ const GUTTER_PX = 44
  */
 const MIN_HOUR_LABEL_GAP_PX = 28
 
+/**
+ * The shortest free stretch that gets its size written on it. Below this the
+ * gap is still a real, tappable button at its full 44px target - nothing about
+ * what it does changes - it just goes quiet.
+ *
+ * A busy day is mostly short gaps: the ten minutes between two meetings, the
+ * quarter hour before a commute. Labelling every one of them fills the middle
+ * of the grid with small text saying nothing anyone acts on, and buries the
+ * two or three genuinely usable holes among a dozen that are not. Half an hour
+ * is roughly the smallest stretch a real task fits in, which makes it the line
+ * between "free time" and "the space between things".
+ */
+const MIN_LABELLED_GAP_MINUTES = 30
+
 export interface TimelineGridProps {
   /**
    * Applied to the grid's own outer wrapper so the disclosure toggle that
@@ -154,6 +169,13 @@ export interface TimelineGridProps {
   onAnchorPointerDown?: (taskId: string, e: React.PointerEvent<HTMLDivElement>) => void
   /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
   draggingTaskId?: string | null
+  /**
+   * The task happening right now, if any - see `activeTask` in capacity.ts.
+   * `DayView` works it out once and hands the same id to both this grid and
+   * the task list, so the block and the card can never disagree about which
+   * one is current. Optional, and meaningless on a day that is not today.
+   */
+  activeTaskId?: string | null
   /**
    * True when the day this grid is drawing is today's own date - see
    * DayView.tsx's own `isToday`. The current-time indicator only ever
@@ -232,6 +254,7 @@ export function TimelineGrid({
   onPlaceFloat,
   onAnchorPointerDown,
   draggingTaskId,
+  activeTaskId,
   isToday = false,
   isWide = false,
   dayType = 'full',
@@ -427,11 +450,21 @@ export function TimelineGrid({
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
+              // A category paints the block itself - a soft wash of its own
+              // colour with the full strength kept for the left edge, applied
+              // from CSS off a custom property so the wash can be mixed
+              // against whichever surface the current theme provides. A task
+              // with no category (one typed before categories existed, or
+              // restored from an older backup) falls back to the inline
+              // template colour exactly as every anchor used to, so nothing
+              // already on disk is silently recoloured.
+              const catColor = anchor.sized ? categoryColor(sourceTask?.category) : undefined
               const draggable = !!onAnchorPointerDown && !!sourceTask && !sourceTask.done
               const classNames = ['timeline-anchor']
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')
               if (anchor.clippedEnd) classNames.push('timeline-anchor-clipped')
-              if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
+              if (catColor) classNames.push('timeline-anchor-cat')
+              else if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
               // Finished work reads as finished here too, not just in the
               // task list: the same muted fill and struck-through title, so
               // one look at the grid says how much of the day is behind you
@@ -440,6 +473,7 @@ export function TimelineGrid({
               // with its afternoon quietly deleted out of it is not the same
               // picture.
               if (sourceTask?.done) classNames.push('timeline-anchor-done')
+              if (activeTaskId === anchor.id) classNames.push('timeline-anchor-now')
               if (compact) classNames.push('timeline-anchor-compact')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
@@ -453,8 +487,9 @@ export function TimelineGrid({
                     minHeight: `${minHeightPx}px`,
                     left: `calc(${GUTTER_PX}px + (100% - ${GUTTER_PX}px) * ${anchor.column * fraction})`,
                     width: `calc((100% - ${GUTTER_PX}px) * ${fraction} - 4px)`,
-                    background: anchor.sized ? templateColor : undefined,
-                  }}
+                    background: catColor ? undefined : anchor.sized ? templateColor : undefined,
+                    ...(catColor ? { ['--cat' as string]: catColor } : {}),
+                  } as React.CSSProperties}
                   onPointerDown={draggable ? e => onAnchorPointerDown!(anchor.id, e) : undefined}
                 >
                   <span className="timeline-anchor-title">{anchor.title}</span>
@@ -478,6 +513,17 @@ export function TimelineGrid({
               <>
                 <div className="timeline-now-line" style={{ top: `${nowTop}px` }} />
                 <div className="timeline-now-dot" style={{ top: `${nowTop}px` }} />
+                {/* The clock time, printed in the gutter on the line itself.
+                    Without it the line says "somewhere around here" and the
+                    reader has to interpolate between two hour marks that a
+                    compressed day may have drawn unevenly - see
+                    computeVerticalLayout. It sits in the same decorative,
+                    aria-hidden layer as the line: this is the same number the
+                    header already states in real text, said again in the one
+                    place the eye is already looking. */}
+                <div className="timeline-now-label" style={{ top: `${nowTop}px` }}>
+                  {formatClock(nowMinutes)}
+                </div>
               </>
             )}
           </div>
@@ -505,7 +551,9 @@ export function TimelineGrid({
                     width: `calc(100% - ${GUTTER_PX}px)`,
                   }}
                 >
-                  <span className="timeline-gap-label" aria-hidden="true">{formatDuration(gap.minutes)} free</span>
+                  {gap.minutes >= MIN_LABELLED_GAP_MINUTES && (
+                    <span className="timeline-gap-label" aria-hidden="true">{formatDuration(gap.minutes)} free</span>
+                  )}
                 </button>
               )
             })}

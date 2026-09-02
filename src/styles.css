@@ -226,6 +226,179 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .settings-group { margin-bottom: 28px; }
 
+/* Settings as a modern app settings screen: a list of sections down one side,
+   the settings themselves down the other. One scrolling document rather than
+   four swappable panels - see SettingsView.tsx for why. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.settings-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  /* A horizontal strip on a phone, where a fixed side column would take a
+     third of the width to hold four words. */
+  -webkit-overflow-scrolling: touch;
+}
+
+.settings-nav-item {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.settings-nav-item:hover { color: var(--text); }
+
+.settings-nav-item.active {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.settings-nav-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* One setting: what it is and what it does on the left, the control that
+   changes it on the right. Every switch in this app reads the same way now,
+   instead of each one inventing its own arrangement of label, paragraph and
+   button. Wraps to stacked at a narrow width rather than squeezing the
+   control into a column too thin to use. */
+.setting-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 16px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.settings-group h3 + .setting-row,
+.settings-group h3 + .setting-block { border-top: none; }
+
+/* The same row, for a setting whose control is too big to sit beside its own
+   label - the theme gallery, the if-then board. Label on top, control filling
+   the width under it. */
+.setting-block {
+  padding: 16px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.setting-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  /* Takes the row's slack but gives up its own width before the control
+     does - a description can wrap onto another line and still be read; a
+     time stepper squeezed to half its width cannot be used. 240px is the
+     narrowest a two-line description stays readable at, below which the row
+     stacks instead. */
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 46ch;
+}
+
+.setting-block .setting-label { margin-bottom: 12px; }
+
+.setting-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.setting-desc {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+@media (min-width: 760px) {
+  .settings-layout {
+    grid-template-columns: 168px minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  /* Sticky rather than fixed, so it scrolls with the page until it reaches
+     the top and then stays with whatever is being read. */
+  .settings-nav {
+    position: sticky;
+    top: 16px;
+    flex-direction: column;
+    overflow: visible;
+    gap: 2px;
+  }
+
+  .settings-nav-item {
+    border: none;
+    border-radius: var(--radius);
+    text-align: left;
+    padding: 8px 12px;
+  }
+
+  .settings-nav-item.active { border: none; }
+}
+
+/* Settings is a two-column layout now, and 760px - a width chosen for a
+   phone-shaped single column of prose - leaves the control column too narrow
+   to hold a pair of time steppers beside a description. Scoped by :has() to
+   this one view, exactly the way the Today tab's own shell is: Templates and
+   Calendar keep the reading width they were designed at. */
+@media (min-width: 1024px) {
+  .app:has(.settings) { max-width: 1080px; }
+}
+
+/* The board still carries its own "If-then" heading, because it is also
+   rendered on its own elsewhere and inside its own sheet. Here it sits
+   directly under a setting that already says what this is, so the heading
+   drops back to being a label for the New button beside it rather than a
+   second title for the same thing. */
+.settings .if-then-header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* The time field and its two steppers, read as one control. The 44px target
+   on each stepper is untouched - see .time-step's own comment - they simply
+   sit tight against the field they change instead of floating 4px off it. */
+.setting-control .time-stepper { gap: 6px; }
+.setting-control .time-input { width: 84px; text-align: center; }
+.setting-control .time-step { min-width: 36px; }
+
+/* Two fields per row here rather than the stacked label-above-field the
+   phone uses, so bedtime and wake time read as one range. */
+.setting-control .sleep-window-field {
+  gap: 4px;
+}
+
+.setting-control .sleep-window-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .segmented {
   display: inline-flex;
   flex-wrap: wrap;
@@ -688,6 +861,60 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   .day-progress-fill { transition: none; }
 }
 
+/* "What is happening right now", in the header - the clock, the running
+   task, and what is left of it. The loudest text in the header on purpose:
+   everything else up there describes the day as a whole, and this is the one
+   line that answers the question the app was opened with. Renders nothing at
+   all when nothing is running, rather than a placeholder. */
+.day-now {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.day-now-clock {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.day-now-sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.day-now-task {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* The one place in the header that borrows the now colour, so the number
+   that is counting down is visibly the same idea as the line crossing the
+   timeline beside it. */
+.day-now-left {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mark) 20%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .day-score {
   color: var(--muted);
   font-size: 13px;
@@ -802,7 +1029,12 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .timeline-grid-scroll {
   max-height: min(58vh, 520px);
   overflow-y: auto;
-  border: 1px solid var(--border);
+  /* No border. The panel is already told apart from the page by its own
+     surface colour, and an outline around it was one more line competing with
+     the twelve hour rules, the block edges and the card edges beside it - see
+     docs/DECISIONS.md on the calm pass. Everything in this stylesheet that
+     draws a line now earns it by separating two things that would otherwise
+     be confused; a container that is already a different colour does not. */
   border-radius: var(--edge);
   background: var(--surface);
   /* Covers .timeline-hour-label's own -7px offset with a small margin, so
@@ -903,12 +1135,16 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   font-variant-numeric: tabular-nums;
 }
 
+/* Lighter than the full --border it used to draw at. Twelve of these run the
+   width of the grid, and at full strength they read as a table with rows
+   rather than as a clock with marks on it - the blocks are the content here
+   and the hours are the ruler behind them. */
 .timeline-hour-rule {
   position: absolute;
   left: 44px;
   right: 0;
   top: 0;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
 }
 
 /* Position between two hours is legible without a second number in the
@@ -921,7 +1157,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   left: 44px;
   right: 0;
   height: 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--border) 28%, transparent);
 }
 
 /* A gap is a real object, not blank space - see docs/TIMELINE.md section 5.
@@ -950,13 +1186,17 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   margin: 0 8px 0 0;
   border: none;
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--border) 20%, transparent);
+  /* Barely there at rest. A gap is the absence of something, and drawing it
+     as a filled panel made empty time look like a third kind of block sitting
+     between the real ones. It brightens under the pointer, where it becomes a
+     control again. */
+  background: transparent;
   font: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.timeline-gap:hover { background: color-mix(in srgb, var(--border) 32%, transparent); }
+.timeline-gap:hover { background: color-mix(in srgb, var(--border) 26%, transparent); }
 
 .timeline-gap:focus-visible {
   outline: 2px solid var(--accent);
@@ -1048,6 +1288,25 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   opacity: 0.75;
 }
 
+/* A category's own colour on a block - src/lib/categories.ts. A wash of about
+   a fifth of the colour rather than the colour itself, with the full strength
+   kept for a 3px left edge: at full fill six categories on one grid is six
+   loud rectangles competing with each other and with the text on them, which
+   is the opposite of what a colour system is for. The wash is mixed against
+   --surface rather than laid over it as alpha, so it lands as a real, opaque
+   colour on whichever theme is showing and the title keeps ordinary --text
+   contrast in light and dark alike.
+
+   Takes over from .timeline-anchor-colored below when a task has a category;
+   a task that does not (written before categories existed, or restored from
+   an older backup) still gets the template's own colour inline, exactly as
+   before - see TimelineGrid.tsx. */
+.timeline-anchor-cat {
+  background: color-mix(in srgb, var(--cat) 20%, var(--surface));
+  border-left: 3px solid var(--cat);
+  color: var(--text);
+}
+
 /* Colored anchors (from a template) pin dark text directly, the same
    rgba(0, 0, 0) treatment .day-template and the calendar cells already
    use on the same pastel palette - see the rule comment above. Applied by
@@ -1072,7 +1331,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    on the element itself, so this rule overrides only what CSS can, and the
    inline fill is muted separately by the opacity on the block as a whole. */
 .timeline-anchor-done {
-  opacity: 0.42;
+  opacity: 0.5;
 }
 
 .timeline-anchor-done .timeline-anchor-title {
@@ -1113,6 +1372,18 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   font-size: 13px;
 }
 
+/* The block that is happening right now. Lifted rather than recoloured: it
+   keeps its own category colour (that is what says what kind of thing it is)
+   and gains a ring in the now colour plus a soft halo of it, so "current"
+   and "what kind" are two separate signals that never overwrite each other.
+   The halo is a spread shadow, not a blur that grows the box, so nothing
+   about the block's real position or height changes when it becomes the
+   current one - the grid still reads as an honest clock. */
+.timeline-anchor-now {
+  box-shadow: 0 0 0 1.5px var(--mark), 0 0 16px -2px color-mix(in srgb, var(--mark) 55%, transparent);
+  z-index: 2;
+}
+
 /* Step 7's drag source for "drag an anchor back to the tray" - see
    docs/TIMELINE.md section 5 and TimelineGrid.tsx's own comment on
    onAnchorPointerDown. touch-action is only ever applied through this
@@ -1148,35 +1419,63 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .timeline-anchor-dragging { opacity: 0.5; }
 
 /* Current-time indicator - docs/RESEARCH-TIMELINE-UI.md section 5 point 7.
-   var(--accent), never a hardcoded red: a fixed red would clash on Legal
-   pad, which already spends red on its own margin rule, and would simply
-   be wrong against Terminal's phosphor palette. Both live inside
-   .timeline-grid, which is already aria-hidden and pointer-events: none,
-   so the indicator is decorative by construction rather than needing its
-   own aria-hidden attribute - it is never announced and never intercepts
-   a tap. Position updates once a minute from TimelineGrid.tsx's own
-   interval, never continuously, so there is no transform or transition on
-   "top" for prefers-reduced-motion to need to disable - only the
-   color-transition rule further up this file applies here, and that rule
-   never touches position. */
+   Still never a hardcoded red - a fixed red would clash on Legal pad, which
+   already spends red on its own margin rule, and would simply be wrong
+   against Terminal's phosphor palette - but no longer var(--accent) either.
+   Categories (src/lib/categories.ts) put a blue almost exactly the accent's
+   own hue on every Focus block, and an indicator the same colour as the
+   blocks it crosses stops being an indicator. --mark is the theme's
+   highlighter: every preset defines it, every preset makes it warm and
+   loud, and no other element on this grid uses it, so "now" is the one
+   thing on the day drawn in that colour. Which is also what it means.
+
+   All three parts live inside .timeline-grid, which is already aria-hidden
+   and pointer-events: none, so they are decorative by construction rather
+   than needing their own attributes - never announced, never intercepting a
+   tap. Position updates once a minute from TimelineGrid.tsx's own interval,
+   never continuously, so there is no transform or transition on "top" for
+   prefers-reduced-motion to disable. */
 .timeline-now-line {
   position: absolute;
   left: 44px;
   right: 0;
   height: 1.5px;
-  background: var(--accent);
+  background: var(--mark);
   pointer-events: none;
+  z-index: 3;
 }
 
 .timeline-now-dot {
   position: absolute;
   left: 40px;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--mark);
   transform: translate(-50%, -50%);
   pointer-events: none;
+  z-index: 3;
+}
+
+/* The clock time on the line, printed in the hour gutter. Sits on its own
+   filled chip rather than as bare text, because it lands wherever the minute
+   happens to fall - often right on top of an hour label - and two numbers
+   sharing four pixels is exactly the unreadable text this app does not
+   allow. The chip covers the label underneath instead of blending with it. */
+.timeline-now-label {
+  position: absolute;
+  left: 2px;
+  transform: translateY(-50%);
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--mark);
+  color: rgba(0, 0, 0, 0.78);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  z-index: 4;
 }
 
 /* The sheet a tapped gap opens - docs/TIMELINE.md section 5, step 5. A
@@ -1431,6 +1730,163 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .task:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
 
+/* The same category colour the block on the timeline carries, as a 3px edge
+   down the side of the card - see src/lib/categories.ts. An edge and not a
+   fill: the timeline is where a colour is a quantity (how much of today is
+   this), and the list is where it is only an identity (which one is this), so
+   the list gets the smallest mark that still pairs the two. Drawn with a
+   pseudo-element rather than a border so it follows the card's own rounded
+   corner instead of squaring it off. */
+.task-cat { position: relative; }
+
+.task-cat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--edge) 0 0 var(--edge);
+  background: var(--cat);
+}
+
+.task.done::before { opacity: 0.35; }
+
+/* The category's name, in the meta line - colour is never the only signal
+   here, the same rule the if-then tags and the year strip's legend follow. */
+.task-cat-name {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* The card that is currently running. Same treatment as its block on the
+   timeline - a ring in the now colour over whatever category colour it
+   already had - so the two are obviously the same task without either one
+   losing what it was already saying. */
+.task-active {
+  border-color: color-mix(in srgb, var(--mark) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mark) 45%, transparent), var(--shadow);
+  background: color-mix(in srgb, var(--mark) 5%, var(--surface));
+}
+
+.task-left {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mark) 20%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Opens the full-screen countdown. Only ever on the running card, so it is
+   allowed to look like a real button rather than the quiet ghost controls the
+   rest of the card carries - there is exactly one of these on screen at a
+   time, and it is on the one thing you are actually doing. */
+.task-focus-button {
+  grid-area: menu;
+  justify-self: end;
+  align-self: center;
+  min-height: 30px;
+  margin-right: 4px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, var(--mark) 55%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mark) 16%, transparent);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.task-focus-button:hover { background: color-mix(in srgb, var(--mark) 28%, transparent); }
+
+.task-focus-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The running card gives the actions button its own column rather than
+   sharing one with Focus - two controls stacked on top of each other in one
+   grid area would overlap. */
+.task-active .task-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "label focus menu"
+    "meta  focus menu";
+}
+
+.task-active .task-focus-button { grid-area: focus; }
+
+/* The planned size is hidden on the running card only - "1h30" and
+   "48 min left" are the same fact told twice, and only one of them is worth
+   reading while it is happening.
+
+   This does take the size control off that one card for as long as the task
+   is running, and there is no other way in to it: the actions menu has never
+   offered size. The cost is bounded and small - a task can only be running if
+   it already has a size, so nothing is unset and unreachable, and the control
+   is back the moment the block ends. Worth it for the one card the eye goes
+   to first carrying one number instead of two that disagree in units. */
+.task-active .task-size { display: none; }
+
+/* The six swatches offered under quick-add and in the template block editor.
+   Real toggle buttons with real names (aria-label plus title), sized to a
+   comfortable target, reading as a row of colour rather than a form control -
+   picking one is meant to cost a glance, not a decision. */
+.category-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.category-swatch {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: color-mix(in srgb, var(--cat) 55%, transparent);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.category-swatch:hover { background: var(--cat); }
+
+.category-swatch.selected {
+  background: var(--cat);
+  border-color: color-mix(in srgb, var(--cat) 45%, var(--surface));
+  box-shadow: 0 0 0 2px var(--cat);
+}
+
+.category-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The swatch row sits under the quick-add field, sharing its block. Grouping
+   them means the wide layout treats "add a task" as one thing with one flex
+   slot, rather than two that can drift apart when the column is short. */
+.quick-add-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* A template block's own colour, in the editor's list - the same 3px mark the
+   card gets, so building a template shows the day it will stamp. */
+.block-list li { position: relative; }
+
+.block-cat-edge {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--cat);
+}
+
 .task-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -1472,8 +1928,8 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .check {
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   border: 2px solid color-mix(in srgb, var(--muted) 55%, var(--border));
   border-radius: 7px;
@@ -1490,8 +1946,8 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .check::after {
   content: '';
   position: absolute;
-  left: 6px;
-  top: 2px;
+  left: 7px;
+  top: 3px;
   width: 5px;
   height: 10px;
   border: solid #fff;
@@ -1692,14 +2148,37 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   .task-size-empty:focus-visible {
     opacity: 1;
   }
+
+  /* See the comment above .task-menu-button for why this is not the
+     hover-reveal bug. Opacity, never display or visibility: the button keeps
+     its box, so nothing about the card's layout moves when the pointer
+     crosses it, and it stays in the accessibility tree and the tab order the
+     whole time. */
+  .task-menu-button {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .task:hover .task-menu-button,
+  .task-menu-button:focus-visible,
+  .task-active .task-menu-button {
+    opacity: 1;
+  }
 }
 
 /* The single door to everything else a task's row can do - place or
    un-anchor, push, mark ongoing, delete - see docs/TIMELINE.md section 5
-   and the comment on this button in TaskRow.tsx. Always visible, never a
-   hover reveal, on any input: this repo has already fixed that class of
-   bug once, and this button is now the only path to some of what it
-   opens, so it cannot be allowed to regress into one. */
+   and the comment on this button in TaskRow.tsx.
+
+   It fades in on hover, but ONLY where a real pointer exists, and it never
+   stops being focusable or reachable. This looks like the hover-reveal bug
+   this repo fixed once and it is deliberately not the same thing: that bug
+   made the control unreachable on touch, where there is no hover state at
+   all. The rule below is gated on (hover: hover) and (pointer: fine), so a
+   phone or a tablet gets exactly what it always got - the button, visible,
+   all the time - and only a mouse-driven window quiets a column of nine
+   identical dot-menus down to the one the pointer is actually near. Focus
+   brings it back at full strength, so a keyboard never loses it either. */
 .task-menu-button {
   grid-area: menu;
   display: inline-flex;
@@ -1792,17 +2271,31 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   margin-bottom: 6px;
 }
 
+/* Deliberately the quietest control in the pane, and no longer the widest
+   thing in it. A full-width dashed button at the bottom of the list read as
+   the day's conclusion - the thing you are meant to press - when what it
+   actually does is give up on nine tasks. It is a real action and it stays
+   reachable; it just stops being the loudest suggestion on the screen. */
 .rollover {
-  width: 100%;
+  align-self: flex-start;
   margin-top: 12px;
   background: none;
-  border: 1px dashed var(--border);
+  border: none;
   border-radius: var(--radius);
   color: var(--muted);
-  padding: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent);
+  text-underline-offset: 3px;
 }
 
-.rollover:hover { color: var(--text); border-color: var(--muted); }
+.rollover:hover { color: var(--text); text-decoration-color: currentColor; }
+
+.rollover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .rollover-note {
   margin: 12px 0 0;
@@ -2876,6 +3369,136 @@ button.danger {
   margin-top: 10px;
 }
 
+/* The focus countdown - src/widgets/day-plan/FocusView.tsx. A whole screen
+   rather than a panel: everything this app usually shows is context, and the
+   point of this view is that for a few minutes there is none. Opaque, fixed,
+   above everything, with exactly three things on it - what you are doing, how
+   long is left, and the way out.
+
+   --bg rather than --surface, so it reads as the app itself having changed
+   rather than as a card floating over the day. */
+.focus-view {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: max(24px, env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+.focus-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.focus-close:hover { color: var(--text); border-color: var(--muted); }
+
+.focus-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The keyboard way out, said next to the pointer one rather than left to be
+   discovered - this view covers everything, so how to leave it should never
+   be a guess. */
+.focus-close-hint {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-task {
+  margin: 0;
+  max-width: 24ch;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3.2vw, 30px);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--text);
+}
+
+.focus-ring {
+  position: relative;
+  width: min(58vh, 300px);
+  aspect-ratio: 1;
+}
+
+.focus-ring svg { width: 100%; height: 100%; display: block; }
+
+.focus-ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border) 70%, transparent);
+  stroke-width: 8;
+}
+
+/* The task's own category colour, so even this screen says what kind of thing
+   is being worked on - falling back to the accent for a task with no category
+   rather than drawing an uncoloured ring. */
+.focus-ring-fill {
+  fill: none;
+  stroke: var(--cat, var(--accent));
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-ring-fill { transition: none; }
+}
+
+.focus-count {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.focus-count-number {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 8vw, 68px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.focus-count-unit {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.focus-done {
+  min-width: 200px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
 /* The update notice - src/UpdateNotice.tsx. A quiet fixed banner, not a
    sheet: it has no backdrop and never blocks a tap on anything beneath
    it, which a modal's scrim would. Sits below the z-index any bottom
@@ -3044,14 +3667,16 @@ button.danger {
     grid-template-columns: minmax(200px, 240px) minmax(420px, 1fr) minmax(320px, 380px);
     grid-template-areas:
       "rail header header"
+      "rail cap    cap"
       "rail day    tasks";
-    /* The header row takes what it needs; the content row takes everything
-       left, and no more - minmax(0, 1fr) rather than a plain 1fr for the
-       same reason the flex chain above needs min-height: 0. A bare 1fr row
-       has an implicit auto minimum and will happily grow past the grid. */
-    grid-template-rows: auto minmax(0, 1fr);
+    /* Header and caption rows take what they need; the content row takes
+       everything left, and no more - minmax(0, 1fr) rather than a plain 1fr
+       for the same reason the flex chain above needs min-height: 0. A bare
+       1fr row has an implicit auto minimum and will happily grow past the
+       grid. */
+    grid-template-rows: auto auto minmax(0, 1fr);
     height: 100%;
-    gap: 16px 24px;
+    gap: 10px 24px;
   }
 
   .rail {
@@ -3060,11 +3685,31 @@ button.danger {
     overflow-y: auto;
   }
 
+  /* `display: contents` here, not a column box. The capacity line and the
+     grid live inside .day-pane in the DOM - they are one region and every
+     test and screen reader treats them as one - but visually they belong to
+     two different bands of this layout: the sentence reads as part of the
+     header, the grid is the content underneath it. Dissolving the wrapper
+     lets each child claim its own grid area without moving either of them in
+     the document. Below this breakpoint .day-pane is already
+     `display: contents` for exactly the same reason. */
   .day-pane {
+    display: contents;
+  }
+
+  /* The capacity sentence, in its own thin band under the header rather than
+     as the first thing in the timeline column. Same words, one line, muted:
+     it describes the whole day, which is what the header band is for, and it
+     was taking the top of the column the day itself should start at. */
+  .day-pane > .capacity-line {
+    grid-area: cap;
+    margin-bottom: 0;
+  }
+
+  .day-pane > .timeline-grid-wrap {
     grid-area: day;
-    display: flex;
-    flex-direction: column;
     min-height: 0;
+    margin-bottom: 0;
   }
 
   .task-pane {
@@ -3085,9 +3730,10 @@ button.danger {
     grid-template-columns: minmax(200px, 240px) 1fr;
     grid-template-areas:
       "rail header"
+      "rail cap"
       "rail pane";
   }
-  .day-view.focus-calendar .day-pane { grid-area: pane; }
+  .day-view.focus-calendar .day-pane > .timeline-grid-wrap { grid-area: pane; }
   .day-view.focus-tasks .task-pane { grid-area: pane; }
 
   /* The header row: day-nav plus the focus control, side by side, wrapping
@@ -3181,12 +3827,11 @@ button.danger {
     overflow-y: visible;
   }
 
-  /* The grid takes the whole column under the capacity caption, and is what
-     useAvailableGridHeight measures against. flex: 1 with min-height: 0, so
-     its height comes from the column rather than from its own contents -
-     which is exactly what makes the measurement non-circular. */
+  /* The grid is its own grid item in a row that is already exactly as tall
+     as the space left over, so its height comes from the layout rather than
+     from its own contents - which is what makes useAvailableGridHeight's
+     measurement of it non-circular. */
   .timeline-grid-wrap {
-    flex: 1 1 auto;
     min-height: 0;
     margin-bottom: 0;
   }
@@ -3233,7 +3878,8 @@ button.danger {
 
   /* The pane's own 10px gap already separates quick-add from the list; the
      phone's stacked margin on top of it would just be doubled spacing. */
-  .task-pane .quick-add { flex: 0 0 auto; margin-bottom: 0; }
+  .task-pane .quick-add-block { flex: 0 0 auto; }
+  .task-pane .quick-add { margin-bottom: 0; }
   .task-pane .done-section { flex: 0 0 auto; margin-top: 0; }
 
   /* The end-of-day action, held at the bottom of the column by the auto
@@ -3250,6 +3896,11 @@ button.danger {
     max-height: 34vh;
     overflow-y: auto;
   }
+
+  /* A little more air between cards where there is height to spend it - the
+     short-screen block further down takes it back on a laptop, which is the
+     one place the arithmetic actually needs it. */
+  .task-pane .task { margin-bottom: 10px; }
 }
 
 /* A wide but short window - a 1366x768 laptop is the ordinary case, and the
@@ -3282,7 +3933,9 @@ button.danger {
   .task-pane .task-size,
   .task-pane .task-state { font-size: 12px; }
   .task-pane .task-size { padding: 2px 6px; margin: -2px -6px; }
-  .task-pane .quick-add { padding: 10px 14px; min-height: 0; }
+  .task-pane .quick-add { padding: 9px 14px; min-height: 0; }
+  .task-pane .quick-add-block { gap: 6px; }
+  .task-pane .category-swatch { width: 18px; height: 18px; }
   .task-pane .done-toggle { min-height: 30px; padding: 4px; }
   .task-pane .rollover { padding: 8px; min-height: 38px; }
 }

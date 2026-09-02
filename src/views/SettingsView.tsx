@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { findPreset } from '../lib/themes'
@@ -48,11 +48,30 @@ function SleepTimeField({
   )
 }
 
+type SectionId = 'general' | 'sleep' | 'rules' | 'appearance'
+
+const SECTIONS: { id: SectionId; label: string }[] = [
+  { id: 'general', label: 'General' },
+  { id: 'sleep', label: 'Sleep' },
+  { id: 'rules', label: 'Rules' },
+  { id: 'appearance', label: 'Appearance' },
+]
+
+/** How far down the viewport a section heading has to be before the list stops calling it current. */
+const SECTION_ACTIVE_OFFSET_PX = 120
+
 export function SettingsView() {
   const data = useAppData()
   const fileRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
+  // Which section the list on the left is marking as current. All four are
+  // always in the page: this is an index into one scrolling document, not a
+  // set of tabs that swap content in and out. That matters for more than
+  // tidiness - find-on-page reaches every setting, nothing has to be
+  // remembered as "behind the other tab", and a person looking for one switch
+  // can scroll past the rest and see what else exists on the way.
+  const [section, setSection] = useState<SectionId>('general')
 
   function handleExport() {
     const blob = new Blob([exportJson(data)], { type: 'application/json' })
@@ -100,124 +119,225 @@ export function SettingsView() {
     }
   }
 
+  function goTo(id: SectionId) {
+    setSection(id)
+    document.getElementById(`settings-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Keeps the marker honest when the page is scrolled by hand rather than
+  // through the list. Plain geometry on a scroll event rather than an
+  // IntersectionObserver: this project's own jsdom setup does not provide
+  // that API - the same reason viewport.ts guards matchMedia - and four
+  // comparisons per scroll frame is not a cost worth a polyfill for.
+  useEffect(() => {
+    function onScroll() {
+      let current: SectionId = SECTIONS[0].id
+      for (const s of SECTIONS) {
+        const el = document.getElementById(`settings-${s.id}`)
+        if (el && el.getBoundingClientRect().top <= SECTION_ACTIVE_OFFSET_PX) current = s.id
+      }
+      setSection(current)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <section className="settings">
       <h2>Settings</h2>
       {!getSaveOk() && (
         <p className="warning">Saving to this browser failed. Your changes only live in memory - export a backup.</p>
       )}
-      <div className="settings-group">
-        <h3>Theme</h3>
-        {/* Preset picks the room, mode says whether the light is on - see
-            docs/THEMES.md section 4. "Adjust this theme" below lets a
-            person hand-tune the active room's own tokens - see section 3. */}
-        <ThemeGallery />
-        <ThemeModeControl
-          mode={data.settings.theme.mode}
-          availableModes={findPreset(data.settings.theme.presetId).modes}
-          onChange={actions.setTheme}
-        />
-        <ThemeOverridePanel />
-      </div>
-      <div className="settings-group">
-        <h3>Sleep</h3>
-        {/* A set-once setting, not a per-day question - see
-            docs/DECISIONS.md and actions.setSleepWindow's own doc comment.
-            Drawn as a greyed band on the timeline grid and measured into the
-            capacity line and every gap - see windowFor in capacity.ts -
-            rather than the fixed 07:00-23:00 window this replaces. Defaults
-            to the exact inverse of that old window, so nobody who never
-            opens this page sees any change. */}
-        <p className="muted">
-          When you're normally asleep. The timeline grid greys it out, and free time is measured
-          around it, on every day from now on - you won't be asked again.
-        </p>
-        <div className="sleep-window-fields">
-          <div className="sleep-window-field">
-            <span className="sleep-window-label">Bedtime</span>
-            <SleepTimeField
-              value={data.settings.sleepWindow.start}
-              ariaLabel="Bedtime"
-              onChange={start => actions.setSleepWindow({ ...data.settings.sleepWindow, start })}
+
+      <div className="settings-layout">
+        {/* The section list. Links into one document, not tabs - see the
+            comment on `section` above. Sticky beside the content at a wide
+            viewport so it stays with whatever is being read; a plain
+            scrolling row above it on a phone, where a fixed column would eat
+            a third of the screen to save nobody anything. */}
+        <nav className="settings-nav" aria-label="Settings sections">
+          {SECTIONS.map(s => (
+            <button
+              key={s.id}
+              type="button"
+              className={section === s.id ? 'settings-nav-item active' : 'settings-nav-item'}
+              aria-current={section === s.id ? 'true' : undefined}
+              onClick={() => goTo(s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="settings-content">
+          <div className="settings-group" id="settings-general">
+            <h3>General</h3>
+
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Backup</span>
+                <span className="setting-desc">
+                  Everything lives in this browser and nowhere else. Export writes one JSON file with
+                  every template, day and setting in it; importing one replaces what is here.
+                </span>
+              </div>
+              <div className="setting-control">
+                {/* Primary styling here is the same accent ErrorBoundary's own
+                    crash screen gives its export button - the way out stays the
+                    visually louder control, one tap, with the destructive one
+                    below needing two and never taking the accent colour until
+                    it is armed. */}
+                <button className="primary" onClick={handleExport}>Export backup</button>
+                <button onClick={() => fileRef.current?.click()}>Import backup</button>
+              </div>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json"
+              hidden
+              onChange={e => handleImport(e.target.files?.[0])}
             />
+            {importError && <p className="warning">{importError}</p>}
+
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Erase all data</span>
+                <span className="setting-desc">
+                  Removes everything on this device - every template, every day of tasks, if-then rules,
+                  and any theme changes you have made. Export a backup first if you want to keep a copy.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  className={confirmReset ? 'danger' : ''}
+                  onClick={handleResetClick}
+                  onBlur={() => setConfirmReset(false)}
+                >
+                  {confirmReset ? 'Confirm reset?' : 'Erase all data'}
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="sleep-window-field">
-            <span className="sleep-window-label">Wake time</span>
-            <SleepTimeField
-              value={data.settings.sleepWindow.end}
-              ariaLabel="Wake time"
-              onChange={end => actions.setSleepWindow({ ...data.settings.sleepWindow, end })}
-            />
+
+          <div className="settings-group" id="settings-sleep">
+            <h3>Sleep</h3>
+            {/* A set-once setting, not a per-day question - see
+                docs/DECISIONS.md and actions.setSleepWindow's own doc comment.
+                Drawn as a greyed band on the timeline grid and measured into
+                the capacity line and every gap - see windowFor in capacity.ts -
+                rather than the fixed 07:00-23:00 window this replaces. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Sleep window</span>
+                <span className="setting-desc">
+                  When you are normally asleep. The timeline greys it out and free time is measured
+                  around it, on every day from now on - you will not be asked again.
+                </span>
+              </div>
+              <div className="setting-control">
+                <div className="sleep-window-field">
+                  <span className="sleep-window-label">Bedtime</span>
+                  <SleepTimeField
+                    value={data.settings.sleepWindow.start}
+                    ariaLabel="Bedtime"
+                    onChange={start => actions.setSleepWindow({ ...data.settings.sleepWindow, start })}
+                  />
+                </div>
+                <div className="sleep-window-field">
+                  <span className="sleep-window-label">Wake time</span>
+                  <SleepTimeField
+                    value={data.settings.sleepWindow.end}
+                    ariaLabel="Wake time"
+                    onChange={end => actions.setSleepWindow({ ...data.settings.sleepWindow, end })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Night-shift sleep window</span>
+                <span className="setting-desc">
+                  Used instead on a day typed as a night shift. Real sleep hours around a night shift
+                  are not a fixed offset from a day shift, so this gets its own setting.
+                </span>
+              </div>
+              <div className="setting-control">
+                <div className="sleep-window-field">
+                  <span className="sleep-window-label">Bedtime</span>
+                  <SleepTimeField
+                    value={data.settings.nightSleepWindow.start}
+                    ariaLabel="Bedtime on a night-shift day"
+                    onChange={start => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, start })}
+                  />
+                </div>
+                <div className="sleep-window-field">
+                  <span className="sleep-window-label">Wake time</span>
+                  <SleepTimeField
+                    value={data.settings.nightSleepWindow.end}
+                    ariaLabel="Wake time on a night-shift day"
+                    onChange={end => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, end })}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <p className="muted">
-          On a day typed as a night shift, this is used instead - your actual sleep hours around a
-          night shift are not a fixed offset from a day shift's, so it gets its own setting.
-        </p>
-        <div className="sleep-window-fields">
-          <div className="sleep-window-field">
-            <span className="sleep-window-label">Bedtime (night shift)</span>
-            <SleepTimeField
-              value={data.settings.nightSleepWindow.start}
-              ariaLabel="Bedtime on a night-shift day"
-              onChange={start => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, start })}
-            />
+
+          <div className="settings-group" id="settings-rules">
+            <h3>Rules</h3>
+            {/* If-then rules, parked here while they wait for a design worth
+                giving them. They used to surface as a line on the day view, and
+                on a day with no eligible rule that line was an empty prompt
+                taking up the one part of the screen that has to answer "what am
+                I doing now" in two seconds. The rules themselves are unchanged
+                and every one already written is still here - only where they
+                live moved. */}
+            <div className="setting-block">
+              <div className="setting-label">
+                <span className="setting-name">If-then plans</span>
+                <span className="setting-desc">
+                  A specific trigger paired with a specific response, written down before you need it.
+                  Not surfaced on the day view for now.
+                </span>
+              </div>
+              <IfThenBoard />
+            </div>
           </div>
-          <div className="sleep-window-field">
-            <span className="sleep-window-label">Wake time (night shift)</span>
-            <SleepTimeField
-              value={data.settings.nightSleepWindow.end}
-              ariaLabel="Wake time on a night-shift day"
-              onChange={end => actions.setNightSleepWindow({ ...data.settings.nightSleepWindow, end })}
-            />
+
+          <div className="settings-group" id="settings-appearance">
+            <h3>Appearance</h3>
+            {/* Preset picks the room, mode says whether the light is on - see
+                docs/THEMES.md section 4. "Adjust this theme" below lets a
+                person hand-tune the active room's own tokens - see section 3. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Light or dark</span>
+                <span className="setting-desc">
+                  System follows whatever this device is set to, and changes with it during the day.
+                </span>
+              </div>
+              <div className="setting-control">
+                <ThemeModeControl
+                  mode={data.settings.theme.mode}
+                  availableModes={findPreset(data.settings.theme.presetId).modes}
+                  onChange={actions.setTheme}
+                />
+              </div>
+            </div>
+
+            <div className="setting-block">
+              <div className="setting-label">
+                <span className="setting-name">Theme</span>
+                <span className="setting-desc">
+                  Eleven rooms, each with its own surface, palette and type. Every one is checked for
+                  readable contrast in both light and dark before it ships.
+                </span>
+              </div>
+              <ThemeGallery />
+              <ThemeOverridePanel />
+            </div>
           </div>
-        </div>
-      </div>
-      <div className="settings-group">
-        <h3>Rules</h3>
-        {/* If-then rules, parked here while they wait for a design worth
-            giving them. They used to surface as a line on the day view, and
-            on a day with no eligible rule that line was an empty prompt
-            taking up the one part of the screen that has to answer "what am
-            I doing now" in two seconds. The rules themselves are unchanged
-            and every one already written is still here - only where they
-            live moved. */}
-        <p className="muted">
-          If-then plans: a specific trigger paired with a specific response, written down before
-          you need it. They are not shown on the day view for now.
-        </p>
-        <IfThenBoard />
-      </div>
-      <div className="settings-group">
-        <h3>Data</h3>
-        <div className="row">
-          {/* Primary styling here is the same accent ErrorBoundary's own crash
-              screen gives its export button - the way out stays the visually
-              louder control, one tap, with the destructive one below needing
-              two and never taking the accent color until it is armed. */}
-          <button className="primary" onClick={handleExport}>Export backup</button>
-          <button onClick={() => fileRef.current?.click()}>Import backup</button>
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json"
-          hidden
-          onChange={e => handleImport(e.target.files?.[0])}
-        />
-        {importError && <p className="warning">{importError}</p>}
-        <p className="muted">
-          Erase everything on this device - every template, every day's tasks, if-then rules, and any
-          theme changes you have made. Export a backup first if you want to keep a copy.
-        </p>
-        <div className="row">
-          <button
-            className={confirmReset ? 'danger' : ''}
-            onClick={handleResetClick}
-            onBlur={() => setConfirmReset(false)}
-          >
-            {confirmReset ? 'Confirm reset?' : 'Erase all data'}
-          </button>
         </div>
       </div>
     </section>

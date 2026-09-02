@@ -1,6 +1,7 @@
 import type { Task } from '../../lib/types'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
+import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useLongPress } from './useLongPress'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
@@ -34,6 +35,19 @@ export interface TaskRowProps {
    * the task itself is already done in the store by the time this is true.
    */
   leaving?: boolean
+  /**
+   * True for the one task happening right now - see `activeTask` in
+   * capacity.ts. `DayView` decides; this row only draws it.
+   */
+  active?: boolean
+  /**
+   * How many minutes of the active task are left, when it is this row. Passed
+   * in rather than computed here so the card, the block on the timeline and
+   * the header's own line are all counting from the same tick.
+   */
+  minutesLeft?: number
+  /** Opens the full-screen countdown for this task - see `FocusView.tsx`. */
+  onFocus?: () => void
   sizeEditingId: string | null
   sizeDraft: string
   onStartSizeEdit: (task: { id: string; minutes?: number }) => void
@@ -88,6 +102,9 @@ export function TaskRow({
   task,
   isFullDay,
   leaving = false,
+  active = false,
+  minutesLeft,
+  onFocus,
   sizeEditingId,
   sizeDraft,
   onStartSizeEdit,
@@ -139,7 +156,16 @@ export function TaskRow({
     onToggleSelect()
   }
 
+  // The same colour this task's block carries on the timeline, on the card's
+  // own left edge - see `categories.ts`. Nothing else about the card changes
+  // colour: the edge is a 3px mark, not a fill, so a list of six categories
+  // still reads as one calm column rather than six competing ones.
+  const catColor = categoryColor(task.category)
+  const catName = categoryLabel(task.category)
+
   const classNames = ['task']
+  if (catColor) classNames.push('task-cat')
+  if (active) classNames.push('task-active')
   if (task.done) classNames.push('done')
   if (leaving) classNames.push('task-leaving')
   if (atBound) classNames.push('task-maxed')
@@ -167,7 +193,10 @@ export function TaskRow({
   const describedBy = describedByIds.length > 0 ? describedByIds.join(' ') : undefined
 
   return (
-    <li className={classNames.join(' ')}>
+    <li
+      className={classNames.join(' ')}
+      style={catColor ? ({ ['--cat' as string]: catColor } as React.CSSProperties) : undefined}
+    >
       {/* Two rows, not one: the title on its own line at full weight, and
           everything that qualifies it - the time, the size, whether it is
           core, whichever push state applies - gathered underneath in one
@@ -208,6 +237,16 @@ export function TaskRow({
         </label>
         <div className="task-meta">
           {task.time && <span className="task-time">{task.time}</span>}
+          {/* The category, named rather than left as colour alone - the edge
+              carries it at a glance, this carries it for anyone who cannot
+              use the colour, and both say the same thing. */}
+          {catName && <span className="task-cat-name">{catName}</span>}
+          {/* The countdown, on the one card that is currently running. Real
+              text, not a bar: "38 min left" is a number a person can act on,
+              where a bar only says "some of it". */}
+          {active && minutesLeft !== undefined && (
+            <span className="task-left">{formatDuration(minutesLeft)} left</span>
+          )}
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
@@ -272,6 +311,15 @@ export function TaskRow({
             regress into one. A real, focusable button - reachable and
             operable with a keyboard exactly like every other control on
             this row, not just a pointer gesture. */}
+        {/* Only ever on the running card - a timer that is not attached to
+            something already happening is a pomodoro, which is a different
+            idea about time and not the one this app is built on. See
+            FocusView.tsx. */}
+        {active && onFocus && (
+          <button type="button" className="task-focus-button" onClick={onFocus}>
+            Focus
+          </button>
+        )}
         <button
           type="button"
           className="task-menu-button"

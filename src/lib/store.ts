@@ -4,6 +4,7 @@ import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
 import { isPushable } from './pushRules'
+import type { CategoryId } from './categories'
 
 export { MAX_PUSHES } from './pushRules'
 
@@ -61,10 +62,24 @@ function pushedForward(task: DayPlan['tasks'][number]): DayPlan['tasks'][number]
 }
 
 export const actions = {
-  addTask(date: string, title: string, time?: string): void {
+  /**
+   * `category` is optional so every existing caller - and a task restored
+   * from a backup written before categories existed - keeps producing exactly
+   * the uncategorised task it always did, drawn in the day's own template
+   * colour. Quick-add is the one caller that passes it.
+   */
+  addTask(date: string, title: string, time?: string, category?: CategoryId): void {
     const day = dayOf(date)
-    const task = { id: crypto.randomUUID(), title, time, done: false }
+    const task = { id: crypto.randomUUID(), title, time, done: false, category }
     commit(withDay(date, { ...day, tasks: [...day.tasks, task] }))
+  },
+
+  setTaskCategory(date: string, taskId: string, category: CategoryId): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, category } : t)),
+    }))
   },
 
   toggleTask(date: string, taskId: string): void {

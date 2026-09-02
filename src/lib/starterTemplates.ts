@@ -1,4 +1,5 @@
 import type { DayType } from './types'
+import type { CategoryId } from './categories'
 import { PALETTE_COLORS } from './colors'
 
 /**
@@ -10,6 +11,13 @@ export interface StarterBlock {
   title: string
   minutes?: number
   core?: boolean
+  /**
+   * Every starter block carries one - see `categories.ts`. A first-run day
+   * that arrives in a single colour teaches that the colours mean nothing;
+   * these are picked so that tapping one offer shows an actual coloured day,
+   * with work, meals, travel and the rest visibly different from each other.
+   */
+  category: CategoryId
 }
 
 /**
@@ -51,15 +59,15 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     type: 'full',
     description: 'A weekday built around one long work block, with the edges left open.',
     blocks: [
-      { time: '07:30', title: 'Get up, shower, coffee', minutes: 45 },
-      { time: '08:15', title: 'Commute', minutes: 30 },
-      { time: '09:00', title: 'Deep work block', minutes: 120 },
-      { time: '11:00', title: 'Standup', minutes: 15 },
-      { time: '12:30', title: 'Lunch', minutes: 45 },
-      { time: '13:30', title: 'Meetings', minutes: 90 },
-      { time: '15:30', title: 'Admin and email', minutes: 45 },
-      { time: '17:00', title: 'Commute home', minutes: 30 },
-      { time: '19:00', title: 'Dinner', minutes: 45 },
+      { time: '07:30', title: 'Get up, shower, coffee', minutes: 45, category: 'routine' },
+      { time: '08:15', title: 'Commute', minutes: 30, category: 'commute' },
+      { time: '09:00', title: 'Deep work block', minutes: 120, category: 'core' },
+      { time: '11:00', title: 'Standup', minutes: 15, category: 'core' },
+      { time: '12:30', title: 'Lunch', minutes: 45, category: 'meal' },
+      { time: '13:30', title: 'Meetings', minutes: 90, category: 'core' },
+      { time: '15:30', title: 'Admin and email', minutes: 45, category: 'core' },
+      { time: '17:00', title: 'Commute home', minutes: 30, category: 'commute' },
+      { time: '19:00', title: 'Dinner', minutes: 45, category: 'meal' },
     ],
   },
   {
@@ -69,12 +77,12 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     type: 'rest',
     description: 'Mostly open. Only one thing on it actually has to happen.',
     blocks: [
-      { time: '09:30', title: 'Take morning medication', minutes: 5, core: true },
-      { title: 'Sleep in, no alarm' },
-      { time: '11:00', title: 'Slow breakfast', minutes: 30 },
-      { title: 'Load of laundry', minutes: 30 },
-      { title: 'Walk outside', minutes: 45 },
-      { title: 'Read or watch something', minutes: 60 },
+      { time: '09:30', title: 'Take morning medication', minutes: 5, core: true, category: 'health' },
+      { title: 'Sleep in, no alarm', category: 'routine' },
+      { time: '11:00', title: 'Slow breakfast', minutes: 30, category: 'meal' },
+      { title: 'Load of laundry', minutes: 30, category: 'routine' },
+      { title: 'Walk outside', minutes: 45, category: 'health' },
+      { title: 'Read or watch something', minutes: 60, category: 'personal' },
     ],
   },
   {
@@ -84,12 +92,12 @@ export const STARTER_TEMPLATES: StarterTemplate[] = [
     type: 'night',
     description: 'Anchored around the shift itself. Everything else only counts if it happens.',
     blocks: [
-      { time: '20:30', title: 'Eat before heading in', minutes: 30 },
-      { time: '21:15', title: 'Commute to work', minutes: 30 },
-      { time: '22:00', title: 'On shift', minutes: 480, core: true },
-      { time: '06:30', title: 'Commute home', minutes: 30 },
-      { time: '07:15', title: 'Wind down and sleep', minutes: 30 },
-      { title: 'Check messages', minutes: 15 },
+      { time: '20:30', title: 'Eat before heading in', minutes: 30, category: 'meal' },
+      { time: '21:15', title: 'Commute to work', minutes: 30, category: 'commute' },
+      { time: '22:00', title: 'On shift', minutes: 480, core: true, category: 'core' },
+      { time: '06:30', title: 'Commute home', minutes: 30, category: 'commute' },
+      { time: '07:15', title: 'Wind down and sleep', minutes: 30, category: 'routine' },
+      { title: 'Check messages', minutes: 15, category: 'personal' },
     ],
   },
 ]
@@ -101,7 +109,7 @@ export interface StarterTemplateInput {
   name: string
   color: string
   type: DayType
-  blocks: { time?: string; title: string; core?: boolean; minutes?: number }[]
+  blocks: { time?: string; title: string; core?: boolean; minutes?: number; category?: CategoryId }[]
 }
 
 /**
@@ -119,6 +127,7 @@ export function starterTemplateInput(starter: StarterTemplate): StarterTemplateI
       title: b.title,
       minutes: b.minutes,
       core: b.core,
+      category: b.category,
     })),
   }
 }

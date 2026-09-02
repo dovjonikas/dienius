@@ -386,6 +386,50 @@ export function computeCapacity(
  * line, the per-task size chip, the template editor - so the wording
  * never drifts between them.
  */
+/**
+ * The one task that is happening right now: a timed task with a real size
+ * whose span contains `nowMinutes`, and which is not already finished.
+ *
+ * Deliberately narrow about all three. A task with no time has no position in
+ * the day, so nothing can say it is happening now rather than later. A task
+ * with no size has no known end, so claiming it is still running would be an
+ * invention - see the same rule about unsized anchors in `computeCapacity`.
+ * And a task already checked off is not what you are doing, whatever the clock
+ * says; the whole point of the mark is to answer "what am I meant to be doing"
+ * at a glance, and a finished task is the wrong answer.
+ *
+ * Where two tasks overlap - a call inside a longer work block, say - the one
+ * that started later wins. That is the more specific commitment, and it is
+ * also the one a person actually switched to.
+ */
+export function activeTask(tasks: Task[], nowMinutes: number): Task | undefined {
+  let best: Task | undefined
+  let bestStart = -1
+  for (const task of tasks) {
+    if (task.done || !isAnchor(task) || task.minutes === undefined) continue
+    const start = timeToMinutes(task.time!)
+    if (nowMinutes < start || nowMinutes >= start + task.minutes) continue
+    if (start > bestStart) {
+      best = task
+      bestStart = start
+    }
+  }
+  return best
+}
+
+/**
+ * How much of `task` is left at `nowMinutes`, rounded up so a task with
+ * forty seconds to go reads as "1 min left" rather than "0 min left" - the
+ * number is there to say there is still time, and zero says the opposite.
+ * Undefined for anything that has no honest end to count toward.
+ */
+export function minutesLeft(task: Task, nowMinutes: number): number | undefined {
+  if (!isAnchor(task) || task.minutes === undefined) return undefined
+  const end = timeToMinutes(task.time!) + task.minutes
+  if (nowMinutes >= end) return undefined
+  return Math.max(1, Math.ceil(end - nowMinutes))
+}
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60

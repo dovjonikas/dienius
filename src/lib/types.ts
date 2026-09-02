@@ -8,6 +8,8 @@
  * scoring; rest is its own value for the same reason, not because it
  * scores any differently from the other two.
  */
+import type { CategoryId } from './categories'
+
 export type DayType = 'full' | 'shift' | 'night' | 'rest'
 
 export interface TemplateBlock {
@@ -37,6 +39,15 @@ export interface TemplateBlock {
    * false is an ordinary block, bound like any other.
    */
   unbounded?: boolean
+  /**
+   * Which of `CATEGORIES` (`src/lib/categories.ts`) this block belongs to.
+   * Copied onto `Task.category` at stamp time exactly the way `core` and
+   * `unbounded` already are, so a stamped day arrives already coloured and
+   * nobody has to sort a morning's tasks by hand. Absent means the task the
+   * block produces has no category and falls back to the day's own template
+   * colour, the way every task did before this field existed.
+   */
+  category?: CategoryId
 }
 
 export interface Template {
@@ -107,6 +118,22 @@ export interface Task {
    * flipping it either way.
    */
   unbounded?: boolean
+  /**
+   * Which of `CATEGORIES` (`src/lib/categories.ts`) this task belongs to -
+   * what colours its block on the timeline and the edge of its card in the
+   * list. Arrives copied from the template block this task was stamped from,
+   * or chosen in quick-add at the moment of typing it.
+   *
+   * Absent is a real state, not a missing value: a task written before this
+   * field existed, or restored from an older backup, has no category and is
+   * drawn exactly as it always was, in the day's own template colour. Nothing
+   * is recoloured retroactively on load.
+   *
+   * Deliberately kept when a task is pushed to the next day, unlike `core`
+   * and `fromTemplate` - what kind of thing a task is does not stop being
+   * true because it did not happen today.
+   */
+  category?: CategoryId
 }
 
 export interface DayPlan {

@@ -1,4 +1,5 @@
 import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import { isCategoryId } from './categories'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 const IF_THEN_WHENS: readonly string[] = ['morning', 'day', 'evening', 'any']
@@ -275,6 +276,15 @@ function isOptionalSleepWindow(x: unknown): x is SleepWindow | undefined {
   return x === undefined || isSleepWindow(x)
 }
 
+// A category is validated by identity against the six this app defines, not
+// by shape - unlike a colour, there is no grammar to check, and an id that is
+// not one of ours would silently draw nothing. Same treatment an unknown
+// DayType already gets: the whole payload is refused rather than quietly
+// dropping the one field that failed.
+function isOptionalCategory(x: unknown): boolean {
+  return x === undefined || isCategoryId(x)
+}
+
 function isTask(x: unknown): x is Task {
   if (!isRecord(x)) return false
   return (
@@ -286,7 +296,8 @@ function isTask(x: unknown): x is Task {
     isOptionalPushCount(x.pushCount) &&
     isOptionalBoolean(x.core) &&
     isOptionalMinutes(x.minutes) &&
-    isOptionalBoolean(x.unbounded)
+    isOptionalBoolean(x.unbounded) &&
+    isOptionalCategory(x.category)
   )
 }
 
@@ -298,7 +309,8 @@ function isTemplateBlock(x: unknown): x is TemplateBlock {
     isOptionalString(x.time) &&
     isOptionalBoolean(x.core) &&
     isOptionalMinutes(x.minutes) &&
-    isOptionalBoolean(x.unbounded)
+    isOptionalBoolean(x.unbounded) &&
+    isOptionalCategory(x.category)
   )
 }
 
