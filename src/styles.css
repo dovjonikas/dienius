@@ -5520,6 +5520,22 @@ button.danger:focus-visible {
     gap: 10px 24px;
   }
 
+  /* Yesterday's banner needs a row of its own across the two content
+     columns - as an unnamed item in an area-based grid it landed in the
+     rail, where it wrapped a seven-word sentence onto three lines beside a
+     mini-calendar. The row is only declared when the banner is there, so a
+     day without one does not pay a grid gap for a track holding nothing. */
+  .day-view:has(.yesterday-banner) {
+    grid-template-areas:
+      "rail header header"
+      "rail note   note"
+      "rail cap    cap"
+      "rail day    tasks";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+
+  .yesterday-banner { grid-area: note; margin-bottom: 0; }
+
   .rail {
     grid-area: rail;
     min-height: 0;
@@ -7249,4 +7265,112 @@ button.danger:focus-visible {
 @media (max-width: 599px) {
   .review { padding: var(--s4) var(--s3) var(--s7); }
   .review-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ------------------------------------------------------------------------
+   Command palette - CommandPalette.tsx.
+
+   Anchored near the top rather than centred: the list grows downward as you
+   type, and a centred box that grows in both directions moves the row your
+   eye is already on.
+   ------------------------------------------------------------------------ */
+.palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(64px, 10vh) var(--s4) var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .palette-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+  .palette { animation: detail-in var(--dur-fast) var(--ease) both; }
+}
+
+.palette {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(60vh, 520px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+/* Borderless and large. It is the only field on screen and the only thing
+   with focus - a box drawn around it would be drawing a box around the
+   whole dialog twice. */
+.palette-input {
+  flex-shrink: 0;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 0;
+  background: none;
+  padding: var(--s4);
+  font-size: var(--t-lg);
+}
+
+.palette-input:focus { outline: none; background: none; border-color: color-mix(in srgb, var(--border) 70%, transparent); }
+
+.palette-results {
+  margin: 0;
+  padding: var(--s2);
+  list-style: none;
+  overflow-y: auto;
+}
+
+.palette-group {
+  padding: var(--s3) var(--s2) var(--s1);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.palette-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-control);
+  cursor: pointer;
+}
+
+/* The selection is the keyboard's, not the pointer's - there is no hover
+   state here on purpose. A row that lights up under the mouse while a
+   different row is armed for Enter is two cursors on one list. */
+.palette-row.is-selected { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+
+.palette-row-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-row-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-empty { padding: var(--s4) var(--s3); color: var(--muted); font-size: var(--t-sm); }
+
+@media (max-width: 599px) {
+  .palette-scrim { padding-top: max(32px, 6vh); }
+  .palette-input { font-size: var(--t-input); }
 }

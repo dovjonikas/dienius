@@ -38,6 +38,9 @@ export const SHORTCUTS: Shortcut[] = [
   { key: 'f', label: 'F', description: 'Start Focus on the task that is running now' },
   { key: 'escape', label: 'Esc', description: 'Close whatever is open' },
   { key: '?', label: '?', description: 'This list' },
+  // The one chord in the list, because it is the one every other app with a
+  // palette uses and taking it is less surprising than not taking it.
+  { key: 'ctrl+k', label: 'Ctrl K', description: 'Search everything, or run a command' },
 ]
 
 /**

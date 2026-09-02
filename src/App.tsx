@@ -16,6 +16,7 @@ import { actions as storeActions } from './lib/store'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
+import { CommandPalette, type PaletteAction } from './views/CommandPalette'
 import { shortcutKeyFor } from './lib/shortcuts'
 import { addDays } from './lib/dates'
 import { LibraryView } from './views/LibraryView'
@@ -46,6 +47,7 @@ export function App() {
     : undefined
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   // Bumped by the N shortcut; the effect below acts on it once the day view
   // has actually rendered. A counter rather than a boolean, so pressing N
   // twice in a row focuses twice rather than doing nothing the second time.
@@ -105,16 +107,29 @@ export function App() {
    */
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      // The one chord this app claims, because it is the one every other app
+      // with a palette claims too - taking it is less surprising than not
+      // taking it. Checked before shortcutKeyFor, which rejects every
+      // modifier held: a chord is exactly what that rule exists to leave
+      // alone, and this is the single exception to it.
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen(open => !open)
+        return
+      }
+
       const key = shortcutKeyFor(e)
       if (key === null) return
 
       if (key === 'escape') {
         // Escape closes the loudest thing open, one layer at a time, and
-        // never more than one per press - the overlay, then Focus, then the
-        // clock. Anything with its own dialog (the detail sheet, the actions
-        // menu) stops the event before it reaches here, so those close
-        // themselves first and this never fires underneath them.
-        if (shortcutsOpen) setShortcutsOpen(false)
+        // never more than one per press - the palette, then the shortcut
+        // card, then Focus, then the clock. Anything with its own dialog
+        // (the detail sheet, the actions menu) stops the event before it
+        // reaches here, so those close themselves first and this never
+        // fires underneath them.
+        if (paletteOpen) setPaletteOpen(false)
+        else if (shortcutsOpen) setShortcutsOpen(false)
         else if (focusExpanded) setFocusExpanded(false)
         else if (clockOpen) setClockOpen(false)
         else return
@@ -122,9 +137,9 @@ export function App() {
         return
       }
 
-      // While the card is open it is the only thing listening, so a stray
-      // "3" behind it cannot navigate the page out from under it.
-      if (shortcutsOpen) return
+      // While either of them is open it is the only thing listening, so a
+      // stray "3" behind it cannot navigate the page out from under it.
+      if (shortcutsOpen || paletteOpen) return
 
       switch (key) {
         case '?':
@@ -184,6 +199,33 @@ export function App() {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   })
+
+  /**
+   * What the palette can do, assembled here because this is the only place
+   * that knows all of it. Every one of these is already reachable by hand -
+   * the palette is a faster route, never the only one.
+   */
+  const paletteActions: PaletteAction[] = [
+    { id: 'go-today', label: 'Today', detail: 'The day view', run: () => openDay(todayKey()) },
+    { id: 'go-calendar', label: 'Calendar', detail: 'Stamp templates onto dates', run: () => setView('calendar') },
+    { id: 'go-templates', label: 'Templates', detail: 'Build and edit day templates', run: () => setView('templates') },
+    { id: 'go-library', label: 'Library', detail: 'Books, series, anything with a unit', run: () => setView('library') },
+    { id: 'go-review', label: 'Review', detail: 'How the week went', run: () => setView('review') },
+    { id: 'go-settings', label: 'Settings', detail: 'Sleep, week, nudges, appearance', run: () => setView('settings') },
+    {
+      id: 'new-task',
+      label: 'New task',
+      detail: 'Jump to the box on today',
+      run: () => {
+        openDay(todayKey())
+        setFocusQuickAdd(n => n + 1)
+      },
+    },
+    { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(25 * 60_000) },
+    { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
+    { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
+    { id: 'shortcuts', label: 'Keyboard shortcuts', detail: 'The single-key list', run: () => setShortcutsOpen(true) },
+  ]
 
   /** The task the clock says is happening right now, or nothing. */
   function activeTaskToday() {
@@ -270,6 +312,15 @@ export function App() {
       )}
 
       {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />}
+
+      {paletteOpen && (
+        <CommandPalette
+          actions={paletteActions}
+          onOpenDay={openDay}
+          onOpenLibrary={() => setView('library')}
+          onClose={() => setPaletteOpen(false)}
+        />
+      )}
 
       <FloatingClock />
       <IntervalReminder date={selectedDate} />
