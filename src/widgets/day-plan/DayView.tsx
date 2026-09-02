@@ -11,7 +11,6 @@ import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
 import { computeCapacity, formatCapacityLine, parseMinutesInput } from './capacity'
 import { TimelineGrid } from './TimelineGrid'
-import { IfThenDayRule } from '../if-then/DayRule'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
@@ -35,11 +34,34 @@ export interface DayViewProps {
  */
 const MIN_DRAG_DISTANCE_PX = 8
 
+/**
+ * How long a task that has just been checked stays in the open list before
+ * it moves down into the Done section - long enough for the card's own
+ * finishing animation (.task-leaving in styles.css) to actually be seen.
+ *
+ * The move is the point of the interaction: the list gets shorter every time
+ * something is finished, so by the end of a day the screen is nearly empty
+ * and the progress bar is full. Doing it instantly on the click makes the
+ * card vanish, which reads as "did I just delete that?" rather than as
+ * progress. Holding it for a beat first turns the same state change into
+ * something watched. Kept in sync by hand with the animation duration in
+ * styles.css; if the two ever disagree, the shorter one is what is seen.
+ */
+const DONE_LEAVE_MS = 420
+
 export function DayView({ date, onDateChange }: DayViewProps) {
   const data = useAppData()
   const [input, setInput] = useState(() => consumeDraft(date))
   const [sizeEditingId, setSizeEditingId] = useState<string | null>(null)
   const [sizeDraft, setSizeDraft] = useState('')
+  // The task currently playing its finishing animation - see DONE_LEAVE_MS.
+  // It is already done in the store the instant the checkbox is clicked;
+  // this only holds it in the open list for the length of the animation, so
+  // nothing here can ever disagree with what is actually saved.
+  const [leavingId, setLeavingId] = useState<string | null>(null)
+  const [doneOpen, setDoneOpen] = useState(false)
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const doneListId = useId()
   const day = data.days[date]
   const tasks = sortTasks(day?.tasks ?? [])
   const template = day?.templateId
@@ -57,6 +79,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
       ? `${score.done} of ${score.total} done`
       : `${score.done} of ${score.total} core tasks done`
     : undefined
+  const progressPercent = score.planned && score.total > 0 ? (score.done / score.total) * 100 : 0
+
+  // The open list and the Done section, split from the one sorted list
+  // rather than sorted differently - sortTasks stays the single source of
+  // order within each. A task mid-animation counts as still open, which is
+  // what keeps it drawn in place while its card plays out.
+  const openTasks = tasks.filter(t => !t.done || t.id === leavingId)
+  const doneTasks = tasks.filter(t => t.done && t.id !== leavingId)
 
   const sleep = { sleepWindow: data.settings.sleepWindow, nightSleepWindow: data.settings.nightSleepWindow }
   const capacity = computeCapacity(day?.tasks ?? [], day?.dayType, sleep)
@@ -103,6 +133,27 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     setInput(text)
     saveDraft(date, text)
   }
+
+  // Checking a task off. The store write happens first and unconditionally,
+  // so the score, the timeline block and everything else derived from it all
+  // update on the click itself; only where the row is *drawn* waits. Undoing
+  // (unchecking something that is still mid-animation) cancels the hold
+  // rather than leaving a task pinned in the open list by a timer nobody
+  // can see any more.
+  function handleToggleDone(taskId: string, wasDone: boolean) {
+    actions.toggleTask(date, taskId)
+    if (leaveTimer.current) clearTimeout(leaveTimer.current)
+    if (wasDone) {
+      setLeavingId(null)
+      return
+    }
+    setLeavingId(taskId)
+    leaveTimer.current = setTimeout(() => setLeavingId(null), DONE_LEAVE_MS)
+  }
+
+  useEffect(() => () => {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current)
+  }, [])
 
   function startSizeEdit(task: { id: string; minutes?: number }) {
     setSizeEditingId(task.id)
@@ -350,15 +401,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           <div className="day-title">
             <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
             {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
-            {formattedScore && (
-              <span className="day-score">
-                <span aria-hidden="true">
-                  {formattedScore}
-                  {!isFullDay && <span className="day-score-note"> core</span>}
-                </span>
-                <span className="visually-hidden">{scoreLabel}</span>
-              </span>
-            )}
             {template && (
               <span className="day-template" style={{ background: template.color }}>
                 {template.name}
@@ -369,6 +411,33 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             &rarr;
           </button>
         </div>
+
+        {/* The day's progress, promoted out of the title block it used to
+            sit inside as a small trailing fraction. It is the one number
+            worth reading first thing on opening the app, and a bar says
+            "most of the way there" faster than a fraction does - the
+            fraction stays right beside it, since a bar alone cannot say
+            *which* three of nine. Only ever rendered for a day that has a
+            plan at all: formatDayScore returns null for an empty day rather
+            than "0/0", so nothing here can imply a plan that was never made.
+            The bar itself is aria-hidden, and the fraction keeps the same
+            visible-digits/spoken-sentence pairing it always had - a screen
+            reader gets "three of nine done", not a percentage and a
+            slash. */}
+        {formattedScore && (
+          <div className="day-progress">
+            <div className="day-progress-track" aria-hidden="true">
+              <div className="day-progress-fill" style={{ width: `${progressPercent}%` }} />
+            </div>
+            <span className="day-score">
+              <span aria-hidden="true">
+                {formattedScore}
+                {!isFullDay && <span className="day-score-note"> core</span>}
+              </span>
+              <span className="visually-hidden">{scoreLabel}</span>
+            </span>
+          </div>
+        )}
 
         {/* The "switch fully" request - docs/LAYOUT-WIDE.md section 3.2.
             A width redistribution, not a navigation event: nothing about
@@ -431,13 +500,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             <p>{capacityLine}</p>
           </div>
         )}
-
-        {/* One quiet if-then rule, rotated in from the board that used to be
-            its own tab - see docs/TIMELINE.md section 6. Self-contained: it
-            reads its own data and renders nothing when there is no eligible
-            rule for today, the same way the capacity line above renders
-            nothing for an empty day. */}
-        <IfThenDayRule date={date} />
 
         {/* The grid's own disclosure, collapsed by default - see
             docs/RESEARCH-ADHD.md section 7 and docs/TIMELINE.md section 5.
@@ -534,24 +596,77 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         )}
 
         <ul className="task-list" ref={taskListRef} tabIndex={-1}>
-          {tasks.map(task => (
+          {openTasks.map(task => (
             <TaskRow
               key={task.id}
               task={task}
-              date={date}
               isFullDay={isFullDay}
+              leaving={task.id === leavingId}
               sizeEditingId={sizeEditingId}
               sizeDraft={sizeDraft}
               onStartSizeEdit={startSizeEdit}
               onSizeDraftChange={setSizeDraft}
               onCommitSizeEdit={commitSizeEdit}
               onCancelSizeEdit={cancelSizeEdit}
+              onToggleDone={handleToggleDone}
               onOpenActions={() => setActionsSheetTaskId(task.id)}
               selected={selectedTaskId === task.id}
               onToggleSelect={() => toggleSelect(task.id)}
             />
           ))}
         </ul>
+
+        {/* Everything already finished, folded away behind one line. This is
+            the payoff for the checkbox interaction above rather than a
+            filing cabinet: the open list only ever gets shorter as the day
+            goes, so by evening the screen is nearly empty and the bar in
+            the header is nearly full - which is the whole shape of the day
+            in one glance, with no counting.
+
+            A plain aria-expanded disclosure whose panel is collapsed in CSS
+            (display: none, see styles.css) rather than unmounted. Unmounting
+            is this app's usual choice for a disclosure, and it is the right
+            one where the hidden thing is expensive or would be confusing to
+            leave in the page. Neither applies here: these rows are already
+            rendered work, and display: none removes them from the
+            accessibility tree just as completely as unmounting would, while
+            keeping the whole day's list in the DOM for anything - find on
+            page, an export, a browser's own search - that reasonably expects
+            a task not to disappear from the document just because it was
+            finished. */}
+        {doneTasks.length > 0 && (
+          <div className={doneOpen ? 'done-section open' : 'done-section'}>
+            <button
+              type="button"
+              className="done-toggle"
+              aria-expanded={doneOpen}
+              aria-controls={doneListId}
+              onClick={() => setDoneOpen(open => !open)}
+            >
+              <span className="done-caret" aria-hidden="true" />
+              Done ({doneTasks.length})
+            </button>
+            <ul className="task-list task-list-done" id={doneListId}>
+              {doneTasks.map(task => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isFullDay={isFullDay}
+                  sizeEditingId={sizeEditingId}
+                  sizeDraft={sizeDraft}
+                  onStartSizeEdit={startSizeEdit}
+                  onSizeDraftChange={setSizeDraft}
+                  onCommitSizeEdit={commitSizeEdit}
+                  onCancelSizeEdit={cancelSizeEdit}
+                  onToggleDone={handleToggleDone}
+                  onOpenActions={() => setActionsSheetTaskId(task.id)}
+                  selected={selectedTaskId === task.id}
+                  onToggleSelect={() => toggleSelect(task.id)}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
 
         {pushableCount > 0 && (
           <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>

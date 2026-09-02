@@ -490,6 +490,108 @@ export function chooseWidePxPerMinute(
   return Math.min(maxPxPerMinute, Math.max(basePxPerMinute, fitPxPerMinute))
 }
 
+/**
+ * The floors `computeVerticalLayout` reserves per segment, grouped into one
+ * object because `fitPxPerMinute` below has to lay the same day out
+ * repeatedly at different densities - passing four loose numbers through two
+ * functions is how those two call sites drift apart.
+ */
+export interface VerticalFloors {
+  sizedAnchorFloorPx: number
+  unsizedAnchorFloorPx: number
+  gapFloorPx: number
+}
+
+/**
+ * The densest this grid can be drawn at while still fitting entirely inside
+ * `availableHeightPx` - the number that makes "the whole day is one screen"
+ * true rather than approximately true.
+ *
+ * `chooseWidePxPerMinute` (still below, unchanged) answers a different
+ * question: how much of a *surplus* of room to spend. It floors at the
+ * phone's own density, so a day needing more pixels than the screen has
+ * simply overflowed and the page scrolled. That was the honest answer while
+ * the grid sat in ordinary page flow. It is the wrong answer now that the
+ * day view is a fixed-height shell, so this function is allowed to go below
+ * the base density as well as above it.
+ *
+ * Solved by bisection rather than algebra because `computeVerticalLayout`'s
+ * per-segment floors make total height a piecewise-linear function of
+ * density, not a proportional one: each segment contributes
+ * `max(minutes * p, floorPx)`, so the relationship bends at a different `p`
+ * for every segment. Total height is still monotonically non-decreasing in
+ * `p`, which is all bisection needs. Thirty halvings of a range a few
+ * px-per-minute wide lands far below one pixel of drawn height.
+ *
+ * Two cases deliberately hand back `basePxPerMinute` untouched:
+ *
+ * - **Nothing measured yet.** An `availableHeightPx` of zero or less is what
+ *   `useAvailableGridHeight` reports before its first layout pass, and what
+ *   an environment with no layout engine reports always. Fitting a day into
+ *   zero pixels would mean drawing every segment at its bare floor; drawing
+ *   it exactly the way the phone does is the honest fallback.
+ * - **A day that cannot fit at any density.** When the segment floors alone
+ *   already exceed the room available, no `p` satisfies the constraint. Those
+ *   floors are touch targets and legible-text minimums, so they are not
+ *   negotiable: the grid draws at its floors and something scrolls. That is a
+ *   real day that genuinely does not fit on a real screen, and saying so is
+ *   better than shrinking a tap target below where a finger can land.
+ */
+export function fitPxPerMinute(
+  window: Interval,
+  anchors: TimelineAnchorBlock[],
+  floors: VerticalFloors,
+  availableHeightPx: number,
+  maxPxPerMinute: number,
+  basePxPerMinute: number,
+): number {
+  if (availableHeightPx <= 0) return basePxPerMinute
+
+  const heightAt = (pxPerMinute: number) =>
+    computeVerticalLayout(window, anchors, { pxPerMinute, ...floors }).totalHeightPx
+
+  if (heightAt(maxPxPerMinute) <= availableHeightPx) return maxPxPerMinute
+  if (heightAt(0) > availableHeightPx) return basePxPerMinute
+
+  let low = 0
+  let high = maxPxPerMinute
+  for (let i = 0; i < 30; i++) {
+    const mid = (low + high) / 2
+    if (heightAt(mid) <= availableHeightPx) low = mid
+    else high = mid
+  }
+  return low
+}
+
+/**
+ * Which hour marks are legible enough to carry their own "HH:MM" label at a
+ * given drawn density, walked in order and keeping only those far enough
+ * from the last kept one to read as separate text.
+ *
+ * Compressing a day to fit a screen (`fitPxPerMinute` above) can push whole
+ * hours closer together than a line of 11px text is tall, and this app has a
+ * standing rule that its text is always readable - two hour labels drawn on
+ * top of each other break it. The *rules* are unaffected and still drawn at
+ * every hour: position within the day is what the eye actually reads off the
+ * grid, and a rule with no number beside it still says "an hour passed here."
+ * Only the number is dropped, and only where there was never room to print it.
+ */
+export function legibleHourLabels(
+  marks: number[],
+  topPx: (minutes: number) => number,
+  minGapPx: number,
+): Set<number> {
+  const kept = new Set<number>()
+  let lastLabelledPx = -Infinity
+  for (const mark of marks) {
+    const px = topPx(mark)
+    if (px - lastLabelledPx < minGapPx) continue
+    kept.add(mark)
+    lastLabelledPx = px
+  }
+  return kept
+}
+
 // Anchors that touch or overlap in their drawn interval (see
 // `drawnInterval`) share one vertical extent on the grid regardless of how
 // many side-by-side columns they end up packed into - a cluster's own

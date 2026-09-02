@@ -650,12 +650,49 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .day-title h2 { margin: 0; }
 .day-subtitle { color: var(--muted); font-size: 13px; }
 
+/* The progress meter beside the date - a bar and the same plain fraction
+   that used to trail the title. Full width on a phone, where it sits on its
+   own line under the day-nav row; a flexible middle column at the wide
+   breakpoint, where the whole header is one line. See DayView.tsx for why
+   the bar is decorative and the fraction carries the spoken sentence. */
+.day-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.day-progress-track {
+  flex: 1;
+  min-width: 60px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+
+/* The one place in this app that draws a filled accent bar. It earns it:
+   this is the single number a person opens the app to see, and it is the
+   only thing on the screen that says "this is going fine" without any
+   reading. Width is set inline from the real count, never animated from a
+   guess - see docs/RESEARCH-ADHD.md section 7 on progress that is measured
+   rather than implied. */
+.day-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-progress-fill { transition: none; }
+}
+
 .day-score {
-  display: inline-block;
-  margin-left: 8px;
   color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Only rendered on a day whose type is not full, so a core-only score
@@ -679,11 +716,17 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 /* The capacity line - see docs/TIMELINE.md section 8. Plain body text at
    the same weight as everything around it: being over is information, not
    a warning, so nothing here ever borrows --danger. */
-.capacity-line { margin-bottom: 16px; }
+/* Reads as the timeline column's own caption now rather than as a paragraph
+   of its own: same words, same neutral register (being over is information,
+   not a warning, so nothing here borrows --danger), one line of muted type
+   directly above the picture it describes. The height it used to claim went
+   to the grid, which is what actually had to fit on one screen. */
+.capacity-line { margin-bottom: 8px; }
 
 .capacity-line p {
-  margin: 0 0 8px;
-  color: var(--text);
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
   line-height: 1.5;
 }
 
@@ -1018,6 +1061,22 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 .timeline-anchor-colored {
   border: none;
   color: rgba(0, 0, 0, 0.7);
+}
+
+/* A finished anchor. Drained of its fill and struck through, matching what
+   the same task's card does in the list - so the grid reads as "this much of
+   the day is behind me" at a glance. It keeps its full height and position:
+   the block is what makes the shape of the day legible, and a day with its
+   morning quietly removed is not the same picture. !important is not needed
+   here - the colored-anchor rule below sets background from an inline style
+   on the element itself, so this rule overrides only what CSS can, and the
+   inline fill is muted separately by the opacity on the block as a whole. */
+.timeline-anchor-done {
+  opacity: 0.42;
+}
+
+.timeline-anchor-done .timeline-anchor-title {
+  text-decoration: line-through;
 }
 
 /* An anchor with no size yet has no honest height to draw - see
@@ -1355,29 +1414,54 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .task-list { list-style: none; margin: 0; padding: 0; }
 
+/* A card, not a row - see TaskRow.tsx's own comment on the two-line shape.
+   The whole card is one grid: the label (checkbox and title) on the first
+   row, everything that qualifies the task on the second, and the actions
+   button spanning both on the right so it stays vertically centred against
+   the card as a whole rather than against either line. */
 .task {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--edge);
   margin-bottom: 8px;
-  padding: 0 8px 0 14px;
+  padding: 9px 4px 9px 14px;
   box-shadow: var(--shadow);
+  transition: border-color 0.15s, background 0.15s, opacity 0.2s;
 }
+
+.task:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
 
 .task-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label menu"
+    "meta  menu";
   align-items: center;
+  column-gap: 4px;
 }
 
-.task label {
+.task-check {
+  grid-area: label;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+/* Aligned under the title, not under the checkbox - the checkbox's own
+   width plus the label's gap. A meta line that starts at the card's left
+   edge reads as a second item; one that starts where the title starts
+   reads as belonging to it. */
+.task-meta {
+  grid-area: meta;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 12px;
-  flex: 1;
-  padding: 12px 0;
-  cursor: pointer;
-  min-width: 0;
+  gap: 2px 10px;
+  padding-left: 34px;
+  min-height: 20px;
 }
 
 .task input[type='checkbox'] {
@@ -1387,12 +1471,34 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .check {
-  width: 20px;
-  height: 20px;
+  position: relative;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  border: 2px solid color-mix(in srgb, var(--muted) 55%, var(--border));
+  border-radius: 7px;
   transition: background 0.15s, border-color 0.15s;
+}
+
+/* The tick itself, drawn as two borders of a rotated box rather than an icon
+   font or an SVG - no asset to load and nothing to go missing offline. White,
+   because it is only ever drawn on a box filled with --accent, and white on
+   --accent is a contrast this stylesheet already stakes a control on
+   (.segmented button.active, above) across all eleven presets in both modes.
+   Scaled to nothing until the box is actually checked, so the tick appears to
+   be drawn on rather than swapped in. */
+.check::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+  transition: transform 0.18s cubic-bezier(0.2, 1.6, 0.5, 1);
 }
 
 .task input:checked + .check {
@@ -1400,6 +1506,8 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   border-color: var(--accent);
   animation: pop 0.25s ease;
 }
+
+.task input:checked + .check::after { transform: rotate(45deg) scale(1); }
 
 .task input:focus-visible + .check {
   outline: 2px solid var(--accent);
@@ -1412,20 +1520,76 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
   100% { transform: scale(1); }
 }
 
-.task-time { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.task-title { transition: opacity 0.2s; }
+/* The card on its way down to the Done section - see DONE_LEAVE_MS in
+   DayView.tsx, which holds the row in the open list for exactly as long as
+   this runs. It shrinks and fades rather than sliding: the card is not going
+   to a place on screen the eye can follow (the Done section is usually
+   collapsed), so a slide would point at nothing. Shrinking says "finished
+   with" and leaves the list visibly one card shorter, which is the whole
+   point of checking something off. */
+@keyframes task-leave {
+  0% { opacity: 1; transform: scale(1); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.94); }
+}
+
+.task-leaving {
+  animation: task-leave 0.42s ease forwards;
+  transform-origin: center left;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-leaving { animation: none; opacity: 0.5; }
+  .task input:checked + .check { animation: none; }
+  .check::after { transition: none; }
+}
+
+.task-time {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* The title carries the card - one clear step above everything under it, so
+   what the task actually is arrives first and the rest reads as annotation.
+   Allowed to wrap onto a second line rather than truncate: a task whose name
+   is cut off is a task you have to open something to identify. */
+.task-title {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text);
+  min-width: 0;
+  transition: opacity 0.2s;
+}
+
 .task.done .task-title { text-decoration: line-through; opacity: 0.45; }
+.task.done { box-shadow: none; }
 
 /* The title, for a float still worth placing, doubles as the control that
    selects it for "where does this fit" - see TaskRow.tsx's own comment and
    TaskGapOffers.tsx. A real button reset back to reading as plain text: no
    border or background of its own at rest, so it looks exactly like the
    plain span it replaces until a person actually reaches for it. */
+/* Deliberately escapes this app's usual `button { min-height: 44px }` floor,
+   the second control to do so - see docs/OPEN-QUESTIONS.md, which carries
+   both. Holding 44px here made a float's card sixteen pixels taller than an
+   anchor's, because this button is the tallest thing in the title row; a
+   task list whose rows change height depending on whether the task has a
+   time is a list that is harder to scan, which is the one job the list has.
+   The padding still gives it a hit area around 29px tall across the full
+   width of the title, and the negative margin keeps that area from
+   contributing to layout, so the card stays the height of its content. The
+   same task's actions menu, at the full 44px, is a stone's throw away on the
+   same card and reaches the same placement. */
 .task-title-select {
   background: none;
   border: none;
-  margin: 0;
-  padding: 2px 6px;
+  min-height: 0;
+  margin: -5px -6px;
+  padding: 5px 6px;
   border-radius: var(--radius);
   font: inherit;
   color: inherit;
@@ -1464,7 +1628,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    actions menu, where the bound's own explanation lives too. */
 .task-state {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 /* Shown per task only on a day whose type is not full, next to the ones
@@ -1473,21 +1637,30 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    the label that explains the score, not a secondary detail. */
 .task-core {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
 }
 
+/* In the meta line now rather than at the far right of the card, so the two
+   facts that qualify a task - when it is, and how long it takes - read as one
+   phrase instead of sitting at opposite ends. Still a real button with a real
+   target: the visible text is small, but the padding keeps the hit area
+   comfortable, and it is the only control down here. */
 .task-size {
   border: none;
   background: none;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
-  min-width: 44px;
-  padding: 8px;
+  min-height: 0;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: var(--radius);
   flex-shrink: 0;
 }
+
+.task-size:hover { color: var(--text); background: color-mix(in srgb, var(--border) 25%, transparent); }
 
 .task-size:focus-visible {
   outline: 2px solid var(--accent);
@@ -1496,7 +1669,7 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 
 .task-size-input {
   width: 64px;
-  min-height: 44px;
+  min-height: 32px;
   flex-shrink: 0;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -1528,10 +1701,11 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
    bug once, and this button is now the only path to some of what it
    opens, so it cannot be allowed to regress into one. */
 .task-menu-button {
+  grid-area: menu;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
+  min-width: 40px;
   min-height: 44px;
   flex-shrink: 0;
   border: none;
@@ -1547,6 +1721,76 @@ h3 { font-size: 14px; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
 }
 
 .task-maxed { border-color: var(--muted); }
+
+/* Everything already finished, folded behind one line - see DayView.tsx.
+   Deliberately the quietest thing in the pane: no card, no shadow, muted
+   type. Finished work is worth being able to find, and worth nothing at all
+   as a thing competing for attention with what is still open. */
+/* A hairline above it, and nothing else. The fold needs to read as a
+   boundary - below this line is finished, above it is not - without reading
+   as a heading competing with the open list. */
+.done-section {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.done-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: left;
+  border-radius: var(--radius);
+}
+
+.done-toggle:hover { color: var(--text); }
+
+.done-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A plain triangle from borders, pointing right when closed and down when
+   open - the same no-asset approach the checkbox tick uses. */
+.done-caret {
+  width: 0;
+  height: 0;
+  flex-shrink: 0;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.18s ease;
+}
+
+.done-section.open .done-caret { transform: rotate(90deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .done-caret { transition: none; }
+}
+
+/* The collapsed state, in CSS rather than by unmounting - see the comment on
+   this section in DayView.tsx for why. display: none specifically: it takes
+   the rows out of the accessibility tree as completely as removing them
+   would, which visibility or a zero height would not. */
+.done-section:not(.open) .task-list-done { display: none; }
+
+.task-list-done { margin-top: 2px; }
+
+.task-list-done .task {
+  background: none;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--border) 55%, transparent);
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
 
 .rollover {
   width: 100%;
@@ -2732,8 +2976,46 @@ button.danger {
      override above already uses, so Calendar, Templates and Settings keep
      the phone's own bottom padding unchanged at every width - this
      document only ever touches the Today tab. */
-  .app:has(.main-day) { max-width: 1600px; padding-bottom: 24px; }
-  .main-day { max-width: 1600px; }
+  /* The fixed-height shell. This is what makes "the whole day is one
+     screen" a structural fact rather than something that happens to be true
+     for a particular day: the app is exactly as tall as the viewport, the
+     day view is exactly as tall as what is left under the header, and every
+     column inside it is therefore bounded. Nothing below has to guess how
+     much room it has, and nothing can push the page taller than the window.
+
+     100dvh, not 100vh: on a phone-shaped browser window the two differ by
+     the height of retracting chrome, and dvh is the one that tracks it. This
+     block only matches at 1024px and up, where that rarely bites, but there
+     is no reason to use the value that is wrong when it does.
+
+     Scoped to :has(.main-day), so it is only ever the Today tab. Calendar,
+     Templates and Settings are ordinary documents that scroll as documents
+     do - they are lists that genuinely have no length limit, and pinning
+     them to the viewport would mean inventing a scroll container inside each
+     one for nothing.
+
+     Escaping .app's own max-width: 760px needs the ancestor itself to
+     widen, not just this element - a child's max-width can never exceed the
+     box its parent already constrained it to. */
+  .app:has(.main-day) {
+    max-width: 1600px;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+  }
+
+  /* min-height: 0 on every link in this chain. A flex item's default
+     min-height is auto - its content's height - which silently defeats the
+     whole arrangement: the item refuses to shrink below its content, the
+     content overflows the shell, and the page scrolls again. It has to be
+     restated at each level, because each level is itself a flex or grid
+     item of the level above. */
+  .main-day {
+    max-width: 1600px;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 /* Step 3: day-pane / task-pane - docs/LAYOUT-WIDE.md section 5. Below the
@@ -2763,21 +3045,32 @@ button.danger {
     grid-template-areas:
       "rail header header"
       "rail day    tasks";
-    gap: 24px;
+    /* The header row takes what it needs; the content row takes everything
+       left, and no more - minmax(0, 1fr) rather than a plain 1fr for the
+       same reason the flex chain above needs min-height: 0. A bare 1fr row
+       has an implicit auto minimum and will happily grow past the grid. */
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    gap: 16px 24px;
   }
 
   .rail {
     grid-area: rail;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .day-pane {
     grid-area: day;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .task-pane {
     grid-area: tasks;
     display: block;
+    min-height: 0;
   }
 
   /* Step 4: dayLayoutFocus's single-pane states. Only one of .day-pane /
@@ -2800,19 +3093,67 @@ button.danger {
   /* The header row: day-nav plus the focus control, side by side, wrapping
      if the window is narrow enough at the breakpoint's own edge that they
      cannot both fit on one line without crowding. */
+  /* One thin line across the top of the day: where you are, how far along
+     you are, and which panes are showing. Everything in it is a fixed height
+     except the progress bar, which takes the slack - so the row's height
+     does not change as the day fills up. */
   .day-header {
     grid-area: header;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 12px 20px;
   }
 
   .day-header .day-nav {
-    flex: 1;
+    flex: 0 0 auto;
+    gap: 8px;
     margin-bottom: 0;
   }
+
+  /* Left-aligned beside the arrows at this width, rather than centred
+     between them the way it is on a phone where the nav row is the full
+     width of the screen. */
+  .day-header .day-title {
+    text-align: left;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+
+  .day-header .day-nav > button { width: 36px; height: 36px; min-height: 36px; }
+
+  .day-header .day-progress {
+    flex: 1 1 200px;
+    margin-bottom: 0;
+    max-width: 420px;
+  }
+
+  .day-header .day-layout-focus { margin-left: auto; }
+
+  /* Which panes are showing is a preference about this screen, not
+     information about the day, so it does not get to be the loudest accent
+     on it - the progress bar next to it earns that. A tinted fill instead of
+     the solid accent .segmented uses everywhere else, and shorter, so the
+     header stays one thin line. Scoped to this one control; the same
+     component in Settings and Templates is unchanged. */
+  .day-layout-focus button { padding: 6px 12px; min-height: 32px; font-size: 13px; }
+
+  .day-layout-focus button.active {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--text);
+  }
+
+  /* Thinner at this width than on a phone, where the top padding is also
+     clearing a notch. The room goes to the day underneath it. */
+  .app:has(.main-day) .app-header {
+    padding-top: max(14px, env(safe-area-inset-top));
+    padding-bottom: 10px;
+  }
+
+  .app:has(.main-day) .brand { font-size: 18px; }
+  .app:has(.main-day) nav button { min-height: 34px; padding: 6px 12px; font-size: 14px; }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
@@ -2828,9 +3169,26 @@ button.danger {
      instead - a single, ordinary scrollbar, not a small one hidden inside
      a pane - which is the honest outcome for a day that truly does not
      fit, not a regression. */
+  /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
+     the phone's stacked layout) is gone at this width: the grid is a
+     dedicated column in a shell that is already exactly the height of the
+     window, and TimelineGrid.tsx now draws this day at whatever density
+     makes it fit that column exactly (fitPxPerMinute). A container that
+     clipped it back to a fixed height would reintroduce precisely the
+     internal scrollbar this layout exists to remove. */
   .timeline-grid-scroll {
     max-height: none;
     overflow-y: visible;
+  }
+
+  /* The grid takes the whole column under the capacity caption, and is what
+     useAvailableGridHeight measures against. flex: 1 with min-height: 0, so
+     its height comes from the column rather than from its own contents -
+     which is exactly what makes the measurement non-circular. */
+  .timeline-grid-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-bottom: 0;
   }
 
   /* The task pane has the same "half the window is empty" problem the
@@ -2847,11 +3205,99 @@ button.danger {
   .task-pane {
     display: flex;
     flex-direction: column;
+    gap: 10px;
   }
 
+  /* The open list takes the column's slack and, only if a day is genuinely
+     longer than the screen, scrolls inside it - so quick-add stays pinned at
+     the top and the Done fold stays pinned at the bottom, where they can
+     both be found without hunting. This is the one scroll container the day
+     view keeps, and on an ordinary day it never engages: the list gets
+     shorter every time something is checked off. scrollbar-gutter keeps the
+     cards from shifting sideways at the moment it does. */
+  /* Cards stack from the top and stop - they do not stretch to fill the
+     column. A list that grows to meet the bottom of the window puts a
+     widening hole between the last card and whatever follows it, which
+     reads as a gap in the plan rather than as room to spare.
+
+     The list only scrolls if a day is genuinely longer than the screen, and
+     on an ordinary day it never does: it gets shorter every time something
+     is checked off. scrollbar-gutter keeps the cards from shifting sideways
+     at the moment it starts. */
   .task-pane .task-list {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
   }
+
+  /* The pane's own 10px gap already separates quick-add from the list; the
+     phone's stacked margin on top of it would just be doubled spacing. */
+  .task-pane .quick-add { flex: 0 0 auto; margin-bottom: 0; }
+  .task-pane .done-section { flex: 0 0 auto; margin-top: 0; }
+
+  /* The end-of-day action, held at the bottom of the column by the auto
+     margin rather than trailing the list. It is the last thing you do with a
+     day, and it stays in the same place all day instead of walking up the
+     screen as tasks are finished. */
+  .task-pane .rollover,
+  .task-pane .rollover-note { flex: 0 0 auto; margin-top: auto; }
+
+  /* The Done fold gets its own bounded scroll for the same reason, so
+     opening it on a day with twenty finished tasks pushes nothing off the
+     bottom of the window. */
+  .task-pane .task-list-done {
+    max-height: 34vh;
+    overflow-y: auto;
+  }
+}
+
+/* A wide but short window - a 1366x768 laptop is the ordinary case, and the
+   one this app has to hold a full nine-task day on without anything
+   scrolling. The timeline already handles its own share by drawing denser
+   (fitPxPerMinute); the task column cannot compress time, so it spends less
+   on padding instead. Nothing here changes the type hierarchy that makes a
+   card scannable - the title still leads at a clear step above the line
+   under it - only the air around it, and only where there is not enough of
+   it to go around.
+
+   Keyed on viewport height rather than measured in JavaScript on purpose: a
+   measured version would have to re-run on every task added or finished, and
+   would make how a card looks depend on how many of them there are, which is
+   a worse thing to explain than "short screen, tighter cards." */
+@media (min-width: 1024px) and (max-height: 900px) {
+  /* The card's own height here is set by the actions button inside it, which
+     holds this app's 44px touch minimum and is not negotiable - 1024x768 is
+     an iPad in landscape, a real finger on a real screen. So the saving comes
+     out of the padding around that button rather than out of the button, and
+     a card ends up almost exactly as tall as the control it contains. */
+  .task-pane .task {
+    padding: 4px 4px 4px 12px;
+    margin-bottom: 5px;
+  }
+
+  .task-pane .task-title { font-size: 14.5px; line-height: 1.3; }
+  .task-pane .task-meta { min-height: 16px; gap: 2px 8px; }
+  .task-pane .task-time,
+  .task-pane .task-size,
+  .task-pane .task-state { font-size: 12px; }
+  .task-pane .task-size { padding: 2px 6px; margin: -2px -6px; }
+  .task-pane .quick-add { padding: 10px 14px; min-height: 0; }
+  .task-pane .done-toggle { min-height: 30px; padding: 4px; }
+  .task-pane .rollover { padding: 8px; min-height: 38px; }
+}
+
+/* The last of it, and the one part that needs a second condition. A card on a
+   short screen is as tall as the actions button inside it, and that button
+   holds 44px because 44px is a fingertip. Where the pointer is a mouse there
+   is no fingertip to hold it for - (pointer: fine) is exactly that case - so
+   the button can come down to 40px and take the card with it, which is what
+   lets a full nine-task day sit on a 1366x768 laptop with nothing scrolling
+   at all. A touch screen at the same size (an iPad in landscape is 1024x768)
+   matches neither half of this and keeps the full target; a long enough day
+   there scrolls the task column, which is the correct trade. */
+@media (min-width: 1024px) and (max-height: 900px) and (hover: hover) and (pointer: fine) {
+  .task-pane .task-menu-button { min-height: 40px; }
 }
 
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only

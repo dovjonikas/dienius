@@ -6,6 +6,7 @@ import { ThemeGallery } from './ThemeGallery'
 import { ThemeModeControl } from './ThemeModeControl'
 import { ThemeOverridePanel } from './ThemeOverridePanel'
 import { TimeStepInput } from './TimeStepInput'
+import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 
 /**
  * One bedtime or wake-time field, wrapping `TimeStepInput` for the sleep
@@ -171,6 +172,21 @@ export function SettingsView() {
             />
           </div>
         </div>
+      </div>
+      <div className="settings-group">
+        <h3>Rules</h3>
+        {/* If-then rules, parked here while they wait for a design worth
+            giving them. They used to surface as a line on the day view, and
+            on a day with no eligible rule that line was an empty prompt
+            taking up the one part of the screen that has to answer "what am
+            I doing now" in two seconds. The rules themselves are unchanged
+            and every one already written is still here - only where they
+            live moved. */}
+        <p className="muted">
+          If-then plans: a specific trigger paired with a specific response, written down before
+          you need it. They are not shown on the day view for now.
+        </p>
+        <IfThenBoard />
       </div>
       <div className="settings-group">
         <h3>Data</h3>

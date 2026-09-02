@@ -1,5 +1,4 @@
 import type { Task } from '../../lib/types'
-import { actions } from '../../lib/store'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { useLongPress } from './useLongPress'
@@ -27,8 +26,14 @@ export function boundNote(pushCount: number): string {
 
 export interface TaskRowProps {
   task: Task
-  date: string
   isFullDay: boolean
+  /**
+   * True while this row is playing its finishing animation on the way down
+   * to the Done section - see `DONE_LEAVE_MS` in `DayView.tsx`, which owns
+   * both the timing and which row it applies to. Purely a class on the card;
+   * the task itself is already done in the store by the time this is true.
+   */
+  leaving?: boolean
   sizeEditingId: string | null
   sizeDraft: string
   onStartSizeEdit: (task: { id: string; minutes?: number }) => void
@@ -44,6 +49,15 @@ export interface TaskRowProps {
    * button below.
    */
   onOpenActions: () => void
+  /**
+   * Checking the task off, or unchecking it. Routed up to `DayView` rather
+   * than calling `actions.toggleTask` here the way this row used to, because
+   * finishing a task is no longer a change to this row alone: it also starts
+   * the hand-off that moves the card into the Done section. The store write
+   * still happens first and unconditionally up there - see
+   * `handleToggleDone`.
+   */
+  onToggleDone: (taskId: string, wasDone: boolean) => void
   /**
    * True while this task is the one selected for "where does this fit" -
    * see `TaskGapOffers.tsx` and the module comment on the title button
@@ -72,8 +86,8 @@ export interface TaskRowProps {
  */
 export function TaskRow({
   task,
-  date,
   isFullDay,
+  leaving = false,
   sizeEditingId,
   sizeDraft,
   onStartSizeEdit,
@@ -81,6 +95,7 @@ export function TaskRow({
   onCommitSizeEdit,
   onCancelSizeEdit,
   onOpenActions,
+  onToggleDone,
   selected,
   onToggleSelect,
 }: TaskRowProps) {
@@ -126,6 +141,7 @@ export function TaskRow({
 
   const classNames = ['task']
   if (task.done) classNames.push('done')
+  if (leaving) classNames.push('task-leaving')
   if (atBound) classNames.push('task-maxed')
   const stateId = `task-state-${task.id}`
   const coreId = `core-badge-${task.id}`
@@ -152,17 +168,30 @@ export function TaskRow({
 
   return (
     <li className={classNames.join(' ')}>
+      {/* Two rows, not one: the title on its own line at full weight, and
+          everything that qualifies it - the time, the size, whether it is
+          core, whichever push state applies - gathered underneath in one
+          quiet line. The old row put all six side by side at nearly the
+          same size, which is six things to read before knowing what the
+          task is. See docs/RESEARCH-ADHD.md section 7: what gets scanned
+          first has to be visibly first.
+
+          The label still wraps exactly the checkbox and the title, so
+          tapping the words toggles the task and a long press anywhere on
+          them opens the actions menu, both unchanged. The meta line sits
+          outside it, because the controls in it (size, and nothing else
+          today) have to be able to take a click of their own without the
+          label forwarding it to the checkbox. */}
       <div className="task-row">
-        <label {...(longPressEligible ? longPress : {})}>
+        <label className="task-check" {...(longPressEligible ? longPress : {})}>
           <input
             type="checkbox"
             checked={task.done}
             aria-label={task.title}
             aria-describedby={describedBy}
-            onChange={() => actions.toggleTask(date, task.id)}
+            onChange={() => onToggleDone(task.id, task.done)}
           />
           <span className="check" aria-hidden="true" />
-          {task.time && <span className="task-time">{task.time}</span>}
           {selectable ? (
             <button
               type="button"
@@ -176,6 +205,9 @@ export function TaskRow({
           ) : (
             <span className="task-title">{task.title}</span>
           )}
+        </label>
+        <div className="task-meta">
+          {task.time && <span className="task-time">{task.time}</span>}
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
@@ -203,7 +235,6 @@ export function TaskRow({
           ) : showPushedMark ? (
             <span id={stateId} className="task-state">pushed {pushCountLabel(pushCount)}</span>
           ) : null}
-        </label>
         {sizeEditingId === task.id ? (
           <input
             className="task-size-input"
@@ -231,6 +262,7 @@ export function TaskRow({
             {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
           </button>
         )}
+        </div>
         {/* The single door to everything else this task can do - place or
             un-anchor, push, mark ongoing, delete - see
             docs/TIMELINE.md section 5 and TaskActionsSheet.tsx. Always

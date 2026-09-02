@@ -8,6 +8,16 @@ export interface IfThenDayRuleProps {
 }
 
 /**
+ * **Currently unmounted.** Nothing renders this today - see
+ * docs/DECISIONS.md, "One screen, zero scroll." It surfaced as a line on the
+ * day view, and on a day with no eligible rule that line was an empty prompt
+ * sitting in the part of the screen that has to answer "what am I doing now"
+ * in two seconds. If-then rules themselves are unchanged and still authored
+ * through `IfThenBoard`, which now lives under Settings; only this
+ * surfacing of one of them on the day view was taken out. Kept, with its own
+ * tests, because the mechanism is right and only the placement was wrong -
+ * this is parked for a design worth giving it, not abandoned.
+ *
  * The one if-then rule surfaced on the day view - docs/TIMELINE.md
  * section 6, and the reasoning behind moving it here at all is
  * docs/RESEARCH-ADHD.md sections 1 and 2: a rule filed in its own tab is a

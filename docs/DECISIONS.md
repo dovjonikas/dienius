@@ -470,3 +470,71 @@ gaps the grid exists to show clearly. The bounded peek gives the boundary withou
 decorative - `aria-hidden`, inside the grid's existing decorative layer - but the sleep window itself is
 real information, so one visually-hidden sentence states it plainly every time the grid renders,
 regardless of how much of the band today's anchors happen to leave room to show.
+
+---
+
+## One screen, zero scroll - the day view rebuilt around what a glance has to answer
+
+The day view worked and was not worth opening. Everything it knew was on the page, and finding any one
+thing meant scrolling past the rest of it. The rebuild is not new features; it is the same day, arranged
+so that opening the app answers "where am I in this" without a single scroll.
+
+**The day view is a fixed-height shell at the wide breakpoint, not a document.** `.app:has(.main-day)`
+is exactly `100dvh`, a flex column, and every level below it restates `min-height: 0` so it can actually
+shrink to that. This is what turns "the day fits on one screen" from something that happened to be true
+for a particular day into something structural: no column can push the page taller than the window,
+because no column is allowed to be taller than its share. Scoped to the Today tab alone - Calendar,
+Templates and Settings are lists with no natural length limit, and pinning them to the viewport would
+mean inventing a scroll container inside each one for nothing.
+
+**The grid is drawn at whatever density makes today fit, including thinner than the phone.**
+`chooseWidePxPerMinute` only ever answered how much of a *surplus* of room to spend; it floored at the
+phone's own density, so a day needing more pixels than the screen had simply overflowed. That was the
+honest answer while the grid sat in page flow. `fitPxPerMinute` replaces it at the wide breakpoint,
+solved by bisection because `computeVerticalLayout`'s per-segment floors make total height piecewise
+linear in density rather than proportional. The floors themselves did not move: a gap is still at least
+44px, an anchor still at least 32px, so compression buys room out of empty time and never out of a tap
+target. Where the floors alone exceed the room available, the grid draws at its floors and something
+scrolls - a day that genuinely does not fit on a real screen, said out loud rather than papered over.
+
+**Hour labels thin out under compression; hour rules never do.** A compressed day can put whole hours
+closer together than a line of type is tall, and this app has a standing rule that its text is always
+readable. `legibleHourLabels` keeps the number only where there is room to print it. The rules stay at
+every hour: position within the day is what the eye reads off a grid, and a rule with no number beside
+it still says an hour passed here.
+
+**Checking a task off is the interaction the whole screen is built around.** The store write happens on
+the click; only where the row is drawn waits. For `DONE_LEAVE_MS` the card stays in the open list
+playing a shrink-and-fade, then moves into a collapsed `Done (n)` fold at the bottom, while the same
+task's block in the grid goes muted and struck through and the header's bar moves. Doing the move
+instantly makes the card vanish, which reads as "did I just delete that?"; holding it for a beat turns
+the same state change into something watched. The payoff compounds: the open list only ever gets
+shorter, so by evening the screen is nearly empty and the bar is nearly full, which is the shape of the
+whole day with no counting.
+
+**The Done fold is collapsed in CSS, not unmounted.** This app's usual choice for a disclosure is to
+unmount the panel, and that is right where the hidden thing is expensive or confusing to leave in the
+page. Neither applies here: these rows are already rendered work, and `display: none` removes them from
+the accessibility tree exactly as completely as unmounting would, while keeping the whole day in the
+document for find-on-page and anything else that reasonably expects a finished task not to vanish from
+it.
+
+**A card, not a row.** The title now leads on its own line at a clear step above everything under it,
+and the time, size, core mark and push state gather in one quiet line beneath. The old row put six
+things side by side at nearly one size, which is six things to read before knowing what the task is -
+see `docs/RESEARCH-ADHD.md` section 7 on what has to be visibly first.
+
+**On a short wide screen the cards spend less on padding, keyed on viewport height rather than measured
+in JavaScript.** A measured version would re-run on every task added or finished and would make how a
+card looks depend on how many there are, which is a worse thing to explain than "short screen, tighter
+cards." The type hierarchy is untouched; only the air around it moves. One rule inside that block needs
+a second condition: a card there is as tall as the 44px actions button inside it, and 44px is a
+fingertip - so it comes down to 40px only under `(pointer: fine)`, where there is no fingertip to hold
+it for. A touch screen at the same size (an iPad in landscape is 1024x768) keeps the full target and a
+long enough day scrolls its task column, which is the correct trade.
+
+**If-then rules moved to Settings, unchanged.** They surfaced as a line on the day view, and on a day
+with no eligible rule that line was an empty prompt occupying the part of the screen that has to answer
+"what am I doing now" in two seconds. Every rule already written is still there and `IfThenBoard` is
+still the one place they are authored; only where they live moved. `IfThenDayRule` is kept, tested and
+currently unmounted - parked for a design worth giving it, not deleted.

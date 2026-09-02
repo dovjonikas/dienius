@@ -4,7 +4,6 @@ import { formatDuration, windowFor, type SleepSettings } from './capacity'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
-  chooseWidePxPerMinute,
   computeTimelineLayout,
   computeVerticalLayout,
   currentMinutes,
@@ -12,6 +11,8 @@ import {
   formatClock,
   halfHourMarks,
   hourMarks,
+  fitPxPerMinute,
+  legibleHourLabels,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
 
@@ -101,6 +102,15 @@ const GAP_MIN_HEIGHT_PX = 44
  * styles.css.
  */
 const GUTTER_PX = 44
+
+/**
+ * How close two hour labels are allowed to get before the later one drops
+ * its number - see `legibleHourLabels` in timelineLayout.ts. The label is
+ * 11px type, so this is roughly two and a half lines of it: enough that two
+ * adjacent times read as two separate times rather than as one smudge, on a
+ * grid that has been compressed to fit a short screen.
+ */
+const MIN_HOUR_LABEL_GAP_PX = 28
 
 export interface TimelineGridProps {
   /**
@@ -292,22 +302,33 @@ export function TimelineGrid({
   // PX_PER_MINUTE, unconditionally - isWide defaults to false and
   // availableHeightPx is always null in that case, so nothing here can
   // change what the phone draws.
-  const pxPerMinute = isWide
-    ? chooseWidePxPerMinute(PX_PER_MINUTE, window.end - window.start, availableHeightPx ?? 0, MAX_PX_PER_MINUTE_WIDE)
-    : PX_PER_MINUTE
-
-  // See computeVerticalLayout's own doc comment: this is what stops a
-  // short gap's touch-target floor from ever being drawn over the anchor
+  // See computeVerticalLayout's own doc comment: these floors are what stop
+  // a short gap's touch-target minimum from ever being drawn over the anchor
   // that follows it. A day with any unsized anchor draws no gap objects at
   // all (see computeTimelineLayout), so no floor is reserved for a button
   // that will never exist there.
-  const vertical = computeVerticalLayout(window, anchors, {
-    pxPerMinute,
+  const floors = {
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
     unsizedAnchorFloorPx: MIN_ANCHOR_HEIGHT,
     gapFloorPx: unsizedAnchorCount > 0 ? 0 : GAP_MIN_HEIGHT_PX,
-  })
+  }
+
+  // At the wide breakpoint the day view is a fixed-height shell (see the
+  // .app:has(.main-day) block in styles.css) whose whole point is that the
+  // day is one screen with nothing to scroll. So the density here is
+  // whatever makes this day fit the room actually measured for it - denser
+  // than the phone where there is room to spare, thinner where there is
+  // not, which is the half chooseWidePxPerMinute deliberately would not do.
+  // Off the wide breakpoint this is exactly PX_PER_MINUTE, unconditionally:
+  // isWide defaults to false and availableHeightPx is always null in that
+  // case, so nothing here can change what the phone draws.
+  const pxPerMinute = isWide
+    ? fitPxPerMinute(window, anchors, floors, availableHeightPx ?? 0, MAX_PX_PER_MINUTE_WIDE, PX_PER_MINUTE)
+    : PX_PER_MINUTE
+
+  const vertical = computeVerticalLayout(window, anchors, { pxPerMinute, ...floors })
   const heightPx = Math.round(vertical.totalHeightPx)
+  const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX)
 
   // Only ever true against today's own window - see the `isToday` prop's
   // own doc comment. A day whose anchors are entirely in the past or
@@ -378,7 +399,7 @@ export function TimelineGrid({
 
             {marks.map(mark => (
               <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>
-                <span className="timeline-hour-label">{formatClock(mark)}</span>
+                {labelledMarks.has(mark) && <span className="timeline-hour-label">{formatClock(mark)}</span>}
                 <span className="timeline-hour-rule" />
               </div>
             ))}
@@ -411,6 +432,14 @@ export function TimelineGrid({
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')
               if (anchor.clippedEnd) classNames.push('timeline-anchor-clipped')
               if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
+              // Finished work reads as finished here too, not just in the
+              // task list: the same muted fill and struck-through title, so
+              // one look at the grid says how much of the day is behind you
+              // without counting anything. Never removed from the grid - the
+              // block is what makes the shape of the day legible, and a day
+              // with its afternoon quietly deleted out of it is not the same
+              // picture.
+              if (sourceTask?.done) classNames.push('timeline-anchor-done')
               if (compact) classNames.push('timeline-anchor-compact')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
