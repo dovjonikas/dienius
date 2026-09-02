@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
 import { MAX_HIGHLIGHTS } from './types'
 import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
+import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -139,9 +140,99 @@ export const actions = {
     commit({ ...withDay(date, { ...day, tasks }), library })
   },
 
-  deleteTask(date: string, taskId: string): void {
+  /**
+   * Everything a day gets on its own, applied once, the first time it is
+   * opened: the template its weekday maps to, and the instances every
+   * repeating task owes it.
+   *
+   * One entry point for both, because they are the same promise - that a day
+   * is already set up when you get to it - and because they have the same
+   * escape hatch. `autoApplied` is written the first time and never again, so
+   * a day whose auto-stamped template was deleted, or whose repeat instances
+   * were all removed, stays the way it was left. Automatic is a starting
+   * point, not a rule the day is held to.
+   *
+   * A day already stamped by hand is never re-stamped: a deliberate choice
+   * outranks a standing one, always. Repeats are still generated onto it -
+   * those are two different promises, and a stamped Tuesday still owes you
+   * your daily medication.
+   *
+   * Returns true when it changed something, so a caller can tell an ordinary
+   * open from one that did work.
+   */
+  ensureDay(date: string): boolean {
+    const existing = data.days[date]
+    if (existing?.autoApplied) return false
+
+    const mapped = data.settings.weekdayTemplates[weekdayOf(date)]
+    const template = mapped ? data.templates.find(t => t.id === mapped) : undefined
+    // A day that already carries a templateId was stamped on purpose - by
+    // hand, or from the calendar - and the weekday map does not get to argue
+    // with it.
+    const shouldStamp = !!template && !existing?.templateId
+
+    let days = data.days
+    if (shouldStamp) {
+      days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
+    }
+
+    const base = days[date] ?? { date, tasks: [] }
+    const { tasks, added } = materialiseRepeats(days, date, base.tasks)
+
+    commit({
+      ...data,
+      days: { ...days, [date]: { ...base, tasks, autoApplied: true } },
+    })
+    return shouldStamp || added
+  },
+
+  setWeekdayTemplate(weekday: number, templateId: string | undefined): void {
+    const next = { ...data.settings.weekdayTemplates }
+    if (templateId) next[weekday] = templateId
+    else delete next[weekday]
+    commit({ ...data, settings: { ...data.settings, weekdayTemplates: next } })
+  },
+
+  setTaskReminder(taskReminder: Settings['taskReminder']): void {
+    commit({ ...data, settings: { ...data.settings, taskReminder } })
+  },
+
+  /**
+   * Removing a task, and - for one that repeats - saying how much of it.
+   *
+   * 'day' is the default and the ordinary case: this one, here, gone. For an
+   * instance that also means recording a skip, or generation would put it
+   * straight back the next time this day is opened.
+   *
+   * 'series' ends the repeat itself: the source stops repeating, and every
+   * instance from this day forward goes with it. Days already lived are left
+   * exactly as they were - a task that happened on Monday still happened,
+   * whatever was decided about Thursday.
+   */
+  deleteTask(date: string, taskId: string, scope: 'day' | 'series' = 'day'): void {
     const day = dayOf(date)
-    commit(withDay(date, { ...day, tasks: day.tasks.filter(t => t.id !== taskId) }))
+    const task = day.tasks.find(t => t.id === taskId)
+    const series = task ? sourceFor(data.days, task) : undefined
+
+    if (scope === 'series' && series) {
+      const sourceId = series.task.id
+      const days = Object.fromEntries(
+        Object.entries({ ...data.days, [date]: day }).map(([key, plan]) => [
+          key,
+          {
+            ...plan,
+            tasks: plan.tasks
+              .filter(t => !(key >= date && (t.id === taskId || t.repeatOf === sourceId)))
+              .map(t => (t.id === sourceId ? { ...t, repeat: undefined } : t)),
+          },
+        ]),
+      )
+      commit({ ...data, days })
+      return
+    }
+
+    const skips = task?.repeatOf ? [...new Set([...(day.repeatSkips ?? []), task.repeatOf])] : day.repeatSkips
+    commit(withDay(date, { ...day, repeatSkips: skips, tasks: day.tasks.filter(t => t.id !== taskId) }))
   },
 
   // --- task detail ------------------------------------------------------
@@ -189,12 +280,45 @@ export const actions = {
     }))
   },
 
-  setTaskRepeat(date: string, taskId: string, repeat: Repeat | undefined): void {
+  /**
+   * Changing how a task repeats.
+   *
+   * 'series' writes to the source, which is what "every day it repeats"
+   * means; 'day' detaches this one instance into an ordinary task, which is
+   * what "just this day" means and is the only honest way to say it - a
+   * per-instance override would be a second, invisible rule competing with
+   * the one on the source.
+   */
+  setTaskRepeat(date: string, taskId: string, repeat: Repeat | undefined, scope: 'day' | 'series' = 'series'): void {
     const day = dayOf(date)
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, repeat } : t)),
-    }))
+    const task = day.tasks.find(t => t.id === taskId)
+    if (!task) return
+    const series = sourceFor(data.days, task)
+
+    if (scope === 'day' || !series || series.task.id === taskId) {
+      const detach = scope === 'day' && !!task.repeatOf
+      commit(withDay(date, {
+        ...day,
+        tasks: day.tasks.map(t =>
+          t.id === taskId ? { ...t, repeat, repeatOf: detach ? undefined : t.repeatOf } : t,
+        ),
+      }))
+      return
+    }
+
+    const sourceId = series.task.id
+    const days = Object.fromEntries(
+      Object.entries({ ...data.days, [date]: day }).map(([key, plan]) => [
+        key,
+        {
+          ...plan,
+          tasks: plan.tasks.map(t =>
+            t.id === sourceId || t.repeatOf === sourceId ? { ...t, repeat } : t,
+          ),
+        },
+      ]),
+    )
+    commit({ ...data, days })
   },
 
   addSubtask(date: string, taskId: string, title: string): void {

@@ -8,6 +8,7 @@ import { UpdateNotice } from './UpdateNotice'
 import { ClockPopover } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
 import { IntervalReminder } from './widgets/clock/IntervalReminder'
+import { TaskReminder } from './widgets/clock/TaskReminder'
 import { FocusBar } from './widgets/clock/FocusBar'
 import { FocusView } from './widgets/day-plan/FocusView'
 import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
@@ -266,6 +267,10 @@ export function App() {
 
       <FloatingClock />
       <IntervalReminder date={selectedDate} />
+      {/* Both at the root, outside <main>, so neither is torn down by moving
+          between tabs - a reminder that stops when you open Settings is not
+          a reminder. */}
+      <TaskReminder date={selectedDate} />
       <UpdateNotice />
     </div>
   )

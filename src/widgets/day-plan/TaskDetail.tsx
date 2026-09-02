@@ -46,6 +46,10 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
   const [note, setNote] = useState(task.note ?? '')
   const [size, setSize] = useState(task.minutes !== undefined ? String(task.minutes) : '')
   const [subtaskDraft, setSubtaskDraft] = useState('')
+  // Which of the two a change means, held while the sheet is open. Defaults
+  // to the series, because that is what somebody who set up a repeat almost
+  // always means - the exception is the exception.
+  const [scope, setScope] = useState<'day' | 'series'>('series')
   const titleId = useId()
 
   useEffect(() => {
@@ -56,6 +60,10 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
   const highlightFull = !task.highlight && highlights >= MAX_HIGHLIGHTS
   const subtasks = task.subtasks ?? []
   const doneSubtasks = subtasks.filter(s => s.done).length
+  // A source with a repeat, or an instance generated from one. A task that
+  // repeats and has never generated anything yet is still a series - it is
+  // about to be.
+  const inSeries = !!task.repeat || !!task.repeatOf
   const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
   const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
 
@@ -266,7 +274,9 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
             <select
               aria-label="Repeats"
               value={task.repeat ?? ''}
-              onChange={e => actions.setTaskRepeat(date, task.id, (e.target.value || undefined) as Repeat | undefined)}
+              onChange={e =>
+                actions.setTaskRepeat(date, task.id, (e.target.value || undefined) as Repeat | undefined, scope)
+              }
             >
               {REPEATS.map(r => (
                 <option key={r.value} value={r.value}>
@@ -274,7 +284,55 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
                 </option>
               ))}
             </select>
+            {/* Only once a task is genuinely part of a series. Asked before
+                the change rather than after it, as a standing choice rather
+                than a dialog: a confirmation that appears every single time
+                you touch a repeating task is a confirmation people learn to
+                dismiss without reading. */}
+            {inSeries && (
+              <div className="segmented task-detail-scope" role="group" aria-label="Changes apply to">
+                <button
+                  type="button"
+                  className={scope === 'series' ? 'active' : ''}
+                  aria-pressed={scope === 'series'}
+                  onClick={() => setScope('series')}
+                >
+                  Every day it repeats
+                </button>
+                <button
+                  type="button"
+                  className={scope === 'day' ? 'active' : ''}
+                  aria-pressed={scope === 'day'}
+                  onClick={() => setScope('day')}
+                >
+                  Just this day
+                </button>
+              </div>
+            )}
           </div>
+
+          {inSeries && (
+            <div className="task-detail-field">
+              <span className="task-detail-label">Remove</span>
+              <div className="task-detail-time">
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={() => {
+                    actions.deleteTask(date, task.id, scope)
+                    onClose()
+                  }}
+                >
+                  {scope === 'series' ? 'Delete from every day' : 'Delete from this day'}
+                </button>
+                <span className="task-detail-hint">
+                  {scope === 'series'
+                    ? 'Days already lived keep it - only this one and the ones ahead lose it.'
+                    : 'It stops coming back on this day, and nowhere else changes.'}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Only offered once there is a library to bind to, the same rule
               the sleep schedule picker follows. */}

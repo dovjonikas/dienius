@@ -17,6 +17,7 @@ import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
+import { YesterdayBanner } from './YesterdayBanner'
 import { TaskGapOffers } from './TaskGapOffers'
 import { clockTools } from '../../lib/clockTools'
 import { resolveDrop, type DropTarget } from './dragDrop'
@@ -327,6 +328,15 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // menu, a double click, and the pointer's own context menu.
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
+
+  // Everything a day gets on its own - the template its weekday maps to, the
+  // instances its repeating tasks owe it - applied once, here, because this
+  // is the moment a day is genuinely opened. Runs on every date change and is
+  // a no-op for a day that has already been through it, so moving back and
+  // forth through the week costs one store read per step.
+  useEffect(() => {
+    actions.ensureDay(date)
+  }, [date])
   // The one task currently selected for "where does this fit" - see
   // TaskRow.tsx's own title button and TaskGapOffers.tsx. Only ever one at
   // a time: selecting a different task's title while one is already
@@ -820,6 +830,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           Below the breakpoint showDayPane is always true (see its own
           comment above); only step 4's Calendar/Tasks focus, at a wide
           viewport, ever unmounts this. */}
+      {/* What yesterday left, stated once and acted on in one tap - never
+          moved forward on its own. See YesterdayBanner. */}
+      <YesterdayBanner date={date} />
+
       {showDayPane && (
       <div className="day-pane">
         {/* Purely informational - no embedded action. Being over is stated

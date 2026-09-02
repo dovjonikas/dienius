@@ -6994,3 +6994,82 @@ button.danger:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in srgb, var(--muted) 70%, transparent);
 }
+
+/* ------------------------------------------------------------------------
+   Yesterday's leftovers, and the weekday map - v1.3's automation.
+   ------------------------------------------------------------------------ */
+
+/* A row, not a card and not a toast. It is a statement of fact with one
+   action on it, and it belongs in the flow above the day rather than
+   floating over it: nothing here is urgent enough to cover anything. */
+.yesterday-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-left: 3px solid color-mix(in srgb, var(--mark) 70%, var(--border));
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .yesterday-banner { animation: focus-bar-in var(--dur) var(--ease) both; }
+}
+
+.yesterday-banner p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.yesterday-banner.is-done { border-left-color: color-mix(in srgb, var(--good) 70%, var(--border)); }
+
+.yesterday-actions { display: flex; align-items: center; gap: var(--s2); flex-shrink: 0; }
+
+.yesterday-dismiss {
+  min-height: 38px;
+  padding: 0 var(--s3);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.yesterday-dismiss:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+/* Seven rows, one per weekday, each a name and a dropdown. A grid rather
+   than seven setting-rows: this is one decision made seven times, and
+   drawing it as seven separate settings would make a week look like seven
+   unrelated switches. */
+.weekday-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s2) var(--s4);
+}
+
+.weekday-map-day {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.weekday-map-name {
+  flex: 0 0 42px;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.weekday-map-day select { flex: 1; min-width: 0; }
+
+/* The two-way scope switch inside the detail sheet. Full width and wrapping,
+   because both labels are sentences rather than words - "Every day it
+   repeats" says what it does; "All" would not. */
+.task-detail-scope { flex-wrap: wrap; width: 100%; }
+.task-detail-scope button { flex: 1 1 auto; font-size: var(--t-sm); }

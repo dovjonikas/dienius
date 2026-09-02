@@ -17,6 +17,10 @@ const DEFAULT_PRESET_ID = 'dark'
 // a fresh install starts with.
 const DEFAULT_REMINDER: Settings['reminder'] = { enabled: false, everyMinutes: 20, text: 'Stand up, drink water' }
 
+// Off, and five minutes. Five is enough to finish a sentence and stand up,
+// and short enough that the nudge is still about the thing it names.
+const DEFAULT_TASK_REMINDER: Settings['taskReminder'] = { enabled: false, minutesBefore: 5 }
+
 // Duplicated from capacity.ts for the same reason DEFAULT_SLEEP_WINDOW is.
 const DEFAULT_SLEEP_PROFILE_ID = 'default'
 const DEFAULT_SLEEP_PROFILE_NAME = 'Sleep schedule'
@@ -80,6 +84,8 @@ export function defaultData(): AppData {
       textScale: 'm',
       reminder: { ...DEFAULT_REMINDER },
       sleepProfiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: DEFAULT_SLEEP_PROFILE_NAME, window: { ...DEFAULT_SLEEP_WINDOW } }],
+      weekdayTemplates: {},
+      taskReminder: { ...DEFAULT_TASK_REMINDER },
     },
     ifThens: [],
     inbox: [],
@@ -413,7 +419,8 @@ function isTask(x: unknown): x is Task {
     isOptionalString(x.note) &&
     isOptionalBoolean(x.highlight) &&
     isOptionalSubtasks(x.subtasks) &&
-    isOptionalRepeat(x.repeat)
+    isOptionalRepeat(x.repeat) &&
+    isOptionalString(x.repeatOf)
   )
 }
 
@@ -443,12 +450,19 @@ function isTemplate(x: unknown): x is Template {
   )
 }
 
+function isOptionalStringList(x: unknown): x is string[] | undefined {
+  return x === undefined || (Array.isArray(x) && x.every(v => typeof v === 'string'))
+}
+
 function isDayPlan(x: unknown): x is DayPlan {
   if (!isRecord(x)) return false
   return (
     typeof x.date === 'string' &&
     isOptionalString(x.templateId) &&
+    isOptionalString(x.sleepProfileId) &&
     isOptionalDayType(x.dayType) &&
+    isOptionalStringList(x.repeatSkips) &&
+    isOptionalBoolean(x.autoApplied) &&
     Array.isArray(x.tasks) &&
     x.tasks.every(isTask)
   )
@@ -511,8 +525,26 @@ function isSettings(x: unknown): x is {
     isOptionalReminder(x.reminder) &&
     isOptionalSleepWindow(x.sleepWindow) &&
     isOptionalSleepWindow(x.nightSleepWindow) &&
-    isOptionalSleepProfiles(x.sleepProfiles)
+    isOptionalSleepProfiles(x.sleepProfiles) &&
+    isOptionalWeekdayMap(x.weekdayTemplates) &&
+    isOptionalTaskReminder(x.taskReminder)
   )
+}
+
+// Keys 0-6, values template ids. A crafted file could put anything here; a
+// weekday outside the week, or a non-string id, would be a map this app then
+// silently ignores forever, so it is refused at the door instead.
+function isOptionalWeekdayMap(x: unknown): x is Settings['weekdayTemplates'] | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  return Object.entries(x).every(([key, value]) => /^[0-6]$/.test(key) && typeof value === 'string')
+}
+
+function isOptionalTaskReminder(x: unknown): x is Settings['taskReminder'] | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  if (typeof x.enabled !== 'boolean') return false
+  return typeof x.minutesBefore === 'number' && Number.isInteger(x.minutesBefore) && x.minutesBefore >= 0 && x.minutesBefore <= 120
 }
 
 // Upgrades a legacy 'light' | 'dark' string into the current ThemeState
@@ -562,6 +594,8 @@ interface StoredAppData {
     density?: Settings['density']
     textScale?: Settings['textScale']
     reminder?: Settings['reminder']
+    weekdayTemplates?: Settings['weekdayTemplates']
+    taskReminder?: Settings['taskReminder']
     sleepProfiles?: SleepProfile[]
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
@@ -657,6 +691,8 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       textScale: data.settings.textScale ?? 'm',
       reminder: data.settings.reminder ?? { ...DEFAULT_REMINDER },
       sleepProfiles: migrateSleepProfiles(data),
+      weekdayTemplates: data.settings.weekdayTemplates ?? {},
+      taskReminder: data.settings.taskReminder ?? { ...DEFAULT_TASK_REMINDER },
     },
   }
 }

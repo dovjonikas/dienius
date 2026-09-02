@@ -10,12 +10,29 @@ import { AppearanceControls } from './AppearanceControls'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
+import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'sleep' | 'nudges' | 'rules' | 'appearance'
+type SectionId = 'general' | 'sleep' | 'week' | 'nudges' | 'rules' | 'appearance'
+
+/**
+ * Monday first, because a week does. The values are `Date.getDay()`'s own
+ * numbering (0 = Sunday), so nothing anywhere has to translate between a
+ * label and a date - see `weekdayOf`.
+ */
+const WEEKDAYS: { value: number; label: string; full: string }[] = [
+  { value: 1, label: 'Mon', full: 'Monday' },
+  { value: 2, label: 'Tue', full: 'Tuesday' },
+  { value: 3, label: 'Wed', full: 'Wednesday' },
+  { value: 4, label: 'Thu', full: 'Thursday' },
+  { value: 5, label: 'Fri', full: 'Friday' },
+  { value: 6, label: 'Sat', full: 'Saturday' },
+  { value: 0, label: 'Sun', full: 'Sunday' },
+]
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'sleep', label: 'Sleep' },
+  { id: 'week', label: 'Week' },
   { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
   { id: 'appearance', label: 'Appearance' },
@@ -340,12 +357,103 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
             </div>
           </div>
 
+          {/* The weekday map. In Sleep's own group rather than General
+              because it is the other thing about a day that is decided once
+              and then stops being a question. */}
+          <div className="settings-group" id="settings-week">
+            <h3>Week</h3>
+            <div className="setting-block">
+              <div className="setting-label">
+                <span className="setting-name">A template per weekday</span>
+                <span className="setting-desc">
+                  {data.templates.length === 0
+                    ? 'Build a template first and this is where you say which days it belongs to. A day whose weekday has no template starts empty, exactly as it does now.'
+                    : 'A new day opens already set up from the template its weekday points at. A day you stamp by hand always wins, and deleting what arrived leaves it deleted - this is a starting point, not a rule.'}
+                </span>
+              </div>
+              {data.templates.length > 0 && (
+                <div className="weekday-map">
+                  {WEEKDAYS.map(day => (
+                    <label key={day.value} className="weekday-map-day">
+                      <span className="weekday-map-name">{day.label}</span>
+                      <select
+                        aria-label={`Template for ${day.full}`}
+                        value={data.settings.weekdayTemplates[day.value] ?? ''}
+                        onChange={e => actions.setWeekdayTemplate(day.value, e.target.value || undefined)}
+                      >
+                        <option value="">Nothing</option>
+                        {data.templates.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="settings-group" id="settings-nudges">
             <h3>Nudges</h3>
             {/* Off by default, and deliberately not a plain interval timer -
                 see IntervalReminder.tsx. It can only speak while a task the
                 owner marked as Focus is actually running, which is the one
                 situation where being interrupted is a favour. */}
+            {/* Before a task, rather than during one. Deliberately honest
+                about its limit: there is no server and no push subscription
+                here, so nothing can fire while the app is closed, and saying
+                so is better than a setting that quietly does not work. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Before a timed task</span>
+                <span className="setting-desc">
+                  A notification shortly before anything with a time on it. Only while the app is open -
+                  in a tab or installed - because there is no server here to send one from.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.taskReminder.enabled}
+                  aria-label="Before a timed task"
+                  onClick={() => {
+                    const next = !data.settings.taskReminder.enabled
+                    if (next) requestNotificationPermission()
+                    actions.setTaskReminder({ ...data.settings.taskReminder, enabled: next })
+                  }}
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {data.settings.taskReminder.enabled && (
+              <div className="setting-row">
+                <div className="setting-label">
+                  <span className="setting-name">How long before</span>
+                  <span className="setting-desc">
+                    Enough to finish a sentence and stand up, short enough that the nudge is still about
+                    the thing it names.
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <MinuteStepInput
+                    value={String(data.settings.taskReminder.minutesBefore)}
+                    ariaLabel="Minutes before a task"
+                    onChange={value => {
+                      const minutes = Number(value)
+                      if (!Number.isInteger(minutes) || minutes < 0 || minutes > 120) return
+                      actions.setTaskReminder({ ...data.settings.taskReminder, minutesBefore: minutes })
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="setting-row">
               <div className="setting-label">
                 <span className="setting-name">Nudge during focus work</span>
