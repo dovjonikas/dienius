@@ -353,6 +353,20 @@ textarea {
 .calendar,
 .templates { max-width: 860px; }
 
+/* A tablet in portrait is below the 1024px two-pane breakpoint - splitting
+   753px into two panes leaves neither wide enough to be a timeline - so it
+   gets the single column. What it should not get is that column stretched
+   edge to edge: a task card 750px wide with a checkbox at one end and a
+   duration at the other is a lot of travel for the eye, and the same reading
+   width the document views already keep applies just as well here. Below
+   700px this does nothing, which is every phone. */
+@media (min-width: 700px) and (max-width: 1023px) {
+  .day-view { width: 100%; max-width: 680px; margin-inline: auto; }
+}
+
+/* The Library is a document too, and reads at the same width as Templates. */
+.library { max-width: 860px; }
+
 main { flex: 1 1 auto; min-height: 0; }
 
 .app-header {
@@ -1711,9 +1725,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 }
 
 /* On touch there is no hover to reveal it, so it is simply always there -
-   the same rule the row's actions button follows. */
+   the same rule the row's actions button follows. The strip also grows to a
+   real target: twelve pixels is generous for a pointer and nothing like
+   enough for a fingertip, which needs the 44 every other control on this app
+   already gets. It hangs below the block rather than growing into it, so a
+   short block is not swallowed by its own resize handle. */
 @media not all and (hover: hover) {
-  .timeline-anchor-resize { opacity: 0.6; }
+  .timeline-anchor-resize {
+    opacity: 0.6;
+    height: 44px;
+    bottom: -21px;
+  }
+  .timeline-anchor-resize::after { bottom: 20px; width: 34px; height: 3px; }
 }
 
 /* Step 7's drag source for "drag an anchor back to the tray" - see
@@ -6160,14 +6183,41 @@ button.danger:focus-visible {
 
 /* Six dots, drawn rather than imported. Only says "this row moves"; the row
    itself is the drag handle, because a 12px target is not one on a phone. */
+/* A 10px handle is not a touch target. The button is 44 square with the
+   dots drawn inside it, so the visible mark stays small while the thing a
+   finger has to hit is the size a finger actually is. touch-action: none so
+   a drag from it moves the row instead of scrolling the page. */
 .library-item-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 32px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.library-item-grip:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.library-item-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.library-item-grip-dots {
   width: 10px;
   height: 16px;
   background-image: radial-gradient(circle, var(--faint) 1px, transparent 1px);
   background-size: 5px 5px;
-  cursor: grab;
 }
+
+/* The seam a drop would land on. A line rather than a gap that opens up:
+   rows that shuffle while a finger is still down make the target move away
+   from where it was aimed. */
+.library-item.is-over { box-shadow: inset 0 2px 0 var(--accent); }
 
 .library-item-main {
   flex: 1;
@@ -6328,12 +6378,11 @@ button.danger:focus-visible {
 @media (max-width: 599px) {
   .library { padding: var(--s4) var(--s3) var(--s7); }
   .library-item { flex-wrap: wrap; row-gap: var(--s2); padding-left: var(--s2); }
-  /* HTML5 drag does not fire from a touch at all, so the grip here would be a
-     handle that does nothing. Hidden rather than left as a lie; reordering a
-     list is a desk job either way. See docs/OPEN-QUESTIONS.md. */
-  .library-item-grip { display: none; }
-  .library-item-main { flex: 1 1 100%; }
-  .library-item-progress { margin-left: auto; }
+  /* The grip stays on the title line rather than taking a 44px row of its
+     own: a basis just short of the full width fills line one with the grip
+     and the title, and pushes the count and the actions onto line two. */
+  .library-item-main { flex: 1 1 calc(100% - 76px); }
+  .library-item-progress { margin-left: 44px; }
   .library-new-fields { flex-direction: column; }
 }
 
@@ -6737,4 +6786,35 @@ button.danger:focus-visible {
   padding: 0 var(--s3);
   color: var(--muted);
   font-size: var(--t-sm);
+}
+
+/* The grab bar. Nothing on a wide screen, where the sheet is a centred
+   panel and there is no edge to pull from; on a phone it is the strip the
+   swipe-down gesture lives on - see TaskDetail.onGrabPointerDown. */
+.task-detail-grab { display: none; }
+
+@media (max-width: 599px) {
+  .task-detail-grab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .task-detail-grab span {
+    width: 36px;
+    height: 4px;
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--muted) 60%, transparent);
+  }
+
+  .task-detail-grab:active { cursor: grabbing; }
+
+  /* The sheet springs back when a pull is released short of the threshold.
+     The inline transform sets transition:none while a finger is down, so
+     this only ever runs on release. */
+  .task-detail { transition: transform var(--dur) var(--ease); }
 }

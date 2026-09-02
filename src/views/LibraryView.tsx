@@ -10,6 +10,7 @@ import {
   unitPlural,
 } from '../lib/library'
 import type { LibraryItem, LibraryList } from '../lib/types'
+import { useListReorder } from './useListReorder'
 
 /**
  * The Library: lists of things worked through a unit at a time.
@@ -154,10 +155,19 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
   const [draft, setDraft] = useState('')
   const [showFinished, setShowFinished] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [dragId, setDragId] = useState<string | null>(null)
+  const itemsRef = useRef<HTMLUListElement>(null)
+  const reorder = useListReorder(itemsRef, (id, to) => actions.moveLibraryItem(list.id, id, to))
 
   const going = list.items.filter(i => !isItemFinished(i))
   const finished = list.items.filter(isItemFinished)
+
+  // Reordering with a keyboard, on the grip itself. A drag-only list is a
+  // list a keyboard cannot arrange at all, and the order here is the whole
+  // point of the list - it is what "next" means.
+  function nudge(itemId: string, index: number, by: number) {
+    const to = Math.max(0, Math.min(list.items.length - 1, index + by))
+    if (to !== index) actions.moveLibraryItem(list.id, itemId, to)
+  }
 
   function add() {
     if (!draft.trim()) return
@@ -237,17 +247,17 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
         <p className="muted library-list-empty">Nothing on this list yet.</p>
       )}
 
-      <ul className="library-items">
+      <ul className="library-items" ref={itemsRef}>
         {going.map((item, index) => (
           <ItemRow
             key={item.id}
             list={list}
             item={item}
             index={index}
-            dragging={dragId === item.id}
-            onDragStart={() => setDragId(item.id)}
-            onDragEnd={() => setDragId(null)}
-            onDropAt={to => actions.moveLibraryItem(list.id, dragId ?? item.id, to)}
+            dragging={reorder.draggingId === item.id}
+            over={reorder.overIndex === index && reorder.draggingId !== null && reorder.draggingId !== item.id}
+            onGripPointerDown={e => reorder.start(item.id, index, e)}
+            onNudge={by => nudge(item.id, index, by)}
             onOpenDay={onOpenDay}
           />
         ))}
@@ -299,13 +309,14 @@ interface ItemRowProps {
   item: LibraryItem
   index: number
   dragging: boolean
-  onDragStart: () => void
-  onDragEnd: () => void
-  onDropAt: (index: number) => void
+  /** True when a drop right now would land on this row. */
+  over: boolean
+  onGripPointerDown: (e: React.PointerEvent) => void
+  onNudge: (by: number) => void
   onOpenDay?: (date: string) => void
 }
 
-function ItemRow({ list, item, index, dragging, onDragStart, onDragEnd, onDropAt, onOpenDay }: ItemRowProps) {
+function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge, onOpenDay }: ItemRowProps) {
   const [scheduling, setScheduling] = useState(false)
   const [already, setAlready] = useState<string | null>(null)
   const percent = progressPercent(item)
@@ -326,21 +337,25 @@ function ItemRow({ list, item, index, dragging, onDragStart, onDragEnd, onDropAt
 
   return (
     <li
-      className={dragging ? 'library-item is-dragging' : 'library-item'}
-      draggable
-      onDragStart={e => {
-        e.dataTransfer.effectAllowed = 'move'
-        onDragStart()
-      }}
-      onDragOver={e => e.preventDefault()}
-      onDrop={e => {
-        e.preventDefault()
-        onDropAt(index)
-        onDragEnd()
-      }}
-      onDragEnd={onDragEnd}
+      className={['library-item', dragging ? 'is-dragging' : '', over ? 'is-over' : ''].filter(Boolean).join(' ')}
+      data-reorder-index={index}
     >
-      <span className="library-item-grip" aria-hidden="true" />
+      {/* A real button, not a decorative handle: it is dragged with a pointer
+          or a finger, and moved a place at a time with the arrow keys, so the
+          order is reachable by every input this app supports. */}
+      <button
+        type="button"
+        className="library-item-grip"
+        aria-label={`Reorder ${item.title}, position ${index + 1}`}
+        onPointerDown={onGripPointerDown}
+        onKeyDown={e => {
+          if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+          e.preventDefault()
+          onNudge(e.key === 'ArrowUp' ? -1 : 1)
+        }}
+      >
+        <span className="library-item-grip-dots" aria-hidden="true" />
+      </button>
       <div className="library-item-main">
         <span className="library-item-title">{item.title}</span>
         {percent !== undefined && (

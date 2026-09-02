@@ -39,6 +39,9 @@ export interface TaskDetailProps {
  */
 export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  // How far the sheet has been pulled down, in pixels. Only ever non-zero
+  // during a drag on the grab bar - see onGrabPointerDown.
+  const [pullY, setPullY] = useState(0)
   const [title, setTitle] = useState(task.title)
   const [note, setNote] = useState(task.note ?? '')
   const [size, setSize] = useState(task.minutes !== undefined ? String(task.minutes) : '')
@@ -90,6 +93,43 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
     setSize(parsed !== undefined ? String(parsed) : '')
   }
 
+  /**
+   * Swipe down to close, from the grab bar only.
+   *
+   * The bar rather than the whole sheet: the body scrolls, and a sheet that
+   * closes on any downward drag closes every time somebody scrolls back up
+   * past the top of a long form. The bar is the one strip with nothing else
+   * to do, which is what it is drawn for.
+   *
+   * A quarter of the sheet's own height is the commit distance, so it scales
+   * with the sheet rather than being a magic number tuned on one phone.
+   */
+  function onGrabPointerDown(e: React.PointerEvent) {
+    if (e.button !== 0) return
+    const bar = e.currentTarget as HTMLElement
+    const panel = panelRef.current
+    if (!panel) return
+    bar.setPointerCapture(e.pointerId)
+    const startY = e.clientY
+    const threshold = Math.max(80, panel.getBoundingClientRect().height / 4)
+    let pulled = 0
+
+    function move(ev: PointerEvent) {
+      pulled = Math.max(0, ev.clientY - startY)
+      setPullY(pulled)
+    }
+    function end() {
+      bar.removeEventListener('pointermove', move)
+      bar.removeEventListener('pointerup', end)
+      bar.removeEventListener('pointercancel', end)
+      setPullY(0)
+      if (pulled > threshold) onClose()
+    }
+    bar.addEventListener('pointermove', move)
+    bar.addEventListener('pointerup', end)
+    bar.addEventListener('pointercancel', end)
+  }
+
   function nudge(byMinutes: number) {
     if (!task.time) return
     actions.setTaskTime(date, task.id, stepTime(task.time, byMinutes))
@@ -106,7 +146,15 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
         ref={panelRef}
         onClick={e => e.stopPropagation()}
         onKeyDown={handleKeyDown}
+        style={pullY > 0 ? { transform: `translateY(${pullY}px)`, transition: 'none' } : undefined}
       >
+        {/* Only visible at the phone breakpoint, where this is a bottom
+            sheet - see styles.css. aria-hidden because closing is already a
+            real, focusable button beside the title; this is the gesture, not
+            a second control to find. */}
+        <div className="task-detail-grab" aria-hidden="true" onPointerDown={onGrabPointerDown}>
+          <span />
+        </div>
         <div className="task-detail-head">
           <h2 id={titleId} className="visually-hidden">
             {task.title}
