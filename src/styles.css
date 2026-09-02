@@ -386,7 +386,15 @@ main { flex: 1 1 auto; min-height: 0; }
   letter-spacing: -0.02em;
 }
 
-nav {
+/* Scoped to the header. This was a bare nav selector, written for the tab
+   row and quietly applying to every other <nav> in the app - which is how
+   the Settings section pills ended up justified to the right inside a
+   horizontally scrolling strip. When a nowrap flex row overflows, flex-end
+   pushes the overflow off the *left* edge, where no amount of scrolling can
+   reach it: the first section was half off screen and unreachable on a
+   phone. Everything below that reads nav button is scoped for the same
+   reason - the tab underline was being drawn on controls that are not tabs. */
+.app-header nav {
   display: flex;
   gap: var(--s1);
   flex: 1;
@@ -401,7 +409,7 @@ nav {
    The underline is a pseudo-element rather than a border, and the padding
    and font are identical in all three states - so nothing here changes size
    on hover or on activation, and the row cannot shift as it is used. */
-nav button {
+.app-header nav button {
   position: relative;
   border: none;
   background: none;
@@ -413,7 +421,7 @@ nav button {
   cursor: pointer;
 }
 
-nav button::after {
+.app-header nav button::after {
   content: '';
   position: absolute;
   left: var(--s3);
@@ -426,16 +434,16 @@ nav button::after {
   transition: opacity var(--dur-fast) var(--ease);
 }
 
-nav button:hover { color: var(--text); }
+.app-header nav button:hover { color: var(--text); }
 
-nav button.active { color: var(--text); font-weight: 600; }
+.app-header nav button.active { color: var(--text); font-weight: 600; }
 
-nav button.active::after { opacity: 1; }
+.app-header nav button.active::after { opacity: 1; }
 
 /* Bold on the active tab would make it wider than it was a moment ago and
    nudge everything after it. The text is pre-sized to its own bold width, so
    the row is laid out once and never moves. */
-nav button::before {
+.app-header nav button::before {
   content: attr(data-label);
   display: block;
   height: 0;
@@ -4535,7 +4543,7 @@ button.danger {
    makes an interface feel like one piece of software rather than several.
    Transform and colour only - nothing here can reflow anything. */
 @media (hover: hover) and (pointer: fine) {
-  nav button,
+  .app-header nav button,
   .segmented button,
   .chip,
   .swatch,
@@ -4562,7 +4570,7 @@ button.danger {
 
 /* Pressing anything gives the press back, on every input including touch -
    the one piece of feedback that has to survive not having a pointer. */
-nav button:active,
+.app-header nav button:active,
 .segmented button:active,
 .chip:active,
 .theme-card:active,
@@ -4575,7 +4583,7 @@ nav button:active,
 @media (prefers-reduced-motion: reduce) {
   .undo-toast { animation: none; }
   .task-list > li { animation: none; }
-  nav button:active,
+  .app-header nav button:active,
   .segmented button:active,
   .chip:active,
   .theme-card:active,
@@ -4607,8 +4615,8 @@ nav button:active,
      a label: the words are the navigation, and "Templ." is not one.
      The nav itself scrolls as a last resort, so a sixth tab, a longer word
      or a large text setting can never push the page sideways again. */
-  nav button { padding-left: var(--s2); padding-right: var(--s2); font-size: var(--t-sm); }
-  nav button::after { left: var(--s2); right: var(--s2); }
+  .app-header nav button { padding-left: var(--s2); padding-right: var(--s2); font-size: var(--t-sm); }
+  .app-header nav button::after { left: var(--s2); right: var(--s2); }
   .app-header nav { overflow-x: auto; scrollbar-width: none; }
   .app-header nav::-webkit-scrollbar { display: none; }
 }
@@ -5622,7 +5630,7 @@ button.danger:focus-visible {
     padding-bottom: var(--s2);
   }
 
-  nav button { min-height: 34px; padding: 6px 12px; }
+  .app-header nav button { min-height: 34px; padding: 6px 12px; }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
