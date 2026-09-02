@@ -195,7 +195,7 @@ export function SettingsView() {
                     below needing two and never taking the accent colour until
                     it is armed. */}
                 <button className="primary" onClick={handleExport}>Export backup</button>
-                <button onClick={() => fileRef.current?.click()}>Import backup</button>
+                <button className="btn-secondary" onClick={() => fileRef.current?.click()}>Import backup</button>
               </div>
             </div>
             <input
@@ -217,7 +217,7 @@ export function SettingsView() {
               </div>
               <div className="setting-control">
                 <button
-                  className={confirmReset ? 'danger' : ''}
+                  className={confirmReset ? 'btn-danger is-armed' : 'btn-danger'}
                   onClick={handleResetClick}
                   onBlur={() => setConfirmReset(false)}
                 >

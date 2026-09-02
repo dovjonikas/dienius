@@ -8,6 +8,10 @@ import { UpdateNotice } from './UpdateNotice'
 import { ClockPopover } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
 import { IntervalReminder } from './widgets/clock/IntervalReminder'
+import { FocusBar } from './widgets/clock/FocusBar'
+import { FocusView } from './widgets/day-plan/FocusView'
+import { actions as storeActions } from './lib/store'
+import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
@@ -26,6 +30,11 @@ export function App() {
   const data = useAppData()
   const [view, setView] = useState<View>('day')
   const [clockOpen, setClockOpen] = useState(false)
+  const [focusExpanded, setFocusExpanded] = useState(false)
+  const tools = useClockTools()
+  const focusTask = tools.focus
+    ? data.days[tools.focus.date]?.tasks.find(t => t.id === tools.focus!.taskId)
+    : undefined
   const [selectedDate, setSelectedDate] = useState(todayKey())
 
   useEffect(() => {
@@ -105,6 +114,13 @@ export function App() {
           {clockOpen && <ClockPopover onClose={() => setClockOpen(false)} />}
         </div>
       </header>
+
+      {/* Focus lives above the content and below the header, on every tab, for
+          as long as the session lasts - see FocusBar. It is deliberately part
+          of the shell rather than of the day view: the whole point of making
+          it a state instead of a screen is that the rest of the app keeps
+          working while it runs. */}
+      <FocusBar onExpand={() => setFocusExpanded(true)} />
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
           WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
@@ -117,6 +133,21 @@ export function App() {
       {/* Both mounted at the root, outside <main>, so neither is torn down by
           moving between tabs - a timer that stops when you open Settings is
           not a timer. */}
+      {/* The optional full-screen version. Not the default any more, and it
+          closes back to the bar rather than to nothing, so leaving it is
+          leaving a view rather than abandoning the session. */}
+      {focusExpanded && focusTask && tools.focus && (
+        <FocusView
+          task={focusTask}
+          onDone={() => {
+            if (!focusTask.done) storeActions.toggleTask(tools.focus!.date, focusTask.id)
+            clockTools.endFocus()
+            setFocusExpanded(false)
+          }}
+          onClose={() => setFocusExpanded(false)}
+        />
+      )}
+
       <FloatingClock />
       <IntervalReminder date={selectedDate} />
       <UpdateNotice />

@@ -4808,6 +4808,211 @@ nav button:active,
   font-size: var(--t-sm);
 }
 
+/* Focus, as a strip under the header rather than a screen over everything -
+   see FocusBar.tsx. Part of the shell, so it is there on every tab for as long
+   as the session lasts, and the app underneath it stays entirely usable.
+
+   A row rather than a card: it is a state the app is in, and a state reads as
+   a band across the top, where a card would read as one more object competing
+   with the day. The category colour runs down its left edge, the same 4px mark
+   the block and the card already carry, so it is obvious which task this is
+   without reading the title. */
+.focus-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: 1px solid color-mix(in srgb, var(--cat, var(--accent)) 35%, var(--border));
+  border-left: 4px solid var(--cat, var(--accent));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--cat, var(--accent)) 8%, var(--surface));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .focus-bar { animation: focus-bar-in var(--dur) var(--ease) both; }
+}
+
+@keyframes focus-bar-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.focus-bar-ring { width: 26px; height: 26px; flex-shrink: 0; }
+.focus-bar-ring svg { width: 100%; height: 100%; display: block; }
+
+.focus-bar-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border) 90%, transparent);
+  stroke-width: 5;
+}
+
+.focus-bar-fill {
+  fill: none;
+  stroke: var(--cat, var(--accent));
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur) var(--ease);
+}
+
+.focus-bar-label {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--cat, var(--accent)) 30%, var(--muted));
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.focus-bar-task {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-bar-left {
+  flex-shrink: 0;
+  padding: 1px var(--s2);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--mark) 20%, transparent);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.focus-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-shrink: 0;
+}
+
+.focus-bar-exit {
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.focus-bar-exit:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+
+.focus-bar-exit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* On a phone the row wraps: the task and its countdown on the first line, the
+   buttons on the second, so a long title is never truncated to nothing to make
+   room for three controls. */
+@media (max-width: 599px) {
+  .focus-bar { flex-wrap: wrap; }
+  .focus-bar-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* ------------------------------------------------------------------------
+   Buttons: three variants, and nothing else.
+
+   Every button in this app was previously styled by whichever rule happened to
+   reach it - .row button, .settings-group > button, .template-card button, or
+   nothing at all, which is a browser-default button on a dark page. Three
+   variants cover every real case: the one action a screen is for, the several
+   it also offers, and the one that destroys something.
+   ------------------------------------------------------------------------ */
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+button.primary,
+button.danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: 38px;
+  padding: var(--s2) var(--s4);
+  border-radius: var(--r-control);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.btn-primary,
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover,
+button.primary:hover { background: color-mix(in srgb, var(--accent) 84%, #fff); }
+
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:hover { border-color: var(--muted); }
+
+/* Outline, never filled. A destructive action should be findable and should
+   not be the brightest thing on the screen - filled red reads as the button
+   you are supposed to press. It fills only once it is armed, which is the
+   second tap, when it genuinely is the one you are about to press. */
+.btn-danger,
+button.danger {
+  background: none;
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  color: var(--danger);
+}
+
+.btn-danger:hover,
+button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+/* Armed: the second tap of a two-tap destructive action, and the one moment it
+   genuinely is the button you are about to press. */
+.btn-danger.is-armed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.btn-danger.is-armed:hover { background: color-mix(in srgb, var(--danger) 86%, #000); }
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-danger:active,
+button.primary:active,
+button.danger:active { transform: scale(0.97); }
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-danger:focus-visible,
+button.primary:focus-visible,
+button.danger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:active,
+  .btn-secondary:active,
+  .btn-danger:active { transform: none; }
+  .focus-bar { animation: none; }
+}
+
 /* The update notice - src/UpdateNotice.tsx. A quiet fixed banner, not a
    sheet: it has no backdrop and never blocks a tap on anything beneath
    it, which a modal's scrim would. Sits below the z-index any bottom

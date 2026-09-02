@@ -16,7 +16,7 @@ import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskGapOffers } from './TaskGapOffers'
-import { FocusView } from './FocusView'
+import { clockTools } from '../../lib/clockTools'
 import { resolveDrop, type DropTarget } from './dragDrop'
 import { useIsWide } from '../../lib/viewport'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel } from '../../lib/categories'
@@ -111,11 +111,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // toggle says, so capturing costs a tap once rather than a decision every
   // time about which box to aim at.
   const [captureMode, setCaptureMode] = useState<'task' | 'inbox'>('task')
-  // Which task the full-screen countdown is open on, if any. Held by id
-  // rather than by the task object so that finishing it - or having it change
-  // underneath, from another tab writing the same storage key - resolves
-  // against live data on the next render instead of pinning a stale copy.
-  const [focusTaskId, setFocusTaskId] = useState<string | null>(null)
+
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const doneListId = useId()
   const day = data.days[date]
@@ -547,7 +543,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     closeSelection()
   }
 
-  const focusTask = focusTaskId && runningTask?.id === focusTaskId ? runningTask : undefined
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined
 
@@ -1002,7 +997,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               leaving={task.id === leavingId}
               active={task.id === runningTask?.id}
               minutesLeft={task.id === runningTask?.id ? runningLeft : undefined}
-              onFocus={() => setFocusTaskId(task.id)}
+              onFocus={() => clockTools.startFocus(date, task.id)}
               sizeEditingId={sizeEditingId}
               sizeDraft={sizeDraft}
               onStartSizeEdit={startSizeEdit}
@@ -1111,22 +1106,6 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
           onDelete={taskId => actions.deleteTask(date, taskId)}
           onClose={() => setActionsSheetTaskId(null)}
-        />
-      )}
-
-      {/* Closes itself the moment the task it is counting stops being the
-          running one - finished from inside the view, checked off in another
-          tab, or simply overrun past its own end. A countdown left open on a
-          task that is no longer happening is a lie about the day, and this is
-          the one screen with nothing else on it to correct the impression. */}
-      {focusTask && (
-        <FocusView
-          task={focusTask}
-          onDone={() => {
-            handleToggleDone(focusTask.id, focusTask.done)
-            setFocusTaskId(null)
-          }}
-          onClose={() => setFocusTaskId(null)}
         />
       )}
 

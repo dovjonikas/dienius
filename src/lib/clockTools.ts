@@ -56,14 +56,34 @@ export interface StopwatchState {
   paused: boolean
 }
 
+/**
+ * Which task is being focused on, if any.
+ *
+ * Only a pointer - the date and the task id - never a copy of the task. Focus
+ * does not own anything about the work; it says which of the day's own tasks
+ * is currently the one being done, and everything shown about it is read live
+ * from the day. That is what lets the task be edited, checked off, or dragged
+ * to a different time while focus is running, without focus holding a stale
+ * version of any of it.
+ *
+ * It lives beside the timer rather than in `AppData` for the same reason the
+ * timer does: which task you are sitting with right now is not a plan, and a
+ * backup restored next month should not put you back into it.
+ */
+export interface FocusSession {
+  date: string
+  taskId: string
+}
+
 export interface ClockTools {
   timer: TimerState | null
   stopwatch: StopwatchState | null
+  focus: FocusSession | null
   /** Which corner the floating widget sits in. A preference, so it persists. */
   corner: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
 }
 
-const EMPTY: ClockTools = { timer: null, stopwatch: null, corner: 'bottom-right' }
+const EMPTY: ClockTools = { timer: null, stopwatch: null, focus: null, corner: 'bottom-right' }
 
 function isCorner(x: unknown): x is ClockTools['corner'] {
   return x === 'bottom-right' || x === 'bottom-left' || x === 'top-right' || x === 'top-left'
@@ -88,6 +108,13 @@ function readTimer(x: unknown): TimerState | null {
   }
 }
 
+function readFocus(x: unknown): FocusSession | null {
+  if (typeof x !== 'object' || x === null) return null
+  const f = x as Record<string, unknown>
+  if (typeof f.date !== 'string' || typeof f.taskId !== 'string') return null
+  return { date: f.date, taskId: f.taskId }
+}
+
 function readStopwatch(x: unknown): StopwatchState | null {
   if (typeof x !== 'object' || x === null) return null
   const s = x as Record<string, unknown>
@@ -106,6 +133,7 @@ function load(): ClockTools {
     return {
       timer: readTimer(p.timer),
       stopwatch: readStopwatch(p.stopwatch),
+      focus: readFocus(p.focus),
       corner: isCorner(p.corner) ? p.corner : 'bottom-right',
     }
   } catch {
@@ -194,6 +222,14 @@ export const clockTools = {
     const t = state.timer
     if (!t || t.rungOut) return
     commit({ ...state, timer: { ...t, rungOut: true } })
+  },
+
+  startFocus(date: string, taskId: string): void {
+    commit({ ...state, focus: { date, taskId } })
+  },
+
+  endFocus(): void {
+    commit({ ...state, focus: null })
   },
 
   startStopwatch(): void {

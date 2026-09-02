@@ -191,7 +191,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
           {data.templates.length === 0 && (
             <div className="stamp-bar-empty">
               <p className="muted">No templates yet, so there is nothing here to stamp onto a day.</p>
-              <button type="button" onClick={onOpenTemplates}>Create a template</button>
+              <button type="button" className="btn-primary" onClick={onOpenTemplates}>Create a template</button>
             </div>
           )}
 
@@ -249,7 +249,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
               </p>
               <div className="stamp-buttons">
                 <button className="primary" onClick={save}>Save</button>
-                <button onClick={cancel}>Cancel</button>
+                <button className="btn-secondary" onClick={cancel}>Cancel</button>
               </div>
             </div>
           )}

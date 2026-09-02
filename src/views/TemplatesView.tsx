@@ -269,13 +269,13 @@ function TemplateEditor({ initial, onSave, onCancel }: TemplateEditorProps) {
         >
           Ongoing
         </button>
-        <button onClick={addBlock}>Add block</button>
+        <button className="btn-secondary" onClick={addBlock}>Add block</button>
       </div>
       <div className="row">
         <button className="primary" disabled={!draft.name.trim()} onClick={() => onSave(draft)}>
           Save template
         </button>
-        <button onClick={onCancel}>Cancel</button>
+        <button className="btn-secondary" onClick={onCancel}>Cancel</button>
       </div>
     </div>
   )
