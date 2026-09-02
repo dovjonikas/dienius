@@ -817,11 +817,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   margin: 2px 0;
 }
 
+/* A stronger tint than the real grid uses. At this size a block is eleven
+   pixels tall with no text on it, so the wash has no legibility to protect
+   and the only job left is telling six colours apart at a glance - which is
+   exactly what a person is judging the theme on. */
 .theme-card-block {
-  height: 11px;
+  height: 12px;
   border-radius: 3px;
   border-left: 3px solid var(--cat);
-  background: color-mix(in srgb, var(--cat) 22%, var(--pv-surface));
+  background: color-mix(in srgb, var(--cat) 34%, var(--pv-surface));
 }
 
 .theme-card-block[data-cat='core'] { --cat: var(--cat-core); width: 100%; }
