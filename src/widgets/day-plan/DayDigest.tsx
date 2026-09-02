@@ -12,6 +12,8 @@ export interface DayDigestProps {
   tasks: Task[]
   capacity: Capacity
   score: DayScore
+  /** How long this day's sleep schedule sleeps for - see `sleepMinutes`. */
+  sleepMinutes: number
   /** Minutes since midnight, ticking in `DayView`. Only meaningful on today. */
   nowMinutes: number
   /** Only today has a "next" - a day in the past or the future has no now to measure from. */
@@ -27,14 +29,23 @@ export interface DayDigestProps {
  * side of the screen should answer while the middle is busy being a day: what
  * is next, and how far along am I.
  *
- * Deliberately three numbers and one shape, not a dashboard. Every figure here
+ * Deliberately four numbers and one shape, not a dashboard. Every figure here
  * is already stated somewhere else in the app - the ring is the header's own
  * fraction, the free time is the capacity line's - and repeating them is only
  * worth it because they are being repeated *small and together*, as a shape
- * you glance at rather than a sentence you read. A fourth and fifth number
- * would turn that back into reading. See docs/RESEARCH-ADHD.md section 7.
+ * you glance at rather than a sentence you read. See docs/RESEARCH-ADHD.md
+ * section 7.
+ *
+ * Sleep is the fourth, and it earned the slot the other candidates did not.
+ * Free time has always been measured inside the waking window, so sleep has
+ * never been counted as free - but with three figures on screen and no fourth,
+ * Free 12h30 sat next to nothing that explained the missing eight hours, and a
+ * reader is entitled to assume a day adds up. Stating it makes the arithmetic
+ * legible instead of leaving it to be trusted. It is also the one number here
+ * that does not move with what you plan, which is exactly why it belongs last
+ * and quiet.
  */
-export function DayDigest({ tasks, capacity, score, nowMinutes, isToday }: DayDigestProps) {
+export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
   const upNextColor = upNext ? categoryColor(upNext.category) : undefined
   const minutesAway = upNext ? timeToMinutes(upNext.time!) - nowMinutes : undefined
@@ -114,6 +125,10 @@ export function DayDigest({ tasks, capacity, score, nowMinutes, isToday }: DayDi
                   dash rather than as a number this app would have had to
                   guess. See computeCapacity. */}
               <dd>{capacity.freeMinutes === null ? '-' : capacity.freeMinutes > 0 ? formatDuration(capacity.freeMinutes) : 'none'}</dd>
+            </div>
+            <div>
+              <dt>Sleep</dt>
+              <dd>{formatDuration(sleepMinutes)}</dd>
             </div>
           </dl>
         </div>

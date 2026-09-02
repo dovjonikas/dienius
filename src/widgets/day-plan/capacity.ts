@@ -94,6 +94,21 @@ const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
  *   tiny or empty window the same way they do around a day with almost no
  *   real anchors.
  */
+/**
+ * How long the schedule sleeps for, in minutes.
+ *
+ * Not `24h - wakingWindow`: that window is clamped to the calendar day, so
+ * for a schedule whose waking hours run past midnight it is shorter than the
+ * real waking stretch and the subtraction would overstate sleep. This
+ * measures the sleep span itself, wrapping midnight the same way
+ * `wakingWindow` wraps the waking one.
+ */
+export function sleepMinutes(sleep: SleepWindow): number {
+  const bedtime = timeToMinutes(sleep.start)
+  const wake = timeToMinutes(sleep.end)
+  return (((wake - bedtime) % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES
+}
+
 export function wakingWindow(sleep: SleepWindow): Interval {
   const bedtime = timeToMinutes(sleep.start)
   const wake = timeToMinutes(sleep.end)

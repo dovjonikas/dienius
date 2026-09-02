@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import type { Task } from '../../lib/types'
+import { MAX_HIGHLIGHTS, type Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
 import { isPushable } from '../../lib/pushRules'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
@@ -9,12 +9,14 @@ import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd } from './parse'
 import { sortTasks } from './sort'
 import { dayScore, formatDayScore } from './score'
-import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, minutesUntilSleep, parseMinutesInput, timeToMinutes, windowFor } from './capacity'
+import { activeTask as findActiveTask, computeCapacity, formatCapacityLine, formatDuration, minutesLeft, minutesUntilSleep, parseMinutesInput, timeToMinutes, sleepMinutes, sleepProfileWindow, windowFor } from './capacity'
 import { currentMinutes, formatClock, snapToStep, SNAP_MINUTES } from './timelineLayout'
 import { TimelineGrid, type GridGeometry } from './TimelineGrid'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { TaskRow } from './TaskRow'
 import { TaskActionsSheet } from './TaskActionsSheet'
+import { TaskContextMenu } from './TaskContextMenu'
+import { TaskDetail } from './TaskDetail'
 import { TaskGapOffers } from './TaskGapOffers'
 import { clockTools } from '../../lib/clockTools'
 import { resolveDrop, type DropTarget } from './dragDrop'
@@ -320,6 +322,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [dragAnnouncement, setDragAnnouncement] = useState('')
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
+  // Everything about one task that the row deliberately does not show - see
+  // TaskDetail.tsx. Reached three ways, all of them deliberate: the actions
+  // menu, a double click, and the pointer's own context menu.
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
   // The one task currently selected for "where does this fit" - see
   // TaskRow.tsx's own title button and TaskGapOffers.tsx. Only ever one at
   // a time: selecting a different task's title while one is already
@@ -548,6 +555,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   }
 
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
+  const detailTask = detailTaskId ? day?.tasks.find(t => t.id === detailTaskId) : undefined
+  const contextTask = contextMenu ? day?.tasks.find(t => t.id === contextMenu.taskId) : undefined
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined
 
   // docs/LAYOUT-WIDE.md section 5, build step 4. dayLayoutFocus only has a
@@ -586,6 +595,15 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   // SLEEP_NOTICE_MINUTES. Measured against the same waking window the grid
   // greys and the capacity line counts against, so the three can never
   // disagree about when the day ends.
+  // Stated on the day rather than folded into the free-time figure, because
+  // it is the one large block of the day that is not free and not a task.
+  // Free time is already measured inside the waking window - see windowFor -
+  // so sleep has never been counted as free; what was missing was saying so,
+  // which left the two numbers looking like they should add up to 24 and not
+  // doing it.
+  const keyCount = (day?.tasks ?? []).filter(t => t.highlight).length
+  const sleepHours = sleepProfileWindow(daySleepProfileId, sleep)
+  const asleepMinutes = sleepMinutes(sleepHours)
   const untilSleep = isToday ? minutesUntilSleep(nowMinutes, windowFor(daySleepProfileId, sleep)) : null
   const showSleep = untilSleep !== null && untilSleep <= SLEEP_NOTICE_MINUTES
 
@@ -609,6 +627,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             tasks={day?.tasks ?? []}
             capacity={capacity}
             score={score}
+            sleepMinutes={asleepMinutes}
             nowMinutes={nowMinutes}
             isToday={isToday}
           />
@@ -736,6 +755,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               </span>
               <span className="visually-hidden">{scoreLabel}</span>
             </span>
+            {/* Only once at least one exists. A cap stated on an empty day is
+                a rule nobody asked about yet; stated the moment somebody uses
+                one, it is the answer to "how many of these do I get". */}
+            {keyCount > 0 && (
+              <span className="day-key-count">
+                {keyCount}/{MAX_HIGHLIGHTS} key
+              </span>
+            )}
           </div>
         )}
 
@@ -798,6 +825,15 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         {capacityLine && (
           <div className="capacity-line">
             <p>{capacityLine}</p>
+            {/* Its own line, in its own weight. Deliberately not a sentence
+                inside the one above: that sentence is the arithmetic of the
+                waking day, and sleep is the boundary that arithmetic runs
+                inside. Reading them as one paragraph would invite adding
+                them together, which is exactly the sum that does not mean
+                anything. */}
+            <p className="capacity-sleep">
+              Sleep {sleepHours.start}-{sleepHours.end} - {formatDuration(asleepMinutes)}, not free time.
+            </p>
           </div>
         )}
 
@@ -842,6 +878,8 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             isToday={isToday}
             isWide={isWide}
             sleepProfileId={daySleepProfileId}
+            onOpenTaskDetails={setDetailTaskId}
+            onTaskContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
             sleep={sleep}
           />
         )}
@@ -1034,6 +1072,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               onCancelSizeEdit={cancelSizeEdit}
               onToggleDone={handleToggleDone}
               onOpenActions={() => setActionsSheetTaskId(task.id)}
+              onOpenDetails={() => setDetailTaskId(task.id)}
+              onContextMenu={(x, y) => setContextMenu({ taskId: task.id, x, y })}
+              library={data.library}
               selected={selectedTaskId === task.id}
               onToggleSelect={() => toggleSelect(task.id)}
             />
@@ -1085,6 +1126,9 @@ export function DayView({ date, onDateChange }: DayViewProps) {
                   onCancelSizeEdit={cancelSizeEdit}
                   onToggleDone={handleToggleDone}
                   onOpenActions={() => setActionsSheetTaskId(task.id)}
+                  onOpenDetails={() => setDetailTaskId(task.id)}
+                  onContextMenu={(x, y) => setContextMenu({ taskId: task.id, x, y })}
+                  library={data.library}
                   selected={selectedTaskId === task.id}
                   onToggleSelect={() => toggleSelect(task.id)}
                 />
@@ -1133,7 +1177,33 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           onPush={taskId => actions.pushTask(date, taskId)}
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
           onDelete={taskId => actions.deleteTask(date, taskId)}
+          onOpenDetails={() => setDetailTaskId(actionsSheetTask.id)}
           onClose={() => setActionsSheetTaskId(null)}
+        />
+      )}
+
+      {detailTask && (
+        <TaskDetail
+          task={detailTask}
+          tasks={day?.tasks ?? []}
+          date={date}
+          library={data.library}
+          onClose={() => setDetailTaskId(null)}
+        />
+      )}
+
+      {contextTask && contextMenu && (
+        <TaskContextMenu
+          task={contextTask}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          highlightCount={(day?.tasks ?? []).filter(t => t.highlight).length}
+          onDetails={() => setDetailTaskId(contextTask.id)}
+          onToggleDone={() => handleToggleDone(contextTask.id, contextTask.done)}
+          onToggleHighlight={() => actions.toggleTaskHighlight(date, contextTask.id)}
+          onPush={() => actions.pushTask(date, contextTask.id)}
+          onDelete={() => actions.deleteTask(date, contextTask.id)}
+          onClose={() => setContextMenu(null)}
         />
       )}
 

@@ -13,16 +13,18 @@ import { FocusView } from './widgets/day-plan/FocusView'
 import { actions as storeActions } from './lib/store'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
+import { LibraryView } from './views/LibraryView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { WIDGETS } from './widgets/registry'
 
-type View = 'day' | 'calendar' | 'templates' | 'settings'
+type View = 'day' | 'calendar' | 'templates' | 'library' | 'settings'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'day', label: 'Today' },
   { view: 'calendar', label: 'Calendar' },
   { view: 'templates', label: 'Templates' },
+  { view: 'library', label: 'Library' },
   { view: 'settings', label: 'Settings' },
 ]
 
@@ -128,6 +130,7 @@ export function App() {
           ))}
         {view === 'calendar' && <CalendarView onOpenDay={openDay} onOpenTemplates={() => setView('templates')} />}
         {view === 'templates' && <TemplatesView />}
+        {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'settings' && <SettingsView />}
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by

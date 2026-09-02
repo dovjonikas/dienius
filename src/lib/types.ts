@@ -48,6 +48,19 @@ export interface TemplateBlock {
    * colour, the way every task did before this field existed.
    */
   category?: CategoryId
+  /**
+   * Binds this block to a library list (`LibraryList`), not to one item in
+   * it. A block is a shape of a day - "read for an hour" - and which book
+   * that hour goes into is a fact about the week, not about the template.
+   * At stamp time `applyStamps` resolves the list's current unfinished item
+   * and writes it onto the task's `libraryRef`, so a stamped day arrives
+   * naming the actual book rather than the word "Reading".
+   *
+   * Absent is the ordinary case. A list that has been deleted, or has
+   * nothing unfinished left in it, stamps a perfectly normal task with the
+   * block's own title - a template never breaks because a list ran out.
+   */
+  libraryListId?: string
 }
 
 export interface Template {
@@ -136,7 +149,114 @@ export interface Task {
    * true because it did not happen today.
    */
   category?: CategoryId
+  /**
+   * Which library item this task is a session of - see `LibraryItem`.
+   * Ticking the task off advances that item by one unit, and un-ticking it
+   * steps back, so progress through a book is a side effect of living the
+   * day rather than a second thing to remember to update.
+   *
+   * Stored as a pair of ids rather than a resolved title so the item stays
+   * the single source of truth for its own name and progress. Every reader
+   * treats a ref that resolves to nothing - the list or the item was deleted
+   * - exactly like no ref at all, so a dangling pair degrades to an ordinary
+   * task rather than crashing, the same contract `DayPlan.templateId`
+   * already keeps.
+   */
+  libraryRef?: LibraryRef
+  /**
+   * Free text the owner attached to this task - see the task detail sheet.
+   * Absent and empty are the same thing; the card shows a small mark when
+   * there is something here, never the text itself.
+   */
+  note?: string
+  /**
+   * Marks this task as one of the day's few that genuinely matter. Capped at
+   * `MAX_HIGHLIGHTS` per day by `actions.toggleTaskHighlight` - a day where
+   * everything is important is a day with no highlights at all, which is the
+   * failure mode this exists to prevent.
+   */
+  highlight?: boolean
+  /**
+   * The steps this task breaks into. Absent means it does not break into
+   * any, which is most tasks. Sub-steps are deliberately not tasks: they
+   * have no time, no size, no category and never appear on the timeline,
+   * because the moment they can be scheduled independently they stop being
+   * a way of starting one thing and become three more things to plan.
+   */
+  subtasks?: Subtask[]
+  /**
+   * How this task repeats itself onto later days - see `Repeat`. Absent
+   * means it happens once, which is what every task written before this
+   * field existed does.
+   */
+  repeat?: Repeat
 }
+
+/** One step inside a task. Nothing more than a line of text and a tick. */
+export interface Subtask {
+  id: string
+  title: string
+  done: boolean
+}
+
+/**
+ * How a task comes back. Three shapes, deliberately, and no calendar-grade
+ * recurrence rule: "every second Tuesday" is a thing a calendar does, and a
+ * planner that tries to be one ends up with a dialog nobody finishes. Daily,
+ * weekdays and weekly cover what an actual routine looks like.
+ */
+export type Repeat = 'daily' | 'weekdays' | 'weekly'
+
+/** A pointer into the library: which list, and which item in it. */
+export interface LibraryRef {
+  listId: string
+  itemId: string
+}
+
+/**
+ * One thing being worked through over time - a book, a series, a course.
+ *
+ * `total` is optional on purpose. Plenty of things worth tracking have no
+ * known length (a podcast someone is caught up on, a game with no chapters),
+ * and inventing one would be worse than admitting it is not known - the same
+ * reasoning `Task.minutes` already follows. With a total, progress reads
+ * "ch 4/12" and draws a bar; without one it reads "ch 4" and draws nothing.
+ */
+export interface LibraryItem {
+  id: string
+  title: string
+  /** Units in the whole thing. Absent means open-ended, not zero. */
+  total?: number
+  /** Units finished. Absent means none. Never exceeds `total` when there is one. */
+  progress?: number
+  /** The date key it was finished on. Absent means it is still going. */
+  finished?: string
+}
+
+/**
+ * A list of things of one kind, and the word for one unit of progress
+ * through them.
+ *
+ * The unit is the whole reason this is one feature rather than three. A book
+ * has chapters, a series has episodes, a course has lessons; an app that
+ * calls all of those "items completed" is an app that reads like a database.
+ * The owner names the unit once, per list, and every number in the interface
+ * is spoken in it.
+ */
+export interface LibraryList {
+  id: string
+  name: string
+  /** Singular unit name, lowercase: "chapter", "episode", "lesson". */
+  unit: string
+  /** Plural, when it is not just unit + "s". Absent means it is. */
+  unitPlural?: string
+  /** Two or three letters for a card: "ch", "ep". Absent falls back to the unit. */
+  unitShort?: string
+  items: LibraryItem[]
+}
+
+/** How many tasks on one day may be marked as highlights. See `Task.highlight`. */
+export const MAX_HIGHLIGHTS = 3
 
 export interface DayPlan {
   date: string
@@ -398,4 +518,11 @@ export interface AppData {
    * `ifThens` already gets.
    */
   inbox: InboxItem[]
+  /**
+   * Every library list. Backfilled to empty exactly like `inbox`, and empty
+   * is the shipped state: the Library tab offers two starter lists the way
+   * Templates offers three starter templates, and creates neither until
+   * somebody taps one.
+   */
+  library: LibraryList[]
 }

@@ -3,7 +3,7 @@ import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, type CategoryId } from '..
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { DayType, SleepProfile, Template } from '../lib/types'
+import type { DayType, LibraryList, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -53,6 +53,12 @@ interface DraftBlock {
    * day. See docs/TIMELINE.md section 4.
    */
   minutes: string
+  /**
+   * Which library list this block draws its subject from - see
+   * `TemplateBlock.libraryListId`. A block bound to Books stamps a task
+   * named after the next unfinished book, rather than the word "Reading".
+   */
+  libraryListId?: string
 }
 
 interface Draft {
@@ -75,6 +81,8 @@ interface TemplateEditorProps {
    *  picker below appears only once there are two, so a person who never set
    *  up a second never sees the concept at all. */
   sleepProfiles: SleepProfile[]
+  /** Every library list, for the per-block binding. Empty hides the control. */
+  libraryLists: LibraryList[]
   onSave: (draft: Draft) => void
   onCancel: () => void
 }
@@ -83,7 +91,7 @@ interface TemplateEditorProps {
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, sleepProfiles, onSave, onCancel }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
@@ -136,6 +144,13 @@ function TemplateEditor({ initial, sleepProfiles, onSave, onCancel }: TemplateEd
     setDraft(d => ({
       ...d,
       blocks: d.blocks.map((b, i) => (i === index ? { ...b, core: !b.core } : b)),
+    }))
+  }
+
+  function setBlockLibrary(index: number, libraryListId: string | undefined) {
+    setDraft(d => ({
+      ...d,
+      blocks: d.blocks.map((b, i) => (i === index ? { ...b, libraryListId } : b)),
     }))
   }
 
@@ -234,6 +249,26 @@ function TemplateEditor({ initial, sleepProfiles, onSave, onCancel }: TemplateEd
             >
               Ongoing
             </button>
+            {/* The binding, per block rather than per template: one day has
+                a reading block and a language block, and they draw from
+                different lists. Hidden entirely while the library is empty,
+                so a template editor stays a template editor for the many
+                people who never build a list. */}
+            {libraryLists.length > 0 && (
+              <select
+                className="block-library"
+                aria-label={`What ${b.title} draws from`}
+                value={b.libraryListId ?? ''}
+                onChange={e => setBlockLibrary(i, e.target.value || undefined)}
+              >
+                <option value="">Nothing</option>
+                {libraryLists.map(list => (
+                  <option key={list.id} value={list.id}>
+                    From {list.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <button aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
               &times;
             </button>
@@ -327,6 +362,7 @@ export function TemplatesView() {
         core: b.core ?? false,
         unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
+        libraryListId: b.libraryListId,
       })),
     })
   }
@@ -357,6 +393,7 @@ export function TemplatesView() {
       core: b.core || undefined,
       unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),
+      libraryListId: b.libraryListId,
     }))
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)
@@ -406,6 +443,7 @@ export function TemplatesView() {
       {draft && (
         <TemplateEditor
           sleepProfiles={data.settings.sleepProfiles}
+          libraryLists={data.library}
           key={draft.id ?? 'new'}
           initial={draft}
           onSave={saveDraft}

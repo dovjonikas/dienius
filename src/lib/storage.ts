@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, Settings, SleepProfile, SleepWindow, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
@@ -83,6 +83,7 @@ export function defaultData(): AppData {
     },
     ifThens: [],
     inbox: [],
+    library: [],
   }
 }
 
@@ -312,6 +313,49 @@ function isOptionalReminder(x: unknown): x is Settings['reminder'] | undefined {
   )
 }
 
+// A count typed by a person, or restored from a file they may have edited:
+// a whole number of units, never negative, and bounded well below anything
+// that could make a progress bar or a "n/total" label misbehave.
+function isOptionalCount(x: unknown): x is number | undefined {
+  return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 100000)
+}
+
+function isLibraryItem(x: unknown): x is LibraryItem {
+  if (!isRecord(x)) return false
+  if (typeof x.id !== 'string' || typeof x.title !== 'string') return false
+  if (!isOptionalCount(x.total) || !isOptionalCount(x.progress)) return false
+  return isOptionalString(x.finished)
+}
+
+function isLibraryList(x: unknown): x is LibraryList {
+  if (!isRecord(x)) return false
+  if (typeof x.id !== 'string' || typeof x.name !== 'string' || typeof x.unit !== 'string') return false
+  if (!isOptionalString(x.unitPlural) || !isOptionalString(x.unitShort)) return false
+  return Array.isArray(x.items) && x.items.every(isLibraryItem)
+}
+
+function isLibraryRef(x: unknown): x is LibraryRef {
+  return isRecord(x) && typeof x.listId === 'string' && typeof x.itemId === 'string'
+}
+
+function isOptionalLibraryRef(x: unknown): x is LibraryRef | undefined {
+  return x === undefined || isLibraryRef(x)
+}
+
+function isSubtask(x: unknown): x is Subtask {
+  return isRecord(x) && typeof x.id === 'string' && typeof x.title === 'string' && typeof x.done === 'boolean'
+}
+
+function isOptionalSubtasks(x: unknown): x is Subtask[] | undefined {
+  return x === undefined || (Array.isArray(x) && x.every(isSubtask))
+}
+
+const REPEATS: readonly string[] = ['daily', 'weekdays', 'weekly']
+
+function isOptionalRepeat(x: unknown): x is Repeat | undefined {
+  return x === undefined || (typeof x === 'string' && REPEATS.includes(x))
+}
+
 function isInboxItem(x: unknown): x is InboxItem {
   if (!isRecord(x)) return false
   return typeof x.id === 'string' && typeof x.text === 'string' && typeof x.captured === 'string'
@@ -364,7 +408,12 @@ function isTask(x: unknown): x is Task {
     isOptionalBoolean(x.core) &&
     isOptionalMinutes(x.minutes) &&
     isOptionalBoolean(x.unbounded) &&
-    isOptionalCategory(x.category)
+    isOptionalCategory(x.category) &&
+    isOptionalLibraryRef(x.libraryRef) &&
+    isOptionalString(x.note) &&
+    isOptionalBoolean(x.highlight) &&
+    isOptionalSubtasks(x.subtasks) &&
+    isOptionalRepeat(x.repeat)
   )
 }
 
@@ -377,7 +426,8 @@ function isTemplateBlock(x: unknown): x is TemplateBlock {
     isOptionalBoolean(x.core) &&
     isOptionalMinutes(x.minutes) &&
     isOptionalBoolean(x.unbounded) &&
-    isOptionalCategory(x.category)
+    isOptionalCategory(x.category) &&
+    isOptionalString(x.libraryListId)
   )
 }
 
@@ -518,6 +568,7 @@ interface StoredAppData {
   }
   ifThens?: IfThenEntry[]
   inbox?: InboxItem[]
+  library?: LibraryList[]
 }
 
 export function validate(x: unknown): x is StoredAppData {
@@ -527,6 +578,7 @@ export function validate(x: unknown): x is StoredAppData {
   if (!isSettings(x.settings)) return false
   if (x.ifThens !== undefined && (!Array.isArray(x.ifThens) || !x.ifThens.every(isIfThenEntry))) return false
   if (x.inbox !== undefined && (!Array.isArray(x.inbox) || !x.inbox.every(isInboxItem))) return false
+  if (x.library !== undefined && (!Array.isArray(x.library) || !x.library.every(isLibraryList))) return false
   return true
 }
 
@@ -595,6 +647,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
     ...data,
     ifThens: data.ifThens ?? [],
     inbox: data.inbox ?? [],
+    library: data.library ?? [],
     settings: {
       theme: migrateTheme(data.settings.theme),
       enabledWidgets,

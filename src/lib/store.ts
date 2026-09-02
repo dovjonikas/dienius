@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, Settings, SleepWindow, Template, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
+import { MAX_HIGHLIGHTS } from './types'
+import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -61,6 +63,53 @@ function pushedForward(task: DayPlan['tasks'][number]): DayPlan['tasks'][number]
   return { ...task, fromTemplate: false, pushCount: (task.pushCount ?? 0) + 1, core: undefined }
 }
 
+function withLibrary(library: LibraryList[]): AppData {
+  return { ...data, library }
+}
+
+function mapList(listId: string, fn: (list: LibraryList) => LibraryList): AppData {
+  return withLibrary(data.library.map(l => (l.id === listId ? fn(l) : l)))
+}
+
+function mapItem(list: LibraryList, itemId: string, fn: (item: LibraryItem) => LibraryItem): LibraryList {
+  return { ...list, items: list.items.map(i => (i.id === itemId ? fn(i) : i)) }
+}
+
+/**
+ * Moves one item forward or back by a number of units, and keeps the
+ * finished flag honest in both directions.
+ *
+ * The flag is set here rather than inferred at read time because an item
+ * with no total can still be finished - somebody just decides a podcast is
+ * done - and because stepping back off the last unit has to un-finish it,
+ * which a derived value could not express. isItemFinished still treats a
+ * full count as finished regardless, so the two agree on the ordinary case.
+ */
+function advanced(item: LibraryItem, by: number, today: string): LibraryItem {
+  const next = Math.max(0, itemProgress(item) + by)
+  const capped = item.total !== undefined ? Math.min(next, item.total) : next
+  const full = item.total !== undefined && item.total > 0 && capped >= item.total
+  return { ...item, progress: capped, finished: full ? (item.finished ?? today) : undefined }
+}
+
+/**
+ * The one place a task's done state and its library item stay in step.
+ *
+ * Ticking a bound task off is what advances the book; un-ticking it steps
+ * back. Doing it here rather than in the view means every way of finishing a
+ * task - the card, the detail sheet, Focus, the keyboard - advances it, and
+ * none of them has to know the library exists.
+ */
+function advanceForTask(library: LibraryList[], task: Task, nowDone: boolean, today: string): LibraryList[] {
+  const ref = task.libraryRef
+  if (!ref) return library
+  return library.map(list => {
+    if (list.id !== ref.listId) return list
+    if (!list.items.some(i => i.id === ref.itemId)) return list
+    return { ...list, items: list.items.map(i => (i.id === ref.itemId ? advanced(i, nowDone ? 1 : -1, today) : i)) }
+  })
+}
+
 export const actions = {
   /**
    * `category` is optional so every existing caller - and a task restored
@@ -84,15 +133,239 @@ export const actions = {
 
   toggleTask(date: string, taskId: string): void {
     const day = dayOf(date)
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t)),
-    }))
+    const task = day.tasks.find(t => t.id === taskId)
+    const tasks = day.tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t))
+    const library = task ? advanceForTask(data.library, task, !task.done, date) : data.library
+    commit({ ...withDay(date, { ...day, tasks }), library })
   },
 
   deleteTask(date: string, taskId: string): void {
     const day = dayOf(date)
     commit(withDay(date, { ...day, tasks: day.tasks.filter(t => t.id !== taskId) }))
+  },
+
+  // --- task detail ------------------------------------------------------
+
+  setTaskTime(date: string, taskId: string, time: string | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, time: time || undefined } : t)),
+    }))
+  },
+
+  setTaskTitle(date: string, taskId: string, title: string): void {
+    const trimmed = title.trim()
+    if (trimmed === '') return
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, title: trimmed } : t)),
+    }))
+  },
+
+  setTaskNote(date: string, taskId: string, note: string): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, note: note.trim() || undefined } : t)),
+    }))
+  },
+
+  /**
+   * Refuses past MAX_HIGHLIGHTS rather than dropping the oldest. Silently
+   * swapping one out would make the cap invisible and the choice arbitrary;
+   * refusing makes the day say, in the one place it matters, that this is a
+   * decision with a cost. Un-highlighting always works.
+   */
+  toggleTaskHighlight(date: string, taskId: string): void {
+    const day = dayOf(date)
+    const task = day.tasks.find(t => t.id === taskId)
+    if (!task) return
+    if (!task.highlight && day.tasks.filter(t => t.highlight).length >= MAX_HIGHLIGHTS) return
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, highlight: !t.highlight } : t)),
+    }))
+  },
+
+  setTaskRepeat(date: string, taskId: string, repeat: Repeat | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, repeat } : t)),
+    }))
+  },
+
+  addSubtask(date: string, taskId: string, title: string): void {
+    const trimmed = title.trim()
+    if (trimmed === '') return
+    const day = dayOf(date)
+    const subtask: Subtask = { id: crypto.randomUUID(), title: trimmed, done: false }
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, subtasks: [...(t.subtasks ?? []), subtask] } : t)),
+    }))
+  },
+
+  toggleSubtask(date: string, taskId: string, subtaskId: string): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t =>
+        t.id === taskId
+          ? { ...t, subtasks: (t.subtasks ?? []).map(sub => (sub.id === subtaskId ? { ...sub, done: !sub.done } : sub)) }
+          : t,
+      ),
+    }))
+  },
+
+  deleteSubtask(date: string, taskId: string, subtaskId: string): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t =>
+        t.id === taskId ? { ...t, subtasks: (t.subtasks ?? []).filter(sub => sub.id !== subtaskId) } : t,
+      ),
+    }))
+  },
+
+  setTaskLibraryRef(date: string, taskId: string, ref: LibraryRef | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, libraryRef: ref } : t)),
+    }))
+  },
+
+  // --- library ----------------------------------------------------------
+
+  addLibraryList(input: { name: string; unit: string; unitShort?: string; unitPlural?: string }): LibraryList {
+    const list: LibraryList = {
+      id: crypto.randomUUID(),
+      name: input.name.trim(),
+      unit: input.unit.trim().toLowerCase() || 'item',
+      unitShort: input.unitShort?.trim() || undefined,
+      unitPlural: input.unitPlural?.trim() || undefined,
+      items: [],
+    }
+    commit(withLibrary([...data.library, list]))
+    return list
+  },
+
+  updateLibraryList(listId: string, patch: Partial<Omit<LibraryList, 'id' | 'items'>>): void {
+    commit(mapList(listId, list => ({
+      ...list,
+      name: patch.name !== undefined ? patch.name : list.name,
+      unit: patch.unit !== undefined ? patch.unit.toLowerCase() : list.unit,
+      unitShort: patch.unitShort !== undefined ? patch.unitShort.trim() || undefined : list.unitShort,
+      unitPlural: patch.unitPlural !== undefined ? patch.unitPlural.trim() || undefined : list.unitPlural,
+    })))
+  },
+
+  /**
+   * Deleting a list takes every task binding to it with it, the same way
+   * deleting a sleep schedule does - a task pointing at a list that is gone
+   * would keep drawing a progress chip for something nobody can open.
+   */
+  deleteLibraryList(listId: string): void {
+    const days = Object.fromEntries(
+      Object.entries(data.days).map(([date, day]) => [
+        date,
+        { ...day, tasks: day.tasks.map(t => (t.libraryRef?.listId === listId ? { ...t, libraryRef: undefined } : t)) },
+      ]),
+    )
+    commit({
+      ...data,
+      days,
+      library: data.library.filter(l => l.id !== listId),
+      templates: data.templates.map(t => ({
+        ...t,
+        blocks: t.blocks.map(b => (b.libraryListId === listId ? { ...b, libraryListId: undefined } : b)),
+      })),
+    })
+  },
+
+  /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
+  addLibraryItem(listId: string, input: string): LibraryItem | undefined {
+    const parsed = parseLibraryItemInput(input)
+    if (!parsed) return undefined
+    const item: LibraryItem = { id: crypto.randomUUID(), title: parsed.title, total: parsed.total }
+    commit(mapList(listId, list => ({ ...list, items: [...list.items, item] })))
+    return item
+  },
+
+  setLibraryItemProgress(listId: string, itemId: string, progress: number, today: string): void {
+    commit(mapList(listId, list =>
+      mapItem(list, itemId, item => advanced({ ...item, progress: 0, finished: undefined }, progress, today)),
+    ))
+  },
+
+  stepLibraryItem(listId: string, itemId: string, by: number, today: string): void {
+    commit(mapList(listId, list => mapItem(list, itemId, item => advanced(item, by, today))))
+  },
+
+  setLibraryItemTotal(listId: string, itemId: string, total: number | undefined, today: string): void {
+    commit(mapList(listId, list =>
+      mapItem(list, itemId, item => advanced({ ...item, total, progress: 0 }, itemProgress(item), today)),
+    ))
+  },
+
+  /** Marks an item finished outright, or reopens one. The manual override. */
+  toggleLibraryItemFinished(listId: string, itemId: string, today: string): void {
+    commit(mapList(listId, list =>
+      mapItem(list, itemId, item =>
+        isItemFinished(item)
+          ? { ...item, finished: undefined, progress: item.total !== undefined ? Math.max(0, item.total - 1) : itemProgress(item) }
+          : { ...item, finished: today, progress: item.total ?? itemProgress(item) },
+      ),
+    ))
+  },
+
+  deleteLibraryItem(listId: string, itemId: string): void {
+    const days = Object.fromEntries(
+      Object.entries(data.days).map(([date, day]) => [
+        date,
+        { ...day, tasks: day.tasks.map(t => (t.libraryRef?.itemId === itemId ? { ...t, libraryRef: undefined } : t)) },
+      ]),
+    )
+    commit({
+      ...data,
+      days,
+      library: data.library.map(l => (l.id === listId ? { ...l, items: l.items.filter(i => i.id !== itemId) } : l)),
+    })
+  },
+
+  /** Drag-reorder: lifts one item out and drops it back at an index. */
+  moveLibraryItem(listId: string, itemId: string, toIndex: number): void {
+    commit(mapList(listId, list => {
+      const from = list.items.findIndex(i => i.id === itemId)
+      if (from === -1) return list
+      const items = [...list.items]
+      const [moved] = items.splice(from, 1)
+      items.splice(Math.max(0, Math.min(toIndex, items.length)), 0, moved)
+      return { ...list, items }
+    }))
+  },
+
+  /**
+   * Puts a session on this item onto a day, already bound and already named
+   * after it. The two-tap path from the Library: pick the item, pick the day.
+   */
+  scheduleLibraryItem(date: string, listId: string, itemId: string, minutes?: number): void {
+    const list = data.library.find(l => l.id === listId)
+    const item = list?.items.find(i => i.id === itemId)
+    if (!list || !item) return
+    const day = dayOf(date)
+    const task: Task = {
+      id: crypto.randomUUID(),
+      title: item.title,
+      done: false,
+      minutes,
+      category: 'personal',
+      libraryRef: { listId, itemId },
+    }
+    commit(withDay(date, { ...day, tasks: [...day.tasks, task] }))
   },
 
   rolloverUnfinished(date: string): RolloverResult {
@@ -303,7 +576,7 @@ export const actions = {
   },
 
   stamp(stamps: Record<string, string | null>): void {
-    commit({ ...data, days: applyStamps(data.days, data.templates, stamps) })
+    commit({ ...data, days: applyStamps(data.days, data.templates, stamps, data.library) })
   },
 
   /**

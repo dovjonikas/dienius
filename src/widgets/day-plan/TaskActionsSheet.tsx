@@ -16,6 +16,12 @@ export interface TaskActionsSheetProps {
   onPush: (taskId: string) => void
   onSetOngoing: (taskId: string, ongoing: boolean) => void
   onDelete: (taskId: string) => void
+  /**
+   * Opens everything about this task that is edited rather than acted on -
+   * see `TaskDetail.tsx`. Optional so every caller written before the sheet
+   * had a door to it still compiles and renders exactly as it did.
+   */
+  onOpenDetails?: () => void
   onClose: () => void
 }
 
@@ -59,7 +65,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  *   The only action a done task ever has left, since everything else above
  *   is gated on the task not being done.
  */
-export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onClose }: TaskActionsSheetProps) {
+export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onOpenDetails, onClose }: TaskActionsSheetProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const anchor = isAnchor(task)
   const pushCount = task.pushCount ?? 0
@@ -144,6 +150,22 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
 
         <div className="task-actions-body">
           {atBound && <p className="task-actions-note">{boundNote(pushCount)}</p>}
+
+          {/* First, because it is the one entry that leads somewhere rather
+              than doing something - everything below acts on the task and
+              closes; this opens the rest of it. */}
+          {onOpenDetails && (
+            <button
+              type="button"
+              className="task-actions-row"
+              onClick={() => {
+                onClose()
+                onOpenDetails()
+              }}
+            >
+              Details
+            </button>
+          )}
 
           {canPlaceOrUnanchor && !anchor && (
             gaps.length === 0 ? (

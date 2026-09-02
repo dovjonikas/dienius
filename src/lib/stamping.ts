@@ -1,9 +1,30 @@
-import type { DayPlan, Task, Template } from './types'
+import { currentItem } from './library'
+import type { DayPlan, LibraryList, Task, Template } from './types'
+
+/**
+ * A block bound to a library list stamps a task named after whatever is next
+ * in that list, bound to it - so a "Reading" block on Tuesday arrives saying
+ * the actual book, and ticking it off advances the book.
+ *
+ * Everything here degrades to an ordinary task rather than failing: the
+ * library is optional (most callers, and every test written before it
+ * existed, pass nothing), a list that was deleted resolves to nothing, and a
+ * list with nothing unfinished left resolves to nothing too. In all three
+ * cases the block's own title stands, which is exactly what it did before
+ * this existed.
+ */
+function boundTo(list: LibraryList | undefined): { title: string; ref: Task['libraryRef'] } | undefined {
+  if (!list) return undefined
+  const item = currentItem(list)
+  if (!item) return undefined
+  return { title: item.title, ref: { listId: list.id, itemId: item.id } }
+}
 
 export function applyStamps(
   days: Record<string, DayPlan>,
   templates: Template[],
   stamps: Record<string, string | null>,
+  library: LibraryList[] = [],
 ): Record<string, DayPlan> {
   const next = { ...days }
   for (const [date, templateId] of Object.entries(stamps)) {
@@ -30,10 +51,12 @@ export function applyStamps(
     const templateTasks: Task[] = template.blocks.map(b => {
       const matchIndex = pool.findIndex(t => t.title === b.title && t.time === b.time)
       const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
+      const bound = b.libraryListId ? boundTo(library.find(l => l.id === b.libraryListId)) : undefined
       return {
         id: crypto.randomUUID(),
         time: b.time,
-        title: b.title,
+        title: bound?.title ?? b.title,
+        libraryRef: bound?.ref,
         done: match?.done ?? false,
         fromTemplate: true,
         // Core, minutes, unbounded and category all come from the template's

@@ -1,4 +1,5 @@
-import type { Task } from '../../lib/types'
+import type { LibraryList, Task } from '../../lib/types'
+import { progressLabel } from '../../lib/library'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { categoryColor, categoryLabel } from '../../lib/categories'
@@ -64,6 +65,16 @@ export interface TaskRowProps {
    */
   onOpenActions: () => void
   /**
+   * Opens everything this row deliberately does not show - see
+   * `TaskDetail.tsx`. Optional so a caller that has not adopted it yet (and
+   * every test written before it existed) renders exactly as before.
+   */
+  onOpenDetails?: () => void
+  /** Opens the pointer's own quick menu at a point - see TaskContextMenu. */
+  onContextMenu?: (x: number, y: number) => void
+  /** Every list, so a bound task can show how far through its book it is. */
+  library?: LibraryList[]
+  /**
    * Checking the task off, or unchecking it. Routed up to `DayView` rather
    * than calling `actions.toggleTask` here the way this row used to, because
    * finishing a task is no longer a change to this row alone: it also starts
@@ -112,6 +123,9 @@ export function TaskRow({
   onCommitSizeEdit,
   onCancelSizeEdit,
   onOpenActions,
+  onOpenDetails,
+  onContextMenu,
+  library = [],
   onToggleDone,
   selected,
   onToggleSelect,
@@ -136,6 +150,15 @@ export function TaskRow({
   // has - see the module comment below for why the title is the gesture at
   // all rather than a new control.
   const selectable = !task.done && !isAnchor(task)
+  const subtasks = task.subtasks ?? []
+  const subtaskCount = subtasks.length
+  const doneSubtaskCount = subtasks.filter(s => s.done).length
+  // A ref that resolves to nothing - the list or the item was deleted -
+  // draws nothing at all, the same contract every other dangling id in this
+  // app keeps. See Task.libraryRef.
+  const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
+  const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
+  const boundLabel = boundList && boundItem ? progressLabel(boundList, boundItem) : undefined
 
   // Selecting has to live somewhere that (a) is not the checkbox, so it
   // cannot be mistaken for completing the task, and (b) is not the row's
@@ -169,6 +192,7 @@ export function TaskRow({
   if (task.done) classNames.push('done')
   if (leaving) classNames.push('task-leaving')
   if (atBound) classNames.push('task-maxed')
+  if (task.highlight) classNames.push('task-key')
   const stateId = `task-state-${task.id}`
   const coreId = `core-badge-${task.id}`
   const showCoreBadge = !isFullDay && !!task.core
@@ -196,6 +220,15 @@ export function TaskRow({
     <li
       className={classNames.join(' ')}
       style={catColor ? ({ ['--cat' as string]: catColor } as React.CSSProperties) : undefined}
+      onDoubleClick={onOpenDetails}
+      onContextMenu={
+        onContextMenu
+          ? e => {
+              e.preventDefault()
+              onContextMenu(e.clientX, e.clientY)
+            }
+          : undefined
+      }
     >
       {/* Two rows, not one: the title on its own line at full weight, and
           everything that qualifies it - the time, the size, whether it is
@@ -249,6 +282,22 @@ export function TaskRow({
           )}
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
+          )}
+          {/* Three marks, each earned by something the task actually is.
+              None of them is a control - they are read, and the detail sheet
+              is where they are changed - so none of them spends a tap
+              target on a row that already has four. */}
+          {subtaskCount > 0 && (
+            <span className="task-steps" title="Steps done">
+              {doneSubtaskCount}/{subtaskCount}
+              <span className="visually-hidden"> steps done</span>
+            </span>
+          )}
+          {boundLabel && <span className="task-library">{boundLabel}</span>}
+          {task.note && (
+            <span className="task-note-mark" title="Has a note">
+              note
+            </span>
           )}
           {/* The one quiet mark for whichever of the three mutually
               exclusive push states applies - see the comment on

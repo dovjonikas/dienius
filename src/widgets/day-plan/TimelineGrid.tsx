@@ -236,6 +236,16 @@ export interface TimelineGridProps {
   /** Which sleep schedule this day is measured against - see `SleepProfile`. */
   sleepProfileId?: string
   /**
+   * Opens everything about the block's task - see `TaskDetail.tsx`. Reached
+   * by a double click or a right click rather than a plain one, because a
+   * plain press on a block already begins a drag and the two gestures would
+   * fight over every attempt to move something. Optional, so every caller
+   * and test written before the detail sheet existed behaves as it did.
+   */
+  onOpenTaskDetails?: (taskId: string) => void
+  /** Opens the pointer's own quick menu for this block - see TaskContextMenu. */
+  onTaskContextMenu?: (taskId: string, x: number, y: number) => void
+  /**
    * The owner's sleep schedules - see `Settings.sleepProfiles` in types.ts.
    * Optional so a caller with nothing to pass (a read-only preview, most of
    * this component's own tests) still renders correctly: `windowFor` itself
@@ -295,6 +305,8 @@ export function TimelineGrid({
   isToday = false,
   isWide = false,
   sleepProfileId,
+  onOpenTaskDetails,
+  onTaskContextMenu,
   sleep,
 }: TimelineGridProps) {
   const layout = computeTimelineLayout(tasks, sleepProfileId, sleep)
@@ -564,6 +576,15 @@ export function TimelineGrid({
                     ...(catColor ? { ['--cat' as string]: catColor } : {}),
                   } as React.CSSProperties}
                   onPointerDown={draggable ? e => onAnchorPointerDown!(anchor.id, e) : undefined}
+                  onDoubleClick={onOpenTaskDetails ? () => onOpenTaskDetails(anchor.id) : undefined}
+                  onContextMenu={
+                    onTaskContextMenu
+                      ? e => {
+                          e.preventDefault()
+                          onTaskContextMenu(anchor.id, e.clientX, e.clientY)
+                        }
+                      : undefined
+                  }
                 >
                   <span className="timeline-anchor-title">{anchor.title}</span>
                   {/* The grab strip, on a sized anchor only: an unsized one is

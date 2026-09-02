@@ -2870,7 +2870,8 @@ select:focus {
   100% { --tick-short: 5px; --tick-long: 10px; opacity: 1; }
 }
 
-.task input:checked + .check::after {
+.task input:checked + .check::after,
+.subtask input:checked + .check::after {
   animation: tick-draw 260ms var(--ease) forwards;
 }
 
@@ -2879,7 +2880,8 @@ select:focus {
    would never appear at all - which is a worse failure than not animating.
    This fallback gives those browsers the finished mark, statically. */
 @supports not (background: paint(x)) {
-  .task input:checked + .check::after {
+  .task input:checked + .check::after,
+.subtask input:checked + .check::after {
     width: 5px;
     height: 10px;
     opacity: 1;
@@ -2887,7 +2889,8 @@ select:focus {
   }
 }
 
-.task input:checked + .check {
+.task input:checked + .check,
+.subtask input:checked + .check {
   background: var(--accent);
   border-color: var(--accent);
   animation: pop 0.25s ease;
@@ -2939,8 +2942,10 @@ select:focus {
 
 @media (prefers-reduced-motion: reduce) {
   .task-leaving { animation: none; opacity: 0.5; }
-  .task input:checked + .check { animation: none; }
-  .task input:checked + .check::after {
+  .task input:checked + .check,
+  .subtask input:checked + .check { animation: none; }
+  .task input:checked + .check::after,
+.subtask input:checked + .check::after {
     width: 5px;
     height: 10px;
     opacity: 1;
@@ -4550,7 +4555,7 @@ nav button:active,
    a different application is a floating widget people close.
    ------------------------------------------------------------------------ */
 
-/* On a phone the brand, four tabs and this button do not fit on one line, and
+/* On a phone the brand, the tabs and this button do not fit on one line, and
    the button was the thing that wrapped - landing alone on a row of its own
    under the tabs, with a hole above the day. Two deliberate rows instead: the
    name and the button, then the tabs across the full width. */
@@ -4559,6 +4564,17 @@ nav button:active,
 @media (max-width: 599px) {
   .app-header nav { order: 2; flex-basis: 100%; justify-content: flex-start; }
   .app-header .brand { flex: 1; }
+
+  /* Five tabs at the desktop size are 408px wide, which put a 375px phone
+     into a horizontal scroll of the whole page - every screen shifted
+     sideways, not just the header. Tightened here rather than by shortening
+     a label: the words are the navigation, and "Templ." is not one.
+     The nav itself scrolls as a last resort, so a sixth tab, a longer word
+     or a large text setting can never push the page sideways again. */
+  nav button { padding-left: var(--s2); padding-right: var(--s2); font-size: var(--t-sm); }
+  nav button::after { left: var(--s2); right: var(--s2); }
+  .app-header nav { overflow-x: auto; scrollbar-width: none; }
+  .app-header nav::-webkit-scrollbar { display: none; }
 }
 
 /* A clock face drawn from a circle and two borders, like every other mark in
@@ -5996,3 +6012,630 @@ button.danger:focus-visible {
     gap: var(--s2);
   }
 }
+
+/* ------------------------------------------------------------------------
+   Library - LibraryView.tsx.
+
+   A page of lists, each a card. Deliberately shaped like the Templates page
+   rather than like the day view: both are places you go to arrange things
+   you will use later, and they should feel like the same kind of room.
+   ------------------------------------------------------------------------ */
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s4) var(--s7);
+}
+
+.library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+}
+
+.library-header h2 {
+  margin: 0;
+  font-size: var(--t-lg);
+}
+
+.library-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.library-empty p { margin: 0; max-width: 60ch; line-height: 1.6; }
+
+.library-starters { display: flex; flex-wrap: wrap; gap: var(--s3); }
+
+.library-new {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.library-new-fields { display: flex; flex-wrap: wrap; gap: var(--s4); }
+.library-new-actions { display: flex; gap: var(--s3); }
+
+/* One field and its label, stacked. The same shape the sleep window fields
+   use, promoted to a shared class now that a second screen needs it. */
+.field { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
+.field-label { color: var(--muted); font-size: var(--t-sm); }
+.field input { width: 100%; }
+
+.library-lists { display: flex; flex-direction: column; gap: var(--s4); }
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+
+.library-list-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.library-list-head h3 { margin: 0; font-size: var(--t-md); }
+
+.library-list-unit {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-list-edit {
+  min-height: 0;
+  padding: 2px var(--s2);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.library-list-edit:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.library-list-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+  padding: var(--s3);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 22%, transparent);
+}
+
+.library-list-settings .field { flex: 1 1 140px; }
+
+.library-add { display: flex; gap: var(--s2); }
+.library-add input { flex: 1; min-width: 0; }
+
+.library-list-empty { margin: 0; font-size: var(--t-sm); }
+
+.library-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s2) var(--s2) 0;
+  border-radius: var(--r-control);
+  transition: background var(--dur-fast) var(--ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .library-item:hover { background: color-mix(in srgb, var(--border) 28%, transparent); }
+}
+
+.library-item.is-dragging { opacity: 0.45; }
+
+/* Six dots, drawn rather than imported. Only says "this row moves"; the row
+   itself is the drag handle, because a 12px target is not one on a phone. */
+.library-item-grip {
+  flex-shrink: 0;
+  width: 10px;
+  height: 16px;
+  background-image: radial-gradient(circle, var(--faint) 1px, transparent 1px);
+  background-size: 5px 5px;
+  cursor: grab;
+}
+
+.library-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.library-item-title {
+  color: var(--text);
+  font-size: var(--t-md);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Two pixels, full width of the title. Enough to read "nearly done" from
+   across the room, not enough to become the loudest thing on the row. */
+.library-item-bar {
+  display: block;
+  /* Capped, so it reads as a bar rather than as an underline running the
+     whole width of a wide screen. */
+  max-width: 280px;
+  height: 3px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+  overflow: hidden;
+}
+
+.library-item-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transition: width var(--dur) var(--ease);
+}
+
+.library-item-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-shrink: 0;
+}
+
+.library-item-count {
+  min-width: 62px;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.library-step {
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1;
+}
+
+.library-step:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+.library-step:disabled { opacity: 0.35; }
+
+.library-item-actions { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
+
+.library-item-schedule,
+.library-item-reopen {
+  min-height: 0;
+  padding: 3px var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.library-item-schedule:hover,
+.library-item-reopen:hover { color: var(--text); border-color: var(--muted); }
+
+/* Two named days and nothing else. The whole promise is two taps, and a
+   date picker here would make it four and a decision. Anything further out
+   is a thing to plan on the calendar, where the days are already drawn. */
+.library-schedule {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+}
+
+.library-schedule button {
+  min-height: 0;
+  padding: 3px var(--s2);
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-xs);
+}
+
+.library-schedule button:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+.library-item-remove {
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.library-item-remove:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+.library-finished { margin-top: var(--s1); }
+
+.library-finished-toggle {
+  min-height: 0;
+  padding: var(--s1) 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.library-finished-toggle:hover { color: var(--text); }
+
+.library-items.is-finished { margin-top: var(--s1); }
+
+.library-item.done .library-item-title { color: var(--muted); text-decoration: line-through; }
+
+/* The per-block binding in the template editor. Sized down to sit in a row
+   of chips rather than to look like a form field. */
+.block-library {
+  flex-shrink: 0;
+  max-width: 150px;
+  min-height: 28px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  font-size: var(--t-xs);
+}
+
+/* Under the wide breakpoint a row of five things does not fit a phone, so
+   the row becomes two: the title and its bar, then everything that acts on
+   it. Nothing is hidden - a phone gets the same list, in two lines. */
+@media (max-width: 599px) {
+  .library { padding: var(--s4) var(--s3) var(--s7); }
+  .library-item { flex-wrap: wrap; row-gap: var(--s2); padding-left: var(--s2); }
+  /* HTML5 drag does not fire from a touch at all, so the grip here would be a
+     handle that does nothing. Hidden rather than left as a lie; reordering a
+     list is a desk job either way. See docs/OPEN-QUESTIONS.md. */
+  .library-item-grip { display: none; }
+  .library-item-main { flex: 1 1 100%; }
+  .library-item-progress { margin-left: auto; }
+  .library-new-fields { flex-direction: column; }
+}
+
+/* ------------------------------------------------------------------------
+   Task detail - TaskDetail.tsx.
+
+   One rectangle, two places. On a wide screen it sits centred over the day;
+   on a phone it is pinned to the bottom edge, where a thumb already is. Both
+   from the same markup - the only difference is which edges it touches, so
+   there is no second component to keep in step.
+   ------------------------------------------------------------------------ */
+.task-detail-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .task-detail-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+  .task-detail { animation: detail-in var(--dur) var(--ease) both; }
+}
+
+@keyframes detail-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes detail-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.task-detail {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  max-height: min(680px, 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  outline: none;
+}
+
+.task-detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s3) var(--s3) var(--s4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/* The title is the heading and the field for it at once. A separate "rename"
+   control would be one more thing to find for the single most obvious edit
+   on the screen. */
+.task-detail-title {
+  flex: 1;
+  min-width: 0;
+  padding: var(--s2) var(--s2);
+  border-color: transparent;
+  background: none;
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.task-detail-title:hover { border-color: var(--border); }
+
+.task-detail-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-lg);
+  line-height: 1;
+}
+
+.task-detail-close:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+
+.task-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s4);
+  overflow-y: auto;
+}
+
+.task-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.task-detail-label {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.task-detail-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* Five minutes either way, which is the correction an actual day needs -
+   the picker beside them is for the jump from 09:00 to 14:00. */
+.task-detail-nudge {
+  min-height: 38px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-detail-nudge:hover:not(:disabled) { border-color: var(--muted); }
+.task-detail-nudge:disabled { opacity: 0.4; }
+
+.task-detail-clear,
+.task-detail-toggle {
+  min-height: 38px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.task-detail-clear:hover,
+.task-detail-toggle:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+
+.task-detail-toggle.active {
+  border-color: var(--mark);
+  background: color-mix(in srgb, var(--mark) 18%, transparent);
+  color: var(--text);
+}
+
+.task-detail-toggle:disabled { opacity: 0.45; }
+
+.task-detail-size { width: 90px; text-align: center; font-variant-numeric: tabular-nums; }
+
+.task-detail-hint { color: var(--muted); font-size: var(--t-sm); }
+
+.task-detail-subtasks { display: flex; flex-direction: column; gap: var(--s1); }
+
+.subtask {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s1) var(--s2);
+  border-radius: var(--r-control);
+}
+
+.subtask:hover { background: color-mix(in srgb, var(--border) 30%, transparent); }
+.subtask input[type='checkbox'] { position: absolute; opacity: 0; width: 0; height: 0; }
+.subtask-title { flex: 1; min-width: 0; font-size: var(--t-sm); }
+.subtask.done .subtask-title { color: var(--muted); text-decoration: line-through; }
+
+.subtask-remove {
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--faint);
+  line-height: 1;
+}
+
+.subtask-remove:hover { color: var(--danger); }
+
+.subtask-add { font-size: var(--t-sm); }
+
+.task-detail-note { resize: vertical; font-size: var(--t-sm); line-height: 1.5; }
+
+/* On a phone the panel is the bottom sheet the brief asks for: full width,
+   square at the bottom, and no taller than most of the screen so the day is
+   still visible behind it. */
+@media (max-width: 599px) {
+  .task-detail-scrim { align-items: flex-end; padding: 0; }
+  .task-detail {
+    width: 100%;
+    max-height: 86dvh;
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    border-bottom: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .task-detail { animation: sheet-in var(--dur) var(--ease) both; }
+  }
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+/* ------------------------------------------------------------------------
+   The right-click menu - TaskContextMenu.tsx.
+   ------------------------------------------------------------------------ */
+.task-context-menu {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  min-width: 176px;
+  padding: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised, var(--surface));
+  box-shadow: var(--e2), 0 16px 36px -12px rgba(0, 0, 0, 0.55);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .task-context-menu { animation: time-picker-in var(--dur-fast) var(--ease) both; }
+}
+
+.task-context-menu button {
+  min-height: 34px;
+  padding: 0 var(--s3);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.task-context-menu button:hover:not(:disabled) { background: color-mix(in srgb, var(--border) 55%, transparent); }
+.task-context-menu button:disabled { opacity: 0.4; }
+.task-context-menu button.danger { color: var(--danger); }
+.task-context-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+.task-context-sep {
+  height: 1px;
+  margin: var(--s1) var(--s2);
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* ------------------------------------------------------------------------
+   The three marks a card can carry, and the key-task edge.
+   ------------------------------------------------------------------------ */
+.task-steps,
+.task-library,
+.task-note-mark {
+  flex-shrink: 0;
+  padding: 1px var(--s2);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--border) 50%, transparent);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.task-library { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+
+/* A key task is marked on the card itself, not by a badge in the meta line:
+   the point of three-per-day is that they are visible before anything is
+   read, and a word in the second line is not. */
+.task-key {
+  border-color: color-mix(in srgb, var(--mark) 45%, var(--border));
+  background: color-mix(in srgb, var(--mark) 7%, var(--surface));
+}
+
+.task-key .task-title { font-weight: 650; }
+
+.day-key-count {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Sleep, stated under the capacity sentence rather than inside it - see
+   DayView's own comment. Quieter than the line above, because it is the one
+   figure on the day that never changes with what you plan. */
+.capacity-sleep {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+/* A sub-step is a line of text, not a card, so its box is smaller - a 24px
+   control beside 13px type reads as the main event rather than a tick. */
+.subtask .check { width: 18px; height: 18px; border-width: 1.5px; }
+.subtask .check::after { left: 5px; top: 2px; }
