@@ -326,6 +326,7 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
                   <input
                     type="checkbox"
                     checked={sub.done}
+                    aria-label={sub.title}
                     onChange={() => actions.toggleSubtask(date, task.id, sub.id)}
                   />
                   <span className="check" aria-hidden="true" />

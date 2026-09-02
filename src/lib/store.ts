@@ -554,7 +554,22 @@ export const actions = {
     color: string
     type?: DayType
     sleepProfileId?: string
-    blocks: { time?: string; title: string; core?: boolean; minutes?: number; unbounded?: boolean }[]
+    // Every field a TemplateBlock has, not a subset. This list used to stop
+    // at unbounded, which silently dropped the category off every block of
+    // every newly created template - the editor was passing it and this was
+    // throwing it away, so a template arrived colourless and only picked its
+    // colours up if somebody edited and saved it again (updateTemplate takes
+    // a whole Template and never had the gap). Found by writing the library
+    // binding's own test, which lost its binding the same way.
+    blocks: {
+      time?: string
+      title: string
+      core?: boolean
+      minutes?: number
+      unbounded?: boolean
+      category?: CategoryId
+      libraryListId?: string
+    }[]
   }): Template {
     const template: Template = {
       id: crypto.randomUUID(),
@@ -569,6 +584,8 @@ export const actions = {
         core: b.core,
         minutes: b.minutes,
         unbounded: b.unbounded,
+        category: b.category,
+        libraryListId: b.libraryListId,
       })),
     }
     commit({ ...data, templates: [...data.templates, template] })

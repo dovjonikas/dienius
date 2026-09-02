@@ -123,7 +123,13 @@ function readStopwatch(x: unknown): StopwatchState | null {
   return { startedAt: s.startedAt, elapsedBeforeMs: s.elapsedBeforeMs, paused: s.paused }
 }
 
-function load(): ClockTools {
+/**
+ * Reads the stored clock back. This is exactly what a reload does, which is
+ * why it is exported: a timer that survives a closed tab is the whole point
+ * of storing an instant rather than a countdown, and there is no way to test
+ * that claim without being able to do the reading half of it.
+ */
+export function loadClockTools(): ClockTools {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return EMPTY
@@ -144,7 +150,7 @@ function load(): ClockTools {
   }
 }
 
-let state: ClockTools = load()
+let state: ClockTools = loadClockTools()
 const listeners = new Set<() => void>()
 
 function commit(next: ClockTools): void {
