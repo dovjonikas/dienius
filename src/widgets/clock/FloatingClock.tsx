@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useTimerTick, useTitleCountdown } from './useTimerTick'
 import {
   clockTools,
   elapsedMs,
@@ -77,7 +78,6 @@ const CORNERS: ClockTools['corner'][] = ['bottom-right', 'bottom-left', 'top-lef
  */
 export function FloatingClock() {
   const tools = useClockTools()
-  const [now, setNow] = useState(() => Date.now())
   // Which run has already chimed. Held per mount rather than in storage: the
   // stored `rungOut` flag is what stops a reload from re-alarming, and this
   // only stops the same tab from alarming twice on consecutive ticks.
@@ -87,14 +87,20 @@ export function FloatingClock() {
   const stopwatch = tools.stopwatch
   const running = (timer && !timer.paused) || (stopwatch && !stopwatch.paused)
 
-  useEffect(() => {
-    if (!running) return
-    const id = setInterval(() => setNow(Date.now()), 500)
-    return () => clearInterval(id)
-  }, [running])
+  // The instant this timer is due, in wall-clock terms, so the tick below
+  // can schedule a single timeout for it rather than trusting an interval a
+  // background tab is allowed to clamp to once a minute. Null for a paused
+  // timer (it has no deadline until it is started again) and for a stopwatch
+  // (which has none at all).
+  const deadline = timer && !timer.paused ? timer.startedAt + (timer.durationMs - timer.elapsedBeforeMs) : null
+  const now = useTimerTick(!!running, deadline)
 
   const left = timer ? remainingMs(timer, now) : 0
   const isUp = !!timer && left <= 0
+
+  // The countdown in the tab title - the one thing a browser will still show
+  // for a tab nobody is looking at, needing neither a permission nor a sound.
+  useTitleCountdown(timer ? (isUp ? 'Time up' : formatClockMs(left)) : null)
 
   useEffect(() => {
     if (!timer || !isUp) return
