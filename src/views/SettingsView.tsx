@@ -24,7 +24,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 /** How far down the viewport a section heading has to be before the list stops calling it current. */
 const SECTION_ACTIVE_OFFSET_PX = 120
 
-export function SettingsView() {
+export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void } = {}) {
   // Two facts the browser owns rather than the store: whether an install
   // offer is currently held (Chromium fires it when it feels like it, and
   // withdraws it after an install), and whether this page is already running
@@ -215,6 +215,27 @@ export function SettingsView() {
                 )}
               </div>
             </div>
+
+            {/* The one place the keyboard layer is discoverable without
+                already knowing about it. A shortcut nobody can find is a
+                shortcut nobody has, and "press ?" is not something an app
+                gets to assume. */}
+            {onShowShortcuts && (
+              <div className="setting-row">
+                <div className="setting-label">
+                  <span className="setting-name">Keyboard shortcuts</span>
+                  <span className="setting-desc">
+                    Single keys for the things done most often - adding a task, moving a day, switching tabs.
+                    Press ? anywhere to see the list.
+                  </span>
+                </div>
+                <div className="setting-control">
+                  <button type="button" className="btn-secondary" onClick={onShowShortcuts}>
+                    Show shortcuts
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="setting-row">
               <div className="setting-label">

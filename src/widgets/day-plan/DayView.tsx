@@ -960,6 +960,10 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           </div>
           <input
             className="quick-add"
+            /* Marked rather than reached by a ref chain from the shell: the
+               N shortcut lives at the app root and has no business knowing
+               this view internals - see App.tsx. */
+            data-quick-add=""
             placeholder={captureMode === 'inbox' ? 'Catch a thought, decide later...' : 'Add a task... try 14:00 Call mom'}
             value={input}
             onChange={e => handleInputChange(e.target.value)}

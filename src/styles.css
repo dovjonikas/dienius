@@ -6818,3 +6818,66 @@ button.danger:focus-visible {
      this only ever runs on release. */
   .task-detail { transition: transform var(--dur) var(--ease); }
 }
+
+/* ------------------------------------------------------------------------
+   The shortcut card - ShortcutsOverlay.tsx. Same rectangle as the task
+   detail sheet, because it is the same kind of object: one thing, over
+   everything, closed by Escape or the scrim.
+   ------------------------------------------------------------------------ */
+.shortcuts-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shortcuts-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+  .shortcuts { animation: detail-in var(--dur) var(--ease) both; }
+}
+
+.shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: min(440px, 100%);
+  max-height: min(640px, 100%);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  overflow-y: auto;
+  outline: none;
+}
+
+.shortcuts-head { display: flex; align-items: center; justify-content: space-between; }
+.shortcuts-head h2 { margin: 0; font-size: var(--t-lg); }
+
+.shortcuts-list { display: flex; flex-direction: column; gap: var(--s2); margin: 0; }
+.shortcuts-list > div { display: flex; align-items: baseline; gap: var(--s3); }
+.shortcuts-list dt { flex: 0 0 44px; margin: 0; }
+.shortcuts-list dd { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+
+/* The key itself, drawn as a key. A border and a bottom edge is the whole
+   idea - anything more literal turns a list into a picture of a keyboard. */
+.shortcuts kbd {
+  display: inline-block;
+  min-width: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: var(--r-chip);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-align: center;
+}
+
+.shortcuts-note { margin: 0; color: var(--faint); font-size: var(--t-sm); line-height: 1.5; }
