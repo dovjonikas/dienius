@@ -1178,3 +1178,73 @@ test('a task that fits nowhere today says so plainly, without suggesting the day
   await user.click(screen.getByRole('button', { name: 'Big errand' }))
   expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
 })
+
+// --- a time without typing one ---------------------------------------------
+//
+// The third way in, after "type nothing and let it be a float" and "type
+// 14:00 Call mom". It exists for the times somebody knows the hour and not
+// the digits, and it is deliberately quiet: nothing here may read as a
+// question that has to be answered before a task can be added.
+
+test('the clock beside quick-add sets a time in two taps, and the task lands at it', async () => {
+  const user = userEvent.setup()
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  // One open, two picks: the list stays up between the hour and the minute,
+  // the way TimePicker's own does.
+  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '14' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Minute' })).getByRole('option', { name: '30' }))
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('listbox', { name: 'Hour' })).toBeNull()
+
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom{Enter}')
+  const taskList = within(container.querySelector('.task-list')!)
+  expect(taskList.getByText('Call mom')).toBeInTheDocument()
+  expect(taskList.getByText('14:30')).toBeInTheDocument()
+})
+
+test('the picked time is forgotten once the task is added, so the next one is a float again', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'First{Enter}')
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'Second{Enter}')
+
+  const tasks = getData().days['2026-09-01'].tasks
+  expect(tasks.find(t => t.title === 'First')?.time).toBe('09:00')
+  expect(tasks.find(t => t.title === 'Second')?.time).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Pick a time' })).toBeInTheDocument()
+})
+
+/**
+ * A time typed into the line wins over one picked from the list: it is the
+ * more explicit of the two, and it is the one still on screen in the chips.
+ */
+test('a time typed into the line beats one picked from the clock', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
+  await user.type(screen.getByPlaceholderText(/add a task/i), '16:00 Call mom{Enter}')
+  expect(getData().days['2026-09-01'].tasks[0].time).toBe('16:00')
+})
+
+test('clearing the picked time puts the task back to being a float', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
+  await user.click(screen.getByRole('button', { name: 'Clear 09:00' }))
+  await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom{Enter}')
+  expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
+})
+
+// An inbox line is not a task yet, so a time on it would be a decision the
+// inbox exists to postpone - see the capture mode comment in TaskPane.
+test('the clock is not offered while the field is writing to the inbox', async () => {
+  const user = userEvent.setup()
+  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(screen.getByRole('button', { name: 'Inbox' }))
+  expect(screen.queryByRole('button', { name: 'Pick a time' })).toBeNull()
+})

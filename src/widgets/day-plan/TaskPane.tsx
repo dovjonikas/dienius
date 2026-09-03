@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { LibraryList, Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
@@ -14,6 +14,7 @@ import { parseQuickAdd } from './parse'
 import { formatDuration, parseMinutesInput } from './capacity'
 import { rolloverSplit } from './rollover'
 import { StarterOffers } from '../onboarding/StarterOffers'
+import { TimeColumns } from '../../views/TimeColumns'
 import { TaskRow } from './TaskRow'
 import { Inbox } from './Inbox'
 
@@ -77,7 +78,36 @@ export function TaskPane({
   // says, so capturing costs a tap once rather than a decision every time
   // about which box to aim at.
   const [captureMode, setCaptureMode] = useState<'task' | 'inbox'>('task')
+  // A time chosen from the list rather than typed - see the clock button
+  // below. Empty is the ordinary case and means the task goes in untimed,
+  // which is what a float is: something to do today, not at a time.
+  const [pickedTime, setPickedTime] = useState('')
+  const [timeOpen, setTimeOpen] = useState(false)
+  const timeRef = useRef<HTMLDivElement>(null)
   const doneListId = useId()
+
+  // The list closes the way TimePicker's own does - a pointerdown outside it,
+  // or Escape - rather than on the first pick. Closing on a pick meant an
+  // hour and a minute cost four taps: choose the hour, watch it shut, open it
+  // again, choose the minute. Pointerdown rather than click, so the panel is
+  // gone before whatever was under it reacts.
+  useEffect(() => {
+    if (!timeOpen) return
+    function onDown(e: PointerEvent) {
+      if (!timeRef.current?.contains(e.target as Node)) setTimeOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setTimeOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey, true)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey, true)
+    }
+  }, [timeOpen])
 
   // The open list and the Done section, split from the one sorted list rather
   // than sorted differently - sortTasks stays the single source of order within
@@ -123,12 +153,17 @@ export function TaskPane({
     }
     const parsed = parseQuickAdd(input)
     if (!parsed) return
-    actions.addTask(date, parsed.title, parsed.time, newCategory)
+    // A time typed into the line wins over one picked from the list: it is
+    // the more explicit of the two, and it is the one still on screen in the
+    // chips. Nothing picked and nothing typed is a float, deliberately.
+    actions.addTask(date, parsed.title, parsed.time ?? (pickedTime || undefined), newCategory)
     if (parsed.minutes !== undefined) {
       const added = getData().days[date]?.tasks.at(-1)
       if (added) actions.setTaskMinutes(date, added.id, parsed.minutes)
     }
     setInput('')
+    setPickedTime('')
+    setTimeOpen(false)
     clearDraft()
   }
 
@@ -213,6 +248,7 @@ export function TaskPane({
             Inbox
           </button>
         </div>
+        <div className="quick-add-field" ref={timeRef}>
         <input
           className="quick-add"
           /* Marked rather than reached by a ref chain from the shell: the N
@@ -224,6 +260,47 @@ export function TaskPane({
           onChange={e => handleInputChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
         />
+        {/* A time without typing one, for the times a person knows the hour
+            and not the digits. Deliberately quiet and deliberately optional:
+            the fast path is still to type nothing and let the task be a
+            float, and the second fastest is still "14:00 Call mom" in the
+            line itself. This is the third way in, not a step in the way. */}
+        {captureMode === 'task' && (
+          <button
+            type="button"
+            className={pickedTime ? 'quick-add-time is-set' : 'quick-add-time'}
+            aria-label={pickedTime ? `At ${pickedTime}. Pick a different time` : 'Pick a time'}
+            aria-expanded={timeOpen}
+            onClick={() => setTimeOpen(o => !o)}
+          >
+            {pickedTime || (
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+                <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10 6v4.3l3 1.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+        )}
+        {pickedTime && (
+          <button
+            type="button"
+            className="quick-add-time-clear"
+            aria-label={`Clear ${pickedTime}`}
+            onClick={() => {
+              setPickedTime('')
+              setTimeOpen(false)
+            }}
+          >
+            &times;
+          </button>
+        )}
+        {timeOpen && captureMode === 'task' && (
+          <TimeColumns
+            value={pickedTime}
+            onPick={setPickedTime}
+          />
+        )}
+        </div>
         {/* What the line was understood as, live, before Enter is pressed.
             Quick-add accepts a leading time and a trailing duration inside
             ordinary prose, which is fast to type and impossible to be sure of -

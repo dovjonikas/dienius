@@ -2039,7 +2039,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   background: var(--surface);
   border-radius: var(--r-card);
   padding: 13px 16px;
-  margin-bottom: var(--s4);
 }
 
 .quick-add:focus {
@@ -9392,4 +9391,87 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .replan-chip { min-height: 44px; }
   .replan-seg button { min-height: 44px; }
+}
+
+/* The quick-add field, and the quiet clock beside it.
+   ------------------------------------------------------------------------
+   The row is the box the time panel anchors to, which is why the field has
+   a wrapper at all: .time-picker-panel is absolute at top: 100%, and without
+   a positioned ancestor it hung off the whole task column. The margin the
+   input used to carry moved here with it, or the panel opened four pixels
+   below where the field actually ends. */
+.quick-add-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--s4);
+}
+
+.quick-add-field .quick-add { padding-right: 84px; }
+
+/* Inside the field's own box, at its right edge: it belongs to the line
+   being typed, not to the row of things under it. Faint until it holds a
+   time, because a task with no time is the common case and this must not
+   read as a question that has to be answered. */
+.quick-add-time {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 36px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.quick-add-time:hover { color: var(--text); border-color: var(--border); }
+
+.quick-add-time.is-set {
+  right: 34px;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.quick-add-time-clear {
+  position: absolute;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1;
+}
+
+.quick-add-time-clear:hover { color: var(--danger); }
+
+/* The panel opens under the right-hand end, where the button is, rather than
+   under the left edge of a field it has nothing to do with. */
+.quick-add-field .time-picker-panel { left: auto; right: 0; }
+
+@media (pointer: coarse) {
+  .quick-add-time { min-height: 36px; position: absolute; }
+  .quick-add-time::after,
+  .quick-add-time-clear::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  .quick-add-time-clear { position: absolute; }
 }
