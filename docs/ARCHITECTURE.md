@@ -179,6 +179,11 @@ src/
     calendars.ts       external feeds: the local cache, and what counts as busy
     demoMode.ts        whether this tab is on sample data, and which key it uses
     demo.ts            the sample fortnight, built from one date
+    scratch.ts         the scratch stream: tags, filtering, the #bug export
+    tour.ts            the tour as data - the steps, and what ends each one
+    tourState.ts       whether a tour is running, and where it got to
+    tourMode.ts        the replay sandbox, and which storage key it uses
+    replanState.ts     the one line between the palette and the replan sheet
     syncEntities.ts    splitting state into entities, stamping, tombstones
     syncMerge.ts       the per-entity last-write-wins merge
     syncClient.ts      pull, debounced push, retry, and the status a person sees
@@ -198,6 +203,8 @@ src/
     viewport.ts        the 1024px wide breakpoint
 
   views/               a tab, or a control shared between tabs
+    scratch/           the scratch overlay, and the floating button on a phone
+    tour/              the tour engine: a spotlight, a card, a predicate
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     CommandPalette, ShortcutsOverlay
     week/              the week view - see section 11
@@ -242,6 +249,8 @@ it delegates:
 | `dragDrop.ts` | Where a dropped block lands |
 | `TaskRow.tsx` | One card |
 | `TaskDetail.tsx` | Everything the card deliberately does not show |
+| `replan.ts` | A day that broke: conflicts, shifting, the rescue, and one writer |
+| `ReplanSheet.tsx` | The three screens that ask, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `YesterdayBanner.tsx` | What yesterday left |
 
@@ -576,7 +585,92 @@ it throws.
 
 ---
 
-## 12. Conventions worth knowing before editing
+## 12. Scratch, the tour, and replan
+
+Three things added after the sync work, each small, each with the same shape:
+a pure module that decides, and a component that only asks and shows.
+
+### Scratch - `lib/scratch.ts`, `views/scratch/`
+
+The layer under everything else, for text that has to be down in the next
+second. The inbox is for a task with no day; this is for a line with nothing
+attached at all - a number said once, a bug noticed while doing something
+else.
+
+`ScratchNote` is text, an instant, a date key and an optional `pinned`. It is
+a sync entity at the same grain as an inbox line. Everything else is derived
+from the text: a `#word` is a filter rather than a folder, so a note is never
+moved by being tagged, and `bugExport` turns the `#bug` ones into a markdown
+list for a bugfix prompt.
+
+**The constraint is the feature, and it is in CONVENTIONS.md section 11.**
+One stream, no folders, no rich text. A note that needs structure has stopped
+being scratch: it becomes a task (through quick-add's own parser, so a time
+and a size come out right), an inbox line, or nothing. Adding a field to
+`ScratchNote` to hold structure is the wrong move; adding a way out is the
+right one.
+
+Capture is never gated: the `S` key (or the backtick) from anywhere, a
+draggable button on a phone, or the palette. The overlay writes on the first
+keystroke and rewrites on every one after, so there is no Save and leaving
+loses nothing.
+
+### The tour - `lib/tour.ts`, `views/tour/Tour.tsx`
+
+The engine knows nothing about what it teaches. It walks a step array, points
+at whatever selector the step names, and asks that step's predicate - over the
+store - whether it has happened yet. Nine steps, each ending on a real action
+rather than a Next button; the two ends are the exception, because a welcome
+has nothing to do yet and an ending has nothing left.
+
+The steps are data, in two arrays: desktop and mobile, the same nine in
+different words. The whole thing is under 120 words and a test holds the
+budget. **The tour is a mirror of the app and goes stale silently - see
+CONVENTIONS.md section 13, which makes checking it part of every wave.**
+
+Two ways to run it, and the difference is where it writes:
+
+- **A new person** takes it on their real, empty plan. While it runs,
+  `commit()` flags whatever appears with `tourCreated` - by the same diff that
+  writes sync timestamps, so no action has to know the tour exists - and the
+  last card offers *Keep what I built* or *Start clean*, which removes exactly
+  the flagged entities.
+- **A replay from Settings** runs in a sandbox: `dienius:tour`, an empty app
+  wearing the person's theme, no sync, no snapshots, deleted on the way out.
+  The same isolation demo mode uses, for the same reason.
+
+The spotlight is one SVG path with an even-odd hole and it never catches a
+pointer event: the app underneath stays usable, and the person operates the
+real control rather than a copy of it.
+
+### Replan - `widgets/day-plan/replan.ts`, `ReplanSheet.tsx`
+
+For the moment a plan breaks. The failure it guards against is not the broken
+piece but what the brain does next - "the whole day is gone" - so the tone
+rules in CONVENTIONS.md section 12 are as much of the contract as the
+arithmetic.
+
+Four pure functions produce one plan shape, and `applyPlan` is the only
+writer:
+
+| Function | Question |
+|---|---|
+| `findConflicts` | What does this new block land on |
+| `planInterrupt` | Into the gaps after it, to tomorrow, or gone - per task |
+| `planShift` | Everything from now, later, with the sleep boundary named |
+| `planRescue` | Back after a while: what still fits, key tasks first |
+
+`applyPlan` is idempotent, because sync can hand the same intention over from
+two devices: a task already at its new time is unchanged, a task tomorrow
+already has by identity is not added twice (the same `dayHas` check every
+move between days uses), and the interruption is not re-added if its title
+already sits at its time. One commit, one undo.
+
+`DayPlan.away` is the pause. It lives on the day so it travels with it - two
+devices cannot disagree about whether the day is paused - and while it is set
+the task reminder does not fire.
+
+## 13. Conventions worth knowing before editing
 
 - **Absent is a state.** Optional fields mean something specific; check the doc
   comment before treating one as a default.
@@ -588,6 +682,12 @@ it throws.
   templates and starter library lists are *offers*.
 - **Nothing is measured that would become a target.** No streak on the day
   view, no counter on an if-then rule. See `RESEARCH-ADHD.md`.
+
+- **The tour is a mirror of the app.** It points at real controls with real
+  selectors and goes stale silently. Every wave that changes the UI checks
+  it, and a broken one is a P0 bug - CONVENTIONS.md section 13.
+- **Scratch stays one stream** and **a partial plan beats a dropped day** are
+  the two other standing rules added with those features - sections 11 and 12.
 
 The full set - zero-scroll rules, design tokens, the button system, the test
 policy, how a critique pass is run - is in

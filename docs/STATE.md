@@ -112,20 +112,34 @@ Tags exist for v1.0 through v1.8.
 
 ### Nothing is half-built
 
-v1.6, v1.7 and v1.8 are tagged, the suite is green (1525 tests, 88 files) and
-the build is clean. What follows is wanted rather than owed.
+v1.6, v1.7 and v1.8 are tagged and pushed, the suite is green (1527 tests, 89
+files), the typecheck and the build are clean and the working tree is empty.
+What follows is wanted rather than owed.
 
 ### Asked for, not yet built
 
 - **A backlog.** The owner asked for "some kind of backlog" and thought it had
-  already been briefed. It has not been built. The inbox is the nearest thing
-  today - a line of text with no date - and Scratch is the layer under that.
-  The open question is what a backlog would be that neither of those already
-  is: a task that is real but has no day yet, kept somewhere it can be pulled
-  from rather than pushed at you. Before building one, read
-  `RESEARCH-ADHD.md` on why nothing here nags, and CONVENTIONS.md sections 11
-  and 12 - a list that grows and is never emptied is exactly the pressure this
-  app is built to take away.
+  already been briefed. It has not been built. Three layers already exist and
+  a fourth has to justify itself against them: Scratch is text with nothing
+  attached, the inbox is a task with no day, and a float is a task on a day
+  with no time.
+
+  The gap is real all the same: something you have decided to do, that is not
+  for this week, and that you want to *pull from* rather than be shown. A
+  concrete proposal, for whoever picks this up - the inbox gains a second
+  shelf rather than the app gaining a seventh tab. An inbox line can be sent
+  to "later", which takes it out of the daily reading; the day view never
+  mentions it; and it surfaces in exactly two places: the command palette (it
+  is already searched) and an offer inside a gap on a day with room, which is
+  the machinery `gapPlacement.ts` already has. No count, no badge, no age
+  shown - see below.
+
+  Before building it, read `RESEARCH-ADHD.md` on why nothing here nags, and
+  CONVENTIONS.md sections 11 and 12. A list that only grows and is never
+  emptied is exactly the pressure this app exists to take away, so the
+  hardest part is not the storage, it is deciding what the app is allowed to
+  say about a backlog that has two hundred things in it. The answer that
+  fits the rest of this app is: nothing at all until you go looking.
 - **Screenshots.** Still wanted, still impossible from the agent environment:
   there is no way to write image files here. The README leads with the live
   demo link instead. If you can produce PNGs, `docs/screenshots/` and a hero
@@ -195,7 +209,12 @@ the one that gets checked first.
 - [ ] **Scratch** - the floating button, and the close cross: on a phone the
       overlay is the whole screen, so there is no scrim to tap.
 - [ ] **The tour** - both platforms, all nine steps. The spotlight has to
-      follow into a bottom sheet, which is where it first failed.
+      follow into a bottom sheet, which is where it first failed. This is not
+      optional polish: CONVENTIONS.md section 13 makes a stale tour a P0 bug,
+      because it is the first thing a new person sees.
+- [ ] **The wide layout with an empty day**, in each of the three focus
+      states. Both rules that collapse the grid have to agree about the
+      column names - see the grid-area note in section 6.
 
 The measurement snippet that has been used for the target audit:
 
@@ -244,6 +263,13 @@ Collected from waves where they actually did.
   detect which the file uses; several edits failed silently on this.
 - **The browser pane's screenshot crops sometimes.** Retry, or open a fresh
   tab. Measurement via `javascript_tool` is more reliable than pixels anyway.
+- **A grid-area naming an area no template declares is not ignored.** It is
+  placed in an implicit track, so the grid quietly grows columns nobody
+  declared. Two rules collapsed the day view to two columns and disagreed
+  about the surviving column's name (`pane` against `tasks`); on an empty day
+  with the Tasks focus both matched and the header was squeezed into 151px in
+  a four-column grid. `gridAreas.test.ts` reads the stylesheet as text and
+  fails on any name a template does not offer.
 - **One stylesheet means class names are global.** `.palette` was the colour
   row in the template editor until the command palette took the same name in
   v1.3, after which eight swatches rendered stacked inside a 560px card. Grep

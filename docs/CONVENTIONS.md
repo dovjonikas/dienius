@@ -326,23 +326,29 @@ whole day is gone" - so the rules are about tone as much as arithmetic:
 
 ---
 
-## 12. A partial plan beats a dropped day
+## 13. The tour is a mirror of the app
 
-Replan (`widgets/day-plan/replan.ts`, `ReplanSheet.tsx`) exists for the
-moment a plan breaks: a call, a change, an afternoon away. The failure it
-guards against is not the broken piece but what the brain does next - "the
-whole day is gone" - so the rules are about tone as much as arithmetic:
+`lib/tour.ts` describes nine steps by pointing at real controls with real
+selectors and waiting for real events. That makes it the one piece of this
+codebase that goes stale silently: rename a class, move a control behind a
+menu, change what a button does, and the tour still compiles, still renders,
+and still points at nothing.
 
-- **Never count what was missed.** A summary says what still fits and what
-  moves. "Still winnable: 2 of 3 key" is allowed; "you missed 4 tasks" is
-  not, in any wording, in any colour.
-- **Nothing disappears silently.** A task that no longer fits before sleep is
-  named and offered to tomorrow. A plan that would drop something says so
-  before Accept, never after.
-- **Ten seconds and one press.** Every replan screen is one question, shows
-  its answer before it is accepted, and applies in one commit with one undo.
-  If a change adds a second question to the path, it is wrong.
-- **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
-  nudges; "I'm back" offers one rescue and clears it. A day that was paused
-  is scored like any other, because the score is a fact and the pause was a
-  choice.
+**Every wave that changes the UI or adds a feature checks the tour.** Not the
+tests alone - walk it, both platforms, all nine steps, in the browser. A
+broken or out-of-date tour is a P0 bug, on the same footing as data loss:
+it is the first thing a new person sees, and a first impression that points
+at an empty rectangle is worse than no tour at all.
+
+What checking it means, concretely:
+
+- **Every `data-tour` target still exists**, and is still reachable the way
+  the step's text says it is. The selectors are in `lib/tour.ts`; grep for
+  `data-tour` to find the other half of each pair.
+- **Every step still ends.** The predicates in `TOUR_EVENTS` watch the store,
+  so a feature that stops writing what it used to write leaves a step that
+  can never be finished and a person who cannot get past it.
+- **The words are still true.** "Eight blocks, one click" is a promise about
+  a starter template; change the template and the sentence is a lie.
+- **A new feature worth teaching gets a step, and the budget is still 120
+  words.** Adding a tenth step means earning it by cutting somewhere else.
