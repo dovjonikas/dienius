@@ -85,6 +85,7 @@ export const SYNCED_SETTINGS = [
   'taskReminder',
   'north',
   'northDismissedOn',
+  'eveningClose',
   'timelineExpanded',
   'dayLayoutFocus',
   'density',

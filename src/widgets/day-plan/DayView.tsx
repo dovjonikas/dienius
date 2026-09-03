@@ -19,6 +19,7 @@ import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
 import { YesterdayBanner } from './YesterdayBanner'
 import { NorthCard } from './NorthCard'
+import { EveningClose } from './EveningClose'
 import { offerUndo } from '../../lib/undo'
 import { TaskGapOffers } from './TaskGapOffers'
 import { useIsWide } from '../../lib/viewport'
@@ -244,14 +245,26 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         />
       )}
 
-      {/* Above the yesterday banner on purpose: one of these is about why, the
-          other about what is left, and on a morning that shows both, why comes
-          first. See NorthCard. */}
-      {isToday && <NorthCard />}
+      {/* Everything that can appear above the day, in one row.
+          ------------------------------------------------------------------
+          One wrapper rather than three siblings, and that is a layout
+          decision, not tidiness. At the wide breakpoint this view is an
+          area-based grid, and an unnamed item in one of those lands in the
+          rail - a seven-word sentence wrapping onto three lines beside a
+          mini-calendar. The stylesheet used to solve that with one template
+          variant per combination, which is fine for two cards and is eight
+          templates for three. They share a row instead, and the grid has one
+          variant: with notices, and without.
 
-      {/* What yesterday left, stated once and acted on in one tap - never moved
-          forward on its own. See YesterdayBanner. */}
-      <YesterdayBanner date={date} />
+          The order is the order they are read in. Why comes before what
+          happened, which comes before what yesterday left; a morning that
+          shows the first and an evening that shows the second are the
+          ordinary cases, and all three at once is a Monday evening. */}
+      <div className="day-notices">
+        {isToday && <NorthCard />}
+        <EveningClose date={date} />
+        <YesterdayBanner date={date} />
+      </div>
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line and the
           timeline grid group into one region - the "picture of the day" - so

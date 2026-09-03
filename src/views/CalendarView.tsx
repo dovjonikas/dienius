@@ -419,5 +419,11 @@ function cellTooltip(stat: DayStat, templateName: string | undefined): string {
   if (stat.pushed > 0) parts.push(`${stat.pushed} carried on`)
   if (stat.highlights > 0) parts.push(`${stat.highlightsDone} of ${stat.highlights} key`)
   if (stat.focusMinutes > 0) parts.push(`${formatDuration(stat.focusMinutes)} deep work`)
-  return parts.join(' - ')
+  // Last, and on its own line, because it is the only part of this that is
+  // not arithmetic. A month of squares saying "6 of 9 done" says what the
+  // days were like; one of them saying "walked home the long way" says what
+  // a Tuesday was.
+  const counted = parts.join(' - ')
+  return stat.bestMoment ? `${counted}
+${stat.bestMoment}` : counted
 }

@@ -422,6 +422,20 @@ export interface DayPlan extends Timestamped {
    */
   away?: string
   /**
+   * One line somebody wrote about the day when they closed it.
+   *
+   * The only thing in this app that records how a day *felt* rather than what
+   * was on it, and it is asked for exactly once, optionally, at the end - see
+   * `eveningClose.ts`. Left absent is the ordinary state and is never asked
+   * about twice.
+   *
+   * It is deliberately not a general-purpose day note. There is no field for
+   * it anywhere else, nothing prompts for it during the day, and nothing
+   * measures whether days have one. It exists so that a month of squares can
+   * occasionally say what a Tuesday was, which is a thing a plan cannot.
+   */
+  bestMoment?: string
+  /**
    * Series this day has been told not to generate - the ids of repeat
    * sources whose instance here was deleted "just this day".
    *
@@ -606,6 +620,12 @@ export interface Settings {
   taskReminder: TaskReminderSettings
   /** When a goal is allowed to come forward on its own - see `NorthSettings`. */
   north: NorthSettings
+  /**
+   * How the day is allowed to end - see `EveningCloseSettings`. Absent in
+   * every payload written before it existed, backfilled to the defaults by
+   * `normalizeLoaded` like every other field added since v1.0.
+   */
+  eveningClose?: EveningCloseSettings
   /**
    * The date key the North card was last dismissed on, or absent.
    *
@@ -848,6 +868,29 @@ export interface NorthSettings {
   afterASlowDay: boolean
   /** The same card, softer, on the first open of a Monday. */
   onMonday: boolean
+}
+
+/**
+ * When and whether the day is allowed to end.
+ *
+ * A day needs an ending, and midnight is not one - it is a rollover, and a
+ * planner whose only closing gesture is the clock going round leaves the
+ * evening open for ever. See `eveningClose.ts` for what the card says and
+ * CONVENTIONS.md section 15 for the tone it has to hold.
+ */
+export interface EveningCloseSettings {
+  /** Off means the day simply never closes itself, and nothing is missing. */
+  enabled: boolean
+  /** "HH:MM". The other way in is finishing the last task, which needs no clock. */
+  at: string
+  /**
+   * Whether the card asks for the best moment of the day.
+   *
+   * Its own switch because it is the one thing on the card that asks
+   * anything at all, and somebody who does not want to be asked should be
+   * able to keep the ending without the question.
+   */
+  askBestMoment: boolean
 }
 
 export interface AppData {

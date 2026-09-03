@@ -252,6 +252,10 @@ function Chart({ title, days, peak, valueOf, capOf, label, peakLabel, onOpenDay 
               type="button"
               className="review-bar"
               aria-label={`${day.date}: ${label(day)}`}
+              /* The one thing on this chart that is not a number. A week of
+                 bars says how the days went; one of them saying "walked home
+                 the long way" says what a Tuesday was. */
+              title={day.bestMoment ? `${label(day)} - ${day.bestMoment}` : undefined}
               disabled={!onOpenDay}
               onClick={() => onOpenDay?.(day.date)}
             >

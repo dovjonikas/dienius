@@ -180,6 +180,7 @@ src/
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
     north.ts           goals: rotation, ages, and when one comes forward
+    eveningClose.ts    how a day ends, and what may be said about it
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
     ics.ts             a small iCalendar reader; no library, and none wanted
@@ -265,6 +266,7 @@ it delegates:
 | `ReplanSheet.tsx` | The three screens that ask, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `Backlog.tsx` | The fourth shelf: decided, undated, pulled from |
+| `EveningClose.tsx` | The end of the day, said once - tone is the feature |
 | `YesterdayBanner.tsx` | What yesterday left |
 
 `DayView.tsx` itself is now only about the day: what it is made of and how its

@@ -466,3 +466,42 @@ thing written down twice.
 
 Order is priority and is the array's own order. There is no star, no urgency,
 no due date, and no sort: a drag or an arrow key is the entire ranking model.
+
+---
+
+## 15 The evening close never appraises
+
+`lib/eveningClose.ts` and `widgets/day-plan/EveningClose.tsx` exist because a
+day needs an ending and midnight is not one. The arithmetic is four lines. The
+rest of it is tone, and the tone is the feature.
+
+**The day is being closed, not judged.** If a line reads like a report to a
+manager, it is wrong, whatever the numbers say. That is the whole rule; the
+rest is what it means in practice.
+
+- **What was not done is not mentioned.** Not counted, not named, not implied.
+  It is still in the list underneath, where somebody can look at it if they
+  want to. The card does not point at it.
+- **"Enough" is reachable every day.** Half the day's tasks, or every key one.
+  That threshold is the 40% doctrine in
+  [`RESEARCH-ADHD.md`](RESEARCH-ADHD.md) written as a sentence: a day that got
+  half of a real plan done is a day that went well, and an app that only says
+  so at ten out of ten says so four times a year.
+- **A day that did not reach it is not failed either.** "The day gave what it
+  gave" is the whole of what is said. There is no third, sadder tier below
+  that, and adding one would be inventing a way to lose.
+- **No colour means anything on that card.** No accent bar, no tick, no ring,
+  no red, no percentage, no comparison with yesterday. The only filled control
+  is the button that ends it, because that is the only action on it.
+- **The one question is optional and asked once.** "Best moment today?" is a
+  plain empty field. Nothing measures whether days have one, nothing prompts
+  for it during the day, and a day that already carries a line shows the line
+  rather than asking again.
+- **The offer to push is an offer.** It names a number, because that is a fact
+  about a button, and gives no reason, because leaving three things unfinished
+  is not a problem this card exists to solve.
+
+The words this app does not use, anywhere near a day's outcome: missed,
+failed, behind, only, should, incomplete, overdue. A test in
+`eveningClose.test.ts` checks the generated line against that list, on every
+shape of day.

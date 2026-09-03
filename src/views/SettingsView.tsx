@@ -14,6 +14,7 @@ import { AppearanceControls } from './AppearanceControls'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
+import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { NorthSettings } from './NorthSettings'
 import { SyncSettings } from './SyncSettings'
 import { CalendarSettings } from './CalendarSettings'
@@ -108,6 +109,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
   }
 
   const data = useAppData()
+  const eveningClose = data.settings.eveningClose ?? DEFAULT_EVENING_CLOSE
   const fileRef = useRef<HTMLInputElement>(null)
   const [importError, setImportError] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
@@ -512,6 +514,74 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
 
           <div className="settings-group" id="settings-nudges">
             <h3>Nudges</h3>
+            {/* The end of the day. Filed under Nudges because it is the only
+                other thing in this app that appears without being asked for -
+                though unlike the two above it, it never interrupts anything:
+                it is a card on a page somebody is already looking at. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Close the day</span>
+                <span className="setting-desc">
+                  A quiet card in the evening, or the moment the last thing on the list is ticked off.
+                  One sentence about the day, and a way to end it.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={eveningClose.enabled}
+                  aria-label="Close the day"
+                  onClick={() => actions.setEveningClose({ ...eveningClose, enabled: !eveningClose.enabled })}
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            {eveningClose.enabled && (
+              <>
+                <div className="setting-row">
+                  <div className="setting-label">
+                    <span className="setting-name">Evening starts at</span>
+                    <span className="setting-desc">
+                      When the card appears on an ordinary evening. Finishing the last task shows it
+                      whatever the time.
+                    </span>
+                  </div>
+                  <div className="setting-control">
+                    <TimePicker
+                      value={eveningClose.at}
+                      ariaLabel="Evening starts at"
+                      onChange={at => actions.setEveningClose({ ...eveningClose, at: at || '21:30' })}
+                    />
+                  </div>
+                </div>
+                <div className="setting-row">
+                  <div className="setting-label">
+                    <span className="setting-name">Ask for the best moment</span>
+                    <span className="setting-desc">
+                      One optional line, kept with the day and shown on the calendar. Off if you would
+                      rather not be asked.
+                    </span>
+                  </div>
+                  <div className="setting-control">
+                    <button
+                      type="button"
+                      role="switch"
+                      className="switch"
+                      aria-checked={eveningClose.askBestMoment}
+                      aria-label="Ask for the best moment"
+                      onClick={() =>
+                        actions.setEveningClose({ ...eveningClose, askBestMoment: !eveningClose.askBestMoment })
+                      }
+                    >
+                      <span className="switch-thumb" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
             {/* Off by default, and deliberately not a plain interval timer -
                 see IntervalReminder.tsx. It can only speak while a task the
                 owner marked as Focus is actually running, which is the one

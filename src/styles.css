@@ -5574,44 +5574,31 @@ button.danger:focus-visible {
     gap: 10px 24px;
   }
 
-  /* Two things can appear above the day: the North card and yesterday's
-     banner. Both need a row of their own across the two content columns - as
-     unnamed items in an area-based grid they land in the rail, where a
-     seven-word sentence wraps onto three lines beside a mini-calendar.
+  /* Everything that can appear above the day shares one row.
+     ---------------------------------------------------------------------
+     There used to be one template variant per combination of the two cards
+     that could show here, which was three of them. A third card makes that
+     eight, so they share a row instead and the grid has exactly one variant:
+     with notices, and without.
 
-     Three variants rather than one four-row template, because an empty grid
-     track still costs its gap, and this is a fixed-height shell where ten
-     pixels is ten pixels. Each declares exactly the rows that exist. */
-  .day-view:has(.north-card):has(.yesterday-banner) {
+     `:empty` is what tells the two apart, and it works because React renders
+     nothing at all for a card that decides not to appear - so the wrapper is
+     genuinely childless rather than holding three empty divs. An always-there
+     row would cost its gap on every ordinary day, and this is a fixed-height
+     shell where ten pixels is ten pixels. */
+  .day-view:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "rail header header"
-      "rail north  north"
-      "rail note   note"
-      "rail cap    cap"
-      "rail day    tasks";
-    grid-template-rows: auto auto auto auto minmax(0, 1fr);
-  }
-
-  .day-view:has(.north-card):not(:has(.yesterday-banner)) {
-    grid-template-areas:
-      "rail header header"
-      "rail north  north"
-      "rail cap    cap"
-      "rail day    tasks";
+      "rail header   header"
+      "rail notices  notices"
+      "rail cap      cap"
+      "rail day      tasks";
     grid-template-rows: auto auto auto minmax(0, 1fr);
   }
 
-  .day-view:has(.yesterday-banner):not(:has(.north-card)) {
-    grid-template-areas:
-      "rail header header"
-      "rail note   note"
-      "rail cap    cap"
-      "rail day    tasks";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-  }
-
-  .north-card { grid-area: north; margin-bottom: 0; }
-  .yesterday-banner { grid-area: note; margin-bottom: 0; }
+  .day-notices { grid-area: notices; }
+  .north-card,
+  .yesterday-banner,
+  .evening-close { margin-bottom: 0; }
 
   .rail {
     grid-area: rail;
@@ -10145,3 +10132,100 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .scratch-intent { min-height: 44px; }
 }
+
+/* The evening close.
+   ------------------------------------------------------------------------
+   Everything about this card is restraint. It has a surface and a border and
+   nothing else: no accent bar, no tick, no ring, no colour that means
+   anything, because every one of those would turn a sentence into a grade.
+   The one filled control is the button that ends it, which is the only thing
+   on here that is an action.
+
+   Compare .north-card, which is the same idea at the other end of the day and
+   is allowed to be a little warmer - a morning card is an invitation, and an
+   evening one is a full stop. */
+.evening-close {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.evening-close-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.evening-close-sleep { color: var(--faint); }
+
+/* The whole of what the app says about how the day went. Larger than the
+   rest of the card and quieter than a heading: it is a sentence somebody
+   reads once, not a title. */
+.evening-close-line {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-lg);
+  line-height: 1.35;
+}
+
+.evening-close-moment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: var(--s2) 0 0;
+}
+
+.evening-close-moment input { width: 100%; }
+
+.evening-close-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin-top: var(--s2);
+}
+
+/* Offered, never urged. A text button beside a filled one, in --muted, with
+   no count in a colour and no exclamation anywhere: leaving three things
+   unfinished is not a problem this card exists to solve. */
+.evening-close-push {
+  min-height: 0;
+  padding: var(--s1) var(--s2);
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.evening-close-push:hover { color: var(--text); }
+
+/* Where you are going, small and last. The morning card says why you are
+   starting; this says the same thing from the other end. */
+.evening-close-north {
+  margin: var(--s1) 0 0;
+  color: var(--faint);
+  font-size: var(--t-xs);
+}
+
+@media (pointer: coarse) {
+  .evening-close-push { min-height: 44px; }
+}
+
+/* The cards above the day, stacked. On a phone this is the whole of its
+   job; at the wide breakpoint it also carries the grid area they share -
+   see the notices row in the day-view template. */
+.day-notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+
+.day-notices:empty { display: none; }

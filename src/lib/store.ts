@@ -337,6 +337,21 @@ export const actions = {
     commit({ ...data, settings: { ...data.settings, weekdayTemplates: next } })
   },
 
+  /**
+   * The one line somebody wrote about how a day was - see `DayPlan.bestMoment`
+   * and `eveningClose.ts`. Empty clears it, so a line typed and thought
+   * better of does not have to be lived with.
+   */
+  setBestMoment(date: string, text: string): void {
+    const trimmed = text.trim()
+    const { bestMoment: _was, ...rest } = dayOf(date)
+    commit(withDay(date, trimmed ? { ...rest, bestMoment: trimmed } : rest))
+  },
+
+  setEveningClose(eveningClose: Settings['eveningClose']): void {
+    commit({ ...data, settings: { ...data.settings, eveningClose } })
+  },
+
   setTaskReminder(taskReminder: Settings['taskReminder']): void {
     commit({ ...data, settings: { ...data.settings, taskReminder } })
   },

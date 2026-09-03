@@ -2,7 +2,7 @@ import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
 import { TOUR_STORAGE_KEY, isTourSandbox } from './tourMode'
 import type { ScratchNote } from './types'
 import { buildDemoData } from './demo'
-import type { AppData, BacklogItem, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, LibraryTrack, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, BacklogItem, DayPlan, DayType, EveningCloseSettings, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, LibraryTrack, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 import { dedupeTasks } from './taskIdentity'
 
@@ -31,6 +31,12 @@ const DEFAULT_TASK_REMINDER: Settings['taskReminder'] = { enabled: false, minute
 // they are a card on a page already being opened, and dismissing one takes a
 // single tap. See north.ts.
 const DEFAULT_NORTH: Settings['north'] = { afterASlowDay: true, onMonday: true }
+
+// On, at half nine, and it asks. Duplicated from eveningClose.ts for the same
+// reason DEFAULT_PRESET_ID is duplicated from themes.ts: this file needs the
+// literal a fresh install starts with, not a dependency on the module that
+// owns the behaviour.
+const DEFAULT_EVENING_CLOSE: EveningCloseSettings = { enabled: true, at: '21:30', askBestMoment: true }
 
 // Duplicated from capacity.ts for the same reason DEFAULT_SLEEP_WINDOW is.
 const DEFAULT_SLEEP_PROFILE_ID = 'default'
@@ -133,6 +139,7 @@ export function defaultData(): AppData {
       weekdayTemplates: {},
       taskReminder: { ...DEFAULT_TASK_REMINDER },
       north: { ...DEFAULT_NORTH },
+      eveningClose: { ...DEFAULT_EVENING_CLOSE },
     },
     ifThens: [],
     inbox: [],
@@ -569,6 +576,7 @@ function isDayPlan(x: unknown): x is DayPlan {
     isOptionalString(x.templateId) &&
     isOptionalString(x.sleepProfileId) &&
     isOptionalString(x.away) &&
+    isOptionalString(x.bestMoment) &&
     isOptionalDayType(x.dayType) &&
     isOptionalStringList(x.repeatSkips) &&
     isOptionalBoolean(x.autoApplied) &&
@@ -637,8 +645,20 @@ function isSettings(x: unknown): x is {
     isOptionalSleepProfiles(x.sleepProfiles) &&
     isOptionalWeekdayMap(x.weekdayTemplates) &&
     isOptionalTaskReminder(x.taskReminder) &&
-    isOptionalNorth(x.north)
+    isOptionalNorth(x.north) &&
+    isOptionalEveningClose(x.eveningClose)
   )
+}
+
+function isOptionalEveningClose(x: unknown): x is Settings['eveningClose'] | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  // The time is checked, not merely typed: a crafted or hand-edited file
+  // with "at": "banana" would make the comparison in shouldClose silently
+  // never true, which is a feature quietly switching itself off rather than
+  // a file being refused.
+  if (typeof x.at !== 'string' || !TIME_STRING_RE.test(x.at)) return false
+  return typeof x.enabled === 'boolean' && typeof x.askBestMoment === 'boolean'
 }
 
 function isOptionalNorth(x: unknown): x is Settings['north'] | undefined {
@@ -713,6 +733,7 @@ interface StoredAppData {
     weekdayTemplates?: Settings['weekdayTemplates']
     taskReminder?: Settings['taskReminder']
     north?: Settings['north']
+    eveningClose?: Settings['eveningClose']
     sleepProfiles?: SleepProfile[]
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
@@ -828,6 +849,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
       taskReminder: data.settings.taskReminder ?? { ...DEFAULT_TASK_REMINDER },
       north: data.settings.north ?? { ...DEFAULT_NORTH },
+      eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
     },
   }
 }

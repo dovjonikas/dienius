@@ -55,6 +55,7 @@ reading them.
 | Day digest | In the wide rail: what is next, and how the day is going |
 | North line | One goal under the day's title, rotating daily, expanding on hover/tap/focus |
 | North card | After a slow day or on a Monday, one goal comes forward with its reason. Never a word about how yesterday went |
+| Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
 
 ### The other tabs
 

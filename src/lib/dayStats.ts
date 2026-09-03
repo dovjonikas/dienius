@@ -26,6 +26,14 @@ export interface DayStat {
   highlightsDone: number
   /** Minutes of finished, sized deep work. */
   focusMinutes: number
+  /**
+   * The one line somebody wrote when they closed the day, if they did.
+   *
+   * The only thing on a stat that is not a number, and the only thing here
+   * that came from a person rather than from arithmetic. It is carried so
+   * that a month of squares can occasionally say what a Tuesday was.
+   */
+  bestMoment?: string
   tone: DayTone
 }
 
@@ -69,6 +77,7 @@ export function dayStat(day: DayPlan | undefined): DayStat {
     focusMinutes: tasks
       .filter(t => t.category === 'core' && t.done && t.minutes !== undefined)
       .reduce((sum, t) => sum + t.minutes!, 0),
+    bestMoment: day?.bestMoment,
     tone: toneFor(rate),
   }
 }
