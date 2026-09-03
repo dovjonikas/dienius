@@ -78,7 +78,15 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
       <div className="library-header">
         <h2>Library</h2>
         {!newListOpen && (
-          <button type="button" className="btn-primary" onClick={() => setNewListOpen(true)}>
+          <button
+            type="button"
+            className="btn-primary"
+            /* The tour's fallback target: the starter offers only exist while
+               the library is empty, and somebody with one list already has
+               none to point at. See lib/tour.ts. */
+            data-tour="library-new"
+            onClick={() => setNewListOpen(true)}
+          >
             New list
           </button>
         )}

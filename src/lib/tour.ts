@@ -143,8 +143,11 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'library',
     title: 'Books, courses, series',
-    text: 'Start a Books list. Sessions land on days later.',
-    targets: ['[data-tour="library-starter"]'],
+    text: 'Start a list. Sessions on it land on days.',
+    // Two, and the last one present wins: the starter offers only exist while
+    // the library is empty, so somebody who already has a list gets the New
+    // list button pointed at instead of an empty rectangle.
+    targets: ['[data-tour="library-new"]', '[data-tour="library-starter"]'],
     view: 'library',
     event: 'list-added',
   },
@@ -178,7 +181,7 @@ export const MOBILE_STEPS: TourStep[] = DESKTOP_STEPS.map(step => {
     case 'done':
       return { ...step, text: 'Tick Walk. Done folds away, the score moves.' }
     case 'library':
-      return { ...step, text: 'Tap Start a Books list. Sessions land on days.' }
+      return { ...step, text: 'Tap to start a list. Sessions land on days.' }
     default:
       return step
   }

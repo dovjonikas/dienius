@@ -1,3 +1,5 @@
+import { readFileSync, readdirSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import { expect, test } from 'vitest'
 import {
   DESKTOP_STEPS,
@@ -182,4 +184,48 @@ test('Keep what I built strips the flags and leaves everything in place', () => 
   expect(kept.templates[0].tourCreated).toBeUndefined()
   expect(kept.goals[0].tourCreated).toBeUndefined()
   expect(kept.goals).toHaveLength(1)
+})
+
+// --- the targets are real ----------------------------------------------------
+//
+// CONVENTIONS.md section 13: the tour points at real controls with real
+// selectors, which makes it the one thing here that goes stale silently. A
+// rename compiles, renders, and points at nothing. This is the mechanical
+// half of that check - every name a step asks for exists in the source. The
+// other half, that the control is actually on screen in the state the step
+// reaches it in, only a browser can answer.
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) return sourceFiles(full)
+    return /\.tsx?$/.test(entry.name) && !entry.name.includes('.test.') ? [full] : []
+  })
+}
+
+test('every data-tour name a step points at exists in the source', () => {
+  const source = sourceFiles(resolve(process.cwd(), 'src'))
+    .map(file => readFileSync(file, 'utf-8'))
+    .join('\n')
+  const asked = new Set<string>()
+  for (const step of [...DESKTOP_STEPS, ...MOBILE_STEPS]) {
+    for (const target of step.targets) {
+      for (const match of target.matchAll(/data-tour="([^"]+)"/g)) asked.add(match[1])
+    }
+  }
+  const missing = [...asked].filter(name => !source.includes(`data-tour="${name}"`))
+  expect(missing).toEqual([])
+})
+
+/**
+ * The library step is the one whose control disappears with use: the starter
+ * offers are only rendered while the library is empty. It carries a fallback,
+ * and the engine takes the last target present on the page.
+ */
+test('the library step has a fallback for a library that already has a list', () => {
+  const step = DESKTOP_STEPS.find(s => s.id === 'library')!
+  expect(step.targets).toContain('[data-tour="library-new"]')
+  expect(step.targets.indexOf('[data-tour="library-new"]')).toBeLessThan(
+    step.targets.indexOf('[data-tour="library-starter"]'),
+  )
 })
