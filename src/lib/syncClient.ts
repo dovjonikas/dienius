@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { getData, onStateCommitted, replaceState } from './store'
+import { isDemoMode } from './demoMode'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
 
 /**
@@ -198,6 +199,10 @@ function blockedByMixedContent(url: string): boolean {
 
 export function syncNow(): Promise<void> {
   if (!config.enabled || !config.url) return Promise.resolve()
+  // The sample week is not anybody's plan and must never reach a server where
+  // a real device would merge it in. Demo mode is a separate storage key, so
+  // this is belt as well as braces - but the braces are worth having.
+  if (isDemoMode()) return Promise.resolve()
   if (blockedByMixedContent(config.url)) {
     setStatus({
       phase: 'error',

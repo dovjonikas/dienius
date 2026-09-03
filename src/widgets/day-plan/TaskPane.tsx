@@ -3,6 +3,7 @@ import type { LibraryList, Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { isFirstRun } from '../../lib/onboarding'
+import { enterDemoMode, isDemoMode } from '../../lib/demoMode'
 import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clockTools } from '../../lib/clockTools'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel, type CategoryId } from '../../lib/categories'
@@ -274,6 +275,20 @@ export function TaskPane({
             of retyping it every morning. Tap one below to add it as a real template and set up today -
             edit or delete it any time afterward.
           </p>
+          {/* The other way in, for somebody who would rather look than build.
+              Offered here rather than as a first screen: an app that asks
+              "demo or real?" before showing anything is asking a question you
+              cannot answer yet. Its own key, thrown away on the way out - see
+              demoMode.ts. */}
+          {!isDemoMode() && (
+            <p className="first-run-demo">
+              Not sure yet?{' '}
+              <button type="button" className="link-button" onClick={enterDemoMode}>
+                Try it with a sample week
+              </button>{' '}
+              - a fortnight of somebody's real-looking days, kept entirely separate from yours.
+            </p>
+          )}
           <StarterOffers onUse={handleUseStarter} />
           <p className="first-run-note">
             Dark, Light and Midnight are all under Settings, along with an accent colour and how

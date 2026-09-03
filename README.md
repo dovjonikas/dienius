@@ -2,15 +2,41 @@
 
 <p align="center">A day planner for a brain that needs the plan to be visible or it stops existing. No account, no server, no streaks.</p>
 
-<p align="center"><a href="https://quicasha.github.io/dienius/"><strong>Open the app</strong></a></p>
+<p align="center">
+  <a href="https://quicasha.github.io/dienius/?demo=1"><strong>Try the live demo</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://quicasha.github.io/dienius/">Open the app</a>
+  &nbsp;·&nbsp;
+  <a href="docs/ARCHITECTURE.md">How it is built</a>
+</p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <img alt="React 19 + TypeScript" src="https://img.shields.io/badge/React_19-TypeScript-61dafb.svg">
   <img alt="PWA" src="https://img.shields.io/badge/PWA-offline--first-5a0fc8.svg">
+  <img alt="1400+ tests" src="https://img.shields.io/badge/tests-1400%2B-brightgreen.svg">
+  <img alt="No dependencies at runtime" src="https://img.shields.io/badge/runtime_deps-react_only-lightgrey.svg">
 </p>
 
-<p align="center"><sub>Screenshots are being re-taken after the v1.0 interface rebuild - the live app above is the current one.</sub></p>
+<p align="center"><sub>The demo link fills a sample fortnight - a real-looking history, a half-read book, two goals - under its own storage key, thrown away when you leave. It never touches a real plan.</sub></p>
+
+---
+
+## In one paragraph
+
+Dienius plans a day from **templates** you stamp onto dates instead of retyping
+every morning, draws it as a **timeline** so the shape of the day is visible
+rather than remembered, and keeps a **week view** for the question a day view
+cannot answer. It is local-first: one JSON object in `localStorage`, no
+account, no backend, works with no connection. Optional **sync** between your
+own devices runs through a 200-line server you host yourself. Optional
+**calendar subscriptions** lay your work meetings over the plan as a read-only
+layer that free time actually counts.
+
+What it deliberately does not have: streaks, points, badges, a score that
+punishes a bad week, or any number that goes down when life happens. The
+reasoning for each of those is written out in
+[`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ---
 
@@ -55,8 +81,10 @@ contents, so an installed copy can never get stuck on stale files.
 - An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
 - A keyboard layer - single keys for the things done most often, and a card behind `?` that lists them. None of them fire while you are typing in a box, except Escape, which is usually how you leave the box
 - Ctrl-K / Cmd-K - one box for running a command and for finding a thing: tasks, notes and library items, or a date typed in words. No search index, because a linear scan over the whole store costs less than the keystroke that triggered it
+- A week view - seven columns of one shared timeline, so the question a day view cannot answer becomes a shape rather than a number. Drag a block onto another day, tap one to open it, tap an empty space to put something there, or lay your whole weekday plan over the week in one press. Three days at a time on a phone, because seven columns at 390px is a stripe rather than a block
 - A calendar that fits without scrolling, where every past day says how it went - the ratio, a thin bar, what was carried on, a dot when every key task was kept. No red at any threshold: a past day is not on trial, and a day nobody planned stays blank rather than reading as a zero
 - A year strip - one cell per day, shaded by how full it was, colored by template where there is one
+- External calendars - subscribe to a work or family iCal feed, or import a .ics file. They appear on Today and on the week as a read-only layer, outlined rather than filled, with nothing to tick off and nothing to push: a meeting is not a task. Free time counts them, because a morning with three meetings in it is not a free morning
 - Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
 ## Your data
@@ -153,8 +181,14 @@ src/
     syncEntities.ts  splits state into addressable entities, stamps what changed
     syncMerge.ts     the per-entity merge, and what counts as a state at all
     syncClient.ts    pull, merge, push - debounced, retrying, never blocking
+    ics.ts           a small iCalendar reader; no library, and none wanted
+    calendars.ts     external feeds: the local cache, and what counts as busy
+    demo.ts          the sample fortnight, built from one date
+    demoMode.ts      whether this tab is on sample data, and which key it uses
   views/          Calendar, Templates, Library, Review, Settings, CommandPalette,
                   TimePicker, ShortcutsOverlay
+    week/         the week view: seven columns of one shared timeline, and the
+                  percentage geometry that makes it fit any screen
   widgets/
     day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score, the task detail sheet
     if-then/      the if-then board and its day-type/time-of-day rotation
@@ -195,6 +229,19 @@ npm run build     # typecheck, build, then generate the service worker
 Requires Node 22 or newer (see `.nvmrc`).
 
 **Deploy** - push to `main`. GitHub Actions runs the full test suite, then builds - which typechecks before it bundles - and only publishes to GitHub Pages if both steps succeed. Workflow in `.github/workflows/deploy.yml`.
+
+## Demo mode
+
+`?demo=1` on any Dienius URL, or **Try it with a sample week** on the first-run
+screen, fills the app with a plausible fortnight: a real-looking history where
+one day went badly, a half-read book, two goals, a carried task, an inbox with
+something in it.
+
+It writes to `dienius:demo`, never to `dienius:data`. That is the whole
+isolation and it is deliberately structural rather than a flag: a bug while
+somebody is poking at the sample week cannot touch a real plan, because the
+real plan is not the file that is open. Sync is skipped and no daily snapshot
+is written while it is on. **Leave demo** throws the sample data away.
 
 ## License
 

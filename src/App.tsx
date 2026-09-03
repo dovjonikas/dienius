@@ -15,6 +15,7 @@ import { FocusView } from './widgets/day-plan/FocusView'
 import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
 import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
+import { DemoBanner } from './views/DemoBanner'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -290,6 +291,7 @@ export function App() {
           of the shell rather than of the day view: the whole point of making
           it a state instead of a screen is that the rest of the app keeps
           working while it runs. */}
+      <DemoBanner />
       <FocusBar onExpand={() => setFocusExpanded(true)} />
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&

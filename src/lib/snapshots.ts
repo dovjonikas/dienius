@@ -1,3 +1,4 @@
+import { isDemoMode } from './demoMode'
 import type { AppData } from './types'
 
 /**
@@ -97,6 +98,10 @@ function countTasks(data: AppData): number {
  * interesting to a test.
  */
 export async function snapshotToday(data: AppData, today: string): Promise<boolean> {
+  // Never from the sample week. A snapshot is a copy of a real plan to fall
+  // back on, and one made of demo data is a trap waiting in the restore list
+  // for the day somebody actually needs it.
+  if (isDemoMode()) return false
   const db = await openDb()
   if (!db) return false
 

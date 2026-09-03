@@ -7017,6 +7017,7 @@ button.danger:focus-visible {
   .library-item-reopen,
   .accent-swatch,
   .switch,
+  .template-chip,
   .task-title-select {
     position: relative;
   }
@@ -7034,6 +7035,11 @@ button.danger:focus-visible {
   .library-item-reopen::after,
   .accent-swatch::after,
   .switch::after,
+  /* The calendar's stamp chips. An overlay rather than a taller chip: the
+     month grid fits 390x844 without scrolling by about thirty pixels, and
+     eight of them spent on the bar above it is not a trade worth making when
+     the hit area can grow without the box doing so. */
+  .template-chip::after,
   .task-title-select::after {
     content: '';
     position: absolute;
@@ -8308,7 +8314,6 @@ main:has(.week) > .calendar {
 
   .week-col-day,
   .week-col-template {
-    min-height: 40px;
     min-width: 0;
   }
 
@@ -8472,3 +8477,110 @@ main:has(.week) > .calendar {
 .calendar-form-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .calendar-blocker { color: var(--muted); }
+
+/* --- Demo mode ---------------------------------------------------------
+   One line at the very top, never dismissible. A sample plan that can be
+   mistaken for a real one is worse than no sample at all: somebody would tick
+   things off it for a week and then find out.
+   ----------------------------------------------------------------------- */
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  padding: var(--s2) var(--s3);
+  margin-bottom: var(--s3);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  font-size: var(--t-sm);
+  color: var(--text);
+}
+
+.demo-banner-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.demo-banner-text { flex: 1 1 240px; min-width: 0; line-height: 1.4; }
+.demo-banner-exit { flex-shrink: 0; }
+
+.first-run-demo {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  margin: 0 0 var(--s4);
+}
+
+/* A button that reads as a link, for an offer inside a sentence. It is a real
+   button because it does something rather than going somewhere. */
+.link-button {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-button:hover { color: var(--text); }
+
+/* ------------------------------------------------------------------------
+   The 44px floor on a touch screen.
+
+   Every plain <button> in this app is already 44px (see the base rule near the
+   top). The three button variants set 38px and, being more specific, won a
+   fight nobody meant to have - so the loudest controls in the interface were
+   the ones under the guideline. 38 stays on a mouse, where it is the right
+   density for a settings page; a finger gets the full target.
+
+   Raised only where it costs nothing. The calendar's stamp bar and the month
+   grid are checked at 390x844 after this - see the note on .cell below - and
+   a cell is never made taller to pay for it.
+   ------------------------------------------------------------------------ */
+@media (pointer: coarse) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  button.primary,
+  button.danger {
+    min-height: 44px;
+  }
+
+  /* Controls with a size of their own, set before this floor existed. Each was
+     found by measuring every visible button on a 390x844 phone rather than by
+     reading the stylesheet - which is how a 28px segmented control that had
+     been shipping for four versions turned up. */
+  .capture-mode button,
+  .done-toggle,
+  .yesterday-dismiss,
+  .week-nav > button[aria-label],
+  .week-col-day,
+  .week-col-template {
+    min-height: 44px;
+  }
+
+  /* Inline row controls get the hit area rather than the height, so a task
+     card does not grow by a third to hold a chip - the same trade the row's
+     size chip and the clock button already make above. */
+  .task-focus-button {
+    position: relative;
+  }
+
+  .task-focus-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

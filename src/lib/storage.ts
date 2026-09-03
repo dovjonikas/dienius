@@ -1,3 +1,5 @@
+import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
+import { buildDemoData } from './demo'
 import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 import { dedupeTasks } from './taskIdentity'
@@ -69,6 +71,19 @@ const LEGACY_IF_THEN_WIDGET_ID = 'if-then'
 // before React mounts, so it has to know the key and that one field's shape
 // on its own. Change either here and check the other still matches.
 export const STORAGE_KEY = 'dienius:data'
+
+/**
+ * The key this tab actually reads and writes.
+ *
+ * Demo mode is a different file, not a flag inside the same one. That is the
+ * only version of the isolation that is genuinely safe: a bug while somebody
+ * is poking at the sample week cannot touch a real plan, because the real plan
+ * is not the file that is open. Everything else in this module is unchanged by
+ * it - the same validation, the same migrations, the same shape.
+ */
+function activeKey(): string {
+  return isDemoMode() ? DEMO_STORAGE_KEY : STORAGE_KEY
+}
 
 // A brand new install has never expressed a light/dark preference, so it
 // gets the spec's own default of following the system live - unlike a
@@ -788,7 +803,12 @@ function salvageTheme(x: unknown): ThemeState | undefined {
 
 export function loadData(): AppData {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(activeKey())
+    // An empty demo key is not an empty app, it is a sample week waiting to be
+    // built. Done here rather than before React mounts because this module is
+    // evaluated first: store.ts calls loadData() at import time, so anything
+    // seeding from main.tsx arrives after the store has already read nothing.
+    if (!raw && isDemoMode()) return buildDemoData(defaultData())
     if (!raw) return defaultData()
     const parsed: unknown = JSON.parse(raw)
     if (!validate(parsed)) {
@@ -804,7 +824,7 @@ export function loadData(): AppData {
 
 export function saveData(data: AppData): boolean {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    localStorage.setItem(activeKey(), JSON.stringify(data))
     return true
   } catch {
     return false
