@@ -7720,3 +7720,175 @@ button.danger:focus-visible {
 .review-north li { display: flex; flex-direction: column; gap: 2px; }
 .review-north-title { color: var(--text); font-size: var(--t-sm); }
 .review-north-age { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------------
+   Calendar, compact - the same zero-scroll promise the day view makes.
+
+   The month used to be a stack of blocks - a mode toggle, a nav row, a stamp
+   bar, then six rows of square cells - and squares are the problem: at 860px
+   wide a square cell is 118px tall, so six weeks is 708px before anything
+   else. Two changes fix it structurally rather than by shaving padding. The
+   header is one row instead of three, and the grid is told to fit the height
+   it has rather than to derive its height from its width.
+   ------------------------------------------------------------------------ */
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-height: 0;
+}
+
+.calendar-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  flex-shrink: 0;
+}
+
+.calendar-bar .calendar-nav { flex: 0 0 auto; margin: 0; }
+.calendar-bar .segmented { margin-left: auto; }
+
+/* The month's one line, between the title and the toggle. Set as quietly as
+   the capacity line - it is the same kind of sentence about a stretch of
+   time, and it is not the reason anybody opened this tab. */
+.calendar-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------
+   The cell.
+   ------------------------------------------------------------------------ */
+.cell-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  max-width: 100%;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+/* A stamped day pins dark ink - see .cell-has-template. On an unstamped one
+   the muted ink is right. Both are set here rather than inherited, because a
+   ratio that disappears on half the calendar is worse than no ratio. */
+.cell-ratio { color: var(--muted); }
+.cell-has-template .cell-ratio,
+.cell-has-template .cell-pushed { color: rgba(0, 0, 0, 0.7); }
+
+.cell-pushed { color: var(--faint); }
+
+/* Every key task that day was kept. A dot, not a star: a star is a reward
+   and this is a fact. Accent rather than green, because green is already the
+   top of the rate scale and two greens meaning two things is one too many. */
+.cell-kept {
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  align-self: center;
+  border-radius: var(--r-round);
+  background: var(--accent);
+}
+
+/* The bar, along the bottom edge, inside the cell's own rounding. */
+.cell-bar {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--muted) 22%, transparent);
+  overflow: hidden;
+}
+
+.cell-bar-fill { display: block; height: 100%; border-radius: 1px; background: var(--muted); }
+
+/* The three registers. No red at any threshold: a past day is not on trial,
+   and a calendar of red squares is a calendar people stop opening. Low is
+   grey, which says quiet rather than bad. */
+.cell-tone-low .cell-bar-fill { background: color-mix(in srgb, var(--muted) 70%, transparent); }
+.cell-tone-mid .cell-bar-fill { background: color-mix(in srgb, var(--accent) 70%, var(--muted)); }
+.cell-tone-high .cell-bar-fill { background: color-mix(in srgb, var(--good) 85%, var(--muted)); }
+
+/* A stamped cell is a light pastel in every theme - see .cell-has-template,
+   which pins dark ink on the number for the same reason. The theme inks that
+   read well on a dark surface are all about as light as that pastel, so the
+   bar effectively disappeared on every stamped day. Darkened mixes here,
+   keeping the three registers distinguishable from each other. */
+.cell-has-template .cell-bar { background: rgba(0, 0, 0, 0.14); }
+.cell-has-template .cell-bar-fill { background: rgba(0, 0, 0, 0.42); }
+.cell-has-template.cell-tone-mid .cell-bar-fill { background: color-mix(in srgb, var(--accent) 55%, #000); }
+.cell-has-template.cell-tone-high .cell-bar-fill { background: color-mix(in srgb, var(--good) 55%, #000); }
+
+/* The kept dot too - accent on a pastel is accent on accent. */
+.cell-has-template .cell-kept { background: color-mix(in srgb, var(--accent) 50%, #000); }
+
+@media (min-width: 700px) {
+  /* The whole tab is a fixed-height column, and the grid takes what is left -
+     the same structure the day view uses. aspect-ratio goes, because a cell
+     that derives its height from its width can only ever overflow.
+
+     main is a plain block, so height: 100% on the calendar had nothing
+     definite to resolve against and the grid collapsed to its content - six
+     rows of 31px in a 682px column. Making main a flex column for this one
+     view is what gives the calendar a real height to fill. */
+  main:has(.calendar) { display: flex; flex-direction: column; }
+
+  .calendar { flex: 1 1 auto; min-height: 0; }
+
+  /* A floor as well as a share: a 30px row is not a calendar, and if the
+     window is genuinely too short for six of them the page scrolls, which is
+     the honest outcome. */
+  .calendar-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: auto repeat(6, minmax(52px, 1fr));
+  }
+
+  .cell {
+    aspect-ratio: auto;
+    min-height: 0;
+    padding: 4px 3px 6px;
+    gap: 1px;
+  }
+
+  .stamp-bar { flex-shrink: 0; padding: 0; }
+}
+
+/* Under about 720px of height there is not room for a ratio and a bar in a
+   cell this short, so the numbers go and the bar stays - the shape of the
+   month survives, which is what the grid is for. Detail is what gets cut,
+   never the cell height: a 30px row is not a calendar. */
+@media (min-width: 700px) and (max-height: 800px) {
+  .cell-stats { display: none; }
+  .cell-template { display: none; }
+}
+
+@media (max-width: 699px) {
+  /* A phone keeps square-ish cells but loses the template name, which never
+     fit anyway - see the existing rule at 420px. The ratio is the more
+     useful of the two in the same space. */
+  .cell { padding: 4px 2px 6px; }
+  .cell-stats { font-size: 10px; }
+}
+
+/* The year as a heatmap. The same four registers the month cells use, drawn
+   as a fill rather than a bar - a 10px square has no room for a bar, and at
+   that size a fill is the only thing legible anyway. A template colour still
+   wins where there is one: which kind of day it was outranks how full it
+   got, and the two together would be two signals in one square. */
+.year-cell.year-tone-low:not([style*='background']) { background: color-mix(in srgb, var(--muted) 18%, transparent); }
+.year-cell.year-tone-mid:not([style*='background']) { background: color-mix(in srgb, var(--accent) 42%, transparent); }
+.year-cell.year-tone-high:not([style*='background']) { background: color-mix(in srgb, var(--good) 62%, transparent); }
+
+/* On a day that carries a template colour the tone shows as a rim instead,
+   so both facts fit without either being lost. */
+.year-cell.year-tone-high { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--good) 70%, transparent); }
+.year-cell.year-tone-mid { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent); }

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { monthGrid, todayKey, type MonthCell } from '../lib/dates'
+import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
+import { formatDuration } from '../widgets/day-plan/capacity'
 import { cellLabel, resolveTemplate, taskState } from '../lib/calendarCell'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
 
@@ -52,6 +54,12 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
   const painting = useRef<'apply' | 'erase' | null>(null)
 
   const cells = useMemo(() => monthGrid(year, month), [year, month])
+  // Over the month's real days only, not the six-week grid - a February
+  // summary should not be diluted by the March days shown around it.
+  const summary = useMemo(
+    () => summaryLine(monthSummary(data.days, cells.filter(c => c.inMonth).map(c => c.key))),
+    [data.days, cells],
+  )
   const weeks = useMemo(() => weeksOf(cells), [cells])
   const today = todayKey()
 
@@ -140,32 +148,49 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
       onPointerCancel={endPainting}
       onPointerMove={handlePointerMove}
     >
-      <div className="segmented" role="group" aria-label="Calendar view">
-        <button
-          type="button"
-          className={mode === 'month' ? 'active' : ''}
-          aria-pressed={mode === 'month'}
-          onClick={() => setMode('month')}
-        >
-          Month
-        </button>
-        <button
-          type="button"
-          className={mode === 'year' ? 'active' : ''}
-          aria-pressed={mode === 'year'}
-          onClick={() => setMode('year')}
-        >
-          Year
-        </button>
-      </div>
-
-      {mode === 'month' && (
-        <>
+      {/* One row: the arrows, the month, and the mode toggle. It used to be
+          three stacked blocks, which cost about 130px of vertical space on a
+          screen whose whole job is to fit twelve months of squares without
+          scrolling. */}
+      <div className="calendar-bar">
+        {mode === 'month' ? (
           <div className="calendar-nav">
             <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>&larr;</button>
             <h2>{MONTHS[month]} {year}</h2>
             <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
+        ) : (
+          <div className="calendar-nav">
+            <h2>{year}</h2>
+          </div>
+        )}
+
+        {/* One quiet line about the month, where a heading's subtitle would
+            be. Never on a month nobody used - see summaryLine. */}
+        {mode === 'month' && summary && <span className="calendar-summary">{summary}</span>}
+
+        <div className="segmented" role="group" aria-label="Calendar view">
+          <button
+            type="button"
+            className={mode === 'month' ? 'active' : ''}
+            aria-pressed={mode === 'month'}
+            onClick={() => setMode('month')}
+          >
+            Month
+          </button>
+          <button
+            type="button"
+            className={mode === 'year' ? 'active' : ''}
+            aria-pressed={mode === 'year'}
+            onClick={() => setMode('year')}
+          >
+            Year
+          </button>
+        </div>
+      </div>
+
+      {mode === 'month' && (
+        <>
 
           {data.templates.length > 0 && (
             <div className="stamp-bar">
@@ -212,6 +237,13 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
                   const templateId = effectiveTemplateId(cell.key)
                   const template = resolveTemplate(templateId, data.templates)
                   const state = taskState(data.days[cell.key])
+                  // A day that has happened, or is happening. The future has
+                  // nothing to report and says nothing - a "0/9" on Thursday
+                  // is not information, it is an accusation about a day that
+                  // has not started.
+                  const past = cell.key <= today
+                  const stat = past ? dayStat(data.days[cell.key]) : undefined
+                  const showStats = !!stat && stat.rate !== null
                   const classes = [
                     'cell',
                     cell.inMonth ? '' : 'outside',
@@ -220,6 +252,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
                     template ? 'cell-has-template' : '',
                     state !== 'none' ? 'cell-has-tasks' : '',
                     state === 'done' ? 'cell-tasks-done' : '',
+                    showStats ? `cell-tone-${stat!.tone}` : '',
                   ].filter(Boolean).join(' ')
                   return (
                     <button
@@ -230,12 +263,36 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
                       style={template ? { background: template.color } : undefined}
                       aria-label={cellLabel(cell, template?.name, state)}
                       aria-current={cell.key === today ? 'date' : undefined}
+                      // The fuller summary on a pointer. A title rather than a
+                      // custom tooltip: it is a handful of numbers on hover, it
+                      // costs nothing, and it is one less thing that can be left
+                      // open when the pointer moves away.
+                      title={showStats ? cellTooltip(stat!, template?.name) : undefined}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
                       onPointerEnter={() => handlePointerEnter(cell.key)}
                       onClick={() => !stampTemplateId && onOpenDay(cell.key)}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
-                      {template && <span className="cell-template" aria-hidden="true">{template.name}</span>}
+                      {showStats ? (
+                        <span className="cell-stats" aria-hidden="true">
+                          <span className="cell-ratio">
+                            {stat!.done}/{stat!.total}
+                          </span>
+                          {stat!.pushed > 0 && <span className="cell-pushed">&rarr;{stat!.pushed}</span>}
+                          {keptEveryKeyTask(stat!) && <span className="cell-kept" />}
+                        </span>
+                      ) : (
+                        template && <span className="cell-template" aria-hidden="true">{template.name}</span>
+                      )}
+                      {/* The bar, along the bottom edge. A ring in a corner was
+                          the other option and lost: a 52px cell has no corner to
+                          spare, and a bar reads as a proportion at two pixels
+                          where a ring needs eight. */}
+                      {showStats && (
+                        <span className="cell-bar" aria-hidden="true">
+                          <span className="cell-bar-fill" style={{ width: `${Math.round((stat!.rate ?? 0) * 100)}%` }} />
+                        </span>
+                      )}
                     </button>
                   )
                 })}
@@ -264,4 +321,19 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
       {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}
     </section>
   )
+}
+
+/**
+ * The fuller summary a pointer gets. Deliberately sentence-shaped rather than
+ * a table of figures: it is read in passing, once, and a list of labelled
+ * numbers takes longer to parse than the cell it is explaining.
+ */
+function cellTooltip(stat: DayStat, templateName: string | undefined): string {
+  const parts: string[] = []
+  if (templateName) parts.push(templateName)
+  parts.push(`${stat.done} of ${stat.total} done`)
+  if (stat.pushed > 0) parts.push(`${stat.pushed} carried on`)
+  if (stat.highlights > 0) parts.push(`${stat.highlightsDone} of ${stat.highlights} key`)
+  if (stat.focusMinutes > 0) parts.push(`${formatDuration(stat.focusMinutes)} deep work`)
+  return parts.join(' - ')
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { addDays, todayKey } from '../../lib/dates'
 import { buildYearCells, formatYearCellLabel, monthLabelPositions, weekCount, type YearCell } from './yearGrid'
+import { dayStat, toneFor } from '../../lib/dayStats'
 
 const MONTH_LABELS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
@@ -170,7 +171,12 @@ export function YearStrip({ onOpenDay }: YearStripProps) {
             ))}
             {cells.map(cell => {
               const isToday = cell.key === today
-              const classNames = ['year-cell']
+              // The same four registers the month cells use - see dayStats.
+              // A year of squares shaded by how full each day was is the one
+              // view where a whole year's shape is legible at once, and it
+              // costs nothing beyond the tone the month grid already knows.
+              const tone = toneFor(dayStat(data.days[cell.key]).rate)
+              const classNames = ['year-cell', `year-tone-${tone}`]
               if (cell.complete) classNames.push('year-cell-complete')
               // A day that is planned but not yet complete, and has no
               // template to color it, would otherwise look exactly like an
