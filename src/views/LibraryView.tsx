@@ -57,6 +57,7 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
                   key={starter.name}
                   type="button"
                   className="btn-secondary"
+                  data-tour="library-starter"
                   onClick={() => actions.addLibraryList(starter)}
                 >
                   Start a {starter.name} list

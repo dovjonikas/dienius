@@ -87,6 +87,12 @@ export interface Template extends Timestamped {
    * loads and scores exactly as it always did.
    */
   type?: DayType
+  /**
+   * Made by the tour. "Start clean" at the end of it removes exactly the
+   * entities carrying this, and "Keep what I built" strips it, so it is only
+   * ever present while the question is still open. See lib/tour.ts.
+   */
+  tourCreated?: boolean
 }
 
 export interface Task extends Timestamped {
@@ -217,6 +223,12 @@ export interface Task extends Timestamped {
    */
   origin?: TaskOrigin
   /**
+   * Made by the tour. "Start clean" at the end of it removes exactly the
+   * entities carrying this, and "Keep what I built" strips it, so it is only
+   * ever present while the question is still open. See lib/tour.ts.
+   */
+  tourCreated?: boolean
+  /**
    * The id of the task this one was generated from - see `Task.repeat`.
    *
    * Instances are ordinary tasks in every other way: they are ticked off,
@@ -314,6 +326,12 @@ export interface LibraryList extends Timestamped {
   /** Two or three letters for a card: "ch", "ep". Absent falls back to the unit. */
   unitShort?: string
   items: LibraryItem[]
+  /**
+   * Made by the tour. "Start clean" at the end of it removes exactly the
+   * entities carrying this, and "Keep what I built" strips it, so it is only
+   * ever present while the question is still open. See lib/tour.ts.
+   */
+  tourCreated?: boolean
 }
 
 /** How many tasks on one day may be marked as highlights. See `Task.highlight`. */
@@ -699,6 +717,12 @@ export interface Goal extends Timestamped {
    * scoring this whole feature refuses to do.
    */
   archivedAt?: string
+  /**
+   * Made by the tour. "Start clean" at the end of it removes exactly the
+   * entities carrying this, and "Keep what I built" strips it, so it is only
+   * ever present while the question is still open. See lib/tour.ts.
+   */
+  tourCreated?: boolean
 }
 
 /** How many goals can be active at once. See `north.ts` for why it is four. */

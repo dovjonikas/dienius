@@ -256,6 +256,7 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
               <button
                 type="button"
                 className={task.highlight ? 'task-detail-toggle active' : 'task-detail-toggle'}
+                data-tour="key"
                 aria-pressed={task.highlight ?? false}
                 disabled={highlightFull}
                 onClick={() => actions.toggleTaskHighlight(date, task.id)}

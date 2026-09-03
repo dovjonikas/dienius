@@ -8637,3 +8637,202 @@ main:has(.week) > .calendar {
     transform: translate(-50%, -50%);
   }
 }
+
+/* ------------------------------------------------------------------------
+   The tour - a spotlight, a card, and the app underneath, untouched.
+
+   The scrim is one SVG path with an even-odd hole. The path catches pointer
+   events where it is painted and lets them through where it is not, which is
+   what keeps the control inside the hole a real control: nothing is copied
+   into the overlay, the person uses the actual button. See views/tour/Tour.tsx.
+   ------------------------------------------------------------------------ */
+
+/* Above every sheet and menu (those sit at 100 and 101), because the tour
+   points into them: the ring has to be drawn on top of the Details row of an
+   actions sheet, not behind it. */
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.tour-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The scrim dims and never blocks. It sat over the app catching clicks at
+   first, which made every sheet's close button unreachable the moment the
+   spotlight moved into the sheet - a tour that traps somebody in a dialog
+   has taught them to distrust the app. Guidance is the hole and the ring;
+   the person keeps the whole app. */
+.tour-scrim path {
+  fill: color-mix(in srgb, var(--bg) 62%, transparent);
+  pointer-events: none;
+  transition: d var(--dur) var(--ease);
+}
+
+/* The ring around the hole. A separate element rather than a stroke on the
+   path, so it can be rounded and animated without redrawing the scrim. */
+.tour-ring {
+  position: absolute;
+  border: 2px solid var(--accent);
+  border-radius: var(--r-control);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
+  pointer-events: none;
+  transition: left var(--dur) var(--ease), top var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease);
+}
+
+.tour-card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+  pointer-events: auto;
+  animation: tour-card-in var(--dur) var(--ease);
+  transition: left var(--dur) var(--ease), top var(--dur) var(--ease);
+}
+
+@keyframes tour-card-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tour-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.tour-title {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.tour-text {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* The tick: hidden until the step's action has happened, then a short
+   burst - scale up past size and settle - and the card moves on. Under
+   250ms, because it is a confirmation, not a reward. */
+.tour-tick {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-round);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  opacity: 0;
+  transform: scale(0.4);
+  flex-shrink: 0;
+}
+
+.tour-tick.is-on { animation: tour-tick-burst 240ms var(--ease) forwards; }
+
+@keyframes tour-tick-burst {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.tour.is-celebrating .tour-ring {
+  border-color: var(--good, var(--accent));
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--good, var(--accent)) 30%, transparent);
+}
+
+.tour-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.tour-dots { display: inline-flex; gap: 5px; align-items: center; }
+
+.tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--border);
+}
+
+.tour-dot.is-past { background: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+.tour-dot.is-now { background: var(--accent); transform: scale(1.35); }
+
+.tour-actions { display: inline-flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+
+/* Skip is always there and never loud: a text button, not a filled one. */
+.tour-skip {
+  min-height: 0;
+  padding: var(--s1) var(--s2);
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tour-skip:hover { color: var(--text); }
+
+/* The "pick it up where you left it" line, for a tour that was interrupted. */
+.tour-offer {
+  position: fixed;
+  left: var(--s3);
+  right: var(--s3);
+  bottom: calc(var(--s3) + env(safe-area-inset-bottom));
+  z-index: 94;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+  font-size: var(--t-sm);
+}
+
+@media (min-width: 1024px) {
+  .tour-offer { left: 50%; right: auto; transform: translateX(-50%); }
+}
+
+.first-run-tour {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin: 0 0 var(--s4);
+  font-size: var(--t-sm);
+}
+
+@media (pointer: coarse) {
+  .tour-skip { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-card { animation: none; transition: none; }
+  .tour-ring { transition: none; }
+  .tour-tick.is-on { animation: none; opacity: 1; transform: none; }
+}

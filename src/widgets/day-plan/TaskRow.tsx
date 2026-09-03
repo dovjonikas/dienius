@@ -219,6 +219,7 @@ export function TaskRow({
   return (
     <li
       className={classNames.join(' ')}
+      data-task-id={task.id}
       style={catColor ? ({ ['--cat' as string]: catColor } as React.CSSProperties) : undefined}
       onDoubleClick={onOpenDetails}
       onContextMenu={
@@ -248,6 +249,7 @@ export function TaskRow({
         <label className="task-check" {...(longPressEligible ? longPress : {})}>
           <input
             type="checkbox"
+            data-tour="task-check"
             checked={task.done}
             aria-label={task.title}
             aria-describedby={describedBy}
@@ -365,13 +367,14 @@ export function TaskRow({
             idea about time and not the one this app is built on. See
             FocusView.tsx. */}
         {active && onFocus && (
-          <button type="button" className="task-focus-button" onClick={onFocus}>
+          <button type="button" className="task-focus-button" data-tour="focus" onClick={onFocus}>
             Focus
           </button>
         )}
         <button
           type="button"
           className="task-menu-button"
+          data-tour="task-menu"
           aria-label={`More actions for ${task.title}`}
           onClick={onOpenActions}
         >

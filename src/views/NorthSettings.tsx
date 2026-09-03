@@ -95,6 +95,7 @@ export function NorthSettings() {
             <button
               type="button"
               className="btn-secondary"
+              data-tour="goal-add"
               disabled={!canAddGoal(data.goals)}
               onClick={() => setAdding(true)}
             >
@@ -254,7 +255,13 @@ function GoalForm({ goal, onSave, onCancel }: GoalFormProps) {
         />
       </label>
       <div className="goal-form-actions">
-        <button type="button" className="btn-primary" disabled={!title.trim()} onClick={() => onSave({ title, why, identity })}>
+        <button
+          type="button"
+          className="btn-primary"
+          data-tour="goal-save"
+          disabled={!title.trim()}
+          onClick={() => onSave({ title, why, identity })}
+        >
           {goal ? 'Save' : 'Write it down'}
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>

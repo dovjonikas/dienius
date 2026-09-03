@@ -10,6 +10,8 @@ import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
 import { isPushable } from './pushRules'
+import { isTourRunning } from './tourState'
+import { discardTourCreated, keepTourCreated, markTourCreated } from './tour'
 import type { CategoryId } from './categories'
 
 export { MAX_PUSHES } from './pushRules'
@@ -30,7 +32,10 @@ const listeners = new Set<() => void>()
  */
 function commit(next: AppData): void {
   const previous = data
-  data = stampChanges(previous, next, new Date().toISOString())
+  // While the tour runs, whatever appears is flagged as its doing - by the
+  // same diff, for the same reason: no action has to know the tour exists.
+  const marked = isTourRunning() ? markTourCreated(previous, next) : next
+  data = stampChanges(previous, marked, new Date().toISOString())
   saveOk = saveData(data)
   listeners.forEach(fn => fn())
   onCommit.forEach(fn => fn())
@@ -1231,6 +1236,16 @@ export const actions = {
    */
   restoreState(next: AppData): void {
     commit(next)
+  },
+
+  /** The tour's "Start clean": what it made goes, nothing else moves. */
+  discardTourCreated(): void {
+    commit(discardTourCreated(data))
+  },
+
+  /** The tour's "Keep what I built": the flags come off and the entities are ordinary from here on. */
+  keepTourCreated(): void {
+    commit(keepTourCreated(data))
   },
 
   resetForTests(next: AppData): void {

@@ -16,6 +16,7 @@ import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
 import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { DemoBanner } from './views/DemoBanner'
+import { Tour } from './views/tour/Tour'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -350,6 +351,9 @@ export function App() {
           what it undoes could have happened on any tab. */}
       <UndoToast />
       <UpdateNotice />
+      {/* The tour, at the root: it points at things on every tab and has
+          to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}
+      <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />
     </div>
   )
 }

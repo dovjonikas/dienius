@@ -6,6 +6,7 @@ import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { addDays, todayKey } from '../lib/dates'
 import { clearClockTools } from '../lib/clockTools'
 import { clearCalendarCache } from '../lib/calendars'
+import { enterTourSandbox } from '../lib/tourMode'
 import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
@@ -347,6 +348,24 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 </div>
               </div>
             )}
+
+            {/* A replay runs in a sandbox - an empty app under its own key,
+                thrown away afterwards - because a tour that stamps a starter
+                template onto a plan somebody already has is not a tour. See
+                lib/tourMode.ts. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Replay the tour</span>
+                <span className="setting-desc">
+                  Two minutes, nine real actions, in a sandbox that is thrown away when you finish. Your plan is not touched.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button type="button" className="btn-secondary" onClick={enterTourSandbox}>
+                  Replay tour
+                </button>
+              </div>
+            </div>
 
             <div className="setting-row">
               <div className="setting-label">

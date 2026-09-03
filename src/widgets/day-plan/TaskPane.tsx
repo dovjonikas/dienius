@@ -4,6 +4,8 @@ import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { isFirstRun } from '../../lib/onboarding'
 import { enterDemoMode, isDemoMode } from '../../lib/demoMode'
+import { startTour } from '../../lib/tourState'
+import { useIsWide } from '../../lib/viewport'
 import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clockTools } from '../../lib/clockTools'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel, type CategoryId } from '../../lib/categories'
@@ -90,6 +92,7 @@ export function TaskPane({
   // genuinely nothing here yet: no template ever saved, no day that ever held
   // a real task.
   const firstRun = isFirstRun(data)
+  const isWide = useIsWide()
   const { pushable, held, covered } = rolloverSplit(data, date, tasks)
 
   // Re-parsed on every keystroke. Cheap - one regex pass over a short string -
@@ -280,6 +283,16 @@ export function TaskPane({
               "demo or real?" before showing anything is asking a question you
               cannot answer yet. Its own key, thrown away on the way out - see
               demoMode.ts. */}
+          {/* The tour: nine real actions on this very plan, two minutes.
+              Offered before the starters because it starts by tapping one
+              of them - and a person who takes it has, by the end, planned a
+              day, which is what this screen is for. */}
+          <p className="first-run-tour">
+            <button type="button" className="btn-primary" onClick={() => startTour(isWide ? 'desktop' : 'mobile')}>
+              Show me around
+            </button>
+            <span className="muted">Two minutes. Every step is a real action, and you keep what you make.</span>
+          </p>
           {!isDemoMode() && (
             <p className="first-run-demo">
               Not sure yet?{' '}

@@ -1,4 +1,5 @@
 import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
+import { TOUR_STORAGE_KEY, isTourSandbox } from './tourMode'
 import { buildDemoData } from './demo'
 import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
@@ -82,7 +83,29 @@ export const STORAGE_KEY = 'dienius:data'
  * it - the same validation, the same migrations, the same shape.
  */
 function activeKey(): string {
+  // The tour's sandbox is the same idea as demo mode - a different file, not
+  // a flag - and it is checked first because a replay is started from inside
+  // the app, never from a demo link.
+  if (isTourSandbox()) return TOUR_STORAGE_KEY
   return isDemoMode() ? DEMO_STORAGE_KEY : STORAGE_KEY
+}
+
+/**
+ * An empty tour sandbox opens as an empty app wearing the person's own
+ * theme. Without this a replay of the tour would flash the default dark on
+ * somebody who has used Light for a year, and the tour would be teaching a
+ * slightly different app from the one they came from.
+ */
+function sandboxSeed(): AppData {
+  const fresh = defaultData()
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return fresh
+    const theme = salvageTheme(JSON.parse(raw))
+    return theme ? { ...fresh, settings: { ...fresh.settings, theme } } : fresh
+  } catch {
+    return fresh
+  }
 }
 
 // A brand new install has never expressed a light/dark preference, so it
@@ -354,7 +377,12 @@ function isGoal(x: unknown): x is Goal {
   if (!isRecord(x)) return false
   if (typeof x.id !== 'string' || typeof x.title !== 'string') return false
   if (typeof x.createdAt !== 'string') return false
-  return isOptionalString(x.why) && isOptionalString(x.identity) && isOptionalString(x.archivedAt)
+  return (
+    isOptionalString(x.why) &&
+    isOptionalString(x.identity) &&
+    isOptionalString(x.archivedAt) &&
+    isOptionalBoolean(x.tourCreated)
+  )
 }
 
 function isLibraryItem(x: unknown): x is LibraryItem {
@@ -368,6 +396,7 @@ function isLibraryList(x: unknown): x is LibraryList {
   if (!isRecord(x)) return false
   if (typeof x.id !== 'string' || typeof x.name !== 'string' || typeof x.unit !== 'string') return false
   if (!isOptionalString(x.unitPlural) || !isOptionalString(x.unitShort)) return false
+  if (!isOptionalBoolean(x.tourCreated)) return false
   return Array.isArray(x.items) && x.items.every(isLibraryItem)
 }
 
@@ -452,7 +481,8 @@ function isTask(x: unknown): x is Task {
     isOptionalSubtasks(x.subtasks) &&
     isOptionalRepeat(x.repeat) &&
     isOptionalString(x.repeatOf) &&
-    isOptionalOrigin(x.origin)
+    isOptionalOrigin(x.origin) &&
+    isOptionalBoolean(x.tourCreated)
   )
 }
 
@@ -487,7 +517,8 @@ function isTemplate(x: unknown): x is Template {
     isColor(x.color) &&
     Array.isArray(x.blocks) &&
     x.blocks.every(isTemplateBlock) &&
-    isOptionalDayType(x.type)
+    isOptionalDayType(x.type) &&
+    isOptionalBoolean(x.tourCreated)
   )
 }
 
@@ -808,6 +839,7 @@ export function loadData(): AppData {
     // built. Done here rather than before React mounts because this module is
     // evaluated first: store.ts calls loadData() at import time, so anything
     // seeding from main.tsx arrives after the store has already read nothing.
+    if (!raw && isTourSandbox()) return sandboxSeed()
     if (!raw && isDemoMode()) return buildDemoData(defaultData())
     if (!raw) return defaultData()
     const parsed: unknown = JSON.parse(raw)

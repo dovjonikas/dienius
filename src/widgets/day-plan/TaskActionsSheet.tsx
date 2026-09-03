@@ -158,6 +158,7 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
             <button
               type="button"
               className="task-actions-row"
+              data-tour="task-details"
               onClick={() => {
                 onClose()
                 onOpenDetails()

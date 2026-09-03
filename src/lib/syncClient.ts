@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { getData, onStateCommitted, replaceState } from './store'
 import { isDemoMode } from './demoMode'
+import { isTourSandbox } from './tourMode'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
 
 /**
@@ -203,6 +204,9 @@ export function syncNow(): Promise<void> {
   // a real device would merge it in. Demo mode is a separate storage key, so
   // this is belt as well as braces - but the braces are worth having.
   if (isDemoMode()) return Promise.resolve()
+  // The tour's sandbox, for the same reason: a starter template stamped onto
+  // today by somebody replaying the tour must never reach their real devices.
+  if (isTourSandbox()) return Promise.resolve()
   if (blockedByMixedContent(config.url)) {
     setStatus({
       phase: 'error',
