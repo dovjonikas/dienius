@@ -5520,12 +5520,34 @@ button.danger:focus-visible {
     gap: 10px 24px;
   }
 
-  /* Yesterday's banner needs a row of its own across the two content
-     columns - as an unnamed item in an area-based grid it landed in the
-     rail, where it wrapped a seven-word sentence onto three lines beside a
-     mini-calendar. The row is only declared when the banner is there, so a
-     day without one does not pay a grid gap for a track holding nothing. */
-  .day-view:has(.yesterday-banner) {
+  /* Two things can appear above the day: the North card and yesterday's
+     banner. Both need a row of their own across the two content columns - as
+     unnamed items in an area-based grid they land in the rail, where a
+     seven-word sentence wraps onto three lines beside a mini-calendar.
+
+     Three variants rather than one four-row template, because an empty grid
+     track still costs its gap, and this is a fixed-height shell where ten
+     pixels is ten pixels. Each declares exactly the rows that exist. */
+  .day-view:has(.north-card):has(.yesterday-banner) {
+    grid-template-areas:
+      "rail header header"
+      "rail north  north"
+      "rail note   note"
+      "rail cap    cap"
+      "rail day    tasks";
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  }
+
+  .day-view:has(.north-card):not(:has(.yesterday-banner)) {
+    grid-template-areas:
+      "rail header header"
+      "rail north  north"
+      "rail cap    cap"
+      "rail day    tasks";
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+
+  .day-view:has(.yesterday-banner):not(:has(.north-card)) {
     grid-template-areas:
       "rail header header"
       "rail note   note"
@@ -5534,6 +5556,7 @@ button.danger:focus-visible {
     grid-template-rows: auto auto auto minmax(0, 1fr);
   }
 
+  .north-card { grid-area: north; margin-bottom: 0; }
   .yesterday-banner { grid-area: note; margin-bottom: 0; }
 
   .rail {
@@ -7453,3 +7476,247 @@ button.danger:focus-visible {
 /* The four figures sit on a shared baseline: a two-line note under one of
    them was stretching its row and leaving the other three floating. */
 .review-figures dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--s1); }
+
+/* ------------------------------------------------------------------------
+   North - the line, and the card.
+
+   Everything about how the line is drawn is an argument that it is not a
+   control. No icon, no border, no background, no chevron, no colour of its
+   own. Small, wide-tracked, uppercase, in the third ink - the register a
+   running head or a watermark is set in, which is the register of something
+   that is *present* rather than something that is *offered*.
+
+   Uppercase and letter-spaced rather than italic: an italic line at this size
+   on a dark surface reads as an aside or an apology, and this is neither. The
+   tracking is what does the work - it slows the eye down enough to read the
+   words without ever competing with the day's own title two lines above.
+   ------------------------------------------------------------------------ */
+/* Its own row across the header, which is a wrapping flex row rather than
+   a grid - a 100% basis is what makes a flex item take a line of its own.
+   Ordered last so it sits under the title and the day figures rather than
+   between them. */
+.north-line {
+  flex: 1 1 100%;
+  order: 9;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.north-line-title {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: left;
+  /* Never wraps to a second line and never truncates mid-thought: a goal
+     long enough to wrap here is a goal that wants shortening, and the
+     ellipsis is the app saying so quietly. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+
+/* The one state change it has. Not a highlight and not an accent - it simply
+   comes up one ink, the way a thing you are looking at directly does. */
+.north-line.is-open .north-line-title,
+.north-line-title:hover,
+.north-line-title:focus-visible {
+  color: var(--muted);
+}
+
+.north-line-title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-chip);
+}
+
+/* What opens. Sentence case and the ordinary reading size, because this is
+   the half meant to be read rather than glanced at - the line above is the
+   watermark, this is the sentence behind it. */
+/* [hidden] is a UA rule of display:none, and an author rule setting display
+   on the same element beats it whatever the specificity - so the panel was
+   always open and the hidden attribute was doing nothing at all. This is the
+   line that makes it mean something. */
+.north-line-more[hidden] { display: none; }
+
+.north-line-more {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s1) 0 2px;
+  max-width: 62ch;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .north-line-more { animation: north-open var(--dur) var(--ease) both; }
+}
+
+@keyframes north-open {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+.north-line-why {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* The identity line, one step quieter again and the only italic in the app -
+   earned here because it is a sentence in the first person and italic is how
+   a first-person aside has been set for four hundred years. */
+.north-line-identity {
+  margin: 0;
+  color: var(--faint);
+  font-size: var(--t-sm);
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------------
+   The card. A note from somebody to themselves, not a system message.
+
+   No border on three sides and a single soft rule down the left, in the
+   accent at low strength: the shape of a pulled quote rather than of an
+   alert. Nothing red exists here and nothing ever will - see NorthCard.
+   ------------------------------------------------------------------------ */
+.north-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Capped, so it reads as a note somebody left rather than as a banner the
+     system put up. A card running the full width of a 1440px screen with
+     four words in it is the second thing. */
+  max-width: 64ch;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+  padding: var(--s4) var(--s5);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .north-card { animation: north-card-in var(--dur) var(--ease) both; }
+}
+
+@keyframes north-card-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.north-card-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.north-card-title {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.north-card-why {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
+.north-card-identity {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: var(--t-md);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* One button, and a quiet one. A filled primary here would make the card
+   read as a thing to get past. */
+.north-card-ok {
+  min-height: 38px;
+  margin-top: var(--s1);
+  padding: 0 var(--s5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.north-card-ok:hover { border-color: var(--muted); }
+
+.north-card-ok:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The Monday version is the same card in a lower key: it is not responding
+   to anything, it is just the start of a week. */
+.north-card.is-monday {
+  border-left-color: color-mix(in srgb, var(--mark) 50%, var(--border));
+  background: color-mix(in srgb, var(--mark) 5%, var(--surface));
+}
+
+@media (max-width: 599px) {
+  .north-card { padding: var(--s4); }
+  .north-line-title { letter-spacing: 0.12em; }
+}
+
+/* The goal list in Settings. Rows rather than cards: four of them is a
+   short list, and a card each would make writing one down feel like filing
+   a form. */
+.goal-list { display: flex; flex-direction: column; gap: var(--s2); margin: var(--s3) 0 0; padding: 0; list-style: none; }
+
+.goal-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.goal-row.is-editing { display: block; }
+
+.goal-text { display: flex; flex-direction: column; gap: 3px; flex: 1 1 260px; min-width: 0; max-width: 52ch; }
+.goal-title { color: var(--text); font-size: var(--t-md); font-weight: 600; }
+.goal-why { color: var(--muted); font-size: var(--t-sm); line-height: 1.5; }
+.goal-identity { color: var(--faint); font-size: var(--t-sm); font-style: italic; line-height: 1.5; }
+
+/* The age. Set as quietly as anything in the app, because the moment it
+   reads as a score it stops being a fact - see goalAge. */
+.goal-age { margin-top: 2px; color: var(--faint); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+
+.goal-actions { display: flex; align-items: center; gap: var(--s2); flex-shrink: 0; }
+.goal-add { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s3); }
+
+.goal-form { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s3) 0; }
+.goal-form .field { max-width: 52ch; }
+.goal-form textarea { resize: vertical; line-height: 1.5; }
+.goal-form-actions { display: flex; gap: var(--s2); }
+
+.goal-list.is-archived .goal-title { color: var(--muted); }
+
+/* The Review section. Two lines per goal, the second one the age. */
+.review-north { display: flex; flex-direction: column; gap: var(--s3); margin: 0; padding: 0; list-style: none; }
+.review-north li { display: flex; flex-direction: column; gap: 2px; }
+.review-north-title { color: var(--text); font-size: var(--t-sm); }
+.review-north-age { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }

@@ -18,6 +18,8 @@ import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
 import { YesterdayBanner } from './YesterdayBanner'
+import { NorthLine } from './NorthLine'
+import { NorthCard } from './NorthCard'
 import { isRoutine, willReceive } from '../../lib/taskIdentity'
 import { weekdayOf } from '../../lib/repeats'
 import { offerUndo } from '../../lib/undo'
@@ -738,6 +740,12 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           </div>
         )}
 
+        {/* The one line the whole app is for - see NorthLine. Inside the
+            header rather than above the day, so it reads as part of the
+            masthead rather than as a notice about today, and so nothing
+            below it moves when it opens. */}
+        <NorthLine date={date} />
+
         {/* The day's progress, promoted out of the title block it used to
             sit inside as a small trailing fraction. It is the one number
             worth reading first thing on opening the app, and a bar says
@@ -823,6 +831,11 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           Below the breakpoint showDayPane is always true (see its own
           comment above); only step 4's Calendar/Tasks focus, at a wide
           viewport, ever unmounts this. */}
+      {/* Above the yesterday banner on purpose: one of these is about why,
+          the other about what is left, and on a morning that shows both, why
+          comes first. See NorthCard. */}
+      {isToday && <NorthCard />}
+
       {/* What yesterday left, stated once and acted on in one tap - never
           moved forward on its own. See YesterdayBanner. */}
       <YesterdayBanner date={date} />

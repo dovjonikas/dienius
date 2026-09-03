@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
 import { addDays, todayKey } from '../lib/dates'
+import { activeGoals } from '../lib/north'
+import { ageLabel } from './NorthSettings'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,
@@ -141,6 +143,8 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
             onOpenDay={onOpenDay}
           />
 
+          <NorthSection />
+
           {stats.library.length > 0 && (
             <div className="review-block">
               <h3>Read and watched</h3>
@@ -159,6 +163,35 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * The goals, at the bottom of a review, with their ages and nothing else.
+ *
+ * The one place in this app where looking back at a week and looking at a
+ * direction sit on the same screen - and the whole discipline of it is that
+ * the direction gets no number the week can move. An age cannot be earned or
+ * lost; it is a fact about how long something has been true.
+ */
+function NorthSection() {
+  const data = useAppData()
+  const today = todayKey()
+  const goals = activeGoals(data.goals)
+  if (goals.length === 0) return null
+
+  return (
+    <div className="review-block">
+      <h3>North</h3>
+      <ul className="review-north">
+        {goals.map(goal => (
+          <li key={goal.id}>
+            <span className="review-north-title">{goal.title}</span>
+            <span className="review-north-age">{ageLabel(goal, today)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

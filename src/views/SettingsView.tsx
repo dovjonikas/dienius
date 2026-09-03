@@ -12,9 +12,10 @@ import { AppearanceControls } from './AppearanceControls'
 import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
+import { NorthSettings } from './NorthSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'sleep' | 'week' | 'nudges' | 'rules' | 'appearance'
+type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -49,6 +50,9 @@ const WEEKDAYS: { value: number; label: string; full: string }[] = [
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
+  // Second, right after General. It is the only section here that is about
+  // what the app is for rather than how it behaves.
+  { id: 'north', label: 'North' },
   { id: 'sleep', label: 'Sleep' },
   { id: 'week', label: 'Week' },
   { id: 'nudges', label: 'Nudges' },
@@ -352,6 +356,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               </div>
             </div>
           </div>
+
+          <NorthSettings />
 
           <div className="settings-group" id="settings-sleep">
             <h3>Sleep</h3>
