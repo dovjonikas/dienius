@@ -5820,7 +5820,7 @@ button.danger:focus-visible {
   /* The pane's own 10px gap already separates quick-add from the list; the
      phone's stacked margin on top of it would just be doubled spacing. */
   .task-pane .quick-add-block { flex: 0 0 auto; }
-  .task-pane .quick-add { margin-bottom: 0; }
+  .task-pane .quick-add-row { margin-bottom: 0; }
   .task-pane .done-section { flex: 0 0 auto; margin-top: 0; }
 
   /* The first-run invitation is three full template cards, which is taller
@@ -9432,85 +9432,186 @@ main:has(.week) > .calendar {
   .replan-seg button { min-height: 44px; }
 }
 
-/* The quick-add field, and the quiet clock beside it.
+/* Quick-add: a time control, the line, and a duration control.
    ------------------------------------------------------------------------
-   The row is the box the time panel anchors to, which is why the field has
-   a wrapper at all: .time-picker-panel is absolute at top: 100%, and without
-   a positioned ancestor it hung off the whole task column. The margin the
-   input used to carry moved here with it, or the panel opened four pixels
-   below where the field actually ends. */
-.quick-add-field {
-  position: relative;
+   One row of three parts, because the ordinary path through this app is
+   "type a title, press Enter" and both of the other two things a task needs
+   have to already be answered when that happens. The row is also the box the
+   two panels anchor to - each control is `position: relative` and its panel
+   is absolute at top: 100%, which is the rule a popover in this codebase has
+   broken twice now: without a positioned ancestor .time-picker-panel
+   measures itself against the whole task column. */
+.quick-add-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  gap: var(--s2);
   margin-bottom: var(--s4);
 }
 
-.quick-add-field .quick-add { padding-right: 84px; }
+.quick-add-row .quick-add {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
 
-/* Inside the field's own box, at its right edge: it belongs to the line
-   being typed, not to the row of things under it. Faint until it holds a
-   time, because a task with no time is the common case and this must not
-   read as a question that has to be answered. */
-.quick-add-time {
-  position: absolute;
-  right: 8px;
+/* Both controls borrow .time-stepper's shell - the same bordered box with a
+   pair of half-height chevrons the template editor and Settings already use.
+   Borrowed rather than re-drawn: a second box that looked almost like it
+   would be a second thing to learn, and the stacked-chevron compromise (each
+   half is 22px, the pair clears 44px between them) is already the documented
+   answer to a spinner in a row that has no 88px to give. */
+.quick-add-time-control {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.quick-add-time-value,
+.quick-add-duration-value {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-width: 36px;
-  min-height: 32px;
+  min-height: 0;
+  padding: 0 var(--s2);
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.quick-add-time-value { width: 66px; }
+
+/* "No time" is a real answer, not an unfilled field, so it is quiet rather
+   than warned about - the same reading a float has had since v1.0. */
+.quick-add-time-value.is-none {
+  width: auto;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.quick-add-time-value:hover,
+.quick-add-duration-value:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.quick-add-time-value:focus-visible,
+.quick-add-duration-value:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.quick-add-duration {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  overflow: visible;
+}
+
+.quick-add-duration-value { min-width: 52px; }
+
+.quick-add-time-panel,
+.quick-add-duration-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised, var(--surface));
+  box-shadow: var(--e2), 0 12px 28px -8px rgba(0, 0, 0, 0.45);
+}
+
+.quick-add-time-panel { left: 0; }
+.quick-add-duration-panel { right: 0; align-items: stretch; }
+
+/* The panel already is the raised card, so the picker inside it goes back to
+   being an ordinary pair of columns rather than a second floating layer. */
+.quick-add-time-panel .time-picker-panel {
+  position: static;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.quick-add-time-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quick-add-time-modes button,
+.quick-add-duration-chips button {
+  justify-content: flex-start;
+  min-height: 34px;
   padding: 0 var(--s2);
   border: 1px solid transparent;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-chip);
   background: none;
-  color: var(--faint);
+  color: var(--text);
   font-size: var(--t-sm);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.quick-add-time-modes button:hover,
+.quick-add-duration-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.quick-add-time-modes button.is-on,
+.quick-add-duration-chips button.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.quick-add-duration-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s1);
+}
+
+.quick-add-duration-chips button {
+  justify-content: center;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.quick-add-time:hover { color: var(--text); border-color: var(--border); }
-
-.quick-add-time.is-set {
-  right: 34px;
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--text);
-}
-
-.quick-add-time-clear {
-  position: absolute;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--r-round);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-md);
-  line-height: 1;
-}
-
-.quick-add-time-clear:hover { color: var(--danger); }
-
-/* The panel opens under the right-hand end, where the button is, rather than
-   under the left edge of a field it has nothing to do with. */
-.quick-add-field .time-picker-panel { left: auto; right: 0; }
+.quick-add-duration-panel .time-stepper { align-self: stretch; }
+.quick-add-duration-panel .time-stepper .minutes-input { width: 100%; }
 
 @media (pointer: coarse) {
-  .quick-add-time { min-height: 36px; position: absolute; }
-  .quick-add-time::after,
-  .quick-add-time-clear::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: max(100%, 44px);
-    height: max(100%, 44px);
-    transform: translate(-50%, -50%);
-  }
-  .quick-add-time-clear { position: absolute; }
+  .quick-add-time-value,
+  .quick-add-duration-value { min-height: 44px; }
+  .quick-add-time-modes button,
+  .quick-add-duration-chips button { min-height: 44px; }
+  /* The one place in this app where the stacked-chevron compromise is not
+     good enough as it stands. Each half is 22px tall, which the template
+     editor gets away with because a template is built once; this pair is on
+     the daily path, pressed with a thumb, several times a morning. It cannot
+     be made taller without making the row taller, so it is made wider - 44px
+     across, so the target is at least generous in the axis that has room. */
+  .quick-add-time-control .time-step { width: 44px; }
+}
+
+/* Below the breakpoint the three parts stop sharing one line: at 390px a
+   66px time control, a 52px duration control and their gaps leave the input
+   under 200px, which is four or five words of a task title before it starts
+   scrolling under the cursor. The line keeps the width; the two controls sit
+   under it, still side by side and still in the same left-to-right order. */
+@media (max-width: 420px) {
+  .quick-add-row { flex-wrap: wrap; }
+  .quick-add-row .quick-add { order: -1; flex: 1 0 100%; }
+
+  /* Measured at 390x844: the row sits about 430px down once the header, the
+     North line and the capacity sentence are above it, which leaves roughly
+     300px underneath. The picker's full 216px columns plus its two mode
+     buttons come to 312 and hang twelve pixels off the bottom of the screen.
+     The columns scroll anyway, so they are the part that gives. */
+  .quick-add-time-panel .time-picker-column { max-height: 160px; }
 }

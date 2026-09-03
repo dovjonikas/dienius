@@ -1179,19 +1179,22 @@ test('a task that fits nowhere today says so plainly, without suggesting the day
   expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
 })
 
-// --- a time without typing one ---------------------------------------------
+// --- a time and a length without typing either -----------------------------
 //
-// The third way in, after "type nothing and let it be a float" and "type
-// 14:00 Call mom". It exists for the times somebody knows the hour and not
-// the digits, and it is deliberately quiet: nothing here may read as a
-// question that has to be answered before a task can be added.
+// Quick-add is three parts: a time control, the line, a duration control.
+// Both controls open already holding an answer, so the ordinary path from a
+// thought to a placed task is a title and Enter. QuickAdd.test.tsx makes the
+// same promises against the component on its own; these assert them through
+// the whole day view, which is where the two have disagreed before - a
+// popover in this row has twice measured itself against the task column
+// because the thing it sat in was not a positioned ancestor.
 
-test('the clock beside quick-add sets a time in two taps, and the task lands at it', async () => {
+test('the time control sets a time in two taps, and the task lands at it', async () => {
   const user = userEvent.setup()
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
   // One open, two picks: the list stays up between the hour and the minute,
   // the way TimePicker's own does.
-  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(screen.getByRole('button', { name: /next free slot/i }))
   await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '14' }))
   await user.click(within(screen.getByRole('listbox', { name: 'Minute' })).getByRole('option', { name: '30' }))
   await user.keyboard('{Escape}')
@@ -1203,48 +1206,63 @@ test('the clock beside quick-add sets a time in two taps, and the task lands at 
   expect(taskList.getByText('14:30')).toBeInTheDocument()
 })
 
-test('the picked time is forgotten once the task is added, so the next one is a float again', async () => {
+/**
+ * Rewritten in the wave that gave quick-add its two controls. It used to
+ * assert that the second task came out a float, which was the honest
+ * behaviour when a picked time was the only way to get one and nothing was
+ * suggested. Now the control returns to the suggestion after an add, and the
+ * promise worth keeping is the one underneath both versions: the picked time
+ * does not silently stick to everything typed afterwards.
+ */
+test('the next task typed goes after the one just added, not on top of it', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
-  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
   await user.type(screen.getByPlaceholderText(/add a task/i), 'First{Enter}')
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Second{Enter}')
 
   const tasks = getData().days['2026-09-01'].tasks
-  expect(tasks.find(t => t.title === 'First')?.time).toBe('09:00')
-  expect(tasks.find(t => t.title === 'Second')?.time).toBeUndefined()
-  expect(screen.getByRole('button', { name: 'Pick a time' })).toBeInTheDocument()
+  expect(tasks.find(t => t.title === 'First')?.time).toBe('07:00')
+  expect(tasks.find(t => t.title === 'Second')?.time).toBe('07:30')
 })
 
 /**
- * A time typed into the line wins over one picked from the list: it is the
- * more explicit of the two, and it is the one still on screen in the chips.
+ * A time typed into the line wins over the one the control is showing: it is
+ * the more explicit of the two, and it is the one still on screen in the
+ * chips. The control redraws to say so rather than sitting there disagreeing.
  */
-test('a time typed into the line beats one picked from the clock', async () => {
+test('a time typed into the line beats the one the control is showing', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
+  await user.click(screen.getByRole('button', { name: /next free slot/i }))
   await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
   await user.type(screen.getByPlaceholderText(/add a task/i), '16:00 Call mom{Enter}')
   expect(getData().days['2026-09-01'].tasks[0].time).toBe('16:00')
 })
 
-test('clearing the picked time puts the task back to being a float', async () => {
+/**
+ * Rewritten with the control it belongs to: the clear cross beside the old
+ * clock button is gone, and "No time" inside the panel is how a task is kept
+ * as a float on purpose. The promise is unchanged - a float is always one
+ * gesture away, and never something you have to fight the app for.
+ */
+test('No time puts the task back to being a float', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'Pick a time' }))
-  await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
-  await user.click(screen.getByRole('button', { name: 'Clear 09:00' }))
+  await user.click(screen.getByRole('button', { name: /next free slot/i }))
+  await user.click(screen.getByRole('button', { name: 'No time' }))
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom{Enter}')
   expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
 })
 
-// An inbox line is not a task yet, so a time on it would be a decision the
-// inbox exists to postpone - see the capture mode comment in TaskPane.
-test('the clock is not offered while the field is writing to the inbox', async () => {
+// An inbox line is not a task yet, so an hour or a length on it would be a
+// decision the inbox exists to postpone - see the capture mode comment in
+// QuickAdd. Both controls go rather than sit there greyed out: a disabled
+// control still asks to be read.
+test('neither control is offered while the field is writing to the inbox', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  expect(screen.getByRole('button', { name: /next free slot/i })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Inbox' }))
-  expect(screen.queryByRole('button', { name: 'Pick a time' })).toBeNull()
+  expect(screen.queryByRole('button', { name: /next free slot/i })).toBeNull()
+  expect(screen.queryByRole('button', { name: /min long/i })).toBeNull()
 })

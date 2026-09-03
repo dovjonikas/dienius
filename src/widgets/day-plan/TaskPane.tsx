@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useState } from 'react'
 import type { LibraryList, Task } from '../../lib/types'
-import { actions, getData, useAppData } from '../../lib/store'
+import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { isFirstRun } from '../../lib/onboarding'
 import { enterDemoMode, isDemoMode } from '../../lib/demoMode'
@@ -8,13 +8,10 @@ import { startTour } from '../../lib/tourState'
 import { useIsWide } from '../../lib/viewport'
 import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clockTools } from '../../lib/clockTools'
-import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel, type CategoryId } from '../../lib/categories'
-import { clearDraft, consumeDraft, saveDraft } from './draft'
-import { parseQuickAdd } from './parse'
-import { formatDuration, parseMinutesInput } from './capacity'
+import { parseMinutesInput } from './capacity'
 import { rolloverSplit } from './rollover'
 import { StarterOffers } from '../onboarding/StarterOffers'
-import { TimeColumns } from '../../views/TimeColumns'
+import { QuickAdd } from './QuickAdd'
 import { TaskRow } from './TaskRow'
 import { Inbox } from './Inbox'
 
@@ -22,10 +19,11 @@ import { Inbox } from './Inbox'
  * The task column: capturing something, the list of what is on the day, what
  * is already finished, and what happens to the leftovers.
  *
- * Everything the tray owns on its own lives here - the quick-add's text, which
- * of the two things Enter does, which category the next task gets, which row
- * is having its size edited. None of that means anything outside this column,
- * and DayView held it only because this markup used to be inline.
+ * What is left in here is the column itself - the list, the Done fold, the
+ * inbox under it, the rollover button at the bottom, and which row is having
+ * its size edited. Capture is its own component (QuickAdd), because the time
+ * control, the text and the duration control are one feature that has to
+ * behave identically wherever it appears and is what the tour points at.
  */
 
 export interface TaskPaneProps {
@@ -64,50 +62,10 @@ export function TaskPane({
   onContextMenu,
 }: TaskPaneProps) {
   const data = useAppData()
-  const [input, setInput] = useState(() => consumeDraft(date))
   const [sizeEditingId, setSizeEditingId] = useState<string | null>(null)
   const [sizeDraft, setSizeDraft] = useState('')
   const [doneOpen, setDoneOpen] = useState(false)
-  // Which category the next quick-added task gets. Session state, not stored:
-  // it follows what you are doing right now, and the point of a default is
-  // that most tasks typed in one sitting belong together - carrying that
-  // across days would be a guess about tomorrow instead.
-  const [newCategory, setNewCategory] = useState<CategoryId>(DEFAULT_CATEGORY)
-  // Which of the two things Enter does. A mode rather than a second field: one
-  // input with one cursor, and the thing being typed goes wherever the toggle
-  // says, so capturing costs a tap once rather than a decision every time
-  // about which box to aim at.
-  const [captureMode, setCaptureMode] = useState<'task' | 'inbox'>('task')
-  // A time chosen from the list rather than typed - see the clock button
-  // below. Empty is the ordinary case and means the task goes in untimed,
-  // which is what a float is: something to do today, not at a time.
-  const [pickedTime, setPickedTime] = useState('')
-  const [timeOpen, setTimeOpen] = useState(false)
-  const timeRef = useRef<HTMLDivElement>(null)
   const doneListId = useId()
-
-  // The list closes the way TimePicker's own does - a pointerdown outside it,
-  // or Escape - rather than on the first pick. Closing on a pick meant an
-  // hour and a minute cost four taps: choose the hour, watch it shut, open it
-  // again, choose the minute. Pointerdown rather than click, so the panel is
-  // gone before whatever was under it reacts.
-  useEffect(() => {
-    if (!timeOpen) return
-    function onDown(e: PointerEvent) {
-      if (!timeRef.current?.contains(e.target as Node)) setTimeOpen(false)
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      setTimeOpen(false)
-    }
-    document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey, true)
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey, true)
-    }
-  }, [timeOpen])
 
   // The open list and the Done section, split from the one sorted list rather
   // than sorted differently - sortTasks stays the single source of order within
@@ -125,9 +83,6 @@ export function TaskPane({
   const isWide = useIsWide()
   const { pushable, held, covered } = rolloverSplit(data, date, tasks)
 
-  // Re-parsed on every keystroke. Cheap - one regex pass over a short string -
-  // and the alternative (parsing only on Enter) is what the chips exist to fix.
-  const draft = parseQuickAdd(input)
 
   function handleUseStarter(starter: StarterTemplate) {
     // One tap does both things the offer promises: a real, editable template
@@ -138,38 +93,6 @@ export function TaskPane({
     // commits through, not a second way to fill a day's tasks in.
     const template = actions.addTemplate(starterTemplateInput(starter))
     actions.stamp({ [date]: template.id })
-  }
-
-  function handleAdd() {
-    if (captureMode === 'inbox') {
-      // Straight in, exactly as typed - no parsing, because an inbox item is
-      // not a task yet and a time or a duration in it is just part of the note
-      // somebody wrote to themselves.
-      if (!input.trim()) return
-      actions.addInboxItem(input)
-      setInput('')
-      clearDraft()
-      return
-    }
-    const parsed = parseQuickAdd(input)
-    if (!parsed) return
-    // A time typed into the line wins over one picked from the list: it is
-    // the more explicit of the two, and it is the one still on screen in the
-    // chips. Nothing picked and nothing typed is a float, deliberately.
-    actions.addTask(date, parsed.title, parsed.time ?? (pickedTime || undefined), newCategory)
-    if (parsed.minutes !== undefined) {
-      const added = getData().days[date]?.tasks.at(-1)
-      if (added) actions.setTaskMinutes(date, added.id, parsed.minutes)
-    }
-    setInput('')
-    setPickedTime('')
-    setTimeOpen(false)
-    clearDraft()
-  }
-
-  function handleInputChange(text: string) {
-    setInput(text)
-    saveDraft(date, text)
   }
 
   function startSizeEdit(task: { id: string; minutes?: number }) {
@@ -229,124 +152,7 @@ export function TaskPane({
     // also move it in time. It is the task column, which is what the gesture
     // was always described as: drag it back to the list.
     <div className="task-pane" data-tray-zone>
-      <div className="quick-add-block">
-        <div className="capture-mode segmented" role="group" aria-label="What Enter does">
-          <button
-            type="button"
-            className={captureMode === 'task' ? 'active' : ''}
-            aria-pressed={captureMode === 'task'}
-            onClick={() => setCaptureMode('task')}
-          >
-            Task
-          </button>
-          <button
-            type="button"
-            className={captureMode === 'inbox' ? 'active' : ''}
-            aria-pressed={captureMode === 'inbox'}
-            onClick={() => setCaptureMode('inbox')}
-          >
-            Inbox
-          </button>
-        </div>
-        <div className="quick-add-field" ref={timeRef}>
-        <input
-          className="quick-add"
-          /* Marked rather than reached by a ref chain from the shell: the N
-             shortcut lives at the app root and has no business knowing this
-             view's internals - see App.tsx. */
-          data-quick-add=""
-          placeholder={captureMode === 'inbox' ? 'Catch a thought, decide later...' : 'Add a task... try 14:00 Call mom'}
-          value={input}
-          onChange={e => handleInputChange(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
-        />
-        {/* A time without typing one, for the times a person knows the hour
-            and not the digits. Deliberately quiet and deliberately optional:
-            the fast path is still to type nothing and let the task be a
-            float, and the second fastest is still "14:00 Call mom" in the
-            line itself. This is the third way in, not a step in the way. */}
-        {captureMode === 'task' && (
-          <button
-            type="button"
-            className={pickedTime ? 'quick-add-time is-set' : 'quick-add-time'}
-            aria-label={pickedTime ? `At ${pickedTime}. Pick a different time` : 'Pick a time'}
-            aria-expanded={timeOpen}
-            onClick={() => setTimeOpen(o => !o)}
-          >
-            {pickedTime || (
-              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-                <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M10 6v4.3l3 1.8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-        )}
-        {pickedTime && (
-          <button
-            type="button"
-            className="quick-add-time-clear"
-            aria-label={`Clear ${pickedTime}`}
-            onClick={() => {
-              setPickedTime('')
-              setTimeOpen(false)
-            }}
-          >
-            &times;
-          </button>
-        )}
-        {timeOpen && captureMode === 'task' && (
-          <TimeColumns
-            value={pickedTime}
-            onPick={setPickedTime}
-          />
-        )}
-        </div>
-        {/* What the line was understood as, live, before Enter is pressed.
-            Quick-add accepts a leading time and a trailing duration inside
-            ordinary prose, which is fast to type and impossible to be sure of -
-            "Read 20 pages" must keep its 20 and "Read 20 min" must not. Showing
-            the parse removes the doubt at the moment it exists, which is
-            cheaper than an error afterwards. Nothing here is a control: it is
-            the input describing itself. */}
-        {draft && captureMode === 'task' && (
-          <div className="quick-add-chips" aria-live="polite">
-            {draft.time && <span className="quick-add-chip is-time">{draft.time}</span>}
-            {draft.minutes !== undefined && (
-              <span className="quick-add-chip is-size">{formatDuration(draft.minutes)}</span>
-            )}
-            <span
-              className="quick-add-chip is-cat"
-              style={{ ['--cat' as string]: categoryColor(newCategory) } as React.CSSProperties}
-            >
-              {categoryLabel(newCategory)}
-            </span>
-            <span className="quick-add-chip-title">{draft.title}</span>
-          </div>
-        )}
-
-        {/* Which colour the next task gets, chosen before typing rather than
-            asked about afterward - six swatches is one glance and one tap,
-            where a follow-up dialog would be a second decision at exactly the
-            moment the thought is meant to be leaving your head. Each is a real
-            toggle button carrying its own name, so the choice is reachable and
-            readable without relying on the colour. */}
-        {captureMode === 'task' && (
-          <div className="category-picker" role="group" aria-label="Category for the next task">
-            {CATEGORIES.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                className={c.id === newCategory ? 'category-swatch selected' : 'category-swatch'}
-                style={{ ['--cat' as string]: c.color } as React.CSSProperties}
-                aria-pressed={c.id === newCategory}
-                aria-label={c.label}
-                title={c.label}
-                onClick={() => setNewCategory(c.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <QuickAdd date={date} tasks={tasks} />
 
       {tasks.length === 0 && firstRun && (
         <div className="first-run">

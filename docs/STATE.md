@@ -36,7 +36,7 @@ reading them.
 
 | Feature | What it is |
 |---|---|
-| Quick-add | One field; a leading time and a trailing duration are parsed out of ordinary prose, shown as chips before Enter |
+| Quick-add | Three parts on one line: a time control, the field, a duration control. Both controls open holding an answer, so a title and Enter is a placed, sized task |
 | Capture mode | The same field writes to the day or to the inbox, chosen by a toggle |
 | Categories | Six, one colour each, picked before typing; the same colour on the card and on the timeline block |
 | Timeline grid | Anchored tasks at their real time and size, free gaps as labelled regions, a line at now; collapsed behind a disclosure on a phone, always open at the wide breakpoint |
@@ -48,7 +48,7 @@ reading them.
 | Yesterday banner | What yesterday left, stated once, moved forward in one tap - never automatically |
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back. See `widgets/day-plan/replan.ts` |
 | Scratch | One key (S or backtick) or a floating button, and you are typing. Its own stream, `#tags` as filters, a #bug export |
-| Quick-add time | A clock at the end of the field opens hours and fives. Pick nothing and the task is a float |
+| Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
 | Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
 | Focus | One task, its own planned time, a ring, a way out. Not a pomodoro |
 | Timer and stopwatch | Survive a refresh, run on every tab, keep time in a background tab, put the countdown in the tab title |

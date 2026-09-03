@@ -87,7 +87,7 @@ if it were absent. This contract is kept by every reader and is tested.
 
 ### What is *not* in `AppData`
 
-Five things live under their own storage keys, on purpose, and none of them is
+Six things live under their own storage keys, on purpose, and none of them is
 in a backup:
 
 - **`dienius:clock-tools`** - the timer, stopwatch and focus session
@@ -101,6 +101,12 @@ in a backup:
 - **`dienius:sync`** - the sync server's address, token and on/off
   ([`syncClient.ts`](../src/lib/syncClient.ts)). Syncing the address of the
   sync server is circular, and a token is a device's own credential.
+- **`dienius:quick-add-duration`** - how long the next quick-added task is
+  assumed to take
+  ([`quickAddPrefs.ts`](../src/widgets/day-plan/quickAddPrefs.ts)). A device
+  habit rather than a plan: restoring a week-old snapshot has no business
+  changing which chip is lit, and a phone and a laptop are allowed to
+  disagree about it.
 - **`dienius:calendars`** - the events fetched from external feeds
   ([`calendars.ts`](../src/lib/calendars.ts)). The *subscriptions* live in
   settings and do sync; what they contain is refetched per device, because a
@@ -244,7 +250,10 @@ it delegates:
 | `TimelineGrid.tsx` | Drawing it, and the drag/resize gestures |
 | `sort.ts` | The one order a day's tasks are shown in |
 | `score.ts` | Done over planned, and how a non-full day is counted |
-| `parse.ts` | Quick-add: "14:00 Call mum" -> a task |
+| `QuickAdd.tsx` | Capture: a time control, the line, a duration control |
+| `parse.ts` | Quick-add: "14:00 Call mum 45min" -> a task, and back again |
+| `autoSlot.ts` | The time the field opens holding: the first gap that fits |
+| `quickAddPrefs.ts` | The one thing capture remembers between sessions |
 | `gapPlacement.ts` | Which floats fit which gap |
 | `dragDrop.ts` | Where a dropped block lands |
 | `TaskRow.tsx` | One card |

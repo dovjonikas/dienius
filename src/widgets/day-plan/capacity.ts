@@ -671,7 +671,24 @@ export function parseTimeInput(text: string): string | undefined {
  */
 export function stepTime(time: string, deltaMinutes: number): string {
   const wrapped = ((timeToMinutes(time) + deltaMinutes) % DAY_MINUTES + DAY_MINUTES) % DAY_MINUTES
-  const hour = Math.floor(wrapped / 60)
-  const minute = wrapped % 60
+  return minutesToTime(wrapped)
+}
+
+/**
+ * The inverse of `timeToMinutes` - a minute offset from midnight back into a
+ * canonical "HH:MM". Exported because the arithmetic that decides *where* in
+ * a day something goes works in minutes throughout (gaps, windows, merged
+ * blocks all do) and only turns back into a clock time at the very end, so
+ * every such caller needs this one line and none of them should own its own
+ * copy of the padding.
+ *
+ * Takes minutes within a single day; anything at or past midnight is the
+ * caller's own wraparound to decide, which is why `stepTime` wraps before it
+ * gets here rather than asking this function to guess what "1500 minutes"
+ * means.
+ */
+export function minutesToTime(minutes: number): string {
+  const hour = Math.floor(minutes / 60)
+  const minute = minutes % 60
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }

@@ -183,9 +183,17 @@ test('in the sandbox the tour starts on its own and the last step is a single Do
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Nothing here is kept')
 })
 
-test('the step text carries the current clock time where it asks for a task now', () => {
+/**
+ * Rewritten with the quick-add wave. The step used to dictate the whole line
+ * - "Type 09:05 Walk 30 min" - because a clock time typed into the words was
+ * the only way to make the new task the running one, which the Focus step two
+ * on depends on. Quick-add now opens holding that time by itself, so the step
+ * teaches the shorter thing it actually promises, and the substitution it used
+ * is left in the engine for the next step that needs it.
+ */
+test('the step that asks for a task says the time is already picked', () => {
   vi.setSystemTime(new Date(2026, 8, 3, 9, 5))
   renderTour()
   act(() => startTour('desktop', 2))
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type 09:05 Walk 30 min')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type Walk and press Enter')
 })

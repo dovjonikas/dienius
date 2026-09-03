@@ -111,7 +111,10 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'add',
     title: 'Add your own',
-    text: 'Type {now} Walk 30 min, then Enter.',
+    text: 'Type Walk and press Enter. The time is already picked.',
+    // The field, not the controls beside it: the whole point of the step is
+    // that the two controls are already answered and nobody has to touch
+    // them. Pointing at one would teach the opposite of what it says.
     targets: ['[data-quick-add]'],
     view: 'day',
     event: 'task-added',
