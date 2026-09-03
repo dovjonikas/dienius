@@ -37,7 +37,11 @@ const DISMISSED_KEY = 'dienius:evening-dismissed'
 export function EveningClose({ date }: { date: string }) {
   const data = useAppData()
   const [dismissed, setDismissed] = useState(() => readDismissed(date))
-  const [moment, setMoment] = useState('')
+  // `null` until the field is touched, and the string after - not an empty
+  // string for both. With one value, clearing a line that was already there
+  // fell straight back to showing it again, so a line typed and thought
+  // better of could not be removed.
+  const [moment, setMoment] = useState<string | null>(null)
   const [pushOffered, setPushOffered] = useState(false)
 
   const day = data.days[date]
@@ -49,7 +53,7 @@ export function EveningClose({ date }: { date: string }) {
   // view past midnight - resets the dismissal to whatever the new day says.
   useEffect(() => {
     setDismissed(readDismissed(date))
-    setMoment('')
+    setMoment(null)
     setPushOffered(false)
   }, [date])
 
@@ -63,7 +67,9 @@ export function EveningClose({ date }: { date: string }) {
   const unfinished = pushableAtClose(day)
 
   function close() {
-    if (settings.askBestMoment && moment.trim()) actions.setBestMoment(date, moment)
+    // Written whenever the field was touched, including to empty: setBestMoment
+    // treats an empty string as clearing it, which is how a line gets removed.
+    if (settings.askBestMoment && moment !== null) actions.setBestMoment(date, moment)
     rememberDismissed(date)
     setDismissed(true)
   }
@@ -89,7 +95,7 @@ export function EveningClose({ date }: { date: string }) {
               answer already given is shown as the value rather than the
               question being asked again. */}
           <input
-            value={moment || day?.bestMoment || ''}
+            value={moment ?? day?.bestMoment ?? ''}
             maxLength={140}
             placeholder="Optional. One line, for the calendar to remember."
             onChange={e => setMoment(e.target.value)}

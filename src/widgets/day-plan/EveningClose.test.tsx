@@ -131,3 +131,27 @@ test('a goal is repeated back at the end, where the morning card would say why',
     'Be someone who finishes things',
   )
 })
+
+test('a line already there can be cleared, not only replaced', async () => {
+  const user = userEvent.setup()
+  finishedDay()
+  actions.setBestMoment(TODAY, 'the coffee was good')
+  render(<EveningClose date={TODAY} />)
+
+  // With one piece of state for both "untouched" and "empty", clearing the
+  // field fell straight back to showing the stored line again, so a line
+  // typed and thought better of could not be removed.
+  await user.clear(screen.getByRole('textbox', { name: 'Best moment today?' }))
+  expect(screen.getByRole('textbox', { name: 'Best moment today?' })).toHaveValue('')
+  await user.click(screen.getByRole('button', { name: 'Close the day' }))
+  expect(getData().days[TODAY].bestMoment).toBeUndefined()
+})
+
+test('closing without touching the field leaves whatever was already there', async () => {
+  const user = userEvent.setup()
+  finishedDay()
+  actions.setBestMoment(TODAY, 'the coffee was good')
+  render(<EveningClose date={TODAY} />)
+  await user.click(screen.getByRole('button', { name: 'Close the day' }))
+  expect(getData().days[TODAY].bestMoment).toBe('the coffee was good')
+})

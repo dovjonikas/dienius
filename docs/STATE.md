@@ -6,8 +6,9 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** after v1.8 - the tour, Scratch, Replan and a responsive
-pass. v1.6, v1.7 and v1.8 are all tagged.
+**Last updated:** after v1.9 - quick-add that asks for nothing, a backlog, the
+Library rebuilt, the tour hardened, and an evening that ends. Tagged v1.0
+through v1.9.
 
 ---
 
@@ -105,8 +106,9 @@ reading them.
 | **v1.6** | Week view, external calendars, demo mode, the 44px touch pass, README rework. Closed with two critique cycles that moved the week's own bar into the calendar bar and gave the phone's grid back 82px |
 | **v1.7** | The interactive tour: a spotlight, nine steps, each ending when the thing actually happens. Sandbox replay from Settings |
 | **v1.8** | Replan (something came up / shift the rest / away and back), Scratch, the quick-add time picker, and a responsive pass over every view at seven viewports |
+| **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 
-Tags exist for v1.0 through v1.8.
+Tags exist for v1.0 through v1.9.
 
 ---
 
@@ -114,8 +116,8 @@ Tags exist for v1.0 through v1.8.
 
 ### Nothing is half-built
 
-v1.6, v1.7 and v1.8 are tagged and pushed, the suite is green (1527 tests, 89
-files), the typecheck and the build are clean and the working tree is empty.
+Everything through v1.9 is tagged, the suite is green (1721 tests, 98 files),
+the typecheck and the build are clean and the working tree is empty.
 What follows is wanted rather than owed.
 
 ### Asked for, not yet built
@@ -205,6 +207,15 @@ the one that gets checked first.
       exists to produce.
 - [ ] **Scratch** - the floating button, and the close cross: on a phone the
       overlay is the whole screen, so there is no scrim to tap.
+- [ ] **The four shelves** - a task, an inbox line and a backlog item from the
+      same field, and the Backlog fold under the inbox. Every row's actions on
+      their own line, all of them 44px.
+- [ ] **Library** - the chip row, a list folded and unfolded, the active card,
+      and a detail panel opened from a row. The picker for a page-counted book
+      is typed, not stepped.
+- [ ] **Evening close** - the card at its time and the card on a finished day.
+      It must span the content columns rather than land in the rail, and it
+      must never say anything about what was not done.
 - [ ] **The tour** - both platforms, all nine steps. The spotlight has to
       follow into a bottom sheet, which is where it first failed. This is not
       optional polish: CONVENTIONS.md section 13 makes a stale tour a P0 bug,

@@ -5596,9 +5596,6 @@ button.danger:focus-visible {
   }
 
   .day-notices { grid-area: notices; }
-  .north-card,
-  .yesterday-banner,
-  .evening-close { margin-bottom: 0; }
 
   .rail {
     grid-area: rail;
@@ -10227,5 +10224,11 @@ main:has(.week) > .calendar {
   gap: var(--s3);
   margin-bottom: var(--s4);
 }
+
+/* The wrapper owns the gap between the cards and the space under the group,
+   on every layout. Leaving each card its own bottom margin as well doubled
+   the spacing on a phone, where this is a plain flex column rather than a
+   grid row. */
+.day-notices > * { margin-bottom: 0; }
 
 .day-notices:empty { display: none; }
