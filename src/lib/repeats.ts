@@ -1,4 +1,4 @@
-import { addDays, todayKey } from './dates'
+import { todayKey } from './dates'
 import type { DayPlan, Repeat, Task } from './types'
 
 /**
@@ -20,9 +20,6 @@ import type { DayPlan, Repeat, Task } from './types'
  *
  * Everything here is pure. The store owns the writes.
  */
-
-/** How far back generation will look for a source. See `materialiseRepeats`. */
-export const REPEAT_LOOKBACK_DAYS = 400
 
 export function repeatApplies(repeat: Repeat, sourceDate: string, targetDate: string): boolean {
   if (targetDate <= sourceDate) return false
@@ -61,12 +58,21 @@ export interface RepeatSource {
  * A source is a task with `repeat` and no `repeatOf` - an instance carries
  * the repeat forward so that editing it can reach the series, but it is not
  * itself a source, or every generated day would start generating its own.
+ *
+ * There is no age limit on how far back a source may be. There used to be one
+ * - four hundred days - and it was removed rather than documented, because it
+ * was an expiry date pretending to be an optimisation. A source is the day the
+ * repeating task was first written, and that day never moves; a weekly task
+ * set up thirteen months ago would simply stop arriving one morning, with
+ * nothing said and nothing to find. It also bought no speed: this loop reads
+ * every day in the store either way, and the floor only skipped the handful of
+ * task arrays inside the old ones. A planner meant to be lived in for years
+ * cannot have a series quietly expire in its second year.
  */
 export function repeatSources(days: Record<string, DayPlan>, before: string): RepeatSource[] {
-  const floor = addDays(before, -REPEAT_LOOKBACK_DAYS)
   const found: RepeatSource[] = []
   for (const [date, day] of Object.entries(days)) {
-    if (date >= before || date < floor) continue
+    if (date >= before) continue
     for (const task of day.tasks) {
       if (task.repeat && !task.repeatOf) found.push({ task, date })
     }

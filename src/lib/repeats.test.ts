@@ -161,3 +161,29 @@ test('generated tasks are appended after whatever the day already had', () => {
     'Medication',
   ])
 })
+
+/**
+ * Generation used to ignore any source older than four hundred days. That
+ * limit was removed rather than documented - see repeatSources. A source is
+ * the day a repeating task was first written and never moves, so the limit was
+ * an expiry date: a weekly task set up thirteen months ago would stop arriving
+ * one morning with nothing said. These pin that it does not.
+ */
+test('a source from years ago still owes today its instance', () => {
+  const store = days({ '2020-01-01': [task({ id: 'src', repeat: 'daily' })] })
+  const { tasks, added } = materialiseRepeats(store, THU, [])
+  expect(added).toBe(true)
+  expect(tasks.map(t => t.title)).toEqual(['Medication'])
+})
+
+test('a weekly source from years ago still lands on its own weekday and no other', () => {
+  // 2020-01-01 was a Wednesday.
+  const store = days({ '2020-01-01': [task({ id: 'src', repeat: 'weekly' })] })
+  expect(materialiseRepeats(store, NEXT_WED, []).added).toBe(true)
+  expect(materialiseRepeats(store, THU, []).added).toBe(false)
+})
+
+test('an old source is still found by repeatSources at all', () => {
+  const store = days({ '2019-06-06': [task({ id: 'src', repeat: 'weekdays' })] })
+  expect(repeatSources(store, THU).map(s => s.date)).toEqual(['2019-06-06'])
+})

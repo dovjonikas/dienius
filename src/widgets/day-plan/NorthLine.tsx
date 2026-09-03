@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { goalForDay } from '../../lib/north'
 
@@ -24,6 +24,15 @@ export function NorthLine({ date }: { date: string }) {
   const data = useAppData()
   const [open, setOpen] = useState(false)
   const panelId = useId()
+  /**
+   * Which kind of pointer pressed this, if one did - cleared on blur.
+   *
+   * The line opens three ways, and on a touchscreen two of them fire for one
+   * gesture: a tap focuses the button and then clicks it. Without knowing that
+   * a press is in progress, the focus opens the panel and the click
+   * immediately closes it, so a finger can never open it at all.
+   */
+  const pressedWith = useRef<string | null>(null)
 
   const goal = goalForDay(data.goals, date)
 
@@ -44,15 +53,33 @@ export function NorthLine({ date }: { date: string }) {
         className="north-line-title"
         aria-expanded={hasMore ? open : undefined}
         aria-controls={hasMore ? panelId : undefined}
-        // Hover opens it on a pointer and tap opens it on a finger, which are
-        // the same gesture here: this is the one thing on the page where
-        // "look closer" and "press" mean the same thing. The hover half is in
-        // CSS so it costs nothing on a device that has no hover.
-        onClick={() => hasMore && setOpen(o => !o)}
+        // Hover opens it on a pointer, tap opens it on a finger, and focus
+        // opens it on a keyboard: this is the one thing on the page where
+        // "look closer" and "press" mean the same thing.
+        //
+        // Three ways in, one piece of state, and the whole difficulty is that
+        // a device usually has more than one of them. `pressedWith` is what
+        // sorts them out - see its own comment above.
+        onPointerDown={e => {
+          pressedWith.current = e.pointerType
+        }}
+        onClick={() => {
+          // A mouse already has this open by hovering. Toggling on its click
+          // would collapse the panel under a cursor still sitting on it, at
+          // the exact moment the person asked to see more.
+          if (!hasMore || pressedWith.current === 'mouse') return
+          setOpen(o => !o)
+        }}
         onPointerEnter={e => e.pointerType === 'mouse' && hasMore && setOpen(true)}
         onPointerLeave={e => e.pointerType === 'mouse' && setOpen(false)}
-        onFocus={() => hasMore && setOpen(true)}
-        onBlur={() => setOpen(false)}
+        // Only a focus that did not come from a press. A tap focuses the
+        // button on its way to the click, and opening here as well would
+        // leave the click with nothing to do but close it again.
+        onFocus={() => hasMore && pressedWith.current === null && setOpen(true)}
+        onBlur={() => {
+          pressedWith.current = null
+          setOpen(false)
+        }}
       >
         {goal.title}
       </button>

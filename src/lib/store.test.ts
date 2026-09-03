@@ -415,7 +415,11 @@ test('placeFloat followed by unanchorTask round-trips a task back to exactly its
   const before = getData().days['2026-09-01'].tasks[0]
   actions.placeFloat('2026-09-01', id, '14:30')
   actions.unanchorTask('2026-09-01', id)
-  expect(getData().days['2026-09-01'].tasks[0]).toEqual(before)
+  // Substance, not stamps - see withoutStamps below. The round trip is about
+  // the task being back to what it was; its updatedAt has to move regardless,
+  // because another device may only ever have seen the placed version and
+  // still needs to be told it was taken back.
+  expect(withoutStamps(getData().days['2026-09-01'].tasks[0])).toEqual(withoutStamps(before))
 })
 
 test('addTemplate assigns ids and stamp applies it', () => {
