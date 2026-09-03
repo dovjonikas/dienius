@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
+import type { AppData, BacklogItem, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -25,6 +25,7 @@ export type EntityKind =
   | 'goal'
   | 'ifthen'
   | 'inbox'
+  | 'backlog'
   | 'scratch'
   | 'setting'
 
@@ -64,7 +65,7 @@ export function idOf(key: EntityKey): string {
   return key.slice(key.indexOf(':') + 1)
 }
 
-const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'scratch', 'setting']
+const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'setting']
 
 /**
  * Which settings fields are entities of their own.
@@ -214,6 +215,20 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
+  // Its own entity per item, the same grain as an inbox line. Two devices
+  // adding to the backlog on the same evening must both keep what they added -
+  // this is the list you reach for when a day has room, and losing half of it
+  // to a merge would be the one failure that makes somebody stop using it.
+  for (const item of data.backlog) {
+    out.set(keyFor('backlog', item.id), {
+      key: keyFor('backlog', item.id),
+      kind: 'backlog',
+      ref: item,
+      bodyOf: () => body(item, 'updatedAt'),
+      updatedAt: item.updatedAt,
+    })
+  }
+
   // A note is its own entity, the same grain as an inbox line: two devices
   // each writing a note in the same minute must both keep theirs.
   for (const note of data.scratch) {
@@ -281,6 +296,7 @@ export function stampChanges(previous: AppData, next: AppData, now: string): App
   diffList('goal', previous.goals, next.goals, changed, removed)
   diffList('ifthen', previous.ifThens, next.ifThens, changed, removed)
   diffList('inbox', previous.inbox, next.inbox, changed, removed)
+  diffList('backlog', previous.backlog, next.backlog, changed, removed)
   diffList('scratch', previous.scratch, next.scratch, changed, removed)
   diffSettings(previous, next, changed)
 
@@ -474,6 +490,7 @@ function applyStamps(data: AppData, changed: Set<EntityKey>, removed: EntityKey[
     goals: mapIfChanged<Goal>(data.goals, g => touched('goal', g.id), now),
     ifThens: mapIfChanged<IfThenEntry>(data.ifThens, e => touched('ifthen', e.id), now),
     inbox: mapIfChanged<InboxItem>(data.inbox, i => touched('inbox', i.id), now),
+    backlog: mapIfChanged<BacklogItem>(data.backlog, i => touched('backlog', i.id), now),
     scratch: mapIfChanged<ScratchNote>(data.scratch, n => touched('scratch', n.id), now),
     settingsUpdatedAt,
     tombstones: pruneTombstones(tombstones, now),

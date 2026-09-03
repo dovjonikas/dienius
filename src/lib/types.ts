@@ -710,6 +710,37 @@ export interface InboxItem extends Timestamped {
 }
 
 /**
+ * Something you have decided to do, that is not for any particular day.
+ *
+ * The fourth shelf, and it had to justify itself against three that already
+ * existed: a scratch note is text with nothing attached, an inbox line is a
+ * thought nobody has decided about yet, and a float is a task on a day with
+ * no time. This is the one none of them cover - the thing you *have* decided
+ * on, that has a size and a colour and everything else a task has, and that
+ * simply is not for this week. You pull from it when a day has room; it never
+ * comes looking for you.
+ *
+ * **There is no `createdAt`, and that is the design.** A backlog that shows
+ * how long something has been sitting there is a list that accuses you every
+ * time you open it, which is exactly the pressure this app exists to take
+ * away - see docs/RESEARCH-ADHD.md and CONVENTIONS.md section 11 for the same
+ * rule applied to scratch. The surest way to guarantee nothing can ever show
+ * an age is to not record one. `updatedAt` is stamped by `commit()` for sync
+ * and is a fact about a device, never shown to anybody.
+ *
+ * Order is priority, and it is the array's own order: dragging a row up is
+ * the only ranking this list has. No stars, no urgency, no due dates.
+ */
+export interface BacklogItem extends Timestamped {
+  id: string
+  title: string
+  /** One of the six, the same as a task's. Absent means uncategorised. */
+  category?: CategoryId
+  /** How long it is expected to take. Absent is unsized, not zero. */
+  minutes?: number
+}
+
+/**
  * A direction, not a task.
  *
  * This is the one type in this app with no `done`, no progress, no due date
@@ -779,6 +810,11 @@ export interface AppData {
    * `ifThens` already gets.
    */
   inbox: InboxItem[]
+  /**
+   * Decided, undated tasks, in priority order. Backfilled to empty like the
+   * rest; absent in every payload written before it existed.
+   */
+  backlog: BacklogItem[]
   /**
    * The scratch stream. Backfilled to empty like the rest; absent in every
    * payload written before it existed.

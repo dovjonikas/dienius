@@ -14,6 +14,7 @@ import { StarterOffers } from '../onboarding/StarterOffers'
 import { QuickAdd } from './QuickAdd'
 import { TaskRow } from './TaskRow'
 import { Inbox } from './Inbox'
+import { Backlog } from './Backlog'
 
 /**
  * The task column: capturing something, the list of what is on the day, what
@@ -275,6 +276,13 @@ export function TaskPane({
           Done fold, because both are places things go rather than places work
           happens, and the open list stays the only thing above them. */}
       <Inbox date={date} />
+
+      {/* And the shelf under that one: things already decided on, waiting
+          for a day with room. Below the inbox because it is read less often,
+          not because it matters less - the inbox is a queue you empty, this
+          is a list you pull from. Collapsed behind a plain count, with
+          nothing anywhere saying how long anything has been in it. */}
+      <Backlog date={date} />
 
       {pushable > 0 && (
         <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>

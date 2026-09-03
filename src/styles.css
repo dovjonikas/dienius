@@ -9655,3 +9655,157 @@ main:has(.week) > .calendar {
      The columns scroll anyway, so they are the part that gives. */
   .quick-add-time-panel .time-picker-column { max-height: 160px; }
 }
+
+/* The backlog: decided, undated, pulled from.
+   ------------------------------------------------------------------------
+   Almost everything here is shared with the inbox above it, because they are
+   the same shape of thing: a fold, a count, rows with two actions. The two
+   differences are the two that matter.
+
+   The count is in --faint on nothing, where the inbox badge is accent-tinted.
+   An inbox count is a queue length and it is meant to be emptied; a backlog
+   count is just how many things you have decided to do one day, and a number
+   that grows in a colour is a report card. Same rule as the scratch count -
+   see CONVENTIONS.md section 11.
+
+   And a row carries a grip, because order is the only ranking this list has. */
+.backlog-section {
+  margin-top: var(--s1);
+  padding-top: var(--s1);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.backlog-section.open .done-caret { transform: rotate(90deg); }
+
+.backlog-count {
+  min-width: 20px;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.backlog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.backlog-section:not(.open) .backlog-list { display: none; }
+
+.backlog-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s1) var(--s2) 0;
+  border-radius: var(--r-control);
+}
+
+.backlog-item + .backlog-item { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
+
+.backlog-item.is-dragging { opacity: 0.45; }
+.backlog-item.is-over { box-shadow: inset 0 2px 0 var(--accent); }
+
+.backlog-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.backlog-item-title {
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: 1.35;
+}
+
+.backlog-item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* The category as a word in its own colour rather than as a filled pill.
+   `.chip` sets a dark ink for a coloured background its callers supply
+   inline, so borrowing it here without one would give a white pill with
+   near-black text - loud, and wrong in the dark theme. */
+.backlog-item-cat {
+  color: var(--cat, var(--muted));
+}
+
+.backlog-item-size { font-variant-numeric: tabular-nums; }
+
+.backlog-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-shrink: 0;
+}
+
+/* The third answer to an inbox line, beside "put it on this day" and
+   "delete it". Same shape as the first, quieter than both. */
+.inbox-item-later {
+  min-height: 28px;
+  padding: var(--s1) var(--s2);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.inbox-item-later:hover { color: var(--text); border-color: var(--border); }
+
+@media (pointer: coarse) {
+  .inbox-item-later { min-height: 44px; }
+  .backlog-item .library-item-grip { min-height: 44px; }
+}
+
+/* The inbox and backlog rows on a finger.
+   ------------------------------------------------------------------------
+   Found by measuring, which is the only way it could have been: the two
+   controls on an inbox row have been 28px tall since v1.4 and survived the
+   v1.6 touch pass because an inbox is collapsed by default and was empty
+   every time the audit ran. The backlog reuses the same two classes, so this
+   is one fix for both rather than a second copy of the same mistake.
+
+   Height rather than a ::after overlay, which is the other way this app
+   reaches 44px. An overlay would work for one control and not for three:
+   a 44px-wide hit area on each of "Add to day", "Backlog" and the cross
+   would have them stealing each other's taps, which is worse than the small
+   target it replaced - the same reason .category-picker spaces its swatches
+   out instead. So the row gives the actions their own line and lets them be
+   full size, which on a phone reads better anyway: the words of the thing
+   above, and what you can do about it below. */
+@media (pointer: coarse) {
+  .inbox-item,
+  .backlog-item {
+    flex-wrap: wrap;
+    row-gap: var(--s1);
+  }
+
+  .inbox-item-text,
+  .backlog-item-main { flex: 1 0 100%; }
+
+  .inbox-item-actions,
+  .backlog-item-actions {
+    flex: 1 0 100%;
+    justify-content: flex-end;
+    gap: var(--s2);
+  }
+
+  .inbox-item-plan,
+  .inbox-item-later,
+  .inbox-item-delete {
+    min-height: 44px;
+    padding-left: var(--s3);
+    padding-right: var(--s3);
+  }
+
+  .inbox-item-delete { width: 44px; }
+}

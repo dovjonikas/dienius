@@ -23,6 +23,7 @@ import { Scratch } from './views/scratch/Scratch'
 import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
 import { requestReplan } from './lib/replanState'
+import { requestCapture } from './lib/captureRequest'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -280,6 +281,19 @@ export function App() {
       run: () => {
         openDay(todayKey())
         requestReplan(getData().days[todayKey()]?.away ? 'back' : 'away')
+      },
+    },
+    // The fourth shelf, reachable without going to the day view and finding
+    // the fold. What is typed here is a decided task with no day - see the
+    // doc comment on BacklogItem for why it is not an inbox line.
+    {
+      id: 'backlog-add',
+      label: 'Add to backlog',
+      detail: 'Decided, but not for any particular day',
+      run: () => {
+        openDay(todayKey())
+        requestCapture('backlog')
+        setFocusQuickAdd(n => n + 1)
       },
     },
     { id: 'scratch', label: 'Scratch', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },

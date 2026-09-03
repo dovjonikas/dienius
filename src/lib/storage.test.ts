@@ -566,6 +566,33 @@ test('importJson backfills ifThens for a legacy backup file without adding a wid
   expect(imported.settings.enabledWidgets).toEqual(['day-plan'])
 })
 
+test('a backup written before the backlog existed loads with an empty one', () => {
+  // Every field added since v1.0 is optional so that data written before it
+  // existed still loads. This is the same test the inbox and ifThens already
+  // have, for the field added most recently.
+  const legacy = JSON.stringify({
+    templates: [],
+    days: {},
+    inbox: [{ id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' }],
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  const imported = importJson(legacy)
+  expect(imported.backlog).toEqual([])
+  expect(imported.inbox).toHaveLength(1)
+})
+
+test('a backlog item whose size is not a size is refused with the whole payload', () => {
+  // validate() discards a payload whole rather than partly trusting it -
+  // this is also the import path for a file somebody may have edited.
+  const bad = JSON.stringify({
+    templates: [],
+    days: {},
+    backlog: [{ id: 'b1', title: 'Fix the bike light', minutes: 'soon' }],
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  expect(() => importJson(bad)).toThrow()
+})
+
 // --- color and CSS-value validation -------------------------------------
 //
 // Security finding: none of these validators used to check the string

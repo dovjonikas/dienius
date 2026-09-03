@@ -400,3 +400,41 @@ runs**: desktop dark, desktop light, 390x844, 768x1024, and once slowly and
 awkwardly - stray taps beside the target, Escape, a resize in the middle of a
 step. Any break resets the count. Escape always leaves the tour, after
 whatever is sitting over it.
+
+---
+
+## 14 The four shelves, and what each is for
+
+Something that is not on a day can be in one of four places, and the whole
+value of having four is that each one asks a different amount of you at the
+moment of writing. Adding a fifth means proving it is not one of these.
+
+| Shelf | What it holds | What it asks |
+|---|---|---|
+| **Scratch** | Text, and nothing attached | Nothing at all |
+| **Inbox** | A line nobody has decided about | Nothing at all |
+| **Backlog** | A decided task with no day | A title, and whatever else you feel like |
+| **A float** | A task on a day, with no time | It is already on a day |
+
+The two rules that keep the backlog from becoming the thing this app exists
+to take away:
+
+- **Nothing records how old an item is, so nothing can show it.** `BacklogItem`
+  has no `createdAt`, deliberately. A list that says "you have been meaning to
+  do this for six weeks" is a list that accuses you every time you open it -
+  the same reasoning as the scratch count in section 11 and the day score's
+  refusal to grow red. `updatedAt` exists for sync and is a fact about a
+  device, never rendered.
+- **It never comes looking for you.** Collapsed behind a plain count in
+  `--faint`, below the inbox, on the day view only. No badge, no colour, no
+  offer inside a gap, no nudge, no mention anywhere else. A backlog with two
+  hundred things in it has to be able to sit there saying nothing.
+
+What it *is* allowed to be is easy to pull from: one press puts an item on the
+day at the next free slot that holds it - the same `autoSlot.ts` arithmetic
+quick-add's own time control uses - and it leaves the backlog in the same
+commit, because a thing that is on today and still in the backlog is the same
+thing written down twice.
+
+Order is priority and is the array's own order. There is no star, no urgency,
+no due date, and no sort: a drag or an arrow key is the entire ranking model.

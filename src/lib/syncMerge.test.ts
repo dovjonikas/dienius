@@ -289,3 +289,41 @@ test('a day that ends up with no meta and no tasks is dropped rather than kept a
   const phone = device(d => ({ ...d, days: {} }), NOON, shared)
   expect(Object.keys(mergeStates(shared, phone, NOW).data.days)).toEqual([])
 })
+
+/**
+ * The backlog merges per item, the same grain as an inbox line. Two devices
+ * adding to it on the same evening must both keep what they added: this is
+ * the list somebody reaches for when a day has room, and losing half of it to
+ * a merge would be the one failure that makes them stop trusting it.
+ */
+test('a backlog item added on the phone and one added on the PC both survive', () => {
+  const phone = device(d => ({ ...d, backlog: [{ id: 'b1', title: 'Fix the bike light' }] }), MORNING)
+  const pc = device(d => ({ ...d, backlog: [{ id: 'b2', title: 'Book the dentist' }] }), EVENING)
+  const merged = mergeStates(phone, pc, NOW).data
+  expect(merged.backlog.map(i => i.title).sort()).toEqual(['Book the dentist', 'Fix the bike light'])
+})
+
+test('an item pulled onto a day on one device does not come back from the other', () => {
+  const both = device(d => ({ ...d, backlog: [{ id: 'b1', title: 'Fix the bike light' }] }), MORNING)
+  // The phone schedules it: the task appears on the day and the item leaves
+  // the backlog, in one commit.
+  const phone = device(
+    d => ({ ...withTasks(d, [task({ id: 't9', title: 'Fix the bike light' })]), backlog: [] }),
+    EVENING,
+    both,
+  )
+  const merged = mergeStates(phone, both, NOW).data
+  expect(merged.backlog).toEqual([])
+  expect(taskOn(merged).map(t => t.title)).toEqual(['Fix the bike light'])
+})
+
+test('a reordering on one device does not resurrect an item deleted on the other', () => {
+  const both = device(
+    d => ({ ...d, backlog: [{ id: 'b1', title: 'First' }, { id: 'b2', title: 'Second' }] }),
+    MORNING,
+  )
+  const phone = device(d => ({ ...d, backlog: [d.backlog[1], d.backlog[0]] }), NOON, both)
+  const pc = device(d => ({ ...d, backlog: d.backlog.filter(i => i.id !== 'b1') }), EVENING, both)
+  const merged = mergeStates(phone, pc, NOW).data
+  expect(merged.backlog.map(i => i.id)).toEqual(['b2'])
+})

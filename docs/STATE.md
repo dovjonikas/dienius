@@ -76,6 +76,7 @@ reading them.
 | Repeating tasks | Daily, weekdays or weekly, materialised as real tasks. "Just this day" vs "every day it repeats" is a standing choice |
 | If-then rules | Trigger plus action, surfaced by day type and time of day. Never measured |
 | Inbox | Catch a thought without deciding what day it belongs on |
+| Backlog | Decided, undated tasks, in the order you would pull them. Collapsed behind a plain count, nothing ever says how old anything is |
 | Keyboard layer | Single keys for common actions; a card behind `?`. Never fires while typing in a box, except Escape |
 | Command palette | Ctrl-K / Cmd-K: run a command or find a thing. Linear scan, no index |
 | Undo | One app-wide offer, five seconds, on the expensive mistakes |
@@ -118,28 +119,6 @@ What follows is wanted rather than owed.
 
 ### Asked for, not yet built
 
-- **A backlog.** The owner asked for "some kind of backlog" and thought it had
-  already been briefed. It has not been built. Three layers already exist and
-  a fourth has to justify itself against them: Scratch is text with nothing
-  attached, the inbox is a task with no day, and a float is a task on a day
-  with no time.
-
-  The gap is real all the same: something you have decided to do, that is not
-  for this week, and that you want to *pull from* rather than be shown. A
-  concrete proposal, for whoever picks this up - the inbox gains a second
-  shelf rather than the app gaining a seventh tab. An inbox line can be sent
-  to "later", which takes it out of the daily reading; the day view never
-  mentions it; and it surfaces in exactly two places: the command palette (it
-  is already searched) and an offer inside a gap on a day with room, which is
-  the machinery `gapPlacement.ts` already has. No count, no badge, no age
-  shown - see below.
-
-  Before building it, read `RESEARCH-ADHD.md` on why nothing here nags, and
-  CONVENTIONS.md sections 11 and 12. A list that only grows and is never
-  emptied is exactly the pressure this app exists to take away, so the
-  hardest part is not the storage, it is deciding what the app is allowed to
-  say about a backlog that has two hundred things in it. The answer that
-  fits the rest of this app is: nothing at all until you go looking.
 - **Screenshots.** Still wanted, still impossible from the agent environment:
   there is no way to write image files here. The README leads with the live
   demo link instead. If you can produce PNGs, `docs/screenshots/` and a hero
@@ -174,6 +153,12 @@ What follows is wanted rather than owed.
 - ~~`normalizeLoaded` dropping optional settings~~ - fixed in v1.6. It had
   silently eaten `northDismissedOn` since v1.4.
 - ~~Snapshot restore never reaching storage~~ - fixed in v1.5.
+- ~~The backlog nobody had built~~ - shipped in v1.9, as a fourth shelf
+  under the inbox rather than a seventh tab. It records no age, because
+  nothing that cannot be recorded can ever be shown.
+- ~~Two 28px buttons on every inbox row~~ - fixed in v1.9. They had been
+  there since v1.4 and survived the v1.6 touch pass because an inbox is
+  collapsed by default and was empty every time the audit ran.
 
 ---
 

@@ -16,11 +16,16 @@ export interface InboxProps {
  * are four things in here - and the contents are one tap away when there is
  * room in the day to deal with them.
  *
- * Two ways out of it and no more: put it on this day, or delete it. Anything
- * else - which day, what time, how long - is a decision the inbox exists to
- * let somebody postpone, and asking it here would put the friction straight
- * back in. Once an item is a task on a day, every one of those questions has
- * a control on the card already.
+ * Three ways out of it and no more: put it on this day, send it to the
+ * backlog, or delete it. Anything else - which day, what time, how long - is
+ * a decision the inbox exists to let somebody postpone, and asking it here
+ * would put the friction straight back in. Once an item is a task on a day,
+ * every one of those questions has a control on the card already.
+ *
+ * The backlog is the third answer, and it is the one that was missing. "Yes,
+ * but not now" had nowhere to go, so the line stayed here and got re-read
+ * every morning - which is how an inbox stops being a place things pass
+ * through and starts being a place they pile up in.
  */
 export function Inbox({ date }: InboxProps) {
   const data = useAppData()
@@ -56,6 +61,14 @@ export function Inbox({ date }: InboxProps) {
                 onClick={() => actions.scheduleInboxItem(item.id, date)}
               >
                 Add to day
+              </button>
+              <button
+                type="button"
+                className="inbox-item-later"
+                aria-label={`Send "${item.text}" to the backlog`}
+                onClick={() => actions.inboxToBacklog(item.id)}
+              >
+                Backlog
               </button>
               {/* The same confirming second tap deleting an if-then entry
                   already takes. An inbox item is one line somebody typed

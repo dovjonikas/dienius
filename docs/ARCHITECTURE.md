@@ -48,6 +48,7 @@ AppData
 ├── goals: Goal[]                directions, never measured - see §6
 ├── ifThens: IfThenEntry[]       trigger + action, never measured
 ├── inbox: InboxItem[]           one line of text, no date
+├── backlog: BacklogItem[]       decided, undated, in priority order
 └── settings: Settings           theme, sleepProfiles, weekdayTemplates,
                                  reminders, density, textScale, ...
 ```
@@ -261,6 +262,7 @@ it delegates:
 | `replan.ts` | A day that broke: conflicts, shifting, the rescue, and one writer |
 | `ReplanSheet.tsx` | The three screens that ask, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
+| `Backlog.tsx` | The fourth shelf: decided, undated, pulled from |
 | `YesterdayBanner.tsx` | What yesterday left |
 
 `DayView.tsx` itself is now only about the day: what it is made of and how its
