@@ -15,6 +15,7 @@ export interface CommandPaletteProps {
   actions: PaletteAction[]
   onOpenDay: (date: string) => void
   onOpenLibrary: () => void
+  onOpenScratch: () => void
   onClose: () => void
 }
 
@@ -31,7 +32,7 @@ export interface CommandPaletteProps {
  * do. Search is a linear scan over the store - see `search.ts` for why there
  * is no index.
  */
-export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onClose }: CommandPaletteProps) {
+export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratch, onClose }: CommandPaletteProps) {
   const data = useAppData()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)
@@ -76,6 +77,7 @@ export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onClose }: C
 
   function open(result: SearchResult) {
     if (result.target.type === 'day') onOpenDay(result.target.date)
+    else if (result.target.type === 'scratch') onOpenScratch()
     else onOpenLibrary()
   }
 

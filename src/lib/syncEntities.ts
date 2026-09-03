@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Settings, Task, Template } from './types'
+import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -25,6 +25,7 @@ export type EntityKind =
   | 'goal'
   | 'ifthen'
   | 'inbox'
+  | 'scratch'
   | 'setting'
 
 export type EntityKey = string
@@ -63,7 +64,7 @@ export function idOf(key: EntityKey): string {
   return key.slice(key.indexOf(':') + 1)
 }
 
-const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'setting']
+const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'scratch', 'setting']
 
 /**
  * Which settings fields are entities of their own.
@@ -213,6 +214,18 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
+  // A note is its own entity, the same grain as an inbox line: two devices
+  // each writing a note in the same minute must both keep theirs.
+  for (const note of data.scratch) {
+    out.set(keyFor('scratch', note.id), {
+      key: keyFor('scratch', note.id),
+      kind: 'scratch',
+      ref: note,
+      bodyOf: () => body(note, 'updatedAt'),
+      updatedAt: note.updatedAt,
+    })
+  }
+
   for (const field of SYNCED_SETTINGS) {
     const value = (data.settings as unknown as Record<string, unknown>)[field]
     if (value === undefined) continue
@@ -268,6 +281,7 @@ export function stampChanges(previous: AppData, next: AppData, now: string): App
   diffList('goal', previous.goals, next.goals, changed, removed)
   diffList('ifthen', previous.ifThens, next.ifThens, changed, removed)
   diffList('inbox', previous.inbox, next.inbox, changed, removed)
+  diffList('scratch', previous.scratch, next.scratch, changed, removed)
   diffSettings(previous, next, changed)
 
   if (changed.size === 0 && removed.length === 0) return next
@@ -460,6 +474,7 @@ function applyStamps(data: AppData, changed: Set<EntityKey>, removed: EntityKey[
     goals: mapIfChanged<Goal>(data.goals, g => touched('goal', g.id), now),
     ifThens: mapIfChanged<IfThenEntry>(data.ifThens, e => touched('ifthen', e.id), now),
     inbox: mapIfChanged<InboxItem>(data.inbox, i => touched('inbox', i.id), now),
+    scratch: mapIfChanged<ScratchNote>(data.scratch, n => touched('scratch', n.id), now),
     settingsUpdatedAt,
     tombstones: pruneTombstones(tombstones, now),
   }

@@ -271,3 +271,26 @@ npm run build
 All three clean. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass.
+
+---
+
+## 11. Scratch stays one stream
+
+Scratch (`lib/scratch.ts`, `views/scratch/`) exists for the thing that has to
+be written down in the next second - a number said once, a bug noticed while
+doing something else. Its value is that nothing is asked at the moment of
+writing, and every addition that asks something takes that value away. So:
+
+- **One stream.** No folders, no notebooks, no colours, no rich text, no
+  attachments. A `#word` in the text is a filter, not a folder: the note is
+  still in the stream, it just also answers to a name.
+- **A note that needs structure is not scratch any more.** It becomes a task,
+  an inbox line, or a document somewhere else. Do not add fields to
+  `ScratchNote` to hold structure; add a way out instead.
+- **An old note is not an accusation.** The count is shown in `--faint`, with
+  no badge and no accent colour, and nothing ever says "unprocessed". Same
+  rule as the day view's score: a number that grows in red is a report card.
+- **Capture is never gated.** The key (`S` or the backtick), the floating
+  button, the palette command: each opens the box with the cursor in it and
+  every keystroke already saved. If a change makes any of those take a second
+  step, it is wrong.

@@ -675,6 +675,26 @@ export interface IfThenEntry extends Timestamped {
  * time, no size and no category - deliberately nothing to fill in. It becomes
  * a real task, on a real day, when someone chooses to make it one.
  */
+/**
+ * One line in the scratch stream - see lib/scratch.ts.
+ *
+ * Text, and when it was written. Nothing else is asked for at the time,
+ * because the time is the whole point: a number somebody just said out loud
+ * has to be down before they finish the sentence. The date is kept as its
+ * own key rather than derived from the instant, so a note written at 00:30
+ * stays on the day it felt like, on whichever device reads it.
+ */
+export interface ScratchNote extends Timestamped {
+  id: string
+  text: string
+  /** ISO instant. The stream's only order. */
+  createdAt: string
+  /** The date key it was written on. */
+  date: string
+  /** Kept at the top of the stream. Absent is not pinned. */
+  pinned?: boolean
+}
+
 export interface InboxItem extends Timestamped {
   id: string
   text: string
@@ -752,6 +772,11 @@ export interface AppData {
    * `ifThens` already gets.
    */
   inbox: InboxItem[]
+  /**
+   * The scratch stream. Backfilled to empty like the rest; absent in every
+   * payload written before it existed.
+   */
+  scratch: ScratchNote[]
   /**
    * Every library list. Backfilled to empty exactly like `inbox`, and empty
    * is the shipped state: the Library tab offers two starter lists the way

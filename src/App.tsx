@@ -17,6 +17,9 @@ import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { DemoBanner } from './views/DemoBanner'
 import { Tour } from './views/tour/Tour'
+import { Scratch } from './views/scratch/Scratch'
+import { ScratchFab } from './views/scratch/ScratchFab'
+import { useIsWide } from './lib/viewport'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -52,6 +55,8 @@ export function App() {
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [scratchOpen, setScratchOpen] = useState(false)
+  const isWide = useIsWide()
   // Bumped by the N shortcut; the effect below acts on it once the day view
   // has actually rendered. A counter rather than a boolean, so pressing N
   // twice in a row focuses twice rather than doing nothing the second time.
@@ -139,7 +144,8 @@ export function App() {
         // (the detail sheet, the actions menu) stops the event before it
         // reaches here, so those close themselves first and this never
         // fires underneath them.
-        if (paletteOpen) setPaletteOpen(false)
+        if (scratchOpen) setScratchOpen(false)
+        else if (paletteOpen) setPaletteOpen(false)
         else if (shortcutsOpen) setShortcutsOpen(false)
         else if (focusExpanded) setFocusExpanded(false)
         else if (clockOpen) setClockOpen(false)
@@ -150,9 +156,16 @@ export function App() {
 
       // While either of them is open it is the only thing listening, so a
       // stray "3" behind it cannot navigate the page out from under it.
-      if (shortcutsOpen || paletteOpen) return
+      if (shortcutsOpen || paletteOpen || scratchOpen) return
 
       switch (key) {
+        // Two keys for the same thing, because the one that is fastest to
+        // hit depends on the keyboard: S sits under the left hand, the
+        // backtick is the corner key nothing else in this app wants.
+        case 's':
+        case '`':
+          setScratchOpen(true)
+          break
         case '?':
           setShortcutsOpen(true)
           break
@@ -232,6 +245,7 @@ export function App() {
         setFocusQuickAdd(n => n + 1)
       },
     },
+    { id: 'scratch', label: 'Scratch', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },
     { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(25 * 60_000) },
     { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
@@ -337,6 +351,7 @@ export function App() {
           actions={paletteActions}
           onOpenDay={openDay}
           onOpenLibrary={() => setView('library')}
+          onOpenScratch={() => setScratchOpen(true)}
           onClose={() => setPaletteOpen(false)}
         />
       )}
@@ -354,6 +369,11 @@ export function App() {
       {/* The tour, at the root: it points at things on every tab and has
           to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}
       <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />
+      {/* Scratch: the layer under everything, reached by one key on a
+          keyboard and by one floating button on a phone. See lib/scratch.ts.
+          The button only exists where there is no key to press. */}
+      <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} />
+      {!isWide && !scratchOpen && <ScratchFab onOpen={() => setScratchOpen(true)} />}
     </div>
   )
 }

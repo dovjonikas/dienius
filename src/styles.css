@@ -8934,3 +8934,259 @@ main:has(.week) > .calendar {
     transform: translate(-50%, -50%);
   }
 }
+
+/* ------------------------------------------------------------------------
+   Scratch - the layer under everything. See lib/scratch.ts.
+
+   A box at the top and the stream under it, over whatever was on screen.
+   Nothing here asks a question: no folder to pick, no kind to choose. The
+   overlay opens with the cursor in the box and every keystroke is already
+   saved; Escape leaves and loses nothing.
+   ------------------------------------------------------------------------ */
+
+.scratch-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(48px, 8vh) var(--s4) var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scratch-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+}
+
+.scratch {
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 100%);
+  max-height: min(78vh, 720px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+/* Borderless and large, like the palette's box: the only field on screen. */
+.scratch-input {
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 56px;
+  max-height: 30vh;
+  resize: none;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 0;
+  background: none;
+  padding: var(--s4);
+  font: inherit;
+  font-size: var(--t-lg);
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.scratch-input:focus { outline: none; background: none; }
+
+.scratch-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding: var(--s2) var(--s3);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* The count is a fact, set as quietly as the capacity line. Never a badge. */
+.scratch-count {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.scratch-tag {
+  min-height: 0;
+  padding: 3px var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.scratch-tag:hover { color: var(--text); }
+.scratch-tag.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
+
+.scratch-export {
+  min-height: 0;
+  padding: 3px var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-xs);
+}
+
+.scratch-list {
+  margin: 0;
+  padding: var(--s2);
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.scratch-empty {
+  margin: 0;
+  padding: var(--s4);
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.scratch-note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-control);
+}
+
+.scratch-note.is-pinned { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+.scratch-note-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--t-md);
+  line-height: 1.4;
+}
+
+.scratch-note-text mark {
+  background: none;
+  color: var(--accent);
+}
+
+.scratch-note-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-wrap: wrap;
+}
+
+.scratch-note-when {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Always visible, never a hover reveal - see .task-menu-button's note. Text
+   buttons, small and quiet, because there are four of them on every line. */
+.scratch-note-action {
+  min-height: 0;
+  padding: 3px var(--s2);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.scratch-note-action:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
+.scratch-note-action.is-danger:hover { color: var(--danger); }
+
+/* The floating way in, on a phone. A corner, never the middle: it must not
+   sit on the timeline or on the task list, and it snaps to whichever corner
+   it was dragged nearest. */
+.scratch-fab {
+  position: fixed;
+  z-index: 46;
+  width: 48px;
+  height: 48px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-round);
+  background: var(--surface-raised, var(--surface));
+  color: var(--text);
+  box-shadow: var(--e2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.scratch-fab svg { width: 20px; height: 20px; }
+.scratch-fab.is-dragging { cursor: grabbing; box-shadow: var(--e3); transition: none; }
+.scratch-fab.at-bottom-right { right: var(--s4); bottom: calc(var(--s6) + env(safe-area-inset-bottom)); }
+.scratch-fab.at-bottom-left { left: var(--s4); bottom: calc(var(--s6) + env(safe-area-inset-bottom)); }
+.scratch-fab.at-top-right { right: var(--s4); top: calc(80px + env(safe-area-inset-top)); }
+.scratch-fab.at-top-left { left: var(--s4); top: calc(80px + env(safe-area-inset-top)); }
+
+@media (pointer: coarse) {
+  .scratch-tag,
+  .scratch-export,
+  .scratch-note-action { min-height: 36px; position: relative; }
+  .scratch-note-action::after,
+  .scratch-tag::after,
+  .scratch-export::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 599px) {
+  .scratch-scrim { padding: max(12px, env(safe-area-inset-top)) var(--s2) var(--s2); align-items: stretch; }
+  .scratch { max-height: none; height: 100%; }
+}
+
+.scratch-status {
+  margin: 0;
+  padding: var(--s1) var(--s3);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* The textarea's box includes its padding, so the height the overlay sets
+   from scrollHeight fits exactly and no scrollbar appears beside one line. */
+.scratch-input { box-sizing: border-box; overflow-y: auto; }
+
+.scratch-close {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-lg);
+  line-height: 1;
+}
+
+.scratch-close:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+
+@media (pointer: coarse) {
+  .scratch-close { position: relative; }
+  .scratch-close::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}

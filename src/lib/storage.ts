@@ -1,5 +1,6 @@
 import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
 import { TOUR_STORAGE_KEY, isTourSandbox } from './tourMode'
+import type { ScratchNote } from './types'
 import { buildDemoData } from './demo'
 import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
@@ -135,6 +136,7 @@ export function defaultData(): AppData {
     },
     ifThens: [],
     inbox: [],
+    scratch: [],
     library: [],
     goals: [],
   }
@@ -427,6 +429,17 @@ function isInboxItem(x: unknown): x is InboxItem {
   return typeof x.id === 'string' && typeof x.text === 'string' && typeof x.captured === 'string'
 }
 
+function isScratchNote(x: unknown): x is ScratchNote {
+  if (!isRecord(x)) return false
+  return (
+    typeof x.id === 'string' &&
+    typeof x.text === 'string' &&
+    typeof x.createdAt === 'string' &&
+    typeof x.date === 'string' &&
+    isOptionalBoolean(x.pinned)
+  )
+}
+
 // A real "HH:MM" clock time - two digits, a colon, two digits, hour 00-23,
 // minute 00-59. Stricter than isOptionalString already gets for Task.time
 // and TemplateBlock.time (a bare typeof check, unvalidated) because a
@@ -682,6 +695,7 @@ interface StoredAppData {
   }
   ifThens?: IfThenEntry[]
   inbox?: InboxItem[]
+  scratch?: ScratchNote[]
   library?: LibraryList[]
   goals?: Goal[]
 }
@@ -693,6 +707,7 @@ export function validate(x: unknown): x is StoredAppData {
   if (!isSettings(x.settings)) return false
   if (x.ifThens !== undefined && (!Array.isArray(x.ifThens) || !x.ifThens.every(isIfThenEntry))) return false
   if (x.inbox !== undefined && (!Array.isArray(x.inbox) || !x.inbox.every(isInboxItem))) return false
+  if (x.scratch !== undefined && (!Array.isArray(x.scratch) || !x.scratch.every(isScratchNote))) return false
   if (x.library !== undefined && (!Array.isArray(x.library) || !x.library.every(isLibraryList))) return false
   if (x.goals !== undefined && (!Array.isArray(x.goals) || !x.goals.every(isGoal))) return false
   return true
@@ -764,6 +779,7 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
     days: repairDuplicates(data.days),
     ifThens: data.ifThens ?? [],
     inbox: data.inbox ?? [],
+    scratch: data.scratch ?? [],
     library: data.library ?? [],
     goals: data.goals ?? [],
     settings: {

@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Task, Template } from './types'
+import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Task, Template } from './types'
 import { SYNCED_SETTINGS, collectEntities, idOf, keyFor, kindOf, pruneTombstones, type EntityKey } from './syncEntities'
 
 /**
@@ -188,6 +188,7 @@ function rebuild(local: AppData, remote: AppData, winner: Map<EntityKey, 'local'
     goals: mergeList<Goal>('goal', winner, local.goals, remote.goals),
     ifThens: mergeList<IfThenEntry>('ifthen', winner, local.ifThens, remote.ifThens),
     inbox: mergeList<InboxItem>('inbox', winner, local.inbox, remote.inbox),
+    scratch: mergeList<ScratchNote>('scratch', winner, local.scratch, remote.scratch),
     ...mergeSettings(local, remote, winner),
   }
 }
@@ -210,7 +211,7 @@ function orderTasks(tasks: Task[], localDay: DayPlan | undefined, remoteDay: Day
 }
 
 function mergeList<T extends { id: string }>(
-  kind: 'template' | 'goal' | 'ifthen' | 'inbox',
+  kind: 'template' | 'goal' | 'ifthen' | 'inbox' | 'scratch',
   winner: Map<EntityKey, 'local' | 'remote' | 'deleted'>,
   localList: T[],
   remoteList: T[],
@@ -282,7 +283,7 @@ export function isSyncableState(x: unknown): x is AppData {
   if (typeof s.days !== 'object' || s.days === null || Array.isArray(s.days)) return false
   if (!Array.isArray(s.templates)) return false
   if (typeof s.settings !== 'object' || s.settings === null) return false
-  for (const field of ['library', 'goals', 'ifThens', 'inbox'] as const) {
+  for (const field of ['library', 'goals', 'ifThens', 'inbox', 'scratch'] as const) {
     if (s[field] !== undefined && !Array.isArray(s[field])) return false
   }
   if (s.tombstones !== undefined && (typeof s.tombstones !== 'object' || s.tombstones === null)) return false
@@ -303,6 +304,7 @@ export function normaliseRemote(remote: AppData): AppData {
     goals: remote.goals ?? [],
     ifThens: remote.ifThens ?? [],
     inbox: remote.inbox ?? [],
+    scratch: remote.scratch ?? [],
     tombstones: remote.tombstones ?? {},
     settingsUpdatedAt: remote.settingsUpdatedAt ?? {},
   }
@@ -310,7 +312,7 @@ export function normaliseRemote(remote: AppData): AppData {
 
 /** Only used by the tests and by the client's own logging. */
 export function entityKinds(): string[] {
-  return ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'setting']
+  return ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'scratch', 'setting']
 }
 
 export { idOf, kindOf }

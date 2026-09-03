@@ -1,5 +1,6 @@
 import { formatDayTitle } from './dates'
 import { progressLabel } from './library'
+import { scratchTitle } from './scratch'
 import type { AppData } from './types'
 
 /**
@@ -18,7 +19,7 @@ import type { AppData } from './types'
  * thing a search box cannot afford.
  */
 
-export type ResultKind = 'task' | 'note' | 'library'
+export type ResultKind = 'task' | 'note' | 'library' | 'scratch'
 
 export interface SearchResult {
   kind: ResultKind
@@ -28,7 +29,7 @@ export interface SearchResult {
   /** The line under the title - a date, a list name, the note itself. */
   detail: string
   /** Where Enter goes: a day to open, or a library item to reveal. */
-  target: { type: 'day'; date: string } | { type: 'library'; listId: string; itemId: string }
+  target: { type: 'day'; date: string } | { type: 'library'; listId: string; itemId: string } | { type: 'scratch'; id: string }
   score: number
 }
 
@@ -108,6 +109,21 @@ export function searchEverything(data: AppData, query: string, today: string): S
         score: score * 2,
       })
     }
+  }
+
+  // The scratch stream is searchable for the same reason it exists: a number
+  // written down in a hurry is only worth writing down if it can be found.
+  for (const note of data.scratch) {
+    const score = matchScore(note.text, needle)
+    if (score === 0) continue
+    results.push({
+      kind: 'scratch',
+      id: `scratch:${note.id}`,
+      title: scratchTitle(note.text),
+      detail: `Scratch - ${formatDayTitle(note.date)}`,
+      target: { type: 'scratch', id: note.id },
+      score: score + (note.date >= today ? 0.6 : 0.4),
+    })
   }
 
   return results
