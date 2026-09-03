@@ -43,7 +43,7 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:4176',
   'http://localhost:5173',
   'https://quicasha.github.io',
-  ...(args.origin ? [args.origin] : []),
+  ...(args.origin ? args.origin.split(',').map(o => o.trim()).filter(Boolean) : []),
 ])
 
 /** Refuse anything absurd before parsing it. A phone's whole planner is small. */
