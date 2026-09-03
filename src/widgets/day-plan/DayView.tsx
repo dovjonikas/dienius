@@ -18,6 +18,8 @@ import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
 import { YesterdayBanner } from './YesterdayBanner'
+import { isRoutine, willReceive } from '../../lib/taskIdentity'
+import { weekdayOf } from '../../lib/repeats'
 import { offerUndo } from '../../lib/undo'
 import { TaskGapOffers } from './TaskGapOffers'
 import { clockTools } from '../../lib/clockTools'
@@ -115,8 +117,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
     ? data.templates.find(t => t.id === day.templateId)
     : undefined
   const unfinishedTasks = tasks.filter(t => !t.done)
-  const pushableCount = unfinishedTasks.filter(isPushable).length
-  const heldCount = unfinishedTasks.length - pushableCount
+  // Split three ways, not two - see actions.rolloverUnfinished. A routine
+  // task tomorrow is getting anyway is not "held", it is simply not this
+  // button's business, and lumping it in with the ones at the push bound
+  // would make the count say something untrue about both.
+  const mappedTomorrow = data.settings.weekdayTemplates[weekdayOf(addDays(date, 1))]
+  const coveredTasks = unfinishedTasks.filter(
+    t => isRoutine(t) && (t.repeatOf !== undefined || willReceive(data.days[addDays(date, 1)], t, mappedTomorrow)),
+  )
+  const oneOffTasks = unfinishedTasks.filter(t => !coveredTasks.includes(t))
+  const pushableCount = oneOffTasks.filter(isPushable).length
+  const heldCount = oneOffTasks.length - pushableCount
+  const coveredCount = coveredTasks.length
   const isToday = date === todayKey()
   const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
   useEffect(() => {
@@ -1132,8 +1144,18 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             <span className="rollover-icon" aria-hidden="true" />
             {heldCount > 0
               ? `Push ${pushableCount} to tomorrow - ${heldCount} staying here`
-              : `Push ${pushableCount} unfinished to tomorrow`}
+              : `Push ${pushableCount} to tomorrow`}
           </button>
+        )}
+        {/* Said out loud rather than left as a silent skip: "seven of your
+            nine did not move" is a surprising thing for a button to do
+            without mentioning it. Any one of them can still be moved by hand
+            from its own detail sheet. */}
+        {coveredCount > 0 && (
+          <p className="rollover-note">
+            {coveredCount} routine {coveredCount === 1 ? 'task stays' : 'tasks stay'} - tomorrow has{' '}
+            {coveredCount === 1 ? 'it' : 'them'} anyway.
+          </p>
         )}
         {pushableCount === 0 && heldCount > 0 && (
           <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>

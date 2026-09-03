@@ -195,6 +195,16 @@ export interface Task {
    */
   repeat?: Repeat
   /**
+   * Where this task came from - see `TaskOrigin`. The one thing a task never
+   * had and needed: without it a pushed copy of "Commute" and the template's
+   * own "Commute" are two unrelated rows, which is exactly how a day ends up
+   * holding both.
+   *
+   * Absent means a task written before origins existed. Every reader treats
+   * that as `manual`, which is what it almost always was.
+   */
+  origin?: TaskOrigin
+  /**
    * The id of the task this one was generated from - see `Task.repeat`.
    *
    * Instances are ordinary tasks in every other way: they are ticked off,
@@ -208,6 +218,27 @@ export interface Task {
    * simply stops being part of anything.
    */
   repeatOf?: string
+}
+
+/**
+ * Where a task came from, and what it is the same thing as.
+ *
+ * The pair `(sourceId, blockId)` is a task's identity across days. A template
+ * block stamped onto Tuesday and the same block's task pushed from Monday are
+ * the same intention, and this is what lets the app know it - so a day can
+ * refuse to hold two of them, a push can decline to move something tomorrow
+ * is getting anyway, and a re-stamp can merge instead of duplicating.
+ *
+ * `manual` carries neither id, because a task somebody typed is not the same
+ * thing as anything: two tasks both called "Call the bank" on one day are two
+ * calls, and the app has no business deciding otherwise.
+ */
+export interface TaskOrigin {
+  type: 'template' | 'repeat' | 'manual'
+  /** The template's or the repeat source's id. Absent for manual. */
+  sourceId?: string
+  /** The block within that template. Absent for a repeat and for manual. */
+  blockId?: string
 }
 
 /** One step inside a task. Nothing more than a line of text and a tick. */
@@ -485,6 +516,8 @@ export interface Settings {
    * app that is allowed to interrupt.
    */
   taskReminder: TaskReminderSettings
+  /** When a goal is allowed to come forward on its own - see `NorthSettings`. */
+  north: NorthSettings
 }
 
 /**
@@ -577,6 +610,59 @@ export interface InboxItem {
   captured: string
 }
 
+/**
+ * A direction, not a task.
+ *
+ * This is the one type in this app with no `done`, no progress, no due date
+ * and no count, and every one of those absences is deliberate. See
+ * docs/DECISIONS.md and `north.ts` for the whole argument; the short version
+ * is that showing progress toward a goal reliably licenses stopping, while
+ * restating *why* it matters does not. So a goal is asked to carry a reason
+ * and never asked to carry a number.
+ *
+ * The three text fields are three different questions, and the second two are
+ * optional because a person who only has the first still has a goal:
+ *
+ * - `title` is what you are doing, short and in the imperative.
+ * - `why` is what it is for, in a sentence or two, in your own words.
+ * - `identity` is who it makes you - "I am someone who ...". The most
+ *   powerful of the three when it is true and the most embarrassing when it
+ *   is invented, which is why nothing ever asks for it twice.
+ */
+export interface Goal {
+  id: string
+  title: string
+  why?: string
+  identity?: string
+  /** The date key it was written on. Its age is read from this - see `goalAge`. */
+  createdAt: string
+  /**
+   * The date key it was archived on. Present means it is no longer one of the
+   * active few - reached, outgrown, or simply not this year's.
+   *
+   * Archiving is not a soft delete and carries no verdict: nothing records
+   * *why* one was archived, because "achieved" and "abandoned" is exactly the
+   * scoring this whole feature refuses to do.
+   */
+  archivedAt?: string
+}
+
+/** How many goals can be active at once. See `north.ts` for why it is four. */
+export const MAX_ACTIVE_GOALS = 4
+
+/**
+ * When the app is allowed to bring a goal forward on its own - see
+ * `shouldSurfaceNorth` in `north.ts`. Both default on, both switchable off,
+ * because a reminder somebody did not want is a reminder they learn to
+ * dismiss without reading.
+ */
+export interface NorthSettings {
+  /** A quiet card after a day that got away - never a scolding, never a number. */
+  afterASlowDay: boolean
+  /** The same card, softer, on the first open of a Monday. */
+  onMonday: boolean
+}
+
 export interface AppData {
   templates: Template[]
   days: Record<string, DayPlan>
@@ -595,4 +681,10 @@ export interface AppData {
    * somebody taps one.
    */
   library: LibraryList[]
+  /**
+   * The big ones. Backfilled to empty exactly like `library` and `inbox`, and
+   * empty is the shipped state - this app has never assumed it knows what
+   * somebody is for.
+   */
+  goals: Goal[]
 }

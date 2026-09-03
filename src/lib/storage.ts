@@ -1,5 +1,6 @@
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
+import { dedupeTasks } from './taskIdentity'
 
 const DAY_TYPES: readonly string[] = ['full', 'shift', 'night', 'rest']
 const IF_THEN_WHENS: readonly string[] = ['morning', 'day', 'evening', 'any']
@@ -20,6 +21,12 @@ const DEFAULT_REMINDER: Settings['reminder'] = { enabled: false, everyMinutes: 2
 // Off, and five minutes. Five is enough to finish a sentence and stand up,
 // and short enough that the nudge is still about the thing it names.
 const DEFAULT_TASK_REMINDER: Settings['taskReminder'] = { enabled: false, minutesBefore: 5 }
+
+// Both on. Unlike every other interruption in this app, these two are not
+// notifications and cannot arrive while somebody is doing something else -
+// they are a card on a page already being opened, and dismissing one takes a
+// single tap. See north.ts.
+const DEFAULT_NORTH: Settings['north'] = { afterASlowDay: true, onMonday: true }
 
 // Duplicated from capacity.ts for the same reason DEFAULT_SLEEP_WINDOW is.
 const DEFAULT_SLEEP_PROFILE_ID = 'default'
@@ -86,10 +93,12 @@ export function defaultData(): AppData {
       sleepProfiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: DEFAULT_SLEEP_PROFILE_NAME, window: { ...DEFAULT_SLEEP_WINDOW } }],
       weekdayTemplates: {},
       taskReminder: { ...DEFAULT_TASK_REMINDER },
+      north: { ...DEFAULT_NORTH },
     },
     ifThens: [],
     inbox: [],
     library: [],
+    goals: [],
   }
 }
 
@@ -326,6 +335,13 @@ function isOptionalCount(x: unknown): x is number | undefined {
   return x === undefined || (typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= 100000)
 }
 
+function isGoal(x: unknown): x is Goal {
+  if (!isRecord(x)) return false
+  if (typeof x.id !== 'string' || typeof x.title !== 'string') return false
+  if (typeof x.createdAt !== 'string') return false
+  return isOptionalString(x.why) && isOptionalString(x.identity) && isOptionalString(x.archivedAt)
+}
+
 function isLibraryItem(x: unknown): x is LibraryItem {
   if (!isRecord(x)) return false
   if (typeof x.id !== 'string' || typeof x.title !== 'string') return false
@@ -420,8 +436,18 @@ function isTask(x: unknown): x is Task {
     isOptionalBoolean(x.highlight) &&
     isOptionalSubtasks(x.subtasks) &&
     isOptionalRepeat(x.repeat) &&
-    isOptionalString(x.repeatOf)
+    isOptionalString(x.repeatOf) &&
+    isOptionalOrigin(x.origin)
   )
+}
+
+const ORIGIN_TYPES: readonly string[] = ['template', 'repeat', 'manual']
+
+function isOptionalOrigin(x: unknown): x is TaskOrigin | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  if (typeof x.type !== 'string' || !ORIGIN_TYPES.includes(x.type)) return false
+  return isOptionalString(x.sourceId) && isOptionalString(x.blockId)
 }
 
 function isTemplateBlock(x: unknown): x is TemplateBlock {
@@ -527,8 +553,15 @@ function isSettings(x: unknown): x is {
     isOptionalSleepWindow(x.nightSleepWindow) &&
     isOptionalSleepProfiles(x.sleepProfiles) &&
     isOptionalWeekdayMap(x.weekdayTemplates) &&
-    isOptionalTaskReminder(x.taskReminder)
+    isOptionalTaskReminder(x.taskReminder) &&
+    isOptionalNorth(x.north)
   )
+}
+
+function isOptionalNorth(x: unknown): x is Settings['north'] | undefined {
+  if (x === undefined) return true
+  if (!isRecord(x)) return false
+  return typeof x.afterASlowDay === 'boolean' && typeof x.onMonday === 'boolean'
 }
 
 // Keys 0-6, values template ids. A crafted file could put anything here; a
@@ -596,6 +629,7 @@ interface StoredAppData {
     reminder?: Settings['reminder']
     weekdayTemplates?: Settings['weekdayTemplates']
     taskReminder?: Settings['taskReminder']
+    north?: Settings['north']
     sleepProfiles?: SleepProfile[]
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
@@ -603,6 +637,7 @@ interface StoredAppData {
   ifThens?: IfThenEntry[]
   inbox?: InboxItem[]
   library?: LibraryList[]
+  goals?: Goal[]
 }
 
 export function validate(x: unknown): x is StoredAppData {
@@ -613,6 +648,7 @@ export function validate(x: unknown): x is StoredAppData {
   if (x.ifThens !== undefined && (!Array.isArray(x.ifThens) || !x.ifThens.every(isIfThenEntry))) return false
   if (x.inbox !== undefined && (!Array.isArray(x.inbox) || !x.inbox.every(isInboxItem))) return false
   if (x.library !== undefined && (!Array.isArray(x.library) || !x.library.every(isLibraryList))) return false
+  if (x.goals !== undefined && (!Array.isArray(x.goals) || !x.goals.every(isGoal))) return false
   return true
 }
 
@@ -679,9 +715,11 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
   ).filter(id => id !== LEGACY_IF_THEN_WIDGET_ID)
   return {
     ...data,
+    days: repairDuplicates(data.days),
     ifThens: data.ifThens ?? [],
     inbox: data.inbox ?? [],
     library: data.library ?? [],
+    goals: data.goals ?? [],
     settings: {
       theme: migrateTheme(data.settings.theme),
       enabledWidgets,
@@ -693,8 +731,34 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       sleepProfiles: migrateSleepProfiles(data),
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
       taskReminder: data.settings.taskReminder ?? { ...DEFAULT_TASK_REMINDER },
+      north: data.settings.north ?? { ...DEFAULT_NORTH },
     },
   }
+}
+
+/**
+ * Removes duplicate tasks from every stored day, once, on load.
+ *
+ * Before tasks had origins, a template block pushed forward from yesterday
+ * and the same block stamped onto today were two unrelated rows - so days
+ * really do exist out there holding two of everything, with the timeline
+ * drawing them side by side as though they were a genuine clash. Nothing
+ * about the new identity rules repairs a day that is already wrong, so this
+ * does: see `dedupeTasks` for what counts as the same task and which copy
+ * survives.
+ *
+ * Idempotent and cheap: a day with nothing duplicated is returned untouched,
+ * so this costs one pass over the store on load and nothing afterwards.
+ */
+function repairDuplicates(days: Record<string, DayPlan>): Record<string, DayPlan> {
+  let changed = false
+  const repaired: Record<string, DayPlan> = {}
+  for (const [date, day] of Object.entries(days)) {
+    const tasks = dedupeTasks(day.tasks)
+    if (tasks.length !== day.tasks.length) changed = true
+    repaired[date] = tasks.length === day.tasks.length ? day : { ...day, tasks }
+  }
+  return changed ? repaired : days
 }
 
 // Reads settings.theme out of a payload that has already failed full

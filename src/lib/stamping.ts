@@ -1,4 +1,5 @@
 import { currentItem } from './library'
+import { originFor } from './taskIdentity'
 import type { DayPlan, LibraryList, Task, Template } from './types'
 
 /**
@@ -37,23 +38,31 @@ export function applyStamps(
     const template = templates.find(t => t.id === templateId)
     if (!template) continue
 
-    // Re-stamping the same template the day already carries should not
-    // wipe out completed work. Block ids are not stable across template
-    // edits, so match prior template tasks to the current blocks by title
-    // and time instead: a match carries its done state forward, a block
-    // with no match arrives unchecked, and a prior task with no matching
-    // block simply does not come back. A genuinely different template
-    // replaces everything, same as before.
+    // Re-stamping the same template must not wipe out completed work, and
+    // must not duplicate a block the day already holds - including one that
+    // arrived by being pushed from yesterday, which is how a day used to end
+    // up with two of everything. Matching is by block id first, which is
+    // stable and survives a rename; title-and-time is the fallback for tasks
+    // stamped before origins existed. A match keeps its own state and its own
+    // id; a block with no match arrives unchecked; a prior task with no
+    // matching block does not come back.
     const priorTemplateTasks =
       existing.templateId === templateId ? existing.tasks.filter(t => t.fromTemplate) : []
-    const pool = [...priorTemplateTasks]
+    // Anything on the day carrying this template's identity, however it got
+    // here. This is the set a re-stamp must not duplicate.
+    const carried = existing.tasks.filter(t => originFor(t).type === 'template' && originFor(t).sourceId === templateId)
+    const pool = [...new Set([...priorTemplateTasks, ...carried])]
 
     const templateTasks: Task[] = template.blocks.map(b => {
-      const matchIndex = pool.findIndex(t => t.title === b.title && t.time === b.time)
+      const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
+      const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
       const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
       const bound = b.libraryListId ? boundTo(library.find(l => l.id === b.libraryListId)) : undefined
       return {
-        id: crypto.randomUUID(),
+        // A matched task keeps its own id, so anything pointing at it - a
+        // focus session, an undo offer - still resolves after a re-stamp.
+        id: match?.id ?? crypto.randomUUID(),
+        origin: { type: 'template', sourceId: templateId, blockId: b.id },
         time: b.time,
         title: bound?.title ?? b.title,
         libraryRef: bound?.ref,
@@ -68,11 +77,28 @@ export function applyStamps(
         minutes: b.minutes,
         unbounded: b.unbounded,
         category: b.category,
+        // State a day earned, kept: a note written on it, the steps ticked
+        // off, whether it was one of the day's key tasks, how far it has been
+        // carried. Editing a template is a statement about its shape, not
+        // permission to erase what happened on a day it was stamped onto.
+        note: match?.note,
+        subtasks: match?.subtasks,
+        highlight: match?.highlight,
+        pushCount: match?.pushCount,
       }
     })
     // dayType is copied from the template at this moment, not looked up
-    // live later - see the field's doc comment in types.ts.
-    next[date] = { date, templateId, dayType: template.type, tasks: [...templateTasks, ...manual] }
+    // live later - see the field's doc comment in types.ts. Manual keeps
+    // every task the template does not account for - including repeat
+    // instances, which are not this template's to replace.
+    const kept = manual.filter(t => !templateTasks.some(s => s.id === t.id))
+    next[date] = {
+      ...existing,
+      date,
+      templateId,
+      dayType: template.type,
+      tasks: [...templateTasks, ...kept],
+    }
   }
   return next
 }

@@ -986,7 +986,10 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  expect(screen.getByRole('button', { name: /push 1 unfinished to tomorrow/i })).toBeInTheDocument()
+  // The word "unfinished" left the button when the count stopped meaning
+  // "everything not done" and started meaning "the one-off things" - see
+  // actions.rolloverUnfinished.
+  expect(screen.getByRole('button', { name: /push 1 to tomorrow/i })).toBeInTheDocument()
   expect(screen.queryByText(/waiting on a decision/i)).not.toBeInTheDocument()
 })
 

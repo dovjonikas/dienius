@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
+import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
 import { MAX_HIGHLIGHTS } from './types'
 import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
 import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
+import { canAddGoal } from './north'
+import { addWithoutDuplicates, isRoutine, willReceive } from './taskIdentity'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -51,6 +53,13 @@ export interface RolloverResult {
   moved: number
   /** Tasks left in place because they had already reached MAX_PUSHES. */
   held: number
+  /**
+   * Routine tasks not moved because tomorrow is getting them anyway - from
+   * the same template, or from their own repeat series. Reported rather than
+   * silently skipped, because "seven of your nine did not move" is a
+   * surprising thing for a button to do without saying so.
+   */
+  skipped: number
 }
 
 // Shared by rolloverUnfinished and pushTask below - both move a task to the
@@ -120,7 +129,7 @@ export const actions = {
    */
   addTask(date: string, title: string, time?: string, category?: CategoryId): void {
     const day = dayOf(date)
-    const task = { id: crypto.randomUUID(), title, time, done: false, category }
+    const task: Task = { id: crypto.randomUUID(), title, time, done: false, category, origin: { type: 'manual' } }
     commit(withDay(date, { ...day, tasks: [...day.tasks, task] }))
   },
 
@@ -178,10 +187,15 @@ export const actions = {
 
     const base = days[date] ?? { date, tasks: [] }
     const { tasks, added } = materialiseRepeats(days, date, base.tasks)
+    // The one guard everything that adds to a day goes through - see
+    // taskIdentity.ts. Generation is already idempotent on its own; this is
+    // the belt to that pair of braces, and the thing that catches a series
+    // whose instance arrived by being pushed rather than generated.
+    const guarded = addWithoutDuplicates(base.tasks, tasks.slice(base.tasks.length))
 
     commit({
       ...data,
-      days: { ...days, [date]: { ...base, tasks, autoApplied: true } },
+      days: { ...days, [date]: { ...base, tasks: guarded, autoApplied: true } },
     })
     return shouldStamp || added
   },
@@ -207,6 +221,65 @@ export const actions = {
    */
   replaceLibraryList(list: LibraryList): void {
     commit(withLibrary(data.library.map(l => (l.id === list.id ? list : l))))
+  },
+
+  /**
+   * Writing one down. Refused past the cap rather than silently dropping the
+   * oldest - four is a decision about how many directions fit in a life, and
+   * quietly evicting one would make the cap invisible.
+   */
+  addGoal(input: { title: string; why?: string; identity?: string }, today: string): Goal | undefined {
+    if (!input.title.trim()) return undefined
+    if (!canAddGoal(data.goals)) return undefined
+    const goal: Goal = {
+      id: crypto.randomUUID(),
+      title: input.title.trim(),
+      why: input.why?.trim() || undefined,
+      identity: input.identity?.trim() || undefined,
+      createdAt: today,
+    }
+    commit({ ...data, goals: [...data.goals, goal] })
+    return goal
+  },
+
+  updateGoal(id: string, patch: { title?: string; why?: string; identity?: string }): void {
+    commit({
+      ...data,
+      goals: data.goals.map(g =>
+        g.id !== id
+          ? g
+          : {
+              ...g,
+              title: patch.title !== undefined ? patch.title.trim() || g.title : g.title,
+              why: patch.why !== undefined ? patch.why.trim() || undefined : g.why,
+              identity: patch.identity !== undefined ? patch.identity.trim() || undefined : g.identity,
+            },
+      ),
+    })
+  },
+
+  /**
+   * Moving one out of the way. Not a delete and not a verdict: nothing
+   * records whether it was reached or abandoned, because that is exactly the
+   * scoring this feature exists without. `createdAt` is untouched, so an
+   * archived goal still knows how long it was carried.
+   */
+  archiveGoal(id: string, today: string): void {
+    commit({ ...data, goals: data.goals.map(g => (g.id === id ? { ...g, archivedAt: today } : g)) })
+  },
+
+  /** Bringing one back, if there is room for it. */
+  restoreGoal(id: string): void {
+    if (!canAddGoal(data.goals)) return
+    commit({ ...data, goals: data.goals.map(g => (g.id === id ? { ...g, archivedAt: undefined } : g)) })
+  },
+
+  deleteGoal(id: string): void {
+    commit({ ...data, goals: data.goals.filter(g => g.id !== id) })
+  },
+
+  setNorthSettings(north: Settings['north']): void {
+    commit({ ...data, settings: { ...data.settings, north } })
   },
 
   setWeekdayTemplate(weekday: number, templateId: string | undefined): void {
@@ -526,18 +599,44 @@ export const actions = {
     return true
   },
 
+  /**
+   * Carries what is left of a day onto tomorrow - the one-off part of it.
+   *
+   * A routine task is not carried. If a "Commute" came from a template and
+   * tomorrow is stamped from that same template, or will be by the weekday
+   * map, then tomorrow already has a Commute; moving this one there produces
+   * two, which is exactly the duplication that made the timeline draw two
+   * columns for one commute. The same holds for a repeat instance, whose
+   * series generates tomorrow's copy on its own.
+   *
+   * This is not a refusal to move a routine task - the detail sheet moves any
+   * task to any day, always. It is a refusal to move one *in bulk, blindly*,
+   * which is the only mode this button has.
+   */
   rolloverUnfinished(date: string): RolloverResult {
     const day = data.days[date]
-    if (!day) return { moved: 0, held: 0 }
+    if (!day) return { moved: 0, held: 0, skipped: 0 }
     const unfinished = day.tasks.filter(t => !t.done)
-    if (unfinished.length === 0) return { moved: 0, held: 0 }
-
-    const pushable = unfinished.filter(isPushable)
-    const held = unfinished.length - pushable.length
-    if (pushable.length === 0) return { moved: 0, held }
+    if (unfinished.length === 0) return { moved: 0, held: 0, skipped: 0 }
 
     const targetDate = addDays(date, 1)
-    const target = data.days[targetDate] ?? { date: targetDate, tasks: [] }
+    const target = data.days[targetDate]
+    const mapped = data.settings.weekdayTemplates[weekdayOf(targetDate)]
+
+    // A routine task tomorrow is getting anyway. A repeat instance always
+    // qualifies: its source generates tomorrow's copy the moment the day is
+    // opened, whatever else is on it.
+    const covered = unfinished.filter(
+      t => isRoutine(t) && (t.repeatOf !== undefined || willReceive(target, t, mapped)),
+    )
+    const coveredIds = new Set(covered.map(t => t.id))
+    const candidates = unfinished.filter(t => !coveredIds.has(t.id))
+
+    const pushable = candidates.filter(isPushable)
+    const held = candidates.length - pushable.length
+    if (pushable.length === 0) return { moved: 0, held, skipped: covered.length }
+
+    const targetDay = target ?? { date: targetDate, tasks: [] }
     const movedIds = new Set(pushable.map(t => t.id))
     // core describes a promise a template made about the day it was
     // stamped for, not a property of the task itself - the same reason
@@ -549,15 +648,16 @@ export const actions = {
     // decision on it - unbounded is the escape hatch from that decision,
     // core is not, and the two stay separate for exactly this reason.
     const moved = pushable.map(pushedForward)
+    const landed = addWithoutDuplicates(targetDay.tasks, moved)
     commit({
       ...data,
       days: {
         ...data.days,
         [date]: { ...day, tasks: day.tasks.filter(t => !movedIds.has(t.id)) },
-        [targetDate]: { ...target, tasks: [...target.tasks, ...moved] },
+        [targetDate]: { ...targetDay, tasks: landed },
       },
     })
-    return { moved: moved.length, held }
+    return { moved: landed.length - targetDay.tasks.length, held, skipped: covered.length }
   },
 
   /**

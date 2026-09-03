@@ -46,12 +46,16 @@ test('rolloverUnfinished moves unfinished tasks to the next day', () => {
   const doneId = getData().days['2026-09-01'].tasks[0].id
   actions.toggleTask('2026-09-01', doneId)
   const result = actions.rolloverUnfinished('2026-09-01')
-  expect(result).toEqual({ moved: 1, held: 0 })
+  expect(result).toEqual({ moved: 1, held: 0, skipped: 0 })
   expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Done thing'])
   expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Not done'])
 })
 
-test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it', () => {
+// This used to assert two Gyms, which was the bug rather than the contract:
+// a task pushed from a template day and the same template stamped onto the
+// day it landed on are the same intention, and a day holding both is what
+// made the timeline draw two columns. They merge now - see taskIdentity.ts.
+test('a pushed template task and a re-stamp of the same template merge rather than doubling', () => {
   const t = actions.addTemplate({
     name: 'Work day',
     color: '#8ab6f9',
@@ -63,12 +67,9 @@ test('rolloverUnfinished clears fromTemplate so the next stamp does not wipe it'
   expect(moved.title).toBe('Gym')
   expect(moved.fromTemplate).toBe(false)
 
-  // Re-stamping the day it landed on must not wipe it, since it is no
-  // longer tied to a template.
   actions.stamp({ '2026-09-02': t.id })
   const titles = getData().days['2026-09-02'].tasks.map(task => task.title)
-  expect(titles).toContain('Gym')
-  expect(titles.filter(title => title === 'Gym')).toHaveLength(2)
+  expect(titles.filter(title => title === 'Gym')).toHaveLength(1)
 })
 
 test('rolloverUnfinished clears core, so a required task from a shift day does not become required on whatever day it lands on next', () => {
@@ -97,7 +98,9 @@ test('rolloverUnfinished clears core, so a required task from a shift day does n
   expect(score).toEqual({ planned: false })
 })
 
-test('pushCount survives a re-stamp of the day a pushed task landed on', () => {
+// The merge keeps what the day earned rather than replacing it: a task that
+// has been carried once is still a task that has been carried once.
+test('pushCount survives the re-stamp that merges a pushed task back into its template', () => {
   const t = actions.addTemplate({
     name: 'Work day',
     color: '#8ab6f9',
@@ -105,15 +108,12 @@ test('pushCount survives a re-stamp of the day a pushed task landed on', () => {
   })
   actions.stamp({ '2026-09-01': t.id })
   actions.rolloverUnfinished('2026-09-01')
-  const pushed = getData().days['2026-09-02'].tasks.find(task => task.title === 'Gym')
-  expect(pushed?.pushCount).toBe(1)
+  expect(getData().days['2026-09-02'].tasks.find(task => task.title === 'Gym')?.pushCount).toBe(1)
 
-  // Re-stamping the day it landed on treats it as a manual task (fromTemplate
-  // is false after a push) and must leave it, and its pushCount, untouched.
   actions.stamp({ '2026-09-02': t.id })
   const afterRestamp = getData().days['2026-09-02'].tasks.filter(task => task.title === 'Gym')
-  expect(afterRestamp).toHaveLength(2)
-  expect(afterRestamp.find(task => task.fromTemplate === false)?.pushCount).toBe(1)
+  expect(afterRestamp).toHaveLength(1)
+  expect(afterRestamp[0].pushCount).toBe(1)
 })
 
 test('rolloverUnfinished increments pushCount on tasks it moves', () => {
@@ -133,7 +133,7 @@ test('rolloverUnfinished holds back a task that has already been pushed twice', 
   actions.rolloverUnfinished('2026-09-02')
   // Now at pushCount 2, sitting in 2026-09-03. A third rollover must not move it.
   const result = actions.rolloverUnfinished('2026-09-03')
-  expect(result).toEqual({ moved: 0, held: 1 })
+  expect(result).toEqual({ moved: 0, held: 1, skipped: 0 })
   expect(getData().days['2026-09-03'].tasks.map(t => t.title)).toEqual(['Chronically postponed'])
   expect(getData().days['2026-09-04']).toBeUndefined()
 })
@@ -148,7 +148,7 @@ test('rolloverUnfinished moves tasks below the bound and holds back tasks at the
   // A fresh task joins it on the same day.
   actions.addTask('2026-09-03', 'Fresh task')
   const result = actions.rolloverUnfinished('2026-09-03')
-  expect(result).toEqual({ moved: 1, held: 1 })
+  expect(result).toEqual({ moved: 1, held: 1, skipped: 0 })
   expect(getData().days['2026-09-03'].tasks.map(t => t.title)).toEqual(['Maxed task'])
   expect(getData().days['2026-09-04'].tasks.map(t => t.title)).toEqual(['Fresh task'])
 })
@@ -162,14 +162,14 @@ test('rolloverUnfinished keeps moving a task marked unbounded past the push boun
 
   actions.setTaskUnbounded('2026-09-03', id, true)
   const result = actions.rolloverUnfinished('2026-09-03')
-  expect(result).toEqual({ moved: 1, held: 0 })
+  expect(result).toEqual({ moved: 1, held: 0, skipped: 0 })
   const moved = getData().days['2026-09-04'].tasks[0]
   expect(moved.pushCount).toBe(3)
   expect(moved.unbounded).toBe(true)
 
   // And it keeps going indefinitely, not just for one extra push.
   const again = actions.rolloverUnfinished('2026-09-04')
-  expect(again).toEqual({ moved: 1, held: 0 })
+  expect(again).toEqual({ moved: 1, held: 0, skipped: 0 })
   expect(getData().days['2026-09-05'].tasks[0].pushCount).toBe(4)
 })
 
@@ -200,7 +200,7 @@ test('a task written to storage before pushCount existed loads and pushes correc
   expect(loadedTask.pushCount).toBeUndefined()
 
   const result = actions.rolloverUnfinished('2026-09-01')
-  expect(result).toEqual({ moved: 1, held: 0 })
+  expect(result).toEqual({ moved: 1, held: 0, skipped: 0 })
   const moved = getData().days['2026-09-02'].tasks[0]
   expect(moved.title).toBe('From before the field existed')
   expect(moved.pushCount).toBe(1)
@@ -278,7 +278,7 @@ test('a task written to storage before unbounded existed loads and pushes exactl
 
   // Already at the bound, and never marked unbounded - held, not moved.
   const result = actions.rolloverUnfinished('2026-09-01')
-  expect(result).toEqual({ moved: 0, held: 1 })
+  expect(result).toEqual({ moved: 0, held: 1, skipped: 0 })
 })
 
 test('pushTask on a missing task or day does not throw and reports no push happened', () => {
