@@ -181,8 +181,31 @@ function scheduleRetry(): void {
  * kind of state to get wrong; the whole state is a few hundred kilobytes and
  * this runs on a home network.
  */
+/**
+ * The one misconfiguration worth naming before it is attempted.
+ *
+ * A page served over HTTPS cannot call an `http://` endpoint: the browser
+ * blocks it before anything leaves, and the failure arrives as the same
+ * generic network error a sleeping PC gives. Guessing "is the PC awake" at
+ * somebody whose PC is awake, over an address that can never work, is the
+ * kind of wrong answer that costs an evening. Tailscale hands out a real
+ * certificate for exactly this - see the README.
+ */
+function blockedByMixedContent(url: string): boolean {
+  if (typeof location === 'undefined' || location.protocol !== 'https:') return false
+  return url.startsWith('http://') && !/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(url)
+}
+
 export function syncNow(): Promise<void> {
   if (!config.enabled || !config.url) return Promise.resolve()
+  if (blockedByMixedContent(config.url)) {
+    setStatus({
+      phase: 'error',
+      message: 'This page is on https, so the server address has to be too. Run "tailscale serve --bg 8787" and use the https address it prints.',
+      pending: false,
+    })
+    return Promise.resolve()
+  }
   // A second caller joins the round trip already in the air rather than
   // opening a competing one - two syncs overlapping would each merge against
   // a state the other is about to replace.

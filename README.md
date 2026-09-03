@@ -100,13 +100,19 @@ Check it with `schtasks /query /tn "Dienius sync"`, stop it with `/end`, remove 
 
 ### Reaching it from the phone
 
-Do not open the port to the internet. Install [Tailscale](https://tailscale.com) on the PC and the phone, sign both into the same account, and use the PC's Tailscale address as the server URL:
+Do not open the port to the internet. Install [Tailscale](https://tailscale.com) on the PC and the phone and sign both into the same account: the two machines can then reach each other from anywhere, over an encrypted link, with nothing exposed publicly.
 
-```
-http://100.x.y.z:8787
+The address has to be **https**, not the plain `http://100.x.y.z:8787` one. The app is served from GitHub Pages over HTTPS, and a page on HTTPS is not allowed to call an HTTP endpoint - the browser blocks the request before it leaves, with nothing in the network log to explain it. Tailscale hands out a real certificate for this, so put it in front of the server:
+
+```bash
+tailscale serve --bg 8787
 ```
 
-That address works from anywhere the phone has a connection, over an encrypted link, with nothing exposed publicly. When the PC is asleep the phone simply says so and catches up later.
+That prints an address like `https://your-pc.your-tailnet.ts.net`, and that is what goes in the server field. It needs MagicDNS and HTTPS certificates switched on in the Tailscale admin console, both of which are one toggle each.
+
+The plain `http://100.x.y.z:8787` form still works when the app itself is being served over HTTP - a local `npm run dev`, or a copy you host yourself without TLS.
+
+When the PC is asleep the phone simply says so and catches up later.
 
 ### What syncs, and what does not
 

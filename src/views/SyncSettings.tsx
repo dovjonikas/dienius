@@ -83,7 +83,7 @@ export function SyncSettings() {
               type="url"
               inputMode="url"
               autoComplete="off"
-              placeholder="http://100.x.y.z:8787"
+              placeholder="https://your-pc.your-tailnet.ts.net"
               value={url}
               onChange={e => setUrl(e.target.value)}
             />

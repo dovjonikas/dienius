@@ -263,3 +263,40 @@ test('a restored snapshot survives the sync that follows it', async () => {
   expect(Object.keys(getData().days)).toEqual(['2026-08-20'])
   expect(getData().days['2026-08-20'].tasks[0].title).toBe('From the snapshot')
 })
+
+/**
+ * An https page cannot call an http endpoint, and the browser refuses it with
+ * the same generic network error a sleeping PC gives. Told "is the PC awake"
+ * about a PC that is awake, over an address that can never work, somebody
+ * spends an evening on it. Named rather than guessed at.
+ */
+test('an http server on an https page is named as the problem, not blamed on the PC', async () => {
+  vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, protocol: 'https:' } as Location)
+
+  setSyncConfig({ url: 'http://100.64.0.1:8787', token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(fetchMock).not.toHaveBeenCalled()
+  expect(getSyncStatus().message).toMatch(/https/)
+  expect(getSyncStatus().message).toMatch(/tailscale serve/)
+})
+
+test('an https server on an https page is left alone', async () => {
+  vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, protocol: 'https:' } as Location)
+  serverHolding(null)
+
+  setSyncConfig({ url: 'https://pc.tail1234.ts.net', token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(fetchMock).toHaveBeenCalled()
+  expect(getSyncStatus().phase).toBe('idle')
+})
+
+// A dev server on http talking to localhost is the ordinary case and must not
+// trip the guard.
+test('localhost over http is fine from an http page', async () => {
+  serverHolding(null)
+  setSyncConfig({ url: 'http://localhost:8787', token: 'abc', enabled: true })
+  await syncNow()
+  expect(getSyncStatus().phase).toBe('idle')
+})
