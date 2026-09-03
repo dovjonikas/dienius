@@ -17,6 +17,18 @@ import type { AppData, LibraryItem, LibraryList } from './types'
  */
 
 interface SeedItem {
+  /**
+   * A stable id, not a fresh uuid, and this is not a detail.
+   *
+   * Found by syncing two devices: each one seeded its own Books list with its
+   * own random ids, the merge unioned them by id the way it unions anything
+   * else, and the phone ended up with two lists both called Books. Sync
+   * merges per entity, so the only way two devices can seed the same thing
+   * independently and end up with one of it is for the thing to have the same
+   * identity on both. Seeding twice, anywhere, now produces byte-identical
+   * entities and the merge is a no-op.
+   */
+  id: string
   title: string
   total?: number
   track?: LibraryItem['track']
@@ -32,32 +44,35 @@ interface SeedItem {
  */
 const BOOKS: SeedItem[] = [
   {
+    id: 'seed-war-of-art',
     title: 'The War of Art',
     track: 'pages',
     pace: 'one section a day - finish Book Two, skim Book Three',
   },
-  { title: 'The Psychology of Money', total: 20, pace: 'short chapters, finish it' },
-  { title: 'Turning Pro', track: 'pages', pace: 'short, about a week' },
-  { title: 'The Courage to Be Disliked', total: 5, pace: 'one night per sitting' },
-  { title: 'Daring Greatly', total: 7, pace: 'one chapter a day' },
-  { title: 'The Status Game', pace: 'one chapter a day' },
-  { title: 'Sapiens', total: 20, pace: 'one chapter a day' },
-  { title: 'Atomic Habits', total: 20, pace: 'one chapter a day' },
+  { id: 'seed-psychology-of-money', title: 'The Psychology of Money', total: 20, pace: 'short chapters, finish it' },
+  { id: 'seed-turning-pro', title: 'Turning Pro', track: 'pages', pace: 'short, about a week' },
+  { id: 'seed-courage-to-be-disliked', title: 'The Courage to Be Disliked', total: 5, pace: 'one night per sitting' },
+  { id: 'seed-daring-greatly', title: 'Daring Greatly', total: 7, pace: 'one chapter a day' },
+  { id: 'seed-status-game', title: 'The Status Game', pace: 'one chapter a day' },
+  { id: 'seed-sapiens', title: 'Sapiens', total: 20, pace: 'one chapter a day' },
+  { id: 'seed-atomic-habits', title: 'Atomic Habits', total: 20, pace: 'one chapter a day' },
   // Last, and deliberately apart from the queue above: it is not part of the
   // main reading block, it is the thing for an evening with nothing left in
   // it. The pace note is what says so, because nothing else in this app
   // ranks or tags an item.
   {
+    id: 'seed-you-are-not-so-smart',
     title: 'You Are Not So Smart',
     total: 48,
     pace: 'LIGHT slot - evening, optional, one mechanism per chapter',
   },
 ]
 
-const BOOKS_LIST = { name: 'Books', unit: 'chapter', unitShort: 'ch' }
+/** Stable for the same reason every item id is - see `SeedItem.id`. */
+const BOOKS_LIST = { id: 'seed-books', name: 'Books', unit: 'chapter', unitShort: 'ch' }
 
 function itemFor(seed: SeedItem): LibraryItem {
-  const item: LibraryItem = { id: crypto.randomUUID(), title: seed.title, pace: seed.pace }
+  const item: LibraryItem = { id: seed.id, title: seed.title, pace: seed.pace }
   if (seed.total !== undefined) item.total = seed.total
   if (seed.track) item.track = seed.track
   return item
@@ -85,6 +100,6 @@ export function seedLibrary(data: AppData): AppData {
   if (existing) {
     return { ...data, library: data.library.map(list => (list === existing ? { ...list, items } : list)) }
   }
-  const list: LibraryList = { id: crypto.randomUUID(), ...BOOKS_LIST, items }
+  const list: LibraryList = { ...BOOKS_LIST, items }
   return { ...data, library: [...data.library, list] }
 }

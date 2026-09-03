@@ -3,6 +3,8 @@ import { seedLibrary } from './librarySeed'
 import { actions, getData } from './store'
 import { defaultData } from './storage'
 import { isItemFinished, progressLabel } from './library'
+import { stampChanges } from './syncEntities'
+import { mergeStates } from './syncMerge'
 
 beforeEach(() => {
   localStorage.clear()
@@ -87,5 +89,35 @@ describe('the reading plan seed', () => {
   it('leaves everything in it going, because nothing here has been read yet', () => {
     actions.seedLibrary()
     expect(books()!.items.every(i => !isItemFinished(i))).toBe(true)
+  })
+})
+
+/**
+ * Found by syncing two devices in a browser, which is the only place it could
+ * have been found: each one seeded its own Books list with its own random
+ * ids, the merge unioned them by id the way it unions anything else, and the
+ * second device ended up with two lists both called Books and eighteen books
+ * between them.
+ *
+ * Sync merges per entity, so the only way two devices can seed the same thing
+ * independently and end up with one of it is for the thing to carry the same
+ * identity on both.
+ */
+describe('two devices seeding independently', () => {
+  it('produce the same entities, so a merge leaves one list and nine books', () => {
+    const phone = stampChanges(defaultData(), seedLibrary(defaultData()), '2026-09-01T08:00:00.000Z')
+    const pc = stampChanges(defaultData(), seedLibrary(defaultData()), '2026-09-01T20:00:00.000Z')
+
+    const merged = mergeStates(phone, pc, '2026-09-02T09:00:00.000Z').data
+    expect(merged.library.map(l => l.name)).toEqual(['Books'])
+    expect(merged.library[0].items).toHaveLength(9)
+    expect(new Set(merged.library[0].items.map(i => i.id)).size).toBe(9)
+  })
+
+  it('agree on every id, down to the item', () => {
+    const a = seedLibrary(defaultData())
+    const b = seedLibrary(defaultData())
+    expect(a.library[0].id).toBe(b.library[0].id)
+    expect(a.library[0].items.map(i => i.id)).toEqual(b.library[0].items.map(i => i.id))
   })
 })
