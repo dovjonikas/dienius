@@ -41,6 +41,22 @@ for (const preset of PRESETS) {
         const ratio = contrastRatio(tokens.accent, groundColor)
         expect(ratio).toBeGreaterThanOrEqual(MIN_ACCENT_CONTRAST)
       })
+
+      // Secondary text, held to the same 4.5:1 as body text rather than to a
+      // lower bar for small print. Both of these carry sentences somebody is
+      // expected to read and act on: --muted is the description under every
+      // setting, and --danger is how the sync status says the server refused
+      // the token. Light passes at 4.55, which is exactly why this is a gate
+      // and not a habit.
+      const SECONDARY = [
+        { name: 'muted', color: tokens.muted },
+        { name: 'danger', color: tokens.danger },
+      ]
+      for (const ink of SECONDARY) {
+        test(`${preset.name} (${mode}): ${ink.name} text reads at ${MIN_TEXT_CONTRAST}:1 against ${ground.name}`, () => {
+          expect(contrastRatio(ink.color, groundColor)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST)
+        })
+      }
     }
   }
 }
