@@ -4,19 +4,27 @@ A map of Dienius for somebody - or some session - arriving cold. It answers
 four questions: what the data is, where it lives, how a change flows through,
 and which file to open for a given job.
 
-For *why* the harder calls were made, see [`DECISIONS.md`](DECISIONS.md). This
-file only describes what is there.
+Read [`STATE.md`](STATE.md) first for where the project currently is and what
+is still owed, and [`CONVENTIONS.md`](CONVENTIONS.md) for the rules work here
+follows. For *why* the harder calls were made, see
+[`DECISIONS.md`](DECISIONS.md). This file only describes what is there.
 
 ---
 
 ## 1. The shape of it in one paragraph
 
 React 19 and TypeScript, built with Vite. No UI framework, no router, no state
-library, no backend. The entire application state is **one object** in memory,
-persisted as **one JSON string** in `localStorage`. Components read it through
+library. The entire application state is **one object** in memory, persisted as
+**one JSON string** in `localStorage`. Components read it through
 `useSyncExternalStore`. Everything that is not a component - parsing, sorting,
-scoring, stamping, capacity arithmetic, repeat generation, search, statistics -
-is a plain function in `src/lib` or beside its widget, tested directly.
+scoring, stamping, capacity arithmetic, repeat generation, search, statistics,
+the week's geometry, iCalendar - is a plain function in `src/lib` or beside its
+widget, tested directly.
+
+Two optional layers sit on top and neither is a dependency: **sync** between
+your own devices, through a 200-line server you host (section 7), and
+**external calendars**, read-only and laid over the plan (section 12). With
+both off - the default - nothing degrades.
 
 ---
 
@@ -79,8 +87,8 @@ if it were absent. This contract is kept by every reader and is tested.
 
 ### What is *not* in `AppData`
 
-Three things live under their own storage keys, on purpose, and none of them
-is in a backup:
+Five things live under their own storage keys, on purpose, and none of them is
+in a backup:
 
 - **`dienius:clock-tools`** - the timer, stopwatch and focus session
   ([`clockTools.ts`](../src/lib/clockTools.ts)). A timer with ninety seconds
@@ -90,6 +98,23 @@ is in a backup:
 - **IndexedDB `dienius-snapshots`** - a week of daily full-state copies
   ([`snapshots.ts`](../src/lib/snapshots.ts)). A backup sharing a quota with the
   thing it backs up disappears exactly when the data grows enough to need it.
+- **`dienius:sync`** - the sync server's address, token and on/off
+  ([`syncClient.ts`](../src/lib/syncClient.ts)). Syncing the address of the
+  sync server is circular, and a token is a device's own credential.
+- **`dienius:calendars`** - the events fetched from external feeds
+  ([`calendars.ts`](../src/lib/calendars.ts)). The *subscriptions* live in
+  settings and do sync; what they contain is refetched per device, because a
+  week of somebody's work meetings is not a plan worth carrying in a backup and
+  is stale the moment it is written.
+
+And one key that is a whole separate copy of everything:
+
+- **`dienius:demo`** - the sample fortnight
+  ([`demoMode.ts`](../src/lib/demoMode.ts)). Demo mode is a different file
+  rather than a flag inside the same one, which is the only version of the
+  isolation that is actually safe: a bug while somebody is poking at the sample
+  week cannot touch a real plan, because the real plan is not the file that is
+  open. `loadData` picks the key; nothing else in the app knows.
 
 ---
 
@@ -150,6 +175,10 @@ src/
     north.ts           goals: rotation, ages, and when one comes forward
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
+    ics.ts             a small iCalendar reader; no library, and none wanted
+    calendars.ts       external feeds: the local cache, and what counts as busy
+    demoMode.ts        whether this tab is on sample data, and which key it uses
+    demo.ts            the sample fortnight, built from one date
     syncEntities.ts    splitting state into entities, stamping, tombstones
     syncMerge.ts       the per-entity last-write-wins merge
     syncClient.ts      pull, debounced push, retry, and the status a person sees
@@ -171,6 +200,9 @@ src/
   views/               a tab, or a control shared between tabs
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     CommandPalette, ShortcutsOverlay
+    week/              the week view - see section 11
+    NorthSettings, SyncSettings, CalendarSettings   Settings sections
+    DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app
     MinuteStepInput    the one duration control
     AppearanceControls, ThemeGallery, ThemePreviewCard
@@ -445,7 +477,7 @@ test will tell you if you forget.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. Around 1300 tests, no worker limits, no skips.
+Vitest + Testing Library + jsdom. Around 1400 tests, no worker limits, no skips.
 
 Two kinds, deliberately:
 
@@ -481,7 +513,70 @@ npm run build     # typecheck, build, generate the service worker
 
 ---
 
-## 11. Conventions worth knowing before editing
+## 11. The week, and external calendars
+
+### The week view
+
+`views/week/` - a third mode in the Calendar tab rather than a seventh tab,
+because the tab bar is already six items and already scrolls sideways at 390px.
+
+| File | Job |
+|---|---|
+| `weekLayout.ts` | All the arithmetic: one shared axis, blocks as percentages, side-by-side lanes for overlaps |
+| `WeekView.tsx` | The grid, the drag between days, stamping, the phone's three-day window |
+| `WeekColumn.tsx` | One day: header, track, footer |
+
+Two things are worth knowing before touching it:
+
+- **Everything is a percentage of a grid row that takes the height it is
+  given.** There is no pixel budget and no density fitting, which is why it
+  fits 1920x1080, 1366x768 and 390x812 for the same reason. Do not introduce a
+  measured height here.
+- **A column is `display: contents`**, so its head, track and foot land in the
+  grid's three rows directly - that is what aligns the hour axis with the
+  tracks exactly. Each column states its `--week-col` index, because auto
+  placement puts the first part in the axis's own column and shifts the whole
+  week one day right.
+
+Dragging a block to another day calls `actions.moveTaskToDay`, which is
+deliberately **not** a push: `pushCount` is not incremented and `core` is not
+cleared. Those describe a task that keeps failing to happen; moving an
+appointment to the day it is actually on does not.
+
+### External calendars
+
+| File | Job |
+|---|---|
+| `ics.ts` | A small iCalendar reader. No library, and none wanted |
+| `calendars.ts` | The local cache, what counts as busy, and fetching through the sync server |
+| `views/CalendarSettings.tsx` | Subscribing, importing, refreshing, removing |
+
+Events are a **layer, never entries**. There is nothing to tick off, nothing to
+push, and no version of a meeting that counts towards a day's score. They draw
+as a dashed outline in a strip down the right of the timeline - over the day's
+own blocks rather than under them, because under hid the one case that matters,
+a meeting clashing with something you planned.
+
+Free time counts them: `computeCapacity` takes a `busy` argument and folds
+those intervals into the same merged blocks the anchors make. They are reported
+separately (`externalMinutes`) because "Timed tasks: 6h" would be a lie about a
+day spent in somebody else's calendar. An all-day event is deliberately *not*
+counted as busy.
+
+Fetching goes through the sync server's `/ics` proxy, because a browser cannot
+read a Google or Outlook feed itself - those hosts send no CORS headers. The
+proxy refuses anything that is not http or https, and anything resolving to
+localhost, a private range or the tailnet. Without sync there is no
+subscribing, and Settings says so up front; file import is the way in.
+
+The parser reads DTSTART, DTEND, DURATION, SUMMARY and daily/weekly RRULE.
+Monthly and yearly rules are **named in `ignored` rather than approximated** - a
+meeting shown on the wrong day is worse than one not shown at all. Nothing in
+it throws.
+
+---
+
+## 12. Conventions worth knowing before editing
 
 - **Absent is a state.** Optional fields mean something specific; check the doc
   comment before treating one as a default.
@@ -493,3 +588,7 @@ npm run build     # typecheck, build, generate the service worker
   templates and starter library lists are *offers*.
 - **Nothing is measured that would become a target.** No streak on the day
   view, no counter on an if-then rule. See `RESEARCH-ADHD.md`.
+
+The full set - zero-scroll rules, design tokens, the button system, the test
+policy, how a critique pass is run - is in
+[`CONVENTIONS.md`](CONVENTIONS.md).
