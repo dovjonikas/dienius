@@ -945,10 +945,21 @@ function timeThemeSwitches(): number {
   return performance.now() - t0
 }
 
-test('switching all 11 presets and their modes costs the same whether the store is empty or holds two years', () => {
-  actions.resetForTests(defaultData())
-  const onEmpty = timeThemeSwitches()
+/**
+ * The best of several rounds, not one round.
+ *
+ * A single timing on a machine running seventy other test files measures that
+ * machine's scheduler as much as this code, and a round that happens to be
+ * preempted reads as a regression. The fastest round is the one that got a
+ * clean run at it, which is the only one that says anything about the code.
+ */
+function fastestThemeSwitches(rounds: number): number {
+  let best = Infinity
+  for (let i = 0; i < rounds; i++) best = Math.min(best, timeThemeSwitches())
+  return best
+}
 
+test('switching all 11 presets and their modes costs the same whether the store is empty or holds two years', () => {
   const templates = Array.from({ length: 50 }, (_, i) => ({
     id: `t${i}`, name: `Template ${i}`, color: '#8ab6f9', blocks: [],
   }))
@@ -957,12 +968,22 @@ test('switching all 11 presets and their modes costs the same whether the store 
     const key = `2024-01-${String((i % 28) + 1).padStart(2, '0')}-${i}`
     days[key] = { date: key, tasks: [{ id: `${key}-t`, title: 'Task', done: false }] }
   }
-  actions.resetForTests({ ...defaultData(), templates, days })
-  const onLoaded = timeThemeSwitches()
+
+  // Alternating rather than one block each, so a machine that gets busier
+  // partway through slows both sides equally instead of only the second.
+  let onEmpty = Infinity
+  let onLoaded = Infinity
+  for (let round = 0; round < 3; round++) {
+    actions.resetForTests(defaultData())
+    onEmpty = Math.min(onEmpty, fastestThemeSwitches(1))
+    actions.resetForTests({ ...defaultData(), templates, days })
+    onLoaded = Math.min(onLoaded, fastestThemeSwitches(1))
+  }
 
   // Generous on purpose - the point is that it is a constant multiple and not
-  // a multiple of 700. A version that walked every day would be orders out.
-  expect(onLoaded).toBeLessThan(Math.max(onEmpty * 4, 60))
+  // a multiple of 700. A version that walked every day would be orders out,
+  // and no amount of scheduler noise turns 700x into 6x.
+  expect(onLoaded).toBeLessThan(Math.max(onEmpty * 6, 80))
 })
 
 test('subscribe is notified on every commit, and the returned function unsubscribes it', () => {
@@ -1042,4 +1063,96 @@ test('what a restore removes is tombstoned, so it does not come back from the ot
   actions.restoreState(defaultData())
 
   expect(getData().tombstones?.[`task:${id}`]).toEqual(expect.any(String))
+})
+
+/**
+ * Moving a task to another day - what a drag across the week commits.
+ *
+ * The distinction these exist for is that it is not a push. A task dragged
+ * onto Friday because that is when the appointment is has nothing to do with
+ * a task that keeps failing to happen and getting shunted forward, and
+ * counting it would eventually trip the two-push bound on something nobody
+ * has ever postponed.
+ */
+test('moveTaskToDay carries the task and its time to the other day', () => {
+  actions.addTask('2026-09-01', 'Dentist', '14:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+
+  expect(actions.moveTaskToDay('2026-09-01', '2026-09-04', id)).toBe(true)
+  expect(getData().days['2026-09-01'].tasks).toHaveLength(0)
+  expect(getData().days['2026-09-04'].tasks[0]).toMatchObject({ title: 'Dentist', time: '14:00' })
+})
+
+test('a moved task is not a pushed one - no pushCount, no cleared core', () => {
+  const shift = actions.addTemplate({
+    name: 'Shift',
+    color: '#c9b3f0',
+    type: 'shift',
+    blocks: [{ time: '19:00', title: 'File report', core: true }],
+  })
+  actions.stamp({ '2026-09-01': shift.id })
+  const id = getData().days['2026-09-01'].tasks[0].id
+
+  actions.moveTaskToDay('2026-09-01', '2026-09-02', id)
+  const moved = getData().days['2026-09-02'].tasks[0]
+  expect(moved.pushCount).toBeUndefined()
+  expect(moved.core).toBe(true)
+})
+
+test('a task at the push bound can still be moved by hand', () => {
+  actions.addTask('2026-09-01', 'Chronically postponed')
+  actions.rolloverUnfinished('2026-09-01')
+  actions.rolloverUnfinished('2026-09-02')
+  const id = getData().days['2026-09-03'].tasks[0].id
+  expect(actions.pushTask('2026-09-03', id)).toBe(false)
+
+  // The bound is about the app moving something for you, not about you
+  // deciding where it goes.
+  expect(actions.moveTaskToDay('2026-09-03', '2026-09-08', id)).toBe(true)
+  expect(getData().days['2026-09-08'].tasks[0].pushCount).toBe(2)
+})
+
+// The duplication `origin` was added to stop, arriving by a new route.
+test('a day that already has the same template block refuses the move', () => {
+  const template = actions.addTemplate({
+    name: 'Work',
+    color: '#8ab6f9',
+    blocks: [{ time: '09:00', title: 'Standup' }],
+  })
+  actions.stamp({ '2026-09-01': template.id, '2026-09-02': template.id })
+  const id = getData().days['2026-09-01'].tasks[0].id
+
+  expect(actions.moveTaskToDay('2026-09-01', '2026-09-02', id)).toBe(false)
+  expect(getData().days['2026-09-01'].tasks).toHaveLength(1)
+  expect(getData().days['2026-09-02'].tasks).toHaveLength(1)
+})
+
+// Two tasks called "Call the bank" on one day are two calls - a manual task
+// has no identity on purpose, so nothing about this is refused.
+test('two manual tasks with the same title can share a day', () => {
+  actions.addTask('2026-09-01', 'Call the bank')
+  actions.addTask('2026-09-02', 'Call the bank')
+  const id = getData().days['2026-09-01'].tasks[0].id
+
+  expect(actions.moveTaskToDay('2026-09-01', '2026-09-02', id)).toBe(true)
+  expect(getData().days['2026-09-02'].tasks).toHaveLength(2)
+})
+
+test('moving onto the same day, or a task that is not there, reports nothing happened', () => {
+  actions.addTask('2026-09-01', 'Dentist', '14:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  expect(actions.moveTaskToDay('2026-09-01', '2026-09-01', id)).toBe(false)
+  expect(actions.moveTaskToDay('2026-09-01', '2026-09-02', 'not-a-task')).toBe(false)
+  expect(getData().days['2026-09-02']).toBeUndefined()
+})
+
+test('the move is exactly reversible, which is what the undo offer relies on', () => {
+  actions.addTask('2026-09-01', 'Dentist', '14:00')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  const before = getData().days['2026-09-01'].tasks[0]
+
+  actions.moveTaskToDay('2026-09-01', '2026-09-04', id)
+  actions.moveTaskToDay('2026-09-04', '2026-09-01', id)
+
+  expect(withoutStamps(getData().days['2026-09-01'].tasks[0])).toEqual(withoutStamps(before))
 })

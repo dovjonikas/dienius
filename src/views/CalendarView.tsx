@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { monthGrid, todayKey, type MonthCell } from '../lib/dates'
+import { formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import { cellLabel, resolveTemplate, taskState } from '../lib/calendarCell'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
+import { WeekView } from './week/WeekView'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -41,12 +42,24 @@ interface CalendarViewProps {
    * it is used just to add one message.
    */
   onOpenTemplates?: () => void
+  /**
+   * The date the week mode is centred on. Optional, with today as the
+   * fallback, so every existing render of this view - and every test that
+   * predates Week - keeps working with no wiring change.
+   */
+  date?: string
+  onDateChange?: (date: string) => void
 }
 
-export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) {
+export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }: CalendarViewProps) {
   const data = useAppData()
   const now = new Date()
-  const [mode, setMode] = useState<'month' | 'year'>('month')
+  // Week sits between Month and Year because that is the order of magnitude,
+  // and because a segmented control that jumps scale non-monotonically reads
+  // as three unrelated buttons. See WeekView.tsx for why this is a mode here
+  // rather than a seventh tab.
+  const [mode, setMode] = useState<'month' | 'week' | 'year'>('month')
+  const [weekDate, setWeekDate] = useState(() => date ?? todayKey())
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
@@ -159,6 +172,10 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
             <h2>{MONTHS[month]} {year}</h2>
             <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
+        ) : mode === 'week' ? (
+          <div className="calendar-nav">
+            <h2>{formatWeekTitle(weekOf(weekDate))}</h2>
+          </div>
         ) : (
           <div className="calendar-nav">
             <h2>{year}</h2>
@@ -177,6 +194,14 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
             onClick={() => setMode('month')}
           >
             Month
+          </button>
+          <button
+            type="button"
+            className={mode === 'week' ? 'active' : ''}
+            aria-pressed={mode === 'week'}
+            onClick={() => setMode('week')}
+          >
+            Week
           </button>
           <button
             type="button"
@@ -316,6 +341,17 @@ export function CalendarView({ onOpenDay, onOpenTemplates }: CalendarViewProps) 
             <p className="muted stamp-hint">Click or drag across days to stamp. Click a stamped day to clear it.</p>
           )}
         </>
+      )}
+
+      {mode === 'week' && (
+        <WeekView
+          date={weekDate}
+          onDateChange={next => {
+            setWeekDate(next)
+            onDateChange?.(next)
+          }}
+          onOpenDay={onOpenDay}
+        />
       )}
 
       {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}

@@ -38,3 +38,42 @@ export function formatDayTitle(key: string): string {
     day: 'numeric',
   })
 }
+
+/**
+ * The seven date keys of the week a date falls in, Monday first.
+ *
+ * Monday first because a week does - the same numbering `weekdayOf` and the
+ * weekday-template mapping already use. A week that started on Sunday would
+ * put the weekend on both ends of the view.
+ */
+export function weekOf(key: string): string[] {
+  const [y, m, d] = key.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const mondayOffset = (date.getDay() + 6) % 7
+  return Array.from({ length: 7 }, (_, i) => addDays(key, i - mondayOffset))
+}
+
+/** "1 - 7 September" or "29 September - 5 October", for a week's heading. */
+export function formatWeekTitle(days: string[]): string {
+  const first = days[0]
+  const last = days[days.length - 1]
+  const toDate = (k: string) => {
+    const [y, m, d] = k.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+  const a = toDate(first)
+  const b = toDate(last)
+  const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'long' })
+  if (a.getMonth() === b.getMonth()) {
+    return `${a.getDate()} - ${b.getDate()} ${month(b)} ${b.getFullYear()}`
+  }
+  const sameYear = a.getFullYear() === b.getFullYear()
+  const left = sameYear ? `${a.getDate()} ${month(a)}` : `${a.getDate()} ${month(a)} ${a.getFullYear()}`
+  return `${left} - ${b.getDate()} ${month(b)} ${b.getFullYear()}`
+}
+
+/** The short weekday label a column header uses. */
+export function shortWeekday(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' })
+}

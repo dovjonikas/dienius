@@ -7970,3 +7970,362 @@ button.danger:focus-visible {
    so both facts fit without either being lost. */
 .year-cell.year-tone-high { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--good) 70%, transparent); }
 .year-cell.year-tone-mid { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ------------------------------------------------------------------------
+   The week - seven columns of one shared timeline.
+
+   Every measurement here is a percentage or a fraction of the space the grid
+   is given, and the grid is a flex child with min-height: 0. That is the whole
+   zero-scroll story: there is no pixel budget to blow, so 1920x1080 and
+   1366x768 fit for the same reason 390x812 does. See views/week/weekLayout.ts.
+   ------------------------------------------------------------------------ */
+
+/* The week is the only view in the app that fills its height rather than
+   taking the height of its content, and filling needs an unbroken chain of
+   stretched boxes all the way up. <main> is a plain block, so .calendar was
+   as tall as its own contents and the 1fr timeline row resolved to nothing -
+   on a phone the whole week collapsed to about a hundred pixels of stacked
+   hour labels.
+
+   Scoped with :has() rather than made general, the same way .main-day's own
+   wide-layout rules are: only the Calendar tab is ever a flex column, and the
+   other five views keep the plain block flow they have always had. */
+main:has(.calendar) {
+  display: flex;
+  flex-direction: column;
+}
+
+main:has(.week) > .calendar {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.week-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-shrink: 0;
+}
+
+.week-nav { display: flex; align-items: center; gap: var(--s2); }
+
+.week-nav > button[aria-label] {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.week-nav > button[aria-label]:hover { border-color: var(--muted); }
+
+.week-today { padding: var(--s1) var(--s3); }
+
+.week-grid {
+  display: grid;
+  /* The axis is a fixed, narrow column; the days share whatever is left,
+     equally, so a Tuesday is never wider than a Wednesday. minmax(0, 1fr)
+     rather than 1fr because a long task title would otherwise push its own
+     column wider than its share.
+
+     Three rows - heads, tracks, feet - and every column is display: contents,
+     so its three parts land in those rows directly. That is what aligns the
+     hour axis with the tracks: the axis is simply another cell in the middle
+     row, rather than a column offset down by however tall a header turned out
+     to be. The offset version worked until a template chip made one header
+     taller than the number it was guessed from. */
+  grid-template-columns: 44px repeat(var(--week-days, 7), minmax(0, 1fr));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0 var(--s1);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.week-axis {
+  grid-row: 2;
+  grid-column: 1;
+  position: relative;
+}
+
+.week-hour {
+  position: absolute;
+  right: var(--s1);
+  transform: translateY(-50%);
+  font-size: var(--t-xs);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* No box of its own - its three parts are placed straight into the grid's
+   three rows above. The element stays in the DOM, so data-week-date is still
+   what a drop finds with closest(), and .week-col.is-today still reaches its
+   own track. */
+.week-col { display: contents; }
+
+.week-col-head {
+  grid-row: 1;
+  grid-column: var(--week-col);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  padding-bottom: var(--s1);
+  position: relative;
+  min-width: 0;
+}
+
+/* The one place in the app that opts out of the global 44px button floor.
+   Seven of these stacked two-deep would take 88px off the top of a grid whose
+   entire job is to be a picture of the week, and a picture squeezed to make
+   room for its own labels is not one. The floor comes back as a single 44px
+   row on a touch screen - see the coarse-pointer block below - rather than by
+   shrinking the target, which would just be failing the guideline quietly. */
+.week-col-day,
+.week-col-template {
+  min-height: 0;
+}
+
+.week-col-day {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--s1);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.week-col-weekday { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.week-col-date { font-size: var(--t-sm); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.week-col.is-today .week-col-day { color: var(--accent); }
+.week-col.is-today .week-col-date { color: var(--accent); }
+
+/* The past is a record, not a plan. Same rule the day view follows: tone
+   only, every control still works. */
+.week-col.is-past .week-col-head { opacity: 0.72; }
+
+.week-col-template {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 1px var(--s1);
+  border-radius: var(--r-chip);
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--chip, var(--border)) 22%, transparent);
+  color: var(--text);
+  font-size: var(--t-xs);
+  cursor: pointer;
+}
+
+.week-col-template-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The offer, not the label: this day has no template and the weekday plan
+   names one. Outlined rather than filled, because it is a suggestion. */
+.week-col-template.is-offer {
+  background: none;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.week-col-template.is-offer:hover { border-color: var(--accent); color: var(--text); }
+
+.week-col-template.is-empty {
+  background: none;
+  border-color: transparent;
+  color: var(--faint);
+}
+
+.week-col-template.is-empty:hover { border-color: var(--border); color: var(--muted); }
+.week-col-template.is-empty:disabled { opacity: 0; pointer-events: none; }
+
+.week-stamp-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: max(100%, 140px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+}
+
+.week-stamp-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s1) var(--s2);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.week-stamp-option:hover { background: color-mix(in srgb, var(--chip) 20%, transparent); }
+
+.week-track {
+  grid-row: 2;
+  grid-column: var(--week-col);
+  position: relative;
+  min-height: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.week-col.is-today .week-track {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+/* The hours this particular day is awake for, where they are narrower than the
+   shared axis. Lighter than the track, so asleep reads as outside rather than
+   as a block. */
+.week-waking {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: color-mix(in srgb, var(--surface) 85%, var(--text) 3%);
+  pointer-events: none;
+}
+
+.week-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.week-block {
+  position: absolute;
+  /* A block's height is its duration, which at a week's scale makes a
+     twenty-minute task about nine pixels. Honest, and unusable. The floor is
+     a deliberate small lie about very short blocks so that every block is
+     something a pointer can hit and a word can fit inside. */
+  min-height: 14px;
+  padding: 1px 3px;
+  border: none;
+  border-radius: 3px;
+  overflow: hidden;
+  text-align: left;
+  cursor: grab;
+  background: color-mix(in srgb, var(--block, var(--accent)) 32%, var(--surface));
+  border-left: 2px solid var(--block, var(--accent));
+  color: var(--text);
+  font-size: var(--t-xs);
+  line-height: 1.15;
+  touch-action: none;
+}
+
+.week-block:hover { background: color-mix(in srgb, var(--block, var(--accent)) 46%, var(--surface)); }
+
+.week-block.is-dragging { opacity: 0.55; cursor: grabbing; }
+
+.week-block.is-done {
+  background: color-mix(in srgb, var(--block, var(--accent)) 12%, var(--surface));
+  color: var(--muted);
+}
+
+.week-block.is-done .week-block-title { text-decoration: line-through; }
+
+.week-block.is-key { box-shadow: inset 0 0 0 1px var(--accent); }
+
+.week-block-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-col-foot {
+  grid-row: 3;
+  grid-column: var(--week-col);
+  padding-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s1);
+  font-size: var(--t-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.week-foot-empty { color: var(--faint); }
+.week-foot-focus { color: var(--faint); }
+.week-foot-untimed { color: var(--faint); }
+
+/* Three columns on a phone, not seven - see NARROW_DAYS in WeekView.tsx.
+   Seven at 390px is 47px a column, which is a stripe rather than a block. */
+@media (max-width: 1023px) {
+  .week-grid { grid-template-columns: 36px repeat(3, minmax(0, 1fr)); }
+}
+
+/* The 44px floor, paid for in layout rather than in height. On a touch screen
+   the header becomes one row instead of two, so the day and its template chip
+   are both full-height targets and the head still costs 44px in total - the
+   same as one of them would have on its own. */
+@media (pointer: coarse) {
+  .week-col-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s1);
+    padding-bottom: 4px;
+  }
+
+  .week-col-day,
+  .week-col-template {
+    min-height: 40px;
+    min-width: 0;
+  }
+
+  /* The dot only. A hundred-pixel column cannot hold "Wed 2" and "Working
+     day" side by side, and the one that has to give is the template name -
+     the blocks below are already drawn in the template's colour, so the
+     column says which template it is either way. The full name stays in the
+     button's accessible name, so nothing is lost to a screen reader. */
+  .week-col-template {
+    flex: 0 0 auto;
+    width: 40px;
+    justify-content: center;
+  }
+
+  .week-col-template-name { display: none; }
+
+  /* Blocks cannot be 44px each - a day of them would not fit - but 20px is
+     the difference between a target a thumb can hit and one it cannot. */
+  .week-block { min-height: 20px; }
+}

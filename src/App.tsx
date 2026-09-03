@@ -296,7 +296,14 @@ export function App() {
           WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
             <w.Component key={w.id} date={selectedDate} onDateChange={setSelectedDate} />
           ))}
-        {view === 'calendar' && <CalendarView onOpenDay={openDay} onOpenTemplates={() => setView('templates')} />}
+        {view === 'calendar' && (
+          <CalendarView
+            onOpenDay={openDay}
+            onOpenTemplates={() => setView('templates')}
+            date={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+        )}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}

@@ -51,7 +51,7 @@ export interface SleepSettings {
   profiles: SleepProfile[]
 }
 
-const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
+export const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
   profiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: 'Sleep schedule', window: DEFAULT_SLEEP_WINDOW }],
 }
 

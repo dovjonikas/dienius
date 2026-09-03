@@ -5,7 +5,7 @@ import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
 import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
 import { canAddGoal } from './north'
 import { stampChanges } from './syncEntities'
-import { addWithoutDuplicates, isRoutine, willReceive } from './taskIdentity'
+import { addWithoutDuplicates, dayHas, isRoutine, willReceive } from './taskIdentity'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
 import { addDays } from './dates'
@@ -23,7 +23,7 @@ const listeners = new Set<() => void>()
  * are written.
  *
  * Every action ends here, so stamping here means no action can forget - see
- * , which diffs what is going out against what was there and
+ * `stampChanges`, which diffs what is going out against what was there and
  * marks whatever actually moved. The alternative was sixty actions each
  * remembering to stamp the right entity, which is sixty chances to get it
  * wrong and a sixty-first action next year that gets it wrong by default.
@@ -829,6 +829,44 @@ export const actions = {
           : t,
       ),
     }))
+    return true
+  },
+
+  /**
+   * Moves a task to a different day, keeping its time - what dragging a block
+   * from one column of the week to another commits.
+   *
+   * Deliberately not a push. `pushCount` is not incremented and `core` is not
+   * cleared, because those exist to describe a task that keeps failing to
+   * happen and getting shunted to tomorrow. Dragging Thursday's dentist
+   * appointment onto Friday because that is when it actually is has nothing to
+   * do with that, and counting it would eventually trip the two-push bound on
+   * a task nobody has ever postponed.
+   *
+   * `origin` travels untouched, which is what keeps a moved template task the
+   * same task as the block it came from - see taskIdentity.ts. That means a
+   * day that already has the same block refuses the move rather than ending up
+   * with two of it, which is the bug the origin field was added to fix.
+   *
+   * Refuses a move onto the same day, and a move onto a day that already has
+   * this task's identity; returns false either way so the view can say nothing
+   * happened rather than silently losing the drag.
+   */
+  moveTaskToDay(from: string, to: string, taskId: string): boolean {
+    if (from === to) return false
+    const day = data.days[from]
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!task) return false
+    const target = data.days[to] ?? { date: to, tasks: [] }
+    if (dayHas(target, task)) return false
+    commit({
+      ...data,
+      days: {
+        ...data.days,
+        [from]: { ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) },
+        [to]: { ...target, tasks: [...target.tasks, task] },
+      },
+    })
     return true
   },
 
