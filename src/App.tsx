@@ -24,6 +24,8 @@ import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
 import { requestReplan } from './lib/replanState'
 import { requestCapture } from './lib/captureRequest'
+import { isDemoMode } from './lib/demoMode'
+import { isTourSandbox } from './lib/tourMode'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -65,6 +67,16 @@ export function App() {
   // has actually rendered. A counter rather than a boolean, so pressing N
   // twice in a row focuses twice rather than doing nothing the second time.
   const [focusQuickAdd, setFocusQuickAdd] = useState(0)
+
+  // Once, on mount. It is a no-op from the second open onward - see
+  // actions.seedLibrary and lib/librarySeed.ts - and it deliberately does
+  // not run in demo mode or the tour sandbox, which are separate files whose
+  // whole point is that they hold sample data rather than anybody's.
+  useEffect(() => {
+    if (isDemoMode() || isTourSandbox()) return
+    storeActions.seedLibrary()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (focusQuickAdd === 0 || view !== 'day') return

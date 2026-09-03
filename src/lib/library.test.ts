@@ -1,11 +1,14 @@
 import { expect, test } from 'vitest'
 import {
   currentItem,
+  hasAnotherSeason,
   isItemFinished,
   itemProgress,
+  nextSeason,
   parseLibraryItemInput,
   progressLabel,
   progressPercent,
+  stepsOneAtATime,
   unitPlural,
   unitShort,
 } from './library'
@@ -144,4 +147,104 @@ test('an empty line makes nothing', () => {
 
 test('a zero or negative count is not a total', () => {
   expect(parseLibraryItemInput('Something, 0')).toEqual({ title: 'Something, 0' })
+})
+
+// --- how one item is counted, when the list's own unit is not the answer ----
+//
+// The list still owns the unit; a shelf just holds things of different
+// shapes. A Books list holds a book whose sections are short and unnumbered
+// beside one with twenty named chapters, and a Watching list holds films,
+// which have no parts at all, beside a series that has three seasons of them.
+
+const SHELF = { name: 'Books', unit: 'chapter', unitShort: 'ch' }
+
+test('a page-counted item is spoken in pages, because that is the question being asked', () => {
+  expect(progressLabel(SHELF, { id: 'a', title: 'The War of Art', track: 'pages', total: 139, progress: 68 })).toBe(
+    'p. 68/139',
+  )
+  expect(progressLabel(SHELF, { id: 'a', title: 'Turning Pro', track: 'pages', progress: 20 })).toBe('p. 20')
+})
+
+test('a film has no number at all, because saying 0/0 about one is worse than saying nothing', () => {
+  expect(progressLabel(SHELF, { id: 'a', title: 'Interstellar', track: 'movie' })).toBe('not yet')
+  expect(progressLabel(SHELF, { id: 'a', title: 'Interstellar', track: 'movie', finished: '2026-09-01' })).toBe(
+    'watched',
+  )
+})
+
+test('a series reads the way anybody says it out loud', () => {
+  expect(
+    progressLabel(SHELF, { id: 'a', title: 'Invincible', track: 'series', season: 2, total: 8, progress: 5 }),
+  ).toBe('S2 E5/8')
+  // Ten episodes and no seasons worth naming is just ep 5/10.
+  expect(progressLabel(SHELF, { id: 'a', title: 'From', track: 'series', total: 10, progress: 5 })).toBe('ep 5/10')
+})
+
+test('pages are never stepped one at a time, and a film has nothing to step', () => {
+  expect(stepsOneAtATime({ id: 'a', title: 'x', track: 'pages' })).toBe(false)
+  expect(stepsOneAtATime({ id: 'a', title: 'x', track: 'movie' })).toBe(false)
+  expect(stepsOneAtATime({ id: 'a', title: 'x', track: 'series' })).toBe(true)
+  expect(stepsOneAtATime({ id: 'a', title: 'x' })).toBe(true)
+})
+
+test('a film is only ever finished by somebody saying so', () => {
+  // Nothing to count means nothing can conclude it is over. Without this a
+  // film would be finished the moment it was added, having "completed" all
+  // zero of its parts.
+  expect(isItemFinished({ id: 'a', title: 'Interstellar', track: 'movie' })).toBe(false)
+  expect(isItemFinished({ id: 'a', title: 'Interstellar', track: 'movie', finished: '2026-09-01' })).toBe(true)
+})
+
+test('the end of a season is not the end of a series', () => {
+  const midway = { id: 'a', title: 'Invincible', track: 'series' as const, seasons: 3, season: 1, total: 8, progress: 8 }
+  expect(isItemFinished(midway)).toBe(false)
+  expect(hasAnotherSeason(midway)).toBe(true)
+  // The last season, finished, is the whole thing finished.
+  expect(isItemFinished({ ...midway, season: 3 })).toBe(true)
+})
+
+test('taking on the next season starts it at nothing, with its length unknown again', () => {
+  const item = { id: 'a', title: 'Invincible', track: 'series' as const, seasons: 3, season: 1, total: 8, progress: 8 }
+  // Unknown rather than carried over: nobody knows how many episodes the next
+  // season has until they look it up, and copying the last one's count would
+  // be a guess wearing a number.
+  expect(nextSeason(item)).toEqual({ season: 2, progress: 0, total: undefined })
+})
+
+// --- what a typed line says about shape ------------------------------------
+
+test('a trailing unit word says how this one is counted', () => {
+  expect(parseLibraryItemInput('The War of Art, 139 pages')).toEqual({
+    title: 'The War of Art',
+    total: 139,
+    track: 'pages',
+  })
+  expect(parseLibraryItemInput('From, 10 episodes')).toEqual({ title: 'From', total: 10, track: 'series' })
+})
+
+test('seasons say how many there are, episodes say how long one is', () => {
+  expect(parseLibraryItemInput('Invincible, 3 seasons')).toEqual({
+    title: 'Invincible',
+    track: 'series',
+    seasons: 3,
+    season: 1,
+  })
+})
+
+test('a shape can be named with no number at all', () => {
+  expect(parseLibraryItemInput('Interstellar, movie')).toEqual({ title: 'Interstellar', track: 'movie' })
+  expect(parseLibraryItemInput('Interstellar - film')).toEqual({ title: 'Interstellar', track: 'movie' })
+})
+
+test('a trailing word with nothing marking it off is part of the title', () => {
+  // Without the comma or dash, "The Third Man" would come back as a title of
+  // two words and a track, which is a worse failure than not supporting the
+  // short form at all.
+  expect(parseLibraryItemInput('The Third Man')).toEqual({ title: 'The Third Man' })
+  expect(parseLibraryItemInput('Watching movie')).toEqual({ title: 'Watching movie' })
+})
+
+test('the list own unit is still the ordinary case', () => {
+  expect(parseLibraryItemInput('Sapiens, 20 chapters')).toEqual({ title: 'Sapiens', total: 20 })
+  expect(parseLibraryItemInput('Andor s2, 12')).toEqual({ title: 'Andor s2', total: 12 })
 })

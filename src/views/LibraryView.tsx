@@ -2,14 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { addDays, todayKey } from '../lib/dates'
 import {
+  LIST_PRESETS,
   STARTER_LISTS,
+  hasAnotherSeason,
   isItemFinished,
   itemProgress,
   progressLabel,
   progressPercent,
+  stepsOneAtATime,
   unitPlural,
 } from '../lib/library'
-import type { LibraryItem, LibraryList } from '../lib/types'
+import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
+import { CATEGORIES } from '../lib/categories'
+import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
 import { useListReorder } from './useListReorder'
 import { offerUndo } from '../lib/undo'
 
@@ -21,21 +26,39 @@ import { offerUndo } from '../lib/undo'
  * wants to type - and the honest shape for it is a list with a place in it,
  * plus a way to spend one evening on it without re-deciding what "it" is.
  *
- * Three rules the whole screen follows:
+ * Four rules the whole screen follows. The first three are older than this
+ * version; the fourth is what this version is:
  *
- * - The unit is the list's, not the app's. Every count on this page is
- *   spoken in the word its owner chose - chapters, episodes, lessons.
+ * - The unit is the list's, not the app's. Every count on this page is spoken
+ *   in the word its owner chose - chapters, episodes, lessons - except where
+ *   the item itself asks for something else, which is what `LibraryTrack` is.
  * - Finished work collapses. A list you have read forty books from should
  *   open on the four you have not.
- * - Nothing is created until somebody asks. An empty Library offers two
- *   starters the way Templates offers three, and makes neither on its own.
+ * - Nothing is created until somebody asks.
+ * - **One thing on this page is loud, and it is what you are actually on.**
+ *   The first unfinished item in each list gets a real card with its progress
+ *   and its pace note; everything behind it is one quiet line. That is the
+ *   only hierarchy here, and it is the fix for the version before this one,
+ *   where thirteen books and five things to watch were thirteen and five
+ *   identical rows with four buttons each, and finding anything meant reading
+ *   all of them.
  */
 export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void }) {
   const data = useAppData()
-  const [openListId, setOpenListId] = useState<string | null>(null)
   const [newListOpen, setNewListOpen] = useState(false)
-
+  // Which lists are open, held here rather than in each section so the chip
+  // row above can open one. Seeded from what this device last did - see
+  // lib/libraryPrefs.ts - and written back on every change, so the fold
+  // survives a reload without ever travelling to another device.
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(data.library.map(list => [list.id, isListOpen(list.id)])),
+  )
   const lists = data.library
+
+  function setOpen(listId: string, open: boolean) {
+    rememberListOpen(listId, open)
+    setOpenIds(current => ({ ...current, [listId]: open }))
+  }
 
   if (lists.length === 0) {
     return (
@@ -92,19 +115,53 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
         )}
       </div>
       {newListOpen && <NewListForm onDone={() => setNewListOpen(false)} />}
+
+      {/* Every list in one line, with what is going in each. It is here
+          because the page is long and the question at the top of it is
+          usually "where is Watching" rather than "what is in Books" - and a
+          chip that answers by scrolling to the list beats a chip that opens a
+          different screen. One list on its own does not need it. */}
+      {lists.length > 1 && (
+        <nav className="library-chips" aria-label="Jump to a list">
+          {lists.map(list => {
+            const going = list.items.filter(i => !isItemFinished(i)).length
+            return (
+              <button
+                key={list.id}
+                type="button"
+                className="library-chip"
+                style={list.color ? ({ ['--dot' as string]: list.color } as React.CSSProperties) : undefined}
+                onClick={() => {
+                  setOpen(list.id, true)
+                  document.getElementById(sectionId(list.id))?.scrollIntoView({ block: 'start' })
+                }}
+              >
+                {list.color && <span className="library-chip-dot" aria-hidden="true" />}
+                {list.name}
+                <span className="library-chip-count">{going} going</span>
+              </button>
+            )
+          })}
+        </nav>
+      )}
+
       <div className="library-lists">
         {lists.map(list => (
-          <ListCard
+          <ListSection
             key={list.id}
             list={list}
-            editing={openListId === list.id}
-            onToggleEdit={() => setOpenListId(id => (id === list.id ? null : list.id))}
+            open={openIds[list.id] ?? isListOpen(list.id)}
+            onToggleOpen={() => setOpen(list.id, !(openIds[list.id] ?? isListOpen(list.id)))}
             onOpenDay={onOpenDay}
           />
         ))}
       </div>
     </section>
   )
+}
+
+function sectionId(listId: string): string {
+  return `library-list-${listId}`
 }
 
 function NewListForm({ onDone }: { onDone: () => void }) {
@@ -125,6 +182,26 @@ function NewListForm({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="library-new">
+      {/* The three that kept being typed by hand, beside the form rather than
+          instead of it. The form was never hard; it was three decisions in a
+          row at the moment somebody had one idea. */}
+      <div className="library-presets">
+        <span className="muted">Quick start:</span>
+        {LIST_PRESETS.map(preset => (
+          <button
+            key={preset.name}
+            type="button"
+            className="library-preset"
+            onClick={() => {
+              actions.addLibraryList(preset)
+              onDone()
+            }}
+          >
+            {preset.name}
+            <span className="library-preset-unit">{unitPlural(preset)}</span>
+          </button>
+        ))}
+      </div>
       <div className="library-new-fields">
         <label className="field">
           <span className="field-label">List name</span>
@@ -154,30 +231,29 @@ function NewListForm({ onDone }: { onDone: () => void }) {
   )
 }
 
-interface ListCardProps {
+interface ListSectionProps {
   list: LibraryList
-  editing: boolean
-  onToggleEdit: () => void
+  open: boolean
+  onToggleOpen: () => void
   onOpenDay?: (date: string) => void
 }
 
-function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
+function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [showFinished, setShowFinished] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
   const itemsRef = useRef<HTMLUListElement>(null)
   const reorder = useListReorder(itemsRef, (id, to) => actions.moveLibraryItem(list.id, id, to))
 
   const going = list.items.filter(i => !isItemFinished(i))
   const finished = list.items.filter(isItemFinished)
-
-  // Reordering with a keyboard, on the grip itself. A drag-only list is a
-  // list a keyboard cannot arrange at all, and the order here is the whole
-  // point of the list - it is what "next" means.
-  function nudge(itemId: string, index: number, by: number) {
-    const to = Math.max(0, Math.min(list.items.length - 1, index + by))
-    if (to !== index) actions.moveLibraryItem(list.id, itemId, to)
-  }
+  // The one thing that is loud. First rather than "most recently touched",
+  // for the same reason `currentItem` is: the list is hand-ordered, the owner
+  // has already said which is next by putting it there, and second-guessing
+  // that with a timestamp would make the order they arranged mean nothing.
+  const [active, ...rest] = going
 
   function add() {
     if (!draft.trim()) return
@@ -192,25 +268,50 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
     offerUndo(`${title} removed from ${list.name}`, () => actions.replaceLibraryList(before))
   }
 
+  const rowProps = (item: LibraryItem, index: number) => ({
+    list,
+    item,
+    index,
+    dragging: reorder.draggingId === item.id,
+    over: reorder.overIndex === index && reorder.draggingId !== null && reorder.draggingId !== item.id,
+    detailOpen: detailId === item.id,
+    onToggleDetail: () => setDetailId(id => (id === item.id ? null : item.id)),
+    onGripPointerDown: (e: React.PointerEvent) => reorder.start(item.id, index, e),
+    onNudge: (by: number) =>
+      actions.moveLibraryItem(list.id, item.id, Math.max(0, Math.min(list.items.length - 1, index + by))),
+    onRemove: () => removeItem(item.id, item.title),
+    onOpenDay,
+  })
+
   return (
-    <div className="library-list">
+    <div className={open ? 'library-list is-open' : 'library-list'} id={sectionId(list.id)}>
       <div className="library-list-head">
-        <h3>{list.name}</h3>
-        <span className="library-list-unit">
-          {going.length} going, counted in {unitPlural(list)}
-        </span>
+        <button type="button" className="library-list-fold" aria-expanded={open} onClick={onToggleOpen}>
+          <span className="done-caret" aria-hidden="true" />
+          {list.color && (
+            <span
+              className="library-chip-dot"
+              style={{ ['--dot' as string]: list.color } as React.CSSProperties}
+              aria-hidden="true"
+            />
+          )}
+          <h3>{list.name}</h3>
+          <span className="library-list-unit">
+            {going.length} going, counted in {unitPlural(list)}
+          </span>
+        </button>
         <button
           type="button"
           className="library-list-edit"
-          aria-expanded={editing}
+          aria-expanded={settingsOpen}
           aria-label={`Settings for ${list.name}`}
-          onClick={onToggleEdit}
+          onClick={() => setSettingsOpen(o => !o)}
         >
           Edit
         </button>
       </div>
 
-      {editing && (
+      {settingsOpen && (
         <div className="library-list-settings">
           <label className="field">
             <span className="field-label">Name</span>
@@ -228,6 +329,32 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
               onChange={e => actions.updateLibraryList(list.id, { unitShort: e.target.value })}
             />
           </label>
+          {/* Six hues and off, from the same palette the categories use, so a
+              chip row can be read at a glance. Nothing sorts or filters by
+              it; it is a dot. */}
+          <div className="field">
+            <span className="field-label">Dot</span>
+            <div className="library-colors" role="group" aria-label={`Colour for ${list.name}`}>
+              <button
+                type="button"
+                className={list.color ? 'library-color' : 'library-color is-on'}
+                aria-pressed={!list.color}
+                aria-label="No colour"
+                onClick={() => actions.updateLibraryList(list.id, { color: undefined })}
+              />
+              {CATEGORIES.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={list.color === c.color ? 'library-color is-on' : 'library-color'}
+                  style={{ ['--dot' as string]: c.color } as React.CSSProperties}
+                  aria-pressed={list.color === c.color}
+                  aria-label={c.label}
+                  onClick={() => actions.updateLibraryList(list.id, { color: c.color })}
+                />
+              ))}
+            </div>
+          </div>
           <button
             type="button"
             className={confirmDelete ? 'btn-danger armed' : 'btn-danger'}
@@ -239,84 +366,85 @@ function ListCard({ list, editing, onToggleEdit, onOpenDay }: ListCardProps) {
         </div>
       )}
 
-      {/* One field, one line, one Enter. The count is optional and comes from
-          the same line - "Daring Greatly, 12 chapters" - so adding a thing
-          with a known length costs no more taps than adding one without. */}
-      <div className="library-add">
-        <input
-          value={draft}
-          placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
-          aria-label={`Add to ${list.name}`}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              add()
-            }
-          }}
-        />
-        <button type="button" className="btn-secondary" disabled={!draft.trim()} onClick={add}>
-          Add
-        </button>
-      </div>
+      {open && (
+        <>
+          {going.length === 0 && finished.length === 0 && (
+            <p className="muted library-list-empty">Nothing on this list yet.</p>
+          )}
 
-      {going.length === 0 && finished.length === 0 && (
-        <p className="muted library-list-empty">Nothing on this list yet.</p>
-      )}
+          {active && (
+            <ul className="library-items is-active">
+              <ItemRow {...rowProps(active, 0)} active />
+            </ul>
+          )}
 
-      <ul className="library-items" ref={itemsRef}>
-        {going.map((item, index) => (
-          <ItemRow
-            key={item.id}
-            list={list}
-            item={item}
-            index={index}
-            dragging={reorder.draggingId === item.id}
-            over={reorder.overIndex === index && reorder.draggingId !== null && reorder.draggingId !== item.id}
-            onGripPointerDown={e => reorder.start(item.id, index, e)}
-            onNudge={by => nudge(item.id, index, by)}
-            onRemove={() => removeItem(item.id, item.title)}
-            onOpenDay={onOpenDay}
-          />
-        ))}
-      </ul>
-
-      {finished.length > 0 && (
-        <div className="library-finished">
-          <button
-            type="button"
-            className="library-finished-toggle"
-            aria-expanded={showFinished}
-            onClick={() => setShowFinished(open => !open)}
-          >
-            Finished ({finished.length})
-          </button>
-          {showFinished && (
-            <ul className="library-items is-finished">
-              {finished.map(item => (
-                <li key={item.id} className="library-item done">
-                  <span className="library-item-title">{item.title}</span>
-                  <span className="library-item-count">{progressLabel(list, item)}</span>
-                  <button
-                    type="button"
-                    className="library-item-reopen"
-                    onClick={() => actions.toggleLibraryItemFinished(list.id, item.id, todayKey())}
-                  >
-                    Reopen
-                  </button>
-                  <button
-                    type="button"
-                    className="library-item-remove"
-                    aria-label={`Remove ${item.title}`}
-                    onClick={() => removeItem(item.id, item.title)}
-                  >
-                    &times;
-                  </button>
-                </li>
+          {rest.length > 0 && (
+            <ul className="library-items" ref={itemsRef}>
+              {rest.map((item, index) => (
+                <ItemRow key={item.id} {...rowProps(item, index + 1)} />
               ))}
             </ul>
           )}
-        </div>
+
+          {/* One field, one line, one Enter. The count is optional and comes
+              from the same line - "Daring Greatly, 12 chapters" - and so is
+              the shape: "139 pages", "3 seasons", "movie". */}
+          <div className="library-add">
+            <input
+              value={draft}
+              placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
+              aria-label={`Add to ${list.name}`}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  add()
+                }
+              }}
+            />
+            <button type="button" className="btn-secondary" disabled={!draft.trim()} onClick={add}>
+              Add
+            </button>
+          </div>
+
+          {finished.length > 0 && (
+            <div className="library-finished">
+              <button
+                type="button"
+                className="library-finished-toggle"
+                aria-expanded={showFinished}
+                onClick={() => setShowFinished(o => !o)}
+              >
+                Finished ({finished.length})
+              </button>
+              {showFinished && (
+                <ul className="library-items is-finished">
+                  {finished.map(item => (
+                    <li key={item.id} className="library-item done">
+                      <span className="library-item-title">{item.title}</span>
+                      <span className="library-item-count">{progressLabel(list, item)}</span>
+                      <button
+                        type="button"
+                        className="library-item-reopen"
+                        onClick={() => actions.toggleLibraryItemFinished(list.id, item.id, todayKey())}
+                      >
+                        Reopen
+                      </button>
+                      <button
+                        type="button"
+                        className="library-item-remove"
+                        aria-label={`Remove ${item.title}`}
+                        onClick={() => removeItem(item.id, item.title)}
+                      >
+                        &times;
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -326,37 +454,55 @@ interface ItemRowProps {
   list: LibraryList
   item: LibraryItem
   index: number
+  active?: boolean
   dragging: boolean
   /** True when a drop right now would land on this row. */
   over: boolean
+  detailOpen: boolean
+  onToggleDetail: () => void
   onGripPointerDown: (e: React.PointerEvent) => void
   onNudge: (by: number) => void
   onRemove: () => void
   onOpenDay?: (date: string) => void
 }
 
-function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge, onRemove, onOpenDay }: ItemRowProps) {
-  const [scheduling, setScheduling] = useState(false)
-  const [already, setAlready] = useState<string | null>(null)
+/**
+ * One item, in one of two sizes.
+ *
+ * The active card carries its progress bar and its pace note; every other row
+ * is a title and a count. That split is the whole navigation model of this
+ * screen - and the reason there are no longer four buttons on every line.
+ * Everything a row can do is behind tapping it, which opens the panel below
+ * it. On a pointer the row also reveals its two commonest actions on hover,
+ * because a mouse can afford them and a thumb cannot.
+ */
+function ItemRow({
+  list,
+  item,
+  index,
+  active = false,
+  dragging,
+  over,
+  detailOpen,
+  onToggleDetail,
+  onGripPointerDown,
+  onNudge,
+  onRemove,
+  onOpenDay,
+}: ItemRowProps) {
   const percent = progressPercent(item)
-
-  // A refused schedule says so and stays put rather than silently doing
-  // nothing or quietly adding a second identical card - see
-  // actions.scheduleLibraryItem. Not a toast: the answer belongs on the row
-  // that was tapped, where the eye already is.
-  function schedule(date: string, label: string) {
-    if (!actions.scheduleLibraryItem(date, list.id, item.id)) {
-      setAlready(label)
-      return
-    }
-    setAlready(null)
-    setScheduling(false)
-    onOpenDay?.(date)
-  }
 
   return (
     <li
-      className={['library-item', dragging ? 'is-dragging' : '', over ? 'is-over' : ''].filter(Boolean).join(' ')}
+      className={[
+        'library-item',
+        active ? 'is-active' : '',
+        dragging ? 'is-dragging' : '',
+        over ? 'is-over' : '',
+        detailOpen ? 'is-detailed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-reorder-index={index}
     >
       {/* A real button, not a decorative handle: it is dragged with a pointer
@@ -375,75 +521,43 @@ function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge
       >
         <span className="library-item-grip-dots" aria-hidden="true" />
       </button>
-      <div className="library-item-main">
-        <span className="library-item-title">{item.title}</span>
-        {percent !== undefined && (
-          <span className="library-item-bar" aria-hidden="true">
-            <span className="library-item-bar-fill" style={{ width: `${percent}%` }} />
-          </span>
-        )}
-      </div>
 
-      {/* The count, and the two buttons that correct it by hand. Progress
-          normally moves by ticking a task off; this is for the evening you
-          read three chapters and only planned one. */}
-      <div className="library-item-progress">
-        <button
-          type="button"
-          className="library-step"
-          aria-label={`One fewer ${list.unit} of ${item.title}`}
-          disabled={itemProgress(item) === 0}
-          onClick={() => actions.stepLibraryItem(list.id, item.id, -1, todayKey())}
-        >
-          &minus;
-        </button>
+      <button
+        type="button"
+        className="library-item-open"
+        aria-expanded={detailOpen}
+        aria-label={`${item.title}, ${progressLabel(list, item)}`}
+        onClick={onToggleDetail}
+      >
+        <span className="library-item-main">
+          <span className="library-item-title">{item.title}</span>
+          {active && percent !== undefined && (
+            <span className="library-item-bar" aria-hidden="true">
+              <span className="library-item-bar-fill" style={{ width: `${percent}%` }} />
+            </span>
+          )}
+          {/* Only on the card that is loud. On a quiet row it would be a
+              second line of prose on every line of a list of thirteen. */}
+          {active && item.pace && <span className="library-item-pace">{item.pace}</span>}
+        </span>
         <span className="library-item-count">{progressLabel(list, item)}</span>
-        <button
-          type="button"
-          className="library-step"
-          aria-label={`One more ${list.unit} of ${item.title}`}
-          onClick={() => actions.stepLibraryItem(list.id, item.id, 1, todayKey())}
-        >
-          +
-        </button>
-      </div>
+      </button>
 
-      <div className="library-item-actions">
-        {scheduling ? (
-          <div className="library-schedule" role="group" aria-label={`Schedule ${item.title}`}>
-            {already ? (
-              <span className="library-schedule-note" role="status">
-                Already on {already}
-              </span>
-            ) : (
-              <>
-                <button type="button" onClick={() => schedule(todayKey(), 'today')}>
-                  Today
-                </button>
-                <button type="button" onClick={() => schedule(addDays(todayKey(), 1), 'tomorrow')}>
-                  Tomorrow
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setScheduling(false)
-                setAlready(null)
-              }}
-              aria-label="Cancel scheduling"
-            >
-              &times;
-            </button>
-          </div>
-        ) : (
+      {/* The two commonest things, revealed by a pointer. A finger opens the
+          panel instead, which has these and everything else - see the CSS.
+          Gone while the panel is open, because the panel has them: two
+          buttons with the same name doing the same thing is a row a screen
+          reader announces twice. */}
+      {!detailOpen && (
+      <div className="library-item-hover">
+        {stepsOneAtATime(item) && (
           <button
             type="button"
-            className="library-item-schedule"
-            aria-label={`Schedule ${item.title}`}
-            onClick={() => setScheduling(true)}
+            className="library-step"
+            aria-label={`One more ${list.unit} of ${item.title}`}
+            onClick={() => actions.stepLibraryItem(list.id, item.id, 1, todayKey())}
           >
-            Schedule
+            +
           </button>
         )}
         <button
@@ -455,6 +569,278 @@ function ItemRow({ list, item, index, dragging, over, onGripPointerDown, onNudge
           &times;
         </button>
       </div>
+      )}
+
+      {detailOpen && <ItemDetail list={list} item={item} onOpenDay={onOpenDay} onRemove={onRemove} />}
     </li>
+  )
+}
+
+interface ItemDetailProps {
+  list: LibraryList
+  item: LibraryItem
+  onOpenDay?: (date: string) => void
+  onRemove: () => void
+}
+
+/**
+ * Everything one item can do, in one place, opened by tapping the row.
+ *
+ * Inline under the row rather than floating beside it, and that is a
+ * deliberate choice against the obvious one. A popover has to be positioned,
+ * and this app has already shipped two bugs where one measured itself against
+ * the wrong ancestor and one hung off the bottom of a phone. A panel that
+ * pushes the list down cannot do either, works identically on both platforms,
+ * and needs no code to decide which side it opens on.
+ */
+function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
+  const [pace, setPace] = useState(item.pace ?? '')
+  const [page, setPage] = useState(String(itemProgress(item)))
+  const [scheduled, setScheduled] = useState<string | null>(null)
+  const [templateOpen, setTemplateOpen] = useState(false)
+
+  const track: LibraryTrack | 'units' = item.track ?? 'units'
+
+  function schedule(date: string, label: string) {
+    if (!actions.scheduleLibraryItem(date, list.id, item.id)) {
+      setScheduled(`Already on ${label}`)
+      return
+    }
+    setScheduled(null)
+    onOpenDay?.(date)
+  }
+
+  return (
+    <div className="library-detail">
+      <div className="library-detail-row">
+        <span className="field-label">Counted in</span>
+        <div className="segmented" role="group" aria-label={`How ${item.title} is counted`}>
+          {(['units', 'pages', 'series', 'movie'] as const).map(option => (
+            <button
+              key={option}
+              type="button"
+              className={track === option ? 'active' : ''}
+              aria-pressed={track === option}
+              onClick={() =>
+                actions.updateLibraryItem(list.id, item.id, { track: option === 'units' ? null : option })
+              }
+            >
+              {option === 'units' ? unitPlural(list) : option === 'movie' ? 'one sitting' : option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {track === 'movie' ? (
+        <div className="library-detail-row">
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => actions.toggleLibraryItemFinished(list.id, item.id, todayKey())}
+          >
+            {isItemFinished(item) ? 'Not watched after all' : 'Watched it'}
+          </button>
+        </div>
+      ) : (
+        <div className="library-detail-row">
+          <span className="field-label">{track === 'pages' ? 'On page' : 'Done'}</span>
+          {/* Typed, not stepped, for pages: nobody presses + fifty-four
+              times, and a control that expects them to is a control that
+              quietly stops being used. */}
+          {track === 'pages' ? (
+            <>
+              <input
+                className="library-page-input"
+                inputMode="numeric"
+                aria-label={`Page you are on in ${item.title}`}
+                value={page}
+                onChange={e => setPage(e.target.value)}
+                onBlur={() => {
+                  const next = Number(page.trim())
+                  if (Number.isInteger(next) && next >= 0) actions.setLibraryItemProgress(list.id, item.id, next, todayKey())
+                  else setPage(String(itemProgress(item)))
+                }}
+              />
+              <span className="muted">of {item.total ?? '?'}</span>
+            </>
+          ) : (
+            <div className="library-item-progress">
+              <button
+                type="button"
+                className="library-step"
+                aria-label={`One fewer ${list.unit} of ${item.title}`}
+                disabled={itemProgress(item) === 0}
+                onClick={() => actions.stepLibraryItem(list.id, item.id, -1, todayKey())}
+              >
+                &minus;
+              </button>
+              <span className="library-item-count">{progressLabel(list, item)}</span>
+              <button
+                type="button"
+                className="library-step"
+                aria-label={`One more ${list.unit} of ${item.title}`}
+                onClick={() => actions.stepLibraryItem(list.id, item.id, 1, todayKey())}
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {track === 'series' && (
+        <div className="library-detail-row">
+          <span className="field-label">Season</span>
+          <input
+            className="library-page-input"
+            inputMode="numeric"
+            aria-label={`Season of ${item.title}`}
+            value={item.season ?? ''}
+            placeholder="-"
+            onChange={e => {
+              const next = Number(e.target.value.trim())
+              actions.updateLibraryItem(list.id, item.id, {
+                season: e.target.value.trim() === '' ? null : Number.isInteger(next) ? next : undefined,
+              })
+            }}
+          />
+          <span className="muted">of {item.seasons ?? '?'}</span>
+          {hasAnotherSeason(item) && itemProgress(item) > 0 && item.total !== undefined && itemProgress(item) >= item.total && (
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => actions.advanceLibrarySeason(list.id, item.id)}
+            >
+              Start season {(item.season ?? 1) + 1}
+            </button>
+          )}
+        </div>
+      )}
+
+      <label className="field library-detail-pace">
+        <span className="field-label">Pace or note</span>
+        {/* One field, not two. "One chapter a day" is both the pace and the
+            note anybody would write, and a second free-text box with nothing
+            reading it is exactly the kind of structure CONVENTIONS section 11
+            says to add a way out for rather than a field to hold. */}
+        <input
+          value={pace}
+          maxLength={80}
+          placeholder="one chapter a day"
+          onChange={e => setPace(e.target.value)}
+          onBlur={() => actions.updateLibraryItem(list.id, item.id, { pace: pace.trim() === '' ? null : pace })}
+        />
+      </label>
+
+      <div className="library-detail-actions">
+        <button type="button" className="btn-secondary" onClick={() => schedule(todayKey(), 'today')}>
+          Onto today
+        </button>
+        <button type="button" className="btn-secondary" onClick={() => schedule(addDays(todayKey(), 1), 'tomorrow')}>
+          Onto tomorrow
+        </button>
+        <button type="button" className="btn-secondary" onClick={() => setTemplateOpen(o => !o)}>
+          Add to template
+        </button>
+        <button type="button" className="library-item-remove" aria-label={`Remove ${item.title}`} onClick={onRemove}>
+          Remove
+        </button>
+      </div>
+      {scheduled && (
+        <p className="library-schedule-note" role="status">
+          {scheduled}
+        </p>
+      )}
+      {templateOpen && <AddToTemplate list={list} onDone={() => setTemplateOpen(false)} />}
+    </div>
+  )
+}
+
+/**
+ * Putting a recurring session for this list onto a template, in one flow.
+ *
+ * It used to be two screens and a piece of knowledge nobody has: go to
+ * Templates, build a block, find the binding control on it. Here it is a
+ * template, a time and a length.
+ *
+ * **It binds to the list, not to the item it was opened from**, which is the
+ * whole point of the binding as it already existed: the block says "a reading
+ * session", the list says which book, and finishing a book moves the block on
+ * to the next one instead of leaving a dead block behind.
+ */
+function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void }) {
+  const data = useAppData()
+  const [templateId, setTemplateId] = useState(data.templates[0]?.id ?? '')
+  const [time, setTime] = useState('')
+  const [minutes, setMinutes] = useState('30')
+  const [clash, setClash] = useState<Template | null>(null)
+
+  if (data.templates.length === 0) {
+    return <p className="muted library-detail-note">No templates yet - build one first, in the Templates tab.</p>
+  }
+
+  const block = {
+    title: `${list.name} session`,
+    time: time.trim() || undefined,
+    minutes: Number(minutes) > 0 ? Number(minutes) : undefined,
+  }
+
+  return (
+    <div className="library-template-form">
+      <label className="field">
+        <span className="field-label">Template</span>
+        <select value={templateId} onChange={e => setTemplateId(e.target.value)}>
+          {data.templates.map(t => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span className="field-label">At</span>
+        <input value={time} placeholder="21:00" onChange={e => setTime(e.target.value)} />
+      </label>
+      <label className="field">
+        <span className="field-label">For</span>
+        <input value={minutes} inputMode="numeric" onChange={e => setMinutes(e.target.value)} />
+      </label>
+      {clash ? (
+        // Offered, never done twice: two reading blocks on one template both
+        // pointing at the same list is not something anybody meant.
+        <div className="library-template-clash" role="status">
+          <span>{clash.name} already has a {list.name} block.</span>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              actions.replaceLibraryBlockOnTemplate(clash.id, list.id, block)
+              onDone()
+            }}
+          >
+            Change that one
+          </button>
+          <button type="button" className="btn-secondary" onClick={() => setClash(null)}>
+            Leave it
+          </button>
+        </div>
+      ) : (
+        <div className="library-new-actions">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              if (actions.addLibraryBlockToTemplate(templateId, list.id, block)) onDone()
+              else setClash(data.templates.find(t => t.id === templateId) ?? null)
+            }}
+          >
+            Add block
+          </button>
+          <button type="button" className="btn-secondary" onClick={onDone}>
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

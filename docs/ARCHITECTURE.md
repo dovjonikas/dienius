@@ -199,7 +199,9 @@ src/
     undo.ts            one app-wide undo offer, five seconds
     shortcuts.ts       the keyboard layer and its two safety rules
     install.ts         holds the one beforeinstallprompt event
-    library.ts         units, progress, the typed-line parser
+    library.ts         units, progress, tracks, the typed-line parser
+    librarySeed.ts     the reading plan, put in once - see its own comment
+    libraryPrefs.ts    which lists are folded, per device
     dates.ts           date-key helpers, month grid
     categories.ts      the six categories; colours live in styles.css
     themes.ts          the three presets

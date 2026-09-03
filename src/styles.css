@@ -2248,6 +2248,24 @@ textarea:focus {
   background: var(--surface);
 }
 
+/* And the same rule the buttons follow: on a finger, a field is 44px.
+   ------------------------------------------------------------------------
+   This was being done per class - .quick-add had it, the block editor had
+   it, the library's new page field did not - which is the same shape of
+   mistake the base rule above was written to end. A field added next year
+   should be a touch target because it is a field, not because somebody
+   remembered.
+
+   min-height rather than height: a textarea keeps whatever its rows give it,
+   and the two inputs inside .time-stepper keep filling their own box. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
 /* ------------------------------------------------------------------------
    TimePicker - the one time control in the app, see views/TimePicker.tsx.
 
@@ -6816,6 +6834,19 @@ button.danger:focus-visible {
 
 .task-library { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 
+/* The pace note the bound item carries. Not a pill: it is a sentence, and
+   pills are for the short facts beside it. Truncated rather than wrapped,
+   because a meta line that grows to two lines pushes every card on the day
+   down - the whole note is in the item, one tap away. */
+.task-pace {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--faint);
+  font-style: italic;
+}
+
 /* A key task is marked on the card itself, not by a badge in the meta line:
    the point of three-per-day is that they are visible before anything is
    read, and a word in the second line is not. */
@@ -9808,4 +9839,265 @@ main:has(.week) > .calendar {
   }
 
   .inbox-item-delete { width: 44px; }
+}
+
+/* Library v2: one loud thing per list, everything else quiet.
+   ------------------------------------------------------------------------
+   The version before this drew every item the same size with four buttons on
+   each, which is fine for a list of three and unreadable for a list of
+   thirteen - and thirteen is what the shelf this was built for actually
+   holds. So: lists fold, a chip row jumps between them, the item you are
+   actually on gets a card, everything behind it gets one line, and the four
+   buttons become a panel that opens under the row that was tapped. */
+
+/* Every list in one line. Scrolls sideways rather than wrapping to three
+   rows on a phone - it is a jump bar, and a jump bar that is taller than the
+   thing it jumps to has stopped being one. */
+.library-chips {
+  display: flex;
+  gap: var(--s2);
+  margin-bottom: var(--s4);
+  padding-bottom: var(--s1);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.library-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.library-chip:hover { border-color: var(--accent); }
+
+.library-chip-count { color: var(--faint); font-variant-numeric: tabular-nums; }
+
+.library-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-round);
+  background: var(--dot, var(--border));
+  flex-shrink: 0;
+}
+
+/* The whole head is the fold, so the target is the width of the card rather
+   than a caret somebody has to aim at. */
+.library-list-fold {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.library-list-fold h3 { margin: 0; font-size: var(--t-md); }
+.library-list.is-open .library-list-fold .done-caret { transform: rotate(90deg); }
+
+/* The three that kept being typed by hand, beside the form rather than
+   instead of it. */
+.library-presets {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-bottom: var(--s3);
+  font-size: var(--t-sm);
+}
+
+.library-preset {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s2);
+  min-height: 34px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.library-preset:hover { border-color: var(--accent); }
+.library-preset-unit { color: var(--faint); font-size: var(--t-xs); }
+
+.library-colors { display: flex; align-items: center; gap: 10px; }
+
+.library-color {
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-round);
+  background: var(--dot, transparent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.library-color.is-on { border-color: var(--text); }
+
+/* The row, as one button. Everything a row can do lives in the panel it
+   opens, which is what took four controls off every line. */
+.library-item-open {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+
+.library-item-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-control); }
+
+/* The one thing that is loud. A surface and a heavier title, so the eye
+   lands on what you are actually on before it reads anything else. */
+.library-items.is-active { margin-bottom: var(--s2); }
+
+.library-item.is-active {
+  padding: var(--s3) var(--s3) var(--s3) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.library-item.is-active .library-item-title { font-size: var(--t-lg); }
+.library-item.is-active .library-item-count { color: var(--text); }
+
+/* The pace note. Only ever on the active card - on a quiet row it would be a
+   second line of prose on every line of a list of thirteen. */
+.library-item-pace {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  line-height: 1.35;
+}
+
+/* The two commonest actions, for a pointer that can afford them. A finger
+   gets the panel instead, which has these and everything else. */
+.library-item-hover {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.library-item:hover .library-item-hover,
+.library-item:focus-within .library-item-hover { opacity: 1; }
+
+@media (hover: none), (pointer: coarse) {
+  .library-item-hover { display: none; }
+}
+
+/* Everything one item can do, inline under the row rather than floating
+   beside it. A popover has to be positioned, and this app has already
+   shipped two bugs where one measured itself against the wrong ancestor and
+   one hung off the bottom of a phone. A panel that pushes the list down
+   cannot do either. */
+.library-detail {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+.library-item.is-detailed { flex-wrap: wrap; }
+
+.library-detail-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.library-detail-row .field-label { min-width: 78px; }
+
+.library-detail-pace { margin: 0; }
+
+.library-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.library-detail-note { margin: 0; font-size: var(--t-sm); }
+
+.library-page-input {
+  width: 72px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.library-template-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--bg);
+}
+
+.library-template-form .field { margin: 0; }
+.library-template-form input { width: 90px; }
+
+/* Offered, never done twice: two reading blocks on one template both
+   pointing at the same list is not something anybody meant. */
+.library-template-clash {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  flex: 1 0 100%;
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+@media (pointer: coarse) {
+  .library-chip,
+  .library-preset { min-height: 44px; }
+  /* The fold is the whole width of the head, so the target is the
+     card rather than a caret somebody has to aim at - but a button
+     whose content is a heading and a line of meta is only as tall as
+     that text, which measured 20px. */
+  .library-list-fold { min-height: 44px; }
+  .library-color { width: 32px; height: 32px; }
+  .library-item-open { min-height: 44px; }
+}
+
+/* On a phone the count sits under the title rather than beside it: a
+   72-character book title and "S2 E5/8" on one 375px line means the title
+   gets nine characters. */
+@media (max-width: 560px) {
+  .library-item-open { flex-wrap: wrap; }
+  .library-item-main { flex: 1 0 100%; }
+  .library-item-open .library-item-count { min-width: 0; text-align: left; }
+  .library-detail-row .field-label { min-width: 0; flex: 1 0 100%; }
+  .library-template-form { flex-direction: column; align-items: stretch; }
+  .library-template-form input,
+  .library-template-form select { width: 100%; }
 }

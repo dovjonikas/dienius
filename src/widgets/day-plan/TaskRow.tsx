@@ -159,6 +159,12 @@ export function TaskRow({
   const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
   const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
   const boundLabel = boundList && boundItem ? progressLabel(boundList, boundItem) : undefined
+  // The pace note rides along with the binding: "one section a day" is the
+  // thing that was actually decided and the thing that has been forgotten by
+  // the time the block comes round on a Thursday. It says nothing about
+  // whether the pace was kept - nothing in this app measures it - it is just
+  // the sentence being repeated back at the moment it is useful.
+  const boundPace = boundItem?.pace
 
   // Selecting has to live somewhere that (a) is not the checkbox, so it
   // cannot be mistaken for completing the task, and (b) is not the row's
@@ -296,6 +302,7 @@ export function TaskRow({
             </span>
           )}
           {boundLabel && <span className="task-library">{boundLabel}</span>}
+          {boundPace && <span className="task-pace">{boundPace}</span>}
           {task.note && (
             <span className="task-note-mark" title="Has a note">
               note

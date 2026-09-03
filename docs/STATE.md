@@ -64,7 +64,7 @@ reading them.
 | **Calendar → Week** | Seven columns of one shared timeline. Drag a block between days, tap to open, tap empty space to add, stamp per column or the whole week. Three days at a time on a phone |
 | **Calendar → Year** | One cell per day, shaded by fullness, coloured by template |
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save |
-| **Library** | Lists worked through a unit at a time (chapters, episodes, sessions). A session goes onto a day in two taps; ticking it off advances the book |
+| **Library** | Lists worked through a unit at a time. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book |
 | **Review** | Week and month statistics, all derived from the days themselves |
 | **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Sync, Appearance. General also replays the tour, in a sandbox |
 
@@ -156,6 +156,12 @@ What follows is wanted rather than owed.
 - ~~The backlog nobody had built~~ - shipped in v1.9, as a fourth shelf
   under the inbox rather than a seventh tab. It records no age, because
   nothing that cannot be recorded can ever be shown.
+- ~~A season ending finished the whole series~~ - fixed in v1.9. Watching the
+  last episode of season one of three filed the series under Finished and
+  took the offer to start season two with it.
+- ~~Text fields were not touch targets~~ - fixed in v1.9. The 44px floor was
+  applied per class, so every field added since the last audit was 39px on a
+  phone. It is on the base rule now.
 - ~~Two 28px buttons on every inbox row~~ - fixed in v1.9. They had been
   there since v1.4 and survived the v1.6 touch pass because an inbox is
   collapsed by default and was empty every time the audit ran.

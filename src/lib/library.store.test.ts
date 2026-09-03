@@ -230,3 +230,129 @@ test('a bound block whose list was deleted stamps an ordinary task rather than f
   actions.stamp({ [DATE]: template.id })
   expect(getData().days[DATE].tasks[0].title).toBe('Reading')
 })
+
+// --- how an item is counted, and the pace note beside it --------------------
+
+test('switching between chapters and pages keeps how far through you are', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const item = actions.addLibraryItem(list.id, 'The War of Art, 20 chapters')!
+  actions.setLibraryItemProgress(list.id, item.id, 4, TODAY)
+
+  actions.updateLibraryItem(list.id, item.id, { track: 'pages', total: 139 })
+  const after = getData().library[0].items[0]
+  // The 4 stays exactly where it was. The app has no way to turn chapters
+  // into pages, and inventing a conversion would be worse than showing a
+  // number that needs correcting once.
+  expect(after.progress).toBe(4)
+  expect(after.track).toBe('pages')
+  expect(after.total).toBe(139)
+
+  actions.updateLibraryItem(list.id, item.id, { track: null })
+  expect(getData().library[0].items[0].track).toBeUndefined()
+  expect(getData().library[0].items[0].progress).toBe(4)
+})
+
+test('a pace note is kept as written, and cleared by asking for nothing', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const item = actions.addLibraryItem(list.id, 'Sapiens, 20 chapters')!
+  actions.updateLibraryItem(list.id, item.id, { pace: '  one chapter a day  ' })
+  expect(getData().library[0].items[0].pace).toBe('one chapter a day')
+  actions.updateLibraryItem(list.id, item.id, { pace: null })
+  expect(getData().library[0].items[0].pace).toBeUndefined()
+})
+
+test('a line that names a shape adds an item of that shape', () => {
+  const list = actions.addLibraryList({ name: 'Watching', unit: 'episode' })
+  actions.addLibraryItem(list.id, 'Interstellar, movie')
+  actions.addLibraryItem(list.id, 'Invincible, 3 seasons')
+  actions.addLibraryItem(list.id, 'From, 10 episodes')
+  expect(getData().library[0].items).toMatchObject([
+    { title: 'Interstellar', track: 'movie' },
+    { title: 'Invincible', track: 'series', seasons: 3, season: 1 },
+    { title: 'From', track: 'series', total: 10 },
+  ])
+})
+
+test('taking on the next season starts it at nothing and reopens the item', () => {
+  const list = actions.addLibraryList({ name: 'Watching', unit: 'episode' })
+  const item = actions.addLibraryItem(list.id, 'Invincible, 3 seasons')!
+  actions.updateLibraryItem(list.id, item.id, { total: 8 })
+  actions.setLibraryItemProgress(list.id, item.id, 8, TODAY)
+
+  actions.advanceLibrarySeason(list.id, item.id)
+  const after = getData().library[0].items[0]
+  expect(after).toMatchObject({ season: 2, progress: 0 })
+  expect(after.total).toBeUndefined()
+  expect(after.finished).toBeUndefined()
+})
+
+test('nothing advances a season on something that is not a series', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const item = actions.addLibraryItem(list.id, 'Sapiens, 20 chapters')!
+  actions.advanceLibrarySeason(list.id, item.id)
+  expect(getData().library[0].items[0].season).toBeUndefined()
+})
+
+// --- putting a list onto a template in one flow ----------------------------
+//
+// This used to be two screens and a piece of knowledge nobody has: build a
+// block in the Templates tab, then find the binding control on it.
+
+test('a session block is added to the template, bound to the list', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const template = actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+
+  expect(
+    actions.addLibraryBlockToTemplate(template.id, list.id, { title: 'Reading', time: '21:00', minutes: 30 }),
+  ).toBe(true)
+  expect(getData().templates[0].blocks).toMatchObject([
+    { title: 'Reading', time: '21:00', minutes: 30, libraryListId: list.id },
+  ])
+})
+
+/**
+ * It binds to the list, not to the item it was started from, and that is the
+ * whole point of the binding as it already existed: the block says "a reading
+ * session", the list says which book, and finishing a book moves the block on
+ * to the next one instead of leaving a dead block behind.
+ */
+test('a second block for the same list is refused rather than added', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const template = actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+  actions.addLibraryBlockToTemplate(template.id, list.id, { title: 'Reading', time: '21:00' })
+
+  expect(actions.addLibraryBlockToTemplate(template.id, list.id, { title: 'More reading' })).toBe(false)
+  expect(getData().templates[0].blocks).toHaveLength(1)
+})
+
+test('the block already there can be changed instead', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const template = actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+  actions.addLibraryBlockToTemplate(template.id, list.id, { title: 'Reading', time: '21:00', minutes: 30 })
+
+  expect(
+    actions.replaceLibraryBlockOnTemplate(template.id, list.id, { title: 'Reading', time: '22:00', minutes: 45 }),
+  ).toBe(true)
+  expect(getData().templates[0].blocks).toMatchObject([
+    { title: 'Reading', time: '22:00', minutes: 45, libraryListId: list.id },
+  ])
+  expect(getData().templates[0].blocks).toHaveLength(1)
+})
+
+test('a block with no time asked for comes back with none, rather than keeping the old one', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  const template = actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+  actions.addLibraryBlockToTemplate(template.id, list.id, { title: 'Reading', time: '21:00', minutes: 30 })
+  actions.replaceLibraryBlockOnTemplate(template.id, list.id, { title: 'Reading' })
+  expect(getData().templates[0].blocks[0].time).toBeUndefined()
+  expect(getData().templates[0].blocks[0].minutes).toBeUndefined()
+})
+
+test('a template or a list that is not there changes nothing', () => {
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  expect(actions.addLibraryBlockToTemplate('nope', list.id, { title: 'Reading' })).toBe(false)
+  const template = actions.addTemplate({ name: 'Weekday', color: '#6c8cff', blocks: [] })
+  expect(actions.addLibraryBlockToTemplate(template.id, 'nope', { title: 'Reading' })).toBe(false)
+  expect(actions.replaceLibraryBlockOnTemplate(template.id, list.id, { title: 'Reading' })).toBe(false)
+  expect(getData().templates[0].blocks).toEqual([])
+})

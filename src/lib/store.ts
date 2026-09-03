@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, BacklogItem, CalendarSubscription, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
+import type { AppData, BacklogItem, CalendarSubscription, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, LibraryTrack, Repeat, Settings, SleepWindow, Subtask, Task, Template, TemplateBlock, ThemeState } from './types'
 import { MAX_HIGHLIGHTS } from './types'
-import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
+import { hasAnotherSeason, isItemFinished, itemProgress, nextSeason, parseLibraryItemInput } from './library'
+import { seedLibrary as librarySeed } from './librarySeed'
 import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
 import { canAddGoal } from './north'
 import { stampChanges } from './syncEntities'
@@ -142,7 +143,11 @@ function advanced(item: LibraryItem, by: number, today: string): LibraryItem {
   const next = Math.max(0, itemProgress(item) + by)
   const capped = item.total !== undefined ? Math.min(next, item.total) : next
   const full = item.total !== undefined && item.total > 0 && capped >= item.total
-  return { ...item, progress: capped, finished: full ? (item.finished ?? today) : undefined }
+  // Reaching the end of a season is not reaching the end of a series. Without
+  // this, watching the last episode of season one of three filed the whole
+  // thing under Finished and the offer to start season two went with it.
+  const done = full && !hasAnotherSeason({ ...item, progress: capped })
+  return { ...item, progress: capped, finished: done ? (item.finished ?? today) : undefined }
 }
 
 /**
@@ -550,10 +555,33 @@ export const actions = {
   },
 
   /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
+  /**
+   * Puts the reading plan in, once, on an install that has no Books list or
+   * an empty one - see lib/librarySeed.ts, which owns the whole rule and the
+   * argument for why this app creates something without being asked exactly
+   * here and nowhere else.
+   *
+   * Skips the commit entirely when there is nothing to do, which is the
+   * ordinary case from the second open onward: seedLibrary returns the same
+   * object, and writing, stamping and syncing an unchanged state every
+   * morning would be a real cost for no reason.
+   */
+  seedLibrary(): void {
+    const next = librarySeed(data)
+    if (next !== data) commit(next)
+  },
+
   addLibraryItem(listId: string, input: string): LibraryItem | undefined {
     const parsed = parseLibraryItemInput(input)
     if (!parsed) return undefined
     const item: LibraryItem = { id: crypto.randomUUID(), title: parsed.title, total: parsed.total }
+    // Whatever the line said about how this one is counted travels with it:
+    // "The War of Art, 139 pages" and "Invincible, 3 seasons" are two
+    // different shapes of thing and typing them is the only place anybody
+    // should have to say so.
+    if (parsed.track) item.track = parsed.track
+    if (parsed.seasons !== undefined) item.seasons = parsed.seasons
+    if (parsed.season !== undefined) item.season = parsed.season
     commit(mapList(listId, list => ({ ...list, items: [...list.items, item] })))
     return item
   },
@@ -583,6 +611,128 @@ export const actions = {
           : { ...item, finished: today, progress: item.total ?? itemProgress(item) },
       ),
     ))
+  },
+
+  /**
+   * Everything about one item that is not its progress: what it is called,
+   * how it is counted, the pace note, which season it is on.
+   *
+   * One action rather than six, because they are one edit as far as the
+   * person making it is concerned - the detail sheet is open, they change
+   * what is wrong, it saves. Six actions would be six commits, six undo
+   * entries and six sync stamps for one sitting.
+   *
+   * `null` clears a field, `undefined` leaves it alone - the same distinction
+   * `updateBacklogItem` draws, and the only way one call can both set and
+   * unset without a second argument saying which.
+   */
+  updateLibraryItem(
+    listId: string,
+    itemId: string,
+    patch: {
+      title?: string
+      pace?: string | null
+      track?: LibraryTrack | null
+      total?: number | null
+      season?: number | null
+      seasons?: number | null
+    },
+  ): void {
+    commit(mapList(listId, list =>
+      mapItem(list, itemId, item => {
+        const next: LibraryItem = { ...item }
+        if (patch.title !== undefined && patch.title.trim()) next.title = patch.title.trim()
+        if (patch.pace === null) delete next.pace
+        else if (patch.pace !== undefined && patch.pace.trim()) next.pace = patch.pace.trim()
+        // Switching how something is counted never touches how far through it
+        // you are. Turning "chapter 4 of 20" into pages leaves the 4 and the
+        // 20 exactly where they were, because the app has no way to convert
+        // one into the other and inventing a conversion would be worse than
+        // showing a number that needs correcting once.
+        if (patch.track === null) delete next.track
+        else if (patch.track !== undefined) next.track = patch.track
+        if (patch.total === null) delete next.total
+        else if (patch.total !== undefined && patch.total > 0) next.total = patch.total
+        if (patch.season === null) delete next.season
+        else if (patch.season !== undefined && patch.season > 0) next.season = patch.season
+        if (patch.seasons === null) delete next.seasons
+        else if (patch.seasons !== undefined && patch.seasons > 0) next.seasons = patch.seasons
+        return next
+      }),
+    ))
+  },
+
+  /**
+   * The end of a season, taken on. Offered rather than applied - see
+   * `nextSeason` in library.ts: an app that rolled a finished season into the
+   * next one by itself would be answering "did you carry on?" for somebody.
+   */
+  advanceLibrarySeason(listId: string, itemId: string): void {
+    commit(mapList(listId, list =>
+      mapItem(list, itemId, item => {
+        if (item.track !== 'series') return item
+        const { total: _dropped, ...rest } = item
+        return { ...rest, ...nextSeason(item), finished: undefined } as LibraryItem
+      }),
+    ))
+  },
+
+  /**
+   * A block on a template that draws its title from a list - the flow that
+   * used to be two screens and a piece of knowledge nobody has: build a block
+   * in the Templates tab, then find the binding control on it.
+   *
+   * **It binds to the list, not to the item it was started from.** That is
+   * the whole point of the binding as it already existed: the block says "a
+   * reading session", the list says which book, and finishing a book moves
+   * the block on to the next one instead of leaving a dead block behind. See
+   * `TemplateBlock.libraryListId`.
+   *
+   * Returns false when the template already has a block bound to this list -
+   * the caller offers to change that block instead, because two reading
+   * blocks on one template both pointing at the same book is not something
+   * anybody meant.
+   */
+  addLibraryBlockToTemplate(
+    templateId: string,
+    listId: string,
+    block: { time?: string; minutes?: number; title: string },
+  ): boolean {
+    const template = data.templates.find(t => t.id === templateId)
+    if (!template || !data.library.some(l => l.id === listId)) return false
+    if (template.blocks.some(b => b.libraryListId === listId)) return false
+    const next: TemplateBlock = { id: crypto.randomUUID(), title: block.title, libraryListId: listId }
+    if (block.time) next.time = block.time
+    if (block.minutes !== undefined && block.minutes > 0) next.minutes = block.minutes
+    commit({
+      ...data,
+      templates: data.templates.map(t => (t.id === templateId ? { ...t, blocks: [...t.blocks, next] } : t)),
+    })
+    return true
+  },
+
+  /** Changing the block that is already bound, rather than adding a second. */
+  replaceLibraryBlockOnTemplate(
+    templateId: string,
+    listId: string,
+    block: { time?: string; minutes?: number; title: string },
+  ): boolean {
+    const template = data.templates.find(t => t.id === templateId)
+    if (!template) return false
+    const existing = template.blocks.find(b => b.libraryListId === listId)
+    if (!existing) return false
+    const next: TemplateBlock = { ...existing, title: block.title }
+    if (block.time) next.time = block.time
+    else delete next.time
+    if (block.minutes !== undefined && block.minutes > 0) next.minutes = block.minutes
+    else delete next.minutes
+    commit({
+      ...data,
+      templates: data.templates.map(t =>
+        t.id === templateId ? { ...t, blocks: t.blocks.map(b => (b.id === existing.id ? next : b)) } : t,
+      ),
+    })
+    return true
   },
 
   deleteLibraryItem(listId: string, itemId: string): void {

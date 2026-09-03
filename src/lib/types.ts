@@ -295,6 +295,30 @@ export interface LibraryRef {
  * reasoning `Task.minutes` already follows. With a total, progress reads
  * "ch 4/12" and draws a bar; without one it reads "ch 4" and draws nothing.
  */
+/**
+ * How progress through one item is counted, when the list's own unit is not
+ * the right answer for it.
+ *
+ * The list still owns the unit - that is what makes this one feature rather
+ * than three - but a list is a shelf, and shelves hold things of different
+ * shapes. A Books list holds one book whose sections are short and unnumbered
+ * beside another with twenty named chapters; a Watching list holds films,
+ * which have no parts at all, beside a series that has three seasons of them.
+ * Forcing all of those through one counter is what makes an app feel like a
+ * database with a nice font.
+ *
+ * Absent is the ordinary case and means the list's own unit, which is what
+ * every item written before this existed is.
+ *
+ * - `pages` - counted in pages, because the sections are short or unnamed and
+ *   "what page am I on" is the question actually being asked. Never stepped
+ *   one at a time: nobody presses + fifty-four times.
+ * - `movie` - one sitting, no parts, no numbers. Watched or not.
+ * - `series` - seasons and episodes. `season` and `total` are about the season
+ *   currently being watched, not about the whole thing.
+ */
+export type LibraryTrack = 'pages' | 'movie' | 'series'
+
 export interface LibraryItem extends Timestamped {
   id: string
   title: string
@@ -304,6 +328,26 @@ export interface LibraryItem extends Timestamped {
   progress?: number
   /** The date key it was finished on. Absent means it is still going. */
   finished?: string
+  /** How this one is counted. Absent is the list's own unit - see `LibraryTrack`. */
+  track?: LibraryTrack
+  /**
+   * How you mean to work through it, in your own words: "one section a day",
+   * "evening only, optional", "skim Book Three".
+   *
+   * A note, never a rule. Nothing measures it, nothing reminds you of it, and
+   * falling behind it is not a state this app can be in - it is here because
+   * "one chapter a day" is the thing you actually decided and the thing you
+   * have forgotten by Thursday. It rides along to whatever the item is bound
+   * to, so the block on the day says it too.
+   */
+  pace?: string
+  /**
+   * Series only: which season `progress` and `total` are about. Absent means
+   * the thing has no seasons worth naming - a ten-episode run is just ep 5/10.
+   */
+  season?: number
+  /** Series only: how many seasons there are. Absent is unknown, not one. */
+  seasons?: number
 }
 
 /**
@@ -325,6 +369,13 @@ export interface LibraryList extends Timestamped {
   unitPlural?: string
   /** Two or three letters for a card: "ch", "ep". Absent falls back to the unit. */
   unitShort?: string
+  /**
+   * A dot beside the name, from the same muted palette the categories use.
+   * Absent means no dot. Its only job is letting a row of eight list chips be
+   * read at a glance rather than word by word - nothing anywhere sorts,
+   * groups or filters by it.
+   */
+  color?: string
   items: LibraryItem[]
   /**
    * Made by the tour. "Start clean" at the end of it removes exactly the

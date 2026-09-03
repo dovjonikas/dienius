@@ -2,7 +2,7 @@ import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
 import { TOUR_STORAGE_KEY, isTourSandbox } from './tourMode'
 import type { ScratchNote } from './types'
 import { buildDemoData } from './demo'
-import type { AppData, BacklogItem, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
+import type { AppData, BacklogItem, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, InboxItem, LibraryItem, LibraryList, LibraryRef, LibraryTrack, Repeat, Settings, SleepProfile, SleepWindow, Subtask, Task, TaskOrigin, Template, TemplateBlock, ThemeOverrides, ThemeState } from './types'
 import { isCategoryId } from './categories'
 import { dedupeTasks } from './taskIdentity'
 
@@ -388,10 +388,18 @@ function isGoal(x: unknown): x is Goal {
   )
 }
 
+const LIBRARY_TRACKS: readonly string[] = ['pages', 'movie', 'series']
+
+function isOptionalTrack(x: unknown): x is LibraryTrack | undefined {
+  return x === undefined || (typeof x === 'string' && LIBRARY_TRACKS.includes(x))
+}
+
 function isLibraryItem(x: unknown): x is LibraryItem {
   if (!isRecord(x)) return false
   if (typeof x.id !== 'string' || typeof x.title !== 'string') return false
   if (!isOptionalCount(x.total) || !isOptionalCount(x.progress)) return false
+  if (!isOptionalTrack(x.track) || !isOptionalString(x.pace)) return false
+  if (!isOptionalCount(x.season) || !isOptionalCount(x.seasons)) return false
   return isOptionalString(x.finished)
 }
 
@@ -400,6 +408,10 @@ function isLibraryList(x: unknown): x is LibraryList {
   if (typeof x.id !== 'string' || typeof x.name !== 'string' || typeof x.unit !== 'string') return false
   if (!isOptionalString(x.unitPlural) || !isOptionalString(x.unitShort)) return false
   if (!isOptionalBoolean(x.tourCreated)) return false
+  // A colour is a CSS value that gets painted, so it goes through the same
+  // check every other colour in a payload does - see the note above
+  // `isColor`. A backup is a file somebody can edit.
+  if (x.color !== undefined && !isColor(x.color)) return false
   return Array.isArray(x.items) && x.items.every(isLibraryItem)
 }
 
