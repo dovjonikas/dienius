@@ -107,7 +107,13 @@ Three screens must fit their viewport with no scrolling at **1920x1080**,
   **Never raise cell height.**
 - **Calendar → Week.** Structurally guaranteed rather than tuned - see below.
 - **The day view at the wide breakpoint** (≥1024px), where the whole day fits
-  the window and the grid draws at whatever density that takes.
+  the window and the grid draws at whatever density that takes - *within the
+  floors*. A gap draws at least 44px and a sized anchor at least 32px, because
+  those are touch targets, and a day with enough blocks to exceed the room a
+  768px screen leaves cannot fit at any density. `fitPxPerMinute` says so by
+  returning the base density, and the page scrolls. That is the honest
+  outcome, not a regression: measured at 1366x768 and 1600x900 with a
+  ten-block day.
 
 Everything else scrolls vertically and that is fine. **Nothing scrolls
 horizontally, ever.** Check with

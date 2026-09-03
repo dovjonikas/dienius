@@ -9258,7 +9258,18 @@ main:has(.week) > .calendar {
   overflow-y: auto;
 }
 
-.replan-menu { display: flex; flex-direction: column; gap: var(--s2); padding: var(--s3); }
+/* Scrolls, like the body it stands in for. The three doors fit every real
+   phone with room to spare, but the sheet is capped at 92vh and clips what
+   overflows, so this is the structural version of "it fits" rather than the
+   measured one - see CONVENTIONS.md section 4. */
+.replan-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s3);
+  min-height: 0;
+  overflow-y: auto;
+}
 
 /* Three big doors. Each is a title and one line, because the person reading
    this has already decided the day is gone and is being offered a way back. */
@@ -9317,7 +9328,17 @@ main:has(.week) > .calendar {
 
 /* The summary is the sentence the whole sheet exists for. Body size, body
    colour: it is the answer, not a footnote. */
-.replan-summary { margin: 0; color: var(--text); font-size: var(--t-md); line-height: 1.45; }
+/* Between the scrolling body and the buttons, so it is on screen whatever
+   the list underneath it is doing. It is the answer, not a footnote: body
+   size, body colour, its own band. */
+.replan-summary {
+  flex-shrink: 0;
+  margin: 0;
+  padding: var(--s3) var(--s4) 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: 1.45;
+}
 .replan-summary-lead { font-size: var(--t-lg); font-weight: 600; }
 .replan-text { margin: 0; color: var(--muted); line-height: 1.5; }
 

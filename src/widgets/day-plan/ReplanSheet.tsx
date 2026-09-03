@@ -85,7 +85,6 @@ export function ReplanSheet(props: ReplanSheetProps) {
             nowMinutes={props.nowMinutes}
             window={window}
             busy={props.busy}
-            titles={titles}
             onAccept={plan => accept(plan)}
             onBack={() => setMode('menu')}
           />
@@ -186,12 +185,11 @@ interface InterruptProps {
   nowMinutes: number
   window: Interval
   busy: Interval[]
-  titles: Map<string, string>
   onAccept: (plan: ReplanPlan) => void
   onBack: () => void
 }
 
-function Interrupt({ tasks, nowMinutes, window, busy, titles, onAccept, onBack }: InterruptProps) {
+function Interrupt({ tasks, nowMinutes, window, busy, onAccept, onBack }: InterruptProps) {
   const [title, setTitle] = useState('')
   const [start, setStart] = useState(() => formatClock(Math.min(roundUp(nowMinutes), window.end - 5)))
   const [minutes, setMinutes] = useState<number | undefined>(30)
@@ -265,8 +263,18 @@ function Interrupt({ tasks, nowMinutes, window, busy, titles, onAccept, onBack }
               {conflicts.map(task => {
                 const choice = choices[task.id] ?? 'squeeze'
                 const move = plan?.moves.find(m => m.taskId === task.id)
+                // "Gaps" with "tomorrow" beside it read as a contradiction;
+                // it is not one, there was simply no gap left. Say that.
                 const outcome =
-                  choice === 'drop' ? 'gone' : choice === 'keep' ? 'stays' : move ? `at ${move.time}` : 'tomorrow'
+                  choice === 'drop'
+                    ? 'gone'
+                    : choice === 'keep'
+                      ? 'stays'
+                      : move
+                        ? `at ${move.time}`
+                        : choice === 'tomorrow'
+                          ? 'tomorrow'
+                          : 'no room, tomorrow'
                 return (
                   <li key={task.id} className="replan-item">
                     <span className="replan-item-title">
@@ -294,8 +302,12 @@ function Interrupt({ tasks, nowMinutes, window, busy, titles, onAccept, onBack }
           </div>
         )}
 
-        {plan && <p className="replan-summary" role="status">{plan.summary}</p>}
       </div>
+      {/* Outside the scrolling body on purpose. With five things in the way
+          the list is taller than the sheet, and the one sentence this whole
+          screen exists to produce was below the fold - the person under
+          time pressure saw a list and no answer. */}
+      {plan && <p className="replan-summary" role="status">{plan.summary}</p>}
       <div className="replan-foot">
         <button type="button" className="btn-primary" disabled={!plan} onClick={() => plan && onAccept(plan)}>
           Accept
@@ -303,9 +315,6 @@ function Interrupt({ tasks, nowMinutes, window, busy, titles, onAccept, onBack }
         <button type="button" className="btn-secondary" onClick={onBack}>
           Cancel
         </button>
-        {plan && plan.tomorrow.length > 0 && (
-          <span className="replan-foot-note">{plan.tomorrow.map(id => titles.get(id)).filter(Boolean).join(', ')} to tomorrow</span>
-        )}
       </div>
     </>
   )
@@ -358,8 +367,8 @@ function Shift({ tasks, nowMinutes, window, titles, onAccept, onBack }: ShiftPro
           </label>
         </div>
         <PlanList plan={plan} tasks={tasks} titles={titles} />
-        <p className="replan-summary" role="status">{plan.summary}</p>
       </div>
+      <p className="replan-summary" role="status">{plan.summary}</p>
       <div className="replan-foot">
         <button type="button" className="btn-primary" disabled={plan.moves.length + plan.tomorrow.length === 0} onClick={() => onAccept(plan)}>
           Accept
@@ -415,9 +424,9 @@ function Back({ tasks, nowMinutes, window, busy, titles, away, onAccept, onNotNo
       <Head title="I'm back" />
       <div className="replan-body">
         {away && <p className="replan-text">Away since {away}. Here is the rest of the day, from {formatClock(nowMinutes)}.</p>}
-        <p className="replan-summary replan-summary-lead" role="status">{plan.summary}</p>
         <PlanList plan={plan} tasks={tasks} titles={titles} />
       </div>
+      <p className="replan-summary replan-summary-lead" role="status">{plan.summary}</p>
       <div className="replan-foot">
         {nothing ? (
           <button type="button" className="btn-primary" onClick={onNotNow}>

@@ -68,6 +68,7 @@ contents, so an installed copy can never get stuck on stale files.
 - A capacity line - one sentence saying whether today fits: what's anchored, how much free time is left across how many gaps, what the floats still need
 - A day timeline - anchored tasks at their real time and size, free gaps drawn as labeled regions, a line marking right now; collapsed until you open it
 - Push twice, then decide - an unfinished task can move to tomorrow twice; after that it's finish it, delete it, or mark it ongoing
+- Replan, for when the plan breaks - a call, a change, an afternoon gone. Say what came up and the app shows what it hits and where each of those goes: into the gaps after it, to tomorrow, or away. Or move everything from now on later by the same amount, with whatever no longer fits before sleep named rather than quietly lost. Or press Away, and the day pauses - nothing nudges you while you are gone, and one press when you are back fits what still fits into the time left, key tasks first. It never counts what was missed; a partial plan beats a dropped day
 - A score with nothing riding on it - done over planned for today, nothing else; no percentage, no streak, no score on a day with no plan
 - Day types and core tasks, so a twelve-hour shift isn't scored like an ordinary Tuesday
 - Six task categories, one colour each - the same colour on the timeline block and on the card, so the eye pairs them without reading either; finished work drains to grey, so the day visibly goes quiet as it is worked through
@@ -79,12 +80,15 @@ contents, so an installed copy can never get stuck on stale files.
 - A library - lists of things worked through a unit at a time, and the unit is the list's own word: chapters, episodes, lessons, sessions. A session on one goes onto a day in two taps, and ticking it off advances the book. A template block can bind to a list, so Tuesday's reading hour arrives already naming the actual book
 - Sleep as a named schedule, not an assumption - one by default, and as many as somebody genuinely lives; a day or a template points at one, and the app never says the word until there are two to choose between
 - An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
+- Scratch - one key, or one floating button on a phone, and you are typing. For the phone number said once and the bug noticed while doing something else: nothing is asked at the moment of writing, every keystroke is already saved, and Escape loses nothing. Later, a note can become a task (through the same parser quick-add uses, so "14:00 Call the bank 20 min" lands timed and sized), an inbox line, or nothing. A #word is a filter rather than a folder, and #bug notes export as a markdown list in one press
+- A time without typing one - a quiet clock at the end of the quick-add field opens two columns, hours and fives. Pick nothing and the task is a float, which is still the fast path
 - A keyboard layer - single keys for the things done most often, and a card behind `?` that lists them. None of them fire while you are typing in a box, except Escape, which is usually how you leave the box
 - Ctrl-K / Cmd-K - one box for running a command and for finding a thing: tasks, notes and library items, or a date typed in words. No search index, because a linear scan over the whole store costs less than the keystroke that triggered it
 - A week view - seven columns of one shared timeline, so the question a day view cannot answer becomes a shape rather than a number. Drag a block onto another day, tap one to open it, tap an empty space to put something there, or lay your whole weekday plan over the week in one press. Three days at a time on a phone, because seven columns at 390px is a stripe rather than a block
 - A calendar that fits without scrolling, where every past day says how it went - the ratio, a thin bar, what was carried on, a dot when every key task was kept. No red at any threshold: a past day is not on trial, and a day nobody planned stays blank rather than reading as a zero
 - A year strip - one cell per day, shaded by how full it was, colored by template where there is one
 - External calendars - subscribe to a work or family iCal feed, or import a .ics file. They appear on Today and on the week as a read-only layer, outlined rather than filled, with nothing to tick off and nothing to push: a meeting is not a task. Free time counts them, because a morning with three meetings in it is not a free morning
+- A tour that leads you through the app rather than describing it - nine steps, each ending when you actually do the thing: stamp a day, add a task, mark it key, focus on it, tick it off, start a list, write a goal. Under two minutes, and what you make during it is yours to keep or throw away at the end. Replay it any time from Settings, where it runs in a sandbox that never touches your plan
 - Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
 ## Your data
@@ -185,12 +189,19 @@ src/
     calendars.ts     external feeds: the local cache, and what counts as busy
     demo.ts          the sample fortnight, built from one date
     demoMode.ts      whether this tab is on sample data, and which key it uses
+    scratch.ts       the scratch stream: tags, filtering, the #bug export
+    tour.ts          the tour as data - the steps, and what ends each one
+    tourState.ts     whether a tour is running, and where it got to
+    tourMode.ts      the replay sandbox, and which key it uses
+    replanState.ts   the one line between the palette and the replan sheet
   views/          Calendar, Templates, Library, Review, Settings, CommandPalette,
-                  TimePicker, ShortcutsOverlay
+                  TimePicker, TimeColumns, ShortcutsOverlay
+    scratch/      the scratch overlay and the floating button that opens it
+    tour/         the tour engine: a spotlight, a card, and a predicate
     week/         the week view: seven columns of one shared timeline, and the
                   percentage geometry that makes it fit any screen
   widgets/
-    day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score, the task detail sheet
+    day-plan/     the day view: quick-add, sort order, capacity, the timeline grid, drag and drop, the score, the task detail sheet, and replan.ts - the arithmetic of a day that broke
     if-then/      the if-then board and its day-type/time-of-day rotation
     year-strip/   the year-at-a-glance strip and the module that colors it
     clock/        the timer popover, the floating widget and the focus-work nudge
