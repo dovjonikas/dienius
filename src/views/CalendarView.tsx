@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
+import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import { cellLabel, resolveTemplate, taskState } from '../lib/calendarCell'
+import { useIsWide } from '../lib/viewport'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
-import { WeekView } from './week/WeekView'
+import { NARROW_DAYS, WeekView, visibleWeekDays } from './week/WeekView'
+import { planWeekStamp, weekStampMessage } from './week/weekStamp'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -60,6 +62,17 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   // rather than a seventh tab.
   const [mode, setMode] = useState<'month' | 'week' | 'year'>('month')
   const [weekDate, setWeekDate] = useState(() => date ?? todayKey())
+  const isWide = useIsWide()
+  // The week's own controls sit in the calendar bar, on the same row as the
+  // mode toggle, rather than in a row of their own inside the week: on a
+  // phone that row cost a fifth of the grid it was steering.
+  const weekDays = useMemo(() => visibleWeekDays(weekDate, isWide), [weekDate, isWide])
+  const weekStamp = useMemo(() => planWeekStamp(weekOf(weekDate), data), [weekDate, data])
+  const [weekAnnouncement, setWeekAnnouncement] = useState('')
+  function changeWeekDate(next: string) {
+    setWeekDate(next)
+    onDateChange?.(next)
+  }
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
@@ -173,13 +186,57 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
         ) : mode === 'week' ? (
-          <div className="calendar-nav">
-            <h2>{formatWeekTitle(weekOf(weekDate))}</h2>
-          </div>
+          <>
+            <div className="calendar-nav">
+              <button
+                aria-label={isWide ? 'Previous week' : 'Earlier days'}
+                onClick={() => changeWeekDate(addDays(weekDate, isWide ? -7 : -NARROW_DAYS))}
+              >
+                &larr;
+              </button>
+              {/* The days actually on screen, short-form on a phone so the
+                  title and its arrows share one row with Today. */}
+              <h2>{formatWeekTitle(weekDays, { short: !isWide })}</h2>
+              <button
+                aria-label={isWide ? 'Next week' : 'Later days'}
+                onClick={() => changeWeekDate(addDays(weekDate, isWide ? 7 : NARROW_DAYS))}
+              >
+                &rarr;
+              </button>
+            </div>
+            <button type="button" className="btn-secondary calendar-today" onClick={() => changeWeekDate(todayKey())}>
+              Today
+            </button>
+            {/* Only where there is a mapping to apply, and only on a screen
+                that shows the week it would stamp. A button that explains it
+                cannot do anything is worse than a button that is not there,
+                and "Stamp week" above three days is a promise about four
+                days you cannot see. */}
+            {isWide && weekStamp.mapped > 0 && (
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={Object.keys(weekStamp.stamps).length === 0}
+                title={
+                  Object.keys(weekStamp.stamps).length === 0
+                    ? 'Every day this week already has a template'
+                    : 'Stamp the days your weekday plan names, leaving anything you have already arranged alone'
+                }
+                onClick={() => {
+                  if (Object.keys(weekStamp.stamps).length > 0) actions.stamp(weekStamp.stamps)
+                  setWeekAnnouncement(weekStampMessage(weekStamp))
+                }}
+              >
+                Stamp week
+              </button>
+            )}
+            <p className="visually-hidden" aria-live="polite">{weekAnnouncement}</p>
+          </>
         ) : (
-          <div className="calendar-nav">
-            <h2>{year}</h2>
-          </div>
+          // The year strip carries its own arrows and its own heading, so
+          // the bar shows nothing but the toggle here. It used to repeat the
+          // year above the strip's own "2026", two headings for one fact.
+          null
         )}
 
         {/* One quiet line about the month, where a heading's subtitle would
@@ -343,16 +400,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
         </>
       )}
 
-      {mode === 'week' && (
-        <WeekView
-          date={weekDate}
-          onDateChange={next => {
-            setWeekDate(next)
-            onDateChange?.(next)
-          }}
-          onOpenDay={onOpenDay}
-        />
-      )}
+      {mode === 'week' && <WeekView date={weekDate} onDateChange={changeWeekDate} onOpenDay={onOpenDay} />}
 
       {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}
     </section>

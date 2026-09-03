@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { CalendarView } from './CalendarView'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
+import { todayKey } from '../lib/dates'
 
 beforeEach(() => {
   localStorage.clear()
@@ -354,4 +355,100 @@ test('the month calendar renders correctly with roughly two years of stamped day
   // The month grid only ever draws its own 42 cells regardless of how much
   // data exists elsewhere in the year.
   expect(screen.getAllByRole('gridcell')).toHaveLength(42)
+})
+
+// --- the week's bar --------------------------------------------------------
+//
+// The week's arrows, Today and Stamp week sit in the calendar bar, on the
+// same row as the mode toggle, rather than in a row of their own inside the
+// week: on a phone that row cost a fifth of the grid it was steering. So the
+// tests that press them render the calendar and switch to Week, the way a
+// person reaches them.
+
+function wideScreen(matches: boolean) {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }))
+}
+
+async function openWeek(date = '2026-09-02') {
+  const user = userEvent.setup({ delay: null })
+  const onDateChange = vi.fn()
+  const result = render(<CalendarView onOpenDay={() => {}} date={date} onDateChange={onDateChange} />)
+  const modes = screen.getByRole('group', { name: 'Calendar view' })
+  await user.click(within(modes).getByRole('button', { name: 'Week' }))
+  return { ...result, user, onDateChange }
+}
+
+test('Stamp week fills every day the weekday plan names', async () => {
+  wideScreen(true)
+  const template = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
+  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, template.id)
+  const { user } = await openWeek()
+
+  await user.click(screen.getByRole('button', { name: 'Stamp week' }))
+
+  const week = ['2026-08-31', '2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06']
+  expect(week.filter(d => getData().days[d]?.templateId === template.id)).toHaveLength(5)
+})
+
+/**
+ * A one-press button has to be safe to press by accident, and stamping over a
+ * week somebody has already arranged by hand is not a convenience, it is a
+ * loss.
+ */
+test('Stamp week leaves a day that already has a template alone', async () => {
+  wideScreen(true)
+  const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
+  const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
+  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, work.id)
+  actions.stamp({ '2026-08-31': rest.id })
+  const { user } = await openWeek()
+
+  await user.click(screen.getByRole('button', { name: 'Stamp week' }))
+  expect(getData().days['2026-08-31'].templateId).toBe(rest.id)
+  expect(getData().days['2026-09-01'].templateId).toBe(work.id)
+})
+
+test('with no weekday plan at all there is no Stamp week button to wonder about', async () => {
+  wideScreen(true)
+  actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  await openWeek()
+  expect(screen.queryByRole('button', { name: 'Stamp week' })).toBeNull()
+})
+
+// A phone shows three days. "Stamp week" above three days is a promise about
+// four days you cannot see, so the button waits for a screen that shows them.
+test('a narrow screen has no Stamp week button, and its title names the three days it shows', async () => {
+  wideScreen(false)
+  const template = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, template.id)
+  await openWeek()
+  expect(screen.queryByRole('button', { name: 'Stamp week' })).toBeNull()
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('1 - 3 Sep 2026')
+})
+
+test('the arrows move a whole week at a time, and the title names the week', async () => {
+  wideScreen(true)
+  const { user, onDateChange, container } = await openWeek()
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('31 August - 6 September 2026')
+  await user.click(navButton(container, 'Next week')!)
+  expect(onDateChange).toHaveBeenCalledWith('2026-09-09')
+})
+
+test('the arrows step three days at a time on a narrow screen', async () => {
+  wideScreen(false)
+  const { user, onDateChange, container } = await openWeek()
+  await user.click(navButton(container, 'Later days')!)
+  expect(onDateChange).toHaveBeenCalledWith('2026-09-05')
+})
+
+test('Today brings the week back to today', async () => {
+  wideScreen(true)
+  const { user, onDateChange } = await openWeek('2025-01-01')
+  await user.click(screen.getByRole('button', { name: 'Today' }))
+  expect(onDateChange).toHaveBeenCalledWith(todayKey())
 })

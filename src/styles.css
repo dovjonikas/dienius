@@ -3534,6 +3534,7 @@ button.danger {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--s2);
   margin-bottom: var(--s3);
 }
 
@@ -8014,28 +8015,8 @@ main:has(.week) > .calendar {
   min-height: 0;
 }
 
-.week-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s3);
-  flex-shrink: 0;
-}
-
-.week-nav { display: flex; align-items: center; gap: var(--s2); }
-
-.week-nav > button[aria-label] {
-  min-width: 34px;
-  min-height: 34px;
-  border-radius: var(--r-control);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-.week-nav > button[aria-label]:hover { border-color: var(--muted); }
-
-.week-today { padding: var(--s1) var(--s3); }
+/* The week's arrows, title, Today and Stamp week are in .calendar-bar, on the
+   mode toggle's row. See CalendarView.tsx. */
 
 .week-grid {
   display: grid;
@@ -8246,6 +8227,14 @@ main:has(.week) > .calendar {
   border: none;
   border-radius: 3px;
   overflow: hidden;
+  /* Title at the top, not centred. A button centres its content, and a
+     twenty-minute block held to its floor overlaps the next one by a few
+     pixels, which took the bottom third off a centred title. At the top the
+     title sits in the part of the block nothing else can cover. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   text-align: left;
   cursor: grab;
   background: color-mix(in srgb, var(--block, var(--accent)) 32%, var(--surface));
@@ -8324,7 +8313,8 @@ main:has(.week) > .calendar {
      button's accessible name, so nothing is lost to a screen reader. */
   .week-col-template {
     flex: 0 0 auto;
-    width: 40px;
+    width: 28px;
+    min-height: 22px;
     justify-content: center;
   }
 
@@ -8363,7 +8353,11 @@ main:has(.week) > .calendar {
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 3px solid var(--cal, var(--muted));
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--cal, var(--muted)) 8%, transparent);
+  /* Mixed into the surface, not into transparency: the strip sits over the
+     block it clashes with, and a see-through strip laid its title across the
+     block's own until neither could be read. Opaque, the block's name ends
+     where the meeting begins, which is the honest picture of a clash. */
+  background: color-mix(in srgb, var(--cal, var(--muted)) 14%, var(--surface));
   color: var(--muted);
   font-size: var(--t-xs);
   line-height: 1.25;
@@ -8401,7 +8395,7 @@ main:has(.week) > .calendar {
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 2px solid var(--cal, var(--muted));
   border-radius: 3px;
-  background: color-mix(in srgb, var(--cal, var(--muted)) 8%, transparent);
+  background: color-mix(in srgb, var(--cal, var(--muted)) 14%, var(--surface));
   color: var(--muted);
   font-size: var(--t-xs);
   line-height: 1.1;
@@ -8506,7 +8500,9 @@ main:has(.week) > .calendar {
   flex-shrink: 0;
 }
 
-.demo-banner-text { flex: 1 1 240px; min-width: 0; line-height: 1.4; }
+/* A basis the short phone sentence fits in beside its button, so the banner
+   is one row there too rather than a paragraph with a button under it. */
+.demo-banner-text { flex: 1 1 160px; min-width: 0; line-height: 1.4; }
 .demo-banner-exit { flex-shrink: 0; }
 
 .first-run-demo {
@@ -8561,10 +8557,67 @@ main:has(.week) > .calendar {
   .capture-mode button,
   .done-toggle,
   .yesterday-dismiss,
-  .week-nav > button[aria-label],
+  .settings-nav-item,
+  .task-detail-nudge,
+  .task-detail-clear,
+  .task-detail-toggle {
+    min-height: 44px;
+  }
+
+  /* The sheet's close cross is a 32px circle in a header that should not
+     grow; the overlay does the rest. */
+  .task-detail-close {
+    position: relative;
+  }
+
+  .task-detail-close::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* The time picker's caret sits inside the field's own box, so it takes the
+     field's height and reaches 44px through an overlay rather than by making
+     every time field taller. Found by the same measurement pass as the rest
+     of this block, two versions after the pass that was supposed to be
+     complete - it lived in Settings, and Settings was not on the checklist. */
+  .time-picker-toggle {
+    position: relative;
+  }
+
+  .time-picker-toggle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* The week's column heads get the hit area, not the height. A 44px head
+     row on top of a phone's week is 44px the grid does not get, and the grid
+     is the whole view; the two controls stay a 28px line and reach 44px
+     through their overlays, which is the same trade the task card's inline
+     chips make. */
   .week-col-day,
   .week-col-template {
-    min-height: 44px;
+    position: relative;
+  }
+
+  .week-col-day::after,
+  .week-col-template::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
   }
 
   /* Inline row controls get the hit area rather than the height, so a task

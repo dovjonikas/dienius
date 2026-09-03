@@ -47,7 +47,20 @@ import { WeekColumn } from './WeekColumn'
  * readable name, and adjacency is the whole point - "what does the next couple
  * of days look like" is the question a phone gets asked.
  */
-const NARROW_DAYS = 3
+export const NARROW_DAYS = 3
+
+/**
+ * The days a screen actually shows for a chosen date: the whole week when
+ * wide, and on a phone the chosen day with one either side - yesterday, today,
+ * tomorrow by default, which is the reading somebody opens their phone for.
+ *
+ * Exported because the calendar bar's title has to name the same days. A
+ * heading that says "31 August - 6 September" above three columns of
+ * Wednesday to Friday is a heading about a different picture.
+ */
+export function visibleWeekDays(date: string, isWide: boolean): string[] {
+  return isWide ? weekOf(date) : [addDays(date, -1), date, addDays(date, 1)]
+}
 
 /** How far a finger has to travel before a swipe counts as one. */
 const SWIPE_THRESHOLD_PX = 50
@@ -80,14 +93,7 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
     return () => clearInterval(timer)
   }, [])
 
-  const fullWeek = useMemo(() => weekOf(date), [date])
-  // On a narrow screen the window is anchored so that the chosen day is the
-  // middle one - yesterday, today, tomorrow by default, which is the reading
-  // somebody opens their phone for.
-  const visible = useMemo(
-    () => (isWide ? fullWeek : [addDays(date, -1), date, addDays(date, 1)]),
-    [isWide, fullWeek, date],
-  )
+  const visible = useMemo(() => visibleWeekDays(date, isWide), [isWide, date])
 
   const templateProfile = useMemo(() => {
     return (day: string) => {
@@ -190,35 +196,6 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
     actions.stamp({ [day]: templateId })
   }
 
-  /**
-   * The whole week from the weekday mapping, in one press.
-   *
-   * Only days the mapping actually names, and only days that have no template
-   * yet: stamping over a week somebody has already arranged by hand is not a
-   * convenience, it is a loss, and this button is deliberately the one-press
-   * kind that has to be safe to press by accident.
-   */
-  function stampWeek() {
-    const mapping = data.settings.weekdayTemplates
-    const stamps: Record<string, string> = {}
-    for (const day of fullWeek) {
-      const templateId = mapping[weekdayOf(day)]
-      if (templateId && !data.days[day]?.templateId) stamps[day] = templateId
-    }
-    const count = Object.keys(stamps).length
-    if (count === 0) {
-      setAnnouncement('Every day this week already has a template.')
-      return
-    }
-    actions.stamp(stamps)
-    setAnnouncement(`${count} ${count === 1 ? 'day' : 'days'} stamped from your weekday plan.`)
-  }
-
-  const mappedDays = fullWeek.filter(d => data.settings.weekdayTemplates[weekdayOf(d)]).length
-  const unstampedMapped = fullWeek.filter(
-    d => data.settings.weekdayTemplates[weekdayOf(d)] && !data.days[d]?.templateId,
-  ).length
-
   // --- swiping on a phone -------------------------------------------------
 
   function onGridPointerDown(e: React.PointerEvent) {
@@ -238,46 +215,9 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
 
   return (
     <div className="week" onPointerDown={onGridPointerDown} onPointerUp={onGridPointerUp}>
-      <div className="week-bar">
-        <div className="week-nav">
-          <button
-            type="button"
-            aria-label={isWide ? 'Previous week' : 'Earlier days'}
-            onClick={() => onDateChange(addDays(date, isWide ? -7 : -NARROW_DAYS))}
-          >
-            &larr;
-          </button>
-          <button type="button" className="btn-secondary week-today" onClick={() => onDateChange(today)}>
-            Today
-          </button>
-          <button
-            type="button"
-            aria-label={isWide ? 'Next week' : 'Later days'}
-            onClick={() => onDateChange(addDays(date, isWide ? 7 : NARROW_DAYS))}
-          >
-            &rarr;
-          </button>
-        </div>
-
-        {/* Only where there is a mapping to apply. A button that explains it
-            cannot do anything is worse than a button that is not there. */}
-        {mappedDays > 0 && (
-          <button
-            type="button"
-            className="btn-secondary week-stamp-all"
-            onClick={stampWeek}
-            disabled={unstampedMapped === 0}
-            title={
-              unstampedMapped === 0
-                ? 'Every day this week already has a template'
-                : 'Stamp the days your weekday plan names, leaving anything you have already arranged alone'
-            }
-          >
-            Stamp week
-          </button>
-        )}
-      </div>
-
+      {/* The arrows, the title, Today and Stamp week live in the calendar bar
+          above - one row with the mode toggle rather than a second row of
+          their own. On a phone that second row was a fifth of the grid. */}
       <div className="week-grid">
         {/* One axis for seven columns - see sharedWindow. Hours only, because
             a label on every block is what turns a week into a wall of text;

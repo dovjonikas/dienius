@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { WeekView } from './WeekView'
+import { WeekView, visibleWeekDays } from './WeekView'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { weekOf } from '../../lib/dates'
@@ -194,50 +194,7 @@ test('a column header stamps a template straight onto its own day', async () => 
   expect(getData().days[MON].tasks.map(t => t.title)).toEqual(['Standup'])
 })
 
-test('Stamp week fills every day the weekday plan names', async () => {
-  const user = userEvent.setup()
-  const template = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
-  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, template.id)
-  renderWeek()
-
-  await user.click(screen.getByRole('button', { name: 'Stamp week' }))
-
-  const stamped = WEEK.filter(d => getData().days[d]?.templateId === template.id)
-  expect(stamped).toHaveLength(5)
-})
-
-/**
- * A one-press button has to be safe to press by accident, and stamping over a
- * week somebody has already arranged by hand is not a convenience, it is a
- * loss.
- */
-test('Stamp week leaves a day that already has a template alone', async () => {
-  const user = userEvent.setup()
-  const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
-  const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
-  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, work.id)
-  actions.stamp({ [MON]: rest.id })
-  renderWeek()
-
-  await user.click(screen.getByRole('button', { name: 'Stamp week' }))
-  expect(getData().days[MON].templateId).toBe(rest.id)
-  expect(getData().days[TUE].templateId).toBe(work.id)
-})
-
-test('with no weekday plan at all there is no Stamp week button to wonder about', () => {
-  actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
-  renderWeek()
-  expect(screen.queryByRole('button', { name: 'Stamp week' })).toBeNull()
-})
-
-// --- navigation -----------------------------------------------------------
-
-test('the arrows move a whole week at a time', async () => {
-  const user = userEvent.setup()
-  const { onDateChange } = renderWeek()
-  await user.click(screen.getByRole('button', { name: 'Next week' }))
-  expect(onDateChange).toHaveBeenCalledWith('2026-09-09')
-})
+// Stamp week and the arrows moved to the calendar bar - see CalendarView.test.
 
 test('a column header opens that day', async () => {
   const user = userEvent.setup()
@@ -265,15 +222,7 @@ test('a narrow screen shows three days around the one chosen, not seven', () => 
   expect(dates).toEqual(['2026-09-01', '2026-09-02', '2026-09-03'])
 })
 
-test('the arrows step three days at a time on a narrow screen', async () => {
-  vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: false,
-    media: query,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  }))
-  const user = userEvent.setup()
-  const { onDateChange } = renderWeek(DATE)
-  await user.click(screen.getByRole('button', { name: 'Later days' }))
-  expect(onDateChange).toHaveBeenCalledWith('2026-09-05')
+test('the visible days are the whole week when wide and the chosen day with its neighbours when not', () => {
+  expect(visibleWeekDays(DATE, true)).toEqual(WEEK)
+  expect(visibleWeekDays(DATE, false)).toEqual(['2026-09-01', '2026-09-02', '2026-09-03'])
 })

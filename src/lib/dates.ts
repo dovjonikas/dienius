@@ -54,7 +54,7 @@ export function weekOf(key: string): string[] {
 }
 
 /** "1 - 7 September" or "29 September - 5 October", for a week's heading. */
-export function formatWeekTitle(days: string[]): string {
+export function formatWeekTitle(days: string[], opts: { short?: boolean } = {}): string {
   const first = days[0]
   const last = days[days.length - 1]
   const toDate = (k: string) => {
@@ -63,7 +63,10 @@ export function formatWeekTitle(days: string[]): string {
   }
   const a = toDate(first)
   const b = toDate(last)
-  const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'long' })
+  // Short month names where the title has to share a phone's width with two
+  // arrows and a Today button: "2 - 4 Sep 2026" fits, "2 - 4 September 2026"
+  // wraps the row it was meant to save.
+  const month = (d: Date) => d.toLocaleDateString('en-US', { month: opts.short ? 'short' : 'long' })
   if (a.getMonth() === b.getMonth()) {
     return `${a.getDate()} - ${b.getDate()} ${month(b)} ${b.getFullYear()}`
   }
