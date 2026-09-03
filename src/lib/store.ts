@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AppData, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
+import type { AppData, CalendarSubscription, DayPlan, DayType, Goal, IfThenEntry, IfThenWhen, LibraryItem, LibraryList, LibraryRef, Repeat, Settings, SleepWindow, Subtask, Task, Template, ThemeState } from './types'
 import { MAX_HIGHLIGHTS } from './types'
 import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
 import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
@@ -1005,6 +1005,38 @@ export const actions = {
       inbox: data.inbox.filter(i => i.id !== id),
     })
     return true
+  },
+
+  /**
+   * Calendars somebody else owns - see `CalendarSubscription`.
+   *
+   * Only the subscription is stored here. What it contains lives under its own
+   * local key and is refetched per device, because a week of work meetings is
+   * not a plan worth carrying in a backup and is stale the moment it is
+   * written.
+   */
+  addCalendar(input: { name: string; url?: string; color: string }): CalendarSubscription | undefined {
+    const name = input.name.trim()
+    if (!name) return undefined
+    const calendar: CalendarSubscription = {
+      id: crypto.randomUUID(),
+      name,
+      url: input.url?.trim() || undefined,
+      color: input.color,
+      enabled: true,
+    }
+    commit({ ...data, settings: { ...data.settings, calendars: [...(data.settings.calendars ?? []), calendar] } })
+    return calendar
+  },
+
+  updateCalendar(id: string, patch: Partial<Omit<CalendarSubscription, 'id'>>): void {
+    const calendars = (data.settings.calendars ?? []).map(c => (c.id === id ? { ...c, ...patch } : c))
+    commit({ ...data, settings: { ...data.settings, calendars } })
+  },
+
+  deleteCalendar(id: string): void {
+    const calendars = (data.settings.calendars ?? []).filter(c => c.id !== id)
+    commit({ ...data, settings: { ...data.settings, calendars } })
   },
 
   setReminder(reminder: Settings['reminder']): void {

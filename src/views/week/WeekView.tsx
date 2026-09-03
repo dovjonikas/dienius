@@ -7,6 +7,7 @@ import { categoryColor } from '../../lib/categories'
 import { formatDuration } from '../../widgets/day-plan/capacity'
 import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayout'
 import { useIsWide } from '../../lib/viewport'
+import { eventsOn, useCalendarCache } from '../../lib/calendars'
 import { offerUndo } from '../../lib/undo'
 import { TaskDetail } from '../../widgets/day-plan/TaskDetail'
 import { computeWeekLayout, timeAtPercent, type WeekBlock } from './weekLayout'
@@ -94,6 +95,8 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
       return id ? data.templates.find(t => t.id === id)?.sleepProfileId : undefined
     }
   }, [data.days, data.templates])
+
+  const calendarCache = useCalendarCache()
 
   const layout = useMemo(
     () => computeWeekLayout(visible, data.days, { profiles: data.settings.sleepProfiles }, templateProfile),
@@ -303,6 +306,7 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
             templates={data.templates}
             template={data.templates.find(t => t.id === data.days[day.date]?.templateId)}
             stat={day.date <= today ? dayStat(data.days[day.date]) : undefined}
+            events={eventsOn(day.date, data.settings.calendars, calendarCache)}
             draggingId={draggingId}
             weekdayTemplateId={data.settings.weekdayTemplates[weekdayOf(day.date)]}
             onBlockPointerDown={beginDrag}

@@ -651,3 +651,90 @@ test('computeCapacity on a day set to a second schedule measures against that sc
   // The Shift schedule gives a waking window of 15:00-24:00 (9h = 540 min).
   expect(capacity.freeMinutes).toBe(540 - 30)
 })
+
+/**
+ * External calendar events - see the `busy` argument to computeCapacity.
+ *
+ * The point of these is one number: a morning with three meetings in it is not
+ * five free hours with three things written on top, it is two. A planner that
+ * gets that wrong is one you stop believing on exactly the days it matters.
+ */
+
+function task(over: Partial<Task> = {}): Task {
+  return { id: `t${Math.random()}`, title: 'Thing', done: false, ...over }
+}
+
+test('a meeting eats free time exactly as a timed task would', () => {
+  // Waking is 07:00-23:00, so 960 minutes.
+  const withNothing = computeCapacity([], undefined, undefined, [])
+  const withMeeting = computeCapacity([], undefined, undefined, [{ start: 540, end: 660 }])
+  expect(withNothing.freeMinutes).toBeNull()
+  expect(withMeeting.freeMinutes).toBe(960 - 120)
+})
+
+test('meetings are counted apart from tasks, because one of them you planned', () => {
+  const capacity = computeCapacity(
+    [task({ time: '14:00', minutes: 60 })],
+    undefined,
+    undefined,
+    [{ start: 540, end: 660 }],
+  )
+  expect(capacity.anchorsMinutes).toBe(60)
+  expect(capacity.externalMinutes).toBe(120)
+  expect(capacity.externalCount).toBe(1)
+  expect(capacity.freeMinutes).toBe(960 - 180)
+})
+
+test('a task inside a meeting is not counted twice', () => {
+  const capacity = computeCapacity(
+    [task({ time: '09:30', minutes: 30 })],
+    undefined,
+    undefined,
+    [{ start: 540, end: 660 }],
+  )
+  // Both blocks merge into the one 09:00-11:00 stretch.
+  expect(capacity.freeMinutes).toBe(960 - 120)
+})
+
+test('a meeting outside waking hours does not eat time the day never had', () => {
+  const capacity = computeCapacity([], undefined, undefined, [{ start: 5 * 60, end: 6 * 60 }])
+  expect(capacity.externalMinutes).toBe(0)
+  expect(capacity.freeMinutes).toBe(960)
+})
+
+test('a meeting running past bedtime counts only the part inside the day', () => {
+  const capacity = computeCapacity([], undefined, undefined, [{ start: 22 * 60, end: 25 * 60 }])
+  expect(capacity.externalMinutes).toBe(60)
+})
+
+test('a day with meetings and no tasks still reports its free time', () => {
+  const capacity = computeCapacity([], undefined, undefined, [{ start: 600, end: 720 }])
+  expect(capacity.gaps.length).toBeGreaterThan(0)
+  expect(capacity.freeMinutes).toBe(960 - 120)
+})
+
+test('a day with neither is unchanged - no free figure invented from nothing', () => {
+  expect(computeCapacity([], undefined, undefined, [])).toMatchObject({
+    anchorCount: 0,
+    externalCount: 0,
+    externalMinutes: 0,
+    freeMinutes: null,
+  })
+})
+
+test('the line says which of the two the day went to', () => {
+  const line = formatCapacityLine(
+    computeCapacity([task({ time: '14:00', minutes: 60 })], undefined, undefined, [{ start: 540, end: 660 }]),
+  )
+  expect(line).toContain('Calendar: 2h across 1 event.')
+  expect(line).toContain('Timed tasks: 1h.')
+})
+
+// An unsized task already means free time is unknown - see computeCapacity.
+// A meeting does not rescue that: the unsized task might run straight through
+// the gap the meeting leaves.
+test('an unsized task still means free time is unknown, meetings or not', () => {
+  const capacity = computeCapacity([task({ time: '14:00' })], undefined, undefined, [{ start: 540, end: 660 }])
+  expect(capacity.freeMinutes).toBeNull()
+  expect(formatCapacityLine(capacity)).toContain("Free time isn't known")
+})

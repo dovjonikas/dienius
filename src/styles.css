@@ -8329,3 +8329,146 @@ main:has(.week) > .calendar {
      the difference between a target a thumb can hit and one it cannot. */
   .week-block { min-height: 20px; }
 }
+
+/* ------------------------------------------------------------------------
+   External calendars - somebody else's, laid over the plan.
+
+   Outlined, never filled. Everything the app's own blocks do to say "this is
+   yours" - a solid wash of category colour, a checkbox, a drag handle - is
+   deliberately absent here, because a meeting is not a task and the moment it
+   looks like one, somebody will try to tick it off. What is left is a dashed
+   edge in the calendar's own colour and the calendar's name in small type:
+   present, legible, and clearly not part of the plan.
+   ------------------------------------------------------------------------ */
+
+/* A strip down the right, over the day's own blocks rather than under them.
+   Under was the first version and it was wrong for the one case that matters:
+   a meeting that clashes with a block you planned was completely hidden by it,
+   which is precisely the clash you opened the app to notice. A narrow strip
+   keeps both readable - the task's title is left-aligned and stays legible -
+   and reads as a second column of things happening to you rather than as part
+   of the plan. */
+.timeline-external {
+  position: absolute;
+  left: auto;
+  right: 4px;
+  width: min(34%, 160px);
+  z-index: 3;
+  padding: 2px 6px;
+  border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
+  border-left: 3px solid var(--cal, var(--muted));
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--cal, var(--muted)) 8%, transparent);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  line-height: 1.25;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.timeline-external-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.timeline-external-cal {
+  display: block;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The same strip, at a week's scale - see .timeline-external for why it is
+   over rather than under. Narrower here because a column is a hundred pixels
+   wide and the block's own name has to survive. */
+.week-external {
+  position: absolute;
+  left: auto;
+  right: 0;
+  width: 42%;
+  z-index: 3;
+  padding: 0 2px;
+  border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
+  border-left: 2px solid var(--cal, var(--muted));
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--cal, var(--muted)) 8%, transparent);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  line-height: 1.1;
+  overflow: hidden;
+  pointer-events: none;
+  min-height: 10px;
+}
+
+.week-external-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- The Calendars settings section ----------------------------------- */
+
+.calendar-list {
+  list-style: none;
+  margin: 0 0 var(--s3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.calendar-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+
+.calendar-swatch {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: var(--r-round);
+  background: var(--chip);
+  flex-shrink: 0;
+}
+
+.calendar-row-main {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-row-name { color: var(--text); font-weight: 600; }
+.calendar-row-note { color: var(--muted); font-size: var(--t-sm); line-height: 1.4; }
+.calendar-row-error { color: var(--danger); }
+
+.calendar-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.calendar-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  max-width: 52ch;
+}
+
+.calendar-form-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+.calendar-blocker { color: var(--muted); }

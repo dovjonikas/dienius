@@ -22,6 +22,7 @@ import { NorthCard } from './NorthCard'
 import { offerUndo } from '../../lib/undo'
 import { TaskGapOffers } from './TaskGapOffers'
 import { useIsWide } from '../../lib/viewport'
+import { busyIntervals, eventsOn, useCalendarCache } from '../../lib/calendars'
 import { MiniCalendar } from './MiniCalendar'
 import { TemplateRail } from './TemplateRail'
 import { DayDigest } from './DayDigest'
@@ -94,7 +95,13 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const daySleepProfileId = day?.sleepProfileId ?? template?.sleepProfileId
   const sleepProfiles = data.settings.sleepProfiles
   const sleep = { profiles: sleepProfiles }
-  const capacity = computeCapacity(day?.tasks ?? [], daySleepProfileId, sleep)
+  // Somebody else's calendar, as a layer and as time already spoken for -
+  // see calendars.ts. Both come from the same list, so the blocks drawn on the
+  // grid and the hours subtracted from the free figure can never disagree.
+  const calendarCache = useCalendarCache()
+  const events = eventsOn(date, data.settings.calendars, calendarCache)
+  const busy = busyIntervals(date, data.settings.calendars, calendarCache)
+  const capacity = computeCapacity(day?.tasks ?? [], daySleepProfileId, sleep, busy)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
   // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
@@ -262,7 +269,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               Not rendered at all at the wide breakpoint - docs/LAYOUT-WIDE.md
               section 5: the grid has its own column there, so there is no fold
               left to protect and nothing this toggle would do. */}
-          {capacity.anchorCount > 0 && !isWide && (
+          {capacity.anchorCount + capacity.externalCount > 0 && !isWide && (
             <button
               type="button"
               className="timeline-toggle"
@@ -288,6 +295,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
               isToday={isToday}
               isWide={isWide}
               sleepProfileId={daySleepProfileId}
+              events={events}
               onOpenTaskDetails={setDetailTaskId}
               onTaskContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
               sleep={sleep}

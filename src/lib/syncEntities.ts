@@ -87,6 +87,11 @@ export const SYNCED_SETTINGS = [
   'dayLayoutFocus',
   'density',
   'textScale',
+  // The subscriptions travel; what they contain does not - see calendars.ts.
+  // A calendar added on the PC should appear on the phone, but a week of
+  // somebody's work meetings is not a plan worth carrying between devices and
+  // is stale the moment it is written.
+  'calendars',
 ] as const
 
 /**

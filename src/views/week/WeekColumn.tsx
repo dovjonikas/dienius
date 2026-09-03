@@ -5,6 +5,7 @@ import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
 import { categoryColor } from '../../lib/categories'
 import { shortWeekday } from '../../lib/dates'
+import type { DayEvent } from '../../lib/calendars'
 import type { WeekBlock, WeekDayLayout } from './weekLayout'
 
 /**
@@ -37,6 +38,8 @@ export interface WeekColumnProps {
   templates: Template[]
   template: Template | undefined
   stat: DayStat | undefined
+  /** Somebody else's calendar, drawn under the day's own blocks. */
+  events: DayEvent[]
   draggingId: string | null
   /** What the weekday plan would stamp here, for the header's one-tap offer. */
   weekdayTemplateId: string | undefined
@@ -56,6 +59,7 @@ export function WeekColumn({
   templates,
   template,
   stat,
+  events,
   draggingId,
   weekdayTemplateId,
   onBlockPointerDown,
@@ -176,6 +180,27 @@ export function WeekColumn({
             style={{ top: `${day.wakeTopPercent}%`, height: `${day.wakeHeightPercent}%` }}
           />
         )}
+
+        {/* Under the day's own blocks on purpose: this is the shape of the day
+            you plan around, not part of the plan. Nothing here is a button -
+            there is nothing to tick, drag or push. */}
+        {events
+          .filter(e => !e.allDay && e.startMinutes !== undefined)
+          .map(event => {
+            const top = ((event.startMinutes! - window.start) / span) * 100
+            const height = (((event.minutes ?? 30)) / span) * 100
+            return (
+              <div
+                key={event.uid}
+                className="week-external"
+                aria-hidden="true"
+                title={`${event.summary} - ${event.calendarName}`}
+                style={{ top: `${top}%`, height: `${height}%`, ['--cal' as string]: event.color } as React.CSSProperties}
+              >
+                <span className="week-external-title">{event.summary}</span>
+              </div>
+            )
+          })}
 
         {showNow && <div className="week-now" aria-hidden="true" style={{ top: `${nowPercent}%` }} />}
 

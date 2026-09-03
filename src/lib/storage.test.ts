@@ -1168,3 +1168,29 @@ test('importJson preserves every sleep schedule across export and re-import', ()
   const imported = importJson(exportJson(data))
   expect(imported.settings.sleepProfiles).toEqual(data.settings.sleepProfiles)
 })
+
+/**
+ * Optional settings survive a save and a load.
+ *
+ * normalizeLoaded used to rebuild settings field by field, which meant an
+ * optional field added later was written, saved, and then quietly gone on the
+ * next open - the value was in localStorage the whole time and nothing ever
+ * read it back. Two features shipped with that bug before it was noticed.
+ */
+test('an optional setting added after the first release survives a reload', () => {
+  const data = defaultData()
+  data.settings.northDismissedOn = '2026-09-03'
+  data.settings.calendars = [{ id: 'c1', name: 'Work', color: '#a7c4f5', enabled: true }]
+
+  const loaded = importJson(JSON.stringify(data))
+  expect(loaded.settings.northDismissedOn).toBe('2026-09-03')
+  expect(loaded.settings.calendars).toHaveLength(1)
+})
+
+test('a backup written before those fields existed still loads, with them absent', () => {
+  const data = defaultData()
+  delete (data.settings as unknown as Record<string, unknown>).northDismissedOn
+  const loaded = importJson(JSON.stringify(data))
+  expect(loaded.settings.northDismissedOn).toBeUndefined()
+  expect(loaded.settings.calendars).toBeUndefined()
+})

@@ -5,6 +5,7 @@ import { clearSnapshots, listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type Snaps
 import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { addDays, todayKey } from '../lib/dates'
 import { clearClockTools } from '../lib/clockTools'
+import { clearCalendarCache } from '../lib/calendars'
 import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
@@ -14,9 +15,10 @@ import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { NorthSettings } from './NorthSettings'
 import { SyncSettings } from './SyncSettings'
+import { CalendarSettings } from './CalendarSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'sync' | 'appearance'
+type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'calendars' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -58,6 +60,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'week', label: 'Week' },
   { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
+  { id: 'calendars', label: 'Calendars' },
   // Near the bottom on purpose. Sync is set up once and then never thought
   // about again; it does not belong next to the things changed weekly.
   { id: 'sync', label: 'Sync' },
@@ -165,6 +168,10 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
       // Not awaited: the reload below is the point, and a delete that has
       // not finished by then finishes without anybody watching.
       void clearSnapshots()
+      // And the cached calendar feeds, under their own key for the same
+      // reason. Somebody else's meetings surviving "remove everything on this
+      // device" would be the most surprising leftover of the three.
+      clearCalendarCache()
       window.location.reload()
     } else {
       setConfirmReset(true)
@@ -631,6 +638,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <IfThenBoard />
             </div>
           </div>
+
+          <CalendarSettings />
 
           <SyncSettings />
 

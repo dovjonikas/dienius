@@ -253,6 +253,15 @@ export interface Capacity {
    */
   anchorsClippedByWindow: boolean
   /**
+   * How many external calendar events fell on this day, and how many minutes
+   * of the waking window they take up once merged - see the `busy` argument
+   * to computeCapacity. Counted apart from the anchors because a meeting is
+   * not something you planned, and "Timed tasks: 6h" would be a lie about a
+   * day spent in somebody else's calendar.
+   */
+  externalCount: number
+  externalMinutes: number
+  /**
    * Free stretches within the window, outside every sized anchor block.
    * Only ever populated when every anchor is sized - see `freeMinutes`.
    */
@@ -320,6 +329,18 @@ export function computeCapacity(
   tasks: Task[],
   sleepProfileId?: string,
   sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS,
+  /**
+   * Time an external calendar has already spoken for - see calendars.ts.
+   *
+   * Folded into the same merged blocks the anchors make, so it eats free time
+   * exactly as a timed task does. This is what keeps the figure honest: a
+   * morning with three meetings in it is not five free hours with three things
+   * written on top, it is two, and a planner that says otherwise is one you
+   * stop believing. It is counted separately from `anchorsMinutes` because a
+   * meeting is not something you planned and "Timed tasks: 6h" would be a lie
+   * about a day you spent in somebody else's calendar.
+   */
+  busy: Interval[] = [],
 ): Capacity {
   const anchors = tasks.filter(isAnchor)
   const floats = tasks.filter(t => !isAnchor(t))
@@ -327,12 +348,14 @@ export function computeCapacity(
   const floatsMinutes = floats.reduce((sum, t) => sum + (t.minutes ?? 0), 0)
   const unsizedFloatCount = floats.filter(t => t.minutes === undefined).length
 
-  if (anchors.length === 0) {
+  if (anchors.length === 0 && busy.length === 0) {
     return {
       anchorCount: 0,
       unsizedAnchorCount: 0,
       anchorsMinutes: null,
       anchorsClippedByWindow: false,
+      externalCount: 0,
+      externalMinutes: 0,
       gaps: [],
       freeMinutes: null,
       floatsMinutes,
@@ -347,8 +370,18 @@ export function computeCapacity(
   const rawIntervals = sizedAnchors.map(anchorInterval)
   const clippedOrNull = rawIntervals.map(interval => clipToWindow(interval, window))
   const clipped = clippedOrNull.filter((interval): interval is Interval => interval !== null)
-  const merged = mergeIntervals(clipped)
-  const anchorsMinutes = merged.reduce((sum, block) => sum + (block.end - block.start), 0)
+  const anchorsMinutes = mergeIntervals(clipped).reduce((sum, block) => sum + (block.end - block.start), 0)
+
+  // Meetings, clipped to the same window and merged into the same blocks. They
+  // take up the day exactly as a timed task does; they are only counted apart
+  // so the sentence can say which of the two the day went to.
+  const externalClipped = busy
+    .map(interval => clipToWindow(interval, window))
+    .filter((interval): interval is Interval => interval !== null)
+  const externalMerged = mergeIntervals(externalClipped)
+  const externalMinutes = externalMerged.reduce((sum, block) => sum + (block.end - block.start), 0)
+
+  const merged = mergeIntervals([...clipped, ...externalClipped])
   // Compared against the raw, unclipped interval for each sized anchor in
   // turn (not against the merged blocks) - merging two overlapping anchors
   // into their union is already-accepted, separate honesty, not a
@@ -371,6 +404,8 @@ export function computeCapacity(
       unsizedAnchorCount,
       anchorsMinutes,
       anchorsClippedByWindow,
+      externalCount: busy.length,
+      externalMinutes,
       gaps: [],
       freeMinutes: null,
       floatsMinutes,
@@ -389,6 +424,8 @@ export function computeCapacity(
     unsizedAnchorCount: 0,
     anchorsMinutes,
     anchorsClippedByWindow,
+    externalCount: busy.length,
+    externalMinutes,
     gaps,
     freeMinutes,
     floatsMinutes,
@@ -516,6 +553,14 @@ export function formatDuration(minutes: number): string {
  */
 export function formatCapacityLine(capacity: Capacity): string | null {
   const sentences: string[] = []
+
+  // Its own sentence, before the arithmetic about tasks. A meeting is not
+  // something you planned, so folding it into "Timed tasks" would overstate
+  // what the day was spent on by exactly the hours somebody else booked.
+  if (capacity.externalMinutes > 0) {
+    const word = capacity.externalCount === 1 ? 'event' : 'events'
+    sentences.push(`Calendar: ${formatDuration(capacity.externalMinutes)} across ${capacity.externalCount} ${word}.`)
+  }
 
   if (capacity.anchorCount > 0) {
     const sizedAnchorCount = capacity.anchorCount - capacity.unsizedAnchorCount

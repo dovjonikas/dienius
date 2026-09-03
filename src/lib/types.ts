@@ -540,6 +540,38 @@ export interface Settings {
    * are looking at, not about a thing you were told.
    */
   northDismissedOn?: string
+  /**
+   * Calendars somebody else owns - see `CalendarSubscription`.
+   *
+   * The subscriptions sync, because a calendar added on the PC should appear
+   * on the phone. What they contain does not: the events are refetched on each
+   * device and cached under their own local key, since a week of somebody's
+   * work meetings is not a plan worth carrying in a backup, and is stale the
+   * moment it is written.
+   */
+  calendars?: CalendarSubscription[]
+}
+
+/**
+ * One external calendar, laid over the plan rather than mixed into it.
+ *
+ * These are not tasks and are never allowed to become them. A meeting is
+ * something that happens to you: there is nothing to tick off, nothing to
+ * push to tomorrow, and no version of it that counts towards a day's score.
+ * It is the shape of the day you plan around, which is exactly why it has to
+ * be visible and exactly why it has to look different.
+ */
+export interface CalendarSubscription {
+  id: string
+  name: string
+  /**
+   * The feed's address, for a subscription. Absent for a calendar imported
+   * from a file, which has no source to refresh from and therefore lives only
+   * on the device it was imported on.
+   */
+  url?: string
+  color: string
+  enabled: boolean
 }
 
 /**

@@ -721,6 +721,13 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
     library: data.library ?? [],
     goals: data.goals ?? [],
     settings: {
+      // Spread first, then normalise. Listing every field by name meant an
+      // optional one added later was silently dropped on load: the value was
+      // written, saved, and gone on the next open. `northDismissedOn` and
+      // `calendars` were both lost this way. Anything unknown that rides along
+      // from a hand-edited backup is harmless - `validate` has already checked
+      // the shape of everything this app actually reads.
+      ...data.settings,
       theme: migrateTheme(data.settings.theme),
       enabledWidgets,
       timelineExpanded: data.settings.timelineExpanded ?? false,

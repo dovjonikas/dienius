@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
 import { formatDuration, windowFor, type SleepSettings } from './capacity'
 import { categoryColor } from '../../lib/categories'
+import type { DayEvent } from '../../lib/calendars'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
 import {
@@ -128,6 +129,14 @@ const MIN_HOUR_LABEL_GAP_PX = 28
  */
 const MIN_LABELLED_GAP_MINUTES = 30
 
+/**
+ * The shortest an external event is ever drawn. Lower than a task's own floor
+ * because this layer is context rather than content: a fifteen-minute standup
+ * should register as a thing in the morning without competing with the block
+ * you actually have to do.
+ */
+const EXTERNAL_MIN_HEIGHT_PX = 18
+
 export interface TimelineGridProps {
   /**
    * Applied to the grid's own outer wrapper so the disclosure toggle that
@@ -253,6 +262,15 @@ export interface TimelineGridProps {
    * falls back to the exact fixed 07:00-23:00 window this app always used.
    */
   sleep?: SleepSettings
+  /**
+   * External calendar events on this day - see calendars.ts.
+   *
+   * Drawn as a layer under the day's own blocks and never as tasks: there is
+   * nothing to tick off, nothing to drag, nothing that counts towards a score.
+   * Defaults to none, so every existing caller and every test that predates
+   * calendars renders exactly the grid it always did.
+   */
+  events?: DayEvent[]
 }
 
 /**
@@ -309,6 +327,7 @@ export function TimelineGrid({
   onOpenTaskDetails,
   onTaskContextMenu,
   sleep,
+  events = [],
 }: TimelineGridProps) {
   // A day with nothing anchored still gets a grid - see emptyDayLayout.
   // The alternative is a blank column beside a full task list, with nowhere
@@ -525,6 +544,30 @@ export function TimelineGrid({
                 style={{ top: `${vertical.topPx(mark)}px` }}
               />
             ))}
+
+            {/* Somebody else's calendar, under the day's own blocks.
+                Deliberately drawn first so a task laid over a meeting is the
+                one you can read: this layer is the shape of the day you plan
+                around, not part of the plan. Outlined rather than filled, no
+                checkbox, nothing to drag - see calendars.ts. */}
+            {events.map(event => {
+              const start = event.startMinutes ?? 0
+              const top = vertical.topPx(start)
+              const height = Math.max(EXTERNAL_MIN_HEIGHT_PX, vertical.topPx(start + (event.minutes ?? 30)) - top)
+              return (
+                <div
+                  key={event.uid}
+                  className="timeline-external"
+                  style={{ top: `${top}px`, height: `${height}px`, ['--cal' as string]: event.color } as React.CSSProperties}
+                  title={`${event.summary} - ${event.calendarName}`}
+                >
+                  <span className="timeline-external-title">{event.summary}</span>
+                  {height >= COMPACT_HEIGHT_PX && (
+                    <span className="timeline-external-cal">{event.calendarName}</span>
+                  )}
+                </div>
+              )
+            })}
 
             {anchors.map(anchor => {
               const top = vertical.topPx(anchor.startMinutes)
