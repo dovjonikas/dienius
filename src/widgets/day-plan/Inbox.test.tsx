@@ -27,10 +27,14 @@ test('an empty inbox is not there at all - it is not a section waiting to be fil
 
 test('a caught line has no date, no time, no size and no category', () => {
   actions.addInboxItem('Book the dentist')
+  // updatedAt is written by commit() for sync and is on every entity in the
+  // store - see stampChanges. It is not something the inbox item carries
+  // about itself, which is what this test is really asserting.
   expect(getData().inbox[0]).toEqual({
     id: expect.any(String),
     text: 'Book the dentist',
     captured: expect.any(String),
+    updatedAt: expect.any(String),
   })
 })
 

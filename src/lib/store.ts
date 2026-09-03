@@ -4,6 +4,7 @@ import { MAX_HIGHLIGHTS } from './types'
 import { isItemFinished, itemProgress, parseLibraryItemInput } from './library'
 import { materialiseRepeats, sourceFor, weekdayOf } from './repeats'
 import { canAddGoal } from './north'
+import { stampChanges } from './syncEntities'
 import { addWithoutDuplicates, isRoutine, willReceive } from './taskIdentity'
 import { importJson, loadData, saveData } from './storage'
 import { applyStamps } from './stamping'
@@ -17,7 +18,42 @@ let data: AppData = loadData()
 let saveOk = true
 const listeners = new Set<() => void>()
 
+/**
+ * The one place state changes, and therefore the one place sync timestamps
+ * are written.
+ *
+ * Every action ends here, so stamping here means no action can forget - see
+ * , which diffs what is going out against what was there and
+ * marks whatever actually moved. The alternative was sixty actions each
+ * remembering to stamp the right entity, which is sixty chances to get it
+ * wrong and a sixty-first action next year that gets it wrong by default.
+ */
 function commit(next: AppData): void {
+  const previous = data
+  data = stampChanges(previous, next, new Date().toISOString())
+  saveOk = saveData(data)
+  listeners.forEach(fn => fn())
+  onCommit.forEach(fn => fn())
+}
+
+/**
+ * Called after every commit. The sync client's debounced push hangs off this
+ * rather than off a subscription, because it wants to know that something was
+ * *written*, not that something re-rendered.
+ */
+const onCommit = new Set<() => void>()
+
+export function onStateCommitted(fn: () => void): () => void {
+  onCommit.add(fn)
+  return () => onCommit.delete(fn)
+}
+
+/**
+ * Replaces the whole state without stamping - the one write that must not
+ * look like a local edit. Used by the sync merge, whose result already
+ * carries the right timestamps from both sides, and by a snapshot restore.
+ */
+export function replaceState(next: AppData): void {
   data = next
   saveOk = saveData(data)
   listeners.forEach(fn => fn())

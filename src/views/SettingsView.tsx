@@ -13,9 +13,10 @@ import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { NorthSettings } from './NorthSettings'
+import { SyncSettings } from './SyncSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'appearance'
+type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -57,6 +58,9 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'week', label: 'Week' },
   { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
+  // Near the bottom on purpose. Sync is set up once and then never thought
+  // about again; it does not belong next to the things changed weekly.
+  { id: 'sync', label: 'Sync' },
   { id: 'appearance', label: 'Appearance' },
 ]
 
@@ -627,6 +631,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <IfThenBoard />
             </div>
           </div>
+
+          <SyncSettings />
 
           <div className="settings-group" id="settings-appearance">
             <h3>Appearance</h3>

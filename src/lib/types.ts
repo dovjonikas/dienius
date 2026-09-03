@@ -12,6 +12,18 @@ import type { CategoryId } from './categories'
 
 export type DayType = 'full' | 'shift' | 'night' | 'rest'
 
+/**
+ * When this entity last changed, as an ISO instant.
+ *
+ * Written by `commit()` rather than by any action - see `stampChanges` - and
+ * read only by the sync merge, which takes the newer side per entity. Absent
+ * on anything written before sync existed, which `normalizeLoaded` and the
+ * first commit both treat as "stamp it now".
+ */
+export interface Timestamped {
+  updatedAt?: string
+}
+
 export interface TemplateBlock {
   id: string
   time?: string
@@ -63,7 +75,7 @@ export interface TemplateBlock {
   libraryListId?: string
 }
 
-export interface Template {
+export interface Template extends Timestamped {
   id: string
   name: string
   color: string
@@ -77,7 +89,7 @@ export interface Template {
   type?: DayType
 }
 
-export interface Task {
+export interface Task extends Timestamped {
   id: string
   time?: string
   title: string
@@ -271,7 +283,7 @@ export interface LibraryRef {
  * reasoning `Task.minutes` already follows. With a total, progress reads
  * "ch 4/12" and draws a bar; without one it reads "ch 4" and draws nothing.
  */
-export interface LibraryItem {
+export interface LibraryItem extends Timestamped {
   id: string
   title: string
   /** Units in the whole thing. Absent means open-ended, not zero. */
@@ -292,7 +304,7 @@ export interface LibraryItem {
  * The owner names the unit once, per list, and every number in the interface
  * is spoken in it.
  */
-export interface LibraryList {
+export interface LibraryList extends Timestamped {
   id: string
   name: string
   /** Singular unit name, lowercase: "chapter", "episode", "lesson". */
@@ -307,7 +319,7 @@ export interface LibraryList {
 /** How many tasks on one day may be marked as highlights. See `Task.highlight`. */
 export const MAX_HIGHLIGHTS = 3
 
-export interface DayPlan {
+export interface DayPlan extends Timestamped {
   date: string
   /**
    * Which template this day was stamped from, if any. Deliberately left in
@@ -518,6 +530,16 @@ export interface Settings {
   taskReminder: TaskReminderSettings
   /** When a goal is allowed to come forward on its own - see `NorthSettings`. */
   north: NorthSettings
+  /**
+   * The date key the North card was last dismissed on, or absent.
+   *
+   * In settings rather than under its own local key, because "I have read this
+   * today" is a fact about the person rather than about the device - the phone
+   * should not ask again about a morning already answered on the PC. The
+   * yesterday banner's own dismissal stays local: that one is about a list you
+   * are looking at, not about a thing you were told.
+   */
+  northDismissedOn?: string
 }
 
 /**
@@ -552,7 +574,7 @@ export type IfThenWhen = 'morning' | 'day' | 'evening' | 'any'
  * undo the reason it works, which is that the decision already happened
  * and there is nothing left to track.
  */
-export interface IfThenEntry {
+export interface IfThenEntry extends Timestamped {
   id: string
   trigger: string
   action: string
@@ -603,7 +625,7 @@ export interface IfThenEntry {
  * time, no size and no category - deliberately nothing to fill in. It becomes
  * a real task, on a real day, when someone chooses to make it one.
  */
-export interface InboxItem {
+export interface InboxItem extends Timestamped {
   id: string
   text: string
   /** When it was caught, as an ISO instant - the only order an inbox has. */
@@ -629,7 +651,7 @@ export interface InboxItem {
  *   powerful of the three when it is true and the most embarrassing when it
  *   is invented, which is why nothing ever asks for it twice.
  */
-export interface Goal {
+export interface Goal extends Timestamped {
   id: string
   title: string
   why?: string
@@ -687,4 +709,17 @@ export interface AppData {
    * somebody is for.
    */
   goals: Goal[]
+  /**
+   * When each synced settings field last changed - see `SYNCED_SETTINGS`. A
+   * map rather than a field on `Settings`, because a boolean has nowhere to
+   * carry a timestamp.
+   */
+  settingsUpdatedAt?: Record<string, string>
+  /**
+   * Deletions, as `entityKey -> ISO instant`. Without these, deleting a task
+   * on one device and syncing means the other - which still has it - looks
+   * like the one with the newer information and hands it straight back. See
+   * `syncEntities.ts`.
+   */
+  tombstones?: Record<string, string>
 }

@@ -2,3 +2,7 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# the sync server keeps its state and its token next to itself
+data/
+server/data/

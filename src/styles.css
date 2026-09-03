@@ -7742,6 +7742,55 @@ button.danger:focus-visible {
 .goal-form textarea { resize: vertical; line-height: 1.5; }
 .goal-form-actions { display: flex; gap: var(--s2); }
 
+/* --- Sync ------------------------------------------------------------- */
+
+/* Two fields side by side where there is room, stacked where there is not.
+   The address is the longer of the two and gets the slack; the token is a
+   fixed-length string and does not need more than it has. */
+.sync-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+}
+
+.sync-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.sync-field > span {
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.sync-field input { width: 100%; }
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.sync-status {
+  margin: 0;
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* Working is quiet, in progress is quieter, and only a state that needs a
+   person to do something takes a colour. A sync that is fine should not be
+   announcing itself in green next to the plan. */
+.sync-status-ok { color: var(--text); }
+.sync-status-busy { color: var(--muted); }
+.sync-status-bad { color: var(--danger); }
+
+.sync-fields + .sync-actions { margin-top: 0; }
+
 .goal-list.is-archived .goal-title { color: var(--muted); }
 
 /* The Review section. Two lines per goal, the second one the age. */

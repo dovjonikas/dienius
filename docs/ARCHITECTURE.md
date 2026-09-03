@@ -150,6 +150,9 @@ src/
     north.ts           goals: rotation, ages, and when one comes forward
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
+    syncEntities.ts    splitting state into entities, stamping, tombstones
+    syncMerge.ts       the per-entity last-write-wins merge
+    syncClient.ts      pull, debounced push, retry, and the status a person sees
     search.ts          the palette's linear scan and its date parsing
     snapshots.ts       the IndexedDB daily copies
     undo.ts            one app-wide undo offer, five seconds
@@ -277,7 +280,107 @@ Three more rules the feature holds to:
 The same tone rule governs the calendar's day stats (`dayStats.ts`): no red at
 any threshold, and a day nobody planned is its own case rather than a zero.
 
-## 7. Styling
+## 7. Sync
+
+Optional, off by default, and deliberately not a dependency. Everything in
+this app works with no server, no account and no connection; sync is a layer
+that copies changes between two devices that both already work on their own.
+If the server is down, unreachable, or was never set up, nothing degrades -
+the app simply does not sync.
+
+### The shape
+
+One dumb server, owned by the person using it (a PC on a home network, reached
+from a phone over Tailscale). It stores state and hands it back. It does not
+merge, does not validate the plan, and has no idea what a task is.
+
+```
+  PC browser ─┐                         ┌─ GET  /state    read what is there
+              ├──> sync-server.mjs <────┤
+  phone PWA ──┘      state.json         └─ POST /state    write the merge back
+```
+
+A client's sync is one round trip: read the server's state, merge it into the
+local one per entity, write the result back. Pull and push are the same
+operation.
+
+Sending only the entities that changed since the last sync would be less
+traffic, and it was the first design. It was dropped because it needs each
+client to remember what the server has already seen, and that bookkeeping is a
+second kind of state that can go wrong - one missed acknowledgement and an
+entity silently never travels. The whole state is a few hundred kilobytes on a
+home network, and a client that sends everything every time cannot get out of
+step. The merge is idempotent, so re-sending what the server already has costs
+nothing but bytes.
+
+### Why per-entity last-write-wins
+
+The naive version - last write wins over the *whole state* - is unusable for
+exactly the case this exists for. Tick three things off on the phone at
+breakfast, edit a template on the PC that evening, and whichever saved second
+erases the other's morning. Every entity therefore carries its own
+`updatedAt`, and a merge takes the newer side **per entity**:
+
+| Entity | Key | Why at this grain |
+|---|---|---|
+| Task | `task:<id>` | The thing that actually changes all day |
+| Day meta | `day:<date>` | Template, day type, skips - changes rarely |
+| Template | `template:<id>` | Blocks change together; splitting them buys nothing |
+| Library list | `list:<id>` | Name and unit |
+| Library item | `item:<id>` | Progress advances independently of the list |
+| Goal | `goal:<id>` | |
+| If-then | `ifthen:<id>` | |
+| Inbox item | `inbox:<id>` | |
+| Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
+
+One person, two devices, rarely at the same second: real conflicts are almost
+nonexistent, and where they happen "the later edit wins" is both correct and
+what anybody would expect. Nothing more elaborate is earned.
+
+### Timestamps are written by diffing, not by hand
+
+Sixty actions in `store.ts` all change something. Asking each of them to stamp
+the right entity is sixty chances to forget, and the sixty-first action added
+next year forgets by default.
+
+Instead `commit()` - the one function every action ends in - diffs the state
+going out against the state coming in, and stamps whatever actually changed.
+It is O(entities) on a store of a few hundred, it cannot be forgotten, and it
+is right for actions that do not exist yet. See `syncEntities.ts`.
+
+### Deletion needs a tombstone
+
+Without one, deleting a task on the phone and syncing means the PC - which
+still has it - looks like the device with the newer information, and hands it
+straight back. So a delete writes `tombstones[key] = timestamp`, which merges
+by the same last-write-wins rule as anything else. Tombstones older than
+`TOMBSTONE_TTL_DAYS` are pruned; a device offline for longer than that would
+resurrect things, which is the honest trade for not growing the file forever.
+
+The same `commit()` diff writes tombstones: an entity present before and
+absent after is a deletion, whoever caused it.
+
+### What does not sync
+
+- **Snapshots** (`snapshots.ts`). They are a local safety net against a local
+  mistake. Copying them between devices would make one device's bad afternoon
+  restorable on the other, which is not what they are for.
+- **The timer and stopwatch** (`clockTools.ts`), for the reason they are not
+  in a backup either: a countdown is not state worth moving.
+- **The sync settings themselves** - URL, token, enabled. Syncing the address
+  of the sync server is circular, and a token is a device's own credential.
+  They live under `dienius:sync` in `localStorage`.
+
+The North card's dismissal *does* sync (it moved into `settings`), because
+"I have read this today" is a fact about the person, not the device.
+
+### Conservatism
+
+A server response that does not validate is ignored entirely and reported as
+an error. Nothing local is ever deleted because the server disagreed - the
+worst outcome of a broken server must be "no sync", never "no data".
+
+## 8. Styling
 
 **One stylesheet**, `src/styles.css`, ~6000 lines, organised by area with a
 comment block per section. No CSS modules, no CSS-in-JS, no utility classes.
@@ -311,7 +414,7 @@ test will tell you if you forget.
 
 ---
 
-## 8. Tests
+## 9. Tests
 
 Vitest + Testing Library + jsdom. ~1170 tests, no worker limits, no skips.
 
@@ -337,7 +440,7 @@ npm run build     # typecheck, build, generate the service worker
 
 ---
 
-## 9. Offline and updates
+## 10. Offline and updates
 
 - `public/sw.js` is hand-written; `scripts/generate-sw.mjs` runs after the
   build, hashes every output file, and writes the cache name and precache list
@@ -349,7 +452,7 @@ npm run build     # typecheck, build, generate the service worker
 
 ---
 
-## 10. Conventions worth knowing before editing
+## 11. Conventions worth knowing before editing
 
 - **Absent is a state.** Optional fields mean something specific; check the doc
   comment before treating one as a default.

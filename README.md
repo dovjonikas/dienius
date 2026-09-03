@@ -67,14 +67,58 @@ Everything is written straight to `localStorage`. There's no account and no serv
 - **Daily snapshots** - a full copy is kept once a day in IndexedDB, the last seven held, restorable from Settings. This covers the case a manual backup structurally cannot: the mistake you did not see coming. Erasing all data takes them with it
 - **Undo** - deleting a task, removing a library item and stamping a template are all reversible for five seconds
 - A running timer is the one thing deliberately kept out of the backup - it lives under its own key, because a timer with ninety seconds left is not a plan worth restoring from last Tuesday
-- No sync between devices - clear site data on this one and it's gone unless you exported first
+- **Sync** is optional and off until you set it up - see below. Without it, each device keeps its own plan, and clearing site data on one loses that copy unless you exported first
 - Updates install themselves the next time you open the app
+
+---
+
+## Sync between devices
+
+Optional. The app is local-first and stays that way: sync is a layer on top, and everything works with the server off, unreachable, or never set up.
+
+There is no hosted service and no account. You run a small server on a machine you own, and your devices copy changes through it. It is about 200 lines, has no dependencies, and never gets any.
+
+### Run it
+
+```bash
+node server/sync-server.mjs
+```
+
+On first run it writes `data/token.txt`, prints the token, and listens on port 8787. Options: `--port`, `--data <dir>`, and `--origin <url>` to allow an origin beyond the built-in list (localhost dev/preview and `https://quicasha.github.io`).
+
+Then on each device: **Settings → Sync**, paste the server URL and that token, and turn it on. It pulls when you open the app, pushes a couple of seconds after each change, and retries on its own when the connection comes back.
+
+### Autostart on Windows
+
+Run it at logon, no window:
+
+```bash
+schtasks /create /tn "Dienius sync" /tr "node \"C:\path\to\dienius\server\sync-server.mjs\"" /sc onlogon /rl highest
+```
+
+Check it with `schtasks /query /tn "Dienius sync"`, stop it with `/end`, remove it with `/delete /f`.
+
+### Reaching it from the phone
+
+Do not open the port to the internet. Install [Tailscale](https://tailscale.com) on the PC and the phone, sign both into the same account, and use the PC's Tailscale address as the server URL:
+
+```
+http://100.x.y.z:8787
+```
+
+That address works from anywhere the phone has a connection, over an encrypted link, with nothing exposed publicly. When the PC is asleep the phone simply says so and catches up later.
+
+### What syncs, and what does not
+
+Tasks, day plans, templates, library, goals, if-then entries, the inbox and your settings all sync. Snapshots do not - they are this device's backup of its own history, and a backup that follows the same wire as the data it protects is not a backup. A running timer does not either.
+
+Merging is per entity, so a morning on the phone and an evening on the PC both survive; only the same task edited on both loses one version, and the later edit wins. Deletes stick rather than coming back from the other device. If the server ever answers with something that is not a plan, nothing local is touched and Settings says so.
 
 ---
 
 ## Under the hood
 
-React 19 and TypeScript, built with Vite. No UI framework, no state management library - app state is one object behind a `useSyncExternalStore` store, persisted straight to `localStorage`. No backend of any kind.
+React 19 and TypeScript, built with Vite. No UI framework, no state management library - app state is one object behind a `useSyncExternalStore` store, persisted straight to `localStorage`. The only server anywhere is the optional sync box above, which stores a file and has no idea what a task is.
 
 ```
 src/
@@ -100,6 +144,9 @@ src/
     theme-color.ts   keeps <meta name="theme-color"> in sync with the active theme
     contrast.ts      the WCAG contrast gate the theme tests run
     pushRules.ts     the two-push bound and the ongoing exemption
+    syncEntities.ts  splits state into addressable entities, stamps what changed
+    syncMerge.ts     the per-entity merge, and what counts as a state at all
+    syncClient.ts    pull, merge, push - debounced, retrying, never blocking
   views/          Calendar, Templates, Library, Review, Settings, CommandPalette,
                   TimePicker, ShortcutsOverlay
   widgets/
@@ -109,6 +156,9 @@ src/
     clock/        the timer popover, the floating widget and the focus-work nudge
     registry.ts   which widgets are enabled on the day view
   App.tsx         tab navigation and the current view/date
+server/
+  sync-server.mjs   the optional sync server: no dependencies, one JSON file,
+                    atomic writes, a token and an origin allowlist
 scripts/
   generate-sw.mjs   runs after the production build; hashes the output and writes the
                     versioned cache name and precache list into public/sw.js
