@@ -10101,3 +10101,41 @@ main:has(.week) > .calendar {
   .library-template-form input,
   .library-template-form select { width: 100%; }
 }
+
+/* The Note/Task marker beside the scratch field.
+   ------------------------------------------------------------------------
+   Scratch's whole value is that nothing is asked at the moment of writing,
+   so the way out of it costs one character or one tap and says where the
+   line is going before Enter rather than after. Quiet as a note, and only
+   as loud as an accent tint as a task - it is a state, not a warning. */
+.scratch-field {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+}
+
+.scratch-field .scratch-input { flex: 1; min-width: 0; }
+
+.scratch-intent {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-xs);
+}
+
+.scratch-intent:hover { color: var(--text); }
+
+.scratch-intent.is-task {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+@media (pointer: coarse) {
+  .scratch-intent { min-height: 44px; }
+}

@@ -243,3 +243,103 @@ test('the floating button is there on a phone and not beside a keyboard', () => 
   expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
   vi.unstubAllGlobals()
 })
+
+// --- something to do, said in one character --------------------------------
+//
+// Scratch's whole value is that nothing is asked at the moment of writing, so
+// the way out of it has to cost one character or one tap - and it has to be a
+// character somebody types deliberately, never one that falls out of ordinary
+// prose.
+
+test('a line starting with ! goes to the inbox, without the mark and without a note', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  const field = screen.getByRole('textbox', { name: 'Scratch note' })
+
+  await user.type(field, '!book the dentist')
+  // Not written into the stream and then moved - never written at all, or
+  // changing your mind mid-sentence would leave a note behind every time.
+  expect(getData().scratch).toHaveLength(0)
+
+  await user.keyboard('{Enter}')
+  expect(getData().inbox.map(i => i.text)).toEqual(['book the dentist'])
+  expect(getData().scratch).toHaveLength(0)
+})
+
+test('the mark only counts at the front, so an ordinary line is still a note', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'That went well!{Enter}')
+  expect(getData().scratch.map(n => n.text)).toEqual(['That went well!'])
+  expect(getData().inbox).toHaveLength(0)
+})
+
+test('the marker says where the line is going before Enter', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  const field = screen.getByRole('textbox', { name: 'Scratch note' })
+  expect(screen.getByRole('button', { name: /Staying as a note/ })).toHaveTextContent('Note')
+
+  await user.type(field, '!call the bank')
+  expect(screen.getByRole('button', { name: /Going to the inbox as a task/ })).toHaveTextContent('Task')
+})
+
+test('the toggle is the same intent said with a tap', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  await user.click(screen.getByRole('button', { name: /Staying as a note/ }))
+  await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'call the bank{Enter}')
+
+  expect(getData().inbox.map(i => i.text)).toEqual(['call the bank'])
+  expect(getData().scratch).toHaveLength(0)
+})
+
+test('a note already started is taken back out of the stream when the line becomes a task', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  const field = screen.getByRole('textbox', { name: 'Scratch note' })
+
+  await user.type(field, 'call the bank')
+  expect(getData().scratch).toHaveLength(1)
+
+  // The "!" arrives after the words, which is how somebody who changes their
+  // mind actually types it: they reach back to the front of the line.
+  await user.clear(field)
+  await user.type(field, '!call the bank')
+  expect(getData().scratch).toHaveLength(0)
+  await user.keyboard('{Enter}')
+  expect(getData().inbox.map(i => i.text)).toEqual(['call the bank'])
+})
+
+test('turning the toggle off takes the mark off with it', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  const field = screen.getByRole('textbox', { name: 'Scratch note' })
+  await user.type(field, '!call the bank')
+
+  // Otherwise the line would still read as a task and the toggle would look
+  // like it had not worked.
+  await user.click(screen.getByRole('button', { name: /Going to the inbox as a task/ }))
+  expect(field).toHaveValue('call the bank')
+  expect(screen.getByRole('button', { name: /Staying as a note/ })).toBeInTheDocument()
+})
+
+test('the next line after a task is a note again', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  await user.click(screen.getByRole('button', { name: /Staying as a note/ }))
+  await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'call the bank{Enter}')
+  // The toggle is about this line, not the rest of the sitting: the next
+  // thing somebody blurts out is far more often a note.
+  expect(screen.getByRole('button', { name: /Staying as a note/ })).toBeInTheDocument()
+  await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'serial is 4471{Enter}')
+  expect(getData().scratch.map(n => n.text)).toEqual(['serial is 4471'])
+})
+
+test('a line that is only a mark sends nothing', async () => {
+  const user = userEvent.setup()
+  render(<Scratch open onClose={() => {}} />)
+  await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), '!{Enter}')
+  expect(getData().inbox).toHaveLength(0)
+  expect(getData().scratch).toHaveLength(0)
+})

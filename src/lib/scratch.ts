@@ -101,3 +101,45 @@ export function scratchCount(n: number): string {
   if (n === 0) return 'Nothing yet'
   return `${n} ${n === 1 ? 'note' : 'notes'}`
 }
+
+/**
+ * Whether this line is meant as something to do rather than something to
+ * remember.
+ *
+ * A leading "!" and nothing else. Scratch's whole value is that nothing is
+ * asked at the moment of writing (CONVENTIONS.md section 11), so the way out
+ * of it has to cost one character - and it has to be a character somebody
+ * types deliberately, never one that falls out of ordinary prose. Leading, so
+ * "That went well!" is a note and "!book the dentist" is a task; and a single
+ * mark, so a line that is only exclamation marks is still just a note nobody
+ * has to think about.
+ *
+ * The toggle beside the field is the same intent said with a tap instead. See
+ * views/scratch/Scratch.tsx.
+ */
+export function isTaskIntent(text: string): boolean {
+  return /^\s*!\s*\S/.test(text)
+}
+
+/**
+ * A line that is the mark and nothing else yet.
+ *
+ * The moment between typing "!" and typing the first letter after it. It is
+ * not a task - there is nothing to do in it - and it must not be written to
+ * the stream either, because scratch saves on every keystroke and the note
+ * would be created and deleted again one character later, leaving a commit
+ * and an undo-able delete behind for every task anybody ever types.
+ */
+export function isTaskMarkOnly(text: string): boolean {
+  return /^s*!s*$/.test(text)
+}
+
+/**
+ * The line without its mark. "!" is punctuation about where the line is
+ * going, not part of what it says, so an inbox line that arrives reading
+ * "!book the dentist" would be the mark leaking into the thing it was
+ * steering.
+ */
+export function stripTaskMark(text: string): string {
+  return text.replace(/^\s*!\s*/, '')
+}

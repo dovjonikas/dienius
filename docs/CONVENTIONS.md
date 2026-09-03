@@ -296,6 +296,13 @@ writing, and every addition that asks something takes that value away. So:
 - **An old note is not an accusation.** The count is shown in `--faint`, with
   no badge and no accent colour, and nothing ever says "unprocessed". Same
   rule as the day view's score: a number that grows in red is a report card.
+- **The way out costs one character.** A leading `!`, or the toggle beside
+  the field, sends the line to the inbox as something to do instead of into
+  the stream. It is never written as a note first and moved afterwards -
+  changing your mind mid-sentence would leave one behind every time - and
+  the marker says which it is going to be before Enter, not after. This is
+  the same rule as the one above it, read the other way: a note that needs
+  structure gets a way out, not a field.
 - **Capture is never gated.** The key (`S` or the backtick), the floating
   button, the palette command: each opens the box with the cursor in it and
   every keystroke already saved. If a change makes any of those take a second

@@ -47,7 +47,7 @@ reading them.
 | Push twice, then decide | An unfinished task moves to tomorrow twice; after that, finish it, delete it, or mark it ongoing |
 | Yesterday banner | What yesterday left, stated once, moved forward in one tap - never automatically |
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back. See `widgets/day-plan/replan.ts` |
-| Scratch | One key (S or backtick) or a floating button, and you are typing. Its own stream, `#tags` as filters, a #bug export |
+| Scratch | One key (S or backtick) or a floating button, and you are typing. Its own stream, `#tags` as filters, a #bug export. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
 | Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
 | Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
 | Focus | One task, its own planned time, a ring, a way out. Not a pomodoro |

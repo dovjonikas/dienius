@@ -8,9 +8,12 @@ import {
   bugExport,
   filterScratch,
   hasTag,
+  isTaskIntent,
+  isTaskMarkOnly,
   scratchCount,
   sortScratch,
   stripTags,
+  stripTaskMark,
 } from '../../lib/scratch'
 import { parseQuickAdd } from '../../widgets/day-plan/parse'
 import type { ScratchNote } from '../../lib/types'
@@ -45,6 +48,7 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState('')
   const [draftId, setDraftId] = useState<string | null>(null)
   const [tag, setTag] = useState<string | null>(null)
+  const [taskMode, setTaskMode] = useState(false)
   const [status, setStatus] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -64,8 +68,26 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
     el.style.height = `${el.scrollHeight + 2}px`
   }, [draft])
 
+  // Whether this line is meant as something to do. Two ways in and one
+  // meaning: a leading "!" for somebody already typing, the toggle for a
+  // thumb. Derived rather than stored, so the mark and the toggle can never
+  // disagree about where Enter is going to send the line.
+  const typedIntent = isTaskIntent(draft)
+  const intent = taskMode || typedIntent
+
   function handleChange(text: string) {
     setDraft(text)
+    // A line meant as a task is never written into the stream at all - not
+    // written and then moved, which would leave a note behind every time
+    // somebody changed their mind mid-sentence. If one was already started
+    // before the "!" appeared, it goes now.
+    if (taskMode || isTaskIntent(text) || isTaskMarkOnly(text)) {
+      if (draftId !== null) {
+        actions.deleteScratch(draftId)
+        setDraftId(null)
+      }
+      return
+    }
     if (draftId === null) {
       if (!text.trim()) return
       setDraftId(actions.addScratch(text).id)
@@ -80,6 +102,16 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
   }
 
   function finishNote() {
+    if (intent) {
+      const text = stripTaskMark(draft).trim()
+      if (!text) return
+      actions.addInboxItem(text)
+      setStatus('Sent to the inbox.')
+      // Back to a note afterwards. The toggle is about this line, not about
+      // the rest of the sitting: the next thing somebody blurts out is far
+      // more often a note, which is what this box is for.
+      setTaskMode(false)
+    }
     setDraft('')
     setDraftId(null)
   }
@@ -137,16 +169,37 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
         data-keeps-keys=""
         onClick={e => e.stopPropagation()}
       >
-        <textarea
-          ref={inputRef}
-          className="scratch-input"
-          aria-label="Scratch note"
-          placeholder="Write it down. A #tag is a filter."
-          rows={1}
-          value={draft}
-          onChange={e => handleChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+        <div className="scratch-field">
+          <textarea
+            ref={inputRef}
+            className="scratch-input"
+            aria-label="Scratch note"
+            placeholder={intent ? 'Something to do. Enter sends it to the inbox.' : 'Write it down. A #tag is a filter.'}
+            rows={1}
+            value={draft}
+            onChange={e => handleChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          {/* Where this line is going, said before Enter rather than after.
+              The toggle and the leading "!" are the same intent expressed two
+              ways - one for a thumb, one for somebody already typing - and
+              the marker shows whichever is in force, so a line that starts
+              with "!" reads as a task without the toggle having been touched. */}
+          <button
+            type="button"
+            className={intent ? 'scratch-intent is-task' : 'scratch-intent'}
+            aria-pressed={intent}
+            aria-label={intent ? 'Going to the inbox as a task. Make it a note instead' : 'Staying as a note. Make it a task instead'}
+            onClick={() => {
+              // Turning it off has to take the mark off too, or the line would
+              // still read as a task and the toggle would appear not to work.
+              if (typedIntent) handleChange(stripTaskMark(draft))
+              setTaskMode(!intent)
+            }}
+          >
+            {intent ? 'Task' : 'Note'}
+          </button>
+        </div>
 
         <div className="scratch-bar">
           <button
