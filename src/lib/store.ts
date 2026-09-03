@@ -13,6 +13,7 @@ import type { ScratchNote } from './types'
 import { isPushable } from './pushRules'
 import { isTourRunning } from './tourState'
 import { discardTourCreated, keepTourCreated, markTourCreated } from './tour'
+import { applyPlan, type ReplanPlan } from '../widgets/day-plan/replan'
 import type { CategoryId } from './categories'
 
 export { MAX_PUSHES } from './pushRules'
@@ -987,6 +988,28 @@ export const actions = {
     if (!trimmed) return
     const item = { id: crypto.randomUUID(), text: trimmed, captured: new Date().toISOString() }
     commit({ ...data, inbox: [item, ...data.inbox] })
+  },
+
+  /**
+   * Replan - see widgets/day-plan/replan.ts. Away is a fact about the day,
+   * kept on the day so it travels to the other device: a phone that says
+   * "away" while the PC nudges about a task that started ten minutes ago is
+   * two devices with two different days.
+   */
+  setAway(date: string, time: string | undefined): void {
+    const { away: _was, ...rest } = dayOf(date)
+    commit(withDay(date, time ? { ...rest, away: time } : rest))
+  },
+
+  /**
+   * One commit for the whole plan, and one undo for it. The undo puts the
+   * previous state back through commit, so it is stamped like any other
+   * change and wins the next sync the way a restore does.
+   */
+  applyReplan(date: string, plan: ReplanPlan): { undo: () => void } {
+    const previous = data
+    commit(applyPlan(data, date, plan, () => crypto.randomUUID()))
+    return { undo: () => commit(previous) }
   },
 
   /**

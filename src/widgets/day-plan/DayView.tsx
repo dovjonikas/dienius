@@ -31,6 +31,8 @@ import { TaskPane } from './TaskPane'
 import { useDayDrag } from './useDayDrag'
 import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
+import { ReplanSheet } from './ReplanSheet'
+import { useReplanRequest, type ReplanMode } from '../../lib/replanState'
 
 export interface DayViewProps {
   date: string
@@ -74,6 +76,14 @@ export function DayView({ date, onDateChange }: DayViewProps) {
   const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
   const isToday = date === todayKey()
   const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
+  // The replan sheet - see replan.ts. Opened from the header, or asked for
+  // by the command palette through replanState; either way it is about
+  // today, so a request while another day is on screen is left for today.
+  const [replanMode, setReplanMode] = useState<ReplanMode | null>(null)
+  const replanRequest = useReplanRequest()
+  useEffect(() => {
+    if (replanRequest.seq > 0 && isToday) setReplanMode(replanRequest.mode)
+  }, [replanRequest, isToday])
   useEffect(() => {
     if (!isToday) return
     const timer = setInterval(() => setNowMinutes(currentMinutes()), NOW_TICK_MS)
@@ -217,7 +227,22 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         daySleepProfileId={daySleepProfileId}
         isWide={isWide}
         dayLayoutFocus={dayLayoutFocus}
+        replan={isToday ? { away: day?.away, onOpen: setReplanMode } : undefined}
       />
+
+      {replanMode && isToday && (
+        <ReplanSheet
+          date={date}
+          tasks={day?.tasks ?? []}
+          nowMinutes={nowMinutes}
+          sleep={sleep}
+          sleepProfileId={daySleepProfileId}
+          busy={busy}
+          away={day?.away}
+          mode={replanMode}
+          onClose={() => setReplanMode(null)}
+        />
+      )}
 
       {/* Above the yesterday banner on purpose: one of these is about why, the
           other about what is left, and on a morning that shows both, why comes

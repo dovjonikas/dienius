@@ -294,3 +294,49 @@ writing, and every addition that asks something takes that value away. So:
   button, the palette command: each opens the box with the cursor in it and
   every keystroke already saved. If a change makes any of those take a second
   step, it is wrong.
+
+---
+
+## 12. A partial plan beats a dropped day
+
+Replan (`widgets/day-plan/replan.ts`, `ReplanSheet.tsx`) exists for the
+moment a plan breaks: a call, a change, an afternoon away. The failure it
+guards against is not the broken piece but what the brain does next - "the
+whole day is gone" - so the rules are about tone as much as arithmetic:
+
+- **Never count what was missed.** A summary says what still fits and what
+  moves. "Still winnable: 2 of 3 key" is allowed; "you missed 4 tasks" is
+  not, in any wording, in any colour.
+- **Nothing disappears silently.** A task that no longer fits before sleep is
+  named and offered to tomorrow. A plan that would drop something says so
+  before Accept, never after.
+- **Ten seconds and one press.** Every replan screen is one question, shows
+  its answer before it is accepted, and applies in one commit with one undo.
+  If a change adds a second question to the path, it is wrong.
+- **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
+  nudges; "I'm back" offers one rescue and clears it. A day that was paused
+  is scored like any other, because the score is a fact and the pause was a
+  choice.
+
+---
+
+## 12. A partial plan beats a dropped day
+
+Replan (`widgets/day-plan/replan.ts`, `ReplanSheet.tsx`) exists for the
+moment a plan breaks: a call, a change, an afternoon away. The failure it
+guards against is not the broken piece but what the brain does next - "the
+whole day is gone" - so the rules are about tone as much as arithmetic:
+
+- **Never count what was missed.** A summary says what still fits and what
+  moves. "Still winnable: 2 of 3 key" is allowed; "you missed 4 tasks" is
+  not, in any wording, in any colour.
+- **Nothing disappears silently.** A task that no longer fits before sleep is
+  named and offered to tomorrow. A plan that would drop something says so
+  before Accept, never after.
+- **Ten seconds and one press.** Every replan screen is one question, shows
+  its answer before it is accepted, and applies in one commit with one undo.
+  If a change adds a second question to the path, it is wrong.
+- **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
+  nudges; "I'm back" offers one rescue and clears it. A day that was paused
+  is scored like any other, because the score is a fact and the pause was a
+  choice.

@@ -40,6 +40,10 @@ export function TaskReminder({ date }: { date: string }) {
 
   useEffect(() => {
     if (!enabled || date !== todayKey()) return
+    // A day that is paused does not nudge. The person said they are away;
+    // a notification about a task that started without them is exactly the
+    // "you missed it" this app does not say. See replan.ts.
+    if (data.days[date]?.away) return
     const tasks = data.days[date]?.tasks ?? []
     for (const task of tasks) {
       if (task.done || !task.time) continue

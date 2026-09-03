@@ -5,6 +5,7 @@ import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
+import type { ReplanMode } from '../../lib/replanState'
 
 /**
  * The masthead: which day this is, what time it is, how it is going, and the
@@ -44,6 +45,11 @@ export interface DayHeaderProps {
   daySleepProfileId: string | undefined
   isWide: boolean
   dayLayoutFocus: 'both' | 'calendar' | 'tasks'
+  /**
+   * The way into replanning, on today only - see replan.ts. While the person
+   * is away the header says so and offers the way back instead.
+   */
+  replan?: { away: string | undefined; onOpen: (mode: ReplanMode) => void }
 }
 
 export function DayHeader({
@@ -60,6 +66,7 @@ export function DayHeader({
   daySleepProfileId,
   isWide,
   dayLayoutFocus,
+  replan,
 }: DayHeaderProps) {
   const isToday = date === todayKey()
   const isPast = date < todayKey()
@@ -102,6 +109,25 @@ export function DayHeader({
               <span className="template-chip-dot" aria-hidden="true" />
               {template.name}
             </span>
+          )}
+          {/* Under the title rather than beside the arrows: a fourth thing
+              in the nav row would have to be as loud as the arrows, and
+              this is a door for a bad moment, not a control for every one. */}
+          {replan && (
+            <div className="day-replan">
+              {replan.away ? (
+                <>
+                  <span className="day-replan-away">Away since {replan.away}</span>
+                  <button type="button" className="link-button" onClick={() => replan.onOpen('back')}>
+                    I'm back
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="link-button" onClick={() => replan.onOpen('menu')}>
+                  Replan
+                </button>
+              )}
+            </div>
           )}
         </div>
         <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>

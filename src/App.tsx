@@ -20,6 +20,7 @@ import { Tour } from './views/tour/Tour'
 import { Scratch } from './views/scratch/Scratch'
 import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
+import { requestReplan } from './lib/replanState'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -243,6 +244,35 @@ export function App() {
       run: () => {
         openDay(todayKey())
         setFocusQuickAdd(n => n + 1)
+      },
+    },
+    // The three replan doors, from anywhere. Each lands on today and opens
+    // the sheet there - the day view owns the sheet, this only asks.
+    {
+      id: 'replan-interrupt',
+      label: 'Something came up',
+      detail: 'Fit it in; what it hits moves or goes',
+      run: () => {
+        openDay(todayKey())
+        requestReplan('interrupt')
+      },
+    },
+    {
+      id: 'replan-shift',
+      label: 'Shift the rest',
+      detail: 'Everything from now, later',
+      run: () => {
+        openDay(todayKey())
+        requestReplan('shift')
+      },
+    },
+    {
+      id: 'replan-away',
+      label: 'Away',
+      detail: 'Pause the day; one rescue when you are back',
+      run: () => {
+        openDay(todayKey())
+        requestReplan(getData().days[todayKey()]?.away ? 'back' : 'away')
       },
     },
     { id: 'scratch', label: 'Scratch', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },

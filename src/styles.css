@@ -9190,3 +9190,206 @@ main:has(.week) > .calendar {
     transform: translate(-50%, -50%);
   }
 }
+
+/* ------------------------------------------------------------------------
+   Replan - the ten seconds after the plan broke. See replan.ts.
+
+   A sheet built for a stressed moment: one question a screen, the answer
+   shown before it is accepted, a summary readable in three seconds on a
+   phone. Bottom sheet on a phone, a centred card elsewhere - the task detail
+   already made that call and this follows it.
+   ------------------------------------------------------------------------ */
+
+.replan-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 92;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .replan-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+}
+
+.replan {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(84vh, 760px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.replan-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.replan-title { margin: 0; flex: 1; font-size: var(--t-lg); }
+
+.replan-back {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-md);
+}
+
+.replan-back:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+
+.replan-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  overflow-y: auto;
+}
+
+.replan-menu { display: flex; flex-direction: column; gap: var(--s2); padding: var(--s3); }
+
+/* Three big doors. Each is a title and one line, because the person reading
+   this has already decided the day is gone and is being offered a way back. */
+.replan-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+.replan-choice:hover { border-color: var(--accent); }
+.replan-choice strong { font-size: var(--t-md); }
+.replan-choice span { color: var(--muted); font-size: var(--t-sm); line-height: 1.4; }
+
+.replan-row { display: flex; gap: var(--s3); flex-wrap: wrap; }
+.replan-when { flex: 0 0 110px; }
+.replan-when input { width: 100%; }
+.replan-row > .field { flex: 1 1 200px; }
+
+.replan-chips { display: flex; gap: var(--s1); flex-wrap: wrap; align-items: center; }
+
+.replan-custom input { width: 72px; }
+
+.replan-conflicts { display: flex; flex-direction: column; gap: var(--s2); }
+.replan-conflicts-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
+.replan-label { color: var(--muted); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.replan-forall { display: inline-flex; gap: var(--s3); font-size: var(--t-sm); }
+
+.replan-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s1); }
+
+.replan-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s1) var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 25%, transparent);
+}
+
+.replan-item-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.replan-item-was { color: var(--faint); font-variant-numeric: tabular-nums; }
+.replan-item-outcome { color: var(--muted); font-size: var(--t-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.replan-item.is-move .replan-item-outcome { color: var(--text); }
+.replan-key { color: var(--accent); margin-right: 4px; font-weight: 700; }
+
+.replan-seg { grid-column: 1 / -1; }
+.replan-seg button { padding: var(--s1) var(--s3); font-size: var(--t-sm); }
+
+/* The summary is the sentence the whole sheet exists for. Body size, body
+   colour: it is the answer, not a footnote. */
+.replan-summary { margin: 0; color: var(--text); font-size: var(--t-md); line-height: 1.45; }
+.replan-summary-lead { font-size: var(--t-lg); font-weight: 600; }
+.replan-text { margin: 0; color: var(--muted); line-height: 1.5; }
+
+.replan-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.replan-foot-note { color: var(--muted); font-size: var(--t-sm); margin-left: auto; }
+
+/* The door in the day header: a quiet text button under the title. */
+.day-replan { display: flex; align-items: center; justify-content: center; gap: var(--s2); font-size: var(--t-sm); }
+.day-replan-away { color: var(--muted); }
+
+@media (max-width: 599px) {
+  .replan-scrim { align-items: flex-end; padding: 0; }
+  .replan {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .replan-item-title { white-space: normal; }
+}
+
+@media (pointer: coarse) {
+  .replan-choice { min-height: 64px; }
+  .replan-seg button { min-height: 40px; }
+  .replan-back { position: relative; }
+  .replan-back::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* The replan sheet's own chips. Not `.chip`, which is the category swatch:
+   that one sets a dark ink for the coloured background its callers supply
+   inline, so borrowing it here rendered a browser-default white pill with
+   near-black text in the dark theme - the loudest thing on a sheet that is
+   read in a hurry. */
+.replan-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.replan-chip:hover { color: var(--text); border-color: var(--muted); }
+
+.replan-chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+@media (pointer: coarse) {
+  .replan-chip { min-height: 44px; }
+  .replan-seg button { min-height: 44px; }
+}

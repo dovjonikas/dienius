@@ -545,6 +545,7 @@ function isDayPlan(x: unknown): x is DayPlan {
     typeof x.date === 'string' &&
     isOptionalString(x.templateId) &&
     isOptionalString(x.sleepProfileId) &&
+    isOptionalString(x.away) &&
     isOptionalDayType(x.dayType) &&
     isOptionalStringList(x.repeatSkips) &&
     isOptionalBoolean(x.autoApplied) &&
