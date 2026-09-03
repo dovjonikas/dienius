@@ -46,6 +46,10 @@ beforeEach(() => {
 afterEach(() => {
   resetSyncForTests()
   vi.unstubAllGlobals()
+  // Spies are not globals: the offline test replaces navigator.onLine's getter,
+  // and unstubAllGlobals leaves it replaced. Every test after it then took the
+  // early return in syncNow and passed by never doing anything.
+  vi.restoreAllMocks()
 })
 
 test('nothing goes over the wire until somebody turns it on', async () => {
@@ -204,4 +208,58 @@ test('the last-synced line reads as a person would say it', () => {
   expect(formatSyncedAt('2026-09-01T11:56:00.000Z', now)).toBe('4 min ago')
   expect(formatSyncedAt('2026-09-01T11:00:00.000Z', now)).toBe('1 hour ago')
   expect(formatSyncedAt('2026-08-30T12:00:00.000Z', now)).toBe('2 days ago')
+})
+
+/**
+ * Two devices whose round trips overlap: both read, then both write, and the
+ * second write lands on top of a state that never saw the first one.
+ *
+ * There is no locking, and there deliberately is not going to be - one person
+ * with two devices does not need a transaction log. What makes it safe is that
+ * nothing is ever lost locally: the device whose change got overwritten still
+ * has it, and its next sync puts it back. This pins that self-healing, because
+ * without it the answer to "did that get through?" would be "sometimes".
+ */
+test('a push that lands on top of another device sorts itself out on the next sync', async () => {
+  actions.addTask(DATE, 'Mine')
+  const mine = getData()
+
+  // The other device wrote while this one was mid-round-trip, so the server
+  // now holds a state that has never seen "Mine".
+  const theirs = defaultData()
+  theirs.days[DATE] = {
+    date: DATE,
+    tasks: [{ id: 'theirs', title: 'Theirs', done: false, updatedAt: '2026-09-01T09:00:00.000Z' }],
+    updatedAt: '2026-09-01T09:00:00.000Z',
+  } as AppData['days'][string]
+
+  const posted = serverHolding(theirs)
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(getData().days[DATE].tasks.map(t => t.title).sort()).toEqual(['Mine', 'Theirs'])
+  expect(posted.at(-1)!.days[DATE].tasks).toHaveLength(2)
+  expect(mine.days[DATE].tasks[0].title).toBe('Mine')
+})
+
+// Restoring a snapshot is a decision made now - see actions.restoreState. It
+// has to beat whatever the other device is still holding, or the restore
+// silently undoes itself a few seconds later.
+test('a restored snapshot survives the sync that follows it', async () => {
+  actions.addTask(DATE, 'Typed today')
+  const server = getData()
+
+  const snapshot = defaultData()
+  snapshot.days['2026-08-20'] = {
+    date: '2026-08-20',
+    tasks: [{ id: 'old', title: 'From the snapshot', done: false, updatedAt: '2026-08-20T09:00:00.000Z' }],
+  } as AppData['days'][string]
+
+  actions.restoreState(snapshot)
+  serverHolding(server)
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(Object.keys(getData().days)).toEqual(['2026-08-20'])
+  expect(getData().days['2026-08-20'].tasks[0].title).toBe('From the snapshot')
 })

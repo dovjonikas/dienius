@@ -68,6 +68,7 @@ let inFlight: Promise<void> | null = null
 /** Set when something changed while a round trip was already in the air. */
 let changedDuringSync = false
 let started = false
+let stopCommitWatch: (() => void) | null = null
 
 function notify(): void {
   listeners.forEach(fn => fn())
@@ -133,7 +134,7 @@ export function startSync(): void {
   if (started) return
   started = true
 
-  onStateCommitted(() => {
+  stopCommitWatch = onStateCommitted(() => {
     if (!config.enabled) return
     setStatus({ pending: true })
     schedulePush()
@@ -273,6 +274,8 @@ export function resetSyncForTests(): void {
   retryDelay = RETRY_BASE_MS
   inFlight = null
   changedDuringSync = false
+  stopCommitWatch?.()
+  stopCommitWatch = null
   started = false
   config = { ...EMPTY_CONFIG }
   status = { phase: 'off', lastSyncedAt: null, message: null, pending: false }

@@ -1,4 +1,4 @@
-import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Task, Template } from './types'
+import type { AppData, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -69,8 +69,10 @@ const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 
  * Which settings fields are entities of their own.
  *
  * Listed rather than derived from the object, so a field added later is a
- * deliberate decision about whether it should travel between devices. The two
- * left out are the ones that describe a device rather than a person.
+ * deliberate decision about whether it should travel between devices rather
+ * than something that happens by accident either way. Everything in Settings
+ * is on it today - see the exhaustiveness check below, which is what stops
+ * the next field from quietly not being.
  */
 export const SYNCED_SETTINGS = [
   'theme',
@@ -86,6 +88,25 @@ export const SYNCED_SETTINGS = [
   'density',
   'textScale',
 ] as const
+
+/**
+ * Settings that deliberately stay on the device they were set on. None so far.
+ */
+type LocalOnlySettings = never
+
+/**
+ * Compile-time exhaustiveness for the list above.
+ *
+ * A setting added to `Settings` and forgotten here would silently never travel
+ * between devices, and nothing would fail - not a test, not a type, not a
+ * merge. It would simply be a preference that does not sync, discovered
+ * months later on a phone. This makes forgetting it a build error: a new
+ * setting is either added to SYNCED_SETTINGS or named in LocalOnlySettings
+ * above, and there is no third option.
+ */
+type UnaccountedSetting = Exclude<keyof Settings, (typeof SYNCED_SETTINGS)[number] | LocalOnlySettings>
+const _everySettingIsAccountedFor: Record<UnaccountedSetting, never> = {}
+void _everySettingIsAccountedFor
 
 /** Strips the field the diff must not compare, and any undefined keys. */
 function body<T extends object>(value: T, ...omit: string[]): unknown {

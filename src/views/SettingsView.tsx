@@ -93,7 +93,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
   async function restoreSnapshot(date: string) {
     const data = await readSnapshot(date)
     if (!data) return
-    actions.resetForTests(data)
+    actions.restoreState(data)
     setRestoring(null)
   }
 

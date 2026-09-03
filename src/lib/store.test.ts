@@ -995,3 +995,51 @@ test('unsubscribing one listener does not affect another still subscribed', () =
   expect(a).toBe(1)
   expect(b).toBe(2)
 })
+
+/**
+ * Restoring a daily snapshot. Two properties, both of which were broken:
+ * it has to reach storage, and it has to win the next sync.
+ */
+test('a restored snapshot is written to storage, so it survives closing the tab', () => {
+  actions.addTask('2026-09-01', 'Today')
+  const snapshot = defaultData()
+  snapshot.days['2026-01-01'] = {
+    date: '2026-01-01',
+    tasks: [{ id: 'x', title: 'From the snapshot', done: false }],
+  }
+
+  actions.restoreState(snapshot)
+
+  const persisted = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as AppData
+  expect(Object.keys(persisted.days)).toEqual(['2026-01-01'])
+  expect(persisted.days['2026-01-01'].tasks[0].title).toBe('From the snapshot')
+})
+
+// A restore is a decision about what the plan should be, made now. Left with
+// the snapshot's own old timestamps it would lose the next merge to whichever
+// device still held the newer version, and the restore would silently undo
+// itself a few seconds later.
+test('a restored snapshot is stamped now, so it wins the next sync rather than losing to it', () => {
+  actions.addTask('2026-09-01', 'Today')
+  const before = getData().days['2026-09-01'].tasks[0].updatedAt
+
+  const snapshot = defaultData()
+  snapshot.days['2026-01-01'] = {
+    date: '2026-01-01',
+    tasks: [{ id: 'x', title: 'From the snapshot', done: false, updatedAt: '2020-01-01T00:00:00.000Z' }],
+  }
+  actions.restoreState(snapshot)
+
+  const restored = getData().days['2026-01-01'].tasks[0]
+  expect(restored.updatedAt).not.toBe('2020-01-01T00:00:00.000Z')
+  expect(restored.updatedAt! >= before!).toBe(true)
+})
+
+test('what a restore removes is tombstoned, so it does not come back from the other device', () => {
+  actions.addTask('2026-09-01', 'Typed after the snapshot')
+  const id = getData().days['2026-09-01'].tasks[0].id
+
+  actions.restoreState(defaultData())
+
+  expect(getData().tombstones?.[`task:${id}`]).toEqual(expect.any(String))
+})

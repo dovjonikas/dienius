@@ -194,6 +194,12 @@ it delegates:
 
 | File | Job |
 |---|---|
+| `DayHeader.tsx` | Which day, what time, how it is going, the North line |
+| `TaskPane.tsx` | The task column, and everything only it owns |
+| `useDayDrag.ts` | The pointer machinery: move, resize, drop back to the list |
+| `useTaskSelection.ts` | "Where does this fit", and focus afterwards |
+| `useDoneAnimation.ts` | The beat a checked task holds before moving to Done |
+| `rollover.ts` | Pushable, held, or covered by tomorrow already |
 | `capacity.ts` | Waking windows, gaps, free time, the capacity sentence |
 | `timelineLayout.ts` | Turning tasks into a drawable grid; density fitting |
 | `TimelineGrid.tsx` | Drawing it, and the drag/resize gestures |
@@ -206,6 +212,10 @@ it delegates:
 | `TaskDetail.tsx` | Everything the card deliberately does not show |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `YesterdayBanner.tsx` | What yesterday left |
+
+`DayView.tsx` itself is now only about the day: what it is made of and how its
+parts sit next to each other. It was 1238 lines before v1.5 and did four
+unrelated jobs; the first six rows above are where those went.
 
 ---
 
@@ -374,11 +384,30 @@ absent after is a deletion, whoever caused it.
 The North card's dismissal *does* sync (it moved into `settings`), because
 "I have read this today" is a fact about the person, not the device.
 
+Note the interaction with a **snapshot restore**. Restoring goes through
+`actions.restoreState`, which commits, so the restore is stamped now and what
+it removes is tombstoned. Left with the snapshot's own old timestamps it would
+lose the next merge to whichever device still held the newer version, and would
+silently undo itself seconds later. A restore is a decision about what the plan
+should be, not an old copy arriving late.
+
+### Two devices at once
+
+There is no locking and there is not going to be. Two overlapping round trips
+can end with the second write landing on a state that never saw the first, and
+that is allowed, because nothing is ever lost *locally*: the device whose
+change was overwritten still has it and puts it back on its next sync. The
+worst case is a change that takes two syncs to arrive, not one that disappears.
+
 ### Conservatism
 
 A server response that does not validate is ignored entirely and reported as
 an error. Nothing local is ever deleted because the server disagreed - the
 worst outcome of a broken server must be "no sync", never "no data".
+
+New settings are a build error rather than a silent omission: `SYNCED_SETTINGS`
+is checked for exhaustiveness against `keyof Settings` at compile time, so a
+field added to settings either travels or is explicitly named as local.
 
 ## 8. Styling
 
@@ -416,7 +445,7 @@ test will tell you if you forget.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. ~1170 tests, no worker limits, no skips.
+Vitest + Testing Library + jsdom. Around 1300 tests, no worker limits, no skips.
 
 Two kinds, deliberately:
 
