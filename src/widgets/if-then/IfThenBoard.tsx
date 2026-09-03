@@ -95,7 +95,7 @@ function IfThenForm({ draft, onChange, onSave, onCancel }: IfThenFormProps) {
         value={draft.action}
         onChange={e => onChange({ ...draft, action: e.target.value })}
       />
-      <div className="palette">
+      <div className="color-palette">
         <button
           type="button"
           aria-label="No tag"

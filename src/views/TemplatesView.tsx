@@ -172,7 +172,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
         value={draft.name}
         onChange={e => setDraft({ ...draft, name: e.target.value })}
       />
-      <div className="palette">
+      <div className="color-palette">
         {TEMPLATE_COLORS.map(color => (
           <button
             key={color}

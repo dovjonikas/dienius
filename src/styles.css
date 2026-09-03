@@ -3390,7 +3390,13 @@ button.primary {
   gap: var(--s3);
 }
 
-.palette { display: flex; gap: var(--s2); flex-wrap: wrap; }
+/* The colour row in the template editor and the if-then board. It was
+   `.palette` until the command palette arrived in v1.3 and took the same
+   class name: from then on eight swatches rendered inside a fixed-width
+   surface card, stacked in one column on a phone. The stylesheet is one
+   file on purpose, and this is the cost of it - a name has to be unique
+   across the whole app, not just its own section. */
+.color-palette { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .day-type-picker {
   display: flex;
@@ -3424,7 +3430,9 @@ button.primary {
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s2) 0;
+  /* Room on the left for .block-cat-edge, which is absolute at left: 0 and
+     was drawn straight over the first digit of the time. */
+  padding: var(--s2) 0 var(--s2) 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -3504,7 +3512,10 @@ button.core-toggle.active {
 }
 
 .template-card .dot { width: 14px; height: 14px; border-radius: var(--r-round); flex-shrink: 0; }
-.template-info { display: flex; flex-direction: column; flex: 1; }
+/* min-width: 0, or the nowrap preview line inside sets the item's minimum
+   width to its own unbroken length and the whole card runs off a phone -
+   648px of document on a 390px screen, the one horizontal scroll in the app. */
+.template-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .muted { color: var(--muted); font-size: var(--t-sm); }
 
 .template-card button {
@@ -6154,7 +6165,9 @@ button.danger:focus-visible {
   display: flex;
   flex-direction: column;
   gap: var(--s5);
-  max-width: 900px;
+  /* 860, the same as Templates - the rule near the top of this file said so
+     and this one, written later for the v1.1 page, quietly said 900. */
+  max-width: 860px;
   margin: 0 auto;
   padding: var(--s5) var(--s4) var(--s7);
 }
@@ -6490,7 +6503,19 @@ button.danger:focus-visible {
      and the title, and pushes the count and the actions onto line two. */
   .library-item-main { flex: 1 1 calc(100% - 76px); }
   .library-item-progress { margin-left: 44px; }
+  /* The actions keep to the right end of whichever line they land on. At
+     360px "page 213/499" and its two buttons fill line two, and Schedule
+     used to drop to a third line and sit under the grip, indented by the
+     count's own margin - three left edges on one row. */
+  .library-item-actions { margin-left: auto; }
   .library-new-fields { flex-direction: column; }
+}
+
+/* On the narrowest phones line two cannot hold the count and the actions
+   side by side, so the count gives up its indent and the row stays two
+   lines instead of three. */
+@media (max-width: 400px) {
+  .library-item-progress { margin-left: 0; }
 }
 
 /* ------------------------------------------------------------------------
@@ -6975,6 +7000,9 @@ button.danger:focus-visible {
 .shortcuts kbd {
   display: inline-block;
   min-width: 28px;
+  /* "Ctrl K" is one key chip, and at 390px it broke into "Ctrl" over "K" -
+     a two-line key cap that reads as two keys. */
+  white-space: nowrap;
   padding: 2px 6px;
   border: 1px solid var(--border);
   border-bottom-width: 2px;
@@ -7869,6 +7897,15 @@ button.danger:focus-visible {
 
 .cell-pushed { color: var(--faint); }
 
+/* A 48px cell holds "3/10" and the kept dot, or "3/10 ->1" - not all three.
+   The carried count is the detail that gives, per the month's own rule
+   (reduce stat detail, never raise cell height): the ratio says how the day
+   went and the dot says the key tasks were kept; what rolled to tomorrow is
+   already on tomorrow. */
+@media (max-width: 430px) {
+  .cell-pushed { display: none; }
+}
+
 /* Every key task that day was kept. A dot, not a star: a star is a reward
    and this is a fact. Accent rather than green, because green is already the
    top of the rate scale and two greens meaning two things is one too many. */
@@ -8560,8 +8597,15 @@ main:has(.week) > .calendar {
   .settings-nav-item,
   .task-detail-nudge,
   .task-detail-clear,
-  .task-detail-toggle {
+  .task-detail-toggle,
+  .library-finished-toggle {
     min-height: 44px;
+  }
+
+  /* Square by its own rule, so the width has to move with the height. */
+  .review-nav button {
+    width: 44px;
+    height: 44px;
   }
 
   /* The sheet's close cross is a 32px circle in a header that should not
@@ -8835,4 +8879,58 @@ main:has(.week) > .calendar {
   .tour-card { animation: none; transition: none; }
   .tour-ring { transition: none; }
   .tour-tick.is-on { animation: none; opacity: 1; transform: none; }
+}
+
+/* A laptop at 720px tall left the rail nine pixels short of its own content
+   and drew a scrollbar for those nine pixels. Two of the rail's own gaps
+   give up half their height below 760px and the whole rail fits; nothing in
+   it changes otherwise. */
+@media (min-width: 1024px) and (max-height: 760px) {
+  .rail .mini-calendar { margin-bottom: var(--s2); }
+  .rail .day-digest { margin-top: var(--s2); }
+}
+
+/* The template editor's block row on a phone. Seven things in one flex line
+   left the title - the only one of them that says what the block is - with
+   a single character at 390px: "(" for "Coffee and the plan". Two lines
+   instead: when, what and how long on the first, the toggles and the
+   remove cross on the second. */
+@media (max-width: 599px) {
+  .block-list li { flex-wrap: wrap; row-gap: var(--s1); }
+  .block-list .block-title { flex: 1 1 calc(100% - 140px); }
+  .block-list .task-size { margin-left: auto; }
+  .block-list .core-toggle:first-of-type,
+  .block-list .core-toggle + .core-toggle { margin-left: 0; }
+  .block-list li > button:last-child { margin-left: auto; }
+}
+
+/* Every select is a touch control too. The weekday map's seven dropdowns
+   measured 40px on a phone - four short of the floor everything else on
+   Settings now meets. */
+@media (pointer: coarse) {
+  select { min-height: 44px; }
+}
+
+/* The timer popover's presets and its Start button sat at 38px on a phone,
+   the mouse height every button variant had before the coarse floor. Found
+   by the same measurement as the rest; the popover was not on the list. */
+@media (pointer: coarse) {
+  .clock-preset,
+  .clock-popover button.primary { min-height: 44px; }
+}
+
+/* A link inside a sentence is 20px tall by nature. On a phone it reaches the
+   floor through the overlay rather than by growing, which would break the
+   sentence it sits in. */
+@media (pointer: coarse) {
+  .link-button { position: relative; }
+  .link-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
 }
