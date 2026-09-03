@@ -37,6 +37,7 @@ contents, so an installed copy can never get stuck on stale files.
 - A template per weekday, so a new day opens already set up - a stamp by hand always wins, and deleting what arrived leaves it deleted
 - Repeating tasks that actually repeat - daily, weekdays or weekly, generated onto each day as real tasks you can tick, move and edit, with "just this day" and "every day it repeats" as a standing choice rather than a dialog
 - What yesterday left, said once: one row, one tap to move it forward. Never moved on its own overnight
+- North - the few things the days are for. Up to four, each with what it is, why it matters and who it makes you. They have no progress, no deadline and nothing to tick, on purpose: showing how far along you are is what makes people ease off, and there is nothing here to ease off from. One appears under the day's title, quietly, rotating; after a day that got away, or on a Monday, one comes forward with its reason in full and never a word about how yesterday went
 - A review of the week or the month - done per day, deep work per day, key tasks set against key tasks finished, what you read or watched, and a streak. Every figure computed from the days themselves, so there is nothing recorded that can drift from the plan it describes
 - A capacity line - one sentence saying whether today fits: what's anchored, how much free time is left across how many gaps, what the floats still need
 - A day timeline - anchored tasks at their real time and size, free gaps drawn as labeled regions, a line marking right now; collapsed until you open it
@@ -54,7 +55,8 @@ contents, so an installed copy can never get stuck on stale files.
 - An inbox - a mode on the same field, for catching a thought without deciding what day it belongs on
 - A keyboard layer - single keys for the things done most often, and a card behind `?` that lists them. None of them fire while you are typing in a box, except Escape, which is usually how you leave the box
 - Ctrl-K / Cmd-K - one box for running a command and for finding a thing: tasks, notes and library items, or a date typed in words. No search index, because a linear scan over the whole store costs less than the keystroke that triggered it
-- A year strip - one cell per day, colored by template, a thin ring when everything planned got done
+- A calendar that fits without scrolling, where every past day says how it went - the ratio, a thin bar, what was carried on, a dot when every key task was kept. No red at any threshold: a past day is not on trial, and a day nobody planned stays blank rather than reading as a zero
+- A year strip - one cell per day, shaded by how full it was, colored by template where there is one
 - Three themes - Dark, Light and Midnight, each built to the same principles, with an accent colour, a density and a text size that work on all three. Every piece of text on every surface is measured against WCAG AA, not eyeballed
 
 ## Your data

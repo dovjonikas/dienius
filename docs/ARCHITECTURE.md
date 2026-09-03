@@ -37,6 +37,7 @@ AppData
 │       └── tasks: Task[]        the one type most of the app is about
 ├── library: LibraryList[]       name + unit + items
 │   └── items: LibraryItem[]     title, total?, progress?, finished?
+├── goals: Goal[]                directions, never measured - see §6
 ├── ifThens: IfThenEntry[]       trigger + action, never measured
 ├── inbox: InboxItem[]           one line of text, no date
 └── settings: Settings           theme, sleepProfiles, weekdayTemplates,
@@ -62,6 +63,15 @@ that data written before it existed still loads:
 | `note`, `subtasks`, `highlight`, `repeat` | The task detail sheet (v1.1). |
 | `libraryRef` | Which library item this is a session of. |
 | `repeatOf` | The series source this was generated from (v1.3). |
+| `origin` | Where it came from - template, repeat or manual (v1.4). |
+
+**`origin` is a task's identity across days.** The pair
+`(sourceId, blockId)` says that a template block stamped onto Tuesday and the
+same block pushed from Monday are the same intention. Without it they were two
+unrelated rows, which is how a day ended up holding two of everything with the
+timeline drawing them as a clash. Everything that adds tasks to a day goes
+through `addWithoutDuplicates`; a manual task deliberately has no identity,
+because two tasks called "Call the bank" on one day are two calls.
 
 **Dangling ids degrade, never crash.** A `templateId`, `libraryRef`,
 `sleepProfileId` or `repeatOf` that resolves to nothing is treated exactly as
@@ -137,6 +147,9 @@ src/
     stamping.ts        template + dates -> day plans
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
+    north.ts           goals: rotation, ages, and when one comes forward
+    dayStats.ts        one past day, small enough for a calendar cell
+    taskIdentity.ts    what makes two tasks the same task across days
     search.ts          the palette's linear scan and its date parsing
     snapshots.ts       the IndexedDB daily copies
     undo.ts            one app-wide undo offer, five seconds
@@ -220,7 +233,51 @@ tasks or a repeat instance, and re-opening the day leaves it deleted.
 
 ---
 
-## 6. Styling
+## 6. North, and the one thing this app refuses to measure
+
+Everything else in Dienius measures something. North does not, and the refusal
+is the feature rather than a gap in it. If you are changing anything in
+`north.ts`, `NorthLine.tsx` or `NorthCard.tsx`, this is the constraint:
+
+**Never show progress toward a goal.** No percentage, no milestones, no target
+date, no streak, no checkbox, no count of anything that goes up. The behaviour
+this is built around is well established: shown how far they have come toward
+something they care about, people ease off - a visible advance reads as licence
+to spend it. Shown instead *why* it matters, the same person keeps going.
+Progress framing and commitment framing pull in opposite directions, and a
+progress bar is the purest possible progress framing.
+
+So a goal carries three things and no numbers:
+
+| Field | Question |
+|---|---|
+| `title` | What you are doing, short, imperative |
+| `why` | What it is for, in your own words |
+| `identity` | Who it makes you - "I am someone who ..." |
+
+The one number allowed near a goal is its **age** - "32 days lived toward
+this". It is a fact, not a measurement: it cannot be earned or lost, it does
+not move faster when you try harder, and it means the same thing on a bad week
+as on a good one. If a future change makes the age respond to how the days
+went, it has become a score and must be removed.
+
+Three more rules the feature holds to:
+
+- **Four active, and the cap refuses.** Quietly evicting the oldest would make
+  the cap invisible and the choice arbitrary.
+- **Editing lives in Settings, deliberately far from the day.** Something you
+  can rewrite from the screen you look at every morning is something you will
+  rewrite on a bad morning, and a goal rewritten on bad mornings is a mood.
+- **The card that appears after a slow day never mentions the slow day.** No
+  count, no percentage, nothing red. The app knows exactly how it went and
+  says none of it: the moment that card contains a number about the past it is
+  a report card, and a report card from a planner is a planner people stop
+  opening.
+
+The same tone rule governs the calendar's day stats (`dayStats.ts`): no red at
+any threshold, and a day nobody planned is its own case rather than a zero.
+
+## 7. Styling
 
 **One stylesheet**, `src/styles.css`, ~6000 lines, organised by area with a
 comment block per section. No CSS modules, no CSS-in-JS, no utility classes.
@@ -254,7 +311,7 @@ test will tell you if you forget.
 
 ---
 
-## 7. Tests
+## 8. Tests
 
 Vitest + Testing Library + jsdom. ~1170 tests, no worker limits, no skips.
 
@@ -280,7 +337,7 @@ npm run build     # typecheck, build, generate the service worker
 
 ---
 
-## 8. Offline and updates
+## 9. Offline and updates
 
 - `public/sw.js` is hand-written; `scripts/generate-sw.mjs` runs after the
   build, hashes every output file, and writes the cache name and precache list
@@ -292,7 +349,7 @@ npm run build     # typecheck, build, generate the service worker
 
 ---
 
-## 9. Conventions worth knowing before editing
+## 10. Conventions worth knowing before editing
 
 - **Absent is a state.** Optional fields mean something specific; check the doc
   comment before treating one as a default.

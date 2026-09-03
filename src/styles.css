@@ -127,7 +127,14 @@
   --s2: 8px;
   --s3: 12px;
   --s4: 16px;
+  /* --s5 and --s7 were referenced by four components before they were ever
+     declared, which makes the whole declaration invalid rather than falling
+     back - so the Library, the Review tab and the North card were rendering
+     with no padding at all where they asked for three values. The scale runs
+     in fours from here, so these are the values it always implied. */
+  --s5: 20px;
   --s6: 24px;
+  --s7: 28px;
   --s8: 32px;
 
   /* Radius. Built on the theme's own --radius and --edge rather than
@@ -188,7 +195,9 @@
   --s2: 6px;
   --s3: 9px;
   --s4: 12px;
+  --s5: 15px;
   --s6: 18px;
+  --s7: 21px;
   --s8: 24px;
 }
 
@@ -1642,6 +1651,22 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 
 .timeline-anchor-done .timeline-anchor-title {
   color: color-mix(in srgb, var(--text) 30%, var(--muted));
+}
+
+/* A finished block that carries a template colour kept that colour - the
+   background is an inline style, and the rule above only changed the ink, so
+   a light grey title landed on a greyed-but-still-light pastel and measured
+   1.14:1. Invisible, on the main screen, on every day stamped from a
+   template.
+
+   Darkening the ink got it to 2.26 and no further, because the block also
+   carries an opacity. So the background goes instead - which is what the
+   categorised done block a few rules up already does, and what "finished work
+   drains to grey" means everywhere else in this app. !important because the
+   colour it is overriding is an inline style, and this is the one case where
+   the stylesheet genuinely knows better than the element. */
+.timeline-anchor-colored.timeline-anchor-done {
+  background: color-mix(in srgb, var(--muted) 12%, var(--surface)) !important;
 }
 
 .timeline-anchor-done .timeline-anchor-title {
@@ -6982,6 +7007,8 @@ button.danger:focus-visible {
   .category-swatch,
   .task-size,
   .clock-button,
+  .setting-remove,
+  .north-line-title,
   .library-step,
   .library-item-remove,
   .subtask-remove,
@@ -6997,6 +7024,8 @@ button.danger:focus-visible {
   .category-swatch::after,
   .task-size::after,
   .clock-button::after,
+  .setting-remove::after,
+  .north-line-title::after,
   .library-step::after,
   .library-item-remove::after,
   .subtask-remove::after,
