@@ -244,11 +244,24 @@ test('a long-running series is only expanded as far as anybody can see', () => {
   expect(events.at(-1)!.date).toBe('2026-10-01')
 })
 
+/**
+ * Not a performance budget, and deliberately not a ratio either: this asserts
+ * that the loop *terminates*, which is a different claim from how fast it is.
+ * CONVENTIONS.md section 3 bans a millisecond ceiling as a stand-in for speed;
+ * a run that never ends fails by exhausting the test's own timeout, which is
+ * the honest failure and the one this wants. The bounded output is the real
+ * assertion - a rule asking for a billion occurrences comes back with only
+ * the thirty days that were asked for.
+ */
 test('an endless rule cannot spin forever', () => {
-  const start = Date.now()
-  parseIcs(cal(event('UID:a\r\nSUMMARY:Forever\r\nDTSTART:20260901T090000\r\nRRULE:FREQ=DAILY;COUNT=999999999')), FROM, 30)
-  expect(Date.now() - start).toBeLessThan(2000)
-})
+  const { events } = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Forever\r\nDTSTART:20260901T090000\r\nRRULE:FREQ=DAILY;COUNT=999999999')),
+    FROM,
+    30,
+  )
+  expect(events.length).toBeGreaterThan(0)
+  expect(events.length).toBeLessThanOrEqual(31)
+}, 5000)
 
 test('several events in one feed all come through', () => {
   const { events } = parseIcs(

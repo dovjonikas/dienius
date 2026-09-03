@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { YearStrip } from './YearStrip'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
+import { SLOWDOWN_LIMIT, STRESS_TIMEOUT_MS, measureSlowdown, timed } from '../../test/stress'
 
 beforeEach(() => {
   localStorage.clear()
@@ -214,48 +215,50 @@ function stampTwoYears() {
   return { work, rest }
 }
 
-// The two stress tests below assert their own per-operation budgets, and
-// those budgets add up to more than vitest's default 5s per-test timeout: the
-// switching test alone allows four switches at 2000ms each. It only ever
-// passed because real switches land far under that, so the sum never
-// approached the ceiling - until the suite grew enough that CPU contention
-// under full parallelism pushed it there, and the harness killed the test
-// before its own assertion could say anything useful.
-//
-// An explicit timeout, sized to what each test's own assertions already
-// allow, is the honest fix. It does not loosen a single budget: a switch
-// slower than 2000ms still fails, and now it fails by saying so rather than
-// by timing out. Raising the assertion thresholds instead would have quietly
-// removed the coverage; this keeps all of it.
-const STRESS_TIMEOUT_MS = 20_000
+/**
+ * The two stress tests below measure a *ratio*, not a number of
+ * milliseconds - CONVENTIONS.md section 3, and see src/test/stress.ts for
+ * why and how. They used to assert 2000ms per operation, which measures the
+ * machine as much as the code; one of them failed once under a dev server
+ * and a browser running alongside the suite, then passed on its own.
+ *
+ * Measured here at 2.06 for the render and 1.08 for a year switch, against a
+ * limit of 8 - loose on purpose, because what these catch is a change in
+ * shape (a lookup that became a scan, a memo that stopped holding) and that
+ * shows up as an order of magnitude.
+ */
 
-test('a year strip over roughly 700 stamped days across two templates renders every cell colored, within a generous time budget', () => {
+function renderStrip(): number {
+  vi.setSystemTime(new Date(2024, 5, 15))
+  return timed(() => render(<YearStrip onOpenDay={() => {}} />))
+}
+
+function switchYear(): number {
+  vi.setSystemTime(new Date(2024, 5, 15))
+  const view = render(<YearStrip onOpenDay={() => {}} />)
+  const t0 = performance.now()
+  act(() => {
+    view.getByRole('button', { name: 'Previous year' }).click()
+  })
+  const elapsed = performance.now() - t0
+  view.unmount()
+  return elapsed
+}
+
+test('two years of stamped days colour every cell, and cost no more than a few times an empty year', () => {
+  expect(measureSlowdown(() => {}, stampTwoYears, renderStrip).ratio).toBeLessThan(SLOWDOWN_LIMIT)
+
+  // And the thing the timing is about actually happened: 2024 is a leap year
+  // and every day in it was stamped by the loop above.
+  actions.resetForTests(defaultData())
   stampTwoYears()
   vi.setSystemTime(new Date(2024, 5, 15))
-  const t0 = performance.now()
   render(<YearStrip onOpenDay={() => {}} />)
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(2000)
   const grid = screen.getByRole('group', { name: 'Days of 2024' })
   const colored = within(grid).getAllByRole('button').filter(b => (b as HTMLElement).style.background !== '')
-  // 2024 is a leap year and every day in it was stamped in the loop above.
   expect(colored.length).toBe(366)
 }, STRESS_TIMEOUT_MS)
 
-test('switching years several times in a row stays well within a generous time budget each time', () => {
-  stampTwoYears()
-  vi.setSystemTime(new Date(2024, 5, 15))
-  const { getByRole } = render(<YearStrip onOpenDay={() => {}} />)
-
-  for (let i = 0; i < 4; i++) {
-    const t0 = performance.now()
-    act(() => {
-      getByRole('button', { name: 'Previous year' }).click()
-    })
-    const elapsed = performance.now() - t0
-    // jsdom-specific bound, generous for the same reason noted on the
-    // DayView render budget test - see the stress-test report for warm,
-    // production-build numbers measured in a real browser.
-    expect(elapsed).toBeLessThan(2000)
-  }
+test('switching years on a full store costs no more than a few times switching on an empty one', () => {
+  expect(measureSlowdown(() => {}, stampTwoYears, switchYear).ratio).toBeLessThan(SLOWDOWN_LIMIT)
 }, STRESS_TIMEOUT_MS)

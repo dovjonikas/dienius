@@ -1,4 +1,5 @@
 import { buildYearCells, formatYearCellLabel, monthLabelPositions, weekCount } from './yearGrid'
+import { measureScaling } from '../../test/stress'
 import type { DayPlan, Template } from '../../lib/types'
 
 const template: Template = { id: 't1', name: 'Office day', color: '#a7c4f5', blocks: [] }
@@ -241,14 +242,25 @@ function twoYearsOfDays(): { days: Record<string, DayPlan>; templates: Template[
   return { days, templates }
 }
 
-test('buildYearCells over a data set covering roughly two full years stays well under 100ms for a single year', () => {
-  const { days, templates } = twoYearsOfDays()
-  const t0 = performance.now()
-  const cells = buildYearCells(2024, days, templates)
-  const elapsed = performance.now() - t0
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts. Two years in the store against one: building a single
+ * year should cost the same either way, because it only ever looks up the
+ * days of the year it was asked for. The next test says the same thing about
+ * the implementation; this one says it about the cost.
+ */
+test('building one year costs the same whether one year or two is in the store', () => {
+  const two = twoYearsOfDays()
+  const one = { ...two, days: Object.fromEntries(Object.entries(two.days).filter(([key]) => key.startsWith('2024'))) }
+  const ratio = measureScaling(
+    () => { buildYearCells(2024, one.days, one.templates) },
+    () => { buildYearCells(2024, two.days, two.templates) },
+  ).ratio
+  expect(ratio).toBeLessThan(4)
+
+  const cells = buildYearCells(2024, two.days, two.templates)
   expect(cells).toHaveLength(366) // 2024 is a leap year
   expect(cells.every(c => c.planned)).toBe(true)
-  expect(elapsed).toBeLessThan(100)
 })
 
 test('buildYearCells does not walk every day in the data set - only the year it was asked for', () => {
@@ -279,11 +291,13 @@ test('buildYearCells does not walk every day in the data set - only the year it 
   expect(twoYearMs).toBeLessThan(oneYearMs * 5 + 50)
 })
 
-test('switching between years repeatedly recomputes each year independently and stays fast throughout', () => {
+/** Ten switches cost about ten builds, not more - nothing accumulates. */
+test('switching between years repeatedly recomputes each year independently', () => {
   const { days, templates } = twoYearsOfDays()
   const years = [2024, 2025, 2024, 2025, 2024, 2025, 2024, 2025, 2024, 2025]
-  const t0 = performance.now()
-  for (const year of years) buildYearCells(year, days, templates)
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(100)
+  const ratio = measureScaling(
+    () => { buildYearCells(2024, days, templates) },
+    () => { for (const year of years) buildYearCells(year, days, templates) },
+  ).ratio
+  expect(ratio).toBeLessThan(30)
 })

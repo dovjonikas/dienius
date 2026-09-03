@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import type { Task } from '../../lib/types'
+import { measureScaling } from '../../test/stress'
 import {
   chooseWidePxPerMinute,
   computeTimelineLayout,
@@ -387,18 +388,30 @@ test('an anchor with ten million minutes still draws a bounded window, never pas
 
 // --- stress test: 200 anchors in one day ------------------------------------
 
-test('computeTimelineLayout and computeVerticalLayout stay well under 100ms with 200 anchors', () => {
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts. Four times the anchors should cost about four times as
+ * much; the overlap arithmetic turning quadratic - which is the plausible
+ * regression in a function that has to know which blocks share a column -
+ * would land near sixteen.
+ */
+test('the geometry for 200 anchors costs proportionally, not quadratically, more than for 50', () => {
+  const run = (n: number) => () => {
+    const tasks: Task[] = Array.from({ length: n }, (_, i) =>
+      anchor(`task-${i}`, `${String(i % 24).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`, 10 + (i % 12) * 5),
+    )
+    const layout = computeTimelineLayout(tasks)
+    computeVerticalLayout(layout.window!, layout.anchors, {
+      pxPerMinute: 1.15, sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44,
+    })
+  }
+  expect(measureScaling(run(50), run(200)).ratio).toBeLessThan(12)
+
+  // And it produced what it was asked for.
   const tasks: Task[] = Array.from({ length: 200 }, (_, i) =>
     anchor(`task-${i}`, `${String(i % 24).padStart(2, '0')}:${i % 2 === 0 ? '00' : '30'}`, 10 + (i % 12) * 5),
   )
-  const t0 = performance.now()
-  const layout = computeTimelineLayout(tasks)
-  computeVerticalLayout(layout.window!, layout.anchors, {
-    pxPerMinute: 1.15, sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44,
-  })
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(100)
-  expect(layout.anchors).toHaveLength(200)
+  expect(computeTimelineLayout(tasks).anchors).toHaveLength(200)
 })
 
 // --- chooseWidePxPerMinute -------------------------------------------------

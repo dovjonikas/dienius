@@ -89,10 +89,31 @@ Never delete a failing test to make a suite green.
 
 ### Timing tests
 
-Do not assert absolute milliseconds. The suite runs eighty files in parallel on
+Do not assert absolute milliseconds. The suite runs ninety files in parallel on
 whatever machine CI hands out. Assert a *ratio* against a baseline measured the
 same way, take the fastest of several rounds, and alternate the two sides so a
 machine that gets busier partway through slows both equally.
+
+The machinery is [`src/test/stress.ts`](../src/test/stress.ts), and there is no
+millisecond assertion left in the suite. Two shapes:
+
+- `measureSlowdown(baseline, load, operation)` for anything that reads the
+  store. The baseline is a parameter rather than always-empty, because the
+  honest baseline differs per test: for a year strip it is an empty store,
+  since the same 366 cells are drawn either way and only the lookups change;
+  for a list of two hundred rows it is a *small* list, because two hundred rows
+  genuinely do cost more than none, and the question worth asking is whether
+  they cost proportionally more or quadratically more.
+- `measureScaling(small, large)` for a pure function, which has no store to
+  reset between measurements.
+
+Set the bound where a change in *shape* shows up - a lookup that became a scan,
+a memo that stopped holding - not where a few percent does. Those land an order
+of magnitude out; noise does not.
+
+A test that asserts a loop *terminates* is not a timing test and must not be
+written as one. Assert the bounded output, and let the runner's own timeout be
+the failure - see the endless-rule test in `ics.test.ts`.
 
 ---
 

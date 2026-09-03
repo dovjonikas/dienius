@@ -183,3 +183,47 @@ test('a task tomorrow already has by identity is not added a second time', () =>
   expect(next.days[NEXT].tasks.map(x => x.id)).toEqual(['a2'])
   expect(next.days[DAY].tasks).toEqual([])
 })
+
+/**
+ * A routine block whose time has passed stays where it is.
+ *
+ * This used to fit a missed Standup into the evening because the evening was
+ * free - honest arithmetic and a silly plan, and the whole point of the
+ * rescue is producing one somebody believes. What makes a task routine is
+ * that it came from a template or a repeat: it has a slot in the shape of
+ * the day rather than a job that needs doing at some point.
+ */
+test('a routine block whose time has passed is left alone, not moved into the evening', () => {
+  const tasks: Task[] = [
+    { id: 'standup', title: 'Standup', done: false, time: '09:00', minutes: 15, origin: { type: 'template', sourceId: 'work', blockId: 'b1' } },
+    { id: 'errand', title: 'Post the parcel', done: false, time: '10:00', minutes: 30 },
+  ]
+  const plan = planRescue(tasks, 18 * 60, { start: 7 * 60, end: 23 * 60 })
+
+  expect(plan.moves.map(m => m.taskId)).toEqual(['errand'])
+  expect(plan.keep).toContain('standup')
+  expect(plan.tomorrow).not.toContain('standup')
+  expect(plan.summary).toContain('Routine block left where it is.')
+})
+
+test('a routine block is not sent to tomorrow either, because tomorrow already has it', () => {
+  // The same judgment the rollover button already makes: pushing a routine
+  // task onto a day whose template produces it is the duplicate this app
+  // spent v1.4 learning to avoid.
+  const tasks: Task[] = [
+    { id: 'a', title: 'Standup', done: false, time: '09:00', minutes: 15, repeatOf: 'series-1' },
+    { id: 'b', title: 'Lunch', done: false, time: '12:30', minutes: 45, origin: { type: 'repeat', sourceId: 'series-2' } },
+  ]
+  const plan = planRescue(tasks, 22 * 60 + 30, { start: 7 * 60, end: 23 * 60 })
+
+  expect(plan.tomorrow).toEqual([])
+  expect(plan.keep).toEqual(expect.arrayContaining(['a', 'b']))
+  expect(plan.summary).toContain('Routine blocks left where they are.')
+})
+
+test('a one-off whose time has passed is still rescued, and says nothing about routine', () => {
+  const tasks: Task[] = [{ id: 'call', title: 'Call the bank', done: false, time: '10:00', minutes: 30 }]
+  const plan = planRescue(tasks, 18 * 60, { start: 7 * 60, end: 23 * 60 })
+  expect(plan.moves).toHaveLength(1)
+  expect(plan.summary).not.toContain('Routine')
+})

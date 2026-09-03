@@ -5,6 +5,7 @@ import { DayView } from './DayView'
 import { consumeDraft, saveDraft } from './draft'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
+import { STRESS_TIMEOUT_MS, measureScaling, measureSlowdown, timed } from '../../test/stress'
 
 beforeEach(() => {
   localStorage.clear()
@@ -103,33 +104,44 @@ test('a day with 200 tasks renders every one of them, sorted, with no duplicates
   expect(firstRowHasTime).toBeInTheDocument()
 })
 
-test('a day with 200 tasks renders within a generous time budget', () => {
-  const tasks = heavyTasks(200)
-  actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
-  const t0 = performance.now()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
-  const elapsed = performance.now() - t0
-  // jsdom's own DOM implementation is meaningfully slower than a real
-  // browser's, and this is the very first render of this component tree in
-  // the process, which also pays React's one-time module setup cost - see
-  // the stress-test report for warm, steady-state numbers measured against
-  // a real production build. This bound exists to catch a genuine
-  // regression (an accidental O(n^2) render path), not to assert a tight
-  // production number from inside jsdom.
-  expect(elapsed).toBeLessThan(2000)
-})
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts.
+ *
+ * The baseline is ten tasks, not none. Two hundred rows genuinely cost more
+ * than zero rows, so an empty day would only ever measure "is a list longer
+ * than an empty list", which nobody needs a test for. Ten to two hundred is
+ * twenty times the work: a render that stays proportional lands near twenty,
+ * and the thing this exists to catch - a path that walks every task for every
+ * task - lands near four hundred.
+ */
+test('a day with 200 tasks costs proportionally, not quadratically, more than one with 10', () => {
+  const withTasks = (n: number) => () =>
+    actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks: heavyTasks(n) } } })
+  const result = measureSlowdown(withTasks(10), withTasks(200), () =>
+    timed(() => render(<DayView date="2026-09-01" onDateChange={() => {}} />)),
+  )
+  expect(result.ratio).toBeLessThan(60)
+}, STRESS_TIMEOUT_MS)
 
 test('rolling over 200 unfinished tasks at once moves every pushable one and holds the rest, without throwing', () => {
   const tasks = heavyTasks(200).map(t => ({ ...t, done: false }))
   actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
-  const t0 = performance.now()
   const result = actions.rolloverUnfinished('2026-09-01')
-  const elapsed = performance.now() - t0
   expect(result.moved).toBe(200)
   expect(result.held).toBe(0)
   expect(getData().days['2026-09-02'].tasks).toHaveLength(200)
   expect(getData().days['2026-09-01'].tasks).toHaveLength(0)
-  expect(elapsed).toBeLessThan(100)
+
+  // A ratio rather than a millisecond budget - CONVENTIONS.md section 3.
+  // Four times the tasks should cost about four times as much; the
+  // duplicate check this walks through turning quadratic would land near
+  // sixteen.
+  const roll = (n: number) => () => {
+    actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks: heavyTasks(n).map(t => ({ ...t, done: false })) } } })
+    actions.rolloverUnfinished('2026-09-01')
+  }
+  expect(measureScaling(roll(50), roll(200)).ratio).toBeLessThan(12)
 })
 
 test('arrows navigate between days', async () => {

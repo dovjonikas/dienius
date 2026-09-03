@@ -1,7 +1,7 @@
 import type { AppData, DayPlan, Task } from '../../lib/types'
 import type { CategoryId } from '../../lib/categories'
 import { addDays } from '../../lib/dates'
-import { dayHas } from '../../lib/taskIdentity'
+import { dayHas, isRoutine } from '../../lib/taskIdentity'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Gap, type Interval } from './capacity'
 import { formatClock } from './timelineLayout'
 
@@ -243,13 +243,32 @@ export function describeDelta(delta: number): string {
  * their slots. What fits is placed; what does not goes to tomorrow. The
  * summary leads with what is still winnable among the key tasks, because
  * that is the question the person came back asking.
+ *
+ * **A routine task whose time has passed is left exactly where it is.** This
+ * used to fit a missed Standup into the evening because the evening was
+ * free, which was honest arithmetic and a silly plan: nobody does a standup
+ * at eight at night, and the whole point of the rescue is producing a plan
+ * somebody believes. What makes a task routine is `isRoutine` - it came from
+ * a template or a repeat, which means it has a slot in the shape of the day
+ * rather than a job that needs doing at some point - and it is the same
+ * judgment the rollover button already makes when it declines to push a
+ * routine task tomorrow is getting anyway.
+ *
+ * Left where it is, not sent to tomorrow: tomorrow's own template will
+ * produce it, and moving it there would be the same duplicate the rollover
+ * refuses to make. It is named in the summary rather than silently skipped,
+ * because CONVENTIONS.md section 12 says nothing disappears without being
+ * mentioned - and "stays where it is" is a fact about the plan, not a count
+ * of what was missed.
  */
 export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, busy: Interval[] = []): ReplanPlan {
   const open = tasks.filter(t => !t.done)
   const passed = open.filter(t => isAnchor(t) && startOf(t) < nowMinutes)
+  const passedRoutine = passed.filter(isRoutine)
+  const passedOneOffs = passed.filter(t => !isRoutine(t))
   const floats = open.filter(t => !isAnchor(t))
   const upcoming = open.filter(t => isAnchor(t) && startOf(t) >= nowMinutes)
-  const candidates = byPriority([...passed, ...floats])
+  const candidates = byPriority([...passedOneOffs, ...floats])
 
   const fixed: Interval[] = upcoming.map(t => ({ start: startOf(t), end: endOf(t) }))
   fixed.push(...busy)
@@ -264,13 +283,17 @@ export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, 
   if (onToday > 0) parts.push(`${onToday} on today${left.length > 0 ? `, ${left.length} to tomorrow` : ''}.`)
   else if (left.length > 0) parts.push(`No room left today - ${left.length} to tomorrow.`)
   else parts.push('Nothing left on the list. The day is yours.')
+  if (passedRoutine.length > 0) {
+    const word = passedRoutine.length === 1 ? 'Routine block' : 'Routine blocks'
+    parts.push(`${word} left where ${passedRoutine.length === 1 ? 'it is' : 'they are'}.`)
+  }
 
   return {
     kind: 'rescue',
     moves: placed,
     tomorrow: left.map(t => t.id),
     drop: [],
-    keep: upcoming.map(t => t.id),
+    keep: [...upcoming.map(t => t.id), ...passedRoutine.map(t => t.id)],
     summary: parts.join(' '),
   }
 }

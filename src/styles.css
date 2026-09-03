@@ -8116,7 +8116,13 @@ main:has(.week) > .calendar {
      row, rather than a column offset down by however tall a header turned out
      to be. The offset version worked until a template chip made one header
      taller than the number it was guessed from. */
-  grid-template-columns: 44px repeat(var(--week-days, 7), minmax(0, 1fr));
+  /* Seven, flatly. This read `repeat(var(--week-days, 7), ...)` for three
+     versions, and nothing ever set `--week-days` - the narrow case is a
+     media query further down that says three. A custom property with one
+     value and no writer is a hook that looks like a feature: the next person
+     to need a four-day week would set it, find nothing happened, and have to
+     work out why. */
+  grid-template-columns: 44px repeat(7, minmax(0, 1fr));
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0 var(--s1);
   flex: 1 1 auto;

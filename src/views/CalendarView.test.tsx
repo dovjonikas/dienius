@@ -5,6 +5,7 @@ import { CalendarView } from './CalendarView'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
 import { todayKey } from '../lib/dates'
+import { SLOWDOWN_LIMIT, STRESS_TIMEOUT_MS, measureSlowdown, timed } from '../test/stress'
 
 beforeEach(() => {
   localStorage.clear()
@@ -336,7 +337,14 @@ test('once a template exists, the calendar empty-templates message is gone', () 
 
 // --- stress test: the month grid with roughly two years of stamped days ----
 
-test('the month calendar renders correctly with roughly two years of stamped days loaded, within a generous time budget', () => {
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts. The month grid draws its own 42 cells whatever else is
+ * in the store, so an empty store is the honest baseline here: what is being
+ * asked is whether two years of stamped days change the cost of drawing
+ * those same 42 cells, and the answer should be "barely".
+ */
+function stampTwoYears() {
   const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
   const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
   const stamps: Record<string, string> = {}
@@ -347,15 +355,21 @@ test('the month calendar renders correctly with roughly two years of stamped day
     d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
   }
   actions.stamp(stamps)
+}
 
-  const t0 = performance.now()
+test('two years of stamped days barely change what the month grid costs to draw', () => {
+  const result = measureSlowdown(() => {}, stampTwoYears, () =>
+    timed(() => render(<CalendarView onOpenDay={() => {}} />)),
+  )
+  expect(result.ratio).toBeLessThan(SLOWDOWN_LIMIT)
+
+  // And it drew the right thing: 42 cells, regardless of how much data
+  // exists elsewhere in the year.
+  actions.resetForTests(defaultData())
+  stampTwoYears()
   render(<CalendarView onOpenDay={() => {}} />)
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(2000)
-  // The month grid only ever draws its own 42 cells regardless of how much
-  // data exists elsewhere in the year.
   expect(screen.getAllByRole('gridcell')).toHaveLength(42)
-})
+}, STRESS_TIMEOUT_MS)
 
 // --- the week's bar --------------------------------------------------------
 //

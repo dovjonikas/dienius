@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { defaultData, loadData, saveData, importJson, exportJson, STORAGE_KEY } from './storage'
 import type { Template } from './types'
+import { measureScaling } from '../test/stress'
 
 beforeEach(() => localStorage.clear())
 
@@ -975,15 +976,22 @@ test('a roughly 20MB backup file imports well within a second', () => {
   const json = exportJson({ ...defaultData(), templates, days } as unknown as ReturnType<typeof defaultData>)
   expect(json.length).toBeGreaterThan(15 * 1024 * 1024)
 
-  const t0 = performance.now()
-  const imported = importJson(json)
-  const elapsed = performance.now() - t0
-  expect(Object.keys(imported.days)).toHaveLength(i)
-  // Generous ceiling to absorb CI variance - the measured cost on a normal
-  // dev machine for a file this size is under 200ms; this bound exists to
-  // catch a real regression (an accidental O(n^2) walk), not to pin down
-  // an exact number.
-  expect(elapsed).toBeLessThan(3000)
+  expect(Object.keys(importJson(json).days)).toHaveLength(i)
+
+  // A ratio, not a millisecond budget - CONVENTIONS.md section 3. Measured
+  // against a tenth of the same file: reading ten times as much should cost
+  // about ten times as much, and the accidental O(n^2) walk this exists to
+  // catch would land near a hundred.
+  const tenth = exportJson({
+    ...defaultData(),
+    templates,
+    days: Object.fromEntries(Object.entries(days).slice(0, Math.floor(i / 10))),
+  } as unknown as ReturnType<typeof defaultData>)
+  const scaling = measureScaling(
+    () => { importJson(tenth) },
+    () => { importJson(json) },
+  )
+  expect(scaling.ratio).toBeLessThan(40)
 })
 
 test('export of roughly two years of stamped days across several templates stays a reasonable size and exports well under a second', () => {
@@ -1008,11 +1016,15 @@ test('export of roughly two years of stamped days across several templates stays
   }
   const data = { ...defaultData(), templates, days } as unknown as ReturnType<typeof defaultData>
 
-  const t0 = performance.now()
   const json = exportJson(data)
-  const elapsed = performance.now() - t0
 
-  expect(elapsed).toBeLessThan(1000)
+  // Same ratio rule as the import above, against a tenth of the same days.
+  const tenth = { ...data, days: Object.fromEntries(Object.entries(data.days).slice(0, 70)) }
+  const scaling = measureScaling(
+    () => { exportJson(tenth as unknown as ReturnType<typeof defaultData>) },
+    () => { exportJson(data) },
+  )
+  expect(scaling.ratio).toBeLessThan(40)
   // A real backup this size lands well under a megabyte - worth pinning so
   // a future change that bloats the export shape (a duplicated field, an
   // accidental circular expansion) shows up as a failing number here rather
@@ -1035,10 +1047,17 @@ test('a large payload that is invalid only in its very last entry is rejected qu
   days['zzz-last'] = { date: 'zzz-last', tasks: [{ id: 'bad', title: 'Bad', done: 'not a boolean' }] }
 
   const payload = JSON.stringify({ templates, days, settings: { theme: 'light', enabledWidgets: [] } })
-  const t0 = performance.now()
   expect(() => importJson(payload)).toThrow('Invalid Dienius backup file')
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(1000)
+
+  // The point is that rejecting costs about what *accepting* the same shape
+  // costs, rather than a slow full walk on top of it - a ratio question, and
+  // one a millisecond ceiling could only answer by accident.
+  const good = JSON.stringify({ templates, days: Object.fromEntries(Object.entries(days).slice(0, 5000)), settings: { theme: 'light', enabledWidgets: [] } })
+  const scaling = measureScaling(
+    () => { importJson(good) },
+    () => { try { importJson(payload) } catch { /* the rejection is the point */ } },
+  )
+  expect(scaling.ratio).toBeLessThan(4)
 })
 
 test('a bad import never destroys existing data - repeated garbage imports leave the store untouched (verified in store.test.ts for the full store round trip)', () => {

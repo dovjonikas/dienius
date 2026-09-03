@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
+import { SLOWDOWN_LIMIT, STRESS_TIMEOUT_MS, measureSlowdown, timed } from '../test/stress'
 
 beforeEach(() => {
   localStorage.clear()
@@ -478,18 +479,28 @@ function blockInput(n: number) {
   }))
 }
 
-test('a template with 30 blocks lists in the editor, opens within a generous time budget, and stamps a day with exactly 30 tasks', () => {
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts. The templates list draws one card per template with a
+ * block count on it, so a thirty-block template should cost what a one-block
+ * template costs: the blocks are not rendered until the editor opens.
+ */
+test('a template with 30 blocks lists as one card, costs what a small one costs, and stamps 30 tasks', () => {
+  const withBlocks = (n: number) => () => {
+    actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(n) })
+  }
+  const result = measureSlowdown(withBlocks(1), withBlocks(30), () => timed(() => render(<TemplatesView />)))
+  expect(result.ratio).toBeLessThan(SLOWDOWN_LIMIT)
+
+  actions.resetForTests(defaultData())
   const template = actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(30) })
-  const t0 = performance.now()
   render(<TemplatesView />)
-  const elapsed = performance.now() - t0
-  expect(elapsed).toBeLessThan(2000)
   expect(screen.getByText('30 blocks')).toBeInTheDocument()
 
   actions.stamp({ '2026-09-01': template.id })
   expect(getData().days['2026-09-01'].tasks).toHaveLength(30)
   expect(getData().days['2026-09-01'].tasks.every(t => t.fromTemplate)).toBe(true)
-})
+}, STRESS_TIMEOUT_MS)
 
 test('opening the editor for a 30-block template shows every block, in order', async () => {
   const user = userEvent.setup()

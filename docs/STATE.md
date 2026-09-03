@@ -129,7 +129,7 @@ What follows is wanted rather than owed.
 | Debt | Detail |
 |---|---|
 | **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
-| **`store.ts` is ~1330 lines** | It is a flat list of actions, so it reads fine, but it is the largest file left. Splitting it by area (tasks / library / settings / calendars / scratch) is the obvious move if it grows again. Scratch and Replan added six actions between them |
+| **`store.ts` is ~1500 lines** | It is a flat list of actions, so it reads fine, but it is the largest file left and v1.9 added a dozen more (backlog, library tracks, the template binding). Splitting it by area (tasks / library / backlog / settings / calendars / scratch) is the obvious move, and it is now overdue rather than optional |
 | **`storage.ts` is ~830 lines** | Almost all of it is `validate()`, a hand-written deep type guard. Deliberate - it is the import path for a file a person may have edited - but it is long |
 | **`timelineLayout.ts` at ~810 lines** | Dense geometry. Well tested, but the next person to touch it will need a while |
 | **No end-to-end tests** | Everything is unit or jsdom-level. The two-device sync test and the week drag were verified by hand in a real browser, not by CI |
@@ -138,10 +138,7 @@ What follows is wanted rather than owed.
 | **ICS: monthly and yearly rules are skipped** | Named in the parse result rather than approximated. A meeting on the wrong day is worse than one not shown |
 | **ICS: named time zones are read as local** | Doing it properly needs the IANA database. Reported in `ignored`, so it is not silent |
 | **Imported .ics calendars are device-local** | They have no address to refresh from, so they do not sync. Stated in the UI |
-| **`--week-days` custom property is unused** | The narrow case is handled by a media query instead. Harmless, but it is a loose end in `styles.css` |
 | **The wide day view scrolls on a short laptop** | At 1366x768 and 1600x900 a ten-block day is taller than the room the grid gets. This is the documented outcome, not a bug: the per-segment floors (32px sized, 44px unsized) are touch targets, and `fitPxPerMinute` correctly refuses to go below them. CONVENTIONS.md section 4 overstates the zero-scroll rule for this one case; it now says so |
-| **A timing test measures a budget, not a ratio** | `YearStrip.test.tsx`'s "switching years stays within a time budget" asserts milliseconds, which CONVENTIONS.md section 3 says not to do. It failed once under a dev server and a browser running alongside the suite, and passed alone. Rewrite it as a ratio |
-| **The rescue re-times everything, including routine** | "I'm back" fits a passed Standup into the evening because it fits. Honest, and occasionally silly. A rescue that knew which tasks are worth moving would need to know which are routine, which is a judgment the app does not currently make |
 
 ### Resolved debts, so you do not chase them
 
@@ -165,6 +162,14 @@ What follows is wanted rather than owed.
 - ~~Two 28px buttons on every inbox row~~ - fixed in v1.9. They had been
   there since v1.4 and survived the v1.6 touch pass because an inbox is
   collapsed by default and was empty every time the audit ran.
+- ~~Timing tests asserting milliseconds~~ - all ten of them became ratios in
+  v1.9, against a baseline measured the same way, alternating sides and
+  keeping the fastest round. The shared machinery is `src/test/stress.ts`,
+  and there is no absolute millisecond assertion left in the suite.
+- ~~The rescue re-timed routine blocks~~ - fixed in v1.9. A missed Standup
+  was fitted into the evening because the evening was free. `isRoutine`
+  already existed; the rescue simply never asked.
+- ~~`--week-days` was a custom property nobody set~~ - removed in v1.9.
 
 ---
 

@@ -10,6 +10,7 @@ import {
   wakingWindow,
   windowFor,
 } from './capacity'
+import { measureScaling } from '../../test/stress'
 
 // A second, named sleep schedule - what used to be the app's one hardcoded
 // night-shift window, now just one entry in a list somebody made.
@@ -500,16 +501,18 @@ function heavyDay(n: number): Task[] {
   }))
 }
 
-test('computeCapacity stays well under 100ms for a day with 50 or 200 tasks', () => {
-  for (const n of [50, 200]) {
-    const t0 = performance.now()
-    const capacity = computeCapacity(heavyDay(n))
-    formatCapacityLine(capacity)
-    const elapsed = performance.now() - t0
-    expect(elapsed).toBeLessThan(100)
+/**
+ * A ratio, not a millisecond budget - CONVENTIONS.md section 3, and see
+ * src/test/stress.ts. Four times the tasks should cost about four times as
+ * much; what this exists to catch is the arithmetic turning quadratic, which
+ * would land near sixteen.
+ */
+test('computing capacity for 200 tasks costs proportionally, not quadratically, more than for 50', () => {
+  const run = (n: number) => () => {
+    formatCapacityLine(computeCapacity(heavyDay(n)))
   }
+  expect(measureScaling(run(50), run(200)).ratio).toBeLessThan(12)
 })
-
 test('computeCapacity does not lose or double-count anchors or floats at 200 tasks', () => {
   const tasks = heavyDay(200)
   const capacity = computeCapacity(tasks)
