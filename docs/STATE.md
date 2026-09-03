@@ -84,7 +84,7 @@ reading them.
 | Sync | Optional, off by default, through a server you host. Per-entity last-write-wins with tombstones |
 | External calendars | ICS subscriptions or file import, as a read-only layer. Free time counts them |
 | Demo mode | `?demo=1` fills a sample fortnight under its own storage key |
-| The tour | Nine steps, each ending on a real action rather than a Next button. Data in `lib/tour.ts`, engine in `views/tour/Tour.tsx` |
+| The tour | Nine steps, each ending on a real action rather than a Next button. Reached from the first-run offer, the `?` card and the palette. A step that cannot end offers to do itself. Data in `lib/tour.ts`, engine in `views/tour/Tour.tsx` |
 | Themes | Dark, Light, Midnight; accent colour, density, text size. Every ink measured against WCAG AA by a test |
 | PWA | Installs, works offline, versioned cache, background update with a quiet Reload notice |
 

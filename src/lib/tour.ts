@@ -55,6 +55,24 @@ export interface TourStep {
   /** The tab the step lives on. The engine switches to it. */
   view: TourView
   event: TourEvent
+  /**
+   * What just happened, said once, on the two steps where something visibly
+   * lands on the screen: a day fills with blocks, a focus bar appears along
+   * the bottom. A step carrying this does *not* advance on its own - it shows
+   * the tick, names the result, and waits for Next.
+   *
+   * Those two are the moments the app makes its case, and auto-advancing
+   * through them meant the payoff was a flicker: the thing appeared and the
+   * spotlight had already moved somewhere else. Everywhere else the tick and
+   * a beat are enough, because nothing changed except the thing the person
+   * was already looking at.
+   *
+   * Deliberately outside the 120-word instructional budget the titles and
+   * lines share, and bounded separately - see tour.test.ts. This is a caption
+   * for something that has already happened, read with the eye free, not a
+   * word standing between somebody and a control.
+   */
+  outcome?: string
 }
 
 /** What a predicate sees: the plan when the step began, the plan now, and the clock tools. */
@@ -95,7 +113,7 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'Two minutes, one real day',
-    text: 'Each step ends when you do it. Skip any time.',
+    text: 'Each step ends when you do it. Skip whenever.',
     targets: [],
     view: 'day',
     event: 'start',
@@ -103,15 +121,16 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'stamp',
     title: 'Stamp a day',
-    text: 'Click Working day. Eight blocks, one click.',
+    text: 'Click the blue Working day card. Eight blocks, one click.',
     targets: ['[data-tour="starter-working-day"]'],
     view: 'day',
     event: 'stamped',
+    outcome: 'Your whole day, from one click. That is the timeline beside it.',
   },
   {
     id: 'add',
     title: 'Add your own',
-    text: 'Type Walk and press Enter. The time is already picked.',
+    text: 'Type Walk in the box, then Enter. The time is already picked.',
     // The field, not the controls beside it: the whole point of the step is
     // that the two controls are already answered and nobody has to touch
     // them. Pointing at one would teach the opposite of what it says.
@@ -122,7 +141,7 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'key',
     title: 'Make it key',
-    text: "Open Walk's details and mark it key.",
+    text: 'Click the dots on the Walk card, then Details, then Key.',
     targets: ['[data-task-id="{task}"] [data-tour="task-menu"]', '[data-tour="task-details"]', '[data-tour="key"]'],
     view: 'day',
     event: 'key-marked',
@@ -130,23 +149,24 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'focus',
     title: 'Focus on one thing',
-    text: 'Start Focus on Walk. One ring, one way out.',
+    text: 'Click Focus on the Walk card. One ring, one way out.',
     targets: ['[data-task-id="{task}"] [data-tour="focus"]'],
     view: 'day',
     event: 'focus-started',
+    outcome: 'That bar along the bottom is Focus. Leave it whenever you like.',
   },
   {
     id: 'done',
     title: 'Tick it off',
-    text: 'Check Walk. Done folds away, the score moves.',
+    text: 'Click the checkbox on Walk. Done folds away, the score moves.',
     targets: ['[data-task-id="{task}"] [data-tour="task-check"]'],
     view: 'day',
     event: 'task-done',
   },
   {
     id: 'library',
-    title: 'Books, courses, series',
-    text: 'Start a list. Sessions on it land on days.',
+    title: 'Books and series',
+    text: 'Start a list here. Its sessions land on days.',
     // Two, and the last one present wins: the starter offers only exist while
     // the library is empty, so somebody who already has a list gets the New
     // list button pointed at instead of an empty rectangle.
@@ -157,7 +177,7 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'north',
     title: 'One direction',
-    text: 'Write one goal. It never shows progress, only why.',
+    text: 'Write one goal here. It never shows progress, only why.',
     targets: ['[data-tour="goal-add"]', '[data-tour="goal-save"]'],
     view: 'settings',
     event: 'goal-added',
@@ -176,13 +196,15 @@ export const DESKTOP_STEPS: TourStep[] = [
 export const MOBILE_STEPS: TourStep[] = DESKTOP_STEPS.map(step => {
   switch (step.id) {
     case 'stamp':
-      return { ...step, text: 'Tap Working day. Eight blocks, one tap.' }
+      return { ...step, text: 'Tap the blue Working day card. Eight blocks, one tap.' }
+    case 'add':
+      return { ...step, text: 'Type Walk in the box, then Enter. The time is already picked.' }
     case 'key':
-      return { ...step, text: "Tap the dots, open Details, mark it key." }
+      return { ...step, text: 'Tap the dots on the Walk card, then Details, then Key.' }
     case 'focus':
-      return { ...step, text: 'Tap Focus on Walk. One ring, one way out.' }
+      return { ...step, text: 'Tap Focus on the Walk card. One ring, one way out.' }
     case 'done':
-      return { ...step, text: 'Tick Walk. Done folds away, the score moves.' }
+      return { ...step, text: 'Tap the checkbox on Walk. Done folds away, the score moves.' }
     case 'library':
       return { ...step, text: 'Tap to start a list. Sessions land on days.' }
     default:

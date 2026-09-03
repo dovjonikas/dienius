@@ -11,7 +11,17 @@ const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabi
  * this renders straight from the same `SHORTCUTS` array the handler reads.
  * A shortcut added without a description simply cannot exist.
  */
-export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
+export interface ShortcutsOverlayProps {
+  onClose: () => void
+  /**
+   * Start the tour from here. This card is where somebody goes when they are
+   * already lost, which makes it the one place in the app where offering a
+   * two-minute walkthrough is a help rather than an interruption.
+   */
+  onStartTour: () => void
+}
+
+export function ShortcutsOverlay({ onClose, onStartTour }: ShortcutsOverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -69,6 +79,12 @@ export function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
         <p className="shortcuts-note">
           Single keys, so none of them fire while you are typing in a box - except Escape, which is usually
           how you leave the box.
+        </p>
+        <p className="shortcuts-tour">
+          <button type="button" className="btn-secondary" onClick={onStartTour}>
+            Take the tour
+          </button>
+          <span className="muted">Two minutes, nine real actions, on your own day.</span>
         </p>
       </div>
     </div>

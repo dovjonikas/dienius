@@ -229,3 +229,32 @@ test('the library step has a fallback for a library that already has a list', ()
     step.targets.indexOf('[data-tour="library-starter"]'),
   )
 })
+
+/**
+ * The outcome lines - what the card says after the two steps where something
+ * visibly lands on the screen. They sit outside the 120-word instructional
+ * budget on purpose: a caption for something that has already happened is
+ * read with the eye free, not while somebody is hunting for a control. That
+ * exemption is only honest while it stays small, which is what this bounds.
+ */
+for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS]] as const) {
+  test(`the ${name} tour names an outcome on at most two steps, in twelve words or fewer`, () => {
+    const withOutcome = steps.filter(s => s.outcome)
+    expect(withOutcome.map(s => s.id)).toEqual(['stamp', 'focus'])
+    for (const step of withOutcome) {
+      expect(wordCount(step.outcome!), step.id).toBeLessThanOrEqual(12)
+      expect(step.outcome!).not.toMatch(/[–—]/)
+    }
+  })
+
+  test(`every ${name} step that waits for something real names a concrete thing to press`, () => {
+    // The three-second test: somebody seeing this app for the first time has
+    // to know what to do without reading twice. That means naming the control
+    // - "the blue Working day card", "the dots on the Walk card" - rather
+    // than describing the idea behind it. Mechanically: an instruction on a
+    // step with a target starts with a verb somebody can act on.
+    for (const step of steps.slice(1, -1)) {
+      expect(step.text, step.id).toMatch(/^(Click|Tap|Type|Tick|Start|Write|Open|Check|Drag)\b/)
+    }
+  })
+}

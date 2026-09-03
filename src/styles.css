@@ -8855,6 +8855,45 @@ main:has(.week) > .calendar {
 
 .tour-skip:hover { color: var(--text); }
 
+/* The way out of a step that will not end - see lib/tourAssist.ts. It appears
+   after twenty seconds of nothing happening and is deliberately the quietest
+   thing on the card: an admission offered to the one person who needs it, not
+   a shortcut waved at everyone else. Muted text on a hairline, above the
+   footer rather than in it, so it never competes with Skip. */
+.tour-stuck {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  padding-top: var(--s2);
+  border-top: 1px solid var(--border);
+}
+
+.tour-stuck button {
+  min-height: 0;
+  padding: var(--s1) var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.tour-stuck button:hover { color: var(--text); border-color: var(--muted); }
+
+/* The other door into the tour, on the card somebody opens when they are
+   already looking for help. */
+.shortcuts-tour {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+  margin: var(--s3) 0 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: var(--t-sm);
+}
+
 /* The "pick it up where you left it" line, for a tour that was interrupted. */
 .tour-offer {
   position: fixed;
@@ -8890,6 +8929,7 @@ main:has(.week) > .calendar {
 
 @media (pointer: coarse) {
   .tour-skip { min-height: 44px; }
+  .tour-stuck button { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

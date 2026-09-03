@@ -17,6 +17,8 @@ import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { DemoBanner } from './views/DemoBanner'
 import { Tour } from './views/tour/Tour'
+import { isTourRunning, startTour } from './lib/tourState'
+import { leaveTour } from './lib/tourExit'
 import { Scratch } from './views/scratch/Scratch'
 import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
@@ -150,6 +152,11 @@ export function App() {
         else if (shortcutsOpen) setShortcutsOpen(false)
         else if (focusExpanded) setFocusExpanded(false)
         else if (clockOpen) setClockOpen(false)
+        // Last, so Escape closes whatever is over the tour before it closes
+        // the tour itself - and so that Escape always does *something* while
+        // a tour is running, which is the one place in this app somebody can
+        // feel held. Keeps what was built: leaving is not undoing.
+        else if (isTourRunning()) leaveTour('keep')
         else return
         e.preventDefault()
         return
@@ -280,6 +287,21 @@ export function App() {
     { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
     { id: 'shortcuts', label: 'Keyboard shortcuts', detail: 'The single-key list', run: () => setShortcutsOpen(true) },
+    // The tour had exactly one door into it: an offer on a day with nothing
+    // on it, which is a screen somebody sees once and never again. Anyone who
+    // dismissed it, or arrived after their first day was planned, could not
+    // find it at all - Settings replays it in a sandbox, which is a different
+    // thing and is filed under General. Two more doors, both of them where a
+    // person goes when they are already looking for help.
+    {
+      id: 'tour',
+      label: 'Take the tour',
+      detail: 'Two minutes, nine real actions, on your own day',
+      run: () => {
+        openDay(todayKey())
+        startTour(isWide ? 'desktop' : 'mobile')
+      },
+    },
   ]
 
   /** The task the clock says is happening right now, or nothing. */
@@ -374,7 +396,16 @@ export function App() {
         />
       )}
 
-      {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />}
+      {shortcutsOpen && (
+        <ShortcutsOverlay
+          onClose={() => setShortcutsOpen(false)}
+          onStartTour={() => {
+            setShortcutsOpen(false)
+            openDay(todayKey())
+            startTour(isWide ? 'desktop' : 'mobile')
+          }}
+        />
+      )}
 
       {paletteOpen && (
         <CommandPalette

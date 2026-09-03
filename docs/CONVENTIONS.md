@@ -352,3 +352,51 @@ What checking it means, concretely:
   a starter template; change the template and the sentence is a lie.
 - **A new feature worth teaching gets a step, and the budget is still 120
   words.** Adding a tenth step means earning it by cutting somewhere else.
+
+### The three guards, and why they exist
+
+A tour whose every step waits for a real action is a tour of the app rather
+than a slideshow about it, and it is also the one design that can trap
+somebody. Three things stop that, and none of them may be removed without
+replacing it with something that does the same job:
+
+1. **The hole follows its target.** Scrolled into view before it is measured,
+   re-measured on resize, on scroll, on any DOM mutation outside the overlay,
+   and on a slow poll besides. The poll is not redundant - a CSS transition
+   moves an element without mutating anything. Everything that asks for a
+   re-measure is coalesced into one measure per animation frame, because
+   measuring writes: the first version of that watcher heard its own output
+   and locked the renderer solid inside a second.
+2. **A target that is nowhere in the document is given up on.** After a grace
+   period the card offers the way through, and after twelve seconds the step
+   moves on by itself with a line in the console. Present-but-unreachable is a
+   different failure and is covered by the next one.
+3. **Twenty seconds of nothing offers a way through** - do it for me, or skip
+   this step. `lib/tourAssist.ts` does the real thing through the real store
+   actions, never a fake tick, because the next step needs the state the
+   previous one was supposed to leave behind.
+
+### Pacing, and the two steps that wait
+
+The tick is held for 1.2 seconds, not the 650ms it used to be: the thing
+being celebrated happens somewhere else on the page, and the eye has to
+travel there and back. Two steps - stamping a day, starting Focus - name what
+just landed on the screen and wait for Next instead of advancing at all.
+Those `outcome` lines sit outside the 120-word budget and are bounded
+separately, because a caption for something that has already happened is read
+with the eye free rather than standing between somebody and a control.
+
+### Three doors in
+
+The tour used to have one: an offer on a day with nothing on it, which is a
+screen somebody sees once. It is now also in the shortcut card behind `?` and
+in the command palette, both of which are where a person goes when they are
+already looking for help. Settings still replays it in a sandbox.
+
+### Before calling a tour change done
+
+Walk it end to end **five times in a row with no code changes between the
+runs**: desktop dark, desktop light, 390x844, 768x1024, and once slowly and
+awkwardly - stray taps beside the target, Escape, a resize in the middle of a
+step. Any break resets the count. Escape always leaves the tour, after
+whatever is sitting over it.

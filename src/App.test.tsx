@@ -5,10 +5,12 @@ import { App } from './App'
 import { actions } from './lib/store'
 import { defaultData } from './lib/storage'
 import { PRESETS } from './lib/themes'
+ import { getTourState, resetTourForTests, startTour } from './lib/tourState'
 
 beforeEach(() => {
   localStorage.clear()
   actions.resetForTests(defaultData())
+  resetTourForTests()
 })
 
 test('renders brand and nav tabs', () => {
@@ -119,3 +121,50 @@ test('every theme preset and mode applies cleanly on the year view with roughly 
     }
   }
 }, 15000)
+
+// --- ways into the tour ------------------------------------------------------
+//
+// The tour had exactly one door: an offer on a day with nothing on it, which
+// is a screen somebody sees once. Anyone who dismissed it, or who arrived
+// after their first day was already planned, could not find it again -
+// Settings replays it in a sandbox, which is a different thing and is filed
+// under General. Both of these are where a person goes when they are already
+// looking for help, which is exactly when a two-minute walkthrough is a help
+// rather than an interruption.
+
+test('the shortcut card offers the tour, and taking it starts one', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('?')
+  expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Take the tour' }))
+  expect(getTourState().active).toBe(true)
+  // The card gets out of the way: a spotlight behind a modal points at
+  // nothing anybody can reach.
+  expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).toBeNull()
+})
+
+test('the command palette can start the tour', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('{Control>}k{/Control}')
+  await user.click(screen.getByRole('option', { name: /Take the tour/ }))
+  expect(getTourState().active).toBe(true)
+})
+
+/**
+ * Escape is the last link in the chain App already walks - the palette, then
+ * the shortcut card, then Focus, then the clock - so anything sitting over
+ * the tour closes first and a second press leaves the tour. It keeps what was
+ * built, because leaving is not undoing.
+ */
+test('Escape leaves a running tour, after everything sitting over it', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  act(() => startTour('desktop', 2))
+  await user.keyboard('{Control>}k{/Control}')
+  await user.keyboard('{Escape}')
+  expect(getTourState().active).toBe(true)
+  await user.keyboard('{Escape}')
+  expect(getTourState().active).toBe(false)
+})
