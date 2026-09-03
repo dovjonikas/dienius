@@ -5641,16 +5641,34 @@ button.danger:focus-visible {
      column. The rail keeps its own column in both states - it is not part
      of what dayLayoutFocus redistributes, see docs/LAYOUT-WIDE.md
      section 5. */
-  .day-view.focus-calendar,
+  /* Each keeps the name its column already has - "day" for the timeline,
+     "tasks" for the task column - rather than both renaming the surviving
+     column to a third name.
+
+     They used to share one template that called it "pane", which was fine
+     until the first-run rule below also collapsed the grid to two columns
+     and called the same column "tasks". On an empty day with the Tasks
+     focus both matched: the template said "tasks" while the task pane was
+     still asking for "pane", and a grid-area naming an area that does not
+     exist is placed in an implicit track instead. The header was squeezed
+     into 151px and wrapped its own controls onto three lines, and the task
+     column landed in a fourth column nobody had declared. One name per
+     column, so two rules that both collapse this grid cannot disagree. */
+  .day-view.focus-calendar {
+    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-areas:
+      "rail header"
+      "rail cap"
+      "rail day";
+  }
+
   .day-view.focus-tasks {
     grid-template-columns: minmax(200px, 240px) 1fr;
     grid-template-areas:
       "rail header"
       "rail cap"
-      "rail pane";
+      "rail tasks";
   }
-  .day-view.focus-calendar .day-pane > .timeline-grid-wrap { grid-area: pane; }
-  .day-view.focus-tasks .task-pane { grid-area: pane; }
 
   /* The header row: day-nav plus the focus control, side by side, wrapping
      if the window is narrow enough at the breakpoint's own edge that they
