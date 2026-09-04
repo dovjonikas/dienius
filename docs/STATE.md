@@ -128,7 +128,51 @@ What follows is wanted rather than owed.
 
 ### Asked for, not yet built
 
-Nothing at the moment. The screenshots, the last item here, landed in v1.11.
+Three things the v1.11 brief named that did not get built, each with where
+it goes. The next session's P1 list, in this order.
+
+- **An "up next" offer when a library item is finished.** Briefed, never
+  built - the v1.11 library e2e test looked for it and found nothing, and
+  the rail's "Up next" is the next timed task, unrelated. What it is: when
+  a tick on a bound task finishes the last chapter (`advanceForTask` in
+  `lib/store/library.ts` sets `finished`), the next unfinished item on the
+  same list is what the next stamp will bind to (`currentItem` in
+  `lib/library.ts`), and nothing tells the person so. Two places to say
+  it: the active item's card in `views/LibraryView.tsx` (the loud one at
+  the top of an open list - a one-line "Next: Deep Work, 7 chapters" under
+  the finished book for the rest of the day), and the bound task's
+  subtitle in `widgets/day-plan/TaskRow.tsx` after the tick, where
+  `boundLabel` now reads "ch 12/12" and could read "finished - next is Deep
+  Work". No new state: both are derived from the list's order. Not a
+  nudge, not a dialog - a line, in `--muted`.
+- **Typing lag in quick-add under a slow CPU.** Not the tour's: measured in
+  v1.11 with a 4x CPU throttle, typing into quick-add with no tour on the
+  page runs a 95th-percentile frame of about 50ms, the same as under the
+  spotlight. Every keystroke re-renders `widgets/day-plan/QuickAdd.tsx`
+  whole: `parseQuickAdd` (cheap), `suggestSlot` over the day's tasks and
+  the calendar cache (not cheap - it merges intervals per keystroke), the
+  time control, the duration control and the live chips. Where to look:
+  memoise `suggestSlot` on (tasks, busy, draft.minutes) rather than
+  recomputing on every character, since the slot only moves when the
+  parsed duration changes; keep the parse synchronous (the chips must
+  answer the keystroke) but let the two controls skip renders whose props
+  did not change. Measure with the same harness the tour fix used - a
+  Playwright run with `Emulation.setCPUThrottlingRate` at 4 and frame
+  times recorded from `requestAnimationFrame` - before and after; the
+  numbers in the v1.11 code-health commit are the baseline.
+- **Outlook's Windows time zone names in .ics files.** "FLE Standard
+  Time", "W. Europe Standard Time" and the rest are not IANA names, so
+  `knowsZone` in `lib/ics.ts` says no, the times are read as local and the
+  calendar reports it. For the owner, in the zone the file was written
+  in, that is right by accident; for a file from a colleague two zones
+  away it is wrong by hours. The question for next time is whether a
+  small table of the dozen Windows names that actually turn up (the CLDR
+  `windowsZones` mapping has about 140; Outlook exports in Europe and the
+  US use perhaps fifteen) is worth carrying - one map in `ics.ts`,
+  consulted before `Intl` is asked, with a test on the Outlook fixture
+  already in `ics.test.ts`. Reading the file's own `VTIMEZONE` block
+  instead would be exact and is a much bigger job; the table is the
+  honest middle.
 
 ### Known debts, oldest first
 
