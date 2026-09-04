@@ -266,6 +266,12 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   tour.e2e.ts          the naive walk, on a desktop and on a phone
   sync.e2e.ts          two browser contexts syncing through the real server
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
+  replan.e2e.ts        the three doors: something came up, shift the rest, away and back
+  library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick
+  shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
+  rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
+  week.e2e.ts          a block dragged onto another day, with a real mouse
+  data.e2e.ts          export, erase, import; a snapshot restored; an .ics file over the day
 playwright.config.ts   the two projects, and the preview server they run against
 scripts/
   generate-sw.mjs      after the build: the service worker's cache name and precache list

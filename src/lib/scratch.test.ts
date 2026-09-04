@@ -3,6 +3,7 @@ import {
   allScratchTags,
   bugExport,
   filterScratch,
+  isTaskMarkOnly,
   scratchCount,
   scratchTags,
   scratchTitle,
@@ -83,4 +84,22 @@ test('the count reads as plain words', () => {
   expect(scratchCount(0)).toBe('Nothing yet')
   expect(scratchCount(1)).toBe('1 note')
   expect(scratchCount(27)).toBe('27 notes')
+})
+
+/**
+ * The mark on its own is the moment between typing "!" and the first letter
+ * after it. The regex used to read /^s*!s*$/ - the backslashes were missing,
+ * so it matched literal letters rather than spaces, and " !" or "! " was
+ * written to the stream and deleted again one keystroke later, leaving a
+ * commit and an undo-able delete behind. Found while writing the scratch
+ * e2e test in v1.11.
+ */
+test('the task mark on its own, with or without spaces around it, is not yet a note', () => {
+  expect(isTaskMarkOnly('!')).toBe(true)
+  expect(isTaskMarkOnly(' !')).toBe(true)
+  expect(isTaskMarkOnly('! ')).toBe(true)
+  expect(isTaskMarkOnly('  !  ')).toBe(true)
+  expect(isTaskMarkOnly('!b')).toBe(false)
+  expect(isTaskMarkOnly('s!s')).toBe(false)
+  expect(isTaskMarkOnly('')).toBe(false)
 })

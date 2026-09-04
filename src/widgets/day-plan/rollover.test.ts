@@ -43,6 +43,20 @@ test('a repeat instance is covered rather than held - tomorrow gets it anyway', 
   expect(split).toEqual({ pushable: 0, held: 0, covered: 1 })
 })
 
+// The source of a series is a manual task with repeat set. It was pushed
+// like any one-off, and tomorrow held it twice: the instance the series had
+// made, and the source arriving with a push count.
+test('the source of a series that reaches tomorrow is covered, like its instances', () => {
+  const split = rolloverSplit(state(), DATE, [task({ repeat: 'daily' })])
+  expect(split).toEqual({ pushable: 0, held: 0, covered: 1 })
+})
+
+test('a weekly source whose series skips tomorrow is pushable like any other', () => {
+  // DATE is a Tuesday; a weekly series from it next lands on the Tuesday after.
+  const split = rolloverSplit(state(), DATE, [task({ repeat: 'weekly' })])
+  expect(split).toEqual({ pushable: 1, held: 0, covered: 0 })
+})
+
 test('a template task tomorrow already has is covered', () => {
   const data = state({
     days: {

@@ -72,6 +72,23 @@ test('a pushed template task and a re-stamp of the same template merge rather th
   expect(titles.filter(title => title === 'Gym')).toHaveLength(1)
 })
 
+// The source of a daily series was pushed like a one-off, and the next day
+// held the task twice: the instance the series had made when the day was
+// opened, and the source arriving with a push count. The rollover e2e test
+// found it in v1.11; the source stays, the way an instance already did.
+test('rolloverUnfinished leaves the source of a series alone when tomorrow gets an instance anyway', () => {
+  actions.addTask('2026-09-01', 'Water the plants')
+  const id = getData().days['2026-09-01'].tasks[0].id
+  actions.setTaskRepeat('2026-09-01', id, 'daily')
+  actions.ensureDay('2026-09-02')
+  expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Water the plants'])
+
+  const result = actions.rolloverUnfinished('2026-09-01')
+  expect(result).toEqual({ moved: 0, held: 0, skipped: 1 })
+  expect(getData().days['2026-09-01'].tasks.map(t => t.title)).toEqual(['Water the plants'])
+  expect(getData().days['2026-09-02'].tasks.map(t => t.title)).toEqual(['Water the plants'])
+})
+
 test('rolloverUnfinished clears core, so a required task from a shift day does not become required on whatever day it lands on next', () => {
   const shift = actions.addTemplate({
     name: 'Night shift',

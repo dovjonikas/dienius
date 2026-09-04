@@ -331,6 +331,15 @@ section 13 written down, on a desktop and on a phone; a change to the
 tour's words has to be made there too, because it finds every control by
 the words the card uses for it.
 
+A browser test that depends on the hour pins the clock before the page
+loads - `openFreshAt(page, wednesdayAt(10))` in `e2e/app.ts` - and moves
+it by reloading (`reopenAt`), which is what opening the app later is.
+Pinned rather than installed: `setFixedTime` leaves the page's timers
+running for real, so debounces, animations and the undo toast behave as
+they do for a person, and only `Date` answers differently. A test that
+reads "the next free slot" or "what still fits before sleep" from a real
+clock passes at ten and fails at four.
+
 ---
 
 ## 11. Scratch stays one stream

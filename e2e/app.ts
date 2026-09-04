@@ -51,3 +51,33 @@ export async function tickEverything(page: Page): Promise<void> {
 function box(input: Locator): Locator {
   return input.locator('xpath=following-sibling::*[1]')
 }
+
+/**
+ * A first open at a chosen instant. The clock is pinned before the page
+ * loads, so everything keyed on now - which day is today, the running card,
+ * the free slot quick-add opens on, what a replan can still fit - is the
+ * same on every run. Pinned, not installed: timers keep running for real,
+ * so animations, debounces and the undo toast behave as they do for a
+ * person, and only Date answers differently.
+ */
+export async function openFreshAt(page: Page, time: Date): Promise<void> {
+  await page.clock.setFixedTime(time)
+  await openFresh(page)
+}
+
+/** Moves the pinned clock and reloads, which is what opening the app later does. */
+export async function reopenAt(page: Page, time: Date): Promise<void> {
+  await page.clock.setFixedTime(time)
+  await page.reload()
+  await page.getByRole('navigation').waitFor()
+}
+
+/** A Wednesday, in Vilnius time - the same day scripts/shots.mjs pins. */
+export function wednesdayAt(hours: number, minutes = 0): Date {
+  return new Date(Date.UTC(2026, 8, 16, hours - 3, minutes))
+}
+
+/** The card for a task in the list, found by its title. */
+export function card(page: Page, title: string): Locator {
+  return page.getByRole('listitem').filter({ has: page.getByRole('checkbox', { name: title, exact: true }) })
+}

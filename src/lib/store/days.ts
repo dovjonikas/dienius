@@ -3,7 +3,7 @@ import { advanceForTask } from './library'
 import type { DayPlan, LibraryRef, Repeat, Subtask, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
-import { materialiseRepeats, sourceFor, weekdayOf } from '../repeats'
+import { materialiseRepeats, sourceCovers, sourceFor, weekdayOf } from '../repeats'
 import { addWithoutDuplicates, dayHas, isRoutine, willReceive } from '../taskIdentity'
 import { applyStamps } from '../stamping'
 import { addDays } from '../dates'
@@ -337,9 +337,10 @@ export const dayActions = {
 
     // A routine task tomorrow is getting anyway. A repeat instance always
     // qualifies: its source generates tomorrow's copy the moment the day is
-    // opened, whatever else is on it.
+    // opened, whatever else is on it. So does the source itself, for the
+    // same reason - see sourceCovers.
     const covered = unfinished.filter(
-      t => isRoutine(t) && (t.repeatOf !== undefined || willReceive(target, t, mapped)),
+      t => (isRoutine(t) && (t.repeatOf !== undefined || willReceive(target, t, mapped))) || sourceCovers(t, date, targetDate),
     )
     const coveredIds = new Set(covered.map(t => t.id))
     const candidates = unfinished.filter(t => !coveredIds.has(t.id))

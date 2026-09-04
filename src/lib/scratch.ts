@@ -131,7 +131,7 @@ export function isTaskIntent(text: string): boolean {
  * and an undo-able delete behind for every task anybody ever types.
  */
 export function isTaskMarkOnly(text: string): boolean {
-  return /^s*!s*$/.test(text)
+  return /^\s*!\s*$/.test(text)
 }
 
 /**

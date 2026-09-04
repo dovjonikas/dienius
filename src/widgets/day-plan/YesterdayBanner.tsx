@@ -32,13 +32,20 @@ export function YesterdayBanner({ date }: { date: string }) {
   const yesterday = addDays(date, -1)
   const unfinished = (data.days[yesterday]?.tasks ?? []).filter(t => !t.done)
 
-  if (!isToday || dismissed || unfinished.length === 0) return null
+  if (!isToday || dismissed) return null
 
   function dismiss() {
     writeDismissed(date)
     setDismissed(true)
   }
 
+  // Checked before "is there anything left", not after. A push moves the
+  // tasks off yesterday, so the moment the button works there is nothing
+  // unfinished there any more - and the early return below used to fire
+  // first, taking the "Moved 3 to today." line with it. The banner simply
+  // vanished on the press, and the sentence written to confirm it was only
+  // ever reachable when something had stayed behind. Found by the rollover
+  // e2e test in v1.11.
   if (pushed) {
     return (
       <div className="yesterday-banner is-done" role="status">
@@ -53,6 +60,7 @@ export function YesterdayBanner({ date }: { date: string }) {
     )
   }
 
+  if (unfinished.length === 0) return null
   const pushable = unfinished.filter(isPushable).length
 
   return (

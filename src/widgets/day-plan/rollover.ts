@@ -2,7 +2,7 @@ import type { AppData, Task } from '../../lib/types'
 import { addDays } from '../../lib/dates'
 import { isPushable } from '../../lib/pushRules'
 import { isRoutine, willReceive } from '../../lib/taskIdentity'
-import { weekdayOf } from '../../lib/repeats'
+import { sourceCovers, weekdayOf } from '../../lib/repeats'
 
 /**
  * What "push what is left to tomorrow" would actually do, counted three ways.
@@ -26,7 +26,9 @@ export function rolloverSplit(data: AppData, date: string, tasks: Task[]): Rollo
   const tomorrow = addDays(date, 1)
   const mappedTomorrow = data.settings.weekdayTemplates[weekdayOf(tomorrow)]
   const covered = unfinished.filter(
-    t => isRoutine(t) && (t.repeatOf !== undefined || willReceive(data.days[tomorrow], t, mappedTomorrow)),
+    t =>
+      (isRoutine(t) && (t.repeatOf !== undefined || willReceive(data.days[tomorrow], t, mappedTomorrow))) ||
+      sourceCovers(t, date, tomorrow),
   )
   const oneOff = unfinished.filter(t => !covered.includes(t))
   const pushable = oneOff.filter(isPushable).length

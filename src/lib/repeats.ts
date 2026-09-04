@@ -47,6 +47,21 @@ export function weekdayOf(dateKey: string): number {
   return new Date(y, m - 1, d).getDay()
 }
 
+/**
+ * Whether an unfinished task is the source of a series that will put its
+ * own instance on `targetDate` anyway.
+ *
+ * The rollover asks this before carrying a task forward. It already knew a
+ * repeat *instance* is covered - the series generates tomorrow's copy - but
+ * the *source* of a series is a manual task with `repeat` set, has no
+ * identity of its own, and was pushed like any one-off. Tomorrow then held
+ * two: the instance the series had already made, and the source arriving
+ * with a push count. Found by the rollover e2e test in v1.11.
+ */
+export function sourceCovers(task: Task, sourceDate: string, targetDate: string): boolean {
+  return task.repeat !== undefined && task.repeatOf === undefined && repeatApplies(task.repeat, sourceDate, targetDate)
+}
+
 export interface RepeatSource {
   task: Task
   date: string

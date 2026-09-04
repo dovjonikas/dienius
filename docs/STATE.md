@@ -157,12 +157,27 @@ Nothing at the moment. The screenshots, the last item here, landed in v1.11.
   position in an implicit grid row 700px under the window, and made a
   page that fitted its screen scroll anyway.
 - ~~No end-to-end tests~~ - Playwright against the production build since
-  v1.10: `npm run e2e`, three files under `e2e/`. A first day (stamp, add,
-  tick, the evening close arriving on the last tick, the reading plan from
-  the palette), the tour walked naively on a desktop and on a phone doing
-  only what each card says, and two browser contexts syncing a task both
-  ways through the real `server/sync-server.mjs` on a spare port. CI runs
-  it in its own job; the deploy does not wait for it.
+  v1.10, and since v1.11 covering the real flows: `npm run e2e`, ten files
+  under `e2e/`. A first day (stamp, add, tick, the evening close arriving
+  on the last tick, the reading plan from the palette), the tour walked
+  naively on a desktop and on a phone doing only what each card says, two
+  browser contexts syncing a task both ways through the real
+  `server/sync-server.mjs` on a spare port, the demo's first screen, the
+  three replan doors, a book bound to a template and ticked, a backlog pull,
+  a night passing with a daily repeat and the yesterday banner, a week-view
+  drag, scratch's two ways out, export-erase-import, a snapshot restore, and
+  an .ics file over the day. Every test that depends on the hour pins the
+  browser clock (`openFreshAt` in `e2e/app.ts`) to a Wednesday in
+  Vilnius, so the same blocks are ahead of now on every run. CI runs it in
+  its own job; the deploy does not wait for it.
+- ~~Three bugs the browser tests found in v1.11~~ - the yesterday banner
+  vanished on "Push to today" instead of saying what moved, because its
+  early return on "nothing unfinished" ran before the confirmation branch;
+  the source of a repeating series was pushed like a one-off, so the next
+  day held it twice beside the instance the series had made
+  (`sourceCovers` in `repeats.ts`); and `isTaskMarkOnly` in scratch read
+  `/^s*!s*$/` with its backslashes missing, so " !" was written to the
+  stream and deleted a keystroke later. Each has its unit test now.
 - ~~`store.ts` at ~1600 lines~~ - split in v1.10 into ten area modules
   under `lib/store/`, with `store.ts` left as the facade so no import
   changed. Every action kept its doc comment and body; the one edit inside a
