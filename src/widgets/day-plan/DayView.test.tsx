@@ -1278,3 +1278,42 @@ test('neither control is offered while the field is writing to the inbox', async
   expect(screen.queryByRole('button', { name: /next free slot/i })).toBeNull()
   expect(screen.queryByRole('button', { name: /min long/i })).toBeNull()
 })
+// --- a bound task, and what it says when the book ends --------------------
+//
+// The card's library mark is normally a count. On the tick that ends the
+// book it stops being useful - "ch 12/12" answers a question nobody has -
+// and says instead what the block will be about next time, which is what
+// the binding to the list already guaranteed and never told anybody.
+
+test('a bound task shows its count, and names the next book once this one ends', async () => {
+  const user = userEvent.setup()
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter', unitShort: 'ch' })
+  actions.addLibraryItem(list.id, 'Deep Work, 2 chapters')
+  actions.addLibraryItem(list.id, 'Atomic Habits, 7 chapters')
+  const [deepWork] = getData().library[0].items
+  actions.stepLibraryItem(list.id, deepWork.id, 1, '2026-09-01')
+  actions.scheduleLibraryItem('2026-09-01', list.id, deepWork.id)
+
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const taskList = within(container.querySelector('.task-list')!)
+  expect(taskList.getByText('ch 1/2')).toBeInTheDocument()
+
+  await user.click(taskList.getByRole('checkbox', { name: /Deep Work/ }))
+
+  expect(within(container.querySelector('.task-list, .done-list')!).queryByText('ch 2/2')).toBeNull()
+  expect(screen.getByText('finished - next is Atomic Habits')).toBeInTheDocument()
+})
+
+test('the last book on a list ends with a count, because there is no next one to name', async () => {
+  const user = userEvent.setup()
+  const list = actions.addLibraryList({ name: 'Books', unit: 'chapter', unitShort: 'ch' })
+  actions.addLibraryItem(list.id, 'Deep Work, 1 chapter')
+  const [deepWork] = getData().library[0].items
+  actions.scheduleLibraryItem('2026-09-01', list.id, deepWork.id)
+
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  await user.click(within(container).getByRole('checkbox', { name: /Deep Work/ }))
+
+  expect(screen.queryByText(/next is/)).toBeNull()
+  expect(screen.getByText('ch 1/1')).toBeInTheDocument()
+})

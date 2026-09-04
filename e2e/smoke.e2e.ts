@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { openFresh, quickAdd, stampWorkingDay, tick, tickEverything } from './app'
+import { openFreshAt, quickAdd, stampWorkingDay, tick, tickEverything, wednesdayAt } from './app'
+
+// wednesdayAt is a Vilnius clock time, so the zone has to match it.
+test.use({ timezoneId: 'Europe/Vilnius' })
 
 /**
  * The first ten minutes of a first day, end to end: the starter offer, a day
@@ -9,7 +12,7 @@ import { openFresh, quickAdd, stampWorkingDay, tick, tickEverything } from './ap
  * browser, on the production build.
  */
 test('a first day: stamp, add, tick, and the day closes when the list is done', async ({ page }) => {
-  await openFresh(page)
+  await openFreshAt(page, wednesdayAt(10))
 
   await stampWorkingDay(page)
   await expect(page.getByRole('checkbox')).toHaveCount(9)
@@ -37,7 +40,7 @@ test('a first day: stamp, add, tick, and the day closes when the list is done', 
 })
 
 test('the reading plan arrives from the palette, and never on its own', async ({ page }) => {
-  await openFresh(page)
+  await openFreshAt(page, wednesdayAt(10))
   await page.getByRole('button', { name: 'Library' }).click()
   await expect(page.getByRole('button', { name: 'Start a Books list' })).toBeVisible()
 

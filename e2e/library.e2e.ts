@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openFreshAt, stampWorkingDay, tick, wednesdayAt } from './app'
+import { card, openFreshAt, stampWorkingDay, tick, wednesdayAt } from './app'
 
 /**
  * A book, bound to a template, arriving on a day by name and moving on when
@@ -48,4 +48,38 @@ test('a list bound to a template puts the current book on the day, and a tick ad
   await page.getByRole('button', { name: 'Onto tomorrow' }).click()
   await expect(page.getByRole('heading', { name: 'Thursday, September 17' })).toBeVisible()
   await expect(page.getByRole('checkbox', { name: 'Dune' })).toBeAttached()
+})
+/**
+ * The end of a book, and what the list does next. The v1.11 walk-through
+ * found the queue behaving like a conveyor and looking like a list: the
+ * binding is to the list, so the next session was already about the next
+ * book, and nothing on either screen said so. This is both halves of the
+ * sentence, on the two screens that say it.
+ */
+test('finishing a book names the next one on the card and offers a sitting on it', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
+  await page.getByRole('button', { name: 'Start a Books list' }).click()
+  const add = page.getByLabel('Add to Books')
+  await add.fill('Dune, 1 chapter')
+  await add.press('Enter')
+  await add.fill('Deep Work, 7 chapters')
+  await add.press('Enter')
+
+  // A sitting on Dune, today, from the book's own panel.
+  await page.getByRole('button', { name: 'Dune, ch 0/1' }).click()
+  await page.getByRole('button', { name: 'Onto today' }).click()
+
+  await tick(page, 'Dune')
+  await expect(card(page, 'Dune')).toContainText('finished - next is Deep Work')
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
+  await expect(page.getByText(/Dune finished\. Next on this list/)).toBeVisible()
+  await page.getByRole('button', { name: 'Put a sitting on today' }).click()
+  // The press answers where it stands rather than following you to the day.
+  await expect(page.getByText('On today.')).toBeVisible()
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Deep Work' })).toBeAttached()
 })

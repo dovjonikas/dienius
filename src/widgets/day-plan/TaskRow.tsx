@@ -1,5 +1,5 @@
 import type { LibraryList, Task } from '../../lib/types'
-import { progressLabel } from '../../lib/library'
+import { currentItem, isItemFinished, progressLabel } from '../../lib/library'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { categoryColor, categoryLabel } from '../../lib/categories'
@@ -158,7 +158,18 @@ export function TaskRow({
   // app keeps. See Task.libraryRef.
   const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
   const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
-  const boundLabel = boundList && boundItem ? progressLabel(boundList, boundItem) : undefined
+  // "ch 12/12" is a true thing to say about a book that just ended and a
+  // useless one: what somebody wants to know at that moment is whether the
+  // list carries on, and it does - the block is bound to the list, so the
+  // next time it comes round it is about the book named here. Same sentence
+  // the Library's own card makes, said on the card the tick happened on.
+  const boundNext =
+    boundList && boundItem && isItemFinished(boundItem) ? currentItem(boundList) : undefined
+  const boundLabel = !boundList || !boundItem
+    ? undefined
+    : boundNext
+      ? `finished - next is ${boundNext.title}`
+      : progressLabel(boundList, boundItem)
   // The pace note rides along with the binding: "one section a day" is the
   // thing that was actually decided and the thing that has been forgotten by
   // the time the block comes round on a Thursday. It says nothing about
@@ -304,7 +315,11 @@ export function TaskRow({
               <span className="visually-hidden"> steps done</span>
             </span>
           )}
-          {boundLabel && <span className="task-library">{boundLabel}</span>}
+          {boundLabel && (
+            <span className={boundNext ? 'task-library is-next' : 'task-library'} title={boundLabel}>
+              {boundLabel}
+            </span>
+          )}
           {boundPace && <span className="task-pace">{boundPace}</span>}
           {task.note && (
             <span className="task-note-mark" title="Has a note">

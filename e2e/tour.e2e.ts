@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test'
-import { openFresh, tick } from './app'
+import { openFreshAt, tick, wednesdayAt } from './app'
+
+// wednesdayAt is a Vilnius clock time, so the zone has to match it.
+test.use({ timezoneId: 'Europe/Vilnius' })
 
 /**
  * The naive walk: nine steps, doing only and exactly what each card says,
@@ -15,7 +18,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   const card = page.getByRole('dialog', { name: 'Tour' })
   const verb = isMobile ? 'Tap' : 'Click'
 
-  await openFresh(page)
+  await openFreshAt(page, wednesdayAt(10))
   await page.getByRole('button', { name: 'Show me around' }).click()
   await expect(card).toContainText('Two minutes, one real day')
   await card.getByRole('button', { name: 'Start' }).click()

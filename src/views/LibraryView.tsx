@@ -7,10 +7,12 @@ import {
   hasAnotherSeason,
   isItemFinished,
   itemProgress,
+  itemSizeLabel,
   progressLabel,
   progressPercent,
   stepsOneAtATime,
   unitPlural,
+  upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
 import { CATEGORIES } from '../lib/categories'
@@ -290,6 +292,12 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
   // that with a timestamp would make the order they arranged mean nothing.
   const [active, ...rest] = going
 
+  // What ended today, and what the list moved on to. A template block binds
+  // to the list rather than to the book it was started from, so tomorrow's
+  // reading block already reads the next one - this is the line that says so,
+  // on the day it happens, beside the one press that puts a sitting on today.
+  const offer = upNext(list, todayKey())
+
 
   /** Removing an item, with the whole list kept for five seconds. */
   function removeItem(itemId: string, title: string) {
@@ -402,6 +410,8 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             <p className="muted library-list-empty">Nothing on this list yet.</p>
           )}
 
+          {offer && <UpNextLine list={list} offer={offer} />}
+
           {active && (
             <ul className="library-items is-active">
               <ItemRow {...rowProps(active, 0)} active />
@@ -461,6 +471,57 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
         </>
       )}
     </div>
+  )
+}
+
+/**
+ * The line that turns a queue into a conveyor: what ended today, what the
+ * list moved on to, and one press that puts a sitting on it.
+ *
+ * The mechanism was always there - a template block binds to the *list*, so
+ * the morning after a book ends the reading block already reads the next one
+ * - and nothing ever said so. To the person, ticking the last chapter made
+ * the card at the top of the list change into a different book with no
+ * explanation, and a list with no template behind it simply stopped.
+ *
+ * It is a line and a button, not a dialog. Nothing is decided for anybody:
+ * the next book is already what the next session will be about, and the
+ * button is only the shortcut for wanting that session today rather than
+ * whenever the block next comes round.
+ *
+ * The press stays on this screen, unlike the panel's own "Onto today" which
+ * follows you to the day. That one is an errand you opened a panel to run;
+ * this is a line on a list you are still reading, and yanking the tab away
+ * mid-read would be the app taking over. The answer is the line itself.
+ */
+function UpNextLine({ list, offer }: { list: LibraryList; offer: { finished: LibraryItem; next: LibraryItem } }) {
+  const [placed, setPlaced] = useState(false)
+  // In the item's own words rather than the list's - a page-counted book on a
+  // list counted in chapters is "306 pages", not "306 chapters".
+  const size = itemSizeLabel(list, offer.next)
+
+  function putOnToday() {
+    // False means today already carries an unfinished sitting on this item,
+    // which is the same answer as far as the person is concerned: it is on
+    // today. Saying "already" would be correcting somebody who was right.
+    actions.scheduleLibraryItem(todayKey(), list.id, offer.next.id)
+    setPlaced(true)
+  }
+
+  return (
+    <p className="library-upnext">
+      <span className="library-upnext-said">
+        {offer.finished.title} finished. Next on this list: <strong>{offer.next.title}</strong>
+        {size !== undefined && `, ${size}`}.
+      </span>
+      {placed ? (
+        <span className="library-upnext-done">On today.</span>
+      ) : (
+        <button type="button" className="btn-secondary library-upnext-go" onClick={putOnToday}>
+          Put a sitting on today
+        </button>
+      )}
+    </p>
   )
 }
 

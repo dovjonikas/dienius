@@ -357,3 +357,38 @@ test('add to template builds the block and binds it, and refuses a second for th
   await user.click(screen.getByRole('button', { name: 'Change that one' }))
   expect(getData().templates.find(t => t.id === template.id)!.blocks).toHaveLength(1)
 })
+// --- what the list moves on to -------------------------------------------
+//
+// The mechanism was always there: a template block binds to the list, so the
+// morning after a book ends the reading block already reads the next one.
+// Nothing said so, and to the person the card at the top of the list simply
+// became a different book. These hold the sentence and the one press.
+
+test('finishing a book names the next one, and puts a sitting on today in one press', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  actions.addLibraryItem(list.id, 'Deep Work, 7 chapters')
+  const first = getData().library[0].items[0]
+  actions.setLibraryItemProgress(list.id, first.id, 12, todayKey())
+  render(<LibraryView />)
+
+  const said = screen.getByText(/Daring Greatly finished/)
+  expect(within(said).getByText('Deep Work')).toBeInTheDocument()
+  expect(said).toHaveTextContent('7 chapters')
+
+  await user.click(screen.getByRole('button', { name: 'Put a sitting on today' }))
+
+  const tasks = getData().days[todayKey()].tasks
+  expect(tasks.map(t => t.title)).toEqual(['Deep Work'])
+  expect(tasks[0].libraryRef?.itemId).toBe(getData().library[0].items[1].id)
+  expect(screen.getByText('On today.')).toBeInTheDocument()
+})
+
+test('a list whose last book ended offers nothing, because there is nothing to offer', () => {
+  const list = seed()
+  const only = getData().library[0].items[0]
+  actions.setLibraryItemProgress(list.id, only.id, 12, todayKey())
+  render(<LibraryView />)
+  expect(screen.queryByText(/finished\. Next on this list/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Put a sitting on today' })).not.toBeInTheDocument()
+})

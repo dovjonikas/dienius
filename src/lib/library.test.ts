@@ -4,6 +4,7 @@ import {
   hasAnotherSeason,
   isItemFinished,
   itemProgress,
+  itemSizeLabel,
   lineHasShape,
   nextSeason,
   parseLibraryItemInput,
@@ -16,6 +17,7 @@ import {
   suggestShortForm,
   unitPlural,
   unitShort,
+  upNext,
 } from './library'
 import type { LibraryItem, LibraryList } from './types'
 
@@ -299,4 +301,90 @@ test('a short form is suggested for the units this app has met, and guessed for 
   expect(suggestShortForm('Episode')).toBe('ep')
   expect(suggestShortForm('lap')).toBe('la')
   expect(suggestShortForm('')).toBe('')
+})
+
+// --- what the list moves on to -------------------------------------------
+//
+// A template block binds to the list, not to the item it was started from,
+// so the morning after a book ends the block already reads the next one.
+// That always worked and nothing ever said so. These hold the sentence that
+// says it: what ended today, and what the queue moved on to.
+
+test('finishing one item today names the next one on the same list', () => {
+  const list: LibraryList = {
+    ...BOOKS,
+    items: [
+      item({ id: 'a', title: 'Deep Work', total: 12, progress: 12, finished: '2026-09-04' }),
+      item({ id: 'b', title: 'Atomic Habits', total: 7 }),
+    ],
+  }
+  const offer = upNext(list, '2026-09-04')
+  expect(offer?.finished.title).toBe('Deep Work')
+  expect(offer?.next.title).toBe('Atomic Habits')
+})
+
+test('a book finished on an earlier day has nothing left to announce', () => {
+  const list: LibraryList = {
+    ...BOOKS,
+    items: [
+      item({ id: 'a', total: 12, progress: 12, finished: '2026-08-20' }),
+      item({ id: 'b', total: 7 }),
+    ],
+  }
+  expect(upNext(list, '2026-09-04')).toBeUndefined()
+})
+
+test('nothing is offered when the book that ended was the last one there was', () => {
+  const list: LibraryList = {
+    ...BOOKS,
+    items: [item({ id: 'a', total: 12, progress: 12, finished: '2026-09-04' })],
+  }
+  expect(upNext(list, '2026-09-04')).toBeUndefined()
+})
+
+test('two finished on one day: the later one in the list order is the news', () => {
+  const list: LibraryList = {
+    ...BOOKS,
+    items: [
+      item({ id: 'a', title: 'First', total: 3, progress: 3, finished: '2026-09-04' }),
+      item({ id: 'b', title: 'Second', total: 3, progress: 3, finished: '2026-09-04' }),
+      item({ id: 'c', title: 'Third', total: 9 }),
+    ],
+  }
+  expect(upNext(list, '2026-09-04')?.finished.title).toBe('Second')
+})
+
+test('a season ending is not a series ending, so it offers nothing', () => {
+  // isItemFinished says so and upNext believes it: the next season is the
+  // offer here, and the detail sheet already makes it.
+  const list: LibraryList = {
+    ...BOOKS,
+    items: [
+      item({ id: 'a', track: 'series', seasons: 3, season: 1, total: 8, progress: 8 }),
+      item({ id: 'b', total: 5 }),
+    ],
+  }
+  expect(upNext(list, '2026-09-04')).toBeUndefined()
+})
+// --- how big a thing is, before it is started ----------------------------
+//
+// progressLabel says where you are in something. This says how big it is,
+// which is what a book you have not opened wants said about it. It reads
+// the item's own track rather than the list's unit: a page-counted book on
+// a list counted in chapters was announced as "306 chapters" for one build.
+
+test('a size is spoken in the item own track, not the list unit', () => {
+  expect(itemSizeLabel(BOOKS, item({ total: 12 }))).toBe('12 chapters')
+  expect(itemSizeLabel(BOOKS, item({ total: 306, track: 'pages' }))).toBe('306 pages')
+  expect(itemSizeLabel(BOOKS, item({ total: 1 }))).toBe('1 chapter')
+})
+
+test('a series is measured in seasons where it has them, in episodes where it does not', () => {
+  expect(itemSizeLabel(BOOKS, item({ track: 'series', seasons: 3, total: 10 }))).toBe('3 seasons')
+  expect(itemSizeLabel(BOOKS, item({ track: 'series', total: 10 }))).toBe('10 episodes')
+})
+
+test('a film and a thing of unknown length say nothing about their size', () => {
+  expect(itemSizeLabel(BOOKS, item({ track: 'movie' }))).toBeUndefined()
+  expect(itemSizeLabel(BOOKS, item({}))).toBeUndefined()
 })

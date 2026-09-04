@@ -313,3 +313,52 @@ export function suggestShortForm(unit: string): string {
   if (known[u]) return known[u]
   return u.slice(0, 2)
 }
+
+/**
+ * How big something is, in its own words: "306 pages", "12 chapters",
+ * "3 seasons", and nothing at all for a film or for anything whose length
+ * nobody has written down.
+ *
+ * Not `progressLabel`, which says where you are in something you have
+ * started. This is said about a thing not started yet, where "p. 0/306" is
+ * a strange way to describe a book. It reads the item's own track rather
+ * than the list's unit, which is the bug this replaced: a page-counted book
+ * on a list counted in chapters was announced as "306 chapters".
+ */
+export function itemSizeLabel(list: Pick<LibraryList, 'unit' | 'unitPlural'>, item: LibraryItem): string | undefined {
+  if (item.track === 'movie') return undefined
+  if (item.track === 'series') {
+    if (item.seasons !== undefined) return `${item.seasons} ${item.seasons === 1 ? 'season' : 'seasons'}`
+    if (item.total !== undefined) return `${item.total} ${item.total === 1 ? 'episode' : 'episodes'}`
+    return undefined
+  }
+  if (item.total === undefined) return undefined
+  if (item.track === 'pages') return `${item.total} ${item.total === 1 ? 'page' : 'pages'}`
+  return `${item.total} ${item.total === 1 ? list.unit : unitPlural(list)}`
+}
+
+/**
+ * What a list moves on to after one of its own was finished today, and what
+ * finished. Absent when nothing on this list ended today, or when the thing
+ * that ended was the last one there was.
+ *
+ * The reason this exists at all: a template block binds to the *list*, not to
+ * the item it was started from, so the morning after a book ends the block
+ * already reads the next one. That worked and nothing said so - the queue
+ * behaved like a conveyor and looked like a list. This is the sentence that
+ * says it, and the handle the Library hangs a one-press session on.
+ *
+ * Bounded to today on purpose. It is a moment, not a state: a book finished
+ * three weeks ago has nothing left to announce, and a line that never goes
+ * away is a line nobody reads. The finished side is the *last* one in the
+ * list's own order that ended today, because that is the one whose ending
+ * pushed the queue along; two in a day is rare and the later one is the news.
+ */
+export function upNext(list: LibraryList, today: string): { finished: LibraryItem; next: LibraryItem } | undefined {
+  let finished: LibraryItem | undefined
+  for (const item of list.items) if (item.finished === today) finished = item
+  if (!finished) return undefined
+  const next = currentItem(list)
+  if (!next) return undefined
+  return { finished, next }
+}

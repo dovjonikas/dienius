@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
@@ -98,14 +98,37 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   const now = new Date()
   const day = data.days[date]
   const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
-  const autoTime = suggestSlot({
-    tasks,
-    durationMinutes: draft?.minutes ?? duration,
-    busy: busyIntervals(date, data.settings.calendars, calendarCache),
-    sleepProfileId: day?.sleepProfileId ?? template?.sleepProfileId,
-    sleep: { profiles: data.settings.sleepProfiles },
-    notBefore: isToday ? now.getHours() * 60 + now.getMinutes() : undefined,
-  })
+  const sleepProfileId = day?.sleepProfileId ?? template?.sleepProfileId
+  const sleepProfiles = data.settings.sleepProfiles
+  const subscriptions = data.settings.calendars
+  const slotMinutes = draft?.minutes ?? duration
+
+  // Both of these are recomputed on every render, and typing is what renders
+  // this component: a keystroke used to walk every event in the calendar
+  // cache and then merge the day's intervals again for an answer that had
+  // not moved. Neither depends on the text, only on the length read out of
+  // it, so a memo on what they actually read turns a per-character scan into
+  // a per-length one.
+  const busy = useMemo(
+    () => busyIntervals(date, subscriptions, calendarCache),
+    [date, subscriptions, calendarCache],
+  )
+  // The minute, not the instant. `new Date()` on every render made the memo
+  // below miss on every keystroke; the suggestion is only ever offered to
+  // the minute anyway - see `suggestSlot` - so the minute is the honest key.
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+  const autoTime = useMemo(
+    () =>
+      suggestSlot({
+        tasks,
+        durationMinutes: slotMinutes,
+        busy,
+        sleepProfileId,
+        sleep: { profiles: sleepProfiles },
+        notBefore: isToday ? nowMinutes : undefined,
+      }),
+    [tasks, slotMinutes, busy, sleepProfileId, sleepProfiles, isToday, nowMinutes],
+  )
 
   // What Enter would actually use, in the order the three sources outrank each
   // other: the typed line first, then whatever the control was pushed to, then
