@@ -265,7 +265,11 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   smoke.e2e.ts         a first day end to end, and the reading plan from the palette
   tour.e2e.ts          the naive walk, on a desktop and on a phone
   sync.e2e.ts          two browser contexts syncing through the real server
+  demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
 playwright.config.ts   the two projects, and the preview server they run against
+scripts/
+  generate-sw.mjs      after the build: the service worker's cache name and precache list
+  shots.mjs            `npm run shots`: the README's screenshots, from the demo under a pinned clock
 ```
 
 ### The day view

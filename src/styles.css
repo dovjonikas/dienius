@@ -225,8 +225,16 @@
    while removing it from the visual layout. Do not swap this for
    `display: none` or `visibility: hidden` - those also remove it from the
    accessibility tree, which defeats the point wherever it is used. */
+/* top: 0 is not decoration. An absolutely positioned box with no offsets
+   sits at its static position, and inside the day view's grid that is an
+   implicit row under everything else - so the two live regions, one pixel
+   tall, put the bottom of the document 700px below the bottom of the
+   window and made a page that fitted its screen scroll anyway. Found by the
+   demo's zero-scroll check at 1366x768. */
 .visually-hidden {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -5633,10 +5641,18 @@ button.danger:focus-visible {
     margin-bottom: 0;
   }
 
+  /* overflow-y: auto is what makes "nothing scrolls" true for a day that
+     genuinely cannot fit. fitPxPerMinute refuses to draw a gap or a card
+     under its floor, so a day with more blocks than the room has floors
+     for is taller than its column - and before this it pushed the whole
+     page taller, header and rail and all. Now the column takes the
+     overflow and opens at now (TimelineGrid.tsx). The gap picker is
+     position: fixed, so clipping the column clips nothing that matters. */
   .day-pane > .timeline-grid-wrap {
     grid-area: day;
     min-height: 0;
     margin-bottom: 0;
+    overflow-y: auto;
   }
 
   .task-pane {
@@ -5786,6 +5802,7 @@ button.danger:focus-visible {
   .timeline-grid-wrap {
     min-height: 0;
     margin-bottom: 0;
+    overflow-y: auto;
   }
 
   /* The task pane has the same "half the window is empty" problem the
@@ -8580,15 +8597,20 @@ main:has(.week) > .calendar {
    things off it for a week and then find out.
    ----------------------------------------------------------------------- */
 
+/* One thin line, and it stays one line: no wrapping, the button inline as a
+   link rather than a second row. It used to be a card with a full-height
+   secondary button in it, which on a 768px screen was the first of three
+   things stacked above the day. The 44px target on a finger comes from the
+   overlay on the button, not from the row's height. */
 .demo-banner {
   display: flex;
   align-items: center;
   gap: var(--s3);
-  flex-wrap: wrap;
-  padding: var(--s2) var(--s3);
-  margin-bottom: var(--s3);
+  min-height: 30px;
+  padding: 0 var(--s3);
+  margin-bottom: var(--s2);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  border-radius: var(--r-card);
+  border-radius: var(--r-control);
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   font-size: var(--t-sm);
   color: var(--text);
@@ -8604,8 +8626,32 @@ main:has(.week) > .calendar {
 
 /* A basis the short phone sentence fits in beside its button, so the banner
    is one row there too rather than a paragraph with a button under it. */
-.demo-banner-text { flex: 1 1 160px; min-width: 0; line-height: 1.4; }
-.demo-banner-exit { flex-shrink: 0; }
+.demo-banner-text { flex: 1 1 auto; min-width: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.demo-banner-exit {
+  flex-shrink: 0;
+  position: relative;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.demo-banner-exit:hover { color: var(--text); }
+@media (pointer: coarse) {
+  .demo-banner-exit::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
 
 .first-run-demo {
   color: var(--muted);
@@ -10287,5 +10333,13 @@ main:has(.week) > .calendar {
    the spacing on a phone, where this is a plain flex column rather than a
    grid row. */
 .day-notices > * { margin-bottom: 0; }
+
+/* One notice at a time. The children are rendered in priority order (see
+   the comment on this wrapper in DayView.tsx) and each one unmounts itself
+   when dismissed, so hiding everything after the first is the whole queue:
+   dismiss the first and the next one is first. Done in the stylesheet rather
+   than by lifting three components' dismissal state into the view, because
+   the state is already exactly where it belongs and this is one line. */
+.day-notices > :not(:first-child) { display: none; }
 
 .day-notices:empty { display: none; }

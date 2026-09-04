@@ -131,16 +131,32 @@ Three screens must fit their viewport with no scrolling at **1920x1080**,
 - **Calendar → Week.** Structurally guaranteed rather than tuned - see below.
 - **The day view at the wide breakpoint** (≥1024px), where the whole day fits
   the window and the grid draws at whatever density that takes - *within the
-  floors*. A gap draws at least 44px and a sized anchor at least 32px, because
-  those are touch targets, and a day with enough blocks to exceed the room a
-  768px screen leaves cannot fit at any density. `fitPxPerMinute` says so by
-  returning the base density, and the page scrolls. That is the honest
-  outcome, not a regression: measured at 1366x768 and 1600x900 with a
-  ten-block day.
+  floors*. A sized anchor draws at least 32px, because that is what its box
+  needs to hold a title. A gap and an unsized anchor draw at least 44px on a
+  finger and 28px and 32px on a mouse (`usePointerCoarse`), because the
+  44px is a touch target and on a desktop it was only height: a nine-block
+  day spent 350px on gaps nobody could miss. A day with more blocks than
+  the room has floors for still cannot fit at any density; `fitPxPerMinute`
+  says so by returning the base density, and then **the grid's own column
+  scrolls, opened at now, and the page does not.** `e2e/demo.e2e.ts` holds
+  that at 1366x768 and 1920x1080 on the sample fortnight.
 
 Everything else scrolls vertically and that is fine. **Nothing scrolls
 horizontally, ever.** Check with
 `document.documentElement.scrollWidth > clientWidth`.
+
+### One notice above the day
+
+Three things can appear between the day's header and the day: the evening
+close, what yesterday left, and the North card. Only the first of them shows
+at a time, in that order, and the next appears when the one above it is
+dismissed - the stylesheet hides every child of `.day-notices` after the
+first, and each card unmounts itself on dismiss, so the order in
+`DayView.tsx` is the queue. The rule exists because the demo's first
+screen once carried all three above a day the visitor had not seen yet, and
+the day itself was below the fold. The demo line at the very top is not one
+of the three: it is chrome, one 30px row, and never goes away while the
+sample is open.
 
 The week view is the model for how to do this: every block is a percentage of a
 grid row that takes whatever height it is given, so there is no pixel budget to
@@ -281,9 +297,13 @@ There is a browser pane. Use it - the test suite cannot see layout.
   tells you something looks wrong; a measurement tells you what is wrong.
 - **Screenshots are for confirming a finished thing**, and for showing the
   owner. The pane's screenshot occasionally crops - retry, or open a fresh tab.
-- **There is no way to write image files from the agent environment.** README
-  imagery has to come from the owner, or from the live demo link, which never
-  goes stale.
+- **README screenshots are generated, never taken.** `npm run shots` runs
+  `scripts/shots.mjs`: the dev server, the sample fortnight under a clock
+  pinned to a Wednesday at 15:00, eight PNGs into `docs/screenshots/`.
+  Running it twice gives the same files. A screenshot that depends on the
+  day somebody ran it is one nobody can regenerate, and a README image
+  nobody can regenerate is a README image that goes stale. Rerun it after
+  any change to the day view, the demo seed or a theme.
 - **Kill and restart the dev server when a phantom error appears.** Vite's
   module cache outlives edits: `rm -rf node_modules/.vite`.
 

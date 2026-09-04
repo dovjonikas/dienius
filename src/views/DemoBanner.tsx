@@ -29,7 +29,7 @@ export function DemoBanner() {
           ? 'Nothing here is yours - it lives under its own key and is thrown away when you leave.'
           : 'Nothing here is yours.'}
       </span>
-      <button type="button" className="btn-secondary demo-banner-exit" onClick={exitDemoMode}>
+      <button type="button" className="demo-banner-exit" onClick={exitDemoMode}>
         {isWide ? 'Leave demo' : 'Leave'}
       </button>
     </div>

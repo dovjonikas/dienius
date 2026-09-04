@@ -86,7 +86,7 @@ reading them.
 | Export / import | Plain JSON, both ways, deliberately manual |
 | Sync | Optional, off by default, through a server you host. Per-entity last-write-wins with tombstones |
 | External calendars | ICS subscriptions or file import, as a read-only layer. Free time counts them |
-| Demo mode | `?demo=1` fills a sample fortnight under its own storage key |
+| Demo mode | `?demo=1` fills a sample fortnight under its own storage key. Today is lived up to the clock (never earlier than one o'clock), yesterday is finished so no banner sits above the first screen, and the seed carries a bound book, a backlog, a scratch stream and a task with a note and sub-steps |
 | The tour | Nine steps, each ending on a real action rather than a Next button. Reached from the first-run offer, the `?` card and the palette. Whatever a step points at is forced visible and never behind a sheet; the card's line follows the person ("Now press Enter"); every step ends on a caption saying what happened. A step that cannot end says so and offers to do itself - it never skips on its own. Data in `lib/tour.ts`, engine in `views/tour/Tour.tsx` |
 | Themes | Dark, Light, Midnight; accent colour, density, text size. Every ink measured against WCAG AA by a test |
 | PWA | Installs, works offline, versioned cache, background update with a quiet Reload notice |
@@ -125,10 +125,7 @@ What follows is wanted rather than owed.
 
 ### Asked for, not yet built
 
-- **Screenshots.** Still wanted, still impossible from the agent environment:
-  there is no way to write image files here. The README leads with the live
-  demo link instead. If you can produce PNGs, `docs/screenshots/` and a hero
-  image are the places for them.
+Nothing at the moment. The screenshots, the last item here, landed in v1.11.
 
 ### Known debts, oldest first
 
@@ -146,6 +143,19 @@ What follows is wanted rather than owed.
 
 ### Resolved debts, so you do not chase them
 
+- ~~Screenshots, and no way to make them~~ - `npm run shots` since v1.11,
+  Playwright writing PNGs from the dev server with the clock pinned. The
+  README leads with the hero it produces. Visual regression checking is
+  still by measurement; the script is for the README, not for diffing.
+- ~~The wide day view scrolls on a short laptop~~ - closed in v1.11 two
+  ways. The gap and unsized-anchor floors follow the pointer, so a mouse
+  gets 28px and 32px where a finger keeps 44px, and a nine-block day fits
+  1440x900. Where it still cannot fit - 1366x768 - the grid's column takes
+  the overflow, opened at now, and the page itself never grows.
+  `e2e/demo.e2e.ts` measures both. Found on the way: the two
+  `visually-hidden` live regions had no `top`, sat at their static
+  position in an implicit grid row 700px under the window, and made a
+  page that fitted its screen scroll anyway.
 - ~~No end-to-end tests~~ - Playwright against the production build since
   v1.10: `npm run e2e`, three files under `e2e/`. A first day (stamp, add,
   tick, the evening close arriving on the last tick, the reading plan from

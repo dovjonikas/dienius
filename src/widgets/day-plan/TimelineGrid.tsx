@@ -18,6 +18,7 @@ import {
   legibleHourLabels,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
+import { usePointerCoarse } from '../../lib/viewport'
 
 /**
  * Pixels per minute of window time before any touch-target floor below is
@@ -95,6 +96,17 @@ const COMPACT_HEIGHT_PX = 40
  * the anchor that follows it. See that function's own doc comment for why.
  */
 const GAP_MIN_HEIGHT_PX = 44
+
+/**
+ * The same two floors on a mouse. A gap's 44px is a target for a thumb; a
+ * pointer lands on 28px without trying, which is what a gap's own label
+ * needs and no more. An unsized anchor drops to the sized floor for the
+ * same reason - it is a card, and 32px is what its box already needs. The
+ * whole difference is height: a working day with eight short gaps drew
+ * 350px of empty targets on a desktop, and that was what pushed a 900px
+ * window into scrolling. See `usePointerCoarse`.
+ */
+const GAP_MIN_HEIGHT_FINE_PX = 28
 
 /**
  * Width of the hour-label column on the left of the grid. Anchors and gaps
@@ -431,10 +443,13 @@ export function TimelineGrid({
   // that follows it. A day with any unsized anchor draws no gap objects at
   // all (see computeTimelineLayout), so no floor is reserved for a button
   // that will never exist there.
+  const coarse = usePointerCoarse()
+  const unsizedAnchorFloorPx = coarse ? MIN_ANCHOR_HEIGHT : SIZED_MIN_HEIGHT_PX
+  const gapMinHeightPx = coarse ? GAP_MIN_HEIGHT_PX : GAP_MIN_HEIGHT_FINE_PX
   const floors = {
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
-    unsizedAnchorFloorPx: MIN_ANCHOR_HEIGHT,
-    gapFloorPx: unsizedAnchorCount > 0 ? 0 : GAP_MIN_HEIGHT_PX,
+    unsizedAnchorFloorPx,
+    gapFloorPx: unsizedAnchorCount > 0 ? 0 : gapMinHeightPx,
   }
 
   // At the wide breakpoint the day view is a fixed-height shell (see the
@@ -469,6 +484,22 @@ export function TimelineGrid({
   // of this grid already follows for an empty or unsized day.
   const showNowLine = isToday && nowMinutes >= window.start && nowMinutes <= window.end
   const nowTop = showNowLine ? vertical.topPx(nowMinutes) : null
+
+  // A day too full to fit its column at any density scrolls inside the
+  // column (see .day-pane > .timeline-grid-wrap in styles.css), and a
+  // column that opens on six o'clock in the morning is a column somebody
+  // has to scroll before the afternoon they are in is on screen. So once,
+  // when the grid first overflows, it is scrolled to put now a third of the
+  // way down - the way a calendar opens. Once: after that the scroll
+  // position is theirs, and a re-render must never pull it back.
+  const scrolledToNow = useRef(false)
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!isWide || nowTop === null || scrolledToNow.current || !wrap) return
+    if (wrap.scrollHeight <= wrap.clientHeight + 1) return
+    scrolledToNow.current = true
+    wrap.scrollTop = Math.max(0, nowTop - wrap.clientHeight / 3)
+  }, [isWide, nowTop, heightPx])
 
   function closeGap(gapStart: number) {
     pendingFocusGapStart.current = gapStart
@@ -573,7 +604,7 @@ export function TimelineGrid({
               const top = vertical.topPx(anchor.startMinutes)
               const bottom = anchor.sized ? vertical.topPx(anchor.endMinutes!) : undefined
               const heightPx = bottom !== undefined ? bottom - top : undefined
-              const minHeightPx = anchor.sized ? SIZED_MIN_HEIGHT_PX : MIN_ANCHOR_HEIGHT
+              const minHeightPx = anchor.sized ? SIZED_MIN_HEIGHT_PX : unsizedAnchorFloorPx
               // The cluster this anchor belongs to already reserves at
               // least minHeightPx of vertical room (computeVerticalLayout),
               // so this Math.max is only ever a safety net for one member
@@ -698,7 +729,7 @@ export function TimelineGrid({
                   onClick={() => setOpenGapStart(isOpen ? null : gap.startMinutes)}
                   style={{
                     top: `${top}px`,
-                    height: `${Math.max(bottom - top, GAP_MIN_HEIGHT_PX)}px`,
+                    height: `${Math.max(bottom - top, gapMinHeightPx)}px`,
                     left: `${GUTTER_PX}px`,
                     width: `calc(100% - ${GUTTER_PX}px)`,
                   }}

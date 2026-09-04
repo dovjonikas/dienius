@@ -37,6 +37,44 @@ function isWideNow(): boolean {
  * choice - see docs/LAYOUT-WIDE.md section 5 on `timelineExpanded` staying
  * untouched by viewport width.
  */
+/**
+ * Whether the primary pointer is a finger, live. The 44px floors on the
+ * timeline's gaps and unsized anchors are touch targets - a thumb has to
+ * land on them - and on a mouse they are only height: a nine-block day
+ * with eight short gaps between the blocks spent 350px on targets nobody
+ * would ever miss, and that was the difference between fitting a 900px
+ * window and scrolling. Unmeasurable is treated as coarse, because the
+ * wrong answer on a phone is a target too small to hit and the wrong
+ * answer on a desktop is a little air.
+ */
+export function usePointerCoarse(): boolean {
+  const [coarse, setCoarse] = useState(isCoarseNow)
+
+  useEffect(() => {
+    try {
+      const query = window.matchMedia(COARSE_QUERY)
+      const update = () => setCoarse(query.matches)
+      update()
+      query.addEventListener('change', update)
+      return () => query.removeEventListener('change', update)
+    } catch {
+      return undefined
+    }
+  }, [])
+
+  return coarse
+}
+
+const COARSE_QUERY = '(pointer: coarse)'
+
+function isCoarseNow(): boolean {
+  try {
+    return window.matchMedia(COARSE_QUERY).matches
+  } catch {
+    return true
+  }
+}
+
 export function useIsWide(): boolean {
   const [wide, setWide] = useState(isWideNow)
 

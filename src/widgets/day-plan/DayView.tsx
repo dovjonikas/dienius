@@ -256,14 +256,19 @@ export function DayView({ date, onDateChange }: DayViewProps) {
           templates for three. They share a row instead, and the grid has one
           variant: with notices, and without.
 
-          The order is the order they are read in. Why comes before what
-          happened, which comes before what yesterday left; a morning that
-          shows the first and an evening that shows the second are the
-          ordinary cases, and all three at once is a Monday evening. */}
+          Only the first of them is shown at a time - the stylesheet hides
+          every child after the first, so the order here is a queue, not a
+          reading order. A visitor arriving on the demo met the demo line,
+          the yesterday banner and the North card stacked above a day they
+          had not seen yet, and the day itself was below the fold. What is
+          ending comes first, because it is about this minute; what
+          yesterday left comes next, because it is the one with a button that
+          changes the plan; the goal comes last, and appears the moment the
+          one above it is dismissed. CONVENTIONS.md section 4 holds the rule. */}
       <div className="day-notices">
-        {isToday && <NorthCard />}
         <EveningClose date={date} />
         <YesterdayBanner date={date} />
+        {isToday && <NorthCard />}
       </div>
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line and the
