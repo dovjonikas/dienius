@@ -380,6 +380,32 @@ What checking it means, concretely:
   a starter template; change the template and the sentence is a lie.
 - **A new feature worth teaching gets a step, and the budget is still 120
   words.** Adding a tenth step means earning it by cutting somewhere else.
+  The lines a target carries ("Click Details", "Now press Enter") and the
+  captions are bounded separately, per line, in `tour.test.ts`.
+
+### The three standing rules about the thing being pointed at
+
+Each one is the fix for something the owner watched go wrong on a walk
+through, and the engine applies them to every step without being asked:
+
+1. **It is visible.** The lit target carries `is-tour-target`, which
+   outranks every hover reveal in the stylesheet. The dots on a task card
+   are opacity zero on a mouse until the pointer crosses the card; the ring
+   was drawn around a button nobody could see.
+2. **It is not behind a sheet.** A modal the previous step led into
+   (`data-tour-modal`) that does not hold this step's control gets its close
+   button lit and the card says "Close this panel first." Every sheet and
+   panel a step can open carries the attribute and marks its close button
+   with `data-tour-modal-close`.
+3. **It says what to do now.** A target carries its own line, and a box
+   carries a second one for once something is typed into it. "Type Walk in
+   the box" becomes "Now press Enter." on the first keystroke - somebody had
+   typed it and waited, because nothing told them the field wanted Enter.
+
+And a fourth, about what happens after: **every step names its outcome.**
+One line, what happened and why it matters, held long enough to read, with
+Next beside it. A step that ended on a tick and a jump read, to the person
+watching the control rather than the card, as the tour skipping by itself.
 
 ### The three guards, and why they exist
 
@@ -395,24 +421,31 @@ replacing it with something that does the same job:
    re-measure is coalesced into one measure per animation frame, because
    measuring writes: the first version of that watcher heard its own output
    and locked the renderer solid inside a second.
-2. **A target that is nowhere in the document is given up on.** After a grace
-   period the card offers the way through, and after twelve seconds the step
-   moves on by itself with a line in the console. Present-but-unreachable is a
+2. **A target that is nowhere in the document is said so.** After a grace
+   period the card says the control is not on this screen - or why, when the
+   step knows: Focus only exists on the card running this minute - and
+   offers the way through. It never moves on by itself: that used to happen
+   after twelve seconds with a line in the console, and to the person it was
+   the tour skipping a step at random. Present-but-unreachable is a
    different failure and is covered by the next one.
 3. **Twenty seconds of nothing offers a way through** - do it for me, or skip
    this step. `lib/tourAssist.ts` does the real thing through the real store
    actions, never a fake tick, because the next step needs the state the
    previous one was supposed to leave behind.
 
-### Pacing, and the two steps that wait
+### Pacing, and the three steps that wait
 
-The tick is held for 1.2 seconds, not the 650ms it used to be: the thing
-being celebrated happens somewhere else on the page, and the eye has to
-travel there and back. Two steps - stamping a day, starting Focus - name what
-just landed on the screen and wait for Next instead of advancing at all.
-Those `outcome` lines sit outside the 120-word budget and are bounded
-separately, because a caption for something that has already happened is read
-with the eye free rather than standing between somebody and a control.
+Every real step ends on a tick and a caption, held for 3.2 seconds before
+the next step: a beat for the tick, which lands somewhere else on the page
+from where the eye was, and two seconds for a line of twelve words. Next is
+there throughout for anybody faster. Three steps wait for Next instead of
+moving on at all - stamping a day, starting Focus, writing a goal - because
+what appeared deserves a proper look; the goal step also moves the shell
+back to the day and points at the North line, so the person sees where the
+goal went rather than being told. The `outcome` lines sit outside the
+120-word budget and are bounded separately, because a caption for something
+that has already happened is read with the eye free rather than standing
+between somebody and a control.
 
 ### Three doors in
 
@@ -426,8 +459,18 @@ already looking for help. Settings still replays it in a sandbox.
 Walk it end to end **five times in a row with no code changes between the
 runs**: desktop dark, desktop light, 390x844, 768x1024, and once slowly and
 awkwardly - stray taps beside the target, Escape, a resize in the middle of a
-step. Any break resets the count. Escape always leaves the tour, after
-whatever is sitting over it.
+step. Then once more naively, doing only and exactly what each card says.
+Any break resets the count. Escape always leaves the tour, after whatever
+is sitting over it - which means every sheet stops the key it handles, or
+one press closes the sheet and the tour together.
+
+The walks are driven from the browser pane, and two things about the pane
+will mislead you if you do not know them. A hidden pane throttles timers to
+once a second and runs no animation frames, so a script that chains several
+`await sleep()` calls can take minutes and every later call queues behind
+it - it looks exactly like a locked renderer. Put the waits between tool
+calls, not inside the page. And `computer` key presses do not always reach
+the page; dispatch the key on the element when the press has to land.
 
 ---
 

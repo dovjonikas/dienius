@@ -87,7 +87,7 @@ reading them.
 | Sync | Optional, off by default, through a server you host. Per-entity last-write-wins with tombstones |
 | External calendars | ICS subscriptions or file import, as a read-only layer. Free time counts them |
 | Demo mode | `?demo=1` fills a sample fortnight under its own storage key |
-| The tour | Nine steps, each ending on a real action rather than a Next button. Reached from the first-run offer, the `?` card and the palette. A step that cannot end offers to do itself. Data in `lib/tour.ts`, engine in `views/tour/Tour.tsx` |
+| The tour | Nine steps, each ending on a real action rather than a Next button. Reached from the first-run offer, the `?` card and the palette. Whatever a step points at is forced visible and never behind a sheet; the card's line follows the person ("Now press Enter"); every step ends on a caption saying what happened. A step that cannot end says so and offers to do itself - it never skips on its own. Data in `lib/tour.ts`, engine in `views/tour/Tour.tsx` |
 | Themes | Dark, Light, Midnight; accent colour, density, text size. Every ink measured against WCAG AA by a test |
 | PWA | Installs, works offline, versioned cache, background update with a quiet Reload notice |
 
@@ -223,10 +223,18 @@ the one that gets checked first.
 - [ ] **Evening close** - the card at its time and the card on a finished day.
       It must span the content columns rather than land in the rail, and it
       must never say anything about what was not done.
-- [ ] **The tour** - both platforms, all nine steps. The spotlight has to
-      follow into a bottom sheet, which is where it first failed. This is not
-      optional polish: CONVENTIONS.md section 13 makes a stale tour a P0 bug,
-      because it is the first thing a new person sees.
+- [ ] **The tour** - both platforms, all nine steps, then once more doing
+      only what each card says. The spotlight has to follow into a bottom
+      sheet, which is where it first failed; the dots on the Walk card have
+      to be visible while pointed at; the caption after the goal has to land
+      on the North line under the day's title. This is not optional polish:
+      CONVENTIONS.md section 13 makes a stale tour a P0 bug, because it is
+      the first thing a new person sees.
+- [ ] **The quick-add row against the cards under it** - the duration
+      control's right edge and the cards' right edge are one line, and the
+      placeholder is whole. Both broke once without anybody measuring.
+- [ ] **Library counts** - every row's count ends on the same x, the active
+      card's included.
 - [ ] **The wide layout with an empty day**, in each of the three focus
       states. Both rules that collapse the grid have to agree about the
       column names - see the grid-area note in section 6.
@@ -301,3 +309,21 @@ Collected from waves where they actually did.
   timer.** The tour showed a tick for ever because the effect that started the
   advance timer re-ran the moment it set `celebrating`, and its cleanup killed
   the timer it had just made. Two effects.
+- **For one render after the tour advances, `celebrating` belongs to the
+  old step and `step` is already the new one.** Any effect keyed on both
+  has to check `before.step === index` first, or the new step's caption
+  fires on the old step's tick - which is how the goal step's relocation
+  sent the shell to the day view on top of the index effect's `settings`.
+- **A layout hook must not measure anything the page's scroll position
+  moves.** `useAvailableGridHeight` read the grid's viewport-relative top;
+  scrolled down, the grid claimed a screen it did not have, grew, pushed
+  the document taller, moved under the scroll settling back, and re-measured
+  - a feedback loop the tour exposed by scrolling Settings and switching
+  tabs. It reads the document-relative top now.
+- **The browser pane throttles a hidden tab.** Timers fire once a second
+  and animation frames not at all, and after a few minutes chained timers
+  fire once a *minute*. A page script with several `await sleep()` calls
+  then takes minutes, every later tool call queues behind it, and it looks
+  exactly like a locked renderer - three "hangs" in one session were this.
+  Put waits between tool calls, never inside the page, and dispatch keys on
+  elements rather than trusting `computer` key presses to land.

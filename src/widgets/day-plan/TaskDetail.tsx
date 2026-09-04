@@ -148,6 +148,10 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
       <div
         className="task-detail"
         role="dialog"
+        /* A modal the tour may have led somebody into. If the next step's
+           control is not inside it, the engine points at the close button
+           and says so - see views/tour/Tour.tsx. */
+        data-tour-modal=""
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
@@ -175,7 +179,13 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
             onBlur={commitTitle}
             onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           />
-          <button type="button" className="task-detail-close" aria-label="Close details" onClick={onClose}>
+          <button
+            type="button"
+            className="task-detail-close"
+            aria-label="Close details"
+            data-tour-modal-close=""
+            onClick={onClose}
+          >
             &times;
           </button>
         </div>

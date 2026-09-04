@@ -54,6 +54,35 @@ test('measures window.innerHeight minus the element\'s own top minus the fixed b
   expect(latest).toBe(1000 - 24)
 })
 
+/**
+ * Found by the tour, which scrolled Settings to a button and then switched
+ * to the day view: the grid measured a viewport-relative top of -355,
+ * claimed a screen's worth of room it did not have, grew, pushed the
+ * document taller, moved under the scroll that was settling back, and
+ * re-measured - a feedback loop through the page's scroll position that
+ * locked the renderer solid. The room is a fact about where the grid sits
+ * in the document, and the same number whether or not the page happens to
+ * be scrolled when it is asked.
+ */
+test('the room does not change with the page\'s scroll position', () => {
+  setInnerHeight(1000)
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 300 })
+  let latest: number | null = null
+  function Wrapped() {
+    const ref = useRef<HTMLDivElement>(null)
+    const height = useAvailableGridHeight(ref, true)
+    latest = height
+    return <div ref={ref} data-testid="measured" />
+  }
+  const { getByTestId, rerender } = render(<Wrapped />)
+  // Scrolled 300px down, the grid's top edge sits 100px above the viewport:
+  // its document top is 200px, and that is what the room is measured from.
+  setTop(getByTestId('measured'), -100)
+  rerender(<Wrapped />)
+  expect(latest).toBe(1000 - 200 - 24)
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
+})
+
 test('re-measures on a window resize event while enabled', () => {
   setInnerHeight(1000)
   let latest: number | null = null

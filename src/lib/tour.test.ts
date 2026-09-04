@@ -66,10 +66,48 @@ for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS
 
   test(`nothing in the ${name} tour uses a dash that is not a hyphen`, () => {
     for (const step of steps) {
-      expect(step.title + step.text).not.toMatch(/[–—]/)
+      const lines = [step.title, step.text, step.absent ?? '', step.outcome?.text ?? '', ...step.targets.flatMap(t => [t.text ?? '', t.typed ?? ''])]
+      expect(lines.join(' '), step.id).not.toMatch(/[–—]/)
+    }
+  })
+
+  /**
+   * The lines a target carries are read at the moment the person reaches
+   * that target - after the menu opened, once the box has something in it -
+   * so they are instructions and are held to the same fifteen words as the
+   * step's own line. The typed variant is the shortest thing on the card by
+   * design: "Now press Enter." is the whole of what somebody with a word in
+   * the box needs to hear.
+   */
+  test(`every ${name} target line is fifteen words or fewer, and a typed line is five`, () => {
+    for (const step of steps) {
+      for (const target of step.targets) {
+        if (target.text) expect(wordCount(target.text), `${step.id} ${target.selector}`).toBeLessThanOrEqual(15)
+        if (target.typed) expect(wordCount(target.typed), `${step.id} ${target.selector}`).toBeLessThanOrEqual(5)
+      }
     }
   })
 }
+
+/**
+ * Every line a phone reads, not only the instruction: the caption after the
+ * stamp said "from one click" on a phone through one whole walk before
+ * anybody noticed, because only `text` was being rewritten.
+ */
+/** Below the wide breakpoint the timeline is behind a button, not beside the list. */
+test('the phone caption after stamping does not claim a timeline beside the list', () => {
+  const stamp = MOBILE_STEPS.find(s => s.id === 'stamp')!
+  expect(stamp.outcome!.text).not.toMatch(/beside/)
+  expect(stamp.outcome!.text).toMatch(/Show timeline/)
+  expect(DESKTOP_STEPS.find(s => s.id === 'stamp')!.outcome!.text).toMatch(/beside/)
+})
+
+test('nothing the phone tour says talks about clicking', () => {
+  for (const step of MOBILE_STEPS) {
+    const lines = [step.text, step.absent ?? '', step.outcome?.text ?? '', ...step.targets.flatMap(t => [t.text ?? '', t.typed ?? ''])]
+    expect(lines.join(' '), step.id).not.toMatch(/click/i)
+  }
+})
 
 test('the two ends never resolve by themselves', () => {
   const data = defaultData()
@@ -100,10 +138,33 @@ test('marking a task key, ticking one off, starting focus, adding a list, adding
   expect(TOUR_EVENTS['task-done'](ctx(before, withTasks([task('a', { done: true })])))).toBe(true)
   expect(TOUR_EVENTS['focus-started'](ctx(before, before, true))).toBe(true)
   expect(TOUR_EVENTS['focus-started'](ctx(before, before, false))).toBe(false)
+  // A list on its own does not end the library step - the tick used to land
+  // on an empty heading. Something has to be in it.
   const list = { ...before, library: [{ id: 'l', name: 'Books', unit: 'chapter', items: [] }] }
-  expect(TOUR_EVENTS['list-added'](ctx(before, list))).toBe(true)
+  expect(TOUR_EVENTS['item-added'](ctx(before, list))).toBe(false)
+  const book = { ...before, library: [{ id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'd', title: 'Dune', total: 20 }] }] }
+  expect(TOUR_EVENTS['item-added'](ctx(before, book))).toBe(true)
   const goal = { ...before, goals: [{ id: 'g', title: 'Be strong', createdAt: TODAY }] }
   expect(TOUR_EVENTS['goal-added'](ctx(before, goal))).toBe(true)
+})
+
+/**
+ * Found on the awkward walk: a stray tick on the card above Walk ended the
+ * tick-off step, and the caption said Walk had moved into Done while Walk
+ * sat there unticked. The two steps that name Walk end on Walk.
+ */
+test('ticking or key-marking some other task does not end a step that names Walk', () => {
+  const before = withTasks([task('other'), task('walk', { tourCreated: true })])
+  const otherDone = withTasks([task('other', { done: true }), task('walk', { tourCreated: true })])
+  const walkDone = withTasks([task('other'), task('walk', { tourCreated: true, done: true })])
+  expect(TOUR_EVENTS['task-done'](ctx(before, otherDone))).toBe(false)
+  expect(TOUR_EVENTS['task-done'](ctx(before, walkDone))).toBe(true)
+  const otherKey = withTasks([task('other', { highlight: true }), task('walk', { tourCreated: true })])
+  const walkKey = withTasks([task('other'), task('walk', { tourCreated: true, highlight: true })])
+  expect(TOUR_EVENTS['key-marked'](ctx(before, otherKey))).toBe(false)
+  expect(TOUR_EVENTS['key-marked'](ctx(before, walkKey))).toBe(true)
+  // Already done when the step began: not the step's doing.
+  expect(TOUR_EVENTS['task-done'](ctx(walkDone, walkDone))).toBe(false)
 })
 
 test('the clock is written into the add step so the task it asks for is the running one', () => {
@@ -209,8 +270,9 @@ test('every data-tour name a step points at exists in the source', () => {
     .join('\n')
   const asked = new Set<string>()
   for (const step of [...DESKTOP_STEPS, ...MOBILE_STEPS]) {
-    for (const target of step.targets) {
-      for (const match of target.matchAll(/data-tour="([^"]+)"/g)) asked.add(match[1])
+    const selectors = [...step.targets.map(t => t.selector), step.outcome?.target ?? '']
+    for (const selector of selectors) {
+      for (const match of selector.matchAll(/data-tour="([^"]+)"/g)) asked.add(match[1])
     }
   }
   const missing = [...asked].filter(name => !source.includes(`data-tour="${name}"`))
@@ -220,31 +282,71 @@ test('every data-tour name a step points at exists in the source', () => {
 /**
  * The library step is the one whose control disappears with use: the starter
  * offers are only rendered while the library is empty. It carries a fallback,
- * and the engine takes the last target present on the page.
+ * and the engine takes the last target present on the page - so the field of
+ * an existing list, which is where the step actually ends, comes last.
  */
-test('the library step has a fallback for a library that already has a list', () => {
+test('the library step falls back to New list, and ends on the field of whatever list is there', () => {
   const step = DESKTOP_STEPS.find(s => s.id === 'library')!
-  expect(step.targets).toContain('[data-tour="library-new"]')
-  expect(step.targets.indexOf('[data-tour="library-new"]')).toBeLessThan(
-    step.targets.indexOf('[data-tour="library-starter"]'),
-  )
+  const selectors = step.targets.map(t => t.selector)
+  expect(selectors.indexOf('[data-tour="library-new"]')).toBeLessThan(selectors.indexOf('[data-tour="library-starter"]'))
+  expect(selectors.at(-1)).toBe('[data-tour="library-add"]')
+  expect(step.targets.at(-1)?.typed).toBe('Now press Enter.')
 })
 
 /**
- * The outcome lines - what the card says after the two steps where something
- * visibly lands on the screen. They sit outside the 120-word instructional
- * budget on purpose: a caption for something that has already happened is
- * read with the eye free, not while somebody is hunting for a control. That
- * exemption is only honest while it stays small, which is what this bounds.
+ * The two-state box. The owner watched somebody type Walk and wait, because
+ * the card was still saying "type Walk" and nothing had told them the field
+ * wanted Enter. Every box the tour asks somebody to type into carries the
+ * second line.
+ */
+test('every box the tour points at says what to do once something is typed', () => {
+  for (const step of DESKTOP_STEPS) {
+    for (const target of step.targets) {
+      if (target.selector.includes('quick-add') || target.selector.includes('library-add')) {
+        expect(target.typed, `${step.id} ${target.selector}`).toBe('Now press Enter.')
+      }
+    }
+  }
+})
+
+/**
+ * Focus is taught on whichever card is running, and between two blocks there
+ * is none. The step says why the button is missing rather than sitting at an
+ * empty spotlight - and rather than skipping itself, which is what the first
+ * version did after twelve seconds.
+ */
+test('the focus step points at the running card and explains its own absence', () => {
+  const step = DESKTOP_STEPS.find(s => s.id === 'focus')!
+  expect(step.targets.map(t => t.selector)).toEqual(['[data-tour="focus"]'])
+  expect(step.absent).toMatch(/running/)
+})
+
+/** The goal is written in Settings and lives under the day's title; the caption goes there to show it. */
+test('the north step relocates its caption to the day, onto the North line', () => {
+  const step = DESKTOP_STEPS.find(s => s.id === 'north')!
+  expect(step.outcome).toMatchObject({ view: 'day', target: '[data-tour="north-line"]', wait: true })
+})
+
+/**
+ * The outcome lines - what the card says after each step, once the thing has
+ * happened. They sit outside the 120-word instructional budget on purpose: a
+ * caption for something that has already happened is read with the eye
+ * free, not while somebody is hunting for a control. That exemption is only
+ * honest while each one stays a line, which is what this bounds.
+ *
+ * Every real step has one. Two used to, and the other five ended on a tick
+ * and a jump that read, to the person watching the control rather than the
+ * card, as the tour skipping by itself. Three wait for Next - the day
+ * filling, the focus bar appearing, the goal landing under the title - and
+ * the rest hold the line for a beat and go on.
  */
 for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS]] as const) {
-  test(`the ${name} tour names an outcome on at most two steps, in twelve words or fewer`, () => {
-    const withOutcome = steps.filter(s => s.outcome)
-    expect(withOutcome.map(s => s.id)).toEqual(['stamp', 'focus'])
-    for (const step of withOutcome) {
-      expect(wordCount(step.outcome!), step.id).toBeLessThanOrEqual(12)
-      expect(step.outcome!).not.toMatch(/[–—]/)
+  test(`every real ${name} step names its outcome in fifteen words or fewer`, () => {
+    for (const step of steps.slice(1, -1)) {
+      expect(step.outcome, step.id).toBeDefined()
+      expect(wordCount(step.outcome!.text), step.id).toBeLessThanOrEqual(15)
     }
+    expect(steps.filter(s => s.outcome?.wait).map(s => s.id)).toEqual(['stamp', 'focus', 'north'])
   })
 
   test(`every ${name} step that waits for something real names a concrete thing to press`, () => {

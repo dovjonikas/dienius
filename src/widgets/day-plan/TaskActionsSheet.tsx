@@ -86,6 +86,14 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {
       e.preventDefault()
+      // Stopped here, the way the detail panel already stops it: the
+      // shell's own Escape chain listens on the document and closes the
+      // loudest thing it knows about, and while a tour is running that is
+      // the tour. Without this one line, Escape on the actions menu closed
+      // the menu and ended the tour in the same press - found on the
+      // deliberately awkward walk-through, where Escape is pressed with
+      // something open on purpose.
+      e.stopPropagation()
       onClose()
       return
     }
@@ -135,6 +143,7 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
       <div
         className="task-actions-sheet"
         role="dialog"
+        data-tour-modal=""
         aria-modal="true"
         aria-label={task.title}
         ref={dialogRef}
@@ -143,7 +152,7 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
       >
         <div className="task-actions-header">
           <h3 className="task-actions-title">{task.title}</h3>
-          <button type="button" className="task-actions-close" aria-label="Close" onClick={onClose}>
+          <button type="button" className="task-actions-close" aria-label="Close" data-tour-modal-close="" onClick={onClose}>
             &times;
           </button>
         </div>

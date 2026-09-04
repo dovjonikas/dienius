@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { App } from './App'
 import { actions, getData } from './lib/store'
 import { defaultData } from './lib/storage'
+import { todayKey } from './lib/dates'
 import { PRESETS } from './lib/themes'
  import { getTourState, resetTourForTests, startTour } from './lib/tourState'
 
@@ -172,6 +173,27 @@ test('the palette command loads the reading plan and opens the library on it', a
   const books = getData().library.find(l => l.name === 'Books')
   expect(books?.items).toHaveLength(9)
   expect(screen.getByRole('heading', { name: 'Library' })).toBeInTheDocument()
+})
+
+/**
+ * Found on the deliberately awkward walk-through. The actions menu closed
+ * itself on Escape and let the key carry on to the shell, which closed the
+ * loudest thing it knew about - the tour. One press, two things gone, and
+ * the person who had just been told to click Details was back on an
+ * ordinary day with no idea why.
+ */
+test('Escape with the actions menu open closes the menu and leaves the tour running', async () => {
+  const user = userEvent.setup()
+  actions.addTask(todayKey(), 'Walk', '12:00')
+  render(<App />)
+  act(() => startTour('desktop', 3))
+  await user.click(screen.getByRole('button', { name: 'More actions for Walk' }))
+  expect(screen.getByRole('dialog', { name: /Walk/ })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: /Walk/ })).toBeNull()
+  expect(getTourState().active).toBe(true)
+  await user.keyboard('{Escape}')
+  expect(getTourState().active).toBe(false)
 })
 
 /**

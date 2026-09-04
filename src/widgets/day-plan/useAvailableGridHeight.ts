@@ -18,16 +18,27 @@ const WIDE_BOTTOM_MARGIN_PX = 24
  * `enabled` is false (the phone never measures anything - see the report
  * this exists for) and, briefly, before the very first layout pass has run.
  *
- * `ref`'s own top edge is a safe, non-circular thing to measure: everything
- * that can move it - the capacity line's height, whether the if-then rule
- * renders - lives entirely above the grid in `DayView.tsx`'s own markup,
- * never below it and never inside the grid itself, so nothing about the
- * grid's own eventual height ever feeds back into this measurement. A
- * `useLayoutEffect` with no dependency array re-measures after every render
- * for exactly that reason - a re-render already means something above the
- * grid may have changed - and bails out of scheduling a further one the
- * moment the rounded result stops changing, so this converges rather than
- * looping.
+ * `ref`'s own top edge, measured from the top of the *document* rather than
+ * of the viewport. Everything that can move it - the capacity line's
+ * height, whether the if-then rule renders - lives entirely above the grid
+ * in `DayView.tsx`'s own markup, never below it and never inside the grid
+ * itself, so nothing about the grid's own eventual height feeds back into
+ * this measurement. A `useLayoutEffect` with no dependency array
+ * re-measures after every render for exactly that reason - a re-render
+ * already means something above the grid may have changed - and bails out
+ * of scheduling a further one the moment the rounded result stops
+ * changing, so this converges rather than looping.
+ *
+ * The viewport-relative top was not safe, and finding out cost a locked
+ * renderer. It changes with the page's scroll position, and the scroll
+ * position depends on the document's height, which depends on the grid's
+ * height, which depends on this number: with the page scrolled down when
+ * the day view mounted - the tour had just scrolled Settings to a button
+ * and then switched tabs - the grid measured a negative top, claimed the
+ * room it would have had a screen higher, grew, pushed the document
+ * taller, moved under the scroll that was settling back, re-measured,
+ * grew again. Fifty re-layouts of a full day later the tab was gone. The
+ * document-relative top has no path back from the grid's own height.
  *
  * `window.innerHeight` plus `getBoundingClientRect`, not a `ResizeObserver`:
  * every case that can change how much room is available - the window
@@ -51,7 +62,7 @@ export function useAvailableGridHeight(ref: RefObject<HTMLElement | null>, enabl
     const el = ref.current
     if (!el) return
     try {
-      const top = el.getBoundingClientRect().top
+      const top = el.getBoundingClientRect().top + window.scrollY
       const available = Math.max(0, Math.round(window.innerHeight - top - WIDE_BOTTOM_MARGIN_PX))
       setHeight(prev => (prev === available ? prev : available))
     } catch {

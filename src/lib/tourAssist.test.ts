@@ -81,10 +81,21 @@ describe('doing a step on somebody behalf', () => {
     expect(assistWith('task-done', TODAY)).toBe(false)
   })
 
-  it('starts a list and writes a goal', () => {
+  it('puts a book in a Books list and writes a goal', () => {
     let before = getData()
-    expect(assistWith('list-added', TODAY)).toBe(true)
-    expect(TOUR_EVENTS['list-added'](ctx(before))).toBe(true)
+    expect(assistWith('item-added', TODAY)).toBe(true)
+    expect(TOUR_EVENTS['item-added'](ctx(before))).toBe(true)
+    // The list the step would have had the person start, holding the book
+    // the card names, so the caption afterwards is true of the screen.
+    const books = getData().library.find(l => l.name === 'Books')
+    expect(books?.items.map(i => [i.title, i.total])).toEqual([['Dune', 20]])
+
+    // Run again on a device that already has the list: the book goes into
+    // it rather than into a second Books.
+    before = getData()
+    expect(assistWith('item-added', TODAY)).toBe(true)
+    expect(getData().library).toHaveLength(1)
+    expect(TOUR_EVENTS['item-added'](ctx(before))).toBe(true)
 
     before = getData()
     expect(assistWith('goal-added', TODAY)).toBe(true)

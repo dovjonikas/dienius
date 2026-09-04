@@ -392,6 +392,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
           <div className="library-add">
             <input
               value={draft}
+              data-tour="library-add"
               placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
               aria-label={`Add to ${list.name}`}
               onChange={e => setDraft(e.target.value)}

@@ -47,7 +47,7 @@ export function NorthLine({ date }: { date: string }) {
   const hasMore = !!goal.why || !!goal.identity
 
   return (
-    <div className={open ? 'north-line is-open' : 'north-line'}>
+    <div className={open ? 'north-line is-open' : 'north-line'} data-tour="north-line">
       <button
         type="button"
         className="north-line-title"

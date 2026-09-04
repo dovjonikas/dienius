@@ -255,13 +255,16 @@ export function TaskRow({
         <label className="task-check" {...(longPressEligible ? longPress : {})}>
           <input
             type="checkbox"
-            data-tour="task-check"
             checked={task.done}
             aria-label={task.title}
             aria-describedby={describedBy}
             onChange={() => onToggleDone(task.id, task.done)}
           />
-          <span className="check" aria-hidden="true" />
+          {/* The tour points at the drawn box, not the real input: the input
+              is a zero-width, invisible control, and a spotlight around it
+              was a spotlight around nothing. Clicking the box toggles it
+              through the label exactly as a finger would. */}
+          <span className="check" aria-hidden="true" data-tour="task-check" />
           {selectable ? (
             <button
               type="button"

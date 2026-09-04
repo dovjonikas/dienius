@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -47,19 +48,47 @@ function TourTargets() {
   return (
     <div>
       <button type="button" data-tour="starter-working-day" />
-      <input data-quick-add="" />
+      <input data-quick-add="" aria-label="Add a task" />
       <button type="button" data-tour="library-new" />
+      {data.library.length > 0 && <input data-tour="library-add" aria-label="Add to Books" />}
       <button type="button" data-tour="goal-add" />
+      {data.goals.length > 0 && <div data-tour="north-line">{data.goals[0].title}</div>}
       {ids.map(id => (
         <div key={id} data-task-id={id}>
           <button type="button" data-tour="task-menu" />
           <button type="button" data-tour="focus" />
-          <button type="button" data-tour="task-check" />
+          <span data-tour="task-check" />
+          <input type="checkbox" aria-label={`Task ${id}`} onChange={() => actions.toggleTask(TODAY, id)} />
         </div>
       ))}
     </div>
   )
 }
+
+/** A sheet the last step led into, of the kind the engine has to see past. */
+function OpenSheet({ children }: { children?: ReactNode }) {
+  return (
+    <div role="dialog" data-tour-modal="">
+      <button type="button" aria-label="Close details" data-tour-modal-close="" />
+      {children}
+    </div>
+  )
+}
+
+/**
+ * jsdom lays nothing out, so `offsetParent` - which the engine reads to tell
+ * a control that is in the document from one that is drawn - is null on
+ * everything. Every stand-in is treated as laid out; the one that must not
+ * be is hidden with the attribute the engine understands.
+ */
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
+    configurable: true,
+    get() {
+      return (this as HTMLElement).hidden ? null : document.body
+    },
+  })
+})
 
 function renderTour() {
   const onNavigate = vi.fn()
@@ -107,18 +136,41 @@ test('the engine switches the shell to the tab a step lives on', () => {
   expect(onNavigate).toHaveBeenLastCalledWith('library')
 })
 
-test('a step ends when its action happens in the store, shows a tick, then moves on', () => {
+/**
+ * Rewritten in the walk-through wave. The step used to move on 1.2 seconds
+ * after the tick with nothing said, which the owner watched read as the
+ * tour skipping by itself: the thing happened on the other side of the
+ * page and the card had already changed subject. Every step now names what
+ * happened, holds the line long enough to read it, and offers Next to
+ * anybody faster than that.
+ */
+test('a step ends when its action happens in the store, shows a tick and says what happened, then moves on', () => {
   renderTour()
   act(() => startTour('desktop', 2)) // "Add your own"
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Add your own')
 
   act(() => actions.addTask(TODAY, 'Lunch', '12:00'))
-  expect(screen.getByRole('dialog', { name: 'Tour' }).querySelector('.tour-tick.is-on')).not.toBeNull()
+  const card = screen.getByRole('dialog', { name: 'Tour' })
+  expect(card.querySelector('.tour-tick.is-on')).not.toBeNull()
+  expect(card).toHaveTextContent('Walk is on the day')
+  expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
   expect(getTourState().step).toBe(2)
 
+  // Still there after the old delay - a line takes longer to read than a tick takes to see.
   act(() => vi.advanceTimersByTime(1300))
+  expect(getTourState().step).toBe(2)
+  act(() => vi.advanceTimersByTime(2200))
   expect(getTourState().step).toBe(3)
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Make it key')
+})
+
+test('Next during a caption moves on at once', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  renderTour()
+  act(() => startTour('desktop', 2))
+  act(() => actions.addTask(TODAY, 'Lunch', '12:00'))
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  expect(getTourState().step).toBe(3)
 })
 
 // A task added before the step began must not end it - the snapshot the
@@ -128,7 +180,7 @@ test('what was there before a step began does not count toward it', () => {
   actions.addTask(TODAY, 'Earlier')
   renderTour()
   act(() => startTour('desktop', 2))
-  act(() => vi.advanceTimersByTime(1300))
+  act(() => vi.advanceTimersByTime(3500))
   expect(getTourState().step).toBe(2)
 })
 
@@ -187,6 +239,9 @@ test('Skip is on every step but the last, and ends the tour keeping what was mad
   renderTour()
   act(() => startTour('desktop', 2))
   act(() => actions.addTask(TODAY, 'Lunch', '12:00'))
+  // While the caption is up the one button is Next; Skip is back on the
+  // step after.
+  await user.click(screen.getByRole('button', { name: 'Next' }))
   await user.click(screen.getByRole('button', { name: 'Skip' }))
   expect(getTourState().active).toBe(false)
   expect(getData().days[TODAY].tasks).toHaveLength(1)
@@ -252,7 +307,9 @@ test('the step that asks for a task says the time is already picked', () => {
   vi.setSystemTime(new Date(2026, 8, 3, 9, 5))
   renderTour()
   act(() => startTour('desktop', 2))
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type Walk in the box, then Enter')
+  const card = screen.getByRole('dialog', { name: 'Tour' })
+  expect(card).toHaveTextContent('Type Walk in the box')
+  expect(card).toHaveTextContent('The time is already picked')
 })
 
 // --- the three guards against a step that never ends -------------------------
@@ -264,23 +321,35 @@ test('the step that asks for a task says the time is already picked', () => {
 // each leaves a person pressing at a spotlight that never clears. Nobody works
 // out that the tour is broken. They close the app.
 
-test('a step whose target never appears offers the way through, then moves on by itself', () => {
-  const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+/**
+ * Rewritten in the walk-through wave. The step used to move on by itself
+ * twelve seconds after admitting its target was missing, with a line in
+ * the console - and to the person it was the tour skipping a step at
+ * random, because nobody reads the console. It says so on the card now,
+ * offers the way through, and stays until somebody takes it.
+ */
+test('a step whose target never appears says so, offers the way through, and never moves on by itself', () => {
   renderTourWithNoTargets()
   act(() => startTour('desktop', 3))
   expect(getTourState().step).toBe(3)
 
-  // The offer comes long before the giving up. Found at eleven at night: the
-  // Focus step points at a button that only exists on the running card, and
-  // past bedtime there is no running card, so skipping straight past meant
-  // never seeing Focus and never being told why.
   act(() => vi.advanceTimersByTime(3000))
   expect(getTourState().step).toBe(3)
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('not on this screen')
   expect(screen.getByRole('button', { name: 'Do it for me' })).toBeInTheDocument()
 
-  act(() => vi.advanceTimersByTime(10_000))
-  expect(getTourState().step).toBe(4)
-  expect(info).toHaveBeenCalledWith(expect.stringContaining('no target on this screen'))
+  act(() => vi.advanceTimersByTime(30_000))
+  expect(getTourState().step).toBe(3)
+})
+
+// Found at eleven at night: the Focus step points at a button that only
+// exists on the running card, and past bedtime there is no running card.
+// The card explains that rather than showing the generic line.
+test('the focus step explains why there is no Focus button when nothing is running', () => {
+  renderTourWithNoTargets()
+  act(() => startTour('desktop', 4))
+  act(() => vi.advanceTimersByTime(3000))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Nothing is running this minute')
 })
 
 test('a step with nothing to point at is not skipped - the two ends have no target by design', () => {
@@ -313,8 +382,29 @@ test('Do it for me does the real thing, so the next step arrives in the state it
   const added = getData().days[TODAY].tasks.at(-1)
   expect(added).toMatchObject({ title: 'Walk', minutes: 30 })
   expect(added?.time).toBeTruthy()
-  act(() => vi.advanceTimersByTime(1300))
+  act(() => vi.advanceTimersByTime(3500))
   expect(getTourState().step).toBe(3)
+})
+
+/**
+ * Ticking off is the one step where the real control is worth going through:
+ * the checkbox is what plays the row's finishing animation and folds it into
+ * Done, and the caption says that is what happened. So "do it for me" clicks
+ * the box when it is on the page, and only falls back to the store action
+ * when it is not.
+ */
+test('Do it for me on the tick-off step clicks the real checkbox', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  renderTour()
+  act(() => startTour('desktop', 2))
+  act(() => actions.addTask(TODAY, 'Walk', '12:00'))
+  const id = getData().days[TODAY].tasks[0].id
+  act(() => startTour('desktop', 5))
+  act(() => vi.advanceTimersByTime(20_500))
+  await user.click(screen.getByRole('button', { name: 'Do it for me' }))
+  expect(screen.getByRole('checkbox', { name: `Task ${id}` })).toBeChecked()
+  expect(getData().days[TODAY].tasks[0].done).toBe(true)
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Walk moved into Done')
 })
 
 test('Skip this step moves on without doing anything to the plan', async () => {
@@ -352,6 +442,204 @@ test('stamping names what landed on the screen and waits for Next', async () => 
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Your whole day, from one click')
   await user.click(screen.getByRole('button', { name: 'Next' }))
   expect(getTourState().step).toBe(2)
+})
+
+// --- the three standing rules about the target -------------------------------
+//
+// Each one is the fix for something the owner watched go wrong on a walk
+// through: a ring around a button nobody could see, a card saying "type
+// Walk" to somebody who had typed it and was waiting, and an instruction to
+// click a checkbox that a detail panel was covering.
+
+test('the thing being pointed at carries the class that makes it visible, and loses it when the step moves on', () => {
+  renderTour()
+  act(() => startTour('desktop', 1))
+  act(() => vi.advanceTimersByTime(250))
+  const starter = document.querySelector('[data-tour="starter-working-day"]')!
+  expect(starter.classList.contains('is-tour-target')).toBe(true)
+
+  act(() => startTour('desktop', 2))
+  act(() => vi.advanceTimersByTime(250))
+  expect(starter.classList.contains('is-tour-target')).toBe(false)
+  expect(document.querySelector('[data-quick-add]')!.classList.contains('is-tour-target')).toBe(true)
+})
+
+test('a box changes its line to "press Enter" the moment something is typed in it', async () => {
+  // The keystroke is heard through an input listener that asks for a
+  // measure on the next frame. jsdom's frames run on real time, which the
+  // fake clock does not advance, so a frame here is a zero-length fake
+  // timer - the point is that the line changes on the keystroke and not on
+  // the next poll. Not synchronous: the coalescing guard keeps the handle
+  // it is given, and a callback that ran before the handle was stored
+  // would leave the guard shut for good.
+  vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => {
+    setTimeout(() => fn(0), 0)
+    return 1
+  })
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  renderTour()
+  act(() => startTour('desktop', 2))
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type Walk in the box')
+
+  await user.type(screen.getByRole('textbox', { name: 'Add a task' }), 'W')
+  act(() => vi.advanceTimersByTime(50))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Now press Enter.')
+
+  await user.clear(screen.getByRole('textbox', { name: 'Add a task' }))
+  act(() => vi.advanceTimersByTime(50))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type Walk in the box')
+  vi.unstubAllGlobals()
+})
+
+test('a later target brings its own line with it', () => {
+  renderTour()
+  act(() => startTour('desktop', 2))
+  act(() => actions.addTask(TODAY, 'Walk', '12:00'))
+  act(() => startTour('desktop', 3)) // "Make it key": the dots, then Details, then Key
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Click the dots on the Walk card')
+
+  // The menu opens: its Details row is now the last target present, and the
+  // line follows the person into it.
+  const menu = document.createElement('div')
+  menu.innerHTML = '<button type="button" data-tour="task-details">Details</button>'
+  act(() => {
+    document.body.appendChild(menu)
+    vi.advanceTimersByTime(250)
+  })
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Click Details.')
+  expect(menu.firstElementChild!.classList.contains('is-tour-target')).toBe(true)
+  menu.remove()
+})
+
+test('a sheet left open over the step gets its close button pointed at, and the card says so', () => {
+  const onNavigate = vi.fn()
+  const { rerender } = render(
+    <>
+      <TourTargets />
+      <OpenSheet />
+      <Tour onNavigate={onNavigate} />
+    </>,
+  )
+  act(() => startTour('desktop', 2))
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Close this panel first.')
+  expect(screen.getByRole('button', { name: 'Close details' }).classList.contains('is-tour-target')).toBe(true)
+
+  // A sheet that holds the step's own control is not in the way - the key
+  // step walks into one on purpose.
+  act(() => actions.addTask(TODAY, 'Walk', '12:00'))
+  rerender(
+    <>
+      <TourTargets />
+      <OpenSheet>
+        <button type="button" data-tour="key">Mark as key</button>
+      </OpenSheet>
+      <Tour onNavigate={onNavigate} />
+    </>,
+  )
+  act(() => startTour('desktop', 3))
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Click Mark as key.')
+  expect(screen.getByRole('button', { name: 'Mark as key' }).classList.contains('is-tour-target')).toBe(true)
+})
+
+/**
+ * The goal is written in Settings and lives under the day's title. The
+ * caption takes the person there and points at the line, because "it never
+ * shows progress" said over a form is a claim, and said over the line it
+ * turned into is a fact they can see.
+ */
+test('writing a goal ends the north step, and the caption moves to the day and points at the North line', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  const { onNavigate } = renderTour()
+  act(() => startTour('desktop', 7))
+  expect(onNavigate).toHaveBeenLastCalledWith('settings')
+  act(() => actions.addGoal({ title: 'Be someone who finishes things' }, TODAY))
+  act(() => vi.advanceTimersByTime(250))
+  expect(onNavigate).toHaveBeenLastCalledWith('day')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('It lives under the day now')
+  expect(document.querySelector('[data-tour="north-line"]')!.classList.contains('is-tour-target')).toBe(true)
+  act(() => vi.advanceTimersByTime(10_000))
+  expect(getTourState().step).toBe(7)
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  expect(getTourState().step).toBe(8)
+})
+
+/**
+ * Found on the first full walk after the captions were added: the moment
+ * the library step ended, the shell went to the day view instead of
+ * Settings, and the goal step sat on the wrong tab saying its control was
+ * not on the screen. For one render after a step advances the tick state
+ * is still the last step's and the step is already the next one, and the
+ * next one's relocation fired on the stale tick.
+ */
+test('a caption that relocates belongs to its own step, and never fires as the step before it ends', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  const { onNavigate } = renderTour()
+  act(() => startTour('desktop', 6))
+  let list!: ReturnType<typeof actions.addLibraryList>
+  act(() => {
+    list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  })
+  act(() => actions.addLibraryItem(list.id, 'Dune, 20 chapters'))
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  act(() => vi.advanceTimersByTime(250))
+  expect(getTourState().step).toBe(7)
+  expect(onNavigate).toHaveBeenLastCalledWith('settings')
+})
+
+/**
+ * Seen on the light-theme walk: the ticked row folded into Done, the
+ * checkbox it pointed at was no longer drawn, and the ring stayed where the
+ * row had been - around the card that moved up into the gap - for the whole
+ * caption. A target that goes away after the step has ended is not missing;
+ * the ring goes with it and the caption stands on its own.
+ */
+test('when the ticked row folds away the ring goes with it, and the caption stands alone', () => {
+  renderTour()
+  act(() => startTour('desktop', 2))
+  act(() => actions.addTask(TODAY, 'Walk', '12:00'))
+  const id = getData().days[TODAY].tasks[0].id
+  act(() => startTour('desktop', 5))
+  act(() => vi.advanceTimersByTime(250))
+  const box = document.querySelector(`[data-task-id="${id}"] [data-tour="task-check"]`) as HTMLElement
+  expect(box.classList.contains('is-tour-target')).toBe(true)
+  expect(document.querySelector('.tour-ring')).not.toBeNull()
+
+  act(() => actions.toggleTask(TODAY, id))
+  // Folded away: still in the document, no longer laid out.
+  box.hidden = true
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Walk moved into Done')
+  expect(document.querySelector('.tour-ring')).toBeNull()
+  expect(box.classList.contains('is-tour-target')).toBe(false)
+  expect(screen.queryByRole('button', { name: 'Do it for me' })).toBeNull()
+})
+
+/**
+ * The library step ends on a book, not on a list. Starting a list used to
+ * end it, before the person had seen the field - the tick landed on an
+ * empty heading and the card moved on.
+ */
+test('the library step waits for something in the list, and points at the field once the list exists', () => {
+  renderTour()
+  act(() => startTour('desktop', 6))
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Click New list')
+
+  let list!: ReturnType<typeof actions.addLibraryList>
+  act(() => {
+    list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+  })
+  act(() => vi.advanceTimersByTime(250))
+  expect(getTourState().step).toBe(6)
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type: Dune, 20 chapters')
+  expect(screen.getByRole('textbox', { name: 'Add to Books' }).classList.contains('is-tour-target')).toBe(true)
+
+  act(() => actions.addLibraryItem(list.id, 'Dune, 20 chapters'))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('A session can now land on any day')
 })
 
 /**

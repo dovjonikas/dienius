@@ -17,8 +17,9 @@ import type { AppData } from '../../lib/types'
  * It knows nothing about what it teaches. It takes the step array for this
  * platform from lib/tour.ts, points at whatever the step names, and asks the
  * step's event whether it has happened yet, on every store change. When it
- * has, the card shows a tick for a beat and moves on. There is no Next, except
- * on the two steps that earn one - see `outcome` in lib/tour.ts.
+ * has, the card shows a tick, names what happened, and moves on. There is a
+ * Next during every caption, and three steps wait for it - see `outcome` in
+ * lib/tour.ts.
  *
  * The spotlight is one SVG path with an even-odd hole, and it never catches
  * a pointer event: it dims, the ring points, and the whole app stays usable
@@ -27,17 +28,33 @@ import type { AppData } from '../../lib/types'
  * the overlay would teach a fake app, and a scrim that blocked clicks trapped
  * people inside the first sheet the tour led them into.
  *
- * Three things guard against the failure this design invites, which is a step
- * that never ends:
+ * Three standing rules about the thing being pointed at, each the fix for a
+ * walk the owner watched go wrong:
+ *
+ * 1. **It is visible.** The lit target carries `is-tour-target`, which
+ *    outranks every hover reveal in the stylesheet. The dots on a task card
+ *    are opacity zero on a mouse until the pointer is over the card, and the
+ *    first version drew a ring around a button nobody could see.
+ * 2. **It is not behind a sheet.** A modal the last step led into (`[data-tour-modal]`)
+ *    that does not hold this step's control gets its close button lit and a
+ *    line saying so, because "click the checkbox on Walk" under a detail
+ *    panel that covers the list is an instruction nobody can follow.
+ * 3. **It says what to do now.** A target can carry its own line, and a box
+ *    a second one for once something is typed in it - the words track where
+ *    the person actually is, not where the step began.
+ *
+ * And three guards against a step that never ends:
  *
  * 1. **The hole follows.** The target is scrolled into view before it is
  *    measured, and re-measured on a resize, on a scroll, on any DOM mutation,
- *    and on a slow poll besides. The poll is not redundant: a CSS transition
- *    moves an element without mutating anything, and a bottom sheet sliding up
- *    over a quarter of a second is exactly that.
- * 2. **A target that never appears is skipped**, after a grace period long
- *    enough to cover a tab switch and a sheet animation. A step pointing at
- *    nothing forever is worse than a step nobody saw.
+ *    on typing, and on a slow poll besides. The poll is not redundant: a CSS
+ *    transition moves an element without mutating anything, and a bottom
+ *    sheet sliding up over a quarter of a second is exactly that.
+ * 2. **A target that never appears is said so**, after a grace period long
+ *    enough to cover a tab switch and a sheet animation, with the way
+ *    through beside it. The step never moves on by itself: that used to
+ *    happen after twelve seconds, and to the person it was the tour
+ *    skipping at random.
  * 3. **A step that has not ended in twenty seconds offers a way through** -
  *    do it for me, or skip it. See lib/tourAssist.ts.
  */
@@ -48,14 +65,16 @@ export interface TourProps {
 }
 
 /**
- * How long the tick is shown before the next step.
+ * How long the tick and the caption are held before the next step, on the
+ * steps that do not wait for Next.
  *
- * Was 650ms, which measured as "long enough to be seen" on a screen somebody
- * was already staring at and was not: the thing being celebrated happens
- * somewhere else on the page, and the eye has to travel to it and back. At
- * 650ms people reported steps "jumping". A beat and a bit is the floor.
+ * The tick alone used to be held for 1.2 seconds, which was measured as
+ * "long enough to be seen" and was not: the thing being celebrated happens
+ * somewhere else on the page, the eye has to travel there and back, and then
+ * there is a line to read. A beat for the tick and two seconds for twelve
+ * words. Next is there throughout for anybody faster than that.
  */
-const ADVANCE_DELAY_MS = 1200
+const OUTCOME_HOLD_MS = 3200
 
 /** How often the target is re-measured. Scroll, resize and mutations also trigger it; this catches motion. */
 const POLL_MS = 200
@@ -67,20 +86,6 @@ const POLL_MS = 200
  */
 const MISSING_TARGET_GRACE_MS = 2500
 
-/**
- * How long after that the step gives up and moves on by itself.
- *
- * The gap between the two is the whole point, and it was found by running the
- * tour at eleven at night. The Focus step points at a button that only exists
- * on the *running* card; past bedtime the day is over, quick-add honestly
- * offers no time, the task it asks for is a float, and there is no running
- * card at all. Skipping straight past that means somebody who started the
- * tour in the evening never sees Focus and is never told why. So a missing
- * target first offers the way through - do it for me, which starts Focus on
- * the task the tour made - and only moves on if nobody takes it.
- */
-const MISSING_TARGET_SKIP_MS = 12_000
-
 /** How long a step waits for the person before offering to do it for them. */
 const STUCK_AFTER_MS = 20_000
 
@@ -88,6 +93,34 @@ const STUCK_AFTER_MS = 20_000
 const HOLE_PAD = 6
 
 const CARD_WIDTH = 300
+
+/** The class the lit target carries - see the first standing rule above, and .is-tour-target in styles.css. */
+export const LIT_CLASS = 'is-tour-target'
+
+/** What the card says while pointing at a sheet's close button - the second standing rule. */
+const BLOCKED_TEXT = 'Close this panel first.'
+
+/** What the card says when a step has no target on this screen and no better explanation of its own. */
+const ABSENT_TEXT = 'That control is not on this screen right now.'
+
+/**
+ * Where the person is within a step, as far as the card can tell from the
+ * page: which target is lit and whether it holds typed text, a modal in the
+ * way, or nothing to point at.
+ */
+type Phase = { kind: 'target'; index: number; typed: boolean } | { kind: 'blocked' } | { kind: 'absent' }
+
+function samePhase(a: Phase | null, b: Phase | null): boolean {
+  if (a === b) return true
+  if (!a || !b || a.kind !== b.kind) return false
+  return a.kind !== 'target' || b.kind !== 'target' || (a.index === b.index && a.typed === b.typed)
+}
+
+function holdsText(el: Element): boolean {
+  return (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && el.value.trim() !== ''
+}
+
+
 
 export function Tour({ onNavigate }: TourProps) {
   const tour = useTourState()
@@ -155,9 +188,16 @@ function TourOverlay({ onNavigate }: TourProps) {
   const [celebrating, setCelebrating] = useState(false)
   const [stuck, setStuck] = useState(false)
   const [hole, setHole] = useState<Rect | null>(null)
+  const [phase, setPhase] = useState<Phase | null>(null)
   const targetRef = useRef<Element | null>(null)
   const lastScrollRef = useRef(0)
   const missingSinceRef = useRef<number | null>(null)
+  // Read by the measurer, which is not re-created when the tick lands: a
+  // target that goes away *after* the step has ended is not a missing
+  // target, it is the ticked row folding into Done, and the ring goes with
+  // it rather than staying drawn around whatever slid into its place.
+  const celebratingRef = useRef(false)
+  celebratingRef.current = celebrating
 
   const advance = useCallback(() => setTourStep(index + 1), [index])
 
@@ -165,6 +205,7 @@ function TourOverlay({ onNavigate }: TourProps) {
     setBefore({ step: index, data: getData() })
     setCelebrating(false)
     setStuck(false)
+    setPhase(null)
     targetRef.current = null
     missingSinceRef.current = null
     setHole(null)
@@ -185,14 +226,25 @@ function TourOverlay({ onNavigate }: TourProps) {
   // timer was cleared by the effect's own cleanup the moment `celebrating`
   // flipped, and the tour showed a tick forever.
   //
-  // A step carrying an `outcome` stops here rather than advancing: something
-  // has just appeared on the screen and the card names it, which is a thing
-  // to read, not a thing to catch sight of on the way past.
+  // A caption that relocates takes the shell with it: the goal step is
+  // written in Settings and lives under the day's title, and the person is
+  // shown where it went rather than told.
+  //
+  // Guarded on the snapshot's step for the same reason the done-check is:
+  // for one render after a step advances, `celebrating` is still the last
+  // step's and `step` is already the next one. Without the guard the goal
+  // step's relocation fired the moment the library step ended, sent the
+  // shell to the day view on top of the index effect's `settings`, and the
+  // card sat on the wrong tab saying its control was not on the screen.
   useEffect(() => {
-    if (!celebrating || step.outcome) return
-    const timer = setTimeout(advance, ADVANCE_DELAY_MS)
+    if (!celebrating || before.step !== index) return
+    if (step.outcome?.view) onNavigate(step.outcome.view)
+    if (step.outcome?.wait) return
+    const timer = setTimeout(advance, OUTCOME_HOLD_MS)
     return () => clearTimeout(timer)
-  }, [celebrating, advance, step.outcome])
+    // onNavigate is stable - see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [celebrating, advance, step.outcome, before.step, index])
 
   // --- has it been too long? ----------------------------------------------
 
@@ -205,10 +257,19 @@ function TourOverlay({ onNavigate }: TourProps) {
   // --- where is the target? ------------------------------------------------
 
   const taskId = tourTask(data, today)?.id ?? ''
+  const captionTarget = celebrating ? step.outcome?.target : undefined
 
   useEffect(() => {
-    if (step.targets.length === 0) return
+    if (step.targets.length === 0 && !captionTarget) return
     let observed: Element | null = null
+    let lit: Element | null = null
+
+    function light(el: Element | null) {
+      if (el === lit) return
+      lit?.classList.remove(LIT_CLASS)
+      el?.classList.add(LIT_CLASS)
+      lit = el
+    }
 
     function measure() {
       // Two questions, and they are not the same one. *Present* is whether
@@ -217,62 +278,101 @@ function TourOverlay({ onNavigate }: TourProps) {
       // a sheet that is still sliding up is present and not yet found, and
       // waiting for it is right. A control that is not in the document is not
       // coming.
+      const wanted = captionTarget ? [{ selector: captionTarget }] : step.targets
       let present = false
       let found: Element | null = null
-      for (const selector of step.targets) {
-        const el = document.querySelector(selector.replace('{task}', taskId))
-        if (!el) continue
+      let foundIndex = -1
+      wanted.forEach((target, i) => {
+        const el = document.querySelector(target.selector.replace('{task}', taskId))
+        if (!el) return
         present = true
-        if ((el as HTMLElement).offsetParent !== null) found = el
+        if ((el as HTMLElement).offsetParent !== null) {
+          found = el
+          foundIndex = i
+        }
+      })
+
+      // A sheet or panel the last step led into, still open, with none of
+      // this step's controls inside it. Its close button is the thing to
+      // point at, whatever the step says - the second standing rule.
+      let next: Phase | null = null
+      const modals = document.querySelectorAll('[data-tour-modal]')
+      const modal = modals[modals.length - 1]
+      if (modal && !(found && modal.contains(found))) {
+        const close = modal.querySelector('[data-tour-modal-close]')
+        if (close && (close as HTMLElement).offsetParent !== null) {
+          found = close
+          present = true
+          next = { kind: 'blocked' }
+        }
+      }
+
+      // The step is done and the thing it pointed at is no longer drawn -
+      // the ticked row has folded into Done. The caption stands alone: a
+      // ring left where the row used to be would circle the card that
+      // moved up into the gap.
+      if (celebratingRef.current && !found) {
+        light(null)
+        targetRef.current = null
+        setHole(null)
+        return
       }
 
       if (!present) {
+        light(null)
         if (targetRef.current) {
           targetRef.current = null
           setHole(null)
         }
         // Nothing to point at, and nothing on its way. A grace period first,
-        // in case a tab is still switching; then the way through is offered,
-        // because a step whose control is genuinely not in this state - a
-        // different viewport, a condition that was never met - would otherwise
-        // hold somebody at a spotlight that never appears, with a card naming
-        // a button that is not on the screen. Only if nobody takes the offer
-        // does the step move on by itself.
+        // in case a tab is still switching; then the card says so and offers
+        // the way through, because a step whose control is genuinely not in
+        // this state - a different viewport, a condition that was never met -
+        // would otherwise hold somebody at a spotlight that never appears.
+        // It never moves on by itself from here.
         const since = missingSinceRef.current ?? Date.now()
         missingSinceRef.current = since
-        const waited = Date.now() - since
-        if (waited > MISSING_TARGET_GRACE_MS) setStuck(true)
-        if (waited > MISSING_TARGET_SKIP_MS) {
-          console.info(`[tour] step "${step.id}" has no target on this screen; skipping it.`)
-          advance()
+        if (Date.now() - since > MISSING_TARGET_GRACE_MS) {
+          setStuck(true)
+          setPhase(prev => (samePhase(prev, { kind: 'absent' }) ? prev : { kind: 'absent' }))
         }
         return
       }
       missingSinceRef.current = null
       if (!found) return
+      const el: Element = found
 
-      if (found !== observed) {
+      if (!next) next = { kind: 'target', index: foundIndex, typed: holdsText(el) }
+      setPhase(prev => (samePhase(prev, next) ? prev : next))
+      light(el)
+
+      if (el !== observed) {
         resizeObserver?.disconnect()
-        resizeObserver?.observe(found)
-        observed = found
+        resizeObserver?.observe(el)
+        observed = el
       }
 
-      const r = found.getBoundingClientRect()
-      // Scrolled into view when first found, and again if it is off screen
-      // later: a bottom sheet slides up over a quarter of a second, and a
-      // control inside it measured mid-slide is below the viewport, so the
-      // first scroll lands on nothing. Throttled, or a control that genuinely
-      // cannot be scrolled to would be fought over every poll.
-      const offScreen = r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth
+      const r = el.getBoundingClientRect()
+      // Scrolled into view if any of it is outside the window - when first
+      // found, and again if it drifts off later: a bottom sheet slides up
+      // over a quarter of a second, and a control inside it measured
+      // mid-slide is below the viewport, so the first scroll lands on
+      // nothing. Throttled, or a control that genuinely cannot be scrolled
+      // to would be fought over every poll. A control already wholly on
+      // screen is left where it is: centring it scrolled the whole shell,
+      // header and all, to put a checkbox in the middle of the window.
+      const offScreen = r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth
       const now = Date.now()
-      if (found !== targetRef.current || (offScreen && now - lastScrollRef.current > 500)) {
-        targetRef.current = found
+      const first = el !== targetRef.current
+      if (offScreen && (first || now - lastScrollRef.current > 500)) {
+        targetRef.current = el
         lastScrollRef.current = now
-        found.scrollIntoView({ block: 'center', inline: 'nearest' })
+        el.scrollIntoView({ block: 'center', inline: 'nearest' })
         return
       }
-      const next = { x: r.left - HOLE_PAD, y: r.top - HOLE_PAD, w: r.width + HOLE_PAD * 2, h: r.height + HOLE_PAD * 2 }
-      setHole(prev => (prev && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h ? prev : next))
+      targetRef.current = el
+      const rect = { x: r.left - HOLE_PAD, y: r.top - HOLE_PAD, w: r.width + HOLE_PAD * 2, h: r.height + HOLE_PAD * 2 }
+      setHole(prev => (prev && prev.x === rect.x && prev.y === rect.y && prev.w === rect.w && prev.h === rect.h ? prev : rect))
     }
 
     // Everything that can ask for a re-measure goes through here, and at most
@@ -297,7 +397,10 @@ function TourOverlay({ onNavigate }: TourProps) {
     // Three watchers and a poll, and each catches something the others do not.
     // The observers are the reason the hole no longer lags a layout change by
     // up to a poll interval; the poll is the reason it does not lag a CSS
-    // transition at all, since moving an element mutates nothing.
+    // transition at all, since moving an element mutates nothing. Typing is
+    // its own event: a value changing in a box mutates no attribute, and the
+    // card's line has to turn into "now press Enter" on the first keystroke,
+    // not on the next poll.
     const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule)
     const mutationObserver =
       typeof MutationObserver === 'undefined'
@@ -306,8 +409,16 @@ function TourOverlay({ onNavigate }: TourProps) {
             // The overlay's own churn - the ring moving, the tick animating,
             // the card resizing - is not news about the target. Ignoring it
             // keeps the common case at zero measures rather than one a frame
-            // for as long as the tour is open.
-            if (records.every(record => (record.target as Element).closest?.('.tour'))) return
+            // for as long as the tour is open. The lit class landing on the
+            // target is the engine's own doing too.
+            if (
+              records.every(
+                record =>
+                  (record.target as Element).closest?.('.tour') ||
+                  (record.type === 'attributes' && record.attributeName === 'class' && record.target === lit),
+              )
+            )
+              return
             schedule()
           })
     mutationObserver?.observe(document.body, { childList: true, subtree: true, attributes: true })
@@ -316,6 +427,7 @@ function TourOverlay({ onNavigate }: TourProps) {
     const timer = setInterval(measure, POLL_MS)
     window.addEventListener('resize', schedule)
     window.addEventListener('scroll', schedule, true)
+    document.addEventListener('input', schedule, true)
     return () => {
       clearInterval(timer)
       cancelAnimationFrame(frame)
@@ -323,8 +435,10 @@ function TourOverlay({ onNavigate }: TourProps) {
       mutationObserver?.disconnect()
       window.removeEventListener('resize', schedule)
       window.removeEventListener('scroll', schedule, true)
+      document.removeEventListener('input', schedule, true)
+      light(null)
     }
-  }, [step, taskId, advance])
+  }, [step, taskId, advance, captionTarget])
 
   // --- the ends -----------------------------------------------------------
 
@@ -337,12 +451,25 @@ function TourOverlay({ onNavigate }: TourProps) {
   }
 
   function doItForMe() {
+    // Ticking off goes through the real checkbox when it is on the page, so
+    // the row plays its finishing animation and folds into Done exactly as a
+    // tap would make it - the caption afterwards says that is what happened,
+    // and it should be true. The store action is the fallback, and what
+    // every other step uses; a three-click path through a menu is not worth
+    // scripting when the action underneath is one call.
+    if (step.event === 'task-done' && taskId) {
+      const box = document.querySelector<HTMLInputElement>(`[data-task-id="${taskId}"] input[type="checkbox"]`)
+      if (box && !box.checked) {
+        box.click()
+        return
+      }
+    }
     // Falls through to skipping when there is nothing sensible to do on
     // somebody's behalf - assistWith says so rather than pretending.
     if (!assistWith(step.event, today)) advance()
   }
 
-  const text = resolveText(step.text, new Date())
+  const text = lineFor(step, phase, celebrating, new Date())
   const vw = typeof window === 'undefined' ? 1024 : window.innerWidth
   const vh = typeof window === 'undefined' ? 768 : window.innerHeight
 
@@ -377,6 +504,27 @@ function TourOverlay({ onNavigate }: TourProps) {
       />
     </div>
   )
+}
+
+/**
+ * The one line the card says, chosen from what the step offers and where
+ * the person is. In order: the caption once the step has ended; the modal
+ * in the way; the absence of anything to point at; the lit target's own
+ * words, with the typed variant once the box has something in it; and the
+ * step's line for everything else.
+ */
+export function lineFor(step: TourStep, phase: Phase | null, celebrating: boolean, now: Date): string {
+  if (celebrating && step.outcome) return step.outcome.text
+  if (phase?.kind === 'blocked') return BLOCKED_TEXT
+  if (phase?.kind === 'absent') return step.absent ?? ABSENT_TEXT
+  if (phase?.kind === 'target') {
+    const target = step.targets[phase.index]
+    if (target) {
+      if (phase.typed && target.typed) return target.typed
+      if (target.text) return resolveText(target.text, now)
+    }
+  }
+  return resolveText(step.text, now)
 }
 
 interface TourCardProps {
@@ -456,13 +604,14 @@ function TourCard({
           </svg>
         </span>
       </div>
-      <p className="tour-text">
-        {isFinish && sandbox ? 'This was a sandbox. Nothing here is kept.' : showingOutcome ? step.outcome : text}
+      <p className={showingOutcome ? 'tour-text is-outcome' : 'tour-text'}>
+        {isFinish && sandbox ? 'This was a sandbox. Nothing here is kept.' : text}
       </p>
-      {/* Only after twenty seconds of nothing happening, and never shouted:
-          it is an admission that something may be wrong, offered quietly to
-          the one person in ten who needs it rather than waved at everybody
-          else as a way to not bother. */}
+      {/* Only after twenty seconds of nothing happening, or once the card
+          has admitted there is nothing on this screen to point at - and
+          never shouted: it is an admission that something may be wrong,
+          offered quietly to the one person in ten who needs it rather than
+          waved at everybody else as a way to not bother. */}
       {stuck && !celebrating && !isStart && !isFinish && (
         <div className="tour-stuck">
           <button type="button" className="tour-stuck-do" onClick={onAssist}>

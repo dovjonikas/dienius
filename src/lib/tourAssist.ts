@@ -64,9 +64,13 @@ export function assistWith(event: TourEvent, today: string): boolean {
       actions.toggleTask(today, task.id)
       return true
     }
-    case 'list-added': {
-      actions.addLibraryList({ name: 'Books', unit: 'chapter' })
-      return true
+    case 'item-added': {
+      // The list the step would have had the person start, and the book the
+      // card names, so the caption afterwards is true of what is on screen.
+      const books =
+        getData().library.find(l => l.name.trim().toLowerCase() === 'books') ??
+        actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+      return actions.addLibraryItem(books.id, 'Dune, 20 chapters') !== undefined
     }
     case 'goal-added': {
       actions.addGoal({ title: 'Be someone who finishes things', why: 'Because starting was never the hard part' }, today)

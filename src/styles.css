@@ -6340,7 +6340,11 @@ button.danger:focus-visible {
   justify-content: center;
   flex-shrink: 0;
   width: 32px;
-  height: 44px;
+  /* The grip is what sets a quiet row's height. 44px is the touch target
+     and is kept below for a finger; on a mouse it made every row of a
+     nine-book list sixty pixels tall, a column of air with one line of
+     text in each. */
+  height: 36px;
   min-height: 0;
   padding: 0;
   border: none;
@@ -6348,6 +6352,10 @@ button.danger:focus-visible {
   background: none;
   cursor: grab;
   touch-action: none;
+}
+
+@media (pointer: coarse) {
+  .library-item-grip { height: 44px; }
 }
 
 .library-item-grip:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
@@ -6410,12 +6418,16 @@ button.danger:focus-visible {
   flex-shrink: 0;
 }
 
+/* Right-aligned, not centred. Centred in a fixed-width box, "p. 0" and
+   "ch 0/20" ended at different x on neighbouring rows and the whole column
+   read as ragged; with the numbers flush right every row's count ends on
+   the same line, which is the one thing a column of counts has to do. */
 .library-item-count {
   min-width: 62px;
   color: var(--muted);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
-  text-align: center;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -8551,6 +8563,13 @@ main:has(.week) > .calendar {
   max-width: 52ch;
 }
 
+/* The fields borrow .sync-field, whose flex basis of 260px is a width in
+   the row it was written for. Here the axis is vertical, so the same basis
+   was a height: each field stood 260px tall with its input at the top and
+   two hundred pixels of nothing under it. Found from a screenshot of the
+   form, which is the only way a rule like that gets found. */
+.calendar-form .sync-field { flex: 0 0 auto; }
+
 .calendar-form-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .calendar-blocker { color: var(--muted); }
@@ -8766,6 +8785,22 @@ main:has(.week) > .calendar {
   transition: d var(--dur) var(--ease);
 }
 
+/* The standing rule for whatever the tour is pointing at: it is visible.
+
+   The card told people to click the dots on the Walk card, and on a mouse
+   the dots are a hover reveal - opacity zero until the pointer is over the
+   card. The spotlight drew a ring around a button nobody could see, and the
+   person looked at an empty rectangle. So the engine marks the lit target
+   with this class and the class outranks every quieting rule in the file.
+   The !important is the point rather than a shortcut: a hover reveal must
+   never win against the one thing on the screen somebody has just been
+   asked to press. Opacity and visibility only - display would change the
+   layout under the ring. */
+.is-tour-target {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* The ring around the hole. A separate element rather than a stroke on the
    path, so it can be rounded and animated without redrawing the scrim. */
 .tour-ring {
@@ -8883,6 +8918,11 @@ main:has(.week) > .calendar {
 }
 
 .tour-skip:hover { color: var(--text); }
+
+/* The line under the instruction once the step has ended: what happened and
+   why it matters. Quieter than the instruction was, because the work is done
+   and this is read with the eye free. */
+.tour-text.is-outcome { color: var(--muted); }
 
 /* The way out of a step that will not end - see lib/tourAssist.ts. It appears
    after twenty seconds of nothing happening and is deliberately the quietest
@@ -9970,8 +10010,10 @@ main:has(.week) > .calendar {
    lands on what you are actually on before it reads anything else. */
 .library-items.is-active { margin-bottom: var(--s2); }
 
+/* The same right inset as the quiet rows under it, so its count sits on
+   their line rather than a few pixels in from it. */
 .library-item.is-active {
-  padding: var(--s3) var(--s3) var(--s3) 0;
+  padding: var(--s3) var(--s2) var(--s3) 0;
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
@@ -9993,8 +10035,15 @@ main:has(.week) > .calendar {
 .library-item-hover {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--s1);
   flex-shrink: 0;
+  /* The same room on every row, whether or not this one has the step
+     button beside the cross. Sized to its own content, a row with both
+     buttons pushed its count thirty pixels left of a row with one, and
+     the column of counts came out ragged even after they were all flush
+     right. Two 26px buttons and the gap between them. */
+  min-width: 56px;
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease);
 }

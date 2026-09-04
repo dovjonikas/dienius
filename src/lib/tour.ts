@@ -14,10 +14,10 @@ import type { AppData, DayPlan } from './types'
  * same things in different words ("tap" is not "click") and, when they
  * differ, through different controls.
  *
- * The whole thing is under 120 words. A tour is read while the eye is on the
- * thing being pointed at, and every word past the first line is a word
- * between the person and the control. The test in tour.test.ts holds the
- * budget: a title is five words at most, a line fifteen.
+ * The instructional lines are under 120 words. A tour is read while the eye
+ * is on the thing being pointed at, and every word past the first line is a
+ * word between the person and the control. The test in tour.test.ts holds
+ * the budget: a title is five words at most, a line fifteen.
  */
 
 export type TourPlatform = 'desktop' | 'mobile'
@@ -35,9 +35,64 @@ export type TourEvent =
   | 'key-marked'
   | 'focus-started'
   | 'task-done'
-  | 'list-added'
+  | 'item-added'
   | 'goal-added'
   | 'finish'
+
+/**
+ * One thing a step can point at.
+ *
+ * A step lists several, in order, and the *last* one present on the page
+ * wins - so a step that walks through a menu lists the button, then the menu
+ * item, then the control it opens, and the spotlight follows the person in.
+ * `{task}` in a selector becomes the id of the task the tour added.
+ *
+ * Each target may carry its own line. The step's own `text` is what the card
+ * says while the first target is lit; a later target usually needs different
+ * words ("Click Details" once the menu is open), and a box needs two: what to
+ * type while it is empty, and "now press Enter" once something is in it.
+ * The owner watched somebody type Walk and wait, because nothing had told
+ * them the field wanted Enter - the card was still saying "type Walk".
+ */
+export interface TourTarget {
+  selector: string
+  /** Said instead of the step's line while this target is the one lit. */
+  text?: string
+  /** Said once the box this points at has something typed into it. */
+  typed?: string
+}
+
+/**
+ * What the card says once a step has ended, and where it looks while saying
+ * it.
+ *
+ * Every real step has one now, because a step that ends with a tick and
+ * moves on inside a second reads as the tour skipping by itself: the thing
+ * happened somewhere else on the page, the eye was on the control, and the
+ * card had already moved to the next instruction. So each step holds the
+ * tick, names in one line what just happened and why it matters, and only
+ * then goes on - by itself after a beat long enough to read the line, or on
+ * Next for the three steps where what appeared deserves a proper look.
+ *
+ * `view` and `target` move the spotlight for the caption. The goal step is
+ * written on the settings screen and lives under the day's title; without
+ * the relocation the person is told it "never shows progress" while looking
+ * at a form, and never sees where it went.
+ *
+ * Deliberately outside the 120-word instructional budget the titles and
+ * lines share, and bounded separately - see tour.test.ts. A caption for
+ * something that has already happened is read with the eye free, not while
+ * hunting for a control.
+ */
+export interface TourOutcome {
+  text: string
+  /** Wait for Next rather than moving on after a beat. */
+  wait?: boolean
+  /** Switch the shell to this tab for the caption. */
+  view?: TourView
+  /** Point at this for the caption instead of the step's own targets. */
+  target?: string
+}
 
 export interface TourStep {
   id: string
@@ -45,34 +100,20 @@ export interface TourStep {
   title: string
   /** Fifteen words at most. `{now}` becomes the current clock time. */
   text: string
-  /**
-   * Selectors for the thing to point at, in order. The *last* one present on
-   * the page wins, so a step that walks through a menu can list the button,
-   * then the menu item, then the control it opens, and the spotlight follows
-   * the person in. `{task}` becomes the id of the task the tour added.
-   */
-  targets: string[]
+  targets: TourTarget[]
   /** The tab the step lives on. The engine switches to it. */
   view: TourView
   event: TourEvent
+  outcome?: TourOutcome
   /**
-   * What just happened, said once, on the two steps where something visibly
-   * lands on the screen: a day fills with blocks, a focus bar appears along
-   * the bottom. A step carrying this does *not* advance on its own - it shows
-   * the tick, names the result, and waits for Next.
-   *
-   * Those two are the moments the app makes its case, and auto-advancing
-   * through them meant the payoff was a flicker: the thing appeared and the
-   * spotlight had already moved somewhere else. Everywhere else the tick and
-   * a beat are enough, because nothing changed except the thing the person
-   * was already looking at.
-   *
-   * Deliberately outside the 120-word instructional budget the titles and
-   * lines share, and bounded separately - see tour.test.ts. This is a caption
-   * for something that has already happened, read with the eye free, not a
-   * word standing between somebody and a control.
+   * Said when none of the targets is on the page at all, beside the offer to
+   * do the step or skip it. The engine never moves on by itself from here -
+   * that used to happen after twelve seconds, and it was the "random
+   * skipping" the owner reported. A step with a good reason to be absent
+   * says the reason: Focus only exists on the card that is running this
+   * minute, and between two blocks there is none.
    */
-  outcome?: string
+  absent?: string
 }
 
 /** What a predicate sees: the plan when the step began, the plan now, and the clock tools. */
@@ -87,17 +128,40 @@ function tasksOn(data: AppData, today: string) {
   return data.days[today]?.tasks ?? []
 }
 
+function libraryItems(data: AppData) {
+  return data.library.reduce((sum, list) => sum + list.items.length, 0)
+}
+
+/**
+ * The two steps that name Walk end on Walk. Counting any key mark or any
+ * tick was enough while nobody strayed; on the deliberately awkward walk a
+ * tick on the card above ended the step and the caption said Walk had moved
+ * into Done while Walk sat there unticked. When the tour has no task of its
+ * own - a resumed tour after Keep stripped the flags - any task will do,
+ * which is the old rule and still the honest one then.
+ */
+function tourTaskChanged(ctx: TourContext, what: (t: { highlight?: boolean; done?: boolean }) => boolean): boolean {
+  const mine = tourTask(ctx.now, ctx.today)
+  if (mine) {
+    const was = tasksOn(ctx.before, ctx.today).find(t => t.id === mine.id)
+    return what(mine) && !(was && what(was))
+  }
+  return tasksOn(ctx.now, ctx.today).filter(what).length > tasksOn(ctx.before, ctx.today).filter(what).length
+}
+
 export const TOUR_EVENTS: Record<TourEvent, (ctx: TourContext) => boolean> = {
   start: () => false,
   finish: () => false,
   stamped: ({ before, now, today }) => !!now.days[today]?.templateId && !before.days[today]?.templateId,
   'task-added': ({ before, now, today }) => tasksOn(now, today).length > tasksOn(before, today).length,
-  'key-marked': ({ before, now, today }) =>
-    tasksOn(now, today).filter(t => t.highlight).length > tasksOn(before, today).filter(t => t.highlight).length,
+  'key-marked': ctx => tourTaskChanged(ctx, t => !!t.highlight),
   'focus-started': ({ focusRunning }) => focusRunning,
-  'task-done': ({ before, now, today }) =>
-    tasksOn(now, today).filter(t => t.done).length > tasksOn(before, today).filter(t => t.done).length,
-  'list-added': ({ before, now }) => now.library.length > before.library.length,
+  'task-done': ctx => tourTaskChanged(ctx, t => !!t.done),
+  // A list with something in it, not merely a list. Starting a Books list
+  // used to end the step on its own, before the person had seen the field
+  // that makes a list worth having - and the tick landed on an empty
+  // heading.
+  'item-added': ({ before, now }) => libraryItems(now) > libraryItems(before),
   'goal-added': ({ before, now }) => now.goals.length > before.goals.length,
 }
 
@@ -105,9 +169,13 @@ export const TOUR_EVENTS: Record<TourEvent, (ctx: TourContext) => boolean> = {
  * The order is deliberate and differs from the obvious one (add a task first).
  * The starter templates are only offered on a day with nothing on it, which
  * is exactly what a new person has, so stamping comes first - and it is also
- * the moment the app makes its case: one click and the day is a day. The
- * task added afterwards is placed at the current minute so that it is the
- * running task, because Focus only ever offers itself on the running card.
+ * the moment the app makes its case: one click and the day is a day.
+ *
+ * Focus is taught on whichever card is running, not on Walk. Quick-add opens
+ * on the first *free* slot, and once a working day is stamped the current
+ * minute is rarely free, so Walk lands an hour or two ahead and is not the
+ * running card - the first version of this step pointed at a Focus button
+ * that was not there, offered a way through, and then skipped itself.
  */
 export const DESKTOP_STEPS: TourStep[] = [
   {
@@ -121,66 +189,90 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'stamp',
     title: 'Stamp a day',
-    text: 'Click the blue Working day card. Eight blocks, one click.',
-    targets: ['[data-tour="starter-working-day"]'],
+    text: 'Click Use this template under Working day. Nine blocks, one click.',
+    targets: [{ selector: '[data-tour="starter-working-day"]' }],
     view: 'day',
     event: 'stamped',
-    outcome: 'Your whole day, from one click. That is the timeline beside it.',
+    outcome: { text: 'Your whole day, from one click. That is the timeline beside it.', wait: true },
   },
   {
     id: 'add',
     title: 'Add your own',
-    text: 'Type Walk in the box, then Enter. The time is already picked.',
+    text: 'Type Walk in the box. The time is already picked.',
     // The field, not the controls beside it: the whole point of the step is
     // that the two controls are already answered and nobody has to touch
     // them. Pointing at one would teach the opposite of what it says.
-    targets: ['[data-quick-add]'],
+    targets: [{ selector: '[data-quick-add]', typed: 'Now press Enter.' }],
     view: 'day',
     event: 'task-added',
+    outcome: { text: 'Walk is on the day, in the first free slot, sized already.' },
   },
   {
     id: 'key',
     title: 'Make it key',
-    text: 'Click the dots on the Walk card, then Details, then Key.',
-    targets: ['[data-task-id="{task}"] [data-tour="task-menu"]', '[data-tour="task-details"]', '[data-tour="key"]'],
+    text: 'Click the dots on the Walk card.',
+    targets: [
+      { selector: '[data-task-id="{task}"] [data-tour="task-menu"]' },
+      { selector: '[data-tour="task-details"]', text: 'Click Details.' },
+      { selector: '[data-tour="key"]', text: 'Click Mark as key.' },
+    ],
     view: 'day',
     event: 'key-marked',
+    outcome: { text: 'Walk is key now. Three a day at most, and the calendar notes them.' },
   },
   {
     id: 'focus',
     title: 'Focus on one thing',
-    text: 'Click Focus on the Walk card. One ring, one way out.',
-    targets: ['[data-task-id="{task}"] [data-tour="focus"]'],
+    text: 'Click Focus on the card running now. One ring, one way out.',
+    targets: [{ selector: '[data-tour="focus"]' }],
     view: 'day',
     event: 'focus-started',
-    outcome: 'That bar along the bottom is Focus. Leave it whenever you like.',
+    absent: 'Nothing is running this minute, so there is no Focus button. Let the tour start it.',
+    outcome: { text: 'That bar along the bottom is Focus. Leave it whenever you like.', wait: true },
   },
   {
     id: 'done',
     title: 'Tick it off',
-    text: 'Click the checkbox on Walk. Done folds away, the score moves.',
-    targets: ['[data-task-id="{task}"] [data-tour="task-check"]'],
+    text: 'Click the checkbox on Walk.',
+    targets: [{ selector: '[data-task-id="{task}"] [data-tour="task-check"]' }],
     view: 'day',
     event: 'task-done',
+    outcome: { text: 'Walk moved into Done, and the score moved with it.' },
   },
   {
     id: 'library',
     title: 'Books and series',
-    text: 'Start a list here. Its sessions land on days.',
-    // Two, and the last one present wins: the starter offers only exist while
-    // the library is empty, so somebody who already has a list gets the New
-    // list button pointed at instead of an empty rectangle.
-    targets: ['[data-tour="library-new"]', '[data-tour="library-starter"]'],
+    text: 'Click Start a Books list. Its sessions land on days.',
+    // Three, and the last one present wins. The starter offers only exist
+    // while the library is empty; somebody who already has a list gets New
+    // list pointed at instead of an empty rectangle; and once any list is
+    // there, its own field is the thing to point at, because the step ends
+    // on something being put in it.
+    targets: [
+      { selector: '[data-tour="library-new"]', text: 'Click New list and call it Books.' },
+      { selector: '[data-tour="library-starter"]' },
+      { selector: '[data-tour="library-add"]', text: 'Type: Dune, 20 chapters', typed: 'Now press Enter.' },
+    ],
     view: 'library',
-    event: 'list-added',
+    event: 'item-added',
+    outcome: { text: 'A session can now land on any day. Ticking it off moves the book along.' },
   },
   {
     id: 'north',
     title: 'One direction',
-    text: 'Write one goal here. It never shows progress, only why.',
-    targets: ['[data-tour="goal-add"]', '[data-tour="goal-save"]'],
+    text: 'Click Write one down. A goal never shows progress, only why.',
+    targets: [
+      { selector: '[data-tour="goal-add"]' },
+      { selector: '[data-tour="goal-save"]', text: 'Name it, then click Write it down.' },
+    ],
     view: 'settings',
     event: 'goal-added',
+    outcome: {
+      text: 'It lives under the day now. One a day, rotating, never a bar.',
+      view: 'day',
+      target: '[data-tour="north-line"]',
+      wait: true,
+    },
   },
   {
     id: 'finish',
@@ -192,23 +284,24 @@ export const DESKTOP_STEPS: TourStep[] = [
   },
 ]
 
-/** The same nine steps in a phone's words. */
+/**
+ * The same nine steps in a phone's words. "Tap" for "click" everywhere,
+ * and one caption of its own: below the wide breakpoint the timeline is
+ * folded behind a button rather than drawn beside the list, so "that is the
+ * timeline beside it" points at nothing a phone can see.
+ */
 export const MOBILE_STEPS: TourStep[] = DESKTOP_STEPS.map(step => {
-  switch (step.id) {
-    case 'stamp':
-      return { ...step, text: 'Tap the blue Working day card. Eight blocks, one tap.' }
-    case 'add':
-      return { ...step, text: 'Type Walk in the box, then Enter. The time is already picked.' }
-    case 'key':
-      return { ...step, text: 'Tap the dots on the Walk card, then Details, then Key.' }
-    case 'focus':
-      return { ...step, text: 'Tap Focus on the Walk card. One ring, one way out.' }
-    case 'done':
-      return { ...step, text: 'Tap the checkbox on Walk. Done folds away, the score moves.' }
-    case 'library':
-      return { ...step, text: 'Tap to start a list. Sessions land on days.' }
-    default:
-      return step
+  const tap = (s: string) => s.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap')
+  const outcome =
+    step.id === 'stamp'
+      ? { ...step.outcome!, text: 'Your whole day, from one tap. Show timeline draws it out.' }
+      : step.outcome && { ...step.outcome, text: tap(step.outcome.text) }
+  return {
+    ...step,
+    text: tap(step.text),
+    targets: step.targets.map(target => (target.text ? { ...target, text: tap(target.text) } : target)),
+    outcome,
+    absent: step.absent && tap(step.absent),
   }
 })
 
