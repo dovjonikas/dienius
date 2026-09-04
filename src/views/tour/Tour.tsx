@@ -424,7 +424,9 @@ function TourOverlay({ onNavigate }: TourProps) {
     mutationObserver?.observe(document.body, { childList: true, subtree: true, attributes: true })
 
     measure()
-    const timer = setInterval(measure, POLL_MS)
+    // Through schedule, not straight to measure: a poll tick and an
+    // observer in the same frame used to measure twice.
+    const timer = setInterval(schedule, POLL_MS)
     window.addEventListener('resize', schedule)
     window.addEventListener('scroll', schedule, true)
     document.addEventListener('input', schedule, true)
@@ -475,16 +477,26 @@ function TourOverlay({ onNavigate }: TourProps) {
 
   return (
     <div className={celebrating ? 'tour is-celebrating' : 'tour'}>
-      <svg className="tour-scrim" width="100%" height="100%" aria-hidden="true">
-        <path
-          fillRule="evenodd"
-          d={
-            `M0 0H${vw}V${vh}H0Z` +
-            (hole ? ` M${hole.x} ${hole.y}h${hole.w}v${hole.h}h${-hole.w}z` : '')
-          }
+      {/* The scrim is four solid shades around the hole rather than one
+          full-screen path with a hole cut in it. The path was re-rasterised
+          across the whole window on every move of the hole, and its `d` was
+          transitioned, so a scroll under the spotlight cost a full-screen
+          paint per frame for a fifth of a second; on a slow machine that was
+          the lag the owner felt. Four shades are positioned with transform
+          and sized by width and height, and a solid rectangle repaints for
+          nothing. Measured under a 4x CPU throttle - see the v1.11 commit. */}
+      <div className="tour-scrim" aria-hidden="true">
+        {shadesAround(hole, vw, vh).map((shade, i) => (
+          <div key={i} className="tour-shade" style={shadeStyle(shade)} />
+        ))}
+      </div>
+      {hole && (
+        <div
+          className="tour-ring"
+          style={{ transform: `translate(${hole.x}px, ${hole.y}px)`, width: hole.w, height: hole.h }}
+          aria-hidden="true"
         />
-      </svg>
-      {hole && <div className="tour-ring" style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h }} aria-hidden="true" />}
+      )}
       <TourCard
         step={step}
         text={text}
@@ -504,6 +516,29 @@ function TourOverlay({ onNavigate }: TourProps) {
       />
     </div>
   )
+}
+
+/**
+ * The four rectangles that dim everything but the hole: above it, below it,
+ * and the two beside it. One full-window rectangle when there is no hole
+ * yet. Exported for its test; the arithmetic is the whole of it.
+ */
+export function shadesAround(hole: Rect | null, vw: number, vh: number): Rect[] {
+  if (!hole) return [{ x: 0, y: 0, w: vw, h: vh }]
+  const top = Math.max(0, hole.y)
+  const bottom = Math.max(top, Math.min(vh, hole.y + hole.h))
+  const left = Math.max(0, hole.x)
+  const right = Math.max(left, Math.min(vw, hole.x + hole.w))
+  return [
+    { x: 0, y: 0, w: vw, h: top },
+    { x: 0, y: bottom, w: vw, h: Math.max(0, vh - bottom) },
+    { x: 0, y: top, w: left, h: bottom - top },
+    { x: right, y: top, w: Math.max(0, vw - right), h: bottom - top },
+  ]
+}
+
+function shadeStyle(shade: Rect): React.CSSProperties {
+  return { transform: `translate(${shade.x}px, ${shade.y}px)`, width: shade.w, height: shade.h }
 }
 
 /**

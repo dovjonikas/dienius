@@ -143,9 +143,11 @@ localStorage ──loadData()──> validate() ──> normalizeLoaded() ──
 ```
 
 - [`storage.ts`](../src/lib/storage.ts) owns the boundary with `localStorage`.
-  Nothing else touches it. `validate()` is a deep, hand-written type guard: a
-  payload that fails it is discarded whole rather than partly trusted, because
-  this is also the import path for a file a person may have edited.
+  Nothing else touches it. `validate()` - in
+  [`validate.ts`](../src/lib/validate.ts), as one table per entity - is a
+  deep type guard: a payload that fails it is discarded whole rather than
+  partly trusted, because this is also the import path for a file a person
+  may have edited.
   `normalizeLoaded()` backfills every field added since, which is what makes an
   old backup still load.
 - [`store.ts`](../src/lib/store.ts) is the facade over that object: one `actions`
@@ -178,7 +180,8 @@ src/
 
   lib/                 no React except where a hook is the API
     types.ts           AppData and everything in it - start here
-    storage.ts         localStorage boundary, validate, export/import
+    storage.ts         localStorage boundary, load/save, migrations, export/import
+    validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
     store.ts           the facade: `actions` spread from the ten areas below
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay

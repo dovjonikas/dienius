@@ -250,9 +250,12 @@ The one documented exception is a week-view block, whose height is its duration.
 - **`AppData` is one object, in one key, behind `storage.ts`.** Nothing else
   touches `localStorage` for it.
 - **Every field added since v1.0 is optional**, so data written before it
-  existed still loads. `validate()` is a hand-written deep type guard; a payload
-  that fails it is discarded whole rather than partly trusted, because it is
-  also the import path for a file a person may have edited.
+  existed still loads. `validate()` in `validate.ts` is a deep type guard
+  written as tables - one per entity, a field and what a value in it may be;
+  a payload that fails it is discarded whole rather than partly trusted,
+  because it is also the import path for a file a person may have edited. A
+  new field goes into its entity's table with its check, and into
+  `normalizeLoaded` if absent has to become something.
 - **A dangling id degrades, never crashes.** A `templateId`, `libraryRef`,
   `sleepProfileId` or `repeatOf` that resolves to nothing is treated exactly as
   if it were absent.

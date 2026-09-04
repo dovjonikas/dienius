@@ -8846,8 +8846,7 @@ main:has(.week) > .calendar {
 .tour-scrim {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  overflow: hidden;
   pointer-events: none;
 }
 
@@ -8855,11 +8854,20 @@ main:has(.week) > .calendar {
    first, which made every sheet's close button unreachable the moment the
    spotlight moved into the sheet - a tour that traps somebody in a dialog
    has taught them to distrust the app. Guidance is the hole and the ring;
-   the person keeps the whole app. */
-.tour-scrim path {
-  fill: color-mix(in srgb, var(--bg) 62%, transparent);
+   the person keeps the whole app.
+
+   Four solid shades around the hole (Tour.tsx, shadesAround), each moved by
+   transform and sized by width and height, and none of them transitioned:
+   a solid rectangle costs nothing to move, and the ring below is what
+   glides. This replaced a full-window SVG path whose `d` was transitioned,
+   which re-rasterised the whole window every frame the hole moved. */
+.tour-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
   pointer-events: none;
-  transition: d var(--dur) var(--ease);
+  will-change: transform;
 }
 
 /* The standing rule for whatever the tour is pointing at: it is visible.
@@ -8880,13 +8888,19 @@ main:has(.week) > .calendar {
 
 /* The ring around the hole. A separate element rather than a stroke on the
    path, so it can be rounded and animated without redrawing the scrim. */
+/* Positioned by transform, not left and top: a transform moves on the
+   compositor without a layout, and the ring is what still glides between
+   two targets now that the shades snap. */
 .tour-ring {
   position: absolute;
+  top: 0;
+  left: 0;
   border: 2px solid var(--accent);
   border-radius: var(--r-control);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
   pointer-events: none;
-  transition: left var(--dur) var(--ease), top var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease);
+  will-change: transform;
+  transition: transform var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease);
 }
 
 .tour-card {

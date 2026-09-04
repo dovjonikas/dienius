@@ -132,8 +132,7 @@ Nothing at the moment. The screenshots, the last item here, landed in v1.11.
 | Debt | Detail |
 |---|---|
 | **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
-| **`storage.ts` is ~830 lines** | Almost all of it is `validate()`, a hand-written deep type guard. Deliberate - it is the import path for a file a person may have edited - but it is long |
-| **`timelineLayout.ts` at ~810 lines** | Dense geometry. Well tested, but the next person to touch it will need a while |
+| **`timelineLayout.ts` at ~880 lines** | Dense geometry. Well tested, and since v1.11 it opens with a map - the two coordinate systems, the three windows, the invariants, and which function decides what - so the next person starts from the map rather than the middle |
 | **Screenshot tooling** | There is no way to produce image files from the agent environment. Any visual regression checking is by measurement (`getBoundingClientRect`, computed styles) rather than by pixels |
 | **Sync has no conflict UI** | Last-write-wins per entity, silently. Correct for one person with two devices; it would not be for two people |
 | **ICS: monthly and yearly rules are skipped** | Named in the parse result rather than approximated. A meeting on the wrong day is worse than one not shown |
@@ -170,6 +169,25 @@ Nothing at the moment. The screenshots, the last item here, landed in v1.11.
   browser clock (`openFreshAt` in `e2e/app.ts`) to a Wednesday in
   Vilnius, so the same blocks are ahead of now on every run. CI runs it in
   its own job; the deploy does not wait for it.
+- ~~`storage.ts` at ~830 lines, almost all of it `validate()`~~ - split in
+  v1.11. The guard lives in `validate.ts` as tables: one per entity, a
+  field and what a value in it may be, built from a dozen small checks
+  (a string, a whole number in a range, one of a list, optional, a list
+  of). Same strictness - every rule tighter than the type kept its reason
+  beside it - and the 96 tests that hold the contract did not change.
+  `storage.ts` is 347 lines and is about loading, saving and migrating.
+- ~~The tour lagged on a slow machine~~ - profiled in v1.11 under a 4x CPU
+  throttle. The scrim was one full-window SVG path with the hole cut out
+  and its `d` transitioned, so every move of the hole re-rasterised the
+  window for a fifth of a second; scrolling under the spotlight ran a 95th
+  percentile frame of 56ms. It is four solid shades now, moved by
+  transform (`shadesAround` in `Tour.tsx`), the ring is positioned by
+  transform, and the poll goes through the same per-frame gate as the
+  observers. Scrolling is at 40-47ms at the 95th percentile under the same
+  throttle, and typing under the spotlight costs what typing costs with no
+  tour at all - what is left is the app's own render at a quarter speed,
+  not the tour's. The 3.2 second caption hold is untouched; that is a
+  pause, not a lag.
 - ~~ICS: named time zones were read as local~~ - resolved in v1.11 through
   `Intl.DateTimeFormat`, which carries the IANA tables the debt said were
   needed; there was never a database to ship. A zone the browser does not

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Tour } from './Tour'
+import { shadesAround, Tour } from './Tour'
 import { actions, getData, useAppData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { todayKey } from '../../lib/dates'
@@ -692,4 +692,38 @@ test('the watcher that keeps the hole on its target does not feed itself', () =>
   act(() => fire!(record(document.body), null as unknown as MutationObserver))
   expect(frames).toHaveBeenCalledTimes(1)
   vi.unstubAllGlobals()
+})
+
+// --- the scrim ---------------------------------------------------------------
+
+/**
+ * The scrim is four solid rectangles around the hole rather than one
+ * full-window path with a hole in it, because a path was re-rasterised
+ * across the whole window on every move. What has to hold is that the four
+ * cover everything but the hole, exactly, with no seam and no overlap.
+ */
+test('the four shades tile the window around the hole and leave the hole itself clear', () => {
+  const shades = shadesAround({ x: 100, y: 50, w: 200, h: 40 }, 1000, 600)
+  expect(shades).toEqual([
+    { x: 0, y: 0, w: 1000, h: 50 },
+    { x: 0, y: 90, w: 1000, h: 510 },
+    { x: 0, y: 50, w: 100, h: 40 },
+    { x: 300, y: 50, w: 700, h: 40 },
+  ])
+  const area = shades.reduce((sum, s) => sum + s.w * s.h, 0)
+  expect(area).toBe(1000 * 600 - 200 * 40)
+})
+
+test('with no hole yet the whole window is one shade', () => {
+  expect(shadesAround(null, 800, 500)).toEqual([{ x: 0, y: 0, w: 800, h: 500 }])
+})
+
+test('a hole partly off the window is clipped to it rather than producing a negative shade', () => {
+  const shades = shadesAround({ x: -20, y: 580, w: 100, h: 60 }, 800, 600)
+  for (const s of shades) {
+    expect(s.w).toBeGreaterThanOrEqual(0)
+    expect(s.h).toBeGreaterThanOrEqual(0)
+  }
+  const area = shades.reduce((sum, s) => sum + s.w * s.h, 0)
+  expect(area).toBe(800 * 600 - 80 * 20)
 })

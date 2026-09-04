@@ -2,6 +2,78 @@ import type { Task } from '../../lib/types'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
 
 /**
+ * The geometry of the day's timeline: which anchors draw where, what is
+ * free between them, and how many pixels a minute is. Pure functions, no
+ * React, no notion of "now" except `currentMinutes` at the bottom, and
+ * every one of them tested directly in timelineLayout.test.ts - jsdom has
+ * no layout, so nothing here may depend on the DOM.
+ *
+ * Read this first; the rest of the file is the detail behind it.
+ *
+ * ## Two coordinate systems
+ *
+ * - **Clock minutes.** Minutes from midnight, 0 to 1440 (`DAY_MINUTES`), the
+ *   same unit `capacity.ts` uses. A task's `time` becomes `startMinutes`;
+ *   a window is an `Interval` of them; every "where" question is asked in
+ *   these first.
+ * - **Pixels down the grid.** `computeVerticalLayout` turns clock minutes
+ *   into a y position with `topPx(minutes)`. The map is piecewise-linear,
+ *   not proportional: the drawn segments (an anchor cluster, the gap between
+ *   two clusters, the buffer at each end) each get at least their own pixel
+ *   floor, and a segment stretched to its floor pushes everything after it
+ *   down by the same amount. So two minutes an hour apart are not always
+ *   the same distance apart in pixels, and nothing outside this module may
+ *   convert one to the other by multiplying - go through `topPx`, and back
+ *   through `minutesAtPx` on the drag side.
+ *
+ * ## Three windows, and why they disagree at the edges
+ *
+ * - `computeCapacity`'s window is the waking day (07:00-23:00 by default),
+ *   a fixed clock boundary the capacity sentence is answerable to.
+ * - `window` here is the anchors' own span with an hour of air each side -
+ *   first anchor minus `DISPLAY_BUFFER_MINUTES` to last anchor plus the same.
+ *   Gaps are computed against this one, and only between two anchors; the
+ *   buffer is never a gap.
+ * - `displayWindow` is `window` pulled toward the sleep boundary when that is
+ *   near enough to be worth a greyed band (`extendTowardSleepBoundary`). The
+ *   grid draws hour marks, anchors, gaps and `sleepBands` against this one.
+ *
+ * ## Invariants the drawing code relies on
+ *
+ * - `anchors` are sorted by start; overlapping ones share a cluster and are
+ *   packed into `column` of `columns` (`assignColumns`, `packCluster`), and a
+ *   cluster has one vertical extent for all its members.
+ * - A sized anchor's `endMinutes` is its real end unless the window clipped
+ *   it (`clippedEnd`); an unsized anchor has no `endMinutes` and draws at
+ *   `UNSIZED_ANCHOR_MINUTES` - never an invented duration.
+ * - Any unsized anchor suppresses every gap for the day (`gaps` is empty),
+ *   because its true end is unknown, and the caller passes a gap floor of 0
+ *   so no room is reserved for a button that will not exist.
+ * - `topPx` is monotonic: a later minute is never higher on the grid.
+ * - `fitPxPerMinute` only ever returns a density at which the whole
+ *   `displayWindow` fits the room it was given, or the base density when
+ *   the floors alone exceed that room - in which case the column scrolls.
+ *
+ * ## Where each thing is decided
+ *
+ * | Question | Function |
+ * |---|---|
+ * | Which anchors, which gaps, which window | `computeTimelineLayout` |
+ * | Where the sleep band goes, if anywhere | `extendTowardSleepBoundary` |
+ * | Which column an overlapping anchor takes | `assignColumns`, `packCluster` |
+ * | Minute to pixel, with the floors | `computeVerticalLayout` |
+ * | How dense the wide grid draws | `fitPxPerMinute` (fit the room), `chooseWidePxPerMinute` (spend a surplus) |
+ * | Which hour labels have room to be drawn | `legibleHourLabels` |
+ * | The hour and half-hour rules | `hourMarks`, `halfHourMarks` |
+ * | Snapping a drag to five minutes | `snapToStep` |
+ * | Formatting a clock or a range for a card | `formatClock`, `formatAnchorTimeRange` |
+ *
+ * The constants at the top are display choices, each with the reason it is
+ * that number; `TimelineGrid.tsx` owns the touch-target floors and the base
+ * density, and hands them in.
+ */
+
+/**
  * Minutes in one calendar day - the grid never draws past this either.
  * Exported so `TimelineGrid.tsx` can format a clipped anchor's real end
  * time (which can run past midnight) without a second copy of this
