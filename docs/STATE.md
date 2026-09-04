@@ -134,7 +134,6 @@ What follows is wanted rather than owed.
 | **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
 | **`storage.ts` is ~830 lines** | Almost all of it is `validate()`, a hand-written deep type guard. Deliberate - it is the import path for a file a person may have edited - but it is long |
 | **`timelineLayout.ts` at ~810 lines** | Dense geometry. Well tested, but the next person to touch it will need a while |
-| **No end-to-end tests** | Everything is unit or jsdom-level. The two-device sync test and the week drag were verified by hand in a real browser, not by CI |
 | **Screenshot tooling** | There is no way to produce image files from the agent environment. Any visual regression checking is by measurement (`getBoundingClientRect`, computed styles) rather than by pixels |
 | **Sync has no conflict UI** | Last-write-wins per entity, silently. Correct for one person with two devices; it would not be for two people |
 | **ICS: monthly and yearly rules are skipped** | Named in the parse result rather than approximated. A meeting on the wrong day is worse than one not shown |
@@ -144,6 +143,13 @@ What follows is wanted rather than owed.
 
 ### Resolved debts, so you do not chase them
 
+- ~~No end-to-end tests~~ - Playwright against the production build since
+  v1.10: `npm run e2e`, three files under `e2e/`. A first day (stamp, add,
+  tick, the evening close arriving on the last tick, the reading plan from
+  the palette), the tour walked naively on a desktop and on a phone doing
+  only what each card says, and two browser contexts syncing a task both
+  ways through the real `server/sync-server.mjs` on a spare port. CI runs
+  it in its own job; the deploy does not wait for it.
 - ~~`store.ts` at ~1600 lines~~ - split in v1.10 into ten area modules
   under `lib/store/`, with `store.ts` left as the facade so no import
   changed. Every action kept its doc comment and body; the one edit inside a

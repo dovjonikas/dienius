@@ -35,6 +35,27 @@ jobs:
         with:
           path: dist
 
+  # The browser tests, in their own job: the deploy waits for the unit suite
+  # and the build above, never for this. A flake here must not hold a
+  # release; a real failure shows red where it can be read.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
   deploy:
     needs: build
     # Tests and build run on every pull request too (see the trigger above) -

@@ -293,11 +293,21 @@ There is a browser pane. Use it - the test suite cannot see layout.
 npx tsc --noEmit
 npx vitest run
 npm run build
+npm run e2e
 ```
 
-All three clean. Then the phone checklist in [`STATE.md`](STATE.md), then
+All four clean. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
-to Pages if the tests and the build both pass.
+to Pages if the tests and the build both pass; the browser tests run in
+their own job beside that and never hold a release.
+
+`npm run e2e` is Playwright driving a real Chromium against `vite preview`
+of the production build - the files under `e2e/`, one browser per test,
+storage wiped between them. It needs the browser once:
+`npx playwright install chromium`. The tour test is the naive walk from
+section 13 written down, on a desktop and on a phone; a change to the
+tour's words has to be made there too, because it finds every control by
+the words the card uses for it.
 
 ---
 

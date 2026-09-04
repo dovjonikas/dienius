@@ -6,3 +6,7 @@ dist
 # the sync server keeps its state and its token next to itself
 data/
 server/data/
+
+# playwright leaves these beside the tests
+test-results/
+playwright-report/

@@ -259,6 +259,13 @@ src/
   test/
     setup.ts           what jsdom does not implement, stubbed once
     stress.ts          ratio measurement for the stress tests - CONVENTIONS §3
+
+e2e/                   Playwright against the production build - CONVENTIONS §10
+  app.ts               a first open, the starter stamp, a quick-add line
+  smoke.e2e.ts         a first day end to end, and the reading plan from the palette
+  tour.e2e.ts          the naive walk, on a desktop and on a phone
+  sync.e2e.ts          two browser contexts syncing through the real server
+playwright.config.ts   the two projects, and the preview server they run against
 ```
 
 ### The day view
