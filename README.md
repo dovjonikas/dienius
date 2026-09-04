@@ -116,6 +116,7 @@ Everything is written straight to `localStorage`. There's no account and no serv
 
 - **Export / Import** - Settings has a plain JSON backup, both ways. It is a deliberate manual step, not an automatic one - a backup only exists when you actually made it. A backup written by any earlier version still imports; every field added since is filled in with its default rather than rejected
 - **Daily snapshots** - a full copy is kept once a day in IndexedDB, the last seven held, restorable from Settings. This covers the case a manual backup structurally cannot: the mistake you did not see coming. Erasing all data takes them with it
+- **A copy on GitHub** - Settings → Backup takes a private repo and a fine-grained token, and from then on the whole plan is written there as plain JSON after the day closes and on the first open of a new day: `data/state.json`, and one file per day under `data/history/`. The token stays on the device. On a new phone, the same two fields and Restore from cloud bring everything back, after showing what it would replace
 - **Undo** - deleting a task, removing a library item and stamping a template are all reversible for five seconds
 - A running timer is the one thing deliberately kept out of the backup - it lives under its own key, because a timer with ninety seconds left is not a plan worth restoring from last Tuesday
 - **Sync** is optional and off until you set it up - see below. Without it, each device keeps its own plan, and clearing site data on one loses that copy unless you exported first

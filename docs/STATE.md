@@ -83,6 +83,7 @@ reading them.
 | Command palette | Ctrl-K / Cmd-K: run a command or find a thing. Linear scan, no index |
 | Undo | One app-wide offer, five seconds, on the expensive mistakes |
 | Snapshots | A full copy once a day in IndexedDB, seven kept, restorable from Settings |
+| Cloud backup | The third copy: the plan as JSON in a private GitHub repo, written after the evening close, on the first open of a new day, and on a button. Token on this device only. Restore describes both copies before an armed replace. See ARCHITECTURE section 7 |
 | Export / import | Plain JSON, both ways, deliberately manual |
 | Sync | Optional, off by default, through a server you host. Per-entity last-write-wins with tombstones |
 | External calendars | ICS subscriptions or file import, as a read-only layer. Free time counts them |

@@ -217,6 +217,7 @@ src/
     syncEntities.ts    splitting state into entities, stamping, tombstones
     syncMerge.ts       the per-entity last-write-wins merge
     syncClient.ts      pull, debounced push, retry, and the status a person sees
+    cloudBackup.ts     the third copy: the plan as JSON in a private GitHub repo, through the Contents API
     search.ts          the palette's linear scan and its date parsing
     snapshots.ts       the IndexedDB daily copies
     undo.ts            one app-wide undo offer, five seconds
@@ -391,7 +392,32 @@ Three more rules the feature holds to:
 The same tone rule governs the calendar's day stats (`dayStats.ts`): no red at
 any threshold, and a day nobody planned is its own case rather than a zero.
 
-## 7. Sync
+## 7. Sync, snapshots, and the copy on GitHub
+
+Three copies, and each covers a loss the other two do not:
+
+| Copy | Where | What it is for | What it cannot do |
+|---|---|---|---|
+| **Sync** (`syncClient.ts`, section below) | A server you host, reached from your devices | Two devices agreeing, live, all day | Survive both devices and the server going at once; work with no server |
+| **Snapshots** (`snapshots.ts`) | IndexedDB on this device, seven kept | This device's own last week - the mistake you did not see coming | Leave the device |
+| **Cloud backup** (`cloudBackup.ts`) | A private GitHub repo you own | Off-site, readable with a browser, on any device that reaches github.com - with sync off, on a phone with no VPN | Merge; it is a copy, whole, and restoring it replaces |
+
+The cloud copy is written through GitHub's Contents API with nothing in
+between: `data/state.json` is the latest plan, `data/history/YYYY-MM-DD.json`
+that day's last copy, so a history accumulates one file a day and can be
+opened on GitHub. Every write sends the file's current `sha`, the API's own
+optimistic lock; a conflict (another device wrote in between) is answered by
+reading the new sha and writing once more. It pushes after the evening
+close, on the first open of a new day (fixing yesterday in its final state),
+and on a button, spaced by ten minutes for the automatic two, never for the
+button. The repo name and the fine-grained token (Contents read and write on
+that one repo) live under `dienius:cloud-backup` on this device only - not
+in `AppData`, so in no export, no sync payload and no snapshot, and a test
+holds each absence. Restore reads the copy, describes it beside what is here
+("340 tasks across 41 days, newest 4 Sept" against "empty"), and replaces
+only on an armed second press.
+
+### Sync
 
 Optional, off by default, and deliberately not a dependency. Everything in
 this app works with no server, no account and no connection; sync is a layer

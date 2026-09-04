@@ -7926,6 +7926,24 @@ button.danger:focus-visible {
 
 .sync-fields + .sync-actions { margin-top: 0; }
 
+/* The two summaries a restore is decided on, and the armed button under
+   them - inside the block, in the same quiet register as the status line. */
+.backup-preview {
+  margin: var(--s3) 0;
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.backup-preview-line {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.backup-preview .sync-actions { margin-bottom: 0; }
+
 .goal-list.is-archived .goal-title { color: var(--muted); }
 
 /* The Review section. Two lines per goal, the second one the age. */

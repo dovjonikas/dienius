@@ -17,10 +17,11 @@ import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { NorthSettings } from './NorthSettings'
 import { SyncSettings } from './SyncSettings'
+import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'calendars' | 'sync' | 'appearance'
+type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -63,8 +64,11 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
   { id: 'calendars', label: 'Calendars' },
-  // Near the bottom on purpose. Sync is set up once and then never thought
-  // about again; it does not belong next to the things changed weekly.
+  // Near the bottom on purpose. Backup and sync are set up once and then
+  // never thought about again; they do not belong next to the things
+  // changed weekly. Backup before sync: it is the one of the two that
+  // matters on a single device.
+  { id: 'backup', label: 'Backup' },
   { id: 'sync', label: 'Sync' },
   { id: 'appearance', label: 'Appearance' },
 ]
@@ -729,6 +733,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           </div>
 
           <CalendarSettings />
+
+          <BackupSettings />
 
           <SyncSettings />
 

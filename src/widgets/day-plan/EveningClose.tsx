@@ -9,6 +9,7 @@ import {
   shouldClose,
 } from '../../lib/eveningClose'
 import { minutesUntilSleep, sleepProfileWindow, wakingWindow, formatDuration } from './capacity'
+import { requestCloudBackup } from '../../lib/cloudBackup'
 
 const DISMISSED_KEY = 'dienius:evening-dismissed'
 
@@ -72,6 +73,9 @@ export function EveningClose({ date }: { date: string }) {
     if (settings.askBestMoment && moment !== null) actions.setBestMoment(date, moment)
     rememberDismissed(date)
     setDismissed(true)
+    // The day is over, so its copy can be: the one moment a push is owed
+    // that no clock could find. Fire-and-forget - see lib/cloudBackup.ts.
+    void requestCloudBackup('evening-close')
   }
 
   return (
