@@ -635,10 +635,18 @@ proxy refuses anything that is not http or https, and anything resolving to
 localhost, a private range or the tailnet. Without sync there is no
 subscribing, and Settings says so up front; file import is the way in.
 
-The parser reads DTSTART, DTEND, DURATION, SUMMARY and daily/weekly RRULE.
-Monthly and yearly rules are **named in `ignored` rather than approximated** - a
-meeting shown on the wrong day is worse than one not shown at all. Nothing in
-it throws.
+The parser reads DTSTART, DTEND, DURATION, SUMMARY and RRULE: daily, weekly,
+the plain monthly (the same day each month, one BYMONTHDAY or DTSTART's own
+day, a month without that day having no occurrence) and the plain yearly
+(the same date each year). Every other shape a rule can take - BYSETPOS, an
+ordinal BYDAY, a negative day - is **named in `ignored` rather than
+approximated**: a meeting shown on the wrong day is worse than one not shown
+at all. A `TZID` is resolved through `Intl.DateTimeFormat`, which ships the
+IANA tables, so a nine o'clock in New York lands where it falls on the
+viewer's clock; a repeating event is expanded in its own zone and each
+occurrence converted on its own day, so daylight-saving weeks come out right
+on both sides. A zone name the browser does not know - Outlook's own "FLE
+Standard Time" - is read as local and reported. Nothing in it throws.
 
 ---
 

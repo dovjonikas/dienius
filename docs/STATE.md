@@ -170,6 +170,15 @@ Nothing at the moment. The screenshots, the last item here, landed in v1.11.
   browser clock (`openFreshAt` in `e2e/app.ts`) to a Wednesday in
   Vilnius, so the same blocks are ahead of now on every run. CI runs it in
   its own job; the deploy does not wait for it.
+- ~~ICS: named time zones were read as local~~ - resolved in v1.11 through
+  `Intl.DateTimeFormat`, which carries the IANA tables the debt said were
+  needed; there was never a database to ship. A zone the browser does not
+  know (Outlook's Windows names) is still read as local and reported.
+- ~~ICS: monthly and yearly rules were skipped~~ - the plain shapes are read
+  since v1.11: the same day each month, the same date each year, with the
+  RFC's rule that a month without the day has no occurrence. The exotic
+  shapes stay named in `ignored`, for the reason the debt gave. Tests
+  include a trimmed Google export and a trimmed Outlook export.
 - ~~Three bugs the browser tests found in v1.11~~ - the yesterday banner
   vanished on "Push to today" instead of saying what moved, because its
   early return on "nothing unfinished" ran before the confirmation branch;
