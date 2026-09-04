@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from './App'
-import { actions } from './lib/store'
+import { actions, getData } from './lib/store'
 import { defaultData } from './lib/storage'
 import { PRESETS } from './lib/themes'
  import { getTourState, resetTourForTests, startTour } from './lib/tourState'
@@ -150,6 +150,28 @@ test('the command palette can start the tour', async () => {
   await user.keyboard('{Control>}k{/Control}')
   await user.click(screen.getByRole('option', { name: /Take the tour/ }))
   expect(getTourState().active).toBe(true)
+})
+
+/**
+ * The reading plan used to arrive by itself on first open, which meant it
+ * arrived for anybody who opened the live demo - a stranger handed the
+ * owner's actual bookshelf. It is a command now, and nothing else puts it
+ * in. The first test is the one that matters: an ordinary open writes no
+ * library at all.
+ */
+test('opening the app never puts the reading plan in on its own', () => {
+  render(<App />)
+  expect(getData().library).toEqual([])
+})
+
+test('the palette command loads the reading plan and opens the library on it', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('{Control>}k{/Control}')
+  await user.click(screen.getByRole('option', { name: /Load my reading plan/ }))
+  const books = getData().library.find(l => l.name === 'Books')
+  expect(books?.items).toHaveLength(9)
+  expect(screen.getByRole('heading', { name: 'Library' })).toBeInTheDocument()
 })
 
 /**

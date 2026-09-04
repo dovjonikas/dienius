@@ -1,19 +1,25 @@
 import type { AppData, LibraryItem, LibraryList } from './types'
 
 /**
- * The owner's actual reading plan, put in once so it does not have to be
- * typed in.
+ * The owner's actual reading plan, put in on request so it does not have to
+ * be typed in.
  *
- * This is the one place in this app where something is created without being
- * asked for, and it is worth being honest about the tension: everywhere else
- * the rule is "offer, never install" - the starter templates, the starter
- * lists, the demo week. The exception is narrow and conditional. It only ever
- * fires when there is no Books list at all or one with nothing in it, so it
- * cannot overwrite, reorder or duplicate anything anybody has; a single item
- * added by hand stops it forever.
+ * It used to put itself in on first open. That was the one place in this app
+ * where something was created without being asked for, and the comment here
+ * named the tension with "offer, never install" and then did not weigh it
+ * heavily enough: the effect fired for anybody who opened the live demo, and
+ * handed a stranger the owner's real bookshelf. So it is a command now -
+ * "Load my reading plan" in the palette - and nothing runs it on its own.
+ * The owner's other devices never needed the automatic path, because the
+ * plan is in their data and arrives by sync.
  *
- * Read `seedLibrary` for the exact guard. Removing this feature is deleting
- * this file and one call in App.tsx.
+ * The guard stays as it was, because it is still right when the command is
+ * run twice or on a device that already has the list: it only ever fills a
+ * Books list that does not exist or has nothing in it, so it cannot
+ * overwrite, reorder or duplicate anything; a single item added by hand
+ * stops it for good. Read `seedLibrary` for the exact rule. Removing this
+ * feature is deleting this file, one action in store.ts and one palette
+ * entry in App.tsx.
  */
 
 interface SeedItem {

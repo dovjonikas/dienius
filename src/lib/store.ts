@@ -569,23 +569,22 @@ export const actions = {
     })
   },
 
-  /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
   /**
-   * Puts the reading plan in, once, on an install that has no Books list or
-   * an empty one - see lib/librarySeed.ts, which owns the whole rule and the
-   * argument for why this app creates something without being asked exactly
-   * here and nowhere else.
+   * Puts the reading plan in, on request, on an install that has no Books
+   * list or an empty one - see lib/librarySeed.ts, which owns the rule and
+   * the history of why nothing calls this by itself any more.
    *
-   * Skips the commit entirely when there is nothing to do, which is the
-   * ordinary case from the second open onward: seedLibrary returns the same
-   * object, and writing, stamping and syncing an unchanged state every
-   * morning would be a real cost for no reason.
+   * Skips the commit entirely when there is nothing to do, so running the
+   * command a second time, or on a device that already got the list by
+   * sync, writes, stamps and syncs nothing: seedLibrary returns the same
+   * object, and an unchanged state is not worth a save.
    */
   seedLibrary(): void {
     const next = librarySeed(data)
     if (next !== data) commit(next)
   },
 
+  /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
   addLibraryItem(listId: string, input: string): LibraryItem | undefined {
     const parsed = parseLibraryItemInput(input)
     if (!parsed) return undefined

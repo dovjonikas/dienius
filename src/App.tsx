@@ -24,8 +24,6 @@ import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
 import { requestReplan } from './lib/replanState'
 import { requestCapture } from './lib/captureRequest'
-import { isDemoMode } from './lib/demoMode'
-import { isTourSandbox } from './lib/tourMode'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
@@ -67,16 +65,6 @@ export function App() {
   // has actually rendered. A counter rather than a boolean, so pressing N
   // twice in a row focuses twice rather than doing nothing the second time.
   const [focusQuickAdd, setFocusQuickAdd] = useState(0)
-
-  // Once, on mount. It is a no-op from the second open onward - see
-  // actions.seedLibrary and lib/librarySeed.ts - and it deliberately does
-  // not run in demo mode or the tour sandbox, which are separate files whose
-  // whole point is that they hold sample data rather than anybody's.
-  useEffect(() => {
-    if (isDemoMode() || isTourSandbox()) return
-    storeActions.seedLibrary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   useEffect(() => {
     if (focusQuickAdd === 0 || view !== 'day') return
@@ -313,6 +301,19 @@ export function App() {
     { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
     { id: 'shortcuts', label: 'Keyboard shortcuts', detail: 'The single-key list', run: () => setShortcutsOpen(true) },
+    // The reading plan used to load itself on first open, which put the
+    // owner's actual bookshelf in front of anybody who opened the live demo.
+    // It is asked for now, here and nowhere else - see lib/librarySeed.ts.
+    // The owner's own devices get it by sync once one of them has run this.
+    {
+      id: 'seed-library',
+      label: 'Load my reading plan',
+      detail: 'Fills an empty Books list with the standing queue',
+      run: () => {
+        storeActions.seedLibrary()
+        setView('library')
+      },
+    },
     // The tour had exactly one door into it: an offer on a day with nothing
     // on it, which is a screen somebody sees once and never again. Anyone who
     // dismissed it, or arrived after their first day was planned, could not
