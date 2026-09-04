@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
-import { openFreshAt, stampWorkingDay, wednesdayAt } from './app'
+import { openFreshAt, quickAdd, reopenAt, stampWorkingDay, wednesdayAt } from './app'
 
 /**
  * The data's own doors: a backup out and back in around an erase, a
@@ -57,6 +57,51 @@ test('a snapshot from the first open of the day restores the app to that moment'
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
   await expect(page.getByRole('checkbox')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Show me around' })).toBeVisible()
+})
+
+/**
+ * The case the feature exists for, rather than the mechanism: a day was
+ * built, an afternoon went wrong, and this morning's copy brings it back.
+ *
+ * The test above restores the empty snapshot the very first mount takes,
+ * which proves the plumbing and nothing about the day. This one lets a
+ * night pass first, so the snapshot taken on the new day's first open holds
+ * yesterday whole - which is the window `snapshots.ts` describes as "a
+ * short window in which a bad five minutes is recoverable".
+ */
+test('a snapshot taken this morning brings yesterday back after it is wrecked', async ({ page }) => {
+  await quickAdd(page, '14:00 Ring the bank 15min')
+  await quickAdd(page, '16:00 Physio 30min')
+  const wednesday = '2026-09-16'
+
+  // A night passes. The first open of the new day takes a snapshot, and
+  // that copy holds Wednesday in full.
+  await reopenAt(page, new Date(Date.UTC(2026, 8, 17, 8 - 3)))
+  await page.waitForTimeout(600)
+
+  // Now Wednesday is wrecked: every task on it deleted.
+  await page.evaluate(date => {
+    const data = JSON.parse(localStorage.getItem('dienius:data') ?? '{}')
+    data.days[date].tasks = []
+    localStorage.setItem('dienius:data', JSON.stringify(data))
+  }, wednesday)
+  await page.reload()
+  await page.waitForSelector('nav')
+
+  await settings(page)
+  const row = page.getByRole('listitem').filter({ hasText: 'Today' }).first()
+  await expect(row).toContainText('11 tasks')
+  await row.getByRole('button', { name: 'Restore' }).click()
+  await row.getByRole('button', { name: 'Replace everything?' }).click()
+  await page.waitForTimeout(600)
+
+  const back = await page.evaluate(date => {
+    const data = JSON.parse(localStorage.getItem('dienius:data') ?? '{}')
+    return (data.days[date]?.tasks ?? []).map((t: { title: string }) => t.title)
+  }, wednesday)
+  expect(back).toContain('Ring the bank')
+  expect(back).toContain('Physio')
+  expect(back).toContain('Get up, shower, coffee')
 })
 
 test('an imported .ics file lays its events over the day, and free time counts them', async ({ page }) => {

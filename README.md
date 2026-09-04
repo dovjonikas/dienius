@@ -9,6 +9,8 @@
   &nbsp;·&nbsp;
   <a href="https://quicasha.github.io/dienius/">Open the app</a>
   &nbsp;·&nbsp;
+  <a href="docs/DAILY.md">Set it up</a>
+  &nbsp;·&nbsp;
   <a href="docs/ARCHITECTURE.md">How it is built</a>
 </p>
 
@@ -151,6 +153,7 @@ Requires Node 22 or newer.
 
 ## Docs
 
+- [`docs/DAILY.md`](docs/DAILY.md) - for using it rather than building it: setting it up once, and what to do if something looks wrong
 - [`docs/STATE.md`](docs/STATE.md) - where the project is: every feature in a line, what is owed, what will bite you
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - where the code is: the data model, the state flow, which file for which job
 - [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) - how work is done here, and why each rule exists
