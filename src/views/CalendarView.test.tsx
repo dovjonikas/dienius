@@ -58,7 +58,11 @@ test('the month grid wraps each week in a row, so gridcells never sit directly i
     expect(grid).toContainElement(row)
   }
   const gridcells = screen.getAllByRole('gridcell')
-  expect(gridcells).toHaveLength(42)
+  // A whole number of weeks, and only the weeks the month is in - see
+  // monthGrid. It was a flat 42 until v2.0, which drew a whole extra week of
+  // the next month under every five-week month.
+  expect(gridcells.length % 7).toBe(0)
+  expect(gridcells).toHaveLength((rows.length - 1) * 7)
   for (const cell of gridcells) {
     expect(cell.closest('[role="row"]')).not.toBeNull()
   }
@@ -363,12 +367,15 @@ test('two years of stamped days barely change what the month grid costs to draw'
   )
   expect(result.ratio).toBeLessThan(SLOWDOWN_LIMIT)
 
-  // And it drew the right thing: 42 cells, regardless of how much data
-  // exists elsewhere in the year.
+  // And it drew the right thing: whole weeks covering the month, regardless
+  // of how much data exists elsewhere in the year.
   actions.resetForTests(defaultData())
   stampTwoYears()
   render(<CalendarView onOpenDay={() => {}} />)
-  expect(screen.getAllByRole('gridcell')).toHaveLength(42)
+  const cells = screen.getAllByRole('gridcell')
+  expect(cells.length % 7).toBe(0)
+  expect(cells.length).toBeGreaterThanOrEqual(28)
+  expect(cells.length).toBeLessThanOrEqual(42)
 }, STRESS_TIMEOUT_MS)
 
 // --- the week's bar --------------------------------------------------------

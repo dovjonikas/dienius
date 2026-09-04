@@ -489,9 +489,13 @@ export function TemplatesView() {
               </span>
             </div>
             <button aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>Edit</button>
+            {/* Outlined from the start, filled once armed - the two states
+                CONVENTIONS section 6 describes. It used to be a plain button
+                until the first press, which made the control that destroys a
+                template look exactly like the one beside it that opens it. */}
             <button
               aria-label={confirmDeleteId === t.id ? `Confirm delete ${t.name}` : `Delete ${t.name}`}
-              className={confirmDeleteId === t.id ? 'danger' : ''}
+              className={confirmDeleteId === t.id ? 'btn-danger is-armed' : 'btn-danger'}
               onClick={() => handleDeleteClick(t)}
               onBlur={() => setConfirmDeleteId(prev => (prev === t.id ? null : prev))}
             >

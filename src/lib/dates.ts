@@ -19,11 +19,28 @@ export function addDays(key: string, n: number): string {
   return dateKey(new Date(y, m - 1, d + n))
 }
 
+/**
+ * The month as whole Monday-to-Sunday weeks: as many as the month actually
+ * touches, and no more.
+ *
+ * It used to be a flat 42 cells, six rows, always. September 2026 starts on
+ * a Tuesday and has thirty days, so it fills five rows exactly - and the
+ * sixth was a whole week of October, drawn under the month, spending a
+ * seventh of the height on days that belong to a month nobody asked for.
+ * That height is the thing the zero-scroll rule in CONVENTIONS section 4
+ * fights for on a 1366x768 laptop.
+ *
+ * A trailing partial week is still drawn whole, because a week with three
+ * empty cells at the end is what a calendar looks like; it is a week the
+ * month is genuinely in.
+ */
 export function monthGrid(year: number, month: number): MonthCell[] {
   const first = new Date(year, month, 1)
   const offset = (first.getDay() + 6) % 7
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const weeks = Math.ceil((offset + daysInMonth) / 7)
   const cells: MonthCell[] = []
-  for (let i = 0; i < 42; i++) {
+  for (let i = 0; i < weeks * 7; i++) {
     const d = new Date(year, month, 1 - offset + i)
     cells.push({ key: dateKey(d), inMonth: d.getMonth() === month })
   }

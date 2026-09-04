@@ -68,7 +68,13 @@ export function NorthSettings() {
                     </button>
                     <button
                       type="button"
-                      className="setting-remove"
+                      /* Quiet, not red. Archiving a goal carries no verdict -
+                         "achieved" and "abandoned" is exactly the scoring
+                         North refuses to do, ARCHITECTURE section 6 - and a
+                         control in --danger says one of the two before
+                         anybody has pressed it. --danger stays for Delete,
+                         further down, which does destroy something. */
+                      className="setting-quiet"
                       onClick={() => actions.archiveGoal(goal.id, today)}
                     >
                       Archive

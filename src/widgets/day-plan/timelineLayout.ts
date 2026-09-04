@@ -760,29 +760,40 @@ export function legibleHourLabels(
   return kept
 }
 
-// Anchors that touch or overlap in their drawn interval (see
-// `drawnInterval`) share one vertical extent on the grid regardless of how
-// many side-by-side columns they end up packed into - a cluster's own
-// floor is the largest floor any of its members need, so a short anchor
-// sharing a cluster with a longer one never has to fend for itself.
+/**
+ * Anchors that touch or overlap in their drawn interval (see
+ * `drawnInterval`) share one vertical extent on the grid regardless of how
+ * many side-by-side columns they end up packed into.
+ *
+ * **A cluster's floor is the tallest of its columns, not the tallest of its
+ * blocks.** Two blocks that do not overlap each other share a column, and
+ * they are stacked, so that column needs both their floors end to end. The
+ * older rule - the largest floor any one member needs - reserved 32px for a
+ * column holding two 32px blocks, and the second was drawn eleven pixels
+ * below the first's top: a full day at 1920x1080 had "Reply to the
+ * landlord" sliced across the middle by "Wash the car". The claim in
+ * `TimelineGrid` that a member's own minimum "can never push into whatever
+ * comes after the cluster" was true of the cluster and false of a column
+ * inside it.
+ */
 function buildAnchorClusters(
   anchors: TimelineAnchorBlock[],
   sizedFloorPx: number,
   unsizedFloorPx: number,
 ): Array<{ start: number; end: number; floorPx: number }> {
-  const clusters: Array<{ start: number; end: number; floorPx: number }> = []
+  const clusters: Array<{ start: number; end: number; floorPx: number; perColumn: Map<number, number> }> = []
   for (const block of anchors) {
     const interval = drawnInterval(block)
     const floorPx = block.sized ? sizedFloorPx : unsizedFloorPx
     const last = clusters[clusters.length - 1]
     if (last && interval.start <= last.end) {
       last.end = Math.max(last.end, interval.end)
-      last.floorPx = Math.max(last.floorPx, floorPx)
+      last.perColumn.set(block.column, (last.perColumn.get(block.column) ?? 0) + floorPx)
     } else {
-      clusters.push({ start: interval.start, end: interval.end, floorPx })
+      clusters.push({ start: interval.start, end: interval.end, floorPx, perColumn: new Map([[block.column, floorPx]]) })
     }
   }
-  return clusters
+  return clusters.map(c => ({ start: c.start, end: c.end, floorPx: Math.max(...c.perColumn.values()) }))
 }
 
 /** Every whole hour mark that falls within the window, for the hour gridlines. */

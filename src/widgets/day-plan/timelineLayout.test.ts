@@ -550,3 +550,51 @@ test('sleepBands measures a night day against the night sleep setting, not the o
   // back further, to a full 90-minute band ending at the 18:00 boundary.
   expect(layout.sleepBands).toEqual([{ start: 16 * 60 + 30, end: 18 * 60 }])
 })
+// --- a cluster's floor is its tallest column ------------------------------
+//
+// Two anchors that do not overlap each other share a column. A third that
+// overlaps both pulls all three into one cluster, and the cluster's own
+// floor used to be the largest floor any single member needed - one 32px
+// for a column holding two 32px blocks stacked. On a full day at 1920x1080
+// that drew "Wash the car" across the middle of "Reply to the landlord".
+// The floor is the tallest column's stacked total now.
+
+test('a column holding two stacked anchors gets room for both their floors', () => {
+  // 14:45-15:10 and 15:15-16:15 do not overlap, so they share column 0;
+  // 15:00-16:00 overlaps both and takes column 1, which is what makes all
+  // three one cluster.
+  const layout = computeTimelineLayout([
+    anchor('Landlord', '14:45', 25),
+    anchor('Quarter numbers', '15:00', 60),
+    anchor('Wash the car', '15:15', 60),
+  ])
+  // A density low enough that ninety minutes is worth less than two floors.
+  const squeezed = { ...OPTS, pxPerMinute: 0.3 }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, squeezed)
+
+  const first = layout.anchors.find(a => a.id === 'Landlord')!
+  const second = layout.anchors.find(a => a.id === 'Wash the car')!
+  expect(first.column).toBe(second.column)
+
+  // The cluster spans 14:45 to 16:15 and its tallest column holds two 32px
+  // blocks, so the whole cluster is 64px rather than the 32 it used to be.
+  const clusterHeight = vertical.topPx(975) - vertical.topPx(885)
+  expect(clusterHeight).toBeCloseTo(64, 5)
+
+  // Inside a cluster the map is still proportional, so the first block's
+  // own share of that is thirty of ninety minutes - twenty-one pixels, not
+  // thirty-two. That is why `TimelineGrid` also caps a block's drawn height
+  // at the next one in its column: the room doubled, and a block that still
+  // cannot have its floor is drawn short rather than over its neighbour.
+  const room = vertical.topPx(second.startMinutes) - vertical.topPx(first.startMinutes)
+  expect(room).toBeCloseTo((30 / 90) * 64, 5)
+})
+
+test('a lone short anchor still gets exactly its own floor and no more', () => {
+  const layout = computeTimelineLayout([anchor('Standup', '09:00', 15), anchor('Deep work', '11:00', 120)])
+  const squeezed = { ...OPTS, pxPerMinute: 0.3, gapFloorPx: 0 }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, squeezed)
+  const top = vertical.topPx(540)
+  const bottom = vertical.topPx(555)
+  expect(bottom - top).toBeCloseTo(32, 5)
+})

@@ -84,6 +84,14 @@ const SIZED_MIN_HEIGHT_PX = 32
 const COMPACT_HEIGHT_PX = 40
 
 /**
+ * Below this a block cannot hold a padded line of title, so it draws the
+ * line centred with no vertical padding at all - see
+ * `.timeline-anchor-squeezed`. Reached only when a column is crowded enough
+ * that the block is capped at the room before the next one in it.
+ */
+const SQUEEZED_HEIGHT_PX = 26
+
+/**
  * The shortest a gap's own tap target is ever drawn, regardless of how
  * short the free stretch really is - the same floor `MIN_ANCHOR_HEIGHT`
  * applies to an unsized anchor, applied here so a 10-minute gap between two
@@ -600,18 +608,31 @@ export function TimelineGrid({
               )
             })}
 
-            {anchors.map(anchor => {
+            {anchors.map((anchor, index) => {
               const top = vertical.topPx(anchor.startMinutes)
               const bottom = anchor.sized ? vertical.topPx(anchor.endMinutes!) : undefined
               const heightPx = bottom !== undefined ? bottom - top : undefined
-              const minHeightPx = anchor.sized ? SIZED_MIN_HEIGHT_PX : unsizedAnchorFloorPx
-              // The cluster this anchor belongs to already reserves at
-              // least minHeightPx of vertical room (computeVerticalLayout),
-              // so this Math.max is only ever a safety net for one member
-              // of a multi-column cluster whose own span is shorter than
-              // its longer column-mates - it can never push into whatever
-              // comes after the cluster as a whole.
-              const blockHeightPx = Math.max(heightPx ?? minHeightPx, minHeightPx)
+              // Where the next block sharing this column begins. A block
+              // raised to its own minimum must stop there: the vertical map
+              // is proportional *inside* a cluster, so a 25-minute block
+              // among 90 minutes of cluster gets a fifth of it and its 32px
+              // minimum would otherwise be drawn straight over the block
+              // stacked under it. Capping means a squeezed block is short
+              // rather than on top of its neighbour, which is the honest
+              // picture of a crowded afternoon.
+              const nextInColumn = anchors
+                .slice(index + 1)
+                .find(other => other.column === anchor.column)
+              const room = nextInColumn ? vertical.topPx(nextInColumn.startMinutes) - top : Infinity
+              const minHeightPx = Math.min(anchor.sized ? SIZED_MIN_HEIGHT_PX : unsizedAnchorFloorPx, room)
+              // The cluster this anchor belongs to reserves at least
+              // minHeightPx per *column* (buildAnchorClusters), so a block
+              // raised to its minimum has room stacked for it whether it
+              // sits beside its cluster-mates or under them. Reserved per
+              // block rather than per cluster since v2.0: two blocks that
+              // do not overlap share a column, and one cluster-wide floor
+              // let the second draw over the first's title.
+              const blockHeightPx = Math.max(Math.min(heightPx ?? minHeightPx, room), minHeightPx)
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
@@ -640,6 +661,8 @@ export function TimelineGrid({
               if (sourceTask?.done) classNames.push('timeline-anchor-done')
               if (activeTaskId === anchor.id) classNames.push('timeline-anchor-now')
               if (compact) classNames.push('timeline-anchor-compact')
+              // Not enough room for one padded line of title. See the CSS.
+              if (blockHeightPx < SQUEEZED_HEIGHT_PX) classNames.push('timeline-anchor-squeezed')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
               return (
@@ -648,7 +671,7 @@ export function TimelineGrid({
                   className={classNames.join(' ')}
                   style={{
                     top: `${top}px`,
-                    height: heightPx !== undefined ? `${heightPx}px` : undefined,
+                    height: heightPx !== undefined ? `${Math.min(heightPx, room)}px` : undefined,
                     minHeight: `${minHeightPx}px`,
                     left: `calc(${GUTTER_PX}px + (100% - ${GUTTER_PX}px) * ${anchor.column * fraction})`,
                     width: `calc((100% - ${GUTTER_PX}px) * ${fraction} - 4px)`,

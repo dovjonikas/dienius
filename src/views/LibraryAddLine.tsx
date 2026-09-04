@@ -136,7 +136,11 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           value={effective.total === undefined ? '' : String(effective.total)}
           onChange={next => apply({ ...effective, total: next === '' ? undefined : Number(next) })}
           ariaLabel={effectiveTrack === 'pages' ? 'How many pages' : `How many ${unitPlural(list)}`}
-          placeholder={effectiveTrack === 'pages' ? 'pages' : unitPlural(list)}
+          // Not the unit word: the control immediately to the left already
+          // says "chapters", and two adjacent controls reading the same word
+          // is one of them looking like a duplicate of the other. This one
+          // asks how many; that one asks of what.
+          placeholder="how many"
         />
       )}
       {effectiveTrack === 'series' && (

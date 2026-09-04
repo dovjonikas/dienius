@@ -395,7 +395,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
           </div>
           <button
             type="button"
-            className={confirmDelete ? 'btn-danger armed' : 'btn-danger'}
+            className={confirmDelete ? 'btn-danger is-armed' : 'btn-danger'}
             onClick={() => (confirmDelete ? actions.deleteLibraryList(list.id) : setConfirmDelete(true))}
             onBlur={() => setConfirmDelete(false)}
           >

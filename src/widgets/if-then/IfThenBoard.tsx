@@ -330,7 +330,7 @@ export function IfThenBoard() {
                     aria-label={
                       confirmDeleteId === entry.id ? `Confirm delete "${entry.trigger}"` : `Delete "${entry.trigger}"`
                     }
-                    className={confirmDeleteId === entry.id ? 'danger' : ''}
+                    className={confirmDeleteId === entry.id ? 'btn-danger is-armed' : 'btn-danger'}
                     onClick={() => handleDeleteClick(entry)}
                     onBlur={() => setConfirmDeleteId(prev => (prev === entry.id ? null : prev))}
                   >

@@ -367,8 +367,19 @@ textarea {
   margin-inline: auto;
 }
 
-.calendar,
 .templates { max-width: 860px; }
+
+/* The calendar is not a document and does not want a reading width. A month
+   is a grid of seven columns and a week is seven days of one timeline: at
+   860px on a 1920 window a third of the screen stood empty while every
+   block title in the week view truncated and every month cell dropped its
+   ratio for want of room. It takes the shell's width now, with a cap that
+   keeps a cell from becoming a poster. */
+.calendar {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+}
 
 /* A tablet in portrait is below the 1024px two-pane breakpoint - splitting
    753px into two panes leaves neither wide enough to be a timeline - so it
@@ -383,6 +394,16 @@ textarea {
 
 /* The Library is a document too, and reads at the same width as Templates. */
 .library { max-width: 860px; }
+
+/* The shell's bottom air, given back on the one view that has to fit. On a
+   phone the month came out 23px past the fold with everything else already
+   at its floor, and 24px of that was the shell's own padding below the last
+   row - a gap the grid's own gutter already provides on this screen. Only
+   here and only on a phone: on a desktop the month fits with room, and
+   every other view scrolls anyway and wants the air at the end. */
+@media (max-width: 699px) {
+  .app:has(.calendar) { padding-bottom: env(safe-area-inset-bottom); }
+}
 
 main { flex: 1 1 auto; min-height: 0; }
 
@@ -1546,6 +1567,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   padding: 3px 8px;
 }
 
+/* Shorter than one padded line. A block whose column is crowded is capped
+   at the room before the next block in it (see TimelineGrid), so on a full
+   afternoon a 25-minute task can come out at twenty pixels. Its one line of
+   title still has to be a whole line rather than a row of sliced glyphs, so
+   the padding goes and the line is centred in whatever height is left. */
+.timeline-anchor.timeline-anchor-squeezed {
+  justify-content: center;
+  padding-block: 0;
+}
+
+.timeline-anchor-squeezed .timeline-anchor-title { line-height: 1.1; }
+
 .timeline-anchor-title,
 .timeline-anchor-time {
   min-width: 0;
@@ -2479,6 +2512,27 @@ textarea:focus {
 }
 
 .setting-remove:hover { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+
+/* The same shape for something that is ordinary rather than destructive -
+   archiving a goal, which carries no verdict (ARCHITECTURE section 6). It
+   used to borrow .setting-remove and came out red and underlined beside a
+   plain Edit, which reads as "give up on this" before anybody presses it. */
+.setting-quiet {
+  align-self: flex-start;
+  min-height: 0;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setting-quiet:hover { color: var(--text); }
+
+.setting-quiet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .setting-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -3685,7 +3739,16 @@ button.danger {
 }
 
 .cell.outside { opacity: 0.35; }
-.cell.today { border-color: var(--accent); border-width: 2px; }
+/* Today, marked outside the cell rather than on its edge. The border was in
+   --accent, and a day carrying a template drawn in the palette's Blue - the
+   nearest neighbour of the accent - swallowed it: the ring measured
+   #8AA4F2 against a #A7C4F5 fill and today looked like every other stamped
+   day in the row. An outline sits on the page's own ground, which contrasts
+   with the accent whatever colour the template is. */
+.cell.today {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .cell.staged { outline: 2px dashed var(--accent); outline-offset: -2px; }
 
 .cell:focus-visible {
@@ -4313,6 +4376,17 @@ button.danger {
   margin-top: var(--s6);
 }
 
+/* A window wide enough to hold the whole year at a size somebody can aim
+   at. Ten pixels is the phone's floor, where the grid scrolls sideways
+   whatever it is; a 1280px desktop has room for fourteen, and 366 cells at
+   ten pixels in a 1920 window was a stamp in the corner of a screen with
+   nothing else on it. Still fixed rather than fluid: the cell is a target
+   as well as a mark, and a size that moves with the window would make the
+   same day a different thing to click on two machines. */
+@media (min-width: 1280px) {
+  .year-strip { --year-cell: 14px; }
+}
+
 .year-scroll {
   display: flex;
   gap: var(--s2);
@@ -4425,8 +4499,12 @@ button.danger {
   color: rgba(0, 0, 0, 0.65);
 }
 
+/* A measure, like every other paragraph in this app. It ran the full width
+   of the window - 1270px of one line on a 1920 screen - because it was the
+   only explanatory paragraph with nothing capping it. */
 .year-strip-legend {
   margin-top: var(--s2);
+  max-width: 68ch;
 }
 
 /* The focus countdown - src/widgets/day-plan/FocusView.tsx. A whole screen
@@ -5869,6 +5947,15 @@ button.danger:focus-visible {
     display: flex;
     flex-direction: column;
     gap: var(--s2);
+    /* The last resort, for the evening of a full day on a short laptop. The
+       column below pins quick-add to the top and the folds to the bottom and
+       gives the list whatever is left - and what was left, at 1366x768 with
+       the evening close card above the day, was nothing: the list measured
+       zero pixels tall with seven tasks in it and the day showed no tasks at
+       all. A pane that scrolls is worse than one that does not; a pane that
+       silently shows none of the day is not a planner. */
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
   /* The open list takes the column's slack and, only if a day is genuinely
@@ -5891,6 +5978,27 @@ button.danger:focus-visible {
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
+  }
+
+  /* Two cards, always - but only once there are cards. Zero height is what
+     this was before, and zero is a day view with no day on it (see
+     .task-pane's own note above); on a day with nothing on it yet, zero is
+     exactly right, and a floor there put 120px of empty ruled band under the
+     first-run invitation that read as something failing to render. */
+  .task-pane .task-list:not(:empty) {
+    min-height: 7.5rem;
+    /* And when it is scrolling, it says so. A thin overlay scrollbar draws
+       nothing at all until the pointer is over the list, so on the evening
+       of a full day four cards were shown, three were not, and there was no
+       mark of any kind to say the list went on. Two shades, in the page's
+       own ground, attached to the scroller: the top one is painted over by
+       the local layer while the list is at its top and appears the moment it
+       is not, and the bottom one is there whenever there is more below. */
+    background:
+      linear-gradient(var(--bg), transparent) center top / 100% 18px no-repeat local,
+      linear-gradient(transparent, var(--bg)) center bottom / 100% 18px no-repeat local,
+      linear-gradient(color-mix(in srgb, var(--text) 22%, transparent), transparent) center top / 100% 10px no-repeat scroll,
+      linear-gradient(transparent, color-mix(in srgb, var(--text) 22%, transparent)) center bottom / 100% 10px no-repeat scroll;
   }
 
   /* The pane's own 10px gap already separates quick-add from the list; the
@@ -8116,12 +8224,18 @@ button.danger:focus-visible {
   .calendar { flex: 1 1 auto; min-height: 0; }
 
   /* A floor as well as a share: a 30px row is not a calendar, and if the
-     window is genuinely too short for six of them the page scrolls, which is
-     the honest outcome. */
+     window is genuinely too short for the weeks it has the page scrolls,
+     which is the honest outcome.
+
+     Auto rows rather than `repeat(6, ...)`: a month is four, five or six
+     weeks long and `monthGrid` now emits only the ones it touches, so a
+     declared sixth track would be an empty week's worth of height on every
+     month that fits in five - which is most of them. */
   .calendar-grid {
     flex: 1 1 auto;
     min-height: 0;
-    grid-template-rows: auto repeat(6, minmax(52px, 1fr));
+    grid-template-rows: auto;
+    grid-auto-rows: minmax(52px, 1fr);
   }
 
   .cell {
