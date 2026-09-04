@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
@@ -6,9 +6,10 @@ import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { useCaptureRequest } from '../../lib/captureRequest'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel, type CategoryId } from '../../lib/categories'
 import { TimeColumns } from '../../views/TimeColumns'
-import { MinuteStepInput } from '../../views/MinuteStepInput'
+import { DurationControl } from '../../views/DurationControl'
+import { useClickAway } from '../../lib/useClickAway'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
-import { durationToText, parseQuickAdd, replaceLeadingTime, replaceTrailingDuration } from './parse'
+import { parseQuickAdd, replaceLeadingTime, replaceTrailingDuration } from './parse'
 import { formatDuration } from './capacity'
 import { stepToQuarter, suggestSlot } from './autoSlot'
 import { DURATION_CHOICES, readLastDuration, rememberDuration } from './quickAddPrefs'
@@ -182,7 +183,6 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
       if (!parsed) return
       actions.addBacklogItem({ title: parsed.title, category: newCategory, minutes: effectiveMinutes })
       setInput('')
-      setDurationOpen(false)
       clearDraft()
       return
     }
@@ -209,7 +209,6 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
     setTimeMode('auto')
     setSetTime('')
     setTimeOpen(false)
-    setDurationOpen(false)
     clearDraft()
   }
 
@@ -330,50 +329,16 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
         />
 
+        {/* The one duration control - DurationControl.tsx - opening on the
+            length remembered from last time. Four chips here rather than
+            six: the row is narrow, and quick-add's tasks are the short ones. */}
         {showsDuration && (
-          <div className="quick-add-duration" ref={durationRef} data-tour="quick-add-duration">
-            <button
-              type="button"
-              className="quick-add-duration-value"
-              aria-expanded={durationOpen}
-              aria-label={`${formatDuration(effectiveMinutes)} long. Change how long.`}
-              title={`${formatDuration(effectiveMinutes)} long`}
-              onClick={() => setDurationOpen(open => !open)}
-            >
-              {durationToText(effectiveMinutes)}
-            </button>
-            {durationOpen && (
-              <div className="quick-add-duration-panel">
-                <div className="quick-add-duration-chips" role="group" aria-label="How long">
-                  {DURATION_CHOICES.map(minutes => (
-                    <button
-                      key={minutes}
-                      type="button"
-                      className={effectiveMinutes === minutes ? 'is-on' : ''}
-                      aria-pressed={effectiveMinutes === minutes}
-                      onClick={() => {
-                        pickDuration(minutes)
-                        setDurationOpen(false)
-                      }}
-                    >
-                      {durationToText(minutes)}
-                    </button>
-                  ))}
-                </div>
-                {/* Anything the four chips do not cover, without leaving the
-                    row: the same stepper the template editor uses, so a
-                    duration is entered one way in this app and not two. */}
-                <MinuteStepInput
-                  value={String(effectiveMinutes)}
-                  onChange={next => {
-                    const minutes = Number(next)
-                    if (Number.isInteger(minutes) && minutes > 0) pickDuration(minutes)
-                  }}
-                  ariaLabel="How long, in minutes"
-                />
-              </div>
-            )}
-          </div>
+          <DurationControl
+            minutes={effectiveMinutes}
+            choices={DURATION_CHOICES}
+            onChange={minutes => minutes !== undefined && pickDuration(minutes)}
+            tour="quick-add-duration"
+          />
         )}
       </div>
 
@@ -428,31 +393,3 @@ function clockNow(now: Date): string {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-/**
- * Closes a panel on a pointerdown outside it or on Escape - never on the
- * first pick inside it. Closing on a pick meant an hour and a minute cost
- * four taps: choose the hour, watch it shut, open it again, choose the
- * minute. Pointerdown rather than click, so the panel is gone before whatever
- * was under it reacts.
- */
-function useClickAway(ref: React.RefObject<HTMLElement | null>, open: boolean, close: () => void) {
-  useEffect(() => {
-    if (!open) return
-    function onDown(e: PointerEvent) {
-      if (!ref.current?.contains(e.target as Node)) close()
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      close()
-    }
-    document.addEventListener('pointerdown', onDown)
-    document.addEventListener('keydown', onKey, true)
-    return () => {
-      document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('keydown', onKey, true)
-    }
-    // close and ref are stable for the life of the panel being open.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-}

@@ -7,6 +7,7 @@ import type { DayType, LibraryList, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
+import { DurationControl } from './DurationControl'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these. Not
@@ -286,14 +287,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
           onChange={e => setBlockTitle(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && addBlock()}
         />
-        <input
-          className="minutes-input"
-          inputMode="numeric"
-          aria-label="Size in minutes"
-          placeholder="min"
-          value={blockMinutes}
-          onChange={e => setBlockMinutes(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addBlock()}
+        <DurationControl
+          minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
+          allowEmpty
+          stepperLabel="Size in minutes"
+          onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
         />
         {/* Same six swatches as quick-add on the day view, for the same
             reason - a template is where most tasks actually get their colour,

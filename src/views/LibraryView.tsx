@@ -16,6 +16,10 @@ import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
 import { CATEGORIES } from '../lib/categories'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
 import { useListReorder } from './useListReorder'
+import { LibraryAddLine } from './LibraryAddLine'
+import { TimePicker } from './TimePicker'
+import { DurationControl } from './DurationControl'
+import { suggestShortForm, UNIT_SUGGESTIONS } from '../lib/library'
 import { offerUndo } from '../lib/undo'
 
 /**
@@ -168,7 +172,15 @@ function NewListForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('')
   const [short, setShort] = useState('')
+  // The short form follows the unit until it is typed by hand: "lesson"
+  // suggests "ls" on its own, and one keystroke in the box takes over.
+  const [shortTouched, setShortTouched] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
+
+  function pickUnit(next: string) {
+    setUnit(next)
+    if (!shortTouched) setShort(suggestShortForm(next))
+  }
 
   useEffect(() => {
     nameRef.current?.focus()
@@ -210,13 +222,36 @@ function NewListForm({ onDone }: { onDone: () => void }) {
         {/* Singular, because that is the form somebody thinks in when naming
             it, and the plural is derivable from it far more often than the
             other way round. */}
-        <label className="field">
+        <div className="field">
           <span className="field-label">One of them is a</span>
-          <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="lesson" />
-        </label>
+          {/* The words lists are usually counted in, as chips, and a box for
+              the rest. Typing was never hard; choosing is one press. */}
+          <div className="duration-chips library-unit-chips" role="group" aria-label="One of them is a">
+            {UNIT_SUGGESTIONS.map(word => (
+              <button
+                key={word}
+                type="button"
+                className={unit === word ? 'is-on' : ''}
+                aria-pressed={unit === word}
+                onClick={() => pickUnit(word)}
+              >
+                {word}
+              </button>
+            ))}
+          </div>
+          <input value={unit} onChange={e => pickUnit(e.target.value)} placeholder="or type one" aria-label="Another unit" />
+        </div>
         <label className="field">
           <span className="field-label">Short form</span>
-          <input value={short} onChange={e => setShort(e.target.value)} placeholder="ls" maxLength={4} />
+          <input
+            value={short}
+            onChange={e => {
+              setShortTouched(true)
+              setShort(e.target.value)
+            }}
+            placeholder="ls"
+            maxLength={4}
+          />
         </label>
       </div>
       <div className="library-new-actions">
@@ -240,7 +275,7 @@ interface ListSectionProps {
 
 function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [draft, setDraft] = useState('')
+
   const [showFinished, setShowFinished] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -255,11 +290,6 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
   // that with a timestamp would make the order they arranged mean nothing.
   const [active, ...rest] = going
 
-  function add() {
-    if (!draft.trim()) return
-    actions.addLibraryItem(list.id, draft)
-    setDraft('')
-  }
 
   /** Removing an item, with the whole list kept for five seconds. */
   function removeItem(itemId: string, title: string) {
@@ -386,27 +416,10 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             </ul>
           )}
 
-          {/* One field, one line, one Enter. The count is optional and comes
-              from the same line - "Daring Greatly, 12 chapters" - and so is
-              the shape: "139 pages", "3 seasons", "movie". */}
-          <div className="library-add">
-            <input
-              value={draft}
-              data-tour="library-add"
-              placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
-              aria-label={`Add to ${list.name}`}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  add()
-                }
-              }}
-            />
-            <button type="button" className="btn-secondary" disabled={!draft.trim()} onClick={add}>
-              Add
-            </button>
-          </div>
+          {/* The words, and two controls that already hold an answer - see
+              LibraryAddLine.tsx. "Daring Greatly, 12 chapters" still works,
+              and the controls redraw to show what was read. */}
+          <LibraryAddLine list={list} />
 
           {finished.length > 0 && (
             <div className="library-finished">
@@ -663,6 +676,19 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
                 }}
               />
               <span className="muted">of {item.total ?? '?'}</span>
+              {/* A sitting is ten or twenty-five pages more often than it is
+                  one, and typing the new number means remembering the old. */}
+              {[10, 25].map(step => (
+                <button
+                  key={step}
+                  type="button"
+                  className="library-step library-step-wide"
+                  aria-label={`${step} pages more of ${item.title}`}
+                  onClick={() => actions.setLibraryItemProgress(list.id, item.id, itemProgress(item) + step, todayKey())}
+                >
+                  +{step}
+                </button>
+              ))}
             </>
           ) : (
             <div className="library-item-progress">
@@ -798,14 +824,19 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
           ))}
         </select>
       </label>
-      <label className="field">
+      <div className="field">
         <span className="field-label">At</span>
-        <input value={time} placeholder="21:00" onChange={e => setTime(e.target.value)} />
-      </label>
-      <label className="field">
+        <TimePicker value={time} onChange={setTime} ariaLabel="At" placeholder="21:00" />
+      </div>
+      <div className="field">
         <span className="field-label">For</span>
-        <input value={minutes} inputMode="numeric" onChange={e => setMinutes(e.target.value)} />
-      </label>
+        <DurationControl
+          minutes={minutes.trim() === '' ? undefined : Number(minutes)}
+          allowEmpty
+          stepperLabel="For, in minutes"
+          onChange={next => setMinutes(next === undefined ? '' : String(next))}
+        />
+      </div>
       {clash ? (
         // Offered, never done twice: two reading blocks on one template both
         // pointing at the same list is not something anybody meant.

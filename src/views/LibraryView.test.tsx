@@ -36,15 +36,32 @@ test('tapping a starter creates that list, counted in its own unit', async () =>
   expect(screen.getByText(/counted in chapters/)).toBeInTheDocument()
 })
 
-test('a list of a kind nobody shipped can be built by hand', async () => {
+// The unit is a chip now, and the short form follows it on its own - typing
+// "lesson" and then "ls" was two answers to one question. The typed box
+// stays for a unit nobody thought of.
+test('a list of a kind nobody shipped can be built by hand, with the unit a chip and the short form suggested', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
   await user.click(screen.getByRole('button', { name: 'Something else' }))
   await user.type(screen.getByLabelText('List name'), 'Courses')
-  await user.type(screen.getByLabelText('One of them is a'), 'lesson')
-  await user.type(screen.getByLabelText('Short form'), 'ls')
+  await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'lesson' }))
+  expect(screen.getByLabelText('Short form')).toHaveValue('ls')
   await user.click(screen.getByRole('button', { name: 'Create list' }))
   expect(getData().library[0]).toMatchObject({ name: 'Courses', unit: 'lesson', unitShort: 'ls' })
+})
+
+test('a unit typed by hand suggests its own short form, until the short form is typed', async () => {
+  const user = userEvent.setup()
+  render(<LibraryView />)
+  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.type(screen.getByLabelText('List name'), 'Swimming')
+  await user.type(screen.getByLabelText('Another unit'), 'lap')
+  expect(screen.getByLabelText('Short form')).toHaveValue('la')
+  await user.clear(screen.getByLabelText('Short form'))
+  await user.type(screen.getByLabelText('Short form'), 'lp')
+  await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'session' }))
+  // Typed by hand, so the chip no longer overwrites it.
+  expect(screen.getByLabelText('Short form')).toHaveValue('lp')
 })
 
 test('a list with no name or no unit cannot be created', async () => {

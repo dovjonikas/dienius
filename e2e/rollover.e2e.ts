@@ -23,7 +23,7 @@ test('a daily repeat is on the next morning, and yesterday is pushed forward in 
   await page.getByRole('button', { name: 'More actions for Water the plants' }).click()
   await page.getByRole('button', { name: 'Details' }).click()
   const detail = page.getByRole('dialog', { name: 'Water the plants' })
-  await detail.getByLabel('Repeats').selectOption({ label: 'Every day' })
+  await detail.getByRole('group', { name: 'Repeats' }).getByRole('button', { name: 'Every day' }).click()
   await expect(detail.getByRole('group', { name: 'Changes apply to' })).toBeVisible()
   await page.getByRole('button', { name: 'Close details' }).click()
 

@@ -4,7 +4,9 @@ import { CATEGORIES, categoryColor } from '../../lib/categories'
 import { progressLabel, progressPercent } from '../../lib/library'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
 import { TimePicker } from '../../views/TimePicker'
-import { formatDuration, parseMinutesInput, stepTime } from './capacity'
+import { MinuteStepInput } from '../../views/MinuteStepInput'
+import { DurationChips } from '../../views/DurationControl'
+import { formatDuration, stepTime } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -44,7 +46,6 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
   const [pullY, setPullY] = useState(0)
   const [title, setTitle] = useState(task.title)
   const [note, setNote] = useState(task.note ?? '')
-  const [size, setSize] = useState(task.minutes !== undefined ? String(task.minutes) : '')
   const [subtaskDraft, setSubtaskDraft] = useState('')
   // Which of the two a change means, held while the sheet is open. Defaults
   // to the series, because that is what somebody who set up a repeat almost
@@ -95,11 +96,6 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
     else setTitle(task.title)
   }
 
-  function commitSize() {
-    const parsed = parseMinutesInput(size)
-    actions.setTaskMinutes(date, task.id, parsed)
-    setSize(parsed !== undefined ? String(parsed) : '')
-  }
 
   /**
    * Swipe down to close, from the grab bar only.
@@ -220,23 +216,22 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
             </div>
           </div>
 
+          {/* The number, and the six lengths a task usually is beside it:
+              a chip is one press where the box is arithmetic, and the box
+              stays for the seventh length. Both write the same field. */}
           <div className="task-detail-field">
             <span className="task-detail-label">Size</span>
             <div className="task-detail-time">
-              <input
-                className="task-detail-size"
-                inputMode="numeric"
-                aria-label="Size in minutes"
-                placeholder="min"
-                value={size}
-                onChange={e => setSize(e.target.value)}
-                onBlur={commitSize}
-                onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+              <MinuteStepInput
+                value={task.minutes === undefined ? '' : String(task.minutes)}
+                ariaLabel="Size in minutes"
+                onChange={next => actions.setTaskMinutes(date, task.id, next === '' ? undefined : Number(next))}
               />
               {task.minutes !== undefined && (
                 <span className="task-detail-hint">{formatDuration(task.minutes)}</span>
               )}
             </div>
+            <DurationChips minutes={task.minutes} onChange={minutes => actions.setTaskMinutes(date, task.id, minutes)} label="Size" />
           </div>
 
           <div className="task-detail-field">
@@ -282,19 +277,21 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
 
           <div className="task-detail-field">
             <span className="task-detail-label">Repeats</span>
-            <select
-              aria-label="Repeats"
-              value={task.repeat ?? ''}
-              onChange={e =>
-                actions.setTaskRepeat(date, task.id, (e.target.value || undefined) as Repeat | undefined, scope)
-              }
-            >
+            {/* Four named shapes as buttons, not a dropdown: every answer is
+                on screen, and one press is the whole of choosing. */}
+            <div className="segmented" role="group" aria-label="Repeats">
               {REPEATS.map(r => (
-                <option key={r.value} value={r.value}>
+                <button
+                  key={r.value}
+                  type="button"
+                  className={(task.repeat ?? '') === r.value ? 'active' : ''}
+                  aria-pressed={(task.repeat ?? '') === r.value}
+                  onClick={() => actions.setTaskRepeat(date, task.id, (r.value || undefined) as Repeat | undefined, scope)}
+                >
                   {r.label}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
             {/* Only once a task is genuinely part of a series. Asked before
                 the change rather than after it, as a standing choice rather
                 than a dialog: a confirmation that appears every single time

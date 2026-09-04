@@ -602,6 +602,20 @@ reached through, and the rule it follows is the reason the whole thing exists:
 **the ordinary path types a title and presses Enter.** Everything else the task
 needs - a time, a length, a colour - is already answered when that happens.
 
+The rule is the app's, not quick-add's: **where a person can choose instead
+of type, they choose. Typing is for what the app cannot know - a name.
+Every control opens already holding an answer.** A length is a chip, not a
+number to work out; a unit is a word to tap; a repeat is four buttons, not
+a dropdown; a page count is a number with arrows and a "+25". The controls
+are shared so the answer is asked for one way everywhere: `DurationControl`
+(the button and its chips, in quick-add, the template editor and the
+library's add-to-template form), `DurationChips` (the same chips in a row,
+in the task detail sheet), `MinuteStepInput`, `CountStepInput`, `TimePicker`.
+A bare `<input type="number">` or a native `<select>` over a fixed set of
+answers is a control that has not been built yet. The library's add line
+(`LibraryAddLine.tsx`) is quick-add's shape applied to a book: the words,
+a unit control, a count control, and the same one-truth rule between them.
+
 - **A default is a real answer, not a placeholder.** The time control opens on
   the first free slot the day genuinely has (`lib/.../autoSlot.ts`), not on a
   blank or on a round number nobody chose. When there is no such slot it says

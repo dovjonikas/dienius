@@ -225,7 +225,8 @@ src/
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser
     librarySeed.ts     the reading plan, on request from the palette - see its own comment
-    libraryPrefs.ts    which lists are folded, per device
+    libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
+    useClickAway.ts    closes a popover on a press outside it or Escape
     dates.ts           date-key helpers, month grid
     categories.ts      the six categories; colours live in styles.css
     themes.ts          the three presets
@@ -246,7 +247,10 @@ src/
     NorthSettings, SyncSettings, CalendarSettings   Settings sections
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app
-    MinuteStepInput    the one duration control
+    MinuteStepInput    a length in minutes, typed or stepped
+    DurationControl    the length control: a button holding an answer, chips, the stepper - and DurationChips, the chips alone
+    CountStepInput     a count with arrows that speed up when held
+    LibraryAddLine     the library's add line: the words, a unit control, a count control, one truth between them
     AppearanceControls, ThemeGallery, ThemePreviewCard
     useListReorder     pointer-and-keyboard reordering
 

@@ -50,7 +50,7 @@ reading them.
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back. See `widgets/day-plan/replan.ts` |
 | Scratch | One key (S or backtick) or a floating button, and you are typing. Its own stream, `#tags` as filters, a #bug export. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
 | Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
-| Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
+| Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. The size is a stepper with six chips beside it; the repeat is four buttons. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
 | Focus | One task, its own planned time, a ring, a way out. Not a pomodoro |
 | Timer and stopwatch | Survive a refresh, run on every tab, keep time in a background tab, put the countdown in the tab title |
 | Day digest | In the wide rail: what is next, and how the day is going |
@@ -66,7 +66,7 @@ reading them.
 | **Calendar → Week** | Seven columns of one shared timeline. Drag a block between days, tap to open, tap empty space to add, stamp per column or the whole week. Three days at a time on a phone |
 | **Calendar → Year** | One cell per day, shaded by fullness, coloured by template |
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save |
-| **Library** | Lists worked through a unit at a time. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book |
+| **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book |
 | **Review** | Week and month statistics, all derived from the days themselves |
 | **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Sync, Appearance. General also replays the tour, in a sandbox |
 

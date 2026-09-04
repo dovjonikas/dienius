@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TaskDetail } from './TaskDetail'
 import { actions, getData, useAppData } from '../../lib/store'
@@ -156,15 +156,17 @@ test('a repeat is chosen from four named shapes, not a recurrence rule', async (
   const user = userEvent.setup()
   seed()
   openFirst()
-  const select = screen.getByLabelText('Repeats')
-  expect(Array.from(select.querySelectorAll('option')).map(o => o.textContent)).toEqual([
+  // Four buttons, every answer on screen, rather than a dropdown.
+  const group = screen.getByRole('group', { name: 'Repeats' })
+  expect(within(group).getAllByRole('button').map(b => b.textContent)).toEqual([
     'Once',
     'Every day',
     'Weekdays',
     'Every week',
   ])
-  await user.selectOptions(select, 'weekdays')
+  await user.click(within(group).getByRole('button', { name: 'Weekdays' }))
   expect(tasks()[0].repeat).toBe('weekdays')
+  expect(within(group).getByRole('button', { name: 'Weekdays' })).toHaveAttribute('aria-pressed', 'true')
 })
 
 // --- library binding -----------------------------------------------------
@@ -207,4 +209,16 @@ test('the close button is a real, named control rather than only a gesture', asy
   openFirst(onClose)
   await user.click(screen.getByRole('button', { name: 'Close details' }))
   expect(onClose).toHaveBeenCalled()
+})
+
+// The six lengths a task usually is sit beside the number. A chip is one
+// press where the box is arithmetic, and both write the same field.
+test('a size can be a chip, and the chip in force is marked', async () => {
+  const user = userEvent.setup()
+  seed()
+  openFirst()
+  await user.click(within(screen.getByRole('group', { name: 'Size' })).getByRole('button', { name: '1h30' }))
+  expect(tasks()[0].minutes).toBe(90)
+  expect(within(screen.getByRole('group', { name: 'Size' })).getByRole('button', { name: '1h30' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByLabelText('Size in minutes')).toHaveValue('90')
 })

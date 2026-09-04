@@ -139,6 +139,26 @@ export const libraryActions = {
   },
 
   /** Takes the raw typed line, so "Daring Greatly, 12 chapters" arrives whole. */
+  /**
+   * The add line's own door: a title and a shape the controls already hold,
+   * so nothing has to be spelt back into a line for the parser to read out
+   * again. The same item the typed line makes; `addLibraryItem` stays for
+   * the palette and the tests that speak in lines.
+   */
+  addLibraryItemShaped(listId: string, input: { title: string; track?: LibraryTrack; total?: number; seasons?: number }): LibraryItem | undefined {
+    const title = input.title.trim()
+    if (!title) return undefined
+    const item: LibraryItem = { id: crypto.randomUUID(), title }
+    if (input.track) item.track = input.track
+    if (input.track !== 'movie' && input.total !== undefined && input.total > 0) item.total = input.total
+    if (input.track === 'series') {
+      if (input.seasons !== undefined && input.seasons > 0) item.seasons = input.seasons
+      item.season = 1
+    }
+    commit(mapList(listId, list => ({ ...list, items: [...list.items, item] })))
+    return item
+  },
+
   addLibraryItem(listId: string, input: string): LibraryItem | undefined {
     const parsed = parseLibraryItemInput(input)
     if (!parsed) return undefined

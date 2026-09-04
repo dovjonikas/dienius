@@ -49,3 +49,42 @@ export function rememberListOpen(listId: string, open: boolean): void {
     // Best effort: a device that cannot remember simply opens everything.
   }
 }
+
+// --- what each list was last counted in -----------------------------------------
+
+const SHAPE_KEY = 'dienius:library-shape'
+
+/**
+ * The track the add line opens on, per list, remembered on this device.
+ *
+ * A Books list is counted in chapters, and the owner counts in pages: after
+ * the first page-counted book the control opens on pages, because the
+ * next one will be too. The same shape as the folded lists above - a device
+ * habit, outside the backup and outside sync - and the same reasoning as
+ * quick-add remembering a length.
+ */
+export function readLastTrack(listId: string): 'pages' | 'movie' | 'series' | undefined {
+  try {
+    const raw = localStorage.getItem(SHAPE_KEY)
+    if (!raw) return undefined
+    const parsed: unknown = JSON.parse(raw)
+    if (typeof parsed !== 'object' || parsed === null) return undefined
+    const value = (parsed as Record<string, unknown>)[listId]
+    return value === 'pages' || value === 'movie' || value === 'series' ? value : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function rememberLastTrack(listId: string, track: 'pages' | 'movie' | 'series' | undefined): void {
+  try {
+    const raw = localStorage.getItem(SHAPE_KEY)
+    const parsed: unknown = raw ? JSON.parse(raw) : {}
+    const map = typeof parsed === 'object' && parsed !== null ? { ...(parsed as Record<string, unknown>) } : {}
+    if (track === undefined) delete map[listId]
+    else map[listId] = track
+    localStorage.setItem(SHAPE_KEY, JSON.stringify(map))
+  } catch {
+    // A forgotten habit is one extra tap next time, not a lost plan.
+  }
+}

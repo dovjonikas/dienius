@@ -4,11 +4,16 @@ import {
   hasAnotherSeason,
   isItemFinished,
   itemProgress,
+  lineHasShape,
   nextSeason,
   parseLibraryItemInput,
   progressLabel,
   progressPercent,
+  shapeLine,
+  shapeOf,
   stepsOneAtATime,
+  stripTrailingShape,
+  suggestShortForm,
   unitPlural,
   unitShort,
 } from './library'
@@ -247,4 +252,51 @@ test('a trailing word with nothing marking it off is part of the title', () => {
 test('the list own unit is still the ordinary case', () => {
   expect(parseLibraryItemInput('Sapiens, 20 chapters')).toEqual({ title: 'Sapiens', total: 20 })
   expect(parseLibraryItemInput('Andor s2, 12')).toEqual({ title: 'Andor s2', total: 12 })
+})
+
+// --- the add line's two controls -------------------------------------------
+
+/**
+ * The words and the controls are one truth. What the parser reads from the
+ * end of a line is what the controls show, and a control pressed against a
+ * line that carries its own shape rewrites the words - the same rule
+ * quick-add follows for a time typed into a sentence.
+ */
+test('the shape at the end of a line is stripped, and only when it is one', () => {
+  expect(stripTrailingShape('Dune, 20 chapters')).toBe('Dune')
+  expect(stripTrailingShape('Past Lives, movie')).toBe('Past Lives')
+  expect(stripTrailingShape('The Bear - 3 seasons')).toBe('The Bear')
+  // A number the parser reads as a count is a count here too - one truth.
+  expect(stripTrailingShape('Catch-22 in one sitting')).toBe('Catch-22 in one sitting')
+  expect(stripTrailingShape('The Third Man')).toBe('The Third Man')
+  expect(stripTrailingShape('Andor s2')).toBe('Andor s2')
+})
+
+test('a title and a shape are written back in the words the parser reads', () => {
+  const books = { unit: 'chapter' }
+  expect(shapeLine('Dune', { total: 20 }, books)).toBe('Dune, 20 chapters')
+  expect(shapeLine('Dune', { total: 1 }, books)).toBe('Dune, 1 chapter')
+  expect(shapeLine('Dune', { track: 'pages', total: 412 }, books)).toBe('Dune, 412 pages')
+  expect(shapeLine('Past Lives', { track: 'movie' }, books)).toBe('Past Lives, movie')
+  expect(shapeLine('The Bear', { track: 'series', seasons: 3 }, books)).toBe('The Bear, 3 seasons')
+  expect(shapeLine('Dune', {}, books)).toBe('Dune')
+  for (const line of ['Dune, 20 chapters', 'Dune, 412 pages', 'Past Lives, movie', 'The Bear, 3 seasons']) {
+    const parsed = parseLibraryItemInput(line)!
+    expect(shapeLine(parsed.title, shapeOf(parsed), books)).toBe(line)
+  }
+})
+
+test('a line carries a shape when the parser reads one from it', () => {
+  expect(lineHasShape('Dune, 20 chapters')).toBe(true)
+  expect(lineHasShape('Past Lives, movie')).toBe(true)
+  expect(lineHasShape('Dune')).toBe(false)
+  expect(lineHasShape('')).toBe(false)
+})
+
+test('a short form is suggested for the units this app has met, and guessed for the rest', () => {
+  expect(suggestShortForm('chapter')).toBe('ch')
+  expect(suggestShortForm('lesson')).toBe('ls')
+  expect(suggestShortForm('Episode')).toBe('ep')
+  expect(suggestShortForm('lap')).toBe('la')
+  expect(suggestShortForm('')).toBe('')
 })

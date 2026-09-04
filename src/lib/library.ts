@@ -219,3 +219,97 @@ export function parseLibraryItemInput(input: string): ParsedLibraryItem | undefi
   if (track === 'movie') return { title, track: 'movie' }
   return track ? { title, total: count, track } : { title, total: count }
 }
+
+// --- the add line's two controls --------------------------------------------
+
+/**
+ * What an item is, apart from its name: how it is counted, and how long it
+ * is. The add line holds one of these beside the text, the parser reads
+ * one out of the text, and the two are kept as one truth - see
+ * `LibraryAddLine.tsx` and CONVENTIONS section 16.
+ */
+export interface LibraryShape {
+  /** Absent means the list's own unit. */
+  track?: LibraryTrack
+  /** Units in the whole thing - or episodes in a season, for a series. Absent means not known. */
+  total?: number
+  /** Series only. */
+  seasons?: number
+}
+
+/** The part of a typed line that says its shape, if any: ", 12 chapters", ", movie", " - 3 seasons". */
+const TRAILING_SHAPE = /\s*[,\u2013-]\s*(?:\d{1,4}\s*[a-z]*|[a-z]+)\s*$/i
+
+/**
+ * The title alone - the line without the shape the parser would read from
+ * its end. Only a shape marked off by a comma or a dash is stripped, and
+ * only when the parser would have read it as one: "Catch-22" and "The Third
+ * Man" keep every character.
+ */
+export function stripTrailingShape(line: string): string {
+  const parsed = parseLibraryItemInput(line)
+  if (!parsed) return line.trim()
+  if (parsed.total === undefined && parsed.track === undefined && parsed.seasons === undefined) return line.trim()
+  const stripped = line.replace(TRAILING_SHAPE, '').trim()
+  return stripped === '' ? line.trim() : stripped
+}
+
+/**
+ * The line that says a title and a shape, in the words the parser reads:
+ * the words, not a second field, so what is stored and what is shown are
+ * one thing - the same rule quick-add follows for a time typed into a line.
+ */
+export function shapeLine(title: string, shape: LibraryShape, list: Pick<LibraryList, 'unit' | 'unitPlural'>): string {
+  const t = title.trim()
+  if (shape.track === 'movie') return `${t}, movie`
+  if (shape.track === 'series') return shape.seasons !== undefined ? `${t}, ${shape.seasons} ${shape.seasons === 1 ? 'season' : 'seasons'}` : `${t}, series`
+  if (shape.track === 'pages') return shape.total !== undefined ? `${t}, ${shape.total} pages` : `${t}, pages`
+  if (shape.total !== undefined) return `${t}, ${shape.total} ${shape.total === 1 ? list.unit : unitPlural(list)}`
+  return t
+}
+
+/** What the parser understood of a line, as a shape - the half the controls show. */
+export function shapeOf(parsed: ParsedLibraryItem | undefined): LibraryShape {
+  if (!parsed) return {}
+  const shape: LibraryShape = {}
+  if (parsed.track) shape.track = parsed.track
+  if (parsed.total !== undefined) shape.total = parsed.total
+  if (parsed.seasons !== undefined) shape.seasons = parsed.seasons
+  return shape
+}
+
+/** Whether a line carries a shape of its own, which is what makes the controls follow the words. */
+export function lineHasShape(line: string): boolean {
+  const parsed = parseLibraryItemInput(line)
+  return !!parsed && (parsed.total !== undefined || parsed.track !== undefined || parsed.seasons !== undefined)
+}
+
+/**
+ * The unit words a new list is usually counted in, offered as chips so the
+ * common case is a tap. Anything else is typed, as before.
+ */
+export const UNIT_SUGGESTIONS = ['lesson', 'song', 'episode', 'session', 'try', 'chapter'] as const
+
+/**
+ * A short form for a unit, for the card: "ch", "ep", "ls". The ones this
+ * app has used are written down; anything else is the first two letters,
+ * which is right often enough to be worth offering and wrong in a way that
+ * takes one keystroke to fix.
+ */
+export function suggestShortForm(unit: string): string {
+  const u = unit.trim().toLowerCase()
+  const known: Record<string, string> = {
+    chapter: 'ch',
+    episode: 'ep',
+    lesson: 'ls',
+    song: 'sg',
+    session: 'ss',
+    try: 'try',
+    page: 'p.',
+    level: 'lv',
+    week: 'wk',
+    module: 'mod',
+  }
+  if (known[u]) return known[u]
+  return u.slice(0, 2)
+}

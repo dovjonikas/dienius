@@ -3479,7 +3479,7 @@ button.primary {
 
 .block-add { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .block-add input { flex: 1 1 120px; }
-.block-add .minutes-input { flex: 0 0 64px; }
+.block-add .duration-control { flex: 0 0 auto; }
 .block-add button {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -6347,8 +6347,10 @@ button.danger:focus-visible {
 
 .library-list-settings .field { flex: 1 1 140px; }
 
-.library-add { display: flex; gap: var(--s2); }
-.library-add input { flex: 1; min-width: 0; }
+/* The words take the whole first line when the two controls and the button
+   do not fit beside them - on a phone the field was 36px wide otherwise. */
+.library-add { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.library-add > input { flex: 1 1 200px; min-width: 0; }
 
 .library-list-empty { margin: 0; font-size: var(--t-sm); }
 
@@ -9684,7 +9686,7 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-value,
-.quick-add-duration-value {
+.duration-control-value {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9710,15 +9712,15 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-value:hover,
-.quick-add-duration-value:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.duration-control-value:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
 
 .quick-add-time-value:focus-visible,
-.quick-add-duration-value:focus-visible {
+.duration-control-value:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-.quick-add-duration {
+.duration-control {
   position: relative;
   flex: 0 0 auto;
   display: flex;
@@ -9728,10 +9730,10 @@ main:has(.week) > .calendar {
   overflow: visible;
 }
 
-.quick-add-duration-value { min-width: 52px; }
+.duration-control-value { min-width: 52px; }
 
 .quick-add-time-panel,
-.quick-add-duration-panel {
+.duration-control-panel {
   position: absolute;
   z-index: 40;
   top: calc(100% + 4px);
@@ -9746,7 +9748,7 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-panel { left: 0; }
-.quick-add-duration-panel { right: 0; align-items: stretch; }
+.duration-control-panel { right: 0; align-items: stretch; }
 
 /* The panel already is the raised card, so the picker inside it goes back to
    being an ordinary pair of columns rather than a second floating layer. */
@@ -9766,7 +9768,7 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-modes button,
-.quick-add-duration-chips button {
+.duration-control-chips button {
   justify-content: flex-start;
   min-height: 34px;
   padding: 0 var(--s2);
@@ -9780,34 +9782,79 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-modes button:hover,
-.quick-add-duration-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.duration-control-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
 
 .quick-add-time-modes button.is-on,
-.quick-add-duration-chips button.is-on {
+.duration-control-chips button.is-on {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.quick-add-duration-chips {
+.duration-control-chips {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s1);
 }
 
-.quick-add-duration-chips button {
+.duration-control-chips button {
   justify-content: center;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.quick-add-duration-panel .time-stepper { align-self: stretch; }
-.quick-add-duration-panel .time-stepper .minutes-input { width: 100%; }
+.duration-control-panel .time-stepper { align-self: stretch; }
+
+/* A column of chips for the shapes a library item can take - the words
+   are sentences, and two to a row would wrap them. */
+.duration-control-chips.is-column { grid-template-columns: 1fr; }
+.duration-control-chips.is-column button { justify-content: flex-start; text-align: left; }
+
+/* The same chips in a row with nothing to open - the task detail sheet's
+   size, and a new list's unit - where there is room and a panel would be a
+   tap for nothing. */
+.duration-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  margin-top: var(--s2);
+}
+
+.duration-chips button {
+  min-height: 34px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.duration-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.duration-chips button.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.library-unit-chips { margin: 0 0 var(--s2); }
+
+/* The value button that says what a library item is counted in, next to
+   the count with its arrows. */
+.library-add .duration-control-value { min-width: 0; padding: 0 var(--s3); }
+.library-add .count-stepper .count-input { width: 84px; }
+.library-step-wide { width: auto; padding: 0 var(--s2); }
+
+@media (pointer: coarse) {
+  .duration-chips button { min-height: 44px; }
+}
+.duration-control-panel .time-stepper .minutes-input { width: 100%; }
 
 @media (pointer: coarse) {
   .quick-add-time-value,
-  .quick-add-duration-value { min-height: 44px; }
+  .duration-control-value { min-height: 44px; }
   .quick-add-time-modes button,
-  .quick-add-duration-chips button { min-height: 44px; }
+  .duration-control-chips button { min-height: 44px; }
   /* The one place in this app where the stacked-chevron compromise is not
      good enough as it stands. Each half is 22px tall, which the template
      editor gets away with because a template is built once; this pair is on
