@@ -148,7 +148,9 @@ localStorage ──loadData()──> validate() ──> normalizeLoaded() ──
   this is also the import path for a file a person may have edited.
   `normalizeLoaded()` backfills every field added since, which is what makes an
   old backup still load.
-- [`store.ts`](../src/lib/store.ts) is a flat list of actions over that object.
+- [`store.ts`](../src/lib/store.ts) is the facade over that object: one `actions`
+  object spread together from ten area modules under [`store/`](../src/lib/store),
+  each reading through `getData()` and writing through `commit()` in `store/core.ts`.
   Every one is `commit(next)`: replace the whole object, save, notify. There
   are no reducers and no action types - the function *is* the action.
 - Components never mutate. They call an action and re-render from the store.
@@ -177,7 +179,19 @@ src/
   lib/                 no React except where a hook is the API
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, validate, export/import
-    store.ts           the actions
+    store.ts           the facade: `actions` spread from the ten areas below
+    store/
+      core.ts          the one object, commit(), the subscriptions, dayOf/withDay
+      days.ts          tasks and the day: details, pushes, the grid's moves, replan
+      library.ts       lists, items, progress, sessions onto days and templates
+      templates.ts     templates, stamping, the weekday map
+      goals.ts         North's goals and settings
+      backlog.ts       the inbox and the backlog, and the doors between them
+      scratch.ts       the scratch stream and its two ways out
+      calendars.ts     external calendar subscriptions
+      settings.ts      theme, density, sleep schedules, reminders, the day view's switches
+      ifThen.ts        if-then rules
+      lifecycle.ts     import, snapshot restore, the tour's two endings
     stamping.ts        template + dates -> day plans
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded

@@ -1156,3 +1156,23 @@ test('the move is exactly reversible, which is what the undo offer relies on', (
 
   expect(withoutStamps(getData().days['2026-09-01'].tasks[0])).toEqual(withoutStamps(before))
 })
+
+/**
+ * The store is ten area modules spread into one object - see store.ts. A
+ * name defined in two areas would be silently shadowed by whichever spreads
+ * last, and the wrong module's version of an action is the kind of bug that
+ * passes every test written against the facade.
+ */
+test('no action is defined in two areas of the store', async () => {
+  const { AREAS } = await import('./store')
+  const seen = new Map<string, string>()
+  for (const [area, group] of Object.entries(AREAS)) {
+    for (const name of Object.keys(group)) {
+      expect(seen.get(name), `${name} is in both ${seen.get(name)} and ${area}`).toBeUndefined()
+      seen.set(name, area)
+    }
+  }
+  // Every area contributes, and the facade carries all of them plus the test seam.
+  expect(Object.values(AREAS).every(group => Object.keys(group).length > 0)).toBe(true)
+  expect(Object.keys(actions).length).toBe(seen.size + 1)
+})

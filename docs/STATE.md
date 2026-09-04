@@ -132,7 +132,6 @@ What follows is wanted rather than owed.
 | Debt | Detail |
 |---|---|
 | **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
-| **`store.ts` is ~1500 lines** | It is a flat list of actions, so it reads fine, but it is the largest file left and v1.9 added a dozen more (backlog, library tracks, the template binding). Splitting it by area (tasks / library / backlog / settings / calendars / scratch) is the obvious move, and it is now overdue rather than optional |
 | **`storage.ts` is ~830 lines** | Almost all of it is `validate()`, a hand-written deep type guard. Deliberate - it is the import path for a file a person may have edited - but it is long |
 | **`timelineLayout.ts` at ~810 lines** | Dense geometry. Well tested, but the next person to touch it will need a while |
 | **No end-to-end tests** | Everything is unit or jsdom-level. The two-device sync test and the week drag were verified by hand in a real browser, not by CI |
@@ -145,6 +144,11 @@ What follows is wanted rather than owed.
 
 ### Resolved debts, so you do not chase them
 
+- ~~`store.ts` at ~1600 lines~~ - split in v1.10 into ten area modules
+  under `lib/store/`, with `store.ts` left as the facade so no import
+  changed. Every action kept its doc comment and body; the one edit inside a
+  body is reading the state through `getData()` instead of a module
+  variable. `store.test.ts` checks that no action is defined in two areas.
 - ~~The reading plan seeded itself on first open~~ - fixed after v1.9. It
   fired for anybody who opened the live demo and handed them the owner's
   actual bookshelf. The data and the stable ids stayed; the mount effect in
