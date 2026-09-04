@@ -38,7 +38,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Draws the day as a **timeline**, with free time labelled and a line at now
 - Adds a task from one line: the time and the length are already filled in, you type the title
 - **Replans** a broken day in one press: something came up, shift the rest, or away and back
-- Keeps a **week view**, a **library** of books and series worked through a session at a time, and a **review** of how the weeks went
+- Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went
 - Never scores a bad day against you: no points, no badges, no red, no streak on the day view
 
 <table align="center">
@@ -131,9 +131,9 @@ React 19 and TypeScript, built with Vite. No UI framework, no router, no state l
 - `src/lib` holds the data model (`types.ts`), the store (`store.ts`, ten area modules under `store/`), the storage boundary and its validator, sync, the calendar reader, the tour as data
 - `src/widgets/day-plan` is the day view: quick-add, the timeline grid, capacity, replan, the task detail sheet
 - `src/views` is every other tab, the week view, the tour engine, the shared controls
-- `server/sync-server.mjs` is the optional sync server; `scripts/` builds the service worker's cache list and the README's screenshots
+- `server/sync-server.mjs` is the optional sync server; `scripts/` builds the service worker's cache list and the README's screenshots, and holds the measuring sweep and the sample day it runs on
 
-The suite is Vitest and Testing Library for the pure modules and the views, and Playwright against the production build for the flows that cross tabs. Every push and pull request runs the tests and the build; a push to `main` also publishes to GitHub Pages when both pass. The browser tests run in a job of their own.
+The suite is Vitest and Testing Library for the pure modules and the views, and Playwright against the production build for the flows that cross tabs. Alongside them, `npm run sweep` opens every screen at three window sizes in both themes on a realistic full day and measures what a person would actually hit - text that does not fit, a control with something on top of it, two pieces of text over each other, contrast against whatever is really painted underneath. It plants its own defects on request to prove it can still see them. Every push and pull request runs the tests and the build; a push to `main` also publishes to GitHub Pages when both pass. The browser tests run in a job of their own.
 
 The map of the whole thing is [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -145,6 +145,7 @@ npm run dev       # dev server at localhost:5173
 npm test          # vitest, watch mode
 npm run e2e       # playwright against the production build (npx playwright install chromium, once)
 npm run shots     # the README's screenshots, from the demo under a pinned clock
+npm run sweep     # every screen measured at three sizes in both themes (needs npm run preview)
 npx tsc --noEmit  # typecheck
 npm run build     # typecheck, build, then generate the service worker
 ```

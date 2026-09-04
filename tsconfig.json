@@ -14,5 +14,12 @@
     "checkJs": true,
     "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
   },
-  "include": ["src", "vite.config.ts", "scripts"]
+  "include": ["src", "vite.config.ts", "scripts"],
+  // Two of the scripts are never run by Node and are not part of the app:
+  // they are read as text and evaluated inside a browser page by
+  // scripts/sweep.mjs. The DOM they talk to is that page's, and the object
+  // they build is checked by validate.ts at run time rather than here, so
+  // checking them against this project's own globals would be checking the
+  // wrong thing. sweep.mjs itself, which does run in Node, is checked.
+  "exclude": ["scripts/audit.js", "scripts/sample-day.js"]
 }

@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "e2e": "playwright test",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "sweep": "node scripts/sweep.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

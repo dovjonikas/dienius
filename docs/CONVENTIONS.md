@@ -124,7 +124,12 @@ the failure - see the endless-rule test in `ics.test.ts`.
 ### Zero scroll, and its exceptions
 
 Three screens must fit their viewport with no scrolling at **1920x1080**,
-**1366x768** and **390x844**:
+**1366x768** and **390x844**. This is the rule most likely to be broken by
+something that has nothing to do with it - a card above the grid growing,
+a row added to a bar, a padding changed for another view - so **measure it
+after any change to a height on those screens**, not only when working on
+them. The month was 74px past the fold at 390x844 for some time before
+v2.0, and nothing said so.
 
 - **Calendar → Month.** If something must give, reduce the detail in a cell.
   **Never raise cell height.**
@@ -296,6 +301,38 @@ Fix what you find in the same wave, and say so in the commit.
 
 There is a browser pane. Use it - the test suite cannot see layout.
 
+### `npm run sweep` first
+
+Before opening anything by hand, run the measuring pass. It opens every
+screen at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic
+full day, and reports what a person would actually hit: text that does not
+fit its box, a control with something on top of it, two pieces of text
+painted over each other, anything past the right edge, a screen that must
+fit and does not, and every visible string's contrast against whatever is
+actually painted under it. `--phone` adds 390x844 and the 44px audit;
+`--heavy` uses a twenty-task day; `--only=<name>` narrows it while working.
+
+```bash
+npm run build && npm run preview   # in one shell
+npm run sweep                      # in another
+npm run sweep -- --self-check      # prove it can still see a defect
+```
+
+**Zero findings is the expected state.** It found fourteen the first time it
+ran, including a task list squeezed to zero pixels with seven tasks in it and
+a month grid drawing a whole extra week of the next month, so a clean report
+is worth having and a dirty one is a wave's work.
+
+`--self-check` plants a defect of each shape on a real screen and reports
+whether the pass still sees it. Run that before trusting a clean report you
+were not expecting - a measuring tool that has quietly stopped measuring
+reads exactly like a codebase with nothing wrong in it.
+
+The desktop is clean. `--phone` reports the two debts STATE.md names as the
+phone wave's first jobs, and nothing else.
+
+### And then by hand
+
 - **Measure with `javascript_tool`**, not with screenshots:
   `getBoundingClientRect()`, `getComputedStyle()`, overflow checks. A screenshot
   tells you something looks wrong; a measurement tells you what is wrong.
@@ -320,9 +357,10 @@ npx tsc --noEmit
 npx vitest run
 npm run build
 npm run e2e
+npm run sweep          # against `npm run preview` of that build
 ```
 
-All four clean. Then the phone checklist in [`STATE.md`](STATE.md), then
+All five clean. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass; the browser tests run in
 their own job beside that and never hold a release. The same workflow runs

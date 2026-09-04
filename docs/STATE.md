@@ -6,11 +6,11 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** after v1.11 - screenshots the README can regenerate, a
-demo whose first screen fits, browser tests for the flows that cross tabs,
-time zones and the plain monthly and yearly repeats in the calendar reader,
-a copy of the plan on GitHub, every control opening on an answer, and the
-docs read against the code. Tagged v1.0 through v1.11.
+**Last updated:** after v2.0 - the desktop closed as a product. The library's
+queue says it is a queue, typing keeps its frame under a slow CPU, fourteen
+defects found by walking the app as its owner at three sizes in both themes,
+every copy of the plan driven live in a browser, and `DAILY.md` for the
+person who uses it. Tagged v1.0 through v2.0.
 
 ---
 
@@ -68,7 +68,7 @@ reading them.
 | **Calendar → Week** | Seven columns of one shared timeline. Drag a block between days, tap to open, tap empty space to add, stamp per column or the whole week. Three days at a time on a phone |
 | **Calendar → Year** | One cell per day, shaded by fullness, coloured by template |
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save |
-| **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book |
+| **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book. When one ends, the list says what it moved on to and puts a sitting on today in one press - the block was already bound to the *list*, and until v2.0 nothing said so |
 | **Review** | Week and month statistics, all derived from the days themselves |
 | **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox |
 
@@ -113,7 +113,9 @@ reading them.
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
 
-Tags exist for v1.0 through v1.11.
+| **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
+
+Tags exist for v1.0 through v2.0.
 
 ---
 
@@ -121,69 +123,98 @@ Tags exist for v1.0 through v1.11.
 
 ### Nothing is half-built
 
-Everything through v1.11 is tagged, the suite is green (1814 tests, 103 files,
-plus twenty Playwright tests across two viewports),
+Everything through v2.0 is tagged, the suite is green (1832 tests, 103 files,
+plus 23 Playwright tests in 10 files across two viewports),
 the typecheck and the build are clean and the working tree is empty.
 What follows is wanted rather than owed.
 
-### Asked for, not yet built
+### The desktop is closed; the phone is the next wave
 
-Three things the v1.11 brief named that did not get built, each with where
-it goes. The next session's P1 list, in this order.
+v2.0 was a desktop pass on purpose. The phone still works - the month fits
+390x844 again, which it had not for some time - but it was measured rather
+than walked. `npm run sweep -- --phone` reports exactly two things and
+nothing else, and they are the first two below; the third is the walk
+itself.
 
-- **An "up next" offer when a library item is finished.** Briefed, never
-  built - the v1.11 library e2e test looked for it and found nothing, and
-  the rail's "Up next" is the next timed task, unrelated. What it is: when
-  a tick on a bound task finishes the last chapter (`advanceForTask` in
-  `lib/store/library.ts` sets `finished`), the next unfinished item on the
-  same list is what the next stamp will bind to (`currentItem` in
-  `lib/library.ts`), and nothing tells the person so. Two places to say
-  it: the active item's card in `views/LibraryView.tsx` (the loud one at
-  the top of an open list - a one-line "Next: Deep Work, 7 chapters" under
-  the finished book for the rest of the day), and the bound task's
-  subtitle in `widgets/day-plan/TaskRow.tsx` after the tick, where
-  `boundLabel` now reads "ch 12/12" and could read "finished - next is Deep
-  Work". No new state: both are derived from the list's order. Not a
-  nudge, not a dialog - a line, in `--muted`.
-- **Typing lag in quick-add under a slow CPU.** Not the tour's: measured in
-  v1.11 with a 4x CPU throttle, typing into quick-add with no tour on the
-  page runs a 95th-percentile frame of about 50ms, the same as under the
-  spotlight. Every keystroke re-renders `widgets/day-plan/QuickAdd.tsx`
-  whole: `parseQuickAdd` (cheap), `suggestSlot` over the day's tasks and
-  the calendar cache (not cheap - it merges intervals per keystroke), the
-  time control, the duration control and the live chips. Where to look:
-  memoise `suggestSlot` on (tasks, busy, draft.minutes) rather than
-  recomputing on every character, since the slot only moves when the
-  parsed duration changes; keep the parse synchronous (the chips must
-  answer the keystroke) but let the two controls skip renders whose props
-  did not change. Measure with the same harness the tour fix used - a
-  Playwright run with `Emulation.setCPUThrottlingRate` at 4 and frame
-  times recorded from `requestAnimationFrame` - before and after; the
-  numbers in the v1.11 code-health commit are the baseline.
-- **Outlook's Windows time zone names in .ics files.** "FLE Standard
-  Time", "W. Europe Standard Time" and the rest are not IANA names, so
-  `knowsZone` in `lib/ics.ts` says no, the times are read as local and the
-  calendar reports it. For the owner, in the zone the file was written
-  in, that is right by accident; for a file from a colleague two zones
-  away it is wrong by hours. The question for next time is whether a
-  small table of the dozen Windows names that actually turn up (the CLDR
-  `windowsZones` mapping has about 140; Outlook exports in Europe and the
-  US use perhaps fifteen) is worth carrying - one map in `ics.ts`,
-  consulted before `Intl` is asked, with a test on the Outlook fixture
-  already in `ics.test.ts`. Reading the file's own `VTIMEZONE` block
-  instead would be exact and is a much bigger job; the table is the
-  honest middle.
+- **Quick-add's quarter-hour arrows are 22px each on a coarse pointer.**
+  Two halves of one 44px column, and the `::after` overlay trick cannot
+  save both: two 44px overlays stacked steal each other's taps. Needs a
+  different shape for a stacked stepper, not a bigger hit area.
+- **The Scratch button sits over the last cell of the month.** It is
+  draggable, so it is a nuisance rather than a trap, but the default
+  position covers a real control.
+- **A walk of every screen with a full day**, the way v2.0 walked the
+  desktop: eyes on it, not just the sweep. A measuring pass finds what it
+  was told to look for; the fourteen defects v2.0 fixed included several
+  nothing would have thought to measure - two adjacent controls reading the
+  same word, a red word on an action that carries no verdict, a month
+  drawing a week of the next one.
 
-### Known debts, oldest first
+### Asked for, and now built
 
-| Debt | Detail |
+The three things the v1.11 brief named. Two are done and one turned out not
+to be what it looked like:
+
+- **An "up next" offer when a library item is finished.** Built in v2.0.
+  `upNext(list, today)` in `lib/library.ts`, the offer line above the loud
+  card in `LibraryView.tsx`, and "finished - next is Deep Work" on the bound
+  task's card. Bounded to today, because it is a moment rather than a state.
+- **Typing lag in quick-add under a slow CPU.** Measured again, the same
+  way - Playwright, CDP `Emulation.setCPUThrottlingRate`, frame times from
+  `requestAnimationFrame`, production build - across a realistic day, a
+  twenty-task day, a twenty-task day with three thousand external calendar
+  events, and a phone viewport. **At 4x nothing drops a frame**: every
+  scenario sits at a flat 16.7ms and the synchronous React render a
+  keystroke costs is 2 to 3ms. The old 50ms figure was a frame measurement
+  that included the page's own baseline. It does reproduce at 8x on a
+  170-task day - 66.7ms at the 95th percentile - and an inert input on the
+  same page costs 50ms of that, so most of it was never quick-add. The rest
+  was a layout invalidation walking out of quick-add's subtree into the day
+  beside it, which `contain: layout style` on `.quick-add-block` and
+  `.timeline-grid` cuts to 33.4ms. `busyIntervals` and `suggestSlot` are
+  memoised on what they actually read, which is another 14% of the render.
+  **Do not chase this further without a measurement that reproduces it.**
+- **Outlook's Windows time zone names in .ics files.** Still open, and
+  still the same question - see below.
+
+### Known debts, and why each one stays
+
+Every one of these was looked at again in v2.0 and left. None is an
+oversight; each is a trade with a reason, written here so nobody has to
+guess whether it was noticed.
+
+| Debt | Why it stays |
 |---|---|
-| **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
-| **`timelineLayout.ts` at ~880 lines** | Dense geometry. Well tested, and since v1.11 it opens with a map - the two coordinate systems, the three windows, the invariants, and which function decides what - so the next person starts from the map rather than the middle |
-| **Sync has no conflict UI** | Last-write-wins per entity, silently. Correct for one person with two devices; it would not be for two people |
-| **Imported .ics calendars are device-local** | They have no address to refresh from, so they do not sync. Stated in the UI |
+| **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall, because its height *is* its duration - that is the whole of what the week view says. Raising it to 44px would make a twenty-minute thing look like an hour, which is a lie about the day in exchange for an easier tap; the block opens the same task the day view does, at a size that fits. `min-height: 20px` on coarse pointers is the compromise |
+| **`timelineLayout.ts` at ~890 lines** | Dense geometry, and splitting it would put the two coordinate systems in different files, which is exactly where a bug would hide. Well tested, and it opens with a map - the two systems, the three windows, the invariants, and which function decides what - so the next person starts from the map rather than the middle. Kept whole on purpose |
+| **Sync has no conflict UI** | Last-write-wins per entity, silently. For one person with two devices a real conflict means editing the same task on both within a few seconds, and "the later edit wins" is both correct and what anybody would expect; a dialog for it would be a question with no good answer, asked on the rare day when somebody is already busy. It would be wrong for two people, and this is not for two people |
+| **Imported .ics calendars are device-local** | A file has no address to refresh from, so there is nothing to sync *to* - carrying the parsed events would make one device's stale copy authoritative on another. Subscriptions, which do have an address, sync. Stated in the UI where it matters |
+| **Outlook's Windows time zone names are read as local** | "FLE Standard Time" is not an IANA name, so `Intl` does not know it and `ics.ts` says so rather than guessing. For the owner, in the zone the file was written in, that is right by accident; for a colleague's file two zones away it is wrong by hours. The open question is whether a table of the dozen Windows names that actually turn up is worth carrying - one map in `ics.ts`, consulted before `Intl`, with a test on the Outlook fixture already in `ics.test.ts`. Reading the file's own `VTIMEZONE` block would be exact and is a much bigger job; the table is the honest middle, and nobody has needed it yet |
+| **The month's cells drop their ratio below about 720px of height** | The zero-scroll rule says the month fits, and something has to give when it cannot. Detail goes, never cell height: a 30px row is not a calendar. The shape of the month survives, which is what the grid is for |
 
 ### Resolved debts, so you do not chase them
+
+- ~~The day view could stop showing the day~~ - fixed in v2.0. At 1366x768
+  with the evening close card above it, `.task-list` measured zero pixels
+  tall with seven tasks in it, and at 1920x1080 it showed four of seven
+  behind an overlay scrollbar that draws nothing until a pointer is over it.
+  The list has a floor of two cards when it has any, the pane scrolls when
+  that floor cannot be honoured, and the list carries scroll shades so it
+  says when there is more.
+- ~~The month grid always drew six rows~~ - fixed in v2.0. `monthGrid`
+  returned a flat 42 cells, so every five-week month carried a whole week of
+  the next one. It emits the weeks the month is actually in, four to six, and
+  the month fits 390x844 again.
+- ~~Two anchors in one column could overlap~~ - fixed in v2.0. A cluster's
+  floor was the largest any single member needed, so a column holding two
+  32px blocks got 32px and the second was drawn over the first's title. The
+  floor is the tallest column's stacked total, and a block is capped at the
+  next one in its own column besides.
+- ~~Typing lag in quick-add~~ - measured in v2.0 and mostly not there; see
+  "Asked for, and now built" above for the numbers, and do not chase it
+  without a measurement that reproduces it.
+- ~~The library queue behaved like a conveyor and looked like a list~~ -
+  fixed in v2.0.
 
 - ~~Screenshots, and no way to make them~~ - `npm run shots` since v1.11,
   Playwright writing PNGs from the dev server with the clock pinned. The
@@ -199,19 +230,22 @@ it goes. The next session's P1 list, in this order.
   position in an implicit grid row 700px under the window, and made a
   page that fitted its screen scroll anyway.
 - ~~No end-to-end tests~~ - Playwright against the production build since
-  v1.10, and since v1.11 covering the real flows: `npm run e2e`, ten files
-  under `e2e/`. A first day (stamp, add, tick, the evening close arriving
-  on the last tick, the reading plan from the palette), the tour walked
-  naively on a desktop and on a phone doing only what each card says, two
-  browser contexts syncing a task both ways through the real
-  `server/sync-server.mjs` on a spare port, the demo's first screen, the
-  three replan doors, a book bound to a template and ticked, a backlog pull,
-  a night passing with a daily repeat and the yesterday banner, a week-view
-  drag, scratch's two ways out, export-erase-import, a snapshot restore, and
-  an .ics file over the day. Every test that depends on the hour pins the
-  browser clock (`openFreshAt` in `e2e/app.ts`) to a Wednesday in
-  Vilnius, so the same blocks are ahead of now on every run. CI runs it in
-  its own job; the deploy does not wait for it.
+  v1.10: `npm run e2e`, 23 tests in ten files under `e2e/`. A first day
+  (stamp, add, tick, the evening close arriving on the last tick, the reading
+  plan from the palette), the tour walked naively on a desktop and on a phone
+  doing only what each card says, two browser contexts syncing through the
+  real `server/sync-server.mjs` on a spare port - one task both ways, and
+  since v2.0 a tick here against an edit there with a delete in the middle -
+  the demo's first screen, the three replan doors, a book bound to a template
+  and ticked and then finished so the list names the next one, a backlog
+  pull, a night passing with a daily repeat and the yesterday banner, a
+  week-view drag, scratch's two ways out, export-erase-import, two snapshot
+  restores (the empty first-mount one, and one that really brings a wrecked
+  day back), and an .ics file over the day. Every test that depends on the
+  hour pins the browser clock (`openFreshAt` in `e2e/app.ts`) to a Wednesday
+  in Vilnius - `smoke` and `tour` did not until v2.0, and failed on any
+  machine run after 21:30, which is the default evening close time. CI runs
+  it in its own job; the deploy does not wait for it.
 - ~~`storage.ts` at ~830 lines, almost all of it `validate()`~~ - split in
   v1.11. The guard lives in `validate.ts` as tables: one per entity, a
   field and what a value in it may be, built from a dozen small checks
@@ -302,14 +336,24 @@ the one that gets checked first.
       exempt from the 44px audit by design). Scrolls vertically (expected),
       never horizontally.
 - [ ] **Calendar → Month** - fits without scrolling. This is a hard constraint;
-      if something must give, reduce stat detail, never raise cell height.
+      if something must give, reduce stat detail, never raise cell height. It
+      was 74px past the fold before v2.0, which is how a hard constraint goes
+      quietly wrong: nothing measured it after the last thing that changed a
+      height. Measure it, every time.
 - [ ] **Calendar → Week** - three columns, no scroll in either direction,
       template chip inside its own column.
 - [ ] **Settings** - every section reachable from the section list at the
       top, which is sticky; it must not cover the content at 390px, and the
       first entry is not clipped.
 - [ ] **Every visible button ≥ 44px**, or carrying a `::after` hit-area
-      overlay. Measure it, do not read it - see `CONVENTIONS.md`.
+      overlay. Measure it, do not read it - see `CONVENTIONS.md`. Three
+      documented exceptions, and nothing else: a week block (its height is
+      its duration), a year cell (a heatmap mark), and quick-add's stacked
+      quarter-hour arrows, which are 22px each and are the phone wave's
+      first job. **A new class in the `@media (pointer: coarse)` overlay
+      list has to go in twice** - the `position: relative` list and the
+      `::after` list - and `.setting-quiet` shipped in v2.0 missing from
+      both, which the measured phone run caught.
 - [ ] **No horizontal overflow anywhere**:
       `document.documentElement.scrollWidth > clientWidth` must be false.
 - [ ] **Both themes** - dark and light. `--muted` and `--danger` are gated at
@@ -430,6 +474,31 @@ Collected from waves where they actually did.
   the document taller, moved under the scroll settling back, and re-measured
   - a feedback loop the tour exposed by scrolling Settings and switching
   tabs. It reads the document-relative top now.
+- **A flex child with `min-height: 0` can be given nothing at all.** That is
+  the point of it - it is what lets a column shrink - and it is also how the
+  task list came to measure zero pixels with seven tasks in it on a 1366x768
+  evening. Anything that must always show *something* needs a floor as well
+  as permission to shrink, and the container needs somewhere for the
+  overflow to go when the floor cannot be honoured.
+- **An overlay scrollbar draws nothing until the pointer is over it.** On
+  Windows Chrome with `scrollbar-width: thin`, a list that scrolls looks
+  exactly like a list that ends. If a scroller matters, say so in the paint:
+  the two `local`/`scroll` gradient shades on `.task-pane .task-list` are
+  the pattern.
+- **`:not(:empty)` is how a CSS floor stays off an empty list.** React
+  renders no child nodes at all for an empty array, so `:empty` matches. A
+  floor without that guard put a 120px ruled band under the first-run
+  invitation, which reads as something failing to render.
+- **A cluster's floor is not a member's floor.** `buildAnchorClusters`
+  reserves per *column* - two anchors that do not overlap share a column and
+  are stacked, so that column needs both floors end to end. It reserved one
+  of them until v2.0 and drew "Wash the car" through the middle of "Reply to
+  the landlord".
+- **A test that reads the real clock fails at some hour of some day.**
+  `smoke.e2e.ts` and `tour.e2e.ts` used `openFresh` rather than
+  `openFreshAt`, so both failed on any machine run after 21:30 - the default
+  evening close time - and had for as long as anybody ran the suite in the
+  morning. CONVENTIONS section 10 already said to pin it.
 - **The browser pane throttles a hidden tab.** Timers fire once a second
   and animation frames not at all, and after a few minutes chained timers
   fire once a *minute*. A page script with several `await sleep()` calls

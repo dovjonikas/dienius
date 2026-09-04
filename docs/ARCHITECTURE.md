@@ -239,7 +239,7 @@ src/
     undo.ts            one app-wide undo offer, five seconds
     shortcuts.ts       the keyboard layer and its two safety rules
     install.ts         holds the one beforeinstallprompt event
-    library.ts         units, progress, tracks, the typed-line parser
+    library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
     librarySeed.ts     the reading plan, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
@@ -296,18 +296,21 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   app.ts               a first open, the starter stamp, a quick-add line
   smoke.e2e.ts         a first day end to end, and the reading plan from the palette
   tour.e2e.ts          the naive walk, on a desktop and on a phone
-  sync.e2e.ts          two browser contexts syncing through the real server
+  sync.e2e.ts          two browser contexts through the real server: one task, then a tick against an edit with a delete between them
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
-  library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick
+  library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
   shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
   week.e2e.ts          a block dragged onto another day, with a real mouse
-  data.e2e.ts          export, erase, import; a snapshot restored; an .ics file over the day
+  data.e2e.ts          export, erase, import; two snapshot restores; an .ics file over the day
 playwright.config.ts   the two projects, and the preview server they run against
 scripts/
   generate-sw.mjs      after the build: the service worker's cache name and precache list
   shots.mjs            `npm run shots`: the README's screenshots, from the demo under a pinned clock
+  sweep.mjs            `npm run sweep`: every screen at three sizes in both themes, measured
+  audit.js             the measuring pass sweep.mjs injects into the page - see tsconfig for why it is not typechecked
+  sample-day.js        one realistic day in localStorage, for the sweep and for looking at the app with something in it
 ```
 
 ### The day view
@@ -581,11 +584,22 @@ and the pre-paint script in `index.html` - and the rule that a theme token
 changes in two places - are in [CONVENTIONS section 5](CONVENTIONS.md#5-design-tokens),
 which is where the rule is kept so it is written once.
 
+Two containment boundaries, and they are the only ones: `contain: layout
+style` on `.quick-add-block` and on `.timeline-grid`. Typing changes
+quick-add's subtree on every keystroke, and without a boundary that
+invalidation walks out into the task list and the grid beside it - thousands
+of boxes on a genuinely full day, measured at 66.7ms for the 95th percentile
+frame under an 8x CPU throttle against 33.4ms with them. Never `paint`: the
+time and duration panels are absolutely positioned and hang outside their
+box on purpose, and paint containment would clip them. The grid layer is
+already inert (aria-hidden, `pointer-events: none`), so nothing inside it
+ever needed to influence anything outside it.
+
 ---
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. Around 1800 tests in a hundred files, no worker limits, no skips; plus twenty Playwright tests against the production build (section 4's `e2e/`).
+Vitest + Testing Library + jsdom. Around 1800 tests in a hundred files, no worker limits, no skips; plus 23 Playwright tests in ten files against the production build (section 4's `e2e/`).
 
 Two kinds, deliberately:
 
