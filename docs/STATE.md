@@ -6,9 +6,11 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** after v1.10 - the reading plan on request, the tour walked
-and rebuilt around what a stranger actually sees, the store in ten files,
-and a real browser in the suite. Tagged v1.0 through v1.10.
+**Last updated:** after v1.11 - screenshots the README can regenerate, a
+demo whose first screen fits, browser tests for the flows that cross tabs,
+time zones and the plain monthly and yearly repeats in the calendar reader,
+a copy of the plan on GitHub, every control opening on an answer, and the
+docs read against the code. Tagged v1.0 through v1.11.
 
 ---
 
@@ -68,7 +70,7 @@ reading them.
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save |
 | **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book |
 | **Review** | Week and month statistics, all derived from the days themselves |
-| **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Sync, Appearance. General also replays the tour, in a sandbox |
+| **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox |
 
 ### Across the app
 
@@ -108,10 +110,10 @@ reading them.
 | **v1.7** | The interactive tour: a spotlight, nine steps, each ending when the thing actually happens. Sandbox replay from Settings |
 | **v1.8** | Replan (something came up / shift the rest / away and back), Scratch, the quick-add time picker, and a responsive pass over every view at seven viewports |
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
+| **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
+| **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
 
-| **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten area modules with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
-
-Tags exist for v1.0 through v1.10.
+Tags exist for v1.0 through v1.11.
 
 ---
 
@@ -119,8 +121,8 @@ Tags exist for v1.0 through v1.10.
 
 ### Nothing is half-built
 
-Everything through v1.10 is tagged, the suite is green (1745 tests, 98 files,
-plus five Playwright tests across two viewports),
+Everything through v1.11 is tagged, the suite is green (1811 tests, 102 files,
+plus twenty Playwright tests across two viewports),
 the typecheck and the build are clean and the working tree is empty.
 What follows is wanted rather than owed.
 
@@ -134,12 +136,8 @@ Nothing at the moment. The screenshots, the last item here, landed in v1.11.
 |---|---|
 | **Week blocks are small targets** | A 20-minute block at a week's scale is ~20px tall. Sized by duration, so it cannot be 44px. `min-height: 20px` on coarse pointers is the compromise |
 | **`timelineLayout.ts` at ~880 lines** | Dense geometry. Well tested, and since v1.11 it opens with a map - the two coordinate systems, the three windows, the invariants, and which function decides what - so the next person starts from the map rather than the middle |
-| **Screenshot tooling** | There is no way to produce image files from the agent environment. Any visual regression checking is by measurement (`getBoundingClientRect`, computed styles) rather than by pixels |
 | **Sync has no conflict UI** | Last-write-wins per entity, silently. Correct for one person with two devices; it would not be for two people |
-| **ICS: monthly and yearly rules are skipped** | Named in the parse result rather than approximated. A meeting on the wrong day is worse than one not shown |
-| **ICS: named time zones are read as local** | Doing it properly needs the IANA database. Reported in `ignored`, so it is not silent |
 | **Imported .ics calendars are device-local** | They have no address to refresh from, so they do not sync. Stated in the UI |
-| **The wide day view scrolls on a short laptop** | At 1366x768 and 1600x900 a ten-block day is taller than the room the grid gets. This is the documented outcome, not a bug: the per-segment floors (32px sized, 44px unsized) are touch targets, and `fitPxPerMinute` correctly refuses to go below them. CONVENTIONS.md section 4 overstates the zero-scroll rule for this one case; it now says so |
 
 ### Resolved debts, so you do not chase them
 
@@ -256,14 +254,16 @@ owner is an iPhone user; Android and desktop must work too, but the phone is
 the one that gets checked first.
 
 - [ ] **Today** - header, North line, capacity line, timeline disclosure, task
-      list, Done fold, inbox, rollover button. Scrolls vertically (expected),
+      list, Done fold, inbox, the rollover link (a button drawn as a link,
+      exempt from the 44px audit by design). Scrolls vertically (expected),
       never horizontally.
 - [ ] **Calendar → Month** - fits without scrolling. This is a hard constraint;
       if something must give, reduce stat detail, never raise cell height.
 - [ ] **Calendar → Week** - three columns, no scroll in either direction,
       template chip inside its own column.
-- [ ] **Settings** - every section reachable from the pill row; the row itself
-      scrolls sideways and the first pill is not clipped.
+- [ ] **Settings** - every section reachable from the section list at the
+      top, which is sticky; it must not cover the content at 390px, and the
+      first entry is not clipped.
 - [ ] **Every visible button ≥ 44px**, or carrying a `::after` hit-area
       overlay. Measure it, do not read it - see `CONVENTIONS.md`.
 - [ ] **No horizontal overflow anywhere**:
@@ -326,7 +326,7 @@ The measurement snippet that has been used for the target audit:
 
 Collected from waves where they actually did.
 
-- **`store.ts` calls `loadData()` at import time.** Anything that needs to
+- **`store/core.ts` calls `loadData()` at import time.** Anything that needs to
   influence what the store reads has to happen inside `loadData`, not in
   `main.tsx` - module imports are evaluated before the importing module's body.
   This ate the first version of demo seeding.

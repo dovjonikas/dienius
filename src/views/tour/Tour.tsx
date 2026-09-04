@@ -21,9 +21,9 @@ import type { AppData } from '../../lib/types'
  * Next during every caption, and three steps wait for it - see `outcome` in
  * lib/tour.ts.
  *
- * The spotlight is one SVG path with an even-odd hole, and it never catches
- * a pointer event: it dims, the ring points, and the whole app stays usable
- * underneath. The person clicks the actual button and types in the actual
+ * The spotlight is four solid shades around the hole and a ring, and none
+ * of it catches a pointer event: it dims, the ring points, and the whole app
+ * stays usable underneath. The person clicks the actual button and types in the actual
  * box, and the app does the actual thing - a fake copy of the control inside
  * the overlay would teach a fake app, and a scrim that blocked clicks trapped
  * people inside the first sheet the tour led them into.

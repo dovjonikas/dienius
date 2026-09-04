@@ -22,7 +22,7 @@ the week's geometry, iCalendar - is a plain function in `src/lib` or beside its
 widget, tested directly.
 
 Two optional layers sit on top and neither is a dependency: **sync** between
-your own devices, through a 200-line server you host (section 7), and
+your own devices, through a server of under three hundred lines you host (section 7), and
 **external calendars**, read-only and laid over the plan (section 12). With
 both off - the default - nothing degrades.
 
@@ -51,8 +51,11 @@ AppData
 ├── ifThens: IfThenEntry[]       trigger + action, never measured
 ├── inbox: InboxItem[]           one line of text, no date
 ├── backlog: BacklogItem[]       decided, undated, in priority order
-└── settings: Settings           theme, sleepProfiles, weekdayTemplates,
-                                 reminders, eveningClose, density, ...
+├── scratch: ScratchNote[]       the stream under everything, text and an instant
+├── settings: Settings           theme, sleepProfiles, weekdayTemplates,
+│                                reminders, eveningClose, density, ...
+├── settingsUpdatedAt            per-field stamps for the sync merge - section 7
+└── tombstones                   what was deleted, and when, so a delete sticks
 ```
 
 A **date key** is `YYYY-MM-DD`, always. It sorts lexically, which is why ranges
@@ -90,8 +93,8 @@ if it were absent. This contract is kept by every reader and is tested.
 
 ### What is *not* in `AppData`
 
-Six things live under their own storage keys, on purpose, and none of them is
-in a backup:
+A handful of things live under their own storage keys, on purpose, and none
+of them is in a backup. The ones that hold something worth knowing about:
 
 - **`dienius:clock-tools`** - the timer, stopwatch and focus session
   ([`clockTools.ts`](../src/lib/clockTools.ts)). A timer with ninety seconds
@@ -110,11 +113,21 @@ in a backup:
   habit rather than a plan: restoring a week-old snapshot has no business
   changing which chip is lit, and a phone and a laptop are allowed to
   disagree about it.
+- **`dienius:cloud-backup`** - the GitHub repo, the token and the time of
+  the last copy ([`cloudBackup.ts`](../src/lib/cloudBackup.ts)). The token is
+  a device's own credential and must never travel; a test holds that it is in
+  no export and no sync payload.
 - **`dienius:calendars`** - the events fetched from external feeds
   ([`calendars.ts`](../src/lib/calendars.ts)). The *subscriptions* live in
   settings and do sync; what they contain is refetched per device, because a
   week of somebody's work meetings is not a plan worth carrying in a backup and
   is stale the moment it is written.
+
+And a few device-local preferences under their own keys for the same
+reason, each explained where it lives: the evening close's and the yesterday
+banner's dismissals for the day, the quick-add draft, which library lists are
+folded and what each was last counted in, where the scratch button sits, and
+the tour's progress.
 
 And one key that is a whole separate copy of everything:
 
@@ -176,13 +189,16 @@ src/
   App.tsx              the shell: tabs, the keyboard layer, everything that
                        must outlive a tab change (focus bar, timer, palette,
                        undo toast, reminders)
-  main.tsx             mount, service worker, install prompt
+  main.tsx             mount, service worker, install prompt, sync, the cloud copy
+  pwa.ts               registers the worker in production, raises the update notice
+  UpdateNotice.tsx     the quiet Reload line; never reloads on its own
+  ErrorBoundary.tsx    the one screen that says something broke, with the way out
 
   lib/                 no React except where a hook is the API
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, load/save, migrations, export/import
     validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
-    store.ts           the facade: `actions` spread from the ten areas below
+    store.ts           the facade: `actions` spread from the ten areas below core.ts
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
@@ -228,6 +244,13 @@ src/
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
     dates.ts           date-key helpers, month grid
+    onboarding.ts      what a first run is: a pure read, no flag
+    starterTemplates.ts  the three starter templates, offered and never installed
+    colors.ts          the one palette templates and if-then tags pick from
+    calendarCell.ts    what a month cell says about a past day
+    theme-color.ts     keeps <meta name="theme-color"> with the active theme
+    theme-preview.ts   the gallery's card, resolved the way the page is
+    useSystemPrefersDark.ts  the live prefers-color-scheme reading
     categories.ts      the six categories; colours live in styles.css
     themes.ts          the three presets
     theme.ts           preset + overrides -> real CSS values
@@ -243,8 +266,9 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     CommandPalette, ShortcutsOverlay
+    TimeColumns        the two scrolling columns inside the time picker
+    BackupSettings, SyncSettings, CalendarSettings, NorthSettings   Settings sections
     week/              the week view - see section 11
-    NorthSettings, SyncSettings, CalendarSettings   Settings sections
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app
     MinuteStepInput    a length in minutes, typed or stepped
@@ -472,6 +496,8 @@ erases the other's morning. Every entity therefore carries its own
 | Goal | `goal:<id>` | |
 | If-then | `ifthen:<id>` | |
 | Inbox item | `inbox:<id>` | |
+| Backlog item | `backlog:<id>` | |
+| Scratch note | `scratch:<id>` | |
 | Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
 
 One person, two devices, rarely at the same second: real conflicts are almost
@@ -480,7 +506,7 @@ what anybody would expect. Nothing more elaborate is earned.
 
 ### Timestamps are written by diffing, not by hand
 
-Sixty actions in `store.ts` all change something. Asking each of them to stamp
+Sixty actions across `store/` all change something. Asking each of them to stamp
 the right entity is sixty chances to forget, and the sixty-first action added
 next year forgets by default.
 
@@ -512,8 +538,11 @@ absent after is a deletion, whoever caused it.
   of the sync server is circular, and a token is a device's own credential.
   They live under `dienius:sync` in `localStorage`.
 
-The North card's dismissal *does* sync (it moved into `settings`), because
-"I have read this today" is a fact about the person, not the device.
+The North card's dismissal *does* sync - `settings.northDismissedOn` -
+because "I have read this today" is a fact about the person, not the device.
+The field existed and was in `SYNCED_SETTINGS` from v1.4, and the card kept
+reading a local key anyway until v1.11, when the docs audit noticed that
+nothing wrote it.
 
 Note the interaction with a **snapshot restore**. Restoring goes through
 `actions.restoreState`, which commits, so the restore is stamped now and what
@@ -542,41 +571,21 @@ field added to settings either travels or is explicitly named as local.
 
 ## 8. Styling
 
-**One stylesheet**, `src/styles.css`, ~6000 lines, organised by area with a
-comment block per section. No CSS modules, no CSS-in-JS, no utility classes.
-
-Everything is built from tokens declared once on `:root`:
-
-- spacing `--s0`..`--s8`, radius `--r-chip/-control/-card/-pill/-round`
-- four type sizes `--t-xs/sm/md/lg`, plus `--t-input` (the iOS zoom floor)
-- three elevations `--e1/e2/e3`, motion `--dur-fast`, `--dur`, `--ease`
-- the theme's own palette: `--bg`, `--surface`, `--text`, `--muted`, `--faint`,
-  `--accent`, `--border`, ...
-
-Two of those are *derived at runtime* rather than declared, in
-`applyResolvedTheme`: `--safe-ink` (readable on `--surface`) and `--on-accent`
-(readable on whatever accent is in force). Anything filled with `--accent` uses
-`--on-accent` for its text; hard-coding white there failed AA badly.
-
-Density and text size are two attributes on `<html>` (`data-density`,
-`data-text-scale`) that redefine those scales at source - which is the entire
-feature, and why nothing else has to know they exist.
-
-### The pre-paint script
-
-`index.html` carries an inline script that resolves and applies the theme
-*before* React mounts, so a dark install never flashes light. It necessarily
-duplicates the preset data and the resolution algorithm from `themes.ts` and
-`theme.ts`. [`src/preTheme.test.ts`](../src/preTheme.test.ts) runs that exact
-script text against the real functions for every preset and mode and fails on
-any difference. **If you change a theme token, change it in both places** - the
-test will tell you if you forget.
+**One stylesheet**, `src/styles.css`, about ten and a half thousand lines,
+organised by area with a comment block per section. No CSS modules, no
+CSS-in-JS, no utility classes. Everything is built from tokens declared once
+on `:root`, two of them derived at runtime in `applyResolvedTheme`, and
+density and text size are two attributes on `<html>` that redefine the
+scales at source. The token list, the derived pair, the three theme presets
+and the pre-paint script in `index.html` - and the rule that a theme token
+changes in two places - are in [CONVENTIONS section 5](CONVENTIONS.md#5-design-tokens),
+which is where the rule is kept so it is written once.
 
 ---
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. Around 1400 tests, no worker limits, no skips.
+Vitest + Testing Library + jsdom. Around 1800 tests in a hundred files, no worker limits, no skips; plus twenty Playwright tests against the production build (section 4's `e2e/`).
 
 Two kinds, deliberately:
 
@@ -629,7 +638,7 @@ Two things are worth knowing before touching it:
 
 - **Everything is a percentage of a grid row that takes the height it is
   given.** There is no pixel budget and no density fitting, which is why it
-  fits 1920x1080, 1366x768 and 390x812 for the same reason. Do not introduce a
+  fits 1920x1080, 1366x768 and 390x844 for the same reason. Do not introduce a
   measured height here.
 - **A column is `display: contents`**, so its head, track and foot land in the
   grid's three rows directly - that is what aligns the hour axis with the
@@ -737,9 +746,11 @@ Two ways to run it, and the difference is where it writes:
   wearing the person's theme, no sync, no snapshots, deleted on the way out.
   The same isolation demo mode uses, for the same reason.
 
-The spotlight is one SVG path with an even-odd hole and it never catches a
-pointer event: the app underneath stays usable, and the person operates the
-real control rather than a copy of it.
+The spotlight is four solid shades around the hole, positioned by transform
+(`shadesAround` in `Tour.tsx`; it was one SVG path with an even-odd hole
+until v1.11, which repainted the window on every move), and a ring that
+glides; none of it catches a pointer event, so the app underneath stays
+usable and the person operates the real control rather than a copy of it.
 
 ### Replan - `widgets/day-plan/replan.ts`, `ReplanSheet.tsx`
 

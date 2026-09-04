@@ -1,9 +1,6 @@
-import { useState } from 'react'
-import { useAppData } from '../../lib/store'
+import { actions, useAppData } from '../../lib/store'
 import { northPrompt } from '../../lib/north'
 import { todayKey } from '../../lib/dates'
-
-const DISMISSED_KEY = 'dienius:north-dismissed'
 
 /**
  * The one time a goal comes forward on its own.
@@ -21,14 +18,16 @@ const DISMISSED_KEY = 'dienius:north-dismissed'
  * telling you off.
  *
  * One button. Dismissing is remembered for the day only - tomorrow is a
- * different morning and will decide again on its own terms.
+ * different morning and will decide again on its own terms. It is remembered
+ * in settings, which sync, because "I have read this today" is a fact about
+ * the person and not the device: the laptop dismissing it should be enough
+ * for the phone. The card wrote a local key instead from v1.4 to v1.11, so
+ * the field that was built for it sat empty and the phone asked again.
  */
 export function NorthCard() {
   const data = useAppData()
   const today = todayKey()
-  const [dismissed, setDismissed] = useState(() => readDismissed())
-
-  const prompt = northPrompt(data, today, dismissed)
+  const prompt = northPrompt(data, today, data.settings.northDismissedOn ?? null)
   if (!prompt) return null
 
   const { goal, kind } = prompt
@@ -42,36 +41,10 @@ export function NorthCard() {
       <button
         type="button"
         className="north-card-ok"
-        onClick={() => {
-          writeDismissed(today)
-          setDismissed(today)
-        }}
+        onClick={() => actions.dismissNorth(today)}
       >
         Ok
       </button>
     </aside>
   )
-}
-
-/**
- * Its own key, and not in a backup - the same reasoning the yesterday
- * banner's own dismissal follows. "I have already read this today" is a fact
- * about this device this morning, not something worth restoring onto another
- * machine next week. Wrapped, because storage can be unavailable and a card
- * is never worth failing a render over.
- */
-function readDismissed(): string | null {
-  try {
-    return localStorage.getItem(DISMISSED_KEY)
-  } catch {
-    return null
-  }
-}
-
-function writeDismissed(date: string): void {
-  try {
-    localStorage.setItem(DISMISSED_KEY, date)
-  } catch {
-    // Nothing to do - it simply asks again next time.
-  }
 }

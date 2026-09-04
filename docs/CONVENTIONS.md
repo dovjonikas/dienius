@@ -91,7 +91,7 @@ Never delete a failing test to make a suite green.
 
 ### Timing tests
 
-Do not assert absolute milliseconds. The suite runs ninety files in parallel on
+Do not assert absolute milliseconds. The suite runs a hundred-odd files in parallel on
 whatever machine CI hands out. Assert a *ratio* against a baseline measured the
 same way, take the fastest of several rounds, and alternate the two sides so a
 machine that gets busier partway through slows both equally.
@@ -259,12 +259,13 @@ The one documented exception is a week-view block, whose height is its duration.
 - **A dangling id degrades, never crashes.** A `templateId`, `libraryRef`,
   `sleepProfileId` or `repeatOf` that resolves to nothing is treated exactly as
   if it were absent.
-- **Three things live under their own keys and are not in a backup**: the clock
-  tools, the yesterday dismissal, the calendar cache. Plus snapshots in
-  IndexedDB. Each has a reason written where it lives.
-- **Timestamps are never written by an action.** `commit()` diffs what is going
-  out against what was there and stamps whatever moved. Sixty actions each
-  remembering to stamp is sixty chances to forget.
+- **Some things live under their own keys and are not in a backup** - the
+  clock tools, the sync and backup credentials, the calendar cache, a few
+  device-local dismissals and preferences, and the snapshots in IndexedDB.
+  The list, with each one's reason, is ARCHITECTURE section 2; add to it
+  there rather than here.
+- **Timestamps are never written by an action.** `commit()` stamps whatever
+  moved - ARCHITECTURE section 7 has the why.
 
 ---
 
@@ -324,7 +325,9 @@ npm run e2e
 All four clean. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass; the browser tests run in
-their own job beside that and never hold a release.
+their own job beside that and never hold a release. The same workflow runs
+on every pull request, and only a push to `main` deploys - a PR from a fork
+must never be able to publish.
 
 `npm run e2e` is Playwright driving a real Chromium against `vite preview`
 of the production build - the files under `e2e/`, one browser per test,
@@ -420,7 +423,7 @@ What checking it means, concretely:
 - **Every step still ends.** The predicates in `TOUR_EVENTS` watch the store,
   so a feature that stops writing what it used to write leaves a step that
   can never be finished and a person who cannot get past it.
-- **The words are still true.** "Eight blocks, one click" is a promise about
+- **The words are still true.** "Nine blocks, one click" is a promise about
   a starter template; change the template and the sentence is a lie.
 - **A new feature worth teaching gets a step, and the budget is still 120
   words.** Adding a tenth step means earning it by cutting somewhere else.
@@ -546,7 +549,7 @@ to take away:
   hundred things in it has to be able to sit there saying nothing.
 
 What it *is* allowed to be is easy to pull from: one press puts an item on the
-day at the next free slot that holds it - the same `autoSlot.ts` arithmetic
+day at the next free slot that holds it - the same `widgets/day-plan/autoSlot.ts` arithmetic
 quick-add's own time control uses - and it leaves the backlog in the same
 commit, because a thing that is on today and still in the backlog is the same
 thing written down twice.
@@ -617,7 +620,7 @@ answers is a control that has not been built yet. The library's add line
 a unit control, a count control, and the same one-truth rule between them.
 
 - **A default is a real answer, not a placeholder.** The time control opens on
-  the first free slot the day genuinely has (`lib/.../autoSlot.ts`), not on a
+  the first free slot the day genuinely has (`widgets/day-plan/autoSlot.ts`), not on a
   blank or on a round number nobody chose. When there is no such slot it says
   "No time" and the task is a float, because a planner that answers a full day
   by booking 23:45 is one people stop believing.

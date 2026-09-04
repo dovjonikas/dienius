@@ -30,7 +30,7 @@ const BASE_MANIFEST = {
   name: 'Dienius',
   short_name: 'Dienius',
   description:
-    'A modular day planner built around reusable day templates. Works fully offline, all data stays on your device.',
+    'A day planner for a brain that needs the plan to be visible: templates stamped onto days, a timeline, a week view. Works offline, keeps its data on your device.',
   start_url: '.',
   scope: '.',
   display: 'standalone',

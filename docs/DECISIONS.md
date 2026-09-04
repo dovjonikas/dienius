@@ -3,20 +3,24 @@
 Notes for anyone reviewing this repo rather than using the app. Each one explains a choice that
 looks unusual next to a typical planner app, what it costs, and why the trade was made anyway.
 
-## localStorage, no backend
+## localStorage first, and every other copy a layer on top of it
 
-Every write goes straight to `localStorage` through `src/lib/storage.ts`. There is no server, no
-sync, no API. `AppData` is one JSON blob, validated on the way in and out by a set of type guards
-(`validate` in `storage.ts`) so that a corrupted or hand-edited value falls back to an empty state
-instead of crashing the app.
+Every write goes straight to `localStorage` through `src/lib/storage.ts`. `AppData` is one
+JSON blob, validated on the way in and out by a deep type guard (`validate` in `validate.ts`)
+so that a corrupted or hand-edited value falls back to an empty state instead of crashing the
+app. The app has no infrastructure it needs: nothing to run, pay for or keep patched, and it works
+fully offline the moment it is installed.
 
-The upside is that the app has no infrastructure to run, pay for, or keep patched, and it works
-fully offline the moment it is installed. The cost is real: data lives in one browser, on one
-device. Clear site data and it is gone. There is no sync between a phone and a laptop. The only
-way to move data is the export/import JSON round trip in Settings, which is a deliberate manual
-step rather than an automatic one - it means a backup only exists when the person actually took
-it. For a single-user day planner that trade reads as acceptable; it would not for anything meant
-to be shared or relied on across devices without that habit.
+As first written, in v1.0, this section said there was no server, no sync and no API, and that
+the only way to move data was the export/import round trip in Settings. That was true then and
+the reasoning has held; what changed is that three copies were added on top, each optional, each
+a layer, none a dependency: sync between your own devices through a server you host (v1.5), a
+week of daily snapshots in IndexedDB (v1.3), and a copy of the plan in a private GitHub repo
+(v1.11). ARCHITECTURE section 7 sets the three side by side. The decision that survives is the
+shape: with all three off - the default - the app is exactly what this section first described,
+and nothing anywhere waits on a network to answer. The cost that was named here is still the
+cost of that default: one browser, one device, and clear site data and it is gone unless one of
+the layers was turned on.
 
 ## No accounts
 
@@ -25,17 +29,18 @@ localStorage decision above - without a backend there is nothing for an account 
 against - but it is also a choice on its own: no password to lose, no email to collect, no consent
 screen before the first task can be typed.
 
-The cost is the same one as above, restated: no cross-device access, and no recovery path if local
-storage is cleared beyond the export file the person remembered to make. A tool for tracking ADHD
-time blindness that puts a login wall between a person and their plan has already lost - the whole
-premise is that a plan needs to be visible with zero friction, and an account is friction before
-the plan even loads.
+The cost is the same one as above, restated: no cross-device access and no recovery path beyond
+what the person set up themselves - the sync server, the GitHub repo - and none of those is an
+account with this app, they are the person's own machine and the person's own repo. A tool for
+tracking ADHD time blindness that puts a login wall between a person and their plan has already
+lost - the whole premise is that a plan needs to be visible with zero friction, and an account is
+friction before the plan even loads.
 
-## No streaks
+## No streak on the day view - and one, described rather than kept, on the review
 
 `dayScore` in `src/widgets/day-plan/score.ts` computes a score from one day's own tasks and
-nothing else. There is no streak counter anywhere in the codebase, no longest-streak record, no
-weekly summary that rewards consecutive good days.
+nothing else. Nothing on the day view, the calendar or the North card counts consecutive days,
+nothing records a longest run, and no notice ever says a run has ended.
 
 This is a considered omission, not an oversight. A streak turns a single bad day into a reason to
 quit the whole system, because the thing being protected is no longer "did I get things done
@@ -44,6 +49,17 @@ protect. For a tool aimed at people whose days are already inconsistent by natur
 punishes the exact pattern it should be accommodating. The cost of leaving it out is real: streaks
 are a proven engagement lever, and this app is deliberately worse at pulling someone back in after
 a gap. That is the point, not a gap in the feature set.
+
+The one place a run of days is shown is the Review tab (`highlightStreak` in `src/lib/review.ts`):
+how many days in a row, counting back from the end of the range, at least one key task was
+finished. It is computed from the days each time and never stored, so there is no record to
+protect and no longest run to beat; it counts key tasks rather than any task, because "I did
+something" is true of almost every day and says nothing; and it lives only on a screen somebody
+opens to look back, never on the screen they plan on. The line this draws is the one the whole
+review holds to: a number you read about your week is a description, a number you can lose while
+living the day is a lever. This section used to say there was no streak counter anywhere in the
+codebase, which stopped being true when the review shipped in v1.3 and was not corrected until
+v1.11; the README said the same in three places and says this instead now.
 
 ## An unplanned day has no score
 
@@ -109,7 +125,7 @@ every other feature deliberately declining to hand anyone.
 A task typed into quick-add can never be marked core, on a shift, night, or rest day or any other.
 Core is set only on a template block, before the day starts - there is no control anywhere in the
 day view to mark an existing task core after the fact, and rolling a task forward to the next day
-clears its core flag rather than carrying it along (`rolloverUnfinished` in `src/lib/store.ts`,
+clears its core flag rather than carrying it along (`rolloverUnfinished` in `src/lib/store/days.ts`,
 the same treatment `fromTemplate` already gets).
 
 The reasoning is the same in both places: core is supposed to mean "known to be unavoidable ahead of
@@ -126,7 +142,7 @@ limitation of what "core" can express, not just a missing convenience, and it is
 ## A stamped day outlives its template
 
 Deleting a template does not touch any day it was already stamped onto. `deleteTemplate` in
-`src/lib/store.ts` only removes the template from the list - `DayPlan.templateId` on a day stamped
+`src/lib/store/templates.ts` only removes the template from the list - `DayPlan.templateId` on a day stamped
 from it is left exactly as it was, now pointing at a template that no longer exists.
 
 This follows the same reasoning as `dayType` and `core`: both are copied onto the day at the moment
@@ -144,12 +160,21 @@ The cost is that every place that reads `templateId` - `DayView`, `CalendarView`
 written down: a dangling `templateId` degrades to an uncolored, unlabeled day rather than crashing,
 which is pinned by tests in `store.test.ts`, `DayView.test.tsx`, and `yearGrid.test.ts`.
 
-## Templates instead of recurring tasks
+## Templates instead of recurring tasks - and the small repeat that came later
 
 Most planners represent a repeating commitment as a recurring task: "every weekday, 09:00, standup."
-Dienius has no recurrence engine. Instead, a `Template` is a named, coloured list of time blocks
-that gets stamped onto specific calendar dates (`applyStamps` in `src/lib/stamping.ts`), one date
-at a time, with the stamps staged in the calendar view until an explicit save.
+Dienius was built without a recurrence engine. Instead, a `Template` is a named, coloured list of
+time blocks that gets stamped onto specific calendar dates (`applyStamps` in
+`src/lib/stamping.ts`), one date at a time, with the stamps staged in the calendar view until an
+explicit save.
+
+Since v1.3 a single task can also repeat - daily, weekdays or weekly, and nothing more
+(`src/lib/repeats.ts`). That is deliberately the smallest repeat that exists: no "every other
+Tuesday", no end date, no exceptions beyond deleting one instance (which writes a skip onto that
+day) or the series. Instances are real tasks, made when a day is first opened, and "just this day"
+against "every day it repeats" is a standing choice rather than a dialog. It exists for the one
+thing a template is bad at - a single commitment that outlives whichever template a day happens to
+wear - and it is kept small for exactly the reasons the next paragraph gives.
 
 Recurrence rules are a small planning problem of their own - exceptions, skipped weeks, "every
 other Tuesday," what happens when a recurring task is edited after some instances are already
@@ -164,13 +189,19 @@ The cost is that stamping is a manual, visible action instead of a background ru
 not fill in a whole month by itself, and a shift-worker's rotating schedule needs the calendar
 painted by hand (or in a drag) rather than described once and forgotten. For a person who already
 struggles with a plan that is not visible, that manual visibility is closer to a feature than a
-tax, but it is still more clicking than a recurrence rule would ask for.
+tax, but it is still more clicking than a recurrence rule would ask for. The one concession, since
+v1.3, is the weekday map in Settings: a template per weekday, applied the first time a day is
+opened and never again for that day, with a stamp by hand always winning. It fills in the ordinary
+week and leaves the rotating one to the calendar, which is where the manual visibility still earns
+its keep.
 
 ## A hand-rolled service worker
 
 `public/sw.js` is written by hand rather than generated by `vite-plugin-pwa` or a similar library.
-`scripts/generate-sw.mjs` runs after every production build, hashes the built output, and writes a
-versioned cache name plus a full precache list directly into the worker file.
+`scripts/generate-sw.mjs` runs at the end of every production build - from a Vite plugin's
+`closeBundle` hook in `vite.config.ts`, which is the moment `public/` has been copied and every
+output file can be seen - hashes the built output, and writes a versioned cache name plus a full
+precache list directly into the worker file.
 
 The app is a small number of static files with one caching strategy - network-first for
 navigations so an online visit always gets the latest build, cache-first for everything else - and
@@ -256,7 +287,11 @@ themselves held to the same content bar the rest of the app's copy already keeps
 rest day, and an overnight shift are written as an actual person's day (specific titles, real
 times, a shift that runs a genuine eight hours) rather than a "Task 1, Task 2" scaffold, because this is
 what a brand new person will assume the app is for. `docs/RESEARCH-ADHD.md` section 12 rules out a
-guided multi-step flow and any coach marks or tour; nothing here is a flow. A person can ignore the
+guided multi-step flow and any coach marks or tour; nothing here is a flow. (The tour that came in
+v1.7 is the exception that was argued for on its own terms: opt-in from an offer, nine steps that
+each end on a real action in the real app rather than a slide about it, and "Start clean" at the
+end - what section 12 was against was a wall of instruction before the first task, and that is
+still not here.) A person can ignore the
 offers entirely and start from quick-add exactly as before, or open Templates and build one from
 scratch exactly as before - the offers are one more starting point sitting next to those two, not a
 replacement for either, and once tapped once the whole section is gone from every screen it ever
@@ -426,7 +461,7 @@ full reasoning where the feature itself is documented; this is the short record 
 - **Dragging a float while the grid is collapsed auto-expands it.** Functionally identical to tapping
   "Show timeline" first, triggered by the one gesture that actually needs the grid open, and it does
   not turn the toggle into a per-day decision.
-- **Theme discovery gets one onboarding line, not a moved gallery.** The eleven themes stay under
+- **Theme discovery gets one onboarding line, not a moved gallery.** The themes (eleven then, three since) stay under
   Settings; the first-run state adds one sentence naming them, at the exact moment a new person is
   deciding whether the app is worth their time. No tour, no second onboarding surface.
 - **A starter tapped on the day view stamps the date on screen, not always today.** Consistent with
@@ -766,11 +801,15 @@ place people glance at first, which is the single distinction this whole app tur
 
 ---
 
-## The utility dock: a timer, a stopwatch, an inbox, and one nudge
+## The clock, the inbox and the nudges: nothing that is not the plan is ever a second place where work lives
 
-Four things that have nothing to do with planning a day and everything to do with getting through one.
-They share a rule: each is either invisible or one tap away, and none of them is ever a second place where
-work lives.
+Written when these four things shared a dock. They no longer do - the timer and stopwatch are a
+popover behind the clock in the header and a small floating widget while one runs
+(`widgets/clock/`), the inbox is one of the four shelves under the day (CONVENTIONS section 14),
+and the one nudge became two: the interval nudge during focus work described below, and a nudge
+before a timed task (`TaskReminder.tsx`), off by default, once per task per day, never while the
+app is closed. The rule they share is unchanged and is what this section is really about: each is
+either invisible or one tap away, and none of them is ever a second place where work lives.
 
 **The timer stores an instant and a length, never a countdown.** A running timer keeps only when it
 started and how long it is; the number on screen is derived on every tick. That is what makes it survive

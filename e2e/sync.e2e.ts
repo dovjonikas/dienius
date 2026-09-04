@@ -46,8 +46,10 @@ test.afterAll(() => {
 
 async function turnSyncOn(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Settings' }).click()
-  await page.getByLabel('Server address').fill(`http://localhost:${PORT}`)
-  await page.getByLabel('Token').fill(token)
+  // Scoped to the Sync section: Backup has a Token field of its own now.
+  const sync = page.locator('#settings-sync')
+  await sync.getByLabel('Server address').fill(`http://localhost:${PORT}`)
+  await sync.getByLabel('Token').fill(token)
   await page.getByRole('button', { name: 'Turn on' }).click()
   await expect(page.getByRole('button', { name: 'Sync now' })).toBeVisible()
 }

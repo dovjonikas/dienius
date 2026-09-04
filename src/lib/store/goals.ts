@@ -68,4 +68,17 @@ export const goalActions = {
     const data = getData()
     commit({ ...data, settings: { ...data.settings, north } })
   },
+
+  /**
+   * "I have read this morning's card." In settings, so it syncs: the card is
+   * about the person, and a phone that showed the same card again after the
+   * laptop had dismissed it would be asking twice. The field has been in
+   * `Settings` and in `SYNCED_SETTINGS` since v1.4; until v1.11 the card
+   * wrote a local key instead and nothing ever set this.
+   */
+  dismissNorth(today: string): void {
+    const data = getData()
+    if (data.settings.northDismissedOn === today) return
+    commit({ ...data, settings: { ...data.settings, northDismissedOn: today } })
+  },
 }

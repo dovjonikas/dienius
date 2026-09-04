@@ -200,15 +200,17 @@ test('an automatic push is skipped when nothing changed, and spaced by ten minut
   expect(calls).toHaveLength(0)
 
   markDirtyForTests()
-  const now = Date.now()
-  expect(await requestCloudBackup('evening-close', now)).toBe(true)
+  expect(await requestCloudBackup('evening-close')).toBe(true)
   const writes = calls.length
+  // Spaced from the moment the copy was actually written, which is a few
+  // milliseconds after any instant read before the push.
+  const last = new Date(getCloudBackupConfig().lastBackupAt!).getTime()
 
   markDirtyForTests()
-  expect(await requestCloudBackup('new-day', now + 60_000)).toBe(false)
+  expect(await requestCloudBackup('new-day', last + 60_000)).toBe(false)
   expect(calls).toHaveLength(writes)
 
-  expect(await requestCloudBackup('new-day', now + BACKUP_MIN_INTERVAL_MS + 1)).toBe(true)
+  expect(await requestCloudBackup('new-day', last + BACKUP_MIN_INTERVAL_MS + 1)).toBe(true)
   expect(calls.length).toBeGreaterThan(writes)
 })
 
