@@ -606,6 +606,19 @@ legend to look up. Fixed hex values rather than theme tokens, exactly as `Templa
 category means the same thing in all eleven presets, and the same day would read differently in each if
 these followed the theme.
 
+**One ring, for every colour that can be chosen.** There are four round colour
+swatches in this app - the accent row in Appearance, the six categories under
+quick-add and in the template editor, a template's own colour, a library
+list's dot - and until v2.0.1 they said "this one is chosen" four different
+ways: a clean outer ring on one, an 18-to-24px size jump plus a doubled
+same-hue ring on another, and a `border-color: var(--text)` drawn inside the
+fill on the other two. They share one rule now: the fill, a two-pixel gap in
+`--surface`, then a two-pixel ring in the swatch's own colour, drawn as a
+box-shadow so choosing one never moves the row. The gap is the whole of why it
+reads as a ring rather than a thicker edge. Four ways to say one thing is the
+kind of small wrongness that reads as carelessness long before anybody can
+name it, which is exactly how it was reported.
+
 **A wash on the block, an edge on the card.** The timeline draws about a fifth of the colour mixed
 against the surface, with full strength kept for a 3px left edge; the card in the list gets only the
 edge. That asymmetry is deliberate. On the grid a colour is a *quantity* - the area it covers is how

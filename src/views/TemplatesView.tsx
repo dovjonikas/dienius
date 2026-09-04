@@ -180,7 +180,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
             aria-label={`Color ${color}`}
             aria-pressed={draft.color === color}
             className={draft.color === color ? 'swatch selected' : 'swatch'}
-            style={{ background: color }}
+            style={{ background: color, ['--pick' as string]: color } as React.CSSProperties}
             onClick={() => setDraft({ ...draft, color })}
           />
         ))}

@@ -657,15 +657,41 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   padding: 0;
   border-radius: var(--r-round);
   border: 2px solid transparent;
-  background: var(--swatch, var(--accent));
+  --pick: var(--swatch, var(--accent));
+  background: var(--pick);
   transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .accent-swatch:hover { transform: scale(1.12); }
 
-.accent-swatch.selected {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch, var(--accent));
+/**
+ * One way to say "this colour is the chosen one", wherever a round colour
+ * swatch is offered: the accent row in Appearance, the six categories under
+ * quick-add and in the template editor, a template's own colour, and a
+ * library list's dot.
+ *
+ * The fill, then a two-pixel gap in the surface, then a two-pixel ring in the
+ * swatch's own colour. The gap is the whole of why it reads as a ring rather
+ * than a thicker edge, and drawing it in `--surface` rather than in the
+ * colour is what stops three shades of one hue turning into a smudge.
+ *
+ * It was four different treatments until v2.0: this one, a size jump plus a
+ * doubled same-colour ring on the categories, and a `border-color: var(--text)`
+ * drawn inside the fill on the other two. Four ways to say one thing is the
+ * kind of small wrongness that reads as carelessness long before anybody can
+ * name it.
+ *
+ * A box-shadow rather than a border on purpose: it is drawn outside the box
+ * and costs no layout, so selecting one never moves the row.
+ */
+.accent-swatch.selected,
+.category-swatch.selected,
+.swatch.selected,
+.library-color.is-on {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--pick, var(--accent));
 }
+
+
 
 .accent-swatch:focus-visible {
   outline: 2px solid var(--accent);
@@ -710,7 +736,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   transition: transform var(--dur) var(--ease);
 }
 
-.switch[aria-checked='true'] .switch-thumb { transform: translateX(18px); background: #fff; }
+/* Same rule as the tick above: the thumb sits on the accent-filled track once
+   the switch is on, so it takes its colour from --on-accent rather than being
+   a hard white that disappears into a pale accent. */
+.switch[aria-checked='true'] .switch-thumb { transform: translateX(18px); background: var(--on-accent, #fff); }
 
 .switch:focus-visible {
   outline: 2px solid var(--accent);
@@ -1108,7 +1137,11 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
-  transition: width 0.35s ease;
+  /* Slower than --dur on purpose, and the only bespoke duration in the
+     stylesheet: this bar moves when a task is ticked, which is a thing that
+     happened rather than a thing being hovered, and at 200ms it reads as a
+     jump rather than as the day filling up. The easing is the app's. */
+  transition: width 0.35s var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2695,7 +2728,7 @@ select:focus {
   margin-bottom: var(--s2);
   padding: 9px 4px 9px 14px;
   box-shadow: var(--e1);
-  transition: border-color var(--dur-fast) var(--ease), background 0.15s, opacity var(--dur) var(--ease);
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), opacity var(--dur) var(--ease);
 }
 
 .task:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
@@ -2819,36 +2852,41 @@ select:focus {
    Real toggle buttons with real names (aria-label plus title), sized to a
    comfortable target, reading as a row of colour rather than a form control -
    picking one is meant to cost a glance, not a decision. */
+/* The four pixels of inset are the selected ring's room. It is a box-shadow,
+   so it costs no layout and the row does not know it is there - and the task
+   pane's own `overflow-y: auto` makes `overflow-x` auto with it, which
+   clipped the left edge of the first swatch's ring against the column. */
 .category-picker {
   display: flex;
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
+  padding: 4px;
 }
 
-/* Unselected swatches sit back so the chosen one wins on size as well as on
-   the ring - a row of seven near-identical dots with one faintly outlined is
-   a puzzle, not a control. */
+/* Unselected swatches sit back at a little over half strength, so the chosen
+   one wins on colour without the row changing shape. It used to win on size
+   too - 18px against 24px - because the ring it wore was a 2px border in a
+   45% mix of its own colour with a ring of the same hue outside it, three
+   layers of nearly the same colour that read as a smudge rather than an
+   outline, and a smudge needs help. The ring is the shared one below now,
+   which is unmistakable on its own, so the size can stay put and the row
+   keeps one baseline. */
 .category-swatch {
-  width: 18px;
-  height: 18px;
+  --pick: var(--cat);
+  width: 20px;
+  height: 20px;
   min-height: 0;
   padding: 0;
+  border: none;
   border-radius: var(--r-round);
-  border: 2px solid transparent;
   background: color-mix(in srgb, var(--cat) 55%, transparent);
-  transition: background var(--dur-fast) var(--ease), border-color 0.15s, transform 0.15s;
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .category-swatch:hover { background: var(--cat); }
 
-.category-swatch.selected {
-  width: 24px;
-  height: 24px;
-  background: var(--cat);
-  border-color: color-mix(in srgb, var(--cat) 45%, var(--surface));
-  box-shadow: 0 0 0 2px var(--cat);
-}
+.category-swatch.selected { background: var(--cat); }
 
 .category-swatch:focus-visible {
   outline: 2px solid var(--accent);
@@ -2986,7 +3024,7 @@ select:focus {
   flex-shrink: 0;
   border: 2px solid color-mix(in srgb, var(--muted) 55%, var(--border));
   border-radius: var(--r-chip);
-  transition: background var(--dur-fast) var(--ease), border-color 0.15s;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 /* The tick itself, drawn as two borders of a rotated box rather than an icon
@@ -3019,7 +3057,14 @@ select:focus {
   top: 3px;
   width: var(--tick-short, 0px);
   height: var(--tick-long, 0px);
-  border: solid #fff;
+  /* The one rule this mark is drawn by: a thing filled with --accent takes
+     its ink from --on-accent, which is derived at runtime against whatever
+     accent is in force. It was a hard white, which is the exact case
+     CONVENTIONS section 5 was written about - 2.42:1 on the default dark
+     accent, on the most-looked-at mark in the app. The same fix gives
+     8.67:1 there and changes nothing on Light, where the accent is dark
+     enough that white was already what --on-accent resolves to. */
+  border: solid var(--on-accent, #fff);
   border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg);
   transform-origin: left top;
@@ -3514,7 +3559,8 @@ button.primary {
   padding: 0;
 }
 
-.swatch.selected { border-color: var(--text); }
+/* The ring is the shared rule near .accent-swatch.selected; the colour it
+   draws in comes from --pick, set beside the background in TemplatesView. */
 
 .swatch:focus-visible {
   outline: 2px solid var(--accent);
@@ -5987,18 +6033,32 @@ button.danger:focus-visible {
      first-run invitation that read as something failing to render. */
   .task-pane .task-list:not(:empty) {
     min-height: 7.5rem;
-    /* And when it is scrolling, it says so. A thin overlay scrollbar draws
-       nothing at all until the pointer is over the list, so on the evening
-       of a full day four cards were shown, three were not, and there was no
-       mark of any kind to say the list went on. Two shades, in the page's
-       own ground, attached to the scroller: the top one is painted over by
-       the local layer while the list is at its top and appears the moment it
-       is not, and the bottom one is there whenever there is more below. */
-    background:
-      linear-gradient(var(--bg), transparent) center top / 100% 18px no-repeat local,
-      linear-gradient(transparent, var(--bg)) center bottom / 100% 18px no-repeat local,
-      linear-gradient(color-mix(in srgb, var(--text) 22%, transparent), transparent) center top / 100% 10px no-repeat scroll,
-      linear-gradient(transparent, color-mix(in srgb, var(--text) 22%, transparent)) center bottom / 100% 10px no-repeat scroll;
+  }
+
+  /* And when it is scrolling, it says so. A thin overlay scrollbar draws
+     nothing at all until the pointer is over the list on Windows Chrome, so
+     on the evening of a full day four cards were shown, three were not, and
+     there was no mark of any kind to say the list went on.
+
+     A mask rather than the classic pair of `background-attachment: local`
+     gradients, which is the right answer only for a scroller whose children
+     are transparent: a task card paints `--surface` edge to edge, and that
+     first version's shades sat behind the cards and showed in the eight
+     pixels between them. A mask fades what is actually drawn.
+
+     Which edge fades is a class rather than a media query or a `:has`,
+     because it is a fact about scroll position that CSS cannot ask for -
+     see useScrollEdges.ts. */
+  .task-pane .task-list.has-more-below {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+  }
+
+  .task-pane .task-list.has-more-above {
+    mask-image: linear-gradient(to bottom, transparent, #000 22px);
+  }
+
+  .task-pane .task-list.has-more-both {
+    mask-image: linear-gradient(to bottom, transparent, #000 22px, #000 calc(100% - 22px), transparent);
   }
 
   /* The pane's own 10px gap already separates quick-add from the list; the
@@ -6215,17 +6275,7 @@ button.danger:focus-visible {
   .digest-ring-fill { transition: none; }
 }
 
-.digest-ring-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--t-sm);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
+
 
 .digest-figures {
   display: flex;
@@ -10282,13 +10332,18 @@ main:has(.week) > .calendar {
   height: 22px;
   min-height: 0;
   padding: 0;
+  /* The ring when this one is chosen is the shared rule near
+     .accent-swatch.selected. "No colour" has no --dot of its own, so --pick
+     falls back to the accent, which is the only honest thing a ring around
+     nothing can be drawn in. */
+  --pick: var(--dot, var(--accent));
   border: 2px solid transparent;
   border-radius: var(--r-round);
   background: var(--dot, transparent);
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.library-color.is-on { border-color: var(--text); }
+
 
 /* The row, as one button. Everything a row can do lives in the panel it
    opens, which is what took four controls off every line. */

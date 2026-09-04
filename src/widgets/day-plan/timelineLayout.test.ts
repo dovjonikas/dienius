@@ -6,6 +6,7 @@ import {
   computeTimelineLayout,
   computeVerticalLayout,
   currentMinutes,
+  fitPxPerMinute,
   formatAnchorTimeRange,
   formatClock,
   halfHourMarks,
@@ -597,4 +598,78 @@ test('a lone short anchor still gets exactly its own floor and no more', () => {
   const top = vertical.topPx(540)
   const bottom = vertical.topPx(555)
   expect(bottom - top).toBeCloseTo(32, 5)
+})
+// --- fitPxPerMinute, and the day that does not fit -------------------------
+//
+// This had no tests at all until v2.0, which is how it shipped a cliff: the
+// starter template's own nine-task day, in the 445px column a normal laptop
+// window leaves, drew at 1082px. Not because 1082 was needed - the floors
+// need 456 - but because "nothing fits" handed back the phone's own density,
+// which is the far end of the range from the answer.
+
+const FIT_FLOORS = { sizedAnchorFloorPx: 32, unsizedAnchorFloorPx: 44, gapFloorPx: 44 }
+const FIT_BASE = 1
+const FIT_MAX = 2.4
+
+/** The starter template, which is the day most people will actually see. */
+const WORKING_DAY = [
+  anchor('Get up, shower, coffee', '07:30', 45),
+  anchor('Commute', '08:15', 30),
+  anchor('Deep work block', '09:00', 120),
+  anchor('Standup', '11:00', 15),
+  anchor('Lunch', '12:30', 45),
+  anchor('Meetings', '13:30', 90),
+  anchor('Admin and email', '15:30', 45),
+  anchor('Commute home', '17:00', 30),
+  anchor('Dinner', '19:00', 45),
+]
+
+function heightOf(pxPerMinute: number) {
+  const layout = computeTimelineLayout(WORKING_DAY)
+  return computeVerticalLayout(layout.window!, layout.anchors, { pxPerMinute, ...FIT_FLOORS }).totalHeightPx
+}
+
+function fitInto(room: number) {
+  const layout = computeTimelineLayout(WORKING_DAY)
+  return fitPxPerMinute(layout.window!, layout.anchors, FIT_FLOORS, room, FIT_MAX, FIT_BASE)
+}
+
+test('room to spare draws at the densest the wide grid allows', () => {
+  expect(fitInto(4000)).toBe(FIT_MAX)
+})
+
+test('a day that fits is drawn exactly as dense as the room permits', () => {
+  const room = 700
+  const height = heightOf(fitInto(room))
+  expect(height).toBeLessThanOrEqual(room)
+  expect(height).toBeGreaterThan(room - 20)
+})
+
+test('a day that cannot fit is drawn at its floors, not at the phone density', () => {
+  // 445px is what a 1990x860 window leaves the grid with the evening close
+  // card above the day - an ordinary laptop, and the case this was found in.
+  const floorsNeed = heightOf(0)
+  const drawn = heightOf(fitInto(445))
+  expect(floorsNeed).toBeGreaterThan(445)
+  // Within a few pixels of the least this day can honestly be drawn in -
+  // and well short of what the base density, the old answer, would produce.
+  expect(drawn).toBeLessThan(floorsNeed + 20)
+  expect(drawn).toBeLessThan(heightOf(FIT_BASE) - 100)
+})
+
+test('the tighter the room, the more of the scroll is the day rather than the density', () => {
+  // Whatever the room, a day that cannot fit draws at about the same height:
+  // its floors. Squeezing the column further must not make the drawing taller.
+  const heights = [445, 400, 350, 300].map(room => heightOf(fitInto(room)))
+  for (let i = 1; i < heights.length; i++) {
+    expect(heights[i]).toBeLessThanOrEqual(heights[i - 1] + 1)
+  }
+})
+
+test('nothing measured yet falls back to the phone density rather than to the floors', () => {
+  // useAvailableGridHeight reports zero before its first layout pass, and
+  // jsdom reports it always. Fitting a day into zero pixels would mean
+  // drawing every segment at its bare floor for no reason.
+  expect(fitInto(0)).toBe(FIT_BASE)
+  expect(fitInto(-10)).toBe(FIT_BASE)
 })

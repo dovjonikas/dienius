@@ -698,12 +698,28 @@ export interface VerticalFloors {
  *   an environment with no layout engine reports always. Fitting a day into
  *   zero pixels would mean drawing every segment at its bare floor; drawing
  *   it exactly the way the phone does is the honest fallback.
- * - **A day that cannot fit at any density.** When the segment floors alone
- *   already exceed the room available, no `p` satisfies the constraint. Those
- *   floors are touch targets and legible-text minimums, so they are not
- *   negotiable: the grid draws at its floors and something scrolls. That is a
- *   real day that genuinely does not fit on a real screen, and saying so is
- *   better than shrinking a tap target below where a finger can land.
+ * - **Nothing measured yet.** An `availableHeightPx` of zero or less is what
+ *   `useAvailableGridHeight` reports before its first layout pass, and what
+ *   an environment with no layout engine reports always. Fitting a day into
+ *   zero pixels would mean drawing every segment at its bare floor; drawing
+ *   it exactly the way the phone does is the honest fallback.
+ *
+ * A day that cannot fit at any density is the third case, and it used to
+ * hand back `basePxPerMinute` too, which was the wrong end of the range.
+ * The floors are touch targets and legible-text minimums and are not
+ * negotiable, so something has to scroll - but *how much* was a choice, and
+ * the phone's density is the worst answer available. The starter template's
+ * own nine-task day in a 445px column drew at 1082px: six hundred pixels of
+ * scrolling for a day whose floors need 456. It fits its floors now, which
+ * is eleven pixels of scroll, and it is what the sentence above always
+ * claimed: the grid draws at its floors and something scrolls.
+ *
+ * Below the density where the first segment leaves its floor, every segment
+ * is at its floor and the total does not move, so the fit is run again
+ * against that minimum height rather than simply returning zero. Proportion
+ * is worth whatever it costs nothing to keep: a two-hour block and a
+ * fifteen-minute one should still differ where there is any room at all for
+ * them to.
  */
 export function fitPxPerMinute(
   window: Interval,
@@ -719,13 +735,15 @@ export function fitPxPerMinute(
     computeVerticalLayout(window, anchors, { pxPerMinute, ...floors }).totalHeightPx
 
   if (heightAt(maxPxPerMinute) <= availableHeightPx) return maxPxPerMinute
-  if (heightAt(0) > availableHeightPx) return basePxPerMinute
+  // Nothing fits: aim at the smallest height the floors allow instead, which
+  // is the least this day can honestly be drawn in.
+  const target = Math.max(availableHeightPx, heightAt(0))
 
   let low = 0
   let high = maxPxPerMinute
   for (let i = 0; i < 30; i++) {
     const mid = (low + high) / 2
-    if (heightAt(mid) <= availableHeightPx) low = mid
+    if (heightAt(mid) <= target) low = mid
     else high = mid
   }
   return low

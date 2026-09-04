@@ -9,6 +9,7 @@ import { useIsWide } from '../../lib/viewport'
 import { starterTemplateInput, type StarterTemplate } from '../../lib/starterTemplates'
 import { clockTools } from '../../lib/clockTools'
 import { parseMinutesInput } from './capacity'
+import { scrollEdgeClass, useScrollEdges } from './useScrollEdges'
 import { rolloverSplit } from './rollover'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { QuickAdd } from './QuickAdd'
@@ -82,6 +83,7 @@ export function TaskPane({
   // a real task.
   const firstRun = isFirstRun(data)
   const isWide = useIsWide()
+  const listEdges = useScrollEdges(taskListRef)
   const { pushable, held, covered } = rolloverSplit(data, date, tasks)
 
 
@@ -221,7 +223,13 @@ export function TaskPane({
         </div>
       )}
 
-      <ul className="task-list" ref={taskListRef} tabIndex={-1}>
+      {/* The class says what is out of sight, and the stylesheet fades that
+          edge - see useScrollEdges for why this is not the pure-CSS version. */}
+      <ul
+        className={['task-list', scrollEdgeClass(listEdges)].filter(Boolean).join(' ')}
+        ref={taskListRef}
+        tabIndex={-1}
+      >
         {openTasks.map(task => (
           <TaskRow
             key={task.id}

@@ -91,7 +91,14 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
           {/* The same fraction the header states in digits, as a shape. Two
               readings of one number is not repetition here: the header answers
               "how many", this answers "how far", and only one of those can be
-              taken in without counting. */}
+              taken in without counting.
+              A shape and nothing else. It carried `Math.round(fraction * 100)`
+              in its middle until v2.0 - a percentage with the sign taken off,
+              which is not less of a percentage, and this app's day score does
+              not do percentages (STATE section 2, and DECISIONS on why a
+              number that goes up is a report card). It also said nothing the
+              "Done 1 of 9" immediately beside it did not already say, in
+              words, correctly. */}
           <div className="digest-ring" aria-hidden="true">
             <svg viewBox="0 0 64 64">
               <circle className="digest-ring-track" cx="32" cy="32" r={RING_RADIUS} />
@@ -105,7 +112,7 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
                 strokeDashoffset={RING_CIRCUMFERENCE * (1 - fraction)}
               />
             </svg>
-            <span className="digest-ring-label">{Math.round(fraction * 100)}</span>
+
           </div>
           <dl className="digest-figures">
             <div>

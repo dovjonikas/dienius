@@ -228,6 +228,17 @@ guess whether it was noticed.
   without a measurement that reproduces it.
 - ~~The library queue behaved like a conveyor and looked like a list~~ -
   fixed in v2.0.
+- ~~The timeline fell off a cliff the moment a day stopped fitting~~ - fixed
+  in v2.0.1. `fitPxPerMinute` returned the phone's own density when no
+  density fit, which is the far end of the range from the answer: the starter
+  template's nine-task day in the 445px column a 1990x860 window leaves drew
+  at 1082px, six hundred pixels of scrolling for a day whose floors need 456.
+  It aims at the floors' own height now and comes out at 464. The function
+  had no tests at all, which is how it shipped; it has six.
+- ~~Four ways to say a colour was chosen~~ - fixed in v2.0.1. One rule.
+- ~~The tick on a done task measured 2.42:1~~ - fixed in v2.0.1. It was a
+  hard `#fff`, which is the exact case CONVENTIONS section 5 was written
+  about, on the most-looked-at mark in the app.
 
 - ~~Screenshots, and no way to make them~~ - `npm run shots` since v1.11,
   Playwright writing PNGs from the dev server with the clock pinned. The
@@ -487,6 +498,13 @@ Collected from waves where they actually did.
   the document taller, moved under the scroll settling back, and re-measured
   - a feedback loop the tour exposed by scrolling Settings and switching
   tabs. It reads the document-relative top now.
+- **`background` on a scroller paints behind its children.** The classic pair
+  of `background-attachment: local` / `scroll` gradients that says "this list
+  goes on" is the right answer only when the children are transparent. A task
+  card paints `--surface` edge to edge, so the shades showed in the eight
+  pixels between cards and nowhere else. What fades opaque children is
+  `mask-image`, and a mask cannot be told to appear only while there is
+  something to fade - hence `useScrollEdges.ts`.
 - **A flex child with `min-height: 0` can be given nothing at all.** That is
   the point of it - it is what lets a column shrink - and it is also how the
   task list came to measure zero pixels with seven tasks in it on a 1366x768
