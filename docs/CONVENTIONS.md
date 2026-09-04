@@ -620,3 +620,30 @@ needs - a time, a length, a colour - is already answered when that happens.
   minutes from now would be quietly out of reach of the one feature for doing
   something immediately. The arrows snap to the quarter from there, which is
   where a round number belongs: in the answer somebody asked for.
+
+---
+
+## 17. A visible way in, on every platform
+
+Every feature has at least one control somebody can see, on a phone and on
+a desktop. A key is a shortcut, never the only road: a person who has not
+read the `?` card does not know the key exists, and to them a feature with
+no button is a feature the app does not have.
+
+Scratch is the case that wrote this rule. On a phone it had the floating
+button; on a desktop the floating button is not mounted, so `S` and the
+backtick were the whole of the way in, and the owner watched somebody use
+the app for a week without finding it. It has a pen in the header now,
+beside the clock.
+
+What "visible" means, concretely:
+
+- **A control on screen, in the place the feature belongs**, not a line in
+  the shortcut card or the palette. Those are the second and third ways in
+  and every feature should be in both, but neither is the first.
+- **Both platforms, checked separately.** The phone checklist in STATE.md
+  and the wide layout are different screens with different chrome, and a
+  control mounted for one is not automatically mounted for the other -
+  `ScratchFab` is `!isWide` and the header pen is `isWide`.
+- **The tooltip names the key.** `title="Scratch - S"`: the visible control
+  is where somebody learns the shortcut, which is the order that works.

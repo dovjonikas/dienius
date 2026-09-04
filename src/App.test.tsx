@@ -212,3 +212,54 @@ test('Escape leaves a running tour, after everything sitting over it', async () 
   await user.keyboard('{Escape}')
   expect(getTourState().active).toBe(false)
 })
+
+// --- a visible way into Scratch, on both platforms - CONVENTIONS section 17
+
+/**
+ * Answers the wide-breakpoint query one way and every other query (the
+ * system theme, the pointer) the other, so the shell mounts the chrome of
+ * one platform. jsdom has no real matchMedia; restored after each test.
+ */
+function pretendViewport(wide: boolean): () => void {
+  const original = window.matchMedia
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes('min-width') ? wide : false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+  return () => {
+    window.matchMedia = original
+  }
+}
+
+test('on a wide screen the header carries a pen that opens Scratch, and says which key does the same', async () => {
+  const restore = pretendViewport(true)
+  try {
+    render(<App />)
+    const pen = screen.getByRole('button', { name: 'Scratch' })
+    expect(pen).toHaveAttribute('title', 'Scratch - S')
+    expect(screen.queryByRole('button', { name: 'Scratch: write something down' })).toBeNull()
+
+    await userEvent.click(pen)
+    expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
+    expect(pen).toHaveAttribute('aria-expanded', 'true')
+  } finally {
+    restore()
+  }
+})
+
+test('on a phone the floating button is the way in, and the header pen is not mounted', () => {
+  const restore = pretendViewport(false)
+  try {
+    render(<App />)
+    expect(screen.getByRole('button', { name: 'Scratch: write something down' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Scratch' })).toBeNull()
+  } finally {
+    restore()
+  }
+})

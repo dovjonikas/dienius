@@ -4667,6 +4667,37 @@ button.danger {
    name and the button, then the tabs across the full width. */
 .clock-launcher { position: relative; order: 1; }
 
+/* The same quiet square as the clock beside it - see .clock-button. Only
+   at the wide breakpoint (App.tsx), where the floating scratch button is
+   not mounted and the key would otherwise be the only way in. */
+.scratch-button {
+  order: 1;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+}
+
+.scratch-button:hover { color: var(--text); }
+
+.scratch-button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--e1);
+}
+
+.scratch-button-pen { display: block; margin: 0 auto; }
+
+.scratch-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 @media (max-width: 599px) {
   .app-header nav { order: 2; flex-basis: 100%; justify-content: flex-start; }
   .app-header .brand { flex: 1; }

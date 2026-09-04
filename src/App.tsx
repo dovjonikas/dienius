@@ -365,6 +365,28 @@ export function App() {
             than on the day view, because both are used while doing something
             other than planning - which is also why the running widget lives at
             the app root and not inside a tab. */}
+        {/* The visible way into Scratch on a wide screen. Below the breakpoint
+            the floating button does this job; here the key was the only road,
+            and a feature reached only by a key somebody has not been told
+            about is a feature they do not have - CONVENTIONS.md section 17.
+            Beside the clock because both are "now, whatever tab": one for
+            time, one for a line that has to be written this second. */}
+        {isWide && (
+          <button
+            type="button"
+            className={scratchOpen ? 'scratch-button active' : 'scratch-button'}
+            aria-haspopup="dialog"
+            aria-expanded={scratchOpen}
+            aria-label="Scratch"
+            title="Scratch - S"
+            onClick={() => setScratchOpen(open => !open)}
+          >
+            <svg className="scratch-button-pen" viewBox="0 0 16 16" width="17" height="17" aria-hidden="true">
+              <path d="M11.2 2.3l2.5 2.5-7.6 7.6-3.4.9.9-3.4z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d="M9.6 3.9l2.5 2.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
         <div className="clock-launcher">
           <button
             type="button"
