@@ -49,8 +49,10 @@ a colleague:
   message says so.
 - **Every commit ends with:**
   ```
-  Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+  Co-Authored-By: Claude <model> <noreply@anthropic.com>
   ```
+  with the model that did the work named - `Claude Opus 5` up to v1.9,
+  `Claude Fable 5.1` from v1.10.
 - PR bodies end with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 Commit and push after each part of a wave, not at the end. A wave that dies

@@ -6,9 +6,9 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** after v1.9 - quick-add that asks for nothing, a backlog, the
-Library rebuilt, the tour hardened, and an evening that ends. Tagged v1.0
-through v1.9.
+**Last updated:** after v1.10 - the reading plan on request, the tour walked
+and rebuilt around what a stranger actually sees, the store in ten files,
+and a real browser in the suite. Tagged v1.0 through v1.10.
 
 ---
 
@@ -108,7 +108,9 @@ reading them.
 | **v1.8** | Replan (something came up / shift the rest / away and back), Scratch, the quick-add time picker, and a responsive pass over every view at seven viewports |
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 
-Tags exist for v1.0 through v1.9.
+| **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten area modules with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
+
+Tags exist for v1.0 through v1.10.
 
 ---
 
@@ -116,7 +118,8 @@ Tags exist for v1.0 through v1.9.
 
 ### Nothing is half-built
 
-Everything through v1.9 is tagged, the suite is green (1721 tests, 98 files),
+Everything through v1.10 is tagged, the suite is green (1745 tests, 98 files,
+plus five Playwright tests across two viewports),
 the typecheck and the build are clean and the working tree is empty.
 What follows is wanted rather than owed.
 

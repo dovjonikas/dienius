@@ -235,13 +235,14 @@ The reasoning behind the harder calls - why templates instead of recurring tasks
 npm install
 npm run dev       # dev server at localhost:5173
 npm test          # vitest, watch mode
+npm run e2e       # playwright against the production build (npx playwright install chromium, once)
 npx tsc --noEmit  # typecheck
 npm run build     # typecheck, build, then generate the service worker
 ```
 
 Requires Node 22 or newer (see `.nvmrc`).
 
-**Deploy** - push to `main`. GitHub Actions runs the full test suite, then builds - which typechecks before it bundles - and only publishes to GitHub Pages if both steps succeed. Workflow in `.github/workflows/deploy.yml`.
+**Deploy** - push to `main`. GitHub Actions runs the full test suite, then builds - which typechecks before it bundles - and only publishes to GitHub Pages if both steps succeed. The browser tests run in a job of their own beside that, so a flake there cannot hold a release. Workflow in `.github/workflows/deploy.yml`.
 
 ## Demo mode
 
