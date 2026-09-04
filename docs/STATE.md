@@ -177,6 +177,19 @@ to be what it looked like:
 - **Outlook's Windows time zone names in .ics files.** Still open, and
   still the same question - see below.
 
+### One flake, unreproduced, written down rather than argued away
+
+`smoke.e2e.ts`'s first day failed once during v2.0's closing regression and
+has not failed since: fifteen full runs after it, including four at four
+workers, all green, and the test passes three for three on its own. No cause
+was found and nothing was changed to chase it, because changing a test to fix
+a failure you cannot reproduce usually means making it assert less.
+
+If it comes back, the thing to know is that this same test failed
+*deterministically* before v2.0 for a different reason - it read the real
+clock and the evening close card appears after 21:30 - so a failure here is
+worth reading carefully rather than re-running. CI retries once.
+
 ### Known debts, and why each one stays
 
 Every one of these was looked at again in v2.0 and left. None is an
