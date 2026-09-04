@@ -121,7 +121,7 @@ Tags exist for v1.0 through v1.11.
 
 ### Nothing is half-built
 
-Everything through v1.11 is tagged, the suite is green (1811 tests, 102 files,
+Everything through v1.11 is tagged, the suite is green (1814 tests, 103 files,
 plus twenty Playwright tests across two viewports),
 the typecheck and the build are clean and the working tree is empty.
 What follows is wanted rather than owed.

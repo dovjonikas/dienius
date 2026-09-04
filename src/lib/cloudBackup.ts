@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { AppData } from './types'
 import { getData, onStateCommitted } from './store'
 import { validate } from './validate'
+import { importJson } from './storage'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
 import { todayKey } from './dates'
@@ -384,7 +385,6 @@ export async function previewRestore(): Promise<RestorePreview> {
   }
   if (!validate(parsed)) throw new Error('The file in the repo is not a Dienius backup.')
   // Through the same door a file import takes, so every migration applies.
-  const { importJson } = await import('./storage')
   const data = importJson(text)
   return { data, cloud: summarise(data), here: summarise(getData()) }
 }
