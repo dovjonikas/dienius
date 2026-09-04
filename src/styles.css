@@ -5553,13 +5553,22 @@ button.danger:focus-visible {
      mini-calendar week row to stay legible (200px) without growing to
      compete with the panes doing the actual work (240px cap); day-pane
      needs the grid's 44px gutter plus a comfortably readable anchor block
-     (420px minimum); task-pane needs a TaskRow's own content (checkbox,
+     (400px minimum); task-pane needs a TaskRow's own content (checkbox,
      time, title, size chip, actions button) to stay comfortable without
      truncating the title (320px minimum), capped at 380px so it never
-     visually dominates the timeline it sits next to. */
+     visually dominates the timeline it sits next to.
+
+     The day pane's floor was 420px, and the three floors plus two 24px gaps
+     came to 988px - eleven more than the 977px a 1024px window actually has
+     once the shell's padding and the reserved scrollbar gutter are taken
+     off. The grid quietly overflowed its section at exactly the breakpoint
+     that turns it on, and the header and the task column both poked past
+     the right edge. Measured, not eyeballed: the overflow was 11px on the
+     nose. Twenty pixels off the widest column's floor is the smallest
+     change that makes the arithmetic true. */
   .day-view {
     display: grid;
-    grid-template-columns: minmax(200px, 240px) minmax(420px, 1fr) minmax(320px, 380px);
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 1fr) minmax(320px, 380px);
     grid-template-areas:
       "rail header header"
       "rail cap    cap"
@@ -5799,24 +5808,23 @@ button.danger:focus-visible {
   /* The open list takes the column's slack and, only if a day is genuinely
      longer than the screen, scrolls inside it - so quick-add stays pinned at
      the top and the Done fold stays pinned at the bottom, where they can
-     both be found without hunting. This is the one scroll container the day
-     view keeps, and on an ordinary day it never engages: the list gets
-     shorter every time something is checked off. scrollbar-gutter keeps the
-     cards from shifting sideways at the moment it does. */
-  /* Cards stack from the top and stop - they do not stretch to fill the
-     column. A list that grows to meet the bottom of the window puts a
-     widening hole between the last card and whatever follows it, which
-     reads as a gap in the plan rather than as room to spare.
+     both be found without hunting. Cards stack from the top and stop rather
+     than stretching to fill the column: a list that grows to meet the bottom
+     of the window puts a widening hole between the last card and whatever
+     follows it, which reads as a gap in the plan rather than room to spare.
 
-     The list only scrolls if a day is genuinely longer than the screen, and
-     on an ordinary day it never does: it gets shorter every time something
-     is checked off. scrollbar-gutter keeps the cards from shifting sideways
-     at the moment it starts. */
+     No reserved scrollbar gutter here, on purpose. It used to keep the cards
+     from shifting sideways at the moment the list started scrolling, and the
+     price was fifteen pixels of nothing down the right of every card on
+     every ordinary day: the cards stopped short of the quick-add row above
+     them and the duration control looked as if it had been pushed out of
+     the column. A thin bar that takes its room only while it is actually
+     there is the smaller wrong. */
   .task-pane .task-list {
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-gutter: stable;
+    scrollbar-width: thin;
   }
 
   /* The pane's own 10px gap already separates quick-add from the list; the
@@ -5833,7 +5841,7 @@ button.danger:focus-visible {
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-gutter: stable;
+    scrollbar-width: thin;
   }
 
   /* A first run has no day yet: no anchors, so no grid, and the middle column

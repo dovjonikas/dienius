@@ -54,7 +54,11 @@ type CaptureMode = 'task' | 'inbox' | 'backlog'
 
 /** What each shelf asks for, in its own words. */
 const PLACEHOLDERS: Record<CaptureMode, string> = {
-  task: 'Add a task, and press Enter',
+  // Two words. "Add a task, and press Enter" was cut off at "press Ente" in
+  // a 380px column on every desktop, and at the column's 320px floor nothing
+  // longer than this fits beside the two controls. The tour is where Enter
+  // is taught; a placeholder is not the place for a sentence.
+  task: 'Add a task',
   inbox: 'Catch a thought, decide later...',
   backlog: 'Something to do, just not today...',
 }

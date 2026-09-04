@@ -387,7 +387,10 @@ its current width unchanged - this document does not touch Calendar, Templates, 
   work.
 - Day pane `minmax(420px, 1fr)`: 420px is the narrowest the timeline grid's own gutter (44px) plus a
   comfortably readable anchor block stays legible at, checked against the grid's existing material
-  spec in `docs/RESEARCH-TIMELINE-UI.md` rather than newly measured here.
+  spec in `docs/RESEARCH-TIMELINE-UI.md` rather than newly measured here. *Lowered to 400px after
+  v1.9*: at exactly 1024px the three floors plus the gaps came to 988px against 977px of room, and
+  the grid overflowed its section by 11px. The arithmetic in the breakpoint paragraph above was
+  eleven pixels optimistic; the stylesheet carries the corrected sum.
 - Task pane `minmax(320px, 380px)`: 320px is the narrowest a `TaskRow` (checkbox, time, title, size
   chip, actions-menu button) stays comfortable at without truncating the title aggressively; 380px caps
   it so the pane does not visually dominate over the timeline it sits next to.
