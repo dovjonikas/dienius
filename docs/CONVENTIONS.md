@@ -431,7 +431,7 @@ whatever is sitting over it.
 
 ---
 
-## 14 The four shelves, and what each is for
+## 14. The four shelves, and what each is for
 
 Something that is not on a day can be in one of four places, and the whole
 value of having four is that each one asks a different amount of you at the
@@ -469,7 +469,7 @@ no due date, and no sort: a drag or an arrow key is the entire ranking model.
 
 ---
 
-## 15 The evening close never appraises
+## 15. The evening close never appraises
 
 `lib/eveningClose.ts` and `widgets/day-plan/EveningClose.tsx` exist because a
 day needs an ending and midnight is not one. The arithmetic is four lines. The
@@ -505,3 +505,34 @@ The words this app does not use, anywhere near a day's outcome: missed,
 failed, behind, only, should, incomplete, overdue. A test in
 `eveningClose.test.ts` checks the generated line against that list, on every
 shape of day.
+
+---
+
+## 16. Capture answers before it asks
+
+`widgets/day-plan/QuickAdd.tsx` is the one field every shelf in section 14 is
+reached through, and the rule it follows is the reason the whole thing exists:
+**the ordinary path types a title and presses Enter.** Everything else the task
+needs - a time, a length, a colour - is already answered when that happens.
+
+- **A default is a real answer, not a placeholder.** The time control opens on
+  the first free slot the day genuinely has (`lib/.../autoSlot.ts`), not on a
+  blank or on a round number nobody chose. When there is no such slot it says
+  "No time" and the task is a float, because a planner that answers a full day
+  by booking 23:45 is one people stop believing.
+- **The text and the controls are one truth, never two.** A line that carries
+  its own time or duration wins, and the controls redraw to show what was
+  understood. Push an arrow or tap a chip against such a line and the *words*
+  are rewritten - see `replaceLeadingTime` and `replaceTrailingDuration`. A
+  field saying one thing while a control beside it says another is the bug
+  this rule exists to make impossible.
+- **What is remembered is a habit, not a plan.** The last duration chosen
+  persists, under its own key, outside the backup and outside sync. The
+  category does not persist at all: it follows the sitting, because most tasks
+  typed in one go belong together and carrying that to tomorrow would be a
+  guess.
+- **A suggestion is now, to the minute.** Not rounded up to the next quarter.
+  Focus is only ever offered on the *running* card, so a task starting eight
+  minutes from now would be quietly out of reach of the one feature for doing
+  something immediately. The arrows snap to the quarter from there, which is
+  where a round number belongs: in the answer somebody asked for.

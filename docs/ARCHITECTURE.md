@@ -41,16 +41,18 @@ AppData
 │                                unbounded?, libraryListId?
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
-│       │                        repeatSkips?, autoApplied?
+│       │                        repeatSkips?, autoApplied?, away?,
+│       │                        bestMoment?
 │       └── tasks: Task[]        the one type most of the app is about
-├── library: LibraryList[]       name + unit + items
-│   └── items: LibraryItem[]     title, total?, progress?, finished?
+├── library: LibraryList[]       name + unit + items, colour?
+│   └── items: LibraryItem[]     title, total?, progress?, finished?,
+│                                track? (pages/movie/series), pace?, season?
 ├── goals: Goal[]                directions, never measured - see §6
 ├── ifThens: IfThenEntry[]       trigger + action, never measured
 ├── inbox: InboxItem[]           one line of text, no date
 ├── backlog: BacklogItem[]       decided, undated, in priority order
 └── settings: Settings           theme, sleepProfiles, weekdayTemplates,
-                                 reminders, density, textScale, ...
+                                 reminders, eveningClose, density, ...
 ```
 
 A **date key** is `YYYY-MM-DD`, always. It sorts lexically, which is why ranges
@@ -191,7 +193,10 @@ src/
     tour.ts            the tour as data - the steps, and what ends each one
     tourState.ts       whether a tour is running, and where it got to
     tourMode.ts        the replay sandbox, and which storage key it uses
+    tourAssist.ts      "do it for me": the real action behind a stuck step
+    tourExit.ts        how the tour ends, from any of its three doors
     replanState.ts     the one line between the palette and the replan sheet
+    captureRequest.ts  the same one line, for which shelf quick-add opens on
     syncEntities.ts    splitting state into entities, stamping, tombstones
     syncMerge.ts       the per-entity last-write-wins merge
     syncClient.ts      pull, debounced push, retry, and the status a person sees
@@ -215,6 +220,8 @@ src/
   views/               a tab, or a control shared between tabs
     scratch/           the scratch overlay, and the floating button on a phone
     tour/              the tour engine: a spotlight, a card, a predicate
+                       (cardPlacement.ts is its geometry, tested on its own -
+                        jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     CommandPalette, ShortcutsOverlay
     week/              the week view - see section 11
@@ -234,6 +241,10 @@ src/
     registry.ts        which widgets the day view mounts
 
   styles.css           the whole stylesheet. One file on purpose - see §6.
+
+  test/
+    setup.ts           what jsdom does not implement, stubbed once
+    stress.ts          ratio measurement for the stress tests - CONVENTIONS §3
 ```
 
 ### The day view

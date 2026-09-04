@@ -122,6 +122,25 @@ What follows is wanted rather than owed.
 
 ### Asked for, not yet built
 
+- **Seed privacy fix. Do this first.** `lib/librarySeed.ts` fills an empty
+  Books list on first open, which was asked for and works - and it fires for
+  *anybody* who opens the live demo at quicasha.github.io/dienius, handing a
+  stranger the owner's actual reading list. That is a privacy leak dressed as
+  a convenience, and it is the one thing in this app that creates something
+  without being asked (see the module's own comment, which names the tension
+  and did not weigh it heavily enough).
+
+  The fix is to stop it running by itself. Keep the seed data and the stable
+  ids - those are right, and the ids are what stop two devices producing two
+  lists - and move the call behind something deliberate: a command palette
+  entry ("Load my reading plan"), or a path only the owner takes. The owner's
+  own devices no longer need the automatic path at all, because the plan is
+  in their data and arrives by sync.
+
+  Concretely: delete the `storeActions.seedLibrary()` mount effect in
+  `App.tsx`, add a palette action that calls it, and keep every test in
+  `librarySeed.test.ts` - none of them assume the automatic trigger. The
+  demo-mode and sandbox guards in that effect go with it.
 - **Screenshots.** Still wanted, still impossible from the agent environment:
   there is no way to write image files here. The README leads with the live
   demo link instead. If you can produce PNGs, `docs/screenshots/` and a hero
