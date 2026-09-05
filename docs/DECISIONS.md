@@ -589,6 +589,10 @@ with no eligible rule that line was an empty prompt occupying the part of the sc
 still the one place they are authored; only where they live moved. `IfThenDayRule` is kept, tested and
 currently unmounted - parked for a design worth giving it, not deleted.
 
+> **Superseded in v2.0.** The design worth giving it turned out not to be a placement at all: a rule
+> belongs to the goal it protects, and both `IfThenBoard` and `IfThenDayRule` are gone. See "A rule
+> with no goal is noise; under a goal it is armour", below.
+
 ---
 
 ## The calm pass: colour that means something, and a screen that says what is happening now

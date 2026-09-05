@@ -6,11 +6,13 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** stage 1 of the wave after v2.0 - categories are the owner's
-now, a list in the data with an editor in Settings and a delete that moves
-what it would orphan. Tagged v1.0 through v2.0; this sits on top of the tag,
-untagged, and five more stages are owed before v2.0's own tag moves. The wave
-table in section 4 is where to start.
+**Last updated:** v2.0 is closed and tagged. Six stages: categories the
+owner names, North as a window with every rule under the goal it protects,
+an explanation for each of the twenty words this app invented, three reading
+lanes instead of one stalling queue, a clean pass over sixteen places
+including a navigation rail and a calendar that says what is on a day, and
+this closing. What is owed next is the week-templates wave, briefed in full
+in section 4, and the phone wave after it.
 
 ---
 
@@ -115,10 +117,12 @@ reading them.
 
 | **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
 
-| *(untagged)* | Categories became the owner's: a list in `AppData` rather than a literal in a module, an editor in Settings, twelve curated colours with a readability gate, and a delete that moves what it would orphan in one commit with one undo. Three bugs on the way - category edits would never have synced at all, because `stampChanges` had no diff for the new collection; and the library's dot row had been a control that did nothing since it was built, writing values `validate` would have rejected on the next load. `adee903` |
+| **v2.0, second half** | Six stages that finish what the first half started, all of them about the app being *understood* rather than being complete. Categories became the owner's: a list in `AppData` rather than a literal in a module, twelve curated colours with a readability gate, and a delete that moves what it would orphan. North became a window with every if-then rule under the goal it protects - a rule with no goal is noise, under a goal it is armour - and the day view's old one-rule-at-a-time surfacing went with the three fields it needed. Twenty invented words got a sentence each, in one file, checked by a test whose data is the list itself. One reading queue of twenty books became three lanes that advance on their own. Then a clean pass over sixteen places: seven text tabs became a rail of icons, month cells started saying what is on a day rather than what the day was called, resting on one shows the whole day, the week gained a second reading and a place for the backlog beside it, and the template editor stopped opening with eight colour balls above the name |
 
-Tags exist for v1.0 through v2.0. The row above is on `main` and is not tagged:
-it is stage 1 of a six-stage wave, and the tag waits for stage 6.
+Tags exist for v1.0 through v2.0, and `v2.0` covers both halves - it was moved
+forward from the desktop close to here, as the plan written at the time said
+it would be. Nothing was published between the two: the first half was tagged
+on a Friday and this is the rest of the same release.
 
 ---
 
@@ -126,20 +130,20 @@ it is stage 1 of a six-stage wave, and the tag waits for stage 6.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed at `adee903`. The suite is green -
-**1925 tests in 108 files, plus 24 Playwright tests in 11 files across two
-viewports** - the typecheck and the build are clean, `npm run sweep` reports
-nothing on the desktop and its self-check sees five shapes out of five, and
-the working tree is empty. Everything through v2.0 is tagged; the categories
-work on top of it is committed and pushed but not tagged.
+Still true, and checked rather than assumed at the v2.0 tag. The suite is
+green - **1953 tests in 111 files, plus 24 Playwright tests in 11 files across
+two viewports** - the typecheck and the build are clean, `npm run sweep`
+reports nothing on the desktop at either the ordinary or the heavy day and
+its self-check sees five shapes out of five, and the working tree is empty.
+Everything is tagged.
 
-What follows in this section is in two parts: the wave that is running, which
-is owed, and then the phone and the debts, which are wanted.
+What follows in this section is in two parts: the wave that is owed next, and
+then the phone and the debts, which are wanted.
 
-### The wave in progress, and what is owed
+### The wave that closed, and the one that is owed
 
-Two waves were briefed by the owner in one sitting. This one is a sixth done;
-the second has not started and must not start before this one closes.
+Two waves were briefed by the owner in one sitting. The first is done and
+tagged; the second is below it and has not started.
 
 | # | Stage | State |
 |---|---|---|
@@ -148,12 +152,14 @@ the second has not started and must not start before this one closes.
 | 3 | **The explanation layer** | **Done**. Twenty terms audited, one tooltip component, all the copy in `lib/explain.ts` |
 | 4 | **Library lanes: MIND, CRAFT, LIGHT** | **Done**. One queue of twenty became three that advance on their own |
 | 5 | **Clean checkup** | **Done**. Sixteen places, plus the icon rail and the calendar's information layer, in four commits |
-| 6 | Closing: desktop QA, DAILY.md, regression, tag v2.0 | Not started |
-| - | **Week templates** (its own wave) | Queued *after* stage 6. Its own stage 3 wants tooltips for "Week template", "Add to" and "Copy to", and the tooltip component is stage 3 of this wave, so the order is not negotiable |
+| 6 | **Closing: desktop QA, DAILY.md, regression, tag v2.0** | **Done**. Tagged `v2.0` |
+| - | **Week templates** (its own wave) | **Next.** Its own stage 3 wanted tooltips for "Week template", "Add to" and "Copy to"; the component for those is `views/Explain.tsx` and it exists, so nothing blocks this now |
 
-The working tree is empty at `adee903` and stage 2 was never begun, so there
-is nothing half-written to pick up - only the briefs below, which are the
-owner's own words turned into something a session can start coding from.
+Every stage above is committed, pushed and tagged, and the working tree is
+empty. The briefs that follow are kept as written because the commits refer
+to them; what each one actually became is in its own commit message and in
+DECISIONS.md. **The next session starts on the week-templates wave**, which
+is the last block of this section.
 
 #### Stage 2 - North becomes a window, and if-then moves into it
 

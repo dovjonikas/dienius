@@ -189,6 +189,12 @@ own, and it was pointer-only, so removing it cost keyboard users nothing.
 
 ## 6. What replaces the if-then board
 
+> **This section is history.** The answer it landed on - one rule surfaced on the day view, chosen by
+> day type and time of day - shipped, was unmounted, and is gone in v2.0 along with the three fields it
+> needed. A rule lives under the goal it protects now: see DECISIONS.md, "A rule with no goal is noise;
+> under a goal it is armour". The reasoning below is kept because it is the reasoning the v2.0 answer
+> was built out of, and because being wrong about the placement three times is the useful part of it.
+
 The board is not a bad idea badly built. It is a correct idea in the wrong place.
 
 Implementation intentions work because the decision is already made when the trigger arrives.

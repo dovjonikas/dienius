@@ -636,7 +636,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 1846 tests in 105 files, no worker limits, no skips; plus 23 Playwright tests in ten files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 1953 tests in 111 files, no worker limits, no skips; plus 24 Playwright tests in 11 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 

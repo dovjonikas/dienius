@@ -66,7 +66,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Push twice, then decide: an unfinished task moves to tomorrow twice, after that you finish it, drop it, or mark it ongoing
 - What yesterday left, said once in a banner, moved forward in one tap, never on its own
 - An evening close: one sentence about the day at a time you set, or when the last thing is ticked. It never mentions what was not done
-- North: up to four directions with a why and no progress bar, one shown under the day's title
+- North: up to four directions with a why and no progress bar, one shown under the day's title - and under each one, the moments that pull you off it, written down before they happen
 - Focus: the running task, its own planned time, a ring, a way out. Not a pomodoro
 - A timer and a stopwatch that survive a refresh and run on every tab
 - Task detail: exact minute, note, sub-steps, repeat, the three-a-day key mark
@@ -159,7 +159,7 @@ Requires Node 22 or newer.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - where the code is: the data model, the state flow, which file for which job
 - [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) - how work is done here, and why each rule exists
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) - the harder calls, with what each one costs
-- [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md) - the evidence behind the push rule and the if-then board, and what not to build
+- [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md) - the evidence behind the push rule and the rules under a goal, and what not to build
 
 ## License
 

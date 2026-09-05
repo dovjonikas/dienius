@@ -66,6 +66,33 @@ fact and cannot be lost.
 Two of these is plenty to start with. Writing a fourth to fill the space is
 how you end up with one you do not believe.
 
+### And what pulls you off them
+
+**North** is its own screen now - the sixth icon in the rail, the `6` key, or
+that line under the day's title. It is where the goals are read rather than
+written, and under each one sits a short list headed **What pulls me off
+this**.
+
+Each line is a moment you can catch and the one thing you already decided to
+do about it:
+
+> If I catch myself scrolling at 23:00 -> phone in the kitchen, book in hand.
+
+**Add another** writes one. Five per goal, and the cap refuses rather than
+dropping the oldest. Write them the way you would say them, in the second
+person, about a moment specific enough to notice: "when I get home and the
+kitchen is a mess" is a moment; "when I feel unmotivated" is not.
+
+Nothing counts them, nothing asks whether you did them, and nothing shows
+them on the day view. They appear in exactly two places: here, and once under
+the why on the card that comes forward after a day that got away, introduced
+as what you wrote yourself.
+
+If you wrote rules before they belonged to goals, they are all still here,
+gathered under **Not under a goal yet** with the goals offered beside each
+one. Nothing was filed for you, and a rule can stay there as long as it
+likes.
+
 ## 4. Point a reading block at the Library
 
 Only if you read, or watch, or work through courses. The point of it: the
@@ -73,7 +100,13 @@ block on your template says "a reading session", the list says which book,
 and finishing one moves the block on to the next by itself.
 
 1. **Library → Start a Books list** (or Something else, for a different unit
-   - lessons, songs, episodes).
+   - lessons, songs, episodes). **More than one list is the point**: a single
+   queue stalls, because everything in it sits behind whatever is at the
+   front. Three shorter ones - the heavy reading, the work reading, and the
+   thing you will actually pick up on a Tuesday evening - each move on their
+   own, and finishing something in one offers the next thing from *that* one.
+   `Ctrl-K` → **Load my reading plan** fills three named MIND, CRAFT and
+   LIGHT if you want a shape to start from.
 2. Add what is on the shelf, in the order you would actually read them:
    `Deep Work, 12 chapters`. A page-counted book is `The War of Art, 139
    pages`; a series is `Andor, 2 seasons`. Or use the two controls beside the
@@ -88,7 +121,28 @@ a book ends, the list says so and offers the next one.
 To reorder the queue, drag a row in the Library - or focus its grip and use
 the arrow keys. The order *is* the queue; nothing else decides what is next.
 
-## 5. Turn on the copy on GitHub
+## 5. Name the kinds of task you actually have
+
+The six the app ships with - core, routine, personal and the rest - are a
+starting point, not a vocabulary you have to live in. **Settings →
+Categories** is where they become yours: rename one, pick its colour from the
+same eight everything else uses, add one, drop one.
+
+Two things worth knowing before you rearrange them:
+
+- **A colour that will not read is refused**, with the reason said out loud.
+  A category's colour ends up as a two-pixel edge on a task card and a dot in
+  a month cell, and one that vanishes against the theme is a category you
+  cannot see.
+- **Deleting one never orphans a task.** The delete asks what its tasks
+  should become and moves them there in the same press, so nothing is left
+  pointing at a category that is gone.
+
+Templates are where most tasks get their category, because a stamped day
+arrives already sorted - the row of dots under the block-add line is the same
+picker quick-add uses on the day view.
+
+## 6. Turn on the copy on GitHub
 
 The one that survives losing the machine. It writes your plan as plain JSON
 into a private repo you own, so it is readable in a browser from anywhere.
@@ -123,7 +177,7 @@ of a new one. **The token never leaves this device** - it is not in an
 export, it does not sync, and it is not in the copy it writes. Which also
 means: set it up separately on each device you use.
 
-## 6. Two devices, if you have a second one
+## 7. Two devices, if you have a second one
 
 Optional, and unrelated to step 5. Sync needs a small server you run
 yourself - a PC at home, reached from the phone. `server/sync-server.mjs`
@@ -140,8 +194,8 @@ Skip this entirely if one browser is where you plan; nothing degrades.
 - **All day.** Type a title into the box and press enter. The time and the
   length beside it already hold real answers, so that is the whole gesture.
   A thought with no home goes to the Inbox; something for another week goes
-  to the Backlog; a number said once on the phone goes into Scratch (the
-  pencil in the header, or the `S` key).
+  to the Backlog; a number said once on the phone goes into Scratch (the pen
+  at the foot of the rail, or the `S` key).
 - **When the plan breaks.** **Replan**, under the date. Three doors:
   something came up, shift the rest, I was away. Each shows its answer
   before you accept it.
@@ -150,7 +204,9 @@ Skip this entirely if one browser is where you plan; nothing degrades.
   done.
 
 Two keys worth learning: **`N`** jumps to the box, **`Ctrl-K`** finds
-anything or runs any command. **`?`** shows the rest.
+anything or runs any command. **`?`** shows the rest - and every icon in the
+rail names its own key when you rest on it, which is the easier way to pick
+them up: `1` to `6` for the six screens, a comma for Settings.
 
 ---
 
