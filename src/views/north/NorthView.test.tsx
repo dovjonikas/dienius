@@ -80,6 +80,10 @@ test('goals from before the picture existed show under the invitation, untouched
 
 // --- writing a goal ----------------------------------------------------------
 
+// Four fields typed one keystroke at a time under fake timers is the slowest
+// interaction in this file: at a hundred and fifteen characters it crossed
+// the five-second budget with a browser pass running beside it. Shorter
+// words, and its own timeout - the budget is for hangs, not for typing.
 test('Write one down opens Compose on a blank goal, and Save writes it with what you do to deserve it', async () => {
   const user = userEvent.setup()
   picture()
@@ -88,25 +92,25 @@ test('Write one down opens Compose on a blank goal, and Save writes it with what
 
   expect(screen.getByLabelText('What')).toHaveFocus()
   await user.type(screen.getByLabelText('What'), 'Be strong at fifty')
-  await user.type(screen.getByLabelText('Why it matters'), 'Dad could not carry his own suitcase at sixty.')
-  await user.type(screen.getByLabelText('Who it makes you'), 'I am someone who trains.')
-  await user.type(screen.getByLabelText('What I do to deserve this'), 'train four times a week{Enter}walk after lunch')
+  await user.type(screen.getByLabelText('Why it matters'), 'Dad stopped moving.')
+  await user.type(screen.getByLabelText('Who it makes you'), 'Someone who trains.')
+  await user.type(screen.getByLabelText('What I do to deserve this'), 'train four times{Enter}walk')
   await user.click(screen.getByRole('button', { name: 'Save' }))
 
   const [written] = getData().goals
   expect(written).toMatchObject({
     title: 'Be strong at fifty',
-    why: 'Dad could not carry his own suitcase at sixty.',
-    identity: 'I am someone who trains.',
-    deserve: ['train four times a week', 'walk after lunch'],
+    why: 'Dad stopped moving.',
+    identity: 'Someone who trains.',
+    deserve: ['train four times', 'walk'],
     createdAt: TODAY,
   })
   // Back to reading: the goal, its lines as a plain list, and no form.
   expect(screen.getByRole('heading', { name: 'Be strong at fifty' })).toBeInTheDocument()
   const items = screen.getAllByRole('listitem').map(li => li.textContent)
-  expect(items).toEqual(expect.arrayContaining(['train four times a week', 'walk after lunch']))
+  expect(items).toEqual(expect.arrayContaining(['train four times', 'walk']))
   expect(screen.queryByLabelText('What')).toBeNull()
-})
+}, 15_000)
 
 test('the deserve field stops at four lines rather than trimming a fifth on save', async () => {
   const user = userEvent.setup()

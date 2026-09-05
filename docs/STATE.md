@@ -10,9 +10,12 @@ should leave you able to start without re-reading the repo.
 North v2, "The Picture" - the window is four layers read as one page, written
 in the window itself behind one Compose; the phone wave, measured to zero and
 then walked; and a bug hunt that lived a day in the app at three sizes and
-fixed eighteen things with a place each. Nothing is owed from the owner's
-brief. **What is next is whatever the owner brings**, and the debts table at
-the end of section 4 says which of the standing ones could move without them.
+fixed eighteen things with a place each. Nothing is owed from that brief,
+and the one standing debt that could move without the owner - Outlook's time
+zone names - was closed one commit above the tag. **What is next is Replan
+v2**, "Something came up" for any day of the week; its brief is coming from
+the owner, and section 4's *Asked for, not yet built* holds what is known
+so far.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -88,7 +91,7 @@ reading them.
 |---|---|
 | Weekday templates | A template per weekday, so a new day opens already set up. A stamp by hand always wins |
 | Repeating tasks | Daily, weekdays or weekly, materialised as real tasks. "Just this day" vs "every day it repeats" is a standing choice |
-| If-then rules | Trigger plus action, surfaced by day type and time of day. Never measured |
+| If-then rules | Trigger plus action, under the goal it protects, in North. Never measured, never surfaced onto the day; one appears under the why on the card after a slow day |
 | Inbox | Catch a thought without deciding what day it belongs on |
 | Backlog | Decided, undated tasks, in the order you would pull them. Collapsed behind a plain count, nothing ever says how old anything is |
 | Keyboard layer | Single keys for common actions; a card behind `?`. Never fires while typing in a box, except Escape |
@@ -146,10 +149,11 @@ viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop **and nothing on the phone**, and the working
 tree is empty and pushed.
 
-**Where to start:** the v2.1 table below is closed. Nothing from the owner's
-brief is owed, and the one standing debt that could move without them -
-Outlook's time zone names - moved the same day, one commit above the tag.
-Every debt left in the table is a designed trade or waits on the owner.
+**Where to start:** the v2.1 table below is closed, commit by commit, and
+the one standing debt that could move without the owner - Outlook's time
+zone names - moved the same day, one commit above the tag. What is owed is
+in *Asked for, not yet built*, under the table, and its first item - Replan
+v2 - is the next session's work once the owner's brief arrives.
 
 ### Both waves closed
 
@@ -172,7 +176,7 @@ and pushed. Nothing below this table is owed.
 |---|---|---|
 | `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
 | `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
-| `v2.1` | the commit that says "v2.1 closes" | North v2, the phone wave and the bug hunt, on top of the week-templates wave |
+| `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
@@ -203,16 +207,49 @@ hunt, then the tag.
 
 | # | Stage | Commit | What it became |
 |---|---|---|---|
-| 1 | North v2, "The Picture" | see `git log` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
-| 2 | The phone wave | see `git log` | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
-| 3 | The bug hunt | see `git log` | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
-| 4 | Closing and `v2.1` | the tagged commit | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
+| 1 | North v2, "The Picture" | `8b30713` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
+| 2 | The phone wave | `7b43311`, with stage 3 | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
+| 3 | The bug hunt | `7b43311`, with stage 2 | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
+| 4 | Closing and `v2.1` | `1384518` | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
+| - | **After the tag: Outlook's zone names** | `606aaeb`, `2b0d787` | The one debt that could move without the owner. `WINDOWS_ZONES` in `ics.ts`, consulted after `Intl` says no, and a quoted TZID unwrapped - which had failed the same way for a different reason. In the resolved-debts list below |
 
 ### Asked for, not yet built
 
-Nothing from the owner's brief. The closing stage is what is left of it:
-the full regression, the screenshots regenerated, the docs read against the
-code once more, and the `v2.1` tag.
+In order. The first is the next session's work, once its brief arrives.
+
+**1. Replan v2 - "Something came up" for any day of the week.** Today the
+door only opens on the day being looked at, for a block that starts now. It
+becomes the way an interruption is answered wherever it lands:
+
+- **One way in from anywhere** - the palette, the day, the week, a key - so
+  answering a call does not start with finding the right day.
+- **A WHEN row of chips**: today, tomorrow, pick a day, and the weekday row
+  for this week.
+- **Quick presets for the shape of it**: the morning is gone, the afternoon,
+  the evening, the whole day, or open-ended - it has started and nobody
+  knows when it ends.
+- **A typed line that parses in Lithuanian and in English** - "rytoj 14:00
+  dantistas 30min", "tomorrow 2pm dentist 30min" - through the same parser
+  quick-add already has, extended rather than doubled.
+- **The plan proposed on its own** - what moves before and what moves after
+  - shown before Accept, in the one-press shape replan already has.
+- **A future day materialised** when the interruption lands on it: stamped
+  from its weekday template if it has nothing yet, so what was accepted is
+  a real day rather than a note about one.
+- **A free-windows line for that day**, so "when could you?" can be
+  answered on the phone without opening the day.
+- **One undo** for the whole thing.
+
+**The brief is coming from the owner**, so do not design it ahead of them.
+What is worth knowing before it arrives: `widgets/day-plan/replan.ts` holds
+the four pure functions and the one writer, `applyPlan`, and CONVENTIONS
+section 12 - one question, ten seconds, one press, never a count of what
+was missed, nothing dropped silently - governs any version of this. A
+future day comes into being through `actions.ensureDay` (ARCHITECTURE
+section 5), which today runs only when a day is opened; an interruption
+landing on Thursday from Tuesday is the first thing that would need it
+without the day being looked at. And `parse.ts` is quick-add's line parser,
+which knows a time and a duration in English and nothing in Lithuanian yet.
 
 ### The six briefs, kept as history
 
