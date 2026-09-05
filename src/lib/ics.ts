@@ -18,7 +18,11 @@
  * already ships the whole IANA database behind `Intl.DateTimeFormat`. That
  * is what resolves a `TZID` here - see `wallToInstant` - so a nine o'clock in
  * New York lands at four in the afternoon for somebody in Vilnius, with the
- * daylight-saving edges handled by the same tables the clock uses.
+ * daylight-saving edges handled by the same tables the clock uses. Outlook
+ * names zones its own way - "FLE Standard Time" for Vilnius - and Intl does
+ * not know those, so a short table of the Windows names that actually turn
+ * up is consulted after Intl says no: `WINDOWS_ZONES`. A name in neither is
+ * read as local and reported, never guessed at.
  */
 
 import { addDays, dateKey } from './dates'
@@ -162,6 +166,62 @@ export function knowsZone(zone: string): boolean {
   return formatterFor(zone) !== null
 }
 
+/**
+ * Windows' own names for the zones that turn up in Outlook exports, and the
+ * IANA zone each one is - the CLDR mapping, which is what every other tool
+ * that meets these names uses. Two dozen rather than the full table of a
+ * hundred and forty: a file from a colleague two zones away is the case this
+ * exists for, and a zone that is not here is still read as local and named
+ * in `ignored`, which is where it was for every zone until v2.1. Reading
+ * the file's own VTIMEZONE block would be exact for any name and is a much
+ * bigger job; this is the honest middle STATE.md named, and the day
+ * somebody needs a zone that is not here the fix is one line.
+ */
+export const WINDOWS_ZONES: Record<string, string> = {
+  'FLE Standard Time': 'Europe/Kiev',
+  'E. Europe Standard Time': 'Europe/Chisinau',
+  'GTB Standard Time': 'Europe/Bucharest',
+  'Central Europe Standard Time': 'Europe/Budapest',
+  'Central European Standard Time': 'Europe/Warsaw',
+  'W. Europe Standard Time': 'Europe/Berlin',
+  'Romance Standard Time': 'Europe/Paris',
+  'GMT Standard Time': 'Europe/London',
+  'Greenwich Standard Time': 'Atlantic/Reykjavik',
+  'Russian Standard Time': 'Europe/Moscow',
+  'Turkey Standard Time': 'Europe/Istanbul',
+  'Israel Standard Time': 'Asia/Jerusalem',
+  'Arabian Standard Time': 'Asia/Dubai',
+  'India Standard Time': 'Asia/Kolkata',
+  'China Standard Time': 'Asia/Shanghai',
+  'Singapore Standard Time': 'Asia/Singapore',
+  'Tokyo Standard Time': 'Asia/Tokyo',
+  'AUS Eastern Standard Time': 'Australia/Sydney',
+  'New Zealand Standard Time': 'Pacific/Auckland',
+  'Eastern Standard Time': 'America/New_York',
+  'Central Standard Time': 'America/Chicago',
+  'Mountain Standard Time': 'America/Denver',
+  'Pacific Standard Time': 'America/Los_Angeles',
+  'Atlantic Standard Time': 'America/Halifax',
+  'SA Eastern Standard Time': 'America/Cayenne',
+  'E. South America Standard Time': 'America/Sao_Paulo',
+  'UTC': 'UTC',
+}
+
+/**
+ * The IANA zone a TZID means, or undefined for one nothing here can place.
+ *
+ * Quotes come off first: RFC 5545 lets a parameter value be quoted, Outlook
+ * quotes every TZID it writes, and until v2.1 a quoted IANA name was refused
+ * by Intl for its quotes and read as local - the same failure the Windows
+ * names had, for a different reason.
+ */
+export function ianaFor(tzid: string): string | undefined {
+  const name = tzid.trim().replace(/^"(.*)"$/, '$1')
+  if (knowsZone(name)) return name
+  const mapped = WINDOWS_ZONES[name]
+  return mapped && knowsZone(mapped) ? mapped : undefined
+}
+
 /** What the clock on the wall in `zone` reads at a given instant. */
 function wallAt(ms: number, zone: string): { y: number; m: number; d: number; h: number; mi: number; s: number } {
   const parts = formatterFor(zone)!.formatToParts(new Date(ms))
@@ -265,12 +325,11 @@ export function parseIcsDate(value: string, params: Record<string, string> = {})
   return { date: local.date, minutes: local.minutes, allDay: false }
 }
 
-/** The frame a date-time was written in: Z wins, then a TZID the browser knows, else floating. */
+/** The frame a date-time was written in: Z wins, then a TZID something here can place, else floating. */
 function zoneFor(raw: RawDate, params: Record<string, string>): Zone {
   if (raw.utc) return 'UTC'
   const tzid = params.TZID
-  if (tzid && knowsZone(tzid)) return tzid
-  return undefined
+  return tzid ? ianaFor(tzid) : undefined
 }
 
 /** `PT1H30M`, `P1D` - only the parts a meeting ever uses. */

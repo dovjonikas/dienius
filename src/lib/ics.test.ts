@@ -142,13 +142,41 @@ test('a named zone is converted through the browser own tables, and nothing is r
   expect(result.ignored).toEqual([])
 })
 
-test('a zone the browser does not know is read as local, and says so rather than silently shifting', () => {
+test('a zone nothing can place is read as local, and says so rather than silently shifting', () => {
+  const result = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Call\r\nDTSTART;TZID=Nowhere Standard Time:20260902T090000')),
+    FROM,
+  )
+  expect(result.events[0].startMinutes).toBe(540)
+  expect(result.ignored.join(' ')).toMatch(/Nowhere Standard Time/)
+})
+
+/**
+ * Outlook's own zone names, resolved through a short table after Intl says
+ * no. "W. Europe Standard Time" is Berlin: nine there is 07:00Z in
+ * September, read through the Z path like the New York test above.
+ */
+test('a Windows zone name is resolved through the table, and nothing is reported', () => {
   const result = parseIcs(
     cal(event('UID:a\r\nSUMMARY:Call\r\nDTSTART;TZID=W. Europe Standard Time:20260902T090000')),
     FROM,
   )
-  expect(result.events[0].startMinutes).toBe(540)
-  expect(result.ignored.join(' ')).toMatch(/W\. Europe Standard Time/)
+  const asUtc = parseIcsDate('20260902T070000Z')!
+  expect(result.events[0].date).toBe(asUtc.date)
+  expect(result.events[0].startMinutes).toBe(asUtc.minutes)
+  expect(result.ignored).toEqual([])
+})
+
+// RFC 5545 lets a parameter value be quoted, and Outlook quotes every TZID it
+// writes. A quoted IANA name was refused for its quotes until v2.1.
+test('a quoted TZID is read like an unquoted one', () => {
+  const result = parseIcs(
+    cal(event('UID:a\r\nSUMMARY:Call\r\nDTSTART;TZID="America/New_York":20260902T090000')),
+    FROM,
+  )
+  const asUtc = parseIcsDate('20260902T130000Z')!
+  expect(result.events[0].startMinutes).toBe(asUtc.minutes)
+  expect(result.ignored).toEqual([])
 })
 
 // The offset changes twice a year, and not on the same day everywhere: the
@@ -514,9 +542,10 @@ test('a Google Calendar export is read: the zoned monthly, the yearly birthday, 
 
 /**
  * Trimmed from an Outlook desktop export. Outlook names zones its own way -
- * "FLE Standard Time" is Vilnius - and Intl does not know those names, so
- * the times are read as local and the calendar says which zone it meant.
- * For somebody in that zone the times are right anyway.
+ * "FLE Standard Time" is Vilnius's zone - and Intl does not know those
+ * names, so the reader's own table places them. Until v2.1 the times were
+ * read as local and the calendar said which zone it meant, which was right
+ * by accident for somebody in that zone and hours wrong for anybody else.
  */
 const OUTLOOK_EXPORT = [
   'BEGIN:VCALENDAR',
@@ -568,17 +597,20 @@ const OUTLOOK_EXPORT = [
   '',
 ].join('\r\n')
 
-test('an Outlook export is read, with its Windows zone name reported rather than resolved', () => {
+test('an Outlook export is read, with its Windows zone name resolved and nothing reported', () => {
   const result = parseIcs(OUTLOOK_EXPORT, FROM)
+  // 14:00 in Vilnius in September is 11:00Z; the machine running this can be
+  // in any zone, so the expectation goes through the Z path.
+  const asUtc = parseIcsDate('20260903T110000Z')!
   expect(result.events).toEqual([
     {
       uid: '040000008200E00074C5B7101A82E00800000000A0B1C2D3E4F50000',
       summary: 'Design review',
-      date: '2026-09-03',
-      startMinutes: 14 * 60,
+      date: asUtc.date,
+      startMinutes: asUtc.minutes,
       minutes: 60,
       allDay: false,
     },
   ])
-  expect(result.ignored).toEqual(['Times are read as local; this calendar states a time zone the browser does not know, "FLE Standard Time".'])
+  expect(result.ignored).toEqual([])
 })

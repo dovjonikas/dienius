@@ -140,7 +140,7 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2037
+Still true, and checked rather than assumed. The suite is green - **2039
 tests in 116 files, plus 25 Playwright tests in 12 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop **and nothing on the phone**, and the working
@@ -504,11 +504,20 @@ guess whether it was noticed.
 | **`timelineLayout.ts` at ~890 lines** | Dense geometry, and splitting it would put the two coordinate systems in different files, which is exactly where a bug would hide. Well tested, and it opens with a map - the two systems, the three windows, the invariants, and which function decides what - so the next person starts from the map rather than the middle. Kept whole on purpose |
 | **Sync has no conflict UI** | Last-write-wins per entity, silently. For one person with two devices a real conflict means editing the same task on both within a few seconds, and "the later edit wins" is both correct and what anybody would expect; a dialog for it would be a question with no good answer, asked on the rare day when somebody is already busy. It would be wrong for two people, and this is not for two people |
 | **Imported .ics calendars are device-local** | A file has no address to refresh from, so there is nothing to sync *to* - carrying the parsed events would make one device's stale copy authoritative on another. Subscriptions, which do have an address, sync. Stated in the UI where it matters |
-| **Outlook's Windows time zone names are read as local** | "FLE Standard Time" is not an IANA name, so `Intl` does not know it and `ics.ts` says so rather than guessing. For the owner, in the zone the file was written in, that is right by accident; for a colleague's file two zones away it is wrong by hours. The open question is whether a table of the dozen Windows names that actually turn up is worth carrying - one map in `ics.ts`, consulted before `Intl`, with a test on the Outlook fixture already in `ics.test.ts`. Reading the file's own `VTIMEZONE` block would be exact and is a much bigger job; the table is the honest middle, and nobody has needed it yet |
 | **A week template's block cannot be edited in place** | It is written once and changed by removing it and adding it again. A week's blocks are drawn at 20px in a 96px column, and putting a time, a length, a category and a library binding behind each one means either a form per block on the smallest surface in the app, or a sheet - and a sheet over a seven-column grid hides the thing being edited. The add row already holds every answer before the block exists, which is where the app puts that question everywhere else. DAILY.md says so up front, because it makes the order matter. Revisit if the owner hits it |
 | **The month's cells drop their ratio below about 720px of height** | The zero-scroll rule says the month fits, and something has to give when it cannot. Detail goes, never cell height: a 30px row is not a calendar. The shape of the month survives, which is what the grid is for |
 
 ### Resolved debts, so you do not chase them
+
+- ~~Outlook's Windows time zone names were read as local~~ - resolved after
+  v2.1, the way the debt said it could be: `WINDOWS_ZONES` in `ics.ts`, two
+  dozen of the names that actually turn up mapped to their IANA zones the
+  way CLDR maps them, consulted after `Intl` says no. The Outlook fixture
+  in `ics.test.ts` now resolves to 11:00Z and reports nothing. Found on the
+  way: a *quoted* TZID - which Outlook writes for every zone, and RFC 5545
+  allows - was refused by `Intl` for its quotes, so a quoted IANA name had
+  been read as local too. Unwrapped first now, with a test. A name in
+  neither place is still read as local and named in `ignored`.
 
 - ~~The library's dot row was a control that did nothing~~ - found while
   categories were being rewired, and it was wrong twice over. `updateLibraryList`

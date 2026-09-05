@@ -651,7 +651,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 2037 tests in 116 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 2039 tests in 116 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 
@@ -755,8 +755,11 @@ at all. A `TZID` is resolved through `Intl.DateTimeFormat`, which ships the
 IANA tables, so a nine o'clock in New York lands where it falls on the
 viewer's clock; a repeating event is expanded in its own zone and each
 occurrence converted on its own day, so daylight-saving weeks come out right
-on both sides. A zone name the browser does not know - Outlook's own "FLE
-Standard Time" - is read as local and reported. Nothing in it throws.
+on both sides. Outlook's own zone names - "FLE Standard Time" - are placed
+by a short table of the ones that turn up, consulted after `Intl` says no,
+and a quoted `TZID` is unwrapped first because Outlook quotes every one it
+writes. A name in neither is read as local and reported. Nothing in it
+throws.
 
 ---
 
