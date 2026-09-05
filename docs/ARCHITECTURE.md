@@ -259,7 +259,7 @@ src/
     starterTemplates.ts  the three starter templates, offered and never installed
     colors.ts          the one palette templates and a rule's tag pick from
     explain.ts         every word this app invented, and the sentence for each
-    calendarCell.ts    what a month cell says about a past day
+    calendarCell.ts    what a month cell says: a past day's numbers, a future day's first lines
     theme-color.ts     keeps <meta name="theme-color"> with the active theme
     theme-preview.ts   the gallery's card, resolved the way the page is
     useSystemPrefersDark.ts  the live prefers-color-scheme reading
@@ -281,6 +281,7 @@ src/
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
+    DayPreview         the whole of a day, without leaving the month
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11
@@ -680,6 +681,8 @@ because six views is already the whole of what the navigation carries.
 | File | Job |
 |---|---|
 | `weekLayout.ts` | All the arithmetic: one shared axis, blocks as percentages, side-by-side lanes for overlaps |
+| `WeekAgenda.tsx` | The same week as a list, for the question the grid answers badly: what is on it |
+| `SomedayStrip.tsx` | The backlog under the columns, and one drag from there to a day |
 | `WeekView.tsx` | The grid, the drag between days, stamping, the phone's three-day window |
 | `WeekColumn.tsx` | One day: header, track, footer |
 

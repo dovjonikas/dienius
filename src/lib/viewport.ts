@@ -92,3 +92,52 @@ export function useIsWide(): boolean {
 
   return wide
 }
+
+/**
+ * A viewport short enough that a month cell holds two lines rather than
+ * three - the height at which a 1366x768 laptop lands, which is the smallest
+ * screen the zero-scroll rule names.
+ *
+ * The number is a fact about the month grid: six rows plus a header plus the
+ * stamp bar plus the shell's own chrome, divided into whatever is left, comes
+ * out around 97px a cell on a 768px screen and around 130px on a 1080px one.
+ * Three 13px lines and a day number need the second of those.
+ */
+export const TALL_VIEWPORT_PX = 820
+
+const TALL_QUERY = `(min-height: ${TALL_VIEWPORT_PX}px)`
+
+function isTallNow(): boolean {
+  try {
+    return window.matchMedia(TALL_QUERY).matches
+  } catch {
+    return false
+  }
+}
+
+/**
+ * How many of a day's tasks a month cell names.
+ *
+ * In JavaScript rather than in the stylesheet, and that is the whole point:
+ * the cell also says how many did *not* fit, and a line hidden by CSS is a
+ * line the "+2" beside it has already counted. Two lines and "+2" over a day
+ * with five things on it is the cell lying about the one number it is there
+ * to be honest about.
+ */
+export function useCellLines(): number {
+  const [tall, setTall] = useState(isTallNow)
+
+  useEffect(() => {
+    try {
+      const query = window.matchMedia(TALL_QUERY)
+      const update = () => setTall(query.matches)
+      update()
+      query.addEventListener('change', update)
+      return () => query.removeEventListener('change', update)
+    } catch {
+      return undefined
+    }
+  }, [])
+
+  return tall ? 3 : 2
+}

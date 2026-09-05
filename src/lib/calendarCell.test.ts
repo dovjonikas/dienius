@@ -1,69 +1,65 @@
-import { expect, test } from 'vitest'
-import { cellLabel, resolveTemplate, taskState } from './calendarCell'
-import type { MonthCell } from './dates'
-import type { Template } from './types'
+import { describe, expect, test } from 'vitest'
+import { cellPoints } from './calendarCell'
+import type { Task } from './types'
 
-// taskState - moved unchanged from CalendarView.tsx. A cell built only from
-// templateId cannot tell a genuinely empty day apart from one that holds
-// real, unstamped tasks.
+function task(id: string, title: string, extra: Partial<Task> = {}): Task {
+  return { id, title, done: false, ...extra }
+}
 
-test('taskState reports none for an undefined day', () => {
-  expect(taskState(undefined)).toBe('none')
-})
+/**
+ * What a month cell says about a day.
+ *
+ * A cell carried a template's name, which is a word somebody chose for a
+ * shape of day two months ago - it is not what is on Thursday. These are the
+ * three rules that make two or three lines worth more than that name, and
+ * every one of them is about honesty rather than about fitting.
+ */
+describe('the lines a month cell shows', () => {
+  test('the day\'s own order, so the first line is the first thing that happens', () => {
+    const points = cellPoints(
+      { tasks: [task('c', 'Gym', { time: '17:30' }), task('a', 'Job hunt', { time: '09:00' }), task('b', 'Lunch', { time: '13:00' })] },
+      3,
+    )
+    expect(points.points.map(p => p.title)).toEqual(['Job hunt', 'Lunch', 'Gym'])
+  })
 
-test('taskState reports none for a day with zero tasks', () => {
-  expect(taskState({ tasks: [] })).toBe('none')
-})
+  /**
+   * The count is of what is *left over*, not of the whole day. Two lines and
+   * a "+5" over a day with five things on it is the cell lying about the one
+   * number it exists to be honest about - which is exactly what happened when
+   * the third line was hidden by a media query while the count was worked out
+   * in JavaScript against a limit of three.
+   */
+  test('the overflow count is what did not fit, not the total', () => {
+    const day = { tasks: [1, 2, 3, 4, 5].map(n => task(`t${n}`, `Task ${n}`, { time: `0${n}:00` })) }
+    expect(cellPoints(day, 3).more).toBe(2)
+    expect(cellPoints(day, 2).more).toBe(3)
+    expect(cellPoints(day, 5).more).toBe(0)
+    expect(cellPoints(day, 9).more).toBe(0)
+  })
 
-test('taskState reports unfinished when at least one task is not done', () => {
-  expect(taskState({ tasks: [{ done: true }, { done: false }] })).toBe('unfinished')
-})
+  /**
+   * A float has no time and is still a real part of the day. Inventing one
+   * would be a lie the cell tells at a glance, which is the worst kind - the
+   * same refusal quick-add's own time control makes when a day is full.
+   */
+  test('a task with no time keeps none, and is still on the list', () => {
+    const points = cellPoints({ tasks: [task('a', 'Read a chapter'), task('b', 'Standup', { time: '09:15' })] }, 3)
+    expect(points.points.find(p => p.title === 'Read a chapter')?.time).toBeUndefined()
+    expect(points.points).toHaveLength(2)
+  })
 
-test('taskState reports done only when every task is done', () => {
-  expect(taskState({ tasks: [{ done: true }, { done: true }] })).toBe('done')
-})
+  test('a key task is marked, and being done is carried through', () => {
+    const points = cellPoints(
+      { tasks: [task('a', 'Job hunt', { time: '09:00', highlight: true, done: true }), task('b', 'Gym', { time: '17:30' })] },
+      3,
+    )
+    expect(points.points[0]).toMatchObject({ key: true, done: true })
+    expect(points.points[1]).toMatchObject({ key: false, done: false })
+  })
 
-// resolveTemplate - the template-lookup logic, extracted so MiniCalendar can
-// share it without re-deriving the same rules or depending on
-// CalendarView's own staged-paint state.
-
-const templates: Template[] = [
-  { id: 't1', name: 'Work', color: '#8ab6f9', blocks: [] },
-  { id: 't2', name: 'Rest', color: '#cde39e', blocks: [] },
-]
-
-test('resolveTemplate finds the template by id', () => {
-  expect(resolveTemplate('t2', templates)?.name).toBe('Rest')
-})
-
-test('resolveTemplate returns undefined for null, undefined, or an unknown id', () => {
-  expect(resolveTemplate(null, templates)).toBeUndefined()
-  expect(resolveTemplate(undefined, templates)).toBeUndefined()
-  expect(resolveTemplate('missing', templates)).toBeUndefined()
-})
-
-// cellLabel - the accessible name a screen reader gets for one cell,
-// carrying the full date, the template name, and unfinished/done state,
-// none of which is left to color alone.
-
-const cell: MonthCell = { key: '2026-09-12', inMonth: true }
-
-test('cellLabel always includes the full formatted date', () => {
-  expect(cellLabel(cell, undefined, 'none')).toBe('Saturday, September 12')
-})
-
-test('cellLabel appends the template name when one is stamped', () => {
-  expect(cellLabel(cell, 'Work', 'none')).toBe('Saturday, September 12, Work')
-})
-
-test('cellLabel appends "has unfinished tasks" for an unfinished day', () => {
-  expect(cellLabel(cell, undefined, 'unfinished')).toBe('Saturday, September 12, has unfinished tasks')
-})
-
-test('cellLabel appends "tasks completed" for a fully done day', () => {
-  expect(cellLabel(cell, undefined, 'done')).toBe('Saturday, September 12, tasks completed')
-})
-
-test('cellLabel combines template name and task state together', () => {
-  expect(cellLabel(cell, 'Work', 'done')).toBe('Saturday, September 12, Work, tasks completed')
+  test('a day with nothing on it has nothing to say', () => {
+    expect(cellPoints(undefined, 3)).toEqual({ points: [], more: 0 })
+    expect(cellPoints({ tasks: [] }, 3)).toEqual({ points: [], more: 0 })
+  })
 })

@@ -12,6 +12,8 @@ import { offerUndo } from '../../lib/undo'
 import { TaskDetail } from '../../widgets/day-plan/TaskDetail'
 import { computeWeekLayout, timeAtPercent, type WeekBlock } from './weekLayout'
 import { WeekColumn } from './WeekColumn'
+import { WeekAgenda } from './WeekAgenda'
+import { SomedayStrip } from './SomedayStrip'
 
 /**
  * The week, as seven columns of one shared timeline.
@@ -68,14 +70,24 @@ const SWIPE_THRESHOLD_PX = 50
 /** As on the day grid: enough to tell a drag from a tap that wobbled. */
 const MIN_DRAG_DISTANCE_PX = 8
 
+/** The two ways to read a week - see WeekAgenda for why there are two. */
+export type WeekReading = 'grid' | 'agenda'
+
 export interface WeekViewProps {
   /** The date the week is centred on. Opening a day hands this back up. */
   date: string
   onDateChange: (date: string) => void
   onOpenDay: (date: string) => void
+  /**
+   * Grid or agenda. Owned by the calendar bar, because the toggle for it sits
+   * beside Month / Week / Year rather than inside the week - a second
+   * segmented control one row down would be two controls saying "which view"
+   * on the same screen.
+   */
+  reading?: WeekReading
 }
 
-export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
+export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: WeekViewProps) {
   const data = useAppData()
   const isWide = useIsWide()
   const today = todayKey()
@@ -213,6 +225,35 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
     onDateChange(addDays(date, dx < 0 ? NARROW_DAYS : -NARROW_DAYS))
   }
 
+  if (reading === 'agenda') {
+    return (
+      <div className="week is-agenda">
+        <WeekAgenda
+          dates={visible}
+          onOpenDay={onOpenDay}
+          onOpenTask={(day, taskId) => {
+            setDetailDate(day)
+            setDetailTaskId(taskId)
+          }}
+        />
+        <SomedayStrip onScheduled={setAnnouncement} />
+        <p className="visually-hidden" aria-live="polite">{announcement}</p>
+        {detailTask && detailDate && (
+          <TaskDetail
+            task={detailTask}
+            tasks={data.days[detailDate]?.tasks ?? []}
+            date={detailDate}
+            library={data.library}
+            onClose={() => {
+              setDetailTaskId(null)
+              setDetailDate(null)
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="week" onPointerDown={onGridPointerDown} onPointerUp={onGridPointerUp}>
       {/* The arrows, the title, Today and Stamp week live in the calendar bar
@@ -257,6 +298,10 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
           />
         ))}
       </div>
+
+      {/* What you have without a day, under what you have with one. Drag one
+          onto a column and it is planned - see SomedayStrip. */}
+      <SomedayStrip onScheduled={setAnnouncement} />
 
       <p className="visually-hidden" aria-live="polite">{announcement}</p>
 

@@ -10944,3 +10944,399 @@ main:has(.week) > .calendar {
 /* Nothing here needs a 44px rule of its own any more: the anchor is a control
    the app already sizes, and the explanation is a hold on it rather than a
    second target beside it. */
+
+/* ------------------------------------------------------------------------
+   What a month cell says, and the whole day behind it.
+
+   A cell held a template's name, which is a word somebody chose two months
+   ago for a shape of day - it is not what is on Thursday. Three lines of
+   "09:00 Job hunt" is. The cell's height does not grow for this: the lines
+   are 10px, they never wrap, and the third is dropped where a cell is too
+   short for it rather than clipped in half.
+   ------------------------------------------------------------------------ */
+.cell-points {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 3px;
+  overflow: hidden;
+}
+
+.cell-point {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+/* On a stamped cell the ground is the template's own pastel, so the ink is
+   pinned dark for the same reason .cell-num and .cell-template already pin
+   theirs - a token that reads on --surface does not read on Gold. */
+.cell-has-template .cell-point { color: rgba(0, 0, 0, 0.72); }
+
+.cell-point-time {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.cell-point-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A key task, marked the one way this app marks one: weight, not colour. */
+.cell-point.is-key .cell-point-title { font-weight: 600; }
+
+.cell-more {
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--faint);
+}
+
+.cell-has-template .cell-more { color: rgba(0, 0, 0, 0.5); }
+
+/* How many lines a cell holds is decided in JavaScript, not here - see
+   useCellLines in lib/viewport.ts. The cell also says how many did not fit,
+   and a line hidden by a media query is a line the "+2" beside it has already
+   counted. */
+
+/* Below the wide breakpoint a cell is too small for text of any kind - the
+   template name has been hidden here since v1.8 for the same reason. */
+@media (max-width: 599px) {
+  .cell-points { display: none; }
+}
+
+/* ------------------------------------------------------------------------
+   The day preview - views/DayPreview.tsx.
+
+   A cell holds three lines and a day has ten, and everything past the third
+   used to be reachable only by leaving the month. This is the rest of it, in
+   place, on a mouse that stopped moving.
+   ------------------------------------------------------------------------ */
+.day-preview {
+  position: absolute;
+  top: calc(100% + var(--s1));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: max-content;
+  min-width: 210px;
+  max-width: min(300px, 90vw);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e3);
+  color: var(--text);
+  text-align: left;
+  /* It hangs over the cells around it, and a popover that swallows a click is
+     a popover that has to be got out of. The two buttons take their own
+     pointer events back below. */
+  pointer-events: none;
+}
+
+.day-preview button { pointer-events: auto; }
+
+/* The cell's own overflow: hidden would clip this to the cell it hangs off,
+   so the grid's cells stop clipping while one is open. Only while one is
+   open: the clip is what keeps a long template name inside its cell. */
+.cell:has(.day-preview) { overflow: visible; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .day-preview { animation: explain-in var(--dur-fast) var(--ease) both; }
+}
+
+.day-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.day-preview-date { font-size: var(--t-sm); font-weight: 600; }
+
+.day-preview-template {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-preview-empty { margin: 0; font-size: var(--t-sm); color: var(--muted); }
+
+.day-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  max-height: 40vh;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.day-preview-list li {
+  display: flex;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.day-preview-list li.is-key .day-preview-title { font-weight: 600; }
+
+/* Done is said by the ink going quiet and a rule through it, not by a tick in
+   a colour: a preview is for reading a day, not for working through one. */
+.day-preview-list li.is-done .day-preview-title {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+
+.day-preview-time {
+  flex: 0 0 3.2em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.day-preview-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Two facts, and neither is a verdict - see DayPreview.tsx. */
+.day-preview-stats {
+  display: flex;
+  gap: var(--s3);
+  margin: 0;
+  padding-top: var(--s1);
+  border-top: 1px solid var(--border);
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+
+.day-preview-actions { display: flex; gap: var(--s2); }
+
+.day-preview-actions button { flex: 1 1 auto; min-height: 32px; font-size: var(--t-sm); }
+
+/* A preview on the last row would hang below the grid and off the screen, and
+   one on the last column would hang past the right edge. Flipped rather than
+   measured: three rules beat a resize observer and a layout effect, and the
+   grid's own columns are the only thing that decides which way it goes. */
+.calendar-grid > [role='row']:last-child .day-preview {
+  top: auto;
+  bottom: calc(100% + var(--s1));
+}
+
+.cell:nth-child(7) .day-preview,
+.cell:nth-child(6) .day-preview {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.cell:nth-child(1) .day-preview,
+.cell:nth-child(2) .day-preview {
+  left: 0;
+  right: auto;
+  transform: none;
+}
+
+/* ------------------------------------------------------------------------
+   The week, read rather than looked at - views/week/WeekAgenda.tsx.
+
+   One column of days, each with its own tasks under it. Nothing here is a
+   box: the day's date is the only structure, and the list under it reads as
+   handwriting rather than as rows in a table.
+   ------------------------------------------------------------------------ */
+.week.is-agenda {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--s3);
+}
+
+.week-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--s2);
+}
+
+.agenda-day { display: flex; flex-direction: column; gap: var(--s1); }
+
+.agenda-date { margin: 0; }
+
+.agenda-date-button {
+  min-height: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.agenda-date-button:hover { color: var(--text); }
+
+.agenda-date-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-chip);
+}
+
+/* Today, marked once and by weight. A list where four things are emphasised
+   has emphasised nothing. */
+.agenda-day.is-today .agenda-date-button { color: var(--text); }
+
+.agenda-day.is-today .agenda-date-button::after {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: var(--s2);
+  border-radius: var(--r-round);
+  background: var(--accent);
+  vertical-align: middle;
+}
+
+.agenda-empty {
+  margin: 0;
+  color: var(--faint);
+  font-size: var(--t-sm);
+}
+
+.agenda-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  width: 100%;
+  min-height: 30px;
+  padding: var(--s1) var(--s2);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-md);
+  text-align: left;
+}
+
+.agenda-row:hover { background: var(--surface); }
+
+.agenda-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.agenda-time {
+  flex: 0 0 3.4em;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-row.is-key .agenda-title { font-weight: 600; }
+
+/* Done is said by the ink going quiet and a rule through it - the same way
+   the day preview says it, and for the same reason: this is for reading a
+   week, not for working through one. */
+.agenda-row.is-done .agenda-title {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+
+/* The Grid / Agenda pair, beside Month / Week / Year but quieter: it is a
+   question about the week rather than about the calendar, and two segmented
+   controls at the same weight would read as two equal choices. */
+.segmented-quiet button { font-size: var(--t-sm); }
+
+/* ------------------------------------------------------------------------
+   Someday - views/week/SomedayStrip.tsx.
+
+   The backlog, under the week, still saying nothing until it is opened. Every
+   rule the fourth shelf keeps on the day view it keeps here: a plain count in
+   --faint, no badge, no accent, no age, no nag.
+   ------------------------------------------------------------------------ */
+.someday {
+  flex: 0 0 auto;
+  padding-top: var(--s1);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.someday.open .done-caret { transform: rotate(90deg); }
+
+.someday-list[hidden] { display: none; }
+
+.someday-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: var(--s2) 0 0;
+  padding: 0 0 var(--s1);
+  list-style: none;
+  max-height: 22vh;
+  overflow-y: auto;
+}
+
+.someday-item {
+  min-height: 30px;
+  padding: var(--s1) var(--s3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-sm);
+  /* Dashed rather than solid, and that is the whole of what says "no day
+     yet": a chip with a dotted edge beside blocks with solid ones reads as
+     unplaced without anything having to be written on it. */
+  touch-action: none;
+  cursor: grab;
+}
+
+.someday-item:hover { border-style: solid; border-color: var(--muted); }
+
+.someday-item.is-dragging {
+  cursor: grabbing;
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: var(--e2);
+}
+
+.someday-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (pointer: coarse) {
+  .someday-item { min-height: 44px; }
+}

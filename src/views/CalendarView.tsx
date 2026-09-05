@@ -3,12 +3,18 @@ import { actions, useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
 import { formatDuration } from '../widgets/day-plan/capacity'
-import { cellLabel, resolveTemplate, taskState } from '../lib/calendarCell'
-import { useIsWide } from '../lib/viewport'
+import { cellLabel, cellPoints, resolveTemplate, taskState, type CellPoints } from '../lib/calendarCell'
+import { DayPreview } from './DayPreview'
+import { useCellLines, useIsWide } from '../lib/viewport'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
-import { NARROW_DAYS, WeekView, visibleWeekDays } from './week/WeekView'
+import { NARROW_DAYS, WeekView, visibleWeekDays, type WeekReading } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
 import { Explain } from './Explain'
+
+/** How long a mouse rests on a cell before the day opens under it. */
+const PREVIEW_DELAY = 400
+
+const EMPTY_POINTS: CellPoints = { points: [], more: 0 }
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -64,6 +70,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   const [mode, setMode] = useState<'month' | 'week' | 'year'>('month')
   const [weekDate, setWeekDate] = useState(() => date ?? todayKey())
   const isWide = useIsWide()
+  const cellLines = useCellLines()
   // The week's own controls sit in the calendar bar, on the same row as the
   // mode toggle, rather than in a row of their own inside the week: on a
   // phone that row cost a fifth of the grid it was steering.
@@ -78,6 +85,11 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
   const [staged, setStaged] = useState<Record<string, string | null>>({})
+  // Which cell the pointer has been resting on long enough to open. Null is
+  // every other moment, which is nearly all of them.
+  const [reading, setReading] = useState<WeekReading>('grid')
+  const [previewDate, setPreviewDate] = useState<string | null>(null)
+  const previewTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const painting = useRef<'apply' | 'erase' | null>(null)
 
   const cells = useMemo(() => monthGrid(year, month), [year, month])
@@ -122,6 +134,26 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
 
   function handlePointerEnter(date: string) {
     if (painting.current) stampCell(date, painting.current)
+  }
+
+  /**
+   * The preview, opened by a mouse resting on a cell.
+   *
+   * A mouse only: a finger taps the cell and gets the day itself, which is
+   * the better answer on a phone anyway. Not while a template is in hand and
+   * being painted across the grid either - a popover appearing under a drag
+   * is a popover in the way of it.
+   */
+  function previewEnter(date: string, e: React.PointerEvent) {
+    if (e.pointerType !== 'mouse' || painting.current) return
+    clearTimeout(previewTimer.current)
+    previewTimer.current = setTimeout(() => setPreviewDate(date), PREVIEW_DELAY)
+  }
+
+  function previewLeave(e: React.PointerEvent) {
+    if (e.pointerType !== 'mouse') return
+    clearTimeout(previewTimer.current)
+    setPreviewDate(null)
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
@@ -270,6 +302,32 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             Year
           </button>
         </div>
+
+        {/* Only while the week is showing, and after the mode it belongs to,
+            because it is a question about that mode rather than about the
+            calendar. Grid is the default: the shape of a week is the thing
+            this view was built for, and a list is what every other screen in
+            this app already is. */}
+        {mode === 'week' && (
+          <div className="segmented segmented-quiet" role="group" aria-label="How to read the week">
+            <button
+              type="button"
+              className={reading === 'grid' ? 'active' : ''}
+              aria-pressed={reading === 'grid'}
+              onClick={() => setReading('grid')}
+            >
+              Grid
+            </button>
+            <button
+              type="button"
+              className={reading === 'agenda' ? 'active' : ''}
+              aria-pressed={reading === 'agenda'}
+              onClick={() => setReading('agenda')}
+            >
+              Agenda
+            </button>
+          </div>
+        )}
       </div>
 
       {mode === 'month' && (
@@ -329,6 +387,11 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                   const past = cell.key <= today
                   const stat = past ? dayStat(data.days[cell.key]) : undefined
                   const showStats = !!stat && stat.rate !== null
+                  // Two or three, decided by the viewport's height - see
+                  // useCellLines for why that decision cannot live in the
+                  // stylesheet. Below 600px the whole block is hidden the way
+                  // the template name already was.
+                  const points = showStats ? EMPTY_POINTS : cellPoints(data.days[cell.key], cellLines)
                   const classes = [
                     'cell',
                     cell.inMonth ? '' : 'outside',
@@ -354,7 +417,11 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       // open when the pointer moves away.
                       title={showStats ? cellTooltip(stat!, template?.name) : undefined}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
-                      onPointerEnter={() => handlePointerEnter(cell.key)}
+                      onPointerEnter={e => {
+                        handlePointerEnter(cell.key)
+                        previewEnter(cell.key, e)
+                      }}
+                      onPointerLeave={previewLeave}
                       onClick={() => !stampTemplateId && onOpenDay(cell.key)}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
@@ -365,6 +432,22 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                           </span>
                           {stat!.pushed > 0 && <span className="cell-pushed">&rarr;{stat!.pushed}</span>}
                           {keptEveryKeyTask(stat!) && <span className="cell-kept" />}
+                        </span>
+                      ) : points.points.length > 0 ? (
+                        /* What is actually on the day, rather than what the
+                           shape of day was called. A template's name is a
+                           word somebody chose two months ago; "09:00 Job
+                           hunt" is Thursday. The third line is dropped by
+                           the stylesheet where a cell is too short for it -
+                           the cell's height never grows for this. */
+                        <span className="cell-points" aria-hidden="true">
+                          {points.points.map(p => (
+                            <span key={p.id} className={p.key ? 'cell-point is-key' : 'cell-point'}>
+                              {p.time && <span className="cell-point-time">{p.time}</span>}
+                              <span className="cell-point-title">{p.title}</span>
+                            </span>
+                          ))}
+                          {points.more > 0 && <span className="cell-more">+{points.more}</span>}
                         </span>
                       ) : (
                         template && <span className="cell-template" aria-hidden="true">{template.name}</span>
@@ -377,6 +460,13 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                         <span className="cell-bar" aria-hidden="true">
                           <span className="cell-bar-fill" style={{ width: `${Math.round((stat!.rate ?? 0) * 100)}%` }} />
                         </span>
+                      )}
+                      {previewDate === cell.key && (
+                        <DayPreview
+                          date={cell.key}
+                          onOpenDay={() => onOpenDay(cell.key)}
+                          onStamp={stampTemplateId ? () => stampCell(cell.key, 'apply') : undefined}
+                        />
                       )}
                     </button>
                   )
@@ -403,7 +493,9 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
         </>
       )}
 
-      {mode === 'week' && <WeekView date={weekDate} onDateChange={changeWeekDate} onOpenDay={onOpenDay} />}
+      {mode === 'week' && (
+        <WeekView date={weekDate} onDateChange={changeWeekDate} onOpenDay={onOpenDay} reading={reading} />
+      )}
 
       {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}
     </section>
