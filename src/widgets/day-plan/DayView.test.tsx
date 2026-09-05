@@ -15,7 +15,7 @@ beforeEach(() => {
 
 test('quick add creates a task on Enter', async () => {
   const user = userEvent.setup()
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), '14:00 Call mom{Enter}')
   // Scoped to the task list: the same anchor also appears in the read-only
   // timeline grid above it, which is a second, aria-hidden picture of the
@@ -27,13 +27,13 @@ test('quick add creates a task on Enter', async () => {
 
 test('a draft left over from before a reload is restored into the input', () => {
   saveDraft('2026-09-01', 'half-typed task')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('half-typed task')
 })
 
 test('typing saves a draft, and finishing the task clears it', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom')
   expect(consumeDraft('2026-09-01')).toBe('Call mom')
 
@@ -46,14 +46,14 @@ test('typing saves a draft, and finishing the task clears it', async () => {
 
 test('a draft saved for a different day is not restored here', () => {
   saveDraft('2026-09-02', 'wrong day')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('')
 })
 
 test('clicking a task toggles done', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Gym')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('checkbox', { name: /gym/i }))
   expect(screen.getByRole('checkbox', { name: /gym/i })).toBeChecked()
 })
@@ -61,7 +61,7 @@ test('clicking a task toggles done', async () => {
 test('rollover button moves unfinished tasks to tomorrow', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Unfinished')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: /push .* to tomorrow/i }))
   expect(screen.queryByText('Unfinished')).not.toBeInTheDocument()
   const tomorrow = getData().days['2026-09-02']
@@ -75,7 +75,7 @@ test('renders without crashing when a day points at a deleted template', () => {
       '2026-09-01': { date: '2026-09-01', templateId: 'missing-template', tasks: [] },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByPlaceholderText(/add a task/i)).toBeInTheDocument()
   expect(container.querySelector('.day-template')).toBeNull()
 })
@@ -95,7 +95,7 @@ function heavyTasks(n: number) {
 test('a day with 200 tasks renders every one of them, sorted, with no duplicates', () => {
   const tasks = heavyTasks(200)
   actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks } } })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const rows = container.querySelectorAll('.task-list > li')
   expect(rows).toHaveLength(200)
   // Anchors (timed tasks) sort before floats, and among anchors, by time -
@@ -119,7 +119,7 @@ test('a day with 200 tasks costs proportionally, not quadratically, more than on
   const withTasks = (n: number) => () =>
     actions.resetForTests({ ...defaultData(), days: { '2026-09-01': { date: '2026-09-01', tasks: heavyTasks(n) } } })
   const result = measureSlowdown(withTasks(10), withTasks(200), () =>
-    timed(() => render(<DayView date="2026-09-01" onDateChange={() => {}} />)),
+    timed(() => render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)),
   )
   expect(result.ratio).toBeLessThan(60)
 }, STRESS_TIMEOUT_MS)
@@ -147,14 +147,14 @@ test('rolling over 200 unfinished tasks at once moves every pushable one and hol
 test('arrows navigate between days', async () => {
   const user = userEvent.setup()
   let navigated = ''
-  render(<DayView date="2026-09-01" onDateChange={d => (navigated = d)} />)
+  render(<DayView date="2026-09-01" onDateChange={d => (navigated = d)} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Next day' }))
   expect(navigated).toBe('2026-09-02')
 })
 
 test('a task that has never been pushed shows no push count', () => {
   actions.addTask('2026-09-01', 'Fresh')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/pushed/i)).not.toBeInTheDocument()
 })
 
@@ -171,7 +171,7 @@ test('a task pushed once shows a quiet push count', () => {
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const badge = screen.getByText(/pushed once/i)
   expect(badge).toBeInTheDocument()
 
@@ -196,7 +196,7 @@ test('a task at the push bound carries a quiet mark on the row, and the full do-
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // The row itself stays quiet: a short mark, not a separate paragraph.
   expect(container.querySelector('p.task-maxed-note')).toBeNull()
   const mark = screen.getByText(/pushed twice/i)
@@ -232,7 +232,7 @@ test('marking a maxed task ongoing through its menu clears the do-or-delete mark
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'More actions for Standing task' }))
   await user.click(screen.getByRole('button', { name: 'Mark Standing task as ongoing' }))
 
@@ -261,7 +261,7 @@ test('an ongoing task carries a quiet, reversible mark instead of the maxed sent
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/do it today, let it go, or mark it ongoing/i)).not.toBeInTheDocument()
   const mark = screen.getByText('ongoing')
   expect(mark).toBeInTheDocument()
@@ -290,7 +290,7 @@ test('an ongoing task shows no push count, even after many more pushes than the 
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // A precise match for the visible "pushed N" count mark, not the hidden
   // exemption note below it - that note legitimately contains the word
   // "pushed" as part of explaining what being ongoing exempts a task from.
@@ -299,7 +299,7 @@ test('an ongoing task shows no push count, even after many more pushes than the 
 
 test('an ordinary task under the bound shows neither the ongoing label nor the mark-ongoing control', () => {
   actions.addTask('2026-09-01', 'Fresh')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: /is ongoing/i })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /mark .* as ongoing/i })).not.toBeInTheDocument()
 })
@@ -321,7 +321,7 @@ test('rollover button explains when some tasks moved and some stayed behind', as
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const button = screen.getByRole('button', { name: /push 1 to tomorrow/i })
   expect(button).toHaveTextContent(/1 (is )?stay/i)
   await user.click(button)
@@ -330,14 +330,14 @@ test('rollover button explains when some tasks moved and some stayed behind', as
 })
 
 test('an empty day shows no score at all', () => {
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
 })
 
 test('a planned day shows done over total as a plain fraction', () => {
   actions.addTask('2026-09-01', 'One')
   actions.addTask('2026-09-01', 'Two')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('0/2')).toBeInTheDocument()
 })
 
@@ -345,7 +345,7 @@ test('checking a task updates the score live', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'One')
   actions.addTask('2026-09-01', 'Two')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('0/2')).toBeInTheDocument()
   await user.click(screen.getByRole('checkbox', { name: /one/i }))
   expect(screen.getByText('1/2')).toBeInTheDocument()
@@ -353,7 +353,7 @@ test('checking a task updates the score live', async () => {
 
 test('the score is announced to screen readers as a sentence, not a fraction', () => {
   actions.addTask('2026-09-01', 'One')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   // The spoken sentence exists and is not itself hidden from assistive tech.
   const spoken = screen.getByText('0 of 1 done')
@@ -380,7 +380,7 @@ test('a full day scores every task and shows no core annotation, even with a tem
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('1/2')).toBeInTheDocument()
   expect(screen.queryByText('core')).not.toBeInTheDocument()
 })
@@ -400,7 +400,7 @@ test('a shift day scores only core tasks and says so next to the fraction', () =
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('1/2')).toBeInTheDocument()
   const spoken = screen.getByText('1 of 2 core tasks done')
   expect(spoken).toBeInTheDocument()
@@ -421,7 +421,7 @@ test('on a shift day, core tasks carry a visible and announced core marker and o
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const badges = container.querySelectorAll('.task-core')
   expect(badges).toHaveLength(1)
 
@@ -445,7 +445,7 @@ test('on a shift day with tasks but none of them core, no score shows at all', (
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
   expect(screen.queryByText('core')).not.toBeInTheDocument()
 })
@@ -461,7 +461,7 @@ test('a task pushed once on a shift day still shows both its core and pushed mar
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const checkbox = screen.getByRole('checkbox', { name: /clock in/i })
   const describedBy = checkbox.getAttribute('aria-describedby')!.split(' ')
   expect(describedBy).toHaveLength(2)
@@ -470,7 +470,7 @@ test('a task pushed once on a shift day still shows both its core and pushed mar
 })
 
 test('an empty day shows no capacity line at all', () => {
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/anchors take|floats need/i)).not.toBeInTheDocument()
 })
 
@@ -487,7 +487,7 @@ test('a day with only floats shows their total with no anchors or gaps claim', (
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Untimed tasks: about 3h40.')).toBeInTheDocument()
 })
 
@@ -509,7 +509,7 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(
     screen.getByText('Timed tasks: 6h10. Free: 9h50 across 4 gaps. Untimed tasks: about 5h50.'),
   ).toBeInTheDocument()
@@ -526,7 +526,7 @@ test('a custom sleep window setting changes the capacity line, not just the hist
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // Waking window is now 06:00-22:00 (16h); the gym takes 1h, leaving 15h
   // free across the stretch before it (06:00-07:00) and after it (08:00-22:00).
   expect(screen.getByText('Timed tasks: 1h. Free: 15h across 2 gaps.')).toBeInTheDocument()
@@ -552,7 +552,7 @@ test('a day on a second sleep schedule reads its capacity against that schedule'
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // The Shift schedule bedtime 09:00, wake 17:00 gives a waking window of
   // 17:00-24:00 (7h, clamped at midnight); the 30-minute prep task leaves
   // 6h30 free, split between the 30 minutes before it and the six hours after.
@@ -569,7 +569,7 @@ test('a mid-day shift leaves real free time within the window, not a false "no f
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Timed tasks: 12h. Free: 4h across 2 gaps.')).toBeInTheDocument()
   expect(screen.queryByText(/no free time/i)).not.toBeInTheDocument()
 })
@@ -588,7 +588,7 @@ test('when floats exceed free time, the line states it plainly with no embedded 
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // The shift runs 00:00-18:00; only the 07:00-18:00 portion falls inside
   // the 07:00-23:00 window, leaving 18:00-23:00 (5h) free. It started
   // before the window opened, so the sentence says the figure is only
@@ -613,7 +613,7 @@ test('the capacity line never uses an alarming word for the over case', () => {
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText(/you are/i)).toBeInTheDocument()
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
 })
@@ -636,7 +636,7 @@ test('a day set to a second schedule is measured against that schedule, not the 
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // Only the 22:00-24:00 portion of the shift falls inside the Shift
   // schedule (waking 13:00-24:00); the default 07:00-23:00 window would
   // have clipped it to one hour instead of two. The shift itself runs
@@ -666,7 +666,7 @@ test('an overnight shift reads as a partial figure, not as its own full length',
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(
     screen.getByText("Timed tasks: 2h within today's window. Free: 9h across 1 gap. Untimed tasks: about 30 min."),
   ).toBeInTheDocument()
@@ -687,7 +687,7 @@ test('each float offers its own push-to-tomorrow control through its menu, so th
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   // Both floats offer the control - the app never pre-selects the larger one.
   await user.click(screen.getByRole('button', { name: 'More actions for Small errand' }))
@@ -713,7 +713,7 @@ test('an anchor never offers a push-to-tomorrow control - only floats do', async
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'More actions for Shift' }))
   expect(screen.queryByRole('button', { name: /push shift to tomorrow/i })).not.toBeInTheDocument()
 })
@@ -729,7 +729,7 @@ test('a float already at the push bound offers no push control', async () => {
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'More actions for Maxed errand' }))
   expect(screen.queryByRole('button', { name: /push maxed errand to tomorrow/i })).not.toBeInTheDocument()
 })
@@ -745,21 +745,21 @@ test('a done float offers no push control - there is nothing left to move', asyn
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'More actions for Finished errand' }))
   expect(screen.queryByRole('button', { name: /push finished errand to tomorrow/i })).not.toBeInTheDocument()
 })
 
 test('a task with no size shows a quiet control to set one, not a number', () => {
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Set size for Guitar' })).toBeInTheDocument()
 })
 
 test('setting a task size through its own control updates the task, not the quick-add flow', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: 'Set size for Guitar' }))
   const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
@@ -776,7 +776,7 @@ test('an existing task size can be changed and cleared back to unsized', async (
   actions.addTask('2026-09-01', 'Guitar')
   const id = getData().days['2026-09-01'].tasks[0].id
   actions.setTaskMinutes('2026-09-01', id, 20)
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
   const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
@@ -792,7 +792,7 @@ test('typing garbage into the size field leaves an existing size untouched', asy
   actions.addTask('2026-09-01', 'Guitar')
   const id = getData().days['2026-09-01'].tasks[0].id
   actions.setTaskMinutes('2026-09-01', id, 20)
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
   const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
@@ -807,7 +807,7 @@ test('pressing Escape while editing a size cancels without changing it', async (
   actions.addTask('2026-09-01', 'Guitar')
   const id = getData().days['2026-09-01'].tasks[0].id
   actions.setTaskMinutes('2026-09-01', id, 20)
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
   const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
@@ -828,7 +828,7 @@ test('the timeline grid stays collapsed until its own toggle is opened, and the 
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const toggle = screen.getByRole('button', { name: /show timeline/i })
   expect(toggle).toHaveAttribute('aria-expanded', 'false')
@@ -851,7 +851,7 @@ test('opening the timeline toggle reveals the grid and relabels itself', async (
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: /show timeline/i }))
 
@@ -867,7 +867,7 @@ test('opening the timeline toggle reveals the grid and relabels itself', async (
 
 test('a day with no anchors shows no timeline toggle at all - there is nothing to expand', () => {
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: /timeline/i })).not.toBeInTheDocument()
 })
 
@@ -882,7 +882,7 @@ test('the timeline toggle stays open across a render once opened, since the choi
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: /hide timeline/i })).toHaveAttribute('aria-expanded', 'true')
   expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
 })
@@ -897,7 +897,7 @@ test('the timeline toggle names the region it controls, for assistive tech', () 
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const toggle = screen.getByRole('button', { name: /show timeline/i })
   const controlsId = toggle.getAttribute('aria-controls')
   expect(controlsId).toBeTruthy()
@@ -922,7 +922,7 @@ test('tapping a gap and placing a float turns it into an anchor, live in the day
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: /1h free/i }))
   await user.click(screen.getByRole('button', { name: /place guitar, 20 min/i }))
@@ -947,7 +947,7 @@ test('a placed float can have its time removed through its own menu, no hunting 
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   await user.click(screen.getByRole('button', { name: 'Remove time from Guitar' }))
@@ -958,7 +958,7 @@ test('a placed float can have its time removed through its own menu, no hunting 
 test('a float with no time offers no remove-time control in its menu - there is nothing to undo', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   expect(screen.queryByRole('button', { name: /remove time/i })).not.toBeInTheDocument()
 })
@@ -976,7 +976,7 @@ test('rollover button is not shown when every unfinished task is already at the 
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: /push .* to tomorrow/i })).not.toBeInTheDocument()
   expect(screen.getByText(/waiting on a decision/i)).toBeInTheDocument()
   expect(screen.queryByText(/need a decision today/i)).not.toBeInTheDocument()
@@ -997,7 +997,7 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // The word "unfinished" left the button when the count stopped meaning
   // "everything not done" and started meaning "the one-off things" - see
   // actions.rolloverUnfinished.
@@ -1006,7 +1006,7 @@ test('the rollover button counts a task marked ongoing as pushable, not held, ev
 })
 
 test('a genuinely fresh install shows the starter offers instead of the plain empty line', () => {
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: /use the working day template/i })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /use the rest day template/i })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /use the overnight shift template/i })).toBeInTheDocument()
@@ -1015,7 +1015,7 @@ test('a genuinely fresh install shows the starter offers instead of the plain em
 
 test('tapping a starter creates it as a real template and stamps it onto the day being viewed', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: /use the rest day template/i }))
 
   const templates = getData().templates
@@ -1035,14 +1035,14 @@ test('tapping a starter creates it as a real template and stamps it onto the day
 
 test('once a template exists anywhere, an empty day falls back to the plain, non-teaching message', () => {
   actions.addTemplate({ name: 'Existing', color: '#a7c4f5', blocks: [] })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
   expect(screen.getByText(/nothing planned/i)).toBeInTheDocument()
 })
 
 test('a day that already has a hand-typed task never shows the starter offers, even before any template exists', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Water the plants{Enter}')
   expect(screen.queryByRole('button', { name: /use the working day template/i })).not.toBeInTheDocument()
 })
@@ -1065,7 +1065,7 @@ test('tapping a float\'s title selects it and opens where it fits, without compl
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const title = screen.getByRole('button', { name: 'Guitar practice' })
   expect(title).toHaveAttribute('aria-pressed', 'false')
@@ -1081,7 +1081,7 @@ test('tapping an already-selected title deselects and closes the sheet', async (
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar', undefined)
   actions.setTaskMinutes('2026-09-01', getData().days['2026-09-01'].tasks[0].id, 20)
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const title = screen.getByRole('button', { name: 'Guitar' })
   await user.click(title)
@@ -1106,7 +1106,7 @@ test('selecting a task opens the timeline if it was collapsed', async () => {
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   expect(screen.getByRole('button', { name: 'Show timeline' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Guitar' }))
@@ -1124,14 +1124,14 @@ test('an anchor\'s title is never a selectable control - it already has a positi
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: 'Meeting' })).not.toBeInTheDocument()
 })
 
 test('a done float\'s title is never a selectable control - there is nothing left to place', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('checkbox', { name: 'Guitar' }))
   expect(screen.queryByRole('button', { name: 'Guitar' })).not.toBeInTheDocument()
 })
@@ -1139,7 +1139,7 @@ test('a done float\'s title is never a selectable control - there is nothing lef
 test('a task with no size says so plainly instead of an empty list', async () => {
   const user = userEvent.setup()
   actions.addTask('2026-09-01', 'Guitar')
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Guitar' }))
   expect(screen.getByText(/size isn't set/i)).toBeInTheDocument()
 })
@@ -1159,7 +1159,7 @@ test('tapping a fitting gap places the task, ends the selection, and moves focus
       },
     },
   })
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: 'Guitar practice' }))
   const dialog = screen.getByRole('dialog', { name: 'Guitar practice' })
@@ -1186,7 +1186,7 @@ test('a task that fits nowhere today says so plainly, without suggesting the day
       },
     },
   })
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Big errand' }))
   expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
 })
@@ -1203,7 +1203,7 @@ test('a task that fits nowhere today says so plainly, without suggesting the day
 
 test('the time control sets a time in two taps, and the task lands at it', async () => {
   const user = userEvent.setup()
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // One open, two picks: the list stays up between the hour and the minute,
   // the way TimePicker's own does.
   await user.click(screen.getByRole('button', { name: /next free slot/i }))
@@ -1228,7 +1228,7 @@ test('the time control sets a time in two taps, and the task lands at it', async
  */
 test('the next task typed goes after the one just added, not on top of it', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.type(screen.getByPlaceholderText(/add a task/i), 'First{Enter}')
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Second{Enter}')
 
@@ -1244,7 +1244,7 @@ test('the next task typed goes after the one just added, not on top of it', asyn
  */
 test('a time typed into the line beats the one the control is showing', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: /next free slot/i }))
   await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' }))
   await user.type(screen.getByPlaceholderText(/add a task/i), '16:00 Call mom{Enter}')
@@ -1259,7 +1259,7 @@ test('a time typed into the line beats the one the control is showing', async ()
  */
 test('No time puts the task back to being a float', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: /next free slot/i }))
   await user.click(screen.getByRole('button', { name: 'No time' }))
   await user.type(screen.getByPlaceholderText(/add a task/i), 'Call mom{Enter}')
@@ -1272,7 +1272,7 @@ test('No time puts the task back to being a float', async () => {
 // control still asks to be read.
 test('neither control is offered while the field is writing to the inbox', async () => {
   const user = userEvent.setup()
-  render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: /next free slot/i })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Inbox' }))
   expect(screen.queryByRole('button', { name: /next free slot/i })).toBeNull()
@@ -1294,7 +1294,7 @@ test('a bound task shows its count, and names the next book once this one ends',
   actions.stepLibraryItem(list.id, deepWork.id, 1, '2026-09-01')
   actions.scheduleLibraryItem('2026-09-01', list.id, deepWork.id)
 
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   const taskList = within(container.querySelector('.task-list')!)
   expect(taskList.getByText('ch 1/2')).toBeInTheDocument()
 
@@ -1311,7 +1311,7 @@ test('the last book on a list ends with a count, because there is no next one to
   const [deepWork] = getData().library[0].items
   actions.scheduleLibraryItem('2026-09-01', list.id, deepWork.id)
 
-  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} />)
+  const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(within(container).getByRole('checkbox', { name: /Deep Work/ }))
 
   expect(screen.queryByText(/next is/)).toBeNull()

@@ -570,7 +570,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .settings-group h3 + .setting-block { border-top: none; }
 
 /* The same row, for a setting whose control is too big to sit beside its own
-   label - the theme gallery, the if-then board. Label on top, control filling
+   label - the theme gallery, the rules under a goal. Label on top, control filling
    the width under it. */
 .setting-block {
   padding: 16px 0;
@@ -758,18 +758,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 @media (min-width: 1024px) {
   /* The settings view constrains itself, above - nothing here touches the
      shell, so the header does not move when this tab is opened. */
-}
-
-/* The board still carries its own "If-then" heading, because it is also
-   rendered on its own elsewhere and inside its own sheet. Here it sits
-   directly under a setting that already says what this is, so the heading
-   drops back to being a label for the New button beside it rather than a
-   second title for the same thing. */
-.settings .if-then-header h2 {
-  font-size: var(--t-md);
-  font-weight: 600;
-  color: var(--muted);
-  margin: 0;
 }
 
 /* The time field and its two steppers, read as one control. The 44px target
@@ -1272,42 +1260,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   font-size: var(--t-sm);
   line-height: 1.5;
   letter-spacing: 0.01em;
-}
-
-/* The one if-then rule surfaced on the day view - docs/TIMELINE.md
-   section 6. Deliberately as quiet as the capacity line above it: a plain
-   bordered row at ordinary text weight, no accent color, nothing that
-   reads as a warning or a task waiting to be checked off. --safe-ink
-   keeps the text readable against every theme's own surface color rather
-   than assuming --text always has enough contrast there. Each line is
-   capped to one row with an ellipsis rather than wrapping, so a long
-   trigger or action can never push this past the two lines it is budgeted
-   for - see the day-view fold measurements in docs/TIMELINE.md. */
-.day-rule {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s0);
-  width: 100%;
-  text-align: left;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  color: var(--safe-ink);
-  padding: var(--s2) var(--s3);
-  margin-bottom: var(--s4);
-}
-
-.day-rule:hover { border-color: var(--muted); }
-
-.day-rule-line {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--t-md);
-  line-height: 1.4;
 }
 
 /* The grid's own disclosure - docs/RESEARCH-ADHD.md section 7 and
@@ -2282,7 +2234,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    Form controls: one definition of what a field looks like.
 
    This stylesheet used to carry six of them - .template-editor input,
-   .block-add input, .if-then-form input, .quick-add, .setting-text-input and
+   .block-add input, .rule-form input, .quick-add, .setting-text-input and
    .task-size-input - each written for the screen it first appeared on. They
    agreed by accident and diverged in the details, and the moment a component
    built for one screen was reused on another it rendered as a bare white
@@ -2763,7 +2715,7 @@ select:focus {
 }
 
 /* The category's name, in the meta line - colour is never the only signal
-   here, the same rule the if-then tags and the year strip's legend follow. */
+   here, the same rule a rule's own tag and the year strip's legend follow. */
 /* The category name carries a trace of its own colour rather than being
    plain muted grey, which is what lets a card be identified from the meta
    line alone when the 4px edge is out of the corner of the eye. Mixed 30%
@@ -3532,7 +3484,7 @@ button.primary {
   gap: var(--s3);
 }
 
-/* The colour row in the template editor and the if-then board. It was
+/* The colour row in the template editor and the rule form. It was
    `.palette` until the command palette arrived in v1.3 and took the same
    class name: from then on eight swatches rendered inside a fixed-width
    surface card, stacked in one column on a phone. The stylesheet is one
@@ -3907,157 +3859,6 @@ button.danger {
 
 .stamp-hint { text-align: center; margin-top: var(--s3); }
 
-.if-then-board { margin-top: var(--s6); }
-
-.if-then-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--s3);
-}
-
-.if-then-filters {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  flex-wrap: wrap;
-  margin-bottom: var(--s3);
-}
-
-.if-then-list { list-style: none; margin: 0; padding: 0; }
-
-/* The colored left edge is a reinforcing hint, never the only signal - the
-   tag's name is always rendered as text below, both on the card and on its
-   matching filter chip. */
-.if-then-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--border);
-  border-radius: var(--r-card);
-  padding: 14px 16px;
-  margin-bottom: var(--s2);
-  box-shadow: var(--e1);
-}
-
-.if-then-trigger {
-  margin: 0;
-  font-size: var(--t-input);
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.if-then-action {
-  margin: 4px 0 0;
-  font-size: var(--t-md);
-  line-height: 1.4;
-  color: var(--text);
-}
-
-.if-then-prefix {
-  display: inline-block;
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-right: var(--s2);
-}
-
-.if-then-tag {
-  display: inline-block;
-  margin-top: var(--s2);
-  padding: 2px 10px;
-  border-radius: var(--r-pill);
-  font-size: var(--t-sm);
-  color: rgba(0, 0, 0, 0.65);
-}
-
-.if-then-card-actions {
-  display: flex;
-  gap: var(--s2);
-  justify-content: flex-end;
-  margin-top: var(--s2);
-}
-
-.if-then-card-actions button {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--muted);
-  padding: 6px 12px;
-}
-
-.if-then-card-actions button:hover { color: var(--text); }
-
-.if-then-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  padding: var(--s4);
-  margin-bottom: var(--s3);
-}
-
-.if-then-hint {
-  margin: -4px 0 0;
-  font-size: var(--t-sm);
-}
-
-.if-then-card > .if-then-form {
-  margin-bottom: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-}
-
-/* Day type and time-of-day scoping, in the form - docs/TIMELINE.md
-   section 6. Reuses the same .chip and .segmented controls the tag
-   filter and the template editor's own day-type picker already use,
-   rather than a third visual language for the same kind of choice. */
-.if-then-scope {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s1);
-}
-
-.if-then-scope-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-}
-
-/* .chip's own default background is the browser's native button chrome -
-   fine for the tag filter row, which is always either an inline color or
-   the "All" / "No tag" pair most people barely look twice at, but four of
-   these in a row here would read as an unstyled leftover against this
-   app's own dark surfaces. An explicit background and themed text, scoped
-   to just this row, rather than changing .chip itself and risking the tag
-   pills and filter chips that already rely on its current look everywhere
-   else. */
-.if-then-scope-chips .chip {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
-}
-
-.if-then-scope-chips .chip.selected {
-  border-color: var(--accent);
-  color: var(--safe-ink);
-}
-
-/* The read-only echo of that scope on a card in the full list - quiet,
-   small, muted text under the tag pill, so a rule that only applies on
-   some days or at some hour reads as what it is at a glance without
-   competing with the trigger and action text above it. */
-.if-then-scope-note {
-  margin: var(--s2) 0 0;
-  font-size: var(--t-sm);
-  color: var(--muted);
-}
-
 .swatch-none {
   display: flex;
   align-items: center;
@@ -4073,76 +3874,11 @@ button.danger {
   border-color: var(--text);
 }
 
-/* The sheet IfThenDayRule opens on tap - docs/TIMELINE.md section 6,
-   "tapping it opens the full list, which is where editing lives." Same
-   bottom-sheet chrome as .gap-picker, deliberately: both are the same
-   pattern (tap something small, get a modal with the fuller picture),
-   and a second visual language for the same interaction would be a cost
-   with no benefit. */
-.if-then-sheet-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  border: none;
-  margin: 0;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.if-then-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 101;
-  max-height: min(85vh, 640px);
-  overflow-y: auto;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-radius: var(--r-card) var(--r-card) 0 0;
-  box-shadow: var(--e3);
-  padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
-    max(16px, env(safe-area-inset-left));
-}
-
-.if-then-sheet:focus-visible,
-.if-then-sheet:focus {
-  outline: none;
-}
-
-.if-then-sheet-header {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.if-then-sheet-close {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: var(--t-lg);
-  line-height: 1;
-}
-
-.if-then-sheet-close:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Inside the sheet the board is the whole content, not a section stacked
-   below something else, so the top margin it used to need as a standalone
-   widget would just be dead space under the close button here. */
-.if-then-sheet .if-then-board { margin-top: 0; }
-
 /* The long-press menu step 7 adds - docs/TIMELINE.md section 5's touch-safe
    fallback, independent of whether drag itself works. Same bottom-sheet
-   chrome as .gap-picker and .if-then-sheet, deliberately: this is the
-   third instance of the same "tap-and-hold something small, get a modal"
-   pattern in this app, and a third visual language for it would be a cost
-   with no benefit. */
+   chrome as .gap-picker, deliberately: this is the second instance of the
+   same "tap-and-hold something small, get a modal" pattern in this app, and
+   a second visual language for it would be a cost with no benefit. */
 .task-actions-scrim {
   position: fixed;
   inset: 0;
@@ -4264,7 +4000,7 @@ button.danger {
 
 /* The sheet a selected task opens - TaskGapOffers.tsx, the inverse of
    GapPicker.tsx's own tap-a-gap sheet. Same bottom-sheet chrome as
-   .gap-picker, .if-then-sheet and .task-actions-sheet, deliberately: this
+   .gap-picker and .task-actions-sheet, deliberately: this
    is the fourth instance of the same "tap something small, get a modal
    with the fuller picture" pattern in this app, and a fourth visual
    language for it would be a cost with no benefit. */
@@ -8032,9 +7768,295 @@ button.danger:focus-visible {
   background: color-mix(in srgb, var(--mark) 5%, var(--surface));
 }
 
+/* The one rule under the why. Same sentence shape as the North window's,
+   because it is the same sentence - see NorthCard. The lead line above it
+   is what makes it the person's own rather than the app's advice. */
+.north-card-rule {
+  display: block;
+  margin: 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+}
+
+.north-card-rule-lead {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+}
+
 @media (max-width: 599px) {
   .north-card { padding: var(--s4); }
   .north-line-title { letter-spacing: 0.12em; }
+}
+
+/* ------------------------------------------------------------------------
+   The North window - views/north/NorthView.tsx.
+
+   Read as a page of writing, not as a settings screen: one column, capped
+   at a reading measure, and the only structure is a hairline down the left
+   of each goal. No cards with borders on four sides, no filled headers, no
+   accent panel. Everything on it is a sentence somebody wrote about
+   themselves, and the more furniture there is around one, the less it reads
+   like their own handwriting.
+
+   Nothing here fills with the accent, and nothing measures anything -
+   ARCHITECTURE section 6.
+   ------------------------------------------------------------------------ */
+.north-view {
+  max-width: 68ch;
+  margin: 0 auto;
+  padding-bottom: var(--s6);
+}
+
+.north-view-head { margin-bottom: var(--s6); }
+
+.north-view-head h2 {
+  margin: 0;
+  font-size: var(--t-lg);
+  font-weight: 600;
+}
+
+.north-view-lead {
+  margin: var(--s1) 0 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.north-view-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.north-view-empty p { margin: 0; max-width: 46ch; }
+
+.north-goals { display: flex; flex-direction: column; gap: var(--s7); }
+
+/* One goal. The rule down the left is the whole of its frame: it groups the
+   why, the identity and the lines under them without drawing a box, which
+   is what keeps four of these on one screen from reading as a form. */
+.north-goal {
+  padding-left: var(--s4);
+  border-left: 2px solid var(--border);
+}
+
+.north-goal-title {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.north-goal-why {
+  margin: var(--s2) 0 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
+/* The only italic in the app besides the day view's own identity line, and
+   earned the same way: a sentence in the first person, set the way a
+   first-person aside has been set for four hundred years. */
+.north-goal-identity {
+  margin: var(--s1) 0 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: var(--t-md);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* A fact, not a measurement - goalAge. Set in --faint at the smallest size
+   so it can never be mistaken for the thing the card is about. */
+.north-goal-age {
+  margin: var(--s2) 0 0;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+}
+
+.north-goal-rules-head {
+  margin: var(--s5) 0 var(--s2);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.north-goal-rules-empty {
+  margin: 0 0 var(--s3);
+  padding: 0;
+  max-width: 52ch;
+  text-align: left;
+  font-size: var(--t-sm);
+}
+
+.north-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: 0 0 var(--s3);
+  padding: 0;
+  list-style: none;
+}
+
+.north-rule { min-width: 0; }
+
+/* One rule, one sentence, wrapping like prose. The tag colour, when there
+   is one, is a two-pixel rule down the left and nothing else - a filled
+   chip would put the loudest thing on the screen on the least important
+   part of it. */
+.north-rule-line {
+  margin: 0;
+  padding-left: var(--s3);
+  border-left: 2px solid transparent;
+  max-width: 60ch;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
+.north-rule-prefix {
+  margin-right: var(--s1);
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.north-rule-arrow {
+  margin: 0 var(--s2);
+  color: var(--faint);
+}
+
+/* Edit and Delete on every rule, at rest, would put the loudest control in
+   the app - an outlined danger button - five times on the calmest screen in
+   it. They fade in when the pointer crosses the rule or something inside it
+   takes focus, which is exactly what the dots on a task card already do. A
+   coarse pointer has no hover to reveal anything with, so there they simply
+   stay visible - the block below. */
+.north-rule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s1);
+  padding-left: var(--s3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .north-rule-actions {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+
+  .north-rule:hover .north-rule-actions,
+  .north-rule:focus-within .north-rule-actions {
+    opacity: 1;
+  }
+
+  /* Compact and unfilled at rest, and the same box when armed - so the row
+     under the cursor does not change height at the moment somebody is
+     deciding whether to press it. Only on a mouse: the 44px floor a finger
+     needs is untouched, which is why this sits inside the fine-pointer
+     query rather than overriding the button system for everyone. */
+  .north-rule-actions button {
+    min-height: 26px;
+    padding: 0 var(--s2);
+    border: none;
+    background: none;
+    font-size: var(--t-sm);
+  }
+
+  .north-rule-actions .btn-danger { color: var(--danger); }
+
+  .north-rule-actions .btn-danger:hover {
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    border-radius: var(--r-control);
+  }
+
+  .north-rule-actions .btn-danger.is-armed {
+    background: var(--danger);
+    color: var(--on-danger, #fff);
+    border-radius: var(--r-control);
+  }
+}
+
+.north-rule-add { align-self: flex-start; }
+
+.north-rule-full {
+  margin: 0;
+  font-size: var(--t-sm);
+}
+
+/* Rules waiting for a goal. Separated by a hairline rather than by a heavier
+   surface: it is a group, not a warning, and a rule can sit here as long as
+   it likes - see UnfiledRules. */
+.north-unfiled {
+  margin-top: var(--s7);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
+.north-unfiled h3 {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.north-unfiled > .muted {
+  margin: var(--s1) 0 var(--s4);
+  max-width: 56ch;
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.north-view-foot {
+  margin: var(--s7) 0 0;
+  font-size: var(--t-sm);
+  line-height: 1.6;
+}
+
+/* The rule form: two lines and a tag, and nothing about scheduling. The
+   fields are the app's own .field rows, so this looks like every other place
+   something is written down rather than like a form of its own. */
+.rule-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: var(--s2) 0 var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.rule-form-hint {
+  margin: 0;
+  font-size: var(--t-sm);
+}
+
+.rule-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s1);
+}
+
+@media (max-width: 599px) {
+  .north-view { max-width: none; }
+  .north-goals { gap: var(--s6); }
 }
 
 /* The goal list in Settings. Rows rather than cards: four of them is a

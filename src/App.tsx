@@ -34,17 +34,25 @@ import { LibraryView } from './views/LibraryView'
 import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
+import { NorthView } from './views/north/NorthView'
 import { WIDGETS } from './widgets/registry'
 
-type View = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'settings'
+type View = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'north' | 'settings'
 
-const TABS: { view: View; label: string }[] = [
-  { view: 'day', label: 'Today' },
-  { view: 'calendar', label: 'Calendar' },
-  { view: 'templates', label: 'Templates' },
-  { view: 'library', label: 'Library' },
-  { view: 'review', label: 'Review' },
-  { view: 'settings', label: 'Settings' },
+// Six places to be, and Settings after them. North joined the six in v2.0:
+// it was a settings page and one quiet line under the day, and neither half
+// was somewhere a person could go. Settings keeps its own key rather than a
+// number, because the numbers are for the six screens the app is actually
+// used through and a seventh would make that a coincidence rather than a
+// rule.
+const TABS: { view: View; label: string; key: string }[] = [
+  { view: 'day', label: 'Today', key: '1' },
+  { view: 'calendar', label: 'Calendar', key: '2' },
+  { view: 'templates', label: 'Templates', key: '3' },
+  { view: 'library', label: 'Library', key: '4' },
+  { view: 'review', label: 'Review', key: '5' },
+  { view: 'north', label: 'North', key: '6' },
+  { view: 'settings', label: 'Settings', key: ',' },
 ]
 
 export function App() {
@@ -215,6 +223,9 @@ export function App() {
           setView('review')
           break
         case '6':
+          setView('north')
+          break
+        case ',':
           setView('settings')
           break
         case 'f': {
@@ -244,6 +255,7 @@ export function App() {
     { id: 'go-templates', label: 'Templates', detail: 'Build and edit day templates', run: () => setView('templates') },
     { id: 'go-library', label: 'Library', detail: 'Books, series, anything with a unit', run: () => setView('library') },
     { id: 'go-review', label: 'Review', detail: 'How the week went', run: () => setView('review') },
+    { id: 'go-north', label: 'North', detail: 'The few things the days are for', run: () => setView('north') },
     { id: 'go-settings', label: 'Settings', detail: 'Sleep, week, nudges, appearance', run: () => setView('settings') },
     {
       id: 'new-task',
@@ -354,6 +366,7 @@ export function App() {
               // already as wide as its own active state and the row cannot
               // shift when one of them becomes bold.
               data-label={tab.label}
+              title={`${tab.label} - ${tab.key === ',' ? 'comma' : tab.key}`}
               aria-current={view === tab.view ? 'page' : undefined}
               onClick={() => (tab.view === 'day' ? openDay(todayKey()) : setView(tab.view))}
             >
@@ -412,7 +425,12 @@ export function App() {
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
           WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
-            <w.Component key={w.id} date={selectedDate} onDateChange={setSelectedDate} />
+            <w.Component
+              key={w.id}
+              date={selectedDate}
+              onDateChange={setSelectedDate}
+              onOpenNorth={() => setView('north')}
+            />
           ))}
         {view === 'calendar' && (
           <CalendarView
@@ -422,10 +440,13 @@ export function App() {
             onDateChange={setSelectedDate}
           />
         )}
+        {view === 'north' && <NorthView onOpenSettings={() => setView('settings')} />}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}
-        {view === 'settings' && <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} />}
+        {view === 'settings' && (
+          <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} onOpenNorth={() => setView('north')} />
+        )}
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by
           moving between tabs - a timer that stops when you open Settings is

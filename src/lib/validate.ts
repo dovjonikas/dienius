@@ -184,7 +184,6 @@ const themeOverrides: Check = x => isRecord(x) && Object.entries(x).every(([key,
 // --- the lists a value may come from ------------------------------------------
 
 const DAY_TYPES = ['full', 'shift', 'night', 'rest'] as const
-const IF_THEN_WHENS = ['morning', 'day', 'evening', 'any'] as const
 const THEME_MODES = ['light', 'dark', 'system'] as const
 const DAY_LAYOUT_FOCUSES = ['both', 'calendar', 'tasks'] as const
 const LIBRARY_TRACKS = ['pages', 'movie', 'series'] as const
@@ -274,16 +273,21 @@ const DAY_PLAN = record({
   tasks: listOf(TASK),
 })
 
+// `dayTypes`, `when` and `lastSurfaced` are not here and that is deliberate.
+// They belonged to the day view's old one-rule-at-a-time surfacing, which is
+// gone in v2.0 along with everything that read them. A payload written before
+// then still carries all three; unnamed fields ride along untouched rather
+// than failing the payload, which is the whole reason these tables name what
+// the app reads instead of everything a stored object may hold.
 const IF_THEN_ENTRY = record({
   id: string,
   trigger: string,
   action: string,
   color: optional(color),
-  // Absent means every day, the same as an entry written before dayTypes
-  // existed; present must be known values, an empty list included.
-  dayTypes: optional(listOf(oneOf(DAY_TYPES))),
-  when: optional(oneOf(IF_THEN_WHENS)),
-  lastSurfaced: optional(string),
+  // A goal id, or absent for a rule nobody has filed yet. Not checked
+  // against the goal list: a dangling id is not an error anywhere in this
+  // app, and here it simply reads as unassigned.
+  goalId: optional(string),
 })
 
 const INBOX_ITEM = record({ id: string, text: string, captured: string })

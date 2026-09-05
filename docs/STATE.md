@@ -144,7 +144,7 @@ the second has not started and must not start before this one closes.
 | # | Stage | State |
 |---|---|---|
 | 1 | **Categories the owner owns** | **Done** - `adee903`. Three bugs found on the way, two of them shipped; two existing tests changed, both named in that commit |
-| 2 | North window: goals and if-then in one place | Not started |
+| 2 | **North window: goals and if-then in one place** | **Done**. North is the sixth tab, rules live under the goal they protect, and the old day-view surfacing is gone with the three fields it needed |
 | 3 | The explanation layer | Not started |
 | 4 | Library lanes: MIND, CRAFT, LIGHT | Not started |
 | 5 | Clean checkup | Not started |

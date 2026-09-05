@@ -49,7 +49,7 @@ AppData
 │                                track? (pages/movie/series), pace?, season?
 ├── goals: Goal[]                directions, never measured - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
-├── ifThens: IfThenEntry[]       trigger + action, never measured
+├── ifThens: IfThenEntry[]       trigger + action under a goal, never measured
 ├── inbox: InboxItem[]           one line of text, no date
 ├── backlog: BacklogItem[]       decided, undated, in priority order
 ├── scratch: ScratchNote[]       the stream under everything, text and an instant
@@ -219,13 +219,13 @@ src/
       scratch.ts       the scratch stream and its two ways out
       calendars.ts     external calendar subscriptions
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
-      ifThen.ts        if-then rules
+      ifThen.ts        the rules under a goal, and the cap that refuses
       categories.ts    the category list, and the delete that moves what it would orphan
       lifecycle.ts     import, snapshot restore, the tour's two endings
     stamping.ts        template + dates -> day plans
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
-    north.ts           goals: rotation, ages, and when one comes forward
+    north.ts           goals: rotation, ages, the rules under each, and when one comes forward
     eveningClose.ts    how a day ends, and what may be said about it
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
@@ -257,7 +257,7 @@ src/
     dates.ts           date-key helpers, month grid
     onboarding.ts      what a first run is: a pure read, no flag
     starterTemplates.ts  the three starter templates, offered and never installed
-    colors.ts          the one palette templates and if-then tags pick from
+    colors.ts          the one palette templates and a rule's tag pick from
     calendarCell.ts    what a month cell says about a past day
     theme-color.ts     keeps <meta name="theme-color"> with the active theme
     theme-preview.ts   the gallery's card, resolved the way the page is
@@ -276,6 +276,7 @@ src/
                        (cardPlacement.ts is its geometry, tested on its own -
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
+    north/             the North window: goals, and the rules under each
     CommandPalette, ShortcutsOverlay
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
@@ -291,7 +292,6 @@ src/
 
   widgets/
     day-plan/          the day view and everything on it
-    if-then/           the if-then board and its rotation
     year-strip/        the year-at-a-glance strip
     clock/             timer popover, floating widget, focus bar, nudges
     UndoToast.tsx      the one undo offer
@@ -395,7 +395,8 @@ tasks or a repeat instance, and re-opening the day leaves it deleted.
 
 Everything else in Dienius measures something. North does not, and the refusal
 is the feature rather than a gap in it. If you are changing anything in
-`north.ts`, `NorthLine.tsx` or `NorthCard.tsx`, this is the constraint:
+`north.ts`, `views/north/`, `NorthLine.tsx` or `NorthCard.tsx`, this is the
+constraint:
 
 **Never show progress toward a goal.** No percentage, no milestones, no target
 date, no streak, no checkbox, no count of anything that goes up. The behaviour
@@ -413,6 +414,11 @@ So a goal carries three things and no numbers:
 | `why` | What it is for, in your own words |
 | `identity` | Who it makes you - "I am someone who ..." |
 
+Under each goal, in the North window, sit the rules that protect it - see
+DECISIONS, "A rule with no goal is noise; under a goal it is armour". Five at
+most, none of them measured, and they appear in exactly two places: that
+window, and under the why on the card that comes forward after a slow day.
+
 The one number allowed near a goal is its **age** - "32 days lived toward
 this". It is a fact, not a measurement: it cannot be earned or lost, it does
 not move faster when you try harder, and it means the same thing on a bad week
@@ -422,7 +428,12 @@ went, it has become a score and must be removed.
 Three more rules the feature holds to:
 
 - **Four active, and the cap refuses.** Quietly evicting the oldest would make
-  the cap invisible and the choice arbitrary.
+  the cap invisible and the choice arbitrary. Five rules per goal, for the
+  same reason.
+- **A goal is written in Settings; a rule is written in North.** The distance
+  to a goal is the point, below. A rule is not a goal: noticing what pulls you
+  off course happens the moment it pulls you off course, so it is written
+  where it is read.
 - **Editing lives in Settings, deliberately far from the day.** Something you
   can rewrite from the screen you look at every morning is something you will
   rewrite on a bad morning, and a goal rewritten on bad mornings is a mood.

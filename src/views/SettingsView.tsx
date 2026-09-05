@@ -11,7 +11,6 @@ import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
 import { AppearanceControls } from './AppearanceControls'
-import { IfThenBoard } from '../widgets/if-then/IfThenBoard'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
@@ -81,7 +80,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 /** How far down the viewport a section heading has to be before the list stops calling it current. */
 const SECTION_ACTIVE_OFFSET_PX = 120
 
-export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void } = {}) {
+export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts?: () => void; onOpenNorth?: () => void } = {}) {
   // Two facts the browser owns rather than the store: whether an install
   // offer is currently held (Chromium fires it when it feels like it, and
   // withdraws it after an install), and whether this page is already running
@@ -718,24 +717,29 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
             )}
           </div>
 
+          {/* The rules board that used to sit here is gone. It was a flat list
+              under a heading nobody opened, and the one rule it surfaced onto
+              the day view was chosen by day type and time of day, which put a
+              sentence about somebody's evening in front of them at ten in the
+              morning. Rules live under the goal they protect now - see
+              views/north/NorthView.tsx. Nothing was deleted in the move: every
+              rule already written is in North, under its goal or in the group
+              waiting to be given one. */}
           <div className="settings-group" id="settings-rules">
             <h3>Rules</h3>
-            {/* If-then rules, parked here while they wait for a design worth
-                giving them. They used to surface as a line on the day view, and
-                on a day with no eligible rule that line was an empty prompt
-                taking up the one part of the screen that has to answer "what am
-                I doing now" in two seconds. The rules themselves are unchanged
-                and every one already written is still here - only where they
-                live moved. */}
             <div className="setting-block">
               <div className="setting-label">
-                <span className="setting-name">If-then plans</span>
+                <span className="setting-name">What pulls you off a goal</span>
                 <span className="setting-desc">
-                  A specific trigger paired with a specific response, written down before you need it.
-                  Not surfaced on the day view for now.
+                  A trigger paired with the one thing you already decided to do about it. They live under
+                  the goal they protect, in North.
                 </span>
               </div>
-              <IfThenBoard />
+              {onOpenNorth && (
+                <button type="button" className="btn-secondary" onClick={onOpenNorth}>
+                  Open North
+                </button>
+              )}
             </div>
           </div>
 

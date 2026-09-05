@@ -145,12 +145,23 @@
       ][i % 10] + (i >= 10 ? ` (${Math.floor(i / 10) + 1})` : ''))
     : ['Fix the loose cupboard door', 'Move the ISA', 'Write up the Rota notes', 'Book the car in for its service', 'Replace the bathroom bulb']
 
+  // Built before the data object so the rules below can point at them. Every
+  // rule belongs to a goal now - see views/north/NorthView.tsx - and a sample
+  // whose rules were all unfiled would put the North window's waiting group on
+  // every screenshot the sweep takes.
+  const goals = [
+    { id: id('g'), title: 'Finish the book proposal', why: 'Because I keep telling people about it instead of writing it', identity: 'I am someone who finishes what they start talking about', createdAt: shift(-96), updatedAt: stamp },
+    { id: id('g'), title: 'Be strong at fifty', why: 'Dad could not carry his own suitcase at sixty and it changed what he could do', identity: 'I am someone who trains, not someone who used to', createdAt: shift(-41), updatedAt: stamp },
+    { id: id('g'), title: 'Read the eight books on the shelf', why: 'They were all bought for a reason I can still remember', identity: 'I am someone who reads the books he buys', createdAt: shift(-12), updatedAt: stamp },
+    { id: id('g'), title: 'Leave the house before nine on a Saturday', why: 'The best days this year all started outside', identity: 'I am someone whose weekends start early', createdAt: shift(-3), updatedAt: stamp },
+  ]
+
   const data = {
     templates,
     days,
     settings: {
       theme: { presetId: 'dark', mode: 'dark', overrides: {} },
-      enabledWidgets: ['day-plan', 'if-then', 'year-strip'],
+      enabledWidgets: ['day-plan', 'year-strip'],
       timelineExpanded: true,
       dayLayoutFocus: 'both',
       density: 'comfortable',
@@ -163,9 +174,10 @@
       eveningClose: { enabled: true, at: '21:30', askBestMoment: true },
     },
     ifThens: [
-      { id: id('if'), trigger: 'The laptop is still open at 22:00', action: 'Close it and put it in the hall', when: 'evening', updatedAt: stamp },
-      { id: id('if'), trigger: 'I open the fridge with nothing in mind', action: 'Drink a glass of water first', when: 'any', color: '#9ed9e8', updatedAt: stamp },
-      { id: id('if'), trigger: 'A meeting ends early', action: 'Walk to the end of the road and back', when: 'day', updatedAt: stamp },
+      { id: id('if'), goalId: goals[0].id, trigger: 'The laptop is still open at 22:00', action: 'Close it and put it in the hall', updatedAt: stamp },
+      { id: id('if'), goalId: goals[1].id, trigger: 'I open the fridge with nothing in mind', action: 'Drink a glass of water first', color: '#9ed9e8', updatedAt: stamp },
+      { id: id('if'), goalId: goals[1].id, trigger: 'A meeting ends early', action: 'Walk to the end of the road and back', updatedAt: stamp },
+      { id: id('if'), goalId: goals[2].id, trigger: 'I sit down and reach for the phone', action: 'The book is already on the arm of the chair', updatedAt: stamp },
     ],
     inbox: [
       { id: id('in'), text: 'Ask Ada whether the Q3 deck is still the right one', captured: stamp, updatedAt: stamp },
@@ -183,12 +195,7 @@
       { id: listBooks, name: 'Books', unit: 'chapter', unitShort: 'ch', color: '#a7c4f5', items: heavy ? books.concat(Array.from({ length: 7 }, (_, i) => ({ id: id('item'), title: `Backlog book number ${i + 1}`, total: 10 + i, progress: 0, updatedAt: stamp }))) : books, updatedAt: stamp },
       { id: listWatch, name: 'Watching', unit: 'episode', unitShort: 'ep', color: '#c9b3f0', items: watching, updatedAt: stamp },
     ],
-    goals: [
-      { id: id('g'), title: 'Finish the book proposal', why: 'Because I keep telling people about it instead of writing it', identity: 'I am someone who finishes what they start talking about', createdAt: shift(-96), updatedAt: stamp },
-      { id: id('g'), title: 'Be strong at fifty', why: 'Dad could not carry his own suitcase at sixty and it changed what he could do', identity: 'I am someone who trains, not someone who used to', createdAt: shift(-41), updatedAt: stamp },
-      { id: id('g'), title: 'Read the eight books on the shelf', why: 'They were all bought for a reason I can still remember', identity: 'I am someone who reads the books he buys', createdAt: shift(-12), updatedAt: stamp },
-      { id: id('g'), title: 'Leave the house before nine on a Saturday', why: 'The best days this year all started outside', identity: 'I am someone whose weekends start early', createdAt: shift(-3), updatedAt: stamp },
-    ],
+    goals,
   }
 
   if (heavy) {

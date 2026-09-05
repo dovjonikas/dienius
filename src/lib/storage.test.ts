@@ -503,7 +503,14 @@ test('validate accepts a well-formed if-then entry, tagged or not', () => {
   expect(loaded.ifThens[1].color).toBeUndefined()
 })
 
-test('an if-then entry from before dayTypes and when existed loads exactly as it always did', () => {
+/**
+ * Rules got a goal in v2.0 and lost the three fields the day view's old
+ * surfacing needed - dayTypes, when and lastSurfaced. These three replace
+ * the tests that covered those, and defend the same promise from the other
+ * side: a payload written before the change still loads whole, and the
+ * fields nothing reads any more are not a reason to discard it.
+ */
+test('an if-then entry from before rules had goals loads, and reads as unfiled', () => {
   const legacy = JSON.stringify({
     templates: [],
     days: {},
@@ -513,46 +520,35 @@ test('an if-then entry from before dayTypes and when existed loads exactly as it
   localStorage.setItem(STORAGE_KEY, legacy)
   const loaded = loadData()
   expect(loaded.ifThens).toHaveLength(1)
-  expect(loaded.ifThens[0].dayTypes).toBeUndefined()
-  expect(loaded.ifThens[0].when).toBeUndefined()
-  expect(loaded.ifThens[0].lastSurfaced).toBeUndefined()
+  expect(loaded.ifThens[0].goalId).toBeUndefined()
 })
 
-test('validate accepts a well-formed dayTypes array, when band, and lastSurfaced date on an if-then entry', () => {
-  const good = JSON.stringify({
+test('a rule still carrying the retired scoping fields loads, and keeps them', () => {
+  const old = JSON.stringify({
     templates: [],
     days: {},
     settings: { theme: 'light', enabledWidgets: [] },
     ifThens: [
-      { id: 'i1', trigger: 'Shift starts', action: 'Lay out the mask', dayTypes: ['shift', 'night'], when: 'evening', lastSurfaced: '2026-08-30' },
+      { id: 'i1', trigger: 'Shift starts', action: 'Lay out the mask', dayTypes: ['shift'], when: 'evening', lastSurfaced: '2026-08-30' },
     ],
   })
-  localStorage.setItem(STORAGE_KEY, good)
+  localStorage.setItem(STORAGE_KEY, old)
   const loaded = loadData()
-  expect(loaded.ifThens[0]).toMatchObject({
-    dayTypes: ['shift', 'night'],
-    when: 'evening',
-    lastSurfaced: '2026-08-30',
-  })
+  expect(loaded.ifThens).toHaveLength(1)
+  expect(loaded.ifThens[0].trigger).toBe('Shift starts')
+  // Unnamed fields ride along untouched rather than being stripped: a
+  // backup restored onto an older build has to come back whole.
+  expect((loaded.ifThens[0] as unknown as Record<string, unknown>).when).toBe('evening')
 })
 
-test('validate rejects an if-then entry with an unknown day type or when value', () => {
-  const badDayType = JSON.stringify({
+test('validate rejects an if-then entry whose goal id is not a string', () => {
+  const bad = JSON.stringify({
     templates: [],
     days: {},
     settings: { theme: 'light', enabledWidgets: [] },
-    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', dayTypes: ['weekend'] }],
+    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', goalId: 7 }],
   })
-  localStorage.setItem(STORAGE_KEY, badDayType)
-  expect(loadData().ifThens).toEqual([])
-
-  const badWhen = JSON.stringify({
-    templates: [],
-    days: {},
-    settings: { theme: 'light', enabledWidgets: [] },
-    ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', when: 'noon' }],
-  })
-  localStorage.setItem(STORAGE_KEY, badWhen)
+  localStorage.setItem(STORAGE_KEY, bad)
   expect(loadData().ifThens).toEqual([])
 })
 

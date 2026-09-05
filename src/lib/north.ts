@@ -1,6 +1,13 @@
 import { addDays, todayKey } from './dates'
 import { weekdayOf } from './repeats'
-import { MAX_ACTIVE_GOALS, type AppData, type DayPlan, type Goal } from './types'
+import {
+  MAX_ACTIVE_GOALS,
+  MAX_RULES_PER_GOAL,
+  type AppData,
+  type DayPlan,
+  type Goal,
+  type IfThenEntry,
+} from './types'
 
 /**
  * North: the few things the days are for.
@@ -91,6 +98,71 @@ export function goalForDay(goals: Goal[], date: string): Goal | undefined {
 export function dayNumber(date: string): number {
   const [y, m, d] = date.split('-').map(Number)
   return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000)
+}
+
+/**
+ * The age, as a sentence. One place, because it is said in three: the goal
+ * list in Settings, the North window, and the review's own North line.
+ */
+export function ageLabel(goal: Goal, asOf: string): string {
+  const days = goalAge(goal, asOf)
+  return days === 1 ? '1 day lived toward this' : `${days} days lived toward this`
+}
+
+// --- what pulls you off a goal -------------------------------------------
+
+/**
+ * The rules filed under one goal, in the order they were written.
+ *
+ * An if-then rule used to live in a flat list of its own, surfaced onto the
+ * day view one at a time by day type and time of day. Nobody ever opened the
+ * list and the surfaced line read as noise on the one screen that has to
+ * answer "what am I doing now" in two seconds, so it was unmounted and the
+ * rules went quiet. The diagnosis was wrong: the problem was never how hard
+ * they were surfaced, it was that a rule with no goal is a chore somebody
+ * set themselves. Under the goal it protects, the same sentence is armour.
+ */
+export function rulesForGoal(entries: IfThenEntry[], goalId: string): IfThenEntry[] {
+  return entries.filter(e => e.goalId === goalId)
+}
+
+/**
+ * Rules that are not under any goal that exists.
+ *
+ * Two shapes land here and they are treated identically: a rule written
+ * before rules had goals, and a rule whose goal has since been deleted. A
+ * dangling id degrades rather than erroring anywhere in this app, and
+ * "degrades" here means the rule is still yours, still readable, and still
+ * one press from being filed - not that it quietly vanishes with the goal.
+ *
+ * Archived goals are still goals: their rules stay with them rather than
+ * falling back into this group, because archiving a direction is not the
+ * same as deciding the things that pull you off it never happened.
+ */
+export function unfiledRules(entries: IfThenEntry[], goals: Goal[]): IfThenEntry[] {
+  const known = new Set(goals.map(g => g.id))
+  return entries.filter(e => !e.goalId || !known.has(e.goalId))
+}
+
+/** Whether one more rule fits under this goal. The cap refuses; it never evicts. */
+export function canAddRule(entries: IfThenEntry[], goalId: string): boolean {
+  return rulesForGoal(entries, goalId).length < MAX_RULES_PER_GOAL
+}
+
+/**
+ * The one rule from a goal that the slack card shows under the why.
+ *
+ * Deterministic from the date, exactly like `goalForDay` above and for the
+ * same reason: the same line all day, a different one tomorrow. Rotating on
+ * render would turn a steady sentence into a slot machine, and there is
+ * deliberately nothing recorded about which rule was shown when - the old
+ * `lastSurfaced` bookkeeping went with the day view's surfacing, and nothing
+ * replaced it, because arithmetic on a date needs no memory.
+ */
+export function ruleForDay(entries: IfThenEntry[], goalId: string, date: string): IfThenEntry | undefined {
+  const rules = rulesForGoal(entries, goalId)
+  if (rules.length === 0) return undefined
+  return rules[dayNumber(date) % rules.length]
 }
 
 // --- when a goal comes forward on its own --------------------------------

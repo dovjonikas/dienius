@@ -684,23 +684,22 @@ export interface TaskReminderSettings {
 }
 
 /**
- * Which stretch of the day a rule's trigger belongs to - see
- * `IfThenEntry.when` and `timeBandFor` in
- * `src/widgets/if-then/select.ts`. `'any'` and absent mean the same thing
- * (every band); both exist because a payload can carry either, but a rule
- * saved or edited through the app always writes absent for "any", the same
- * way an untagged entry always writes an absent `color` rather than a
- * literal "none" value.
- */
-export type IfThenWhen = 'morning' | 'day' | 'evening' | 'any'
-
-/**
  * An implementation intention: a trigger decided on in advance, paired with
  * the one concrete thing to do when it happens. Deliberately just those two
  * strings plus an optional tag - nothing here is measured. No done flag, no
  * count of how often it fired: turning one of these into a task would
  * undo the reason it works, which is that the decision already happened
  * and there is nothing left to track.
+ *
+ * A rule belongs to a goal, and that is the whole of what changed in v2.0.
+ * It is also the reason the feature works at all: a list of rules filed on
+ * its own is noise nobody opens, and the same lines sitting under the goal
+ * they protect are armour. Rules used to surface one at a time on the day
+ * view, chosen by day type and time of day; that machinery is gone, and so
+ * are the `dayTypes`, `when` and `lastSurfaced` fields it needed. A payload
+ * written before v2.0 still carries them and they ride along untouched -
+ * the tables in `validate.ts` name what the app reads, not everything a
+ * stored object is allowed to hold.
  */
 export interface IfThenEntry extends Timestamped {
   id: string
@@ -713,36 +712,32 @@ export interface IfThenEntry extends Timestamped {
    */
   color?: string
   /**
-   * Which day types this rule surfaces on - see docs/TIMELINE.md section 6.
-   * Absent means every day, same as an entry written before this field
-   * existed: a night-shift rule only makes sense to show on a night day,
-   * but most rules have nothing to do with what kind of day it is, and
-   * those should keep surfacing regardless without their owner having to
-   * tick every box by hand.
+   * The goal this rule protects - a `Goal.id`.
+   *
+   * Optional, for two reasons that are not the same one twice. Every rule
+   * on disk predates the field, so absent has to keep meaning something;
+   * and a rule can legitimately sit unassigned for a while, because writing
+   * down what pulls you off course is worth doing the moment you notice it,
+   * and which goal it belongs under is not always obvious then. The North
+   * window gathers those into their own group and offers a goal for each,
+   * one at a time. Nothing is guessed at and nothing is auto-filed.
+   *
+   * A dangling id degrades rather than crashing, like every other id in
+   * this app: a rule pointing at a goal that no longer exists reads as
+   * unassigned, exactly as if the field were absent.
    */
-  dayTypes?: DayType[]
-  /**
-   * Which part of the day this rule's trigger belongs to. Absent (or
-   * `'any'`) means every part of the day - an evening wind-down rule has
-   * no business surfacing at 8am, but most rules are not tied to a
-   * particular hour and should not have to name one to keep working the
-   * way they always did.
-   */
-  when?: IfThenWhen
-  /**
-   * The date key (`YYYY-MM-DD`) this rule was last chosen to surface on
-   * the day view - scheduling metadata for `pickIfThenRule` in
-   * `src/widgets/if-then/select.ts`, never rendered and never a count.
-   * This is deliberately not a use counter: it exists only so rotation can
-   * favor whichever eligible rule has gone longest without a turn, the
-   * same "least-recently-shown" idea a round-robin queue already uses.
-   * Absent means never surfaced - see docs/RESEARCH-ADHD.md section 12,
-   * "any measurement of if-then rules" is explicitly ruled out, and this
-   * is not one: it records when the app last chose to show the rule, not
-   * whether the person read it, acted on it, or did anything at all.
-   */
-  lastSurfaced?: string
+  goalId?: string
 }
+
+/**
+ * How many rules one goal can carry.
+ *
+ * Five, and the cap refuses rather than evicting - the same choice
+ * `MAX_ACTIVE_GOALS` makes, for the same reason. A goal with fifteen rules
+ * under it is a list again, and the entire point of moving them here was to
+ * stop having a list.
+ */
+export const MAX_RULES_PER_GOAL = 5
 
 /**
  * One line of text caught before it had anywhere to go.

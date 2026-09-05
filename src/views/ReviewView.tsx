@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
 import { addDays, todayKey } from '../lib/dates'
-import { activeGoals } from '../lib/north'
-import { ageLabel } from './NorthSettings'
+import { activeGoals, ageLabel } from '../lib/north'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,

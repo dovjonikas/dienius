@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { todayKey } from '../lib/dates'
-import { activeGoals, archivedGoals, canAddGoal, goalAge } from '../lib/north'
+import { activeGoals, ageLabel, archivedGoals, canAddGoal } from '../lib/north'
 import { MAX_ACTIVE_GOALS, type Goal } from '../lib/types'
 
 /**
@@ -203,11 +203,6 @@ export function NorthSettings() {
       </div>
     </div>
   )
-}
-
-export function ageLabel(goal: Goal, asOf: string): string {
-  const days = goalAge(goal, asOf)
-  return days === 1 ? '1 day lived toward this' : `${days} days lived toward this`
 }
 
 interface GoalFormProps {

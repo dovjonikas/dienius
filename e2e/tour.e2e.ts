@@ -76,7 +76,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Write it down.`)
   await page.getByPlaceholder('Become the dad worth looking up to').fill('Finish things')
   await page.getByRole('button', { name: 'Write it down' }).click()
-  await expect(card).toContainText('It lives under the day now')
+  await expect(card).toContainText('It sits under the day now')
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
   await expect(page.getByText('Finish things')).toBeVisible()
   await card.getByRole('button', { name: 'Next' }).click()

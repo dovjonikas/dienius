@@ -177,22 +177,22 @@ test('Not now clears the pause and moves nothing', async () => {
 
 test('the day header offers Replan on today, and "I\'m back" while away', () => {
   seed()
-  const { rerender } = render(<DayView date={TODAY} onDateChange={() => {}} />)
+  const { rerender } = render(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Replan' })).toBeInTheDocument()
   actions.setAway(TODAY, '11:00')
-  rerender(<DayView date={TODAY} onDateChange={() => {}} />)
+  rerender(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Away since 11:00')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: "I'm back" })).toBeInTheDocument()
 })
 
 test('yesterday has no Replan door', () => {
-  render(<DayView date={addDays(TODAY, -1)} onDateChange={() => {}} />)
+  render(<DayView date={addDays(TODAY, -1)} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: 'Replan' })).toBeNull()
 })
 
 test('a request from the palette opens the sheet on today', async () => {
   seed()
-  render(<DayView date={TODAY} onDateChange={() => {}} />)
+  render(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   await userEvent.setup().click(screen.getByRole('button', { name: 'Replan' }))
   expect(screen.getByRole('dialog', { name: 'Replan' })).toHaveTextContent('Something came up')
   await userEvent.setup().keyboard('{Escape}')

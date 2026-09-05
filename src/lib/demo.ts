@@ -202,9 +202,30 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         createdAt: addDays(today, -34),
       },
     ],
+    // Each one under the goal it protects - that is the whole of what a rule
+    // is for. The trigger and the action are written without "If" and "then"
+    // in the strings: the line puts those in itself, and the sample data
+    // carried them for two versions, so the demo read "If If I open the
+    // laptop" wherever a rule was drawn.
     ifThens: [
-      { id: 'demo-if-1', trigger: 'If I open the laptop and do not know what to do', action: 'then I open today and do the first unticked thing', when: 'morning' },
-      { id: 'demo-if-2', trigger: 'If it is past ten and I am still scrolling', action: 'then the phone goes in the other room', when: 'evening' },
+      {
+        id: 'demo-if-1',
+        goalId: 'demo-goal-1',
+        trigger: 'I open the laptop and do not know what to do',
+        action: 'I open today and do the first unticked thing',
+      },
+      {
+        id: 'demo-if-2',
+        goalId: 'demo-goal-1',
+        trigger: 'it is past ten and I am still scrolling',
+        action: 'the phone goes in the other room',
+      },
+      {
+        id: 'demo-if-3',
+        goalId: 'demo-goal-2',
+        trigger: 'I am too tired to train properly',
+        action: 'I go anyway and do half of it',
+      },
     ],
     inbox: [
       { id: 'demo-inbox-1', text: 'Look into that cycling route', captured: addDays(today, -1) },

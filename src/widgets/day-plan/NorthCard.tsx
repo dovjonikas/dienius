@@ -1,5 +1,5 @@
 import { actions, useAppData } from '../../lib/store'
-import { northPrompt } from '../../lib/north'
+import { northPrompt, ruleForDay } from '../../lib/north'
 import { todayKey } from '../../lib/dates'
 
 /**
@@ -17,6 +17,14 @@ import { todayKey } from '../../lib/dates'
  * better morning. It is allowed to be warm. It is not allowed to be a system
  * telling you off.
  *
+ * The one rule under the why is the second and last place a rule appears -
+ * the other is the North window. It is the person's own sentence, chosen the
+ * same way the goal is: deterministically from the date, so it is the same
+ * line all day. It is introduced as theirs rather than as advice, because the
+ * difference between "here is what you wrote yourself" and an app suggesting
+ * what to do on a bad morning is the difference between this card working and
+ * this card being closed.
+ *
  * One button. Dismissing is remembered for the day only - tomorrow is a
  * different morning and will decide again on its own terms. It is remembered
  * in settings, which sync, because "I have read this today" is a fact about
@@ -31,6 +39,9 @@ export function NorthCard() {
   if (!prompt) return null
 
   const { goal, kind } = prompt
+  // Only on the slack card. A Monday is not a morning that needs telling what
+  // pulls you off course; it is a morning with nothing behind it yet.
+  const rule = kind === 'slack' ? ruleForDay(data.ifThens, goal.id, today) : undefined
 
   return (
     <aside className={kind === 'monday' ? 'north-card is-monday' : 'north-card'} aria-label="Why this matters">
@@ -38,6 +49,18 @@ export function NorthCard() {
       <h2 className="north-card-title">{goal.title}</h2>
       {goal.why && <p className="north-card-why">{goal.why}</p>}
       {goal.identity && <p className="north-card-identity">{goal.identity}</p>}
+      {rule && (
+        <p className="north-card-rule">
+          <span className="north-card-rule-lead">Here is what you wrote yourself.</span>
+          <span className="north-rule-prefix">If</span>{' '}
+          {rule.trigger}
+          <span className="north-rule-arrow" aria-hidden="true">
+            {'→'}
+          </span>
+          <span className="visually-hidden">, then </span>
+          {rule.action}
+        </p>
+      )}
       <button
         type="button"
         className="north-card-ok"

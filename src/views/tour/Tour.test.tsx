@@ -559,7 +559,7 @@ test('writing a goal ends the north step, and the caption moves to the day and p
   act(() => actions.addGoal({ title: 'Be someone who finishes things' }, TODAY))
   act(() => vi.advanceTimersByTime(250))
   expect(onNavigate).toHaveBeenLastCalledWith('day')
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('It lives under the day now')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('It sits under the day now')
   expect(document.querySelector('[data-tour="north-line"]')!.classList.contains('is-tour-target')).toBe(true)
   act(() => vi.advanceTimersByTime(10_000))
   expect(getTourState().step).toBe(7)

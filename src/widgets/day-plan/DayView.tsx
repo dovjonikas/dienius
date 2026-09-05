@@ -38,6 +38,12 @@ import { useReplanRequest, type ReplanMode } from '../../lib/replanState'
 export interface DayViewProps {
   date: string
   onDateChange: (date: string) => void
+  /**
+   * Opens the North window from the North line under the header. The shell
+   * owns which tab is showing, so this is a callback rather than a route:
+   * the day view knows the line exists, not where the window is.
+   */
+  onOpenNorth: () => void
 }
 
 /**
@@ -63,7 +69,7 @@ export interface DayViewProps {
  */
 const NOW_TICK_MS = 30_000
 
-export function DayView({ date, onDateChange }: DayViewProps) {
+export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
   const data = useAppData()
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
   // Everything about one task that the row deliberately does not show - see
@@ -228,6 +234,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
         daySleepProfileId={daySleepProfileId}
         isWide={isWide}
         dayLayoutFocus={dayLayoutFocus}
+        onOpenNorth={onOpenNorth}
         replan={isToday ? { away: day?.away, onOpen: setReplanMode } : undefined}
       />
 

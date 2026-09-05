@@ -99,6 +99,7 @@ const SCREENS = [
   },
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
+  { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
   {
     name: 'Task detail',

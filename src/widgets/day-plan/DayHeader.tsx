@@ -45,6 +45,8 @@ export interface DayHeaderProps {
   daySleepProfileId: string | undefined
   isWide: boolean
   dayLayoutFocus: 'both' | 'calendar' | 'tasks'
+  /** Passed straight to the North line - see NorthLine. */
+  onOpenNorth: () => void
   /**
    * The way into replanning, on today only - see replan.ts. While the person
    * is away the header says so and offers the way back instead.
@@ -66,6 +68,7 @@ export function DayHeader({
   daySleepProfileId,
   isWide,
   dayLayoutFocus,
+  onOpenNorth,
   replan,
 }: DayHeaderProps) {
   const isToday = date === todayKey()
@@ -211,7 +214,7 @@ export function DayHeader({
           rather than above the day, so it reads as part of the masthead rather
           than as a notice about today, and so nothing below it moves when it
           opens. */}
-      <NorthLine date={date} />
+      <NorthLine date={date} onOpenNorth={onOpenNorth} />
 
       {/* The day's progress, promoted out of the title block it used to sit
           inside as a small trailing fraction. It is the one number worth

@@ -21,7 +21,7 @@ import type { AppData, DayPlan } from './types'
  */
 
 export type TourPlatform = 'desktop' | 'mobile'
-export type TourView = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'settings'
+export type TourView = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'north' | 'settings'
 
 /**
  * What a step waits for. `start` and `finish` never resolve on their own -
@@ -268,7 +268,7 @@ export const DESKTOP_STEPS: TourStep[] = [
     view: 'settings',
     event: 'goal-added',
     outcome: {
-      text: 'It lives under the day now. One a day, rotating, never a bar.',
+      text: 'It sits under the day now. Press that line for North, never a bar.',
       view: 'day',
       target: '[data-tour="north-line"]',
       wait: true,

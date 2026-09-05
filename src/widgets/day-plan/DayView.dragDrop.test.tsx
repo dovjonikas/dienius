@@ -43,14 +43,14 @@ const GYM = { id: 'gym', title: 'Gym', done: false, time: '11:00', minutes: 30 }
 
 test('no task row carries a drag handle any more - only the grid\'s own anchor block starts a drag', () => {
   seed([SHIFT, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('[data-drag-handle]')).toBeNull()
   expect(container.querySelector('.timeline-anchor')).toBeInTheDocument()
 })
 
 test('dragging an anchor block back onto the tray un-anchors it', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const block = container.querySelector('.timeline-anchor')!
   fireEvent.pointerDown(block, { pointerId: 1, clientX: 100, clientY: 100 })
@@ -64,7 +64,7 @@ test('dragging an anchor block back onto the tray un-anchors it', () => {
 
 test('a bare tap on an anchor block - pointerdown and pointerup with no real movement - does not un-anchor it', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const block = container.querySelector('.timeline-anchor')!
   const taskList = container.querySelector('.task-list')!
@@ -77,7 +77,7 @@ test('a bare tap on an anchor block - pointerdown and pointerup with no real mov
 
 test('pressing Escape mid-drag cancels it without changing anything', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const block = container.querySelector('.timeline-anchor')!
   fireEvent.pointerDown(block, { pointerId: 1, clientX: 0, clientY: 0 })
@@ -92,13 +92,13 @@ test('pressing Escape mid-drag cancels it without changing anything', () => {
 
 test('a done anchor never carries the grid\'s own drag wiring', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: true, time: '10:00', minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.timeline-anchor')).not.toHaveClass('timeline-anchor-draggable')
 })
 
 test('the row\'s menu button opens the same actions menu a long press does', async () => {
   seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   expect(screen.getByRole('dialog', { name: 'Guitar' })).toBeInTheDocument()
@@ -106,7 +106,7 @@ test('the row\'s menu button opens the same actions menu a long press does', asy
 
 test('a done task\'s menu button still opens the actions menu, offering only delete', async () => {
   seed([{ id: 'guitar', title: 'Guitar', done: true, minutes: 20 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   const dialog = screen.getByRole('dialog', { name: 'Guitar' })
@@ -118,7 +118,7 @@ test('a done task\'s menu button still opens the actions menu, offering only del
 test('long-pressing a float row opens the actions menu, and the checkbox is not toggled by the click that follows', () => {
   vi.useFakeTimers()
   seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], true)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const checkbox = screen.getByRole('checkbox', { name: 'Guitar' })
   const label = checkbox.closest('label')!
@@ -134,7 +134,7 @@ test('long-pressing a float row opens the actions menu, and the checkbox is not 
 test('placing a float through the actions menu works even while the grid is collapsed', () => {
   vi.useFakeTimers()
   seed([SHIFT, GYM, { id: 'guitar', title: 'Guitar', done: false, minutes: 20 }], false)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Show timeline' })).toBeInTheDocument()
 
   const checkbox = screen.getByRole('checkbox', { name: 'Guitar' })
@@ -155,7 +155,7 @@ test('placing a float through the actions menu works even while the grid is coll
 test('long-pressing an anchor row opens a menu offering to remove its time', () => {
   vi.useFakeTimers()
   seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const checkbox = screen.getByRole('checkbox', { name: 'Guitar' })
   const label = checkbox.closest('label')!
@@ -170,7 +170,7 @@ test('long-pressing an anchor row opens a menu offering to remove its time', () 
 test('a done task never opens its menu from a long press - only from the menu button', () => {
   vi.useFakeTimers()
   seed([{ id: 'guitar', title: 'Guitar', done: true, minutes: 20 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   const checkbox = screen.getByRole('checkbox', { name: 'Guitar' })
   const label = checkbox.closest('label')!
@@ -183,7 +183,7 @@ test('a done task never opens its menu from a long press - only from the menu bu
 
 test('pushing a float through the actions menu moves it to tomorrow', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   fireEvent.click(screen.getByRole('button', { name: 'Push Guitar to tomorrow' }))
@@ -195,7 +195,7 @@ test('pushing a float through the actions menu moves it to tomorrow', () => {
 
 test('marking a task ongoing through the actions menu clears the do-or-delete note on the row', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20, pushCount: 2 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   expect(screen.getByText(/do it today, let it go, or mark it ongoing/i)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
@@ -207,7 +207,7 @@ test('marking a task ongoing through the actions menu clears the do-or-delete no
 
 test('deleting a task through the actions menu removes it', () => {
   seed([{ id: 'guitar', title: 'Guitar', done: false, minutes: 20 }])
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   fireEvent.click(screen.getByRole('button', { name: 'More actions for Guitar' }))
   fireEvent.click(screen.getByRole('button', { name: 'Delete Guitar' }))

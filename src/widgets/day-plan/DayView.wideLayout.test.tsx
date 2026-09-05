@@ -73,21 +73,21 @@ const anchoredTasks = [
 test('at a wide viewport, the timeline grid renders even though timelineExpanded is false', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
 })
 
 test('at a wide viewport, the Show timeline / Hide timeline toggle does not render', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('button', { name: /show timeline|hide timeline/i })).not.toBeInTheDocument()
 })
 
 test('at a narrow viewport, the toggle still renders and the grid still stays gated behind timelineExpanded', () => {
   viewport = mockViewport(false)
   seed(anchoredTasks, false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Show timeline' })).toBeInTheDocument()
   expect(container.querySelector('.timeline-grid-wrap')).not.toBeInTheDocument()
 })
@@ -98,7 +98,7 @@ test('at a narrow viewport, the toggle still renders and the grid still stays ga
 test('a day with no anchors still shows the empty grid at a wide viewport', () => {
   viewport = mockViewport(true)
   seed([{ id: 'f1', title: 'Float', done: false, minutes: 20 }], false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
   expect(container.querySelectorAll('.timeline-anchor')).toHaveLength(0)
 })
@@ -106,14 +106,14 @@ test('a day with no anchors still shows the empty grid at a wide viewport', () =
 test('resizing wide does not write timelineExpanded to true - the stored phone choice is untouched', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(getData().settings.timelineExpanded).toBe(false)
 })
 
 test('resizing back below the breakpoint after auto-showing wide restores the phone default (grid hidden again, toggle back)', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
 
   act(() => viewport!.setWide(false))
@@ -126,7 +126,7 @@ test('resizing back below the breakpoint after auto-showing wide restores the ph
 test('a phone choice of expanded=true survives being viewed wide and then narrow again', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.timeline-grid-wrap')).toBeInTheDocument()
 
   act(() => viewport!.setWide(false))
@@ -145,7 +145,7 @@ test('selecting a task at a wide viewport does not persist timelineExpanded, sin
   const user = userEvent.setup()
   viewport = mockViewport(true)
   seed([{ id: 'f1', title: 'Float task', done: false, minutes: 20 }, ...anchoredTasks], false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const taskList = within(container.querySelector('.task-list')!)
   await user.click(taskList.getByRole('button', { name: 'Float task' }))
   expect(getData().settings.timelineExpanded).toBe(false)
@@ -156,7 +156,7 @@ test('selecting a task at a wide viewport does not persist timelineExpanded, sin
 test('day-pane and task-pane wrapper regions exist in the DOM at any viewport, narrow included', () => {
   viewport = mockViewport(false)
   seed(anchoredTasks, false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
 })
@@ -164,7 +164,7 @@ test('day-pane and task-pane wrapper regions exist in the DOM at any viewport, n
 test('the capacity line, if-then rule and grid all land inside day-pane', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const dayPane = container.querySelector('.day-pane')!
   expect(dayPane.querySelector('.capacity-line')).not.toBeNull()
   expect(dayPane.querySelector('.timeline-grid-wrap')).not.toBeNull()
@@ -173,7 +173,7 @@ test('the capacity line, if-then rule and grid all land inside day-pane', () => 
 test('quick-add, the task list and the rollover button all land inside task-pane', () => {
   viewport = mockViewport(true)
   seed([{ id: 'f1', title: 'Unfinished float', done: false, minutes: 20 }], false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const taskPane = container.querySelector('.task-pane')!
   expect(taskPane.querySelector('.quick-add')).not.toBeNull()
   expect(taskPane.querySelector('.task-list')).not.toBeNull()
@@ -202,14 +202,14 @@ function seedFocus(
 test('the Both / Calendar / Tasks control does not render at a narrow viewport', () => {
   viewport = mockViewport(false)
   seedFocus('both')
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByRole('group', { name: /day layout/i })).not.toBeInTheDocument()
 })
 
 test('at a wide viewport the control renders all three options, Both active by default', () => {
   viewport = mockViewport(true)
   seedFocus('both')
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const group = screen.getByRole('group', { name: /day layout/i })
   const both = within(group).getByRole('button', { name: 'Both' })
   const calendar = within(group).getByRole('button', { name: 'Calendar' })
@@ -222,7 +222,7 @@ test('at a wide viewport the control renders all three options, Both active by d
 test('both panes render at a wide viewport when the stored focus is both', () => {
   viewport = mockViewport(true)
   seedFocus('both')
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
 })
@@ -230,7 +230,7 @@ test('both panes render at a wide viewport when the stored focus is both', () =>
 test("a stored focus of 'calendar' unmounts the task pane at a wide viewport", () => {
   viewport = mockViewport(true)
   seedFocus('calendar')
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
   expect(container.querySelector('.task-pane')).not.toBeInTheDocument()
   expect(container.querySelector('.day-view')).toHaveClass('focus-calendar')
@@ -239,7 +239,7 @@ test("a stored focus of 'calendar' unmounts the task pane at a wide viewport", (
 test("a stored focus of 'tasks' unmounts the day pane at a wide viewport", () => {
   viewport = mockViewport(true)
   seedFocus('tasks')
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).not.toBeInTheDocument()
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
   expect(container.querySelector('.day-view')).toHaveClass('focus-tasks')
@@ -248,7 +248,7 @@ test("a stored focus of 'tasks' unmounts the day pane at a wide viewport", () =>
 test("a stored focus other than 'both' has no effect at a narrow viewport - both panes still render", () => {
   viewport = mockViewport(false)
   seedFocus('calendar')
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
 })
@@ -257,7 +257,7 @@ test('clicking Calendar then Tasks then Both persists each choice through action
   const user = userEvent.setup()
   viewport = mockViewport(true)
   seedFocus('both')
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: 'Calendar' }))
   expect(getData().settings.dayLayoutFocus).toBe('calendar')
@@ -277,7 +277,7 @@ test('clicking Calendar then Tasks then Both persists each choice through action
 test('a day with no anchors still lets the focus control switch to Calendar - the day pane (capacity line, if-then rule) is not just the grid', () => {
   viewport = mockViewport(true)
   seedFocus('both', [{ id: 'f1', title: 'Float', done: false, minutes: 20 }])
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.day-pane')).toBeInTheDocument()
 })
 
@@ -286,7 +286,7 @@ test('a day with no anchors still lets the focus control switch to Calendar - th
 test('the rail does not render at a narrow viewport', () => {
   viewport = mockViewport(false)
   seed(anchoredTasks, false)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail')).not.toBeInTheDocument()
 })
 
@@ -294,7 +294,7 @@ test('at a wide viewport the rail renders the mini calendar and, once templates 
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
   actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail .mini-calendar')).toBeInTheDocument()
   expect(container.querySelector('.rail .template-rail')).toBeInTheDocument()
 })
@@ -302,11 +302,11 @@ test('at a wide viewport the rail renders the mini calendar and, once templates 
 test('the rail stays visible regardless of dayLayoutFocus - it is not part of what the control redistributes', () => {
   viewport = mockViewport(true)
   seedFocus('calendar')
-  const { container, rerender } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container, rerender } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail')).toBeInTheDocument()
 
   seedFocus('tasks')
-  rerender(<DayView date={DATE} onDateChange={() => {}} />)
+  rerender(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail')).toBeInTheDocument()
 })
 
@@ -315,7 +315,7 @@ test('clicking a mini-calendar cell navigates the day view via the same onDateCh
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
   let picked: string | undefined
-  render(<DayView date={DATE} onDateChange={d => { picked = d }} />)
+  render(<DayView date={DATE} onDateChange={d => { picked = d }} onOpenNorth={() => {}} />)
   const cell = screen.getByRole('gridcell', { name: /September 15/ })
   await user.click(cell)
   expect(picked).toBe('2026-09-15')
@@ -326,7 +326,7 @@ test('tapping a template chip in the rail stamps the day currently open', async 
   viewport = mockViewport(true)
   seed(anchoredTasks, false)
   const work = actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
-  render(<DayView date={DATE} onDateChange={() => {}} />)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Work day' }))
   expect(getData().days[DATE]?.templateId).toBe(work.id)
 })
@@ -338,7 +338,7 @@ test('the rail sits before the header in the DOM, which sits before the panes', 
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
   actions.addTemplate({ name: 'Work day', color: '#8ab6f9', blocks: [] })
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const rail = container.querySelector('.rail')!
   const header = container.querySelector('.day-header')!
   const dayPane = container.querySelector('.day-pane')!
@@ -351,7 +351,7 @@ test('DOM order is unchanged: day-nav, capacity line, grid, quick-add, task list
   viewport = mockViewport(false)
   seed([{ id: 't1', title: 'Anchor', done: false, time: '09:00', minutes: 30 },
         { id: 'f1', title: 'Unfinished float', done: false, minutes: 20 }], true)
-  const { container } = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const order = [
     container.querySelector('.day-nav')!,
     container.querySelector('.capacity-line')!,
@@ -385,14 +385,14 @@ test('at a wide viewport with real vertical room, the grid draws taller than the
   seed(anchoredTasks, true) // expanded, so the narrow render below has a grid to compare against
 
   viewport = mockViewport(false)
-  const narrow = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const narrow = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const narrowLayers = narrow.container.querySelector('.timeline-grid-layers') as HTMLElement
   const narrowHeight = parseFloat(narrowLayers.style.height)
   narrow.unmount()
   viewport!.restore()
 
   viewport = mockViewport(true)
-  const wide = render(<DayView date={DATE} onDateChange={() => {}} />)
+  const wide = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const wideLayers = wide.container.querySelector('.timeline-grid-layers') as HTMLElement
   expect(parseFloat(wideLayers.style.height)).toBeGreaterThan(narrowHeight)
 })

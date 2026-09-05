@@ -953,3 +953,68 @@ beacon inside an accent override and an out-of-range reminder interval. Corrupt 
 default rather than a white screen. And a day with twelve anchors and twenty cards re-measures and
 re-renders eight times in 0.7 milliseconds, which is what makes a clock that ticks every thirty seconds
 free.
+
+## A rule with no goal is noise; under a goal it is armour
+
+If-then rules shipped in v1.2 as their own board and stayed unread for eight
+versions. The board moved to Settings; one rule at a time was surfaced onto the
+day view, chosen by day type and time of day; that was unmounted again because
+on a day with no eligible rule the line was an empty prompt in the one part of
+the screen that has to answer "what am I doing now" in two seconds. Three
+placements, and every one of them was a different answer to the same wrong
+question - **how hard should a rule be surfaced?**
+
+The right question was what a rule is *for*. An implementation intention is not
+a reminder and not a task. It is a decision made in advance about a moment that
+has not happened yet, and the reason it works is that when the moment arrives
+there is nothing left to decide. That only holds if the person can remember why
+they made the decision. A rule filed under a heading called "Rules" is a chore
+somebody set themselves, and a chore somebody set themselves is the first thing
+to go on a bad week - which is exactly the week it was written for.
+
+So in v2.0 a rule belongs to a goal, and it lives under that goal in a window
+of its own:
+
+- **North is a view**, beside Calendar and Library, reached from the nav, from
+  the North line under the day, and from the palette. It was a settings page
+  and one line of watermark text, and neither of those is somewhere a person
+  goes.
+- **Each goal is what it already was**: what, why, who it makes you, an age,
+  and nothing that measures anything. ARCHITECTURE section 6 governs the whole
+  card and none of it moved.
+- **Under it, "What pulls me off this"** - at most five lines, in the person's
+  own second person: "If I catch myself scrolling at 23:00 -> phone in the
+  kitchen, book in hand."
+- **Two limits, both refusing rather than evicting**: four goals, five rules
+  each. A cap that silently drops the newest entry is a cap nobody can see and
+  a sentence somebody thinks they wrote down.
+- **A rule appears in exactly two places** - the North window, and under the
+  why on the card that comes forward after a slow day, introduced as "here is
+  what you wrote yourself". Nowhere else, ever. Not in a gap, not as a nudge,
+  not on the day view.
+- **Nothing about a rule is measured.** No count of how often it fired, no
+  done flag, no last-shown date. `lastSurfaced` existed for the rotation and
+  went with it; the one rule the slack card shows is arithmetic on the date,
+  which needs no memory. RESEARCH-ADHD section 12 rules out measuring these
+  and this is the version of the feature that finally has nothing to measure.
+
+**The migration is a question, not a guess.** `goalId` is optional, nothing on
+load tries to work out which goal a sentence belongs under, and every rule
+written before the change appears in the North window in its own group with
+the goals offered beside it. A rule may sit there indefinitely: noticing what
+pulls you off course is worth writing down the moment you notice it, and which
+goal it belongs under is not always obvious then. The same group catches a rule
+whose goal was deleted, because a dangling id degrades everywhere in this app
+and degrading here means the sentence is still yours.
+
+**What was given up.** Day-type and time-of-day scoping, the tag filter over a
+flat list, and the rotation. All three existed to serve the surfacing that is
+gone. The fields ride along untouched in a payload written before v2.0 - the
+tables in `validate.ts` name what the app reads, not everything a stored object
+may hold - so a backup from v1.11 restores whole and simply stops being
+interpreted by machinery that no longer exists.
+
+**Found on the way**: the demo's own rules had "If" and "then" inside the
+strings, and every place that drew one put its own "If" in front, so the sample
+data read "If If I open the laptop" wherever a rule was shown. It had been
+that way since the demo was written.
