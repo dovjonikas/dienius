@@ -64,9 +64,14 @@ async function tab(page, name) {
   await page.waitForTimeout(350)
 }
 
-/** @param {Page} page @param {string} name */
+/** @param {Page} page @param {string|RegExp} name */
 async function press(page, name) {
-  const b = page.getByRole('button', { name, exact: true }).first()
+  // A regular expression is matched loosely on purpose: some of these
+  // controls carry a sentence beside their label (the kind question's two
+  // cards do), and an exact match on those is a match on the sentence too.
+  const b = typeof name === 'string'
+    ? page.getByRole('button', { name, exact: true }).first()
+    : page.getByRole('button', { name }).first()
   if (await b.count()) await b.click().catch(() => {})
   await page.waitForTimeout(350)
 }
@@ -94,6 +99,31 @@ const SCREENS = [
   { name: 'Calendar week', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Week') } },
   { name: 'Calendar year', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Year') } },
   { name: 'Templates', go: /** @param {Page} p */ p => tab(p, 'Templates') },
+  {
+    name: 'Template editor',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await press(p, /^Edit /)
+    },
+  },
+  {
+    // Seven columns of blocks is the widest thing this app draws, and it is
+    // drawn inside a card inside a reading-width view - which is exactly the
+    // shape that overflows quietly.
+    name: 'Week template editor',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await press(p, 'New template')
+      await press(p, /^A week/)
+      const field = p.getByPlaceholder('What happens')
+      if (await field.count()) {
+        await field.fill('Deep work block, and a long title to push a column')
+        await press(p, 'All days')
+        await press(p, 'Add block')
+      }
+      await p.waitForTimeout(300)
+    },
+  },
   { name: 'Library', go: /** @param {Page} p */ p => tab(p, 'Library') },
   {
     name: 'Library (item panel)',

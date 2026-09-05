@@ -10,6 +10,7 @@ import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
+import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
 import { useListReorder } from './useListReorder'
 import { paletteColorName } from '../lib/colors'
 
@@ -429,10 +430,32 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
 export function TemplatesView() {
   const data = useAppData()
   const [draft, setDraft] = useState<Draft | null>(null)
+  /**
+   * The week draft, when one is open. Two states rather than one tagged
+   * union: the two editors share a name, a colour and a block list and
+   * nothing else, and pretending otherwise would mean every field in both
+   * being optional in the other.
+   */
+  const [weekDraft, setWeekDraft] = useState<(WeekDraft & { id?: string }) | null>(null)
+  /** Open while "New template" has been pressed and the kind is still open. */
+  const [asking, setAsking] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   function startEdit(t: Template) {
     setConfirmDeleteId(null)
+    setAsking(false)
+    if (t.kind === 'week') {
+      setWeekDraft({
+        id: t.id,
+        name: t.name,
+        color: t.color,
+        type: t.type ?? 'full',
+        sleepProfileId: t.sleepProfileId,
+        weekDays: t.weekDays ?? {},
+        blocks: t.blocks,
+      })
+      return
+    }
     setDraft({
       id: t.id,
       name: t.name,
@@ -467,6 +490,59 @@ export function TemplatesView() {
     // Stamping happens afterward through the calendar's own stamp bar, the
     // same as it would for a template built by hand.
     actions.addTemplate(starterTemplateInput(starter))
+  }
+
+  function saveWeek() {
+    const next = weekDraft
+    if (!next || !next.name.trim()) return
+    const shared = {
+      name: next.name.trim(),
+      color: next.color,
+      type: next.type,
+      sleepProfileId: next.sleepProfileId,
+      weekDays: Object.keys(next.weekDays).length > 0 ? next.weekDays : undefined,
+    }
+    const existing = next.id ? data.templates.find(x => x.id === next.id) : undefined
+    if (existing) {
+      actions.updateTemplate({ ...existing, ...shared, kind: 'week', blocks: next.blocks })
+    } else {
+      // addTemplate mints its own block ids, and the week editor has already
+      // minted them - it has to, because a group is a set of ids and Add to
+      // makes five blocks at once. Passing the blocks through updateTemplate
+      // on a freshly made shell is what keeps both true.
+      const made = actions.addTemplate({ ...shared, kind: 'week', blocks: [] })
+      actions.updateTemplate({ ...made, ...shared, kind: 'week', blocks: next.blocks })
+    }
+    setWeekDraft(null)
+  }
+
+  /**
+   * Turns a day template into a week, by putting its blocks on all seven and
+   * grouping each one across them.
+   *
+   * The offer this answers is "start from a day template": most weeks are one
+   * shape with three differences in it, and typing the shape seven times to
+   * get at the differences is the work this feature exists to remove. It
+   * copies rather than converting - the day template it started from is
+   * untouched and still stampable - because a person trying this out should
+   * not lose the thing that already worked.
+   */
+  function expandToWeek(from: Template) {
+    setConfirmDeleteId(null)
+    setDraft(null)
+    setAsking(false)
+    const blocks = from.blocks.flatMap(b => {
+      const groupId = crypto.randomUUID()
+      return [1, 2, 3, 4, 5, 6, 0].map(weekday => ({ ...b, id: crypto.randomUUID(), weekday, groupId }))
+    })
+    setWeekDraft({
+      name: `${from.name} week`,
+      color: from.color,
+      type: from.type ?? 'full',
+      sleepProfileId: from.sleepProfileId,
+      weekDays: {},
+      blocks,
+    })
   }
 
   function saveDraft(next: Draft) {
@@ -512,18 +588,78 @@ export function TemplatesView() {
     <section className="templates">
       <div className="templates-header">
         <h2>Templates</h2>
-        {!draft && (
+        {!draft && !weekDraft && !asking && (
           <button
             className="primary"
             onClick={() => {
               setConfirmDeleteId(null)
-              setDraft(emptyDraft())
+              setAsking(true)
             }}
           >
             New template
           </button>
         )}
       </div>
+
+      {/* The one question a new template asks, before anything else, because
+          it is the only one that cannot be changed afterwards: a day and a
+          week are the same entity but not the same editor, and switching
+          halfway would mean throwing away either six columns or six days'
+          worth of blocks. */}
+      {asking && (
+        <div className="template-kind">
+          <p className="muted">One day, or a whole week?</p>
+          <div className="template-kind-choices">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setAsking(false)
+                setDraft(emptyDraft())
+              }}
+            >
+              <strong>A day</strong>
+              <Explain id="template-day" inline />
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setAsking(false)
+                setWeekDraft({ name: '', color: TEMPLATE_COLORS[0], type: 'full', weekDays: {}, blocks: [] })
+              }}
+            >
+              <strong>A week</strong>
+              <Explain id="template-week" inline />
+            </button>
+          </div>
+          {data.templates.some(x => x.kind !== 'week') && (
+            <p className="muted template-kind-from">
+              Or start a week from a day you already have:{' '}
+              {data.templates
+                .filter(x => x.kind !== 'week')
+                .map(x => (
+                  <button key={x.id} type="button" className="chip" onClick={() => expandToWeek(x)}>
+                    {x.name}
+                  </button>
+                ))}
+            </p>
+          )}
+          <button type="button" className="setting-quiet" onClick={() => setAsking(false)}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {weekDraft && (
+        <WeekTemplateEditor
+          key={weekDraft.id ?? 'new-week'}
+          draft={weekDraft}
+          onChange={next => setWeekDraft({ ...next, id: weekDraft.id })}
+          onSave={saveWeek}
+          onCancel={() => setWeekDraft(null)}
+        />
+      )}
 
       {draft && (
         <TemplateEditor
@@ -537,7 +673,7 @@ export function TemplatesView() {
         />
       )}
 
-      {!draft && data.templates.length === 0 && (
+      {!draft && !weekDraft && !asking && data.templates.length === 0 && (
         <div className="first-run">
           <p className="empty">
             No templates yet. Start from one of these, or build your own with New template above.
@@ -558,15 +694,25 @@ export function TemplatesView() {
                   The first few titles, in order, with the day type when it is
                   not an ordinary one - which is what they would have opened
                   the editor to find out. */}
-              <span className="template-preview">
-                {t.blocks.length === 0
-                  ? 'Empty - nothing in it yet'
-                  : t.blocks
-                      .slice(0, PREVIEW_BLOCKS)
-                      .map(b => b.title)
-                      .join(' · ') + (t.blocks.length > PREVIEW_BLOCKS ? ` +${t.blocks.length - PREVIEW_BLOCKS} more` : '')}
-              </span>
+              {/* A week's card says its shape instead of its first four
+                  titles: three heavy days and a hollow Thursday is a fact you
+                  can read from seven small bars and cannot read from
+                  "Gym · Deep work · Lunch +20 more", which is what the same
+                  preview would say about every week ever built. */}
+              {t.kind === 'week' ? (
+                <WeekPreview template={t} />
+              ) : (
+                <span className="template-preview">
+                  {t.blocks.length === 0
+                    ? 'Empty - nothing in it yet'
+                    : t.blocks
+                        .slice(0, PREVIEW_BLOCKS)
+                        .map(b => b.title)
+                        .join(' · ') + (t.blocks.length > PREVIEW_BLOCKS ? ` +${t.blocks.length - PREVIEW_BLOCKS} more` : '')}
+                </span>
+              )}
               <span className="template-meta">
+                {t.kind === 'week' && 'A week · '}
                 {t.blocks.length} {t.blocks.length === 1 ? 'block' : 'blocks'}
                 {t.type && t.type !== 'full' && ` · ${DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type}`}
                 {t.sleepProfileId && data.settings.sleepProfiles.length > 1 &&

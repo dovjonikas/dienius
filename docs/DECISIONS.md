@@ -1022,3 +1022,61 @@ interpreted by machinery that no longer exists.
 strings, and every place that drew one put its own "If" in front, so the sample
 data read "If If I open the laptop" wherever a rule was shown. It had been
 that way since the demo was written.
+
+## A week is a template, not seven of them
+
+Building "my week" meant seven day templates, seven entries in the weekday
+map, and seven places to edit when the gym rotation changed - which is six
+more than anybody keeps up with. What it produced in practice was one
+template called "Workday" stamped onto five different days and a Wednesday
+that was quietly wrong, because the shape of a real week is not one day
+repeated: the gym alternates, Thursday is short, and Saturday starts late.
+
+So a template can be a week. The two kinds are **one entity**, and that is
+the decision the rest follows from:
+
+- `Template.kind` is `'day' | 'week'`, and **absent means a day**. Every
+  template ever saved loads unchanged and stamps unchanged.
+- A week template's blocks carry a `weekday`. Stamping a date takes that
+  weekday's column and nothing else - `columnFor` in `stamping.ts` is the
+  whole of the difference, and everything after it (matching by block id,
+  keeping what a day earned, not duplicating a pushed task) is the same code
+  for both kinds.
+- `Template.weekDays` holds a per-weekday day type and sleep schedule.
+  Absent means the template's own answer stands, which is what makes a week
+  template that overrides nothing behave exactly like a day one.
+
+**Why not a second entity.** A `WeekTemplate` type would need its own place
+in `AppData`, its own table in `validate`, its own sync diff, its own
+stamping path, its own editor and its own answer everywhere a template id is
+resolved - and the thing it would be modelling differently is one filter.
+Two entities that are 90% the same drift, and the 10% that differs is not
+where the drift happens.
+
+**The three things that make it not a chore.** Most of a week is the same on
+several days, so "Add to" puts a block on this day, the weekdays, the weekend
+or all seven in one press. Blocks made together share a `groupId`, so the
+next edit can ask "this day, or everywhere?" - and it asks it the way a
+repeating task already does, as a standing choice above the columns rather
+than a dialog per press, because a confirmation that appears every time you
+touch something is a confirmation people learn to dismiss without reading.
+"Copy to" is the same idea for a column somebody has already built, and a
+drag is for a block on the wrong day.
+
+**A week template fills the whole weekday map.** Choosing one for Monday sets
+all seven, and clearing one of its days clears all seven. A week template's
+Monday is not a template somebody could sensibly put on Wednesday, so a map
+holding it on one weekday and something else on another would describe a week
+that does not exist.
+
+**Its card shows its shape.** Seven small bars, one per day. A day template's
+card says its first four titles, which is the whole of what there is to say
+about one; "23 blocks" says nothing at all about a week, and three heavy days
+with a hollow Thursday is a fact you can read at that size.
+
+**And it can start from a day.** Most weeks are one shape with three
+differences in it, and typing the shape seven times to get at the differences
+is the work this exists to remove. "Start a week from a day you already have"
+copies rather than converting: the day template is untouched and still
+stampable, because somebody trying this out should not lose the thing that
+already worked.

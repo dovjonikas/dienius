@@ -55,6 +55,10 @@ export const EXPLAIN_IDS = [
   'sleep-schedule',
   'sync',
   'backup',
+  'template-day',
+  'template-week',
+  'add-to',
+  'copy-to',
 ] as const
 
 export type ExplainId = (typeof EXPLAIN_IDS)[number]
@@ -146,6 +150,22 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   backup: {
     term: 'Backup',
     text: 'A copy of everything, written somewhere else, that you can bring back later. That is the one that keeps the day safe, and it is worth having whether or not you sync.',
+  },
+  'template-day': {
+    term: 'A day',
+    text: 'One shape of day you can stamp onto any date - a workday, a rest day, a night shift. Most templates are this.',
+  },
+  'template-week': {
+    term: 'A week',
+    text: 'Seven days in one template, each with its own blocks, so a gym rotation or a shift pattern lives in one place. Stamping a date takes that weekday’s column.',
+  },
+  'add-to': {
+    term: 'Add to',
+    text: 'Which days one press puts this block on: the day you have picked, the weekdays, the weekend, or all seven. Blocks added together are treated as one thing when you next edit them.',
+  },
+  'copy-to': {
+    term: 'Copy to',
+    text: 'Takes a day you have already built and puts it on the others, as it stands. What it copies is not linked back to the original except through the group it joins.',
   },
 }
 

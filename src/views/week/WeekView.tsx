@@ -3,6 +3,7 @@ import { actions, getData, useAppData } from '../../lib/store'
 import { addDays, shortWeekday, todayKey, weekOf } from '../../lib/dates'
 import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
+import { columnFor } from '../../lib/stamping'
 import { categoryColor } from '../../lib/categories'
 import { formatDuration } from '../../widgets/day-plan/capacity'
 import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayout'
@@ -110,7 +111,9 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
   const templateProfile = useMemo(() => {
     return (day: string) => {
       const id = data.days[day]?.templateId
-      return id ? data.templates.find(t => t.id === id)?.sleepProfileId : undefined
+      const template = id ? data.templates.find(t => t.id === id) : undefined
+      // Through columnFor - a week template answers per weekday. See DayView.
+      return template ? columnFor(template, day).sleepProfileId : undefined
     }
   }, [data.days, data.templates])
 

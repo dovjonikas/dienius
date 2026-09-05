@@ -222,7 +222,7 @@ src/
       ifThen.ts        the rules under a goal, and the cap that refuses
       categories.ts    the category list, and the delete that moves what it would orphan
       lifecycle.ts     import, snapshot restore, the tour's two endings
-    stamping.ts        template + dates -> day plans
+    stamping.ts        template + dates -> day plans, and which column a date takes
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
     north.ts           goals: rotation, ages, the rules under each, and when one comes forward
@@ -283,6 +283,7 @@ src/
     Explain            the sentence behind a term, on a rest, a hold or a focus
     DayPreview         the whole of a day, without leaving the month
     ColorSwatchPicker  one colour from eight, without eight of them on screen
+    WeekTemplateEditor seven columns of one template, and the card's preview of it
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11

@@ -138,6 +138,10 @@ const PLACED: Record<ExplainId, () => ReactElement> = {
   'sleep-schedule': () => <TemplatesView />,
   sync: () => <SyncSettings />,
   backup: () => <BackupSettings />,
+  'template-day': () => <TemplatesView />,
+  'template-week': () => <TemplatesView />,
+  'add-to': () => <TemplatesView />,
+  'copy-to': () => <TemplatesView />,
 }
 
 test('every term on the audit list is placed on a real screen', () => {
@@ -172,6 +176,19 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     // open for editing, and the four day-type values only one at a time.
     if (id === 'ongoing' || id === 'day-type' || id.startsWith('day-type-') || id === 'sleep-schedule') {
       await user.click(screen.getByRole('button', { name: /Edit Workday/ }))
+    }
+    // The kind question is behind New template, and the week editor's own two
+    // terms are behind choosing the week.
+    if (id === 'template-day' || id === 'template-week' || id === 'add-to' || id === 'copy-to') {
+      await user.click(screen.getByRole('button', { name: 'New template' }))
+    }
+    if (id === 'add-to' || id === 'copy-to') {
+      await user.click(screen.getByRole('button', { name: /^A week/ }))
+    }
+    if (id === 'copy-to') {
+      // Copy to only exists on a column that has something to copy.
+      await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+      await user.click(screen.getByRole('button', { name: 'Add block' }))
     }
     if (id.startsWith('day-type-')) {
       // The segment's own labels are the copy's `term` for each value, which

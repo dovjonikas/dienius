@@ -29,6 +29,26 @@ export interface TemplateBlock {
   time?: string
   title: string
   /**
+   * Which weekday this block belongs to on a week template - 0 = Sunday
+   * through 6 = Saturday.
+   *
+   * Absent on every block of a day template, which is every block written
+   * before week templates existed. A block on a week template with no weekday
+   * belongs to no column and stamps onto nothing: that is a defect rather
+   * than a state, but it degrades the way a dangling id does instead of
+   * throwing, so one bad block cannot cost somebody their week.
+   */
+  weekday?: number
+  /**
+   * Blocks added to several days in one press share this.
+   *
+   * It is what lets editing one of them ask "this day, or everywhere?" the
+   * way a repeating task already does - the same question, and deliberately
+   * the same words. Absent means the block stands alone, which is every block
+   * on a day template and every block added to one column at a time.
+   */
+  groupId?: string
+  /**
    * Marks this block as something that genuinely had to happen. Only
    * matters on a template whose type is not 'full' - there, only core
    * blocks count toward the day's score. Absent or false is not core.
@@ -75,11 +95,47 @@ export interface TemplateBlock {
   libraryListId?: string
 }
 
+/**
+ * Whether a template is one day or a whole week.
+ *
+ * Absent means `'day'`, and that is the whole of the migration: every
+ * template ever saved is a day template, loads unchanged, and stamps
+ * unchanged. The two kinds share one entity on purpose - a week template is
+ * seven days' worth of blocks in one list, each block saying which weekday it
+ * belongs to, rather than a second type with its own storage, its own
+ * validator, its own stamping path and its own editor. The one thing that
+ * genuinely differs is which blocks a given date takes, and that is one
+ * filter.
+ */
+export type TemplateKind = 'day' | 'week'
+
+/**
+ * What one weekday of a week template overrides.
+ *
+ * A week is not seven copies of the same day: Saturday is a rest day and
+ * Wednesday is a night shift, and both are the same template. Absent means
+ * the template's own `type` and `sleepProfileId` stand, which is what makes
+ * a week template that overrides nothing behave exactly like a day one.
+ */
+export interface WeekDayOverride {
+  type?: DayType
+  sleepProfileId?: string
+}
+
 export interface Template extends Timestamped {
   id: string
   name: string
   color: string
   blocks: TemplateBlock[]
+  /** Absent means a day template - see `TemplateKind`. */
+  kind?: TemplateKind
+  /**
+   * Per-weekday overrides, keyed the way `WeekdayMap` is: 0 = Sunday through
+   * 6 = Saturday, the numbering `Date.getDay()` uses. Only read on a week
+   * template; a day template carrying one is data that means nothing, not an
+   * error, the same treatment every other field out of place gets here.
+   */
+  weekDays?: Partial<Record<number, WeekDayOverride>>
   /** Which sleep schedule days stamped from this template use - see `SleepProfile`. */
   sleepProfileId?: string
   /**

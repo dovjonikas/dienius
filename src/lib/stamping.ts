@@ -1,6 +1,40 @@
 import { currentItem } from './library'
 import { originFor } from './taskIdentity'
-import type { DayPlan, LibraryList, Task, Template } from './types'
+import { weekdayOf } from './repeats'
+import type { DayPlan, LibraryList, Task, Template, TemplateBlock } from './types'
+
+/**
+ * The blocks a given date takes from a template, and the day type and sleep
+ * schedule that come with them.
+ *
+ * This is the entire difference between a day template and a week one. A day
+ * template hands over all of its blocks whatever the date is; a week template
+ * hands over the column for that weekday, and lets that column override the
+ * template's own day type and sleep schedule. Everything after this point -
+ * matching, keeping what a day earned, not duplicating a pushed task - is the
+ * same code for both, which is the reason the two kinds share one entity
+ * rather than having a stamping path each.
+ *
+ * A block on a week template with no weekday belongs to no column and is
+ * simply not stamped. That is a defect rather than a state, but it degrades
+ * the way a dangling id does instead of throwing: one bad block cannot cost
+ * somebody their week.
+ */
+export function columnFor(
+  template: Template,
+  date: string,
+): { blocks: TemplateBlock[]; type: Template['type']; sleepProfileId: string | undefined } {
+  if (template.kind !== 'week') {
+    return { blocks: template.blocks, type: template.type, sleepProfileId: template.sleepProfileId }
+  }
+  const weekday = weekdayOf(date)
+  const override = template.weekDays?.[weekday]
+  return {
+    blocks: template.blocks.filter(b => b.weekday === weekday),
+    type: override?.type ?? template.type,
+    sleepProfileId: override?.sleepProfileId ?? template.sleepProfileId,
+  }
+}
 
 /**
  * A block bound to a library list stamps a task named after whatever is next
@@ -53,7 +87,9 @@ export function applyStamps(
     const carried = existing.tasks.filter(t => originFor(t).type === 'template' && originFor(t).sourceId === templateId)
     const pool = [...new Set([...priorTemplateTasks, ...carried])]
 
-    const templateTasks: Task[] = template.blocks.map(b => {
+    const column = columnFor(template, date)
+
+    const templateTasks: Task[] = column.blocks.map(b => {
       const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
       const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
       const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
@@ -96,7 +132,15 @@ export function applyStamps(
       ...existing,
       date,
       templateId,
-      dayType: template.type,
+      dayType: column.type,
+      // Sleep is deliberately *not* written onto the day here, the way dayType
+      // is. A day's sleep schedule is looked up from its template when it is
+      // drawn - see DayView and WeekView - and a week template's answer to
+      // that lookup is its column's, which is why both callers ask
+      // columnFor rather than reading template.sleepProfileId. Writing it
+      // here would pin a stamped day's sleep against a later template edit,
+      // which is a change to how day templates have always behaved and is not
+      // this feature's to make.
       tasks: [...templateTasks, ...kept],
     }
   }

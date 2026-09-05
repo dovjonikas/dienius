@@ -11,10 +11,22 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
+/**
+ * New template asks one question before it opens anything: a day, or a week.
+ * Every test below that wants the day editor walks past it here, in one
+ * place, because it is one step and pasting a second click twenty-three times
+ * would make the next change to that question twenty-three edits.
+ */
+async function newDayTemplate(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A day/ }))
+}
+
+
 test('opening the new-template form moves focus into the name field', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   expect(screen.getByPlaceholderText('Template name')).toHaveFocus()
 })
 
@@ -29,7 +41,7 @@ test('opening an existing template for editing moves focus into the name field',
 test('creates a template with a block', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('09:00'), '09:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -99,7 +111,7 @@ test('cancel discards the draft without touching stored data', async () => {
 test('removing a block from a draft leaves it out of the saved template', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('09:00'), '09:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -118,7 +130,7 @@ test('removing a block from a draft leaves it out of the saved template', async 
 test('a new template defaults to full day and saves that type explicitly', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Ordinary day')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates[0].type).toBe('full')
@@ -127,7 +139,7 @@ test('a new template defaults to full day and saves that type explicitly', async
 test('the core toggle is not shown on a full-day template, so a block cannot be marked core there', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
   expect(screen.queryByRole('button', { name: /mark new block as core/i })).not.toBeInTheDocument()
 })
@@ -135,7 +147,7 @@ test('the core toggle is not shown on a full-day template, so a block cannot be 
 test('the ongoing toggle is shown on a full-day template too, unlike core - it has nothing to do with day type', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('What happens'), 'Standing item')
   expect(screen.getByRole('button', { name: /mark new block as ongoing/i })).toBeInTheDocument()
 })
@@ -143,7 +155,7 @@ test('the ongoing toggle is shown on a full-day template too, unlike core - it h
 test('marking a new block ongoing saves that way, and an untouched block saves as bounded', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Ongoing project')
   await user.type(screen.getByPlaceholderText('What happens'), 'Standing item')
   await user.click(screen.getByRole('button', { name: /mark new block as ongoing/i }))
@@ -172,7 +184,7 @@ test('editing a template loads each block\'s ongoing state', async () => {
 test('picking a day type reveals the core toggle, and a block marked core saves that way', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Night shift')
   await user.click(screen.getByRole('button', { name: 'Shift' }))
   await user.type(screen.getByPlaceholderText('09:00'), '19:00')
@@ -251,7 +263,7 @@ test('editing a template keeps each surviving block\'s id and mints a fresh one 
 test('a block saved with a size carries it, so a stamped day arrives already sized', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
   await user.type(screen.getByPlaceholderText('09:00'), '09:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -267,7 +279,7 @@ test('a block saved with a size carries it, so a stamped day arrives already siz
 test('a block added with no size saves with minutes absent, not zero', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
   await user.type(screen.getByPlaceholderText('What happens'), 'Guitar')
   await user.click(screen.getByRole('button', { name: 'Add block' }))
@@ -292,7 +304,7 @@ test('editing an existing sized template loads its blocks with their sizes intac
 test('typing garbage into the block size field saves it as unsized rather than a bad number', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
   await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
@@ -306,7 +318,7 @@ test('typing garbage into the block size field saves it as unsized rather than a
 test('typing a time in a bare-digit shorthand normalises it before the block is added', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('09:00'), '0930')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -318,7 +330,7 @@ test('typing a time in a bare-digit shorthand normalises it before the block is 
 test('typing garbage into the block time field is discarded, and the block is added as a float', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('09:00'), 'banana')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -330,7 +342,7 @@ test('typing garbage into the block time field is discarded, and the block is ad
 test('an out-of-range time like 25:00 is discarded the same way plain garbage is', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('09:00'), '25:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
@@ -342,7 +354,7 @@ test('an out-of-range time like 25:00 is discarded the same way plain garbage is
 test('clearing an already-typed time leaves the block a float, not an error', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   const timeField = screen.getByPlaceholderText('09:00')
   await user.type(timeField, '09:00')
@@ -356,7 +368,7 @@ test('clearing an already-typed time leaves the block a float, not an error', as
 test('the arrow keys step the block time by five minutes, seeding an empty field on the first press', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   const timeField = screen.getByPlaceholderText('09:00')
   timeField.focus()
   await user.keyboard('{ArrowUp}')
@@ -370,7 +382,7 @@ test('the arrow keys step the block time by five minutes, seeding an empty field
 test('the arrow keys step across an hour boundary and, with Shift held, by a full hour', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   const timeField = screen.getByPlaceholderText('09:00')
   await user.type(timeField, '09:55')
   timeField.focus()
@@ -383,7 +395,7 @@ test('the arrow keys step across an hour boundary and, with Shift held, by a ful
 test('the arrow keys wrap across midnight in both directions', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   const timeField = screen.getByPlaceholderText('09:00')
   await user.type(timeField, '23:55')
   timeField.focus()
@@ -400,7 +412,7 @@ test('the arrow keys wrap across midnight in both directions', async () => {
 test('the dropdown beside the field sets a time in two taps', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   const timeField = screen.getByPlaceholderText('09:00')
   await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
   await user.click(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '14' }))
@@ -411,7 +423,7 @@ test('the dropdown beside the field sets a time in two taps', async () => {
 test('a time committed straight to the block-add row is used even without leaving the field first', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Work day')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
   const timeField = screen.getByPlaceholderText('09:00')
@@ -424,7 +436,7 @@ test('a time committed straight to the block-add row is used even without leavin
 test('garbage typed into the block size field never shows as a bad number in the live preview', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
   await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
   await user.type(screen.getByLabelText('Size in minutes'), 'abc')
@@ -532,7 +544,7 @@ test('opening the editor for a 30-block template shows every block, in order', a
 test('the colour opens as one swatch beside the name, not eight above it', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
 
   const editor = document.querySelector('.template-editor')!
   expect(editor.querySelectorAll('.swatch')).toHaveLength(1)
@@ -548,7 +560,7 @@ test('the colour opens as one swatch beside the name, not eight above it', async
 test('the add row is two levels: the words on one, everything that qualifies them on the other', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
-  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await newDayTemplate(user)
 
   const line = document.querySelector('.block-add-line')!
   const marks = document.querySelector('.block-add-marks')!

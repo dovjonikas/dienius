@@ -184,6 +184,7 @@ const themeOverrides: Check = x => isRecord(x) && Object.entries(x).every(([key,
 // --- the lists a value may come from ------------------------------------------
 
 const DAY_TYPES = ['full', 'shift', 'night', 'rest'] as const
+const TEMPLATE_KINDS = ['day', 'week'] as const
 const THEME_MODES = ['light', 'dark', 'system'] as const
 const DAY_LAYOUT_FOCUSES = ['both', 'calendar', 'tasks'] as const
 const LIBRARY_TRACKS = ['pages', 'movie', 'series'] as const
@@ -247,6 +248,17 @@ const TEMPLATE_BLOCK = record({
   unbounded: optional(boolean),
   category: categoryRef,
   libraryListId: optional(string),
+  // 0 = Sunday through 6 = Saturday, the numbering Date.getDay() uses and
+  // the one WeekdayMap already keys by. Bounded rather than any number,
+  // because a block on weekday 9 is a block that stamps onto nothing and
+  // there is no reading of it that is somebody's real data.
+  weekday: optional(wholeNumber(0, 6)),
+  groupId: optional(string),
+})
+
+const WEEK_DAY_OVERRIDE = record({
+  type: optional(oneOf(DAY_TYPES)),
+  sleepProfileId: optional(string),
 })
 
 const TEMPLATE = record({
@@ -258,6 +270,11 @@ const TEMPLATE = record({
   // four known values - a typo, a future build's value - fails rather than
   // being coerced into a guess.
   type: optional(oneOf(DAY_TYPES)),
+  // Absent means a day template, which is every template saved before week
+  // ones existed.
+  kind: optional(oneOf(TEMPLATE_KINDS)),
+  weekDays: optional(mapOf(k => typeof k === 'string' && /^[0-6]$/.test(k), WEEK_DAY_OVERRIDE)),
+  sleepProfileId: optional(string),
   tourCreated: optional(boolean),
 })
 

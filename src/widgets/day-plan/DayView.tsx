@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
+import { columnFor } from '../../lib/stamping'
 import { sortTasks } from './sort'
 import { dayScore } from './score'
 import {
@@ -109,7 +110,11 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
 
   // Which schedule this day is measured against: its own if it has one, else
   // whatever its template chose, else the default.
-  const daySleepProfileId = day?.sleepProfileId ?? template?.sleepProfileId
+  // Through columnFor, not straight off the template: a week template's
+  // Wednesday can be a night shift while its Saturday is not, and the answer
+  // for this date is its own column's. A day template answers with its own
+  // one field, exactly as it always has.
+  const daySleepProfileId = day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
   const sleepProfiles = data.settings.sleepProfiles
   const sleep = { profiles: sleepProfiles }
   // Somebody else's calendar, as a layer and as time already spoken for -

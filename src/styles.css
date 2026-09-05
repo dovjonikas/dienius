@@ -6705,6 +6705,13 @@ button.danger:focus-visible {
   font-size: var(--t-xs);
 }
 
+/* 28px is a chip on a mouse and a miss on a finger. It sat that way for four
+   versions because nothing measured the template editor: the phone pass had
+   no screen that opened one, and it does now. */
+@media (pointer: coarse) {
+  .block-library { min-height: 44px; }
+}
+
 /* Under the wide breakpoint a row of five things does not fit a phone, so
    the row becomes two: the title and its bar, then everything that acts on
    it. Nothing is hidden - a phone gets the same list, in two lines. */
@@ -11462,3 +11469,227 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .someday-item { min-height: 44px; }
 }
+
+/* ------------------------------------------------------------------------
+   The kind question, and the week editor - views/WeekTemplateEditor.tsx.
+
+   A day and a week are the same entity and not the same editor, so the one
+   question that cannot be changed afterwards is asked first and on its own.
+   ------------------------------------------------------------------------ */
+.template-kind {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  margin-bottom: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.template-kind > .muted { margin: 0; }
+
+.template-kind-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  width: 100%;
+}
+
+/* Two cards rather than two words: this is the one choice in the app that
+   cannot be undone by pressing the other thing afterwards, so it is worth
+   the room to say what each one is. */
+.template-kind-choices button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  flex: 1 1 240px;
+  min-height: 0;
+  padding: var(--s3);
+  text-align: left;
+  white-space: normal;
+}
+
+.template-kind-choices .explain-inline { font-size: var(--t-sm); }
+
+.template-kind-from { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1); }
+
+/* Seven columns of one week. They scroll sideways together below the width
+   where a column stops being able to hold a block title - the alternative
+   was wrapping into two rows of four, which is not a week. */
+.wt-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--s1);
+  overflow-x: auto;
+}
+
+.wt-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  min-width: 0;
+  padding: var(--s1);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+}
+
+/* The day "Add to" means, marked the way the rail marks the view you are on:
+   one thin accent rule, not a filled panel. */
+.wt-column.is-active { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+
+/* Every column is a drop target while something is being dragged, and says so
+   quietly - a dashed edge, the same language the Someday chips use for "no
+   day yet". */
+.wt-column.is-dropping { border-style: dashed; border-color: var(--border); }
+
+.wt-day {
+  min-height: 28px;
+  padding: 2px var(--s1);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wt-column.is-active .wt-day { color: var(--text); }
+
+.wt-day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.wt-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  min-height: 40px;
+  list-style: none;
+}
+
+.wt-block { display: flex; align-items: flex-start; gap: 2px; min-width: 0; }
+
+.wt-block-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px var(--s1) 3px var(--s2);
+  border: none;
+  border-left: 2px solid var(--cat, var(--border));
+  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-xs);
+  line-height: 1.3;
+  text-align: left;
+  touch-action: none;
+  cursor: grab;
+}
+
+.wt-block.is-dragging .wt-block-body { cursor: grabbing; box-shadow: var(--e2); }
+
+.wt-block-time { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.wt-block-title {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wt-block-size { color: var(--faint); }
+
+/* Thirty-five blocks on a full week means thirty-five of these, and
+   --danger is the loudest ink in the app: at rest they are invisible on a
+   mouse and arrive when the pointer is on the block, which is the same
+   treatment the rules under a goal and the dots on a task card already get. A
+   finger has no hover, so there they stay where they are. */
+.wt-block .setting-remove { flex: 0 0 auto; margin-top: 0; font-size: var(--t-sm); }
+
+@media (hover: hover) and (pointer: fine) {
+  .wt-block .setting-remove {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+
+  .wt-block:hover .setting-remove,
+  .wt-block:focus-within .setting-remove { opacity: 1; }
+}
+
+.wt-empty { color: var(--faint); font-size: var(--t-xs); text-align: center; }
+
+.wt-column-foot { display: flex; flex-direction: column; gap: var(--s1); margin-top: auto; }
+
+.wt-column-foot .setting-select { font-size: var(--t-xs); padding: 2px var(--s1); min-height: 26px; }
+
+.wt-copy { align-self: flex-start; font-size: var(--t-xs); }
+
+.wt-copy-panel { display: flex; flex-wrap: wrap; gap: 2px; }
+
+.wt-copy-panel .chip { font-size: var(--t-xs); padding: 2px var(--s2); min-height: 24px; }
+
+.wt-scope { align-self: flex-start; }
+
+.wt-add-to { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1); }
+
+@media (pointer: coarse) {
+  .wt-day { min-height: 44px; }
+  .wt-copy-panel .chip,
+  .wt-column-foot .setting-select { min-height: 44px; }
+  /* A block is a drag handle before it is anything else, and a 20px one is
+     a handle a finger cannot take hold of. The columns already scroll
+     sideways at this width - seven of them will not fit 390px whatever
+     height they are - so the room this costs is room the screen did not
+     have either way. */
+  .wt-block-body { min-height: 44px; justify-content: center; }
+}
+
+/* Below the width where a column can hold a title, the week scrolls sideways
+   inside its own box rather than the page doing it - nothing scrolls
+   horizontally, ever, and this is what that costs here. */
+@media (max-width: 899px) {
+  .wt-columns { grid-template-columns: repeat(7, minmax(96px, 1fr)); }
+}
+
+/* ------------------------------------------------------------------------
+   The seven-column preview on a week template's card - WeekPreview.
+
+   A day template's card says its first four titles, which is the whole of
+   what there is to say about one. A week's shape is the thing worth showing,
+   and "23 blocks" says nothing about it.
+   ------------------------------------------------------------------------ */
+.week-preview {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 26px;
+}
+
+.week-preview-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1px;
+  width: 12px;
+  height: 100%;
+}
+
+.week-preview-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.week-preview-label { color: var(--faint); font-size: 9px; line-height: 1; }
