@@ -115,40 +115,52 @@ clears the lot.
 
 ## 4. Write down what the days are for
 
-**Settings → North → Write one down.** Up to four. Each is three lines:
+**North** - the sixth icon in the rail, or the `6` key. It opens empty with
+one question: **the picture**, one line about the person you are becoming.
+How you look, how you live, what you do in the morning, in the first person
+and the present tense. One line is enough to start; **Keep it**.
+
+Then **Write one down** - a goal, in four parts:
 
 | | |
 |---|---|
 | **What** | Short, and something you do rather than something you get |
-| **Why** | In your own words, the reason you would say out loud |
+| **Why it matters** | In your own words, the reason you would say out loud |
 | **Who it makes you** | "I am someone who ..." |
+| **What I do to deserve this** | Two to four things you actually do, most days, one per line: "train four times a week", "apply to three places a day". Not wishes |
 
-Press **Write it down** to keep it.
+**Save** keeps it. Up to four goals; the window refuses a fifth rather than
+dropping one.
 
-One of them appears under the day's title each morning, rotating. **Nothing
-here is ever measured** - no progress, no deadline, nothing to tick. The one
-number near a goal is how many days you have lived toward it, which is a
-fact and cannot be lost.
+One goal appears under the day's title each morning, rotating. On a Monday
+the card that comes forward carries one of your deserve lines for the week.
+**Nothing here is ever measured** - no progress, no deadline, nothing to
+tick. The one number near a goal is how many days you have lived toward it,
+which is a fact and cannot be lost.
 
 Two of these is plenty to start with. Writing a fourth to fill the space is
 how you end up with one you do not believe.
 
+**Changing it later** is **Compose**, the quiet word in the corner. It opens
+the whole page at once - the picture, every goal, what to archive, what to
+bring back - and **Save** writes all of it in one press; **Cancel** or Escape
+drops the lot. It is meant to be opened rarely: this is a page to read, and
+rewriting it on a bad morning is exactly what it is built not to invite.
+
 ### And what pulls you off them
 
-**North** is its own screen now - the sixth icon in the rail, the `6` key, or
-that line under the day's title. It is where the goals are read rather than
-written, and under each one sits a short list headed **What pulls me off
-this**.
-
-Each line is a moment you can catch and the one thing you already decided to
-do about it:
+Under each goal sits a short list headed **What pulls me off this**. Each
+line is a moment you can catch and the one thing you already decided to do
+about it:
 
 > If I catch myself scrolling at 23:00 -> phone in the kitchen, book in hand.
 
-**Add another** writes one. Five per goal, and the cap refuses rather than
-dropping the oldest. Write them the way you would say them, in the second
-person, about a moment specific enough to notice: "when I get home and the
-kitchen is a mess" is a moment; "when I feel unmotivated" is not.
+**Write one down** under the goal writes one, on the spot rather than in
+Compose, because noticing what pulls you off course happens the moment it
+does. Five per goal, and the cap refuses rather than dropping the oldest.
+Write them the way you would say them, about a moment specific enough to
+notice: "when I get home and the kitchen is a mess" is a moment; "when I feel
+unmotivated" is not.
 
 Nothing counts them, nothing asks whether you did them, and nothing shows
 them on the day view. They appear in exactly two places: here, and once under

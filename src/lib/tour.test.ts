@@ -323,7 +323,7 @@ test('the focus step points at the running card and explains its own absence', (
   expect(step.absent).toMatch(/running/)
 })
 
-/** The goal is written in Settings and lives under the day's title; the caption goes there to show it. */
+/** The goal is written in the North window and lives under the day's title; the caption goes there to show it. */
 test('the north step relocates its caption to the day, onto the North line', () => {
   const step = DESKTOP_STEPS.find(s => s.id === 'north')!
   expect(step.outcome).toMatchObject({ view: 'day', target: '[data-tour="north-line"]', wait: true })

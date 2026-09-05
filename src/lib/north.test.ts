@@ -1,10 +1,11 @@
 import { beforeEach, expect, test } from 'vitest'
-import { actions, getData } from './store'
+import { actions, getData, subscribe } from './store'
 import { defaultData } from './storage'
 import {
   activeGoals,
   archivedGoals,
   canAddGoal,
+  deserveForWeek,
   goalAge,
   goalForDay,
   hasStuckTask,
@@ -247,9 +248,154 @@ test('goals and their settings survive export and re-import', async () => {
   const data = dataWithGoal()
   data.goals[0].why = 'Because they will remember.'
   data.goals[0].identity = 'I am someone who shows up.'
+  data.goals[0].deserve = ['train four times a week', 'sleep by eleven']
+  data.picture = { text: 'I wake before the house does.' }
   data.settings.north = { afterASlowDay: false, onMonday: true }
 
   const back = importJson(exportJson(data))
   expect(back.goals).toEqual(data.goals)
+  expect(back.picture).toEqual({ text: 'I wake before the house does.' })
   expect(back.settings.north).toEqual({ afterASlowDay: false, onMonday: true })
+})
+
+// --- what you do to deserve it -------------------------------------------
+
+/**
+ * "What I do to deserve this" is the bridge between a goal and a day: two to
+ * four concrete things done most days, not wishes. Four at most, because a
+ * list of ten things done every day is a routine pretending to be a reason.
+ */
+test('a goal carries what you do to deserve it, trimmed, empty lines dropped, four at most', () => {
+  actions.addGoal(
+    {
+      title: 'Be strong at fifty',
+      deserve: ['  train four times a week ', '', 'walk after lunch', 'sleep by eleven', 'stretch', 'a fifth thing'],
+    },
+    MON,
+  )
+  expect(getData().goals[0].deserve).toEqual(['train four times a week', 'walk after lunch', 'sleep by eleven', 'stretch'])
+})
+
+test('a goal written with nothing to deserve carries no list at all', () => {
+  actions.addGoal({ title: 'Be strong at fifty', deserve: ['', '  '] }, MON)
+  expect(getData().goals[0].deserve).toBeUndefined()
+})
+
+test('editing the deserve lines replaces them, and clearing them removes the list', () => {
+  const g = actions.addGoal({ title: 'Be strong', deserve: ['train'] }, MON)!
+  actions.updateGoal(g.id, { deserve: ['train', 'walk'] })
+  expect(getData().goals[0].deserve).toEqual(['train', 'walk'])
+  actions.updateGoal(g.id, { deserve: [] })
+  expect(getData().goals[0].deserve).toBeUndefined()
+})
+
+/**
+ * The Monday card shows one deserve line for the week. Chosen from the date
+ * the way the goal and the rule are - the same line all week, a different one
+ * next week - so a Monday and the Friday after it agree about what this week
+ * was for.
+ */
+test('the line for the week holds from Monday to Sunday, and moves on the next Monday', () => {
+  const g = goal({ deserve: ['train four times', 'walk after lunch', 'sleep by eleven'] })
+  const monday = deserveForWeek(g, MON)
+  expect(monday).toBeDefined()
+  // The Sunday of the same week, then the Monday after it.
+  expect(deserveForWeek(g, '2026-09-06')).toBe(monday)
+  expect(deserveForWeek(g, '2026-09-07')).not.toBe(monday)
+  expect(deserveForWeek(goal(), MON)).toBeUndefined()
+})
+
+// --- the picture ----------------------------------------------------------
+
+/**
+ * The picture is one text about the person you are becoming, and the heading
+ * over everything else in North. One entity, because it is one thing: there
+ * is no second picture for two devices to fight over.
+ */
+test('the picture is kept trimmed, and emptying it removes it rather than leaving a blank', () => {
+  actions.setPicture('  I wake before the house does.  ')
+  expect(getData().picture?.text).toBe('I wake before the house does.')
+  actions.setPicture('   ')
+  expect(getData().picture).toBeUndefined()
+})
+
+// --- compose: the whole window in one press --------------------------------
+
+/**
+ * Compose edits every layer at once and Save is one commit: the picture, each
+ * goal's fields, what to archive, what to add. One commit means one sync
+ * stamp per thing that changed and nothing half-saved if the tab closes
+ * between two of them.
+ */
+test('compose writes the picture and every goal in one commit', () => {
+  const keep = actions.addGoal({ title: 'Ship something', why: 'Because rented is not mine' }, MON)!
+  const going = actions.addGoal({ title: 'Old direction' }, MON)!
+  let commits = 0
+  const stop = subscribe(() => {
+    commits++
+  })
+
+  actions.composeNorth(
+    {
+      picture: 'I wake before the house does.',
+      goals: [
+        {
+          id: keep.id,
+          title: 'Ship something people keep using',
+          why: '',
+          identity: 'Someone who finishes.',
+          deserve: ['open the editor before the inbox', ''],
+        },
+        { id: going.id, title: 'Old direction', archive: true },
+        { title: 'Be strong at fifty', deserve: ['train four times a week'] },
+        { title: '   ' },
+      ],
+    },
+    WED,
+  )
+  stop()
+
+  expect(commits).toBe(1)
+  expect(getData().picture?.text).toBe('I wake before the house does.')
+  const kept = getData().goals.find(g => g.id === keep.id)!
+  expect(kept).toMatchObject({
+    title: 'Ship something people keep using',
+    identity: 'Someone who finishes.',
+    deserve: ['open the editor before the inbox'],
+  })
+  expect(kept.why).toBeUndefined()
+  expect(getData().goals.find(g => g.id === going.id)?.archivedAt).toBe(WED)
+  const added = getData().goals.find(g => g.title === 'Be strong at fifty')!
+  expect(added).toMatchObject({ createdAt: WED, deserve: ['train four times a week'] })
+  // The blank row was never a goal.
+  expect(activeGoals(getData().goals).map(g => g.title)).toEqual(['Ship something people keep using', 'Be strong at fifty'])
+})
+
+test('compose refuses a fifth goal rather than evicting, and an archive in the same press makes room', () => {
+  for (let i = 0; i < MAX_ACTIVE_GOALS; i++) actions.addGoal({ title: `Goal ${i}` }, MON)
+  const [first] = getData().goals
+  actions.composeNorth({ picture: '', goals: [{ title: 'One too many' }] }, WED)
+  expect(activeGoals(getData().goals)).toHaveLength(MAX_ACTIVE_GOALS)
+  expect(getData().goals.some(g => g.title === 'One too many')).toBe(false)
+
+  actions.composeNorth(
+    { picture: '', goals: [{ id: first.id, title: first.title, archive: true }, { title: 'Now there is room' }] },
+    WED,
+  )
+  expect(activeGoals(getData().goals).map(g => g.title)).toEqual(['Goal 1', 'Goal 2', 'Goal 3', 'Now there is room'])
+})
+
+test('a goal whose title was emptied in compose keeps its old title rather than vanishing', () => {
+  const g = actions.addGoal({ title: 'Ship something' }, MON)!
+  actions.composeNorth({ picture: '', goals: [{ id: g.id, title: '', why: 'Because' }] }, WED)
+  expect(getData().goals[0]).toMatchObject({ title: 'Ship something', why: 'Because' })
+})
+
+test('compose with nothing changed writes nothing new', () => {
+  const g = actions.addGoal({ title: 'Ship something', why: 'Because' }, MON)!
+  actions.setPicture('I wake early.')
+  const before = getData()
+  actions.composeNorth({ picture: 'I wake early.', goals: [{ id: g.id, title: 'Ship something', why: 'Because' }] }, WED)
+  expect(getData().goals).toEqual(before.goals)
+  expect(getData().picture).toEqual(before.picture)
 })

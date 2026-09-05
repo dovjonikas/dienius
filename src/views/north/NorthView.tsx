@@ -1,52 +1,67 @@
 import { useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
-import { activeGoals, ageLabel, canAddRule, rulesForGoal, unfiledRules } from '../../lib/north'
+import { activeGoals, ageLabel, archivedGoals, canAddRule, rulesForGoal, unfiledRules } from '../../lib/north'
 import { paletteColorName } from '../../lib/colors'
 import { MAX_RULES_PER_GOAL, type Goal, type IfThenEntry } from '../../lib/types'
 import { RuleForm } from './RuleForm'
+import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
 
-export interface NorthViewProps {
-  /** Goals are written in Settings and nowhere else - see the doc comment below. */
-  onOpenSettings: () => void
-}
-
 /**
- * North: the few things the days are for, and what pulls you off them.
+ * North: the picture, the goals, what you do to deserve them, and what
+ * pulls you off them. One window, read from the top as one piece of writing.
  *
- * ## Why this is a window and not a settings page
+ * ## The four layers
  *
- * Goals lived in Settings and appeared as one quiet line under the day's
- * title. Rules lived in a different part of Settings, in a flat list, and
- * were surfaced one at a time onto the day view by day type and time of day.
- * Neither half was read. The rules were the worse of the two: a list of
- * chores somebody had set themselves, filed under a heading nobody opens,
- * shown at a moment they had nothing to do with.
+ * 1. **The picture** - who you are becoming, in the first person, a few
+ *    lines at most. The heading over everything else here.
+ * 2. **The goals** - what, why, who it makes you. Four at most, an age each
+ *    and nothing that measures anything.
+ * 3. **What I do to deserve this** - under each goal, two to four concrete
+ *    things done most days. The bridge between a direction and a Tuesday,
+ *    and the one line the Monday card carries.
+ * 4. **What pulls me off this** - the if-then rules under the goal they
+ *    protect, exactly as v2.0 built them.
  *
- * The fix is not to surface a rule harder. It is to put every rule under the
- * goal it protects, so that reading one is reading why it exists. A rule with
- * no goal is noise; under a goal it is armour.
+ * ## Built once, left in peace
+ *
+ * Until v2.1 a goal was written in Settings, four taps from the day, on the
+ * argument that something you can rewrite from the screen you look at every
+ * morning is something you will rewrite on a bad morning. That argument was
+ * right about the day view and wrong about this window: North is not a
+ * screen anybody lands on by accident. It is the sixth icon and the `6`
+ * key, and nothing on the day view edits it. So editing lives here, behind
+ * one quiet Compose in the corner rather than an Add on every card, and it
+ * edits every layer at once and saves in one press - the shape of sitting
+ * down to rewrite the whole page, which is a thing done rarely, rather than
+ * the shape of fixing one goal, which is a thing done on bad mornings. See
+ * DECISIONS, "North is built once and left in peace".
+ *
+ * The only thing written *without* Compose is the first line of the picture,
+ * because an empty window with a twelve-field form on it is a form, and the
+ * whole of what this window should ask of somebody new is one sentence.
  *
  * ## What this screen refuses to do
  *
- * Everything ARCHITECTURE section 6 says, unchanged and not up for
- * negotiation here: no progress, no percentage, no milestone, no target
- * date, no streak, no checkbox, and no count of anything that goes up. A
- * rule has nothing to tick and never says how often it fired. The one number
- * on the screen is a goal's age, which cannot be earned or lost.
- *
- * Writing and editing a *goal* is still in Settings, deliberately four taps
- * from the day: something you can rewrite from the screen you look at every
- * morning is something you will rewrite on a bad morning. Rules are not
- * goals, and they are written here, because noticing what pulls you off
- * course happens the moment it pulls you off course.
+ * Everything ARCHITECTURE section 6 says, unchanged: no progress, no
+ * percentage, no milestone, no target date, no streak, no checkbox, and no
+ * count of anything that goes up. The deserve lines are a plain list with
+ * nothing to tick, because a list that could be ticked would be a
+ * scoreboard, and a scoreboard is exactly the thing this window is not.
  */
-export function NorthView({ onOpenSettings }: NorthViewProps) {
+export function NorthView() {
   const data = useAppData()
   const today = todayKey()
   const goals = activeGoals(data.goals)
+  const archived = archivedGoals(data.goals)
   const unfiled = unfiledRules(data.ifThens, data.goals)
+  const [composing, setComposing] = useState<ComposeFocus | null>(null)
+  const picture = data.picture
+  // Compose only once there is something to compose. On an empty window the
+  // one control is the picture's own line, and a second control beside it
+  // would be a second question.
+  const hasAnything = !!picture || goals.length > 0 || archived.length > 0
 
   return (
     <section className="north-view" aria-label="North">
@@ -54,37 +69,118 @@ export function NorthView({ onOpenSettings }: NorthViewProps) {
         <h2>
           <Explain id="north">North</Explain>
         </h2>
-        <p className="north-view-lead">
-          The few things the days are for, and the moments that pull you off them.
-        </p>
+        {hasAnything && !composing && (
+          <button
+            type="button"
+            className="north-compose-open"
+            data-tour="north-compose"
+            onClick={() => setComposing('picture')}
+          >
+            Compose
+          </button>
+        )}
       </header>
 
-      {goals.length === 0 ? (
-        <div className="empty north-view-empty">
-          <p>Nothing here yet. A goal is what you are doing, why it matters, and who it makes you.</p>
-          <button type="button" className="btn-primary" onClick={onOpenSettings}>
-            Write one down
-          </button>
-        </div>
+      {composing ? (
+        <NorthCompose focus={composing} onDone={() => setComposing(null)} />
       ) : (
-        <div className="north-goals">
-          {goals.map(goal => (
-            <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} today={today} />
-          ))}
-        </div>
-      )}
+        <>
+          {picture ? <ThePicture text={picture.text} /> : <PictureInvitation />}
 
-      {unfiled.length > 0 && <UnfiledRules rules={unfiled} goals={goals} ifThens={data.ifThens} />}
+          {goals.length === 0 && picture && <GoalOffer onWrite={() => setComposing('goal')} />}
 
-      {goals.length > 0 && (
-        <p className="north-view-foot muted">
-          Goals are written in Settings, on purpose - away from the screen you look at on a bad morning.{' '}
-          <button type="button" className="setting-quiet" onClick={onOpenSettings}>
-            Edit goals
-          </button>
-        </p>
+          {goals.length > 0 && (
+            <div className="north-goals">
+              {goals.map(goal => (
+                <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} today={today} />
+              ))}
+            </div>
+          )}
+
+          {unfiled.length > 0 && <UnfiledRules rules={unfiled} goals={goals} ifThens={data.ifThens} />}
+        </>
       )}
     </section>
+  )
+}
+
+/**
+ * The picture, read. Set like the preface of a book: larger, looser, and
+ * with more air around it than anything under it, because it is the one
+ * thing on the screen that is about the person rather than about a goal.
+ * Line breaks are the person's own and are kept.
+ */
+function ThePicture({ text }: { text: string }) {
+  return (
+    <div className="north-picture">
+      <p className="north-layer-label">
+        <Explain id="picture">The picture</Explain>
+      </p>
+      <p className="north-picture-text">{text}</p>
+    </div>
+  )
+}
+
+/**
+ * The one way in for somebody with no picture yet: a sentence and a line.
+ *
+ * One line, not a paragraph, and not the four goals' twelve fields. A
+ * window with nothing on it has to ask exactly one thing, and "one line
+ * about who you are becoming" is the one thing everything else here hangs
+ * off. It can grow into six lines later, in Compose.
+ *
+ * This is also the top of the window for everybody who wrote goals before
+ * the picture existed: the invitation sits above their goals until it is
+ * answered once, and then it is gone.
+ */
+function PictureInvitation() {
+  const [line, setLine] = useState('')
+  const ready = line.trim().length > 0
+
+  function keep() {
+    if (!ready) return
+    actions.setPicture(line)
+  }
+
+  return (
+    <div className="north-invite">
+      <p className="north-layer-label">
+        <Explain id="picture">The picture</Explain>
+      </p>
+      <p className="north-invite-lead">
+        Who you are becoming: how you look, how you live, what you do in the morning. One line is enough to
+        start.
+      </p>
+      <input
+        className="north-invite-line"
+        aria-label="The picture"
+        data-tour="picture-field"
+        maxLength={240}
+        placeholder="I wake before the house does."
+        value={line}
+        onChange={e => setLine(e.target.value)}
+        onKeyDown={e => {
+          if (e.key !== 'Enter') return
+          e.preventDefault()
+          keep()
+        }}
+      />
+      <button type="button" className="btn-primary" data-tour="picture-keep" disabled={!ready} onClick={keep}>
+        Keep it
+      </button>
+    </div>
+  )
+}
+
+/** The one next thing once the picture exists and no goal does yet. */
+function GoalOffer({ onWrite }: { onWrite: () => void }) {
+  return (
+    <div className="north-offer">
+      <p>A goal is what you are doing, why it matters, who it makes you, and what you do to deserve it.</p>
+      <button type="button" className="btn-primary" data-tour="goal-add" onClick={onWrite}>
+        Write one down
+      </button>
+    </div>
   )
 }
 
@@ -95,19 +191,20 @@ interface GoalCardProps {
 }
 
 /**
- * One goal, calm, with its rules under it.
+ * One goal, calm, with its two lists under it.
  *
- * The three fields are the three the goal already carries and there is
- * nothing else on the card. No edit button: editing a goal is in Settings
- * and the distance is the point. The heading over the rules is written in
- * the first person - "What pulls me off this" - because everything under it
- * is in the person's own voice, and a card that switches to the app's voice
- * halfway down reads like a form.
+ * No edit control on the card: editing is Compose, at the top, and the
+ * distance from a card to that one control is the whole of what keeps this
+ * a page to read rather than a form to fill. The two headings are written in
+ * the first person - "What I do to deserve this", "What pulls me off this" -
+ * because everything under them is in the person's own voice, and a card
+ * that switches to the app's voice halfway down reads like a form.
  */
 function GoalCard({ goal, rules, today }: GoalCardProps) {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const room = rules.length < MAX_RULES_PER_GOAL
+  const deserve = goal.deserve ?? []
 
   return (
     <article className="north-goal">
@@ -118,7 +215,25 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
           does not move faster on a good week. */}
       <p className="north-goal-age">{ageLabel(goal, today)}</p>
 
-      <h4 className="north-goal-rules-head">What pulls me off this</h4>
+      <h4 className="north-layer-label north-goal-deserve-head">
+        <Explain id="deserve">What I do to deserve this</Explain>
+      </h4>
+      {deserve.length > 0 ? (
+        // A plain list. No marker, no box, nothing to tick: the moment one
+        // of these could be checked off it would be a scoreboard, and the
+        // heading would stop being true.
+        <ul className="north-deserve">
+          {deserve.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="north-goal-deserve-empty">
+          Two to four things you do most days for this. They are written in Compose.
+        </p>
+      )}
+
+      <h4 className="north-layer-label north-goal-rules-head">What pulls me off this</h4>
 
       {rules.length === 0 && !adding && (
         <p className="empty north-goal-rules-empty">
@@ -156,7 +271,7 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
           onCancel={() => setAdding(false)}
         />
       ) : room ? (
-        <button type="button" className="btn-secondary north-rule-add" onClick={() => setAdding(true)}>
+        <button type="button" className="setting-quiet north-rule-add" onClick={() => setAdding(true)}>
           {rules.length === 0 ? 'Write one down' : 'Add another'}
         </button>
       ) : (

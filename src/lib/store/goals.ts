@@ -1,6 +1,6 @@
 import { commit, getData } from './core'
 import type { Goal, Settings } from '../types'
-import { canAddGoal } from '../north'
+import { applyNorthDraft, canAddGoal, cleanDeserve, withPicture, type NorthDraft } from '../north'
 
 /** North: goals and their settings. Nothing here measures anything - see lib/north.ts. */
 export const goalActions = {
@@ -9,22 +9,27 @@ export const goalActions = {
    * oldest - four is a decision about how many directions fit in a life, and
    * quietly evicting one would make the cap invisible.
    */
-  addGoal(input: { title: string; why?: string; identity?: string }, today: string): Goal | undefined {
+  addGoal(
+    input: { title: string; why?: string; identity?: string; deserve?: string[] },
+    today: string,
+  ): Goal | undefined {
     const data = getData()
     if (!input.title.trim()) return undefined
     if (!canAddGoal(data.goals)) return undefined
+    const deserve = cleanDeserve(input.deserve)
     const goal: Goal = {
       id: crypto.randomUUID(),
       title: input.title.trim(),
       why: input.why?.trim() || undefined,
       identity: input.identity?.trim() || undefined,
+      ...(deserve ? { deserve } : {}),
       createdAt: today,
     }
     commit({ ...data, goals: [...data.goals, goal] })
     return goal
   },
 
-  updateGoal(id: string, patch: { title?: string; why?: string; identity?: string }): void {
+  updateGoal(id: string, patch: { title?: string; why?: string; identity?: string; deserve?: string[] }): void {
     const data = getData()
     commit({
       ...data,
@@ -36,9 +41,28 @@ export const goalActions = {
               title: patch.title !== undefined ? patch.title.trim() || g.title : g.title,
               why: patch.why !== undefined ? patch.why.trim() || undefined : g.why,
               identity: patch.identity !== undefined ? patch.identity.trim() || undefined : g.identity,
+              deserve: patch.deserve !== undefined ? cleanDeserve(patch.deserve) : g.deserve,
             },
       ),
     })
+  },
+
+  /**
+   * The picture, written or rewritten. Empty removes it - see `withPicture`
+   * for why removed and not blank.
+   */
+  setPicture(text: string): void {
+    commit(withPicture(getData(), text))
+  },
+
+  /**
+   * Save from the North window's Compose: the picture and every goal, in
+   * one commit. One commit is the point - one sync stamp per thing that
+   * changed, and nothing half-written if the tab closes between two saves.
+   * The arithmetic is `applyNorthDraft`, tested on its own.
+   */
+  composeNorth(draft: NorthDraft, today: string): void {
+    commit(applyNorthDraft(getData(), draft, today))
   },
 
   /**

@@ -7285,6 +7285,7 @@ button.danger:focus-visible {
   .setting-remove,
   .setting-quiet,
   .north-line-title,
+  .north-compose-open,
   .library-step,
   .library-item-remove,
   .subtask-remove,
@@ -7305,6 +7306,7 @@ button.danger:focus-visible {
   .setting-remove::after,
   .setting-quiet::after,
   .north-line-title::after,
+  .north-compose-open::after,
   .library-step::after,
   .library-item-remove::after,
   .subtask-remove::after,
@@ -8007,6 +8009,19 @@ button.danger:focus-visible {
   letter-spacing: 0.04em;
 }
 
+/* The one deserve line on the Monday card - see NorthCard. Same lead line
+   as the rule on the slack card, and in the text colour rather than the
+   muted one, because it is the one thing on the card that is about the week
+   ahead rather than about why. */
+.north-card-deserve {
+  display: block;
+  margin: 0;
+  max-width: 56ch;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
 @media (max-width: 599px) {
   .north-card { padding: var(--s4); }
   .north-line-title { letter-spacing: 0.12em; }
@@ -8022,16 +8037,29 @@ button.danger:focus-visible {
    themselves, and the more furniture there is around one, the less it reads
    like their own handwriting.
 
+   Since v2.1 it is four layers read from the top as one text, and the type
+   does the work: the picture set like a preface, larger and looser than
+   anything under it; a goal as a chapter, with its why and its identity
+   line; what you do to deserve it as a plain list at body size; the rules
+   smaller and last. More air between layers than anywhere else in the app,
+   on purpose - this is the one window allowed to be slower.
+
    Nothing here fills with the accent, and nothing measures anything -
    ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
 .north-view {
-  max-width: 68ch;
+  max-width: 62ch;
   margin: 0 auto;
-  padding-bottom: var(--s6);
+  padding-bottom: var(--s8);
 }
 
-.north-view-head { margin-bottom: var(--s6); }
+.north-view-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s7);
+}
 
 .north-view-head h2 {
   margin: 0;
@@ -8039,27 +8067,88 @@ button.danger:focus-visible {
   font-weight: 600;
 }
 
-.north-view-lead {
-  margin: var(--s1) 0 0;
+/* The one control on a written window. Quiet on purpose: a filled Add on a
+   page somebody reads every morning is an invitation to rewrite it every
+   morning, and this is meant to be opened rarely. On a finger it carries the
+   44px overlay like every other quiet control - see the coarse-pointer list. */
+.north-compose-open {
+  min-height: 0;
+  padding: var(--s1) 0;
+  border: none;
+  background: none;
   color: var(--muted);
   font-size: var(--t-sm);
-  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.north-view-empty {
+.north-compose-open:hover { color: var(--text); }
+
+.north-compose-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The small heading over each layer: the picture's label, and the two
+   headings inside a goal. One register for all three, so the eye learns it
+   once and then stops reading it. */
+.north-layer-label {
+  margin: 0;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The picture, read. A preface: the largest text on the screen, a looser
+   line than anything under it, and the person's own line breaks kept. */
+.north-picture { margin-bottom: var(--s8); }
+
+.north-picture-text {
+  margin: var(--s3) 0 0;
+  max-width: 52ch;
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* The invitation: a sentence and one line. The whole of an empty window. */
+.north-invite {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--s4);
+  align-items: flex-start;
+  gap: var(--s3);
+  margin-bottom: var(--s8);
 }
 
-.north-view-empty p { margin: 0; max-width: 46ch; }
+.north-invite-lead,
+.north-offer p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
 
-.north-goals { display: flex; flex-direction: column; gap: var(--s7); }
+.north-invite-line {
+  width: 100%;
+  max-width: 52ch;
+}
+
+.north-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+
+.north-goals { display: flex; flex-direction: column; gap: var(--s8); }
 
 /* One goal. The rule down the left is the whole of its frame: it groups the
-   why, the identity and the lines under them without drawing a box, which
-   is what keeps four of these on one screen from reading as a form. */
+   why, the identity and the two lists under them without drawing a box,
+   which is what keeps four of these on one screen from reading as a form. */
 .north-goal {
   padding-left: var(--s4);
   border-left: 2px solid var(--border);
@@ -8103,17 +8192,41 @@ button.danger:focus-visible {
   letter-spacing: 0.04em;
 }
 
+.north-goal-deserve-head,
 .north-goal-rules-head {
   margin: var(--s5) 0 var(--s2);
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+}
+
+/* What you do to deserve it: a plain list. No marker and nothing to tick.
+   Set at body size in the text colour, because it is the bridge between the
+   goal above and the day this window is not - the one part of a goal that
+   is about a Tuesday. */
+.north-deserve {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.north-deserve li {
+  max-width: 52ch;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
+.north-goal-deserve-empty {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--faint);
+  font-size: var(--t-sm);
+  line-height: 1.5;
 }
 
 .north-goal-rules-empty {
-  margin: 0 0 var(--s3);
+  margin: 0 0 var(--s2);
   padding: 0;
   max-width: 52ch;
   text-align: left;
@@ -8123,25 +8236,41 @@ button.danger:focus-visible {
 .north-rules {
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
-  margin: 0 0 var(--s3);
+  gap: var(--s2);
+  margin: 0 0 var(--s2);
   padding: 0;
   list-style: none;
 }
 
-.north-rule { min-width: 0; }
+/* A rule and its two controls share a row on a wide screen, so the hidden
+   controls reserve no band of their own under every rule - which is what
+   they did until v2.1, and four blank bands on the calmest screen in the
+   app read as something failing to render. The line's basis is wide enough
+   that on a phone the controls wrap to a row of their own, where a finger
+   wants them anyway. */
+.north-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s1) var(--s3);
+  min-width: 0;
+}
 
-/* One rule, one sentence, wrapping like prose. The tag colour, when there
-   is one, is a two-pixel rule down the left and nothing else - a filled
-   chip would put the loudest thing on the screen on the least important
-   part of it. */
+.north-rule > .rule-form { flex: 1 1 100%; }
+
+/* One rule, one sentence, wrapping like prose - and a size down from the
+   deserve lines above it, because a rule is about a moment and a deserve
+   line is about a week. The tag colour, when there is one, is a two-pixel
+   rule down the left and nothing else - a filled chip would put the loudest
+   thing on the screen on the least important part of it. */
 .north-rule-line {
+  flex: 1 1 36ch;
   margin: 0;
   padding-left: var(--s3);
   border-left: 2px solid transparent;
   max-width: 60ch;
   color: var(--text);
-  font-size: var(--t-md);
+  font-size: var(--t-sm);
   line-height: 1.6;
 }
 
@@ -8169,8 +8298,8 @@ button.danger:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  flex-shrink: 0;
   gap: var(--s2);
-  margin-top: var(--s1);
   padding-left: var(--s3);
 }
 
@@ -8223,7 +8352,7 @@ button.danger:focus-visible {
    surface: it is a group, not a warning, and a rule can sit here as long as
    it likes - see UnfiledRules. */
 .north-unfiled {
-  margin-top: var(--s7);
+  margin-top: var(--s8);
   padding-top: var(--s5);
   border-top: 1px solid var(--border);
 }
@@ -8241,10 +8370,105 @@ button.danger:focus-visible {
   line-height: 1.5;
 }
 
-.north-view-foot {
-  margin: var(--s7) 0 0;
+/* Compose - views/north/NorthCompose.tsx. The same page with every layer
+   open: the picture as a textarea, each goal as its four fields behind the
+   same hairline the read card has, and one Save at the bottom. The fields
+   are the app's own .field rows, so this looks like every other place
+   something is written down rather than like a form of its own. */
+.north-compose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+}
+
+.north-compose .field { max-width: 52ch; }
+
+.north-compose textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.north-compose-picture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.north-compose-hint {
+  max-width: 52ch;
+  color: var(--faint);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.north-compose-goal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 var(--s4);
+  border: none;
+  border-left: 2px solid var(--border);
+}
+
+.north-compose-goal-foot {
+  display: flex;
+  gap: var(--s3);
+}
+
+/* A goal marked for archiving, until Save: the row folds to one line and
+   keeps its place, so Undo puts it back where it was. */
+.north-compose-archived {
+  margin: 0;
+  padding-left: var(--s4);
+  border-left: 2px solid var(--border);
+  color: var(--muted);
   font-size: var(--t-sm);
   line-height: 1.6;
+}
+
+.north-compose-add { align-self: flex-start; }
+
+.north-compose-full {
+  margin: 0;
+  font-size: var(--t-sm);
+}
+
+.north-compose-archive {
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+
+.north-compose-archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.north-compose-archive-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.north-compose-archive-title { color: var(--muted); }
+
+.north-compose-archive-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-left: auto;
+}
+
+.north-compose-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding-top: var(--s2);
 }
 
 /* The rule form: two lines and a tag, and nothing about scheduling. The
@@ -8275,45 +8499,12 @@ button.danger:focus-visible {
 
 @media (max-width: 599px) {
   .north-view { max-width: none; }
-  .north-goals { gap: var(--s6); }
+  .north-goals { gap: var(--s7); }
+  .north-picture { margin-bottom: var(--s7); }
 }
 
-/* The goal list in Settings. Rows rather than cards: four of them is a
-   short list, and a card each would make writing one down feel like filing
-   a form. */
-.goal-list { display: flex; flex-direction: column; gap: var(--s2); margin: var(--s3) 0 0; padding: 0; list-style: none; }
-
-.goal-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--s3);
-  padding: var(--s3) 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-.goal-row.is-editing { display: block; }
-
-.goal-text { display: flex; flex-direction: column; gap: 3px; flex: 1 1 260px; min-width: 0; max-width: 52ch; }
-.goal-title { color: var(--text); font-size: var(--t-md); font-weight: 600; }
-.goal-why { color: var(--muted); font-size: var(--t-sm); line-height: 1.5; }
-.goal-identity { color: var(--faint); font-size: var(--t-sm); font-style: italic; line-height: 1.5; }
-
-/* The age. Set as quietly as anything in the app, because the moment it
-   reads as a score it stops being a fact - see goalAge. */
-.goal-age { margin-top: 2px; color: var(--faint); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
-
-.goal-actions { display: flex; align-items: center; gap: var(--s2); flex-shrink: 0; }
-.goal-add { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s3); }
-
-.goal-form { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s3) 0; }
-.goal-form .field { max-width: 52ch; }
-.goal-form textarea { resize: vertical; line-height: 1.5; }
-.goal-form-actions { display: flex; gap: var(--s2); }
-
-/* The category list in Settings. The same row shape the goal list uses, plus
-   a grip and a dot: the order is what the swatch row under quick-add draws,
+/* The category list in Settings. Rows rather than cards, plus a grip and a
+   dot: the order is what the swatch row under quick-add draws,
    so it has to be draggable, and the dot is the only part of a row that says
    what the colour actually is. */
 .category-list { display: flex; flex-direction: column; gap: 0; margin: var(--s3) 0 0; padding: 0; list-style: none; }
@@ -8466,8 +8657,6 @@ button.danger:focus-visible {
 }
 
 .backup-preview .sync-actions { margin-bottom: 0; }
-
-.goal-list.is-archived .goal-title { color: var(--muted); }
 
 /* The Review section. Two lines per goal, the second one the age. */
 .review-north { display: flex; flex-direction: column; gap: var(--s3); margin: 0; padding: 0; list-style: none; }

@@ -344,9 +344,15 @@ const GOAL = record({
   createdAt: string,
   why: optional(string),
   identity: optional(string),
+  // Lines of text, and nothing about whether any of them happened. Absent
+  // in every goal written before North v2; the app reads absent as none.
+  deserve: optional(listOf(string)),
   archivedAt: optional(string),
   tourCreated: optional(boolean),
 })
+
+// One text. `updatedAt` rides along unnamed like every other timestamp.
+const PICTURE = record({ text: string })
 
 const LIBRARY_ITEM = record({
   id: string,
@@ -469,6 +475,7 @@ export interface StoredAppData {
   library?: AppDataLists['library']
   goals?: AppDataLists['goals']
   categories?: AppDataLists['categories']
+  picture?: import('./types').Picture
 }
 
 type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories'>
@@ -489,6 +496,7 @@ const STORED_APP_DATA = record({
   library: optional(listOf(LIBRARY_LIST)),
   goals: optional(listOf(GOAL)),
   categories: optional(listOf(CATEGORY)),
+  picture: optional(PICTURE),
 })
 
 export function validate(x: unknown): x is StoredAppData {

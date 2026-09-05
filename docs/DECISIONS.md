@@ -1080,3 +1080,75 @@ is the work this exists to remove. "Start a week from a day you already have"
 copies rather than converting: the day template is untouched and still
 stampable, because somebody trying this out should not lose the thing that
 already worked.
+## North is built once and left in peace
+
+Until v2.1 a goal was written in Settings and read in North, on an argument
+ARCHITECTURE section 6 has carried since v1.4: something you can rewrite from
+the screen you look at every morning is something you will rewrite on a bad
+morning, and a goal rewritten on bad mornings is a mood. The argument was
+right and the placement was wrong. It was right about the *day view* -
+nothing there edits a goal, and nothing ever will - and wrong about North,
+which is not a screen anybody lands on by accident: it is the sixth icon and
+the `6` key, and a person who is there has gone there. What Settings
+actually did was make writing the goals feel like configuring the app, and a
+direction filed between Sleep and Nudges reads as a preference.
+
+The owner's brief, in their words: North is our goals, what we want and how
+we get there - what we want and what we have to do to deserve it - how we want
+to look and what that version of us does. The point is that we build that
+version once and it stays in peace; we just live by it and always see,
+somewhere, what pushes us forward - so that when you see it, it hits.
+
+So in v2.1 North is written where it is read, and the shape of the writing is
+what answers the old worry:
+
+- **Four layers, one page.** The picture - who I am becoming, first person, a
+  few lines - over the goals; under each goal what I do to deserve it, two to
+  four concrete things done most days; under that what pulls me off it, the
+  rules v2.0 built. Read from the top it is one text about one person, and
+  that is the whole design: a page somebody reads on a Tuesday and recognises
+  themselves in, not a list of targets. The typography does the work - the
+  picture set like a preface, larger and looser than anything under it, a
+  goal as a chapter, the deserve lines at body size, the rules a size down -
+  and there are no boxes, because every box is a form field waiting to
+  happen.
+- **Built once.** The empty window asks for one line of the picture and
+  nothing else. Everything after that is behind one quiet Compose in the
+  corner, which edits every layer at once and saves in one press. That is the
+  shape of sitting down to rewrite the page - a thing done rarely, on a good
+  morning, with the whole of it in view - and not the shape of fixing one
+  goal, which is the thing done on bad mornings. There is no Edit on a card
+  and no Add beside a heading. The distance the old rule wanted is still
+  there; it is a decision now rather than a tab.
+- **Nothing measures anything, still.** The deserve lines are the closest
+  this window has ever come to a checklist, and they are a plain list with
+  nothing to tick, because the moment one of them could be checked off the
+  heading above it would stop being true and the page would be a scoreboard.
+  The Monday card repeats one of them for the week - "This week. train four
+  times" - the same line from Monday to Sunday, and never asks whether last
+  week's happened. RESEARCH-ADHD sections 7 and 12 are unchanged by this and
+  are the reason it is a list and not a tracker.
+
+**What Settings keeps.** Two switches - whether a goal may come forward after
+a slow day, and on a Monday - because those are about when the app speaks,
+which is a nudge, and they sit with the other nudges. The North section and
+the Rules section are gone; one row in Nudges points at the window.
+
+**The picture is one entity, not a settings field.** CONVENTIONS section 7
+puts everything a person authors at the top level of `AppData`, because a
+settings field is one sync entity and two devices editing two things in it
+fight over one key. The picture is one thing, so one entity is exactly its
+grain: `picture:north`, the singleton case of the rule rather than an
+exception to it. The alternative, a string in settings, would have failed on
+the erase - a blank body wins a merge and comes back, while an absent entity
+is a tombstone and stays gone - and `syncMerge.test.ts` holds exactly that.
+
+**What was given up.** The three-field goal form in Settings, the goal list
+there with its Archive fold (Compose has the fold now), and the tour step that
+walked into Settings to write a goal - it walks into North, picture first,
+and ends where it always did, on the line under the day's title.
+
+**Found on the way.** The North card's tests read the real clock, and the
+card has a Monday version that says something different: the slack-card
+tests passed six days a week since v1.4 and would have failed on the seventh.
+They are pinned to a Wednesday now, with a Monday test of their own.

@@ -14,14 +14,13 @@ import { AppearanceControls } from './AppearanceControls'
 import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
-import { NorthSettings } from './NorthSettings'
 import { CategorySettings } from './CategorySettings'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'categories' | 'nudges' | 'rules' | 'calendars' | 'backup' | 'sync' | 'appearance'
+type SectionId = 'general' | 'sleep' | 'week' | 'categories' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -56,9 +55,9 @@ const WEEKDAYS: { value: number; label: string; full: string }[] = [
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
-  // Second, right after General. It is the only section here that is about
-  // what the app is for rather than how it behaves.
-  { id: 'north', label: 'North' },
+  // No North section since v2.1. What the app is for is written in the
+  // North window itself; the one thing Settings still decides about it -
+  // whether a goal may come forward on its own - is a nudge and sits there.
   { id: 'sleep', label: 'Sleep' },
   { id: 'week', label: 'Week' },
   // After Week and before Nudges: it is about what a day is made of, which
@@ -66,7 +65,6 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   // that interrupt one.
   { id: 'categories', label: 'Categories' },
   { id: 'nudges', label: 'Nudges' },
-  { id: 'rules', label: 'Rules' },
   { id: 'calendars', label: 'Calendars' },
   // Near the bottom on purpose. Backup and sync are set up once and then
   // never thought about again; they do not belong next to the things
@@ -397,8 +395,6 @@ export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts
             </div>
           </div>
 
-          <NorthSettings />
-
           <div className="settings-group" id="settings-sleep">
             <h3>Sleep</h3>
             {/* A named list rather than the pair of fixed windows this used
@@ -715,31 +711,81 @@ export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts
                 </div>
               </>
             )}
-          </div>
 
-          {/* The rules board that used to sit here is gone. It was a flat list
-              under a heading nobody opened, and the one rule it surfaced onto
-              the day view was chosen by day type and time of day, which put a
-              sentence about somebody's evening in front of them at ten in the
-              morning. Rules live under the goal they protect now - see
-              views/north/NorthView.tsx. Nothing was deleted in the move: every
-              rule already written is in North, under its goal or in the group
-              waiting to be given one. */}
-          <div className="settings-group" id="settings-rules">
-            <h3>Rules</h3>
-            <div className="setting-block">
+            {/* North's two cards, here rather than in a North section of
+                their own. Since v2.1 everything North is made of - the
+                picture, the goals, what you do to deserve them, what pulls
+                you off them - is written in the North window itself, and
+                what is left for Settings is exactly this: whether a goal may
+                come forward on its own. That is a nudge, and it sits with
+                the other nudges. The rules board that was once here went the
+                same way in v2.0. */}
+            <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">What pulls you off a goal</span>
+                <span className="setting-name">North</span>
                 <span className="setting-desc">
-                  A trigger paired with the one thing you already decided to do about it. They live under
-                  the goal they protect, in North.
+                  The picture, the goals, what you do to deserve them and what pulls you off them are all
+                  written in North itself - the sixth icon, or the 6 key.
                 </span>
               </div>
               {onOpenNorth && (
-                <button type="button" className="btn-secondary" onClick={onOpenNorth}>
-                  Open North
-                </button>
+                <div className="setting-control">
+                  <button type="button" className="btn-secondary" onClick={onOpenNorth}>
+                    Open North
+                  </button>
+                </div>
               )}
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">Bring a goal forward after a slow day</span>
+                <span className="setting-desc">
+                  A card the next morning with the goal and its reason in full. Never a count of what was
+                  missed - it is a reminder of why, not a report on yesterday.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.north.afterASlowDay}
+                  aria-label="Bring a goal forward after a slow day"
+                  onClick={() =>
+                    actions.setNorthSettings({
+                      ...data.settings.north,
+                      afterASlowDay: !data.settings.north.afterASlowDay,
+                    })
+                  }
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">And on a Monday</span>
+                <span className="setting-desc">
+                  The same card, softer, on the first open of the week, with one line of what you do to
+                  deserve the goal.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.north.onMonday}
+                  aria-label="And on a Monday"
+                  onClick={() =>
+                    actions.setNorthSettings({ ...data.settings.north, onMonday: !data.settings.north.onMonday })
+                  }
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
             </div>
           </div>
 

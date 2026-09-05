@@ -364,3 +364,42 @@ test('a recolour on one device and a rename on the other, on the same category, 
   const merged = mergeStates(phone, pc, NOW).data
   expect(merged.categories[0]).toMatchObject({ label: 'Health', color: '#4fa46a' })
 })
+// --- the picture, one entity ---------------------------------------------
+
+/**
+ * The picture is one text and syncs as one thing, at its own key. The later
+ * rewrite wins whole - two devices editing the same paragraph in the same
+ * minute is not a case this app is for - and an erase is a deletion like
+ * any other, so it sticks rather than being handed back by the device that
+ * still has the old text.
+ */
+test('the picture merges as one thing, and the later rewrite wins', () => {
+  const shared = device(d => ({ ...d, picture: { text: 'I wake early.' } }), MORNING)
+  const phone = device(d => ({ ...d, picture: { ...d.picture!, text: 'I wake before the house does.' } }), NOON, shared)
+  const pc = device(d => ({ ...d, picture: { ...d.picture!, text: 'I wake at six.' } }), EVENING, shared)
+  expect(mergeStates(phone, pc, NOW).data.picture?.text).toBe('I wake at six.')
+  expect(mergeStates(pc, phone, NOW).data.picture?.text).toBe('I wake at six.')
+})
+
+test('a picture erased on one device stays erased after a merge with one that still has it', () => {
+  const shared = device(d => ({ ...d, picture: { text: 'I wake early.' } }), MORNING)
+  const phone = device(d => {
+    const { picture: _gone, ...erased } = d
+    return erased
+  }, EVENING, shared)
+  const pc = device(d => ({ ...d, goals: [{ id: 'g', title: 'Ship', createdAt: DATE }] }), NOON, shared)
+  expect(mergeStates(phone, pc, NOW).data.picture).toBeUndefined()
+  expect(mergeStates(pc, phone, NOW).data.picture).toBeUndefined()
+  // And the goal written on the other side is not lost in the same merge.
+  expect(mergeStates(phone, pc, NOW).data.goals.map(g => g.id)).toEqual(['g'])
+})
+
+test('a picture written on one device arrives on another that never had one', () => {
+  const pc = device(d => ({ ...d, picture: { text: 'I wake early.' } }), NOON)
+  expect(mergeStates(base, pc, NOW).data.picture?.text).toBe('I wake early.')
+})
+
+test('a state whose picture is not an object is not one this app will merge with', () => {
+  expect(isSyncableState({ ...base, picture: 'text' })).toBe(false)
+  expect(isSyncableState({ ...base, picture: { text: 'I wake early.' } })).toBe(true)
+})

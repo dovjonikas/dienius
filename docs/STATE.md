@@ -6,10 +6,12 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** the week-templates wave, on top of a closed and tagged
-v2.0. A template can be a week now: one entity with a `kind`, seven columns
-in the editor, and stamping that takes the date's own weekday column. It is
-committed and pushed and sits above the tag.
+**Last updated:** the v2.1 wave, in progress. Its first stage is done: North
+v2, "The Picture" - the window is four layers read as one page, written in
+the window itself behind one Compose, and the Settings section it replaced is
+gone. The phone wave and a bug hunt follow it, and the wave closes with the
+`v2.1` tag. The week-templates wave before it sits above `v2.0`, committed
+and pushed.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -63,7 +65,7 @@ reading them.
 | Timer and stopwatch | Survive a refresh, run on every tab, keep time in a background tab, put the countdown in the tab title |
 | Day digest | In the wide rail: what is next, and how the day is going |
 | North line | One goal under the day's title, rotating daily, expanding on hover/tap/focus |
-| North card | After a slow day or on a Monday, one goal comes forward with its reason. Never a word about how yesterday went |
+| North card | After a slow day or on a Monday, one goal comes forward with its reason - on a Monday with one line of what you do to deserve it, for the week. Never a word about how yesterday went |
 | Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
 
 ### The other tabs
@@ -76,7 +78,8 @@ reading them.
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save |
 | **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book. When one ends, the list says what it moved on to and puts a sitting on today in one press - the block was already bound to the *list*, and until v2.0 nothing said so |
 | **Review** | Week and month statistics, all derived from the days themselves |
-| **Settings** | General, North, Sleep, Week, Nudges, Rules, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox |
+| **North** | One page, read from the top: the picture of who I am becoming, up to four goals with why and who it makes you, two to four deserve lines under each, and the if-then rules under each. Written in the window itself - one line of the picture to start, then everything behind one quiet Compose that saves in one press. Nothing measured, ever |
+| **Settings** | General, Sleep, Week, Categories, Nudges, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox; Nudges holds the two North card switches and points at the window |
 
 ### Across the app
 
@@ -134,16 +137,16 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **1988
+Still true, and checked rather than assumed. The suite is green - **2024
 tests in 113 files, plus 25 Playwright tests in 12 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop at either the ordinary or the heavy day and
 its self-check sees five shapes out of five, and the working tree is empty
 and pushed.
 
-**Where to start:** the table below says both briefed waves are closed. What
-is owed is in *Asked for, not yet built*, two headings down, and its first
-item is the next session's work.
+**Where to start:** the v2.1 table below says which of its four stages are
+done. What is owed is in *Asked for, not yet built*, under it, and its first
+item is the next stage's work.
 
 ### Both waves closed
 
@@ -189,33 +192,26 @@ one of them had been in the app for versions:
 The last three are the measuring pass doing its job on code written hours
 earlier, which is the argument for running it before believing anything.
 
+### The v2.1 wave
+
+Briefed by the owner in one sitting: North v2, then the phone, then a bug
+hunt, then the tag.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | North v2, "The Picture" | see `git log` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
+| 2 | The phone wave | - | Not started |
+| 3 | The bug hunt | - | Not started |
+| 4 | Closing and `v2.1` | - | Not started |
+
 ### Asked for, not yet built
 
-In order. The first is the next session's work.
-
-**1. North v2 - North becomes The Picture.** Editing moves out of Settings
-and into the North window itself, and the structure changes from three
-fields to four:
-
-> who I am / what I want / what I do to deserve it / what pulls me off it
-
-The last of those is the one thing that already exists - the rules under each
-goal, built in stage 2 of this wave and living in `views/north/NorthView.tsx`.
-**The brief for the rest is coming from the owner**, so do not design it
-ahead of them; what is worth knowing before it arrives is that
-ARCHITECTURE section 6 has governed North since v1.4 and one line of it is
-about to be re-opened on purpose. "Editing lives in Settings, deliberately
-far from the day" was written because a goal you can rewrite from the screen
-you look at every morning is a goal you will rewrite on a bad morning. If
-editing moves into North, that argument has to be answered rather than
-forgotten - most likely by North not being a screen somebody lands on by
-accident, which it is not: it is the sixth icon and the `6` key. Write the
-answer into DECISIONS when it is made.
-
-**2. The phone wave.** `npm run sweep -- --phone` reports 82 findings which
+**The phone wave.** `npm run sweep -- --phone` reports 82 findings which
 are two controls, and the walk itself has still never been done. *The phone
 wave, in detail* further down has both, including how to count them - this
-file has got that number wrong twice. Section 5 is the checklist to walk.
+file has got that number wrong twice. Section 5 is the checklist to walk,
+and North v2 adds to it: the window at 390x844 in both themes, the empty
+window, Compose with four goals, and the Monday card with its deserve line.
 
 ### The six briefs, kept as history
 

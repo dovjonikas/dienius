@@ -150,11 +150,25 @@
   // whose rules were all unfiled would put the North window's waiting group on
   // every screenshot the sweep takes.
   const goals = [
-    { id: id('g'), title: 'Finish the book proposal', why: 'Because I keep telling people about it instead of writing it', identity: 'I am someone who finishes what they start talking about', createdAt: shift(-96), updatedAt: stamp },
-    { id: id('g'), title: 'Be strong at fifty', why: 'Dad could not carry his own suitcase at sixty and it changed what he could do', identity: 'I am someone who trains, not someone who used to', createdAt: shift(-41), updatedAt: stamp },
-    { id: id('g'), title: 'Read the eight books on the shelf', why: 'They were all bought for a reason I can still remember', identity: 'I am someone who reads the books he buys', createdAt: shift(-12), updatedAt: stamp },
+    { id: id('g'), title: 'Finish the book proposal', why: 'Because I keep telling people about it instead of writing it', identity: 'I am someone who finishes what they start talking about', deserve: ['write 300 words before the first meeting', 'send one chapter to Ada every Sunday'], createdAt: shift(-96), updatedAt: stamp },
+    { id: id('g'), title: 'Be strong at fifty', why: 'Dad could not carry his own suitcase at sixty and it changed what he could do', identity: 'I am someone who trains, not someone who used to', deserve: ['train four times a week', 'walk after lunch', 'in bed by eleven'], createdAt: shift(-41), updatedAt: stamp },
+    { id: id('g'), title: 'Read the eight books on the shelf', why: 'They were all bought for a reason I can still remember', identity: 'I am someone who reads the books he buys', deserve: ['twenty pages with the morning coffee'], createdAt: shift(-12), updatedAt: stamp },
     { id: id('g'), title: 'Leave the house before nine on a Saturday', why: 'The best days this year all started outside', identity: 'I am someone whose weekends start early', createdAt: shift(-3), updatedAt: stamp },
   ]
+
+  // The picture over them - see views/north/NorthView.tsx. Five lines, which
+  // is about what a person writes, and enough to show the window at its
+  // real height on every screen the sweep measures.
+  const picture = {
+    text: [
+      'I wake before the house does, and the first hour is mine.',
+      'I train like someone who intends to be carrying suitcases at seventy.',
+      'I finish the things I start talking about, and I talk about fewer of them.',
+      'The books on the shelf are read, not owned.',
+      'On a Saturday I am already outside by nine, and the day is longer for it.',
+    ].join('\n'),
+    updatedAt: stamp,
+  }
 
   const data = {
     templates,
@@ -196,6 +210,7 @@
       { id: listWatch, name: 'Watching', unit: 'episode', unitShort: 'ep', color: '#c9b3f0', items: watching, updatedAt: stamp },
     ],
     goals,
+    picture,
   }
 
   if (heavy) {

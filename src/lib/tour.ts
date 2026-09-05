@@ -75,7 +75,7 @@ export interface TourTarget {
  * Next for the three steps where what appeared deserves a proper look.
  *
  * `view` and `target` move the spotlight for the caption. The goal step is
- * written on the settings screen and lives under the day's title; without
+ * written in the North window and lives under the day's title; without
  * the relocation the person is told it "never shows progress" while looking
  * at a form, and never sees where it went.
  *
@@ -260,12 +260,22 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'north',
     title: 'One direction',
-    text: 'Click Write one down. A goal never shows progress, only why.',
+    text: 'Type one line of who you are becoming.',
+    // Four, and the last one present wins. The picture's line is the whole
+    // of an empty North window; Keep it is disabled until a line is typed
+    // and takes over the moment it is not, so the ring lands on the button
+    // rather than the card landing on it. Once the picture is kept, the
+    // goal offer appears under it; once that is pressed, Compose opens on a
+    // blank goal and the step ends on Save. Somebody who already has a
+    // picture starts at the offer, which is the same walk with one step
+    // fewer.
     targets: [
-      { selector: '[data-tour="goal-add"]' },
-      { selector: '[data-tour="goal-save"]', text: 'Name it, then click Write it down.' },
+      { selector: '[data-tour="picture-field"]', typed: 'Now click Keep it.' },
+      { selector: '[data-tour="picture-keep"]', text: 'Now click Keep it.' },
+      { selector: '[data-tour="goal-add"]', text: 'Click Write one down. A goal never shows progress, only why.' },
+      { selector: '[data-tour="goal-save"]', text: 'Name it, then click Save.' },
     ],
-    view: 'settings',
+    view: 'north',
     event: 'goal-added',
     outcome: {
       text: 'It sits under the day now. Press that line for North, never a bar.',
@@ -299,7 +309,14 @@ export const MOBILE_STEPS: TourStep[] = DESKTOP_STEPS.map(step => {
   return {
     ...step,
     text: tap(step.text),
-    targets: step.targets.map(target => (target.text ? { ...target, text: tap(target.text) } : target)),
+    // Both lines a target can carry: what to do, and what to do once
+    // something is typed. "Now click Keep it" on a phone is the same
+    // mistake as "click" anywhere else.
+    targets: step.targets.map(target => ({
+      ...target,
+      ...(target.text ? { text: tap(target.text) } : {}),
+      ...(target.typed ? { typed: tap(target.typed) } : {}),
+    })),
     outcome,
     absent: step.absent && tap(step.absent),
   }

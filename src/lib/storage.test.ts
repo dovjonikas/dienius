@@ -1305,3 +1305,70 @@ test('a dangling category id loads and is simply not found, the way every other 
   expect(loaded.days['2026-09-01'].tasks[0].category).toBe('deleted-on-the-phone')
   expect(loaded.categories.some(c => c.id === 'deleted-on-the-phone')).toBe(false)
 })
+/**
+ * North v2 added two things to the data: a `deserve` list on a goal and the
+ * picture, one text of its own beside the lists. Both are optional on disk,
+ * because every backup written before them has neither, and that is not
+ * corruption - it is every real backup from before the feature shipped.
+ */
+test('a goal from before deserve existed loads with no lines, and one with lines keeps them', () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      templates: [],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+      goals: [
+        { id: 'g1', title: 'Old', createdAt: '2026-08-01' },
+        { id: 'g2', title: 'New', createdAt: '2026-08-01', deserve: ['train four times a week'] },
+      ],
+    }),
+  )
+  const loaded = loadData()
+  expect(loaded.goals[0].deserve).toBeUndefined()
+  expect(loaded.goals[1].deserve).toEqual(['train four times a week'])
+})
+
+test('validate rejects a goal whose deserve is not a list of text', () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      templates: [],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+      goals: [{ id: 'g1', title: 'Old', createdAt: '2026-08-01', deserve: 'train' }],
+    }),
+  )
+  expect(loadData().goals).toEqual([])
+})
+
+test('the picture loads when it is there, and a payload without one has none', () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      templates: [],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+      picture: { text: 'I wake before the house does.', updatedAt: '2026-09-01T08:00:00.000Z' },
+    }),
+  )
+  expect(loadData().picture).toEqual({ text: 'I wake before the house does.', updatedAt: '2026-09-01T08:00:00.000Z' })
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ templates: [], days: {}, settings: { theme: 'light', enabledWidgets: [] } }))
+  expect(loadData().picture).toBeUndefined()
+})
+
+test('validate rejects a picture that is not text, and the whole payload with it', () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      templates: [{ id: 't', name: 'Workday', color: '#a7c4f5', blocks: [] }],
+      days: {},
+      settings: { theme: 'light', enabledWidgets: [] },
+      picture: { text: 42 },
+    }),
+  )
+  // Discarded whole rather than partly trusted - the template goes with it.
+  expect(loadData().picture).toBeUndefined()
+  expect(loadData().templates).toEqual([])
+})

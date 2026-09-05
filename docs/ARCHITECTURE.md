@@ -48,6 +48,7 @@ AppData
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
 │                                track? (pages/movie/series), pace?, season?
 ├── goals: Goal[]                directions, never measured - see §6
+├── picture?: Picture            who I am becoming: one text, one entity - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
 ├── ifThens: IfThenEntry[]       trigger + action under a goal, never measured
 ├── inbox: InboxItem[]           one line of text, no date
@@ -214,7 +215,7 @@ src/
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
       library.ts       lists, items, progress, sessions onto days and templates
       templates.ts     templates, stamping, the weekday map
-      goals.ts         North's goals and settings
+      goals.ts         North: the goals, the picture, Compose's one commit, and the card switches
       backlog.ts       the inbox and the backlog, and the doors between them
       scratch.ts       the scratch stream and its two ways out
       calendars.ts     external calendar subscriptions
@@ -225,7 +226,7 @@ src/
     stamping.ts        template + dates -> day plans, and which column a date takes
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
-    north.ts           goals: rotation, ages, the rules under each, and when one comes forward
+    north.ts           goals: rotation, ages, the rules under each, when one comes forward; the picture, the deserve lines, and the compose draft applied
     eveningClose.ts    how a day ends, and what may be said about it
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
@@ -277,7 +278,7 @@ src/
                        (cardPlacement.ts is its geometry, tested on its own -
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
-    north/             the North window: goals, and the rules under each
+    north/             the North window: the picture, the goals, what deserves them, the rules - and Compose, which edits all four
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
@@ -285,7 +286,7 @@ src/
     ColorSwatchPicker  one colour from eight, without eight of them on screen
     WeekTemplateEditor seven columns of one template, and the card's preview of it
     TimeColumns        the two scrolling columns inside the time picker
-    BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
+    BackupSettings, SyncSettings, CalendarSettings, CategorySettings   Settings sections
     week/              the week view - see section 11
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app
@@ -413,18 +414,19 @@ to spend it. Shown instead *why* it matters, the same person keeps going.
 Progress framing and commitment framing pull in opposite directions, and a
 progress bar is the purest possible progress framing.
 
-So a goal carries three things and no numbers:
+Since v2.1 the window is four layers, read from the top as one text, and none
+of them carries a number:
 
-| Field | Question |
-|---|---|
-| `title` | What you are doing, short, imperative |
-| `why` | What it is for, in your own words |
-| `identity` | Who it makes you - "I am someone who ..." |
+| Layer | What it holds | Where it lives |
+|---|---|---|
+| **The picture** | Who I am becoming - first person, a few lines. The heading over everything | `AppData.picture`, one entity at `PICTURE_KEY` |
+| **A goal** | `title` what, `why` what it is for, `identity` who it makes you | `AppData.goals`, four active at most |
+| **What I do to deserve this** | Two to four concrete things done most days. A plain list, never ticked | `Goal.deserve`, at most `MAX_DESERVE_LINES` |
+| **What pulls me off this** | The if-then rules under the goal they protect | `AppData.ifThens` by `goalId`, five per goal |
 
-Under each goal, in the North window, sit the rules that protect it - see
-DECISIONS, "A rule with no goal is noise; under a goal it is armour". Five at
-most, none of them measured, and they appear in exactly two places: that
-window, and under the why on the card that comes forward after a slow day.
+The rules are DECISIONS, "A rule with no goal is noise; under a goal it is
+armour". They appear in exactly two places: the window, and under the why on
+the card that comes forward after a slow day.
 
 The one number allowed near a goal is its **age** - "32 days lived toward
 this". It is a fact, not a measurement: it cannot be earned or lost, it does
@@ -435,20 +437,28 @@ went, it has become a score and must be removed.
 Three more rules the feature holds to:
 
 - **Four active, and the cap refuses.** Quietly evicting the oldest would make
-  the cap invisible and the choice arbitrary. Five rules per goal, for the
-  same reason.
-- **A goal is written in Settings; a rule is written in North.** The distance
-  to a goal is the point, below. A rule is not a goal: noticing what pulls you
-  off course happens the moment it pulls you off course, so it is written
-  where it is read.
-- **Editing lives in Settings, deliberately far from the day.** Something you
-  can rewrite from the screen you look at every morning is something you will
-  rewrite on a bad morning, and a goal rewritten on bad mornings is a mood.
+  the cap invisible and the choice arbitrary. Five rules per goal and four
+  deserve lines, for the same reason.
+- **Everything is written in North, behind one Compose.** Until v2.1 a goal
+  was written in Settings, deliberately far from the day, on the argument that
+  something you can rewrite from the screen you look at every morning is
+  something you will rewrite on a bad morning. That argument still governs the
+  day view, which edits nothing here. North itself is not a screen anybody
+  lands on by accident - the sixth icon, the `6` key - so the distance is a
+  decision now rather than a tab: the empty window asks for one line of the
+  picture and nothing else, and everything after that is behind Compose,
+  which edits every layer at once and saves in one commit (`applyNorthDraft`
+  in `north.ts`, pure and tested on its own). A rule is the exception and
+  always was: noticing what pulls you off course happens the moment it pulls
+  you off course, so a rule is written on its own line under its goal. See
+  DECISIONS, "North is built once and left in peace".
 - **The card that appears after a slow day never mentions the slow day.** No
   count, no percentage, nothing red. The app knows exactly how it went and
   says none of it: the moment that card contains a number about the past it is
   a report card, and a report card from a planner is a planner people stop
-  opening.
+  opening. The Monday card carries one deserve line for the week, the same one
+  from Monday to Sunday (`deserveForWeek`), and never a word about whether
+  last week's happened.
 
 The same tone rule governs the calendar's day stats (`dayStats.ts`): no red at
 any threshold, and a day nobody planned is its own case rather than a zero.
@@ -527,6 +537,7 @@ erases the other's morning. Every entity therefore carries its own
 | Library list | `list:<id>` | Name and unit |
 | Library item | `item:<id>` | Progress advances independently of the list |
 | Goal | `goal:<id>` | |
+| Picture | `picture:north` | One text, one fixed key. Absent is a tombstone, so an erase sticks; a blank string in a settings field would be a body that wins the next merge and comes back |
 | If-then | `ifthen:<id>` | |
 | Inbox item | `inbox:<id>` | |
 | Backlog item | `backlog:<id>` | |
@@ -638,7 +649,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 1988 tests in 113 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 2024 tests in 113 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 

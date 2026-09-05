@@ -107,7 +107,14 @@ const replanChrome = {
  * the state the whole vocabulary was already in.
  */
 const PLACED: Record<ExplainId, () => ReactElement> = {
-  north: () => <NorthView onOpenSettings={() => {}} />,
+  north: () => <NorthView />,
+  // The invitation carries the picture's own explanation, so an empty window
+  // has it; the deserve heading only exists under a goal.
+  picture: () => <NorthView />,
+  deserve: () => {
+    actions.addGoal({ title: 'Be strong at fifty', deserve: ['train four times a week'] }, DATE)
+    return <NorthView />
+  },
   'key-task': () => <TaskDetail task={task} tasks={[task]} date={DATE} library={[]} onClose={() => {}} />,
   push: () => (
     <TaskActionsSheet

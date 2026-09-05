@@ -546,16 +546,16 @@ test('a sheet left open over the step gets its close button pointed at, and the 
 })
 
 /**
- * The goal is written in Settings and lives under the day's title. The
- * caption takes the person there and points at the line, because "it never
- * shows progress" said over a form is a claim, and said over the line it
- * turned into is a fact they can see.
+ * The goal is written in the North window and lives under the day's title.
+ * The caption takes the person there and points at the line, because "it
+ * never shows progress" said over a form is a claim, and said over the line
+ * it turned into is a fact they can see.
  */
 test('writing a goal ends the north step, and the caption moves to the day and points at the North line', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const { onNavigate } = renderTour()
   act(() => startTour('desktop', 7))
-  expect(onNavigate).toHaveBeenLastCalledWith('settings')
+  expect(onNavigate).toHaveBeenLastCalledWith('north')
   act(() => actions.addGoal({ title: 'Be someone who finishes things' }, TODAY))
   act(() => vi.advanceTimersByTime(250))
   expect(onNavigate).toHaveBeenLastCalledWith('day')
@@ -570,7 +570,7 @@ test('writing a goal ends the north step, and the caption moves to the day and p
 /**
  * Found on the first full walk after the captions were added: the moment
  * the library step ended, the shell went to the day view instead of
- * Settings, and the goal step sat on the wrong tab saying its control was
+ * North, and the goal step sat on the wrong tab saying its control was
  * not on the screen. For one render after a step advances the tick state
  * is still the last step's and the step is already the next one, and the
  * next one's relocation fired on the stale tick.
@@ -587,7 +587,7 @@ test('a caption that relocates belongs to its own step, and never fires as the s
   await user.click(screen.getByRole('button', { name: 'Next' }))
   act(() => vi.advanceTimersByTime(250))
   expect(getTourState().step).toBe(7)
-  expect(onNavigate).toHaveBeenLastCalledWith('settings')
+  expect(onNavigate).toHaveBeenLastCalledWith('north')
 })
 
 /**

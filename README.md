@@ -66,7 +66,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Push twice, then decide: an unfinished task moves to tomorrow twice, after that you finish it, drop it, or mark it ongoing
 - What yesterday left, said once in a banner, moved forward in one tap, never on its own
 - An evening close: one sentence about the day at a time you set, or when the last thing is ticked. It never mentions what was not done
-- North: up to four directions with a why and no progress bar, one shown under the day's title - and under each one, the moments that pull you off it, written down before they happen
+- North: the picture of who you are becoming, up to four directions with a why and no progress bar, what you do to deserve each one, and the moments that pull you off it - one page, written once, read every day, one line of it under the day's title
 - Focus: the running task, its own planned time, a ring, a way out. Not a pomodoro
 - A timer and a stopwatch that survive a refresh and run on every tab
 - Task detail: exact minute, note, sub-steps, repeat, the three-a-day key mark

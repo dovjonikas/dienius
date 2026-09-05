@@ -1,14 +1,19 @@
-import { beforeEach, expect, test } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthCard } from './NorthCard'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
-import { addDays, todayKey } from '../../lib/dates'
+import { addDays } from '../../lib/dates'
 
-const TODAY = todayKey()
+// A Wednesday, pinned. These tests read the real clock until v2.1, and the
+// card has a Monday version that says something different: the slack-card
+// tests below passed six days a week and would have failed on the seventh.
+const TODAY = '2026-09-02'
 
 beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(`${TODAY}T09:00:00`))
   localStorage.clear()
   actions.resetForTests(defaultData())
   actions.addGoal({ title: 'Finish things', why: 'Because rented is not mine.' }, TODAY)
@@ -80,4 +85,32 @@ test('a goal with no rules under it shows the why and stops there', () => {
   expect(screen.getByRole('complementary', { name: 'Why this matters' })).not.toHaveTextContent(
     'Here is what you wrote yourself',
   )
+})
+/**
+ * The Monday card carries one line of what you do to deserve the goal - the
+ * bridge between the direction and the week that is starting. One line, the
+ * same one all week, and never a question about whether last week's was done.
+ */
+test('on a Monday the card says one thing you do for this, and nothing about last week', () => {
+  vi.setSystemTime(new Date('2026-09-07T09:00:00'))
+  const [g] = getData().goals
+  actions.updateGoal(g.id, { deserve: ['train four times', 'sleep by eleven'] })
+  render(<NorthCard />)
+  const card = screen.getByRole('complementary', { name: 'Why this matters' })
+  expect(card).toHaveTextContent('New week.')
+  expect(card).toHaveTextContent('This week.')
+  expect(card.textContent).toMatch(/train four times|sleep by eleven/)
+  expect(card.querySelectorAll('.north-card-deserve')).toHaveLength(1)
+  expect(card.textContent).not.toMatch(/missed|last week|did not|%/i)
+  // And the rule stays on the slack card: a Monday is a morning with nothing
+  // behind it yet.
+  expect(card).not.toHaveTextContent('Here is what you wrote yourself')
+})
+
+test('a Monday card for a goal with nothing written to deserve it shows the why and stops there', () => {
+  vi.setSystemTime(new Date('2026-09-07T09:00:00'))
+  render(<NorthCard />)
+  const card = screen.getByRole('complementary', { name: 'Why this matters' })
+  expect(card).toHaveTextContent('New week.')
+  expect(card).not.toHaveTextContent('This week.')
 })

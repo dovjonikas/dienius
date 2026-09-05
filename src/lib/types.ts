@@ -872,20 +872,28 @@ export interface BacklogItem extends Timestamped {
  * restating *why* it matters does not. So a goal is asked to carry a reason
  * and never asked to carry a number.
  *
- * The three text fields are three different questions, and the second two are
- * optional because a person who only has the first still has a goal:
+ * The four fields are four different questions, and everything after the
+ * first is optional because a person who only has the first still has a
+ * goal:
  *
  * - `title` is what you are doing, short and in the imperative.
  * - `why` is what it is for, in a sentence or two, in your own words.
  * - `identity` is who it makes you - "I am someone who ...". The most
  *   powerful of the three when it is true and the most embarrassing when it
  *   is invented, which is why nothing ever asks for it twice.
+ * - `deserve` is what you do to deserve it: two to four concrete things
+ *   done most days - "train four times a week", "apply to three places a
+ *   day" - and never a wish. It is the bridge between the goal and a day,
+ *   and the one line the Monday card carries. Nothing checks whether any
+ *   of it happened; a list that could be ticked would be a scoreboard.
  */
 export interface Goal extends Timestamped {
   id: string
   title: string
   why?: string
   identity?: string
+  /** Trimmed, no blank lines, at most `MAX_DESERVE_LINES`. Absent rather than empty - see `cleanDeserve`. */
+  deserve?: string[]
   /** The date key it was written on. Its age is read from this - see `goalAge`. */
   createdAt: string
   /**
@@ -907,6 +915,31 @@ export interface Goal extends Timestamped {
 
 /** How many goals can be active at once. See `north.ts` for why it is four. */
 export const MAX_ACTIVE_GOALS = 4
+
+/**
+ * How many lines "what I do to deserve this" holds. Four, and the form stops
+ * offering a fifth rather than trimming it on save: a list of ten things done
+ * every day is a routine pretending to be a reason, and the whole point of
+ * the list is that it fits in a glance on a Monday morning.
+ */
+export const MAX_DESERVE_LINES = 4
+
+/**
+ * The picture: who you are becoming, in your own words, in the first person.
+ *
+ * The heading over everything in North - read every day, written once,
+ * edited rarely. One text rather than fields, because a person is not a
+ * form. One entity of its own rather than a settings field, because it is
+ * content the person authored - CONVENTIONS section 7, in its singleton
+ * case: there is exactly one, so one entity is exactly its grain. It syncs
+ * under `PICTURE_KEY`, and erasing it is a deletion with a tombstone, so an
+ * erase sticks rather than being handed back by a device that still has the
+ * old text. A blank string in a settings field would have been a body, not
+ * a deletion, and would have come back.
+ */
+export interface Picture extends Timestamped {
+  text: string
+}
 
 /**
  * When the app is allowed to bring a goal forward on its own - see
@@ -1006,6 +1039,12 @@ export interface AppData {
    * somebody is for.
    */
   goals: Goal[]
+  /**
+   * The picture - see `Picture`. Absent until written, which is every
+   * payload from before North v2 and every person who has not written one
+   * yet; absent is not blank, it is the invitation still showing.
+   */
+  picture?: Picture
   /**
    * What kinds of thing a day is made of, and the colour each one is drawn in.
    *

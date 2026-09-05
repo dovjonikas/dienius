@@ -1,5 +1,5 @@
 import { actions, useAppData } from '../../lib/store'
-import { northPrompt, ruleForDay } from '../../lib/north'
+import { deserveForWeek, northPrompt, ruleForDay } from '../../lib/north'
 import { todayKey } from '../../lib/dates'
 
 /**
@@ -42,6 +42,12 @@ export function NorthCard() {
   // Only on the slack card. A Monday is not a morning that needs telling what
   // pulls you off course; it is a morning with nothing behind it yet.
   const rule = kind === 'slack' ? ruleForDay(data.ifThens, goal.id, today) : undefined
+  // Only on the Monday card, and one line: what this week is for, in the
+  // person's own words. The slack card carries a rule instead - a morning
+  // after a day that got away wants what to do about the moment; a Monday
+  // wants what to do with the week. The same line every day of that week -
+  // see deserveForWeek - and never a word about whether last week's happened.
+  const line = kind === 'monday' ? deserveForWeek(goal, today) : undefined
 
   return (
     <aside className={kind === 'monday' ? 'north-card is-monday' : 'north-card'} aria-label="Why this matters">
@@ -49,6 +55,12 @@ export function NorthCard() {
       <h2 className="north-card-title">{goal.title}</h2>
       {goal.why && <p className="north-card-why">{goal.why}</p>}
       {goal.identity && <p className="north-card-identity">{goal.identity}</p>}
+      {line && (
+        <p className="north-card-deserve">
+          <span className="north-card-rule-lead">This week.</span>
+          {line}
+        </p>
+      )}
       {rule && (
         <p className="north-card-rule">
           <span className="north-card-rule-lead">Here is what you wrote yourself.</span>

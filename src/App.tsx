@@ -400,7 +400,7 @@ export function App() {
             onDateChange={setSelectedDate}
           />
         )}
-        {view === 'north' && <NorthView onOpenSettings={() => setView('settings')} />}
+        {view === 'north' && <NorthView />}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}

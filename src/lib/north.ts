@@ -2,6 +2,7 @@ import { addDays, todayKey } from './dates'
 import { weekdayOf } from './repeats'
 import {
   MAX_ACTIVE_GOALS,
+  MAX_DESERVE_LINES,
   MAX_RULES_PER_GOAL,
   type AppData,
   type DayPlan,
@@ -237,4 +238,137 @@ export function northPrompt(data: AppData, today: string, dismissedOn: string | 
     return { kind: 'slack', goal }
   }
   return undefined
+}
+// --- what you do to deserve it -------------------------------------------
+
+/**
+ * The lines under "What I do to deserve this", cleaned the way they are
+ * stored: trimmed, blank lines gone, at most `MAX_DESERVE_LINES`, and no
+ * list at all when nothing is left. An empty array in the store would be a
+ * field that says nothing and still has to be carried by every reader, and
+ * absent already means "not written" everywhere else in this app.
+ *
+ * The cap trims here only because this runs on save; the form stops offering
+ * a fifth line before that, which is where refusing belongs.
+ */
+export function cleanDeserve(lines: readonly string[] | undefined): string[] | undefined {
+  const kept = (lines ?? [])
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(0, MAX_DESERVE_LINES)
+  return kept.length > 0 ? kept : undefined
+}
+
+/**
+ * Which week a date is in, counting Monday-first weeks from the epoch. Only
+ * its remainder is ever used, like `dayNumber`. The epoch itself was a
+ * Thursday, hence the three.
+ */
+export function weekNumber(date: string): number {
+  return Math.floor((dayNumber(date) + 3) / 7)
+}
+
+/**
+ * The one deserve line the Monday card carries.
+ *
+ * Chosen from the week rather than the day, so it is the same sentence from
+ * Monday to Sunday: "this week: train four times" is a promise about a week,
+ * and a card that changed its mind on Wednesday would not be one. No memory
+ * of which line was shown when, for the same reason `ruleForDay` keeps none.
+ */
+export function deserveForWeek(goal: Goal, date: string): string | undefined {
+  const lines = goal.deserve ?? []
+  if (lines.length === 0) return undefined
+  return lines[weekNumber(date) % lines.length]
+}
+
+// --- the picture, and compose ---------------------------------------------
+
+/**
+ * The store with the picture written, rewritten or - when the text is
+ * empty - removed. Removed rather than blank, because absent is what syncs
+ * as a deletion (see `PICTURE_KEY`) and a blank would be a body that wins
+ * the next merge and comes back. The same object is kept when the text has
+ * not changed, so nothing is stamped for a save that changed nothing.
+ */
+export function withPicture(data: AppData, text: string): AppData {
+  const trimmed = text.trim()
+  const next: AppData = { ...data }
+  if (!trimmed) {
+    delete next.picture
+    return next
+  }
+  next.picture = data.picture?.text === trimmed ? data.picture : { ...data.picture, text: trimmed }
+  return next
+}
+
+/**
+ * One goal as the compose form holds it. `id` absent means a goal being
+ * written now; `archive` means it goes on Save, not before. A field left
+ * out is a field left alone.
+ */
+export interface GoalDraft {
+  id?: string
+  title: string
+  why?: string
+  identity?: string
+  deserve?: string[]
+  archive?: boolean
+}
+
+/** Everything Compose edits: the picture and the active goals, in one draft. */
+export interface NorthDraft {
+  picture: string
+  goals: GoalDraft[]
+}
+
+/**
+ * The store after a compose draft is saved. Pure, so it is tested as
+ * arithmetic; `actions.composeNorth` commits what this returns, once.
+ *
+ * Three rules, each the answer to a way the form could lose something:
+ *
+ * - **Archives first, then additions.** Archiving one goal and writing its
+ *   replacement in the same press has to fit under the cap of four.
+ * - **A title emptied is a title kept.** Every other field becomes what the
+ *   form holds, an empty one becoming absent; the title falls back to what
+ *   it was, because a goal with no name is not a state, and deleting a
+ *   direction by backspacing over its name is not a thing anybody means.
+ * - **The cap refuses.** A fifth new goal is not written and the rest of
+ *   the draft still is. The form never offers a fifth row; this is the
+ *   guard behind the guard.
+ *
+ * A blank new row - no title - was never a goal and is skipped.
+ */
+export function applyNorthDraft(data: AppData, draft: NorthDraft, today: string): AppData {
+  const byId = new Map(draft.goals.filter(g => g.id).map(g => [g.id as string, g]))
+  let goals = data.goals.map(goal => {
+    const d = byId.get(goal.id)
+    if (!d) return goal
+    if (d.archive) return goal.archivedAt ? goal : { ...goal, archivedAt: today }
+    return {
+      ...goal,
+      title: d.title.trim() || goal.title,
+      why: d.why === undefined ? goal.why : d.why.trim() || undefined,
+      identity: d.identity === undefined ? goal.identity : d.identity.trim() || undefined,
+      deserve: d.deserve === undefined ? goal.deserve : cleanDeserve(d.deserve),
+    }
+  })
+  for (const d of draft.goals) {
+    if (d.id || !d.title.trim()) continue
+    if (!canAddGoal(goals)) continue
+    const deserve = cleanDeserve(d.deserve)
+    goals = [
+      ...goals,
+      {
+        id: crypto.randomUUID(),
+        title: d.title.trim(),
+        why: d.why?.trim() || undefined,
+        identity: d.identity?.trim() || undefined,
+        ...(deserve ? { deserve } : {}),
+        createdAt: today,
+      },
+    ]
+  }
+  return withPicture({ ...data, goals }, draft.picture)
 }

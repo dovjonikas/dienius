@@ -1,4 +1,4 @@
-import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
+import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Picture, ScratchNote, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -28,12 +28,20 @@ export type EntityKind =
   | 'backlog'
   | 'scratch'
   | 'category'
+  | 'picture'
   | 'setting'
 
 export type EntityKey = string
 
 /** How long a deletion is remembered. See `pruneTombstones`. */
 export const TOMBSTONE_TTL_DAYS = 90
+
+/**
+ * The one picture's key. There is only ever one, so the key names the thing
+ * rather than an id - and being a fixed key is what lets an erase be a
+ * tombstone the other device can match. See `AppData.picture`.
+ */
+export const PICTURE_KEY = 'picture:north'
 
 export interface Entity {
   key: EntityKey
@@ -66,7 +74,7 @@ export function idOf(key: EntityKey): string {
   return key.slice(key.indexOf(':') + 1)
 }
 
-const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'setting']
+const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'picture', 'setting']
 
 /**
  * Which settings fields are entities of their own.
@@ -197,6 +205,20 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
+  // One text, one entity, one fixed key - see PICTURE_KEY. Absent means no
+  // entity at all, which is what lets a deletion be a tombstone rather than
+  // a blank body that would win a merge and come back.
+  if (data.picture) {
+    const picture = data.picture
+    out.set(PICTURE_KEY, {
+      key: PICTURE_KEY,
+      kind: 'picture',
+      ref: picture,
+      bodyOf: () => body(picture, 'updatedAt'),
+      updatedAt: picture.updatedAt,
+    })
+  }
+
   for (const entry of data.ifThens) {
     out.set(keyFor('ifthen', entry.id), {
       key: keyFor('ifthen', entry.id),
@@ -310,6 +332,7 @@ export function stampChanges(previous: AppData, next: AppData, now: string): App
   diffList('template', previous.templates, next.templates, changed, removed)
   if (previous.library !== next.library) diffLibrary(previous, next, changed, removed)
   diffList('goal', previous.goals, next.goals, changed, removed)
+  diffPicture(previous, next, changed, removed)
   diffList('ifthen', previous.ifThens, next.ifThens, changed, removed)
   diffList('inbox', previous.inbox, next.inbox, changed, removed)
   diffList('backlog', previous.backlog, next.backlog, changed, removed)
@@ -395,6 +418,19 @@ function diffList<T extends { id: string; updatedAt?: string }>(
   const ids = new Set(after.map(x => x.id))
   for (const item of before) {
     if (!ids.has(item.id)) removed.push(keyFor(kind, item.id))
+  }
+}
+
+/** The picture is a singleton: written, rewritten, or gone - and gone is a deletion like any other. */
+function diffPicture(previous: AppData, next: AppData, changed: Set<EntityKey>, removed: EntityKey[]): void {
+  if (previous.picture === next.picture) return
+  if (!next.picture) {
+    if (previous.picture) removed.push(PICTURE_KEY)
+    return
+  }
+  const before = previous.picture
+  if (!before || next.picture.updatedAt === undefined || !unchanged(body(before, 'updatedAt'), body(next.picture, 'updatedAt'))) {
+    changed.add(PICTURE_KEY)
   }
 }
 
@@ -505,6 +541,7 @@ function applyStamps(data: AppData, changed: Set<EntityKey>, removed: EntityKey[
     library: libraryMoved ? library : data.library,
     templates: mapIfChanged<Template>(data.templates, t => touched('template', t.id), now),
     goals: mapIfChanged<Goal>(data.goals, g => touched('goal', g.id), now),
+    ...(data.picture ? { picture: stampOne<Picture>(data.picture, changed.has(PICTURE_KEY), now) } : {}),
     ifThens: mapIfChanged<IfThenEntry>(data.ifThens, e => touched('ifthen', e.id), now),
     inbox: mapIfChanged<InboxItem>(data.inbox, i => touched('inbox', i.id), now),
     backlog: mapIfChanged<BacklogItem>(data.backlog, i => touched('backlog', i.id), now),

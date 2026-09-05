@@ -187,18 +187,28 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
     ...base,
     templates: [work, rest],
     days,
+    // The picture over the goals: a few lines in the first person, the way
+    // the North window asks for it. Sample copy, like the goals.
+    picture: {
+      text:
+        'I wake before the house does and the first hour is mine.\n' +
+        'I ship small things on Fridays and I do not apologise for them.\n' +
+        'People ask me how the training is going, and I have an answer.',
+    },
     goals: [
       {
         id: 'demo-goal-1',
         title: 'Ship something people keep using',
         why: 'Because everything I have built so far was rented.',
         identity: 'Someone who finishes.',
+        deserve: ['open the editor before the inbox', 'ship one small thing every Friday'],
         createdAt: addDays(today, -60),
       },
       {
         id: 'demo-goal-2',
         title: 'Be strong at forty',
         why: 'My father stopped moving at fifty and never started again.',
+        deserve: ['train three mornings a week', 'walk after lunch', 'in bed by eleven'],
         createdAt: addDays(today, -34),
       },
     ],

@@ -286,7 +286,13 @@ function TourOverlay({ onNavigate }: TourProps) {
         const el = document.querySelector(target.selector.replace('{task}', taskId))
         if (!el) return
         present = true
-        if ((el as HTMLElement).offsetParent !== null) {
+        // Drawn, and something the person can press. A disabled control is
+        // on the page but not on offer - the picture's Keep it before a
+        // line is typed - and lighting it would tell somebody to press a
+        // button that does nothing. Skipping it is also what lets a step
+        // walk from a field to the button beside it: the button is listed
+        // after the field, so the moment typing enables it, it wins.
+        if ((el as HTMLElement).offsetParent !== null && !(el as HTMLButtonElement).disabled) {
           found = el
           foundIndex = i
         }

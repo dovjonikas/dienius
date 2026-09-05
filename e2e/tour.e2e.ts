@@ -70,12 +70,18 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await add.press('Enter')
   await expect(card).toContainText('A session can now land on any day')
 
-  // One direction - written in Settings, shown under the day
+  // One direction - the picture's first line, then a goal under it in the
+  // North window, then shown under the day
+  await expect(card).toContainText('Type one line of who you are becoming')
+  const line = page.getByRole('textbox', { name: 'The picture' })
+  await line.pressSequentially('Someone who finishes what he starts.')
+  await expect(card).toContainText(`Now ${verb.toLowerCase()} Keep it.`)
+  await page.getByRole('button', { name: 'Keep it' }).click()
   await expect(card).toContainText(`${verb} Write one down`)
   await page.getByRole('button', { name: 'Write one down' }).click()
-  await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Write it down.`)
+  await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Save.`)
   await page.getByPlaceholder('Become the dad worth looking up to').fill('Finish things')
-  await page.getByRole('button', { name: 'Write it down' }).click()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(card).toContainText('It sits under the day now')
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
   await expect(page.getByText('Finish things')).toBeVisible()

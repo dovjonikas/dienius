@@ -1,5 +1,5 @@
 import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Task, Template } from './types'
-import { SYNCED_SETTINGS, collectEntities, idOf, keyFor, kindOf, pruneTombstones, type EntityKey } from './syncEntities'
+import { PICTURE_KEY, SYNCED_SETTINGS, collectEntities, idOf, keyFor, kindOf, pruneTombstones, type EntityKey } from './syncEntities'
 
 /**
  * Merging two states, one entity at a time.
@@ -180,7 +180,7 @@ function rebuild(local: AppData, remote: AppData, winner: Map<EntityKey, 'local'
     library.push({ ...meta, items: itemsByList.get(id) ?? [] })
   }
 
-  return {
+  const merged: AppData = {
     ...local,
     days,
     library,
@@ -193,6 +193,12 @@ function rebuild(local: AppData, remote: AppData, winner: Map<EntityKey, 'local'
     categories: mergeList<Category>('category', winner, local.categories, remote.categories),
     ...mergeSettings(local, remote, winner),
   }
+  // The one singleton. Absent when the winning side has none, or when the
+  // winner is a deletion - never a blank.
+  const picture = pick(PICTURE_KEY, winner, local.picture, remote.picture)
+  if (picture) merged.picture = picture
+  else delete merged.picture
+  return merged
 }
 
 /**
@@ -289,6 +295,7 @@ export function isSyncableState(x: unknown): x is AppData {
     if (s[field] !== undefined && !Array.isArray(s[field])) return false
   }
   if (s.tombstones !== undefined && (typeof s.tombstones !== 'object' || s.tombstones === null)) return false
+  if (s.picture !== undefined && (typeof s.picture !== 'object' || s.picture === null)) return false
   return true
 }
 
