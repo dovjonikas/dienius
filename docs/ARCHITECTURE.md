@@ -282,6 +282,7 @@ src/
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
     DayPreview         the whole of a day, without leaving the month
+    ColorSwatchPicker  one colour from eight, without eight of them on screen
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11

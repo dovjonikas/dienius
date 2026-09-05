@@ -3665,6 +3665,58 @@ button.primary {
   padding: 0;
 }
 
+/* ------------------------------------------------------------------------
+   One colour, chosen from eight, without eight of them on screen -
+   views/ColorSwatchPicker.tsx. The answer at the size of a bullet, and the
+   alternatives behind it rather than beside it.
+   ------------------------------------------------------------------------ */
+.swatch-picker { position: relative; flex: 0 0 auto; }
+
+/* A bullet, not a ball. It is decoration on top of a name that already
+   carries the meaning, and it opened the form at 44px for four versions. */
+.swatch-picker-value {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+}
+
+/* The 44px a finger needs, by overlay rather than by height - CONVENTIONS
+   section 6. Growing the bullet would grow the name row it sits in. */
+@media (pointer: coarse) {
+  .swatch-picker-value::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.swatch-picker-panel {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  right: 0;
+  z-index: 50;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
+}
+
+/* The name row: the field takes the line, the colour sits at the end of it. */
+.template-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.template-name-row input { flex: 1 1 auto; min-width: 0; }
+
 /* The ring is the shared rule near .accent-swatch.selected; the colour it
    draws in comes from --pick, set beside the background in TemplatesView. */
 
@@ -3701,7 +3753,53 @@ button.primary {
   flex-shrink: 0;
 }
 
-.block-add { display: flex; gap: var(--s2); flex-wrap: wrap; }
+/* Two levels. This was one row carrying a time, a title, a duration, six
+   category dots, Core, Ongoing and Add - eight controls competing with the
+   one thing anybody actually types. The words are the top line; everything
+   that qualifies them is the second, where it can be ignored until wanted. */
+.block-add { display: flex; flex-direction: column; gap: var(--s2); }
+
+/* One height per row, and it is measured rather than assumed: the time
+   control came out 41px, the field 39 and the duration control 21, which is
+   three different rows pretending to be one. */
+.block-add-line {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+}
+
+/* A floor, never a ceiling, and only where a pointer is fine: on a finger
+   every one of these is 44px and stays that way. Setting the height flat
+   pulled the duration control and the Add button back under the touch target
+   they had, which is exactly what CONVENTIONS section 6 means by auditing by
+   measuring rather than by reading the stylesheet - the phone pass found both
+   the same afternoon they were written. */
+@media (hover: hover) and (pointer: fine) {
+  .block-add-line > *,
+  .block-add-line input,
+  .block-add-line .duration-control-value { min-height: 38px; }
+}
+
+.block-add-marks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+/* The second level is the qualifying half, so it reads as one: pushed in to
+   the width of the time control above it, and set at the smaller size. */
+/* The qualifying half, at the qualifying height. Everything here was between
+   28px and 44px, which put three baselines in one row. */
+.block-add-marks { padding-left: 2px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .block-add-marks button,
+  .block-add-marks .category-picker { min-height: 32px; }
+}
+
+.block-add-marks .btn-secondary { margin-left: auto; }
+
 .block-add input { flex: 1 1 120px; }
 .block-add .duration-control { flex: 0 0 auto; }
 .block-add button {
@@ -6351,8 +6449,32 @@ button.danger:focus-visible {
 
 /* The words take the whole first line when the two controls and the button
    do not fit beside them - on a phone the field was 36px wide otherwise. */
-.library-add { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.library-add > input { flex: 1 1 200px; min-width: 0; }
+/* The words dominate, and every control travels as one group beside them.
+   They used to be four siblings in a wrapping row, so a narrow screen broke
+   the line between the unit and the count - two halves of one answer, on two
+   lines, with the field's tail between them. */
+.library-add {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.library-add > input { flex: 1 1 240px; min-width: 0; }
+
+.library-add-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex: 0 0 auto;
+}
+
+/* One height across the row, the field included - on a mouse. */
+@media (hover: hover) and (pointer: fine) {
+  .library-add > input,
+  .library-add-controls button,
+  .library-add-controls .count-input { min-height: 38px; }
+}
 
 .library-list-empty { margin: 0; font-size: var(--t-sm); }
 

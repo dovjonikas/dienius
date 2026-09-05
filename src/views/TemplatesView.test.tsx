@@ -521,3 +521,88 @@ test('opening the editor for a 30-block template shows every block, in order', a
   expect(rows[0].textContent).toContain('Block 0')
   expect(rows[29].textContent).toContain('Block 29')
 })
+
+/**
+ * The form's own tidying, v2.0. Three things it used to do that a form about
+ * a day's worth of blocks should not: open with eight 44px colour balls above
+ * the name, carry eight controls on the one line anybody types into, and
+ * offer no way to move a block except deleting it and adding it again in the
+ * right place.
+ */
+test('the colour opens as one swatch beside the name, not eight above it', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+
+  const editor = document.querySelector('.template-editor')!
+  expect(editor.querySelectorAll('.swatch')).toHaveLength(1)
+  expect(screen.getByRole('button', { name: /^Template colour: / })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /^Template colour: / }))
+  expect(editor.querySelectorAll('.swatch-picker-panel .swatch')).toHaveLength(8)
+
+  await user.click(screen.getByRole('button', { name: 'Green' }))
+  expect(screen.getByRole('button', { name: 'Template colour: Green. Change it.' })).toBeInTheDocument()
+})
+
+test('the add row is two levels: the words on one, everything that qualifies them on the other', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+
+  const line = document.querySelector('.block-add-line')!
+  const marks = document.querySelector('.block-add-marks')!
+  expect(line.querySelector('input[placeholder="What happens"]')).toBeTruthy()
+  expect(marks.querySelector('[aria-label="Category for the new block"]')).toBeTruthy()
+  expect(marks).toContainElement(screen.getByRole('button', { name: 'Add block' }))
+  // The typing half carries no toggles at all - that was the whole complaint.
+  expect(line.querySelectorAll('.core-toggle')).toHaveLength(0)
+})
+
+test('a block can be moved up the list with the keyboard, and stays where it is put', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Workday',
+    color: '#8ab6f9',
+    blocks: [
+      { title: 'First', time: '09:00' },
+      { title: 'Second', time: '10:00' },
+      { title: 'Third', time: '11:00' },
+    ],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Workday' }))
+
+  const grip = screen.getByRole('button', { name: 'Reorder Third, position 3 of 3' })
+  grip.focus()
+  await user.keyboard('{ArrowUp}')
+  expect([...document.querySelectorAll('.block-list .block-title')].map(e => e.textContent)).toEqual([
+    'First',
+    'Third',
+    'Second',
+  ])
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks.map(b => b.title)).toEqual(['First', 'Third', 'Second'])
+})
+
+// A nudge past either end is somebody meaning "first", not a mistake to
+// reject - the same reading moveBacklogItem already takes of the same gesture.
+test('nudging the first block up changes nothing rather than losing it', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Workday',
+    color: '#8ab6f9',
+    blocks: [{ title: 'First', time: '09:00' }, { title: 'Second', time: '10:00' }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Workday' }))
+
+  const grip = screen.getByRole('button', { name: 'Reorder First, position 1 of 2' })
+  grip.focus()
+  await user.keyboard('{ArrowUp}')
+  expect([...document.querySelectorAll('.block-list .block-title')].map(e => e.textContent)).toEqual([
+    'First',
+    'Second',
+  ])
+})

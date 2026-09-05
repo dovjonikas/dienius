@@ -9,6 +9,9 @@ import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { Explain } from './Explain'
+import { ColorSwatchPicker } from './ColorSwatchPicker'
+import { useListReorder } from './useListReorder'
+import { paletteColorName } from '../lib/colors'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these. Not
@@ -111,6 +114,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   // default would be. Every other field of the block-add row clears on add.
   const [blockCategory, setBlockCategory] = useState<CategoryId>(() => defaultCategoryId(categories))
   const nameRef = useRef<HTMLInputElement>(null)
+  const blockListRef = useRef<HTMLUListElement>(null)
+  // The index doubles as the id here: a draft block has no id of its own, and
+  // the list is short enough that its position is a stable identity for the
+  // length of one drag.
+  const blockReorder = useListReorder(blockListRef, (id, to) => moveBlock(Number(id), to))
 
   // Moves focus into the name field the moment the form appears, for both a
   // brand new template and an in-place edit - the same pattern the if-then
@@ -161,6 +169,24 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
     }))
   }
 
+  /**
+   * Moves a block to another position, clamped rather than refused.
+   *
+   * A drop past either end is somebody meaning "first" or "last", not a
+   * mistake to reject - the same reading `moveBacklogItem` already takes of
+   * the same gesture.
+   */
+  function moveBlock(from: number, to: number) {
+    setDraft(d => {
+      const target = Math.max(0, Math.min(d.blocks.length - 1, to))
+      if (from === target) return d
+      const blocks = [...d.blocks]
+      const [moved] = blocks.splice(from, 1)
+      blocks.splice(target, 0, moved)
+      return { ...d, blocks }
+    })
+  }
+
   function toggleBlockUnbounded(index: number) {
     setDraft(d => ({
       ...d,
@@ -170,23 +196,24 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
 
   return (
     <div className="template-editor">
-      <input
-        ref={nameRef}
-        placeholder="Template name"
-        value={draft.name}
-        onChange={e => setDraft({ ...draft, name: e.target.value })}
-      />
-      <div className="color-palette">
-        {TEMPLATE_COLORS.map(color => (
-          <button
-            key={color}
-            aria-label={`Color ${color}`}
-            aria-pressed={draft.color === color}
-            className={draft.color === color ? 'swatch selected' : 'swatch'}
-            style={{ background: color, ['--pick' as string]: color } as React.CSSProperties}
-            onClick={() => setDraft({ ...draft, color })}
-          />
-        ))}
+      {/* The name, and the colour as a bullet beside it. This opened with a
+          row of eight 32px balls above the field: the largest and most
+          saturated thing on a form about a day's worth of blocks, and seven of
+          the eight were answers nobody had chosen. See ColorSwatchPicker. */}
+      <div className="template-name-row">
+        <input
+          ref={nameRef}
+          placeholder="Template name"
+          value={draft.name}
+          onChange={e => setDraft({ ...draft, name: e.target.value })}
+        />
+        <ColorSwatchPicker
+          colors={TEMPLATE_COLORS}
+          value={draft.color}
+          label="Template colour"
+          nameOf={paletteColorName}
+          onChange={color => setDraft({ ...draft, color })}
+        />
       </div>
       <div className="day-type-picker">
         <Explain id="day-type">
@@ -234,10 +261,40 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </select>
         </div>
       )}
-      <ul className="block-list">
+      <ul className="block-list" ref={blockListRef}>
         {draft.blocks.map((b, i) => (
-          <li key={i} style={{ ['--cat' as string]: categoryColor(b.category, categories) } as React.CSSProperties}>
+          <li
+            key={i}
+            className={[
+              blockReorder.draggingId === String(i) ? 'is-dragging' : '',
+              blockReorder.overIndex === i && blockReorder.draggingId !== null && blockReorder.draggingId !== String(i)
+                ? 'is-over'
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            data-reorder-index={i}
+            style={{ ['--cat' as string]: categoryColor(b.category, categories) } as React.CSSProperties}
+          >
             <span className="block-cat-edge" aria-hidden="true" />
+            {/* The order of a template's blocks is a list somebody builds top
+                to bottom, and until v2.0 the only way to change one was to
+                delete it and add it again in the right place. Dragged with a
+                finger or a pointer, nudged a place at a time with the arrows -
+                the same grip the backlog and the library lists already use. */}
+            <button
+              type="button"
+              className="library-item-grip"
+              aria-label={`Reorder ${b.title}, position ${i + 1} of ${draft.blocks.length}`}
+              onPointerDown={e => blockReorder.start(String(i), i, e)}
+              onKeyDown={e => {
+                if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+                e.preventDefault()
+                moveBlock(i, i + (e.key === 'ArrowUp' ? -1 : 1))
+              }}
+            >
+              <span className="library-item-grip-dots" aria-hidden="true" />
+            </button>
             <span className="task-time">{b.time || '--:--'}</span>
             <span className="block-title">{b.title}</span>
             {parseMinutesInput(b.minutes) !== undefined && (
@@ -291,20 +348,28 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </li>
         ))}
       </ul>
+      {/* Two levels, not one. This was a single row carrying a time, a title
+          field, a duration, six category dots, Core, Ongoing and Add - eight
+          controls competing with the one thing anybody actually types. The
+          words are the top line now; everything that qualifies them is the
+          second, where it can be ignored until it is wanted. */}
       <div className="block-add">
-        <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
-        <input
-          placeholder="What happens"
-          value={blockTitle}
-          onChange={e => setBlockTitle(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addBlock()}
-        />
-        <DurationControl
-          minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
-          allowEmpty
-          stepperLabel="Size in minutes"
-          onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
-        />
+        <div className="block-add-line">
+          <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
+          <input
+            placeholder="What happens"
+            value={blockTitle}
+            onChange={e => setBlockTitle(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addBlock()}
+          />
+          <DurationControl
+            minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
+            allowEmpty
+            stepperLabel="Size in minutes"
+            onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
+          />
+        </div>
+        <div className="block-add-marks">
         {/* The same swatches as quick-add on the day view, for the same
             reason - a template is where most tasks actually get their colour,
             since a stamped day arrives already sorted. */}
@@ -349,6 +414,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </button>
         </Explain>
         <button className="btn-secondary" onClick={addBlock}>Add block</button>
+        </div>
       </div>
       <div className="row">
         <button className="primary" disabled={!draft.name.trim()} onClick={() => onSave(draft)}>

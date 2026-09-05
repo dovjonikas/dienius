@@ -90,6 +90,11 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
 
   return (
     <div className="library-add">
+      {/* The words on the left and every control in one group on the right.
+          They used to be four siblings in a wrapping row, which meant a
+          narrow screen broke the line between the unit and the count - two
+          halves of one answer, on two lines, with the field's tail between
+          them. As one group they wrap together or not at all. */}
       <input
         value={draft}
         data-tour="library-add"
@@ -103,6 +108,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           }
         }}
       />
+      <div className="library-add-controls">
       <Explain id="library-unit">
       <div className="duration-control library-unit" ref={unitRef}>
         <button
@@ -169,6 +175,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
       <button type="button" className="btn-secondary" disabled={!draft.trim()} onClick={add}>
         Add
       </button>
+      </div>
     </div>
   )
 }
