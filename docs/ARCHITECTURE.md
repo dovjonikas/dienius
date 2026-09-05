@@ -325,6 +325,7 @@ it delegates:
 | `useDayDrag.ts` | The pointer machinery: move, resize, drop back to the list |
 | `useTaskSelection.ts` | "Where does this fit", and focus afterwards |
 | `useDoneAnimation.ts` | The beat a checked task holds before moving to Done |
+| `useScrollEdges.ts` | Whether the task list has more above or below, so the mask can say so |
 | `rollover.ts` | Pushable, held, or covered by tomorrow already |
 | `capacity.ts` | Waking windows, gaps, free time, the capacity sentence |
 | `timelineLayout.ts` | Turning tasks into a drawable grid; density fitting |
@@ -584,6 +585,14 @@ and the pre-paint script in `index.html` - and the rule that a theme token
 changes in two places - are in [CONVENTIONS section 5](CONVENTIONS.md#5-design-tokens),
 which is where the rule is kept so it is written once.
 
+One selected-swatch rule, shared by all four round colour swatches - the
+accent row in Appearance, the six categories, a template's own colour, a
+library list's dot. Each sets `--pick` to its own colour and the shared rule
+draws the ring: the fill, a two-pixel gap in `--surface`, a two-pixel ring in
+`--pick`, as a box-shadow so choosing one never moves the row. It was four
+different treatments until v2.0.1 - see DECISIONS, "One ring, for every
+colour that can be chosen".
+
 Two containment boundaries, and they are the only ones: `contain: layout
 style` on `.quick-add-block` and on `.timeline-grid`. Typing changes
 quick-add's subtree on every keystroke, and without a boundary that
@@ -599,7 +608,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. Around 1800 tests in a hundred files, no worker limits, no skips; plus 23 Playwright tests in ten files against the production build (section 4's `e2e/`).
+Vitest + Testing Library + jsdom. 1846 tests in 105 files, no worker limits, no skips; plus 23 Playwright tests in ten files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 

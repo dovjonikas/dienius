@@ -190,8 +190,20 @@ bug this project shipped and fixed.
 
 Two are derived at runtime rather than declared: `--safe-ink` (readable on
 `--surface`) and `--on-accent` (readable on whatever accent is in force).
-**Anything filled with `--accent` uses `--on-accent` for its text.** Hard-coding
-white there measured 2.42:1 on the app's loudest button.
+**Anything filled with `--accent` uses `--on-accent` for its ink.** Hard-coding
+white there measured 2.42:1 on the app's loudest button - and again, two
+versions later, on the tick of a done task and the thumb of a switched-on
+switch, which is the most-looked-at mark in the app and the one nobody
+thought to check because it is not text. **Ink means anything drawn on top:
+a border, a mask, an icon's stroke, not only a `color`.** The check is four
+lines - every rule that fills with `var(--accent)`, and what it draws on
+top - and it is worth running after any wave that touches the stylesheet.
+
+**A duration is a token or it explains itself.** `--dur-fast`, `--dur`, and
+one bespoke 0.35s on the day progress bar with its reason written beside it.
+A literal that happens to equal a token - `0.15s` beside `var(--dur-fast)` in
+the same declaration, which shipped three times - means the token no longer
+controls what it claims to, and a reader cannot tell which was meant.
 
 **A custom property that does not exist invalidates the whole declaration.**
 `--s5` and `--s7` were referenced before they were defined, and three

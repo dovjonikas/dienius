@@ -123,10 +123,12 @@ Tags exist for v1.0 through v2.0.
 
 ### Nothing is half-built
 
-Everything through v2.0 is tagged, the suite is green (1832 tests, 103 files,
-plus 23 Playwright tests in 10 files across two viewports),
-the typecheck and the build are clean and the working tree is empty.
-What follows is wanted rather than owed.
+Everything through v2.0 is tagged, plus one polish pass on top of it. The
+suite is green - **1846 tests in 105 files, plus 23 Playwright tests in 10
+files across two viewports** - the typecheck and the build are clean,
+`npm run sweep` reports nothing on the desktop and its self-check sees five
+shapes out of five, and the working tree is empty. What follows is wanted
+rather than owed.
 
 ### The desktop is closed; the phone is the next wave
 
@@ -149,6 +151,184 @@ itself.
   nothing would have thought to measure - two adjacent controls reading the
   same word, a red word on an action that carries no verdict, a month
   drawing a week of the next one.
+
+### Asked for, not yet built: categories the owner owns (P1)
+
+The next session's first job, designed rather than described so it can start
+from code. Reported as: the six categories should stay as the defaults, but
+be editable, deletable, and joinable by new ones with a colour picked by
+hand.
+
+**This does not delete the six-category doctrine, it moves it.** DECISIONS
+still holds that a day is only takeable-in-at-a-glance while the palette is
+about six, and `RESEARCH-ADHD.md` section 7 is why. What changes is who
+decides *which* six: the app ships them, the owner may disagree, and a
+planner that will not let somebody rename "Commute" when they work from home
+is being precious about a decision that was never the app's to keep. No cap
+is enforced; the Settings copy says what the number is for, once, and then
+gets out of the way.
+
+#### The data model
+
+`Category` moves out of a literal and into `AppData`, as a top-level list
+beside `library` and `goals` - not a settings field. It is content the
+person authors, the same shape a library list is, and a settings field is one
+sync entity, so two devices editing two different categories would fight over
+one key.
+
+```ts
+// types.ts
+export interface Category extends Timestamped {
+  id: string
+  label: string
+  /**
+   * Absent means the built-in pair in styles.css for this id - `--cat-core`
+   * and the rest, which carry one value for dark and one for light. Present
+   * means a literal hex the owner chose, used in both.
+   */
+  color?: string
+}
+
+// AppData
+categories: Category[]
+```
+
+**`CategoryId` stops being a union and becomes `string`.** The six defaults
+keep their literal ids - `core`, `routine`, `health`, `meal`, `commute`,
+`personal` - so every task, template block and backlog item already on disk
+keeps pointing at exactly what it points at now. A new one gets a
+`crypto.randomUUID()`.
+
+**Absent `color` is the whole trick, and it is worth keeping.** Today a
+category means the same thing in Dark and Light because the stylesheet
+carries two values per id and the cascade picks. A hand-picked colour cannot
+do that - one hex is one hex. So an untouched default keeps the pair, and
+only an edited or new category carries a literal. Somebody who never opens
+this loses nothing; somebody who picks a colour gets the colour they picked,
+in both themes, which is what picking a colour means.
+
+#### What has to change, file by file
+
+- **`lib/categories.ts`** keeps `DEFAULT_CATEGORIES` (the six, with their
+  `var(--cat-*)` references) and `DEFAULT_CATEGORY`, and loses the module-level
+  `BY_ID` map. `findCategory`, `categoryColor` and `categoryLabel` take the
+  loaded list: `findCategory(id, categories)`. `isCategoryId` goes.
+- **`storage.ts` / `normalizeLoaded`** backfills `categories` to the six
+  defaults when absent, which is every backup written before this. Nothing on
+  disk is recoloured or renamed.
+- **`validate.ts`**: a new `CATEGORY` table - `{ id: string, label: text(1, 40),
+  color: optional(color) }` - and `categories: optional(listOf(CATEGORY))` in
+  `STORED_APP_DATA`. The three `category: optional(category)` fields on `TASK`,
+  `TEMPLATE_BLOCK` and `BACKLOG_ITEM` become `optional(text(1, 64))`. **That
+  is a deliberate loosening and it is the right one**: an id the owner made up
+  cannot be checked against a closed list, and a category id becomes exactly
+  what `templateId`, `libraryRef` and `sleepProfileId` already are - a dangling
+  id that degrades to "no category" rather than crashing, which every reader
+  already handles.
+- **`syncEntities.ts`**: `'category'` joins `EntityKind` and `KINDS`, and a
+  line beside `inbox` in the entity builder. Per-entity merge and tombstones
+  come free. `SYNCED_SETTINGS` is untouched.
+- **Sixteen files read categories, in two ways**, and both have to take the
+  loaded list instead of the module's. Four draw the whole row and import
+  `CATEGORIES` - `LibraryView`, `TemplatesView`, `QuickAdd`, `TaskDetail`
+  (`types.ts` imports only the type). Eleven look one up and import
+  `categoryColor` / `categoryLabel` - `TemplatesView`, `week/WeekColumn`,
+  `week/WeekView`, `clock/FocusBar`, and `day-plan/{Backlog, DayDigest,
+  FocusView, QuickAdd, TaskDetail, TaskRow, TimelineGrid}`. `validate.ts`
+  imports `isCategoryId`, which goes. Components read
+  `useAppData().categories` or take it as a prop; the store modules already
+  have `getData()`. This is the bulk of the work and none of it is hard.
+- **`styles.css`** keeps the two `--cat-*` blocks for the defaults. A custom
+  colour arrives inline on `--cat` the way `Template.color` already does, so
+  no new mechanism. Note that `.theme-card[data-pv-mode]` overrides the six
+  for the theme preview; a custom category has no `--cat-*` to override and
+  will preview as its literal, which is correct and worth a comment.
+
+#### Where the editing lives
+
+**A new Settings section, between Week and Nudges**, and nowhere else. Same
+reasoning as North's: something you can rewrite from the screen you look at
+every morning is something you will rewrite on a bad morning, and the swatch
+row under quick-add is a picker, not an editor. It is a list of rows - the
+dot, the name, an Edit and a Delete - with "Add a category" under it, which
+is the shape `NorthSettings` already has and should be read for the pattern.
+
+**The order is the array's own**, dragged with `useListReorder` the way the
+library's items already are, because the order is what the swatch row draws
+and there is nothing else it could be. No sort, no priority, no cap.
+
+`DEFAULT_CATEGORY` stays `'core'` as the id quick-add opens on, and falls
+back to the first in the list when that id has been deleted.
+
+#### Deleting one, which is the only part with a real decision in it
+
+**A delete offers to move what it would orphan.** Never silent loss, never a
+locked delete.
+
+`actions.deleteCategory(id, moveTo)` is one commit: every `Task.category`,
+`TemplateBlock.category` and `BacklogItem.category` equal to `id` is rewritten
+to `moveTo`, the category is removed, the tombstone is written by `commit()`'s
+own diff. One undo, five seconds, like every other expensive mistake.
+
+The dialog says what it is about to touch and offers where it goes:
+
+> **Delete Health?**
+> 14 tasks, 2 template blocks and 1 backlog item use it.
+> Move them to: [ Personal ▾ ]   *(the first remaining category)*
+> [ Delete and move ]  [ Keep it ]
+
+- The count is a fact about a button, not a warning, and it is stated once.
+- The target defaults to the first remaining category, so the ordinary path
+  is one press.
+- Nothing uses it? The sentence goes and the button reads plain "Delete".
+- **The last category cannot be deleted**, because there is nowhere to move
+  to. Say so on the disabled button rather than hiding it.
+
+#### Picking a colour
+
+The eight `PALETTE_COLORS` as a swatch row - the same row Templates already
+offers, and now with the same selected ring as everything else - plus a free
+hex behind them. CONVENTIONS section 16 says a person chooses rather than
+types wherever the answers are a fixed set; a colour wheel is the case where
+they are not, so a native `<input type="color">` is the honest escape hatch
+and not the "control that has not been built yet" that rule is about.
+
+**A chosen colour still has to be readable.** A category is a wash under text
+on the timeline and a 4px edge on a card, and a hand-picked one can be
+anything. The wash is the thing to check, not the colour, and the wash is a
+gradient: `.timeline-anchor-cat` runs 30% of the colour at the left edge down
+to 15% across the block, and the title is not `--text` but
+`color-mix(in srgb, var(--cat) 22%, var(--text))`. So the honest test is that
+mixed title against the strongest end of that wash -
+`color-mix(in srgb, <picked> 30%, var(--surface))` - in **both** themes, since
+one hex now serves both where the built-in pair served each separately.
+`contrast.ts` has the maths and `theme-contrast.test.ts` is the pattern: a
+preset that fails is not mergeable, and neither is a colour that fails here.
+
+**Refuse rather than clamp.** Silently changing what somebody picked is worse
+than saying it will not read, and a clamped colour is a third thing that is
+neither what they chose nor what the app would have chosen.
+
+**Clearing a colour is how a default comes back**, and only a default has one
+to come back to. The picker's "no colour" option deletes `color`, which
+returns one of the six to its built-in `--cat-*` pair and its two-theme
+behaviour; it has to exist, because somebody who tries a green Health and
+dislikes it should not have to remember the original hex. A category the
+owner made has no pair behind it, so **a new one's colour is required** - the
+option is simply not offered there, and the form will not save without one.
+
+#### Tests this needs, in the same commit
+
+- `categories.test.ts` for the new lookups against a loaded list, including a
+  dangling id resolving to nothing.
+- `validate.test.ts` for the new table, and for the three loosened fields
+  still refusing a non-string.
+- `storage.test.ts` for a backup with no `categories` loading with the six.
+- `syncMerge.test.ts` for two devices renaming and deleting.
+- A view test for the delete dialog: the count, the default target, and that
+  every task pointing at the deleted one points at the target afterwards.
+- One `e2e` walk: add a category with a picked colour, use it, delete it,
+  and see the tasks land on the target.
 
 ### Asked for, and now built
 
@@ -235,10 +415,31 @@ guess whether it was noticed.
   at 1082px, six hundred pixels of scrolling for a day whose floors need 456.
   It aims at the floors' own height now and comes out at 464. The function
   had no tests at all, which is how it shipped; it has six.
-- ~~Four ways to say a colour was chosen~~ - fixed in v2.0.1. One rule.
+- ~~Four ways to say a colour was chosen~~ - fixed in v2.0.1. The accent row,
+  the six categories, a template's colour and a library dot each had their
+  own idea of what "selected" looks like. One rule now, in DECISIONS: fill,
+  a two-pixel gap in `--surface`, a two-pixel ring in the swatch's own colour
+  through `--pick`, as a box-shadow so choosing one never moves the row.
 - ~~The tick on a done task measured 2.42:1~~ - fixed in v2.0.1. It was a
-  hard `#fff`, which is the exact case CONVENTIONS section 5 was written
-  about, on the most-looked-at mark in the app.
+  hard `#fff` on an accent fill, which is the exact case CONVENTIONS section
+  5 was written about, on the most-looked-at mark in the app. 8.67:1 now, and
+  the switch's thumb had the same bug. A check over every accent-filled
+  surface in the stylesheet found those two and nothing else.
+- ~~A percentage in the rail~~ - fixed in v2.0.1. The digest's ring carried
+  `Math.round(fraction * 100)`, which is a percentage with the sign taken
+  off, next to a "Done 1 of 9" that already said it correctly in words.
+  `score.test.ts` had held the no-percentage rule for `formatDayScore` since
+  it was written; the digest computed its own fraction and walked around it.
+  The ring is a shape now, and `DayDigest.test.tsx` holds it.
+- ~~Scroll shades that could not be seen~~ - fixed in v2.0.1, and it was a
+  flaw in v2.0's own fix. The `background-attachment: local`/`scroll`
+  gradient pair is the right answer only for a scroller whose children are
+  transparent; a task card paints `--surface` edge to edge, so the shades sat
+  behind the cards. `mask-image` driven by `useScrollEdges.ts`.
+- ~~Three transitions mixed `0.15s` with `var(--dur-fast)`~~ - fixed in
+  v2.0.1. The same number written two ways means the motion token no longer
+  controls everything it claims to. The one genuinely bespoke duration left
+  (the day progress bar at 0.35s) now says why.
 
 - ~~Screenshots, and no way to make them~~ - `npm run shots` since v1.11,
   Playwright writing PNGs from the dev server with the clock pinned. The
