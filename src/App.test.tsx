@@ -170,8 +170,9 @@ test('the palette command loads the reading plan and opens the library on it', a
   render(<App />)
   await user.keyboard('{Control>}k{/Control}')
   await user.click(screen.getByRole('option', { name: /Load my reading plan/ }))
-  const books = getData().library.find(l => l.name === 'Books')
-  expect(books?.items).toHaveLength(9)
+  // Three lanes since v2.0, each advancing on its own - see librarySeed.ts.
+  expect(getData().library.map(l => l.name)).toEqual(['MIND', 'CRAFT', 'LIGHT'])
+  expect(getData().library.map(l => l.items.length)).toEqual([10, 5, 6])
   expect(screen.getByRole('heading', { name: 'Library' })).toBeInTheDocument()
 })
 

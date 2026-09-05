@@ -146,7 +146,7 @@ the second has not started and must not start before this one closes.
 | 1 | **Categories the owner owns** | **Done** - `adee903`. Three bugs found on the way, two of them shipped; two existing tests changed, both named in that commit |
 | 2 | **North window: goals and if-then in one place** | **Done**. North is the sixth tab, rules live under the goal they protect, and the old day-view surfacing is gone with the three fields it needed |
 | 3 | **The explanation layer** | **Done**. Twenty terms audited, one tooltip component, all the copy in `lib/explain.ts` |
-| 4 | Library lanes: MIND, CRAFT, LIGHT | Not started |
+| 4 | **Library lanes: MIND, CRAFT, LIGHT** | **Done**. One queue of twenty became three that advance on their own |
 | 5 | Clean checkup | Not started |
 | 6 | Closing: desktop QA, DAILY.md, regression, tag v2.0 | Not started |
 | - | **Week templates** (its own wave) | Queued *after* stage 6. Its own stage 3 wants tooltips for "Week template", "Add to" and "Copy to", and the tooltip component is stage 3 of this wave, so the order is not negotiable |

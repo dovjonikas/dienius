@@ -251,7 +251,7 @@ src/
     shortcuts.ts       the keyboard layer and its two safety rules
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
-    librarySeed.ts     the reading plan, on request from the palette - see its own comment
+    librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
     dates.ts           date-key helpers, month grid

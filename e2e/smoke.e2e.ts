@@ -50,6 +50,15 @@ test('the reading plan arrives from the palette, and never on its own', async ({
   await palette.getByRole('option', { name: /Load my reading plan/ }).click()
 
   await expect(page.getByRole('heading', { name: 'Library' })).toBeVisible()
+  // Three lanes, each with its own queue and its own "up next" - MIND is the
+  // first of them and The War of Art is at the front of it.
   await expect(page.getByText('The War of Art')).toBeVisible()
-  await expect(page.getByText('9 going')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'MIND' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'CRAFT' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'LIGHT' })).toBeVisible()
+  // Each lane carries its own count, which is the whole reason for the split:
+  // three queues that move independently rather than one that stalls.
+  await expect(page.getByRole('button', { name: 'MIND 10 going', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'CRAFT 5 going', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'LIGHT 6 going', exact: true })).toBeVisible()
 })
