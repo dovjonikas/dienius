@@ -11,6 +11,7 @@ import { YearStrip } from '../widgets/year-strip/YearStrip'
 import { NARROW_DAYS, WeekView, visibleWeekDays, type WeekReading } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
 import { Explain } from './Explain'
+import { requestReplan } from '../lib/replanState'
 
 /** How long a mouse rests on a cell before the day opens under it. */
 const PREVIEW_DELAY = 400
@@ -274,6 +275,17 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             <button type="button" className="btn-secondary calendar-today" onClick={() => changeWeekDate(todayKey())}>
               Today
             </button>
+            {/* The phone rings while the week is the screen that shows the
+                day it is about. Opens the one sheet over the week, on the
+                day the week is centred on when that day is still ahead, and
+                the sheet's own row moves it. */}
+            <button
+              type="button"
+              className="btn-secondary calendar-came-up"
+              onClick={() => requestReplan('interrupt', weekDate >= today ? weekDate : today)}
+            >
+              Something came up
+            </button>
             {/* Only where there is a mapping to apply, and only on a screen
                 that shows the week it would stamp. A button that explains it
                 cannot do anything is worse than a button that is not there,
@@ -511,6 +523,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                           date={cell.key}
                           onOpenDay={() => onOpenDay(cell.key)}
                           onStamp={stampTemplateId ? () => stampCell(cell.key, 'apply') : undefined}
+                          onInterrupt={cell.key >= today ? () => requestReplan('interrupt', cell.key) : undefined}
                         />
                       )}
                     </button>

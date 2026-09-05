@@ -197,7 +197,13 @@ export function planInterrupt(
     .map(t => ({ start: startOf(t), end: endOf(t) }))
   fixed.push({ start: interruption.start, end }, ...busy)
 
-  const { placed, left } = pack(squeeze, freeGapsAfter(fixed, window, opts.from ?? end))
+  // The gaps after the interruption first, then the ones before it that a
+  // start-from opened up. A task the afternoon lost goes into the evening
+  // when the evening has room, and into the morning only when it does not:
+  // "I will do it after" is the reading a person gives it, and lunch moved
+  // to eight in the morning is arithmetic nobody believes.
+  const gaps = freeGapsAfter(fixed, window, opts.from ?? end)
+  const { placed, left } = pack(squeeze, [...gaps.filter(g => g.start >= end), ...gaps.filter(g => g.start < end)])
 
   const parts: string[] = []
   if (placed.length > 0) {
@@ -265,7 +271,8 @@ export function planShift(tasks: Task[], nowMinutes: number, delta: number, wind
   }
 }
 
-function capitalise(text: string): string {
+/** "tomorrow" at the start of a sentence. */
+export function capitalise(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
@@ -392,29 +399,38 @@ export interface ApplyOptions {
  * rather than a silence, and the one pass that generates instances has to
  * be able to see it.
  */
+/**
+ * A day's tasks with the plan's moves made: what stays at its new time,
+ * what leaves for the next day, and what goes. The sheet reads the free
+ * windows off `staying` before anything is applied; `applyPlan` is the
+ * same split committed.
+ */
+export function splitByPlan(tasks: Task[], plan: ReplanPlan): { staying: Task[]; leaving: Task[]; dropped: Task[] } {
+  const gone = new Set(plan.drop)
+  const going = new Set(plan.tomorrow)
+  const newTime = new Map(plan.moves.map(m => [m.taskId, m.time]))
+  const staying: Task[] = []
+  const leaving: Task[] = []
+  const dropped: Task[] = []
+  for (const task of tasks) {
+    if (gone.has(task.id)) dropped.push(task)
+    else if (going.has(task.id)) leaving.push(task)
+    else {
+      const time = newTime.get(task.id)
+      staying.push(time !== undefined && time !== task.time ? { ...task, time } : task)
+    }
+  }
+  return { staying, leaving, dropped }
+}
+
 export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId: () => string, opts: ApplyOptions = {}): AppData {
   const day: DayPlan = data.days[date] ?? { date, tasks: [] }
   const next = addDays(date, 1)
   const target: DayPlan = data.days[next] ?? { date: next, tasks: [] }
-  const dropped = new Set(plan.drop)
-  const leaving = new Set(plan.tomorrow)
-  const newTime = new Map(plan.moves.map(m => [m.taskId, m.time]))
 
-  const staying: Task[] = []
-  const goingTomorrow: Task[] = []
+  const { staying, leaving: goingTomorrow, dropped } = splitByPlan(day.tasks, plan)
   const skips = new Set(day.repeatSkips ?? [])
-  for (const task of day.tasks) {
-    if (dropped.has(task.id)) {
-      if (task.repeatOf) skips.add(task.repeatOf)
-      continue
-    }
-    if (leaving.has(task.id)) {
-      goingTomorrow.push(task)
-      continue
-    }
-    const time = newTime.get(task.id)
-    staying.push(time !== undefined && time !== task.time ? { ...task, time } : task)
-  }
+  for (const task of dropped) if (task.repeatOf) skips.add(task.repeatOf)
 
   if (plan.add) {
     const already = staying.some(t => t.title === plan.add!.title && t.time === plan.add!.time)

@@ -45,6 +45,12 @@ export interface WeekColumnProps {
   draggingId: string | null
   /** What the weekday plan would stamp here, for the header's one-tap offer. */
   weekdayTemplateId: string | undefined
+  /**
+   * Somebody accepted a replan for this day - see `DayPlan.replannedOn`.
+   * One quiet word under the template chip, so a Thursday that looks unlike
+   * its template is read as arranged rather than as broken. Never a count.
+   */
+  replanned?: boolean
   onBlockPointerDown: (block: WeekBlock, e: React.PointerEvent) => void
   onEmptyClick: (percent: number) => void
   onStamp: (templateId: string) => void
@@ -65,6 +71,7 @@ export function WeekColumn({
   events,
   draggingId,
   weekdayTemplateId,
+  replanned = false,
   onBlockPointerDown,
   onEmptyClick,
   onStamp,
@@ -147,6 +154,8 @@ export function WeekColumn({
             +
           </button>
         )}
+
+        {replanned && <span className="week-col-mark">replanned</span>}
 
         {stampOpen && templates.length > 0 && (
           <div className="week-stamp-menu" role="menu">

@@ -19,7 +19,6 @@ import { TaskDetail } from '../widgets/day-plan/TaskDetail'
 import { TaskActionsSheet } from '../widgets/day-plan/TaskActionsSheet'
 import { ReplanSheet } from '../widgets/day-plan/ReplanSheet'
 import type { Task } from '../lib/types'
-import { DEFAULT_SLEEP_SETTINGS } from '../widgets/day-plan/capacity'
 
 const DATE = '2026-09-04'
 
@@ -89,12 +88,6 @@ const rowChrome = {
 
 const replanChrome = {
   date: DATE,
-  tasks: [] as Task[],
-  nowMinutes: 600,
-  sleep: DEFAULT_SLEEP_SETTINGS,
-  sleepProfileId: undefined,
-  busy: [],
-  away: undefined,
   onClose: () => {},
 }
 

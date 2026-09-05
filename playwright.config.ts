@@ -29,8 +29,10 @@ export default defineConfig({
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 } } },
     // The owner is an iPhone user: the tour is walked on a phone's viewport
-    // too, in the phone's words, with the sheets it uses there.
-    { name: 'phone', testMatch: /tour\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
+    // too, in the phone's words, with the sheets it uses there - and so is
+    // the phone call, whose whole promise is three presses with nothing
+    // scrolled at this size.
+    { name: 'phone', testMatch: /(tour|interrupt)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

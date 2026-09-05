@@ -135,7 +135,7 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   },
   'replan-interrupt': {
     term: 'Something came up',
-    text: 'Fits one new thing into the day and shows you what it lands on before anything moves. Whatever it hits is moved later or offered to tomorrow, never quietly dropped.',
+    text: 'Fits one new thing into today or any day this week, and shows what it lands on before anything moves. What it hits goes into a free gap or to the next day; a routine block is skipped for the day, never quietly dropped.',
   },
   'replan-shift': {
     term: 'Shift the rest',

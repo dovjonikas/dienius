@@ -33,8 +33,7 @@ import { TaskPane } from './TaskPane'
 import { useDayDrag } from './useDayDrag'
 import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
-import { ReplanSheet } from './ReplanSheet'
-import { useReplanRequest, type ReplanMode } from '../../lib/replanState'
+import { requestReplan } from '../../lib/replanState'
 
 export interface DayViewProps {
   date: string
@@ -84,14 +83,6 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
   const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
   const isToday = date === todayKey()
   const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
-  // The replan sheet - see replan.ts. Opened from the header, or asked for
-  // by the command palette through replanState; either way it is about
-  // today, so a request while another day is on screen is left for today.
-  const [replanMode, setReplanMode] = useState<ReplanMode | null>(null)
-  const replanRequest = useReplanRequest()
-  useEffect(() => {
-    if (replanRequest.seq > 0 && isToday) setReplanMode(replanRequest.mode)
-  }, [replanRequest, isToday])
   useEffect(() => {
     if (!isToday) return
     const timer = setInterval(() => setNowMinutes(currentMinutes()), NOW_TICK_MS)
@@ -240,22 +231,12 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
         isWide={isWide}
         dayLayoutFocus={dayLayoutFocus}
         onOpenNorth={onOpenNorth}
-        replan={isToday ? { away: day?.away, onOpen: setReplanMode } : undefined}
+        // The sheet itself is at the app root - see App.tsx and replanState.
+        // Today gets the three doors; a day still ahead gets the one that
+        // applies to it; a day that has passed gets none, because nothing
+        // can come up in it any more.
+        replan={!isPast ? { away: day?.away, isToday, onOpen: mode => requestReplan(mode, date) } : undefined}
       />
-
-      {replanMode && isToday && (
-        <ReplanSheet
-          date={date}
-          tasks={day?.tasks ?? []}
-          nowMinutes={nowMinutes}
-          sleep={sleep}
-          sleepProfileId={daySleepProfileId}
-          busy={busy}
-          away={day?.away}
-          mode={replanMode}
-          onClose={() => setReplanMode(null)}
-        />
-      )}
 
       {/* Everything that can appear above the day, in one row.
           ------------------------------------------------------------------

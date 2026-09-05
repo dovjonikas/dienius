@@ -8742,6 +8742,17 @@ button.danger:focus-visible {
 .calendar-bar .calendar-nav { flex: 0 0 auto; margin: 0; }
 .calendar-bar .segmented { margin-left: auto; }
 
+/* The week's door to Something came up. On a wide screen it sits beside
+   Today and Stamp week where it was written. Below the wide breakpoint the
+   bar wraps into rows, and a button of its own was a fourth row - 55px off
+   a grid whose whole job is to be a picture - so it is ordered after the
+   Month / Week / Year segment and shares the Grid / Agenda row, which had
+   the room. */
+@media (max-width: 1023px) {
+  .calendar-came-up { order: 1; }
+  .calendar-bar .segmented-quiet { order: 2; }
+}
+
 /* The month's one line, between the title and the toggle. Set as quietly as
    the capacity line - it is the same kind of sentence about a stretch of
    time, and it is not the reason anybody opened this tab. */
@@ -10389,6 +10400,74 @@ main:has(.week) > .calendar {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent, #fff);
+}
+
+/* A shape nothing is left of - the morning, at three in the afternoon. Kept
+   in the row rather than removed, so the row keeps its shape between one
+   opening and the next; greyed, because it is not an answer today. */
+.replan-chip:disabled { opacity: 0.45; cursor: default; }
+.replan-chip:disabled:hover { color: var(--muted); border-color: var(--border); }
+
+/* Something came up, for any day: the sections of the one sheet.
+   ------------------------------------------------------------------------
+   Chips first - when, then what is gone - the words second, and the plan
+   under both. That is the order a call gets answered in, and the order a
+   thumb reaches on a phone held in one hand: the two rows that need a tap
+   are at the top, the field that needs a keyboard is below them, and Accept
+   is in the foot whatever the list between does. */
+.replan-section { display: flex; flex-direction: column; gap: var(--s2); }
+.replan-section > .replan-label { display: block; }
+.replan-section .field { gap: var(--s1); }
+
+/* The date field behind Pick a day, styled as the app's other fields are.
+   Native on purpose: it is the rare path, and a wheel on a phone for a date
+   three weeks out is the right control for that path. */
+.replan-date-input { min-height: 36px; padding: 4px var(--s3); font: inherit; }
+
+/* One line: the free windows, which is the answer for the person on the
+   phone, over the plan's own sentence. Weight rather than colour, so it is
+   the first thing read and still reads as part of the same answer. */
+.replan-free { display: block; font-weight: 600; margin-bottom: 2px; }
+
+/* A block in the way is a row you can press: the row itself says what
+   happens to it, and pressing it opens the four ways out for that one. The
+   old item styling moves onto the button, so the shift and rescue lists,
+   which are read and not pressed, keep theirs. */
+.replan-item.is-row { display: flex; flex-direction: column; gap: var(--s1); padding: 0; background: none; }
+.replan-row-button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s1) var(--s3);
+  width: 100%;
+  min-height: 0;
+  padding: var(--s2) var(--s3);
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 25%, transparent);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+.replan-row-button:hover { border-color: var(--border); }
+.replan-row-button[aria-expanded='true'] { border-color: var(--accent); }
+.replan-item.is-row .replan-item-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.replan-item.is-squeeze .replan-item-outcome { color: var(--text); }
+.replan-item.is-drop .replan-item-outcome { color: var(--faint); }
+
+/* The quiet word on a replanned day, in the week's column head and the
+   agenda's date heading. Faint, small, never a number: it says the day was
+   arranged by hand, not how much of it moved. */
+.week-col-mark { display: block; text-align: center; font-size: var(--t-xs); color: var(--faint); line-height: 1.2; }
+.agenda-mark { margin-left: var(--s2); font-size: var(--t-xs); font-weight: 400; color: var(--faint); }
+
+@media (max-width: 599px) {
+  .replan-item.is-row .replan-item-title { white-space: normal; }
+}
+
+@media (pointer: coarse) {
+  .replan-row-button { min-height: 44px; }
+  .replan-date-input { min-height: 44px; }
 }
 
 @media (pointer: coarse) {

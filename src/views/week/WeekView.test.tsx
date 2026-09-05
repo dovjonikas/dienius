@@ -226,3 +226,20 @@ test('the visible days are the whole week when wide and the chosen day with its 
   expect(visibleWeekDays(DATE, true)).toEqual(WEEK)
   expect(visibleWeekDays(DATE, false)).toEqual(['2026-09-01', '2026-09-02', '2026-09-03'])
 })
+
+// --- a replanned day -------------------------------------------------------
+
+/**
+ * One quiet word on a day somebody replanned, so a Thursday that looks
+ * unlike its template is read as arranged rather than as broken. Never a
+ * count of what moved - see DayPlan.replannedOn.
+ */
+test('a replanned day says so in one quiet word, and an ordinary day says nothing', () => {
+  actions.resetForTests({
+    ...defaultData(),
+    days: { [TUE]: { date: TUE, tasks: [], replannedOn: DATE } },
+  })
+  renderWeek()
+  expect(within(column(TUE)).getByText('replanned')).toBeInTheDocument()
+  expect(within(column(MON)).queryByText('replanned')).toBeNull()
+})

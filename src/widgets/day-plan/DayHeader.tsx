@@ -48,10 +48,12 @@ export interface DayHeaderProps {
   /** Passed straight to the North line - see NorthLine. */
   onOpenNorth: () => void
   /**
-   * The way into replanning, on today only - see replan.ts. While the person
-   * is away the header says so and offers the way back instead.
+   * The way into replanning - see replan.ts. Today has the three doors,
+   * behind Replan; while the person is away the header says so and offers
+   * the way back instead. A day still ahead has the one door that applies to
+   * it, Something came up, opened straight onto that day.
    */
-  replan?: { away: string | undefined; onOpen: (mode: ReplanMode) => void }
+  replan?: { away: string | undefined; isToday: boolean; onOpen: (mode: ReplanMode) => void }
 }
 
 export function DayHeader({
@@ -118,7 +120,11 @@ export function DayHeader({
               this is a door for a bad moment, not a control for every one. */}
           {replan && (
             <div className="day-replan">
-              {replan.away ? (
+              {!replan.isToday ? (
+                <button type="button" className="link-button" onClick={() => replan.onOpen('interrupt')}>
+                  Something came up
+                </button>
+              ) : replan.away ? (
                 <>
                   <span className="day-replan-away">Away since {replan.away}</span>
                   <button type="button" className="link-button" onClick={() => replan.onOpen('back')}>

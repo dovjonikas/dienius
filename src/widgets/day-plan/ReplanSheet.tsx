@@ -1,21 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import type { Task } from '../../lib/types'
-import { actions } from '../../lib/store'
+import { actions, useAppData } from '../../lib/store'
 import { offerUndo } from '../../lib/undo'
 import type { ReplanMode } from '../../lib/replanState'
-import { formatDuration, parseTimeInput, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
-import { formatClock } from './timelineLayout'
+import { todayKey } from '../../lib/dates'
+import { columnFor } from '../../lib/stamping'
+import { busyIntervals, useCalendarCache } from '../../lib/calendars'
+import { isRoutine } from '../../lib/taskIdentity'
+import { usePointerCoarse } from '../../lib/viewport'
+import { formatDuration, parseTimeInput, timeToMinutes, windowFor, type Interval } from './capacity'
+import { currentMinutes, formatClock } from './timelineLayout'
 import { Explain } from '../../views/Explain'
 import {
+  capitalise,
   findConflicts,
+  formatFreeWindows,
+  freeWindows,
   planInterrupt,
   planRescue,
   planShift,
+  splitByPlan,
   type ConflictChoice,
   type Interruption,
   type ReplanPlan,
 } from './replan'
+import { DEFAULT_TITLE, SHAPES, dayChoices, dayLabel, dayWordsFor, defaultChoices, roundUp, shapeInterval, type Preset } from './interrupt'
+import { parseInterruptLine, resolveDay, stripTokens, withTitle } from './interruptParse'
+import { readRecentTitles, rememberTitle } from './replanPrefs'
 
 /**
  * The replan sheet - the ten seconds between "the plan just broke" and
@@ -26,18 +38,20 @@ import {
  * is one question, the answer is shown before it is accepted, and the
  * summary is written to be read in three seconds on a phone. Nothing is
  * applied until Accept, and Accept is one commit with one undo.
+ *
+ * Since v2.2 it is mounted at the root and reads the store itself, given a
+ * day, because "Something came up" is about any day of the week: the phone
+ * rings about Thursday while Tuesday is on screen. The other three doors -
+ * shift the rest, away, back - are about today whatever day was asked for,
+ * since "everything from now" has no meaning on a day that has not begun.
  */
 
 export interface ReplanSheetProps {
+  /**
+   * The day an interruption lands on to begin with. The sheet's own WHEN row
+   * changes it without leaving; a day that has passed is read as today.
+   */
   date: string
-  tasks: Task[]
-  nowMinutes: number
-  sleep: SleepSettings
-  sleepProfileId: string | undefined
-  /** External calendar time, which is never a gap. */
-  busy: Interval[]
-  /** The time the person went away, while they are. */
-  away: string | undefined
   mode: ReplanMode
   onClose: () => void
 }
@@ -45,15 +59,29 @@ export interface ReplanSheetProps {
 const DURATIONS = [15, 30, 45, 60, 90, 120]
 const SHIFTS = [15, 30, 60]
 
-function roundUp(minutes: number, step = 5): number {
-  return Math.ceil(minutes / step) * step
+/** As on the day view: never more than half a minute behind the real clock. */
+const NOW_TICK_MS = 30_000
+
+/** Everything one day's arithmetic needs, read from the store for that day. */
+interface DayContext {
+  tasks: Task[]
+  window: Interval
+  busy: Interval[]
+  away: string | undefined
 }
 
 export function ReplanSheet(props: ReplanSheetProps) {
   useRestoreFocus()
+  const data = useAppData()
+  const calendarCache = useCalendarCache()
   const [mode, setMode] = useState<ReplanMode>(props.mode)
-  const window = useMemo(() => windowFor(props.sleepProfileId, props.sleep), [props.sleepProfileId, props.sleep])
-  const titles = useMemo(() => new Map(props.tasks.map(t => [t.id, t.title])), [props.tasks])
+  const today = todayKey()
+  const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMinutes(currentMinutes()), NOW_TICK_MS)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -66,12 +94,35 @@ export function ReplanSheet(props: ReplanSheetProps) {
     return () => document.removeEventListener('keydown', onKey, true)
   }, [props])
 
-  function accept(plan: ReplanPlan, clearAway = false) {
-    const { undo } = actions.applyReplan(props.date, plan)
-    if (clearAway) actions.setAway(props.date, undefined)
-    offerUndo('Day replanned', () => {
+  /**
+   * One day as the arithmetic sees it. The sleep schedule is the day's own,
+   * else its template's through `columnFor` - a week template's Wednesday
+   * can be a night shift while its Saturday is not - else the default, the
+   * same three steps the day view takes; somebody else's calendar is time
+   * already spoken for on that day.
+   */
+  function contextFor(date: string): DayContext {
+    const day = data.days[date]
+    const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
+    const sleepProfileId = day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
+    return {
+      tasks: day?.tasks ?? [],
+      window: windowFor(sleepProfileId, { profiles: data.settings.sleepProfiles }),
+      busy: busyIntervals(date, data.settings.calendars, calendarCache),
+      away: day?.away,
+    }
+  }
+
+  const todayContext = contextFor(today)
+  const titles = new Map(todayContext.tasks.map(t => [t.id, t.title]))
+
+  function accept(date: string, plan: ReplanPlan, label: string, clearAway = false) {
+    const wasAway = todayContext.away
+    const { undo } = actions.applyReplan(date, plan)
+    if (clearAway) actions.setAway(today, undefined)
+    offerUndo(label, () => {
       undo()
-      if (clearAway && props.away) actions.setAway(props.date, props.away)
+      if (clearAway && wasAway) actions.setAway(today, wasAway)
     })
     props.onClose()
   }
@@ -80,33 +131,34 @@ export function ReplanSheet(props: ReplanSheetProps) {
     <div className="replan-scrim" onClick={props.onClose}>
       <div className="replan" role="dialog" aria-label="Replan" data-keeps-keys="" onClick={e => e.stopPropagation()}>
         {mode === 'menu' && (
-          <Menu away={props.away} onPick={setMode} onClose={props.onClose} />
+          <Menu away={todayContext.away} onPick={setMode} onClose={props.onClose} />
         )}
         {mode === 'interrupt' && (
           <Interrupt
-            tasks={props.tasks}
-            nowMinutes={props.nowMinutes}
-            window={window}
-            busy={props.busy}
-            onAccept={plan => accept(plan)}
+            initialDate={props.date}
+            today={today}
+            nowMinutes={nowMinutes}
+            contextFor={contextFor}
+            onAccept={accept}
             onBack={() => setMode('menu')}
+            onClose={props.onClose}
           />
         )}
         {mode === 'shift' && (
           <Shift
-            tasks={props.tasks}
-            nowMinutes={props.nowMinutes}
-            window={window}
+            tasks={todayContext.tasks}
+            nowMinutes={nowMinutes}
+            window={todayContext.window}
             titles={titles}
-            onAccept={plan => accept(plan)}
+            onAccept={plan => accept(today, plan, 'Day replanned')}
             onBack={() => setMode('menu')}
           />
         )}
         {mode === 'away' && (
           <Away
-            nowMinutes={props.nowMinutes}
+            nowMinutes={nowMinutes}
             onAway={() => {
-              actions.setAway(props.date, formatClock(props.nowMinutes))
+              actions.setAway(today, formatClock(nowMinutes))
               props.onClose()
             }}
             onBack={() => setMode('menu')}
@@ -114,15 +166,15 @@ export function ReplanSheet(props: ReplanSheetProps) {
         )}
         {mode === 'back' && (
           <Back
-            tasks={props.tasks}
-            nowMinutes={props.nowMinutes}
-            window={window}
-            busy={props.busy}
+            tasks={todayContext.tasks}
+            nowMinutes={nowMinutes}
+            window={todayContext.window}
+            busy={todayContext.busy}
             titles={titles}
-            away={props.away}
-            onAccept={plan => accept(plan, true)}
+            away={todayContext.away}
+            onAccept={plan => accept(today, plan, 'Day replanned', true)}
             onNotNow={() => {
-              actions.setAway(props.date, undefined)
+              actions.setAway(today, undefined)
               props.onClose()
             }}
           />
@@ -186,138 +238,395 @@ function Head({ title, onClose, onBack }: { title: string; onClose?: () => void;
   )
 }
 
-// --- something came up ----------------------------------------------------------
+// --- something came up, for any day ---------------------------------------------
 
 interface InterruptProps {
-  tasks: Task[]
+  initialDate: string
+  today: string
   nowMinutes: number
-  window: Interval
-  busy: Interval[]
-  onAccept: (plan: ReplanPlan) => void
+  contextFor: (date: string) => DayContext
+  onAccept: (date: string, plan: ReplanPlan, label: string) => void
   onBack: () => void
+  onClose: () => void
 }
 
-function Interrupt({ tasks, nowMinutes, window, busy, onAccept, onBack }: InterruptProps) {
-  const [title, setTitle] = useState('')
-  const [start, setStart] = useState(() => formatClock(Math.min(roundUp(nowMinutes), window.end - 5)))
-  const [minutes, setMinutes] = useState<number | undefined>(30)
+/**
+ * The one screen the phone call is answered on.
+ *
+ * Two rows of chips - when, and what is gone - then the words, then the
+ * plan, then Accept: the order a call is answered in, and the order a thumb
+ * reaches on a phone held in one hand. Everything is proposed before
+ * anything is asked: choosing when shows what the interruption lands on and
+ * where each block goes, and a row is pressed only to say otherwise.
+ *
+ * The typed line and the chips are one truth, CONVENTIONS section 16's rule
+ * for quick-add kept the cheap way: where the line names a day, a time or a
+ * shape, the line wins and the chips redraw to show it; where it says
+ * nothing, the chips speak. Pressing a chip takes that kind of word out of
+ * the line, so the two can never disagree.
+ *
+ * Choosing a day opens it, through `actions.ensureDay`, exactly as looking
+ * at it would - see lib/ensureDay.ts for why a pure preview could not do
+ * this job. What is planned against is then what Accept lands on.
+ */
+function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBack, onClose }: InterruptProps) {
+  const [chosenDate, setChosenDate] = useState(initialDate < today ? today : initialDate)
+  const [chosenPreset, setChosenPreset] = useState<Preset | null>(null)
+  /** What was typed into From; null means nothing was, and the default stands. */
+  const [startText, setStartText] = useState<string | null>(null)
+  const [chosenMinutes, setChosenMinutes] = useState(30)
+  const [line, setLine] = useState('')
+  /** Only what is not the default - see `defaultChoices`. */
   const [choices, setChoices] = useState<Record<string, ConflictChoice>>({})
-  const titleRef = useRef<HTMLInputElement>(null)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [picking, setPicking] = useState(false)
+  const [recent] = useState(readRecentTitles)
+  const coarse = usePointerCoarse()
+  const lineRef = useRef<HTMLInputElement>(null)
+
+  // A keyboard raised on open would sit over the two rows of chips and the
+  // Accept this screen is for, so on a finger nothing takes focus; on a mouse
+  // the words are the fastest path and the field has the cursor.
+  useEffect(() => {
+    if (!coarse) lineRef.current?.focus()
+  }, [coarse])
+
+  const parsed = useMemo(() => parseInterruptLine(line), [line])
+  const date = parsed.day ? resolveDay(parsed.day, today) : chosenDate
+  const isToday = date === today
 
   useEffect(() => {
-    titleRef.current?.focus()
-  }, [])
+    actions.ensureDay(date)
+  }, [date])
 
-  const startMinutes = parseTimeInput(start) ? timeToMinutes(parseTimeInput(start)!) : undefined
-  const interruption: Interruption | null =
-    title.trim() && startMinutes !== undefined ? { title: title.trim(), start: startMinutes, minutes } : null
-  const conflicts = interruption ? findConflicts(tasks, interruption) : []
-  const plan = interruption ? planInterrupt(tasks, interruption, choices, window, busy) : null
+  const ctx = contextFor(date)
+  const { window } = ctx
+  // Where fitting may start: now on today, and nothing that has already
+  // happened is moved; the start of the waking window on a day still ahead.
+  const from = isToday ? Math.min(roundUp(nowMinutes), window.end) : window.start
+  const words = dayWordsFor(date, today)
+  const chips = dayChoices(today)
+
+  const lineSpeaksOfTime = parsed.start !== undefined || parsed.end !== undefined || parsed.minutes !== undefined || parsed.open === true
+  const preset: Preset | null =
+    parsed.shape ??
+    (lineSpeaksOfTime
+      ? parsed.open && parsed.end === undefined && parsed.minutes === undefined
+        ? 'open'
+        : 'custom'
+      : chosenPreset)
+
+  const defaultStart = isToday ? from : Math.min(Math.max(window.start, 9 * 60), window.end)
+  const typedStart = startText !== null ? parseTimeInput(startText) : undefined
+  const startMinutes =
+    parsed.start ??
+    (parsed.end !== undefined
+      ? from
+      : typedStart !== undefined
+        ? timeToMinutes(typedStart)
+        : startText === null
+          ? defaultStart
+          : undefined)
+  const minutes = parsed.end !== undefined && startMinutes !== undefined ? parsed.end - startMinutes : parsed.minutes ?? chosenMinutes
+
+  const title = parsed.title || DEFAULT_TITLE
+  let interruption: Interruption | null = null
+  if (preset === 'open') {
+    if (startMinutes !== undefined) interruption = { title, start: startMinutes }
+  } else if (preset === 'custom') {
+    if (startMinutes !== undefined && minutes > 0) interruption = { title, start: startMinutes, minutes }
+  } else if (preset) {
+    const span = shapeInterval(preset, window, from)
+    if (span) interruption = { title, start: span.start, minutes: span.end - span.start }
+  }
+
+  const conflicts = interruption ? findConflicts(ctx.tasks, interruption) : []
+  const allChoices: Record<string, ConflictChoice> = { ...defaultChoices(conflicts), ...choices }
+  const plan = interruption ? planInterrupt(ctx.tasks, interruption, allChoices, window, ctx.busy, { from, words }) : null
+  // The answer for the person on the phone: what is left of the day once
+  // the plan is in. The interruption is busy for its length, or to bedtime
+  // when nobody knows its length - which is what "don't know" means.
+  const free =
+    plan && interruption
+      ? formatFreeWindows(
+          freeWindows(
+            splitByPlan(ctx.tasks, plan).staying,
+            window,
+            [...ctx.busy, { start: interruption.start, end: interruption.minutes === undefined ? window.end : interruption.start + interruption.minutes }],
+            from,
+          ),
+          window,
+          words,
+        )
+      : null
+
+  function pickDay(next: string) {
+    setLine(stripTokens(line, ['day']))
+    setChosenDate(next)
+    setChoices({})
+    setPicking(false)
+  }
+
+  function pickPreset(next: Preset) {
+    setLine(stripTokens(line, ['shape', 'time', 'length', 'open']))
+    setChosenPreset(next)
+    setChoices({})
+  }
+
+  function editStart(text: string) {
+    setLine(stripTokens(line, ['time']))
+    setStartText(text)
+  }
+
+  function pickMinutes(next: number) {
+    setLine(stripTokens(line, ['length', 'open']))
+    setChosenMinutes(next)
+    setChosenPreset('custom')
+  }
+
+  function pickRecent(name: string) {
+    setLine(withTitle(line, name))
+  }
 
   function setAll(choice: ConflictChoice) {
     setChoices(Object.fromEntries(conflicts.map(c => [c.id, choice])))
   }
 
+  function accept() {
+    if (!plan) return
+    rememberTitle(title)
+    // The free line is not carried into the toast. It was tried: the toast
+    // is a pill, and "Free on Tuesday: 08:15-10:00, 13:00-13:30, 14:15-17:30,
+    // 18:10-21:00, after 21:30" wrapped it into a column seven lines tall on
+    // a phone. The line is read here, before Accept, with the phone still
+    // at the ear - which is when the caller is asking.
+    const dayName = isToday ? 'Day' : capitalise(words.day.replace(/^on /, ''))
+    onAccept(date, plan, `${dayName} replanned`)
+  }
+
+  const startValue = parsed.start !== undefined ? formatClock(parsed.start) : startText ?? formatClock(defaultStart)
+  const nextWord = capitalise(words.next)
+
   return (
     <>
-      <Head title="Something came up" onBack={onBack} />
+      <Head title="Something came up" onBack={onBack} onClose={onClose} />
       <div className="replan-body">
-        <label className="field">
-          <span className="field-label">What</span>
-          <input ref={titleRef} value={title} placeholder="Dentist" maxLength={80} onChange={e => setTitle(e.target.value)} />
-        </label>
-        <div className="replan-row">
-          <label className="field replan-when">
-            <span className="field-label">When</span>
-            <input value={start} inputMode="numeric" placeholder="14:00" aria-label="Start time" onChange={e => setStart(e.target.value)} />
-          </label>
-          <div className="field">
-            <span className="field-label">How long</span>
-            <div className="replan-chips" role="group" aria-label="How long">
-              {DURATIONS.map(d => (
-                <button
-                  key={d}
-                  type="button"
-                  className={minutes === d ? 'replan-chip active' : 'replan-chip'}
-                  aria-pressed={minutes === d}
-                  onClick={() => setMinutes(d)}
-                >
-                  {formatDuration(d)}
-                </button>
-              ))}
+        <div className="replan-section">
+          <span className="replan-label" id="replan-when-label">When</span>
+          <div className="replan-chips" role="group" aria-labelledby="replan-when-label">
+            {chips.map(c => (
               <button
+                key={c.date}
                 type="button"
-                className={minutes === undefined ? 'replan-chip active' : 'replan-chip'}
-                aria-pressed={minutes === undefined}
-                onClick={() => setMinutes(undefined)}
+                className={date === c.date ? 'replan-chip active' : 'replan-chip'}
+                aria-pressed={date === c.date}
+                onClick={() => pickDay(c.date)}
               >
-                Don't know
+                {c.label}
               </button>
-            </div>
+            ))}
+            {!chips.some(c => c.date === date) && (
+              <button type="button" className="replan-chip active" aria-pressed onClick={() => setPicking(true)}>
+                {dayLabel(date, today)}
+              </button>
+            )}
+            <button
+              type="button"
+              className={picking ? 'replan-chip active' : 'replan-chip'}
+              aria-pressed={picking}
+              aria-expanded={picking}
+              onClick={() => setPicking(p => !p)}
+            >
+              Pick a day
+            </button>
+            {picking && (
+              <input
+                type="date"
+                className="replan-date-input"
+                aria-label="Which day"
+                min={today}
+                value={date}
+                onChange={e => e.target.value && pickDay(e.target.value)}
+              />
+            )}
           </div>
         </div>
 
-        {interruption && conflicts.length > 0 && (
+        <div className="replan-section">
+          <span className="replan-label" id="replan-shape-label">What is gone</span>
+          <div className="replan-chips" role="group" aria-labelledby="replan-shape-label">
+            {SHAPES.map(s => {
+              const possible = shapeInterval(s.id, window, from) !== null
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={preset === s.id ? 'replan-chip active' : 'replan-chip'}
+                  aria-pressed={preset === s.id}
+                  disabled={!possible}
+                  title={possible ? undefined : 'Already behind you'}
+                  onClick={() => pickPreset(s.id)}
+                >
+                  {s.label}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              className={preset === 'custom' ? 'replan-chip active' : 'replan-chip'}
+              aria-pressed={preset === 'custom'}
+              onClick={() => pickPreset('custom')}
+            >
+              A time
+            </button>
+            <button
+              type="button"
+              className={preset === 'open' ? 'replan-chip active' : 'replan-chip'}
+              aria-pressed={preset === 'open'}
+              onClick={() => pickPreset('open')}
+            >
+              Don't know how long
+            </button>
+          </div>
+          {(preset === 'custom' || preset === 'open') && (
+            <div className="replan-row">
+              <label className="field replan-when">
+                <span className="field-label">From</span>
+                <input value={startValue} inputMode="numeric" placeholder="14:00" aria-label="Start time" onChange={e => editStart(e.target.value)} />
+              </label>
+              {preset === 'custom' && (
+                <div className="field">
+                  <span className="field-label" id="replan-length-label">How long</span>
+                  <div className="replan-chips" role="group" aria-labelledby="replan-length-label">
+                    {DURATIONS.map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        className={minutes === d ? 'replan-chip active' : 'replan-chip'}
+                        aria-pressed={minutes === d}
+                        onClick={() => pickMinutes(d)}
+                      >
+                        {formatDuration(d)}
+                      </button>
+                    ))}
+                    {/* "10-13" is three hours, which no chip says. The row
+                        shows the length it was given rather than six unlit
+                        chips beside a range that clearly has one. */}
+                    {minutes > 0 && !DURATIONS.includes(minutes) && <span className="replan-chip active">{formatDuration(minutes)}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="replan-section">
+          <label className="field">
+            <span className="field-label">What</span>
+            <input
+              ref={lineRef}
+              value={line}
+              placeholder={DEFAULT_TITLE}
+              maxLength={120}
+              aria-label="What came up"
+              onChange={e => setLine(e.target.value)}
+            />
+          </label>
+          {recent.length > 0 && (
+            <div className="replan-chips" role="group" aria-label="Recent names">
+              {recent.map(name => (
+                <button
+                  key={name}
+                  type="button"
+                  className={parsed.title.toLowerCase() === name.toLowerCase() ? 'replan-chip active' : 'replan-chip'}
+                  aria-pressed={parsed.title.toLowerCase() === name.toLowerCase()}
+                  onClick={() => pickRecent(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {plan && conflicts.length > 0 && (
           <div className="replan-conflicts">
             <div className="replan-conflicts-head">
               <span className="replan-label">In the way</span>
               <span className="replan-forall" role="group" aria-label="For all of them">
-                <button type="button" className="link-button" onClick={() => setAll('squeeze')}>Into gaps</button>
-                <button type="button" className="link-button" onClick={() => setAll('tomorrow')}>Tomorrow</button>
-                <button type="button" className="link-button" onClick={() => setAll('drop')}>Drop</button>
+                <button type="button" className="link-button" onClick={() => setAll('squeeze')}>Move</button>
+                <button type="button" className="link-button" onClick={() => setAll('tomorrow')}>{nextWord}</button>
+                <button type="button" className="link-button" onClick={() => setAll('drop')}>Skip</button>
               </span>
             </div>
             <ul className="replan-list">
               {conflicts.map(task => {
-                const choice = choices[task.id] ?? 'squeeze'
-                const move = plan?.moves.find(m => m.taskId === task.id)
+                const choice = allChoices[task.id] ?? 'squeeze'
+                const move = plan.moves.find(m => m.taskId === task.id)
+                const routine = isRoutine(task)
                 // "Gaps" with "tomorrow" beside it read as a contradiction;
                 // it is not one, there was simply no gap left. Say that.
                 const outcome =
                   choice === 'drop'
-                    ? 'gone'
+                    ? routine ? 'skipped' : 'gone'
                     : choice === 'keep'
                       ? 'stays'
                       : move
                         ? `at ${move.time}`
                         : choice === 'tomorrow'
-                          ? 'tomorrow'
-                          : 'no room, tomorrow'
+                          ? words.next
+                          : `no room, ${words.next}`
+                const open = expanded === task.id
                 return (
-                  <li key={task.id} className="replan-item">
-                    <span className="replan-item-title">
-                      {task.title}
-                      <span className="replan-item-was"> {task.time}</span>
-                    </span>
-                    <span className="replan-item-outcome">{outcome}</span>
-                    <div className="segmented replan-seg" role="group" aria-label={`What to do with ${task.title}`}>
-                      {(['squeeze', 'tomorrow', 'drop'] as const).map(c => (
-                        <button
-                          key={c}
-                          type="button"
-                          className={choice === c ? 'active' : ''}
-                          aria-pressed={choice === c}
-                          onClick={() => setChoices({ ...choices, [task.id]: c })}
-                        >
-                          {c === 'squeeze' ? 'Gaps' : c === 'tomorrow' ? 'Tomorrow' : 'Drop'}
-                        </button>
-                      ))}
-                    </div>
+                  <li key={task.id} className={`replan-item is-row is-${choice}`}>
+                    <button
+                      type="button"
+                      className="replan-row-button"
+                      aria-expanded={open}
+                      aria-label={`${task.title}, ${task.time}: ${outcome}. Change what happens to it`}
+                      onClick={() => setExpanded(open ? null : task.id)}
+                    >
+                      <span className="replan-item-title">
+                        {task.highlight && <span className="replan-key" aria-hidden="true">*</span>}
+                        {task.title}
+                        <span className="replan-item-was"> {task.time}</span>
+                      </span>
+                      <span className="replan-item-outcome">{outcome}</span>
+                    </button>
+                    {open && (
+                      <div className="segmented replan-seg" role="group" aria-label={`What to do with ${task.title}`}>
+                        {(['squeeze', 'tomorrow', 'drop', 'keep'] as const).map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={choice === c ? 'active' : ''}
+                            aria-pressed={choice === c}
+                            onClick={() => setChoices({ ...choices, [task.id]: c })}
+                          >
+                            {c === 'squeeze' ? 'Move' : c === 'tomorrow' ? nextWord : c === 'drop' ? (routine ? 'Skip' : 'Drop') : 'Keep'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </li>
                 )
               })}
             </ul>
           </div>
         )}
-
       </div>
       {/* Outside the scrolling body on purpose. With five things in the way
-          the list is taller than the sheet, and the one sentence this whole
-          screen exists to produce was below the fold - the person under
-          time pressure saw a list and no answer. */}
-      {plan && <p className="replan-summary" role="status">{plan.summary}</p>}
+          the list is taller than the sheet, and the two sentences this whole
+          screen exists to produce - what is free, and what moves - have to
+          be on screen whatever the list is doing. */}
+      {plan && (
+        <div className="replan-summary" role="status">
+          {free && <strong className="replan-free">{free}</strong>}
+          <span>{plan.summary}</span>
+        </div>
+      )}
       <div className="replan-foot">
-        <button type="button" className="btn-primary" disabled={!plan} onClick={() => plan && onAccept(plan)}>
+        <button type="button" className="btn-primary" disabled={!plan} onClick={accept}>
           Accept
         </button>
         <button type="button" className="btn-secondary" onClick={onBack}>

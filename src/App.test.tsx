@@ -7,11 +7,13 @@ import { defaultData } from './lib/storage'
 import { todayKey } from './lib/dates'
 import { PRESETS } from './lib/themes'
  import { getTourState, resetTourForTests, startTour } from './lib/tourState'
+import { resetReplanForTests } from './lib/replanState'
 
 beforeEach(() => {
   localStorage.clear()
   actions.resetForTests(defaultData())
   resetTourForTests()
+  resetReplanForTests()
 })
 
 test('renders brand and nav tabs', () => {
@@ -279,4 +281,60 @@ test('the rail names every view and the key that also reaches it', () => {
   } finally {
     restore()
   }
+})
+
+// --- something came up, from anywhere ----------------------------------------
+
+/**
+ * The replan sheet is mounted at the root and opened by a request, so the
+ * palette, the R key, the week and the calendar all reach the same one
+ * without leaving the screen they are on. The phone rings about Thursday
+ * while the week is what is on screen; the week should still be there when
+ * the sheet closes.
+ */
+test('the palette opens Something came up over the screen that is showing, and leaves it there', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(within(screen.getByRole('navigation', { name: 'Views' })).getByRole('button', { name: 'Calendar' }))
+  expect(screen.getByRole('group', { name: 'Calendar view' })).toBeInTheDocument()
+
+  await user.keyboard('{Control>}k{/Control}')
+  await user.click(screen.getByRole('option', { name: /Something came up/ }))
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+  expect(within(sheet).getByRole('heading', { name: 'Something came up' })).toBeInTheDocument()
+  expect(within(sheet).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-pressed', 'true')
+  // The calendar is still underneath.
+  expect(screen.getByRole('group', { name: 'Calendar view' })).toBeInTheDocument()
+
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'Replan' })).toBeNull()
+  expect(screen.getByRole('group', { name: 'Calendar view' })).toBeInTheDocument()
+})
+
+test('R opens it, on the day being looked at when that day is still ahead', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('{ArrowRight}')
+  await user.keyboard('r')
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+  expect(within(sheet).getByRole('button', { name: 'Tomorrow' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('a later day\'s header opens the sheet on that day', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('{ArrowRight}')
+  await user.click(screen.getByRole('button', { name: 'Something came up' }))
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+  expect(within(sheet).getByRole('button', { name: 'Tomorrow' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('the week\'s bar has the door too, on the day the week is centred on', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(within(screen.getByRole('navigation', { name: 'Views' })).getByRole('button', { name: 'Calendar' }))
+  await user.click(within(screen.getByRole('group', { name: 'Calendar view' })).getByRole('button', { name: 'Week' }))
+  await user.click(screen.getByRole('button', { name: 'Something came up' }))
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+  expect(within(sheet).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-pressed', 'true')
 })

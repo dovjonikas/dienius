@@ -17,18 +17,22 @@ test.beforeEach(async ({ page }) => {
   await stampWorkingDay(page)
 })
 
-test('something came up: the block lands, what it hits is named, and Tomorrow sends it there', async ({ page }) => {
+test('something came up at a time: the block lands, what it hits is skipped by default, and Tomorrow sends it there instead', async ({ page }) => {
   await page.getByRole('button', { name: 'Replan' }).click()
   const sheet = page.getByRole('dialog', { name: 'Replan' })
   await sheet.getByRole('button', { name: 'Something came up' }).click()
 
-  await sheet.getByPlaceholder('Dentist').fill('Dentist')
+  // The v2 sheet: a name in the words, a time behind "A time", a length.
+  await sheet.getByRole('textbox', { name: 'What came up' }).fill('Dentist')
+  await sheet.getByRole('button', { name: 'A time' }).click()
   await sheet.getByLabel('Start time').fill('13:30')
   await sheet.getByRole('group', { name: 'How long' }).getByRole('button', { name: '1h', exact: true }).click()
 
-  // Meetings runs 13:30 to 15:00 on the starter day, so it is in the way.
+  // Meetings runs 13:30 to 15:00 on the starter day, so it is in the way -
+  // and it is the template's, so the proposal skips it for the day.
   const summary = sheet.getByRole('status')
-  await expect(summary).toContainText('Meetings')
+  await expect(summary).toContainText('Skipped today: Meetings.')
+  await expect(summary).toContainText('Free today:')
   await expect(summary).not.toContainText(/missed|failed|behind|only|should/i)
 
   await sheet.getByRole('group', { name: 'For all of them' }).getByRole('button', { name: 'Tomorrow' }).click()

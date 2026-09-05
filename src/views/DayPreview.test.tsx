@@ -79,10 +79,10 @@ test('opening the day is one press', async () => {
   expect(onOpenDay).toHaveBeenCalledTimes(1)
 })
 
-// Two actions and no more. Stamp is offered only where stamping is already
-// what the pointer is doing; a preview that grows a third action is a menu,
-// and a menu that appears because a cursor stopped moving is a menu nobody
-// asked for.
+// Three actions and no more. Stamp is offered only where stamping is already
+// what the pointer is doing, and Something came up only where it can still
+// happen; a preview that grows a fourth action is a menu, and a menu that
+// appears because a cursor stopped moving is a menu nobody asked for.
 test('stamping is offered only when a template is in hand', async () => {
   const user = userEvent.setup()
   const onStamp = vi.fn()
@@ -95,4 +95,18 @@ test('stamping is offered only when a template is in hand', async () => {
   render(<DayPreview date={DATE} onOpenDay={() => {}} onStamp={onStamp} />)
   await user.click(screen.getByRole('button', { name: 'Stamp' }))
   expect(onStamp).toHaveBeenCalledTimes(1)
+})
+
+test('saying something came up is offered where the caller says so, and is one press', async () => {
+  const user = userEvent.setup()
+  const onInterrupt = vi.fn()
+  seed()
+
+  const { unmount } = render(<DayPreview date={DATE} onOpenDay={() => {}} />)
+  expect(screen.queryByRole('button', { name: 'Something came up' })).toBeNull()
+  unmount()
+
+  render(<DayPreview date={DATE} onOpenDay={() => {}} onInterrupt={onInterrupt} />)
+  await user.click(screen.getByRole('button', { name: 'Something came up' }))
+  expect(onInterrupt).toHaveBeenCalledTimes(1)
 })

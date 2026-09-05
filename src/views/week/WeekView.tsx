@@ -294,6 +294,7 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             events={eventsOn(day.date, data.settings.calendars, calendarCache)}
             draggingId={draggingId}
             weekdayTemplateId={data.settings.weekdayTemplates[weekdayOf(day.date)]}
+            replanned={!!data.days[day.date]?.replannedOn}
             onBlockPointerDown={beginDrag}
             onEmptyClick={percent => addAt(day.date, percent)}
             onStamp={templateId => stampDay(day.date, templateId)}

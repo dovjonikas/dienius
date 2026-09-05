@@ -50,6 +50,8 @@ export function WeekAgenda({ dates, onOpenDay, onOpenTask }: WeekAgendaProps) {
               <button type="button" className="agenda-date-button" onClick={() => onOpenDay(date)}>
                 {formatDayTitle(date)}
               </button>
+              {/* The same quiet word the grid's column carries - see WeekColumn. */}
+              {data.days[date]?.replannedOn && <span className="agenda-mark">replanned</span>}
             </h3>
             {tasks.length === 0 ? (
               <p className="agenda-empty">Nothing on this day.</p>

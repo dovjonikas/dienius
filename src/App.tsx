@@ -21,7 +21,8 @@ import { isTourRunning, startTour } from './lib/tourState'
 import { leaveTour } from './lib/tourExit'
 import { Scratch } from './views/scratch/Scratch'
 import { useIsWide } from './lib/viewport'
-import { requestReplan } from './lib/replanState'
+import { requestReplan, useReplanRequest, type ReplanMode } from './lib/replanState'
+import { ReplanSheet } from './widgets/day-plan/ReplanSheet'
 import { requestCapture } from './lib/captureRequest'
 import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
@@ -56,6 +57,15 @@ export function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [scratchOpen, setScratchOpen] = useState(false)
+  // The replan sheet - see widgets/day-plan/ReplanSheet.tsx. At the root
+  // rather than inside the day view since v2.2, because "Something came up"
+  // is about any day and is opened from the week, the calendar and the
+  // palette without leaving them. Whoever asks goes through replanState.
+  const replanRequest = useReplanRequest()
+  const [replan, setReplan] = useState<{ mode: ReplanMode; date: string } | null>(null)
+  useEffect(() => {
+    if (replanRequest.seq > 0) setReplan({ mode: replanRequest.mode, date: replanRequest.date })
+  }, [replanRequest])
   const isWide = useIsWide()
   // Bumped by the N shortcut; the effect below acts on it once the day view
   // has actually rendered. A counter rather than a boolean, so pressing N
@@ -187,6 +197,11 @@ export function App() {
         case 't':
           openDay(todayKey())
           break
+        case 'r':
+          // Something came up, for the day being looked at if it is still
+          // ahead, otherwise today. The sheet's own row changes the day.
+          requestReplan('interrupt', selectedDate >= todayKey() ? selectedDate : todayKey())
+          break
         case 'arrowleft':
           if (view === 'day') setSelectedDate(d => addDays(d, -1))
           else return
@@ -254,16 +269,15 @@ export function App() {
         setFocusQuickAdd(n => n + 1)
       },
     },
-    // The three replan doors, from anywhere. Each lands on today and opens
-    // the sheet there - the day view owns the sheet, this only asks.
+    // The three replan doors, from anywhere. Something came up opens over
+    // whatever is showing, for the day being looked at or today; the other
+    // two are about today and land on it first, so the day is there to see
+    // when the sheet closes.
     {
       id: 'replan-interrupt',
       label: 'Something came up',
-      detail: 'Fit it in; what it hits moves or goes',
-      run: () => {
-        openDay(todayKey())
-        requestReplan('interrupt')
-      },
+      detail: 'Any day this week: what it hits moves, skips or waits',
+      run: () => requestReplan('interrupt', selectedDate >= todayKey() ? selectedDate : todayKey()),
     },
     {
       id: 'replan-shift',
@@ -456,6 +470,7 @@ export function App() {
       {/* One undo offer, app-wide - see lib/undo.ts. At the root because
           what it undoes could have happened on any tab. */}
       <UndoToast />
+      {replan && <ReplanSheet date={replan.date} mode={replan.mode} onClose={() => setReplan(null)} />}
       <UpdateNotice />
       {/* The tour, at the root: it points at things on every tab and has
           to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}

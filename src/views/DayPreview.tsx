@@ -9,6 +9,8 @@ export interface DayPreviewProps {
   onOpenDay: () => void
   /** Offered only where stamping is what the pointer is already doing. */
   onStamp?: () => void
+  /** Something came up on this day. Offered for today and the days ahead; nothing can come up in a day that has passed. */
+  onInterrupt?: () => void
 }
 
 /**
@@ -31,14 +33,18 @@ export interface DayPreviewProps {
  * - **No count of what was missed.** "6 of 9" is a fact about a list. "3
  *   missed" is a verdict, and this app does not hand those out - the same
  *   rule the evening close and the day stats already keep.
- * - **Two actions and no more.** Open the day, and stamp it while a template
- *   is in hand. A preview that grows a third action is a menu, and a menu
- *   that appears because a cursor stopped moving is a menu nobody asked for.
+ * - **Three actions and no more.** Open the day; stamp it while a template
+ *   is in hand; and, on a day still ahead, say that something came up on it.
+ *   The third earned its place in v2.2 because it is the one thing that
+ *   lands on a future day from the month - the phone rings about Thursday
+ *   while the month is the screen that shows Thursday. A preview that grows
+ *   a fourth is a menu, and a menu that appears because a cursor stopped
+ *   moving is a menu nobody asked for.
  * - **A pointer thing only.** A finger taps the cell and gets the day itself,
  *   which is the better answer on a phone anyway: the day view is the whole
  *   screen and the preview would be most of one.
  */
-export function DayPreview({ date, onOpenDay, onStamp }: DayPreviewProps) {
+export function DayPreview({ date, onOpenDay, onStamp, onInterrupt }: DayPreviewProps) {
   const data = useAppData()
   const day = data.days[date]
   const tasks = sortTasks(day?.tasks ?? [])
@@ -84,6 +90,11 @@ export function DayPreview({ date, onOpenDay, onStamp }: DayPreviewProps) {
         {onStamp && (
           <button type="button" className="btn-secondary" onClick={onStamp}>
             Stamp
+          </button>
+        )}
+        {onInterrupt && (
+          <button type="button" className="btn-secondary" onClick={onInterrupt}>
+            Something came up
           </button>
         )}
       </div>

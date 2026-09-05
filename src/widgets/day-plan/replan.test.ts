@@ -236,11 +236,17 @@ test('a one-off whose time has passed is still rescued, and says nothing about r
  * lost can go into a free morning - so the caller says where fitting may
  * begin, and the summary is told what to call the day.
  */
-test('given a start-from, a moved task may land before the interruption', () => {
-  const tasks = [task('deep', '15:00', 60)]
+test('given a start-from, a moved task may land before the interruption - once the gaps after it are full', () => {
+  const tasks = [task('deep', '15:00', 60), task('wall', '16:00', 420)]
   const interruption = { title: 'Dad', start: t(15), minutes: 60 }
-  expect(planInterrupt(tasks, interruption, {}, WINDOW).moves).toEqual([{ taskId: 'deep', time: '16:00' }])
+  expect(planInterrupt(tasks, interruption, {}, WINDOW).tomorrow).toEqual(['deep'])
   expect(planInterrupt(tasks, interruption, {}, WINDOW, [], { from: WINDOW.start }).moves).toEqual([{ taskId: 'deep', time: '07:00' }])
+})
+
+test('with room on both sides, what the afternoon lost goes into the evening rather than the morning', () => {
+  const tasks = [task('lunch', '12:30', 45)]
+  const plan = planInterrupt(tasks, { title: 'Dad', start: t(12), minutes: 360 }, {}, WINDOW, [], { from: WINDOW.start })
+  expect(plan.moves).toEqual([{ taskId: 'lunch', time: '18:00' }])
 })
 
 test('the summary speaks about the day it is for, not about today', () => {
