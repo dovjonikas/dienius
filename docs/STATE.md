@@ -147,8 +147,9 @@ reports nothing on the desktop **and nothing on the phone**, and the working
 tree is empty and pushed.
 
 **Where to start:** the v2.1 table below is closed. Nothing from the owner's
-brief is owed; the debts table further down names the one standing debt that
-could move without them (Outlook's time zone names).
+brief is owed, and the one standing debt that could move without them -
+Outlook's time zone names - moved the same day, one commit above the tag.
+Every debt left in the table is a designed trade or waits on the owner.
 
 ### Both waves closed
 
@@ -476,8 +477,9 @@ to be what it looked like:
   `.timeline-grid` cuts to 33.4ms. `busyIntervals` and `suggestSlot` are
   memoised on what they actually read, which is another 14% of the render.
   **Do not chase this further without a measurement that reproduces it.**
-- **Outlook's Windows time zone names in .ics files.** Still open, and
-  still the same question - see below.
+- **Outlook's Windows time zone names in .ics files.** Resolved one commit
+  above `v2.1`, the way the debt said it could be - see the resolved debts
+  below.
 
 ### One flake, unreproduced, written down rather than argued away
 
@@ -641,7 +643,8 @@ guess whether it was noticed.
 - ~~ICS: named time zones were read as local~~ - resolved in v1.11 through
   `Intl.DateTimeFormat`, which carries the IANA tables the debt said were
   needed; there was never a database to ship. A zone the browser does not
-  know (Outlook's Windows names) is still read as local and reported.
+  know was read as local and reported until Outlook's Windows names got
+  their own table after v2.1 - the entry at the top of this list.
 - ~~ICS: monthly and yearly rules were skipped~~ - the plain shapes are read
   since v1.11: the same day each month, the same date each year, with the
   RFC's rule that a month without the day has no occurrence. The exotic
