@@ -228,7 +228,11 @@ test('a plan saved before Scratch existed loads with an empty stream', () => {
   expect(loadData().scratch).toEqual([])
 })
 
-test('the floating button is there on a phone and not beside a keyboard', () => {
+// The pen in the rail, on a phone. It used to be a draggable floating circle
+// here and a pen in the header on a desktop; the rail put one control in one
+// place on both, which is what section 17 wanted and could not have while
+// there was nowhere a control could live on both platforms.
+test('the pen in the bar opens Scratch on a phone', () => {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: false,
     media: query,
@@ -236,9 +240,9 @@ test('the floating button is there on a phone and not beside a keyboard', () => 
     removeEventListener: () => {},
   }))
   render(<App />)
-  expect(screen.getByRole('button', { name: /^Scratch:/ })).toBeInTheDocument()
+  const pen = screen.getByRole('button', { name: 'Scratch' })
   act(() => {
-    screen.getByRole('button', { name: /^Scratch:/ }).click()
+    pen.click()
   })
   expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
   vi.unstubAllGlobals()

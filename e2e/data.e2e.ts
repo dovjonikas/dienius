@@ -49,7 +49,9 @@ test('a snapshot from the first open of the day restores the app to that moment'
   // The one snapshot so far was taken when the app first mounted, before the
   // stamp; restoring it is restoring an empty day.
   await settings(page)
-  const row = page.getByRole('listitem').filter({ hasText: 'Today' }).filter({ hasText: '0 tasks, 0 templates' })
+  // Scoped to the page rather than the document: the rail's own list item for
+  // the Today view matches "Today" too, and it is the first one in the DOM.
+  const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Today' }).filter({ hasText: '0 tasks, 0 templates' })
   await expect(row).toBeVisible()
   await row.getByRole('button', { name: 'Restore' }).click()
   await row.getByRole('button', { name: 'Replace everything?' }).click()
@@ -89,7 +91,7 @@ test('a snapshot taken this morning brings yesterday back after it is wrecked', 
   await page.waitForSelector('nav')
 
   await settings(page)
-  const row = page.getByRole('listitem').filter({ hasText: 'Today' }).first()
+  const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Today' }).first()
   await expect(row).toContainText('11 tasks')
   await row.getByRole('button', { name: 'Restore' }).click()
   await row.getByRole('button', { name: 'Replace everything?' }).click()

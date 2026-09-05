@@ -184,6 +184,14 @@
       if (hit === b || b.contains(hit) || hit.contains(b)) continue
       if (hit.closest('label') && hit.closest('label').contains(b)) continue
       if (isScrim(hit)) continue
+      // The navigation is chrome and is always over the page: a rail down the
+      // side on a desktop, a bar along the bottom on a phone. A control
+      // passing under it while the page scrolls is what a fixed bar is, not a
+      // defect - and the layout already reserves the room it needs, so
+      // nothing is under it at rest. The exemption is for the covering
+      // element only: a control *inside* the rail that something else is over
+      // is still a finding.
+      if (hit.closest('.nav-rail')) continue
       out.covered.push({ sel: sig(b), by: sig(hit), t: (b.textContent || b.ariaLabel || '').trim().slice(0, 30) })
     }
 

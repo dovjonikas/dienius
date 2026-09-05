@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from './App'
 import { actions, getData } from './lib/store'
@@ -238,28 +238,44 @@ function pretendViewport(wide: boolean): () => void {
   }
 }
 
-test('on a wide screen the header carries a pen that opens Scratch, and says which key does the same', async () => {
-  const restore = pretendViewport(true)
-  try {
-    render(<App />)
-    const pen = screen.getByRole('button', { name: 'Scratch' })
-    expect(pen).toHaveAttribute('title', 'Scratch - S')
-    expect(screen.queryByRole('button', { name: 'Scratch: write something down' })).toBeNull()
+/**
+ * Scratch used to have two different ways in, one per platform: a pen in the
+ * header on a desktop and a draggable floating button on a phone. The rail
+ * replaced both with one pen in the same place on both, which is what
+ * CONVENTIONS section 17 was asking for all along - it only ever needed two
+ * because there was nowhere a control could live on both platforms.
+ *
+ * These two tests replace "the header carries a pen" and "on a phone the
+ * floating button is the way in", which asserted exactly the split that is
+ * gone.
+ */
+test('the rail carries a pen on both platforms, and says which key does the same', async () => {
+  for (const wide of [true, false]) {
+    const restore = pretendViewport(wide)
+    try {
+      const { unmount } = render(<App />)
+      const pen = screen.getByRole('button', { name: 'Scratch' })
+      expect(pen, String(wide)).toHaveAttribute('title', 'Scratch - S')
+      expect(screen.queryByRole('button', { name: 'Scratch: write something down' })).toBeNull()
 
-    await userEvent.click(pen)
-    expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
-    expect(pen).toHaveAttribute('aria-expanded', 'true')
-  } finally {
-    restore()
+      await userEvent.click(pen)
+      expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
+      unmount()
+    } finally {
+      restore()
+    }
   }
 })
 
-test('on a phone the floating button is the way in, and the header pen is not mounted', () => {
-  const restore = pretendViewport(false)
+test('the rail names every view and the key that also reaches it', () => {
+  const restore = pretendViewport(true)
   try {
     render(<App />)
-    expect(screen.getByRole('button', { name: 'Scratch: write something down' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Scratch' })).toBeNull()
+    const nav = screen.getByRole('navigation', { name: 'Views' })
+    expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('title', 'Today - 1')
+    expect(within(nav).getByRole('button', { name: 'North' })).toHaveAttribute('title', 'North - 6')
+    expect(within(nav).getByRole('button', { name: 'Settings' })).toHaveAttribute('title', 'Settings - comma')
+    expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-current', 'page')
   } finally {
     restore()
   }

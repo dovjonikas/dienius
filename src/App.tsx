@@ -20,7 +20,6 @@ import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
 import { leaveTour } from './lib/tourExit'
 import { Scratch } from './views/scratch/Scratch'
-import { ScratchFab } from './views/scratch/ScratchFab'
 import { useIsWide } from './lib/viewport'
 import { requestReplan } from './lib/replanState'
 import { requestCapture } from './lib/captureRequest'
@@ -35,25 +34,14 @@ import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { NorthView } from './views/north/NorthView'
+import { NavRail, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
 
-type View = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'north' | 'settings'
-
-// Six places to be, and Settings after them. North joined the six in v2.0:
-// it was a settings page and one quiet line under the day, and neither half
-// was somewhere a person could go. Settings keeps its own key rather than a
-// number, because the numbers are for the six screens the app is actually
-// used through and a seventh would make that a coincidence rather than a
-// rule.
-const TABS: { view: View; label: string; key: string }[] = [
-  { view: 'day', label: 'Today', key: '1' },
-  { view: 'calendar', label: 'Calendar', key: '2' },
-  { view: 'templates', label: 'Templates', key: '3' },
-  { view: 'library', label: 'Library', key: '4' },
-  { view: 'review', label: 'Review', key: '5' },
-  { view: 'north', label: 'North', key: '6' },
-  { view: 'settings', label: 'Settings', key: ',' },
-]
+// The six places to be, and Settings after them, are the rail's own data now
+// - see views/NavRail.tsx. North joined the six in v2.0: it was a settings
+// page and one quiet line under the day, and neither half was somewhere a
+// person could go.
+type View = NavView
 
 export function App() {
   const data = useAppData()
@@ -354,52 +342,24 @@ export function App() {
 
   return (
     <div className="app">
+      <NavRail
+        view={view}
+        isWide={isWide}
+        scratchOpen={scratchOpen}
+        onOpenScratch={() => setScratchOpen(open => !open)}
+        onNavigate={next => (next === 'day' ? openDay(todayKey()) : setView(next))}
+      />
       <header className="app-header">
         <span className="brand">Dienius</span>
-        <nav>
-          {TABS.map(tab => (
-            <button
-              key={tab.view}
-              className={view === tab.view ? 'active' : ''}
-              // The label again, as an attribute. The stylesheet renders it a
-              // second time at bold weight and zero height, so every tab is
-              // already as wide as its own active state and the row cannot
-              // shift when one of them becomes bold.
-              data-label={tab.label}
-              title={`${tab.label} - ${tab.key === ',' ? 'comma' : tab.key}`}
-              aria-current={view === tab.view ? 'page' : undefined}
-              onClick={() => (tab.view === 'day' ? openDay(todayKey()) : setView(tab.view))}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
         {/* The way in to the timer and the stopwatch. In the header rather
             than on the day view, because both are used while doing something
             other than planning - which is also why the running widget lives at
             the app root and not inside a tab. */}
-        {/* The visible way into Scratch on a wide screen. Below the breakpoint
-            the floating button does this job; here the key was the only road,
-            and a feature reached only by a key somebody has not been told
-            about is a feature they do not have - CONVENTIONS.md section 17.
-            Beside the clock because both are "now, whatever tab": one for
-            time, one for a line that has to be written this second. */}
-        {isWide && (
-          <button
-            type="button"
-            className={scratchOpen ? 'scratch-button active' : 'scratch-button'}
-            aria-haspopup="dialog"
-            aria-expanded={scratchOpen}
-            aria-label="Scratch"
-            title="Scratch - S"
-            onClick={() => setScratchOpen(open => !open)}
-          >
-            <svg className="scratch-button-pen" viewBox="0 0 16 16" width="17" height="17" aria-hidden="true">
-              <path d="M11.2 2.3l2.5 2.5-7.6 7.6-3.4.9.9-3.4z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-              <path d="M9.6 3.9l2.5 2.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        )}
+        {/* The pen that used to sit here moved into the rail, which is where
+            somebody looks for the app's own controls rather than the day's.
+            The rule it exists for is unchanged - CONVENTIONS section 17, a
+            feature reached only by a key somebody has not been told about is
+            a feature they do not have. */}
         <div className="clock-launcher">
           <button
             type="button"
@@ -501,10 +461,13 @@ export function App() {
           to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}
       <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />
       {/* Scratch: the layer under everything, reached by one key on a
-          keyboard and by one floating button on a phone. See lib/scratch.ts.
-          The button only exists where there is no key to press. */}
+          keyboard and by the pen in the rail on every platform. See
+          lib/scratch.ts. The floating button that used to do that job on a
+          phone is gone with the rail's arrival: it was a draggable circle
+          somebody had to park somewhere, it sat over the bottom of every
+          screen, and the rail put a pen in the same corner of the same bar
+          as everything else - one control, one place, both platforms. */}
       <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} />
-      {!isWide && !scratchOpen && <ScratchFab onOpen={() => setScratchOpen(true)} />}
     </div>
   )
 }

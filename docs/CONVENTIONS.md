@@ -706,11 +706,14 @@ a desktop. A key is a shortcut, never the only road: a person who has not
 read the `?` card does not know the key exists, and to them a feature with
 no button is a feature the app does not have.
 
-Scratch is the case that wrote this rule. On a phone it had the floating
-button; on a desktop the floating button is not mounted, so `S` and the
-backtick were the whole of the way in, and the owner watched somebody use
-the app for a week without finding it. It has a pen in the header now,
-beside the clock.
+Scratch is the case that wrote this rule. On a phone it had a floating
+button; on a desktop that button was not mounted, so `S` and the backtick
+were the whole of the way in, and the owner watched somebody use the app for
+a week without finding it. It got a pen in the header, and for a while the
+feature had two different ways in, one per platform - which is the shape this
+rule accepts when there is nowhere a control can live on both. Since v2.0
+there is: the navigation rail is a rail on a desktop and a bar along the
+bottom on a phone, and Scratch is one pen in it, in the same place, on both.
 
 What "visible" means, concretely:
 
@@ -719,8 +722,9 @@ What "visible" means, concretely:
   and every feature should be in both, but neither is the first.
 - **Both platforms, checked separately.** The phone checklist in STATE.md
   and the wide layout are different screens with different chrome, and a
-  control mounted for one is not automatically mounted for the other -
-  `ScratchFab` is `!isWide` and the header pen is `isWide`.
+  control mounted for one is not automatically mounted for the other. One
+  control in the rail is better than two that agree, because two that agree
+  today are two that can disagree tomorrow.
 - **The tooltip names the key.** `title="Scratch - S"`: the visible control
   is where somebody learns the shortcut, which is the order that works.
 

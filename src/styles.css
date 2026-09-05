@@ -347,9 +347,19 @@ textarea {
    content inside it. Today used to widen the shell to 1600 and Settings to
    1080 while Calendar sat at 760, and every switch between them moved the
    header, the brand and the tabs. */
+/* How much height the navigation takes out of the viewport: nothing while it
+   is a rail down the side, the bar's own height once it is a bar along the
+   bottom. One token, because two rules need the same number and a literal
+   repeated in both is a month that fits at one of them and not the other. */
+:root { --nav-bar-h: 0px; }
+
+@media (max-width: 1023px) {
+  :root { --nav-bar-h: calc(52px + env(safe-area-inset-bottom)); }
+}
+
 .app {
   max-width: 1600px;
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--nav-bar-h));
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -424,71 +434,215 @@ main { flex: 1 1 auto; min-height: 0; }
   letter-spacing: -0.02em;
 }
 
-/* Scoped to the header. This was a bare nav selector, written for the tab
-   row and quietly applying to every other <nav> in the app - which is how
-   the Settings section pills ended up justified to the right inside a
-   horizontally scrolling strip. When a nowrap flex row overflows, flex-end
-   pushes the overflow off the *left* edge, where no amount of scrolling can
-   reach it: the first section was half off screen and unreachable on a
-   phone. Everything below that reads nav button is scoped for the same
-   reason - the tab underline was being drawn on controls that are not tabs. */
-.app-header nav {
+/* ------------------------------------------------------------------------
+   The navigation rail - views/NavRail.tsx.
+
+   Down the left on a desktop, along the bottom on a phone, and the same
+   eight items either way. It replaced seven text tabs across the top, which
+   were the second-loudest thing on every screen and had already started
+   scrolling sideways at 390px.
+
+   Two states: 56px of icons, and 176px with the labels. Hovering draws the
+   open rail *over* the content rather than pushing it - a layout that
+   reflows when a cursor drifts to the left edge is a layout that cannot be
+   trusted - and only the pin moves anything, once, deliberately.
+   ------------------------------------------------------------------------ */
+.nav-rail {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
   display: flex;
-  gap: var(--s1);
-  flex: 1;
-  justify-content: flex-end;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s4);
+  width: 56px;
+  padding: calc(var(--s4) + env(safe-area-inset-top)) var(--s2) calc(var(--s4) + env(safe-area-inset-bottom))
+    max(var(--s2), env(safe-area-inset-left));
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  overflow: hidden;
+  transition: width var(--dur) var(--ease);
 }
 
-/* Quiet text, not chips. A filled pill on the active tab is a lot of paint
-   for a fact the page already makes obvious, and it made the tab row the
-   second-loudest thing on every screen. What is left is a difference in
-   brightness, plus a thin accent rule under the tab you are on.
+/* Open, it is a panel drawn over the page rather than a wider edge of it, so
+   it says so: its own surface and an elevation. Without those the labels land
+   on top of whatever is in the left column - the mini calendar, most of the
+   time - and read as two things printed over each other. */
+.nav-rail.is-open {
+  width: 176px;
+  background: var(--surface);
+  box-shadow: var(--e2);
+}
 
-   The underline is a pseudo-element rather than a border, and the padding
-   and font are identical in all three states - so nothing here changes size
-   on hover or on activation, and the row cannot shift as it is used. */
-.app-header nav button {
+.nav-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The item is a fixed-width row whether or not the rail is showing its
+   labels, so nothing inside it moves as the rail opens: the label is simply
+   clipped by the rail's own overflow. Animating the text's own width would
+   reflow eight rows on every frame of the transition. */
+.nav-rail-item,
+.nav-rail-pin {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 160px;
+  min-height: 40px;
+  padding: 0 var(--s2);
   border: none;
+  border-radius: var(--r-control);
   background: none;
   color: var(--muted);
-  font-size: var(--t-md);
-  min-height: 44px;
-  padding: var(--s2) var(--s3);
-  border-radius: var(--r-control);
-  cursor: pointer;
+  font-size: var(--t-sm);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.app-header nav button::after {
-  content: '';
-  position: absolute;
-  left: var(--s3);
-  right: var(--s3);
-  bottom: 6px;
-  height: 2px;
-  border-radius: var(--r-pill);
-  background: var(--accent);
+.nav-rail-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.nav-rail-pin svg,
+.nav-rail-icon svg { display: block; }
+
+/* The pin is the rail's own control rather than one of the eight, so it is
+   quieter than they are and stays that way even while it is holding the rail
+   open. */
+.nav-rail-pin { color: var(--faint); }
+
+.nav-rail-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Faded rather than hidden, so opening the rail is one movement rather
+     than a width animation with text appearing at the end of it. */
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease);
 }
 
-.app-header nav button:hover { color: var(--text); }
+.nav-rail.is-open .nav-rail-label { opacity: 1; }
 
-.app-header nav button.active { color: var(--text); font-weight: 600; }
+.nav-rail-item:hover,
+.nav-rail-pin:hover { color: var(--text); }
 
-.app-header nav button.active::after { opacity: 1; }
+/* The active mark: a rule on the leading edge, and the label a shade
+   brighter. Not a filled pill - that is a lot of paint for a fact the screen
+   behind it already makes obvious, and it is the same argument the text tabs
+   settled when they gave up their pill for an underline. */
+.nav-rail-item.is-active { color: var(--text); }
 
-/* Bold on the active tab would make it wider than it was a moment ago and
-   nudge everything after it. The text is pre-sized to its own bold width, so
-   the row is laid out once and never moves. */
-.app-header nav button::before {
-  content: attr(data-label);
-  display: block;
-  height: 0;
-  overflow: hidden;
-  visibility: hidden;
-  font-weight: 600;
+.nav-rail-item.is-active::before {
+  content: '';
+  position: absolute;
+  /* Four pixels in from the rail's own edge rather than flush against it: a
+     2px rule sitting exactly on the edge of the screen reads as a rendering
+     seam rather than as a mark on the item it belongs to. */
+  left: calc(var(--s1) * -1);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
 }
+
+.nav-rail-item:focus-visible,
+.nav-rail-pin:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The gutter the rail sits in belongs to the mount node rather than to the
+   shell: .app is a centred 1600px box, so padding inside it would eat its own
+   content width while leaving a gap between the rail and the box on a wide
+   screen. Here the rail's column comes off the viewport first and .app
+   centres in what is left, which is what "a rail down the left edge" means.
+
+   Only the pinned width is reserved. A rail opened by hovering is drawn over
+   the content, because a layout that reflows when a cursor drifts to the left
+   edge is a layout that cannot be trusted. */
+#root {
+  padding-left: max(56px, calc(56px + env(safe-area-inset-left)));
+  padding-bottom: var(--nav-bar-h);
+}
+
+:root[data-rail-pinned='true'] #root {
+  padding-left: max(176px, calc(176px + env(safe-area-inset-left)));
+}
+
+/* Below the wide breakpoint the rail is a bar along the bottom. The top of a
+   phone is the hardest part of it to reach and the tab row was up there;
+   under the thumb that is already holding the device is where this belongs.
+   Labels go, because seven of them do not fit at 390px - which is exactly
+   what made the old row scroll sideways. */
+@media (max-width: 1023px) {
+  .nav-rail {
+    top: auto;
+    right: 0;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0;
+    width: auto;
+    padding: var(--s1) max(var(--s2), env(safe-area-inset-right)) calc(var(--s1) + env(safe-area-inset-bottom))
+      max(var(--s2), env(safe-area-inset-left));
+    border-right: none;
+    border-top: 1px solid var(--border);
+    transition: none;
+  }
+
+  .nav-rail-list {
+    flex: 1 1 auto;
+    flex-direction: row;
+    justify-content: space-evenly;
+    gap: 0;
+  }
+
+  /* Settings and Scratch sit in the same row as the six rather than at an
+     end of their own: a bar with two groups in it reads as two bars. */
+  .nav-rail-foot { flex: 0 0 auto; }
+
+  .nav-rail-item,
+  .nav-rail-pin {
+    width: auto;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0 var(--s1);
+  }
+
+  .nav-rail-label { display: none; }
+
+  /* Along the bottom the mark goes above the icon rather than beside it -
+     there is no leading edge to put a rule on when the items sit in a row. */
+  .nav-rail-item.is-active::before {
+    left: 50%;
+    top: 2px;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 2px;
+  }
+
+  /* The bar sits over the bottom of every screen, so every screen owes it
+     that much room. Given on the mount node, so the shell's own bottom air -
+     and the one view that gives that air back to fit - are untouched. */
+  #root,
+  :root[data-rail-pinned='true'] #root { padding-left: 0; }
+}
+
 
 button {
   cursor: pointer;
@@ -4483,7 +4637,7 @@ button.danger {
    makes an interface feel like one piece of software rather than several.
    Transform and colour only - nothing here can reflow anything. */
 @media (hover: hover) and (pointer: fine) {
-  .app-header nav button,
+  .nav-rail-item,
   .segmented button,
   .chip,
   .swatch,
@@ -4510,7 +4664,7 @@ button.danger {
 
 /* Pressing anything gives the press back, on every input including touch -
    the one piece of feedback that has to survive not having a pointer. */
-.app-header nav button:active,
+.nav-rail-item:active,
 .segmented button:active,
 .chip:active,
 .theme-card:active,
@@ -4523,7 +4677,7 @@ button.danger {
 @media (prefers-reduced-motion: reduce) {
   .undo-toast { animation: none; }
   .task-list > li { animation: none; }
-  .app-header nav button:active,
+  .nav-rail-item:active,
   .segmented button:active,
   .chip:active,
   .theme-card:active,
@@ -4545,69 +4699,7 @@ button.danger {
    name and the button, then the tabs across the full width. */
 .clock-launcher { position: relative; order: 1; }
 
-/* The same quiet square as the clock beside it - see .clock-button. Only
-   at the wide breakpoint (App.tsx), where the floating scratch button is
-   not mounted and the key would otherwise be the only way in. */
-.scratch-button {
-  order: 1;
-  position: relative;
-  width: 36px;
-  height: 36px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--r-control);
-  background: none;
-  color: var(--muted);
-}
 
-.scratch-button:hover { color: var(--text); }
-
-.scratch-button.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--e1);
-}
-
-.scratch-button-pen { display: block; margin: 0 auto; }
-
-.scratch-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-@media (max-width: 599px) {
-  .app-header nav { order: 2; flex-basis: 100%; justify-content: flex-start; }
-  .app-header .brand { flex: 1; }
-
-  /* Five tabs at the desktop size are 408px wide, which put a 375px phone
-     into a horizontal scroll of the whole page - every screen shifted
-     sideways, not just the header. Tightened here rather than by shortening
-     a label: the words are the navigation, and "Templ." is not one.
-     The nav itself scrolls as a last resort, so a sixth tab, a longer word
-     or a large text setting can never push the page sideways again. */
-  .app-header nav button { padding-left: var(--s2); padding-right: var(--s2); font-size: var(--t-sm); }
-  .app-header nav button::after { left: var(--s2); right: var(--s2); }
-  .app-header nav {
-    overflow-x: auto;
-    scrollbar-width: none;
-    /* A fade at the trailing edge, so a clipped tab reads as "there is more
-       this way" rather than as a rendering fault. Only ever visible when
-       there is genuinely something past the edge - a mask over a row that
-       fits does nothing. */
-    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
-  }
-  .app-header nav::-webkit-scrollbar { display: none; }
-
-  /* Six tabs at 13px are 393px wide, which clips the last one on a 390px
-     phone. Four pixels of padding either side buys the 48 that makes the
-     whole row fit - and the row still scrolls, so a seventh tab or a large
-     text setting degrades to a scroll rather than to a clip. */
-  @media (max-width: 430px) {
-    .app-header nav button { padding-left: var(--s1); padding-right: var(--s1); }
-    .app-header nav button::after { left: var(--s1); right: var(--s1); }
-  }
-}
 
 /* A clock face drawn from a circle and two borders, like every other mark in
    this app. No icon font, nothing to load. */
@@ -5675,8 +5767,6 @@ button.danger:focus-visible {
     padding-top: max(14px, env(safe-area-inset-top));
     padding-bottom: var(--s2);
   }
-
-  .app-header nav button { min-height: 34px; padding: 6px 12px; }
 
   /* The grid's own scroll cap (max-height: min(58vh, 520px), set above for
      the phone's stacked layout) is what LAYOUT-WIDE.md section 5 flagged
@@ -9641,38 +9731,6 @@ main:has(.week) > .calendar {
   color: var(--muted);
   font-size: var(--t-xs);
 }
-
-.scratch-note-action:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
-.scratch-note-action.is-danger:hover { color: var(--danger); }
-
-/* The floating way in, on a phone. A corner, never the middle: it must not
-   sit on the timeline or on the task list, and it snaps to whichever corner
-   it was dragged nearest. */
-.scratch-fab {
-  position: fixed;
-  z-index: 46;
-  width: 48px;
-  height: 48px;
-  min-height: 0;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--r-round);
-  background: var(--surface-raised, var(--surface));
-  color: var(--text);
-  box-shadow: var(--e2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  touch-action: none;
-  cursor: grab;
-}
-
-.scratch-fab svg { width: 20px; height: 20px; }
-.scratch-fab.is-dragging { cursor: grabbing; box-shadow: var(--e3); transition: none; }
-.scratch-fab.at-bottom-right { right: var(--s4); bottom: calc(var(--s6) + env(safe-area-inset-bottom)); }
-.scratch-fab.at-bottom-left { left: var(--s4); bottom: calc(var(--s6) + env(safe-area-inset-bottom)); }
-.scratch-fab.at-top-right { right: var(--s4); top: calc(80px + env(safe-area-inset-top)); }
-.scratch-fab.at-top-left { left: var(--s4); top: calc(80px + env(safe-area-inset-top)); }
 
 @media (pointer: coarse) {
   .scratch-tag,

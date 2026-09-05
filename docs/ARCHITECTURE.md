@@ -272,13 +272,14 @@ src/
     viewport.ts        the 1024px wide breakpoint
 
   views/               a tab, or a control shared between tabs
-    scratch/           the scratch overlay, and the floating button on a phone
+    scratch/           the scratch overlay, opened from the pen in the rail
     tour/              the tour engine: a spotlight, a card, a predicate
                        (cardPlacement.ts is its geometry, tested on its own -
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             the North window: goals, and the rules under each
     CommandPalette, ShortcutsOverlay
+    NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the (i) beside a term, and the sentence behind it
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
@@ -674,7 +675,7 @@ npm run build     # typecheck, build, generate the service worker
 ### The week view
 
 `views/week/` - a third mode in the Calendar tab rather than a seventh tab,
-because the tab bar is already six items and already scrolls sideways at 390px.
+because six views is already the whole of what the navigation carries.
 
 | File | Job |
 |---|---|
