@@ -320,6 +320,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
   week.e2e.ts          a block dragged onto another day, with a real mouse
+  week-template.e2e.ts a week built, dragged between columns, saved and stamped
   data.e2e.ts          export, erase, import; two snapshot restores; an .ics file over the day
 playwright.config.ts   the two projects, and the preview server they run against
 scripts/
@@ -637,7 +638,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 1953 tests in 111 files, no worker limits, no skips; plus 24 Playwright tests in 11 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 1986 tests in 113 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 

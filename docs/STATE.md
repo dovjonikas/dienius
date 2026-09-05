@@ -6,13 +6,17 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.0 is closed and tagged. Six stages: categories the
-owner names, North as a window with every rule under the goal it protects,
-an explanation for each of the twenty words this app invented, three reading
-lanes instead of one stalling queue, a clean pass over sixteen places
-including a navigation rail and a calendar that says what is on a day, and
-this closing. What is owed next is the week-templates wave, briefed in full
-in section 4, and the phone wave after it.
+**Last updated:** the week-templates wave, on top of a closed and tagged
+v2.0. A template can be a week now: one entity with a `kind`, seven columns
+in the editor, and stamping that takes the date's own weekday column. It is
+committed and pushed and sits above the tag.
+
+v2.0 itself was six stages - categories the owner names, North as a window
+with every rule under the goal it protects, an explanation for each of the
+twenty words this app invented, three reading lanes instead of one stalling
+queue, a clean pass over sixteen places including a navigation rail and a
+calendar that says what is on a day, and the closing. **What is owed next is
+the phone wave**, section 4's last block.
 
 ---
 
@@ -130,9 +134,9 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed at the v2.0 tag. The suite is
-green - **1953 tests in 111 files, plus 24 Playwright tests in 11 files across
-two viewports** - the typecheck and the build are clean, `npm run sweep`
+Still true, and checked rather than assumed. The suite is green - **1986
+tests in 113 files, plus 25 Playwright tests in 12 files across two
+viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop at either the ordinary or the heavy day and
 its self-check sees five shapes out of five, and the working tree is empty.
 Everything is tagged.
@@ -153,13 +157,14 @@ tagged; the second is below it and has not started.
 | 4 | **Library lanes: MIND, CRAFT, LIGHT** | **Done**. One queue of twenty became three that advance on their own |
 | 5 | **Clean checkup** | **Done**. Sixteen places, plus the icon rail and the calendar's information layer, in four commits |
 | 6 | **Closing: desktop QA, DAILY.md, regression, tag v2.0** | **Done**. Tagged `v2.0` |
-| - | **Week templates** (its own wave) | **Next.** Its own stage 3 wanted tooltips for "Week template", "Add to" and "Copy to"; the component for those is `views/Explain.tsx` and it exists, so nothing blocks this now |
+| - | **Week templates** (its own wave) | **Done.** One entity with a `kind`, seven columns, Add to / Copy to / drag, a per-column day type and sleep, a shape on the card, a start-from-a-day expansion, and four more terms in the explanation layer |
 
-Every stage above is committed, pushed and tagged, and the working tree is
-empty. The briefs that follow are kept as written because the commits refer
-to them; what each one actually became is in its own commit message and in
-DECISIONS.md. **The next session starts on the week-templates wave**, which
-is the last block of this section.
+Every stage above is committed and pushed, and the working tree is empty.
+Everything through the closing is tagged `v2.0`; the week-templates wave sits
+above it, untagged. The briefs that follow are kept as written because the
+commits refer to them; what each one actually became is in its own commit
+message and in DECISIONS.md. **The next session starts on the phone wave**,
+which is the block after them.
 
 #### Stage 2 - North becomes a window, and if-then moves into it
 

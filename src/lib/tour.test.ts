@@ -1,4 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
+import { applyStamps } from './stamping'
+import type { Template } from './types'
 import { join, resolve } from 'node:path'
 import { expect, test } from 'vitest'
 import {
@@ -360,3 +362,29 @@ for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS
     }
   })
 }
+
+/**
+ * The tour's stamp step ends when the day gains a template, and a week
+ * template is a template - a person who built one before taking the tour must
+ * not find the step unfinishable. Checked here rather than assumed, because
+ * CONVENTIONS section 13 makes a step that can never be finished a P0: it
+ * traps somebody on their first screen with no way past.
+ */
+test('the stamp step ends on a week template exactly as it does on a day one', () => {
+  const today = '2026-09-16'
+  const empty = { ...defaultData(), days: {} }
+  const week: Template = {
+    id: 'wk',
+    name: 'My week',
+    color: '#a7c4f5',
+    kind: 'week',
+    blocks: [{ id: 'b', title: 'Commute', weekday: 3 }],
+  }
+  const stamped = {
+    ...empty,
+    templates: [week],
+    days: applyStamps({}, [week], { [today]: 'wk' }),
+  }
+
+  expect(TOUR_EVENTS.stamped({ before: empty, now: stamped, today, focusRunning: false })).toBe(true)
+})

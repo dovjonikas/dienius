@@ -35,7 +35,54 @@ Three things worth knowing while you build:
 Start with two: the ordinary working day, and whatever the other kind of day
 is - a shift, a day off, a Sunday. Add more when you notice a third kind.
 
-## 2. Say which weekday gets which
+## 2. Or build the whole week at once
+
+If your week has a shape - a gym rotation, a shift pattern, one short day -
+build it as one template rather than as seven.
+
+**New template → A week.** Seven columns, and one row underneath to add to
+them:
+
+1. Type what happens, pick a time and a length the way you would anywhere
+   else.
+2. **Add to** decides which days it lands on: the day you have picked, the
+   weekdays, the weekend, or all seven. Most of a week is the same on several
+   days, and this is the press that says so.
+3. Blocks you added together are treated as one thing. Removing one takes it
+   off every day it is on - unless you switch the choice above the columns to
+   **Just this day**, which stays switched until you switch it back.
+4. **Copy to**, at the foot of a column, takes a day you have already built
+   and puts it on the others.
+5. A block on the wrong day: drag it to the right one.
+6. Each column can name its **own day type and sleep schedule**. That is what
+   makes a week worth having: Saturday is a rest day and Wednesday is a night
+   shift, and they are the same template.
+
+Already have a day template you like? **New template → Or start a week from a
+day you already have** puts its blocks on all seven and leaves the original
+alone, so you can edit the differences instead of typing the shape seven
+times.
+
+Stamping a date takes that weekday's column and nothing else. The card shows
+the week's shape - seven small bars - rather than its first four titles,
+because that is the thing worth reading about a week.
+
+**A worked one**, which is what this was built for:
+
+| | |
+|---|---|
+| Every weekday | Commute 08:15, Deep work 09:00, Commute home 17:00 |
+| Mon, Wed, Fri | Gym: Upper 18:30 |
+| Tue, Thu | Gym: Lower 18:30 |
+| Every day | Reading 21:30, bound to your MIND list |
+| Wed | Reading 21:30 bound to CRAFT instead - drag the MIND one off and add a CRAFT one just for that day |
+| Sat | Long walk 10:00, and the column set to **Rest** |
+
+That is six presses of Add to and two drags. As seven day templates it is
+seven forms, seven names, and seven places to change when the gym rotation
+moves.
+
+## 3. Say which weekday gets which
 
 **Settings → Week → A template per weekday.** One dropdown per day of the
 week. Set the ones you are sure of and leave the rest on Nothing.
@@ -46,7 +93,11 @@ From then on a new day opens already set up. Two rules to trust it:
 - **Deleting what arrived leaves it deleted.** Re-opening the day does not
   put it back. It is a starting point, not a rule.
 
-## 3. Write down what the days are for
+A **week template** fills all seven at once, because its Monday is not
+something you could sensibly put on a Wednesday. Clearing any one of its days
+clears the lot.
+
+## 4. Write down what the days are for
 
 **Settings → North → Write one down.** Up to four. Each is three lines:
 
@@ -93,7 +144,7 @@ gathered under **Not under a goal yet** with the goals offered beside each
 one. Nothing was filed for you, and a rule can stay there as long as it
 likes.
 
-## 4. Point a reading block at the Library
+## 5. Point a reading block at the Library
 
 Only if you read, or watch, or work through courses. The point of it: the
 block on your template says "a reading session", the list says which book,
@@ -121,7 +172,7 @@ a book ends, the list says so and offers the next one.
 To reorder the queue, drag a row in the Library - or focus its grip and use
 the arrow keys. The order *is* the queue; nothing else decides what is next.
 
-## 5. Name the kinds of task you actually have
+## 6. Name the kinds of task you actually have
 
 The six the app ships with - core, routine, personal and the rest - are a
 starting point, not a vocabulary you have to live in. **Settings →
@@ -142,7 +193,7 @@ Templates are where most tasks get their category, because a stamped day
 arrives already sorted - the row of dots under the block-add line is the same
 picker quick-add uses on the day view.
 
-## 6. Turn on the copy on GitHub
+## 7. Turn on the copy on GitHub
 
 The one that survives losing the machine. It writes your plan as plain JSON
 into a private repo you own, so it is readable in a browser from anywhere.
@@ -177,7 +228,7 @@ of a new one. **The token never leaves this device** - it is not in an
 export, it does not sync, and it is not in the copy it writes. Which also
 means: set it up separately on each device you use.
 
-## 7. Two devices, if you have a second one
+## 8. Two devices, if you have a second one
 
 Optional, and unrelated to step 5. Sync needs a small server you run
 yourself - a PC at home, reached from the phone. `server/sync-server.mjs`
