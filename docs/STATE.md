@@ -213,43 +213,85 @@ hunt, then the tag.
 | 4 | Closing and `v2.1` | `1384518` | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
 | - | **After the tag: Outlook's zone names** | `606aaeb`, `2b0d787` | The one debt that could move without the owner. `WINDOWS_ZONES` in `ics.ts`, consulted after `Intl` says no, and a quoted TZID unwrapped - which had failed the same way for a different reason. In the resolved-debts list below |
 
-### Asked for, not yet built
+### Replan v2 - "Something came up" for any day of the week
 
-In order. The first is the next session's work, once its brief arrives.
+**The brief arrived**, and this is the plan it became; the wave is being
+built against it. The scenario: the week is stamped from templates, and
+the phone rings - "tomorrow at ten I need a hand", or "Thursday
+afternoon". The person is on the phone, one hand on the device. From the
+call to a replanned day: ten seconds, three presses, no scrolling through
+the week.
 
-**1. Replan v2 - "Something came up" for any day of the week.** Today the
-door only opens on the day being looked at, for a block that starts now. It
-becomes the way an interruption is answered wherever it lands:
+1. **One way in from anywhere.** The Today header (there already), any
+   later day's header, the week view, the calendar's day preview, `Ctrl-K`
+   and the `R` key. One sheet opens, and its first row is WHEN: today,
+   tomorrow, the five days after that with their dates, and Pick a day.
+   Today is the default, and the day changes without leaving the sheet.
+2. **Presets for the shape of it**, because a call rarely names a length:
+   Morning gone (wake to 13:00), Afternoon gone (13:00 to 18:00), Evening
+   gone (18:00 to sleep), Whole day gone, Custom (a time and a length), and
+   Don't know how long (open-ended from a time). The name is optional -
+   "Something came up" stands in - and the last three names used are chips.
+3. **A typed line in Lithuanian or English**, beside the chips rather than
+   instead of them: "tomorrow 10-13 dad", "thu afternoon", "ryt 10 val
+   tetis", "pn ryte". Day, time and name come out of it and the chips
+   redraw live, the way quick-add already does. A small table of tokens,
+   not a language library; the short forms pr, an, tr, kt, pn, st, sk and
+   ryt, poryt are in it.
+4. **The plan is proposed, not asked for.** Choosing when shows that day
+   before and after at once: what the interruption lands on and where each
+   goes - that day's free gaps first, then the next day; a routine block
+   (`isRoutine`: a template's or a repeat's) is skipped for the day rather
+   than moved, because the template makes it again; key tasks are placed
+   first. One Accept applies it. Tapping a row overrides that one - move,
+   the next day, skip, keep - and nobody has to. The arithmetic is v1's
+   `planInterrupt`, given a start-from and a way of naming the day, not a
+   second copy.
+5. **A day that does not exist yet is made.** An interruption landing on
+   Thursday from Tuesday materialises Thursday first - its weekday template,
+   its repeats - and applies the plan on top, in one commit, so opening
+   Thursday later shows the day as accepted. `ensuredDay` in
+   `lib/ensureDay.ts` is the pure half of `actions.ensureDay`, and
+   choosing a day in the sheet opens it through the action, exactly as
+   looking at it would - a pure preview was tried and stamps its own copy
+   with its own task ids. Stamp week leaves the day alone afterwards, as it
+   already leaves every day that has a template.
+6. **The answer for the person on the phone.** One line under the plan,
+   before Accept and in the undo toast after it: "Free tomorrow:
+   15:30-17:00, after 19:30" - so "I can after half three" can be said
+   into the phone without opening the day.
+7. **One undo** for the whole thing, sync as for everything, and the week
+   view marks the day with a quiet "replanned" (`DayPlan.replannedOn`).
+8. **Tests** for each of those, and a browser test on a 390x844 phone:
+   from the door to Accept in three presses, nothing scrolled.
+9. **Two critique passes on the phone** with the stress scenario - the
+   phone ringing, the sheet open in one hand, ten seconds - then DAILY.md
+   gains "When the phone rings", and the tag is `v2.2`.
 
-- **One way in from anywhere** - the palette, the day, the week, a key - so
-  answering a call does not start with finding the right day.
-- **A WHEN row of chips**: today, tomorrow, pick a day, and the weekday row
-  for this week.
-- **Quick presets for the shape of it**: the morning is gone, the afternoon,
-  the evening, the whole day, or open-ended - it has started and nobody
-  knows when it ends.
-- **A typed line that parses in Lithuanian and in English** - "rytoj 14:00
-  dantistas 30min", "tomorrow 2pm dentist 30min" - through the same parser
-  quick-add already has, extended rather than doubled.
-- **The plan proposed on its own** - what moves before and what moves after
-  - shown before Accept, in the one-press shape replan already has.
-- **A future day materialised** when the interruption lands on it: stamped
-  from its weekday template if it has nothing yet, so what was accepted is
-  a real day rather than a note about one.
-- **A free-windows line for that day**, so "when could you?" can be
-  answered on the phone without opening the day.
-- **One undo** for the whole thing.
+**Decisions taken while designing it**, so nobody re-argues them by
+accident:
 
-**The brief is coming from the owner**, so do not design it ahead of them.
-What is worth knowing before it arrives: `widgets/day-plan/replan.ts` holds
-the four pure functions and the one writer, `applyPlan`, and CONVENTIONS
-section 12 - one question, ten seconds, one press, never a count of what
-was missed, nothing dropped silently - governs any version of this. A
-future day comes into being through `actions.ensureDay` (ARCHITECTURE
-section 5), which today runs only when a day is opened; an interruption
-landing on Thursday from Tuesday is the first thing that would need it
-without the day being looked at. And `parse.ts` is quick-add's line parser,
-which knows a time and a duration in English and nothing in Lithuanian yet.
+- The sheet moves to the app root and reads the store itself, given a day.
+  It lived inside the day view because it was about today; it is about any
+  day now, and the week view and the calendar open it without leaving.
+- The WHEN row is seven days from today rather than Monday to Sunday of
+  this week: a chip for a day that has passed is a chip nobody can use,
+  and "Thursday" said on a Sunday means the one coming.
+- A typed weekday means the next one, never today - the rule the palette's
+  date parsing already keeps.
+- Tapping a chip takes its word out of the line rather than rewriting the
+  line in one of two languages: the line and the chips stay one truth,
+  which is CONVENTIONS section 16's rule for quick-add.
+- A routine block is skipped, not moved, and the summary says "Skipped";
+  a one-off the person chose to drop still reads "Dropped". They are two
+  different facts, and one word for both would hide that.
+- The last three names are a device habit under their own key, outside the
+  backup and outside sync, the same way quick-add remembers a length.
+- There is no floating menu on the phone to put it in: the bar along the
+  bottom is the six views, Scratch and Settings, and an eighth icon at
+  390px is 48px each. On a phone the ways in are the day header on today
+  and any later day, the month (a tap opens the day, whose header has the
+  door), and the palette.
 
 ### The six briefs, kept as history
 
