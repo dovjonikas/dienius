@@ -743,16 +743,25 @@ something precise here and something else, or nothing, everywhere else.
   literals across twenty components is a vocabulary nobody can see the whole
   of, and two entries can contradict each other for a year without anybody
   noticing.
-- **One component renders it**, `views/Explain.tsx`, in two shapes: a small
-  (i) that opens a bubble, and the same sentence printed in place for a term
-  that *is* a choice somebody is making right now. A tooltip on a control
-  somebody is deciding about is an explanation behind a second decision.
+- **One component renders it**, `views/Explain.tsx`, in two shapes: a bubble
+  hanging off the control it is about, and the same sentence printed in place
+  for a term that *is* a choice somebody is making right now. A tooltip on a
+  control somebody is deciding about is an explanation behind a second
+  decision.
+- **There is no marker.** There was, for one version - a small (i) beside
+  every term - and twenty of them read as twenty controls rather than as
+  texture, each the loudest thing in a row it had no business being loudest
+  in. An explanation is a second thought about something already on screen,
+  and a second thought does not get a permanent button. The control is the
+  anchor: rest on it, hold it, or focus it.
 - **One or two sentences, and nothing to press inside.** The moment a bubble
   has a control in it, it has to be reachable, which makes it a popover,
   which makes it a thing somebody has to get out of.
-- **Three ways in, always.** A mouse rests on it for 400ms, a finger taps it,
-  a keyboard focuses it. A tooltip only a mouse can reach is an explanation
-  half the people who need it cannot get to - section 17, one step down.
+- **Three ways in, always.** A mouse rests on the control for 400ms, a finger
+  holds it for 500ms, a keyboard focuses it. A tooltip only a mouse can reach
+  is an explanation half the people who need it cannot get to - section 17,
+  one step down. The hold never swallows the tap: this wraps the control, it
+  does not replace it.
 - **The list is the test's own data.** `Explain.test.tsx` walks every id in
   `EXPLAIN_IDS`, checks it has a sentence, checks the sentence is at most two
   sentences with no dash, and renders the screen it is supposed to live on to

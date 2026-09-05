@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
-import { Explain, EXPLAIN_DELAY } from './Explain'
+import { Explain, EXPLAIN_DELAY, EXPLAIN_HOLD } from './Explain'
 import { EXPLAIN_IDS, EXPLANATIONS, type ExplainId } from '../lib/explain'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
@@ -190,15 +190,25 @@ describe.each(EXPLAIN_IDS)('%s', id => {
  * Three ways in, because there are three kinds of input and a tooltip that
  * only answers to one of them is an explanation half the people who need it
  * cannot reach - the same rule as CONVENTIONS section 17, one step down.
+ *
+ * All five of these changed when the (i) went. They used to reach for a
+ * marker button of its own; there is no marker any more, so they reach for
+ * the control the sentence is about - which is the whole point of the change.
  */
 describe('opening it', () => {
-  test('a mouse has to rest on it, not merely cross it', async () => {
+  const host = (id: 'ongoing' | 'push' | 'stamp' | 'focus') => (
+    <Explain id={id}>
+      <button type="button">Ongoing</button>
+    </Explain>
+  )
+
+  test('a mouse has to rest on the control, not merely cross it', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    render(<Explain id="ongoing" />)
+    render(host('ongoing'))
     const bubble = screen.getByRole('tooltip', { hidden: true })
 
-    await user.hover(screen.getByRole('button', { name: 'What Ongoing means' }))
+    await user.hover(screen.getByRole('button', { name: 'Ongoing' }))
     expect(bubble).toHaveAttribute('hidden')
 
     act(() => vi.advanceTimersByTime(EXPLAIN_DELAY))
@@ -209,46 +219,60 @@ describe('opening it', () => {
   test('a cursor passing over on its way somewhere else never opens it', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-    render(<Explain id="ongoing" />)
-    const marker = screen.getByRole('button', { name: 'What Ongoing means' })
+    render(host('ongoing'))
+    const control = screen.getByRole('button', { name: 'Ongoing' })
 
-    await user.hover(marker)
+    await user.hover(control)
     act(() => vi.advanceTimersByTime(EXPLAIN_DELAY - 50))
-    await user.unhover(marker)
+    await user.unhover(control)
     act(() => vi.advanceTimersByTime(EXPLAIN_DELAY))
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveAttribute('hidden')
     vi.useRealTimers()
   })
 
-  test('a tap opens it and a second tap puts it away - a finger has no hover', async () => {
-    const user = userEvent.setup()
-    render(<Explain id="push" />)
-    const marker = screen.getByRole('button', { name: 'What Push means' })
+  /**
+   * A finger holds. The important half is the second assertion: the control's
+   * own click still fires, because this wraps rather than replaces - a tap
+   * that stopped doing what the button does in order to explain the button
+   * would be the worst trade in the app.
+   */
+  test('a finger holds the control to get the sentence, and a tap still presses it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    const pressed = vi.fn()
+    render(
+      <Explain id="push">
+        <button type="button" onClick={pressed}>
+          Push
+        </button>
+      </Explain>,
+    )
+    const control = screen.getByRole('button', { name: 'Push' })
 
-    await user.pointer({ keys: '[TouchA]', target: marker })
-    expect(screen.getByRole('tooltip')).toHaveTextContent('Moves a task to tomorrow')
-
-    await user.pointer({ keys: '[TouchA]', target: marker })
+    await user.pointer({ keys: '[TouchA]', target: control })
+    act(() => vi.advanceTimersByTime(EXPLAIN_HOLD))
     expect(screen.getByRole('tooltip', { hidden: true })).toHaveAttribute('hidden')
+    expect(pressed).toHaveBeenCalledTimes(1)
+
+    await user.pointer({ keys: '[TouchA>]', target: control })
+    act(() => vi.advanceTimersByTime(EXPLAIN_HOLD))
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Moves a task to tomorrow')
+    vi.useRealTimers()
   })
 
-  test('a keyboard opens it at once - nobody tabs past something by accident', async () => {
+  test('a keyboard reaching the control gets it at once - nobody tabs past by accident', async () => {
     const user = userEvent.setup()
-    render(<Explain id="stamp" />)
+    render(host('stamp'))
 
     await user.tab()
-    expect(screen.getByRole('button', { name: 'What Stamp means' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Ongoing' })).toHaveFocus()
     expect(screen.getByRole('tooltip')).not.toHaveAttribute('hidden')
   })
 
   test('Escape closes the bubble and stops there, so it does not also close what is under it', async () => {
     const user = userEvent.setup()
     const outer = vi.fn()
-    render(
-      <div onKeyDown={outer}>
-        <Explain id="focus" />
-      </div>,
-    )
+    render(<div onKeyDown={outer}>{host('focus')}</div>)
 
     await user.tab()
     expect(screen.getByRole('tooltip')).not.toHaveAttribute('hidden')
@@ -258,7 +282,7 @@ describe('opening it', () => {
   })
 
   // Printed rather than asked for - see the `inline` prop. Same copy, same
-  // file, same audit hook, no control.
+  // file, same audit hook, no control and no gesture.
   test('an inline explanation is the sentence itself, with nothing to press', () => {
     const { container } = render(<Explain id="replan-away" inline />)
     expect(container.querySelector('[data-explains="replan-away"]')).toHaveTextContent('Pauses the day')

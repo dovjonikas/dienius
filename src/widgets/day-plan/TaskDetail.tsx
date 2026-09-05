@@ -258,21 +258,20 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
               being refused. See actions.toggleTaskHighlight for why it
               refuses rather than swapping the oldest out. */}
           <div className="task-detail-field">
-            <span className="task-detail-label">
-              Key task
-              <Explain id="key-task" />
-            </span>
+            <span className="task-detail-label">Key task</span>
             <div className="task-detail-time">
-              <button
-                type="button"
-                className={task.highlight ? 'task-detail-toggle active' : 'task-detail-toggle'}
-                data-tour="key"
-                aria-pressed={task.highlight ?? false}
-                disabled={highlightFull}
-                onClick={() => actions.toggleTaskHighlight(date, task.id)}
-              >
-                {task.highlight ? 'A key task today' : 'Mark as key'}
-              </button>
+              <Explain id="key-task">
+                <button
+                  type="button"
+                  className={task.highlight ? 'task-detail-toggle active' : 'task-detail-toggle'}
+                  data-tour="key"
+                  aria-pressed={task.highlight ?? false}
+                  disabled={highlightFull}
+                  onClick={() => actions.toggleTaskHighlight(date, task.id)}
+                >
+                  {task.highlight ? 'A key task today' : 'Mark as key'}
+                </button>
+              </Explain>
               <span className="task-detail-hint">
                 {highlights}/{MAX_HIGHLIGHTS} used
                 {highlightFull ? ' - unmark another first' : ''}

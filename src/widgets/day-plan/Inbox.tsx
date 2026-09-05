@@ -39,12 +39,11 @@ export function Inbox({ date }: InboxProps) {
 
   return (
     <div className={open ? 'inbox-section open' : 'inbox-section'}>
-      {/* The (i) is beside the fold rather than inside it, because a button
-          cannot live inside a button - see views/Explain.tsx. Of the four
-          shelves this and the backlog are the two whose names sound like
-          each other and mean different things, which is exactly the pair
-          worth a sentence. */}
-      <div className="shelf-head">
+      {/* Of the four shelves this and the backlog are the two whose names
+          sound like each other and mean different things, which is exactly
+          the pair worth a sentence. The sentence hangs off the fold itself -
+          see views/Explain.tsx for why it has no marker of its own. */}
+      <Explain id="inbox" className="explain-block">
         <button
           type="button"
           className="done-toggle"
@@ -56,8 +55,7 @@ export function Inbox({ date }: InboxProps) {
           Inbox
           <span className="inbox-badge">{items.length}</span>
         </button>
-        <Explain id="inbox" align="end" />
-      </div>
+      </Explain>
       <ul className="inbox-list" id={listId}>
         {items.map(item => (
           <li key={item.id} className="inbox-item">

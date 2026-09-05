@@ -189,10 +189,9 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
         ))}
       </div>
       <div className="day-type-picker">
-        <span className="muted">
-          Day type
-          <Explain id="day-type" />
-        </span>
+        <Explain id="day-type">
+          <span className="muted">Day type</span>
+        </Explain>
         <div className="segmented" role="group" aria-label="Day type">
           {DAY_TYPES.map(opt => (
             <button
@@ -218,10 +217,9 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
       </p>
       {sleepProfiles.length > 1 && (
         <div className="day-type-picker">
-          <span className="muted">
-            Sleep schedule
-            <Explain id="sleep-schedule" />
-          </span>
+          <Explain id="sleep-schedule">
+            <span className="muted">Sleep schedule</span>
+          </Explain>
           <select
             className="setting-select"
             aria-label="Sleep schedule"
@@ -335,20 +333,21 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             Core
           </button>
         )}
-        <button
-          type="button"
-          aria-pressed={blockUnbounded}
-          aria-label={blockUnbounded ? 'New block is ongoing' : 'Mark new block as ongoing'}
-          className={blockUnbounded ? 'core-toggle active' : 'core-toggle'}
-          onClick={() => setBlockUnbounded(v => !v)}
-        >
-          Ongoing
-        </button>
-        {/* Beside the button rather than as a standing sentence under the
-            form. The sentence was there, it read "Ongoing blocks never get
-            pushed to tomorrow or need a decision", and it sat above a list
-            of blocks two scroll-lengths away from the toggle it described. */}
-        <Explain id="ongoing" />
+        {/* On the button rather than as a standing sentence under the form.
+            The sentence was there, it read "Ongoing blocks never get pushed
+            to tomorrow or need a decision", and it sat above a list of blocks
+            two scroll-lengths from the toggle it described. */}
+        <Explain id="ongoing">
+          <button
+            type="button"
+            aria-pressed={blockUnbounded}
+            aria-label={blockUnbounded ? 'New block is ongoing' : 'Mark new block as ongoing'}
+            className={blockUnbounded ? 'core-toggle active' : 'core-toggle'}
+            onClick={() => setBlockUnbounded(v => !v)}
+          >
+            Ongoing
+          </button>
+        </Explain>
         <button className="btn-secondary" onClick={addBlock}>Add block</button>
       </div>
       <div className="row">

@@ -70,7 +70,7 @@ export function Backlog({ date }: BacklogProps) {
 
   return (
     <div className={open ? 'backlog-section open' : 'backlog-section'}>
-      <div className="shelf-head">
+      <Explain id="backlog" className="explain-block">
         <button
           type="button"
           className="done-toggle"
@@ -85,8 +85,7 @@ export function Backlog({ date }: BacklogProps) {
               that grows in red is a report card. */}
           <span className="backlog-count">{items.length}</span>
         </button>
-        <Explain id="backlog" align="end" />
-      </div>
+      </Explain>
       <ul className="backlog-list" id={listId} ref={listRef}>
         {items.map((item, index) => (
           <li

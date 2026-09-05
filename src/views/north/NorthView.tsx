@@ -52,8 +52,7 @@ export function NorthView({ onOpenSettings }: NorthViewProps) {
     <section className="north-view" aria-label="North">
       <header className="north-view-head">
         <h2>
-          North
-          <Explain id="north" />
+          <Explain id="north">North</Explain>
         </h2>
         <p className="north-view-lead">
           The few things the days are for, and the moments that pull you off them.

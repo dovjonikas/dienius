@@ -1,6 +1,7 @@
 import type { MonthCell } from './dates'
 import { formatDayTitle } from './dates'
-import type { Template } from './types'
+import type { Task, Template } from './types'
+import { sortTasks } from '../widgets/day-plan/sort'
 
 /**
  * Extracted from CalendarView.tsx - docs/LAYOUT-WIDE.md section 5, build
@@ -50,4 +51,54 @@ export function cellLabel(cell: MonthCell, templateName: string | undefined, sta
   if (state === 'unfinished') parts.push('has unfinished tasks')
   if (state === 'done') parts.push('tasks completed')
   return parts.join(', ')
+}
+
+/**
+ * What a month cell says about a day that has not happened yet.
+ *
+ * The report that asked for this: *"you arrive at the calendar and it looks
+ * unclear."* A cell carried a template's name and a colour, and a template's
+ * name is what somebody called a shape of day two months ago - it is not what
+ * is on Thursday. Two or three lines of "09:00 Job hunt" is.
+ *
+ * The rules are all about the cell's height, which may not grow:
+ *
+ * - **The day's own order**, so the first line is the first thing that
+ *   happens. `sortTasks` is that order and there is only one of it.
+ * - **A time only when the task has one.** A float is a real part of the day
+ *   and belongs in the list; inventing a time for it would be a lie the cell
+ *   tells at a glance.
+ * - **The count of what is left over**, not the total. "+4" after three lines
+ *   means four more; a "7" would mean the three above it were a lie.
+ *
+ * Pure, and takes the limit as an argument, because how many fit is a fact
+ * about the screen and this file has never been allowed to know about one.
+ */
+export interface CellPoint {
+  id: string
+  time: string | undefined
+  title: string
+  done: boolean
+  /** A key task, marked - it is the one thing about a task the cell ranks. */
+  key: boolean
+}
+
+export interface CellPoints {
+  points: CellPoint[]
+  /** How many did not fit. Zero when they all did. */
+  more: number
+}
+
+export function cellPoints(day: { tasks: Task[] } | undefined, limit: number): CellPoints {
+  const tasks = sortTasks(day?.tasks ?? [])
+  return {
+    points: tasks.slice(0, limit).map(t => ({
+      id: t.id,
+      time: t.time,
+      title: t.title,
+      done: !!t.done,
+      key: !!t.highlight,
+    })),
+    more: Math.max(0, tasks.length - limit),
+  }
 }

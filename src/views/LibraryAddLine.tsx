@@ -103,6 +103,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           }
         }}
       />
+      <Explain id="library-unit">
       <div className="duration-control library-unit" ref={unitRef}>
         <button
           type="button"
@@ -132,7 +133,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           </div>
         )}
       </div>
-      <Explain id="library-unit" align="end" />
+      </Explain>
       {effectiveTrack !== 'movie' && effectiveTrack !== 'series' && (
         <CountStepInput
           value={effective.total === undefined ? '' : String(effective.total)}
@@ -142,7 +143,11 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           // says "chapters", and two adjacent controls reading the same word
           // is one of them looking like a duplicate of the other. This one
           // asks how many; that one asks of what.
-          placeholder="how many"
+          // "how many" is a question, and it was being asked inside a box
+          // sized for a two-digit answer - it read "how mar" on every screen
+          // this app has. The question is in the label; the box shows the
+          // shape of what goes in it.
+          placeholder="12"
         />
       )}
       {effectiveTrack === 'series' && (

@@ -69,8 +69,7 @@ export function SyncSettings() {
           the difference between losing an afternoon and losing everything -
           so both say what they are for, in a sentence, where they are. */}
       <h3>
-        Sync
-        <Explain id="sync" />
+        <Explain id="sync">Sync</Explain>
       </h3>
 
       <div className="setting-block">

@@ -401,12 +401,11 @@ export function TaskRow({
             idea about time and not the one this app is built on. See
             FocusView.tsx. */}
         {active && onFocus && (
-          <>
+          <Explain id="focus" align="end">
             <button type="button" className="task-focus-button" data-tour="focus" onClick={onFocus}>
               Focus
             </button>
-            <Explain id="focus" align="end" />
-          </>
+          </Explain>
         )}
         <button
           type="button"

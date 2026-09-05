@@ -88,8 +88,7 @@ export function BackupSettings() {
   return (
     <div className="settings-group" id="settings-backup">
       <h3>
-        Backup
-        <Explain id="backup" />
+        <Explain id="backup">Backup</Explain>
       </h3>
 
       <div className="setting-block">

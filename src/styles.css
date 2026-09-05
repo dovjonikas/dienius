@@ -10208,7 +10208,7 @@ main:has(.week) > .calendar {
 /* The value button that says what a library item is counted in, next to
    the count with its arrows. */
 .library-add .duration-control-value { min-width: 0; padding: 0 var(--s3); }
-.library-add .count-stepper .count-input { width: 84px; }
+.library-add .count-stepper .count-input { width: 72px; }
 .library-step-wide { width: auto; padding: 0 var(--s2); }
 
 @media (pointer: coarse) {
@@ -10857,43 +10857,21 @@ main:has(.week) > .calendar {
    it, and no fill, no border, no accent at any point. Twenty of these on a
    settings page must read as texture rather than as twenty controls.
    ------------------------------------------------------------------------ */
+/* No box of its own: the wrapper takes the shape of whatever it is explaining
+   so nothing moves by being explainable. There was an (i) here for exactly one
+   version - twenty small bordered circles read as twenty controls rather than
+   as texture, and each was the loudest thing in a row it had no business
+   being loudest in. */
 .explain {
   position: relative;
   display: inline-flex;
   vertical-align: baseline;
-  margin-left: var(--s1);
 }
 
-.explain-button {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  min-height: 0;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--faint) 55%, transparent);
-  border-radius: var(--r-round);
-  background: none;
-  color: var(--faint);
-  font-size: 10px;
-  font-style: italic;
-  font-weight: 600;
-  line-height: 1;
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-
-.explain-button:hover,
-.explain.is-open .explain-button {
-  border-color: var(--muted);
-  color: var(--muted);
-}
-
-.explain-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* For a host that is a row rather than a word - a fold, a full-width action -
+   where the wrapper has to fill the line the control used to fill itself. */
+.explain-block { display: flex; }
+.explain-block > button { flex: 1 1 auto; min-width: 0; }
 
 /* [hidden] is a UA display:none, and an author rule setting display on the
    same element beats it whatever the specificity - the same trap
@@ -10953,32 +10931,6 @@ main:has(.week) > .calendar {
   line-height: 1.5;
 }
 
-/* A shelf's fold and its (i), on one row. The fold keeps the whole width it
-   had; the marker sits at the end of it rather than inside, because a button
-   cannot live inside a button. */
-.shelf-head {
-  display: flex;
-  align-items: center;
-  gap: var(--s1);
-}
-
-.shelf-head .done-toggle { flex: 1 1 auto; min-width: 0; }
-
-/* A row in the actions sheet that carries an explanation. The row keeps the
-   full-width press target it had; the marker sits over its right end. */
-.task-actions-explained {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.task-actions-explained .task-actions-row { flex: 1 1 auto; min-width: 0; }
-
-.task-actions-explained .explain {
-  position: absolute;
-  right: var(--s3);
-}
-
 /* What picking a day type actually changes, under the segment that picks it.
    Live: it is rewritten as the choice changes, which is the only way a line
    like this is read at the moment it matters. */
@@ -10989,16 +10941,6 @@ main:has(.week) > .calendar {
   line-height: 1.5;
 }
 
-@media (pointer: coarse) {
-  /* The 44px rule, by overlay rather than by height - CONVENTIONS section 6.
-     Growing the marker itself would grow every row it sits in. */
-  .explain-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: max(100%, 44px);
-    height: max(100%, 44px);
-    transform: translate(-50%, -50%);
-  }
-}
+/* Nothing here needs a 44px rule of its own any more: the anchor is a control
+   the app already sizes, and the explanation is a hold on it rather than a
+   second target beside it. */

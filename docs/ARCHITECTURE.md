@@ -280,7 +280,7 @@ src/
     north/             the North window: goals, and the rules under each
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
-    Explain            the (i) beside a term, and the sentence behind it
+    Explain            the sentence behind a term, on a rest, a hold or a focus
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11

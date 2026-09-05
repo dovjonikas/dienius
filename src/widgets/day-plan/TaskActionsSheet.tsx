@@ -204,21 +204,19 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
           )}
 
           {canPush && (
-            <div className="task-actions-explained">
+            <Explain id="push" className="explain-block">
               <button type="button" className="task-actions-row" onClick={push}>
                 Push {task.title} to tomorrow
               </button>
-              <Explain id="push" align="end" />
-            </div>
+            </Explain>
           )}
 
           {atBound && (
-            <div className="task-actions-explained">
+            <Explain id="ongoing" className="explain-block">
               <button type="button" className="task-actions-row" onClick={() => setOngoing(true)}>
                 Mark {task.title} as ongoing
               </button>
-              <Explain id="ongoing" align="end" />
-            </div>
+            </Explain>
           )}
 
           {isUnbounded && (
