@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { hasSeenAGesture } from './FloatingClock'
 import { useAppData } from '../../lib/store'
 import { activeTask, timeToMinutes } from '../day-plan/capacity'
 import { currentMinutes } from '../day-plan/timelineLayout'
@@ -14,6 +15,8 @@ const TOAST_MS = 6000
  */
 function playSoftTone(): void {
   try {
+    // The same guard as the timer's chime, for the same console warning.
+    if (!hasSeenAGesture()) return
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!Ctor) return
     const ctx = new Ctor()

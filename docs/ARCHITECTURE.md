@@ -255,6 +255,8 @@ src/
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
+    useRestoreFocus.ts hands focus back to whatever opened a sheet, panel or popover
+    gridKeys.ts        the arrow keys and the one tab stop of a month grid
     dates.ts           date-key helpers, month grid
     onboarding.ts      what a first run is: a pure read, no flag
     starterTemplates.ts  the three starter templates, offered and never installed

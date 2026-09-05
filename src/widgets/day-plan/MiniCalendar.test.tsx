@@ -90,9 +90,12 @@ test('is a proper grid: gridcells sit inside role=row inside role=grid, not dire
 test('there is no paint-drag or stamping affordance - cells are plain click-to-navigate buttons with no pointer-drag handlers wired', () => {
   render(<MiniCalendar date="2026-09-12" onDateChange={() => {}} />)
   const cell = screen.getByRole('gridcell', { name: /September 12/ })
-  // No stamp bar, no "days staged" UI exists at all in this component.
+  // No stamp bar, no "days staged" UI exists at all in this component. The
+  // cell's data-date is the grid's own keyboard anchor since v2.1, not a
+  // stamping hook, so the affordance to look for is the bar itself.
   expect(screen.queryByText(/staged/i)).not.toBeInTheDocument()
-  expect(cell).not.toHaveAttribute('data-date')
+  expect(screen.queryByRole('button', { name: /stamp/i })).toBeNull()
+  expect(cell).not.toHaveClass('staged')
 })
 
 test('outside-month cells are shown but visually de-emphasised, matching CalendarView', () => {
@@ -100,4 +103,37 @@ test('outside-month cells are shown but visually de-emphasised, matching Calenda
   const cells = screen.getAllByRole('gridcell')
   const outside = cells.find(c => c.className.includes('outside'))
   expect(outside).toBeDefined()
+})
+/**
+ * One tab stop per grid, and the arrows do the rest. Thirty-five stops sat
+ * between the rail and the day's own controls until v2.1: quick-add was
+ * the sixtieth Tab from the top of the page.
+ */
+test('the viewed day is the one tab stop, and the arrows walk the grid', async () => {
+  const user = userEvent.setup()
+  render(<MiniCalendar date="2026-09-12" onDateChange={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  expect(cells.filter(c => c.getAttribute('tabindex') === '0')).toHaveLength(1)
+  const viewed = screen.getByRole('gridcell', { name: /September 12/ })
+  expect(viewed).toHaveAttribute('tabindex', '0')
+  viewed.focus()
+  await user.keyboard('{ArrowRight}')
+  expect(screen.getByRole('gridcell', { name: /September 13/ })).toHaveFocus()
+  await user.keyboard('{ArrowDown}')
+  expect(screen.getByRole('gridcell', { name: /September 20/ })).toHaveFocus()
+  // The cell last rested on keeps the stop, so Tab out and back lands there.
+  expect(screen.getByRole('gridcell', { name: /September 20/ })).toHaveAttribute('tabindex', '0')
+  expect(viewed).toHaveAttribute('tabindex', '-1')
+})
+
+test('an arrow off the edge of the grid turns the month and lands on the day', async () => {
+  const user = userEvent.setup()
+  render(<MiniCalendar date="2026-09-30" onDateChange={() => {}} />)
+  screen.getByRole('gridcell', { name: /September 30/ }).focus()
+  // September's grid runs to October 4, so one week down is still on it and
+  // the second is not.
+  await user.keyboard('{ArrowDown}')
+  await user.keyboard('{ArrowDown}')
+  expect(screen.getByText('October 2026')).toBeInTheDocument()
+  expect(screen.getByRole('gridcell', { name: /October 14/ })).toHaveFocus()
 })

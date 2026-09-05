@@ -1231,6 +1231,11 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 }
 
 .day-nav > button {
+  /* A basis rather than a width: as a plain width the two arrows gave up a
+     pixel each to the title between them on a 390px phone and measured 43,
+     which the touch audit reads as a miss. The title is the part with
+     room to shrink, so it is the part that does. */
+  flex: 0 0 44px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
@@ -1240,7 +1245,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   font-size: var(--t-input);
 }
 
-.day-title { text-align: center; }
+.day-title { min-width: 0; text-align: center; }
 .day-title h2 { margin: 0; }
 .day-subtitle { color: var(--muted); font-size: var(--t-sm); }
 
@@ -1489,6 +1494,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .timeline-grid {
   position: absolute;
   inset: 0;
+  /* An explicit base. Containment makes this layer a stacking context too,
+     and it is meant to sit exactly where DOM order puts it - saying so is
+     what lets stacking.test.ts ask every contained rule the same question. */
+  z-index: 0;
   pointer-events: none;
   /* The other half of the containment quick-add's own rule explains. This
      layer holds a block per task and an hour mark per hour, so it is the
@@ -3003,6 +3012,16 @@ select:focus {
    them means the wide layout treats "add a task" as one thing with one flex
    slot, rather than two that can drift apart when the column is short. */
 .quick-add-block {
+  position: relative;
+  /* The containment below makes this a stacking context - `contain: layout`
+     does, whatever it was added for - and a stacking context with no
+     z-index paints in DOM order, under the task list that follows it. The
+     time and duration panels hang out of this box over that list, and from
+     v2.0 until this line they were painted behind its first card on every
+     viewport: one row of chips showed and the rest sat under the list.
+     stacking.test.ts reads the stylesheet to hold that every contained
+     rule places itself. */
+  z-index: 3;
   display: flex;
   flex-direction: column;
   gap: var(--s2);
@@ -4974,6 +4993,21 @@ button.danger {
 .floating-clock.at-top-right { right: var(--s4); top: calc(var(--s4) + env(safe-area-inset-top)); }
 .floating-clock.at-top-left { left: var(--s4); top: calc(var(--s4) + env(safe-area-inset-top)); }
 
+/* While the widget sits in a bottom corner the content gives it the room:
+   the shell ends above it, so the task pane's rollover line - which lives
+   in exactly that corner on a desktop, at both sizes the sweep measures -
+   is not under it. The widget carries the class onto body while it is
+   there; the shell is not the widget's to render. */
+body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + env(safe-area-inset-bottom)); }
+
+/* On a phone the bottom corners belong to the navigation bar. */
+@media (max-width: 1023px) {
+  .floating-clock.at-bottom-right,
+  .floating-clock.at-bottom-left {
+    bottom: calc(var(--nav-bar-h) + var(--s3));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .floating-clock { animation: float-in var(--dur) var(--ease) both; }
 }
@@ -6423,6 +6457,13 @@ button.danger:focus-visible {
   white-space: nowrap;
 }
 
+/* On a phone the line wraps instead: "7 going, counted in episodes" beside
+   the list's name and its Edit read "7 going, counted in ..." at 390px,
+   and the unit is the half of the sentence worth having. */
+@media (max-width: 599px) {
+  .library-list-unit { white-space: normal; overflow: visible; }
+}
+
 .library-list-edit {
   min-height: 0;
   padding: 2px var(--s2);
@@ -7286,6 +7327,8 @@ button.danger:focus-visible {
   .setting-quiet,
   .north-line-title,
   .north-compose-open,
+  .focus-bar-exit,
+  .block-remove,
   .library-step,
   .library-item-remove,
   .subtask-remove,
@@ -7307,6 +7350,13 @@ button.danger:focus-visible {
   .setting-quiet::after,
   .north-line-title::after,
   .north-compose-open::after,
+  /* The one way out of a running Focus session, on every screen the bar can
+     show on. A 30px cross in a row of 44px buttons; the overlay makes it the
+     same target as its neighbours without making it the same size. */
+  .focus-bar-exit::after,
+  /* The cross that removes a block from a template: 23px wide at rest, in
+     a row where the select beside it takes the width. */
+  .block-remove::after,
   .library-step::after,
   .library-item-remove::after,
   .subtask-remove::after,
@@ -10038,6 +10088,16 @@ main:has(.week) > .calendar {
   font-variant-numeric: tabular-nums;
 }
 
+/* The four actions wrap as one: a row that breaks between Pin and Delete
+   reads as a note with one action, and on a 390px phone a full weekday in
+   the date made it break exactly there. */
+.scratch-note-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--s1);
+}
+
 /* Always visible, never a hover reveal - see .task-menu-button's note. Text
    buttons, small and quiet, because there are four of them on every line. */
 .scratch-note-action {
@@ -10539,13 +10599,38 @@ main:has(.week) > .calendar {
   .duration-control-value { min-height: 44px; }
   .quick-add-time-modes button,
   .duration-control-chips button { min-height: 44px; }
-  /* The one place in this app where the stacked-chevron compromise is not
-     good enough as it stands. Each half is 22px tall, which the template
-     editor gets away with because a template is built once; this pair is on
-     the daily path, pressed with a thumb, several times a morning. It cannot
-     be made taller without making the row taller, so it is made wider - 44px
-     across, so the target is at least generous in the axis that has room. */
-  .quick-add-time-control .time-step { width: 44px; }
+}
+
+/* A stepper on a finger: the two chevrons side by side, 44px each.
+   ------------------------------------------------------------------------
+   Stacked, each half is 22px tall, and the 44px overlay every other small
+   control uses cannot save a stacked pair - two overlays on top of each
+   other steal each other's taps. So on a coarse pointer the pair changes
+   shape rather than growing a hit area: up and down sit beside each other,
+   each a full 44px square, and the control gets 54px wider for it. Every
+   stepper in the app, not only quick-add's: the template editor's and the
+   sleep window's are pressed less often, but a thumb is the same size on
+   every screen, and one shape to learn is the point of sharing the shell. */
+@media (pointer: coarse) {
+  .time-stepper-buttons { flex-direction: row; }
+
+  .time-step {
+    width: 44px;
+    height: auto;
+    min-height: 44px;
+  }
+
+  .time-step + .time-step {
+    border-top: none;
+    border-left: 1px solid var(--border);
+  }
+
+  /* Room for the pair inside the duration panel: the minutes field kept
+     its share of a panel sized for a stacked stepper and came out 26px
+     wide, which the phone walk measured the day the pair was made. */
+  .duration-control-panel { min-width: 236px; }
+  .duration-control-panel .time-stepper .minutes-input { min-width: 72px; }
+
 }
 
 /* Below the breakpoint the three parts stop sharing one line: at 390px a
@@ -10698,8 +10783,13 @@ main:has(.week) > .calendar {
     row-gap: var(--s1);
   }
 
-  .inbox-item-text,
-  .backlog-item-main { flex: 1 0 100%; }
+  .inbox-item-text { flex: 1 0 100%; }
+
+  /* The backlog row has a grip in front of its words, and the words share
+     the grip's line; only the actions wrap under. With the words on a full
+     row of their own the grip sat alone on a line above them, which the
+     phone walk found looking like a row that had lost its text. */
+  .backlog-item-main { flex: 1 1 0; min-width: 0; }
 
   .inbox-item-actions,
   .backlog-item-actions {
@@ -11572,6 +11662,17 @@ main:has(.week) > .calendar {
 
 .agenda-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+/* The week's agenda reading on a finger: every row opens a task and every
+   date opens a day, and at 30px and 19px they were the smallest things a
+   finger was asked to hit anywhere in the app. Found by the phone walk, not
+   by the measuring pass, which had never opened the agenda. After the rules
+   above on purpose - an earlier block at the same specificity lost to them,
+   which the walk measured the same afternoon. */
+@media (pointer: coarse) {
+  .agenda-row { min-height: 44px; align-items: center; }
+  .agenda-date-button { min-height: 44px; }
+}
+
 .agenda-time {
   flex: 0 0 3.4em;
   color: var(--muted);
@@ -11847,7 +11948,9 @@ main:has(.week) > .calendar {
    inside its own box rather than the page doing it - nothing scrolls
    horizontally, ever, and this is what that costs here. */
 @media (max-width: 899px) {
-  .wt-columns { grid-template-columns: repeat(7, minmax(96px, 1fr)); }
+  /* Wide enough for "Same as the week" in the foot's select at its size:
+     at 96px the phone showed "Same as the we" under the arrow. */
+  .wt-columns { grid-template-columns: repeat(7, minmax(128px, 1fr)); }
 }
 
 /* ------------------------------------------------------------------------

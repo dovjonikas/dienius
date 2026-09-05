@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import type { Task } from '../../lib/types'
 import { formatDuration, type SleepSettings } from './capacity'
 import { describeGapNeighbors, matchTaskToGaps, VISIBLE_ROW_LIMIT, type GapWithContext } from './gapPlacement'
@@ -54,6 +55,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  * gapPlacement.ts for why four is the number.
  */
 export function TaskGapOffers({ task, tasks, sleepProfileId, sleep, onPlace, onClose }: TaskGapOffersProps) {
+  useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
 

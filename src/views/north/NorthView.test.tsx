@@ -413,3 +413,11 @@ test('a goal shows its age and nothing else that counts', () => {
   expect(container.querySelector('progress, meter, input[type="checkbox"]')).toBeNull()
   expect(container.textContent).not.toMatch(/%|\b1 of \b|complete|streak/i)
 })
+test('leaving Compose puts focus back on the Compose control', async () => {
+  const user = userEvent.setup()
+  picture()
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.keyboard('{Escape}')
+  expect(screen.getByRole('button', { name: 'Compose' })).toHaveFocus()
+})

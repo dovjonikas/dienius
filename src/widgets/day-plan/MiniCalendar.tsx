@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { monthGrid, todayKey, type MonthCell } from '../../lib/dates'
 import { cellLabel, resolveTemplate, taskState } from '../../lib/calendarCell'
+import { dateFromArrow, tabStopFor } from '../../lib/gridKeys'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -44,10 +45,25 @@ export interface MiniCalendarProps {
  * (monthGrid, calendarCell.ts's taskState/resolveTemplate/cellLabel)
  * rather than inventing a second navigation model. Rendered only when
  * useIsWide() is true - see DayView.tsx.
+ *
+ * ## One tab stop, and the arrows
+ *
+ * Thirty-five buttons were thirty-five tab stops, and they sat between the
+ * navigation rail and everything on the day: the quick-add field was the
+ * sixtieth Tab from the top of the page. A grid is one stop - the day
+ * being viewed, or today, or the first of the month - and the arrow keys
+ * walk it, turning the month when they walk off its edge. The cell that
+ * was last focused keeps the stop, so leaving the grid and coming back
+ * lands where the person left. The arithmetic is `lib/gridKeys.ts`.
  */
 export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
   const data = useAppData()
   const [{ year, month }, setYearMonth] = useState(() => monthOf(date))
+  // The cell the keyboard last rested on, when that differs from the viewed
+  // day; and a cell to focus once a month turned by an arrow is drawn.
+  const [roving, setRoving] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   // Follows the day currently open across a month boundary - stepping the
   // day view's own prev/next day arrows across, say, the 1st of a month
@@ -60,13 +76,38 @@ export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
     setYearMonth(monthOf(date))
   }, [date])
 
+  useEffect(() => {
+    if (!pending) return
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-date="${pending}"]`)
+    if (!el) return
+    el.focus()
+    setPending(null)
+  }, [pending, year, month])
+
   const cells = monthGrid(year, month)
   const weeks = weeksOf(cells)
   const today = todayKey()
+  const stop = tabStopFor(cells, [roving, date, today])
 
   function shiftMonth(delta: number) {
     const d = new Date(year, month + delta, 1)
     setYearMonth({ year: d.getFullYear(), month: d.getMonth() })
+  }
+
+  function onGridKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const from = (e.target as HTMLElement).dataset.date
+    if (!from) return
+    const next = dateFromArrow(e.key, from)
+    if (!next) return
+    e.preventDefault()
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-date="${next}"]`)
+    if (el) {
+      el.focus()
+      return
+    }
+    // Off the edge of the grid: turn the month, then focus once it is drawn.
+    setYearMonth(monthOf(next))
+    setPending(next)
   }
 
   return (
@@ -81,7 +122,17 @@ export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
         </button>
       </div>
 
-      <div className="mini-calendar-grid" role="grid" aria-label={`${MONTHS[month]} ${year}`}>
+      <div
+        ref={gridRef}
+        className="mini-calendar-grid"
+        role="grid"
+        aria-label={`${MONTHS[month]} ${year}`}
+        onKeyDown={onGridKeyDown}
+        onFocus={e => {
+          const focused = (e.target as HTMLElement).dataset.date
+          if (focused) setRoving(focused)
+        }}
+      >
         {/* display: contents keeps this row invisible to the CSS grid that
             lays cells out in seven columns, while still nesting it under
             the grid in the DOM - the same technique CalendarView.tsx's own
@@ -113,6 +164,8 @@ export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
                   type="button"
                   role="gridcell"
                   className={classes}
+                  data-date={cell.key}
+                  tabIndex={cell.key === stop ? 0 : -1}
                   style={template ? { background: template.color } : undefined}
                   aria-label={cellLabel(cell, template?.name, state)}
                   aria-current={cell.key === today ? 'date' : undefined}

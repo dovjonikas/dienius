@@ -200,18 +200,15 @@ hunt, then the tag.
 | # | Stage | Commit | What it became |
 |---|---|---|---|
 | 1 | North v2, "The Picture" | see `git log` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
-| 2 | The phone wave | - | Not started |
-| 3 | The bug hunt | - | Not started |
+| 2 | The phone wave | see `git log` | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
+| 3 | The bug hunt | see `git log` | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
 | 4 | Closing and `v2.1` | - | Not started |
 
 ### Asked for, not yet built
 
-**The phone wave.** `npm run sweep -- --phone` reports 82 findings which
-are two controls, and the walk itself has still never been done. *The phone
-wave, in detail* further down has both, including how to count them - this
-file has got that number wrong twice. Section 5 is the checklist to walk,
-and North v2 adds to it: the window at 390x844 in both themes, the empty
-window, Compose with four goals, and the Monday card with its deserve line.
+Nothing from the owner's brief. The closing stage is what is left of it:
+the full regression, the screenshots regenerated, the docs read against the
+code once more, and the `v2.1` tag.
 
 ### The six briefs, kept as history
 
@@ -356,53 +353,51 @@ rotation across the week, Reading and CRAFT blocks bound to Library lists), the
 tour's stamp step checked against a week template, and tooltips for the new
 terms.
 
-### The phone wave, in detail
+### The phone wave, done
 
 v2.0 was a desktop pass on purpose, and the wave after it stayed on the
-desktop. The phone still works - the month and the week both fit 390x844 with
-no scroll, re-measured with the icon rail as a bottom bar - but it has been
-measured rather than walked, and that is still the job.
+desktop. v2.1 walked the phone.
 
-`npm run sweep -- --phone` reports **82 findings, which are two controls**:
-the quarter-hour arrows and the focus bar's exit cross, both below. The pass
-counts every occurrence and runs 390x844 in both themes, so one control on
-seventeen screens is thirty-four findings.
-
-**Read that number the same way every time**, because this file has now got
-it wrong twice. It was "exactly two things" until somebody counted; it was
-"three shapes" after that; and during the v2.0 wave three commit messages
-said the phone was down to one, on a grep that was quietly dropping half the
-lines. The command that answers it honestly is:
+`npm run sweep -- --phone` reported **82 findings, which were two
+controls** - the quarter-hour arrows at 22px each and the focus bar's exit
+cross at 30px, counted on every screen in both themes. It reports **zero**
+now. The honest way to count it, written here because this file got the
+number wrong twice:
 
 ```bash
 npm run sweep -- --phone | grep -oP '\d+px [a-z-]+' | sort | uniq -c
 ```
 
-What did genuinely go in the v2.0 wave is the third control: the floating
-scratch button, which left with the navigation rail. A 28px library select
-and a 20px week block were found and fixed by this same pass the day they
-were written.
+- **The arrows** could not be saved by the 44px overlay: two overlays in one
+  44px column land on top of each other. On a coarse pointer every
+  `.time-stepper` lays its pair side by side, 44px each - quick-add, the
+  template editor, the sleep windows, the duration panel - and the control
+  gets 54px wider for it. DECISIONS, "The phone is walked, not only
+  measured", has the reasoning.
+- **The exit cross** joined the overlay list, both halves of it.
 
-The walk is the part no measurement replaces.
+Then the walk - the part no measurement replaces - with a full day at
+390x844 in both themes, every screen, and a day lived in the app after it.
+What it found that the pass could not is in the table below, and section 5
+carries the tick against every checklist item.
 
-- **Quick-add's quarter-hour arrows are 22px each on a coarse pointer.**
-  Two halves of one 44px column, and the `::after` overlay trick cannot
-  save both: two 44px overlays stacked steal each other's taps. Needs a
-  different shape for a stacked stepper, not a bigger hit area.
-- **The focus bar's exit cross is 30px**, on seven screens - anywhere the bar
-  can be showing. It is not in the `::after` overlay list and it is the one
-  way out of a running Focus session, which makes it the worse of the two to
-  miss.
-- ~~**The Scratch button sits over the last cell of the month.**~~ Gone. The
-  floating button left with the navigation rail in v2.0: Scratch is a pen in
-  the rail on a desktop and in the bottom bar on a phone, in the same place
-  on both.
-- **A walk of every screen with a full day**, the way v2.0 walked the
-  desktop: eyes on it, not just the sweep. A measuring pass finds what it
-  was told to look for; the fourteen defects v2.0 fixed included several
-  nothing would have thought to measure - two adjacent controls reading the
-  same word, a red word on an action that carries no verdict, a month
-  drawing a week of the next one.
+#### The bugs the phone wave and the bug hunt found
+
+| Found | Where it had been |
+|---|---|
+| The quick-add time and duration panels painted behind the first task card, on every viewport - `contain: layout` on quick-add made a stacking context that never said where it sat | Since v2.0's typing-performance change. jsdom has no paint order and the sweep never opens the panels |
+| Ten sheets and popovers dropped focus on close - Escape on the task menu left a keyboard at the top of the document | Since each was built; the task menu since v1.1 |
+| The mini calendar's 35 cells and the month grid's 42 were each a tab stop; quick-add was the sixtieth Tab from the top of the day view | Since the mini calendar shipped in v1.11 |
+| The floating timer covered the task pane's rollover line at both desktop sizes and sat on the navigation bar on a phone | Since the bottom bar arrived in v2.0 |
+| A timer that ran out while the app was closed logged Chrome's AudioContext warning on the next open | Since the chime was written in v1.2 |
+| The week's agenda reading had 30px rows and 19px date headings, all of them buttons | Since the agenda arrived in v2.0's clean pass |
+| The template editor's block remove cross was 23px wide; the day header's arrows measured 43 | Since v1.0 and since the phone header was laid out |
+| A backlog row's grip sat alone on a line above its words on a phone; a scratch note's Delete wrapped onto a line of its own under a long date; a library list's unit line clipped; the week editor's "Same as the week" read "Same as the we" | Since each was built |
+| The duration panel's minutes field came out 26px wide once the arrows sat beside each other | Written and caught the same afternoon |
+| The agenda's first 44px rule sat earlier in the stylesheet than the rule it was meant to beat, at the same specificity, and lost | Written and caught the same afternoon |
+
+The last two are the walk doing its job on code written hours earlier,
+which is the argument for walking before believing anything.
 
 ### Built: categories the owner owns
 
@@ -695,69 +690,97 @@ guess whether it was noticed.
 
 Run this at **390x844** in the browser pane before calling any wave done. The
 owner is an iPhone user; Android and desktop must work too, but the phone is
-the one that gets checked first.
+the one that gets checked first. **Walked in v2.1**, every item, in both
+themes, on the sample day; what each found is beside it.
 
-- [ ] **Today** - header, North line, capacity line, timeline disclosure, task
+- [x] **Today** - header, North line, capacity line, timeline disclosure, task
       list, Done fold, inbox, the rollover link (a button drawn as a link,
       exempt from the 44px audit by design). Scrolls vertically (expected),
-      never horizontally.
-- [ ] **Calendar → Month** - fits without scrolling. This is a hard constraint;
+      never horizontally. *Found: the two day arrows measured 43px, shrunk by
+      the title column. Fixed.*
+- [x] **Calendar → Month** - fits without scrolling. This is a hard constraint;
       if something must give, reduce stat detail, never raise cell height. It
       was 74px past the fold before v2.0, which is how a hard constraint goes
       quietly wrong: nothing measured it after the last thing that changed a
-      height. Measure it, every time.
-- [ ] **Calendar → Week** - three columns, no scroll in either direction,
-      template chip inside its own column.
-- [ ] **Settings** - every section reachable from the section list at the
+      height. Measure it, every time. *664 of 664 in both themes. A tap opens
+      the day; the hover preview is a mouse's, on purpose.*
+- [x] **Calendar → Week** - three columns, no scroll in either direction,
+      template chip inside its own column. *Fits, and the Someday strip sits
+      under the columns. The Agenda reading's rows were 30px and its date
+      headings 19px - fixed to 44.*
+- [x] **Settings** - every section reachable from the section list at the
       top, which is sticky; it must not cover the content at 390px, and the
-      first entry is not clipped.
-- [ ] **Every visible button ≥ 44px**, or carrying a `::after` hit-area
-      overlay. Measure it, do not read it - see `CONVENTIONS.md`. Three
-      documented exceptions, and nothing else: a week block (its height is
-      its duration), a year cell (a heatmap mark), and quick-add's stacked
-      quarter-hour arrows, which are 22px each and are the phone wave's
-      first job. **A new class in the `@media (pointer: coarse)` overlay
-      list has to go in twice** - the `position: relative` list and the
-      `::after` list - and `.setting-quiet` shipped in v2.0 missing from
-      both, which the measured phone run caught.
-- [ ] **No horizontal overflow anywhere**:
+      first entry is not clipped. *Nine sections since North left it; the
+      two North card switches are in Nudges with a row pointing at the window.*
+- [x] **Every visible button ≥ 44px**, or carrying a `::after` hit-area
+      overlay. Measure it, do not read it - see `CONVENTIONS.md`. Documented
+      exceptions, and nothing else: a week block (its height is its
+      duration), a year cell (a heatmap mark), a reorder grip (32 wide at 44
+      tall), the six duration chips (40 wide at 44 tall - widening them wraps
+      the row), and the time picker's 30px rows (a scrolling column; taller
+      rows show fewer hours). The stacked quarter-hour arrows are no longer
+      one: they are a side-by-side pair on a finger. **A new class in the
+      `@media (pointer: coarse)` overlay list has to go in twice** - the
+      `position: relative` list and the `::after` list - and `.setting-quiet`
+      shipped in v2.0 missing from both, which the measured phone run caught.
+      *The focus bar's exit and the template editor's block cross joined the
+      list in v2.1.*
+- [x] **No horizontal overflow anywhere**:
       `document.documentElement.scrollWidth > clientWidth` must be false.
-- [ ] **Both themes** - dark and light. `--muted` and `--danger` are gated at
+      *False on all thirty-two screens walked.*
+- [x] **Both themes** - dark and light. `--muted` and `--danger` are gated at
       4.5:1 by a test, but check that nothing new hard-codes a colour.
-- [ ] **A task detail sheet** opens as a bottom sheet and can be swiped away,
-      clear of the home bar.
-- [ ] **Settings and the detail sheet** get measured too. The v1.6 pass
+- [x] **A task detail sheet** opens as a bottom sheet and can be swiped away,
+      clear of the home bar. *And hands focus back to the dots that opened
+      it, since v2.1.*
+- [x] **Settings and the detail sheet** get measured too. The v1.6 pass
       measured Today and the calendar and stopped there, which is how a 38px
       pill row and four sub-44px controls in the sheet survived two versions.
-- [ ] **Replan** - open all three doors. The summary must be on screen without
+- [x] **Replan** - open all three doors. The summary must be on screen without
       scrolling, with five things in the way. It is the sentence the screen
-      exists to produce.
-- [ ] **Scratch** - the pen in the bar, and the close cross: on a phone the
-      overlay is the whole screen, so there is no scrim to tap.
-- [ ] **The four shelves** - a task, an inbox line and a backlog item from the
+      exists to produce. *"Nothing in the way. It goes straight in." sits
+      above Accept without a scroll.*
+- [x] **Scratch** - the pen in the bar, and the close cross: on a phone the
+      overlay is the whole screen, so there is no scrim to tap. *A note's four
+      actions wrapped one at a time under a long date - fixed to wrap as a
+      group.*
+- [x] **The four shelves** - a task, an inbox line and a backlog item from the
       same field, and the Backlog fold under the inbox. Every row's actions on
-      their own line, all of them 44px.
-- [ ] **Library** - the chip row, a list folded and unfolded, the active card,
+      their own line, all of them 44px. *A backlog row's grip sat alone on a
+      line above its words - fixed.*
+- [x] **Library** - the chip row, a list folded and unfolded, the active card,
       and a detail panel opened from a row. The picker for a page-counted book
-      is typed, not stepped.
-- [ ] **Evening close** - the card at its time and the card on a finished day.
+      is typed, not stepped. *A list's "7 going, counted in episodes" clipped
+      beside its name - it wraps now.*
+- [x] **Evening close** - the card at its time and the card on a finished day.
       It must span the content columns rather than land in the rail, and it
       must never say anything about what was not done.
-- [ ] **The tour** - both platforms, all nine steps, then once more doing
+- [x] **The tour** - both platforms, all nine steps, then once more doing
       only what each card says. The spotlight has to follow into a bottom
       sheet, which is where it first failed; the dots on the Walk card have
       to be visible while pointed at; the caption after the goal has to land
       on the North line under the day's title. This is not optional polish:
       CONVENTIONS.md section 13 makes a stale tour a P0 bug, because it is
-      the first thing a new person sees.
-- [ ] **The quick-add row against the cards under it** - the duration
+      the first thing a new person sees. *Walked by Playwright on both
+      viewports with the North step rewritten for the window - and the card
+      sat on Keep it at 1366x768 until the button became a target of its own.*
+- [x] **The quick-add row against the cards under it** - the duration
       control's right edge and the cards' right edge are one line, and the
-      placeholder is whole. Both broke once without anybody measuring.
-- [ ] **Library counts** - every row's count ends on the same x, the active
-      card's included.
-- [ ] **The wide layout with an empty day**, in each of the three focus
+      placeholder is whole. Both broke once without anybody measuring. *Whole,
+      and the duration panel now opens over the cards rather than under them.*
+- [x] **Library counts** - every row's count ends on the same x, the active
+      card's included. *On a phone the count sits under the title, one x for
+      all of them.*
+- [x] **The wide layout with an empty day**, in each of the three focus
       states. Both rules that collapse the grid have to agree about the
       column names - see the grid-area note in section 6.
+- [x] **North** - the window in both themes with a five-line picture and four
+      goals, the empty window, Compose with four goals, and the Monday card
+      with its deserve line. *One column, the picture at 20px over 10 wrapped
+      lines, and Compose a long form that ends on Save - meant to be rare.*
+- [x] **The week template editor** - seven columns on a phone. *They scroll
+      sideways inside the card, 128px each since "Same as the week" clipped
+      at 96; the add row sits below them at full width.*
 
 The measurement snippet that has been used for the target audit:
 

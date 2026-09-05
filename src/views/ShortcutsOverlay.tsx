@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useRestoreFocus } from '../lib/useRestoreFocus'
 import { SHORTCUTS } from '../lib/shortcuts'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -22,6 +23,7 @@ export interface ShortcutsOverlayProps {
 }
 
 export function ShortcutsOverlay({ onClose, onStartTour }: ShortcutsOverlayProps) {
+  useRestoreFocus()
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

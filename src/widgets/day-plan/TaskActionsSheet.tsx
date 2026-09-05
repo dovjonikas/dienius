@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import type { Task } from '../../lib/types'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
@@ -67,6 +68,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  *   is gated on the task not being done.
  */
 export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onOpenDetails, onClose }: TaskActionsSheetProps) {
+  useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const anchor = isAnchor(task)
   const pushCount = task.pushCount ?? 0

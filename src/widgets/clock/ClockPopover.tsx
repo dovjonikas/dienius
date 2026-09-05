@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
@@ -26,6 +27,7 @@ export interface ClockPopoverProps {
  * panel is only ever a way in, never a place to sit and watch.
  */
 export function ClockPopover({ onClose }: ClockPopoverProps) {
+  useRestoreFocus()
   const tools = useClockTools()
   const panelRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<'timer' | 'stopwatch'>(tools.stopwatch && !tools.timer ? 'stopwatch' : 'timer')

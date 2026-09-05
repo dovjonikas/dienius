@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import type { Task } from '../../lib/types'
 import { categoryColor } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
@@ -57,6 +58,7 @@ function formatCountdown(totalSeconds: number): string {
  * only runs while this is actually open.
  */
 export function FocusView({ task, onDone, onClose }: FocusViewProps) {
+  useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const [nowSeconds, setNowSeconds] = useState(secondsNow)
 

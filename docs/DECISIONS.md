@@ -1152,3 +1152,51 @@ and ends where it always did, on the line under the day's title.
 card has a Monday version that says something different: the slack-card
 tests passed six days a week since v1.4 and would have failed on the seventh.
 They are pinned to a Wednesday now, with a Monday test of their own.
+## The phone is walked, not only measured
+
+The measuring pass had said for two versions that the phone was "two
+controls": the quarter-hour arrows at 22px and the focus bar's exit at 30px.
+Both are fixed in v2.1 and the pass reads zero on the phone. The walk that
+followed - every screen at 390x844 in both themes with a full day, and then a
+day lived in the app from a stamped morning to the evening close at three
+sizes - found what a pass that is told what to look for cannot:
+
+- **The quick-add panels were painted behind the task list**, on every
+  viewport, since v2.0. Not a phone bug; a bug the phone walk was the first
+  to open a panel in front of. The rule it became is in CONVENTIONS section
+  4.
+- **Ten surfaces dropped focus on close.** Escape on the task menu, the
+  detail panel, replan, the gap picker, the shortcut card, the palette,
+  scratch, the clock popover, the focus view and the gap offers all left a
+  keyboard user at the top of the document. One hook, ten call sites.
+- **A month grid was forty-two tab stops.** The day view's mini calendar
+  and the calendar's month were both in the tab order cell by cell, and
+  quick-add was the sixtieth Tab from the top of the page. Both are one
+  stop now, with the arrows walking the grid and turning the month.
+- **The floating timer covered the rollover line** at both desktop sizes,
+  and sat on the navigation bar on a phone. The shell ends above it now.
+- **The week's agenda reading was 30px rows and 19px date headings**, all
+  of them buttons, and the template editor's remove cross was 23px wide -
+  the smallest targets a finger was asked to hit anywhere in the app,
+  neither of them on a screen the measuring pass opens.
+- **A timer that ran out while the app was closed rang before any gesture**
+  on the next open, and Chrome said so on the console. The chime waits for
+  `navigator.userActivation` now; the widget and the notification carry that
+  case.
+
+**Why a stepper changes shape rather than growing.** The 44px overlay every
+small control uses is a transparent square centred on the control, and two
+of them stacked in one 44px column land on top of each other: the upper
+half's overlay reaches into the lower half's box and back. There is no hit
+area that fixes a stacked pair. So on a coarse pointer the pair is a row -
+up beside down, 44px each - and every stepper in the app does it, not only
+the one on the daily path, because a thumb is the same size on the template
+editor as on the day.
+
+**What the walk did not change.** The week view's blocks stay as tall as
+their duration (a documented exception since v1.6); the year's cells stay
+10px marks; the reorder grips stay 32px wide at 44px tall; the duration
+chips stay 40px wide at 44px tall, because widening six of them wraps the
+row; the time picker's rows stay 30px, because it is a scrolling column
+and a taller row shows fewer hours. Each is in STATE section 5 with its
+reason.

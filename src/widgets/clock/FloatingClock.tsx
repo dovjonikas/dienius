@@ -30,6 +30,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
  */
 function playChime(): void {
   try {
+    if (!hasSeenAGesture()) return
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!Ctor) return
     const ctx = new Ctor()
@@ -51,6 +52,20 @@ function playChime(): void {
   } catch {
     // See above - a missing chime is not a failure worth surfacing.
   }
+}
+
+/**
+ * Whether the page has had a user gesture yet. A browser refuses to start
+ * an AudioContext before one and says so on the console - which is exactly
+ * what a timer that ran out while the app was closed did on the next open:
+ * it rang before anybody had touched anything, no sound came, and a warning
+ * did. The widget and the notification carry that case; the chime stays
+ * quiet rather than logging a sound it could not play. Browsers without
+ * `userActivation` answer yes and behave as before.
+ */
+export function hasSeenAGesture(): boolean {
+  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+  return !activation || activation.hasBeenActive
 }
 
 function notify(body: string): void {
@@ -101,6 +116,16 @@ export function FloatingClock() {
   // The countdown in the tab title - the one thing a browser will still show
   // for a tab nobody is looking at, needing neither a permission nor a sound.
   useTitleCountdown(timer ? (isUp ? 'Time up' : formatClockMs(left)) : null)
+
+  // While the widget sits in a bottom corner the content gives it the room -
+  // see body.has-floating-clock-bottom in the stylesheet. A class on body
+  // because the shell is not this widget's to render, and only for the
+  // bottom corners: at the top it covers the header's empty right-hand end.
+  const atBottom = !!(timer || stopwatch) && tools.corner.startsWith('bottom')
+  useEffect(() => {
+    document.body.classList.toggle('has-floating-clock-bottom', atBottom)
+    return () => document.body.classList.remove('has-floating-clock-bottom')
+  }, [atBottom])
 
   useEffect(() => {
     if (!timer || !isUp) return

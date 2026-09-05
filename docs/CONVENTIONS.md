@@ -174,6 +174,19 @@ the same grid and let it align them. An offset computed from "how tall the
 header probably is" works until a chip makes one header taller. That is a real
 bug this project shipped and fixed.
 
+### A containment boundary places itself
+
+`contain: layout` makes a stacking context, whatever it was added for, and a
+stacking context with no `z-index` paints in DOM order. Quick-add got
+`contain: layout style` in v2.0 to stop typing from re-laying-out the day,
+with a note that `paint` was avoided because it would clip the two panels
+that hang out of the box - the right worry about the wrong effect. From that
+commit to v2.1 the time and duration panels painted behind the first task
+card on every viewport, and nothing saw it: jsdom has no paint order and the
+measuring pass never opens those panels. **Every rule that contains also
+declares its z-index**, and `stacking.test.ts` reads the stylesheet to hold
+that.
+
 ---
 
 ## 5. Design tokens
@@ -259,6 +272,22 @@ shipped for four versions because it looked fine in the CSS. The snippet is in
 [`STATE.md`](STATE.md#5-phone-checklist).
 
 The one documented exception is a week-view block, whose height is its duration.
+
+**A stacked stepper is not a touch target.** Two half-height chevrons in one
+44px column are 22px each, and the overlay cannot save them: two overlays on
+top of each other steal each other's taps. On a coarse pointer every
+`.time-stepper` lays its pair side by side, 44px each, and the control gets
+wider for it. That was the phone wave's first job and the shape the
+measuring pass had been reporting as 82 findings.
+
+**A sheet hands focus back.** Every surface that takes focus when it opens -
+a sheet, a panel, a popover, the palette - calls `useRestoreFocus()` at the
+top of its component, before the effect that takes focus, so that closing
+it puts focus back on the control that opened it. Until v2.1 none of the ten
+did, and Escape on the task menu left a keyboard at the top of the document.
+A grid of days is one tab stop and the arrow keys - `lib/gridKeys.ts` - for
+the same reason: forty-two cells were forty-two Tabs between the calendar
+bar and everything under it.
 
 ---
 

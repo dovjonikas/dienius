@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { formatDuration } from './capacity'
 import { allRows, hasNothingForGap, visibleRows, type GapOffer } from './gapPlacement'
 
@@ -35,6 +36,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  * into the grid or page behind it while it is open.
  */
 export function GapPicker({ gapLabel, offer, onPlace, onClose }: GapPickerProps) {
+  useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const empty = hasNothingForGap(offer)

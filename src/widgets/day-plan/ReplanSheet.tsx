@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import type { Task } from '../../lib/types'
 import { actions } from '../../lib/store'
 import { offerUndo } from '../../lib/undo'
@@ -49,6 +50,7 @@ function roundUp(minutes: number, step = 5): number {
 }
 
 export function ReplanSheet(props: ReplanSheetProps) {
+  useRestoreFocus()
   const [mode, setMode] = useState<ReplanMode>(props.mode)
   const window = useMemo(() => windowFor(props.sleepProfileId, props.sleep), [props.sleepProfileId, props.sleep])
   const titles = useMemo(() => new Map(props.tasks.map(t => [t.id, t.title])), [props.tasks])

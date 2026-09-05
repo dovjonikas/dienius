@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { activeGoals, ageLabel, archivedGoals, canAddRule, rulesForGoal, unfiledRules } from '../../lib/north'
@@ -57,6 +57,15 @@ export function NorthView() {
   const archived = archivedGoals(data.goals)
   const unfiled = unfiledRules(data.ifThens, data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
+  const composeRef = useRef<HTMLButtonElement>(null)
+  const wasComposing = useRef(false)
+  // Focus goes back to Compose when the form closes. The form itself cannot
+  // hand it back the way a sheet does - the button is unmounted while the
+  // form is open - so the window puts it there once the button is drawn.
+  useEffect(() => {
+    if (!composing && wasComposing.current) composeRef.current?.focus()
+    wasComposing.current = composing !== null
+  }, [composing])
   const picture = data.picture
   // Compose only once there is something to compose. On an empty window the
   // one control is the picture's own line, and a second control beside it
@@ -71,6 +80,7 @@ export function NorthView() {
         </h2>
         {hasAnything && !composing && (
           <button
+            ref={composeRef}
             type="button"
             className="north-compose-open"
             data-tour="north-compose"

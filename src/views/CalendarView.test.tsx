@@ -473,3 +473,20 @@ test('Today brings the week back to today', async () => {
   await user.click(screen.getByRole('button', { name: 'Today' }))
   expect(onDateChange).toHaveBeenCalledWith(todayKey())
 })
+/**
+ * One tab stop per grid, and the arrows do the rest. Forty-two stops sat
+ * between the calendar bar and everything under the grid until v2.1.
+ */
+test('the month grid is one tab stop, and the arrows walk it across a month boundary', async () => {
+  const user = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} date={todayKey()} onDateChange={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  expect(cells.filter(c => c.getAttribute('tabindex') === '0')).toHaveLength(1)
+  const stop = cells.find(c => c.getAttribute('tabindex') === '0')!
+  stop.focus()
+  const from = stop.getAttribute('data-date')!
+  await user.keyboard('{ArrowRight}')
+  const next = document.activeElement?.getAttribute('data-date')
+  expect(next).not.toBe(from)
+  expect(next! > from).toBe(true)
+})

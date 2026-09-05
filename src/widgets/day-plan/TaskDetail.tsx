@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
 import { resolvedColor } from '../../lib/categories'
 import { progressLabel, progressPercent } from '../../lib/library'
@@ -41,6 +42,7 @@ export interface TaskDetailProps {
  * difference between them - only where the rectangle sits.
  */
 export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailProps) {
+  useRestoreFocus()
   const data = useAppData()
   const panelRef = useRef<HTMLDivElement>(null)
   // How far the sheet has been pulled down, in pixels. Only ever non-zero

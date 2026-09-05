@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
+import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import { cellLabel, cellPoints, resolveTemplate, taskState, type CellPoints } from '../lib/calendarCell'
@@ -91,6 +92,12 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   const [previewDate, setPreviewDate] = useState<string | null>(null)
   const previewTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const painting = useRef<'apply' | 'erase' | null>(null)
+  // One tab stop for the whole grid and the arrows to walk it - the same
+  // roving pattern as the day view's mini calendar, for the same reason:
+  // forty-two buttons were forty-two Tabs. See lib/gridKeys.ts.
+  const [roving, setRoving] = useState<string | null>(null)
+  const [pendingFocus, setPendingFocus] = useState<string | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
   const cells = useMemo(() => monthGrid(year, month), [year, month])
   // Over the month's real days only, not the six-week grid - a February
@@ -101,6 +108,33 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   )
   const weeks = useMemo(() => weeksOf(cells), [cells])
   const today = todayKey()
+  const tabStop = tabStopFor(cells, [roving, date, today])
+
+  useEffect(() => {
+    if (!pendingFocus) return
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-date="${pendingFocus}"]`)
+    if (!el) return
+    el.focus()
+    setPendingFocus(null)
+  }, [pendingFocus, year, month])
+
+  function onGridKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const from = (e.target as HTMLElement).dataset.date
+    if (!from) return
+    const next = dateFromArrow(e.key, from)
+    if (!next) return
+    e.preventDefault()
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-date="${next}"]`)
+    if (el) {
+      el.focus()
+      return
+    }
+    // Off the edge of the grid: turn the month, then focus once it is drawn.
+    const [y, m] = next.split('-').map(Number)
+    setYear(y)
+    setMonth(m - 1)
+    setPendingFocus(next)
+  }
 
   function shiftMonth(delta: number) {
     const d = new Date(year, month + delta, 1)
@@ -364,7 +398,17 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             </div>
           )}
 
-          <div className="calendar-grid" role="grid" aria-label={`${MONTHS[month]} ${year}`}>
+          <div
+            ref={gridRef}
+            className="calendar-grid"
+            role="grid"
+            aria-label={`${MONTHS[month]} ${year}`}
+            onKeyDown={onGridKeyDown}
+            onFocus={e => {
+              const focused = (e.target as HTMLElement).dataset.date
+              if (focused) setRoving(focused)
+            }}
+          >
             {/* display: contents keeps this row invisible to the CSS grid
                 that lays cells out in seven columns across the whole
                 .calendar-grid, while still nesting it under the grid in the
@@ -407,6 +451,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       key={cell.key}
                       role="gridcell"
                       data-date={cell.key}
+                      tabIndex={cell.key === tabStop ? 0 : -1}
                       className={classes}
                       style={template ? { background: template.color } : undefined}
                       aria-label={cellLabel(cell, template?.name, state)}

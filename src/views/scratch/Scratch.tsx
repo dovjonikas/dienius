@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { offerUndo } from '../../lib/undo'
@@ -44,6 +45,7 @@ export function Scratch({ open, onClose }: ScratchProps) {
 }
 
 function ScratchPanel({ onClose }: { onClose: () => void }) {
+  useRestoreFocus()
   const data = useAppData()
   const [draft, setDraft] = useState('')
   const [draftId, setDraftId] = useState<string | null>(null)
@@ -254,23 +256,28 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
                 <p className="scratch-note-text">{withTags(note.text)}</p>
                 <div className="scratch-note-foot">
                   <span className="scratch-note-when">{whenLabel(note)}</span>
-                  <button type="button" className="scratch-note-action" onClick={() => toTask(note)}>
-                    To task
-                  </button>
-                  <button type="button" className="scratch-note-action" onClick={() => toInbox(note)}>
-                    To inbox
-                  </button>
-                  <button
-                    type="button"
-                    className="scratch-note-action"
-                    aria-pressed={note.pinned ?? false}
-                    onClick={() => actions.toggleScratchPin(note.id)}
-                  >
-                    {note.pinned ? 'Unpin' : 'Pin'}
-                  </button>
-                  <button type="button" className="scratch-note-action is-danger" onClick={() => remove(note)}>
-                    Delete
-                  </button>
+                  {/* One group, so that on a phone with a long date - "Thursday,
+                      September 3 17:47" - the four wrap under it together
+                      rather than Delete dropping onto a line of its own. */}
+                  <span className="scratch-note-actions">
+                    <button type="button" className="scratch-note-action" onClick={() => toTask(note)}>
+                      To task
+                    </button>
+                    <button type="button" className="scratch-note-action" onClick={() => toInbox(note)}>
+                      To inbox
+                    </button>
+                    <button
+                      type="button"
+                      className="scratch-note-action"
+                      aria-pressed={note.pinned ?? false}
+                      onClick={() => actions.toggleScratchPin(note.id)}
+                    >
+                      {note.pinned ? 'Unpin' : 'Pin'}
+                    </button>
+                    <button type="button" className="scratch-note-action is-danger" onClick={() => remove(note)}>
+                      Delete
+                    </button>
+                  </span>
                 </div>
               </li>
             ))}

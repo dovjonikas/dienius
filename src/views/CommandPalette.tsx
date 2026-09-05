@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRestoreFocus } from '../lib/useRestoreFocus'
 import { useAppData } from '../lib/store'
 import { formatDayTitle, todayKey } from '../lib/dates'
 import { parseDateQuery, searchEverything, type SearchResult } from '../lib/search'
@@ -33,6 +34,7 @@ export interface CommandPaletteProps {
  * is no index.
  */
 export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratch, onClose }: CommandPaletteProps) {
+  useRestoreFocus()
   const data = useAppData()
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)

@@ -343,7 +343,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 ))}
               </select>
             )}
-            <button aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
+            <button className="block-remove" aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
               &times;
             </button>
           </li>
