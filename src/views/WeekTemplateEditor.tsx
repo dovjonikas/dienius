@@ -112,6 +112,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   const [blockMinutes, setBlockMinutes] = useState('')
   const [blockCategory, setBlockCategory] = useState<CategoryId | undefined>(undefined)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
+  const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
 
   const dragRef = useRef<{ id: string; x: number; y: number } | null>(null)
   const sleepProfiles = data.settings.sleepProfiles
@@ -166,6 +167,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
       minutes: parseMinutesInput(blockMinutes),
       category: blockCategory,
       unbounded: blockUnbounded || undefined,
+      libraryListId: blockLibraryListId,
       weekday: day,
       groupId,
     }))
@@ -312,6 +314,11 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                       {block.minutes !== undefined && (
                         <span className="wt-block-size">{formatDuration(block.minutes)}</span>
                       )}
+                      {block.libraryListId && (
+                        <span className="wt-block-size">
+                          from {data.library.find(l => l.id === block.libraryListId)?.name ?? 'a list'}
+                        </span>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -426,6 +433,27 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               />
             ))}
           </div>
+          {/* The binding, per block, exactly as the day editor has it - a
+              week is where it earns its keep, because "Reading on six days
+              from MIND and on the Wednesday from CRAFT" is a sentence about a
+              week and cannot be said with a day template at all. Hidden while
+              the library is empty, so a template editor stays a template
+              editor for the many people who never build a list. */}
+          {data.library.length > 0 && (
+            <select
+              className="block-library"
+              aria-label="What the new block draws from"
+              value={blockLibraryListId ?? ''}
+              onChange={e => setBlockLibraryListId(e.target.value || undefined)}
+            >
+              <option value="">Nothing</option>
+              {data.library.map(list => (
+                <option key={list.id} value={list.id}>
+                  From {list.name}
+                </option>
+              ))}
+            </select>
+          )}
           <Explain id="ongoing">
             <button
               type="button"

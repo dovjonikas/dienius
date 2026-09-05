@@ -226,3 +226,35 @@ test('a week template\'s card shows its shape rather than its first four titles'
   render(<WeekPreview template={template} />)
   expect(screen.getByLabelText('Mon 2, Tue 0, Wed 0, Thu 0, Fri 0, Sat 1, Sun 0')).toBeInTheDocument()
 })
+
+/**
+ * A week is where a library binding earns its keep: "Reading on six days from
+ * MIND and on the Wednesday from CRAFT" is a sentence about a week and cannot
+ * be said with a day template at all.
+ */
+test('a block can be bound to a library list as it is added, and says which', async () => {
+  const user = userEvent.setup()
+  const mind = actions.addLibraryList({ name: 'MIND', unit: 'chapter' })
+  actions.addLibraryItem(mind.id, 'Sapiens, 20 chapters')
+  render(<TemplatesView />)
+  await newWeek(user)
+
+  await user.selectOptions(screen.getByLabelText('What the new block draws from'), mind.id)
+  await user.click(within(screen.getByRole('group', { name: 'Add to' })).getByRole('button', { name: 'All days' }))
+  await addBlock(user, 'Reading')
+
+  expect(within(column('Monday')).getByText('from MIND')).toBeInTheDocument()
+
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks.every(b => b.libraryListId === mind.id)).toBe(true)
+})
+
+// The control is not there at all while the library is empty, so a template
+// editor stays a template editor for the many people who never build a list.
+test('there is nothing to bind to while the library is empty', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  expect(screen.queryByLabelText('What the new block draws from')).toBeNull()
+})

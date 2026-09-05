@@ -44,10 +44,12 @@ build it as one template rather than as seven.
 them:
 
 1. Type what happens, pick a time and a length the way you would anywhere
-   else.
+   else. If it reads or watches something, point it at a Library list here
+   too - that is section 5, and a week is where it earns its keep.
 2. **Add to** decides which days it lands on: the day you have picked, the
    weekdays, the weekend, or all seven. Most of a week is the same on several
-   days, and this is the press that says so.
+   days, and this is the press that says so. Tap a column's name to change
+   which day "this day" means.
 3. Blocks you added together are treated as one thing. Removing one takes it
    off every day it is on - unless you switch the choice above the columns to
    **Just this day**, which stays switched until you switch it back.
@@ -58,6 +60,11 @@ them:
    makes a week worth having: Saturday is a rest day and Wednesday is a night
    shift, and they are the same template.
 
+A block is written once and not edited afterwards: to change one, remove it
+and add it again. That is a real limit and it is worth knowing before you
+start, because it makes the order matter - get the time and the length right
+in the row before you press Add to, rather than after.
+
 Already have a day template you like? **New template → Or start a week from a
 day you already have** puts its blocks on all seven and leaves the original
 alone, so you can edit the differences instead of typing the shape seven
@@ -67,20 +74,29 @@ Stamping a date takes that weekday's column and nothing else. The card shows
 the week's shape - seven small bars - rather than its first four titles,
 because that is the thing worth reading about a week.
 
-**A worked one**, which is what this was built for:
+**A worked one**, which is what this was built for. In the order you would
+actually do it:
 
-| | |
+| Press | What lands |
 |---|---|
-| Every weekday | Commute 08:15, Deep work 09:00, Commute home 17:00 |
-| Mon, Wed, Fri | Gym: Upper 18:30 |
-| Tue, Thu | Gym: Lower 18:30 |
-| Every day | Reading 21:30, bound to your MIND list |
-| Wed | Reading 21:30 bound to CRAFT instead - drag the MIND one off and add a CRAFT one just for that day |
-| Sat | Long walk 10:00, and the column set to **Rest** |
+| Add to → **Weekdays**, three times | Commute 08:15, Deep work 09:00, Commute home 17:00, on Mon to Fri |
+| Add to → **All days** | Reading 21:30, bound to your MIND list |
+| Add to → **this day**, on Mon, then Wed, then Fri | Gym: Upper 18:30 |
+| Add to → **this day**, on Tue, then Thu | Gym: Lower 18:30 |
+| Add to → **this day**, on Sat | Long walk 10:00 |
+| The Saturday column's day type → **Rest** | Saturday stops being scored like a workday |
 
-That is six presses of Add to and two drags. As seven day templates it is
-seven forms, seven names, and seven places to change when the gym rotation
-moves.
+Eleven presses, and the rotation is the only fiddly part - there is no
+"Mon, Wed, Fri" chip, on purpose: three named scopes and one picked day are
+four things to understand, and a chip for every combination is thirty-one.
+
+Want the Wednesday's reading to come from CRAFT instead of MIND? Switch the
+choice above the columns to **Just this day**, remove Wednesday's Reading,
+then add a new one with CRAFT selected and Add to set to Wednesday. Switch
+the choice back afterwards, or the next removal will surprise you.
+
+As seven day templates the same week is seven forms, seven names, and seven
+places to change when the gym rotation moves.
 
 ## 3. Say which weekday gets which
 

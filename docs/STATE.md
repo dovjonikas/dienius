@@ -134,37 +134,95 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **1986
+Still true, and checked rather than assumed. The suite is green - **1988
 tests in 113 files, plus 25 Playwright tests in 12 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop at either the ordinary or the heavy day and
-its self-check sees five shapes out of five, and the working tree is empty.
-Everything is tagged.
+its self-check sees five shapes out of five, and the working tree is empty
+and pushed.
 
-What follows in this section is in two parts: the wave that is owed next, and
-then the phone and the debts, which are wanted.
+**Where to start:** the table below says both briefed waves are closed. What
+is owed is in *Asked for, not yet built*, two headings down, and its first
+item is the next session's work.
 
-### The wave that closed, and the one that is owed
+### Both waves closed
 
-Two waves were briefed by the owner in one sitting. The first is done and
-tagged; the second is below it and has not started.
+Two waves were briefed by the owner in one sitting. Both are done, committed
+and pushed. Nothing below this table is owed.
 
-| # | Stage | State |
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | Categories the owner owns | `adee903` | A list in `AppData` rather than a literal in a module, an editor in Settings, twelve curated colours with a readability gate, and a delete that moves what it would orphan |
+| 2 | North window: goals and if-then in one place | `e33dd08` | North is the sixth view. Every rule lives under the goal it protects; `widgets/if-then/` is gone, and so are the three fields the day view's old surfacing needed |
+| 3 | The explanation layer | `40722cd` | Twenty terms audited, all the copy in `lib/explain.ts`, one component in `views/Explain.tsx`, and a test whose data is the list itself |
+| 4 | Library lanes: MIND, CRAFT, LIGHT | `878d4fb` | One queue of twenty became three that advance on their own. Still only from the palette, never on first open |
+| 5 | Clean checkup | `d38990d`, `b71bbfb`, `3da5336`, `879b90d` | Sixteen places. Seven text tabs became a left icon rail; the (i) markers came back out a commit later at the owner's word; month cells say what is on a day; a day preview on hover; the week gained an agenda reading and a Someday strip; the template editor stopped opening with eight colour balls |
+| 6 | Closing: desktop QA, DAILY.md, regression, tag | `890e0ad` | Desktop QA at two sizes in both themes on a realistic day, every `data-tour` target re-checked, DAILY.md, every doc read against the code, and the tag moved |
+| - | **Week templates** (its own wave) | `a786b0b`, `8f7bb51` | One entity with a `kind`; `columnFor()` is the whole difference. Seven columns, Add to / Copy to / drag, a per-column day type and sleep, the week's shape on its card, a start-from-a-day expansion, four more explained terms, and DAILY.md on building one |
+
+#### The tags, which are the thing most likely to confuse
+
+| Tag | Commit | What it covers |
 |---|---|---|
-| 1 | **Categories the owner owns** | **Done** - `adee903`. Three bugs found on the way, two of them shipped; two existing tests changed, both named in that commit |
-| 2 | **North window: goals and if-then in one place** | **Done**. North is the sixth tab, rules live under the goal they protect, and the old day-view surfacing is gone with the three fields it needed |
-| 3 | **The explanation layer** | **Done**. Twenty terms audited, one tooltip component, all the copy in `lib/explain.ts` |
-| 4 | **Library lanes: MIND, CRAFT, LIGHT** | **Done**. One queue of twenty became three that advance on their own |
-| 5 | **Clean checkup** | **Done**. Sixteen places, plus the icon rail and the calendar's information layer, in four commits |
-| 6 | **Closing: desktop QA, DAILY.md, regression, tag v2.0** | **Done**. Tagged `v2.0` |
-| - | **Week templates** (its own wave) | **Done.** One entity with a `kind`, seven columns, Add to / Copy to / drag, a per-column day type and sleep, a shape on the card, a start-from-a-day expansion, and four more terms in the explanation layer |
+| `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
+| `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
 
-Every stage above is committed and pushed, and the working tree is empty.
-Everything through the closing is tagged `v2.0`; the week-templates wave sits
-above it, untagged. The briefs that follow are kept as written because the
-commits refer to them; what each one actually became is in its own commit
-message and in DECISIONS.md. **The next session starts on the phone wave**,
-which is the block after them.
+The move is why `v2.0-desktop` exists: nothing was published between the two
+halves, so one version number is honest, but the earlier commit is worth
+being able to name. The week-templates wave sits above `v2.0`, untagged,
+ending at `8f7bb51`.
+
+#### The bugs this wave found, all of them already shipped
+
+Written down here because CONVENTIONS section 2 asks for it and because every
+one of them had been in the app for versions:
+
+| Found | Where it had been |
+|---|---|
+| The demo's own if-then rules carried "If" and "then" inside their strings while every place that drew one added its own "If", so the sample read "If If I open the laptop" | Since the demo was written |
+| Eight tests queried the Inbox and Backlog folds with a loose `/Backlog/`, which any new control containing the word would have matched | Since those folds were built |
+| The (i) marker reused the North line's four-version-old bug: a tap fires a focus and then a click, so a focus that opened the bubble meant every tap popped a sentence over the screen | Written and caught in the same wave |
+| A 28px per-block library select in the template editor, under the 44px a finger needs | Since v1.9. The phone pass had no screen that opened a template editor until this wave added one |
+| The sweep left its pointer resting on the rail after clicking a tab, so every screen was measured with a flyout open - nine false findings and then a 30-second hang | Written and caught in the same wave |
+| A flat `min-height: 38px` on two rebuilt rows pulled four controls back under 44px on a finger | Written and caught the same afternoon, twice |
+
+The last three are the measuring pass doing its job on code written hours
+earlier, which is the argument for running it before believing anything.
+
+### Asked for, not yet built
+
+In order. The first is the next session's work.
+
+**1. North v2 - North becomes The Picture.** Editing moves out of Settings
+and into the North window itself, and the structure changes from three
+fields to four:
+
+> who I am / what I want / what I do to deserve it / what pulls me off it
+
+The last of those is the one thing that already exists - the rules under each
+goal, built in stage 2 of this wave and living in `views/north/NorthView.tsx`.
+**The brief for the rest is coming from the owner**, so do not design it
+ahead of them; what is worth knowing before it arrives is that
+ARCHITECTURE section 6 has governed North since v1.4 and one line of it is
+about to be re-opened on purpose. "Editing lives in Settings, deliberately
+far from the day" was written because a goal you can rewrite from the screen
+you look at every morning is a goal you will rewrite on a bad morning. If
+editing moves into North, that argument has to be answered rather than
+forgotten - most likely by North not being a screen somebody lands on by
+accident, which it is not: it is the sixth icon and the `6` key. Write the
+answer into DECISIONS when it is made.
+
+**2. The phone wave.** `npm run sweep -- --phone` reports 82 findings which
+are two controls, and the walk itself has still never been done. *The phone
+wave, in detail* further down has both, including how to count them - this
+file has got that number wrong twice. Section 5 is the checklist to walk.
+
+### The six briefs, kept as history
+
+What follows is the owner's own words as this session received them, kept
+because every commit above refers to them. **They are not work to do.** What
+each one actually became is in its own commit message and, where it changed a
+rule, in DECISIONS.md.
 
 #### Stage 2 - North becomes a window, and if-then moves into it
 
@@ -302,28 +360,47 @@ rotation across the week, Reading and CRAFT blocks bound to Library lists), the
 tour's stamp step checked against a week template, and tooltips for the new
 terms.
 
-### The desktop is closed; the phone is the next wave
+### The phone wave, in detail
 
-v2.0 was a desktop pass on purpose. The phone still works - the month fits
-390x844 again, which it had not for some time - but it was measured rather
-than walked. `npm run sweep -- --phone` reports **84 findings, which are three
-shapes** - the pass counts every occurrence, and the same control on ten
-screens is ten findings. The three are below; the fourth job is the walk
-itself. "Exactly two things and nothing else" is what this file said until the
-count was read rather than remembered, and the third shape had never been
-written down at all.
+v2.0 was a desktop pass on purpose, and the wave after it stayed on the
+desktop. The phone still works - the month and the week both fit 390x844 with
+no scroll, re-measured with the icon rail as a bottom bar - but it has been
+measured rather than walked, and that is still the job.
+
+`npm run sweep -- --phone` reports **82 findings, which are two controls**:
+the quarter-hour arrows and the focus bar's exit cross, both below. The pass
+counts every occurrence and runs 390x844 in both themes, so one control on
+seventeen screens is thirty-four findings.
+
+**Read that number the same way every time**, because this file has now got
+it wrong twice. It was "exactly two things" until somebody counted; it was
+"three shapes" after that; and during the v2.0 wave three commit messages
+said the phone was down to one, on a grep that was quietly dropping half the
+lines. The command that answers it honestly is:
+
+```bash
+npm run sweep -- --phone | grep -oP '\d+px [a-z-]+' | sort | uniq -c
+```
+
+What did genuinely go in the v2.0 wave is the third control: the floating
+scratch button, which left with the navigation rail. A 28px library select
+and a 20px week block were found and fixed by this same pass the day they
+were written.
+
+The walk is the part no measurement replaces.
 
 - **Quick-add's quarter-hour arrows are 22px each on a coarse pointer.**
   Two halves of one 44px column, and the `::after` overlay trick cannot
   save both: two 44px overlays stacked steal each other's taps. Needs a
   different shape for a stacked stepper, not a bigger hit area.
-- **The Scratch button sits over the last cell of the month.** It is
-  draggable, so it is a nuisance rather than a trap, but the default
-  position covers a real control.
 - **The focus bar's exit cross is 30px**, on seven screens - anywhere the bar
   can be showing. It is not in the `::after` overlay list and it is the one
-  way out of a running Focus session, which makes it the worst of the three
-  to miss.
+  way out of a running Focus session, which makes it the worse of the two to
+  miss.
+- ~~**The Scratch button sits over the last cell of the month.**~~ Gone. The
+  floating button left with the navigation rail in v2.0: Scratch is a pen in
+  the rail on a desktop and in the bottom bar on a phone, in the same place
+  on both.
 - **A walk of every screen with a full day**, the way v2.0 walked the
   desktop: eyes on it, not just the sweep. A measuring pass finds what it
   was told to look for; the fourteen defects v2.0 fixed included several
@@ -434,6 +511,7 @@ guess whether it was noticed.
 | **Sync has no conflict UI** | Last-write-wins per entity, silently. For one person with two devices a real conflict means editing the same task on both within a few seconds, and "the later edit wins" is both correct and what anybody would expect; a dialog for it would be a question with no good answer, asked on the rare day when somebody is already busy. It would be wrong for two people, and this is not for two people |
 | **Imported .ics calendars are device-local** | A file has no address to refresh from, so there is nothing to sync *to* - carrying the parsed events would make one device's stale copy authoritative on another. Subscriptions, which do have an address, sync. Stated in the UI where it matters |
 | **Outlook's Windows time zone names are read as local** | "FLE Standard Time" is not an IANA name, so `Intl` does not know it and `ics.ts` says so rather than guessing. For the owner, in the zone the file was written in, that is right by accident; for a colleague's file two zones away it is wrong by hours. The open question is whether a table of the dozen Windows names that actually turn up is worth carrying - one map in `ics.ts`, consulted before `Intl`, with a test on the Outlook fixture already in `ics.test.ts`. Reading the file's own `VTIMEZONE` block would be exact and is a much bigger job; the table is the honest middle, and nobody has needed it yet |
+| **A week template's block cannot be edited in place** | It is written once and changed by removing it and adding it again. A week's blocks are drawn at 20px in a 96px column, and putting a time, a length, a category and a library binding behind each one means either a form per block on the smallest surface in the app, or a sheet - and a sheet over a seven-column grid hides the thing being edited. The add row already holds every answer before the block exists, which is where the app puts that question everywhere else. DAILY.md says so up front, because it makes the order matter. Revisit if the owner hits it |
 | **The month's cells drop their ratio below about 720px of height** | The zero-scroll rule says the month fits, and something has to give when it cannot. Detail goes, never cell height: a 30px row is not a calendar. The shape of the month survives, which is what the grid is for |
 
 ### Resolved debts, so you do not chase them
