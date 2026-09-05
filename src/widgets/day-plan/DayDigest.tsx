@@ -1,5 +1,6 @@
 import type { Task } from '../../lib/types'
 import { categoryColor, categoryLabel } from '../../lib/categories'
+import { useAppData } from '../../lib/store'
 import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
 import type { DayScore } from './score'
@@ -47,7 +48,8 @@ export interface DayDigestProps {
  */
 export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
-  const upNextColor = upNext ? categoryColor(upNext.category) : undefined
+  const categories = useAppData().categories
+  const upNextColor = upNext ? categoryColor(upNext.category, categories) : undefined
   const minutesAway = upNext ? timeToMinutes(upNext.time!) - nowMinutes : undefined
 
   // Only tasks marked as Focus work, timed or not. This is the one number here
@@ -72,7 +74,7 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
           <span className="up-next-time">{upNext.time}</span>
           <span className="up-next-title">{upNext.title}</span>
           <span className="up-next-meta">
-            {categoryLabel(upNext.category) ?? 'Scheduled'}
+            {categoryLabel(upNext.category, categories) ?? 'Scheduled'}
             {minutesAway !== undefined && minutesAway > 0 && ` · in ${formatDuration(minutesAway)}`}
           </span>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Task } from '../../lib/types'
+import type { Category, Task } from '../../lib/types'
 import { formatDuration, windowFor, type SleepSettings } from './capacity'
 import { categoryColor } from '../../lib/categories'
 import type { DayEvent } from '../../lib/calendars'
@@ -168,6 +168,14 @@ export interface TimelineGridProps {
   id?: string
   tasks: Task[]
   /**
+   * The category list, so an anchor's wash is the colour its category is
+   * actually set to. A prop rather than a store read for the same reason
+   * TaskRow takes one: the grid already re-renders on every commit through
+   * its caller, and a second subscription would only add a listener.
+   * Defaulted to empty so a test rendering the grid alone still draws.
+   */
+  categories?: Category[]
+  /**
    * The day's own template color, if it has one - see `docs/TIMELINE.md`
    * section 5: anchors show "the day-type colour they came from." A task
    * only ever has one color source today, the template a day was stamped
@@ -334,6 +342,7 @@ export interface GridGeometry {
 export function TimelineGrid({
   id,
   tasks,
+  categories = [],
   templateColor,
   onPlaceFloat,
   onAnchorPointerDown,
@@ -644,7 +653,7 @@ export function TimelineGrid({
               // restored from an older backup) falls back to the inline
               // template colour exactly as every anchor used to, so nothing
               // already on disk is silently recoloured.
-              const catColor = anchor.sized ? categoryColor(sourceTask?.category) : undefined
+              const catColor = anchor.sized ? categoryColor(sourceTask?.category, categories) : undefined
               const draggable = !!onAnchorPointerDown && !!sourceTask && !sourceTask.done
               const classNames = ['timeline-anchor']
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')

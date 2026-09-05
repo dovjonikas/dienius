@@ -328,6 +328,7 @@ export function DayView({ date, onDateChange }: DayViewProps) {
             <TimelineGrid
               id={timelineGridId}
               tasks={day?.tasks ?? []}
+              categories={data.categories}
               templateColor={template?.color}
               onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
               onAnchorPointerDown={drag.startDrag}

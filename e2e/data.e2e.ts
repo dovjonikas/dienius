@@ -112,7 +112,10 @@ test('an imported .ics file lays its events over the day, and free time counts t
     page.getByRole('button', { name: 'Import a .ics file' }).click(),
   ])
   await chooser.setFiles({ name: 'work.ics', mimeType: 'text/calendar', buffer: Buffer.from(WORK_ICS) })
-  const row = page.getByRole('listitem').filter({ hasText: 'work' })
+  // Scoped to the calendar list rather than to any listitem saying "work":
+  // the Settings page has a category row reading "Deep work" now, and the
+  // loose selector matched both.
+  const row = page.getByRole('list', { name: 'Calendars' }).getByRole('listitem').filter({ hasText: 'work' })
   await expect(row).toContainText('2 events - from a file, on this device only')
 
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()

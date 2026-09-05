@@ -952,7 +952,15 @@ test('a day stored under a key that is not a real date loads without throwing, a
   expect(loaded.days['not-a-real-date'].tasks[0].title).toBe('Orphaned')
 })
 
-test('a roughly 20MB backup file imports well within a second', () => {
+// The default 5s per-test timeout is an absolute millisecond budget, and
+// CONVENTIONS section 3 is about exactly why that is the wrong shape here:
+// this test builds a 20MB payload and then imports it several times over,
+// so on a machine running a hundred other files in parallel it is honest
+// work that takes longer than five seconds, and the failure says "timed
+// out" rather than anything about the code. It failed two runs in four on
+// v2.0's own commit with nothing changed. The ratio below is the
+// assertion; the timeout is only here so the runner cannot pre-empt it.
+test('a roughly 20MB backup file imports well within a second', { timeout: 60_000 }, () => {
   // Built to land close to 20MB as an actual exported *file* would be -
   // exportJson pretty-prints with a 2-space indent, which inflates a
   // compact JSON.stringify by roughly 1.6-1.7x, so the compact-size target
@@ -1239,4 +1247,65 @@ test('a backup written before those fields existed still loads, with them absent
   const loaded = importJson(JSON.stringify(data))
   expect(loaded.settings.northDismissedOn).toBeUndefined()
   expect(loaded.settings.calendars).toBeUndefined()
+})
+
+/**
+ * Categories became content rather than a literal in the module, which makes
+ * them a thing a backup can be missing - and every backup ever written before
+ * this is.
+ */
+test('a backup with no categories at all loads with the six the app ships', () => {
+  const data = defaultData()
+  delete (data as unknown as Record<string, unknown>).categories
+  const loaded = importJson(JSON.stringify(data))
+  expect(loaded.categories.map(c => c.id)).toEqual(['core', 'routine', 'health', 'meal', 'commute', 'personal'])
+  // Nothing on disk is recoloured: an untouched default carries no literal,
+  // so the stylesheet's dark/light pair still decides what it looks like.
+  expect(loaded.categories.every(c => c.color === undefined)).toBe(true)
+})
+
+test('a backup that carries its own categories keeps exactly those', () => {
+  const data = defaultData()
+  data.categories = [{ id: 'core', label: 'Work' }, { id: 'x1', label: 'Gym', color: '#4fa46a' }]
+  const loaded = importJson(JSON.stringify(data))
+  expect(loaded.categories).toEqual([{ id: 'core', label: 'Work' }, { id: 'x1', label: 'Gym', color: '#4fa46a' }])
+})
+
+test('validate rejects a category with no label, an over-long one, or a colour that is not a hex', () => {
+  for (const bad of [{ id: 'x' }, { id: 'x', label: '' }, { id: 'x', label: 'a'.repeat(41) }, { id: 'x', label: 'Gym', color: 'url(https://example.com/x.png)' }]) {
+    const data = { ...defaultData(), categories: [bad] }
+    expect(() => importJson(JSON.stringify(data))).toThrow('Invalid Dienius backup file')
+  }
+})
+
+/**
+ * The three fields that point at a category were checked against the closed
+ * list of six until the list stopped being closed. The loosening is
+ * deliberate - an id somebody made up cannot be checked against a list nobody
+ * wrote - but it is a loosening to "a string of a sane length", not to
+ * anything at all.
+ */
+test('validate accepts a made-up category id on a task, a block and a backlog item', () => {
+  const data = defaultData()
+  data.categories = [{ id: 'core', label: 'Deep work' }, { id: 'abc-123', label: 'Gym', color: '#4fa46a' }]
+  data.days = { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 't1', title: 'Run', done: false, category: 'abc-123' }] } }
+  data.templates = [{ id: 'tp1', name: 'W', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Run', category: 'abc-123' }] }]
+  data.backlog = [{ id: 'k1', title: 'Physio', category: 'abc-123' }]
+  expect(importJson(JSON.stringify(data)).days['2026-09-01'].tasks[0].category).toBe('abc-123')
+})
+
+test('validate still refuses a category field that is not a string, or is empty', () => {
+  for (const bad of [42, {}, [], '', 'x'.repeat(65)]) {
+    const data = defaultData()
+    data.days = { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 't1', title: 'Run', done: false, category: bad }] } } as never
+    expect(() => importJson(JSON.stringify(data))).toThrow('Invalid Dienius backup file')
+  }
+})
+
+test('a dangling category id loads and is simply not found, the way every other dangling id is', () => {
+  const data = defaultData()
+  data.days = { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 't1', title: 'Run', done: false, category: 'deleted-on-the-phone' }] } }
+  const loaded = importJson(JSON.stringify(data))
+  expect(loaded.days['2026-09-01'].tasks[0].category).toBe('deleted-on-the-phone')
+  expect(loaded.categories.some(c => c.id === 'deleted-on-the-phone')).toBe(false)
 })

@@ -4,7 +4,7 @@ import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { useCaptureRequest } from '../../lib/captureRequest'
-import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, categoryLabel, type CategoryId } from '../../lib/categories'
+import { categoryColor, categoryLabel, defaultCategoryId, resolvedColor, type CategoryId } from '../../lib/categories'
 import { TimeColumns } from '../../views/TimeColumns'
 import { DurationControl } from '../../views/DurationControl'
 import { useClickAway } from '../../lib/useClickAway'
@@ -76,7 +76,10 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   // it follows what you are doing right now, and the point of a default is
   // that most tasks typed in one sitting belong together - carrying that
   // across days would be a guess about tomorrow instead.
-  const [newCategory, setNewCategory] = useState<CategoryId>(DEFAULT_CATEGORY)
+  // The id the row opens on, not an index: a reorder must not silently
+  // change which colour the next task gets. Falls back to the first in the
+  // list when the shipped default has been deleted - see defaultCategoryId.
+  const [newCategory, setNewCategory] = useState<CategoryId>(() => defaultCategoryId(data.categories))
   // Which of the two things Enter does. A mode rather than a second field: one
   // input with one cursor, and the thing being typed goes wherever the toggle
   // says, so capturing costs a tap once rather than a decision every time
@@ -378,28 +381,28 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
           <span className="quick-add-chip is-size">{formatDuration(effectiveMinutes)}</span>
           <span
             className="quick-add-chip is-cat"
-            style={{ ['--cat' as string]: categoryColor(newCategory) } as React.CSSProperties}
+            style={{ ['--cat' as string]: categoryColor(newCategory, data.categories) } as React.CSSProperties}
           >
-            {categoryLabel(newCategory)}
+            {categoryLabel(newCategory, data.categories)}
           </span>
           <span className="quick-add-chip-title">{draft.title}</span>
         </div>
       )}
 
       {/* Which colour the next task gets, chosen before typing rather than
-          asked about afterward - six swatches is one glance and one tap,
+          asked about afterward - a handful of swatches is one glance and one tap,
           where a follow-up dialog would be a second decision at exactly the
           moment the thought is meant to be leaving your head. Each is a real
           toggle button carrying its own name, so the choice is reachable and
           readable without relying on the colour. */}
       {showsDuration && (
         <div className="category-picker" role="group" aria-label="Category for the next task">
-          {CATEGORIES.map(c => (
+          {data.categories.map(c => (
             <button
               key={c.id}
               type="button"
               className={c.id === newCategory ? 'category-swatch selected' : 'category-swatch'}
-              style={{ ['--cat' as string]: c.color } as React.CSSProperties}
+              style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
               aria-pressed={c.id === newCategory}
               aria-label={c.label}
               title={c.label}

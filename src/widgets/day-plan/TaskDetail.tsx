@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { actions } from '../../lib/store'
-import { CATEGORIES, categoryColor } from '../../lib/categories'
+import { actions, useAppData } from '../../lib/store'
+import { resolvedColor } from '../../lib/categories'
 import { progressLabel, progressPercent } from '../../lib/library'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
 import { TimePicker } from '../../views/TimePicker'
@@ -40,6 +40,7 @@ export interface TaskDetailProps {
  * difference between them - only where the rectangle sits.
  */
 export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailProps) {
+  const data = useAppData()
   const panelRef = useRef<HTMLDivElement>(null)
   // How far the sheet has been pulled down, in pixels. Only ever non-zero
   // during a drag on the grab bar - see onGrabPointerDown.
@@ -237,12 +238,12 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
           <div className="task-detail-field">
             <span className="task-detail-label">Category</span>
             <div className="category-picker" role="group" aria-label="Category">
-              {CATEGORIES.map(c => (
+              {data.categories.map(c => (
                 <button
                   key={c.id}
                   type="button"
                   className={c.id === task.category ? 'category-swatch selected' : 'category-swatch'}
-                  style={{ ['--cat' as string]: categoryColor(c.id) } as React.CSSProperties}
+                  style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
                   aria-pressed={c.id === task.category}
                   aria-label={c.label}
                   title={c.label}

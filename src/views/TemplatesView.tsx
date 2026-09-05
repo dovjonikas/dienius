@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES, DEFAULT_CATEGORY, categoryColor, type CategoryId } from '../lib/categories'
+import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from '../lib/categories'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { DayType, LibraryList, SleepProfile, Template } from '../lib/types'
+import type { Category, DayType, LibraryList, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -37,7 +37,7 @@ interface DraftBlock {
   id?: string
   time: string
   title: string
-  /** Which of `CATEGORIES` colours the task this block stamps - see `categories.ts`. */
+  /** Which of `AppData.categories` colours the task this block stamps. */
   category: CategoryId
   core: boolean
   /**
@@ -87,6 +87,8 @@ interface TemplateEditorProps {
   sleepProfiles: SleepProfile[]
   /** Every library list, for the per-block binding. Empty hides the control. */
   libraryLists: LibraryList[]
+  /** The category list, so the block row offers what this person actually uses. */
+  categories: Category[]
   onSave: (draft: Draft) => void
   onCancel: () => void
 }
@@ -95,7 +97,7 @@ interface TemplateEditorProps {
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSave, onCancel }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
@@ -106,7 +108,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
   // the same kind of thing (three work blocks, then two meals), so carrying
   // the last choice forward is right far more often than resetting to the
   // default would be. Every other field of the block-add row clears on add.
-  const [blockCategory, setBlockCategory] = useState<CategoryId>(DEFAULT_CATEGORY)
+  const [blockCategory, setBlockCategory] = useState<CategoryId>(() => defaultCategoryId(categories))
   const nameRef = useRef<HTMLInputElement>(null)
 
   // Moves focus into the name field the moment the form appears, for both a
@@ -224,7 +226,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
       <p className="muted">Ongoing blocks never get pushed to tomorrow or need a decision.</p>
       <ul className="block-list">
         {draft.blocks.map((b, i) => (
-          <li key={i} style={{ ['--cat' as string]: categoryColor(b.category) } as React.CSSProperties}>
+          <li key={i} style={{ ['--cat' as string]: categoryColor(b.category, categories) } as React.CSSProperties}>
             <span className="block-cat-edge" aria-hidden="true" />
             <span className="task-time">{b.time || '--:--'}</span>
             <span className="block-title">{b.title}</span>
@@ -293,16 +295,16 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, onSave, onCancel
           stepperLabel="Size in minutes"
           onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
         />
-        {/* Same six swatches as quick-add on the day view, for the same
+        {/* The same swatches as quick-add on the day view, for the same
             reason - a template is where most tasks actually get their colour,
             since a stamped day arrives already sorted. */}
         <div className="category-picker" role="group" aria-label="Category for the new block">
-          {CATEGORIES.map(c => (
+          {categories.map(c => (
             <button
               key={c.id}
               type="button"
               className={c.id === blockCategory ? 'category-swatch selected' : 'category-swatch'}
-              style={{ ['--cat' as string]: c.color } as React.CSSProperties}
+              style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
               aria-pressed={c.id === blockCategory}
               aria-label={c.label}
               title={c.label}
@@ -359,7 +361,7 @@ export function TemplatesView() {
         id: b.id,
         time: b.time ?? '',
         title: b.title,
-        category: b.category ?? DEFAULT_CATEGORY,
+        category: b.category ?? defaultCategoryId(data.categories),
         core: b.core ?? false,
         unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
@@ -445,6 +447,7 @@ export function TemplatesView() {
         <TemplateEditor
           sleepProfiles={data.settings.sleepProfiles}
           libraryLists={data.library}
+          categories={data.categories}
           key={draft.id ?? 'new'}
           initial={draft}
           onSave={saveDraft}

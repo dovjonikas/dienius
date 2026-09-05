@@ -1,5 +1,4 @@
 import type { DayPlan, IfThenEntry, Settings, SleepProfile, SleepWindow, Template, ThemeState } from './types'
-import { isCategoryId } from './categories'
 
 /**
  * The shape a stored payload has to have before any of it is trusted.
@@ -192,10 +191,15 @@ const LIBRARY_TRACKS = ['pages', 'movie', 'series'] as const
 const REPEATS = ['daily', 'weekdays', 'weekly'] as const
 const ORIGIN_TYPES = ['template', 'repeat', 'manual'] as const
 
-// A category is checked by identity against the six the app defines, not by
-// shape: unlike a colour there is no grammar, and an id that is not one of
-// ours would silently draw nothing.
-const category: Check = x => isCategoryId(x)
+// A category id used to be checked by identity against the six the app
+// defined. It cannot be any more, and the loosening is deliberate: once the
+// owner can make a category up, its id comes from crypto.randomUUID() and
+// there is no closed list to check it against. A category id is now exactly
+// what templateId, libraryRef and sleepProfileId already are - an id that
+// may dangle, which every reader already answers as "no category" rather
+// than crashing. What is still checked is that it is a string of a sane
+// length, so a number or an object in that field still fails the payload.
+const categoryRef = optional(text(1, 64))
 
 // A whole number of minutes, never negative. Rejecting a fractional or
 // negative value rather than coercing it keeps a corrupted field from
@@ -224,7 +228,7 @@ const TASK = record({
   core: optional(boolean),
   minutes: optional(minutes),
   unbounded: optional(boolean),
-  category: optional(category),
+  category: categoryRef,
   libraryRef: optional(LIBRARY_REF),
   note: optional(string),
   highlight: optional(boolean),
@@ -242,7 +246,7 @@ const TEMPLATE_BLOCK = record({
   core: optional(boolean),
   minutes: optional(minutes),
   unbounded: optional(boolean),
-  category: optional(category),
+  category: categoryRef,
   libraryListId: optional(string),
 })
 
@@ -284,10 +288,24 @@ const IF_THEN_ENTRY = record({
 
 const INBOX_ITEM = record({ id: string, text: string, captured: string })
 
+// A label is capped like every other free string in a payload, and required
+// to be non-empty: a category with no name is a swatch nobody can identify,
+// and the editor will not save one either. The colour is optional because
+// absent is a real state - it means the built-in dark/light pair in
+// styles.css for one of the six ids the app ships. Its readability is not
+// checked here: this is the guard on a file's shape, and a hex that is
+// merely hard to read is not a corrupt payload. The editor refuses one at
+// the point somebody picks it, which is where saying so is any use.
+const CATEGORY = record({
+  id: string,
+  label: text(1, 40),
+  color: optional(color),
+})
+
 const BACKLOG_ITEM = record({
   id: string,
   title: string,
-  category: optional(category),
+  category: categoryRef,
   minutes: optional(minutes),
 })
 
@@ -429,9 +447,10 @@ export interface StoredAppData {
   scratch?: AppDataLists['scratch']
   library?: AppDataLists['library']
   goals?: AppDataLists['goals']
+  categories?: AppDataLists['categories']
 }
 
-type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals'>
+type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories'>
 
 // Templates, days and settings are required: a payload without them is not
 // a plan. A shape check on those three alone once let {"templates":[{}],
@@ -448,6 +467,7 @@ const STORED_APP_DATA = record({
   scratch: optional(listOf(SCRATCH_NOTE)),
   library: optional(listOf(LIBRARY_LIST)),
   goals: optional(listOf(GOAL)),
+  categories: optional(listOf(CATEGORY)),
 })
 
 export function validate(x: unknown): x is StoredAppData {

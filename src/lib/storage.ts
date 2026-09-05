@@ -4,6 +4,7 @@ import { buildDemoData } from './demo'
 import type { AppData, DayPlan, EveningCloseSettings, Settings, SleepProfile, SleepWindow, ThemeState } from './types'
 import { dedupeTasks } from './taskIdentity'
 import { isLegacyTheme, isStoredTheme, validate, type StoredAppData, type StoredTheme } from './validate'
+import { DEFAULT_CATEGORIES } from './categories'
 
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -140,6 +141,10 @@ export function defaultData(): AppData {
     scratch: [],
     library: [],
     goals: [],
+    // Copied, not shared. defaultData() is called on every failed load and by
+    // the tour's sandbox seed, and a shared array would let one of those
+    // hand the module's own list to a store that then edits it in place.
+    categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
   }
 }
 
@@ -233,6 +238,14 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
     scratch: data.scratch ?? [],
     library: data.library ?? [],
     goals: data.goals ?? [],
+    // Every backup written before categories became the owner's opens with
+    // the six the app has always shipped, which is what every task and
+    // template block in it already points at. Nothing is recoloured and
+    // nothing is renamed: an absent list is not a person who deleted them,
+    // it is a file from before the list existed. An empty one is left empty,
+    // because deleting down to nothing is not reachable through the editor
+    // and a payload that says so is saying something deliberate.
+    categories: data.categories ?? DEFAULT_CATEGORIES.map(c => ({ ...c })),
     settings: {
       // Spread first, then normalise. Listing every field by name meant an
       // optional one added later was silently dropped on load: the value was

@@ -15,7 +15,7 @@ import {
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
-import { CATEGORIES } from '../lib/categories'
+import { PALETTE_COLORS } from '../lib/colors'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
 import { useListReorder } from './useListReorder'
 import { LibraryAddLine } from './LibraryAddLine'
@@ -367,9 +367,13 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
               onChange={e => actions.updateLibraryList(list.id, { unitShort: e.target.value })}
             />
           </label>
-          {/* Six hues and off, from the same palette the categories use, so a
-              chip row can be read at a glance. Nothing sorts or filters by
-              it; it is a dot. */}
+          {/* Eight hues and off, from the one palette every colour choice in
+              this app draws from - see colors.ts. Nothing sorts or filters by
+              it; it is a dot. It used to borrow the category colours, which
+              was wrong twice over: they are `var(--cat-*)` references and
+              this value is stored, where `validate` only accepts a hex, and
+              the categories are the owner's to rename now, so a dot would
+              have quietly meant something else a week later. */}
           <div className="field">
             <span className="field-label">Dot</span>
             <div className="library-colors" role="group" aria-label={`Colour for ${list.name}`}>
@@ -380,15 +384,15 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
                 aria-label="No colour"
                 onClick={() => actions.updateLibraryList(list.id, { color: undefined })}
               />
-              {CATEGORIES.map(c => (
+              {PALETTE_COLORS.map(c => (
                 <button
-                  key={c.id}
+                  key={c.value}
                   type="button"
-                  className={list.color === c.color ? 'library-color is-on' : 'library-color'}
-                  style={{ ['--dot' as string]: c.color } as React.CSSProperties}
-                  aria-pressed={list.color === c.color}
-                  aria-label={c.label}
-                  onClick={() => actions.updateLibraryList(list.id, { color: c.color })}
+                  className={list.color === c.value ? 'library-color is-on' : 'library-color'}
+                  style={{ ['--dot' as string]: c.value } as React.CSSProperties}
+                  aria-pressed={list.color === c.value}
+                  aria-label={c.name}
+                  onClick={() => actions.updateLibraryList(list.id, { color: c.value })}
                 />
               ))}
             </div>

@@ -48,6 +48,7 @@ AppData
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
 │                                track? (pages/movie/series), pace?, season?
 ├── goals: Goal[]                directions, never measured - see §6
+├── categories: Category[]      what a day is made of; the owner's, not the app's
 ├── ifThens: IfThenEntry[]       trigger + action, never measured
 ├── inbox: InboxItem[]           one line of text, no date
 ├── backlog: BacklogItem[]       decided, undated, in priority order
@@ -70,7 +71,7 @@ that data written before it existed still loads:
 |---|---|
 | `time` | An *anchor* - it happens at a clock time. Absent is a *float*. |
 | `minutes` | Its size. Absent is unsized, not zero. |
-| `category` | One of six; drives the colour everywhere it appears. |
+| `category` | One of `AppData.categories`; drives the colour everywhere it appears. A dangling id degrades like every other. |
 | `core` | Counted on a non-full day. Set by a template, never by quick-add. |
 | `unbounded` | Exempt from the two-push bound. |
 | `pushCount` | How many days it has been carried. |
@@ -210,6 +211,7 @@ src/
       calendars.ts     external calendar subscriptions
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
       ifThen.ts        if-then rules
+      categories.ts    the category list, and the delete that moves what it would orphan
       lifecycle.ts     import, snapshot restore, the tour's two endings
     stamping.ts        template + dates -> day plans
     repeats.ts         which days a series owes, and what an instance carries
@@ -251,7 +253,7 @@ src/
     theme-color.ts     keeps <meta name="theme-color"> with the active theme
     theme-preview.ts   the gallery's card, resolved the way the page is
     useSystemPrefersDark.ts  the live prefers-color-scheme reading
-    categories.ts      the six categories; colours live in styles.css
+    categories.ts      the six the app ships, the lookups over the owner's list, and whether a picked colour will read
     themes.ts          the three presets
     theme.ts           preset + overrides -> real CSS values
     contrast.ts        WCAG maths, used by the theme tests and --on-accent
@@ -267,7 +269,7 @@ src/
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     CommandPalette, ShortcutsOverlay
     TimeColumns        the two scrolling columns inside the time picker
-    BackupSettings, SyncSettings, CalendarSettings, NorthSettings   Settings sections
+    BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app

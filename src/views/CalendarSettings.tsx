@@ -107,7 +107,7 @@ export function CalendarSettings() {
         </div>
 
         {calendars.length > 0 && (
-          <ul className="calendar-list">
+          <ul className="calendar-list" aria-label="Calendars">
             {calendars.map(calendar => {
               const entry = cache[calendar.id]
               return (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Template } from '../../lib/types'
+import type { Category, Template } from '../../lib/types'
 import type { DayStat } from '../../lib/dayStats'
 import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
@@ -36,6 +36,8 @@ export interface WeekColumnProps {
   nowMinutes: number
   window: Interval
   templates: Template[]
+  /** The category list, passed down rather than read per column - see TaskRow. */
+  categories: Category[]
   template: Template | undefined
   stat: DayStat | undefined
   /** Somebody else's calendar, drawn under the day's own blocks. */
@@ -57,6 +59,7 @@ export function WeekColumn({
   nowMinutes,
   window,
   templates,
+  categories,
   template,
   stat,
   events,
@@ -206,7 +209,7 @@ export function WeekColumn({
 
         {day.blocks.map(block => {
           const width = 100 / block.lanes
-          const color = categoryColor(block.task.category) ?? template?.color
+          const color = categoryColor(block.task.category, categories) ?? template?.color
           return (
             <button
               key={block.task.id}

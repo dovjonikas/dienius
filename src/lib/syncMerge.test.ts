@@ -327,3 +327,40 @@ test('a reordering on one device does not resurrect an item deleted on the other
   const merged = mergeStates(phone, pc, NOW).data
   expect(merged.backlog.map(i => i.id)).toEqual(['b2'])
 })
+
+/**
+ * Categories are an entity each, not one settings field, and this is the
+ * whole reason why: renaming one on the laptop while recolouring another on
+ * the phone is two edits to two things, and at a settings field's grain one
+ * of them would simply vanish.
+ */
+test('two devices renaming two different categories both keep their edit', () => {
+  const shared = device(d => ({ ...d, categories: [{ id: 'core', label: 'Deep work' }, { id: 'meal', label: 'Meals' }] }), MORNING)
+  const phone = device(d => ({ ...d, categories: [{ ...d.categories[0], label: 'Focus' }, d.categories[1]] }), NOON, shared)
+  const pc = device(d => ({ ...d, categories: [d.categories[0], { ...d.categories[1], label: 'Food' }] }), EVENING, shared)
+  const merged = mergeStates(phone, pc, NOW).data
+  expect(merged.categories.map(c => c.label)).toEqual(['Focus', 'Food'])
+})
+
+test('the later rename of the same category wins, and nothing else moves', () => {
+  const shared = device(d => ({ ...d, categories: [{ id: 'core', label: 'Deep work' }] }), MORNING)
+  const phone = device(d => ({ ...d, categories: [{ ...d.categories[0], label: 'Focus' }] }), NOON, shared)
+  const pc = device(d => ({ ...d, categories: [{ ...d.categories[0], label: 'Craft' }] }), EVENING, shared)
+  expect(mergeStates(phone, pc, NOW).data.categories[0].label).toBe('Craft')
+})
+
+test('a category deleted on one device stays deleted after a merge with one that still has it', () => {
+  const shared = device(d => ({ ...d, categories: [{ id: 'core', label: 'Deep work' }, { id: 'meal', label: 'Meals' }] }), MORNING)
+  const phone = device(d => ({ ...d, categories: [{ ...d.categories[0], label: 'Focus' }, d.categories[1]] }), NOON, shared)
+  const pc = device(d => ({ ...d, categories: d.categories.filter(c => c.id !== 'meal') }), EVENING, shared)
+  const merged = mergeStates(phone, pc, NOW).data
+  expect(merged.categories.map(c => c.id)).toEqual(['core'])
+})
+
+test('a recolour on one device and a rename on the other, on the same category, take the later one whole', () => {
+  const shared = device(d => ({ ...d, categories: [{ id: 'health', label: 'Health' }] }), MORNING)
+  const phone = device(d => ({ ...d, categories: [{ ...d.categories[0], color: '#4fa46a' }] }), EVENING, shared)
+  const pc = device(d => ({ ...d, categories: [{ ...d.categories[0], label: 'Body' }] }), NOON, shared)
+  const merged = mergeStates(phone, pc, NOW).data
+  expect(merged.categories[0]).toMatchObject({ label: 'Health', color: '#4fa46a' })
+})

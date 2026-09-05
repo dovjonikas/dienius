@@ -1,4 +1,4 @@
-import type { AppData, BacklogItem, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
+import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -27,6 +27,7 @@ export type EntityKind =
   | 'inbox'
   | 'backlog'
   | 'scratch'
+  | 'category'
   | 'setting'
 
 export type EntityKey = string
@@ -65,7 +66,7 @@ export function idOf(key: EntityKey): string {
   return key.slice(key.indexOf(':') + 1)
 }
 
-const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'setting']
+const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'setting']
 
 /**
  * Which settings fields are entities of their own.
@@ -242,6 +243,20 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
+  // An entity of its own rather than a settings field, which is the whole
+  // reason the list lives in AppData - see the note on AppData.categories.
+  // Renaming Health on the laptop and recolouring Meals on the phone are two
+  // edits to two things, and at this grain they both survive.
+  for (const category of data.categories) {
+    out.set(keyFor('category', category.id), {
+      key: keyFor('category', category.id),
+      kind: 'category',
+      ref: category,
+      bodyOf: () => body(category, 'updatedAt'),
+      updatedAt: category.updatedAt,
+    })
+  }
+
   for (const field of SYNCED_SETTINGS) {
     const value = (data.settings as unknown as Record<string, unknown>)[field]
     if (value === undefined) continue
@@ -299,6 +314,7 @@ export function stampChanges(previous: AppData, next: AppData, now: string): App
   diffList('inbox', previous.inbox, next.inbox, changed, removed)
   diffList('backlog', previous.backlog, next.backlog, changed, removed)
   diffList('scratch', previous.scratch, next.scratch, changed, removed)
+  diffList('category', previous.categories, next.categories, changed, removed)
   diffSettings(previous, next, changed)
 
   if (changed.size === 0 && removed.length === 0) return next
@@ -493,6 +509,7 @@ function applyStamps(data: AppData, changed: Set<EntityKey>, removed: EntityKey[
     inbox: mapIfChanged<InboxItem>(data.inbox, i => touched('inbox', i.id), now),
     backlog: mapIfChanged<BacklogItem>(data.backlog, i => touched('backlog', i.id), now),
     scratch: mapIfChanged<ScratchNote>(data.scratch, n => touched('scratch', n.id), now),
+    categories: mapIfChanged<Category>(data.categories, c => touched('category', c.id), now),
     settingsUpdatedAt,
     tombstones: pruneTombstones(tombstones, now),
   }

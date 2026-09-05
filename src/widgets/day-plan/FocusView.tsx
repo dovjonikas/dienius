@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
 import { categoryColor } from '../../lib/categories'
+import { useAppData } from '../../lib/store'
 import { timeToMinutes } from './capacity'
 
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -94,7 +95,7 @@ export function FocusView({ task, onDone, onClose }: FocusViewProps) {
   const elapsed = Math.min(Math.max(0, nowSeconds - startSeconds), totalSeconds)
   const remaining = Math.max(0, totalSeconds - elapsed)
   const fraction = totalSeconds > 0 ? elapsed / totalSeconds : 0
-  const color = categoryColor(task.category)
+  const color = categoryColor(task.category, useAppData().categories)
 
   return (
     <div

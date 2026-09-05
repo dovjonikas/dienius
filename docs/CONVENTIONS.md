@@ -266,6 +266,12 @@ The one documented exception is a week-view block, whose height is its duration.
 
 - **`AppData` is one object, in one key, behind `storage.ts`.** Nothing else
   touches `localStorage` for it.
+- **Content the person authors is a top-level list, never a settings field.**
+  A settings field is one sync entity, so two devices editing two different
+  things in it fight over one key and one of the edits vanishes. `library`,
+  `goals` and `categories` are all lists for that reason; a preference about
+  how the app behaves is a settings field, and that is the whole of the
+  distinction.
 - **Every field added since v1.0 is optional**, so data written before it
   existed still loads. `validate()` in `validate.ts` is a deep type guard
   written as tables - one per entity, a field and what a value in it may be;

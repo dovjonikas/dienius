@@ -95,6 +95,12 @@ export const libraryActions = {
       unit: patch.unit !== undefined ? patch.unit.toLowerCase() : list.unit,
       unitShort: patch.unitShort !== undefined ? patch.unitShort.trim() || undefined : list.unitShort,
       unitPlural: patch.unitPlural !== undefined ? patch.unitPlural.trim() || undefined : list.unitPlural,
+      // Carried through by name like every other field here. It was missing,
+      // which made the whole dot row in the list editor a control that did
+      // nothing at all - see LibraryView's own note. Keyed on the key being
+      // present rather than on the value, because `undefined` is a real
+      // choice here: it is what the "No colour" button sends.
+      color: 'color' in patch ? patch.color : list.color,
     })))
   },
 

@@ -16,12 +16,13 @@ import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { NorthSettings } from './NorthSettings'
+import { CategorySettings } from './CategorySettings'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
 import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
-type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'nudges' | 'rules' | 'calendars' | 'backup' | 'sync' | 'appearance'
+type SectionId = 'general' | 'north' | 'sleep' | 'week' | 'categories' | 'nudges' | 'rules' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -61,6 +62,10 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'north', label: 'North' },
   { id: 'sleep', label: 'Sleep' },
   { id: 'week', label: 'Week' },
+  // After Week and before Nudges: it is about what a day is made of, which
+  // belongs with the things that shape a day rather than with the things
+  // that interrupt one.
+  { id: 'categories', label: 'Categories' },
   { id: 'nudges', label: 'Nudges' },
   { id: 'rules', label: 'Rules' },
   { id: 'calendars', label: 'Calendars' },
@@ -515,6 +520,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               )}
             </div>
           </div>
+
+          <CategorySettings />
 
           <div className="settings-group" id="settings-nudges">
             <h3>Nudges</h3>

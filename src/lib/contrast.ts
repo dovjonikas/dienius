@@ -84,3 +84,23 @@ export function bestInk(background: string): string {
   const withWhite = contrastRatio('#ffffff', background)
   return withBlack >= withWhite ? '#000000' : '#ffffff'
 }
+
+/**
+ * The CSS `color-mix(in srgb, a p%, b)` of two hex colours, as a hex colour.
+ *
+ * Written here rather than left to the browser because the thing that needs
+ * it cannot wait for a paint: a hand-picked category colour is checked for
+ * readability before it is saved, and the wash it will be read against is a
+ * mix the stylesheet only computes once the colour is already in the
+ * document. `in srgb` interpolates the gamma-encoded channels directly, which
+ * is exactly what this does - no linearisation, because that would be
+ * `in srgb-linear` and would give a different colour from the one that
+ * actually gets painted.
+ */
+export function mixSrgb(a: string, b: string, proportionOfA: number): string {
+  const first = parseHexColor(a)
+  const second = parseHexColor(b)
+  const channel = (x: number, y: number) => Math.round(x * proportionOfA + y * (1 - proportionOfA))
+  const toHex = (v: number) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')
+  return `#${toHex(channel(first.r, second.r))}${toHex(channel(first.g, second.g))}${toHex(channel(first.b, second.b))}`
+}

@@ -118,9 +118,9 @@ export function Backlog({ date }: BacklogProps) {
                 {item.category && (
                   <span
                     className="backlog-item-cat"
-                    style={{ ['--cat' as string]: categoryColor(item.category) } as React.CSSProperties}
+                    style={{ ['--cat' as string]: categoryColor(item.category, data.categories) } as React.CSSProperties}
                   >
-                    {categoryLabel(item.category)}
+                    {categoryLabel(item.category, data.categories)}
                   </span>
                 )}
                 {item.minutes !== undefined && <span className="backlog-item-size">{formatDuration(item.minutes)}</span>}

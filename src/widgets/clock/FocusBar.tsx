@@ -64,7 +64,7 @@ export function FocusBar({ onExpand }: FocusBarProps) {
     ? Math.min(total, Math.max(0, now - timeToMinutes(task.time)))
     : 0
   const fraction = total ? elapsed / total : 0
-  const color = categoryColor(task.category)
+  const color = categoryColor(task.category, data.categories)
 
   return (
     <div

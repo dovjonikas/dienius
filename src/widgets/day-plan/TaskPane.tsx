@@ -142,6 +142,7 @@ export function TaskPane({
       onOpenDetails: () => onOpenDetails(task.id),
       onContextMenu: (x: number, y: number) => onContextMenu(task.id, x, y),
       library,
+      categories: data.categories,
       selected: selectedTaskId === task.id,
       onToggleSelect: () => onToggleSelect(task.id),
     }

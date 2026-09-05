@@ -1,4 +1,4 @@
-import type { LibraryList, Task } from '../../lib/types'
+import type { Category, LibraryList, Task } from '../../lib/types'
 import { currentItem, isItemFinished, progressLabel } from '../../lib/library'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
@@ -75,6 +75,13 @@ export interface TaskRowProps {
   /** Every list, so a bound task can show how far through its book it is. */
   library?: LibraryList[]
   /**
+   * The category list, as a prop rather than a store read. A day can hold a
+   * hundred and seventy rows and each one would otherwise open its own
+   * subscription to a list that is the same for all of them - the same reason
+   * `library` above is passed down rather than looked up here.
+   */
+  categories?: Category[]
+  /**
    * Checking the task off, or unchecking it. Routed up to `DayView` rather
    * than calling `actions.toggleTask` here the way this row used to, because
    * finishing a task is no longer a change to this row alone: it also starts
@@ -126,6 +133,7 @@ export function TaskRow({
   onOpenDetails,
   onContextMenu,
   library = [],
+  categories = [],
   onToggleDone,
   selected,
   onToggleSelect,
@@ -200,8 +208,8 @@ export function TaskRow({
   // own left edge - see `categories.ts`. Nothing else about the card changes
   // colour: the edge is a 3px mark, not a fill, so a list of six categories
   // still reads as one calm column rather than six competing ones.
-  const catColor = categoryColor(task.category)
-  const catName = categoryLabel(task.category)
+  const catColor = categoryColor(task.category, categories)
+  const catName = categoryLabel(task.category, categories)
 
   const classNames = ['task']
   if (catColor) classNames.push('task-cat')

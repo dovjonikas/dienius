@@ -244,6 +244,7 @@ export function WeekView({ date, onDateChange, onOpenDay }: WeekViewProps) {
             nowMinutes={nowMinutes}
             window={layout.window}
             templates={data.templates}
+            categories={data.categories}
             template={data.templates.find(t => t.id === data.days[day.date]?.templateId)}
             stat={day.date <= today ? dayStat(data.days[day.date]) : undefined}
             events={eventsOn(day.date, data.settings.calendars, calendarCache)}

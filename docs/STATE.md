@@ -134,9 +134,12 @@ rather than owed.
 
 v2.0 was a desktop pass on purpose. The phone still works - the month fits
 390x844 again, which it had not for some time - but it was measured rather
-than walked. `npm run sweep -- --phone` reports exactly two things and
-nothing else, and they are the first two below; the third is the walk
-itself.
+than walked. `npm run sweep -- --phone` reports **84 findings, which are three
+shapes** - the pass counts every occurrence, and the same control on ten
+screens is ten findings. The three are below; the fourth job is the walk
+itself. "Exactly two things and nothing else" is what this file said until the
+count was read rather than remembered, and the third shape had never been
+written down at all.
 
 - **Quick-add's quarter-hour arrows are 22px each on a coarse pointer.**
   Two halves of one 44px column, and the `::after` overlay trick cannot
@@ -145,6 +148,10 @@ itself.
 - **The Scratch button sits over the last cell of the month.** It is
   draggable, so it is a nuisance rather than a trap, but the default
   position covers a real control.
+- **The focus bar's exit cross is 30px**, on seven screens - anywhere the bar
+  can be showing. It is not in the `::after` overlay list and it is the one
+  way out of a running Focus session, which makes it the worst of the three
+  to miss.
 - **A walk of every screen with a full day**, the way v2.0 walked the
   desktop: eyes on it, not just the sweep. A measuring pass finds what it
   was told to look for; the fourteen defects v2.0 fixed included several
@@ -152,183 +159,55 @@ itself.
   same word, a red word on an action that carries no verdict, a month
   drawing a week of the next one.
 
-### Asked for, not yet built: categories the owner owns (P1)
+### Built: categories the owner owns
 
-The next session's first job, designed rather than described so it can start
-from code. Reported as: the six categories should stay as the defaults, but
-be editable, deletable, and joinable by new ones with a colour picked by
-hand.
+Shipped, to the design this file carried. The six the app has always shipped
+are still the six a fresh install opens with, and they are now a list in
+`AppData` rather than a literal in `categories.ts` - renameable, recolourable,
+deletable, and joinable by new ones.
 
-**This does not delete the six-category doctrine, it moves it.** DECISIONS
-still holds that a day is only takeable-in-at-a-glance while the palette is
-about six, and `RESEARCH-ADHD.md` section 7 is why. What changes is who
-decides *which* six: the app ships them, the owner may disagree, and a
-planner that will not let somebody rename "Commute" when they work from home
-is being precious about a decision that was never the app's to keep. No cap
-is enforced; the Settings copy says what the number is for, once, and then
-gets out of the way.
+**The six-category doctrine did not go, it moved.** DECISIONS still holds that
+a day is only takeable-in-at-a-glance while the palette is about six, and
+`RESEARCH-ADHD.md` section 7 is why. What changed is who decides *which* six.
+No cap is enforced; the Settings copy says what the number is for, once, and
+then gets out of the way.
 
-#### The data model
+What a reader should know without opening the diff:
 
-`Category` moves out of a literal and into `AppData`, as a top-level list
-beside `library` and `goals` - not a settings field. It is content the
-person authors, the same shape a library list is, and a settings field is one
-sync entity, so two devices editing two different categories would fight over
-one key.
+- **`Category` is a top-level list beside `library` and `goals`**, not a
+  settings field, because a settings field is one sync entity and two devices
+  editing two different categories would fight over one key. `'category'` is
+  an `EntityKind`; per-entity merge and tombstones come free.
+- **`CategoryId` is `string`.** The six defaults keep their literal ids, so
+  every task, template block and backlog item already on disk points at
+  exactly what it pointed at before. A new one gets a `crypto.randomUUID()`.
+- **Absent `color` means the built-in `--cat-*` pair**, which is what keeps a
+  category meaning the same thing in Dark and Light. Only an edited or new one
+  carries a literal hex. A category the owner made has no pair behind it, so
+  its colour is required and "the app's own colour" is not offered there.
+- **`validate` loosened the three fields that point at a category** from a
+  closed list to `optional(text(1, 64))`, deliberately: an id somebody made up
+  cannot be checked against a list nobody wrote. A category id is now what
+  `templateId`, `libraryRef` and `sleepProfileId` already are.
+- **A delete offers to move what it would orphan**, in one commit with one
+  undo, and says what it is about to touch as a fact rather than a warning.
+  The last one cannot go, and the disabled button says why.
+- **A hand-picked colour is refused rather than clamped** when it will not
+  read. The check is the one this file specified: the title mix at 22% against
+  the strongest end of the wash at 30%, at 4.5:1, in every theme the app
+  ships. `categories.test.ts` holds all twelve palette colours to it.
 
-```ts
-// types.ts
-export interface Category extends Timestamped {
-  id: string
-  label: string
-  /**
-   * Absent means the built-in pair in styles.css for this id - `--cat-core`
-   * and the rest, which carry one value for dark and one for light. Present
-   * means a literal hex the owner chose, used in both.
-   */
-  color?: string
-}
-
-// AppData
-categories: Category[]
-```
-
-**`CategoryId` stops being a union and becomes `string`.** The six defaults
-keep their literal ids - `core`, `routine`, `health`, `meal`, `commute`,
-`personal` - so every task, template block and backlog item already on disk
-keeps pointing at exactly what it points at now. A new one gets a
-`crypto.randomUUID()`.
-
-**Absent `color` is the whole trick, and it is worth keeping.** Today a
-category means the same thing in Dark and Light because the stylesheet
-carries two values per id and the cascade picks. A hand-picked colour cannot
-do that - one hex is one hex. So an untouched default keeps the pair, and
-only an edited or new category carries a literal. Somebody who never opens
-this loses nothing; somebody who picks a colour gets the colour they picked,
-in both themes, which is what picking a colour means.
-
-#### What has to change, file by file
-
-- **`lib/categories.ts`** keeps `DEFAULT_CATEGORIES` (the six, with their
-  `var(--cat-*)` references) and `DEFAULT_CATEGORY`, and loses the module-level
-  `BY_ID` map. `findCategory`, `categoryColor` and `categoryLabel` take the
-  loaded list: `findCategory(id, categories)`. `isCategoryId` goes.
-- **`storage.ts` / `normalizeLoaded`** backfills `categories` to the six
-  defaults when absent, which is every backup written before this. Nothing on
-  disk is recoloured or renamed.
-- **`validate.ts`**: a new `CATEGORY` table - `{ id: string, label: text(1, 40),
-  color: optional(color) }` - and `categories: optional(listOf(CATEGORY))` in
-  `STORED_APP_DATA`. The three `category: optional(category)` fields on `TASK`,
-  `TEMPLATE_BLOCK` and `BACKLOG_ITEM` become `optional(text(1, 64))`. **That
-  is a deliberate loosening and it is the right one**: an id the owner made up
-  cannot be checked against a closed list, and a category id becomes exactly
-  what `templateId`, `libraryRef` and `sleepProfileId` already are - a dangling
-  id that degrades to "no category" rather than crashing, which every reader
-  already handles.
-- **`syncEntities.ts`**: `'category'` joins `EntityKind` and `KINDS`, and a
-  line beside `inbox` in the entity builder. Per-entity merge and tombstones
-  come free. `SYNCED_SETTINGS` is untouched.
-- **Sixteen files read categories, in two ways**, and both have to take the
-  loaded list instead of the module's. Four draw the whole row and import
-  `CATEGORIES` - `LibraryView`, `TemplatesView`, `QuickAdd`, `TaskDetail`
-  (`types.ts` imports only the type). Eleven look one up and import
-  `categoryColor` / `categoryLabel` - `TemplatesView`, `week/WeekColumn`,
-  `week/WeekView`, `clock/FocusBar`, and `day-plan/{Backlog, DayDigest,
-  FocusView, QuickAdd, TaskDetail, TaskRow, TimelineGrid}`. `validate.ts`
-  imports `isCategoryId`, which goes. Components read
-  `useAppData().categories` or take it as a prop; the store modules already
-  have `getData()`. This is the bulk of the work and none of it is hard.
-- **`styles.css`** keeps the two `--cat-*` blocks for the defaults. A custom
-  colour arrives inline on `--cat` the way `Template.color` already does, so
-  no new mechanism. Note that `.theme-card[data-pv-mode]` overrides the six
-  for the theme preview; a custom category has no `--cat-*` to override and
-  will preview as its literal, which is correct and worth a comment.
-
-#### Where the editing lives
-
-**A new Settings section, between Week and Nudges**, and nowhere else. Same
-reasoning as North's: something you can rewrite from the screen you look at
-every morning is something you will rewrite on a bad morning, and the swatch
-row under quick-add is a picker, not an editor. It is a list of rows - the
-dot, the name, an Edit and a Delete - with "Add a category" under it, which
-is the shape `NorthSettings` already has and should be read for the pattern.
-
-**The order is the array's own**, dragged with `useListReorder` the way the
-library's items already are, because the order is what the swatch row draws
-and there is nothing else it could be. No sort, no priority, no cap.
-
-`DEFAULT_CATEGORY` stays `'core'` as the id quick-add opens on, and falls
-back to the first in the list when that id has been deleted.
-
-#### Deleting one, which is the only part with a real decision in it
-
-**A delete offers to move what it would orphan.** Never silent loss, never a
-locked delete.
-
-`actions.deleteCategory(id, moveTo)` is one commit: every `Task.category`,
-`TemplateBlock.category` and `BacklogItem.category` equal to `id` is rewritten
-to `moveTo`, the category is removed, the tombstone is written by `commit()`'s
-own diff. One undo, five seconds, like every other expensive mistake.
-
-The dialog says what it is about to touch and offers where it goes:
-
-> **Delete Health?**
-> 14 tasks, 2 template blocks and 1 backlog item use it.
-> Move them to: [ Personal ▾ ]   *(the first remaining category)*
-> [ Delete and move ]  [ Keep it ]
-
-- The count is a fact about a button, not a warning, and it is stated once.
-- The target defaults to the first remaining category, so the ordinary path
-  is one press.
-- Nothing uses it? The sentence goes and the button reads plain "Delete".
-- **The last category cannot be deleted**, because there is nowhere to move
-  to. Say so on the disabled button rather than hiding it.
-
-#### Picking a colour
-
-The eight `PALETTE_COLORS` as a swatch row - the same row Templates already
-offers, and now with the same selected ring as everything else - plus a free
-hex behind them. CONVENTIONS section 16 says a person chooses rather than
-types wherever the answers are a fixed set; a colour wheel is the case where
-they are not, so a native `<input type="color">` is the honest escape hatch
-and not the "control that has not been built yet" that rule is about.
-
-**A chosen colour still has to be readable.** A category is a wash under text
-on the timeline and a 4px edge on a card, and a hand-picked one can be
-anything. The wash is the thing to check, not the colour, and the wash is a
-gradient: `.timeline-anchor-cat` runs 30% of the colour at the left edge down
-to 15% across the block, and the title is not `--text` but
-`color-mix(in srgb, var(--cat) 22%, var(--text))`. So the honest test is that
-mixed title against the strongest end of that wash -
-`color-mix(in srgb, <picked> 30%, var(--surface))` - in **both** themes, since
-one hex now serves both where the built-in pair served each separately.
-`contrast.ts` has the maths and `theme-contrast.test.ts` is the pattern: a
-preset that fails is not mergeable, and neither is a colour that fails here.
-
-**Refuse rather than clamp.** Silently changing what somebody picked is worse
-than saying it will not read, and a clamped colour is a third thing that is
-neither what they chose nor what the app would have chosen.
-
-**Clearing a colour is how a default comes back**, and only a default has one
-to come back to. The picker's "no colour" option deletes `color`, which
-returns one of the six to its built-in `--cat-*` pair and its two-theme
-behaviour; it has to exist, because somebody who tries a green Health and
-dislikes it should not have to remember the original hex. A category the
-owner made has no pair behind it, so **a new one's colour is required** - the
-option is simply not offered there, and the form will not save without one.
-
-#### Tests this needs, in the same commit
-
-- `categories.test.ts` for the new lookups against a loaded list, including a
-  dangling id resolving to nothing.
-- `validate.test.ts` for the new table, and for the three loosened fields
-  still refusing a non-string.
-- `storage.test.ts` for a backup with no `categories` loading with the six.
-- `syncMerge.test.ts` for two devices renaming and deleting.
-- A view test for the delete dialog: the count, the default target, and that
-  every task pointing at the deleted one points at the target afterwards.
-- One `e2e` walk: add a category with a picked colour, use it, delete it,
-  and see the tasks land on the target.
+**One thing to know about that gate, said plainly**: with those numbers it is
+a floor rather than a filter. The wash is 30% colour on the surface and the
+title is 78% `--text`, so the pair stays close to text-on-surface and almost
+any hex clears 4.5:1 - pure white in Dark measures 5.07. It genuinely refuses
+anything that is not a hex at all, and it would catch a future change that
+made the wash stronger, which is what it is for. What it does *not* police is
+whether the 4px edge can be told apart from the surface. The twelve curated
+colours are checked against that separately, in the test, at 3:1 in every
+theme; a hand-typed hex is not. That was a deliberate call to implement the
+gate this file specified rather than invent a second one, and it is the first
+thing to look at if a hand-picked colour ever looks wrong on a card.
 
 ### Asked for, and now built
 
@@ -386,6 +265,22 @@ guess whether it was noticed.
 | **The month's cells drop their ratio below about 720px of height** | The zero-scroll rule says the month fits, and something has to give when it cannot. Detail goes, never cell height: a 30px row is not a calendar. The shape of the month survives, which is what the grid is for |
 
 ### Resolved debts, so you do not chase them
+
+- ~~The library's dot row was a control that did nothing~~ - found while
+  categories were being rewired, and it was wrong twice over. `updateLibraryList`
+  never carried `color` through its patch, so every button in that row had
+  been inert since it was built; and the values it was writing were
+  `var(--cat-*)` references, which `LIBRARY_LIST`'s own `validate` table only
+  accepts as a hex - so the first list that had actually taken a colour would
+  have made the whole payload fail to load and open as a clean default. It
+  draws from `PALETTE_COLORS` now, like every other colour choice in the app.
+- ~~The 20MB import test failed at random~~ - it was the default 5s per-test
+  timeout acting as an absolute millisecond budget on a test that deliberately
+  asserts a *ratio* (CONVENTIONS section 3). It builds a 20MB payload and
+  imports it several times, which on a machine running a hundred test files in
+  parallel is honest work that takes longer than five seconds. Reproduced on
+  v2.0's own commit with nothing changed: two failures in four runs. It carries
+  its own 60s timeout now, so the ratio is what can fail it.
 
 - ~~The day view could stop showing the day~~ - fixed in v2.0. At 1366x768
   with the evening close card above it, `.task-list` measured zero pixels

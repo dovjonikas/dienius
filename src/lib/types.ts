@@ -52,7 +52,7 @@ export interface TemplateBlock {
    */
   unbounded?: boolean
   /**
-   * Which of `CATEGORIES` (`src/lib/categories.ts`) this block belongs to.
+   * Which of `AppData.categories` this block belongs to.
    * Copied onto `Task.category` at stamp time exactly the way `core` and
    * `unbounded` already are, so a stamped day arrives already coloured and
    * nobody has to sort a morning's tasks by hand. Absent means the task the
@@ -152,10 +152,10 @@ export interface Task extends Timestamped {
    */
   unbounded?: boolean
   /**
-   * Which of `CATEGORIES` (`src/lib/categories.ts`) this task belongs to -
-   * what colours its block on the timeline and the edge of its card in the
-   * list. Arrives copied from the template block this task was stamped from,
-   * or chosen in quick-add at the moment of typing it.
+   * Which of `AppData.categories` this task belongs to - what colours its
+   * block on the timeline and the edge of its card in the list. Arrives
+   * copied from the template block this task was stamped from, or chosen in
+   * quick-add at the moment of typing it.
    *
    * Absent is a real state, not a missing value: a task written before this
    * field existed, or restored from an older backup, has no category and is
@@ -805,7 +805,7 @@ export interface InboxItem extends Timestamped {
 export interface BacklogItem extends Timestamped {
   id: string
   title: string
-  /** One of the six, the same as a task's. Absent means uncategorised. */
+  /** One of `AppData.categories`, the same as a task's. Absent means uncategorised. */
   category?: CategoryId
   /** How long it is expected to take. Absent is unsized, not zero. */
   minutes?: number
@@ -893,6 +893,34 @@ export interface EveningCloseSettings {
   askBestMoment: boolean
 }
 
+/**
+ * One kind of thing a day is made of - "Deep work", "Health", or whatever the
+ * person who uses this decided instead.
+ *
+ * The app ships six and owns none of them. See `categories.ts` for why the
+ * number is about six and why that is advice rather than a cap.
+ */
+export interface Category extends Timestamped {
+  id: string
+  /** Shown next to the swatch wherever one is offered - colour is never the only signal. */
+  label: string
+  /**
+   * Absent means the built-in pair in styles.css for this id - `--cat-core`
+   * and the rest, which carry one value for dark and one for light. Present
+   * means a literal hex the owner chose, used in both.
+   *
+   * Absent is the whole trick and it is worth keeping. A category means the
+   * same thing in Dark and Light because the stylesheet carries two values per
+   * id and the cascade picks; a hand-picked colour cannot do that, because one
+   * hex is one hex. So an untouched default keeps the pair and only an edited
+   * or new one carries a literal. Somebody who never opens this loses nothing.
+   *
+   * A category the owner made has no pair behind it, so its colour is
+   * required - see `CategorySettings`, which does not offer "no colour" there.
+   */
+  color?: string
+}
+
 export interface AppData {
   templates: Template[]
   days: Record<string, DayPlan>
@@ -927,6 +955,20 @@ export interface AppData {
    * somebody is for.
    */
   goals: Goal[]
+  /**
+   * What kinds of thing a day is made of, and the colour each one is drawn in.
+   *
+   * A top-level list beside `library` and `goals` rather than a settings
+   * field, and that placement is the decision. It is content the person
+   * authors, the same shape a library list is; a settings field is one sync
+   * entity, so two devices editing two different categories would fight over
+   * one key and one of the two edits would simply vanish. Per-entity merge
+   * and tombstones come free at this grain.
+   *
+   * Backfilled to the six defaults when absent, which is every backup written
+   * before this existed. Nothing on disk is recoloured or renamed by that.
+   */
+  categories: Category[]
   /**
    * When each synced settings field last changed - see `SYNCED_SETTINGS`. A
    * map rather than a field on `Settings`, because a boolean has nowhere to

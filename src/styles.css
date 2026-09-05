@@ -7324,6 +7324,7 @@ button.danger:focus-visible {
    ------------------------------------------------------------------------ */
 @media (pointer: coarse) {
   .category-swatch,
+  .category-wheel,
   .task-size,
   .clock-button,
   .setting-remove,
@@ -7343,6 +7344,7 @@ button.danger:focus-visible {
   }
 
   .category-swatch::after,
+  .category-wheel::after,
   .task-size::after,
   .clock-button::after,
   .setting-remove::after,
@@ -8068,6 +8070,94 @@ button.danger:focus-visible {
 .goal-form .field { max-width: 52ch; }
 .goal-form textarea { resize: vertical; line-height: 1.5; }
 .goal-form-actions { display: flex; gap: var(--s2); }
+
+/* The category list in Settings. The same row shape the goal list uses, plus
+   a grip and a dot: the order is what the swatch row under quick-add draws,
+   so it has to be draggable, and the dot is the only part of a row that says
+   what the colour actually is. */
+.category-list { display: flex; flex-direction: column; gap: 0; margin: var(--s3) 0 0; padding: 0; list-style: none; }
+
+.category-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding: var(--s1) 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.category-row.is-dragging { opacity: 0.45; }
+.category-row.is-over { box-shadow: inset 0 2px 0 var(--accent); }
+
+/* A full-strength dot, not a wash: at 14px a 55% mix reads as a smudge, and
+   this is the one place in the app whose entire job is saying what a colour
+   is. The ring keeps a pale colour visible on a pale surface. */
+.category-row-dot {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-round);
+  background: var(--cat);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cat) 40%, transparent);
+}
+
+.category-row-label { flex: 1 1 auto; min-width: 0; color: var(--text); font-size: var(--t-md); }
+
+.category-row-actions { display: flex; align-items: center; gap: var(--s2); flex-shrink: 0; }
+
+/* The form and the delete both open under the row that opened them, across
+   its full width - a row is one line and neither of these is. */
+.category-form,
+.category-delete { flex: 1 0 100%; display: flex; flex-direction: column; gap: var(--s3); padding: var(--s3) 0; }
+
+.category-form .field { max-width: 52ch; }
+.category-form-actions { display: flex; gap: var(--s2); }
+
+.category-picker.is-palette { flex-wrap: wrap; max-width: 52ch; }
+
+/* "The app's own colour" - the one swatch that is not a flat fill, because
+   what it stands for is two values rather than one. The diagonal says so
+   without needing a word beside it. */
+.category-swatch.is-none {
+  background: linear-gradient(135deg, var(--cat) 0 50%, color-mix(in srgb, var(--cat) 30%, var(--surface)) 50% 100%);
+}
+
+/* The wheel behind the twelve. A label wrapping a real colour input: the
+   native control is the honest escape hatch for the one question whose
+   answers are not a fixed set - CONVENTIONS section 16. */
+.category-wheel {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-round);
+  background: conic-gradient(#d9705f, #bd7f30, #8a9439, #4fa46a, #3f9fae, #5b8ae6, #9b7bd8, #d1698f, #d9705f);
+  cursor: pointer;
+}
+
+/* The native control itself, invisible over the wheel that stands for it.
+   Not `display: none` and not `visually-hidden`: it has to stay the thing a
+   click actually lands on, or opening the picker would need a script. */
+.category-wheel input {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.category-wheel:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.category-delete-title { margin: 0; color: var(--text); font-size: var(--t-md); font-weight: 600; }
+
+/* A fact about a button, not a warning. --muted, the same as every other
+   sentence under a control, and never --danger: the count is not the reason
+   to hesitate, it is the reason the next control exists. */
+.category-delete-count { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+
+.category-delete-move { display: flex; flex-direction: column; gap: var(--s2); }
 
 /* --- Sync ------------------------------------------------------------- */
 
@@ -10325,7 +10415,7 @@ main:has(.week) > .calendar {
 .library-preset:hover { border-color: var(--accent); }
 .library-preset-unit { color: var(--faint); font-size: var(--t-xs); }
 
-.library-colors { display: flex; align-items: center; gap: 10px; }
+.library-colors { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 
 .library-color {
   width: 22px;
