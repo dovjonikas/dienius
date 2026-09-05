@@ -287,6 +287,7 @@ const DAY_PLAN = record({
   dayType: optional(oneOf(DAY_TYPES)),
   repeatSkips: optional(listOf(string)),
   autoApplied: optional(boolean),
+  replannedOn: optional(string),
   tasks: listOf(TASK),
 })
 

@@ -2,6 +2,7 @@ import type { AppData, DayPlan, Task } from '../../lib/types'
 import type { CategoryId } from '../../lib/categories'
 import { addDays } from '../../lib/dates'
 import { dayHas, isRoutine } from '../../lib/taskIdentity'
+import { DEFAULT_TITLE } from './interrupt'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Gap, type Interval } from './capacity'
 import { formatClock } from './timelineLayout'
 
@@ -50,6 +51,34 @@ export interface Interruption {
 }
 
 export type ConflictChoice = 'squeeze' | 'tomorrow' | 'drop' | 'keep'
+
+/**
+ * How a summary names the day it is about and the day after it. v1 only
+ * ever spoke about today, so "today" and "tomorrow" were written into the
+ * sentences; a plan for Thursday made on Tuesday has to say "on Thursday"
+ * and "Friday" or it is a sentence about the wrong day. `dayWordsFor` in
+ * interrupt.ts produces the pair for any date.
+ */
+export interface DayWords {
+  /** "today", "tomorrow", "on Thursday", "on 25 Sep". */
+  day: string
+  /** "tomorrow", "the day after", "Friday", "26 Sep". */
+  next: string
+}
+
+export const TODAY_WORDS: DayWords = { day: 'today', next: 'tomorrow' }
+
+export interface InterruptOptions {
+  /**
+   * The earliest minute a moved task may be put at. Absent means the end of
+   * the interruption, which is v1's answer for a block that starts now: the
+   * gaps after it are the only ones still ahead. For a day that has not
+   * started, the waking window's start - a task the afternoon lost can go
+   * into a free morning; for today from another screen, now.
+   */
+  from?: number
+  words?: DayWords
+}
 
 export interface ReplanPlan {
   kind: 'interrupt' | 'shift' | 'rescue'
@@ -150,7 +179,9 @@ export function planInterrupt(
   choices: Record<string, ConflictChoice>,
   window: Interval,
   busy: Interval[] = [],
+  opts: InterruptOptions = {},
 ): ReplanPlan {
+  const words = opts.words ?? TODAY_WORDS
   const conflicts = findConflicts(tasks, interruption)
   const choiceOf = (t: Task): ConflictChoice => choices[t.id] ?? 'squeeze'
   const squeeze = byPriority(conflicts.filter(t => choiceOf(t) === 'squeeze'))
@@ -166,7 +197,7 @@ export function planInterrupt(
     .map(t => ({ start: startOf(t), end: endOf(t) }))
   fixed.push({ start: interruption.start, end }, ...busy)
 
-  const { placed, left } = pack(squeeze, freeGapsAfter(fixed, window, end))
+  const { placed, left } = pack(squeeze, freeGapsAfter(fixed, window, opts.from ?? end))
 
   const parts: string[] = []
   if (placed.length > 0) {
@@ -174,15 +205,22 @@ export function planInterrupt(
     parts.push(`Into the gaps: ${named.join(', ')}.`)
   }
   const toTomorrow = [...tomorrow, ...left]
-  if (left.length > 0) parts.push(`No room left today for ${titleList(left)} - tomorrow.`)
-  else if (tomorrow.length > 0) parts.push(`Tomorrow: ${titleList(tomorrow)}.`)
-  if (drop.length > 0) parts.push(`Dropped: ${titleList(drop)}.`)
+  if (left.length > 0) parts.push(`No room left ${words.day} for ${titleList(left)} - ${words.next}.`)
+  if (tomorrow.length > 0) parts.push(`${capitalise(words.next)}: ${titleList(tomorrow)}.`)
+  // Two words for two facts. A routine block skipped for the day is not
+  // lost - its template makes it again on the next day it belongs to - and
+  // saying "dropped" about it would be reporting a loss that did not
+  // happen. A one-off somebody chose to let go of is gone, and says so.
+  const skipped = drop.filter(isRoutine)
+  const dropped = drop.filter(t => !isRoutine(t))
+  if (skipped.length > 0) parts.push(`Skipped ${words.day}: ${titleList(skipped)}.`)
+  if (dropped.length > 0) parts.push(`Dropped: ${titleList(dropped)}.`)
   if (conflicts.length === 0) parts.push('Nothing in the way. It goes straight in.')
 
   return {
     kind: 'interrupt',
     add: {
-      title: interruption.title.trim(),
+      title: interruption.title.trim() || DEFAULT_TITLE,
       time: formatClock(interruption.start),
       minutes: interruption.minutes,
       category: interruption.category,
@@ -225,6 +263,10 @@ export function planShift(tasks: Task[], nowMinutes: number, delta: number, wind
     keep: [],
     summary: parts.join(' '),
   }
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
 export function describeDelta(delta: number): string {
@@ -299,10 +341,58 @@ export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, 
 }
 
 /**
+ * Below this a stretch of free time is not something anybody would offer
+ * on the phone. "Free 15:30-15:40" is arithmetic, not an answer.
+ */
+export const FREE_WINDOW_MIN_MINUTES = 30
+
+/**
+ * The free stretches left on a day, for saying into a phone.
+ *
+ * Every open anchor is busy for its size - or the assumed half hour, the
+ * same assumption the packing above makes, because a window this reports
+ * has to agree with the plan it sits under. Somebody else's calendar is
+ * busy too. From `from` on: now on today, the start of the waking window
+ * on a day that has not started.
+ */
+export function freeWindows(
+  tasks: Task[],
+  window: Interval,
+  busy: Interval[] = [],
+  from: number = window.start,
+  minMinutes = FREE_WINDOW_MIN_MINUTES,
+): Gap[] {
+  const fixed: Interval[] = tasks.filter(t => !t.done && isAnchor(t)).map(t => ({ start: startOf(t), end: endOf(t) }))
+  fixed.push(...busy)
+  return freeGapsAfter(fixed, window, from).filter(g => g.minutes >= minMinutes)
+}
+
+/**
+ * The line that answers "when could you?": "Free tomorrow: 15:30-17:00,
+ * after 19:30." A stretch that reaches bedtime is "after", because that is
+ * how a person says it. A day with nothing left says so as a fact.
+ */
+export function formatFreeWindows(gaps: Gap[], window: Interval, words: DayWords = TODAY_WORDS): string {
+  if (gaps.length === 0) return `No free time left ${words.day}.`
+  const named = gaps.map(g => (g.end >= window.end ? `after ${formatClock(g.start)}` : `${formatClock(g.start)}-${formatClock(g.end)}`))
+  return `Free ${words.day}: ${named.join(', ')}.`
+}
+
+export interface ApplyOptions {
+  /** The date key the plan was accepted on. Written to the day - see `DayPlan.replannedOn`. */
+  replannedOn?: string
+}
+
+/**
  * Applies a plan to the data. Pure, and idempotent - see the module comment.
  * `makeId` is passed in because the store owns ids; a test passes a counter.
+ *
+ * A dropped repeat instance also writes its series into the day's
+ * `repeatSkips`, the way deleting one by hand does: a skip is a tombstone
+ * rather than a silence, and the one pass that generates instances has to
+ * be able to see it.
  */
-export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId: () => string): AppData {
+export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId: () => string, opts: ApplyOptions = {}): AppData {
   const day: DayPlan = data.days[date] ?? { date, tasks: [] }
   const next = addDays(date, 1)
   const target: DayPlan = data.days[next] ?? { date: next, tasks: [] }
@@ -312,8 +402,12 @@ export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId:
 
   const staying: Task[] = []
   const goingTomorrow: Task[] = []
+  const skips = new Set(day.repeatSkips ?? [])
   for (const task of day.tasks) {
-    if (dropped.has(task.id)) continue
+    if (dropped.has(task.id)) {
+      if (task.repeatOf) skips.add(task.repeatOf)
+      continue
+    }
     if (leaving.has(task.id)) {
       goingTomorrow.push(task)
       continue
@@ -325,7 +419,7 @@ export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId:
   if (plan.add) {
     const already = staying.some(t => t.title === plan.add!.title && t.time === plan.add!.time)
     if (!already) {
-      const task: Task = { id: makeId(), title: plan.add.title, time: plan.add.time, done: false }
+      const task: Task = { id: makeId(), title: plan.add.title, time: plan.add.time, done: false, origin: { type: 'manual' } }
       if (plan.add.minutes !== undefined) task.minutes = plan.add.minutes
       if (plan.add.category) task.category = plan.add.category
       staying.push(task)
@@ -336,7 +430,10 @@ export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId:
   // tomorrow already has is not added a second time.
   const arriving = goingTomorrow.filter(t => !dayHas(target, t))
 
-  const days = { ...data.days, [date]: { ...day, tasks: staying } }
+  const replanned: DayPlan = { ...day, tasks: staying }
+  if (skips.size > 0) replanned.repeatSkips = [...skips]
+  if (opts.replannedOn) replanned.replannedOn = opts.replannedOn
+  const days = { ...data.days, [date]: replanned }
   if (goingTomorrow.length > 0) days[next] = { ...target, tasks: [...target.tasks, ...arriving] }
   return { ...data, days }
 }

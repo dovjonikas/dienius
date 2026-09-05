@@ -512,6 +512,16 @@ export interface DayPlan extends Timestamped {
    * is a starting point, not a rule the day is held to.
    */
   autoApplied?: boolean
+  /**
+   * The date key a replan was accepted on for this day - see
+   * widgets/day-plan/replan.ts. Present means somebody moved this day's
+   * plan around on purpose, which the week view says in one quiet word so
+   * a Thursday that looks unlike its template is not read as a mistake. It
+   * is a fact about the day and travels with it, never a count of what
+   * moved, and nothing measures it. Absent is the ordinary state, and every
+   * plan written before this field existed is in it.
+   */
+  replannedOn?: string
   tasks: Task[]
 }
 

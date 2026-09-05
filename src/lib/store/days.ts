@@ -3,10 +3,10 @@ import { advanceForTask } from './library'
 import type { DayPlan, LibraryRef, Repeat, Subtask, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
-import { materialiseRepeats, sourceCovers, sourceFor, weekdayOf } from '../repeats'
+import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
 import { addWithoutDuplicates, dayHas, isRoutine, willReceive } from '../taskIdentity'
-import { applyStamps } from '../stamping'
-import { addDays } from '../dates'
+import { ensuredDay } from '../ensureDay'
+import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
 import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
@@ -90,37 +90,17 @@ export const dayActions = {
    *
    * Returns true when it changed something, so a caller can tell an ordinary
    * open from one that did work.
+   *
+   * The arithmetic is `ensuredDay` in lib/ensureDay.ts, kept pure so the
+   * replan sheet can show what a day nobody has opened yet would hold
+   * without writing it - see `applyReplan` below, which is the other caller.
    */
   ensureDay(date: string): boolean {
     const data = getData()
-    const existing = data.days[date]
-    if (existing?.autoApplied) return false
-
-    const mapped = data.settings.weekdayTemplates[weekdayOf(date)]
-    const template = mapped ? data.templates.find(t => t.id === mapped) : undefined
-    // A day that already carries a templateId was stamped on purpose - by
-    // hand, or from the calendar - and the weekday map does not get to argue
-    // with it.
-    const shouldStamp = !!template && !existing?.templateId
-
-    let days = data.days
-    if (shouldStamp) {
-      days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
-    }
-
-    const base = days[date] ?? { date, tasks: [] }
-    const { tasks, added } = materialiseRepeats(days, date, base.tasks)
-    // The one guard everything that adds to a day goes through - see
-    // taskIdentity.ts. Generation is already idempotent on its own; this is
-    // the belt to that pair of braces, and the thing that catches a series
-    // whose instance arrived by being pushed rather than generated.
-    const guarded = addWithoutDuplicates(base.tasks, tasks.slice(base.tasks.length))
-
-    commit({
-      ...data,
-      days: { ...days, [date]: { ...base, tasks: guarded, autoApplied: true } },
-    })
-    return shouldStamp || added
+    const ensured = ensuredDay(data, date)
+    if (!ensured) return false
+    commit({ ...data, days: ensured.days })
+    return ensured.changed
   },
 
   /**
@@ -567,11 +547,20 @@ export const dayActions = {
    * One commit for the whole plan, and one undo for it. The undo puts the
    * previous state back through commit, so it is stamped like any other
    * change and wins the next sync the way a restore does.
+   *
+   * A day nobody has opened yet is made first - its weekday template, its
+   * repeats, through the same `ensuredDay` opening it would run - and the
+   * plan is applied on top, in the one commit. An interruption landing on
+   * Thursday from Tuesday's phone call has to land on the Thursday that
+   * will exist, not on an empty record that the template then stamps over
+   * the moment Thursday is opened. The day is marked `replannedOn` today,
+   * which is what the week view's one quiet word reads.
    */
   applyReplan(date: string, plan: ReplanPlan): { undo: () => void } {
-    const data = getData()
-    const previous = data
-    commit(applyPlan(data, date, plan, () => crypto.randomUUID()))
+    const previous = getData()
+    const ensured = ensuredDay(previous, date)
+    const base = ensured ? { ...previous, days: ensured.days } : previous
+    commit(applyPlan(base, date, plan, () => crypto.randomUUID(), { replannedOn: todayKey() }))
     return { undo: () => commit(previous) }
   },
 

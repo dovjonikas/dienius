@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { applyPlan, describeDelta, findConflicts, planInterrupt, planRescue, planShift } from './replan'
+import { applyPlan, describeDelta, findConflicts, formatFreeWindows, freeWindows, planInterrupt, planRescue, planShift } from './replan'
 import { defaultData } from '../../lib/storage'
 import type { Task } from '../../lib/types'
 
@@ -226,4 +226,94 @@ test('a one-off whose time has passed is still rescued, and says nothing about r
   const plan = planRescue(tasks, 18 * 60, { start: 7 * 60, end: 23 * 60 })
   expect(plan.moves).toHaveLength(1)
   expect(plan.summary).not.toContain('Routine')
+})
+
+// --- any day of the week ------------------------------------------------------
+
+/**
+ * Replan v2 asks the same arithmetic about a day that has not started. The
+ * gaps before the interruption are real gaps then - a task the afternoon
+ * lost can go into a free morning - so the caller says where fitting may
+ * begin, and the summary is told what to call the day.
+ */
+test('given a start-from, a moved task may land before the interruption', () => {
+  const tasks = [task('deep', '15:00', 60)]
+  const interruption = { title: 'Dad', start: t(15), minutes: 60 }
+  expect(planInterrupt(tasks, interruption, {}, WINDOW).moves).toEqual([{ taskId: 'deep', time: '16:00' }])
+  expect(planInterrupt(tasks, interruption, {}, WINDOW, [], { from: WINDOW.start }).moves).toEqual([{ taskId: 'deep', time: '07:00' }])
+})
+
+test('the summary speaks about the day it is for, not about today', () => {
+  const words = { day: 'on Thursday', next: 'Friday' }
+  const tasks = [task('early', '07:00', 120), task('a', '09:00', 60), task('wall', '10:00', 780)]
+  const plan = planInterrupt(tasks, { title: 'Dad', start: t(9), minutes: 60 }, {}, WINDOW, [], { from: WINDOW.start, words })
+  expect(plan.summary).toContain('No room left on Thursday for a - Friday.')
+  const chosen = planInterrupt(tasks, { title: 'Dad', start: t(9), minutes: 60 }, { a: 'tomorrow' }, WINDOW, [], { words })
+  expect(chosen.summary).toContain('Friday: a.')
+})
+
+/**
+ * Two words for two facts. A routine block skipped for the day is not lost -
+ * the template makes it again - so it is not "dropped"; a one-off the person
+ * let go of is.
+ */
+test('a skipped routine block and a dropped one-off are named as the two different things they are', () => {
+  const commute = task('commute', '09:00', 30, { origin: { type: 'template', sourceId: 'work', blockId: 'b1' } })
+  const errand = task('errand', '09:30', 30)
+  const plan = planInterrupt([commute, errand], { title: 'Dad', start: t(9), minutes: 60 }, { commute: 'drop', errand: 'drop' }, WINDOW)
+  expect(plan.summary).toContain('Skipped today: commute.')
+  expect(plan.summary).toContain('Dropped: errand.')
+})
+
+test('an interruption with no name is called what the sheet is called', () => {
+  const plan = planInterrupt([], { title: '   ', start: t(9), minutes: 60 }, {}, WINDOW)
+  expect(plan.add?.title).toBe('Something came up')
+})
+
+/**
+ * The free-windows line is the answer for the person on the phone: what is
+ * left of the day once the plan is in, said the way it would be said.
+ */
+test('free windows are the gaps left around what stays, from a given minute, none shorter than half an hour', () => {
+  const tasks = [task('a', '09:00', 60), task('b', '12:00', 30), task('c', '12:40', 20, { done: true }), task('d', '17:00', 60)]
+  const gaps = freeWindows(tasks, WINDOW, [{ start: t(10), end: t(11, 45) }], t(8))
+  expect(gaps.map(g => [g.start, g.end])).toEqual([[t(8), t(9)], [t(12, 30), t(17)], [t(18), t(23)]])
+  expect(formatFreeWindows(gaps, WINDOW)).toBe('Free today: 08:00-09:00, 12:30-17:00, after 18:00.')
+})
+
+test('a day with nothing left says so as a fact, in the words of that day', () => {
+  const gaps = freeWindows([task('wall', '07:00', 16 * 60)], WINDOW)
+  expect(gaps).toEqual([])
+  expect(formatFreeWindows(gaps, WINDOW, { day: 'on Thursday', next: 'Friday' })).toBe('No free time left on Thursday.')
+})
+
+test('a stretch too short to offer is not offered', () => {
+  const gaps = freeWindows([task('a', '09:00', 60), task('b', '10:20', 60)], WINDOW, [], t(9))
+  expect(gaps.map(g => g.start)).toEqual([t(11, 20)])
+})
+
+/**
+ * Applying marks the day, and a dropped repeat instance leaves the skip a
+ * hand delete would leave - a tombstone rather than a silence.
+ */
+test('applying writes the day it was replanned on, and only then', () => {
+  const data = withTasks([task('a', '09:00', 60)])
+  const plan = planInterrupt(data.days[DAY].tasks, { title: 'Dad', start: t(9), minutes: 60 }, {}, WINDOW)
+  expect(applyPlan(data, DAY, plan, () => 'id').days[DAY].replannedOn).toBeUndefined()
+  expect(applyPlan(data, DAY, plan, () => 'id', { replannedOn: '2026-09-01' }).days[DAY].replannedOn).toBe('2026-09-01')
+})
+
+test('dropping a repeat instance records the skip, and nothing else grows a skips list', () => {
+  const data = withTasks([task('pills', '09:00', 10, { repeatOf: 'series' }), task('walk', '10:00', 30)])
+  const plan = planInterrupt(data.days[DAY].tasks, { title: 'Dad', start: t(9), minutes: 120 }, { pills: 'drop', walk: 'drop' }, WINDOW)
+  const next = applyPlan(data, DAY, plan, () => 'id')
+  expect(next.days[DAY].repeatSkips).toEqual(['series'])
+  const plain = applyPlan(withTasks([task('walk', '10:00', 30)]), DAY, planInterrupt([task('walk', '10:00', 30)], { title: 'X', start: t(10), minutes: 60 }, { walk: 'drop' }, WINDOW), () => 'id')
+  expect(plain.days[DAY].repeatSkips).toBeUndefined()
+})
+
+test('the interruption arrives as a manual task, which is what it is', () => {
+  const data = withTasks([])
+  const plan = planInterrupt([], { title: 'Dad', start: t(9), minutes: 60 }, {}, WINDOW)
+  expect(applyPlan(data, DAY, plan, () => 'id').days[DAY].tasks[0].origin).toEqual({ type: 'manual' })
 })
