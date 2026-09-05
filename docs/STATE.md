@@ -6,12 +6,13 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** the v2.1 wave, in progress. Its first stage is done: North
-v2, "The Picture" - the window is four layers read as one page, written in
-the window itself behind one Compose, and the Settings section it replaced is
-gone. The phone wave and a bug hunt follow it, and the wave closes with the
-`v2.1` tag. The week-templates wave before it sits above `v2.0`, committed
-and pushed.
+**Last updated:** v2.1, closed and tagged. Three stages in one sitting:
+North v2, "The Picture" - the window is four layers read as one page, written
+in the window itself behind one Compose; the phone wave, measured to zero and
+then walked; and a bug hunt that lived a day in the app at three sizes and
+fixed eighteen things with a place each. Nothing is owed from the owner's
+brief. **What is next is whatever the owner brings**, and the debts table at
+the end of section 4 says which of the standing ones could move without them.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -124,6 +125,8 @@ reading them.
 
 | **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
 
+| **v2.1** | North as a page: the picture over the goals, what you do to deserve each under it, the rules under that, all written in the window behind one Compose; the phone measured to zero and walked; and a bug hunt at three sizes - the quick-add panels painted behind the list since v2.0, ten sheets dropping focus on close, two month grids that were forty tab stops each, a timer widget over the rollover line, and a dozen smaller things, each with a place and a viewport |
+
 | **v2.0, second half** | Six stages that finish what the first half started, all of them about the app being *understood* rather than being complete. Categories became the owner's: a list in `AppData` rather than a literal in a module, twelve curated colours with a readability gate, and a delete that moves what it would orphan. North became a window with every if-then rule under the goal it protects - a rule with no goal is noise, under a goal it is armour - and the day view's old one-rule-at-a-time surfacing went with the three fields it needed. Twenty invented words got a sentence each, in one file, checked by a test whose data is the list itself. One reading queue of twenty books became three lanes that advance on their own. Then a clean pass over sixteen places: seven text tabs became a rail of icons, month cells started saying what is on a day rather than what the day was called, resting on one shows the whole day, the week gained a second reading and a place for the backlog beside it, and the template editor stopped opening with eight colour balls above the name |
 
 Tags exist for v1.0 through v2.0, and `v2.0` covers both halves - it was moved
@@ -137,16 +140,15 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2024
-tests in 113 files, plus 25 Playwright tests in 12 files across two
+Still true, and checked rather than assumed. The suite is green - **2037
+tests in 116 files, plus 25 Playwright tests in 12 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
-reports nothing on the desktop at either the ordinary or the heavy day and
-its self-check sees five shapes out of five, and the working tree is empty
-and pushed.
+reports nothing on the desktop **and nothing on the phone**, and the working
+tree is empty and pushed.
 
-**Where to start:** the v2.1 table below says which of its four stages are
-done. What is owed is in *Asked for, not yet built*, under it, and its first
-item is the next stage's work.
+**Where to start:** the v2.1 table below is closed. Nothing from the owner's
+brief is owed; the debts table further down names the one standing debt that
+could move without them (Outlook's time zone names).
 
 ### Both waves closed
 
@@ -169,11 +171,12 @@ and pushed. Nothing below this table is owed.
 |---|---|---|
 | `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
 | `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
+| `v2.1` | the commit that says "v2.1 closes" | North v2, the phone wave and the bug hunt, on top of the week-templates wave |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
-being able to name. The week-templates wave sits above `v2.0`, untagged,
-ending at `8f7bb51`.
+being able to name. The week-templates wave sits between `v2.0` and `v2.1`,
+ending at `8f7bb51`, and is part of the later tag.
 
 #### The bugs this wave found, all of them already shipped
 
@@ -202,7 +205,7 @@ hunt, then the tag.
 | 1 | North v2, "The Picture" | see `git log` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
 | 2 | The phone wave | see `git log` | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
 | 3 | The bug hunt | see `git log` | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
-| 4 | Closing and `v2.1` | - | Not started |
+| 4 | Closing and `v2.1` | the tagged commit | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
 
 ### Asked for, not yet built
 
@@ -902,3 +905,21 @@ Collected from waves where they actually did.
   exactly like a locked renderer - three "hangs" in one session were this.
   Put waits between tool calls, never inside the page, and dispatch keys on
   elements rather than trusting `computer` key presses to land.
+- **`contain: layout` makes a stacking context**, and one with no z-index
+  paints in DOM order. Quick-add's panels painted behind the task list for
+  a whole version because of it, and nothing that runs in jsdom can see
+  paint order. `stacking.test.ts` holds every contained rule to a z-index;
+  the next one needs its own.
+- **A `@media (pointer: coarse)` block earlier in the stylesheet loses to a
+  later base rule at the same specificity.** The agenda's 44px rows were
+  written into the shared coarse block, hundreds of lines above the
+  agenda's own `min-height: 30px`, and measured 30px on the phone the same
+  afternoon. Put a coarse override after the rule it overrides.
+- **A step the tour lights can have a button right under it that the card
+  then covers.** The card avoids the hole, not the control beside the
+  hole. Make the button a target of its own - the engine skips a disabled
+  one, so it takes over the moment typing enables it.
+- **`grep -c $'\r'` reports zero in the Bash tool for a file full of
+  them**: it is POSIX sh, and `$'...'` is not expanded there. Count with
+  `tr -cd '\r' < file | wc -c`. A session believed the tree was LF for an
+  hour on that.

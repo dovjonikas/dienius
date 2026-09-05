@@ -378,8 +378,9 @@ whether the pass still sees it. Run that before trusting a clean report you
 were not expecting - a measuring tool that has quietly stopped measuring
 reads exactly like a codebase with nothing wrong in it.
 
-The desktop is clean. `--phone` reports the two debts STATE.md names as the
-phone wave's first jobs, and nothing else.
+Both are clean: the desktop since v2.0, the phone since v2.1. A dirty
+report is a wave's work, and "it is only the phone" was the sentence that
+kept two controls under 44px for two versions.
 
 ### And then by hand
 
