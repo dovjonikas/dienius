@@ -277,7 +277,8 @@ Skip this entirely if one browser is where you plan; nothing degrades.
   at the foot of the rail, or the `S` key).
 - **When the plan breaks.** **Replan**, under the date. Three doors:
   something came up, shift the rest, I was away. Each shows its answer
-  before you accept it.
+  before you accept it. The first of them works for any day of the week -
+  the next section is that one, walked as a phone call.
 - **Evening.** Around half nine, or the moment the last thing is ticked, a
   card offers to close the day. It never says anything about what was not
   done.
@@ -286,6 +287,48 @@ Two keys worth learning: **`N`** jumps to the box, **`Ctrl-K`** finds
 anything or runs any command. **`?`** shows the rest - and every icon in the
 rail names its own key when you rest on it, which is the easier way to pick
 them up: `1` to `6` for the six screens, a comma for Settings.
+
+---
+
+## When the phone rings
+
+Your dad calls: "tomorrow at ten I need a hand", or "Thursday afternoon".
+The plan for that day is about to change, you have one hand free, and he
+is waiting for an answer.
+
+**Something came up** is in six places and is one sheet from all of them:
+under the date on Today, behind **Replan**; under the date on any later
+day; in the week's bar; on a day in the month when the pointer rests on it;
+`Ctrl-K`; and the `R` key.
+
+1. **When.** Today is already chosen. Tap **Tomorrow**, the weekday, or
+   **Pick a day** for anything further out than the week.
+2. **What is gone.** **Morning gone**, **Afternoon gone**, **Evening gone**
+   or **Whole day gone** - or **A time** and a length when the call named
+   one, or **Don't know how long** when it did not.
+3. **Accept.**
+
+That is the three presses. Before the third, read the line in bold to the
+person on the phone: *Free tomorrow: 15:30-17:00, after 19:30.* That is
+your answer.
+
+Under it the plan says what happens to each block in the way, and nothing
+is asked. A block from your template is **skipped** for the day, because the
+template makes it again next time; a task of your own is moved into the
+first free gap after the interruption, into the morning if the evening is
+full, or on to the next day, key tasks first. Tap a row to say otherwise -
+move, the next day, skip, keep. Nobody has to.
+
+The name is optional: "Something came up" stands in, and the last three
+names you gave are chips. Or type the whole thing in one line, in either
+language - `ryt 10-13 tetis`, `thu afternoon`, `tomorrow 2pm dentist
+30min` - and the chips follow the words. Tap a chip afterwards and it takes
+its word out of the line, so the two never disagree.
+
+A day you have not opened yet is set up first, from your weekday plan, so
+what you see is what you will find when you open it. **Undo** is offered
+for five seconds, and the week shows the day with a quiet *replanned* under
+its name.
 
 ---
 

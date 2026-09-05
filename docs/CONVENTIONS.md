@@ -488,6 +488,32 @@ whole day is gone" - so the rules are about tone as much as arithmetic:
   is scored like any other, because the score is a fact and the pause was a
   choice.
 
+Since v2.2 "Something came up" answers a phone call about any day of the
+week, and five more rules came with it:
+
+- **Proposed, not asked.** Choosing when shows the plan - what the
+  interruption lands on and where each block goes - before anybody says
+  anything. A row is pressed to say otherwise, never to say yes. If a change
+  makes the proposal wait for a choice, it is wrong.
+- **A routine block is skipped, a one-off is moved.** A template's or a
+  repeat's block (`isRoutine`) taken by the interruption is dropped for that
+  day and the summary says "Skipped", because the template makes it again;
+  a task somebody typed is fitted into a gap, key tasks first, or sent on to
+  the next day. A one-off the person chooses to let go of reads "Dropped".
+  Two words, because they are two facts.
+- **The line for the caller comes first.** "Free tomorrow: 15:30-17:00,
+  after 19:30" sits above the plan's own sentence, in weight, before Accept,
+  where it is read with the phone at the ear. Stretches under half an hour
+  are not offered.
+- **The line and the chips are one truth.** A typed line that names a day,
+  a time or a shape wins and the chips redraw to show it; a pressed chip
+  takes that kind of word out of the line. Section 16's rule for quick-add,
+  kept the cheap way.
+- **A day chosen is opened.** Choosing a day in the sheet runs
+  `actions.ensureDay` for it, exactly as looking at it would, so what is
+  planned against is what Accept lands on. A pure preview was tried and
+  stamps its own copy with its own task ids.
+
 ---
 
 ## 13. The tour is a mirror of the app

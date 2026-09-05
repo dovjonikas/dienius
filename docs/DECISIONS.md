@@ -1200,3 +1200,85 @@ chips stay 40px wide at 44px tall, because widening six of them wraps the
 row; the time picker's rows stay 30px, because it is a scrolling column
 and a taller row shows fewer hours. Each is in STATE section 5 with its
 reason.
+
+## Something came up is one sheet, for any day, and it proposes
+
+Replan v1 answered one situation: a block that starts now, on the day being
+looked at. The situation that actually happens is a phone call about another
+day - "tomorrow at ten I need a hand", "Thursday afternoon" - taken with one
+hand, with the caller waiting. v2.2 rebuilt the first door around that call,
+and these are the calls made on the way.
+
+**The sheet moved to the root.** It lived inside the day view because it was
+about today. It is about any day now, and the week, the calendar's day
+preview, the palette and a key all open it without leaving what they were
+showing. `replanState` carries the day; the sheet reads everything else
+from the store, and the other three doors stay about today whatever day was
+asked for, because "everything from now" has no meaning on Thursday.
+
+**Chips before words, and shapes before times.** A call rarely names a
+length. "The afternoon" is what gets said, and asking for 13:00 and 300
+minutes at that moment is asking somebody to translate. So the sheet's first
+two rows are chips - when, and what is gone - and the shapes cut the waking
+window at one and at six, because "after lunch" and "after work" are what
+the words mean to the person saying them. A time and a length are still
+there, one chip further along, for the call that did name one.
+
+**Proposed, not asked.** Choosing when shows the plan at once, and a row is
+pressed only to say otherwise. The proposal's one judgment is the one the
+rescue already made in v1.9: a routine block - a template's or a repeat's -
+is skipped for the day rather than moved, because the template makes it
+again and a commute at nine in the evening is not a plan; a one-off is
+fitted into a gap, key tasks first, or sent on. The summary says "Skipped"
+for the first and "Dropped" for a one-off the person let go of, because the
+first is not a loss and one word for both would have hidden that.
+
+**The gaps after the interruption first.** With a day that has not started,
+the morning is a real gap for a task the afternoon lost - v1 could only look
+after a block that starts now. But given room on both sides, what the
+afternoon lost goes into the evening: "I will do it after" is the reading a
+person gives it, and lunch moved to eight in the morning is arithmetic
+nobody believes.
+
+**A chosen day is opened, not previewed.** The plan said the sheet would
+preview a future day through the pure half of `ensureDay` without writing.
+The first store test found the routine blocks it had skipped still sitting
+at their times: a preview stamps its own copy of the template with its own
+task ids, and a plan made against that copy names tasks the committed day
+does not have. So choosing a day runs `actions.ensureDay` for it, exactly
+as looking at it would - idempotent, and what the weekday map promised for
+that day anyway - and `applyReplan` keeps its own ensure as the belt to that
+pair of braces.
+
+**Seven days from today, not Monday to Sunday.** A chip for a day that has
+passed is a chip nobody can press, and "Thursday" said on a Sunday means the
+one coming. A typed weekday means the next one and never today, the rule the
+palette's date parsing already kept.
+
+**The line and the chips are one truth.** A typed line that names a day, a
+time or a shape wins and the chips redraw; a pressed chip takes that kind of
+word out of the line. Rewriting the line to match the chip - quick-add's way
+- would mean rewriting it in one of two languages, and taking the word out
+costs nothing and cannot disagree.
+
+**The free line lives before Accept, and not in the toast.** "Free tomorrow:
+15:30-17:00, after 19:30" is the smallest thing in the feature and the most
+useful: it is what gets said into the phone, and the moment it is needed is
+before Accept, with the phone still at the ear. It was going to ride in the
+undo toast as well. A five-window line wrapped the toast into a column seven
+lines tall on a phone, and the toast went back to two words.
+
+**A table of words, not a language library.** "ryt 10-13 tetis", "pn ryte",
+"ketvirtadienį 14:00 dantistas 30min" are read by a list of the words that
+get said about a day in either language - the weekdays and their short
+forms, today and tomorrow and the day after, the four parts of a day, a
+time, a range, a length. Every other word is the name, which is the safe
+failure. Two of the Lithuanian short forms are English words, and each has a
+guard: "an" before a vowel or an h is the article, and "St." is a saint. A
+bare number is never a time.
+
+**No door in the phone's bar.** The bar along the bottom is the six views,
+Scratch and Settings, and an eighth icon at 390px is 48px each. The phone's
+doors are the day header on today and any later day, the month through the
+day, and the palette; the week's door shares the Grid / Agenda row rather
+than costing the grid a fourth row of bar.

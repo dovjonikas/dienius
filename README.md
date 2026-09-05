@@ -37,7 +37,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Stamps a **template** onto a day, so the morning does not start from a blank list
 - Draws the day as a **timeline**, with free time labelled and a line at now
 - Adds a task from one line: the time and the length are already filled in, you type the title
-- **Replans** a broken day in one press: something came up, shift the rest, or away and back
+- **Replans** a broken day in one press: something came up - on today or any day this week, with one line saying when you are still free - shift the rest, or away and back
 - Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went
 - Never scores a bad day against you: no points, no badges, no red, no streak on the day view
 

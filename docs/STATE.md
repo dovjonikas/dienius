@@ -6,16 +6,16 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.1, closed and tagged. Three stages in one sitting:
-North v2, "The Picture" - the window is four layers read as one page, written
-in the window itself behind one Compose; the phone wave, measured to zero and
-then walked; and a bug hunt that lived a day in the app at three sizes and
-fixed eighteen things with a place each. Nothing is owed from that brief,
-and the one standing debt that could move without the owner - Outlook's time
-zone names - was closed one commit above the tag. **What is next is Replan
-v2**, "Something came up" for any day of the week; its brief is coming from
-the owner, and section 4's *Asked for, not yet built* holds what is known
-so far.
+**Last updated:** v2.2, closed and tagged. One wave, the owner's brief for
+Replan v2: "Something came up" for any day of the week, built as the phone
+call it is answered on - one sheet from six doors, a WHEN row and the shape
+of the loss as chips, a typed line read in Lithuanian and English, the plan
+proposed with routine blocks skipped, a day made before it is planned, one
+line to say into the phone, one undo, and a quiet word on the week. From the
+door to Accept in three presses with nothing scrolled on a phone, held by a
+browser test. Section 4 has the table, commit by commit. **Nothing is
+owed**: the debts table is unchanged and every entry in it is a trade with
+its reason, and the next brief comes from the owner.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -61,7 +61,7 @@ reading them.
 | Day types and core tasks | A twelve-hour shift is not scored like an ordinary Tuesday |
 | Push twice, then decide | An unfinished task moves to tomorrow twice; after that, finish it, delete it, or mark it ongoing |
 | Yesterday banner | What yesterday left, stated once, moved forward in one tap - never automatically |
-| Replan | Three doors for a day that broke: something came up, shift the rest, away and back. See `widgets/day-plan/replan.ts` |
+| Replan | Three doors for a day that broke: something came up, shift the rest, away and back. The first works for any day of the week since v2.2 - a phone call answered in three presses, with one line saying when you are still free. See `widgets/day-plan/replan.ts` |
 | Scratch | One key (S or backtick) or the pen in the rail, and you are typing. Its own stream, `#tags` as filters, a #bug export. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
 | Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
 | Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. The size is a stepper with six chips beside it; the repeat is four buttons. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
@@ -130,9 +130,11 @@ reading them.
 
 | **v2.1** | North as a page: the picture over the goals, what you do to deserve each under it, the rules under that, all written in the window behind one Compose; the phone measured to zero and walked; and a bug hunt at three sizes - the quick-add panels painted behind the list since v2.0, ten sheets dropping focus on close, two month grids that were forty tab stops each, a timer widget over the rollover line, and a dozen smaller things, each with a place and a viewport |
 
+| **v2.2** | Replan v2: "Something came up" for any day of the week, as the phone call it is answered on. One sheet at the app root from six doors - the day header on today and any later day, the week's bar, the calendar's day preview, the palette, the R key. Today, tomorrow and the five days after as chips, then the morning, afternoon, evening or whole day gone against that day's own waking window, a time and a length, or don't know how long; a typed line in Lithuanian or English that the chips follow and that a pressed chip takes its word out of; the plan proposed with the template's blocks skipped and one-offs moved into the gaps after it, key tasks first; a day nobody opened made from its weekday template before the plan lands; the free-windows line above Accept; one undo; "replanned" on the week. `ensuredDay` as the pure half of `ensureDay`, `DayPlan.replannedOn`, and a phone-sized browser test measuring three presses with nothing scrolled |
+
 | **v2.0, second half** | Six stages that finish what the first half started, all of them about the app being *understood* rather than being complete. Categories became the owner's: a list in `AppData` rather than a literal in a module, twelve curated colours with a readability gate, and a delete that moves what it would orphan. North became a window with every if-then rule under the goal it protects - a rule with no goal is noise, under a goal it is armour - and the day view's old one-rule-at-a-time surfacing went with the three fields it needed. Twenty invented words got a sentence each, in one file, checked by a test whose data is the list itself. One reading queue of twenty books became three lanes that advance on their own. Then a clean pass over sixteen places: seven text tabs became a rail of icons, month cells started saying what is on a day rather than what the day was called, resting on one shows the whole day, the week gained a second reading and a place for the backlog beside it, and the template editor stopped opening with eight colour balls above the name |
 
-Tags exist for v1.0 through v2.0, and `v2.0` covers both halves - it was moved
+Tags exist for v1.0 through v2.2, and `v2.0` covers both halves - it was moved
 forward from the desktop close to here, as the plan written at the time said
 it would be. Nothing was published between the two: the first half was tagged
 on a Friday and this is the rest of the same release.
@@ -143,84 +145,52 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2039
-tests in 116 files, plus 25 Playwright tests in 12 files across two
+Still true, and checked rather than assumed. The suite is green - **2095
+tests in 120 files, plus 27 Playwright tests in 13 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop **and nothing on the phone**, and the working
 tree is empty and pushed.
 
-**Where to start:** the v2.1 table below is closed, commit by commit, and
-the one standing debt that could move without the owner - Outlook's time
-zone names - moved the same day, one commit above the tag. What is owed is
-in *Asked for, not yet built*, under the table, and its first item - Replan
-v2 - is the next session's work once the owner's brief arrives.
+**Where to start:** nothing is owed. The v2.2 table below is closed, commit
+by commit; the v2.1 table under it is history; the debts table further down
+is unchanged, and each entry in it is a trade with its reason. The next
+brief comes from the owner.
 
-### Both waves closed
+### The v2.2 wave: Replan v2
 
-Two waves were briefed by the owner in one sitting. Both are done, committed
-and pushed. Nothing below this table is owed.
+Briefed by the owner in one message, in Lithuanian, and built in one
+sitting. The brief as understood is the numbered list under the table, kept
+because every commit refers to it.
 
 | # | Stage | Commit | What it became |
 |---|---|---|---|
-| 1 | Categories the owner owns | `adee903` | A list in `AppData` rather than a literal in a module, an editor in Settings, twelve curated colours with a readability gate, and a delete that moves what it would orphan |
-| 2 | North window: goals and if-then in one place | `e33dd08` | North is the sixth view. Every rule lives under the goal it protects; `widgets/if-then/` is gone, and so are the three fields the day view's old surfacing needed |
-| 3 | The explanation layer | `40722cd` | Twenty terms audited, all the copy in `lib/explain.ts`, one component in `views/Explain.tsx`, and a test whose data is the list itself |
-| 4 | Library lanes: MIND, CRAFT, LIGHT | `878d4fb` | One queue of twenty became three that advance on their own. Still only from the palette, never on first open |
-| 5 | Clean checkup | `d38990d`, `b71bbfb`, `3da5336`, `879b90d` | Sixteen places. Seven text tabs became a left icon rail; the (i) markers came back out a commit later at the owner's word; month cells say what is on a day; a day preview on hover; the week gained an agenda reading and a Someday strip; the template editor stopped opening with eight colour balls |
-| 6 | Closing: desktop QA, DAILY.md, regression, tag | `890e0ad` | Desktop QA at two sizes in both themes on a realistic day, every `data-tour` target re-checked, DAILY.md, every doc read against the code, and the tag moved |
-| - | **Week templates** (its own wave) | `a786b0b`, `8f7bb51` | One entity with a `kind`; `columnFor()` is the whole difference. Seven columns, Add to / Copy to / drag, a per-column day type and sleep, the week's shape on its card, a start-from-a-day expansion, four more explained terms, and DAILY.md on building one |
+| 0 | Written down first | `00de297` | The brief and the decisions it forced, in this file, before any code |
+| 1 | The arithmetic | `22db34f` | `ensuredDay` as the pure half of `ensureDay`, and `applyReplan` running it first so a plan for Thursday lands on the Thursday that will exist; `planInterrupt` given a start-from and the day's own words; "Skipped" for a routine block and "Dropped" for a one-off; the free-windows line; the shapes, the WHEN row and the day words in `interrupt.ts`; the two-language line in `interruptParse.ts`; the last three names in `replanPrefs.ts`; `DayPlan.replannedOn` |
+| 2 | The sheet, from six doors | `acd6c48` | The sheet at the root, reading the store given a day; two rows of chips, the words, the plan proposed, Accept; the header on any later day, the week's bar, the day preview's third action, the palette and R; the mark on the week's column and agenda; two phone passes and what they found (below); two browser tests, the phone one measuring three presses with nothing scrolled |
+| 3 | Closing and `v2.2` | the closing commit | Full regression - unit, browser, both sweeps - DAILY.md's "When the phone rings", every doc read against the code, DECISIONS carrying the reasoning, and the tag |
 
-#### The tags, which are the thing most likely to confuse
+#### What the two phone passes found
 
-| Tag | Commit | What it covers |
-|---|---|---|
-| `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
-| `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
-| `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
+Two deliberate passes at 390x844 in both themes on the sample day, with the
+phone ringing as the scenario - the sheet open in one hand, ten seconds.
+Each finding has a place; the first three were written and caught the same
+evening, which is the argument for walking before believing anything.
 
-The move is why `v2.0-desktop` exists: nothing was published between the two
-halves, so one version number is honest, but the earlier commit is worth
-being able to name. The week-templates wave sits between `v2.0` and `v2.1`,
-ending at `8f7bb51`, and is part of the later tag.
-
-#### The bugs this wave found, all of them already shipped
-
-Written down here because CONVENTIONS section 2 asks for it and because every
-one of them had been in the app for versions:
-
-| Found | Where it had been |
+| Found | What changed |
 |---|---|
-| The demo's own if-then rules carried "If" and "then" inside their strings while every place that drew one added its own "If", so the sample read "If If I open the laptop" | Since the demo was written |
-| Eight tests queried the Inbox and Backlog folds with a loose `/Backlog/`, which any new control containing the word would have matched | Since those folds were built |
-| The (i) marker reused the North line's four-version-old bug: a tap fires a focus and then a click, so a focus that opened the bubble meant every tap popped a sentence over the screen | Written and caught in the same wave |
-| A 28px per-block library select in the template editor, under the 44px a finger needs | Since v1.9. The phone pass had no screen that opened a template editor until this wave added one |
-| The sweep left its pointer resting on the rail after clicking a tab, so every screen was measured with a flyout open - nine false findings and then a 30-second hang | Written and caught in the same wave |
-| A flat `min-height: 38px` on two rebuilt rows pulled four controls back under 44px on a finger | Written and caught the same afternoon, twice |
+| The undo toast carried the free line and wrapped into a column seven lines tall - a pill cannot hold a five-window sentence | The line stays in the sheet, where it is read with the phone at the ear; the toast is two words again and its wrap rule was reverted |
+| The week's bar on a phone gained a fourth row for the new door, 55px off a grid whose whole job is to be a picture | Ordered after the Month / Week / Year segment below the wide breakpoint, it shares the Grid / Agenda row; the bar is back to three rows |
+| A typed range of three hours lit none of the six length chips, and the row read as no length chosen | The length the line gave shows as a lit chip when none of the six say it |
+| With room on both sides, what the afternoon lost went into the morning because the morning came first - lunch at eight, arithmetic nobody believes | The gaps after the interruption are tried first, and the ones a start-from opened up before it only when those are full |
+| The sheet was going to preview a future day through the pure half of `ensureDay` without writing; a preview stamps its own copy with its own task ids, and the first store test found the routine blocks it had skipped still at their times | Choosing a day opens it through `actions.ensureDay`, exactly as looking at it would |
 
-The last three are the measuring pass doing its job on code written hours
-earlier, which is the argument for running it before believing anything.
+#### The brief, as understood
 
-### The v2.1 wave
-
-Briefed by the owner in one sitting: North v2, then the phone, then a bug
-hunt, then the tag.
-
-| # | Stage | Commit | What it became |
-|---|---|---|---|
-| 1 | North v2, "The Picture" | `8b30713` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
-| 2 | The phone wave | `7b43311`, with stage 3 | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
-| 3 | The bug hunt | `7b43311`, with stage 2 | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
-| 4 | Closing and `v2.1` | `1384518` | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
-| - | **After the tag: Outlook's zone names** | `606aaeb`, `2b0d787` | The one debt that could move without the owner. `WINDOWS_ZONES` in `ics.ts`, consulted after `Intl` says no, and a quoted TZID unwrapped - which had failed the same way for a different reason. In the resolved-debts list below |
-
-### Replan v2 - "Something came up" for any day of the week
-
-**The brief arrived**, and this is the plan it became; the wave is being
-built against it. The scenario: the week is stamped from templates, and
-the phone rings - "tomorrow at ten I need a hand", or "Thursday
-afternoon". The person is on the phone, one hand on the device. From the
-call to a replanned day: ten seconds, three presses, no scrolling through
-the week.
+The scenario: the week is stamped from templates, and the phone rings -
+"tomorrow at ten I need a hand", or "Thursday afternoon". The person is on
+the phone, one hand on the device. From the call to a replanned day: ten
+seconds, three presses, no scrolling through the week. Nine points, all
+built:
 
 1. **One way in from anywhere.** The Today header (there already), any
    later day's header, the week view, the calendar's day preview, `Ctrl-K`
@@ -257,9 +227,11 @@ the week.
    with its own task ids. Stamp week leaves the day alone afterwards, as it
    already leaves every day that has a template.
 6. **The answer for the person on the phone.** One line under the plan,
-   before Accept and in the undo toast after it: "Free tomorrow:
+   before Accept, read with the phone still at the ear: "Free tomorrow:
    15:30-17:00, after 19:30" - so "I can after half three" can be said
-   into the phone without opening the day.
+   into the phone without opening the day. It was going to ride in the undo
+   toast too; a five-window line wrapped the toast into a column seven
+   lines tall on a phone, and the toast went back to two words.
 7. **One undo** for the whole thing, sync as for everything, and the week
    view marks the day with a quiet "replanned" (`DayPlan.replannedOn`).
 8. **Tests** for each of those, and a browser test on a 390x844 phone:
@@ -268,8 +240,7 @@ the week.
    phone ringing, the sheet open in one hand, ten seconds - then DAILY.md
    gains "When the phone rings", and the tag is `v2.2`.
 
-**Decisions taken while designing it**, so nobody re-argues them by
-accident:
+**Decisions taken on the way**, so nobody re-argues them by accident:
 
 - The sheet moves to the app root and reads the store itself, given a day.
   It lived inside the day view because it was about today; it is about any
@@ -292,6 +263,65 @@ accident:
   390px is 48px each. On a phone the ways in are the day header on today
   and any later day, the month (a tap opens the day, whose header has the
   door), and the palette.
+
+### Both waves closed
+
+Two waves were briefed by the owner in one sitting. Both are done, committed
+and pushed. Nothing below this table is owed.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | Categories the owner owns | `adee903` | A list in `AppData` rather than a literal in a module, an editor in Settings, twelve curated colours with a readability gate, and a delete that moves what it would orphan |
+| 2 | North window: goals and if-then in one place | `e33dd08` | North is the sixth view. Every rule lives under the goal it protects; `widgets/if-then/` is gone, and so are the three fields the day view's old surfacing needed |
+| 3 | The explanation layer | `40722cd` | Twenty terms audited, all the copy in `lib/explain.ts`, one component in `views/Explain.tsx`, and a test whose data is the list itself |
+| 4 | Library lanes: MIND, CRAFT, LIGHT | `878d4fb` | One queue of twenty became three that advance on their own. Still only from the palette, never on first open |
+| 5 | Clean checkup | `d38990d`, `b71bbfb`, `3da5336`, `879b90d` | Sixteen places. Seven text tabs became a left icon rail; the (i) markers came back out a commit later at the owner's word; month cells say what is on a day; a day preview on hover; the week gained an agenda reading and a Someday strip; the template editor stopped opening with eight colour balls |
+| 6 | Closing: desktop QA, DAILY.md, regression, tag | `890e0ad` | Desktop QA at two sizes in both themes on a realistic day, every `data-tour` target re-checked, DAILY.md, every doc read against the code, and the tag moved |
+| - | **Week templates** (its own wave) | `a786b0b`, `8f7bb51` | One entity with a `kind`; `columnFor()` is the whole difference. Seven columns, Add to / Copy to / drag, a per-column day type and sleep, the week's shape on its card, a start-from-a-day expansion, four more explained terms, and DAILY.md on building one |
+
+#### The tags, which are the thing most likely to confuse
+
+| Tag | Commit | What it covers |
+|---|---|---|
+| `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
+| `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
+| `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
+| `v2.2` | the closing commit | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
+
+The move is why `v2.0-desktop` exists: nothing was published between the two
+halves, so one version number is honest, but the earlier commit is worth
+being able to name. The week-templates wave sits between `v2.0` and `v2.1`,
+ending at `8f7bb51`, and is part of the later tag.
+
+#### The bugs this wave found, all of them already shipped
+
+Written down here because CONVENTIONS section 2 asks for it and because every
+one of them had been in the app for versions:
+
+| Found | Where it had been |
+|---|---|
+| The demo's own if-then rules carried "If" and "then" inside their strings while every place that drew one added its own "If", so the sample read "If If I open the laptop" | Since the demo was written |
+| Eight tests queried the Inbox and Backlog folds with a loose `/Backlog/`, which any new control containing the word would have matched | Since those folds were built |
+| The (i) marker reused the North line's four-version-old bug: a tap fires a focus and then a click, so a focus that opened the bubble meant every tap popped a sentence over the screen | Written and caught in the same wave |
+| A 28px per-block library select in the template editor, under the 44px a finger needs | Since v1.9. The phone pass had no screen that opened a template editor until this wave added one |
+| The sweep left its pointer resting on the rail after clicking a tab, so every screen was measured with a flyout open - nine false findings and then a 30-second hang | Written and caught in the same wave |
+| A flat `min-height: 38px` on two rebuilt rows pulled four controls back under 44px on a finger | Written and caught the same afternoon, twice |
+
+The last three are the measuring pass doing its job on code written hours
+earlier, which is the argument for running it before believing anything.
+
+### The v2.1 wave
+
+Briefed by the owner in one sitting: North v2, then the phone, then a bug
+hunt, then the tag.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | North v2, "The Picture" | `8b30713` | Four layers read as one page - the picture, the goals, what I do to deserve each, what pulls me off it - written in the window itself: one line of the picture to start, then everything behind one quiet Compose that saves in one commit. Settings lost its North and Rules sections; the two card switches moved to Nudges. The picture is one entity at `picture:north`, `deserve` rides on the goal, the Monday card carries one deserve line for the week, and the tour walks into North instead of Settings. The reasoning is in DECISIONS, "North is built once and left in peace" |
+| 2 | The phone wave | `7b43311`, with stage 3 | `npm run sweep -- --phone` at zero: the stacked quarter-hour arrows are a side-by-side 44px pair on a coarse pointer (every stepper, not only quick-add) and the focus bar's exit carries the overlay. Then the walk itself, every screen at 390x844 in both themes with a full day - section 5 is ticked with what each item found. Nine more phone fixes came out of it, from a 43px day arrow to an agenda whose rows were 30px |
+| 3 | The bug hunt | `7b43311`, with stage 2 | A day lived in the app from a stamped morning to the evening close, at 1920x1080, 1366x768 and on a phone, with console noise, overflow, focus and text clipping logged after every step. Eighteen findings with a place and a viewport each; the two that had shipped longest were the quick-add panels painting behind the task list since v2.0 and ten sheets dropping focus on close since they were built. See DECISIONS, "The phone is walked, not only measured" |
+| 4 | Closing and `v2.1` | `1384518` | Full regression - unit, browser, both sweeps - the README screenshots regenerated, every doc read against the code, the tour walked with the North step rewritten, and the tag |
+| - | **After the tag: Outlook's zone names** | `606aaeb`, `2b0d787` | The one debt that could move without the owner. `WINDOWS_ZONES` in `ics.ts`, consulted after `Intl` says no, and a quoted TZID unwrapped - which had failed the same way for a different reason. In the resolved-debts list below |
 
 ### The six briefs, kept as history
 
@@ -568,6 +598,14 @@ workers, all green, and the test passes three for three on its own. No cause
 was found and nothing was changed to chase it, because changing a test to fix
 a failure you cannot reproduce usually means making it assert less.
 
+One more, from v2.2's closing regression: a unit test failed once inside
+the chained run - typecheck, suite, build, browser tests, screenshots in
+one command - and the log that would have named it had been cut to its
+last lines by the pipe that fed it to the terminal. The rerun a minute
+later was green, 2095 of 2095, and so was the full run before it. Written
+down rather than argued away, with the lesson: a chained gate keeps its
+whole log in a file, and a pipe into tail hides an exit code.
+
 If it comes back, the thing to know is that this same test failed
 *deterministically* before v2.0 for a different reason - it read the real
 clock and the evening close card appears after 21:30 - so a failure here is
@@ -833,7 +871,13 @@ themes, on the sample day; what each found is beside it.
 - [x] **Replan** - open all three doors. The summary must be on screen without
       scrolling, with five things in the way. It is the sentence the screen
       exists to produce. *"Nothing in the way. It goes straight in." sits
-      above Accept without a scroll.*
+      above Accept without a scroll.* **Since v2.2, Something came up is two
+      rows of chips, the words, the plan and Accept**: the day chip, the
+      shape chip and Accept all inside the viewport with the sheet's body
+      unscrolled, measured by `e2e/interrupt.e2e.ts`; every chip, row and
+      segment 44px; the week's bar keeps its three rows with the new door on
+      the Grid / Agenda row. *Walked twice in v2.2, both themes; the toast
+      and the bar were the findings, both fixed.*
 - [x] **Scratch** - the pen in the bar, and the close cross: on a phone the
       overlay is the whole screen, so there is no scrim to tap. *A note's four
       actions wrapped one at a time under a long date - fixed to wrap as a

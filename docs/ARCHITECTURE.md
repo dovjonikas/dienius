@@ -124,6 +124,10 @@ of them is in a backup. The ones that hold something worth knowing about:
   habit rather than a plan: restoring a week-old snapshot has no business
   changing which chip is lit, and a phone and a laptop are allowed to
   disagree about it.
+- **`dienius:replan-titles`** - the last three names given to an
+  interruption ([`replanPrefs.ts`](../src/widgets/day-plan/replanPrefs.ts)),
+  the chips under the sheet's What field. The same kind of habit, kept the
+  same way.
 - **`dienius:cloud-backup`** - the GitHub repo, the token and the time of
   the last copy ([`cloudBackup.ts`](../src/lib/cloudBackup.ts)). The token is
   a device's own credential and must never travel; a test holds that it is in
@@ -199,7 +203,7 @@ anything outside React.
 src/
   App.tsx              the shell: tabs, the keyboard layer, everything that
                        must outlive a tab change (focus bar, timer, palette,
-                       undo toast, reminders)
+                       undo toast, reminders, the replan sheet)
   main.tsx             mount, service worker, install prompt, sync, the cloud copy
   pwa.ts               registers the worker in production, raises the update notice
   UpdateNotice.tsx     the quiet Reload line; never reloads on its own
@@ -240,7 +244,8 @@ src/
     tourMode.ts        the replay sandbox, and which storage key it uses
     tourAssist.ts      "do it for me": the real action behind a stuck step
     tourExit.ts        how the tour ends, from any of its three doors
-    replanState.ts     the one line between the palette and the replan sheet
+    replanState.ts     the one line between whoever asks and the replan sheet at the root
+    ensureDay.ts       everything a day gets on its own, as a pure function - the action and a replan both commit it
     captureRequest.ts  the same one line, for which shelf quick-add opens on
     syncEntities.ts    splitting state into entities, stamping, tombstones
     syncMerge.ts       the per-entity last-write-wins merge
@@ -319,6 +324,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   sync.e2e.ts          two browser contexts through the real server: one task, then a tick against an edit with a delete between them
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
+  interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
   shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
@@ -361,8 +367,11 @@ it delegates:
 | `dragDrop.ts` | Where a dropped block lands |
 | `TaskRow.tsx` | One card |
 | `TaskDetail.tsx` | Everything the card deliberately does not show |
-| `replan.ts` | A day that broke: conflicts, shifting, the rescue, and one writer |
-| `ReplanSheet.tsx` | The three screens that ask, and the one press that applies |
+| `replan.ts` | A day that broke: conflicts, shifting, the rescue, the free windows, and one writer |
+| `interrupt.ts` | The shape of a loss - morning, afternoon, evening, the day - the WHEN row, and the day's own words |
+| `interruptParse.ts` | "ryt 10-13 tetis": a line about an interruption, read in Lithuanian and English |
+| `replanPrefs.ts` | The last three names an interruption was given, per device |
+| `ReplanSheet.tsx` | The sheet at the root: any day's Something came up, the three doors about today, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `Backlog.tsx` | The fourth shelf: decided, undated, pulled from |
 | `EveningClose.tsx` | The end of the day, said once - tone is the feature |
@@ -379,11 +388,16 @@ unrelated jobs; the first six rows above are where those went.
 One function is responsible for everything a day gets on its own:
 
 ```ts
-actions.ensureDay(date)   // called by DayView on mount and on every date change
+actions.ensureDay(date)   // called by DayView on mount and on every date change,
+                          // and by the replan sheet when a day is chosen
 ```
 
-It does two things, once, and records `autoApplied` so it never does them
-again for that day:
+The arithmetic is `ensuredDay` in [`lib/ensureDay.ts`](../src/lib/ensureDay.ts),
+pure, and the action commits it; `actions.applyReplan` runs the same
+function first and applies the plan on top in one commit, so an
+interruption accepted for Thursday on Tuesday lands on the Thursday that
+will exist. It does two things, once, and records `autoApplied` so it never
+does them again for that day:
 
 1. **The weekday map.** `settings.weekdayTemplates[weekday]` names a template;
    the day is stamped from it - unless the day already has a `templateId`,
@@ -651,7 +665,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 2039 tests in 116 files, no worker limits, no skips; plus 25 Playwright tests in 12 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 2095 tests in 120 files, no worker limits, no skips; plus 27 Playwright tests in 13 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 
@@ -836,15 +850,26 @@ writer:
 | Function | Question |
 |---|---|
 | `findConflicts` | What does this new block land on |
-| `planInterrupt` | Into the gaps after it, to tomorrow, or gone - per task |
+| `planInterrupt` | Into the gaps, to the next day, skipped or gone - per task. Given a start-from and the day's own words since v2.2, so it answers for Thursday as well as for now |
 | `planShift` | Everything from now, later, with the sleep boundary named |
 | `planRescue` | Back after a while: what still fits, key tasks first |
+| `freeWindows`, `formatFreeWindows` | What is left of the day once the plan is in - the line said into the phone |
 
 `applyPlan` is idempotent, because sync can hand the same intention over from
 two devices: a task already at its new time is unchanged, a task tomorrow
 already has by identity is not added twice (the same `dayHas` check every
 move between days uses), and the interruption is not re-added if its title
-already sits at its time. One commit, one undo.
+already sits at its time. It writes `DayPlan.replannedOn`, which the week
+view reads as one quiet word, and a dropped repeat instance's skip. One
+commit, one undo.
+
+Since v2.2 the sheet is mounted at the root of the app and reads the store
+itself, given a day (`replanState.ts` is the request). "Something came up"
+is about any day of the week: a WHEN row, the shape of the loss in
+`interrupt.ts`, a typed line in either language in `interruptParse.ts`, the
+plan proposed with routine blocks skipped, and the free line. Choosing a day
+opens it through `actions.ensureDay` first. The other three doors are about
+today whatever day was asked for.
 
 `DayPlan.away` is the pause. It lives on the day so it travels with it - two
 devices cannot disagree about whether the day is paused - and while it is set
