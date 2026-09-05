@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Explain } from './Explain'
 import { actions } from '../lib/store'
 import {
   describeSummary,
@@ -86,7 +87,10 @@ export function BackupSettings() {
 
   return (
     <div className="settings-group" id="settings-backup">
-      <h3>Backup</h3>
+      <h3>
+        Backup
+        <Explain id="backup" />
+      </h3>
 
       <div className="setting-block">
         <div className="setting-label">

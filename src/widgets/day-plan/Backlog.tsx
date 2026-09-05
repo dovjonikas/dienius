@@ -4,6 +4,7 @@ import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useCalendarCache, busyIntervals } from '../../lib/calendars'
 import { todayKey } from '../../lib/dates'
 import { useListReorder } from '../../views/useListReorder'
+import { Explain } from '../../views/Explain'
 import { formatDuration } from './capacity'
 import { suggestSlot } from './autoSlot'
 
@@ -69,20 +70,23 @@ export function Backlog({ date }: BacklogProps) {
 
   return (
     <div className={open ? 'backlog-section open' : 'backlog-section'}>
-      <button
-        type="button"
-        className="done-toggle"
-        aria-expanded={open}
-        aria-controls={listId}
-        onClick={() => setOpen(o => !o)}
-      >
-        <span className="done-caret" aria-hidden="true" />
-        Backlog
-        {/* The count, and nothing else. In --faint, with no accent and no
-            badge colour - the same rule the scratch count follows. A number
-            that grows in red is a report card. */}
-        <span className="backlog-count">{items.length}</span>
-      </button>
+      <div className="shelf-head">
+        <button
+          type="button"
+          className="done-toggle"
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpen(o => !o)}
+        >
+          <span className="done-caret" aria-hidden="true" />
+          Backlog
+          {/* The count, and nothing else. In --faint, with no accent and no
+              badge colour - the same rule the scratch count follows. A number
+              that grows in red is a report card. */}
+          <span className="backlog-count">{items.length}</span>
+        </button>
+        <Explain id="backlog" align="end" />
+      </div>
       <ul className="backlog-list" id={listId} ref={listRef}>
         {items.map((item, index) => (
           <li

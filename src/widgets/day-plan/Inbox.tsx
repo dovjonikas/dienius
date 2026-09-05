@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { Explain } from '../../views/Explain'
 import { actions, useAppData } from '../../lib/store'
 
 export interface InboxProps {
@@ -38,17 +39,25 @@ export function Inbox({ date }: InboxProps) {
 
   return (
     <div className={open ? 'inbox-section open' : 'inbox-section'}>
-      <button
-        type="button"
-        className="done-toggle"
-        aria-expanded={open}
-        aria-controls={listId}
-        onClick={() => setOpen(o => !o)}
-      >
-        <span className="done-caret" aria-hidden="true" />
-        Inbox
-        <span className="inbox-badge">{items.length}</span>
-      </button>
+      {/* The (i) is beside the fold rather than inside it, because a button
+          cannot live inside a button - see views/Explain.tsx. Of the four
+          shelves this and the backlog are the two whose names sound like
+          each other and mean different things, which is exactly the pair
+          worth a sentence. */}
+      <div className="shelf-head">
+        <button
+          type="button"
+          className="done-toggle"
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpen(o => !o)}
+        >
+          <span className="done-caret" aria-hidden="true" />
+          Inbox
+          <span className="inbox-badge">{items.length}</span>
+        </button>
+        <Explain id="inbox" align="end" />
+      </div>
       <ul className="inbox-list" id={listId}>
         {items.map(item => (
           <li key={item.id} className="inbox-item">

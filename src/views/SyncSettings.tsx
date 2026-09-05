@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Explain } from './Explain'
 import {
   formatSyncedAt,
   getSyncConfig,
@@ -63,7 +64,14 @@ export function SyncSettings() {
 
   return (
     <div className="settings-group" id="settings-sync">
-      <h3>Sync</h3>
+      {/* Sync and Backup sit two headings apart in Settings and are widely
+          assumed to be the same feature. They are not, and the difference is
+          the difference between losing an afternoon and losing everything -
+          so both say what they are for, in a sentence, where they are. */}
+      <h3>
+        Sync
+        <Explain id="sync" />
+      </h3>
 
       <div className="setting-block">
         <div className="setting-label">

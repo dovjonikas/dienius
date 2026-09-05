@@ -81,7 +81,7 @@ test('the fold says how many, in nothing but a number', () => {
   actions.addBacklogItem({ title: 'One' })
   actions.addBacklogItem({ title: 'Two' })
   render(<Backlog date={DATE} />)
-  const fold = screen.getByRole('button', { name: /Backlog/ })
+  const fold = screen.getByRole('button', { name: /^Backlog/ })
   expect(fold).toHaveTextContent('2')
   // Nothing anywhere counts, ranks or ages what is in here.
   expect(fold.textContent).not.toMatch(/old|since|waiting|overdue|days/i)
@@ -92,7 +92,7 @@ test('it is closed until somebody opens it, so the day view never mentions it', 
   actions.addBacklogItem({ title: 'Fix the bike light' })
   const { container } = render(<Backlog date={DATE} />)
   expect(container.querySelector('.backlog-section.open')).toBeNull()
-  await user.click(screen.getByRole('button', { name: /Backlog/ }))
+  await user.click(screen.getByRole('button', { name: /^Backlog/ }))
   expect(container.querySelector('.backlog-section.open')).not.toBeNull()
 })
 
@@ -106,7 +106,7 @@ test('one press puts an item on the day, at a free slot, with everything it carr
   const user = userEvent.setup()
   actions.addBacklogItem({ title: 'Fix the bike light', category: 'health', minutes: 45 })
   render(<Backlog date={DATE} />)
-  await user.click(screen.getByRole('button', { name: /Backlog/ }))
+  await user.click(screen.getByRole('button', { name: /^Backlog/ }))
   await user.click(screen.getByRole('button', { name: /Put "Fix the bike light" on this day/ }))
 
   expect(getData().backlog).toHaveLength(0)
@@ -140,7 +140,7 @@ test('deleting takes a confirming second tap', async () => {
   const user = userEvent.setup()
   actions.addBacklogItem({ title: 'Fix the bike light' })
   render(<Backlog date={DATE} />)
-  await user.click(screen.getByRole('button', { name: /Backlog/ }))
+  await user.click(screen.getByRole('button', { name: /^Backlog/ }))
 
   await user.click(screen.getByRole('button', { name: /^Delete/ }))
   expect(getData().backlog).toHaveLength(1)
@@ -157,7 +157,7 @@ test('an inbox line can be sent to the backlog, and leaves the inbox when it goe
   const user = userEvent.setup()
   actions.addInboxItem('Look into a bike service')
   render(<Inbox date={DATE} />)
-  await user.click(screen.getByRole('button', { name: /Inbox/ }))
+  await user.click(screen.getByRole('button', { name: /^Inbox/ }))
   await user.click(screen.getByRole('button', { name: /Send "Look into a bike service" to the backlog/ }))
 
   expect(getData().inbox).toHaveLength(0)
@@ -169,7 +169,7 @@ test('the row offers reordering to a keyboard as well as a finger', async () => 
   actions.addBacklogItem({ title: 'First' })
   actions.addBacklogItem({ title: 'Second' })
   render(<Backlog date={DATE} />)
-  await user.click(screen.getByRole('button', { name: /Backlog/ }))
+  await user.click(screen.getByRole('button', { name: /^Backlog/ }))
 
   const second = screen.getByRole('button', { name: /Reorder Second, position 2 of 2/ })
   second.focus()
@@ -182,7 +182,7 @@ test('a category and a size are shown on the row when they are there, and nothin
   actions.addBacklogItem({ title: 'Sized', category: 'health', minutes: 45 })
   actions.addBacklogItem({ title: 'Bare' })
   const { container } = render(<Backlog date={DATE} />)
-  await user.click(screen.getByRole('button', { name: /Backlog/ }))
+  await user.click(screen.getByRole('button', { name: /^Backlog/ }))
 
   const rows = container.querySelectorAll('.backlog-item')
   expect(within(rows[0] as HTMLElement).getByText('45 min')).toBeInTheDocument()

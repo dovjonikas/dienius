@@ -5,6 +5,7 @@ import { activeGoals, ageLabel, canAddRule, rulesForGoal, unfiledRules } from '.
 import { paletteColorName } from '../../lib/colors'
 import { MAX_RULES_PER_GOAL, type Goal, type IfThenEntry } from '../../lib/types'
 import { RuleForm } from './RuleForm'
+import { Explain } from '../Explain'
 
 export interface NorthViewProps {
   /** Goals are written in Settings and nowhere else - see the doc comment below. */
@@ -50,7 +51,10 @@ export function NorthView({ onOpenSettings }: NorthViewProps) {
   return (
     <section className="north-view" aria-label="North">
       <header className="north-view-head">
-        <h2>North</h2>
+        <h2>
+          North
+          <Explain id="north" />
+        </h2>
         <p className="north-view-lead">
           The few things the days are for, and the moments that pull you off them.
         </p>

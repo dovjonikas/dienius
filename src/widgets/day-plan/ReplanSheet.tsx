@@ -5,6 +5,7 @@ import { offerUndo } from '../../lib/undo'
 import type { ReplanMode } from '../../lib/replanState'
 import { formatDuration, parseTimeInput, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
 import { formatClock } from './timelineLayout'
+import { Explain } from '../../views/Explain'
 import {
   findConflicts,
   planInterrupt,
@@ -136,13 +137,18 @@ function Menu({ away, onPick, onClose }: { away: string | undefined; onPick: (m:
     <>
       <Head title="Replan" onClose={onClose} />
       <div className="replan-menu">
+        {/* The line under each door is the same copy the rest of the app
+            explains itself with, from lib/explain.ts, printed rather than
+            hidden behind an (i) - nobody can choose between three doors from
+            their names alone, and an explanation behind a second decision is
+            not an explanation. */}
         <button type="button" className="replan-choice" onClick={() => onPick('interrupt')}>
           <strong>Something came up</strong>
-          <span>A new block lands. What it hits moves into the gaps, to tomorrow, or goes.</span>
+          <Explain id="replan-interrupt" inline />
         </button>
         <button type="button" className="replan-choice" onClick={() => onPick('shift')}>
           <strong>Shift the rest</strong>
-          <span>Everything from now, later. What no longer fits before sleep is named.</span>
+          <Explain id="replan-shift" inline />
         </button>
         {away ? (
           <button type="button" className="replan-choice" onClick={() => onPick('back')}>
@@ -152,7 +158,7 @@ function Menu({ away, onPick, onClose }: { away: string | undefined; onPick: (m:
         ) : (
           <button type="button" className="replan-choice" onClick={() => onPick('away')}>
             <strong>Away</strong>
-            <span>Pause the day. No nudges until you are back, then one rescue.</span>
+            <Explain id="replan-away" inline />
           </button>
         )}
       </div>

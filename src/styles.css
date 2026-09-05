@@ -10789,3 +10789,158 @@ main:has(.week) > .calendar {
 .day-notices > :not(:first-child) { display: none; }
 
 .day-notices:empty { display: none; }
+
+/* ------------------------------------------------------------------------
+   The explanation layer - views/Explain.tsx, copy in lib/explain.ts.
+
+   A small (i) beside a term, and one or two sentences when asked for. It has
+   to be findable and it must never be the loudest thing in its row, which is
+   the whole design problem: --faint at rest, --muted when the pointer is on
+   it, and no fill, no border, no accent at any point. Twenty of these on a
+   settings page must read as texture rather than as twenty controls.
+   ------------------------------------------------------------------------ */
+.explain {
+  position: relative;
+  display: inline-flex;
+  vertical-align: baseline;
+  margin-left: var(--s1);
+}
+
+.explain-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--faint) 55%, transparent);
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--faint);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.explain-button:hover,
+.explain.is-open .explain-button {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.explain-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* [hidden] is a UA display:none, and an author rule setting display on the
+   same element beats it whatever the specificity - the same trap
+   .north-line-more walked into. This is the line that makes the attribute
+   mean something. */
+.explain-bubble[hidden] { display: none; }
+
+.explain-bubble {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  left: -6px;
+  z-index: 60;
+  display: block;
+  width: max-content;
+  max-width: min(34ch, calc(100vw - var(--s6) * 2));
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.5;
+  text-align: left;
+  text-transform: none;
+  /* Pointer-transparent on purpose: this hangs over whatever is under it,
+     and a bubble that swallows a click is a bubble that has to be dismissed
+     before the row underneath will answer. */
+  pointer-events: none;
+}
+
+/* For a term near the right edge of its row, where a 34ch bubble hanging
+   left-aligned would run off the screen. */
+.explain-bubble.is-end {
+  left: auto;
+  right: -6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .explain-bubble { animation: explain-in var(--dur-fast) var(--ease) both; }
+}
+
+@keyframes explain-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The same copy, printed rather than asked for - see the `inline` prop. */
+.explain-inline {
+  display: block;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* A shelf's fold and its (i), on one row. The fold keeps the whole width it
+   had; the marker sits at the end of it rather than inside, because a button
+   cannot live inside a button. */
+.shelf-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.shelf-head .done-toggle { flex: 1 1 auto; min-width: 0; }
+
+/* A row in the actions sheet that carries an explanation. The row keeps the
+   full-width press target it had; the marker sits over its right end. */
+.task-actions-explained {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.task-actions-explained .task-actions-row { flex: 1 1 auto; min-width: 0; }
+
+.task-actions-explained .explain {
+  position: absolute;
+  right: var(--s3);
+}
+
+/* What picking a day type actually changes, under the segment that picks it.
+   Live: it is rewritten as the choice changes, which is the only way a line
+   like this is read at the moment it matters. */
+.day-type-note {
+  margin: calc(var(--s1) * -1) 0 var(--s3);
+  max-width: 56ch;
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+@media (pointer: coarse) {
+  /* The 44px rule, by overlay rather than by height - CONVENTIONS section 6.
+     Growing the marker itself would grow every row it sits in. */
+  .explain-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

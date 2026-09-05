@@ -8,6 +8,7 @@ import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
+import { Explain } from './Explain'
 
 // Kept as the same values PALETTE_COLORS has always had, so every template
 // saved before this shared module existed still matches one of these. Not
@@ -188,7 +189,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
         ))}
       </div>
       <div className="day-type-picker">
-        <span className="muted">Day type</span>
+        <span className="muted">
+          Day type
+          <Explain id="day-type" />
+        </span>
         <div className="segmented" role="group" aria-label="Day type">
           {DAY_TYPES.map(opt => (
             <button
@@ -203,12 +207,21 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           ))}
         </div>
       </div>
-      {draft.type !== 'full' && (
-        <p className="muted">Only blocks marked core count toward the score on this day type.</p>
-      )}
+      {/* What the choice actually changes, under the choice, in the words of
+          the value that is selected. Four buttons labelled Full, Shift,
+          Night and Rest say what they are called and nothing about what
+          picking one does to the day, and the one line that used to sit here
+          only appeared once a day type other than Full had already been
+          picked - which is after the moment somebody needed it. */}
+      <p className="muted day-type-note" aria-live="polite">
+        <Explain id={`day-type-${draft.type}` as const} inline />
+      </p>
       {sleepProfiles.length > 1 && (
         <div className="day-type-picker">
-          <span className="muted">Sleep schedule</span>
+          <span className="muted">
+            Sleep schedule
+            <Explain id="sleep-schedule" />
+          </span>
           <select
             className="setting-select"
             aria-label="Sleep schedule"
@@ -223,7 +236,6 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </select>
         </div>
       )}
-      <p className="muted">Ongoing blocks never get pushed to tomorrow or need a decision.</p>
       <ul className="block-list">
         {draft.blocks.map((b, i) => (
           <li key={i} style={{ ['--cat' as string]: categoryColor(b.category, categories) } as React.CSSProperties}>
@@ -332,6 +344,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
         >
           Ongoing
         </button>
+        {/* Beside the button rather than as a standing sentence under the
+            form. The sentence was there, it read "Ongoing blocks never get
+            pushed to tomorrow or need a decision", and it sat above a list
+            of blocks two scroll-lengths away from the toggle it described. */}
+        <Explain id="ongoing" />
         <button className="btn-secondary" onClick={addBlock}>Add block</button>
       </div>
       <div className="row">

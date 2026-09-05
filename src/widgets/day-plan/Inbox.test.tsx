@@ -55,7 +55,7 @@ test('the count is on the fold, so the inbox says how much is in it while closed
   actions.addInboxItem('One')
   actions.addInboxItem('Two')
   render(<Inbox date={DATE} />)
-  expect(screen.getByRole('button', { name: /Inbox/ })).toHaveTextContent('2')
+  expect(screen.getByRole('button', { name: /^Inbox/ })).toHaveTextContent('2')
 })
 
 test('adding to the day makes a task and empties that line from the inbox in one action', async () => {

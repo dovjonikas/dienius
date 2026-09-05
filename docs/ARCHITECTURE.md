@@ -258,6 +258,7 @@ src/
     onboarding.ts      what a first run is: a pure read, no flag
     starterTemplates.ts  the three starter templates, offered and never installed
     colors.ts          the one palette templates and a rule's tag pick from
+    explain.ts         every word this app invented, and the sentence for each
     calendarCell.ts    what a month cell says about a past day
     theme-color.ts     keeps <meta name="theme-color"> with the active theme
     theme-preview.ts   the gallery's card, resolved the way the page is
@@ -278,6 +279,7 @@ src/
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             the North window: goals, and the rules under each
     CommandPalette, ShortcutsOverlay
+    Explain            the (i) beside a term, and the sentence behind it
     TimeColumns        the two scrolling columns inside the time picker
     BackupSettings, SyncSettings, CalendarSettings, NorthSettings, CategorySettings   Settings sections
     week/              the week view - see section 11

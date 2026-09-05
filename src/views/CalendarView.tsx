@@ -8,6 +8,7 @@ import { useIsWide } from '../lib/viewport'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
 import { NARROW_DAYS, WeekView, visibleWeekDays } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
+import { Explain } from './Explain'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -277,6 +278,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
           {data.templates.length > 0 && (
             <div className="stamp-bar">
               <span className="muted">Stamp:</span>
+              <Explain id="stamp" />
               {data.templates.map(t => (
                 <button
                   key={t.id}

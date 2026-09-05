@@ -6,6 +6,7 @@ import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../
 import { TimePicker } from '../../views/TimePicker'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
+import { Explain } from '../../views/Explain'
 import { formatDuration, stepTime } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -257,7 +258,10 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
               being refused. See actions.toggleTaskHighlight for why it
               refuses rather than swapping the oldest out. */}
           <div className="task-detail-field">
-            <span className="task-detail-label">Key task</span>
+            <span className="task-detail-label">
+              Key task
+              <Explain id="key-task" />
+            </span>
             <div className="task-detail-time">
               <button
                 type="button"

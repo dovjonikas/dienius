@@ -723,3 +723,38 @@ What "visible" means, concretely:
   `ScratchFab` is `!isWide` and the header pen is `isWide`.
 - **The tooltip names the key.** `title="Scratch - S"`: the visible control
   is where somebody learns the shortcut, which is the order that works.
+
+---
+
+## 18. Every invented word is explained where it is used
+
+This app invented, or bent, about twenty terms: Ongoing, Key, Push, Stamp,
+Focus, day type and its four values, the difference between the inbox and
+the backlog, what a unit is in the library, what North is for, what a sleep
+schedule does, and how sync differs from a backup. Every one of them means
+something precise here and something else, or nothing, everywhere else.
+
+- **The copy lives in one file**, [`src/lib/explain.ts`](../src/lib/explain.ts),
+  because copy is read as copy or it is not read at all. Twenty string
+  literals across twenty components is a vocabulary nobody can see the whole
+  of, and two entries can contradict each other for a year without anybody
+  noticing.
+- **One component renders it**, `views/Explain.tsx`, in two shapes: a small
+  (i) that opens a bubble, and the same sentence printed in place for a term
+  that *is* a choice somebody is making right now. A tooltip on a control
+  somebody is deciding about is an explanation behind a second decision.
+- **One or two sentences, and nothing to press inside.** The moment a bubble
+  has a control in it, it has to be reachable, which makes it a popover,
+  which makes it a thing somebody has to get out of.
+- **Three ways in, always.** A mouse rests on it for 400ms, a finger taps it,
+  a keyboard focuses it. A tooltip only a mouse can reach is an explanation
+  half the people who need it cannot get to - section 17, one step down.
+- **The list is the test's own data.** `Explain.test.tsx` walks every id in
+  `EXPLAIN_IDS`, checks it has a sentence, checks the sentence is at most two
+  sentences with no dash, and renders the screen it is supposed to live on to
+  check it is actually there. Adding a term without copy fails; writing copy
+  for a term nobody put on screen fails too, which is the more useful of the
+  two.
+
+**If a sentence here and the behaviour disagree, the sentence is the bug.**
+Changing what Push does means changing what Push says, in the same commit.

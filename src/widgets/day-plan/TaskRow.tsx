@@ -4,6 +4,7 @@ import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useLongPress } from './useLongPress'
+import { Explain } from '../../views/Explain'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -400,9 +401,12 @@ export function TaskRow({
             idea about time and not the one this app is built on. See
             FocusView.tsx. */}
         {active && onFocus && (
-          <button type="button" className="task-focus-button" data-tour="focus" onClick={onFocus}>
-            Focus
-          </button>
+          <>
+            <button type="button" className="task-focus-button" data-tour="focus" onClick={onFocus}>
+              Focus
+            </button>
+            <Explain id="focus" align="end" />
+          </>
         )}
         <button
           type="button"

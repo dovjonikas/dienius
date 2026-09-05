@@ -4,6 +4,7 @@ import { actions } from '../lib/store'
 import { lineHasShape, parseLibraryItemInput, shapeLine, shapeOf, stripTrailingShape, unitPlural, type LibraryShape } from '../lib/library'
 import { readLastTrack, rememberLastTrack } from '../lib/libraryPrefs'
 import { useClickAway } from '../lib/useClickAway'
+import { Explain } from './Explain'
 import { CountStepInput } from './CountStepInput'
 
 /**
@@ -131,6 +132,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           </div>
         )}
       </div>
+      <Explain id="library-unit" align="end" />
       {effectiveTrack !== 'movie' && effectiveTrack !== 'series' && (
         <CountStepInput
           value={effective.total === undefined ? '' : String(effective.total)}

@@ -4,6 +4,7 @@ import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { canPlaceFloatInGap } from './gapPlacement'
 import { boundNote } from './TaskRow'
+import { Explain } from '../../views/Explain'
 import { computeTimelineLayout, formatClock, type TimelineGap } from './timelineLayout'
 
 export interface TaskActionsSheetProps {
@@ -203,15 +204,21 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
           )}
 
           {canPush && (
-            <button type="button" className="task-actions-row" onClick={push}>
-              Push {task.title} to tomorrow
-            </button>
+            <div className="task-actions-explained">
+              <button type="button" className="task-actions-row" onClick={push}>
+                Push {task.title} to tomorrow
+              </button>
+              <Explain id="push" align="end" />
+            </div>
           )}
 
           {atBound && (
-            <button type="button" className="task-actions-row" onClick={() => setOngoing(true)}>
-              Mark {task.title} as ongoing
-            </button>
+            <div className="task-actions-explained">
+              <button type="button" className="task-actions-row" onClick={() => setOngoing(true)}>
+                Mark {task.title} as ongoing
+              </button>
+              <Explain id="ongoing" align="end" />
+            </div>
           )}
 
           {isUnbounded && (
