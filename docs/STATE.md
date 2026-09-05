@@ -6,11 +6,11 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** after v2.0 - the desktop closed as a product. The library's
-queue says it is a queue, typing keeps its frame under a slow CPU, fourteen
-defects found by walking the app as its owner at three sizes in both themes,
-every copy of the plan driven live in a browser, and `DAILY.md` for the
-person who uses it. Tagged v1.0 through v2.0.
+**Last updated:** stage 1 of the wave after v2.0 - categories are the owner's
+now, a list in the data with an editor in Settings and a delete that moves
+what it would orphan. Tagged v1.0 through v2.0; this sits on top of the tag,
+untagged, and five more stages are owed before v2.0's own tag moves. The wave
+table in section 4 is where to start.
 
 ---
 
@@ -115,7 +115,10 @@ reading them.
 
 | **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
 
-Tags exist for v1.0 through v2.0.
+| *(untagged)* | Categories became the owner's: a list in `AppData` rather than a literal in a module, an editor in Settings, twelve curated colours with a readability gate, and a delete that moves what it would orphan in one commit with one undo. Three bugs on the way - category edits would never have synced at all, because `stampChanges` had no diff for the new collection; and the library's dot row had been a control that did nothing since it was built, writing values `validate` would have rejected on the next load. `adee903` |
+
+Tags exist for v1.0 through v2.0. The row above is on `main` and is not tagged:
+it is stage 1 of a six-stage wave, and the tag waits for stage 6.
 
 ---
 
@@ -123,12 +126,170 @@ Tags exist for v1.0 through v2.0.
 
 ### Nothing is half-built
 
-Everything through v2.0 is tagged, plus one polish pass on top of it. The
-suite is green - **1846 tests in 105 files, plus 23 Playwright tests in 10
-files across two viewports** - the typecheck and the build are clean,
-`npm run sweep` reports nothing on the desktop and its self-check sees five
-shapes out of five, and the working tree is empty. What follows is wanted
-rather than owed.
+Still true, and checked rather than assumed at `adee903`. The suite is green -
+**1925 tests in 108 files, plus 24 Playwright tests in 11 files across two
+viewports** - the typecheck and the build are clean, `npm run sweep` reports
+nothing on the desktop and its self-check sees five shapes out of five, and
+the working tree is empty. Everything through v2.0 is tagged; the categories
+work on top of it is committed and pushed but not tagged.
+
+What follows in this section is in two parts: the wave that is running, which
+is owed, and then the phone and the debts, which are wanted.
+
+### The wave in progress, and what is owed
+
+Two waves were briefed by the owner in one sitting. This one is a sixth done;
+the second has not started and must not start before this one closes.
+
+| # | Stage | State |
+|---|---|---|
+| 1 | **Categories the owner owns** | **Done** - `adee903`. Three bugs found on the way, two of them shipped; two existing tests changed, both named in that commit |
+| 2 | North window: goals and if-then in one place | Not started |
+| 3 | The explanation layer | Not started |
+| 4 | Library lanes: MIND, CRAFT, LIGHT | Not started |
+| 5 | Clean checkup | Not started |
+| 6 | Closing: desktop QA, DAILY.md, regression, tag v2.0 | Not started |
+| - | **Week templates** (its own wave) | Queued *after* stage 6. Its own stage 3 wants tooltips for "Week template", "Add to" and "Copy to", and the tooltip component is stage 3 of this wave, so the order is not negotiable |
+
+The working tree is empty at `adee903` and stage 2 was never begun, so there
+is nothing half-written to pick up - only the briefs below, which are the
+owner's own words turned into something a session can start coding from.
+
+#### Stage 2 - North becomes a window, and if-then moves into it
+
+The reported problem: **if-then is useless as it stands.** It is a list in
+Settings that nobody ever sees, surfaced by day type and time of day into a
+day view where it reads as noise. The fix is not to surface it harder; it is
+to put every rule under the goal it protects.
+
+- **North becomes its own view.** In the nav, reachable from the North line on
+  Today, and in the command palette. `views/north/` beside `views/week/`.
+- **Each goal is a calm card**: what / why / who it makes you, exactly the
+  three fields `Goal` already carries, with no progress, no checkbox and no
+  count of anything. ARCHITECTURE section 6 is the constraint and none of it
+  moves. The rotation stays.
+- **Under each card, "What pulls me off this"** - the if-then lines belonging
+  to *that goal*. Written in the second person the owner writes in: "If I
+  catch myself scrolling at 23:00 -> phone in the kitchen, book in hand."
+- **Limits: four goals** (already `MAX_ACTIVE_GOALS`), **five rules per goal.**
+- **A rule is never measured and never nudges.** It appears in exactly two
+  places: the North window, and the slack-trigger card - where, under the
+  why, *one* rule from that goal appears as "here is what you wrote yourself".
+  The day-type and time-of-day surfacing of the old if-then board goes.
+- **Data**: `IfThenEntry` gains an optional `goalId`. Optional because every
+  rule on disk predates it - see the migration below - and because a rule can
+  legitimately sit unassigned for a while.
+- **Migration**: existing rules land in North as "unassigned", with an offer to
+  put each under a goal. Nothing is deleted and nothing is guessed at.
+  Settings -> Rules goes, replaced by a line pointing at North.
+- **DECISIONS gets the sentence this is all for**: a rule with no goal is
+  noise; under a goal it is armour.
+- **The tour's North step is updated** - CONVENTIONS section 13 makes a stale
+  tour a P0, and this moves the thing that step points at.
+- Tests: the goal-rule link, the migration of unassigned rules, the slack
+  card showing exactly one rule from the right goal, and both limits refusing
+  rather than evicting.
+
+#### Stage 3 - the explanation layer
+
+The reported problem, in the owner's words: *"arriving for the first time I
+would not even know what Ongoing means."*
+
+- **Audit every unexplained term and control first, and put the list in the
+  report.** The ones already named: Ongoing, Day type and each of its four
+  values, Key task, Push, Backlog against Inbox, Stamp, Focus, the three
+  Replan doors, Library units, North, sleep schedule, and sync against backup.
+- **One tooltip component**, built from the tokens like everything else: 400ms
+  delay, one or two sentences, and on a phone an `(i)` or a long-press, since
+  a finger has no hover. **All the text in one file**, so the copy can be read
+  as copy.
+- **Day type**: choosing one puts a line under it saying what that choice
+  actually changes. **Ongoing**: the explanation sits beside the button.
+- A DOM test that every term on the audit list has a tooltip - the list is the
+  test's own data, so adding a term to the list without writing its copy
+  fails.
+
+#### Stage 4 - three reading lanes from the palette
+
+`Ctrl-K` -> "Load my reading plan" fills **three** lists instead of one, and
+is idempotent - running it twice changes nothing. All three are counted in
+chapters. A blank count means the book has no useful chapter count and the
+note carries the intent instead.
+
+- **MIND**: The War of Art (pages, blank, "one section a day - finish Book
+  Two, skim Book Three"), The Courage to Be Disliked (5), Daring Greatly (7),
+  Attached (12), The Status Game (blank), How to Fail at Almost Everything and
+  Still Win Big (38), Sapiens (20), Models (13), Atomic Habits (20), Four
+  Thousand Weeks (14).
+- **CRAFT**: Turning Pro (pages, blank, "short - about a week"), The Missing
+  README (blank, "before day one at the job"), The Pragmatic Programmer
+  (blank, "dip-in, 100 tips"), Never Split the Difference (10), Deep Work
+  (blank, "when the YouTube era opens").
+- **LIGHT**: The Psychology of Money (20, "finish it"), Siddhartha (12), You
+  Are Not So Smart (48, "one mechanism per chapter"), The Subtle Art of Not
+  Giving a F*ck (9), Crime and Punishment (blank), Musashi (blank, "winter").
+- **"Up next" after an item ends** offers the next book *from the same list*,
+  and only when there is not already one - `upNext` in `lib/library.ts`
+  already does the arithmetic; this is about it being per lane.
+
+This is seeded on request from the palette and never on first open. That rule
+is not a detail - it was a privacy bug in v1.9 that handed the owner's actual
+bookshelf to anybody who opened the live demo. See `librarySeed.ts`.
+
+#### Stage 5 - the clean checkup
+
+The owner's report: *"a lot of places are not clean."* Named, in order:
+
+- **The template editor.** Eight large colour balls above the form become a
+  small swatch beside the name. The day-type segment gets a line under it
+  saying what it changes (shared with stage 3). The block-add row is
+  overloaded - time, text, minutes, six dots, Ongoing and Add on one line - so
+  split it over two levels or use the compact controls quick-add already has
+  (`DurationControl`, `TimePicker`). Existing blocks become a tidy list with
+  drag reorder.
+- **The library add line.** "how many" is clipped and the unit, count and Add
+  are crushed together. Rebuild it as a quick-add row: the words dominate, the
+  controls line up.
+- **Everywhere**: one vertical rhythm, no clipped placeholder, one button
+  height per row, and every empty state carrying exactly one clear next action.
+- **A screenshot before and after for every screen touched**, and **at least
+  fifteen fixed places across the app**. Fewer than fifteen means the pass was
+  not thorough enough and gets a second round.
+
+Note for whoever runs this: the browser pane's screenshot went blank for
+anything but scroll position zero during stage 1, while `javascript_tool`
+measurement stayed reliable throughout. A fresh `preview_start`, or a fresh
+tab that actually has layout - a background tab reports `innerWidth: 0` and
+every ref reads as off-canvas - is the thing to try first.
+
+#### Stage 6 - closing
+
+- **Desktop QA on a realistic day** - twenty tasks, three Library lists,
+  thirty in the backlog, North with rules - at 1920x1080 and 1366x768 in both
+  themes, aimed at what is *new*: the North window, categories, the tooltips
+  and the rebuilt forms.
+- **`DAILY.md` updated** (it exists): the North window with its if-then lines,
+  editing categories, and the three Library lists with their template bindings.
+- Full regression - unit and e2e - `npm run sweep`, `npm run shots` rerun,
+  every doc read against the code, DECISIONS carrying the North/if-then
+  reasoning, the tour walked, then commit, push and **tag v2.0**.
+
+#### The wave after: week templates
+
+Briefed and queued, not started. **No personal seed data - the owner builds
+their own template.** In short: "New template" first asks Day or Week
+(`kind: 'day' | 'week'`, everything existing is a day and nothing changes); a
+week editor of seven columns with "Add to" chips (this day / weekdays /
+weekend / all days), Copy to, drag between columns, a per-column day type and
+sleep override, and blocks sharing a `groupId` when added together so editing
+one can ask "this day or everywhere" the way a repeat does. Stamping takes the
+weekday's column; a weekday map holding a week template fills all seven in one
+press; idempotency is `blockId` plus weekday. A week template's card shows a
+seven-column preview. Then: "Start from a day template" to expand one day into
+seven and edit the differences, `DAILY.md` on doing exactly that (a gym
+rotation across the week, Reading and CRAFT blocks bound to Library lists), the
+tour's stamp step checked against a week template, and tooltips for the new
+terms.
 
 ### The desktop is closed; the phone is the next wave
 

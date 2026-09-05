@@ -89,8 +89,17 @@ through `addWithoutDuplicates`; a manual task deliberately has no identity,
 because two tasks called "Call the bank" on one day are two calls.
 
 **Dangling ids degrade, never crash.** A `templateId`, `libraryRef`,
-`sleepProfileId` or `repeatOf` that resolves to nothing is treated exactly as
-if it were absent. This contract is kept by every reader and is tested.
+`sleepProfileId`, `repeatOf` or `category` that resolves to nothing is treated
+exactly as if it were absent. This contract is kept by every reader and is
+tested.
+
+`category` joined that list when categories became the owner's to author. It
+used to be a closed union of six ids that `validate` could refuse anything
+outside; an id from `crypto.randomUUID()` cannot be checked against a list
+nobody wrote, so the three fields that point at one - on `Task`,
+`TemplateBlock` and `BacklogItem` - are `optional(text(1, 64))` now. That is a
+loosening, and it is the deliberate one: a number, an object or an empty
+string in that field still fails the whole payload.
 
 ### What is *not* in `AppData`
 
@@ -504,6 +513,7 @@ erases the other's morning. Every entity therefore carries its own
 | Inbox item | `inbox:<id>` | |
 | Backlog item | `backlog:<id>` | |
 | Scratch note | `scratch:<id>` | |
+| Category | `category:<id>` | Renaming Health on the laptop and recolouring Meals on the phone are two edits to two things. This is exactly why the list is in `AppData` rather than in `Settings`: at a settings field's grain one of those two would simply vanish |
 | Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
 
 One person, two devices, rarely at the same second: real conflicts are almost
