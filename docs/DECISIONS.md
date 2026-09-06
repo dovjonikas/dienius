@@ -1329,3 +1329,48 @@ under Review's arrows rather than in the calendar's bar, which on a phone
 is three rows already and was kept to three in v2.2; greyed rather than
 hidden when the stretch has nothing, because a control that only appears
 once the feature has been used is a control nobody finds.
+
+## The rail opens on intent only
+
+Since v2.0 the navigation rail unfolded to its labels two ways: a mouse
+arriving on it, and any focus landing inside it. Both were argued for at
+the time and both were wrong in the same way - they read a signal the
+browser sends for its own reasons as a person reaching for the rail.
+
+The owner watched it happen every day. Open or close Discord on the other
+screen, or come back to the window, and the rail was out over the mini
+calendar with nobody having gone near it. The cause is what a browser does
+when a window gets its focus back: it fires focus again on whatever element
+had it, and after a click on a rail item that element is the item. React's
+`onFocus` is `focusin`, so the nav heard it, took it for a keyboard
+arriving, and opened. A mouse arrival is the same shape of false signal:
+the browser sends boundary events under a pointer that has not moved
+whenever what is under it changes, so an enter alone says nothing about a
+hand.
+
+**Three ways in, each of them somebody meaning it.** A mouse that comes in
+and moves, and is still inside `RAIL_OPEN_DWELL_MS` (150ms) after it came
+in; a Tab that brings the focus in; and the pin. A move that reports the
+arrival's own coordinates is the browser's, not the hand's, and is ignored;
+a cursor crossing the rail on its way to the left column never opens it,
+which was a small annoyance of its own. Only a Tab counts as a keyboard
+reaching the rail, bracketed by its keydown and keyup: a focus that arrives
+any other way - the window coming back, Escape handing focus back to the
+pen that opened Scratch - is not a person arriving.
+
+**An opening needs an arrival.** A press on an item, the pointer leaving,
+or the window losing focus all end the visit, and a mouse that is still in
+the rail after any of those does not reopen it by staying there. That is
+what makes "never from the window's focus or blur" hold with the pointer
+resting on the rail's edge: the blur closes it, the focus opens nothing,
+and the next real movement in it is a new arrival.
+
+**What it costs.** The labels come out 150 milliseconds later than they
+did, and a keyboard user who reaches the rail by any road other than Tab
+sees the icons with their tooltips rather than the labels. Both are the
+right trade against a sidebar that opens on its own several times a day.
+
+The six cases are in `NavRail.test.tsx`: the dwell and not a moment before,
+a still pointer, a crossing pointer, the window coming back with the focus
+on the item last pressed, the window losing focus with the rail open, and
+Escape handing the focus to the pen.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { readRailPinned, writeRailPinned } from '../lib/railPrefs'
 import {
   CalendarIcon,
@@ -39,6 +39,14 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const SETTINGS_ITEM: NavItem = { view: 'settings', label: 'Settings', key: ',', Icon: SettingsIcon }
 
+/**
+ * How long a mouse has to have been inside the rail, and moving, before the
+ * labels come out. Long enough that a cursor crossing the rail on its way to
+ * the left column never opens it; short enough that a cursor coming to rest
+ * on an icon reads as instant.
+ */
+export const RAIL_OPEN_DWELL_MS = 150
+
 export interface NavRailProps {
   view: NavView
   onNavigate: (view: NavView) => void
@@ -68,12 +76,26 @@ export interface NavRailProps {
  * ## The two states
  *
  * Closed is icons only, 56px. Open is 176px with the labels beside them, and
- * it opens two ways: a pointer resting on the rail, or the pin, which is
- * remembered per device because a 1366 laptop and a 2560 monitor want
- * different answers. Hovering never moves the page - the open rail is drawn
- * over the content rather than pushing it - because a layout that reflows
- * when a cursor drifts to the left edge is a layout that cannot be trusted.
- * Pinning does move it, once, deliberately.
+ * it opens three ways, each of them somebody meaning it: a mouse that comes
+ * in and moves, and is still there `RAIL_OPEN_DWELL_MS` later; a Tab that
+ * brings the focus in; or the pin, which is remembered per device because a
+ * 1366 laptop and a 2560 monitor want different answers. Hovering never
+ * moves the page - the open rail is drawn over the content rather than
+ * pushing it - because a layout that reflows when a cursor drifts to the
+ * left edge is a layout that cannot be trusted. Pinning does move it, once,
+ * deliberately.
+ *
+ * ## What does not open it
+ *
+ * The window changing hands. It used to open on any focus, on the argument
+ * that a keyboard cannot hover - and a browser re-fires focus on whatever
+ * was focused when another window gives this one back, which after a click
+ * on a rail item is that item. The owner watched the rail unfold every time
+ * Discord took the screen and returned it. A cursor that has not moved is
+ * the same false signal in another shape: the browser sends boundary events
+ * under a resting pointer whenever the page under it changes, so an enter
+ * alone means nothing, and a move at the same place means nothing either.
+ * DECISIONS, "The rail opens on intent only".
  *
  * ## The active mark
  *
@@ -94,6 +116,57 @@ export interface NavRailProps {
 export function NavRail({ view, onNavigate, onOpenScratch, scratchOpen, isWide }: NavRailProps) {
   const [pinned, setPinned] = useState(readRailPinned)
   const [hovering, setHovering] = useState(false)
+
+  // Where and when the mouse came in. Cleared by anything that ends the
+  // visit - leaving, a press, the window going elsewhere - so an opening
+  // always needs a fresh arrival: the mouse still sitting in the rail after
+  // any of those does not reopen it by staying there.
+  const arrival = useRef<{ at: number; x: number; y: number } | null>(null)
+  const dwell = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Whether a Tab is what is moving the focus right now. Set on its keydown
+  // and cleared on its keyup, which brackets the focus change the browser
+  // makes between them; a focus arriving any other way - the window coming
+  // back, a sheet handing focus to the pen that opened it - is not somebody
+  // reaching for the rail.
+  const tabbing = useRef(false)
+
+  function forget() {
+    arrival.current = null
+    if (dwell.current) {
+      clearTimeout(dwell.current)
+      dwell.current = null
+    }
+  }
+
+  function close() {
+    forget()
+    setHovering(false)
+  }
+
+  useEffect(() => {
+    if (!isWide) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') tabbing.current = true
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') tabbing.current = false
+    }
+    const onWindowBlur = () => {
+      tabbing.current = false
+      close()
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('keyup', onKeyUp, true)
+    window.addEventListener('blur', onWindowBlur)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('keyup', onKeyUp, true)
+      window.removeEventListener('blur', onWindowBlur)
+      forget()
+    }
+    // close and forget only touch refs and a state setter, both stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWide])
 
   // The pinned width is what the content is laid out against, so it belongs
   // on the root rather than inside the rail - .app reads it to decide how
@@ -121,7 +194,30 @@ export function NavRail({ view, onNavigate, onOpenScratch, scratchOpen, isWide }
    * survives every press.
    */
   function closeAfterPress() {
-    setHovering(false)
+    close()
+  }
+
+  /**
+   * A move that is a move. The first one after arriving arms the dwell for
+   * whatever is left of it; a move that comes after the dwell has already
+   * passed opens the rail there and then. A move reporting the same place
+   * as the arrival is the browser's own, not the hand's, and is ignored.
+   */
+  function onPointerMove(e: React.PointerEvent) {
+    if (e.pointerType !== 'mouse') return
+    const from = arrival.current
+    if (!from || dwell.current || hovering) return
+    if (e.clientX === from.x && e.clientY === from.y) return
+    const remaining = RAIL_OPEN_DWELL_MS - (Date.now() - from.at)
+    if (remaining <= 0) {
+      setHovering(true)
+      return
+    }
+    dwell.current = setTimeout(() => {
+      dwell.current = null
+      // Still the same visit: nothing has ended it in the meantime.
+      if (arrival.current === from) setHovering(true)
+    }, remaining)
   }
 
   return (
@@ -131,13 +227,18 @@ export function NavRail({ view, onNavigate, onOpenScratch, scratchOpen, isWide }
       data-pinned={isWide && pinned ? 'true' : undefined}
       // Mouse only. A finger arriving at the rail is a finger on its way to
       // pressing something in it, and widening under it would move the target
-      // out from under the press.
-      onPointerEnter={e => e.pointerType === 'mouse' && setHovering(true)}
-      onPointerLeave={e => e.pointerType === 'mouse' && setHovering(false)}
+      // out from under the press. Arriving opens nothing by itself: see
+      // onPointerMove for what does.
+      onPointerEnter={e => {
+        if (e.pointerType === 'mouse') arrival.current = { at: Date.now(), x: e.clientX, y: e.clientY }
+      }}
+      onPointerMove={onPointerMove}
+      onPointerLeave={e => e.pointerType === 'mouse' && close()}
       // A keyboard reaching the rail gets the labels too - it is the one way
       // in that cannot hover, and a tab stop on an unlabelled square is the
-      // worst of both.
-      onFocus={() => isWide && setHovering(true)}
+      // worst of both. Only a Tab counts as reaching it; a focus that comes
+      // back on its own is the window returning, not a person arriving.
+      onFocus={() => isWide && tabbing.current && setHovering(true)}
       onBlur={e => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHovering(false)
       }}

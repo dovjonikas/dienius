@@ -55,10 +55,11 @@ const SMALL_ON_PURPOSE = ['week-block', 'year-cell', 'link-button']
 async function tab(page, name) {
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name, exact: true }).click()
   // Park the pointer away from the rail before anything is measured. The rail
-  // opens under a resting mouse and draws its labels over the left of the
-  // page, which is a flyout doing its job and not a state any screen is ever
-  // found in - leaving the cursor on it reported nine covered mini-calendar
-  // cells and then hung the next click on a point the flyout was over.
+  // opens under a mouse that moves in it and draws its labels over the left
+  // of the page, which is a flyout doing its job and not a state any screen
+  // is ever found in - leaving the cursor on it reported nine covered
+  // mini-calendar cells and then hung the next click on a point the flyout
+  // was over.
   const size = page.viewportSize() ?? { width: 1200, height: 800 }
   await page.mouse.move(size.width / 2, size.height / 2)
   await page.waitForTimeout(350)

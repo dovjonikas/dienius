@@ -171,7 +171,7 @@ with the rail down the left.
 | # | Stage | Commit | What it became |
 |---|---|---|---|
 | 0 | Written down first | - | The brief and the decisions it forced, in this file, before any code |
-| 1 | The rail opens on intent only | - | |
+| 1 | The rail opens on intent only | - | The cause: React's `onFocus` is `focusin`, and a browser re-fires focus on the item last pressed whenever another window gives this one back. Three ways in now - a mouse that comes in and moves and is still there 150ms later, a Tab, the pin - and the window changing hands is none of them. Six tests in `NavRail.test.tsx`, checked in the pane at 1920x1080 against the real event stream; DECISIONS "The rail opens on intent only" |
 | 2 | The pixel audit | - | |
 | 3 | Low day, and a timer on a step | - | |
 | 4 | Closing and `v2.4` | - | |
