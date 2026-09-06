@@ -25,6 +25,9 @@ function openFirst(onClose = () => {}) {
   function Harness() {
     const data = useAppData()
     const day = data.days[DATE]
+    // Gone the way it goes in the app: DayView stops drawing the sheet
+    // the moment its task is no longer on the day.
+    if (!day?.tasks[0]) return null
     return <TaskDetail task={day.tasks[0]} tasks={day.tasks} date={DATE} library={data.library} onClose={onClose} />
   }
   return render(<Harness />)
@@ -221,4 +224,62 @@ test('a size can be a chip, and the chip in force is marked', async () => {
   expect(tasks()[0].minutes).toBe(90)
   expect(within(screen.getByRole('group', { name: 'Size' })).getByRole('button', { name: '1h30' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByLabelText('Size in minutes')).toHaveValue('90')
+})
+
+// --- the footer: the way out, and the way to be rid of it ------------------
+//
+// Outside the scrolling body, so both are on screen whatever the sheet
+// holds. The sheet saves as it goes, so Done is not Save: it is the button
+// that says the person is finished here, which a sheet with no ending made
+// people look for. Delete used to be a Remove section at the bottom of a
+// body that scrolled, and only for a repeating task; a plain task's delete
+// was two menus away.
+
+test('Done closes the sheet, and everything typed is already kept', async () => {
+  const user = userEvent.setup()
+  seed()
+  const onClose = vi.fn()
+  openFirst(onClose)
+  await user.click(screen.getByRole('button', { name: 'Done' }))
+  expect(onClose).toHaveBeenCalled()
+})
+
+test("a plain task can be deleted from its own sheet, through the day's own undo-carrying delete", async () => {
+  const user = userEvent.setup()
+  const id = seed()
+  const onDelete = vi.fn()
+  function Harness() {
+    const data = useAppData()
+    const day = data.days[DATE]
+    return (
+      <TaskDetail task={day.tasks[0]} tasks={day.tasks} date={DATE} library={data.library} onClose={() => {}} onDelete={onDelete} />
+    )
+  }
+  render(<Harness />)
+  await user.click(screen.getByRole('button', { name: 'Delete' }))
+  expect(onDelete).toHaveBeenCalledWith(id)
+})
+
+test("a repeating task's delete says which days it leaves, and the sheet closes after it", async () => {
+  const user = userEvent.setup()
+  const id = seed('Standup')
+  actions.setTaskRepeat(DATE, id, 'weekdays', 'series')
+  const onClose = vi.fn()
+  openFirst(onClose)
+  expect(screen.getByRole('button', { name: 'Delete from every day' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Just this day' }))
+  await user.click(screen.getByRole('button', { name: 'Delete from this day' }))
+  expect(onClose).toHaveBeenCalled()
+})
+
+// The stepper said "120" and a hint beside it said "2h", and the owner read
+// the same size twice. The unit is in the stepper now, once; the chips
+// beside it are the six lengths, which is a different thing.
+test('the size is stated once: a number with its unit, and the chips', () => {
+  const id = seed()
+  actions.setTaskMinutes(DATE, id, 120)
+  openFirst()
+  expect(screen.getByLabelText('Size in minutes')).toHaveValue('120')
+  expect(screen.queryByText('2h', { selector: '.task-detail-hint' })).toBeNull()
+  expect(screen.getByText('min', { selector: '.time-stepper-unit' })).toBeInTheDocument()
 })

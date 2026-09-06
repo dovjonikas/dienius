@@ -409,6 +409,7 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
           date={date}
           library={data.library}
           onClose={() => setDetailTaskId(null)}
+          onDelete={taskId => deleteWithUndo(taskId)}
         />
       )}
 

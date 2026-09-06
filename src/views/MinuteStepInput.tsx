@@ -17,6 +17,13 @@ export interface MinuteStepInputProps {
   onChange: (next: string) => void
   placeholder?: string
   ariaLabel: string
+  /**
+   * A unit printed after the number, inside the box - "min". Without it a
+   * filled field reads "120" and needs a "2h" beside it to be read at all,
+   * and the two together read as one number said twice; an empty one reads
+   * as the bare word "min". Decorative: the label already says minutes.
+   */
+  unit?: string
 }
 
 /**
@@ -33,7 +40,7 @@ export interface MinuteStepInputProps {
  * a length. Two small components that each do one thing are easier to trust
  * than one with a flag that changes half of what it does.
  */
-export function MinuteStepInput({ value, onChange, placeholder = 'min', ariaLabel }: MinuteStepInputProps) {
+export function MinuteStepInput({ value, onChange, placeholder = 'min', ariaLabel, unit }: MinuteStepInputProps) {
   // The text actually in the box, which is allowed to be mid-typing and
   // therefore invalid. `value` is the committed truth; this is the draft.
   const [draft, setDraft] = useState(value)
@@ -88,6 +95,11 @@ export function MinuteStepInput({ value, onChange, placeholder = 'min', ariaLabe
         onBlur={e => commit(e.target.value)}
         onKeyDown={handleKeyDown}
       />
+      {unit && (
+        <span className="time-stepper-unit" aria-hidden="true">
+          {unit}
+        </span>
+      )}
       <div className="time-stepper-buttons">
         <button type="button" className="time-step" aria-label={`${ariaLabel} up`} onClick={() => step(STEP)} />
         <button type="button" className="time-step is-down" aria-label={`${ariaLabel} down`} onClick={() => step(-STEP)} />

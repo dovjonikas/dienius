@@ -2840,6 +2840,21 @@ select:focus {
   border-left: 1px solid var(--border);
 }
 
+/* The unit after the number, inside the box - see MinuteStepInput. */
+.time-stepper-unit {
+  align-self: center;
+  padding-right: var(--s2);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  user-select: none;
+}
+
+.time-stepper:has(.time-stepper-unit) .minutes-input {
+  width: 58px;
+  padding-right: 0;
+  text-align: right;
+}
+
 /* Two half-height buttons stacked, which is what a spinner is. The pair still
    clears the 44px the app holds for a touch target between them, and each is
    40px wide - a chevron is a small mark and needs the width, not the height.
@@ -6966,7 +6981,10 @@ button.danger:focus-visible {
   align-items: center;
   justify-content: center;
   padding: var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  /* Dark enough that the sheet is the foreground and the day behind it is
+     the background: at 45% the day still competed with the sheet for the
+     eye, and the sheet read as one more card among the cards. */
+  background: rgba(0, 0, 0, 0.62);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -6988,7 +7006,12 @@ button.danger:focus-visible {
   display: flex;
   flex-direction: column;
   width: min(460px, 100%);
-  max-height: min(680px, 100%);
+  /* As tall as the scrim's padded height allows, which holds the whole of
+     a task at 965px of window with nothing to scroll; where it cannot, the
+     body scrolls behind a thin bar and the footer stays. It was 680, which
+     scrolled 220px of a nine-field sheet behind a native scrollbar with
+     arrows. */
+  max-height: 100%;
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
@@ -6996,11 +7019,15 @@ button.danger:focus-visible {
   outline: none;
 }
 
+/* The title runs the width of the head and the close cross sits in the
+   sheet's own corner, over the head's padding. It used to be a flex item
+   beside the title, which put it inside what read as the title's field. */
 .task-detail-head {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s3) var(--s3) var(--s3) var(--s4);
+  padding: var(--s3) 52px var(--s3) var(--s4);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
@@ -7018,6 +7045,13 @@ button.danger:focus-visible {
 }
 
 .task-detail-title:hover { border-color: var(--border); }
+
+.task-detail-head .task-detail-close {
+  position: absolute;
+  top: 50%;
+  right: var(--s3);
+  transform: translateY(-50%);
+}
 
 .task-detail-close {
   flex-shrink: 0;
@@ -7038,10 +7072,24 @@ button.danger:focus-visible {
 .task-detail-body {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
-  padding: var(--s4);
+  gap: var(--s3);
+  padding: var(--s3) var(--s4) var(--s4);
   overflow-y: auto;
+  scrollbar-width: thin;
 }
+
+/* Outside the scrolling body, so the way out and the way to be rid of the
+   task are on screen whatever the sheet holds. */
+.task-detail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.task-detail-done { margin-left: auto; }
 
 .task-detail-field {
   display: flex;

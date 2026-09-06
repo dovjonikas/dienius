@@ -8,7 +8,7 @@ import { TimePicker } from '../../views/TimePicker'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
-import { formatDuration, stepTime } from './capacity'
+import { stepTime } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -26,6 +26,13 @@ export interface TaskDetailProps {
   date: string
   library: LibraryList[]
   onClose: () => void
+  /**
+   * Deletes a task that is not part of a series - the day's own delete,
+   * which carries the undo offer. Optional so a caller with nothing to do
+   * about it draws the sheet without a Delete; a task in a series deletes
+   * itself through the store with its scope, as it always did.
+   */
+  onDelete?: (taskId: string) => void
 }
 
 /**
@@ -41,7 +48,7 @@ export interface TaskDetailProps {
  * entirely in CSS. Two components would drift, and there is no behavioural
  * difference between them - only where the rectangle sits.
  */
-export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailProps) {
+export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: TaskDetailProps) {
   useRestoreFocus()
   const data = useAppData()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -71,6 +78,10 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
   const inSeries = !!task.repeat || !!task.repeatOf
   const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
   const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
+  const scopeHint =
+    scope === 'series'
+      ? 'Days already lived keep it - only this one and the ones ahead change.'
+      : 'This day changes, and nowhere else does.'
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {
@@ -222,18 +233,18 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
 
           {/* The number, and the six lengths a task usually is beside it:
               a chip is one press where the box is arithmetic, and the box
-              stays for the seventh length. Both write the same field. */}
+              stays for the seventh length. Both write the same field. The
+              number carries its unit and nothing repeats it: a "2h" beside
+              "120" read as the same size said twice. */}
           <div className="task-detail-field">
             <span className="task-detail-label">Size</span>
             <div className="task-detail-time">
               <MinuteStepInput
                 value={task.minutes === undefined ? '' : String(task.minutes)}
                 ariaLabel="Size in minutes"
+                unit="min"
                 onChange={next => actions.setTaskMinutes(date, task.id, next === '' ? undefined : Number(next))}
               />
-              {task.minutes !== undefined && (
-                <span className="task-detail-hint">{formatDuration(task.minutes)}</span>
-              )}
             </div>
             <DurationChips minutes={task.minutes} onChange={minutes => actions.setTaskMinutes(date, task.id, minutes)} label="Size" />
           </div>
@@ -323,30 +334,8 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
                 </button>
               </div>
             )}
+            {inSeries && <span className="task-detail-hint">{scopeHint}</span>}
           </div>
-
-          {inSeries && (
-            <div className="task-detail-field">
-              <span className="task-detail-label">Remove</span>
-              <div className="task-detail-time">
-                <button
-                  type="button"
-                  className="btn-danger"
-                  onClick={() => {
-                    actions.deleteTask(date, task.id, scope)
-                    onClose()
-                  }}
-                >
-                  {scope === 'series' ? 'Delete from every day' : 'Delete from this day'}
-                </button>
-                <span className="task-detail-hint">
-                  {scope === 'series'
-                    ? 'Days already lived keep it - only this one and the ones ahead lose it.'
-                    : 'It stops coming back on this day, and nowhere else changes.'}
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Only offered once there is a library to bind to, the same rule
               the sleep schedule picker follows. */}
@@ -441,6 +430,47 @@ export function TaskDetail({ task, tasks, date, library, onClose }: TaskDetailPr
               onBlur={() => actions.setTaskNote(date, task.id, note)}
             />
           </div>
+        </div>
+
+        {/* The way out and the way to be rid of it, outside the scrolling
+            body so both are on screen whatever the sheet holds. The sheet
+            saves as it goes - every field writes on change or on blur - so
+            Done is not Save: it is the button that says the person is
+            finished here, which a sheet with no ending made people look for.
+            Delete was a Remove section at the bottom of a body that scrolled,
+            and only for a repeating task; a plain task's delete was two menus
+            away. A task in a series still deletes with its scope, and the
+            scope's own line above says what that reaches. */}
+        <div className="task-detail-foot">
+          {inSeries ? (
+            <button
+              type="button"
+              className="btn-danger"
+              title={scopeHint}
+              onClick={() => {
+                actions.deleteTask(date, task.id, scope)
+                onClose()
+              }}
+            >
+              {scope === 'series' ? 'Delete from every day' : 'Delete from this day'}
+            </button>
+          ) : (
+            onDelete && (
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={() => {
+                  onDelete(task.id)
+                  onClose()
+                }}
+              >
+                Delete
+              </button>
+            )
+          )}
+          <button type="button" className="btn-primary task-detail-done" onClick={onClose}>
+            Done
+          </button>
         </div>
       </div>
     </div>
