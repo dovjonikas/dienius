@@ -268,20 +268,25 @@ test('a block saved with a size carries it, so a stamped day arrives already siz
   await user.type(screen.getByPlaceholderText('09:00'), '09:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
   // The size is the one duration control now: a chip for the common
-  // lengths, and the stepper under them for the rest.
-  await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
+  // lengths, and the stepper under them for the rest. It opens holding the
+  // length quick-add last used, so it is opened by that label.
+  await user.click(screen.getByRole('button', { name: /Change how long/ }))
   await user.click(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '1h30' }))
   await user.click(screen.getByRole('button', { name: 'Add block' }))
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Gym', minutes: 90 })
 })
 
-test('a block added with no size saves with minutes absent, not zero', async () => {
+// The control opens holding a length since v2.4, so a block with none is
+// a choice made in its panel rather than the state a field starts in.
+test('a block added after choosing No length saves with minutes absent, not zero', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
   await user.type(screen.getByPlaceholderText('What happens'), 'Guitar')
+  await user.click(screen.getByRole('button', { name: /Change how long/ }))
+  await user.click(screen.getByRole('button', { name: 'No length' }))
   await user.click(screen.getByRole('button', { name: 'Add block' }))
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates[0].blocks[0].minutes).toBeUndefined()
@@ -307,6 +312,11 @@ test('typing garbage into the block size field saves it as unsized rather than a
   await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Full day')
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+  // The control opens holding the last length quick-add used; No length is
+  // one press in its panel, which closes on it, so it is opened again for
+  // the stepper.
+  await user.click(screen.getByRole('button', { name: /Change how long/ }))
+  await user.click(screen.getByRole('button', { name: 'No length' }))
   await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
   await user.type(screen.getByLabelText('Size in minutes'), 'abc')
   await user.tab()
@@ -438,6 +448,11 @@ test('garbage typed into the block size field never shows as a bad number in the
   render(<TemplatesView />)
   await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+  // The control opens holding the last length quick-add used; No length is
+  // one press in its panel, which closes on it, so it is opened again for
+  // the stepper.
+  await user.click(screen.getByRole('button', { name: /Change how long/ }))
+  await user.click(screen.getByRole('button', { name: 'No length' }))
   await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
   await user.type(screen.getByLabelText('Size in minutes'), 'abc')
   await user.tab()
@@ -453,14 +468,15 @@ test('block-add fields do not leak between editing sessions', async () => {
   await user.click(screen.getByRole('button', { name: 'Edit A' }))
   await user.type(screen.getByPlaceholderText('09:00'), '10:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Half-typed')
-  await user.click(screen.getByRole('button', { name: 'No length set. Choose how long.' }))
+  await user.click(screen.getByRole('button', { name: '30 min long. Change how long.' }))
   await user.click(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '15min' }))
   expect(screen.getByRole('button', { name: '15 min long. Change how long.' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Cancel' }))
   await user.click(screen.getByRole('button', { name: 'Edit B' }))
   expect(screen.getByPlaceholderText('09:00')).toHaveValue('')
   expect(screen.getByPlaceholderText('What happens')).toHaveValue('')
-  expect(screen.getByRole('button', { name: 'No length set. Choose how long.' })).toBeInTheDocument()
+  // Back to the length quick-add last used, not the 15 chosen for A.
+  expect(screen.getByRole('button', { name: '30 min long. Change how long.' })).toBeInTheDocument()
 })
 
 test('with no templates saved, the empty state offers starter templates instead of a dead end', () => {

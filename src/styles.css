@@ -3870,7 +3870,10 @@ button.primary {
 .block-add-line {
   display: flex;
   gap: var(--s2);
-  align-items: center;
+  /* Stretched, not centred: three controls with three box models came out
+     41, 39 and 40px when each kept its own height. Stretched to the row
+     they are one height whatever each one's border adds. */
+  align-items: stretch;
 }
 
 /* A floor, never a ceiling, and only where a pointer is fine: on a finger
@@ -3880,8 +3883,8 @@ button.primary {
    measuring rather than by reading the stylesheet - the phone pass found both
    the same afternoon they were written. */
 @media (hover: hover) and (pointer: fine) {
-  .block-add-line > *,
-  .block-add-line input,
+  .block-add-line > * { min-height: 40px; }
+  .block-add-line .time-picker .time-input,
   .block-add-line .duration-control-value { min-height: 38px; }
 }
 
@@ -3898,16 +3901,48 @@ button.primary {
    28px and 44px, which put three baselines in one row. */
 .block-add-marks { padding-left: 2px; }
 
+/* Not the swatches: a 20px circle given the row's 32px minimum was a
+   20x32 oval, and with the generic block-add button rule below giving it
+   the page's ground for a fill, a border and a control's corners, it was a
+   dark rounded square - six of them, and the owner could not see the
+   colours. A swatch is a swatch wherever it sits. */
 @media (hover: hover) and (pointer: fine) {
-  .block-add-marks button,
+  .block-add-marks button:not(.category-swatch),
   .block-add-marks .category-picker { min-height: 32px; }
 }
 
 .block-add-marks .btn-secondary { margin-left: auto; }
 
+/* The week editor's two groups, each under its heading - see
+   WeekTemplateEditor. The heading is the field label's own register. */
+.block-add-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.block-add-heading {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.block-add-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .block-add-where button { min-height: 32px; }
+}
+
 .block-add input { flex: 1 1 120px; }
 .block-add .duration-control { flex: 0 0 auto; }
-.block-add button {
+.block-add button:not(.category-swatch) {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
@@ -5577,6 +5612,16 @@ button.primary:hover { background: color-mix(in srgb, var(--accent) 84%, #fff); 
 
 .btn-secondary:hover { border-color: var(--muted); }
 
+/* Hollow, in the muted ink, at full opacity. At half opacity a surface
+   button's white text went grey on grey, and the library's Add read as a
+   button that had been forgotten rather than one waiting for a title. */
+.btn-secondary:disabled {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--muted);
+  opacity: 1;
+}
+
 /* Outline, never filled. A destructive action should be findable and should
    not be the brightest thing on the screen - filled red reads as the button
    you are supposed to press. It fills only once it is armed, which is the
@@ -6684,7 +6729,10 @@ button.danger:focus-visible {
    lines, with the field's tail between them. */
 .library-add {
   display: flex;
-  align-items: center;
+  /* Stretched, so the field and the three controls beside it are one
+     height whatever each one's border adds - centred, the field came out a
+     pixel short of the controls. */
+  align-items: stretch;
   flex-wrap: wrap;
   gap: var(--s2);
 }
@@ -6693,16 +6741,21 @@ button.danger:focus-visible {
 
 .library-add-controls {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--s2);
   flex: 0 0 auto;
 }
 
-/* One height across the row, the field included - on a mouse. */
+/* One height across the row, the field included - on a mouse. Not the
+   stepper's two arrows: each is half its box, and giving each the row's
+   own minimum made the box twice the row - 78px beside a 39px field. */
 @media (hover: hover) and (pointer: fine) {
   .library-add > input,
-  .library-add-controls button,
-  .library-add-controls .count-input { min-height: 38px; }
+  .library-add .library-unit,
+  .library-add .count-stepper,
+  .library-add .btn-secondary { min-height: 40px; }
+  .library-add-controls .count-input,
+  .library-add .duration-control-value { min-height: 38px; }
 }
 
 .library-list-empty { margin: 0; font-size: var(--t-sm); }
@@ -12332,11 +12385,17 @@ main:has(.week) > .calendar {
   .wt-block:focus-within .setting-remove { opacity: 1; }
 }
 
-.wt-empty { color: var(--faint); font-size: var(--t-xs); text-align: center; }
+/* Said in words rather than as a dash: "-" read as a figure missing. The
+   muted ink, which reads, rather than the faint one, which does not. */
+.wt-empty { color: var(--muted); font-size: var(--t-xs); font-style: italic; text-align: center; }
 
 .wt-column-foot { display: flex; flex-direction: column; gap: var(--s1); margin-top: auto; }
 
-.wt-column-foot .setting-select { font-size: var(--t-xs); padding: 2px var(--s1); min-height: 26px; }
+/* Room for the arrow: the select draws its chevron over the last 22px, and
+   with 4px of padding there the word under it read "Same as the wee". The
+   option is "Week default" now, as well, which fits a 105px column with the
+   arrow's room taken. */
+.wt-column-foot .setting-select { font-size: var(--t-xs); padding: 2px 22px 2px var(--s1); min-height: 26px; }
 
 .wt-copy { align-self: flex-start; font-size: var(--t-xs); }
 

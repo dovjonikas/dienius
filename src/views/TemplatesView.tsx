@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from '../lib/categories'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
@@ -108,11 +109,16 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
-  const [blockMinutes, setBlockMinutes] = useState('')
+  // Opens holding an answer, the rule every control in this app keeps
+  // (CONVENTIONS section 16): the length quick-add last used. It opened
+  // empty and read as the bare word "min". No length is one press away in
+  // the control's panel.
+  const [blockMinutes, setBlockMinutes] = useState(() => String(readLastDuration()))
   // Sticks between blocks on purpose: a template is usually built in runs of
   // the same kind of thing (three work blocks, then two meals), so carrying
   // the last choice forward is right far more often than resetting to the
-  // default would be. Every other field of the block-add row clears on add.
+  // default would be. The size sticks for the same reason; the time, the
+  // title and the two marks clear on add.
   const [blockCategory, setBlockCategory] = useState<CategoryId>(() => defaultCategoryId(categories))
   const nameRef = useRef<HTMLInputElement>(null)
   const blockListRef = useRef<HTMLUListElement>(null)
@@ -149,7 +155,6 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
     setBlockTitle('')
     setBlockCore(false)
     setBlockUnbounded(false)
-    setBlockMinutes('')
   }
 
   function removeBlock(index: number) {

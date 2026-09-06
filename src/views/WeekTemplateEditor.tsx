@@ -3,6 +3,7 @@ import { PALETTE_COLORS, paletteColorName } from '../lib/colors'
 import { categoryColor, resolvedColor } from '../lib/categories'
 import { useAppData } from '../lib/store'
 import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
+import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import type { CategoryId } from '../lib/categories'
 import type { DayType, Template, TemplateBlock, WeekDayOverride } from '../lib/types'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
@@ -109,8 +110,15 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
 
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
-  const [blockMinutes, setBlockMinutes] = useState('')
-  const [blockCategory, setBlockCategory] = useState<CategoryId | undefined>(undefined)
+  // Opens holding an answer, the rule every control in this app keeps
+  // (CONVENTIONS section 16): the length quick-add last used, which is the
+  // length this person's blocks tend to be. It opened empty and read as
+  // the bare word "min", which the owner took for a field that had lost
+  // its number. No size is still one press away in the control's panel.
+  const [blockMinutes, setBlockMinutes] = useState(() => String(readLastDuration()))
+  // The first category, so one dot is lit from the start: six dark dots
+  // with none chosen read as six dots that do not work.
+  const [blockCategory, setBlockCategory] = useState<CategoryId | undefined>(() => data.categories[0]?.id)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
   const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
 
@@ -172,8 +180,9 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
       groupId,
     }))
     onChange({ ...draft, blocks: [...draft.blocks, ...made] })
+    // The title clears; the size stays, like the category, because the next
+    // block is usually the same kind of thing as the last.
     setBlockTitle('')
-    setBlockMinutes('')
   }
 
   function removeBlock(block: TemplateBlock) {
@@ -334,7 +343,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                     </button>
                   </li>
                 ))}
-                {blocks.length === 0 && <li className="wt-empty">-</li>}
+                {blocks.length === 0 && <li className="wt-empty">No blocks yet</li>}
               </ul>
 
               <div className="wt-column-foot">
@@ -344,7 +353,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                   value={override?.type ?? ''}
                   onChange={e => setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })}
                 >
-                  <option value="">Same as the week</option>
+                  <option value="">Week default</option>
                   {DAY_TYPES.map(t => (
                     <option key={t.value} value={t.value}>
                       {t.label}
@@ -359,7 +368,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                     value={override?.sleepProfileId ?? ''}
                     onChange={e => setOverride(day, { sleepProfileId: e.target.value || undefined })}
                   >
-                    <option value="">Same as the week</option>
+                    <option value="">Week default</option>
                     {sleepProfiles.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.name}
@@ -400,9 +409,16 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         })}
       </div>
 
-      {/* The same two levels the day editor's add row has, plus the one thing
-          only a week needs: which days one press puts this on. */}
+      {/* Two groups under two headings: what the block is, and where it
+          goes. The day editor's add row has the first; a week needs the
+          second, and it used to sit on the same line as the category dots,
+          the library binding and Ongoing, with Add block alone at the far
+          right of the line under it - eleven things in a row and the button
+          that acted on them nowhere near them. The heading is the smallest
+          register the app has, the one a field label uses. */}
       <div className="block-add">
+        <div className="block-add-group">
+        <span className="block-add-heading">What</span>
         <div className="block-add-line">
           <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
           <input
@@ -465,7 +481,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               Ongoing
             </button>
           </Explain>
+        </div>
+        </div>
 
+        <div className="block-add-group">
+        <span className="block-add-heading">Where</span>
+        <div className="block-add-where">
           <div className="wt-add-to" role="group" aria-label="Add to">
             <Explain id="add-to">
               <span className="muted">Add to</span>
@@ -493,6 +514,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           <button className="btn-secondary" disabled={!blockTitle.trim()} onClick={addBlocks}>
             Add block
           </button>
+        </div>
         </div>
       </div>
 
