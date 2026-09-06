@@ -1718,3 +1718,57 @@ each one and deletes it on load, and that list only ever grows. Validation
 is deliberately not tightened against a field this app used to write: an old
 backup has to keep opening, which is the one promise a local-first app's
 backups may never break.
+
+## A tool that cannot see a thing will say it is fine
+
+This app has a measuring pass because looking at screenshots does not
+scale: `npm run sweep` walks thirty-odd screens at three widths in two
+themes and reports sideways scroll, clipped text, text over text, covered
+controls, broken focus rings and anything under AA. It has been reporting
+zero for three versions.
+
+It was wrong about a whole category, and the way it was wrong is the part
+worth keeping.
+
+**Opacity.** The contrast pass read an element's `color` and the surface
+under it. It never read `opacity`, so an element faded to 0.45 was measured
+as though it were fully painted. Every fade in the app - and fading is how
+half this interface draws its hierarchy - was invisible. Once the pass
+multiplied the colour's alpha by the painted share, 858 strings came back
+under the line, from a stylesheet that had reported clean since v2.2.
+
+**A field's text.** The same walk collected child text nodes. An input has
+none: what it shows is its value. So no field's contents had ever been
+checked, and every time picker in the app - Settings' evening and both
+sleep windows, the task detail, the template editor - had been painted pure
+black on a dark surface at 1.14:1 since the stepper fix earlier in this
+same wave excluded `.time-input` from the base input rule and took its
+colour with it.
+
+**The clock.** The sweep ran at whatever hour somebody ran it. Half of what
+this app draws depends on the hour, and a run at midnight has no running
+task, no now line, and nothing greyed out to look at. The replan door's
+"Morning gone" at 2.4:1 was found by looking at a phone screenshot, because
+the sweep that had just passed had run at one in the morning when nothing
+was disabled.
+
+**And the self-check had the same disease.** It plants six defects and
+checks the pass still sees each shape. It read its baseline while the app
+was still fading its first screen in, counted fourteen mid-animation
+strings, and then declared the contrast pass blind because planting one
+more defect did not raise a number that had been inflated by animation. A
+measurement taken during an animation is not a measurement.
+
+**The shape, and it is the thing to remember.** Each of these is the same
+mistake: *the tool could only see what it had been told to look at, and
+silence was read as absence.* A clean report means "nothing was found",
+never "nothing is there", and the difference is exactly the size of what
+the tool cannot see. Every one of these four was found by a person looking
+at a picture, not by the tool, which is the whole argument for still
+looking.
+
+So the pass now reads the painted share, reads a field's value, walks a
+pinned afternoon with `--hour=` for the others, and settles a page before
+reading it. What it found is written up in CONVENTIONS section 22: push
+something back once, never below 3:1, one `--faded` token, and a filled
+button that stops being filled rather than fading.

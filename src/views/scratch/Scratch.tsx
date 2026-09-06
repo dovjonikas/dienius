@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, getData, useAppData } from '../../lib/store'
-import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
+import { addDays, formatDayShort, todayKey } from '../../lib/dates'
 import { offerUndo } from '../../lib/undo'
 import { isTaskIntent, isTaskMarkOnly, scratchCount, sortScratch, stripTaskMark } from '../../lib/scratch'
 import { keepPhoto, refusePhoto, shrinkPhoto } from '../../lib/photos'
@@ -369,10 +369,17 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
   )
 }
 
-/** "Today 14:32", "Yesterday 09:10", or the day and date. */
+/**
+ * "Today 14:32", "Yesterday 09:10", or "Sat 12 Sep 14:00".
+ *
+ * Short on purpose, all three of them: the row this sits on carries four
+ * actions beside it, and `formatDayTitle`'s "Monday, September 14" is wide
+ * enough on a phone to push them onto a line of their own - so a note from
+ * last week stood 19px taller than the four above it.
+ */
 function whenLabel(note: ScratchNote): string {
   const today = todayKey()
-  const day = note.date === today ? 'Today' : note.date === addDays(today, -1) ? 'Yesterday' : formatDayTitle(note.date)
+  const day = note.date === today ? 'Today' : note.date === addDays(today, -1) ? 'Yesterday' : formatDayShort(note.date)
   const d = new Date(note.createdAt)
   const time = Number.isNaN(d.getTime())
     ? ''

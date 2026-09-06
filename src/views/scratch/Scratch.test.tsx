@@ -5,7 +5,7 @@ import { App } from '../../App'
 import { Scratch } from './Scratch'
 import { actions, getData } from '../../lib/store'
 import { STORAGE_KEY, defaultData, loadData } from '../../lib/storage'
-import { todayKey } from '../../lib/dates'
+import { addDays, todayKey } from '../../lib/dates'
 import { TOUR_STORAGE_KEY, setTourSandboxForTests } from '../../lib/tourMode'
 import { resetTourForTests } from '../../lib/tourState'
 import { collectEntities, stampChanges } from '../../lib/syncEntities'
@@ -334,4 +334,40 @@ test('a line that is only a mark sends nothing', async () => {
   await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), '!{Enter}')
   expect(getData().inbox).toHaveLength(0)
   expect(getData().scratch).toHaveLength(0)
+})
+
+// --- how old a note is, in a shape that always fits -----------------------
+
+/**
+ * Every note carries a date and four actions on one row. The date used to
+ * be the full title - "Monday, September 14" - which is 142px on a phone
+ * and pushed the actions onto a second line, so one note in a list stood
+ * 19px taller than the four above it for no reason a reader could see.
+ *
+ * Today and Yesterday were already short. Anything older gets the same
+ * treatment: a weekday, a day and a month, in the abbreviations the week
+ * columns already use.
+ */
+test('a note older than yesterday says its date short enough to sit on one line', () => {
+  const now = new Date().toISOString()
+  actions.resetForTests({
+    ...defaultData(),
+    scratch: [
+      { id: 'n1', text: 'Today', date: todayKey(), createdAt: now },
+      { id: 'n2', text: 'Yesterday', date: addDays(todayKey(), -1), createdAt: now },
+      { id: 'n3', text: 'Older', date: addDays(todayKey(), -4), createdAt: now },
+    ],
+  })
+  render(<Scratch open onClose={() => {}} />)
+
+  const whens = Array.from(document.querySelectorAll('.scratch-note-when')).map(el => el.textContent ?? '')
+  expect(whens.some(w => w.startsWith('Today'))).toBe(true)
+  expect(whens.some(w => w.startsWith('Yesterday'))).toBe(true)
+
+  // The old one: "Sat 12 Sep 14:00" and nothing longer. No full weekday,
+  // no full month, and short enough to leave the actions where they were.
+  const older = whens.find(w => !/^(Today|Yesterday)/.test(w)) ?? ""
+  expect(older).not.toMatch(/Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday/)
+  expect(older).not.toMatch(/January|February|March|April|May|June|July|August|September|October|November|December/)
+  expect(older.length).toBeLessThanOrEqual(17)
 })

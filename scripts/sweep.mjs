@@ -36,6 +36,30 @@ const PHONE = process.argv.includes('--phone')
 const SELF_CHECK = process.argv.includes('--self-check')
 const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
 
+/**
+ * The hour the sample day is walked at, pinned rather than taken from
+ * whatever time the sweep happens to be run.
+ *
+ * Half of what this app draws depends on the hour: the Focus screen only
+ * exists while a task is running, the now line only sits over the day if
+ * the day is happening, and the replan doors grey out the parts of the day
+ * that have already gone. A sweep run at night sees none of it and reports
+ * clean, which it did - twice. The v2.2 phone sweeps passed at night and
+ * the same build at 15:00 had the Explain bubble sitting over the running
+ * card; v2.5's disabled replan chips were read off a screenshot by eye
+ * because the midnight run had nothing disabled to look at.
+ *
+ * 15:00 is the hour that has the most of the app switched on at once: a
+ * task running, a morning behind it, an evening ahead. `--hour=` walks
+ * another one - worth doing at 09:00 and 22:00 once per wave, since no
+ * single hour shows everything.
+ */
+const HOUR = Number(process.argv.find(a => a.startsWith('--hour='))?.slice(7) ?? 15)
+
+// Wednesday 16 September 2026, Vilnius, like scripts/shots.mjs - so a
+// finding here and a screenshot of it name the same minute.
+const FIXED_TIME = new Date(Date.UTC(2026, 8, 16, HOUR - 3, 0))
+
 const SEED = readFileSync(join(here, 'sample-day.js'), 'utf8')
 const AUDIT = readFileSync(join(here, 'audit.js'), 'utf8')
 
@@ -265,11 +289,19 @@ if (SELF_CHECK) {
   // Before trusting a clean report, prove the pass can still see a defect.
   // Six planted ones, on a real screen, in the seven shapes it looks for.
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } })
+  await ctx.clock.setFixedTime(FIXED_TIME)
   const page = await ctx.newPage()
   await page.goto(BASE)
   await page.evaluate(([s]) => eval(`(${s})`)({}), [SEED])
   await page.reload()
   await page.waitForSelector('nav')
+  // The app fades its first screen in, and this took its baseline reading
+  // during that - fourteen strings mid-animation, counted as faint, gone by
+  // the time the plants went in. The before-and-after then compared two
+  // different pages and reported the contrast pass blind while it was
+  // working perfectly. Every real screen in the list below settles before it
+  // is read; this one has to as well.
+  await page.waitForTimeout(600)
   await page.addScriptTag({ content: AUDIT })
   const clean = await page.evaluate(() => /** @type {AuditWindow} */ (/** @type {unknown} */ (window)).__brief('before'))
   await page.evaluate(() => {
@@ -319,6 +351,7 @@ for (const run of runs) {
       ? { ...devices['iPhone 13'], isMobile: true, hasTouch: true }
       : { viewport: { width: run.size.w, height: run.size.h } },
   )
+  await ctx.clock.setFixedTime(FIXED_TIME)
   const page = await ctx.newPage()
   await page.goto(BASE)
   await page.evaluate(([src, heavy]) => eval(`(${src})`)({ heavy }), [SEED, HEAVY])

@@ -72,6 +72,31 @@
     return false
   }
 
+  /**
+   * How much of this element actually reaches the screen: its own opacity
+   * times every ancestor's.
+   *
+   * The contrast pass read `color` and nothing else, so an element faded to
+   * 0.45 was measured as though it were fully painted. That is most of the
+   * disabled controls in this app - a `:disabled { opacity: 0.4 }` roughly
+   * halves the contrast of whatever is inside it - and every one of them
+   * came back clean. The replan door's "Morning gone" was read off a phone
+   * screenshot by eye at 2.4:1 while the sweep called the same screen
+   * spotless.
+   *
+   * @param {Element} el @returns {number}
+   */
+  const paintedShare = el => {
+    let share = 1
+    /** @type {Element | null} */
+    let at = el
+    while (at && at !== document.body) {
+      share *= Number(getComputedStyle(at).opacity)
+      at = at.parentElement
+    }
+    return share
+  }
+
   /** @param {Element} el */
   const visible = el => {
     const cs = getComputedStyle(el)
@@ -321,14 +346,35 @@
       if (!t) continue
       const cs = getComputedStyle(el)
       const fg = parse(cs.color)
-      if (!fg || fg[3] < 0.05) continue
+      if (!fg) continue
+      // Fading an element fades its text with it, and the text is what has
+      // to be read. An element's own background fades into what is under it
+      // by the same share, but a control's background is a hairline lighter
+      // than the surface it sits on, so measuring against the surface is
+      // both simpler and the harder test.
+      const share = paintedShare(el)
+      // Pushed back on purpose, however it is said: faded, or disabled. The
+      // two are the same intention and get the same floor - what would be
+      // wrong is a bar that moves depending on whether a control was dimmed
+      // with an opacity or with a colour.
+      const faded = share < 0.999 || el.matches(':disabled, :disabled *')
+      fg[3] *= share
+      if (fg[3] < 0.05) continue
       const bg = surfaceUnder(el)
       if (!bg) continue
       const size = parseFloat(cs.fontSize)
       const bold = Number(cs.fontWeight) >= 700
       const large = size >= 24 || (bold && size >= 18.66)
       const ratio = contrast(blend(fg, bg), bg)
-      const need = large ? 3 : 4.5
+      // Text somebody has to read: AA, 4.5 or 3 when it is large.
+      //
+      // Text this app has deliberately pushed back - a day from the month
+      // either side, a control that cannot be pressed yet - is held to 3
+      // instead. Fading is how a hierarchy is drawn here and holding a
+      // deliberate whisper to the same bar as the sentence it sits under
+      // would flatten it; 3:1 is the line below which it stops being a
+      // whisper and starts being a smudge. See CONVENTIONS section 22.
+      const need = faded ? 3 : large ? 3 : 4.5
       if (ratio >= need) continue
       out.faint.push({ sel: sig(el), text: t.slice(0, 40), ratio: +ratio.toFixed(2), need, fg: cs.color, bg: 'rgb(' + bg.slice(0, 3).map(Math.round).join(',') + ')' })
     }

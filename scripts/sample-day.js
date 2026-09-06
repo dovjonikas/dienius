@@ -198,12 +198,16 @@
       { id: id('in'), text: 'Something about the boiler pressure', captured: stamp, updatedAt: stamp },
     ],
     backlog: backlogTitles.map((title, i) => ({ id: id('bk'), title, category: ['personal', 'core', 'routine', 'personal', 'routine'][i % 5], minutes: [30, 45, 60, 20, 10][i % 5], updatedAt: stamp })),
+    // No hashes in here. Three of these notes carried "#house" and "#bug"
+    // from when the stream filtered on them - v2.5 took that out, and a
+    // sample that still shows the syntax is teaching a shape that does
+    // nothing. See DECISIONS "Notes are notes".
     scratch: [
-      { id: id('sc'), text: 'Meter reading 41882 #house', createdAt: stamp, date: today, updatedAt: stamp },
-      { id: id('sc'), text: 'The week view drops a block when you drag it past the last column #bug', createdAt: stamp, date: today, updatedAt: stamp },
+      { id: id('sc'), text: 'Meter reading 41882', createdAt: stamp, date: today, updatedAt: stamp },
+      { id: id('sc'), text: 'The week view drops a block when you drag it past the last column', createdAt: stamp, date: today, updatedAt: stamp },
       { id: id('sc'), text: 'Ada: her sister is called Nel, not Nell', createdAt: stamp, date: today, updatedAt: stamp },
       { id: id('sc'), text: 'Try the coffee place on Vokieciu', createdAt: stamp, date: shift(-1), updatedAt: stamp, pinned: true },
-      { id: id('sc'), text: 'Reading light, warm white, under 20 quid #house', createdAt: stamp, date: shift(-2), updatedAt: stamp },
+      { id: id('sc'), text: 'Reading light, warm white, under 20 quid', createdAt: stamp, date: shift(-2), updatedAt: stamp },
     ],
     library: [
       { id: listBooks, name: 'Books', unit: 'chapter', unitShort: 'ch', color: '#a7c4f5', items: heavy ? books.concat(Array.from({ length: 7 }, (_, i) => ({ id: id('item'), title: `Backlog book number ${i + 1}`, total: 10 + i, progress: 0, updatedAt: stamp }))) : books, updatedAt: stamp },

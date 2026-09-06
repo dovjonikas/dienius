@@ -6,7 +6,24 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.4, closed and tagged. The polish wave, briefed by the
+**Last updated:** v2.5, closed and tagged. Twelve stages from three briefs
+in one sitting: notes stop pretending to be a database, they hold pictures,
+and one press turns a note into a task with its editor open; nothing an
+interruption touches leaves the day; the library's add row is one row; the
+tour never covers what it points at; a template is judged as a day; the
+evening's three questions become a journal that asks nothing; and every
+setting is walked against a rule that most of them fail. Section 4 has the
+table, stage by stage. **Nothing is owed.**
+
+The closing critique found what a wave of measuring had not: the sweep's
+contrast pass could not see `opacity`, could not see what a field says, and
+ran at whatever hour it happened to run. Fixing all three turned a clean
+report into 858 findings from a stylesheet nine hand-tuned fades deep, and
+the app now pushes something back once, never below 3:1, on one token. That
+is DECISIONS "A tool that cannot see a thing will say it is fine" and
+CONVENTIONS section 22, and it is the most useful thing in this wave.
+
+**Before that: v2.4**, closed and tagged at `f544c55`. The polish wave, briefed by the
 owner in one message and run end to end: the navigation rail opening by
 itself whenever another window handed focus back (it opens on intent only
 now - a pointer that comes in and moves and is still there 150ms later, a
@@ -155,16 +172,39 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2120
-tests in 124 files, plus 29 Playwright tests in 14 files across two
-viewports** - the typecheck and the build are clean, `npm run sweep`
-reports nothing on the desktop **and nothing on the phone**, and the working
-tree is empty and pushed.
+Still true, and checked rather than assumed. The suite is green - **2310
+tests in 139 files, plus 35 Playwright tests across two viewports** - the
+typecheck and the build are clean, and `npm run sweep` reports nothing on
+the desktop and nothing on the phone at 09:00, 15:00 and 22:00, with
+`--self-check` at 7/7. The working tree is empty and pushed.
 
-**Where to start:** nothing is owed. The v2.3 table below is closed, and
-so is the v2.2 one under it, commit by commit; the debts table further down
-is unchanged, and each entry in it is a trade with its reason. The next
-brief comes from the owner.
+Read that sweep line as stronger than the same sentence in v2.4: the pass
+now sees through a fade, reads what a field says, and walks a pinned clock
+rather than whatever hour it was run at. Each of those three was a hole it
+had been reporting clean through - see DECISIONS "A tool that cannot see a
+thing will say it is fine".
+
+**Where to start:** nothing is owed. The v2.5 table below is closed, and
+so are the v2.4, v2.3 and v2.2 ones under it, commit by commit; the debts
+table further down is unchanged, and each entry in it is a trade with its
+reason. The next brief comes from the owner.
+
+### The v2.5 wave: notes, replan, the journal, and the settings
+
+Three briefs in one sitting, in Lithuanian, run end to end without
+stopping. Twelve stages, six commits.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | Notes are notes | `29a3c03` | The scratch tags and the `#bug` markdown export come out - code, tests, docs and the sample. A note is shown exactly as it was written, and a `#` somebody typed stays plain text. DECISIONS "Notes are notes" |
+| 2 | Pictures in a note | `e064b02` | Paste, drag or the `+`, shrunk to 1600px and JPEG 0.8 on the way in, twenty per note, in IndexedDB and never in the sync payload or the backup. A full-screen viewer, Escape closes, deleting the note deletes its pictures. The other device says the picture stayed where it was taken |
+| 3 | Notes at the clock | `0430786` | A fourth thing beside the timer, the focus tool and the stopwatch: one line, enter, and it is gone. The last three to recognise, and a way to the whole stream. `Q` from anywhere; fits 390x844 with nothing scrolled |
+| 4, 6, 7 | A note becomes a task, and nothing leaves the day | `bfa529b` | **To task** opens the task's editor with the title filled in and the note kept, each linking to the other. What an interruption takes off the day waits on a quiet **Set aside** strip; one press offers the nearest free gap, a block that no longer fits comes back shorter and says so, and under a quarter hour or under half its length it offers tomorrow instead. The whole push-and-replan logic written down as eleven numbered rules, each with a test and a sentence in CONVENTIONS |
+| 5 | The library's add row | `4a63ffe` | One amount, one button, and a stepper that is one box instead of two - the base input rule's five `:not()`s had outranked `.time-stepper .time-input` since v1.0, so every stepper in the app had been a box inside a box |
+| 9 | The tour | `df99d14` | The card never covers what it points at - the scroll knows about the card, and the placement is checked again after it lands - and a step that changed the screen waits for Next instead of running on |
+| 10 | A template is judged as a day | `c19d20a` | The template editor draws the day it makes, live: the same hour scale as Today, sleep first from the chosen profile, blocks as they are typed, overlaps with a warning edge, gap labels, one line of numbers. A week is seven narrow columns each with its own sleep; a phone is one day at a time |
+| 11, 12 | A journal instead of a form, and a settings health check | `2f58d3b` | v2.3's three questions and the best moment beside them are gone, folded into one free text box per day at the clock beside Notes, reachable with `J`, saving as you type, counting nothing. Then every setting walked against one rule - the owner would change it **and** the app cannot decide itself - which four failed: two nudges that could only fire while the app was already open, a second switch for the Monday goal card, and a widget list nothing could ever change. DECISIONS "A journal, not a form" and "A setting has to earn its place" |
+| 8 | Closing and `v2.5` | this commit | Full gates, two critique passes on the phone, and the three blindnesses in the measuring pass that those passes exposed. The docs read against the code, and the tag |
 
 ### The v2.4 wave: the polish wave
 
@@ -758,6 +798,15 @@ thing to look at if a hand-picked colour ever looks wrong on a card.
   rather than written a second time, which is why it is a piece of work of
   its own and not a follow-up commit. The owner named it as a v2.6
   candidate when the timeline was briefed.
+- **A reminder that can arrive while the app is closed.** Two nudges were
+  removed in v2.5 - one before a timed task, one during focus work - not
+  because nobody wants them but because neither could do the thing its name
+  promised: with no service worker registration for push and no
+  subscription, both could only speak from a page already open in front of
+  somebody. A real one means a push subscription, a server that holds it,
+  and a permission flow that asks at a moment that makes sense, which is a
+  piece of work of its own. See DECISIONS "A setting has to earn its
+  place".
 
 ### Asked for, and now built
 

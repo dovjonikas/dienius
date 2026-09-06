@@ -41,7 +41,8 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Has a **low day** for when you do not feel like it: the key tasks stay at 40% of their length, the routine stays, the rest waits for tomorrow, and the day is scored on the key tasks alone
 - Times a **step** of a task from its own line - "Meditation 10 min" - with the one timer the app has, and ticks the step when the bell rings
 - Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went
-- Keeps a **journal** that never counts: one line in the morning, two questions at the close, and the week or the month copied as markdown for anywhere else
+- Takes a **note** in one line from any screen, holds **pictures** in it - paste a screenshot, drag one in, or use the camera - and turns any note into a task with its editor already open
+- Keeps a **journal** that asks nothing and counts nothing: a day, one box, no questions, saving as you type, with the month copied as markdown for anywhere else
 - Never scores a bad day against you: no points, no badges, no red, no streak on the day view
 
 <table align="center">

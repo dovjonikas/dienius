@@ -92,6 +92,24 @@ export function formatWeekTitle(days: string[], opts: { short?: boolean } = {}):
   return `${left} - ${b.getDate()} ${month(b)} ${b.getFullYear()}`
 }
 
+/**
+ * A date short enough to sit on a row beside something else: "Sat 12 Sep".
+ *
+ * `formatDayTitle` spells the weekday and the month out in full, which is
+ * right for a heading and 142px wide on a phone. A note's row carries the
+ * date and four actions together, and the full title pushed the actions
+ * onto a second line - so one note in a list stood taller than the rest for
+ * a reason nobody reading it could see.
+ */
+export function formatDayShort(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 /** The short weekday label a column header uses. */
 export function shortWeekday(key: string): string {
   const [y, m, d] = key.split('-').map(Number)

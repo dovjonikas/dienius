@@ -193,6 +193,57 @@
   --rail-open-w: 176px;
   --timeline-gutter: 44px;
   --touch: 44px;
+  /* How far back a thing is pushed when it is still there but not the point:
+     a day from the month either side, a control that cannot be pressed yet,
+     a time under a title. One value, because "faded" is one idea and nine
+     hand-tuned numbers for it is how three of them ended up unreadable.
+
+     0.55 rather than the 0.35 to 0.5 this app used until v2.5. Those were
+     tuned by eye against a contrast pass that ignored opacity entirely - it
+     read a half-faded element as fully painted - so a fade could be
+     measured clean at 2:1. It was: the month grid's outside days sat at
+     2.04:1 in the light theme for five versions. 0.55 is the lowest value
+     that keeps every faded string in the app over 3:1, which is the line
+     between a whisper and a smudge. See CONVENTIONS section 22.
+
+     A drag is not on this token. A card under the cursor is faded for the
+     second it is moving and nobody reads it there. */
+  --faded: 0.55;
+
+  /* How far back a thing is pushed when it is still there but not the point:
+     a day from the month either side, a control that cannot be pressed yet,
+     a time under a title. One value, because "faded" is one idea and nine
+     hand-tuned numbers for it is how three of them ended up unreadable.
+
+     0.55 rather than the 0.35 to 0.5 this app used until v2.5. Those were
+     tuned by eye against a contrast pass that ignored opacity entirely - it
+     read a half-faded element as fully painted - so a fade could be
+     measured clean at 2:1. It was: the month grid's outside days sat at
+     2.04:1 in the light theme for five versions. 0.55 is the lowest value
+     that keeps every faded string in the app over 3:1, which is the line
+     between a whisper and a smudge. See CONVENTIONS section 22.
+
+     A drag is not on this token. A card under the cursor is faded for the
+     second it is moving and nobody reads it there. */
+  --faded: 0.55;
+
+  /* How far back a thing is pushed when it is still there but not the point:
+     a day from the month either side, a control that cannot be pressed yet,
+     a time under a title. One value, because "faded" is one idea and nine
+     hand-tuned numbers for it is how three of them ended up unreadable.
+
+     0.55 rather than the 0.35 to 0.5 this app used until v2.5. Those were
+     tuned by eye against a contrast pass that ignored opacity entirely - it
+     read a half-faded element as fully painted - so a fade could be
+     measured clean at 2:1. It was: the month grid's outside days sat at
+     2.04:1 in the light theme for five versions. 0.55 is the lowest value
+     that keeps every faded string in the app over 3:1, which is the line
+     between a whisper and a smudge. See CONVENTIONS section 22.
+
+     A drag is not on this token. A card under the cursor is faded for the
+     second it is moving and nobody reads it there. */
+  --faded: 0.55;
+
   --dur-fast: 150ms;
   --dur: 200ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -686,7 +737,7 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: var(--faded);
 }
 
 h2 { font-family: var(--font-display); font-size: var(--t-lg); margin: var(--s2) 0 var(--s4); }
@@ -4257,7 +4308,19 @@ button.danger {
   touch-action: none;
 }
 
-.cell.outside { opacity: 0.35; }
+/* A day from the month either side. Faded, because the grid needs six full
+   rows and those days are the shape of the month rather than part of it.
+
+   The fade is on the cell, so what is inside it fades too - and what is
+   inside it is already `--muted`, which took "08:00 Standup" on the 1st of
+   next month to 2.1:1 in the light theme. The lines come off instead of
+   being made louder: a month view answers a question about this month, and
+   three task titles from the next one is noise the grid never owed anybody.
+   The number, the tone and the template dot stay, which is what those cells
+   are there to give. See CONVENTIONS section 22. */
+.cell.outside { opacity: var(--faded); }
+.cell.outside .cell-points,
+.cell.outside .cell-ratio { display: none; }
 /* Today, marked outside the cell rather than on its edge. The border was in
    --accent, and a day carrying a template drawn in the palette's Blue - the
    nearest neighbour of the accent - swallowed it: the ring measured
@@ -5744,6 +5807,22 @@ button.primary {
   color: var(--on-accent, #fff);
 }
 
+/* A primary that cannot be pressed yet. Fading a filled button takes its
+   background toward the surface and its text with it - "Save template"
+   greyed out read 2.61:1 - so it stops being filled instead: the surface's
+   own colour, a border, and muted text. It still reads as the loud button
+   of the pair by where it sits and what it says, and it is legible.
+
+   `opacity: 1` because the global `button:disabled` fade is what this
+   replaces, not something it adds to. */
+.btn-primary:disabled,
+button.primary:disabled {
+  background: color-mix(in srgb, var(--accent) 25%, var(--surface));
+  border-color: transparent;
+  color: var(--muted);
+  opacity: 1;
+}
+
 .btn-primary:hover,
 button.primary:hover { background: color-mix(in srgb, var(--accent) 84%, #fff); }
 
@@ -6707,7 +6786,7 @@ button.danger:focus-visible {
     padding: 0;
   }
 
-  .mini-cell.outside { opacity: 0.35; }
+  .mini-cell.outside { opacity: var(--faded); }
   .mini-cell.today { border-color: var(--accent); border-width: 2px; }
   /* The day currently open in DayView - a dashed ring rather than
      .today's solid border, so the two read as related but distinct marks
@@ -7092,7 +7171,7 @@ button.danger:focus-visible {
 }
 
 .library-step:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
-.library-step:disabled { opacity: 0.35; }
+.library-step:disabled { opacity: var(--faded); }
 
 .library-item-actions { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
 
@@ -7372,7 +7451,7 @@ button.danger:focus-visible {
 }
 
 .task-detail-nudge:hover:not(:disabled) { border-color: var(--muted); }
-.task-detail-nudge:disabled { opacity: 0.4; }
+.task-detail-nudge:disabled { opacity: var(--faded); }
 
 .task-detail-clear,
 .task-detail-toggle {
@@ -7394,7 +7473,7 @@ button.danger:focus-visible {
   color: var(--text);
 }
 
-.task-detail-toggle:disabled { opacity: 0.45; }
+.task-detail-toggle:disabled { opacity: var(--faded); }
 
 .task-detail-size { width: 90px; text-align: center; font-variant-numeric: tabular-nums; }
 
@@ -7517,7 +7596,7 @@ button.danger:focus-visible {
 }
 
 .task-context-menu button:hover:not(:disabled) { background: color-mix(in srgb, var(--border) 55%, transparent); }
-.task-context-menu button:disabled { opacity: 0.4; }
+.task-context-menu button:disabled { opacity: var(--faded); }
 .task-context-menu button.danger { color: var(--danger); }
 .task-context-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
 
@@ -8058,7 +8137,7 @@ button.danger:focus-visible {
 }
 
 .review-nav button:hover:not(:disabled) { border-color: var(--muted); }
-.review-nav button:disabled { opacity: 0.35; }
+.review-nav button:disabled { opacity: var(--faded); }
 
 .review-range { color: var(--text); font-size: var(--t-md); font-weight: 600; }
 
@@ -9572,8 +9651,18 @@ main:has(.week) > .calendar {
 .week-col.is-today .week-col-date { color: var(--accent); }
 
 /* The past is a record, not a plan. Same rule the day view follows: tone
-   only, every control still works. */
-.week-col.is-past .week-col-head { opacity: 0.72; }
+   only, every control still works.
+
+   `--faded` rather than the 0.72 it carried until v2.5: the weekday inside
+   it is `--muted` already, and muted at 0.72 read 2.76:1 in the light
+   theme. The head keeps the fade because the fade is the whole cue here -
+   there is no second colour saying "this has happened" - so it goes to the
+   value the app guarantees is still legible. */
+/* The fade goes on the date rather than the whole head. The weekday beside
+   it is `--muted` already and a fade on top of that read 2.09:1 in the
+   light theme; the date is `--text`, which has the contrast to spare and is
+   the part that says which day this was. */
+.week-col.is-past .week-col-date { opacity: var(--faded); }
 
 /* A day that has passed offers nothing at rest: the "+" and the "+ Working
    day" that a day ahead shows are invitations to plan, and a plan for a
@@ -10943,12 +11032,12 @@ main:has(.week) > .calendar {
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: var(--bg);
-  color: var(--muted);
+  color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
-.replan-chip:hover { color: var(--text); border-color: var(--muted); }
+.replan-chip:hover { border-color: var(--muted); }
 
 .replan-chip.active {
   background: var(--accent);
@@ -10959,7 +11048,16 @@ main:has(.week) > .calendar {
 /* A shape nothing is left of - the morning, at three in the afternoon. Kept
    in the row rather than removed, so the row keeps its shape between one
    opening and the next; greyed, because it is not an answer today. */
-.replan-chip:disabled { opacity: 0.45; cursor: default; }
+/* A part of the day that has already gone. Said with colour, not with a
+   fade: the chip is `--muted` even when it can be pressed, so fading that
+   again put "Morning gone" at 2.09:1 in the light theme at three in the
+   afternoon - which is exactly when somebody opens this door.
+
+   So the row reads the other way round now. A chip that can be pressed is
+   `--text`, like every other choice this app offers; one that cannot is
+   `--muted`, at full strength, where it is still perfectly readable and
+   plainly the quieter of the two. */
+.replan-chip:disabled { color: var(--muted); cursor: default; opacity: 1; }
 .replan-chip:disabled:hover { color: var(--muted); border-color: var(--border); }
 
 /* Something came up, for any day: the sections of the one sheet.
@@ -12025,10 +12123,15 @@ main:has(.week) > .calendar {
   color: var(--muted);
 }
 
+/* Muted, and only muted. `.cell-point` above is already `--muted`, so the
+   0.75 this carried until v2.5 was a second de-emphasis on top of the first
+   and took the pair to 2.9:1 in the light theme. The time is the smaller
+   half of "09:00 Job hunt" by being first and narrow, not by being fainter
+   than the words beside it. See CONVENTIONS section 22 - push something
+   back once. */
 .cell-point-time {
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
 }
 
 .cell-point-title {
@@ -12306,7 +12409,10 @@ main:has(.week) > .calendar {
 .week-tools, .review-tools { display: flex; justify-content: flex-end; flex: 0 0 auto; }
 .review-tools { margin-top: calc(-1 * var(--s2)); }
 .copy-journal { display: inline-flex; align-items: center; font-size: var(--t-sm); }
-.copy-journal .link-button:disabled { color: var(--faint); text-decoration: none; cursor: default; }
+/* `opacity: 1` against the global `button:disabled` fade: this row says
+   "nothing to copy" with `--faint` and the underline coming off, which is
+   two cues already. The fade underneath made three and took it to 2.08:1. */
+.copy-journal .link-button:disabled { color: var(--faint); text-decoration: none; cursor: default; opacity: 1; }
 
 .agenda-list {
   display: flex;
@@ -12830,7 +12936,7 @@ main:has(.week) > .calendar {
   font-size: var(--t-glyph);
 }
 
-.photo-viewer-step:disabled { opacity: 0.4; }
+.photo-viewer-step:disabled { opacity: var(--faded); }
 
 .photo-viewer-where { color: #fff; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
 
@@ -13136,7 +13242,7 @@ main:has(.week) > .calendar {
   font-size: var(--t-glyph);
 }
 
-.journal-step:disabled { opacity: 0.4; }
+.journal-step:disabled { opacity: var(--faded); }
 
 .journal-box {
   width: 100%;

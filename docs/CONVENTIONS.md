@@ -1130,3 +1130,61 @@ on load, because settings normalise by spreading what was stored, so
 anything left unnamed would ride along and be written back out forever. An
 old backup still opens; validation is not tightened against a field this
 app used to write.
+
+## 22. Push something back once, and never below three to one
+
+Half of this interface is hierarchy: a day from the month either side, a
+time under a title, a past column, a control that cannot be pressed yet.
+Two rules hold it.
+
+**Push it back once.** A rule that already says "secondary" with a colour
+does not also get a fade. Doing both is how three strings ended up
+unreadable while every one of them looked deliberate in the source: the
+month cell's time was `--muted` *and* 0.75, the past week column's weekday
+was `--muted` inside a head at 0.72, the disabled copy row was `--faint`
+*and* the global disabled fade. Each half was a reasonable choice; the
+product of the two was 2.1:1.
+
+**And never below 3:1.** Text somebody has to read is AA - 4.5, or 3 when
+it is large. Text this app has deliberately pushed back is held to 3
+instead: flattening a whisper to the same bar as the sentence above it
+would remove the hierarchy the whisper exists to draw, and below 3 it stops
+being a whisper and becomes a smudge. **Disabled counts as pushed back**,
+whether it is said with an opacity or with a colour - what would be wrong
+is a floor that moves depending on how the dimming was written.
+
+**One value for "faded", and it is `--faded`.** Nine hand-tuned numbers
+between 0.35 and 0.5 lived in this stylesheet, and three of them were
+unreadable. They are one token now. A drag is not on it: a card under the
+cursor is faded for the second it is moving and nobody reads it there.
+
+**A filled button does not fade.** Fading a primary takes its background
+toward the surface and its text with it - "Save template" greyed out read
+2.61:1. A disabled primary keeps a quarter-strength tint of the accent so
+it is still recognisably the loud one, with muted text on it.
+
+### How this went unseen for five versions
+
+The sweep's contrast pass read `color` and nothing else, so an element at
+`opacity: 0.45` was measured as though it were fully painted. Every fade
+in the app was invisible to it, and the app reported clean the whole time.
+It reads the painted share now - the element's opacity times every
+ancestor's.
+
+Two smaller blindnesses went with it, and all three are worth remembering
+as a shape: **the pass could only see what it thought to look at.**
+
+- **A field's text is its value.** The walk collected child text nodes, and
+  an input has none, so no field's contents were ever checked. Every time
+  picker in the app was painted pure black on a dark surface at 1.14:1.
+- **The sweep ran at whatever time it was run.** Half of what this app
+  draws depends on the hour, and a midnight run has no running task, no now
+  line and nothing greyed out. The clock is pinned to 15:00 now, and
+  `--hour=` walks another; 09:00 and 22:00 are worth one run each per wave.
+
+The self-check is what proves the pass still has its eyes, and it caught
+its own version of this: it read the baseline while the app was still
+fading its first screen in, counted fourteen mid-animation strings as
+defects, and then reported the contrast pass blind because the planted
+defect did not raise the count. It settles first now. **A measurement taken
+during an animation is not a measurement.**
