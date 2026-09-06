@@ -9,6 +9,7 @@ import type { DayType, Template, TemplateBlock, WeekDayOverride } from '../lib/t
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { DurationControl } from './DurationControl'
 import { Explain } from './Explain'
+import { TemplateTimeline } from './TemplateTimeline'
 import { TimePicker } from './TimePicker'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
@@ -277,6 +278,16 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         </div>
       )}
 
+      {/* The day the pressed column makes, at full width with its hours -
+          seven narrow columns show the shape of a week, and this shows the
+          detail of the one being worked on. */}
+      <TemplateTimeline
+        blocks={draft.blocks}
+        weekday={activeDay}
+        sleepProfileId={draft.weekDays[activeDay]?.sleepProfileId ?? draft.sleepProfileId}
+        color={draft.color}
+      />
+
       <div className="wt-columns">
         {WEEK.map(({ day, label, short }) => {
           const blocks = blocksOn(day)
@@ -301,6 +312,19 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               >
                 {short}
               </button>
+
+              {/* The column as the day it makes. Its own scale, because a
+                  column carries its own sleep - one shared scale down the
+                  left would be a picture of a week where every day wakes at
+                  the same hour, which is the thing a week template exists
+                  to stop being true. */}
+              <TemplateTimeline
+                blocks={draft.blocks}
+                weekday={day}
+                sleepProfileId={override?.sleepProfileId ?? draft.sleepProfileId}
+                color={draft.color}
+                compact
+              />
 
               <ul className="wt-blocks">
                 {blocks.map(block => (

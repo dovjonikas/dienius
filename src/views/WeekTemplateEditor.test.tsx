@@ -197,8 +197,10 @@ test('a week can start from a day template, and leaves that template alone', asy
   await user.click(screen.getByRole('button', { name: 'Workday' }))
 
   expect(screen.getByPlaceholderText('Week name')).toHaveValue('Workday week')
-  expect(within(column('Monday')).getByText('Standup')).toBeInTheDocument()
-  expect(within(column('Sunday')).getByText('Standup')).toBeInTheDocument()
+  // Twice per column since v2.5: once in the list of blocks and once in the
+  // little day the column draws - see TemplateTimeline.
+  expect(within(column('Monday')).getAllByText('Standup').length).toBeGreaterThan(0)
+  expect(within(column('Sunday')).getAllByText('Standup').length).toBeGreaterThan(0)
 
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates).toHaveLength(2)

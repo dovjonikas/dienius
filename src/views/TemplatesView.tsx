@@ -9,6 +9,8 @@ import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
+import { TemplateTimeline } from './TemplateTimeline'
+import type { DrawableBlock } from './templateDay'
 import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
@@ -31,6 +33,27 @@ const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'night', label: 'Overnight' },
   { value: 'rest', label: 'Rest' },
 ]
+
+/**
+ * A draft block as the picture wants it.
+ *
+ * The editor keeps `time` and `minutes` as free-typed text and parses them
+ * at save, so that a half-typed "9:" is not a block at nine - see
+ * `DraftBlock`. The timeline draws what is typed so far, which means the
+ * same parse, per keystroke, and a block with nothing readable in its time
+ * simply floats rather than jumping to midnight.
+ */
+function drawable(block: DraftBlock): DrawableBlock {
+  const minutes = parseMinutesInput(block.minutes)
+  return {
+    ...(block.id === undefined ? {} : { id: block.id }),
+    title: block.title,
+    ...(/^\d{1,2}:\d{2}$/.test(block.time.trim()) ? { time: block.time.trim() } : {}),
+    ...(minutes === undefined ? {} : { minutes }),
+    category: block.category,
+    core: block.core,
+  }
+}
 
 interface DraftBlock {
   /**
@@ -267,6 +290,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </select>
         </div>
       )}
+      {/* The template as the day it makes, live - see TemplateTimeline. A
+          list says what is on the day; only the picture says whether there
+          is room for it, which is the question a template is about. */}
+      <TemplateTimeline blocks={draft.blocks.map(drawable)} sleepProfileId={draft.sleepProfileId} color={draft.color} />
+
       <ul className="block-list" ref={blockListRef}>
         {draft.blocks.map((b, i) => (
           <li

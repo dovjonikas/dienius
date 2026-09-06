@@ -293,6 +293,23 @@ export interface TimelineGridProps {
    */
   isWide?: boolean
   /**
+   * Blocks to mark as sitting on top of another - the template editor's
+   * overlap warning. Empty everywhere else: a real day cannot have two
+   * anchors on the same minutes, because every way of putting one there
+   * moves what was there. A template can, on purpose - see templateDay.ts.
+   */
+  clashIds?: string[]
+  /**
+   * Draws the rules without the hour numbers beside them, and gives the
+   * gutter back to the blocks.
+   *
+   * For the seven columns of a week template, where a hundred pixels of
+   * width has no room for a clock and seven copies of the same scale say
+   * nothing anyway. The shape of the day is what those columns are for;
+   * the hours are in the full-width picture under them.
+   */
+  hideHours?: boolean
+  /**
    * The day's own type, if it has one - decides which of `sleep`'s two
    * windows the grid's greyed sleep band and every position on it are
    * measured against, exactly the way `computeCapacity` already picks
@@ -386,6 +403,8 @@ export function TimelineGrid({
   onTaskContextMenu,
   sleep,
   events = [],
+  clashIds,
+  hideHours = false,
 }: TimelineGridProps) {
   // A day with nothing anchored still gets a grid - see emptyDayLayout.
   // The alternative is a blank column beside a full task list, with nowhere
@@ -621,7 +640,7 @@ export function TimelineGrid({
 
             {marks.map(mark => (
               <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>
-                {labelledMarks.has(mark) && <span className="timeline-hour-label">{formatClock(mark)}</span>}
+                {!hideHours && labelledMarks.has(mark) && <span className="timeline-hour-label">{formatClock(mark)}</span>}
                 <span className="timeline-hour-rule" />
               </div>
             ))}
@@ -718,6 +737,7 @@ export function TimelineGrid({
               if (compact) classNames.push('timeline-anchor-compact')
               // Not enough room for one padded line of title. See the CSS.
               if (blockHeightPx < SQUEEZED_HEIGHT_PX) classNames.push('timeline-anchor-squeezed')
+              if (clashIds?.includes(anchor.id)) classNames.push('timeline-anchor-clash')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
               return (

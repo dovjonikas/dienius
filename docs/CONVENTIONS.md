@@ -1045,3 +1045,39 @@ everything else is one line: **the state holds an id, never the bytes.**
 
 If a second thing in this app ever needs to hold a file, it goes through this
 module rather than beside it.
+
+---
+
+## 20. A template is judged as a day, not as a list
+
+A template editor that shows only a list of blocks answers "what is on this
+day". The question somebody is actually asking while building one is "is
+there room for it", and only the picture answers that - which is why both
+editors draw the day the template makes, live, as it is typed
+(`TemplateTimeline`, `templateDay.ts`).
+
+- **The same grid the day view draws.** Same component, same hour scale,
+  same block colours, same gap labels. A second, simplified drawing of a day
+  would drift, and then a template would look like something the day does
+  not.
+- **Sleep is drawn first**, from the profile the template or the column
+  carries, so the picture starts at waking and ends at sleep. Changing the
+  profile redraws it: that is how somebody sees how much day they have
+  before deciding what goes in it.
+- **Blocks appear as they are typed**, not behind a Preview button. The
+  editor keeps a time as free text and parses it per keystroke, so a
+  half-typed "9:" floats rather than jumping to midnight.
+- **An overlap is shown, never prevented.** Two blocks on the same minutes
+  may be meant - a commute that runs into the start of a shift is a real
+  Tuesday - so the line says which and Save is untouched.
+- **One line of numbers, live.** Timed, free, sleep, key. This is where an
+  overloaded day is caught before it is stamped onto a month of Tuesdays,
+  and overlapping blocks are counted once so the arithmetic never disagrees
+  with the picture above it.
+- **A week is seven shapes and one detail.** Each column draws its own day
+  with its own sleep and gives up its hour numbers - seven copies of a clock
+  in a hundred pixels each say nothing - and the column being worked on is
+  drawn full width above them, with its hours.
+- **It is a picture.** Blocks are not dragged in it. That is in STATE's
+  "Asked for, not yet built", and adding it means the drag machinery the day
+  view already has, not a second one.

@@ -748,6 +748,17 @@ theme; a hand-typed hex is not. That was a deliberate call to implement the
 gate this file specified rather than invent a second one, and it is the first
 thing to look at if a hand-picked colour ever looks wrong on a card.
 
+### Asked for, not yet built
+
+- **Dragging a block inside the template editor's timeline.** The picture
+  arrived in v2.5 and is read-only: it draws the day a template makes, live,
+  with its sleep and its clashes, and the blocks are moved in the list under
+  it. Making the picture editable means the drag machinery the day view
+  already has - pointer capture, the grid's geometry, the snap - reused
+  rather than written a second time, which is why it is a piece of work of
+  its own and not a follow-up commit. The owner named it as a v2.6
+  candidate when the timeline was briefed.
+
 ### Asked for, and now built
 
 The three things the v1.11 brief named. Two are done and one turned out not

@@ -13026,3 +13026,56 @@ main:has(.week) > .calendar {
    shades of the same dot. */
 .tour-dot.is-past { width: 10px; border-radius: var(--r-pill); }
 .tour-dot.is-now { width: 14px; border-radius: var(--r-pill); transform: none; }
+
+/* ---------------------------------------------------------------------------
+   A template drawn as the day it makes - views/TemplateTimeline.tsx.
+
+   Shorter than the day view's own grid, because this sits above the list
+   that edits it and the point is the shape of the day rather than the
+   detail of any one block. The grid inside scrolls to its own full height,
+   so nothing is hidden - it is a window onto the same picture.
+   ------------------------------------------------------------------------ */
+.template-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.template-timeline .timeline-grid-scroll,
+.template-timeline .timeline-grid {
+  max-height: 340px;
+}
+
+.template-timeline-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Said, never prevented: two blocks on the same minutes may be meant. */
+.template-timeline-clash {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--t-xs);
+}
+
+.timeline-anchor-clash {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+/* One column of a week, at a glance. Narrow enough that seven fit, tall
+   enough that the shape of a day is legible - which is the whole reason a
+   week template is seven columns and not seven lists. */
+.template-timeline.is-compact { gap: var(--s1); margin-bottom: var(--s2); }
+
+.template-timeline.is-compact .timeline-grid-scroll,
+.template-timeline.is-compact .timeline-grid {
+  max-height: 160px;
+}
+
+.template-timeline.is-compact .template-timeline-summary,
+.template-timeline.is-compact .template-timeline-clash {
+  font-size: var(--t-2xs);
+}
