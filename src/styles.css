@@ -12563,3 +12563,158 @@ main:has(.week) > .calendar {
 }
 
 .week-preview-label { color: var(--faint); font-size: var(--t-2xs); line-height: 1; }
+
+/* ---------------------------------------------------------------------------
+   Photographs on a note - views/scratch/NotePhotos.tsx, lib/photos.ts.
+
+   A row of thumbnails under the words, capped in height rather than width so
+   a portrait screenshot and a landscape one sit on one baseline: the note
+   holds each picture's shape and the box is drawn from it before the blob
+   arrives, so the row never reflows as three pictures come back from
+   IndexedDB at three different moments.
+   ------------------------------------------------------------------------ */
+.note-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.note-photo {
+  position: relative;
+  display: inline-flex;
+  height: 160px;
+}
+
+.note-photo-open {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 30%, transparent);
+  overflow: hidden;
+}
+
+.note-photo-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A picture that is on the other device. Not a broken frame and not an
+   error: the note says where it is, in the space the picture would fill. */
+.note-photo.is-elsewhere {
+  align-items: center;
+  justify-content: center;
+  max-width: 160px;
+  padding: var(--s2);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-control);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-align: center;
+}
+
+.note-photo-remove {
+  position: absolute;
+  top: var(--s1);
+  right: var(--s1);
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: var(--t-md);
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.note-photo:hover .note-photo-remove,
+.note-photo-remove:focus-visible { opacity: 1; }
+
+/* A finger has no hover, so the cross is simply there. */
+@media (pointer: coarse) {
+  .note-photo-remove { opacity: 1; }
+}
+
+.scratch-photo-add {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-glyph);
+  line-height: 1;
+}
+
+.scratch-photo-add:hover { color: var(--text); border-color: var(--muted); }
+
+.scratch-draft-photos { margin-top: var(--s2); }
+
+/* The full-screen look at one picture. Above the scratch sheet, which is
+   itself above everything - a picture opened from a note is the front-most
+   thing on the screen while it is open. */
+.photo-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 96;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+  padding: var(--s4);
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.photo-viewer-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+.photo-viewer-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--r-control);
+}
+
+.photo-viewer-empty { color: #fff; font-size: var(--t-sm); }
+
+.photo-viewer-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-shrink: 0;
+}
+
+.photo-viewer-step,
+.photo-viewer-close {
+  width: var(--touch);
+  height: var(--touch);
+  min-height: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--r-control);
+  background: none;
+  color: #fff;
+  font-size: var(--t-glyph);
+}
+
+.photo-viewer-step:disabled { opacity: 0.4; }
+
+.photo-viewer-where { color: #fff; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }

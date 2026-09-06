@@ -1392,3 +1392,34 @@ test("a step's length is a whole number of minutes, and anything else refuses th
   broken.days['2026-09-16'].tasks[0].subtasks[0].minutes = 'ten'
   expect(validate(broken)).toBe(false)
 })
+
+/**
+ * The backup is a file the owner opens on a bad day, so it says what it is
+ * not carrying rather than leaving a note pointing at a picture that is not
+ * in it - see DECISIONS "A photograph stays on the device it was taken on".
+ */
+test('a backup with pictures named in it says they stayed on the device', () => {
+  const data = defaultData()
+  data.scratch = [
+    { id: 'n1', text: 'the meal plan', createdAt: '2026-09-16T10:00:00.000Z', date: '2026-09-16', photos: [{ id: 'p1', width: 1600, height: 1200 }] },
+  ]
+  const file = JSON.parse(exportJson(data))
+  expect(file.about).toContain('1 picture is named in this file')
+  expect(file.about).toContain('kept on the device they were taken on')
+  expect(file.scratch[0].photos).toEqual([{ id: 'p1', width: 1600, height: 1200 }])
+})
+
+test('a backup with no pictures carries no sentence about them', () => {
+  const file = JSON.parse(exportJson(defaultData()))
+  expect(file.about).toBeUndefined()
+})
+
+test('the sentence is not state: importing a file that has it gives an ordinary plan back', () => {
+  const data = defaultData()
+  data.scratch = [
+    { id: 'n1', text: 'the meal plan', createdAt: '2026-09-16T10:00:00.000Z', date: '2026-09-16', photos: [{ id: 'p1', width: 10, height: 10 }] },
+  ]
+  const back = importJson(exportJson(data))
+  expect('about' in back).toBe(false)
+  expect(back.scratch[0].photos).toEqual([{ id: 'p1', width: 10, height: 10 }])
+})

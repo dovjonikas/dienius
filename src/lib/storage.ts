@@ -344,14 +344,39 @@ export function saveData(data: AppData): boolean {
   }
 }
 
+/**
+ * The backup, as a file somebody can open and read.
+ *
+ * Photographs are the one thing in the app that is not in it. They live in
+ * IndexedDB and the state holds their ids - see lib/photos.ts and DECISIONS
+ * "A photograph stays on the device it was taken on" - so a note with a
+ * screenshot exports as a note that names one. Base64 in here would turn a
+ * readable document into a wall of characters and could take a two-hundred
+ * kilobyte file into the tens of megabytes, and the one place a backup has
+ * to work is the day something has gone wrong.
+ *
+ * So the file says so, in a field a person reads rather than a comment they
+ * never see. It is deliberately not part of `AppData`: it is a note about
+ * the document, and `importJson` ignores it the way `validate` ignores any
+ * key it was not told about.
+ */
 export function exportJson(data: AppData): string {
-  return JSON.stringify(data, null, 2)
+  const pictures = data.scratch.reduce((n, note) => n + (note.photos?.length ?? 0), 0)
+  const about =
+    pictures === 0
+      ? undefined
+      : `${pictures} ${pictures === 1 ? 'picture is' : 'pictures are'} named in this file and kept on the device they were taken on. Restoring this file brings the notes back; the pictures stay where they are.`
+  return JSON.stringify(about ? { about, ...data } : data, null, 2)
 }
 
 export function importJson(text: string): AppData {
   try {
     const parsed: unknown = JSON.parse(text)
     if (!validate(parsed)) throw new Error('invalid')
+    // `about` is a sentence `exportJson` writes for whoever opens the file,
+    // not a field of the plan - see there. Dropped here so a file that has
+    // been exported and imported is byte for byte the plan again.
+    if (parsed && typeof parsed === 'object' && 'about' in parsed) delete (parsed as { about?: unknown }).about
     return normalizeLoaded(parsed, 'ifThens' in parsed)
   } catch {
     throw new Error('Invalid Dienius backup file')

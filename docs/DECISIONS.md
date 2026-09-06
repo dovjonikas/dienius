@@ -1514,3 +1514,54 @@ explain the next time an old note is read: it says what it said.
 "!" or the Note/Task marker sends a line to the inbox instead, and it is
 decided before Enter rather than after. That is not structure asked for
 at the moment of writing; it is the same one keystroke either way.
+
+## A photograph stays on the device it was taken on
+
+A note can hold pictures since v2.5, because a screenshot is a note taken
+with a camera instead of a keyboard: a meal plan, a receipt, a whiteboard,
+the error the app just put on the screen. Where they are kept was the whole
+of the decision.
+
+**Not localStorage.** The plan lives under one key with about five
+megabytes for all of it. One photograph eats that, and the failure would
+not be a picture that did not save - it would be the next `saveData`
+throwing with a day's edits in hand, sync stopping, the backup refusing.
+The blobs are in IndexedDB in a store of their own, and the note holds an
+id and two numbers.
+
+**The two numbers are the picture's shape**, and they are the reason a row
+of thumbnails does not jump about as three blobs come back from the
+database at three different moments. Two numbers on a note is a cheap price
+for a row that is still while it is read.
+
+**Not in the sync payload.** Sync moves entities as JSON through a small
+server on the owner's own machine. A base64 photograph is a hundred times
+the size of everything else that ever crosses it, and the merge has no use
+for the bytes: a note is a note whether or not this device can show the
+picture. So the id travels and the picture does not.
+
+**Not in the backup either.** The backup is a file the owner is meant to be
+able to open and read on the day something has gone wrong; that is what it
+is for. Base64 turns it into a wall of characters and takes a two-hundred
+kilobyte document into the tens of megabytes. The exported file names the
+pictures and says, in a sentence at the top, that they stayed where they
+were.
+
+**So the other device says so, in words.** Opening a note written on the
+phone shows "Kept on another device" in the space the picture would fill.
+Not a broken frame, not a spinner that never ends, not an error: the design
+working, stated. The owner is told the same thing in DAILY.md, so it is
+never a surprise.
+
+**What this costs, said plainly.** A screenshot taken on the phone is not on
+the laptop, and never will be. That is a real loss and it is the right
+trade: the alternative is a sync payload and a backup that both break at the
+size of one photograph, which loses everything rather than one picture. If
+it ever wants solving properly it wants a blob store of its own beside the
+sync server, which is a different feature with a different brief.
+
+**And nothing is left behind.** Deleting a note deletes its pictures; undoing
+that delete puts both back, because the undo is holding the blobs it just
+took out. A sweep on every open deletes any blob no note points at, for the
+delete that was interrupted by a closed tab and for the device that synced a
+note's deletion without ever having had the picture.

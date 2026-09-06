@@ -870,6 +870,22 @@ export interface ScratchNote extends Timestamped {
   date: string
   /** Kept at the top of the stream. Absent is not pinned. */
   pinned?: boolean
+  /**
+   * Photographs, as ids into IndexedDB plus the shape to lay out before the
+   * blob loads - never the picture itself. This is the whole reason a note
+   * can carry one without breaking sync or the backup: what travels is a
+   * few dozen bytes, and the picture stays on the device it was taken on.
+   * See lib/photos.ts and DECISIONS "A photograph stays on the device it
+   * was taken on".
+   */
+  photos?: NotePhoto[]
+}
+
+/** An id into the photo store, and the two numbers a thumbnail needs. */
+export interface NotePhoto {
+  id: string
+  width: number
+  height: number
 }
 
 export interface InboxItem extends Timestamped {

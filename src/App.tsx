@@ -110,6 +110,10 @@ export function App() {
   // minutes, and nothing about the app may wait on IndexedDB to answer.
   useEffect(() => {
     void snapshotToday(getData(), todayKey())
+    // And any picture no note points at any more. Same rules: once per
+    // mount, never awaited, and a failure is nothing anybody sees. See
+    // sweepPhotos for why an orphan is possible at all.
+    void storeActions.sweepPhotos()
   }, [])
 
   useEffect(() => {

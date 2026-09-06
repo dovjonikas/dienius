@@ -357,80 +357,9 @@ Pressfield - and one timer, rather than four blocks on the grid.
 
 ---
 
-## The evening questions
+## Notes, and pictures in them
 
-A journal that never counts. Three lines a day, none of them required, and
-a day with none is not a day the app notices.
-
-- **Morning.** Under the North line, one field: **Today**. One line about
-  what this day is for, in your own words. It saves when you leave the
-  field, or on Enter; Escape puts the saved line back.
-- **Evening.** The closing card asks two questions under the best moment:
-  **What was real today?** and **What do I want to tell myself tomorrow?**
-  Plain fields, no length, no switch. An answer typed and left is kept even
-  if you never press Close the day.
-
-Nothing streaks, nothing counts the days you wrote, nothing shows the days
-you did not. Skipping costs nothing and is shown nowhere.
-
-The lines live on the day, so sync, the backup and the snapshots carry them
-with everything else. To read them: **Calendar → Week → Agenda** shows each
-day's lines under its tasks. To take them somewhere else: **Copy week
-journal** under the week, or **Copy month journal** in Review, puts the
-stretch on the clipboard as markdown - the date, the morning line, the two
-answers, only for the days that have any - ready to paste into another
-chat.
-
----
-
-## If something looks wrong
-
-In this order, and the order matters:
-
-**1. Back it up first.** Settings → Backup → **Back up now**, or
-Settings → General → **Export backup** if GitHub is not set up. Whatever is
-wrong, having a copy of it is better than not.
-
-**2. Write it down while you can see it.** Press the pencil (or `S`) and
-type what you saw:
-
-```
-the week arrows are too close to the edge on my thumb
-```
-
-It saves as you type. Later, open Scratch and the note is there, newest
-first, in the words you wrote.
-
-**3. Then, if you need the plan back:**
-
-- **Something is wrong from earlier today** - Settings → General →
-  **Restore from a snapshot**. One copy a day, taken on the first open, seven
-  kept, so this morning's is the newest. It replaces everything, and it says
-  what it holds before it does.
-- **Something is wrong since yesterday or before** - Settings → Backup →
-  **Restore from cloud**. It reads the copy on GitHub, tells you what is in
-  it and what is here, and replaces only on the second press.
-- **You want one specific day back and nothing else** - open
-  `data/history/YYYY-MM-DD.json` on github.com, download it, and
-  Settings → General → **Import backup**. Same thing: it replaces everything,
-  so back up first.
-
-**Never clear the site data.** That is the one action nothing protects you
-from. Every destructive thing inside the app asks twice; that one does not
-ask at all.
-
----
-
-## The two things it will not do, on purpose
-
-Worth knowing so they do not read as missing:
-
-- **It never shows progress toward a goal**, and never will. Being shown how
-  far along you are is what makes people ease off. The reason is written down
-  in [`DECISIONS.md`](DECISIONS.md) if you want it.
-- **It never says what you did not do.** Not on the evening card, not on a
-  past day in the calendar, not in a colour. Everything left is still in the
-  list, where you can look at it if you want to.
-
-If either of those ever stops being true, that is a bug, and the most
-important kind.
+Press the pencil at the bottom right, or `S` on a laptop, and write. It
+saves as you type - there is no save button and nothing to lose by closing
+it. A line starting with `!` goes to your inbox as something to do instead;
+the marker beside the box says which before you press enter.

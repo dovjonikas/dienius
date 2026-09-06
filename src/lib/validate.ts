@@ -342,12 +342,23 @@ const BACKLOG_ITEM = record({
   minutes: optional(minutes),
 })
 
+// A picture's id and shape. The blob is in IndexedDB and never in a
+// document this validates - see lib/photos.ts. A backup written by another
+// device names pictures this one does not have, and that is not an error:
+// the note says so and reads fine without them.
+const NOTE_PHOTO = record({
+  id: string,
+  width: wholeNumber(1, 20_000),
+  height: wholeNumber(1, 20_000),
+})
+
 const SCRATCH_NOTE = record({
   id: string,
   text: string,
   createdAt: string,
   date: string,
   pinned: optional(boolean),
+  photos: optional(listOf(NOTE_PHOTO)),
 })
 
 const GOAL = record({

@@ -240,6 +240,7 @@ src/
     demoMode.ts        whether this tab is on sample data, and which key it uses
     demo.ts            the sample fortnight, built from one date
     scratch.ts         the scratch stream: its order, its counts, the way out
+    photos.ts          pictures on a note: IndexedDB, the shrink, the two limits, the sweep
     tour.ts            the tour as data - the steps, and what ends each one
     tourState.ts       whether a tour is running, and where it got to
     tourMode.ts        the replay sandbox, and which storage key it uses
@@ -809,107 +810,4 @@ and a size come out right), an inbox line, or nothing. Adding a field to
 right one.
 
 Capture is never gated: the `S` key (or the backtick) from anywhere, a
-draggable button on a phone, or the palette. The overlay writes on the first
-keystroke and rewrites on every one after, so there is no Save and leaving
-loses nothing.
-
-### The tour - `lib/tour.ts`, `views/tour/Tour.tsx`
-
-The engine knows nothing about what it teaches. It walks a step array, points
-at whatever selector the step names, and asks that step's predicate - over the
-store - whether it has happened yet. Nine steps, each ending on a real action
-rather than a Next button; the two ends are the exception, because a welcome
-has nothing to do yet and an ending has nothing left.
-
-The steps are data, in two arrays: desktop and mobile, the same nine in
-different words. The whole thing is under 120 words and a test holds the
-budget. **The tour is a mirror of the app and goes stale silently - see
-CONVENTIONS.md section 13, which makes checking it part of every wave.**
-
-Two ways to run it, and the difference is where it writes:
-
-- **A new person** takes it on their real, empty plan. While it runs,
-  `commit()` flags whatever appears with `tourCreated` - by the same diff that
-  writes sync timestamps, so no action has to know the tour exists - and the
-  last card offers *Keep what I built* or *Start clean*, which removes exactly
-  the flagged entities.
-- **A replay from Settings** runs in a sandbox: `dienius:tour`, an empty app
-  wearing the person's theme, no sync, no snapshots, deleted on the way out.
-  The same isolation demo mode uses, for the same reason.
-
-The spotlight is four solid shades around the hole, positioned by transform
-(`shadesAround` in `Tour.tsx`; it was one SVG path with an even-odd hole
-until v1.11, which repainted the window on every move), and a ring that
-glides; none of it catches a pointer event, so the app underneath stays
-usable and the person operates the real control rather than a copy of it.
-
-### Replan - `widgets/day-plan/replan.ts`, `ReplanSheet.tsx`
-
-For the moment a plan breaks. The failure it guards against is not the broken
-piece but what the brain does next - "the whole day is gone" - so the tone
-rules in CONVENTIONS.md section 12 are as much of the contract as the
-arithmetic.
-
-Four pure functions produce one plan shape, and `applyPlan` is the only
-writer:
-
-| Function | Question |
-|---|---|
-| `findConflicts` | What does this new block land on |
-| `planInterrupt` | Into the gaps, to the next day, skipped or gone - per task. Given a start-from and the day's own words since v2.2, so it answers for Thursday as well as for now |
-| `planShift` | Everything from now, later, with the sleep boundary named |
-| `planRescue` | Back after a while: what still fits, key tasks first |
-| `freeWindows`, `formatFreeWindows` | What is left of the day once the plan is in - the line said into the phone |
-
-`applyPlan` is idempotent, because sync can hand the same intention over from
-two devices: a task already at its new time is unchanged, a task tomorrow
-already has by identity is not added twice (the same `dayHas` check every
-move between days uses), and the interruption is not re-added if its title
-already sits at its time. It writes `DayPlan.replannedOn`, which the week
-view reads as one quiet word, and a dropped repeat instance's skip. One
-commit, one undo.
-
-Since v2.4 there is a fourth door beside these, "Low day", in
-[`lowDay.ts`](../src/widgets/day-plan/lowDay.ts): `planLowDay` keeps the
-key tasks at 40% of their length (on the five-minute grid, never under
-fifteen minutes), leaves the routine blocks where they are and sends the
-rest to tomorrow, and `applyLowDayPlan` commits it with the same
-idempotence and the same `dayHas` check. It writes `DayPlan.lowDay`,
-which `dayScore` and `dayStat` read to count the key tasks alone. The
-sheet is the replan sheet in its `'low'` mode, opened from the button
-beside Replan or the palette.
-
-Since v2.2 the sheet is mounted at the root of the app and reads the store
-itself, given a day (`replanState.ts` is the request). "Something came up"
-is about any day of the week: a WHEN row, the shape of the loss in
-`interrupt.ts`, a typed line in either language in `interruptParse.ts`, the
-plan proposed with routine blocks skipped, and the free line. Choosing a day
-opens it through `actions.ensureDay` first. The other three doors are about
-today whatever day was asked for.
-
-`DayPlan.away` is the pause. It lives on the day so it travels with it - two
-devices cannot disagree about whether the day is paused - and while it is set
-the task reminder does not fire.
-
-## 13. Conventions worth knowing before editing
-
-- **Absent is a state.** Optional fields mean something specific; check the doc
-  comment before treating one as a default.
-- **A dangling id is not an error.** Resolve it to nothing and carry on.
-- **Comments explain the decision, not the mechanism.** If a line is surprising,
-  the comment says what the obvious alternative was and why it lost.
-- **No em dashes anywhere** - plain hyphens, in code, comments and copy.
-- **Nothing is created until asked for.** The app ships empty; starter
-  templates and starter library lists are *offers*.
-- **Nothing is measured that would become a target.** No streak on the day
-  view, no counter on an if-then rule. See `RESEARCH-ADHD.md`.
-
-- **The tour is a mirror of the app.** It points at real controls with real
-  selectors and goes stale silently. Every wave that changes the UI checks
-  it, and a broken one is a P0 bug - CONVENTIONS.md section 13.
-- **Scratch stays one stream** and **a partial plan beats a dropped day** are
-  the two other standing rules added with those features - sections 11 and 12.
-
-The full set - zero-scroll rules, design tokens, the button system, the test
-policy, how a critique pass is run - is in
-[`CONVENTIONS.md`](CONVENTIONS.md).
+draggable button on a phone, or the palette.
