@@ -3,6 +3,8 @@ import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
+import { actions, useAppData } from '../../lib/store'
+import { scratchTitle, sortScratch } from '../../lib/scratch'
 
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -13,25 +15,42 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  */
 const PRESETS = [5, 10, 15, 30]
 
+/** How many of the last notes the panel shows. Enough to recognise one, few enough not to be a list. */
+const RECENT_NOTES = 3
+
 export interface ClockPopoverProps {
   onClose: () => void
+  /** Hands over to the full stream - see the Notes tab. */
+  onOpenNotes: () => void
+  /** Which tool the panel opens on. The quick-note key asks for 'notes'. */
+  tab?: ClockTab
 }
+
+export type ClockTab = 'timer' | 'stopwatch' | 'notes'
 
 /**
  * Timer and stopwatch, in one small panel hung off the header button.
  *
- * Two tabs rather than two buttons in the header, because they are the same
+ * Tabs rather than three buttons in the header, because they are the same
  * kind of thing used at different moments and only one of them is ever
- * running for a given reason. Once either is started this panel has nothing
+ * running for a given reason. Once a tool is started this panel has nothing
  * left to say - the floating widget takes over and this closes itself, so the
  * panel is only ever a way in, never a place to sit and watch.
+ *
+ * Notes is the third tab since v2.5. The clock button is the one control on
+ * screen from every tab, which makes it the shortest path from a thought to
+ * a line written down - and this is deliberately not a second Scratch: one
+ * line, Enter, gone. The last three are there to recognise, not to work
+ * through, and the way to the whole stream is a button that says so.
  */
-export function ClockPopover({ onClose }: ClockPopoverProps) {
+export function ClockPopover({ onClose, onOpenNotes, tab: openOn }: ClockPopoverProps) {
   useRestoreFocus()
   const tools = useClockTools()
+  const data = useAppData()
   const panelRef = useRef<HTMLDivElement>(null)
-  const [tab, setTab] = useState<'timer' | 'stopwatch'>(tools.stopwatch && !tools.timer ? 'stopwatch' : 'timer')
+  const [tab, setTab] = useState<ClockTab>(openOn ?? (tools.stopwatch && !tools.timer ? 'stopwatch' : 'timer'))
   const [custom, setCustom] = useState('')
+  const [note, setNote] = useState('')
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -66,6 +85,19 @@ export function ClockPopover({ onClose }: ClockPopoverProps) {
       e.preventDefault()
       first.focus()
     }
+  }
+
+  // One line, kept, and the panel is gone. Not the draft-per-keystroke the
+  // Scratch overlay does: that exists because the overlay is a place to sit
+  // and this is a door somebody is already halfway through.
+  const recent = sortScratch(data.scratch).slice(0, RECENT_NOTES)
+
+  function keepNote() {
+    const text = note.trim()
+    if (!text) return
+    actions.addScratch(text)
+    setNote('')
+    onClose()
   }
 
   function start(minutes: number) {
@@ -114,9 +146,52 @@ export function ClockPopover({ onClose }: ClockPopoverProps) {
           >
             Stopwatch
           </button>
+          <button
+            type="button"
+            className={tab === 'notes' ? 'active' : ''}
+            aria-pressed={tab === 'notes'}
+            onClick={() => setTab('notes')}
+          >
+            Notes
+          </button>
         </div>
 
-        {tab === 'timer' ? (
+        {tab === 'notes' ? (
+          <div className="clock-panel clock-notes">
+            <textarea
+              className="clock-note-input"
+              aria-label="A quick note"
+              placeholder="One line. Enter keeps it."
+              rows={2}
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== 'Enter' || e.shiftKey) return
+                e.preventDefault()
+                keepNote()
+              }}
+            />
+            {recent.length === 0 ? (
+              <p className="clock-note">Nothing written down yet.</p>
+            ) : (
+              <ul className="clock-note-list">
+                {recent.map(n => (
+                  <li key={n.id}>{scratchTitle(n.text, 60)}</li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              className="clock-note-open"
+              onClick={() => {
+                onOpenNotes()
+                onClose()
+              }}
+            >
+              Open notes
+            </button>
+          </div>
+        ) : tab === 'timer' ? (
           <div className="clock-panel">
             <div className="clock-presets">
               {PRESETS.map(m => (

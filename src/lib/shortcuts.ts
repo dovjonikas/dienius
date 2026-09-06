@@ -39,6 +39,7 @@ export const SHORTCUTS: Shortcut[] = [
   { key: 'f', label: 'F', description: 'Start Focus on the task that is running now' },
   { key: 'r', label: 'R', description: 'Something came up - fit it into today or any day this week' },
   { key: 's', label: 'S', description: 'Scratch - write it down now, sort it out later' },
+  { key: 'q', label: 'Q', description: 'A quick note, without leaving the screen' },
   { key: 'escape', label: 'Esc', description: 'Close whatever is open' },
   { key: '?', label: '?', description: 'This list' },
   // The one chord in the list, because it is the one every other app with a

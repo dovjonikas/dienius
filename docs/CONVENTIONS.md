@@ -555,3 +555,407 @@ writing, and every addition that asks something takes that value away. So:
   button, the palette command: each opens the box with the cursor in it and
   every keystroke already saved. If a change makes any of those take a second
   step, it is wrong.
+- **And there is a shorter way in than the stream.** `Q`, or the clock
+  button's Notes tab: one line, Enter, gone, without leaving the screen. It
+  is not a second Scratch and must never grow into one - no pinning, no
+  editing, no filtering. The last three are shown to be recognised, and the
+  way to the stream is a button that says where it goes.
+
+---
+
+## 12. A partial plan beats a dropped day
+
+Replan (`widgets/day-plan/replan.ts`, `ReplanSheet.tsx`) exists for the
+moment a plan breaks: a call, a change, an afternoon away. The failure it
+guards against is not the broken piece but what the brain does next - "the
+whole day is gone" - so the rules are about tone as much as arithmetic:
+
+- **Never count what was missed.** A summary says what still fits and what
+  moves. "Still winnable: 2 of 3 key" is allowed; "you missed 4 tasks" is
+  not, in any wording, in any colour.
+- **Nothing disappears silently.** A task that no longer fits before sleep is
+  named and offered to tomorrow. A plan that would drop something says so
+  before Accept, never after.
+- **Ten seconds and one press.** Every replan screen is one question, shows
+  its answer before it is accepted, and applies in one commit with one undo.
+  If a change adds a second question to the path, it is wrong.
+- **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
+  nudges; "I'm back" offers one rescue and clears it. A day that was paused
+  is scored like any other, because the score is a fact and the pause was a
+  choice.
+
+Since v2.2 "Something came up" answers a phone call about any day of the
+week, and five more rules came with it:
+
+- **Proposed, not asked.** Choosing when shows the plan - what the
+  interruption lands on and where each block goes - before anybody says
+  anything. A row is pressed to say otherwise, never to say yes. If a change
+  makes the proposal wait for a choice, it is wrong.
+- **A routine block is skipped, a one-off is moved.** A template's or a
+  repeat's block (`isRoutine`) taken by the interruption is dropped for that
+  day and the summary says "Skipped", because the template makes it again;
+  a task somebody typed is fitted into a gap, key tasks first, or sent on to
+  the next day. A one-off the person chooses to let go of reads "Dropped".
+  Two words, because they are two facts.
+- **The line for the caller comes first.** "Free tomorrow: 15:30-17:00,
+  after 19:30" sits above the plan's own sentence, in weight, before Accept,
+  where it is read with the phone at the ear. Stretches under half an hour
+  are not offered.
+- **The line and the chips are one truth.** A typed line that names a day,
+  a time or a shape wins and the chips redraw to show it; a pressed chip
+  takes that kind of word out of the line. Section 16's rule for quick-add,
+  kept the cheap way.
+- **A day chosen is opened.** Choosing a day in the sheet runs
+  `actions.ensureDay` for it, exactly as looking at it would, so what is
+  planned against is what Accept lands on. A pure preview was tried and
+  stamps its own copy with its own task ids.
+
+---
+
+## 13. The tour is a mirror of the app
+
+`lib/tour.ts` describes nine steps by pointing at real controls with real
+selectors and waiting for real events. That makes it the one piece of this
+codebase that goes stale silently: rename a class, move a control behind a
+menu, change what a button does, and the tour still compiles, still renders,
+and still points at nothing.
+
+**Every wave that changes the UI or adds a feature checks the tour.** Not the
+tests alone - walk it, both platforms, all nine steps, in the browser. A
+broken or out-of-date tour is a P0 bug, on the same footing as data loss:
+it is the first thing a new person sees, and a first impression that points
+at an empty rectangle is worse than no tour at all.
+
+What checking it means, concretely:
+
+- **Every `data-tour` target still exists**, and is still reachable the way
+  the step's text says it is. The selectors are in `lib/tour.ts`; grep for
+  `data-tour` to find the other half of each pair.
+- **Every step still ends.** The predicates in `TOUR_EVENTS` watch the store,
+  so a feature that stops writing what it used to write leaves a step that
+  can never be finished and a person who cannot get past it.
+- **The words are still true.** "Nine blocks, one click" is a promise about
+  a starter template; change the template and the sentence is a lie.
+- **A new feature worth teaching gets a step, and the budget is still 120
+  words.** Adding a tenth step means earning it by cutting somewhere else.
+  The lines a target carries ("Click Details", "Now press Enter") and the
+  captions are bounded separately, per line, in `tour.test.ts`.
+
+### The three standing rules about the thing being pointed at
+
+Each one is the fix for something the owner watched go wrong on a walk
+through, and the engine applies them to every step without being asked:
+
+1. **It is visible.** The lit target carries `is-tour-target`, which
+   outranks every hover reveal in the stylesheet. The dots on a task card
+   are opacity zero on a mouse until the pointer crosses the card; the ring
+   was drawn around a button nobody could see.
+2. **It is not behind a sheet.** A modal the previous step led into
+   (`data-tour-modal`) that does not hold this step's control gets its close
+   button lit and the card says "Close this panel first." Every sheet and
+   panel a step can open carries the attribute and marks its close button
+   with `data-tour-modal-close`.
+3. **It says what to do now.** A target carries its own line, and a box
+   carries a second one for once something is typed into it. "Type Walk in
+   the box" becomes "Now press Enter." on the first keystroke - somebody had
+   typed it and waited, because nothing told them the field wanted Enter.
+
+And a fourth, about what happens after: **every step names its outcome.**
+One line, what happened and why it matters, held long enough to read, with
+Next beside it. A step that ended on a tick and a jump read, to the person
+watching the control rather than the card, as the tour skipping by itself.
+
+### The three guards, and why they exist
+
+A tour whose every step waits for a real action is a tour of the app rather
+than a slideshow about it, and it is also the one design that can trap
+somebody. Three things stop that, and none of them may be removed without
+replacing it with something that does the same job:
+
+1. **The hole follows its target.** Scrolled into view before it is measured,
+   re-measured on resize, on scroll, on any DOM mutation outside the overlay,
+   and on a slow poll besides. The poll is not redundant - a CSS transition
+   moves an element without mutating anything. Everything that asks for a
+   re-measure is coalesced into one measure per animation frame, because
+   measuring writes: the first version of that watcher heard its own output
+   and locked the renderer solid inside a second.
+2. **A target that is nowhere in the document is said so.** After a grace
+   period the card says the control is not on this screen - or why, when the
+   step knows: Focus only exists on the card running this minute - and
+   offers the way through. It never moves on by itself: that used to happen
+   after twelve seconds with a line in the console, and to the person it was
+   the tour skipping a step at random. Present-but-unreachable is a
+   different failure and is covered by the next one.
+3. **Twenty seconds of nothing offers a way through** - do it for me, or skip
+   this step. `lib/tourAssist.ts` does the real thing through the real store
+   actions, never a fake tick, because the next step needs the state the
+   previous one was supposed to leave behind.
+
+### Pacing, and the three steps that wait
+
+Every real step ends on a tick and a caption, held for 3.2 seconds before
+the next step: a beat for the tick, which lands somewhere else on the page
+from where the eye was, and two seconds for a line of twelve words. Next is
+there throughout for anybody faster. Three steps wait for Next instead of
+moving on at all - stamping a day, starting Focus, writing a goal - because
+what appeared deserves a proper look; the goal step also moves the shell
+back to the day and points at the North line, so the person sees where the
+goal went rather than being told. The `outcome` lines sit outside the
+120-word budget and are bounded separately, because a caption for something
+that has already happened is read with the eye free rather than standing
+between somebody and a control.
+
+### Three doors in
+
+The tour used to have one: an offer on a day with nothing on it, which is a
+screen somebody sees once. It is now also in the shortcut card behind `?` and
+in the command palette, both of which are where a person goes when they are
+already looking for help. Settings still replays it in a sandbox.
+
+### Before calling a tour change done
+
+Walk it end to end **five times in a row with no code changes between the
+runs**: desktop dark, desktop light, 390x844, 768x1024, and once slowly and
+awkwardly - stray taps beside the target, Escape, a resize in the middle of a
+step. Then once more naively, doing only and exactly what each card says.
+Any break resets the count. Escape always leaves the tour, after whatever
+is sitting over it - which means every sheet stops the key it handles, or
+one press closes the sheet and the tour together.
+
+The walks are driven from the browser pane, and two things about the pane
+will mislead you if you do not know them. A hidden pane throttles timers to
+once a second and runs no animation frames, so a script that chains several
+`await sleep()` calls can take minutes and every later call queues behind
+it - it looks exactly like a locked renderer. Put the waits between tool
+calls, not inside the page. And `computer` key presses do not always reach
+the page; dispatch the key on the element when the press has to land.
+
+---
+
+## 14. The four shelves, and what each is for
+
+Something that is not on a day can be in one of four places, and the whole
+value of having four is that each one asks a different amount of you at the
+moment of writing. Adding a fifth means proving it is not one of these.
+
+| Shelf | What it holds | What it asks |
+|---|---|---|
+| **Scratch** | Text, and nothing attached | Nothing at all |
+| **Inbox** | A line nobody has decided about | Nothing at all |
+| **Backlog** | A decided task with no day | A title, and whatever else you feel like |
+| **A float** | A task on a day, with no time | It is already on a day |
+
+The two rules that keep the backlog from becoming the thing this app exists
+to take away:
+
+- **Nothing records how old an item is, so nothing can show it.** `BacklogItem`
+  has no `createdAt`, deliberately. A list that says "you have been meaning to
+  do this for six weeks" is a list that accuses you every time you open it -
+  the same reasoning as the scratch count in section 11 and the day score's
+  refusal to grow red. `updatedAt` exists for sync and is a fact about a
+  device, never rendered.
+- **It never comes looking for you.** Collapsed behind a plain count in
+  `--faint`, below the inbox, on the day view only. No badge, no colour, no
+  offer inside a gap, no nudge, no mention anywhere else. A backlog with two
+  hundred things in it has to be able to sit there saying nothing.
+
+What it *is* allowed to be is easy to pull from: one press puts an item on the
+day at the next free slot that holds it - the same `widgets/day-plan/autoSlot.ts` arithmetic
+quick-add's own time control uses - and it leaves the backlog in the same
+commit, because a thing that is on today and still in the backlog is the same
+thing written down twice.
+
+Order is priority and is the array's own order. There is no star, no urgency,
+no due date, and no sort: a drag or an arrow key is the entire ranking model.
+
+---
+
+## 15. The evening close never appraises
+
+`lib/eveningClose.ts` and `widgets/day-plan/EveningClose.tsx` exist because a
+day needs an ending and midnight is not one. The arithmetic is four lines. The
+rest of it is tone, and the tone is the feature.
+
+**The day is being closed, not judged.** If a line reads like a report to a
+manager, it is wrong, whatever the numbers say. That is the whole rule; the
+rest is what it means in practice.
+
+- **What was not done is not mentioned.** Not counted, not named, not implied.
+  It is still in the list underneath, where somebody can look at it if they
+  want to. The card does not point at it.
+- **"Enough" is reachable every day.** Half the day's tasks, or every key one.
+  That threshold is the 40% doctrine in
+  [`RESEARCH-ADHD.md`](RESEARCH-ADHD.md) written as a sentence: a day that got
+  half of a real plan done is a day that went well, and an app that only says
+  so at ten out of ten says so four times a year.
+- **A day that did not reach it is not failed either.** "The day gave what it
+  gave" is the whole of what is said. There is no third, sadder tier below
+  that, and adding one would be inventing a way to lose.
+- **No colour means anything on that card.** No accent bar, no tick, no ring,
+  no red, no percentage, no comparison with yesterday. The only filled control
+  is the button that ends it, because that is the only action on it.
+- **The questions are optional and asked once.** "Best moment today?" is a
+  plain empty field, and since v2.3 so are the journal's two under it: "What
+  was real today?" and "What do I want to tell myself tomorrow?" (see
+  `lib/journal.ts`). Nothing measures whether days have one, nothing
+  prompts for them during the day, and a day that already carries a line
+  shows the line rather than asking again. A journal that counted its own
+  days would be the report card this card refuses to be, so it never does.
+- **The offer to push is an offer.** It names a number, because that is a fact
+  about a button, and gives no reason, because leaving three things unfinished
+  is not a problem this card exists to solve.
+
+The words this app does not use, anywhere near a day's outcome: missed,
+failed, behind, only, should, incomplete, overdue. A test in
+`eveningClose.test.ts` checks the generated line against that list, on every
+shape of day.
+
+---
+
+## 16. Capture answers before it asks
+
+`widgets/day-plan/QuickAdd.tsx` is the one field every shelf in section 14 is
+reached through, and the rule it follows is the reason the whole thing exists:
+**the ordinary path types a title and presses Enter.** Everything else the task
+needs - a time, a length, a colour - is already answered when that happens.
+
+The rule is the app's, not quick-add's: **where a person can choose instead
+of type, they choose. Typing is for what the app cannot know - a name.
+Every control opens already holding an answer.** A length is a chip, not a
+number to work out; a unit is a word to tap; a repeat is four buttons, not
+a dropdown; a page count is a number with arrows and a "+25". The controls
+are shared so the answer is asked for one way everywhere: `DurationControl`
+(the button and its chips, in quick-add, the template editor and the
+library's add-to-template form), `DurationChips` (the same chips in a row,
+in the task detail sheet), `MinuteStepInput`, `CountStepInput`, `TimePicker`.
+A bare `<input type="number">` or a native `<select>` over a fixed set of
+answers is a control that has not been built yet. The library's add line
+(`LibraryAddLine.tsx`) is quick-add's shape applied to a book: the words,
+a unit control, a count control, and the same one-truth rule between them.
+
+- **A default is a real answer, not a placeholder.** The time control opens on
+  the first free slot the day genuinely has (`widgets/day-plan/autoSlot.ts`), not on a
+  blank or on a round number nobody chose. When there is no such slot it says
+  "No time" and the task is a float, because a planner that answers a full day
+  by booking 23:45 is one people stop believing.
+- **The text and the controls are one truth, never two.** A line that carries
+  its own time or duration wins, and the controls redraw to show what was
+  understood. Push an arrow or tap a chip against such a line and the *words*
+  are rewritten - see `replaceLeadingTime` and `replaceTrailingDuration`. A
+  field saying one thing while a control beside it says another is the bug
+  this rule exists to make impossible.
+- **What is remembered is a habit, not a plan.** The last duration chosen
+  persists, under its own key, outside the backup and outside sync. The
+  category does not persist at all: it follows the sitting, because most tasks
+  typed in one go belong together and carrying that to tomorrow would be a
+  guess.
+- **A suggestion is now, to the minute.** Not rounded up to the next quarter.
+  Focus is only ever offered on the *running* card, so a task starting eight
+  minutes from now would be quietly out of reach of the one feature for doing
+  something immediately. The arrows snap to the quarter from there, which is
+  where a round number belongs: in the answer somebody asked for.
+
+---
+
+## 17. A visible way in, on every platform
+
+Every feature has at least one control somebody can see, on a phone and on
+a desktop. A key is a shortcut, never the only road: a person who has not
+read the `?` card does not know the key exists, and to them a feature with
+no button is a feature the app does not have.
+
+Scratch is the case that wrote this rule. On a phone it had a floating
+button; on a desktop that button was not mounted, so `S` and the backtick
+were the whole of the way in, and the owner watched somebody use the app for
+a week without finding it. It got a pen in the header, and for a while the
+feature had two different ways in, one per platform - which is the shape this
+rule accepts when there is nowhere a control can live on both. Since v2.0
+there is: the navigation rail is a rail on a desktop and a bar along the
+bottom on a phone, and Scratch is one pen in it, in the same place, on both.
+
+What "visible" means, concretely:
+
+- **A control on screen, in the place the feature belongs**, not a line in
+  the shortcut card or the palette. Those are the second and third ways in
+  and every feature should be in both, but neither is the first.
+- **Both platforms, checked separately.** The phone checklist in STATE.md
+  and the wide layout are different screens with different chrome, and a
+  control mounted for one is not automatically mounted for the other. One
+  control in the rail is better than two that agree, because two that agree
+  today are two that can disagree tomorrow.
+- **The tooltip names the key.** `title="Scratch - S"`: the visible control
+  is where somebody learns the shortcut, which is the order that works.
+
+---
+
+## 18. Every invented word is explained where it is used
+
+This app invented, or bent, about twenty terms: Ongoing, Key, Push, Stamp,
+Focus, day type and its four values, the difference between the inbox and
+the backlog, what a unit is in the library, what North is for, what a sleep
+schedule does, and how sync differs from a backup. Every one of them means
+something precise here and something else, or nothing, everywhere else.
+
+- **The copy lives in one file**, [`src/lib/explain.ts`](../src/lib/explain.ts),
+  because copy is read as copy or it is not read at all. Twenty string
+  literals across twenty components is a vocabulary nobody can see the whole
+  of, and two entries can contradict each other for a year without anybody
+  noticing.
+- **One component renders it**, `views/Explain.tsx`, in two shapes: a bubble
+  hanging off the control it is about, and the same sentence printed in place
+  for a term that *is* a choice somebody is making right now. A tooltip on a
+  control somebody is deciding about is an explanation behind a second
+  decision.
+- **There is no marker.** There was, for one version - a small (i) beside
+  every term - and twenty of them read as twenty controls rather than as
+  texture, each the loudest thing in a row it had no business being loudest
+  in. An explanation is a second thought about something already on screen,
+  and a second thought does not get a permanent button. The control is the
+  anchor: rest on it, hold it, or focus it.
+- **One or two sentences, and nothing to press inside.** The moment a bubble
+  has a control in it, it has to be reachable, which makes it a popover,
+  which makes it a thing somebody has to get out of.
+- **Three ways in, always.** A mouse rests on the control for 400ms, a finger
+  holds it for 500ms, a keyboard focuses it. A tooltip only a mouse can reach
+  is an explanation half the people who need it cannot get to - section 17,
+  one step down. The hold never swallows the tap: this wraps the control, it
+  does not replace it.
+- **The list is the test's own data.** `Explain.test.tsx` walks every id in
+  `EXPLAIN_IDS`, checks it has a sentence, checks the sentence is at most two
+  sentences with no dash, and renders the screen it is supposed to live on to
+  check it is actually there. Adding a term without copy fails; writing copy
+  for a term nobody put on screen fails too, which is the more useful of the
+  two.
+
+**If a sentence here and the behaviour disagree, the sentence is the bug.**
+Changing what Push does means changing what Push says, in the same commit.
+
+---
+
+## 19. A picture is never in the state
+
+Photographs on a note (`lib/photos.ts`, `views/scratch/NotePhotos.tsx`) are
+the only binary this app holds, and the rule that keeps them from breaking
+everything else is one line: **the state holds an id, never the bytes.**
+
+- **The blobs are in IndexedDB**, in a store of their own. Not localStorage,
+  which is where the plan lives and has five megabytes for all of it.
+- **The note holds `{ id, width, height }`.** The two numbers are what lets a
+  thumbnail hold its box before the blob arrives, so a row of them does not
+  reflow as they load.
+- **Nothing binary crosses sync or lands in the backup.** The id travels; the
+  picture does not. The other device says "Kept on another device" in the
+  space the picture would fill, and the exported file says the same in a
+  sentence at the top. See DECISIONS "A photograph stays on the device it was
+  taken on" for what that costs and why it is the right trade.
+- **Every path degrades to "there is no picture".** IndexedDB can be missing
+  or blocked and a canvas can be refused; none of that may stop a note from
+  being written.
+- **A picture is shrunk before it is kept**: the longer edge to 1600, JPEG at
+  0.8. Five megabytes for one and twenty to a note are the two ceilings, and
+  passing either is a sentence somebody would say, not a code.
+- **Nothing is orphaned.** A note's delete takes its pictures, its undo brings
+  them back, and a sweep on open removes any blob no note names.
+
+If a second thing in this app ever needs to hold a file, it goes through this
+module rather than beside it.

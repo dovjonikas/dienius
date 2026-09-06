@@ -6,7 +6,7 @@ import { syncThemeColorMeta } from './lib/theme-color'
 import { syncManifestTheme } from './lib/manifest-sync'
 import { UpdateNotice } from './UpdateNotice'
 import { UndoToast } from './widgets/UndoToast'
-import { ClockPopover } from './widgets/clock/ClockPopover'
+import { ClockPopover, type ClockTab } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
 import { IntervalReminder } from './widgets/clock/IntervalReminder'
 import { TaskReminder } from './widgets/clock/TaskReminder'
@@ -48,6 +48,7 @@ export function App() {
   const data = useAppData()
   const [view, setView] = useState<View>('day')
   const [clockOpen, setClockOpen] = useState(false)
+  const [clockTab, setClockTab] = useState<ClockTab | undefined>(undefined)
   const [focusExpanded, setFocusExpanded] = useState(false)
   const tools = useClockTools()
   const focusTask = tools.focus
@@ -197,6 +198,13 @@ export function App() {
           // yet.
           setView('day')
           setFocusQuickAdd(n => n + 1)
+          break
+        case 'q':
+          // A line written down without leaving the screen: the clock panel's
+          // Notes tab, which is the short way in. S opens the whole stream,
+          // which is the long one. N was taken by quick-add years ago.
+          setClockTab('notes')
+          setClockOpen(true)
           break
         case 't':
           openDay(todayKey())
@@ -398,7 +406,16 @@ export function App() {
           >
             <span className="clock-button-face" aria-hidden="true" />
           </button>
-          {clockOpen && <ClockPopover onClose={() => setClockOpen(false)} />}
+          {clockOpen && (
+            <ClockPopover
+              onClose={() => {
+                setClockOpen(false)
+                setClockTab(undefined)
+              }}
+              onOpenNotes={() => setScratchOpen(true)}
+              tab={clockTab}
+            />
+          )}
         </div>
       </header>
 

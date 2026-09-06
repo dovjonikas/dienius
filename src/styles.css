@@ -12718,3 +12718,49 @@ main:has(.week) > .calendar {
 .photo-viewer-step:disabled { opacity: 0.4; }
 
 .photo-viewer-where { color: #fff; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+
+/* The Notes tab of the clock panel - see ClockPopover. One line, the last
+   three to recognise, and the way to the whole stream. Deliberately small:
+   the panel is a door somebody is already halfway through, not a place to
+   sit, and anything taller would be a second Scratch. */
+.clock-notes { gap: var(--s2); }
+
+.clock-note-input {
+  width: 100%;
+  resize: none;
+  font-size: var(--t-input);
+}
+
+.clock-note-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.clock-note-list li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.clock-note-open {
+  align-self: flex-start;
+  min-height: 0;
+  padding: var(--s1) var(--s2);
+  margin-left: calc(var(--s2) * -1);
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--t-sm);
+}
+
+.clock-note-open:hover { text-decoration: underline; }
+
+@media (pointer: coarse) {
+  .clock-note-open { min-height: var(--touch); }
+}
