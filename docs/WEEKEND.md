@@ -30,19 +30,20 @@ Do not write it down anywhere else. Do not try to remember it.
 
 The moment you notice something - it looks wrong, it did something odd, a word
 grated, a button was hard to hit - press the pencil button at the bottom right
-and type it starting with `#bug`:
+and type it:
 
 ```
-#bug the week arrows are too close to the edge on my thumb
+the week arrows are too close to the edge on my thumb
 ```
 
 That is the whole process. It saves as you type; there is no save button and
-no way to lose it. `#bug` is what makes it findable later.
+no way to lose it, and nothing is asked about where it goes.
 
 Two other things the same box does, worth knowing because you will want them:
 
-- Anything not starting with `#bug` is just a note. A number somebody says on
-  the phone, a thought at a red light.
+- A screenshot goes in the same place. Take it, then paste it into a note
+  with Ctrl+V, or drag it onto the box, or use the + button. On a phone the
+  + offers the camera and the gallery.
 - A line starting with `!` goes to your inbox as something to do instead:
   `!book the dentist`. There is a Note/Task marker beside the box that shows
   which it will be before you press enter.
@@ -115,12 +116,12 @@ worth noticing while you do:
 ## Sunday evening: send the bugs
 
 1. Press the pencil, or the backtick key on a laptop.
-2. Tap the `#bug` chip to filter down to just those.
-3. Press **Export bugs**. It copies them all as a markdown list.
+2. Read down the stream - newest first, the whole week in one column.
+3. Select the ones that matter and copy them.
 4. Paste that wherever we are talking.
 
-If the clipboard refuses - some phone browsers do - select the notes and copy
-them by hand. The button says so if it happens.
+A note with a screenshot in it stays on the device it was taken on, so say
+what the picture showed if you are on the other one.
 
 ---
 
@@ -149,4 +150,4 @@ second tap, and there is a week of daily snapshots in Settings → General →
 
 1. Do not clear the site data. That is the one thing that actually loses it.
 2. Take a photo of whatever the screen says.
-3. `#bug` it from another device if you can, or just tell me.
+3. Write it down from another device if you can, or just tell me.

@@ -249,10 +249,10 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
       { id: 'demo-backlog-3', title: 'Try the new climbing gym', category: 'health' },
     ],
     // The stream under everything else: a number said once, a bug noticed
-    // while doing something else. One carries the #bug tag the export reads.
+    // while doing something else, in the words it was noticed in.
     scratch: [
       { id: 'demo-scratch-1', text: 'Locker 214, code 7731', createdAt: `${addDays(today, -2)}T18:40:00.000Z`, date: addDays(today, -2) },
-      { id: 'demo-scratch-2', text: '#bug the week view loses the chip when the window is narrowed', createdAt: `${addDays(today, -1)}T10:05:00.000Z`, date: addDays(today, -1) },
+      { id: 'demo-scratch-2', text: 'the week view loses the chip when the window is narrowed', createdAt: `${addDays(today, -1)}T10:05:00.000Z`, date: addDays(today, -1) },
       { id: 'demo-scratch-3', text: 'Ask Rita about the Thursday slot', createdAt: `${today}T09:12:00.000Z`, date: today, pinned: true },
     ],
     library: [

@@ -10501,29 +10501,6 @@ main:has(.week) > .calendar {
   white-space: nowrap;
 }
 
-.scratch-tag {
-  min-height: 0;
-  padding: 3px var(--s2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-xs);
-}
-
-.scratch-tag:hover { color: var(--text); }
-.scratch-tag.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); }
-
-.scratch-export {
-  min-height: 0;
-  padding: 3px var(--s2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--text);
-  font-size: var(--t-xs);
-}
-
 .scratch-list {
   margin: 0;
   padding: var(--s2);
@@ -10603,12 +10580,8 @@ main:has(.week) > .calendar {
 }
 
 @media (pointer: coarse) {
-  .scratch-tag,
-  .scratch-export,
   .scratch-note-action { min-height: 36px; position: relative; }
-  .scratch-note-action::after,
-  .scratch-tag::after,
-  .scratch-export::after {
+  .scratch-note-action::after {
     content: '';
     position: absolute;
     top: 50%;

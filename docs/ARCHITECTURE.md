@@ -239,7 +239,7 @@ src/
     calendars.ts       external feeds: the local cache, and what counts as busy
     demoMode.ts        whether this tab is on sample data, and which key it uses
     demo.ts            the sample fortnight, built from one date
-    scratch.ts         the scratch stream: tags, filtering, the #bug export
+    scratch.ts         the scratch stream: its order, its counts, the way out
     tour.ts            the tour as data - the steps, and what ends each one
     tourState.ts       whether a tour is running, and where it got to
     tourMode.ts        the replay sandbox, and which storage key it uses
@@ -330,7 +330,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
   journal.e2e.ts       the evening questions fitting a phone without a scroll, and the week read back off the clipboard
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
-  shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
+  shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and a note kept as typed
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
   week.e2e.ts          a block dragged onto another day, with a real mouse
   week-template.e2e.ts a week built, dragged between columns, saved and stamped
@@ -795,11 +795,11 @@ second. The inbox is for a task with no day; this is for a line with nothing
 attached at all - a number said once, a bug noticed while doing something
 else.
 
-`ScratchNote` is text, an instant, a date key and an optional `pinned`. It is
-a sync entity at the same grain as an inbox line. Everything else is derived
-from the text: a `#word` is a filter rather than a folder, so a note is never
-moved by being tagged, and `bugExport` turns the `#bug` ones into a markdown
-list for a bugfix prompt.
+`ScratchNote` is text, an instant, a date key and an optional `pinned`. It
+is a sync entity at the same grain as an inbox line, and nothing in the text
+is parsed: a `#word` was a filter for four versions and is a word again
+since v2.5, because reading the text for meaning is a question asked at the
+moment of writing. See DECISIONS "Notes are notes".
 
 **The constraint is the feature, and it is in CONVENTIONS.md section 11.**
 One stream, no folders, no rich text. A note that needs structure has stopped

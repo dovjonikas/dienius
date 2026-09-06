@@ -4,8 +4,8 @@ import { card, openFreshAt, stampWorkingDay, wednesdayAt } from './app'
 /**
  * The shelves that are not the day - CONVENTIONS section 14 - and the doors
  * between them: a line typed as backlog and pulled onto the day in one
- * press, a scratch line that a leading "!" sends to the inbox instead, and
- * the #bug export landing on the clipboard as a markdown list.
+ * press, and a scratch line that a leading "!" sends to the inbox instead
+ * of into the stream.
  */
 
 test.use({ timezoneId: 'Europe/Vilnius', permissions: ['clipboard-read', 'clipboard-write'] })
@@ -34,7 +34,7 @@ test('a backlog item is pulled onto the day at the first slot that holds it, and
   await expect(page.getByRole('button', { name: /^Backlog \d+$/ })).toHaveCount(0)
 })
 
-test('a scratch line starting with "!" goes to the inbox, and #bug notes export as a markdown list', async ({ page }) => {
+test('a scratch line starting with "!" goes to the inbox, and the rest is kept exactly as typed', async ({ page }) => {
   await page.keyboard.press('s')
   const scratch = page.getByRole('dialog', { name: 'Scratch' })
   const note = scratch.getByRole('textbox', { name: 'Scratch note' })
@@ -48,14 +48,14 @@ test('a scratch line starting with "!" goes to the inbox, and #bug notes export 
   await expect(scratch.getByRole('status')).toContainText('Sent to the inbox.')
   await expect(toggle).toHaveText('Note')
 
+  // A # is a character now, not a filter: the note reads back as written and
+  // there is no chip over the stream to explain. DECISIONS "Notes are notes".
   await note.pressSequentially('#bug the week view loses its chip when narrowed')
   await note.press('Enter')
   await expect(scratch.getByText('1 note')).toBeVisible()
-
-  await scratch.getByRole('button', { name: 'Export bugs' }).click()
-  await expect(scratch.getByRole('status')).toContainText('Copied 1 bug as a markdown list.')
-  const clipboard = await page.evaluate(() => navigator.clipboard.readText())
-  expect(clipboard).toBe('- 2026-09-16: the week view loses its chip when narrowed')
+  await expect(scratch.getByRole('listitem')).toContainText('#bug the week view loses its chip when narrowed')
+  await expect(scratch.getByRole('button', { name: '#bug' })).toHaveCount(0)
+  await expect(scratch.getByRole('button', { name: 'Export bugs' })).toHaveCount(0)
 
   await page.keyboard.press('Escape')
   await expect(scratch).toHaveCount(0)

@@ -67,7 +67,7 @@ reading them.
 | Yesterday banner | What yesterday left, stated once, moved forward in one tap - never automatically |
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back. The first works for any day of the week since v2.2 - a phone call answered in three presses, with one line saying when you are still free. See `widgets/day-plan/replan.ts` |
 | Low day | Beside Replan, for a day that is not going to be a full one: the key tasks stay at 40% of their length, the routine stays, the rest goes to tomorrow, and the score counts the key tasks alone. One press, one undo, a quiet mark under the date |
-| Scratch | One key (S or backtick) or the pen in the rail, and you are typing. Its own stream, `#tags` as filters, a #bug export. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
+| Scratch | One key (S or backtick) or the pen in the rail, and you are typing. Its own stream, the text kept exactly as written, photographs in a note. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
 | Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
 | Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. The size is a stepper with six chips beside it; the repeat is four buttons. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
 | Step timer | A step with a length ("Meditation 10 min") carries the one timer: a tap on its minutes starts it for that step, and the bell ticks the step |

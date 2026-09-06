@@ -1,15 +1,5 @@
 import { expect, test } from 'vitest'
-import {
-  allScratchTags,
-  bugExport,
-  filterScratch,
-  isTaskMarkOnly,
-  scratchCount,
-  scratchTags,
-  scratchTitle,
-  sortScratch,
-  stripTags,
-} from './scratch'
+import { isTaskMarkOnly, scratchCount, scratchTitle, sortScratch } from './scratch'
 import type { ScratchNote } from './types'
 
 function note(id: string, text: string, patch: Partial<ScratchNote> = {}): ScratchNote {
@@ -17,61 +7,24 @@ function note(id: string, text: string, patch: Partial<ScratchNote> = {}): Scrat
 }
 
 /**
- * A #tag is a filter, not a folder - see CONVENTIONS.md section 11. It is
- * read out of the text and never stored beside it, so a note keeps exactly
- * the words that were typed and the tag can be renamed by editing them.
+ * A # in a note is a character in a sentence. It was a filter until v2.5 -
+ * a row of chips over the stream, a markdown export for the #bug ones - and
+ * the owner never used any of it, while reading the text for tags is a
+ * question asked at the one moment this layer exists to keep free. Notes
+ * written when it meant something are untouched, so this is what a stored
+ * # now does: nothing. DECISIONS "Notes are notes".
  */
-test('tags are the words with a # in front, lowercased, once each, in order', () => {
-  expect(scratchTags('Call Ana #bug about the #Calendar #bug')).toEqual(['bug', 'calendar'])
-  expect(scratchTags('#first line\nand #second')).toEqual(['first', 'second'])
-})
-
-test('a # inside a word or a number is not a tag', () => {
-  expect(scratchTags('room#12 costs #40')).toEqual(['40'])
-  expect(scratchTags('C# and F# are languages')).toEqual([])
-})
-
-test('tags are counted across the stream, most used first', () => {
-  const notes = [note('a', '#bug one'), note('ab', '#bug two #idea'), note('abc', '#idea three #bug')]
-  expect(allScratchTags(notes)).toEqual([
-    { tag: 'bug', count: 3 },
-    { tag: 'idea', count: 2 },
-  ])
-})
-
-test('stripping tags leaves the sentence, without doubled spaces', () => {
-  expect(stripTags('Calendar cells overlap #bug at 390px')).toBe('Calendar cells overlap at 390px')
-  expect(stripTags('#bug Calendar cells overlap')).toBe('Calendar cells overlap')
+test('a # is text, kept and read back exactly as it was typed', () => {
+  const n = note('a', 'Call Ana #bug about the #Calendar')
+  expect(n.text).toBe('Call Ana #bug about the #Calendar')
+  expect(scratchTitle(n.text)).toBe('Call Ana #bug about the #Calendar')
+  expect(sortScratch([n])[0].text).toBe('Call Ana #bug about the #Calendar')
 })
 
 // Pinned first, then newest first. The one order a stream has.
 test('pinned notes come first, and within each group the newest is on top', () => {
   const notes = [note('a', 'oldest'), note('ab', 'middle', { pinned: true }), note('abc', 'newest')]
   expect(sortScratch(notes).map(n => n.text)).toEqual(['middle', 'newest', 'oldest'])
-})
-
-test('filtering by a tag keeps only the notes that carry it', () => {
-  const notes = [note('a', '#bug one'), note('ab', 'plain two'), note('abc', 'three #BUG')]
-  expect(filterScratch(notes, 'bug').map(n => n.id)).toEqual(['a', 'abc'])
-  expect(filterScratch(notes, null)).toHaveLength(3)
-})
-
-/**
- * The export is built to be pasted into a bugfix prompt: one line per note,
- * the date it was seen on, the sentence as written, the tag itself gone.
- * Oldest first, because that is the order they were noticed in.
- */
-test('the bug export is a markdown list, oldest first, tag removed, one line per note', () => {
-  const notes = [
-    note('abc', '#bug Week title\nwraps at 390', { date: '2026-09-03' }),
-    note('a', 'Calendar cells overlap #bug', { date: '2026-09-01' }),
-    note('ab', 'Not a bug, an #idea'),
-  ]
-  expect(bugExport(notes)).toBe('- 2026-09-01: Calendar cells overlap\n- 2026-09-03: Week title wraps at 390')
-})
-
-test('with no bug notes the export is empty rather than a header with nothing under it', () => {
-  expect(bugExport([note('a', 'plain')])).toBe('')
 })
 
 test('a search result title is the first non-empty line, shortened', () => {

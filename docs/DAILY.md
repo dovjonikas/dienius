@@ -392,14 +392,14 @@ Settings → General → **Export backup** if GitHub is not set up. Whatever is
 wrong, having a copy of it is better than not.
 
 **2. Write it down while you can see it.** Press the pencil (or `S`) and
-type it starting with `#bug`:
+type what you saw:
 
 ```
-#bug the week arrows are too close to the edge on my thumb
+the week arrows are too close to the edge on my thumb
 ```
 
-It saves as you type. Later, open Scratch, tap the `#bug` chip, and press
-**Export bugs** - it copies them all as a list to paste wherever.
+It saves as you type. Later, open Scratch and the note is there, newest
+first, in the words you wrote.
 
 **3. Then, if you need the plan back:**
 

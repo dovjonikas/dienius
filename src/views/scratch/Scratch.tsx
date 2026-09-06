@@ -3,19 +3,7 @@ import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
 import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
 import { offerUndo } from '../../lib/undo'
-import {
-  BUG_TAG,
-  allScratchTags,
-  bugExport,
-  filterScratch,
-  hasTag,
-  isTaskIntent,
-  isTaskMarkOnly,
-  scratchCount,
-  sortScratch,
-  stripTags,
-  stripTaskMark,
-} from '../../lib/scratch'
+import { isTaskIntent, isTaskMarkOnly, scratchCount, sortScratch, stripTaskMark } from '../../lib/scratch'
 import { parseQuickAdd } from '../../widgets/day-plan/parse'
 import type { ScratchNote } from '../../lib/types'
 
@@ -49,7 +37,6 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
   const data = useAppData()
   const [draft, setDraft] = useState('')
   const [draftId, setDraftId] = useState<string | null>(null)
-  const [tag, setTag] = useState<string | null>(null)
   const [taskMode, setTaskMode] = useState(false)
   const [status, setStatus] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -130,22 +117,10 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const tags = allScratchTags(data.scratch)
-  const notes = sortScratch(filterScratch(data.scratch, tag)).filter(n => n.id !== draftId)
-  const bugs = data.scratch.filter(n => hasTag(n, BUG_TAG)).length
-
-  async function exportBugs() {
-    const text = bugExport(data.scratch)
-    try {
-      await navigator.clipboard.writeText(text)
-      setStatus(`Copied ${bugs} ${bugs === 1 ? 'bug' : 'bugs'} as a markdown list.`)
-    } catch {
-      setStatus('The clipboard is not reachable here. Select the notes and copy them by hand.')
-    }
-  }
+  const notes = sortScratch(data.scratch).filter(n => n.id !== draftId)
 
   function toTask(note: ScratchNote) {
-    const parsed = parseQuickAdd(stripTags(note.text))
+    const parsed = parseQuickAdd(note.text)
     if (!parsed) return
     const today = todayKey()
     if (actions.scratchToTask(note.id, today, { title: parsed.title, time: parsed.time, minutes: parsed.minutes })) {
@@ -154,7 +129,7 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
   }
 
   function toInbox(note: ScratchNote) {
-    if (actions.scratchToInbox(note.id, stripTags(note.text))) setStatus('Moved to the inbox.')
+    if (actions.scratchToInbox(note.id, note.text)) setStatus('Moved to the inbox.')
   }
 
   function remove(note: ScratchNote) {
@@ -176,7 +151,7 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
             ref={inputRef}
             className="scratch-input"
             aria-label="Scratch note"
-            placeholder={intent ? 'Something to do. Enter sends it to the inbox.' : 'Write it down. A #tag is a filter.'}
+            placeholder={intent ? 'Something to do. Enter sends it to the inbox.' : 'Write it down. Enter keeps it.'}
             rows={1}
             value={draft}
             onChange={e => handleChange(e.target.value)}
@@ -204,30 +179,6 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="scratch-bar">
-          <button
-            type="button"
-            className={tag === null ? 'scratch-tag active' : 'scratch-tag'}
-            aria-pressed={tag === null}
-            onClick={() => setTag(null)}
-          >
-            All
-          </button>
-          {tags.map(t => (
-            <button
-              key={t.tag}
-              type="button"
-              className={tag === t.tag ? 'scratch-tag active' : 'scratch-tag'}
-              aria-pressed={tag === t.tag}
-              onClick={() => setTag(tag === t.tag ? null : t.tag)}
-            >
-              #{t.tag}
-            </button>
-          ))}
-          {bugs > 0 && (
-            <button type="button" className="scratch-export" onClick={exportBugs}>
-              Export bugs
-            </button>
-          )}
           <span className="scratch-count">{scratchCount(data.scratch.length)}</span>
           {/* On a phone the sheet is the whole screen and there is no scrim
               to tap and no Escape to press, so the way out has to be a
@@ -247,13 +198,13 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
 
         {notes.length === 0 ? (
           <p className="scratch-empty">
-            {tag ? `Nothing tagged #${tag}.` : draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet. Type, and it is kept.'}
+            {draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet. Type, and it is kept.'}
           </p>
         ) : (
           <ul className="scratch-list">
             {notes.map(note => (
               <li key={note.id} className={note.pinned ? 'scratch-note is-pinned' : 'scratch-note'}>
-                <p className="scratch-note-text">{withTags(note.text)}</p>
+                <p className="scratch-note-text">{note.text}</p>
                 <div className="scratch-note-foot">
                   <span className="scratch-note-when">{whenLabel(note)}</span>
                   {/* One group, so that on a phone with a long date - "Thursday,
@@ -286,21 +237,6 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   )
-}
-
-/** The tags in accent, the rest as written. */
-function withTags(text: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = []
-  const re = /(^|\s)(#[\p{L}\p{N}_-]+)/gu
-  let last = 0
-  for (const m of text.matchAll(re)) {
-    const start = (m.index ?? 0) + m[1].length
-    if (start > last) parts.push(text.slice(last, start))
-    parts.push(<mark key={start}>{m[2]}</mark>)
-    last = start + m[2].length
-  }
-  if (last < text.length) parts.push(text.slice(last))
-  return parts
 }
 
 /** "Today 14:32", "Yesterday 09:10", or the day and date. */

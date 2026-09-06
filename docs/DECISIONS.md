@@ -1483,3 +1483,34 @@ no colour at all, so every wash in the app was invisible to it. Five
 strings had been sitting under AA behind that: the month cell's "+", the
 scratch timestamp, the week's finished blocks in the light theme, the
 palette's detail line on the selected row.
+
+## Notes are notes
+
+Scratch had #tags from v1.8: a word with a # in front of it was a filter,
+a row of chips sat above the stream, and the #bug ones could be copied out
+as a markdown list for a bugfix prompt. All of it worked. The owner never
+used any of it, and said so plainly - the tags come out.
+
+**Why it was worth removing rather than leaving alone.** An unused feature
+is not free here. This layer exists for one moment: the second between
+noticing something and losing it. A tag is a small question at exactly
+that moment - which word, is there one already, does this belong with
+those - and a question at that moment is the thing scratch was built to
+not have. The chips above the stream said the question was there even on
+the days nothing was tagged, which is a cost paid every time the box is
+opened by a feature used none of the time.
+
+**The text is now the text.** Nothing is parsed and nothing is coloured.
+A note reads back exactly as it was typed, which is also what makes the
+next thing possible: a photograph in a note is an attachment, and an
+attachment on top of a parser is two kinds of structure in a layer whose
+whole promise is none.
+
+**Old notes are not touched.** A # written when it meant something stays
+in the sentence as a character. No migration, no rewrite, nothing to
+explain the next time an old note is read: it says what it said.
+
+**What is left is the way out, which was never a question.** A leading
+"!" or the Note/Task marker sends a line to the inbox instead, and it is
+decided before Enter rather than after. That is not structure asked for
+at the moment of writing; it is the same one keystroke either way.

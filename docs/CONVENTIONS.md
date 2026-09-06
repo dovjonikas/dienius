@@ -529,9 +529,15 @@ be written down in the next second - a number said once, a bug noticed while
 doing something else. Its value is that nothing is asked at the moment of
 writing, and every addition that asks something takes that value away. So:
 
-- **One stream.** No folders, no notebooks, no colours, no rich text, no
-  attachments. A `#word` in the text is a filter, not a folder: the note is
-  still in the stream, it just also answers to a name.
+- **One stream.** No folders, no notebooks, no colours, no rich text. A
+  photograph is the one attachment, because a screenshot is a note somebody
+  took with a camera instead of a keyboard - see section 22.
+- **The text is the text.** Nothing in a note is parsed. A `#word` was a
+  filter for four versions and the row of chips above the stream was the
+  price of it; both are gone since v2.5, and a `#` typed before then is
+  still a `#`. If a future idea wants to read the words for meaning, it is
+  a question asked at the moment of writing, which is the thing this layer
+  exists to avoid.
 - **A note that needs structure is not scratch any more.** It becomes a task,
   an inbox line, or a document somewhere else. Do not add fields to
   `ScratchNote` to hold structure; add a way out instead.

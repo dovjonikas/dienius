@@ -110,7 +110,7 @@ test('Enter keeps the note and starts the next one; backspacing to nothing remov
  */
 test('To task runs the note through quick-add and puts it on today, sized and timed', async () => {
   const user = userEvent.setup()
-  actions.addScratch('14:00 Call the bank #money 20 min')
+  actions.addScratch('14:00 Call the bank 20 min')
   render(<Scratch open onClose={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'To task' }))
   const tasks = getData().days[todayKey()].tasks
@@ -120,12 +120,12 @@ test('To task runs the note through quick-add and puts it on today, sized and ti
   expect(screen.getByRole('status')).toHaveTextContent('Call the bank is on today at 14:00.')
 })
 
-test('To inbox moves the words, without the tags, and leaves the stream', async () => {
+test('To inbox moves the words exactly as they were written, and leaves the stream', async () => {
   const user = userEvent.setup()
   actions.addScratch('Look up the #idea about pricing')
   render(<Scratch open onClose={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'To inbox' }))
-  expect(getData().inbox.map(i => i.text)).toEqual(['Look up the about pricing'])
+  expect(getData().inbox.map(i => i.text)).toEqual(['Look up the #idea about pricing'])
   expect(getData().scratch).toHaveLength(0)
 })
 
@@ -143,38 +143,23 @@ test('Pin brings a note to the top; Delete removes it and offers an undo', async
   expect(getData().scratch.map(n => n.text)).toEqual(['newer'])
 })
 
-test('a #tag is a filter: the bar offers it, and choosing it narrows the list', async () => {
-  const user = userEvent.setup()
+/**
+ * Since v2.5 there are no chips over the stream and no export under it: a
+ * note is the words in it. A # is drawn as a #, not marked and not offered
+ * as a filter, and a note written when it meant something reads as it was
+ * written. DECISIONS "Notes are notes".
+ */
+test('a # is text: no chip bar, no export, and the sentence as it was typed', () => {
   actions.addScratch('Week title wraps #bug')
   actions.addScratch('A quieter accent #idea')
   render(<Scratch open onClose={() => {}} />)
-  await user.click(screen.getByRole('button', { name: '#bug' }))
-  const items = screen.getAllByRole('listitem')
-  expect(items).toHaveLength(1)
-  expect(items[0]).toHaveTextContent('Week title wraps')
-})
-
-/**
- * The weekend testing loop: notice, S, "#bug ...", Escape, carry on. On
- * Sunday, Export bugs puts the whole list on the clipboard as markdown,
- * ready for a bugfix prompt.
- */
-test('Export bugs copies the #bug notes as a markdown list and says so', async () => {
-  const user = userEvent.setup()
-  const writeText = vi.fn().mockResolvedValue(undefined)
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
-  actions.addScratch('Calendar cells overlap at 390 #bug')
-  actions.addScratch('Not a bug')
-  render(<Scratch open onClose={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'Export bugs' }))
-  expect(writeText).toHaveBeenCalledWith(`- ${todayKey()}: Calendar cells overlap at 390`)
-  expect(screen.getByRole('status')).toHaveTextContent('Copied 1 bug as a markdown list.')
-})
-
-test('with no #bug notes there is no Export button to wonder about', () => {
-  actions.addScratch('Nothing wrong here')
-  render(<Scratch open onClose={() => {}} />)
+  expect(screen.queryByRole('button', { name: '#bug' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'All' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export bugs' })).toBeNull()
+  const items = screen.getAllByRole('listitem')
+  expect(items).toHaveLength(2)
+  expect(items[0]).toHaveTextContent('A quieter accent #idea')
+  expect(items[0].querySelector('mark')).toBeNull()
 })
 
 test('the count is plain words, never a badge', () => {
