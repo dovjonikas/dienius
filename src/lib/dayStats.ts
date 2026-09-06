@@ -58,10 +58,13 @@ export function toneFor(rate: number | null): DayTone {
 
 export function dayStat(day: DayPlan | undefined): DayStat {
   const tasks = day?.tasks ?? []
-  const total = tasks.length
-  const done = tasks.filter(t => t.done).length
-  const rate = total > 0 ? done / total : null
   const highlights = tasks.filter(t => t.highlight)
+  // A low day is measured on its key tasks alone, the same count the day
+  // score keeps - see lowDay.ts. Nothing else on it counts either way.
+  const counted = day?.lowDay ? highlights : tasks
+  const total = counted.length
+  const done = counted.filter(t => t.done).length
+  const rate = total > 0 ? done / total : null
 
   return {
     rate,

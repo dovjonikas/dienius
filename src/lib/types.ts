@@ -326,6 +326,13 @@ export interface Subtask {
   id: string
   title: string
   done: boolean
+  /**
+   * How long the step takes, when the person said - "Meditation 10 min". A
+   * tap on the step starts the timer for this long, and the step is ticked
+   * when it rings out. Absent for a step that is only a thing to do, which
+   * is most of them.
+   */
+  minutes?: number
 }
 
 /**
@@ -545,6 +552,14 @@ export interface DayPlan extends Timestamped {
    * nothing was written, which is most days.
    */
   journal?: DayJournal
+  /**
+   * The day was declared a low day - see widgets/day-plan/lowDay.ts. Its key
+   * tasks were cut to 40% of their length and the rest sent to tomorrow,
+   * and the score counts the key tasks alone. A fact about the day that
+   * travels with it, like `away`; absent is the ordinary state, and every
+   * plan written before this field existed is in it.
+   */
+  lowDay?: boolean
   tasks: Task[]
 }
 

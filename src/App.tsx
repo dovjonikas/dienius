@@ -297,6 +297,15 @@ export function App() {
         requestReplan(getData().days[todayKey()]?.away ? 'back' : 'away')
       },
     },
+    {
+      id: 'low-day',
+      label: 'Low day',
+      detail: 'Key tasks at 40% of their length, the routine stays, the rest waits',
+      run: () => {
+        openDay(todayKey())
+        requestReplan('low')
+      },
+    },
     // The fourth shelf, reachable without going to the day view and finding
     // the fold. What is typed here is a decided task with no day - see the
     // doc comment on BacklogItem for why it is not an inbox line.

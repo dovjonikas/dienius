@@ -214,7 +214,7 @@ const count = wholeNumber(0, 100_000)
 
 const LIBRARY_REF = record({ listId: string, itemId: string })
 
-const SUBTASK = record({ id: string, title: string, done: boolean })
+const SUBTASK = record({ id: string, title: string, done: boolean, minutes: optional(minutes) })
 
 const ORIGIN = record({ type: oneOf(ORIGIN_TYPES), sourceId: optional(string), blockId: optional(string) })
 
@@ -298,6 +298,7 @@ const DAY_PLAN = record({
   autoApplied: optional(boolean),
   replannedOn: optional(string),
   journal: optional(DAY_JOURNAL),
+  lowDay: optional(boolean),
   tasks: listOf(TASK),
 })
 

@@ -6,6 +6,7 @@ import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
 import { JournalLine } from './JournalLine'
+import { Explain } from '../../views/Explain'
 import type { ReplanMode } from '../../lib/replanState'
 
 /**
@@ -55,6 +56,8 @@ export interface DayHeaderProps {
    * it, Something came up, opened straight onto that day.
    */
   replan?: { away: string | undefined; isToday: boolean; onOpen: (mode: ReplanMode) => void }
+  /** The day was declared a low one - see lowDay.ts. The door goes and a quiet mark takes its place. */
+  lowDay?: boolean
 }
 
 export function DayHeader({
@@ -73,6 +76,7 @@ export function DayHeader({
   dayLayoutFocus,
   onOpenNorth,
   replan,
+  lowDay,
 }: DayHeaderProps) {
   const isToday = date === todayKey()
   const isPast = date < todayKey()
@@ -124,7 +128,7 @@ export function DayHeader({
           of controls drawn as running text was the thing that read as an
           afterthought. Still one door, still quiet - the same surface as the
           arrows, none of the accent. */}
-      {(template || replan) && (
+      {(template || replan || lowDay) && (
         <div className="day-tools">
           {template && (
             <span
@@ -152,6 +156,18 @@ export function DayHeader({
                 Replan
               </button>
             ))}
+          {/* The other door for a day that is not going to be a full one -
+              the 40% doctrine as one press, see lowDay.ts. Only on today,
+              and only until it is taken: after that the day carries the
+              mark instead, quiet, in the register of the template chip. */}
+          {replan && replan.isToday && !replan.away && !lowDay && (
+            <Explain id="low-day">
+              <button type="button" className="day-replan-button" onClick={() => replan.onOpen('low')}>
+                Low day
+              </button>
+            </Explain>
+          )}
+          {lowDay && <span className="day-low">Low day</span>}
         </div>
       )}
 

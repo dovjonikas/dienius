@@ -103,3 +103,22 @@ test('a payload whose timer is missing its instant is discarded, not half-loaded
   )
   expect(loadClockTools().timer ?? undefined).toBeUndefined()
 })
+
+// A timer started from a task's step carries the step - the date, the task
+// and the step's id - so the tab that watches it run out can tick the step,
+// and a reload in between does not lose which step that was.
+test('a timer started for a step keeps the step across a reload', () => {
+  clockTools.startTimer(10 * 60_000, { date: '2026-09-16', taskId: 't1', subtaskId: 's1' })
+  expect(getClockTools().timer?.step).toEqual({ date: '2026-09-16', taskId: 't1', subtaskId: 's1' })
+  expect(loadClockTools().timer?.step).toEqual({ date: '2026-09-16', taskId: 't1', subtaskId: 's1' })
+})
+
+test('a timer started with no step has none, and a stored step with a piece missing is dropped', () => {
+  clockTools.startTimer(60_000)
+  expect(getClockTools().timer?.step).toBeUndefined()
+  localStorage.setItem(
+    'dienius:clock-tools',
+    JSON.stringify({ timer: { startedAt: Date.now(), durationMs: 60_000, elapsedBeforeMs: 0, paused: false, step: { date: '2026-09-16' } } }),
+  )
+  expect(loadClockTools().timer?.step).toBeUndefined()
+})

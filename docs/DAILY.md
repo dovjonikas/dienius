@@ -333,6 +333,30 @@ its name.
 
 ---
 
+## When you do not feel like it
+
+Some days are not going to be full ones, and the mistake is treating them
+as full ones that went badly. **Low day**, beside Replan under the date, is
+the other answer. One press: your key tasks stay at 40% of their length -
+two hours of deep work becomes fifty minutes - the routine blocks stay as
+they are, and everything else waits for tomorrow. The sheet shows what
+stays and what waits before you accept, and **Undo** is there for five
+seconds afterwards; the day carries a quiet *Low day* under its name.
+
+A low day is scored on its key tasks alone. Fifty minutes of the thing
+that mattered is a day that went well, and the app says so; it does not
+count the rest.
+
+## A ritual as one block
+
+A block's steps can carry a length: type `Meditation 10 min` as a step
+and it gets a timer - tap the minutes beside it and the app's own timer
+runs for that long, ticking the step when it rings. So the 07:30 ritual is
+one block with four steps - water, meditation 10 min, gratitude, a page of
+Pressfield - and one timer, rather than four blocks on the grid.
+
+---
+
 ## The evening questions
 
 A journal that never counts. Three lines a day, none of them required, and

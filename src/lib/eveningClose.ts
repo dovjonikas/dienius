@@ -81,7 +81,7 @@ export function isEnough(summary: Pick<EveningSummary, 'done' | 'total' | 'keyDo
  */
 export function eveningSummary(day: DayPlan | undefined): EveningSummary | null {
   const tasks: Task[] = day?.tasks ?? []
-  const score = dayScore(tasks, day?.dayType)
+  const score = dayScore(tasks, day?.dayType, day?.lowDay)
   if (!score.planned) return null
 
   const key = tasks.filter(t => t.highlight)

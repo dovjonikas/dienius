@@ -148,3 +148,17 @@ test('the line names the rate and the active days, and the run only when there i
     '100% done - 2 active days - longest run 2',
   )
 })
+
+// --- a low day -------------------------------------------------------------
+
+test('a low day is measured on its key tasks, the same count the day score keeps', () => {
+  const stat = dayStat({ date: '2026-09-01', lowDay: true, tasks: [task({ highlight: true, done: true }), task({ highlight: true }), task({ done: true }), task()] })
+  expect(stat.done).toBe(1)
+  expect(stat.total).toBe(2)
+  expect(stat.rate).toBeCloseTo(0.5)
+})
+
+test('a low day with no key task reports no ratio, not a zero', () => {
+  const stat = dayStat({ date: '2026-09-01', lowDay: true, tasks: [task({ done: true }), task()] })
+  expect(stat.rate).toBeNull()
+})

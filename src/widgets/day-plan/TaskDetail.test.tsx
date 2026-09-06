@@ -5,6 +5,7 @@ import { TaskDetail } from './TaskDetail'
 import { actions, getData, useAppData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { MAX_HIGHLIGHTS } from '../../lib/types'
+import { clockTools, getClockTools } from '../../lib/clockTools'
 
 const DATE = '2026-09-01'
 
@@ -282,4 +283,28 @@ test('the size is stated once: a number with its unit, and the chips', () => {
   expect(screen.getByLabelText('Size in minutes')).toHaveValue('120')
   expect(screen.queryByText('2h', { selector: '.task-detail-hint' })).toBeNull()
   expect(screen.getByText('min', { selector: '.time-stepper-unit' })).toBeInTheDocument()
+})
+
+// --- a step with a length, and its timer ---------------------------------
+//
+// The 07:30 ritual - water, ten minutes of meditation, gratitude, a page of
+// Pressfield - is one block with steps, and a step that takes a while has a
+// timer on it: one tap starts the existing timer for that long, and the
+// step is ticked when it rings out.
+
+test('a step with a length carries a timer, and a tap starts it for that long, for that step', async () => {
+  const user = userEvent.setup()
+  clockTools.resetForTests()
+  const id = seed('Morning ritual')
+  actions.addSubtask(DATE, id, 'Water')
+  actions.addSubtask(DATE, id, 'Meditation 10 min')
+  openFirst()
+
+  expect(screen.queryByRole('button', { name: /timer for Water/ })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Start a 10 min timer for Meditation' }))
+
+  const timer = getClockTools().timer
+  expect(timer?.durationMs).toBe(10 * 60_000)
+  const sub = getData().days[DATE].tasks[0].subtasks!.find(s => s.title === 'Meditation')!
+  expect(timer?.step).toEqual({ date: DATE, taskId: id, subtaskId: sub.id })
 })

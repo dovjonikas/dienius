@@ -90,7 +90,7 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
   }, [isToday])
 
   const isFullDay = (day?.dayType ?? 'full') === 'full'
-  const score = dayScore(day?.tasks ?? [], day?.dayType)
+  const score = dayScore(day?.tasks ?? [], day?.dayType, day?.lowDay)
 
   // Worked out once here and handed to both the grid and the task list, so a
   // block and its card can never disagree about which task is current. Only
@@ -236,6 +236,7 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
         // applies to it; a day that has passed gets none, because nothing
         // can come up in it any more.
         replan={!isPast ? { away: day?.away, isToday, onOpen: mode => requestReplan(mode, date) } : undefined}
+        lowDay={day?.lowDay}
       />
 
       {/* Everything that can appear above the day, in one row.

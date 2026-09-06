@@ -1,4 +1,4 @@
-import { durationToText, parseQuickAdd, replaceLeadingTime, replaceTrailingDuration } from './parse'
+import { durationToText, parseQuickAdd, parseStepLine, replaceLeadingTime, replaceTrailingDuration } from './parse'
 
 test('parses a leading HH:MM time', () => {
   expect(parseQuickAdd('14:00 Call mom')).toEqual({ time: '14:00', title: 'Call mom' })
@@ -96,4 +96,27 @@ test('a line with no duration is left exactly as typed', () => {
 
 test('a number the parser reads as part of the title is not swapped either', () => {
   expect(replaceTrailingDuration('Read 20 pages', 30)).toBe('Read 20 pages')
+})
+
+// --- a step with a length ------------------------------------------------
+//
+// A task's step can carry how long it takes - "Meditation 10 min" - and a
+// tap on it then starts the timer for that long. The same trailing-duration
+// grammar quick-add reads, and the same refusal: "Read 20 pages" keeps its
+// twenty.
+
+test('a step line with a trailing length gives the step its minutes', () => {
+  expect(parseStepLine('Meditation 10 min')).toEqual({ title: 'Meditation', minutes: 10 })
+  expect(parseStepLine('Meditation - 10 min')).toEqual({ title: 'Meditation', minutes: 10 })
+  expect(parseStepLine('Stretch 1h')).toEqual({ title: 'Stretch', minutes: 60 })
+})
+
+test('a step line without a length is only its words', () => {
+  expect(parseStepLine('Water')).toEqual({ title: 'Water' })
+  expect(parseStepLine('Read 20 pages')).toEqual({ title: 'Read 20 pages' })
+})
+
+test('a step line that is only a length, or nothing, is no step', () => {
+  expect(parseStepLine('10 min')).toBeNull()
+  expect(parseStepLine('   ')).toBeNull()
 })

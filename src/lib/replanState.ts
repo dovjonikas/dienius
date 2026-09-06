@@ -13,7 +13,7 @@ import { todayKey } from './dates'
  * flag, so asking twice opens twice.
  */
 
-export type ReplanMode = 'menu' | 'interrupt' | 'shift' | 'away' | 'back'
+export type ReplanMode = 'menu' | 'interrupt' | 'shift' | 'away' | 'back' | 'low'
 
 export interface ReplanRequest {
   mode: ReplanMode

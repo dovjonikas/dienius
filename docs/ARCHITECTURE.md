@@ -326,6 +326,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   sync.e2e.ts          two browser contexts through the real server: one task, then a tick against an edit with a delete between them
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
+  lowday.e2e.ts        a low day: the key task at 40%, the mark under the date, the routine where it was
   interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
   journal.e2e.ts       the evening questions fitting a phone without a scroll, and the week read back off the clipboard
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
@@ -371,6 +372,7 @@ it delegates:
 | `TaskRow.tsx` | One card |
 | `TaskDetail.tsx` | Everything the card deliberately does not show |
 | `replan.ts` | A day that broke: conflicts, shifting, the rescue, the free windows, and one writer |
+| `lowDay.ts` | A low day: the key tasks at 40% of their length, the routine kept, the rest to tomorrow - a plan and its commit, both pure |
 | `interrupt.ts` | The shape of a loss - morning, afternoon, evening, the day - the WHEN row, and the day's own words |
 | `interruptParse.ts` | "ryt 10-13 tetis": a line about an interruption, read in Lithuanian and English |
 | `replanPrefs.ts` | The last three names an interruption was given, per device |
@@ -866,6 +868,16 @@ move between days uses), and the interruption is not re-added if its title
 already sits at its time. It writes `DayPlan.replannedOn`, which the week
 view reads as one quiet word, and a dropped repeat instance's skip. One
 commit, one undo.
+
+Since v2.4 there is a fourth door beside these, "Low day", in
+[`lowDay.ts`](../src/widgets/day-plan/lowDay.ts): `planLowDay` keeps the
+key tasks at 40% of their length (on the five-minute grid, never under
+fifteen minutes), leaves the routine blocks where they are and sends the
+rest to tomorrow, and `applyLowDayPlan` commits it with the same
+idempotence and the same `dayHas` check. It writes `DayPlan.lowDay`,
+which `dayScore` and `dayStat` read to count the key tasks alone. The
+sheet is the replan sheet in its `'low'` mode, opened from the button
+beside Replan or the palette.
 
 Since v2.2 the sheet is mounted at the root of the app and reads the store
 itself, given a day (`replanState.ts` is the request). "Something came up"

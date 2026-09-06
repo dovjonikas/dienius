@@ -53,6 +53,7 @@ export const EXPLAIN_IDS = [
   'replan-interrupt',
   'replan-shift',
   'replan-away',
+  'low-day',
   'library-unit',
   'sleep-schedule',
   'sync',
@@ -144,6 +145,10 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   'replan-away': {
     term: 'Away',
     text: 'Pauses the day while you are not there: nothing nudges and nothing counts against you. Coming back offers one rescue of what still fits.',
+  },
+  'low-day': {
+    term: 'Low day',
+    text: 'Keeps what matters: your key tasks stay at 40% of their length, the routine stays, and everything else goes to tomorrow. The day is scored on the key tasks alone, so a day at 40% can still be a good one.',
   },
   'library-unit': {
     term: 'Unit',

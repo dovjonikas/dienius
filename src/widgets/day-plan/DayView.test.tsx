@@ -1317,3 +1317,29 @@ test('the last book on a list ends with a count, because there is no next one to
   expect(screen.queryByText(/next is/)).toBeNull()
   expect(screen.getByText('ch 1/1')).toBeInTheDocument()
 })
+
+// --- a low day --------------------------------------------------------------
+
+import { todayKey } from '../../lib/dates'
+import { planLowDay } from './lowDay'
+
+test('today has a Low day door beside Replan, and a day that has passed does not', () => {
+  render(<DayView date={todayKey()} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  expect(screen.getByRole('button', { name: 'Low day' })).toBeInTheDocument()
+})
+
+test('a day that has passed has no Low day door', () => {
+  render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
+  expect(screen.queryByRole('button', { name: 'Low day' })).toBeNull()
+})
+
+test('once the day is low it carries the mark and the door is gone', () => {
+  const today = todayKey()
+  actions.addTask(today, 'Deep work')
+  const id = getData().days[today].tasks[0].id
+  actions.toggleTaskHighlight(today, id)
+  actions.applyLowDay(today, planLowDay(getData().days[today].tasks))
+  render(<DayView date={today} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  expect(screen.queryByRole('button', { name: 'Low day' })).toBeNull()
+  expect(screen.getByText('Low day')).toBeInTheDocument()
+})

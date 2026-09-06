@@ -1,5 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { defaultData, loadData, saveData, importJson, exportJson, STORAGE_KEY } from './storage'
+import { validate } from './validate'
 import type { Template } from './types'
 import { measureScaling } from '../test/stress'
 
@@ -1371,4 +1372,23 @@ test('validate rejects a picture that is not text, and the whole payload with it
   // Discarded whole rather than partly trusted - the template goes with it.
   expect(loadData().picture).toBeUndefined()
   expect(loadData().templates).toEqual([])
+})
+
+// --- two fields v2.4 added, each optional, each checked --------------------
+
+test('a low day is a flag on the day, and a flag that is not a flag refuses the payload', () => {
+  const data = { ...defaultData(), days: { '2026-09-16': { date: '2026-09-16', lowDay: true, tasks: [] } } }
+  expect(validate(JSON.parse(exportJson(data)))).toBe(true)
+  const broken = JSON.parse(exportJson(data))
+  broken.days['2026-09-16'].lowDay = 'yes'
+  expect(validate(broken)).toBe(false)
+})
+
+test("a step's length is a whole number of minutes, and anything else refuses the payload", () => {
+  const task = { id: 't1', title: 'Ritual', done: false, subtasks: [{ id: 's1', title: 'Meditation', done: false, minutes: 10 }] }
+  const data = { ...defaultData(), days: { '2026-09-16': { date: '2026-09-16', tasks: [task] } } }
+  expect(validate(JSON.parse(exportJson(data)))).toBe(true)
+  const broken = JSON.parse(exportJson(data))
+  broken.days['2026-09-16'].tasks[0].subtasks[0].minutes = 'ten'
+  expect(validate(broken)).toBe(false)
 })

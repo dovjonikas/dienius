@@ -29,6 +29,17 @@ import { useSyncExternalStore } from 'react'
 
 const STORAGE_KEY = 'dienius:clock-tools'
 
+/**
+ * The step a timer was started from - see Subtask.minutes. Only a pointer,
+ * the way a focus session is: the tab that watches the timer run out ticks
+ * this step through the store, and a reload in between keeps it.
+ */
+export interface TimerStep {
+  date: string
+  taskId: string
+  subtaskId: string
+}
+
 export interface TimerState {
   /** Epoch milliseconds when the current run began, or resumed after a pause. */
   startedAt: number
@@ -48,6 +59,8 @@ export interface TimerState {
    * ago" instead of nothing at all.
    */
   rungOut?: boolean
+  /** The step this timer is for, when it was started from one. */
+  step?: TimerStep
 }
 
 export interface StopwatchState {
@@ -93,18 +106,27 @@ function isFiniteNumber(x: unknown): x is number {
   return typeof x === 'number' && Number.isFinite(x)
 }
 
+function readStep(x: unknown): TimerStep | undefined {
+  if (typeof x !== 'object' || x === null) return undefined
+  const s = x as Record<string, unknown>
+  if (typeof s.date !== 'string' || typeof s.taskId !== 'string' || typeof s.subtaskId !== 'string') return undefined
+  return { date: s.date, taskId: s.taskId, subtaskId: s.subtaskId }
+}
+
 function readTimer(x: unknown): TimerState | null {
   if (typeof x !== 'object' || x === null) return null
   const t = x as Record<string, unknown>
   if (!isFiniteNumber(t.startedAt) || !isFiniteNumber(t.durationMs) || !isFiniteNumber(t.elapsedBeforeMs)) return null
   if (typeof t.paused !== 'boolean') return null
   if (t.durationMs <= 0 || t.elapsedBeforeMs < 0) return null
+  const step = readStep(t.step)
   return {
     startedAt: t.startedAt,
     durationMs: t.durationMs,
     elapsedBeforeMs: t.elapsedBeforeMs,
     paused: t.paused,
     rungOut: t.rungOut === true,
+    ...(step ? { step } : {}),
   }
 }
 
@@ -189,9 +211,10 @@ export function clearClockTools(): void {
 }
 
 export const clockTools = {
-  startTimer(durationMs: number): void {
+  /** `step` is the task's step this runs for, when started from one - see TimerStep. */
+  startTimer(durationMs: number, step?: TimerStep): void {
     if (durationMs <= 0) return
-    commit({ ...state, timer: { startedAt: Date.now(), durationMs, elapsedBeforeMs: 0, paused: false } })
+    commit({ ...state, timer: { startedAt: Date.now(), durationMs, elapsedBeforeMs: 0, paused: false, ...(step ? { step } : {}) } })
   },
 
   pauseTimer(): void {

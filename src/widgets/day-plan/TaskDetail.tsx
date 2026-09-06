@@ -8,7 +8,8 @@ import { TimePicker } from '../../views/TimePicker'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
-import { stepTime } from './capacity'
+import { clockTools, useClockTools } from '../../lib/clockTools'
+import { formatDuration, stepTime } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -63,6 +64,9 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: Ta
   // always means - the exception is the exception.
   const [scope, setScope] = useState<'day' | 'series'>('series')
   const titleId = useId()
+  // Which step the timer is running for, if it is this task's - so the
+  // step's own button can say so rather than offering to start it again.
+  const runningStep = useClockTools().timer?.step
 
   useEffect(() => {
     panelRef.current?.focus()
@@ -392,6 +396,28 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: Ta
                   />
                   <span className="check" aria-hidden="true" />
                   <span className="subtask-title">{sub.title}</span>
+                  {/* A step with a length carries the timer for it: one tap
+                      and the app's own timer runs for that long, ticking the
+                      step when it rings. Inside the label, but a button is
+                      interactive content and a press on it is not a press on
+                      the box; stopped besides, so nothing above hears it. */}
+                  {sub.minutes !== undefined && (
+                    <button
+                      type="button"
+                      className={
+                        runningStep?.subtaskId === sub.id && runningStep.taskId === task.id ? 'subtask-timer is-running' : 'subtask-timer'
+                      }
+                      aria-label={`Start a ${formatDuration(sub.minutes)} timer for ${sub.title}`}
+                      title="Starts the timer for this step"
+                      onClick={e => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        clockTools.startTimer(sub.minutes! * 60_000, { date, taskId: task.id, subtaskId: sub.id })
+                      }}
+                    >
+                      {formatDuration(sub.minutes)}
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="subtask-remove"
@@ -404,7 +430,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: Ta
               ))}
               <input
                 className="subtask-add"
-                placeholder="Add a step"
+                placeholder="Add a step, or one with a length: Meditation 10 min"
                 aria-label="Add a step"
                 value={subtaskDraft}
                 onChange={e => setSubtaskDraft(e.target.value)}

@@ -28,6 +28,7 @@ import {
 import { DEFAULT_TITLE, SHAPES, dayChoices, dayLabel, dayWordsFor, defaultChoices, roundUp, shapeInterval, type Preset } from './interrupt'
 import { parseInterruptLine, resolveDay, stripTokens, withTitle } from './interruptParse'
 import { readRecentTitles, rememberTitle } from './replanPrefs'
+import { planLowDay, type LowDayPlan } from './lowDay'
 
 /**
  * The replan sheet - the ten seconds between "the plan just broke" and
@@ -127,6 +128,12 @@ export function ReplanSheet(props: ReplanSheetProps) {
     props.onClose()
   }
 
+  function acceptLow(plan: LowDayPlan) {
+    const { undo } = actions.applyLowDay(today, plan)
+    offerUndo('Low day set', undo)
+    props.onClose()
+  }
+
   return (
     <div className="replan-scrim" onClick={props.onClose}>
       <div className="replan" role="dialog" aria-label="Replan" data-keeps-keys="" onClick={e => e.stopPropagation()}>
@@ -164,6 +171,7 @@ export function ReplanSheet(props: ReplanSheetProps) {
             onBack={() => setMode('menu')}
           />
         )}
+        {mode === 'low' && <Low tasks={todayContext.tasks} onAccept={acceptLow} onClose={props.onClose} />}
         {mode === 'back' && (
           <Back
             tasks={todayContext.tasks}
@@ -759,6 +767,74 @@ function Back({ tasks, nowMinutes, window, busy, titles, away, onAccept, onNotNo
             </button>
           </>
         )}
+      </div>
+    </>
+  )
+}
+
+// --- a low day ---------------------------------------------------------------------
+
+/**
+ * The 40% doctrine as one press - see lowDay.ts. Proposed before it is
+ * accepted, like every door here: what stays and at what length, what
+ * waits, what stays as it is, then Accept. There is nothing to choose,
+ * which is the point of it on the day it is for.
+ */
+function Low({ tasks, onAccept, onClose }: { tasks: Task[]; onAccept: (plan: LowDayPlan) => void; onClose: () => void }) {
+  const plan = planLowDay(tasks)
+  const byId = new Map(tasks.map(t => [t.id, t]))
+  const nothing = plan.keep.length + plan.tomorrow.length === 0
+  const was = (id: string) => byId.get(id)?.time
+  return (
+    <>
+      <Head title="Low day" onClose={onClose} />
+      <div className="replan-body">
+        <p className="replan-text">
+          <Explain id="low-day" inline />
+        </p>
+        <ul className="replan-list">
+          {plan.keep.map(k => (
+            <li key={k.taskId} className="replan-item is-keep">
+              <span className="replan-item-title">
+                <span className="replan-key" aria-label="Key task">*</span>
+                {byId.get(k.taskId)?.title}
+                {was(k.taskId) && <span className="replan-item-was"> {was(k.taskId)}</span>}
+              </span>
+              <span className="replan-item-outcome">
+                {k.minutes !== undefined && k.minutes !== k.wasMinutes
+                  ? `${formatDuration(k.minutes)}, was ${formatDuration(k.wasMinutes!)}`
+                  : 'stays'}
+              </span>
+            </li>
+          ))}
+          {plan.tomorrow.map(id => (
+            <li key={id} className="replan-item is-tomorrow">
+              <span className="replan-item-title">
+                {byId.get(id)?.title}
+                {was(id) && <span className="replan-item-was"> {was(id)}</span>}
+              </span>
+              <span className="replan-item-outcome">tomorrow</span>
+            </li>
+          ))}
+          {plan.stay.map(id => (
+            <li key={id} className="replan-item is-keep">
+              <span className="replan-item-title">
+                {byId.get(id)?.title}
+                {was(id) && <span className="replan-item-was"> {was(id)}</span>}
+              </span>
+              <span className="replan-item-outcome">stays</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="replan-summary replan-summary-lead" role="status">{plan.summary}</p>
+      <div className="replan-foot">
+        <button type="button" className="btn-primary" disabled={nothing} onClick={() => onAccept(plan)}>
+          Accept
+        </button>
+        <button type="button" className="btn-secondary" onClick={onClose}>
+          Cancel
+        </button>
       </div>
     </>
   )

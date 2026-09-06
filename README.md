@@ -38,6 +38,8 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Draws the day as a **timeline**, with free time labelled and a line at now
 - Adds a task from one line: the time and the length are already filled in, you type the title
 - **Replans** a broken day in one press: something came up - on today or any day this week, with one line saying when you are still free - shift the rest, or away and back
+- Has a **low day** for when you do not feel like it: the key tasks stay at 40% of their length, the routine stays, the rest waits for tomorrow, and the day is scored on the key tasks alone
+- Times a **step** of a task from its own line - "Meditation 10 min" - with the one timer the app has, and ticks the step when the bell rings
 - Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went
 - Keeps a **journal** that never counts: one line in the morning, two questions at the close, and the week or the month copied as markdown for anywhere else
 - Never scores a bad day against you: no points, no badges, no red, no streak on the day view

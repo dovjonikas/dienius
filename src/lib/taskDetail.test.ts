@@ -166,3 +166,33 @@ test('a task can be bound to a library item by hand and unbound again', () => {
   actions.setTaskLibraryRef(DATE, id, undefined)
   expect(task(id).libraryRef).toBeUndefined()
 })
+
+// --- a step with a length ------------------------------------------------
+//
+// "Meditation 10 min" as a step is a step called Meditation that takes ten
+// minutes, the way quick-add reads a trailing length; a tap on it starts the
+// timer, and the timer ticks it when it rings out - through completeSubtask,
+// which only ever sets done, so a step somebody ticked by hand while the
+// timer ran is not unticked by the bell.
+
+test('a step typed with a trailing length keeps the words and takes the minutes', () => {
+  const [id] = seed()
+  actions.addSubtask(DATE, id, 'Meditation - 10 min')
+  expect(task(id).subtasks).toEqual([expect.objectContaining({ title: 'Meditation', minutes: 10, done: false })])
+})
+
+test('a step typed without a length has none', () => {
+  const [id] = seed()
+  actions.addSubtask(DATE, id, 'Water')
+  expect(task(id).subtasks![0].minutes).toBeUndefined()
+})
+
+test('completing a step sets it done and leaves a done step done', () => {
+  const [id] = seed()
+  actions.addSubtask(DATE, id, 'Meditation 10 min')
+  const sub = task(id).subtasks![0]
+  actions.completeSubtask(DATE, id, sub.id)
+  expect(task(id).subtasks![0].done).toBe(true)
+  actions.completeSubtask(DATE, id, sub.id)
+  expect(task(id).subtasks![0].done).toBe(true)
+})

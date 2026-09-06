@@ -11,6 +11,8 @@ import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
 import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
+import { applyLowDayPlan, type LowDayPlan } from '../../widgets/day-plan/lowDay'
+import { parseStepLine } from '../../widgets/day-plan/parse'
 
 export interface RolloverResult {
   /** Tasks moved to the next day, with pushCount incremented. */
@@ -262,14 +264,40 @@ export const dayActions = {
     commit({ ...data, days })
   },
 
+  /**
+   * A step, from one typed line. A trailing length - "Meditation 10 min" -
+   * becomes the step's minutes, the way quick-add reads a task's; see
+   * parseStepLine. The words are the step.
+   */
   addSubtask(date: string, taskId: string, title: string): void {
-    const trimmed = title.trim()
-    if (trimmed === '') return
+    const parsed = parseStepLine(title)
+    if (!parsed) return
     const day = dayOf(date)
-    const subtask: Subtask = { id: crypto.randomUUID(), title: trimmed, done: false }
+    const subtask: Subtask = { id: crypto.randomUUID(), title: parsed.title, done: false }
+    if (parsed.minutes !== undefined) subtask.minutes = parsed.minutes
     commit(withDay(date, {
       ...day,
       tasks: day.tasks.map(t => (t.id === taskId ? { ...t, subtasks: [...(t.subtasks ?? []), subtask] } : t)),
+    }))
+  },
+
+  /**
+   * Sets a step done, and only ever done: the timer that rang out for it
+   * calls this, and a step somebody ticked by hand while the timer ran must
+   * not be unticked by the bell. A step or a task that is gone by then is
+   * nothing to tick, and nothing happens.
+   */
+  completeSubtask(date: string, taskId: string, subtaskId: string): void {
+    const day = getData().days[date]
+    if (!day) return
+    const task = day.tasks.find(t => t.id === taskId)
+    const step = task?.subtasks?.find(s => s.id === subtaskId)
+    if (!task || !step || step.done) return
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t =>
+        t.id === taskId ? { ...t, subtasks: (t.subtasks ?? []).map(s => (s.id === subtaskId ? { ...s, done: true } : s)) } : t,
+      ),
     }))
   },
 
@@ -574,6 +602,18 @@ export const dayActions = {
     const ensured = ensuredDay(previous, date)
     const base = ensured ? { ...previous, days: ensured.days } : previous
     commit(applyPlan(base, date, plan, () => crypto.randomUUID(), { replannedOn: todayKey() }))
+    return { undo: () => commit(previous) }
+  },
+
+  /**
+   * A low day - see widgets/day-plan/lowDay.ts - in one commit with one
+   * undo, the shape every replan has. The undo puts the previous state
+   * back through commit, so both days come back and the change is stamped
+   * like any other.
+   */
+  applyLowDay(date: string, plan: LowDayPlan): { undo: () => void } {
+    const previous = getData()
+    commit(applyLowDayPlan(previous, date, plan))
     return { undo: () => commit(previous) }
   },
 

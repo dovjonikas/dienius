@@ -335,3 +335,62 @@ test('yesterday has no door at all', () => {
   expect(screen.queryByRole('button', { name: 'Replan' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Something came up' })).toBeNull()
 })
+
+// --- a low day --------------------------------------------------------------
+//
+// The 40% doctrine as one press, from the Low day button beside Replan: the
+// key tasks stay at 40% of their length, the routine stays, the rest waits
+// for tomorrow, and the day is scored on the key tasks alone. Proposed, then
+// Accept, then one undo - the shape every door in this sheet has.
+
+function seedLow() {
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      [TODAY]: {
+        date: TODAY,
+        tasks: [
+          { id: 'deep', title: 'Deep work', time: '09:00', minutes: 120, done: false, highlight: true },
+          { id: 'lunch', title: 'Lunch', time: '12:30', minutes: 45, done: false, origin: { type: 'template', sourceId: 'tpl', blockId: 'b1' } },
+          { id: 'dentist', title: 'Call the dentist', time: '11:30', minutes: 15, done: false },
+          { id: 'coffee', title: 'Coffee', time: '08:00', minutes: 15, done: true },
+        ],
+      },
+    },
+  })
+}
+
+test('the low day proposes the cut, the wait and what stays, and Accept applies it in one commit', async () => {
+  const user = userEvent.setup()
+  seedLow()
+  const onClose = renderSheet('low')
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+
+  expect(within(sheet).getByRole('heading', { name: 'Low day' })).toBeInTheDocument()
+  // Each name is in the list and again in the summary under it.
+  expect(within(sheet).getAllByText(/Deep work/).length).toBeGreaterThan(0)
+  expect(within(sheet).getAllByText(/50 min/).length).toBeGreaterThan(0)
+  expect(within(sheet).getAllByText(/Call the dentist/).length).toBeGreaterThan(0)
+  expect(within(sheet).getAllByText(/Lunch/).length).toBeGreaterThan(0)
+
+  await user.click(within(sheet).getByRole('button', { name: 'Accept' }))
+  expect(onClose).toHaveBeenCalled()
+  const today = getData().days[TODAY]
+  expect(today.lowDay).toBe(true)
+  expect(today.tasks.find(t => t.id === 'deep')?.minutes).toBe(50)
+  expect(today.tasks.map(t => t.id)).toEqual(['deep', 'lunch', 'coffee'])
+  expect(getData().days[TOMORROW].tasks.map(t => t.id)).toEqual(['dentist'])
+})
+
+test('the low day offers one undo, and undo brings both days back', async () => {
+  const user = userEvent.setup()
+  seedLow()
+  renderSheet('low')
+  await user.click(screen.getByRole('button', { name: 'Accept' }))
+  const undo = getUndo()
+  expect(undo?.label).toMatch(/low day/i)
+  undo!.restore()
+  expect(getData().days[TODAY].lowDay).toBeUndefined()
+  expect(getData().days[TODAY].tasks.find(t => t.id === 'deep')?.minutes).toBe(120)
+  expect(getData().days[TOMORROW]).toBeUndefined()
+})

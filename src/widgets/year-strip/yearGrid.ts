@@ -63,7 +63,7 @@ export function buildYearCells(
     const key = dateKey(d)
     const day = days[key]
     const template = day?.templateId ? templates.find(t => t.id === day.templateId) : undefined
-    const score = dayScore(day?.tasks ?? [], day?.dayType)
+    const score = dayScore(day?.tasks ?? [], day?.dayType, day?.lowDay)
 
     cells.push({
       key,

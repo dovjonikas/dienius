@@ -101,6 +101,35 @@ export function parseQuickAdd(input: string): QuickAdd | null {
   return { title, time, minutes }
 }
 
+/**
+ * A task's step and how long it takes, from one typed line - "Meditation
+ * 10 min", "Meditation - 10 min", "Stretch 1h". The same trailing-duration
+ * grammar quick-add reads and the same refusal: "Read 20 pages" keeps its
+ * twenty. A separator left hanging before the length - the dash people
+ * type between a name and a number - is not part of the name. A line that
+ * is only a length, or nothing, is no step.
+ */
+export function parseStepLine(input: string): { title: string; minutes?: number } | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  // Padded with a space so a line that is nothing but a length still meets
+  // the grammar, which wants whitespace before the number.
+  const padded = ` ${trimmed}`
+  let rest = padded
+  let minutes: number | undefined
+  const sized = TRAILING_DURATION_RE.exec(padded)
+  if (sized) {
+    const total = durationFromMatch(sized)
+    if (total > 0) {
+      minutes = total
+      rest = padded.slice(0, sized.index)
+    }
+  }
+  const title = rest.replace(/[\s:-]+$/, '').trim()
+  if (!title) return null
+  return minutes === undefined ? { title } : { title, minutes }
+}
+
 function durationFromMatch(match: RegExpExecArray): number {
   const hours = match[1] !== undefined ? Number(match[1]) : 0
   const minutes = match[2] !== undefined ? Number(match[2]) : match[3] !== undefined ? Number(match[3]) : 0

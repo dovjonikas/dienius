@@ -1374,3 +1374,67 @@ The six cases are in `NavRail.test.tsx`: the dwell and not a moment before,
 a still pointer, a crossing pointer, the window coming back with the focus
 on the item last pressed, the window losing focus with the rail open, and
 Escape handing the focus to the pen.
+
+## A low day is the 40% doctrine as one press
+
+RESEARCH-ADHD.md's 40% rule has been in the docs since v1.0 and in the
+evening close's "enough" threshold since v1.9, and until v2.4 nothing let
+a person act on it in the morning. The plan written for a good day sat
+there on a bad one, nine blocks deep, and the honest answer - do the two
+that matter, at a size you can face, and let the rest wait - was eight
+edits away. That is exactly the arithmetic the brain answers with "the
+whole day is gone", which is the failure every replan door exists to
+prevent.
+
+**One press, proposed first.** Low day, beside Replan under the date, opens
+the same sheet the other doors use and shows what it would do before
+anything moves: the key tasks stay at 40% of their length, on the
+five-minute grid a plan is made at and never under fifteen minutes; the
+routine blocks - a template's, a repeat's - stay exactly where they are,
+because the shape of the day is not the problem; everything else that is
+not done goes to tomorrow at the time it had. Accept is one commit with
+one undo. Nothing is asked, because on the day this is for a question is
+a cost.
+
+**The day is scored on its key tasks alone.** That is the whole of what the
+40% rule means and the part the score has to keep: fifty minutes of the
+thing that mattered is a day that went well, and a score that counted the
+routine beside it, or the tasks that waited, would be a report card about
+a day the person had already decided the shape of. A low day with no key
+task has nothing required on it and reports no plan, by the same rule as a
+shift day with no core task. The mark is a quiet pill under the date and
+the calendar's measure of the day keeps the same count; nothing anywhere
+counts how many days were low.
+
+**Key wins over routine.** A standup marked key is the standup that matters
+today and is kept and cut like any other key task; a routine block that is
+not key is left alone rather than cut, because cutting a commute makes no
+sense and cutting lunch is not a plan.
+
+## A step can carry a timer
+
+The owner's morning is one block with four steps - water, ten minutes of
+meditation, gratitude, a page of Pressfield - and until v2.4 the one step
+with a length had no way to be timed except by opening the clock, typing
+ten, and remembering which step it was for. Four blocks on the grid would
+have timed it and would have been wrong: a ritual is one thing you do, and
+the grid's job is to say when the day's things happen, not to list the
+parts of one of them.
+
+**A step's length is read off its line.** "Meditation 10 min" is a step
+called Meditation that takes ten minutes, through the same trailing-length
+grammar quick-add reads a task with - and the same refusal: "Read 20
+pages" keeps its twenty. Nothing new to learn and no second field.
+
+**It starts the timer the app already has.** There is one timer,
+deliberately (see the clock's own section above), and this does not add a
+second: a tap on the minutes beside a step starts that one for that long,
+with the step attached as a pointer - the date, the task, the step - the
+way a focus session points at a task. The widget says which step it is
+running for, and a reload in between keeps the pointer.
+
+**The bell ticks the step.** The tab that watches the timer run out sets
+the step done, through an action that only ever sets it and never toggles
+it, so a step ticked by hand while the timer ran stays ticked, and a step
+or a task gone by then is nothing to tick. The chime is the timer's own,
+quiet one.

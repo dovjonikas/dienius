@@ -134,6 +134,7 @@ const PLACED: Record<ExplainId, () => ReactElement> = {
   'replan-interrupt': () => <ReplanSheet {...replanChrome} mode="menu" />,
   'replan-shift': () => <ReplanSheet {...replanChrome} mode="menu" />,
   'replan-away': () => <ReplanSheet {...replanChrome} mode="menu" />,
+  'low-day': () => <ReplanSheet {...replanChrome} mode="low" />,
   'library-unit': () => <LibraryAddLine list={getData().library[0]} />,
   'sleep-schedule': () => <TemplatesView />,
   sync: () => <SyncSettings />,

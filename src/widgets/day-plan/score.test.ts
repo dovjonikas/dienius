@@ -73,3 +73,34 @@ test('a non-full day with every task core behaves exactly like a full day of the
   const tasks = [task('a', true, true), task('b', false, true)]
   expect(dayScore(tasks, 'shift')).toEqual({ planned: true, done: 1, total: 2 })
 })
+
+// --- a low day -------------------------------------------------------------
+//
+// The 40% doctrine as one press - see lowDay.ts. The day is scored on its
+// key tasks alone: the routine that stayed and the one-offs that went to
+// tomorrow have no say in how a low day went. A low day with no key task
+// has nothing required on it, and reports no plan the way a shift day with
+// no core task does - not a failed 0/0.
+
+test('a low day is scored on its key tasks alone', () => {
+  const score = dayScore(
+    [
+      { ...task('deep', true), highlight: true },
+      { ...task('review', false), highlight: true },
+      task('lunch', false),
+      task('walk', true),
+    ],
+    'full',
+    true,
+  )
+  expect(score).toEqual({ planned: true, done: 1, total: 2 })
+})
+
+test('a low day with no key task reports no plan rather than a zero', () => {
+  expect(dayScore([task('lunch', false), task('walk', true)], 'full', true)).toEqual({ planned: false })
+})
+
+test('a low day counts its key tasks whatever its day type is', () => {
+  const score = dayScore([{ ...task('deep', false), highlight: true }, task('shift', true, true)], 'shift', true)
+  expect(score).toEqual({ planned: true, done: 0, total: 1 })
+})

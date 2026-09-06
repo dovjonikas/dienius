@@ -30,9 +30,15 @@ export type DayScore =
  * to drag the score down. A non-full day with tasks but none of them
  * core reports no plan, the same way an empty day does: there is nothing
  * required today, so there is nothing to measure - not a failed 0/0.
+ *
+ * A low day - see lowDay.ts - is scored on its key tasks alone, whatever
+ * its type: the routine that stayed and the one-offs that went to tomorrow
+ * have no say in how a day that was declared a low one went. A low day
+ * with no key task has nothing required on it and reports no plan, by the
+ * same rule as the shift day with no core task.
  */
-export function dayScore(tasks: Task[], dayType: DayType = 'full'): DayScore {
-  const counted = dayType === 'full' ? tasks : tasks.filter(t => t.core)
+export function dayScore(tasks: Task[], dayType: DayType = 'full', lowDay = false): DayScore {
+  const counted = lowDay ? tasks.filter(t => t.highlight) : dayType === 'full' ? tasks : tasks.filter(t => t.core)
   if (counted.length === 0) {
     return { planned: false }
   }

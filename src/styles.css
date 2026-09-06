@@ -1443,6 +1443,20 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    drawn two ways in two places is exactly the seam this pass is for. Not a
    button here: on the header it is a label saying which template today came
    from, and there is nothing to press. */
+/* The mark a low day carries - see lowDay.ts - in the template chip's
+   register and none of its colour: a fact about the day, said once, quietly. */
+.day-low {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--s0) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--border) 40%, transparent);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
 .day-template {
   display: inline-flex;
   align-items: center;
@@ -5251,6 +5265,16 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
   white-space: nowrap;
 }
 
+/* The step the timer is for, under the reading - see TimerStep. */
+.floating-clock-for {
+  max-width: 16ch;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .floating-clock-actions {
   display: flex;
   gap: var(--s1);
@@ -7258,6 +7282,30 @@ button.danger:focus-visible {
 
 .subtask-remove:hover { color: var(--danger); }
 
+/* The timer on a step that has a length - see TaskDetail. A pill in the
+   meta register; lit while the timer is running for this step. */
+.subtask-timer {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0 var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.subtask-timer:hover { color: var(--text); border-color: var(--muted); }
+
+.subtask-timer.is-running {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
 .subtask-add { font-size: var(--t-sm); }
 
 .task-detail-note { resize: vertical; font-size: var(--t-sm); line-height: 1.5; }
@@ -7627,6 +7675,7 @@ button.danger:focus-visible {
   .library-step,
   .library-item-remove,
   .subtask-remove,
+  .subtask-timer,
   .library-list-edit,
   .library-item-schedule,
   .library-item-reopen,
@@ -7655,6 +7704,7 @@ button.danger:focus-visible {
   .library-step::after,
   .library-item-remove::after,
   .subtask-remove::after,
+  .subtask-timer::after,
   .library-list-edit::after,
   .library-item-schedule::after,
   .library-item-reopen::after,
