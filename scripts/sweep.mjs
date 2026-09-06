@@ -358,6 +358,14 @@ for (const run of runs) {
             // The real checkbox behind a drawn box is visually hidden and
             // is not the target - see .task input[type='checkbox'].
             if (el instanceof HTMLInputElement && el.type === 'checkbox') return false
+            // And nothing else that is visually hidden either: the file
+            // input behind the + in a note is 1px on purpose and is opened
+            // by the button, which is the target and is measured.
+            if (el.closest('.visually-hidden')) return false
+            // And nothing else that is visually hidden either: the file
+            // input behind the + in a note is 1px on purpose and is opened
+            // by the button, which is the target and is measured.
+            if (el.closest('.visually-hidden')) return false
             if (allowed.some(c => String(el.className).includes(c))) return false
             const after = getComputedStyle(el, '::after')
             return !(after.content !== 'none' && after.position === 'absolute')

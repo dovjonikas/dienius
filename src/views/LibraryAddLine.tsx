@@ -109,6 +109,11 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
         }}
       />
       <div className="library-add-controls">
+      {/* The unit and the number are one answer - "12 chapters" - so they
+          are one control with a hairline between them rather than two boxes
+          with a gap. They were as far from each other as each was from Add,
+          which read as three unrelated things. */}
+      <div className="library-amount">
       <Explain id="library-unit">
       <div className="duration-control library-unit" ref={unitRef}>
         <button
@@ -172,7 +177,12 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           />
         </>
       )}
-      <button type="button" className="btn-secondary" disabled={!draft.trim()} onClick={add}>
+      </div>
+      {/* Primary, not secondary: this is the one thing the row is for. It
+          is disabled until there is a word to add, and says so by being
+          flat and quiet rather than by being a faded copy of the button
+          beside it - the owner read the faded one as broken. */}
+      <button type="button" className="primary library-add-go" disabled={!draft.trim()} onClick={add}>
         Add
       </button>
       </div>

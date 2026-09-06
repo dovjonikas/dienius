@@ -2562,7 +2562,7 @@ textarea::placeholder {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):hover,
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):hover,
   textarea:hover {
     border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
   }
@@ -2570,7 +2570,7 @@ textarea::placeholder {
 
 /* One focus ring for every field. Inset, so it never changes the size of the
    control and never nudges what is beside it. */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):focus,
 textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
@@ -2884,15 +2884,30 @@ select:focus {
 
 .time-stepper:focus-within { border-color: var(--accent); }
 
+/* The number inside the box. Everything a field needs is said here rather
+   than inherited from the base rule, because the base rule is excluded for
+   `.time-input` - see the comment on it. The box, the border, the hover and
+   the focus ring all belong to `.time-stepper` around it. */
 .time-stepper .time-input,
 .time-stepper .minutes-input {
   width: 76px;
+  padding: var(--s2) var(--s3);
   border: none;
   border-radius: 0;
   background: none;
+  color: var(--text);
+  font-family: inherit;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+.time-stepper .time-input::placeholder,
+.time-stepper .minutes-input::placeholder { color: var(--faint); }
+
+/* The ring goes on the box, not on the number inside it. */
+.time-stepper .time-input:focus,
+.time-stepper .minutes-input:focus { outline: none; }
+.time-stepper:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 .time-stepper .time-input:focus,
 .time-stepper .minutes-input:focus {
@@ -6853,14 +6868,53 @@ button.danger:focus-visible {
    own minimum made the box twice the row - 78px beside a 39px field. */
 @media (hover: hover) and (pointer: fine) {
   .library-add > input,
+  .library-add .library-amount,
+  .library-add .library-add-go { min-height: 40px; }
   .library-add .library-unit,
   .library-add .count-stepper,
-  .library-add .btn-secondary { min-height: 40px; }
   .library-add-controls .count-input,
   .library-add .duration-control-value { min-height: 38px; }
 }
 
-.library-list-empty { margin: 0; font-size: var(--t-sm); }
+/* "12 chapters" is one answer, so the unit and the count are one box with
+   a hairline between them. Two boxes with the row's own gap between them
+   sat as far apart as each of them sat from Add, and the row read as three
+   unrelated controls instead of a field, an amount and a button. */
+.library-amount {
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.library-amount:focus-within { border-color: var(--accent); }
+
+/* The two halves give up their own edges to the shell around them. */
+.library-amount .library-unit .duration-control-value,
+.library-amount .count-stepper {
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+.library-amount .count-stepper { border-left: 1px solid var(--border); }
+.library-amount .library-unit { border: none; }
+
+/* Flat and quiet while there is nothing to add, rather than a faded copy
+   of the button beside it - the owner read the faded one as broken. */
+.library-add-go:disabled {
+  background: color-mix(in srgb, var(--border) 45%, transparent);
+  border-color: transparent;
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* One step under the row it belongs to, not two. */
+.library-list-empty { margin: 0 0 calc(var(--s1) * -1); font-size: var(--t-sm); color: var(--muted); }
 
 .library-items {
   display: flex;
@@ -11130,7 +11184,7 @@ main:has(.week) > .calendar {
 /* The value button that says what a library item is counted in, next to
    the count with its arrows. */
 .library-add .duration-control-value { min-width: 0; padding: 0 var(--s3); }
-.library-add .count-stepper .count-input { width: 72px; }
+.library-add .count-stepper .count-input { width: 52px; }
 .library-step-wide { width: auto; padding: 0 var(--s2); }
 
 @media (pointer: coarse) {
@@ -12654,6 +12708,19 @@ main:has(.week) > .calendar {
 /* A finger has no hover, so the cross is simply there. */
 @media (pointer: coarse) {
   .note-photo-remove { opacity: 1; }
+  /* The + is 32px so the compose row stays one height beside the Note
+     toggle; a finger gets the overlay instead, the same trade every small
+     control in this app makes. */
+  .scratch-photo-add { position: relative; }
+  .scratch-photo-add::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch));
+    height: max(100%, var(--touch));
+    transform: translate(-50%, -50%);
+  }
 }
 
 .scratch-photo-add {
