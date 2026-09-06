@@ -1438,3 +1438,48 @@ the step done, through an action that only ever sets it and never toggles
 it, so a step ticked by hand while the timer ran stays ticked, and a step
 or a task gone by then is nothing to tick. The chime is the timer's own,
 quiet one.
+
+## The pixel standard
+
+The owner's sentence, from the v2.4 brief: text that looks even slightly
+off, a gap too wide or too narrow, is a defect, not taste. This is what
+that means in practice, because "looks right" is not something a test can
+be written against and every one of these can.
+
+**A size is a token or it is a defect.** Two scales, in CONVENTIONS
+section 5, and `scale.test.ts` reads the stylesheet and fails on anything
+else. It reads whole lines since v2.4, not first columns, which found
+twenty more literals hiding inside one-line rules.
+
+**Four sizes on a screen.** Not counting the input floor, which exists so
+iOS does not zoom a field, and the glyph size, which is an icon drawn in a
+font. A fifth size is a screen with no hierarchy. The browser's own 16px
+is not on the scale, so the body says its size and a button inherits it -
+until v2.4 every unsized button, a template card's name and a step's title
+fell through to 16 and were that fifth size on four screens.
+
+**What is painted under a thing is part of the thing.** A ring's gap is
+drawn in `--ground`, which the body sets to the page and each surface sets
+to itself, because a gap in the card colour on a row that sits on the page
+is a halo, and the owner saw it as a ring that was not clean.
+
+**A box-shadow needs its room.** It is drawn outside the box, so a
+scroller between it and the page clips it. The first swatch under
+quick-add lost the left of its ring for one commit, to a flush left edge
+that read better in the stylesheet than on the screen.
+
+**The measure is the sweep, and the sweep is measured.** `npm run sweep`
+walks every screen at every promised size in both themes and reports text
+cut off, text over text, a control covered, anything past the right edge,
+a screen that should fit and does not, text under AA against what is
+actually painted under it, and since v2.4 a chosen swatch's ring cut off
+or drawn on the wrong ground. `--self-check` plants one of each and fails
+if the pass has gone blind: seven of seven. Zero findings is the expected
+state, on the desktop and on the phone.
+
+**Reading a colour is part of reading the screen.** Chrome hands a
+`color-mix()` back as `color(srgb ...)`, which the audit's parser read as
+no colour at all, so every wash in the app was invisible to it. Five
+strings had been sitting under AA behind that: the month cell's "+", the
+scratch timestamp, the week's finished blocks in the light theme, the
+palette's detail line on the selected row.

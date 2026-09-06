@@ -227,8 +227,10 @@
     }
 
     // While a sheet is open, everything behind it is meant to be behind it.
+    // A popover is the same for as long as it is up - the template's colour
+    // panel sits over the day-type buttons, which is where a popover goes.
     const layer =
-      document.querySelector('[role="dialog"], .replan, .task-detail-panel, .task-detail-sheet, .scratch-overlay, .task-gap-offers-panel, .task-actions-sheet') || null
+      document.querySelector('[role="dialog"], .replan, .task-detail-panel, .task-detail-sheet, .scratch-overlay, .task-gap-offers-panel, .task-actions-sheet, .swatch-picker-panel') || null
     out.layer = layer ? sig(layer) : null
 
     for (const b of document.querySelectorAll('button, [role="button"], a[href], input, select, textarea')) {

@@ -239,7 +239,8 @@ that.
   at hand - the page by default, and a surface sets it to itself - for the
   one thing that has to match it exactly, the gap in a chosen swatch's ring
 - Geometry the scales have no step for, named once: `--rail-w`,
-  `--rail-open-w`, `--timeline-gutter`
+  `--rail-open-w`, `--timeline-gutter`, and `--touch`, the 44px a control
+  grows to under a finger
 
 ### The two scales
 
@@ -258,9 +259,13 @@ reads the stylesheet and fails on any other.
 | `--t-input` | 16px | Every field on a phone - the iOS zoom floor |
 | `--t-focus`, `--t-focus-title` | fluid | The Focus screen, the one place type fills the window |
 
-**At most four of them on one screen**, not counting the input floor: a
-screen with five sizes is a screen with no hierarchy. Today is 11, 13,
-15 and 20; the month is 10, 11, 13 and 20.
+**At most four of them on one screen**, not counting the input floor and
+the glyph size: a screen with five sizes is a screen with no hierarchy.
+Today is 11, 13, 15 and 20; the month is 10, 11, 13 and 20. The body
+carries `--t-sm` and a button inherits, so nothing falls to the browser's
+16px - which is not on the scale, and was the fifth size on four screens
+until the v2.4 critique measured them: every button without a size of
+its own, a template card's name, a step's title, a pace line.
 
 | Spacing | Size | Spacing | Size |
 |---|---|---|---|

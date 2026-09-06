@@ -35,10 +35,13 @@ const css = readFileSync(resolve(__dirname, '../styles.css'), 'utf8')
 function declarations(props: string[]): { line: number; prop: string; value: string }[] {
   const out: { line: number; prop: string; value: string }[] = []
   const lines = css.split('\n')
-  const wanted = new RegExp(`^\\s*(${props.join('|')})\\s*:\\s*([^;]+);`)
+  // Anywhere on the line, not only at its start: a one-line rule holds its
+  // declarations after the brace, and reading the first column alone let a
+  // handful of literals live on for a version inside `h2 { ... margin: 8px
+  // 0 16px; }` and its kind.
+  const wanted = new RegExp(`(?:^|[{;])\\s*(${props.join('|')})\\s*:\\s*([^;}]+)`, 'g')
   lines.forEach((text, i) => {
-    const m = text.match(wanted)
-    if (m) out.push({ line: i + 1, prop: m[1], value: m[2].trim() })
+    for (const m of text.matchAll(wanted)) out.push({ line: i + 1, prop: m[1], value: m[2].trim() })
   })
   return out
 }
@@ -90,7 +93,9 @@ test('every padding, margin and gap is a spacing token, or a hairline or half-st
   ]
   const offenders = declarations(props).flatMap(d =>
     barePixels(d.value)
-      .filter(px => !SPACING_ALLOWED.has(px))
+      // A fraction of a pixel is drawing, not a gap: the clock face's hands
+      // are centred by three quarters of one.
+      .filter(px => !SPACING_ALLOWED.has(px) && px >= 1)
       .map(px => `L${d.line} ${d.prop}: ${d.value} (${px}px)`),
   )
   expect(offenders).toEqual([])
