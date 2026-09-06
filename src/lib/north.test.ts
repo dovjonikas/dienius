@@ -222,23 +222,30 @@ test('dismissing holds for the day and no longer', () => {
   expect(northPrompt(data, TUE, MON)?.kind).toBe('slack')
 })
 
-test('both switches off means it never comes forward on its own', () => {
+/**
+ * One switch, not two. Until v2.5 the Monday card and the slow-day card had
+ * a switch each, and nobody has ever wanted one without the other: a person
+ * who does not want a goal brought forward does not want it brought forward
+ * on a Monday either. Turning it off takes both cards with it.
+ */
+test('the switch off means it never comes forward on its own, Monday included', () => {
   const base = dataWithGoal()
   const data = withDay(MON, [task({ highlight: true }), task(), task()], {
     ...base,
-    settings: { ...base.settings, north: { afterASlowDay: false, onMonday: false } },
+    settings: { ...base.settings, north: { afterASlowDay: false } },
   })
   expect(northPrompt(data, TUE, null)).toBeUndefined()
   expect(northPrompt(data, MON, null)).toBeUndefined()
 })
 
-test('the Monday switch alone does not silence the slow-day card', () => {
+test('the switch on carries both cards, the slow day and the Monday', () => {
   const base = dataWithGoal()
   const data = withDay(MON, [task({ highlight: true }), task(), task()], {
     ...base,
-    settings: { ...base.settings, north: { afterASlowDay: true, onMonday: false } },
+    settings: { ...base.settings, north: { afterASlowDay: true } },
   })
   expect(northPrompt(data, TUE, null)?.kind).toBe('slack')
+  expect(northPrompt(data, MON, null)?.kind).toBe('monday')
 })
 
 // --- it survives a backup ------------------------------------------------
@@ -250,12 +257,12 @@ test('goals and their settings survive export and re-import', async () => {
   data.goals[0].identity = 'I am someone who shows up.'
   data.goals[0].deserve = ['train four times a week', 'sleep by eleven']
   data.picture = { text: 'I wake before the house does.' }
-  data.settings.north = { afterASlowDay: false, onMonday: true }
+  data.settings.north = { afterASlowDay: false }
 
   const back = importJson(exportJson(data))
   expect(back.goals).toEqual(data.goals)
   expect(back.picture).toEqual({ text: 'I wake before the house does.' })
-  expect(back.settings.north).toEqual({ afterASlowDay: false, onMonday: true })
+  expect(back.settings.north).toEqual({ afterASlowDay: false })
 })
 
 // --- what you do to deserve it -------------------------------------------

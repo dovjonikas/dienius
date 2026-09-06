@@ -5,6 +5,7 @@ import type { AppData, DayPlan, EveningCloseSettings, Settings, SleepProfile, Sl
 import { dedupeTasks } from './taskIdentity'
 import { isLegacyTheme, isStoredTheme, validate, type StoredAppData, type StoredTheme } from './validate'
 import { DEFAULT_CATEGORIES } from './categories'
+import { mergeOldJournal } from './journal'
 
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -16,23 +17,17 @@ const DEFAULT_PRESET_ID = 'dark'
 // actually needs during a long block. Duplicated here rather than imported
 // for the same reason DEFAULT_PRESET_ID is: this file only needs the literal
 // a fresh install starts with.
-const DEFAULT_REMINDER: Settings['reminder'] = { enabled: false, everyMinutes: 20, text: 'Stand up, drink water' }
-
-// Off, and five minutes. Five is enough to finish a sentence and stand up,
-// and short enough that the nudge is still about the thing it names.
-const DEFAULT_TASK_REMINDER: Settings['taskReminder'] = { enabled: false, minutesBefore: 5 }
-
 // Both on. Unlike every other interruption in this app, these two are not
 // notifications and cannot arrive while somebody is doing something else -
 // they are a card on a page already being opened, and dismissing one takes a
 // single tap. See north.ts.
-const DEFAULT_NORTH: Settings['north'] = { afterASlowDay: true, onMonday: true }
+const DEFAULT_NORTH: Settings['north'] = { afterASlowDay: true }
 
 // On, at half nine, and it asks. Duplicated from eveningClose.ts for the same
 // reason DEFAULT_PRESET_ID is duplicated from themes.ts: this file needs the
 // literal a fresh install starts with, not a dependency on the module that
 // owns the behaviour.
-const DEFAULT_EVENING_CLOSE: EveningCloseSettings = { enabled: true, at: '21:30', askBestMoment: true }
+const DEFAULT_EVENING_CLOSE: EveningCloseSettings = { enabled: true, at: '21:30' }
 
 // Duplicated from capacity.ts for the same reason DEFAULT_SLEEP_WINDOW is.
 const DEFAULT_SLEEP_PROFILE_ID = 'default'
@@ -53,21 +48,31 @@ const DEFAULT_NIGHT_SLEEP_WINDOW: SleepWindow = { start: '00:00', end: '13:00' }
 // migrateTheme below is what actually upgrades it, called on every load
 // and import regardless of which shape validation just accepted.
 
-// Widgets that ship enabled for everyone, with no settings control to turn
-// them off.
-const DEFAULT_ENABLED_WIDGETS = ['day-plan']
+/**
+ * The settings v2.5 removed, dropped once on load.
+ *
+ * Settings normalise by spreading what was stored and then correcting it -
+ * see the comment in `normalizeLoaded`, and the bug that put it there: an
+ * optional field added later was silently lost on every load. The cost of
+ * spreading is that anything unknown rides along untouched, gets written
+ * back out on the next save, and would sit in everybody's data forever. So
+ * a removed field is named here once and deleted, and the list only ever
+ * grows.
+ *
+ * - `reminder` and `taskReminder`: two nudges that could only fire while
+ *   the app was already open. See DECISIONS "A setting has to earn its
+ *   place".
+ * - `enabledWidgets`: a list of which widgets to show, on a registry that
+ *   has had exactly one widget in it since v1.2, with no control anywhere
+ *   that could change it. A setting nobody can reach is not a setting.
+ * - `sleepWindow` and `nightSleepWindow`: the pair of fixed windows that
+ *   became sleep profiles in v1.4. `migrateSleepProfiles` reads them and
+ *   has always left them behind in the object it read from.
+ */
+const REMOVED_SETTINGS = ['reminder', 'taskReminder', 'enabledWidgets', 'sleepWindow', 'nightSleepWindow'] as const
 
 // The if-then board's old widget registry id, from when it rendered as its
 // own stacked section under the day plan - see docs/TIMELINE.md section 6.
-// It surfaces inline on the day view now (IfThenDayRule) rather than
-// through the widget registry, so this id no longer names anything in
-// `WIDGETS`. Kept here only so normalizeLoaded can strip it out of real
-// people's existing `enabledWidgets` lists below - every install from
-// before this change has it, since there was never a toggle to remove it
-// by hand, and leaving it in place would mean carrying a dead reference in
-// everyone's data forever for no reason.
-const LEGACY_IF_THEN_WIDGET_ID = 'if-then'
-
 // Also duplicated, deliberately and minimally, in the pre-paint script in
 // index.html - that script reads settings.theme straight out of this key
 // before React mounts, so it has to know the key and that one field's shape
@@ -123,15 +128,12 @@ export function defaultData(): AppData {
     days: {},
     settings: {
       theme: defaultThemeState(),
-      enabledWidgets: [...DEFAULT_ENABLED_WIDGETS],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
       density: 'comfortable',
       textScale: 'm',
-      reminder: { ...DEFAULT_REMINDER },
       sleepProfiles: [{ id: DEFAULT_SLEEP_PROFILE_ID, name: DEFAULT_SLEEP_PROFILE_NAME, window: { ...DEFAULT_SLEEP_WINDOW } }],
       weekdayTemplates: {},
-      taskReminder: { ...DEFAULT_TASK_REMINDER },
       north: { ...DEFAULT_NORTH },
       eveningClose: { ...DEFAULT_EVENING_CLOSE },
     },
@@ -169,22 +171,9 @@ export { validate }
 export type { StoredAppData } from './validate'
 
 // Fills in what a payload from before the if-then board existed does not
-// have: an empty ifThens list. Older payloads may also carry
-// LEGACY_IF_THEN_WIDGET_ID in enabledWidgets, from when the board briefly
-// lived in the widget registry - that id is stripped out below regardless
-// of how the payload otherwise got here, so nobody's real data keeps
-// carrying a reference to a widget that no longer exists.
-//
-// wasMigrated distinguishes "this payload predates ifThens entirely" from
-// "this payload already went through this function once, and enabledWidgets
-// is however it is now for a reason" - the ifThens key's own presence in the
-// raw payload is that signal, since it is added by this same function on
-// first load and then persisted by every subsequent save from here on. Once
-// a payload has been migrated, enabledWidgets is left exactly as it stands
-// apart from that one strip - a future settings toggle for some other
-// widget would find its own choice respected exactly the way this comment
-// used to promise for if-then, back when if-then still had a widget id to
-// turn off.
+// have: an empty ifThens list. The dead 'if-then' widget id such payloads
+// also carry needs no handling of its own any more - the whole
+// `enabledWidgets` list goes on load, see REMOVED_SETTINGS.
 /**
  * Turns whatever a payload carries about sleep into the profile list.
  *
@@ -223,12 +212,9 @@ function migrateSleepProfiles(data: StoredAppData): SleepProfile[] {
   return [base, { id: 'shift', name: 'Shift', window: night }]
 }
 
-function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
-  const enabledWidgets = (
-    wasMigrated
-      ? data.settings.enabledWidgets
-      : [...new Set([...data.settings.enabledWidgets, ...DEFAULT_ENABLED_WIDGETS])]
-  ).filter(id => id !== LEGACY_IF_THEN_WIDGET_ID)
+function normalizeLoaded(data: StoredAppData): AppData {
+  const settings = { ...data.settings } as Record<string, unknown>
+  for (const gone of REMOVED_SETTINGS) delete settings[gone]
   return {
     ...data,
     days: repairDuplicates(data.days),
@@ -253,18 +239,15 @@ function normalizeLoaded(data: StoredAppData, wasMigrated: boolean): AppData {
       // `calendars` were both lost this way. Anything unknown that rides along
       // from a hand-edited backup is harmless - `validate` has already checked
       // the shape of everything this app actually reads.
-      ...data.settings,
+      ...(settings as Partial<Settings>),
       theme: migrateTheme(data.settings.theme),
-      enabledWidgets,
       timelineExpanded: data.settings.timelineExpanded ?? false,
       dayLayoutFocus: data.settings.dayLayoutFocus ?? 'both',
       density: data.settings.density ?? 'comfortable',
       textScale: data.settings.textScale ?? 'm',
-      reminder: data.settings.reminder ?? { ...DEFAULT_REMINDER },
       sleepProfiles: migrateSleepProfiles(data),
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
-      taskReminder: data.settings.taskReminder ?? { ...DEFAULT_TASK_REMINDER },
-      north: data.settings.north ?? { ...DEFAULT_NORTH },
+      north: data.settings.north ? { afterASlowDay: data.settings.north.afterASlowDay } : { ...DEFAULT_NORTH },
       eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
     },
   }
@@ -289,8 +272,20 @@ function repairDuplicates(days: Record<string, DayPlan>): Record<string, DayPlan
   const repaired: Record<string, DayPlan> = {}
   for (const [date, day] of Object.entries(days)) {
     const tasks = dedupeTasks(day.tasks)
-    if (tasks.length !== day.tasks.length) changed = true
-    repaired[date] = tasks.length === day.tasks.length ? day : { ...day, tasks }
+    // A v2.3 journal - three named answers - becomes the one entry v2.5
+    // keeps, in the order the day said them. Done here rather than in a
+    // migration step because it is the same shape of repair as a duplicate
+    // task: something the state can honestly hold, folded on the way in, so
+    // nothing downstream has to know two shapes. See `mergeOldJournal`.
+    const legacy = (day as { bestMoment?: string }).bestMoment !== undefined || (day.journal !== undefined && typeof day.journal !== 'string')
+    const journal = legacy ? mergeOldJournal(day.journal, (day as { bestMoment?: string }).bestMoment) : day.journal
+    if (tasks.length !== day.tasks.length || legacy) changed = true
+    if (tasks.length === day.tasks.length && !legacy) {
+      repaired[date] = day
+      continue
+    }
+    const { bestMoment: _wasAMoment, journal: _wasAForm, ...rest } = day as DayPlan & { bestMoment?: string }
+    repaired[date] = { ...rest, tasks, ...(journal === undefined ? {} : { journal }) }
   }
   return changed ? repaired : days
 }
@@ -329,7 +324,7 @@ export function loadData(): AppData {
       const fallback = defaultData()
       return theme ? { ...fallback, settings: { ...fallback.settings, theme } } : fallback
     }
-    return normalizeLoaded(parsed, 'ifThens' in parsed)
+    return normalizeLoaded(parsed)
   } catch {
     return defaultData()
   }
@@ -377,7 +372,7 @@ export function importJson(text: string): AppData {
     // not a field of the plan - see there. Dropped here so a file that has
     // been exported and imported is byte for byte the plan again.
     if (parsed && typeof parsed === 'object' && 'about' in parsed) delete (parsed as { about?: unknown }).about
-    return normalizeLoaded(parsed, 'ifThens' in parsed)
+    return normalizeLoaded(parsed)
   } catch {
     throw new Error('Invalid Dienius backup file')
   }

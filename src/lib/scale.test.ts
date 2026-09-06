@@ -100,3 +100,45 @@ test('every padding, margin and gap is a spacing token, or a hairline or half-st
   )
   expect(offenders).toEqual([])
 })
+
+// --- a class excluded from the base rule still says what colour it is ----
+
+/**
+ * The base input rule excludes some inputs by class, so a control that
+ * draws its own box does not get a second one - see the comment on it. An
+ * exclusion takes away the border, the padding and the background, and it
+ * also takes away `color`, which is not a box: it is whether the text can
+ * be read at all.
+ *
+ * It did. `.time-input` was excluded in v2.5 to fix the stepper being a box
+ * inside a box, and every time picker in the app - Settings' evening and
+ * both sleep windows, the task detail, the template editor - fell through
+ * to the browser's own black on a dark surface, at 1.14:1. Nothing caught
+ * it: a field's text is its value, and the sweep's contrast pass walked
+ * text nodes, which an input has none of. The sweep reads a field's value
+ * now, and this holds the same line without needing a build.
+ *
+ * So: every class named in a `:not(.x)` on the base input rule must have a
+ * rule of its own that gives it a colour.
+ */
+test('every input class excluded from the base rule sets its own colour', () => {
+  const base = css.split(String.fromCharCode(10)).find(l => l.startsWith('input:not(') && l.includes("[type='checkbox']"))
+  expect(base).toBeDefined()
+
+  const excluded = [...(base as string).matchAll(/:not\(\.([a-z-]+)\)/g)].map(m => m[1])
+  expect(excluded.length).toBeGreaterThan(0)
+
+  // Each rule as selector + body, which is enough here: a nested block's
+  // inner rules still come out whole when split on a closing brace.
+  const rules = css.split(String.fromCharCode(10)).join(' ').split('}')
+
+  for (const cls of excluded) {
+    const owns = rules.some(rule => {
+      const brace = rule.indexOf('{')
+      if (brace < 0) return false
+      const selectors = rule.slice(0, brace).split(',').map(sel => sel.trim())
+      return selectors.includes('.' + cls) && rule.slice(brace).includes('color:')
+    })
+    expect(owns, cls + ' is excluded from the base input rule and no rule gives it a colour').toBe(true)
+  }
+})

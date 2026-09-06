@@ -187,6 +187,19 @@ const SCREENS = [
       await p.waitForTimeout(400)
     },
   },
+  // The clock's four panels. Reachable from every tab and therefore on
+  // screen more often than most of the list above, and until v2.5 not
+  // measured once: the journal's own line about what it is not is the
+  // smallest text the app draws, and it went in unswept.
+  .../** @type {Screen[]} */ (['Notes', 'Journal'].map(panel => ({
+    name: `Clock: ${panel.toLowerCase()}`,
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await press(p, 'Timer and stopwatch')
+      await press(p, panel)
+      await p.waitForTimeout(300)
+    },
+  }))),
   .../** @type {Screen[]} */ (['Something came up', 'Shift the rest', 'I was away'].map(door => ({
     name: `Replan: ${door.toLowerCase()}`,
     go: async /** @param {Page} p */ p => {

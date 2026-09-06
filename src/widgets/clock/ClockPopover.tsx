@@ -5,6 +5,7 @@ import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { actions, useAppData } from '../../lib/store'
 import { scratchTitle, sortScratch } from '../../lib/scratch'
+import { JournalPanel } from './JournalPanel'
 
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -22,11 +23,13 @@ export interface ClockPopoverProps {
   onClose: () => void
   /** Hands over to the full stream - see the Notes tab. */
   onOpenNotes: () => void
+  /** Hands over to the whole journal - a month at a time, and the search. */
+  onOpenJournal: () => void
   /** Which tool the panel opens on. The quick-note key asks for 'notes'. */
   tab?: ClockTab
 }
 
-export type ClockTab = 'timer' | 'stopwatch' | 'notes'
+export type ClockTab = 'timer' | 'stopwatch' | 'notes' | 'journal'
 
 /**
  * Timer and stopwatch, in one small panel hung off the header button.
@@ -37,13 +40,22 @@ export type ClockTab = 'timer' | 'stopwatch' | 'notes'
  * left to say - the floating widget takes over and this closes itself, so the
  * panel is only ever a way in, never a place to sit and watch.
  *
- * Notes is the third tab since v2.5. The clock button is the one control on
- * screen from every tab, which makes it the shortest path from a thought to
- * a line written down - and this is deliberately not a second Scratch: one
- * line, Enter, gone. The last three are there to recognise, not to work
- * through, and the way to the whole stream is a button that says so.
+ * Notes and Journal are the third and fourth tabs since v2.5. The clock
+ * button is the one control on screen from every tab, which makes it the
+ * shortest path from a thought to a line written down.
+ *
+ * The two are deliberately different things, and the difference has to stay
+ * obvious or they become two of the same box. A note is a thought caught on
+ * the way past: short, undated in any way that matters, and it turns into a
+ * task. A journal entry is a day: dated, kept, turned into nothing, read
+ * later. Notes is for doing; the journal is for remembering.
+ *
+ * Notes here is not a second Scratch - one line, Enter, gone, with the last
+ * three to recognise and a button to the whole stream. The journal is one
+ * box that saves itself, with no questions on it at all; see JournalPanel
+ * and DECISIONS "A journal, not a form".
  */
-export function ClockPopover({ onClose, onOpenNotes, tab: openOn }: ClockPopoverProps) {
+export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn }: ClockPopoverProps) {
   useRestoreFocus()
   const tools = useClockTools()
   const data = useAppData()
@@ -154,9 +166,24 @@ export function ClockPopover({ onClose, onOpenNotes, tab: openOn }: ClockPopover
           >
             Notes
           </button>
+          <button
+            type="button"
+            className={tab === 'journal' ? 'active' : ''}
+            aria-pressed={tab === 'journal'}
+            onClick={() => setTab('journal')}
+          >
+            Journal
+          </button>
         </div>
 
-        {tab === 'notes' ? (
+        {tab === 'journal' ? (
+          <JournalPanel
+            onOpenFull={() => {
+              onOpenJournal()
+              onClose()
+            }}
+          />
+        ) : tab === 'notes' ? (
           <div className="clock-panel clock-notes">
             <textarea
               className="clock-note-input"

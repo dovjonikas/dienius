@@ -856,7 +856,7 @@ no due date, and no sort: a drag or an arrow key is the entire ranking model.
 
 ---
 
-## 15. The evening close never appraises
+## 15. The evening close never appraises, and never asks
 
 `lib/eveningClose.ts` and `widgets/day-plan/EveningClose.tsx` exist because a
 day needs an ending and midnight is not one. The arithmetic is four lines. The
@@ -1081,3 +1081,52 @@ editors draw the day the template makes, live, as it is typed
 - **It is a picture.** Blocks are not dragged in it. That is in STATE's
   "Asked for, not yet built", and adding it means the drag machinery the day
   view already has, not a second one.
+
+## 21. A setting has to earn its place
+
+A setting stays only if **both** of these are true:
+
+1. **The owner would actually change it from the default.** Not "somebody
+   might". If the default is right for the person using this app, the
+   setting is a row they scroll past forever.
+2. **The app cannot decide correctly itself.** If the answer is derivable -
+   from the time, the screen, the day, the data already stored - then a
+   switch is the app asking a question it already knows the answer to.
+
+Either one alone is not enough. A preference nobody would change is
+clutter even if the app truly cannot guess it; a preference somebody would
+change is still clutter if the app can simply be right.
+
+**A setting nobody can reach is not a setting.** `enabledWidgets` stored
+which of the day view's widgets to render, on a registry that has held
+exactly one widget since v1.2, with no control anywhere that could change
+the list. It sat in types, validation, sync and every backup for three
+versions, and failed rule 1 absolutely: there was no default to change it
+from.
+
+**A nudge that can only fire while you are looking at the app is not a
+nudge.** Two lived under Nudges until v2.5 - one before a timed task, one
+every so many minutes during focus work - and both could only speak from a
+page already open in front of somebody. Real ones need a service worker and
+a push subscription, which is a piece of work of its own and sits in
+STATE's "Asked for, not yet built" until it is done.
+
+**One card, one switch.** The Monday goal card and the slow-day goal card
+had a switch each. They are the same card in two moments, and nobody has
+ever wanted one without the other: a person who does not want a goal
+brought forward does not want it brought forward on a Monday either. Two
+switches for one decision is a question asked twice.
+
+**What is never removed, whatever this rule says:** Backup, Sync, Sleep
+profiles, Categories, the week's template map. These are not preferences,
+they are the owner's data and the ways out of this app, and an app that
+cannot be left is worse than one with a setting too many.
+
+**Removing a setting means removing the code**, not hiding the switch: the
+field goes from `types.ts`, from `validate.ts`, from `syncEntities.ts`,
+from the backup, from DAILY.md and from the README. Migration is silent -
+the field is named once in `REMOVED_SETTINGS` in `storage.ts` and deleted
+on load, because settings normalise by spreading what was stored, so
+anything left unnamed would ride along and be written back out forever. An
+old backup still opens; validation is not tightened against a field this
+app used to write.

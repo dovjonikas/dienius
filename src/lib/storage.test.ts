@@ -406,65 +406,35 @@ test('a payload written before the if-then board existed has no ifThens key and 
   expect(loaded.ifThens).toEqual([])
 })
 
-test('loading a payload from before the if-then board existed leaves enabledWidgets untouched, with no phantom widget added', () => {
-  const legacy = JSON.stringify({
-    templates: [],
-    days: {},
-    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
-  })
-  localStorage.setItem(STORAGE_KEY, legacy)
-  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
+// `enabledWidgets` said which widgets the day view should render, on a
+// registry that has held exactly one widget since the if-then board left it
+// in v1.2, and there was never a control anywhere that could change the
+// list. v2.5 removed it - a setting nobody can reach is not a setting. Every
+// real install still has it in localStorage, in one of three shapes: the
+// list on its own, the list with the dead 'if-then' id still in it, or the
+// list after an earlier load stripped that id out. All three have to load,
+// and none of them may leave the key behind.
+test('every shape of the old widget list loads, and the key is gone afterwards', () => {
+  for (const settings of [
+    { theme: 'light', enabledWidgets: ['day-plan'] },
+    { theme: 'light', enabledWidgets: ['day-plan', 'if-then'] },
+    { theme: 'light', enabledWidgets: [] },
+  ]) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ templates: [], days: {}, settings }))
+    const loaded = loadData()
+    expect(loaded.settings).not.toHaveProperty('enabledWidgets')
+    expect(loaded.settings.theme.presetId).toBeTruthy()
+  }
 })
 
-// The if-then board briefly lived in the widget registry, under the id
-// 'if-then' - see docs/TIMELINE.md section 6 for why it moved to a single
-// surfaced rule inline on the day view instead. Every real install from
-// that window has 'if-then' sitting in its enabledWidgets, since there was
-// never a settings toggle to remove it by hand; loading must not leave
-// that dead id in place forever.
-test('a leftover if-then widget id from before the relocation is stripped out on load, migrated or not', () => {
-  const unmigrated = JSON.stringify({
-    templates: [],
-    days: {},
-    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then'] },
-  })
-  localStorage.setItem(STORAGE_KEY, unmigrated)
-  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
-
-  const alreadyMigrated = JSON.stringify({
-    templates: [],
-    days: {},
-    settings: { theme: 'light', enabledWidgets: ['day-plan', 'if-then'] },
-    ifThens: [],
-  })
-  localStorage.setItem(STORAGE_KEY, alreadyMigrated)
-  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
-})
-
-// Migration must run exactly once per payload, not on every load. The
-// ifThens key's presence is what marks a payload as already migrated - see
-// normalizeLoaded in storage.ts. Without this, a future settings toggle
-// that lets someone turn the if-then widget off would find it silently
-// back on the next time the app loads.
-test('a payload that has already been migrated and had the widget removed from enabledWidgets does not get it added back', () => {
-  const alreadyMigrated = JSON.stringify({
+test('importJson drops the widget list from a backup that still carries one', () => {
+  const old = JSON.stringify({
     templates: [],
     days: {},
     settings: { theme: 'light', enabledWidgets: ['day-plan'] },
     ifThens: [],
   })
-  localStorage.setItem(STORAGE_KEY, alreadyMigrated)
-  expect(loadData().settings.enabledWidgets).toEqual(['day-plan'])
-})
-
-test('importJson leaves enabledWidgets untouched for a backup that has already been migrated', () => {
-  const alreadyMigrated = JSON.stringify({
-    templates: [],
-    days: {},
-    settings: { theme: 'light', enabledWidgets: ['day-plan'] },
-    ifThens: [],
-  })
-  expect(importJson(alreadyMigrated).settings.enabledWidgets).toEqual(['day-plan'])
+  expect(importJson(old).settings).not.toHaveProperty('enabledWidgets')
 })
 
 test('validate rejects an if-then entry missing an id, or with a non-string trigger or action', () => {
@@ -553,7 +523,7 @@ test('validate rejects an if-then entry whose goal id is not a string', () => {
   expect(loadData().ifThens).toEqual([])
 })
 
-test('importJson backfills ifThens for a legacy backup file without adding a widget id for it', () => {
+test('importJson backfills ifThens for a legacy backup file', () => {
   const legacy = JSON.stringify({
     templates: [],
     days: {},
@@ -561,7 +531,6 @@ test('importJson backfills ifThens for a legacy backup file without adding a wid
   })
   const imported = importJson(legacy)
   expect(imported.ifThens).toEqual([])
-  expect(imported.settings.enabledWidgets).toEqual(['day-plan'])
 })
 
 test('a backup written before the backlog existed loads with an empty one', () => {

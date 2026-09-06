@@ -1,71 +1,118 @@
 import { expect, test } from 'vitest'
-import { daysWithJournal, hasJournal, journalMarkdown, mergeJournal } from './journal'
 import type { DayPlan } from './types'
+import { daysWithJournal, hasJournal, journalMarkdown, mergeOldJournal, searchJournal } from './journal'
 
-function day(date: string, journal?: DayPlan['journal']): DayPlan {
-  return journal ? { date, tasks: [], journal } : { date, tasks: [] }
+/**
+ * A journal, not a form.
+ *
+ * v2.3 asked three questions on a schedule: a line in the morning about
+ * what the day was for, and two on the evening close card. The owner's
+ * verdict on all of it was "fuck it, too much" - which is the honest
+ * outcome of a form that appears every evening with three empty boxes in
+ * it. See DECISIONS "A journal, not a form".
+ *
+ * What is left is a day and whatever somebody wanted to say on it. No
+ * questions, no fields, no count of the days with nothing on them.
+ */
+
+function day(date: string, journal?: string): DayPlan {
+  return { date, tasks: [], ...(journal === undefined ? {} : { journal }) }
 }
 
-/**
- * Three lines a day, none required, and a blank one is nothing rather than
- * an empty string: a day nobody wrote on carries no key, so it takes no
- * bytes and changes no sync entity.
- */
-test('a line is trimmed as it is kept, and a blank one is dropped rather than kept empty', () => {
-  expect(mergeJournal(undefined, { intent: '  Ship the pricing page  ' })).toEqual({ intent: 'Ship the pricing page' })
-  expect(mergeJournal({ intent: 'Ship it', real: 'It shipped' }, { real: '   ' })).toEqual({ intent: 'Ship it' })
+// --- what counts as written ------------------------------------------------
+
+test('a day with words has a journal, and a day with none has nothing', () => {
+  expect(hasJournal(day('2026-09-16', 'It rained all afternoon.'))).toBe(true)
+  expect(hasJournal(day('2026-09-16'))).toBe(false)
+  expect(hasJournal(undefined)).toBe(false)
 })
 
-test('a field the patch does not mention is left alone, and a cleared last field leaves nothing at all', () => {
-  expect(mergeJournal({ intent: 'Ship it', tomorrow: 'Rest' }, { real: 'A walk' })).toEqual({ intent: 'Ship it', real: 'A walk', tomorrow: 'Rest' })
-  expect(mergeJournal({ intent: 'Ship it' }, { intent: '' })).toBeUndefined()
-  expect(mergeJournal(undefined, {})).toBeUndefined()
+test('whitespace is not writing', () => {
+  expect(hasJournal(day('2026-09-16', '   \n  '))).toBe(false)
 })
 
-test('a day has a journal only when one of its lines says something', () => {
-  expect(hasJournal(day('2026-09-07'))).toBe(false)
-  expect(hasJournal(day('2026-09-07', {}))).toBe(false)
-  expect(hasJournal(day('2026-09-07', { tomorrow: 'Sleep' }))).toBe(true)
-  expect(daysWithJournal({ a: day('a', { intent: 'x' }), b: day('b') }, ['a', 'b', 'c'])).toEqual(['a'])
-})
-
-/**
- * The copy: a heading, one section per day that has something written,
- * each line as a list item, and nothing for the days that had none. It is
- * for pasting into another chat, so it has to read as a document on its
- * own and never as a record of what was skipped.
- */
-test('the markdown lists the days with something written, in order, and only the lines they have', () => {
+test('the days with something on them, in order, and nothing said about the rest', () => {
   const days = {
-    '2026-09-07': day('2026-09-07', { intent: 'Ship the pricing page', real: 'It shipped, late', tomorrow: 'Start with the walk' }),
-    '2026-09-08': day('2026-09-08'),
-    '2026-09-09': day('2026-09-09', { real: 'Dad called' }),
+    '2026-09-14': day('2026-09-14', 'Monday'),
+    '2026-09-15': day('2026-09-15'),
+    '2026-09-16': day('2026-09-16', 'Wednesday'),
   }
-  const text = journalMarkdown(days, ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10'], '7 - 13 September 2026')
+  expect(daysWithJournal(days, ['2026-09-14', '2026-09-15', '2026-09-16'])).toEqual(['2026-09-14', '2026-09-16'])
+})
+
+// --- the way out -----------------------------------------------------------
+
+test('a stretch of days copies as markdown, a heading per day that has words', () => {
+  const days = {
+    '2026-09-14': day('2026-09-14', 'Rained all day.\nWalked anyway.'),
+    '2026-09-15': day('2026-09-15'),
+    '2026-09-16': day('2026-09-16', 'Better.'),
+  }
+  const text = journalMarkdown(days, ['2026-09-14', '2026-09-15', '2026-09-16'], 'week of 14 September')
   expect(text).toBe(
     [
-      '# Journal, 7 - 13 September 2026',
+      '# Journal, week of 14 September',
       '',
-      '## Monday, September 7',
+      '## Monday, September 14',
       '',
-      '- **Today:** Ship the pricing page',
-      '- **What was real today:** It shipped, late',
-      '- **To myself, tomorrow:** Start with the walk',
+      'Rained all day.',
+      'Walked anyway.',
       '',
-      '## Wednesday, September 9',
+      '## Wednesday, September 16',
       '',
-      '- **What was real today:** Dad called',
+      'Better.',
       '',
     ].join('\n'),
   )
 })
 
-test('a stretch with nothing written is a heading and nothing under it', () => {
-  expect(journalMarkdown({}, ['2026-09-07'], '7 - 13 September 2026')).toBe('# Journal, 7 - 13 September 2026\n')
+test('a stretch with nothing written is a heading and nothing under it, never a list of blank days', () => {
+  const text = journalMarkdown({ '2026-09-15': day('2026-09-15') }, ['2026-09-15'], 'September')
+  expect(text).toBe('# Journal, September\n')
 })
 
-test('nothing in the copy counts, ranks or says what was skipped', () => {
-  const days = { '2026-09-07': day('2026-09-07', { intent: 'One line' }) }
-  const text = journalMarkdown(days, ['2026-09-07', '2026-09-08'], 'a week')
-  expect(text).not.toMatch(/skipped|missed|streak|\d+ of \d+|empty|nothing written/i)
+// --- finding something again -----------------------------------------------
+
+test('search finds the days a word is on, newest first', () => {
+  const days = {
+    '2026-09-14': day('2026-09-14', 'Ada called about the dentist'),
+    '2026-09-15': day('2026-09-15', 'Nothing much'),
+    '2026-09-16': day('2026-09-16', 'The dentist again'),
+  }
+  expect(searchJournal(days, 'dentist')).toEqual(['2026-09-16', '2026-09-14'])
+})
+
+test('search does not care about case, and an empty search finds nothing rather than everything', () => {
+  const days = { '2026-09-14': day('2026-09-14', 'Ada called') }
+  expect(searchJournal(days, 'ADA')).toEqual(['2026-09-14'])
+  expect(searchJournal(days, '   ')).toEqual([])
+})
+
+// --- what v2.3 left behind -------------------------------------------------
+
+/**
+ * Nothing anybody wrote is lost. The three fields become one entry, in the
+ * order the day said them, each on its own line - so a day that had all
+ * three reads as a short paragraph and a day that had one reads as that
+ * line. No labels, no questions: the words are what was kept, and the
+ * questions they were answers to were the thing being removed.
+ */
+test('the three old lines become one entry, in the order the day said them', () => {
+  expect(
+    mergeOldJournal({ intent: 'Ship the pricing page', real: 'It shipped', tomorrow: 'Start earlier' }),
+  ).toBe('Ship the pricing page\nIt shipped\nStart earlier')
+})
+
+test('a day that only answered one keeps that one, alone', () => {
+  expect(mergeOldJournal({ real: 'It shipped' })).toBe('It shipped')
+})
+
+test('an empty old journal becomes nothing rather than an empty string', () => {
+  expect(mergeOldJournal({})).toBeUndefined()
+  expect(mergeOldJournal(undefined)).toBeUndefined()
+  expect(mergeOldJournal({ intent: '   ' })).toBeUndefined()
+})
+
+test('something already written as free text is left exactly as it is', () => {
+  expect(mergeOldJournal('It rained.\nWalked anyway.')).toBe('It rained.\nWalked anyway.')
 })

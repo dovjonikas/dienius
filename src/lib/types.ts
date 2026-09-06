@@ -523,21 +523,7 @@ export interface DayPlan extends Timestamped {
    * every plan written before this field existed is in it.
    */
   away?: string
-  /**
-   * One line somebody wrote about the day when they closed it.
-   *
-   * The only thing in this app that records how a day *felt* rather than what
-   * was on it, and it is asked for exactly once, optionally, at the end - see
-   * `eveningClose.ts`. Left absent is the ordinary state and is never asked
-   * about twice.
-   *
-   * It is deliberately not a general-purpose day note. There is no field for
-   * it anywhere else, nothing prompts for it during the day, and nothing
-   * measures whether days have one. It exists so that a month of squares can
-   * occasionally say what a Tuesday was, which is a thing a plan cannot.
-   */
-  bestMoment?: string
-  /**
+    /**
    * Series this day has been told not to generate - the ids of repeat
    * sources whose instance here was deleted "just this day".
    *
@@ -569,12 +555,21 @@ export interface DayPlan extends Timestamped {
    */
   replannedOn?: string
   /**
-   * What the person wrote on this day - see `DayJournal`. On the day so
-   * it travels with it: sync, backup and the snapshots carry it the way
-   * they carry the tasks, and nothing has to know it exists. Absent means
-   * nothing was written, which is most days.
+   * Whatever was written on this day, as one piece of free text.
+   *
+   * It was three named lines until v2.5 - a morning intent and two answers
+   * on the evening close card - and the owner's verdict on all of it was
+   * that it was too much. A form that appears every evening with three
+   * empty boxes is a form somebody starts skipping, and then starts
+   * avoiding the card that carries it. See lib/journal.ts and DECISIONS
+   * "A journal, not a form"; `mergeOldJournal` folds an old one into this
+   * on load, so nothing anybody wrote is lost.
+   *
+   * On the day so it travels with it: sync, the backup and the snapshots
+   * carry it the way they carry the tasks. Absent means nothing was
+   * written, which is most days and is not a state this app remarks on.
    */
-  journal?: DayJournal
+  journal?: string
   /**
    * The day was declared a low day - see widgets/day-plan/lowDay.ts. Its key
    * tasks were cut to 40% of their length and the rest sent to tomorrow,
@@ -628,14 +623,6 @@ export interface SleepWindow {
   end: string
 }
 
-export interface ReminderSettings {
-  enabled: boolean
-  /** How often, in minutes. Kept as a plain number so the control can offer a few sensible ones. */
-  everyMinutes: number
-  /** What it says. Editable, because the useful reminder is a different sentence for everybody. */
-  text: string
-}
-
 /**
  * One named sleep schedule. There is always at least one; the first in the
  * list is the default and the only one most people will ever have.
@@ -659,7 +646,6 @@ export interface SleepProfile {
 
 export interface Settings {
   theme: ThemeState
-  enabledWidgets: string[]
   /**
    * When the owner is normally asleep, on a full, shift or rest day - see
    * `docs/DECISIONS.md`. Set once in Settings, never asked per day: the
@@ -712,13 +698,6 @@ export interface Settings {
    * things sit is a decision about this device, not about which room you are
    * in, so it must survive switching themes.
    */
-  /**
-   * The nudge that fires while a Focus task is running - see
-   * `IntervalReminder`. Off by default and off for everybody who never turns
-   * it on: an app that interrupts you unasked is an app people mute, and this
-   * one only ever speaks during work somebody already told it was work.
-   */
-  reminder: ReminderSettings
   density: 'comfortable' | 'compact'
   /**
    * A multiplier on the whole type scale, not a font-size for one element.
@@ -739,12 +718,6 @@ export interface Settings {
    * wins: see `ensureDay`.
    */
   weekdayTemplates: WeekdayMap
-  /**
-   * The nudge that fires shortly before a task with a time - see
-   * `TaskReminderSettings`. Off by default, like every other thing in this
-   * app that is allowed to interrupt.
-   */
-  taskReminder: TaskReminderSettings
   /** When a goal is allowed to come forward on its own - see `NorthSettings`. */
   north: NorthSettings
   /**
@@ -803,12 +776,6 @@ export interface CalendarSubscription {
  * A missing key means that weekday starts empty.
  */
 export type WeekdayMap = Partial<Record<number, string>>
-
-export interface TaskReminderSettings {
-  enabled: boolean
-  /** How many minutes before a task's own time the nudge fires. */
-  minutesBefore: number
-}
 
 /**
  * An implementation intention: a trigger decided on in advance, paired with
@@ -1047,8 +1014,7 @@ export interface Picture extends Timestamped {
 export interface NorthSettings {
   /** A quiet card after a day that got away - never a scolding, never a number. */
   afterASlowDay: boolean
-  /** The same card, softer, on the first open of a Monday. */
-  onMonday: boolean
+  /** The same card, softer, on the first open of a Monday. */
 }
 
 /**
@@ -1064,14 +1030,6 @@ export interface EveningCloseSettings {
   enabled: boolean
   /** "HH:MM". The other way in is finishing the last task, which needs no clock. */
   at: string
-  /**
-   * Whether the card asks for the best moment of the day.
-   *
-   * Its own switch because it is the one thing on the card that asks
-   * anything at all, and somebody who does not want to be asked should be
-   * able to keep the ending without the question.
-   */
-  askBestMoment: boolean
 }
 
 /**

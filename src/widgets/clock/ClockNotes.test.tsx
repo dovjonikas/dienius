@@ -20,13 +20,13 @@ beforeEach(() => {
 })
 
 function open(onOpenNotes = () => {}) {
-  render(<ClockPopover onClose={() => {}} onOpenNotes={onOpenNotes} tab="notes" />)
+  render(<ClockPopover onClose={() => {}} onOpenNotes={onOpenNotes} onOpenJournal={() => {}} tab="notes" />)
 }
 
 test('one line and Enter keeps the note and closes the panel', async () => {
   const user = userEvent.setup()
   const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} tab="notes" />)
+  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} onOpenJournal={() => {}} tab="notes" />)
 
   const box = screen.getByRole('textbox', { name: 'A quick note' })
   await user.type(box, 'Ada: her sister is called Nel{Enter}')
@@ -38,7 +38,7 @@ test('one line and Enter keeps the note and closes the panel', async () => {
 test('Enter on an empty line does nothing, so a stray keystroke leaves no note', async () => {
   const user = userEvent.setup()
   const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} tab="notes" />)
+  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} onOpenJournal={() => {}} tab="notes" />)
 
   await user.type(screen.getByRole('textbox', { name: 'A quick note' }), '   {Enter}')
   expect(getData().scratch).toEqual([])
@@ -70,7 +70,7 @@ test('Open notes hands over to the full stream, and closes the panel behind it',
   const user = userEvent.setup()
   const onOpenNotes = vi.fn()
   const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={onOpenNotes} tab="notes" />)
+  render(<ClockPopover onClose={onClose} onOpenNotes={onOpenNotes} onOpenJournal={() => {}} tab="notes" />)
 
   await user.click(screen.getByRole('button', { name: 'Open notes' }))
   expect(onOpenNotes).toHaveBeenCalled()
@@ -78,6 +78,6 @@ test('Open notes hands over to the full stream, and closes the panel behind it',
 })
 
 test('the panel still opens on the timer when nothing asked for notes', () => {
-  render(<ClockPopover onClose={() => {}} onOpenNotes={() => {}} />)
+  render(<ClockPopover onClose={() => {}} onOpenNotes={() => {}} onOpenJournal={() => {}} />)
   expect(screen.getByRole('button', { name: 'Timer' })).toHaveAttribute('aria-pressed', 'true')
 })

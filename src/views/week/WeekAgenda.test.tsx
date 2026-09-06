@@ -5,7 +5,7 @@ import { WeekAgenda } from './WeekAgenda'
 import { SomedayStrip } from './SomedayStrip'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
-import { todayKey } from '../../lib/dates'
+import { addDays, todayKey } from '../../lib/dates'
 
 const DATES = ['2026-09-07', '2026-09-08', '2026-09-09']
 
@@ -73,14 +73,22 @@ test('the date opens the day, and a row opens the task', async () => {
   expect(onOpenTask).toHaveBeenCalledWith('2026-09-07', 'a')
 })
 
+/**
+ * The window without today is built from today rather than written down: the
+ * fixture dates are a real week in September 2026, and on the three mornings
+ * that week actually arrives, a hardcoded "these are not today" is wrong.
+ * This failed for real on 7 September 2026, which is the only kind of proof
+ * that matters for a date in a test.
+ */
 test('today is the one day marked, and only when it is in the window', () => {
   seed()
-  const { container, unmount } = render(<WeekAgenda dates={DATES} onOpenDay={() => {}} onOpenTask={() => {}} />)
+  const notToday = [addDays(todayKey(), 30), addDays(todayKey(), 31), addDays(todayKey(), 32)]
+  const { container, unmount } = render(<WeekAgenda dates={notToday} onOpenDay={() => {}} onOpenTask={() => {}} />)
   expect(container.querySelectorAll('.agenda-day.is-today')).toHaveLength(0)
   unmount()
 
   const { container: withToday } = render(
-    <WeekAgenda dates={[todayKey(), ...DATES]} onOpenDay={() => {}} onOpenTask={() => {}} />,
+    <WeekAgenda dates={[todayKey(), ...notToday]} onOpenDay={() => {}} onOpenTask={() => {}} />,
   )
   expect(withToday.querySelectorAll('.agenda-day.is-today')).toHaveLength(1)
 })
@@ -177,18 +185,17 @@ test('a press that goes nowhere plans nothing', async () => {
 // --- the journal under a day ---------------------------------------------------
 
 /**
- * What was written on a day, under what was on it: the lines it has, with
- * their labels, and nothing at all for a day with none - not an empty
- * block, not a prompt.
+ * What was written on a day, under what was on it, as it was written - and
+ * nothing at all for a day with none. Not an empty block, not a prompt, no
+ * labels: since v2.5 there are no fields to label. See DECISIONS "A
+ * journal, not a form".
  */
-test('a day\'s journal lines read under its tasks, and a day without any shows nothing for it', () => {
+test("a day's writing reads under its tasks, and a day without any shows nothing for it", () => {
   seed()
-  actions.setJournal('2026-09-07', { intent: 'Ship the pricing page', tomorrow: 'Start with the walk' })
+  actions.setJournal('2026-09-07', 'Ship the pricing page\nStart with the walk')
   render(<WeekAgenda dates={DATES} onOpenDay={() => {}} onOpenTask={() => {}} />)
 
-  expect(screen.getByText('Ship the pricing page')).toBeInTheDocument()
-  expect(screen.getByText('Start with the walk')).toBeInTheDocument()
-  expect(screen.getByText('To myself, tomorrow')).toBeInTheDocument()
-  expect(screen.queryByText('What was real today')).toBeNull()
+  expect(screen.getByText(/Ship the pricing page/)).toBeInTheDocument()
+  expect(screen.getByText(/Start with the walk/)).toBeInTheDocument()
   expect(document.querySelectorAll('.agenda-journal')).toHaveLength(1)
 })

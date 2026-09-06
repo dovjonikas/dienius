@@ -5,7 +5,6 @@ import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
-import { JournalLine } from './JournalLine'
 import { Explain } from '../../views/Explain'
 import type { ReplanMode } from '../../lib/replanState'
 
@@ -294,9 +293,7 @@ export function DayHeader({
           opens. */}
       <NorthLine date={date} onOpenNorth={onOpenNorth} />
 
-      {/* The morning line, under the one the app wrote: what this day is for,
-          in the person's own words, or nothing. See JournalLine. */}
-      <JournalLine date={date} />
+      
 
       {/* The "switch fully" request - docs/LAYOUT-WIDE.md section 3.2. A width
           redistribution, not a navigation event: nothing about the underlying

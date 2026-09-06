@@ -8,8 +8,6 @@ import { UpdateNotice } from './UpdateNotice'
 import { UndoToast } from './widgets/UndoToast'
 import { ClockPopover, type ClockTab } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
-import { IntervalReminder } from './widgets/clock/IntervalReminder'
-import { TaskReminder } from './widgets/clock/TaskReminder'
 import { FocusBar } from './widgets/clock/FocusBar'
 import { FocusView } from './widgets/day-plan/FocusView'
 import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
@@ -20,6 +18,7 @@ import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
 import { leaveTour } from './lib/tourExit'
 import { Scratch } from './views/scratch/Scratch'
+import { JournalOverlay } from './views/JournalView'
 import { useIsWide } from './lib/viewport'
 import { requestReplan, useReplanRequest, type ReplanMode } from './lib/replanState'
 import { ReplanSheet } from './widgets/day-plan/ReplanSheet'
@@ -49,6 +48,10 @@ export function App() {
   const [view, setView] = useState<View>('day')
   const [clockOpen, setClockOpen] = useState(false)
   const [clockTab, setClockTab] = useState<ClockTab | undefined>(undefined)
+  // The whole journal, as an overlay rather than a seventh tab in the rail:
+  // it is a place to read back rather than a place to be, the same shape as
+  // Scratch. See views/JournalView.
+  const [journalOpen, setJournalOpen] = useState(false)
   const [focusExpanded, setFocusExpanded] = useState(false)
   const tools = useClockTools()
   const focusTask = tools.focus
@@ -216,6 +219,12 @@ export function App() {
           // Notes tab, which is the short way in. S opens the whole stream,
           // which is the long one. N was taken by quick-add years ago.
           setClockTab('notes')
+          setClockOpen(true)
+          break
+        case 'j':
+          // Today's journal, with the cursor already in it. The same door as
+          // the clock's Journal tab, because there is only one.
+          setClockTab('journal')
           setClockOpen(true)
           break
         case 't':
@@ -425,6 +434,7 @@ export function App() {
                 setClockTab(undefined)
               }}
               onOpenNotes={() => setScratchOpen(true)}
+              onOpenJournal={() => setJournalOpen(true)}
               tab={clockTab}
             />
           )}
@@ -440,7 +450,7 @@ export function App() {
       <FocusBar onExpand={() => setFocusExpanded(true)} />
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
-          WIDGETS.filter(w => data.settings.enabledWidgets.includes(w.id)).map(w => (
+          WIDGETS.map(w => (
             <w.Component
               key={w.id}
               date={selectedDate}
@@ -464,7 +474,7 @@ export function App() {
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}
         {view === 'settings' && (
-          <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} onOpenNorth={() => setView('north')} />
+          <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} />
         )}
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by
@@ -507,11 +517,6 @@ export function App() {
       )}
 
       <FloatingClock />
-      <IntervalReminder date={selectedDate} />
-      {/* Both at the root, outside <main>, so neither is torn down by moving
-          between tabs - a reminder that stops when you open Settings is not
-          a reminder. */}
-      <TaskReminder date={selectedDate} />
       {/* One undo offer, app-wide - see lib/undo.ts. At the root because
           what it undoes could have happened on any tab. */}
       <UndoToast />
@@ -528,6 +533,7 @@ export function App() {
           screen, and the rail put a pen in the same corner of the same bar
           as everything else - one control, one place, both platforms. */}
       <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} onOpenTask={openTask} />
+      {journalOpen && <JournalOverlay onClose={() => setJournalOpen(false)} />}
     </div>
   )
 }

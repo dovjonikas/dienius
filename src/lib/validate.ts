@@ -297,7 +297,11 @@ const DAY_PLAN = record({
   repeatSkips: optional(listOf(string)),
   autoApplied: optional(boolean),
   replannedOn: optional(string),
-  journal: optional(DAY_JOURNAL),
+  // Free text since v2.5. A three-field journal from an older backup still
+  // validates, because `normalizeLoaded` folds it into one entry on the way
+  // in - see `mergeOldJournal`. Refusing the old shape would mean a v2.3
+  // backup failing to restore, which is the one day a backup has to work.
+  journal: optional(x => typeof x === 'string' || DAY_JOURNAL(x)),
   lowDay: optional(boolean),
   tasks: listOf(TASK),
 })
@@ -421,19 +425,12 @@ const SLEEP_PROFILE = record({ id: text(1, Number.POSITIVE_INFINITY), name: text
 const sleepProfiles: Check = x =>
   listOf(SLEEP_PROFILE)(x) && (x as SleepProfile[]).length > 0 && new Set((x as SleepProfile[]).map(p => p.id)).size === (x as SleepProfile[]).length
 
-// The interval is bounded on both ends rather than merely "a number": a
-// reminder every zero minutes is a loop, and one every three days is not a
-// reminder. The text is capped for the reason every free string here is.
-const REMINDER = record({ enabled: boolean, everyMinutes: wholeNumber(1, 240), text: text(0, 120) })
-
-const TASK_REMINDER = record({ enabled: boolean, minutesBefore: wholeNumber(0, 120) })
-
-const NORTH = record({ afterASlowDay: boolean, onMonday: boolean })
+const NORTH = record({ afterASlowDay: boolean })
 
 // The time is checked, not merely typed: "at": "banana" would make the
 // comparison in shouldClose silently never true, which is a feature quietly
 // switching itself off rather than a file being refused.
-const EVENING_CLOSE = record({ enabled: boolean, at: clockTime, askBestMoment: boolean })
+const EVENING_CLOSE = record({ enabled: boolean, at: clockTime })
 
 // Keys 0-6, values template ids. A weekday outside the week, or a non-string
 // id, would be a map the app silently ignores forever, so it is refused at
@@ -458,25 +455,28 @@ export function isStoredTheme(x: unknown): x is StoredTheme {
   return isLegacyTheme(x) || THEME_STATE(x)
 }
 
-// Every field after enabledWidgets is checked only when present: a payload
-// written before the field existed has no such key at all, and that is not
+// Every field after theme is checked only when present: a payload written
+// before the field existed has no such key at all, and that is not
 // corruption, it is every real backup on disk before the feature shipped.
 // normalizeLoaded backfills them once validation passes. A field that is
 // present but malformed fails the whole payload, exactly like a bad
 // Template.color does.
+//
+// A field this app has removed is not listed at all, which means an old
+// payload carrying it passes and normalizeLoaded drops it - see
+// REMOVED_SETTINGS. Refusing the payload instead would turn every backup
+// written before v2.5 into a file that no longer opens, which is the one
+// thing a local-first app's backups may never do.
 const SETTINGS = record({
   theme: isStoredTheme,
-  enabledWidgets: listOf(string),
   timelineExpanded: optional(boolean),
   dayLayoutFocus: optional(oneOf(DAY_LAYOUT_FOCUSES)),
   density: optional(oneOf(['comfortable', 'compact'])),
   textScale: optional(oneOf(['s', 'm', 'l'])),
-  reminder: optional(REMINDER),
   sleepWindow: optional(SLEEP_WINDOW),
   nightSleepWindow: optional(SLEEP_WINDOW),
   sleepProfiles: optional(sleepProfiles),
   weekdayTemplates: optional(WEEKDAY_MAP),
-  taskReminder: optional(TASK_REMINDER),
   north: optional(NORTH),
   eveningClose: optional(EVENING_CLOSE),
 })
@@ -490,9 +490,8 @@ const SETTINGS = record({
 export interface StoredAppData {
   templates: Template[]
   days: Record<string, DayPlan>
-  settings: Omit<Partial<Settings>, 'theme' | 'enabledWidgets'> & {
+  settings: Omit<Partial<Settings>, 'theme'> & {
     theme: StoredTheme
-    enabledWidgets: string[]
     sleepWindow?: SleepWindow
     nightSleepWindow?: SleepWindow
   }

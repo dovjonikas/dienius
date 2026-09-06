@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { EveningClose } from './EveningClose'
 import { actions, getData } from '../../lib/store'
@@ -67,37 +67,6 @@ test('the card says nothing anywhere about what was not done', () => {
   expect(card.textContent).not.toMatch(/missed|fail|behind|only|should|%/i)
 })
 
-test('closing it puts it away for the day, and the best moment is kept with the day', async () => {
-  const user = userEvent.setup()
-  finishedDay()
-  const { unmount } = render(<EveningClose date={TODAY} />)
-
-  await user.type(screen.getByRole('textbox', { name: 'Best moment today?' }), 'walked home the long way')
-  await user.click(screen.getByRole('button', { name: 'Close the day' }))
-
-  expect(screen.queryByRole('complementary', { name: 'Closing the day' })).toBeNull()
-  expect(getData().days[TODAY].bestMoment).toBe('walked home the long way')
-
-  // And it stays away: a fresh mount, as after switching tabs and back.
-  unmount()
-  const { container } = render(<EveningClose date={TODAY} />)
-  expect(container).toBeEmptyDOMElement()
-})
-
-test('a day that already carries a line shows it rather than asking again', () => {
-  finishedDay()
-  actions.setBestMoment(TODAY, 'the coffee was good')
-  render(<EveningClose date={TODAY} />)
-  expect(screen.getByRole('textbox', { name: 'Best moment today?' })).toHaveValue('the coffee was good')
-})
-
-test('the question can be switched off without switching off the ending', () => {
-  finishedDay()
-  actions.setEveningClose({ ...DEFAULT_EVENING_CLOSE, askBestMoment: false })
-  render(<EveningClose date={TODAY} />)
-  expect(screen.getByRole('complementary', { name: 'Closing the day' })).toBeInTheDocument()
-  expect(screen.queryByRole('textbox', { name: 'Best moment today?' })).toBeNull()
-})
 
 /**
  * Offered, never urged. The card does not say that leaving three things is a
@@ -132,72 +101,38 @@ test('a goal is repeated back at the end, where the morning card would say why',
   )
 })
 
-test('a line already there can be cleared, not only replaced', async () => {
-  const user = userEvent.setup()
-  finishedDay()
-  actions.setBestMoment(TODAY, 'the coffee was good')
-  render(<EveningClose date={TODAY} />)
-
-  // With one piece of state for both "untouched" and "empty", clearing the
-  // field fell straight back to showing the stored line again, so a line
-  // typed and thought better of could not be removed.
-  await user.clear(screen.getByRole('textbox', { name: 'Best moment today?' }))
-  expect(screen.getByRole('textbox', { name: 'Best moment today?' })).toHaveValue('')
-  await user.click(screen.getByRole('button', { name: 'Close the day' }))
-  expect(getData().days[TODAY].bestMoment).toBeUndefined()
-})
-
-test('closing without touching the field leaves whatever was already there', async () => {
-  const user = userEvent.setup()
-  finishedDay()
-  actions.setBestMoment(TODAY, 'the coffee was good')
-  render(<EveningClose date={TODAY} />)
-  await user.click(screen.getByRole('button', { name: 'Close the day' }))
-  expect(getData().days[TODAY].bestMoment).toBe('the coffee was good')
-})
-
-// --- the two evening questions --------------------------------------------------
-
 /**
- * Two plain questions, both optional, kept on the day - see lib/journal.ts.
- * A blank answer is nothing rather than an empty string, an answer typed
- * and left is kept whether or not the day gets closed tonight, and no word
- * on the card counts, streaks or notices a day that had nothing to say.
+ * Nothing is asked here any more.
+ *
+ * There were three questions on this card until v2.5 - the best moment,
+ * what was real today, what to tell yourself tomorrow - and the owner
+ * called the lot of it too much. A card that appears every evening with
+ * three empty boxes is a card somebody starts closing without reading, and
+ * then starts dreading. Writing has its own place now and no schedule -
+ * see widgets/clock/JournalPanel and DECISIONS "A journal, not a form".
+ *
+ * What is left is the mechanics the card was always for, which is what
+ * these last two hold.
  */
-test('the two questions are kept with the day on Close, and a blank one takes no space', async () => {
-  const user = userEvent.setup()
+test('the card asks nothing at all: no fields, no questions, no prompts', () => {
   finishedDay()
   render(<EveningClose date={TODAY} />)
 
-  await user.type(screen.getByRole('textbox', { name: 'What was real today?' }), 'Dad called')
-  await user.click(screen.getByRole('button', { name: 'Close the day' }))
-  expect(getData().days[TODAY].journal).toEqual({ real: 'Dad called' })
-})
-
-test('an answer typed and left is kept even before the day is closed', async () => {
-  const user = userEvent.setup()
-  finishedDay()
-  render(<EveningClose date={TODAY} />)
-
-  await user.type(screen.getByRole('textbox', { name: 'What do I want to tell myself tomorrow?' }), 'Start with the walk')
-  await user.tab()
-  expect(getData().days[TODAY].journal).toEqual({ tomorrow: 'Start with the walk' })
-  expect(screen.getByRole('complementary', { name: 'Closing the day' })).toBeInTheDocument()
-})
-
-test('closing without a word writes no journal, and the card says nothing about that', async () => {
-  const user = userEvent.setup()
-  finishedDay()
-  render(<EveningClose date={TODAY} />)
   const card = screen.getByRole('complementary', { name: 'Closing the day' })
-  expect(card.textContent).not.toMatch(/streak|skipped|required|\*/i)
-  await user.click(screen.getByRole('button', { name: 'Close the day' }))
-  expect('journal' in getData().days[TODAY]).toBe(false)
+  expect(within(card).queryAllByRole('textbox')).toEqual([])
+  expect(card.textContent).not.toMatch(/[?]/)
 })
 
-test('an answer already given is shown as the value rather than asked again', () => {
+test('closing it puts it away for the day, and it stays away', async () => {
+  const user = userEvent.setup()
   finishedDay()
-  actions.setJournal(TODAY, { real: 'It shipped' })
-  render(<EveningClose date={TODAY} />)
-  expect(screen.getByRole('textbox', { name: 'What was real today?' })).toHaveValue('It shipped')
+  const { unmount } = render(<EveningClose date={TODAY} />)
+
+  await user.click(screen.getByRole('button', { name: 'Close the day' }))
+  expect(screen.queryByRole('complementary', { name: 'Closing the day' })).toBeNull()
+
+  // And it stays away: a fresh mount, as after switching tabs and back.
+  unmount()
+  const { container } = render(<EveningClose date={TODAY} />)
+  expect(container).toBeEmptyDOMElement()
 })

@@ -438,29 +438,37 @@ so the meal plan screenshot is one press from the task that came out of it.
 
 ---
 
-## The evening questions
+## The journal
 
-A journal that never counts. Three lines a day, none of them required, and
-a day with none is not a day the app notices.
+A day, and whatever you wanted to say on it. Nothing is asked.
 
-- **Morning.** Under the North line, one field: **Today**. One line about
-  what this day is for, in your own words. It saves when you leave the
-  field, or on Enter; Escape puts the saved line back.
-- **Evening.** The closing card asks two questions under the best moment:
-  **What was real today?** and **What do I want to tell myself tomorrow?**
-  Plain fields, no length, no switch. An answer typed and left is kept even
-  if you never press Close the day.
+Press `J`, or the clock in the top right and then **Journal**. There is a
+date, an arrow either side of it, and one box. Write as much or as little as
+you like. It saves as you type; there is no Save button.
 
-Nothing streaks, nothing counts the days you wrote, nothing shows the days
-you did not. Skipping costs nothing and is shown nowhere.
+There were three questions until v2.5 - one in the morning and two on the
+closing card - and they are gone, along with the best moment beside them.
+Anything you wrote into any of them is still there, joined into that day's
+entry. See DECISIONS "A journal, not a form" for why.
 
-The lines live on the day, so sync, the backup and the snapshots carry them
-with everything else. To read them: **Calendar → Week → Agenda** shows each
-day's lines under its tasks. To take them somewhere else: **Copy week
-journal** under the week, or **Copy month journal** in Review, puts the
-stretch on the clipboard as markdown - the date, the morning line, the two
-answers, only for the days that have any - ready to paste into another
-chat.
+Nothing counts. No streak, no run of days, no mark for a day with nothing on
+it, nothing anywhere that says you missed one. Most days have nothing on
+them.
+
+**Open full** gives you the whole thing: the month on the left with a quiet
+dot on the days that have something, that day's words on the right, and a
+search box that looks through everything you have written. **Copy this
+month** puts the month on the clipboard as markdown, days with nothing
+skipped, ready to paste into a conversation. That is the one you will use.
+
+**Notes and the journal are different boxes on purpose.** A note is a
+thought caught on the way past - short, and it turns into a task. A journal
+entry is a day - dated, kept, and it turns into nothing. Notes is for doing;
+the journal is for remembering.
+
+The writing lives on the day, so sync, the backup and the snapshots carry it
+with everything else, and **Calendar → Week → Agenda** shows each day's
+words under its tasks.
 
 ---
 

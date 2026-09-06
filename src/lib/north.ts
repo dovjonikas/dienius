@@ -228,11 +228,14 @@ export function northPrompt(data: AppData, today: string, dismissedOn: string | 
   const goal = goalForDay(data.goals, today)
   if (!goal) return undefined
 
-  const { afterASlowDay, onMonday } = data.settings.north
+  // One switch, not two. Monday's card and the slow-day card are the same
+  // card in two moments, and nobody has ever wanted one without the other -
+  // a person who does not want a goal brought forward does not want it
+  // brought forward on a Monday either. See CONVENTIONS section 21.
+  if (!data.settings.north.afterASlowDay) return undefined
 
-  if (onMonday && weekdayOf(today) === 1) return { kind: 'monday', goal }
+  if (weekdayOf(today) === 1) return { kind: 'monday', goal }
 
-  if (!afterASlowDay) return undefined
   const yesterday = data.days[addDays(today, -1)]
   if (wasSlowDay(yesterday) || hasStuckTask(data.days[today]) || hasStuckTask(yesterday)) {
     return { kind: 'slack', goal }

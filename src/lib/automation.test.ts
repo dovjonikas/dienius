@@ -203,14 +203,8 @@ test('a mapped day gets its template and its repeats together', () => {
   expect(titles(THU).sort()).toEqual(['Medication', 'Working day block'])
 })
 
-// --- the task reminder setting -------------------------------------------
-
-test('the before-a-task nudge is off on a fresh install, at five minutes', () => {
-  expect(getData().settings.taskReminder).toEqual({ enabled: false, minutesBefore: 5 })
-})
-
-test('turning it on and changing its lead time touches nothing else', () => {
-  actions.setTaskReminder({ enabled: true, minutesBefore: 15 })
-  expect(getData().settings.taskReminder).toEqual({ enabled: true, minutesBefore: 15 })
-  expect(getData().settings.reminder.enabled).toBe(false)
-})
+// The two nudges that used to be tested here - one before a timed task, one
+// every so many minutes during focus work - were removed in v2.5. Neither
+// earned its place: the app knows when a timed task is coming and when focus
+// work is running, so neither needed asking about. See CONVENTIONS
+// section 21 and DECISIONS "A setting has to earn its place".

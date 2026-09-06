@@ -622,7 +622,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
     settings: {
       ...defaultData().settings,
       theme: { presetId: 'midnight', overrides: { midnight: { accent: '#e0553b' } }, mode: 'light' },
-      enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'],
+      textScale: 'l',
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
@@ -631,7 +631,7 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
   expect(getData().settings.theme.mode).toBe('dark')
   expect(getData().settings.theme.presetId).toBe('midnight')
   expect(getData().settings.theme.overrides).toEqual({ midnight: { accent: '#e0553b' } })
-  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  expect(getData().settings.textScale).toBe('l')
   actions.setTheme('system')
   expect(getData().settings.theme.mode).toBe('system')
 })
@@ -639,12 +639,12 @@ test('setTheme updates the mode and leaves the rest of settings, and the rest of
 test('setTimelineExpanded flips whether the day view timeline grid is shown, leaving the rest of settings untouched', () => {
   actions.resetForTests({
     ...defaultData(),
-    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'] },
+    settings: { ...defaultData().settings, textScale: 'l' },
   })
   expect(getData().settings.timelineExpanded).toBe(false)
   actions.setTimelineExpanded(true)
   expect(getData().settings.timelineExpanded).toBe(true)
-  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  expect(getData().settings.textScale).toBe('l')
   actions.setTimelineExpanded(false)
   expect(getData().settings.timelineExpanded).toBe(false)
 })
@@ -656,12 +656,12 @@ test('setTimelineExpanded flips whether the day view timeline grid is shown, lea
 test('setDayLayoutFocus changes only dayLayoutFocus, leaving the rest of settings untouched', () => {
   actions.resetForTests({
     ...defaultData(),
-    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then', 'a-future-widget'], timelineExpanded: true },
+    settings: { ...defaultData().settings, textScale: 'l', timelineExpanded: true },
   })
   expect(getData().settings.dayLayoutFocus).toBe('both')
   actions.setDayLayoutFocus('calendar')
   expect(getData().settings.dayLayoutFocus).toBe('calendar')
-  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then', 'a-future-widget'])
+  expect(getData().settings.textScale).toBe('l')
   expect(getData().settings.timelineExpanded).toBe(true)
   actions.setDayLayoutFocus('tasks')
   expect(getData().settings.dayLayoutFocus).toBe('tasks')
@@ -676,12 +676,12 @@ test('setDayLayoutFocus changes only dayLayoutFocus, leaving the rest of setting
 test('setSleepProfileWindow changes one schedule and nothing else in settings', () => {
   actions.resetForTests({
     ...defaultData(),
-    settings: { ...defaultData().settings, enabledWidgets: ['day-plan', 'if-then'], timelineExpanded: true },
+    settings: { ...defaultData().settings, textScale: 'l', timelineExpanded: true },
   })
   expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '23:00', end: '07:00' })
   actions.setSleepProfileWindow('default', { start: '22:30', end: '06:15' })
   expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '22:30', end: '06:15' })
-  expect(getData().settings.enabledWidgets).toEqual(['day-plan', 'if-then'])
+  expect(getData().settings.textScale).toBe('l')
   expect(getData().settings.timelineExpanded).toBe(true)
 })
 
@@ -733,7 +733,6 @@ test('setThemeOverride writes one token under the current preset id without dist
     settings: {
       ...defaultData().settings,
       theme: { presetId: 'midnight', overrides: { dark: { accent: '#111111' } }, mode: 'dark' },
-      enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
@@ -757,7 +756,6 @@ test('resetThemeOverrides clears only the named preset\'s patch', () => {
         overrides: { dark: { accent: '#111111' }, midnight: { accent: '#e0553b' } },
         mode: 'dark',
       },
-      enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
@@ -776,7 +774,6 @@ test('unsetThemeOverride removes one token, leaving the preset\'s other override
         overrides: { dark: { accent: '#111111' }, midnight: { accent: '#e0553b', mark: '#ffcc00' } },
         mode: 'dark',
       },
-      enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },
@@ -794,7 +791,6 @@ test('unsetThemeOverride drops the preset\'s own entry once its last token is re
     settings: {
       ...defaultData().settings,
       theme: { presetId: 'midnight', overrides: { midnight: { accent: '#e0553b' } }, mode: 'dark' },
-      enabledWidgets: [],
       timelineExpanded: false,
       dayLayoutFocus: 'both',
     },

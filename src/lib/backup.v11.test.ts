@@ -182,3 +182,40 @@ test('a backup from before the library existed still loads, with an empty one', 
   expect(validate(old)).toBe(true)
   expect(importJson(JSON.stringify(old)).library).toEqual([])
 })
+
+// --- the settings that stopped earning their place -----------------------
+
+/**
+ * v2.5 removed four settings: the nudge before a timed task, the nudge
+ * during focus work, a second switch for the Monday goal card, and the
+ * widget list nothing could ever change. See DECISIONS "A setting has to
+ * earn its place".
+ *
+ * A backup written before that still has all four in it, and every install
+ * that upgrades still has them in localStorage. Loading has to drop them
+ * rather than carry them: settings normalise by spreading what was stored
+ * and then correcting it, so anything unknown rides along untouched, gets
+ * written back out on the next save, and would sit in everybody's data
+ * forever. Nothing else the payload carries may be touched.
+ */
+test('a backup carrying the removed settings loads without them, and loses nothing else', () => {
+  const old = JSON.parse(exportJson(defaultData()))
+  old.settings.reminder = { enabled: true, everyMinutes: 20, text: 'Stand up, drink water' }
+  old.settings.taskReminder = { enabled: true, minutesBefore: 5 }
+  old.settings.north = { afterASlowDay: true, onMonday: false }
+  old.settings.enabledWidgets = ['day-plan', 'if-then']
+  old.settings.textScale = 'l'
+  old.settings.density = 'compact'
+
+  expect(validate(old)).toBe(true)
+  const back = importJson(JSON.stringify(old))
+
+  expect(back.settings).not.toHaveProperty('reminder')
+  expect(back.settings).not.toHaveProperty('taskReminder')
+  expect(back.settings).not.toHaveProperty('enabledWidgets')
+  expect(back.settings.north).toEqual({ afterASlowDay: true })
+
+  // Everything beside them is exactly as it was written.
+  expect(back.settings.textScale).toBe('l')
+  expect(back.settings.density).toBe('compact')
+})

@@ -1,8 +1,7 @@
 import { useAppData } from '../../lib/store'
 import { formatDayTitle, todayKey } from '../../lib/dates'
 import { sortTasks } from '../../widgets/day-plan/sort'
-import type { DayJournal, Task } from '../../lib/types'
-import { JOURNAL_FIELDS, JOURNAL_LABELS } from '../../lib/journal'
+import type { Task } from '../../lib/types'
 
 export interface WeekAgendaProps {
   /** The days the week view is showing - seven wide, three on a phone. */
@@ -72,24 +71,13 @@ export function WeekAgenda({ dates, onOpenDay, onOpenTask }: WeekAgendaProps) {
 }
 
 /**
- * What the person wrote on the day, under what was on it - the lines it
- * has and nothing for the ones it does not. A day with no journal shows
- * nothing here, not an empty block: the reading is what was written, never
- * what was not.
+ * What the person wrote on the day, under what was on it, exactly as they
+ * wrote it. A day with nothing written shows nothing here, not an empty
+ * block: the reading is what was written, never what was not.
  */
-function JournalLines({ journal }: { journal: DayJournal | undefined }) {
-  const fields = journal ? JOURNAL_FIELDS.filter(field => journal[field]) : []
-  if (fields.length === 0) return null
-  return (
-    <dl className="agenda-journal">
-      {fields.map(field => (
-        <div key={field}>
-          <dt>{JOURNAL_LABELS[field]}</dt>
-          <dd>{journal![field]}</dd>
-        </div>
-      ))}
-    </dl>
-  )
+function JournalLines({ journal }: { journal: string | undefined }) {
+  if (!journal?.trim()) return null
+  return <p className="agenda-journal">{journal}</p>
 }
 
 function AgendaRow({ task, onOpen }: { task: Task; onOpen: () => void }) {

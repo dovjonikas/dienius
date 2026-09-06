@@ -90,7 +90,7 @@ reading them.
 | **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book. When one ends, the list says what it moved on to and puts a sitting on today in one press - the block was already bound to the *list*, and until v2.0 nothing said so |
 | **Review** | Week and month statistics, all derived from the days themselves |
 | **North** | One page, read from the top: the picture of who I am becoming, up to four goals with why and who it makes you, two to four deserve lines under each, and the if-then rules under each. Written in the window itself - one line of the picture to start, then everything behind one quiet Compose that saves in one press. Nothing measured, ever |
-| **Settings** | General, Sleep, Week, Categories, Nudges, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox; Nudges holds the two North card switches and points at the window |
+| **Settings** | General, Sleep, Week, Categories, Nudges, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox. Nudges is exactly three rows since v2.5 - closing the day, when the evening starts, bringing a goal forward - and every setting in the screen has been walked against CONVENTIONS section 21 |
 
 ### Across the app
 
@@ -1039,8 +1039,8 @@ themes, on the sample day; what each found is beside it.
       headings 19px - fixed to 44.*
 - [x] **Settings** - every section reachable from the section list at the
       top, which is sticky; it must not cover the content at 390px, and the
-      first entry is not clipped. *Nine sections since North left it; the
-      two North card switches are in Nudges with a row pointing at the window.*
+      first entry is not clipped. *Nine sections since North left it; Nudges
+      is three rows since the v2.5 health check.*
 - [x] **Every visible button ≥ 44px**, or carrying a `::after` hit-area
       overlay. Measure it, do not read it - see `CONVENTIONS.md`. Documented
       exceptions, and nothing else: a week block (its height is its

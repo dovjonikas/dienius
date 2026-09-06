@@ -30,15 +30,14 @@ test('the week being reviewed copies as markdown under its own heading', async (
   const user = userEvent.setup()
   const writeText = stubClipboard()
   actions.addTask(TODAY, 'One')
-  actions.setJournal(TODAY, { intent: 'Ship the pricing page', tomorrow: 'Start with the walk' })
+  actions.setJournal(TODAY, 'Ship the pricing page\nStart with the walk')
   render(<ReviewView />)
 
   await user.click(screen.getByRole('button', { name: 'Copy week journal' }))
   expect(writeText).toHaveBeenCalledTimes(1)
   const text = writeText.mock.calls[0][0] as string
   expect(text.startsWith(`# Journal, ${formatWeekTitle(weekOf(TODAY))}`)).toBe(true)
-  expect(text).toContain('- **Today:** Ship the pricing page')
-  expect(text).toContain('- **To myself, tomorrow:** Start with the walk')
+  expect(text).toContain('Ship the pricing page\nStart with the walk')
   expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
 })
 
@@ -46,7 +45,7 @@ test('the month copies the month, named as the month', async () => {
   const user = userEvent.setup()
   const writeText = stubClipboard()
   actions.addTask(TODAY, 'One')
-  actions.setJournal(TODAY, { real: 'Dad called' })
+  actions.setJournal(TODAY, 'Dad called')
   render(<ReviewView />)
 
   await user.click(screen.getByRole('button', { name: 'Month' }))
@@ -54,7 +53,7 @@ test('the month copies the month, named as the month', async () => {
   const text = writeText.mock.calls[0][0] as string
   const month = new Date(`${TODAY}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   expect(text.startsWith(`# Journal, ${month}`)).toBe(true)
-  expect(text).toContain('- **What was real today:** Dad called')
+  expect(text).toContain('Dad called')
 })
 
 test('with nothing written the button is greyed and says why, and never says what was skipped', () => {

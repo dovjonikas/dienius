@@ -82,7 +82,21 @@
   }
 
   /** @param {Element} el */
+  /**
+   * The string this element paints itself, if any.
+   *
+   * A field's text is its value or its placeholder, not a child node - it
+   * has no children at all - so an input was invisible to every pass that
+   * starts here, contrast included. That is how the evening time in
+   * Settings came to be painted pure black on a dark surface for a whole
+   * version without anything noticing: the colour a field shows is the one
+   * thing in this app nobody can read from the DOM by walking text.
+   */
   const ownText = el => {
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'range' || el.type === 'color' || el.type === 'file') return ''
+      return (el.value || el.placeholder || '').trim()
+    }
     for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) return n.nodeValue.trim()
     return ''
   }

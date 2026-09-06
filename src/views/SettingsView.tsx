@@ -11,14 +11,12 @@ import { findPreset } from '../lib/themes'
 
 import { ThemeGallery } from './ThemeGallery'
 import { AppearanceControls } from './AppearanceControls'
-import { MinuteStepInput } from './MinuteStepInput'
 import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { CategorySettings } from './CategorySettings'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
-import { requestNotificationPermission } from '../widgets/clock/ClockPopover'
 
 type SectionId = 'general' | 'sleep' | 'week' | 'categories' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
@@ -78,7 +76,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 /** How far down the viewport a section heading has to be before the list stops calling it current. */
 const SECTION_ACTIVE_OFFSET_PX = 120
 
-export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts?: () => void; onOpenNorth?: () => void } = {}) {
+export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void } = {}) {
   // Two facts the browser owns rather than the store: whether an install
   // offer is currently held (Chromium fires it when it feels like it, and
   // withdraws it after an install), and whether this page is already running
@@ -563,186 +561,25 @@ export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts
                     />
                   </div>
                 </div>
-                <div className="setting-row">
-                  <div className="setting-label">
-                    <span className="setting-name">Ask for the best moment</span>
-                    <span className="setting-desc">
-                      One optional line, kept with the day and shown on the calendar. Off if you would
-                      rather not be asked.
-                    </span>
-                  </div>
-                  <div className="setting-control">
-                    <button
-                      type="button"
-                      role="switch"
-                      className="switch"
-                      aria-checked={eveningClose.askBestMoment}
-                      aria-label="Ask for the best moment"
-                      onClick={() =>
-                        actions.setEveningClose({ ...eveningClose, askBestMoment: !eveningClose.askBestMoment })
-                      }
-                    >
-                      <span className="switch-thumb" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
               </>
             )}
-            {/* Off by default, and deliberately not a plain interval timer -
-                see IntervalReminder.tsx. It can only speak while a task the
-                owner marked as Focus is actually running, which is the one
-                situation where being interrupted is a favour. */}
-            {/* Before a task, rather than during one. Deliberately honest
-                about its limit: there is no server and no push subscription
-                here, so nothing can fire while the app is closed, and saying
-                so is better than a setting that quietly does not work. */}
+            {/* Two nudges lived here until v2.5 and neither earned its
+                place: a reminder before a timed task and one during focus
+                work, both of which could only fire while the app was
+                already open and being looked at. A reminder that arrives
+                only when you are already there is not a reminder. Real ones
+                need a service worker and a push subscription, which is a
+                piece of work of its own - see STATE's "Asked for, not yet
+                built". The North row that sat under them said what the
+                North tab says, which is the sixth icon and the 6 key.
+                CONVENTIONS section 21. */}
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Before a timed task</span>
+                <span className="setting-name">Bring a goal forward</span>
                 <span className="setting-desc">
-                  A notification shortly before anything with a time on it. Only while the app is open -
-                  in a tab or installed - because there is no server here to send one from.
-                </span>
-              </div>
-              <div className="setting-control">
-                <button
-                  type="button"
-                  role="switch"
-                  className="switch"
-                  aria-checked={data.settings.taskReminder.enabled}
-                  aria-label="Before a timed task"
-                  onClick={() => {
-                    const next = !data.settings.taskReminder.enabled
-                    if (next) requestNotificationPermission()
-                    actions.setTaskReminder({ ...data.settings.taskReminder, enabled: next })
-                  }}
-                >
-                  <span className="switch-thumb" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            {data.settings.taskReminder.enabled && (
-              <div className="setting-row">
-                <div className="setting-label">
-                  <span className="setting-name">How long before</span>
-                  <span className="setting-desc">
-                    Enough to finish a sentence and stand up, short enough that the nudge is still about
-                    the thing it names.
-                  </span>
-                </div>
-                <div className="setting-control">
-                  <MinuteStepInput
-                    value={String(data.settings.taskReminder.minutesBefore)}
-                    ariaLabel="Minutes before a task"
-                    onChange={value => {
-                      const minutes = Number(value)
-                      if (!Number.isInteger(minutes) || minutes < 0 || minutes > 120) return
-                      actions.setTaskReminder({ ...data.settings.taskReminder, minutesBefore: minutes })
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">Nudge during focus work</span>
-                <span className="setting-desc">
-                  A quiet reminder while a Focus task is running, and only then - never during a meal,
-                  a commute, or an evening off.
-                </span>
-              </div>
-              <div className="setting-control">
-                <button
-                  type="button"
-                  role="switch"
-                  className="switch"
-                  aria-checked={data.settings.reminder.enabled}
-                  aria-label="Nudge during focus work"
-                  onClick={() =>
-                    actions.setReminder({ ...data.settings.reminder, enabled: !data.settings.reminder.enabled })
-                  }
-                >
-                  <span className="switch-thumb" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            {data.settings.reminder.enabled && (
-              <>
-                <div className="setting-row">
-                  <div className="setting-label">
-                    <span className="setting-name">How often</span>
-                    <span className="setting-desc">
-                      Counted from when the task started, so the first one lands inside the work rather
-                      than whenever the app happened to be opened.
-                    </span>
-                  </div>
-                  <div className="setting-control">
-                    <MinuteStepInput
-                      value={String(data.settings.reminder.everyMinutes)}
-                      ariaLabel="Minutes between nudges"
-                      onChange={next => {
-                        const minutes = Number(next)
-                        if (!Number.isFinite(minutes) || minutes < 1) return
-                        actions.setReminder({ ...data.settings.reminder, everyMinutes: minutes })
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="setting-row">
-                  <div className="setting-label">
-                    <span className="setting-name">What it says</span>
-                    <span className="setting-desc">
-                      The useful reminder is a different sentence for everybody.
-                    </span>
-                  </div>
-                  <div className="setting-control">
-                    <input
-                      className="setting-text-input"
-                      aria-label="Nudge text"
-                      maxLength={120}
-                      value={data.settings.reminder.text}
-                      onChange={e => actions.setReminder({ ...data.settings.reminder, text: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* North's two cards, here rather than in a North section of
-                their own. Since v2.1 everything North is made of - the
-                picture, the goals, what you do to deserve them, what pulls
-                you off them - is written in the North window itself, and
-                what is left for Settings is exactly this: whether a goal may
-                come forward on its own. That is a nudge, and it sits with
-                the other nudges. The rules board that was once here went the
-                same way in v2.0. */}
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">North</span>
-                <span className="setting-desc">
-                  The picture, the goals, what you do to deserve them and what pulls you off them are all
-                  written in North itself - the sixth icon, or the 6 key.
-                </span>
-              </div>
-              {onOpenNorth && (
-                <div className="setting-control">
-                  <button type="button" className="btn-secondary" onClick={onOpenNorth}>
-                    Open North
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">Bring a goal forward after a slow day</span>
-                <span className="setting-desc">
-                  A card the next morning with the goal and its reason in full. Never a count of what was
-                  missed - it is a reminder of why, not a report on yesterday.
+                  A card on a Monday morning, and after a day that got away from you: the goal and its
+                  reason in full. Never a count of what was missed - it is a reminder of why, not a
+                  report on yesterday.
                 </span>
               </div>
               <div className="setting-control">
@@ -751,36 +588,12 @@ export function SettingsView({ onShowShortcuts, onOpenNorth }: { onShowShortcuts
                   role="switch"
                   className="switch"
                   aria-checked={data.settings.north.afterASlowDay}
-                  aria-label="Bring a goal forward after a slow day"
+                  aria-label="Bring a goal forward"
                   onClick={() =>
                     actions.setNorthSettings({
                       ...data.settings.north,
                       afterASlowDay: !data.settings.north.afterASlowDay,
                     })
-                  }
-                >
-                  <span className="switch-thumb" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">And on a Monday</span>
-                <span className="setting-desc">
-                  The same card, softer, on the first open of the week, with one line of what you do to
-                  deserve the goal.
-                </span>
-              </div>
-              <div className="setting-control">
-                <button
-                  type="button"
-                  role="switch"
-                  className="switch"
-                  aria-checked={data.settings.north.onMonday}
-                  aria-label="And on a Monday"
-                  onClick={() =>
-                    actions.setNorthSettings({ ...data.settings.north, onMonday: !data.settings.north.onMonday })
                   }
                 >
                   <span className="switch-thumb" aria-hidden="true" />

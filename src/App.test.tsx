@@ -6,6 +6,7 @@ import { actions, getData } from './lib/store'
 import { defaultData } from './lib/storage'
 import { todayKey } from './lib/dates'
 import { PRESETS } from './lib/themes'
+import { WIDGETS } from './widgets/registry'
  import { getTourState, resetTourForTests, startTour } from './lib/tourState'
 import { resetReplanForTests } from './lib/replanState'
 
@@ -57,12 +58,15 @@ test('matching the system resolves against the live OS preference, and turning i
   expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#121417')
 })
 
-test('the day tab renders widgets through the registry, driven by enabledWidgets', () => {
-  const data = defaultData()
-  data.settings.enabledWidgets = []
-  actions.resetForTests(data)
+// The registry is the seam a second day-view widget would slot into, and
+// the day tab renders whatever is in it. It held a stored list of ids until
+// v2.5 - see REMOVED_SETTINGS in storage.ts for why a list nothing could
+// change is not a setting.
+test('the day tab renders every widget in the registry', () => {
+  actions.resetForTests(defaultData())
   render(<App />)
-  expect(screen.queryByPlaceholderText(/add a task/i)).not.toBeInTheDocument()
+  expect(WIDGETS).toHaveLength(1)
+  expect(screen.getByPlaceholderText(/add a task/i)).toBeInTheDocument()
 })
 
 // --- .main-day - docs/LAYOUT-WIDE.md section 5, build step 1. Only the

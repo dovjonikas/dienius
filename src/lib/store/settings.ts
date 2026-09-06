@@ -1,7 +1,7 @@
 import { commit, getData } from './core'
 import type { Settings, SleepWindow, ThemeState } from '../types'
 
-/** Everything under Settings that is not a goal, a calendar or a rule: theme, density, sleep, the reminders, the day view's own switches. */
+/** Everything under Settings that is not a goal, a calendar or a rule: theme, density, sleep, the day view's own switches. */
 export const settingsActions = {
   /**
    * Sets the light/dark/system mode without touching which preset is
@@ -113,16 +113,6 @@ export const settingsActions = {
   setTextScale(textScale: Settings['textScale']): void {
     const data = getData()
     commit({ ...data, settings: { ...data.settings, textScale } })
-  },
-
-  setReminder(reminder: Settings['reminder']): void {
-    const data = getData()
-    commit({ ...data, settings: { ...data.settings, reminder } })
-  },
-
-  setTaskReminder(taskReminder: Settings['taskReminder']): void {
-    const data = getData()
-    commit({ ...data, settings: { ...data.settings, taskReminder } })
   },
 
   setEveningClose(eveningClose: Settings['eveningClose']): void {

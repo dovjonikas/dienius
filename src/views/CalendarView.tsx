@@ -588,6 +588,6 @@ function cellTooltip(stat: DayStat, templateName: string | undefined): string {
   // days were like; one of them saying "walked home the long way" says what
   // a Tuesday was.
   const counted = parts.join(' - ')
-  return stat.bestMoment ? `${counted}
-${stat.bestMoment}` : counted
+  const line = stat.journal?.split('\n').find(l => l.trim())?.trim()
+  return line ? `${counted}\n${line}` : counted
 }

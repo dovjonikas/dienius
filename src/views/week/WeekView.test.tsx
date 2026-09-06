@@ -247,17 +247,17 @@ test('a replanned day says so in one quiet word, and an ordinary day says nothin
 // --- the journal ------------------------------------------------------------------
 
 /**
- * The morning line under a day's name in the grid, and the week as markdown
- * from one press. The copy covers the whole week under its own heading and
- * lists only the days with something written.
+ * The first line of what was written under a day's name in the grid, and
+ * the week as markdown from one press. The copy covers the whole week under
+ * its own heading and lists only the days with something written.
  */
-test('the morning line shows under the day, and the week copies as markdown', async () => {
+test('the first line shows under the day, and the week copies as markdown', async () => {
   const user = userEvent.setup()
   const writeText = vi.fn().mockResolvedValue(undefined)
   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
   actions.resetForTests({
     ...defaultData(),
-    days: { [TUE]: { date: TUE, tasks: [], journal: { intent: 'Ship it', real: 'It shipped' } } },
+    days: { [TUE]: { date: TUE, tasks: [], journal: 'Ship it\nIt shipped' } },
   })
   renderWeek()
 
@@ -269,8 +269,7 @@ test('the morning line shows under the day, and the week copies as markdown', as
   const text = writeText.mock.calls[0][0] as string
   expect(text).toContain('# Journal, 31 August - 6 September 2026')
   expect(text).toContain('## Tuesday, September 1')
-  expect(text).toContain('- **Today:** Ship it')
-  expect(text).toContain('- **What was real today:** It shipped')
+  expect(text).toContain('Ship it\nIt shipped')
   expect(text).not.toContain('Monday')
   expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
 })

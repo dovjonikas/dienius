@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, getData, useAppData } from '../../lib/store'
 import { addDays, formatWeekTitle, shortWeekday, todayKey, weekOf } from '../../lib/dates'
-import { JOURNAL_FIELDS, JOURNAL_LABELS } from '../../lib/journal'
 import { CopyJournalButton } from '../CopyJournalButton'
 import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
@@ -303,8 +302,8 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             draggingId={draggingId}
             weekdayTemplateId={data.settings.weekdayTemplates[weekdayOf(day.date)]}
             replanned={!!data.days[day.date]?.replannedOn}
-            journalLine={data.days[day.date]?.journal?.intent}
-            journalTitle={journalTitle(data.days[day.date]?.journal)}
+            journalLine={firstLine(data.days[day.date]?.journal)}
+            journalTitle={data.days[day.date]?.journal?.trim() || undefined}
             onBlockPointerDown={beginDrag}
             onEmptyClick={percent => addAt(day.date, percent)}
             onStamp={templateId => stampDay(day.date, templateId)}
@@ -343,11 +342,12 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
   )
 }
 
-/** Every line the day has, one per row, for the title behind the one the column shows. */
-function journalTitle(journal: { intent?: string; real?: string; tomorrow?: string } | undefined): string | undefined {
-  if (!journal) return undefined
-  const lines = JOURNAL_FIELDS.filter(f => journal[f]).map(f => `${JOURNAL_LABELS[f]}: ${journal[f]}`)
-  return lines.length > 0 ? lines.join('\n') : undefined
+/**
+ * The first line of what was written, for a column an inch wide. The whole
+ * of it is the title behind it, so hovering reads the day.
+ */
+function firstLine(journal: string | undefined): string | undefined {
+  return journal?.split(String.fromCharCode(10)).find(line => line.trim())?.trim() || undefined
 }
 
 /** Exported for the column footer, which says the same thing about a past day. */

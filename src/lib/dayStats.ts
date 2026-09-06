@@ -33,7 +33,8 @@ export interface DayStat {
    * that came from a person rather than from arithmetic. It is carried so
    * that a month of squares can occasionally say what a Tuesday was.
    */
-  bestMoment?: string
+  /** What was written on the day, if anything - see lib/journal.ts. */
+  journal?: string
   tone: DayTone
 }
 
@@ -80,7 +81,7 @@ export function dayStat(day: DayPlan | undefined): DayStat {
     focusMinutes: tasks
       .filter(t => t.category === 'core' && t.done && t.minutes !== undefined)
       .reduce((sum, t) => sum + t.minutes!, 0),
-    bestMoment: day?.bestMoment,
+    journal: day?.journal,
     tone: toneFor(rate),
   }
 }

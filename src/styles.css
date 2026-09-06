@@ -2553,6 +2553,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    the owner finally saw in the library's add row. Excluded here rather than
    out-specified there: the box belongs to the control, and the control says
    so in one place.
+
+   What an exclusion must never take away is the text being readable. It
+   did: excluding `.time-input` here left every one of them outside a
+   `.time-stepper` - the time pickers in Settings, the task detail and the
+   template editor - falling through to the browser's own black, on a dark
+   surface, at 1.14:1. The rule below puts that back for the class itself,
+   so a control that draws its own box only has to draw the box.
    ------------------------------------------------------------------------ */
 input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input),
 textarea {
@@ -2568,6 +2575,23 @@ textarea {
 
 input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input)::placeholder,
 textarea::placeholder {
+  color: var(--faint);
+}
+
+/* The two classes excluded above, given back everything that is about the
+   text rather than about the box: the colour, the family, the figures. Each
+   control still draws its own frame - see `.time-stepper` and
+   `.time-picker` - and neither has to remember to make its own number
+   legible. */
+.time-input,
+.minutes-input {
+  color: var(--text);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-input::placeholder,
+.minutes-input::placeholder {
   color: var(--faint);
 }
 
@@ -2656,7 +2680,6 @@ textarea:focus {
   background: none;
   text-align: center;
   font-size: var(--t-input);
-  font-variant-numeric: tabular-nums;
 }
 
 .time-picker .time-input:focus {
@@ -2894,10 +2917,9 @@ select:focus {
 
 .time-stepper:focus-within { border-color: var(--accent); }
 
-/* The number inside the box. Everything a field needs is said here rather
-   than inherited from the base rule, because the base rule is excluded for
-   `.time-input` - see the comment on it. The box, the border, the hover and
-   the focus ring all belong to `.time-stepper` around it. */
+/* The number inside the box. The box, the border, the hover and the focus
+   ring all belong to `.time-stepper` around it; the colour and the figures
+   come from the `.time-input` rule beside the base one. */
 .time-stepper .time-input,
 .time-stepper .minutes-input {
   width: 76px;
@@ -2905,14 +2927,8 @@ select:focus {
   border: none;
   border-radius: 0;
   background: none;
-  color: var(--text);
-  font-family: inherit;
   text-align: center;
-  font-variant-numeric: tabular-nums;
 }
-
-.time-stepper .time-input::placeholder,
-.time-stepper .minutes-input::placeholder { color: var(--faint); }
 
 /* The ring goes on the box, not on the number inside it. */
 .time-stepper .time-input:focus,
@@ -5138,8 +5154,12 @@ button.danger {
   to { opacity: 1; transform: none; }
 }
 
-.clock-tabs { width: 100%; }
-.clock-tabs button { flex: 1; }
+.clock-tabs { width: 100%; flex-wrap: wrap; }
+
+/* Four tabs in a panel this narrow are two rows of two, not three and a
+   stray. A basis rather than `flex: 1`, which fitted three across and put
+   Journal on a line of its own. */
+.clock-tabs button { flex: 1 1 40%; }
 
 .clock-panel {
   display: flex;
@@ -13079,3 +13099,160 @@ main:has(.week) > .calendar {
 .template-timeline.is-compact .template-timeline-clash {
   font-size: var(--t-2xs);
 }
+
+/* ---------------------------------------------------------------------------
+   The journal - widgets/clock/JournalPanel.tsx, views/JournalView.tsx.
+
+   A day and whatever was written on it. Nothing here counts anything: no
+   streak, no run of days, no mark for a day with nothing on it. That is the
+   whole reason the three questions came out - see DECISIONS "A journal, not
+   a form" - and putting a count on the reading side would be the same
+   mistake wearing different clothes.
+   ------------------------------------------------------------------------ */
+.journal-panel { gap: var(--s2); }
+
+.journal-days {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.journal-date {
+  flex: 1;
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.journal-step {
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-glyph);
+}
+
+.journal-step:disabled { opacity: 0.4; }
+
+.journal-box {
+  width: 100%;
+  resize: vertical;
+  font-size: var(--t-input);
+  line-height: 1.5;
+}
+
+/* The one line that says this is not Notes. The quietest text on the panel:
+   it is there for the first day somebody opens it and never wanted again,
+   so it reads as a caption under the box rather than as a heading over it. */
+.journal-difference {
+  margin: 0;
+  font-size: var(--t-2xs);
+  color: var(--faint);
+  text-align: center;
+}
+
+@media (pointer: coarse) {
+  .journal-step { min-height: var(--touch); min-width: var(--touch); }
+}
+
+/* The whole thing, over the app: a month on the left, a day on the right. */
+.journal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 93;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.journal-overlay {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+  box-shadow: var(--e3);
+}
+
+.journal-close { position: absolute; top: var(--s3); right: var(--s3); }
+
+/* Room on the right for the close, which is positioned over this row. */
+.journal-view-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  padding-right: var(--s8);
+}
+
+.journal-view-head h2 { margin: 0; }
+.journal-search { flex: 1 1 160px; min-width: 0; }
+
+.journal-view-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s4);
+}
+
+.journal-view-side { flex: 0 1 260px; min-width: 0; }
+.journal-view-day { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.journal-view-date { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+.journal-box-full { min-height: 320px; }
+
+/* A day with something written carries a dot. A mark, not a count.
+   The cell is only positioned inside the wide rail's own block, and this
+   calendar is also drawn in the journal overlay at any width. */
+.mini-cell-marked { position: relative; }
+
+.mini-cell-marked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: var(--r-round);
+  background: var(--muted);
+  transform: translateX(-50%);
+}
+
+.journal-hits {
+  list-style: none;
+  margin: var(--s3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.journal-hits button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  min-height: 0;
+  padding: var(--s1) var(--s2);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  text-align: left;
+}
+
+.journal-hits button:hover { background: color-mix(in srgb, var(--border) 30%, transparent); }
+.journal-hit-date { color: var(--muted); font-size: var(--t-2xs); }
+.journal-hit-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; font-size: var(--t-xs); }
+.journal-hits-none { color: var(--faint); font-size: var(--t-xs); }

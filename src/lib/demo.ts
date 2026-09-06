@@ -150,7 +150,7 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
     read.libraryRef = { listId: 'demo-list-1', itemId: 'demo-item-1' }
   }
   // Yesterday kept its best moment, which is what the calendar shows for it.
-  days[addDays(today, -1)].bestMoment = 'The walk back, no headphones'
+  days[addDays(today, -1)].journal = 'The walk back, no headphones'
 
   // One carried task and one untimed one on today, because a real day has
   // both and a demo of a perfectly tidy day is a demo of nothing.

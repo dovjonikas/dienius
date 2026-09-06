@@ -87,11 +87,8 @@ const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 
  */
 export const SYNCED_SETTINGS = [
   'theme',
-  'enabledWidgets',
   'sleepProfiles',
   'weekdayTemplates',
-  'reminder',
-  'taskReminder',
   'north',
   'northDismissedOn',
   'eveningClose',

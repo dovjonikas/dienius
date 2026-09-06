@@ -1614,3 +1614,107 @@ which is exactly the counting CONVENTIONS section 12 forbids.
 That is what `away` already means, so the header offers "I'm back" without
 anything new being invented, and the rescue recomputes from the moment it
 is pressed rather than from a length nobody had at the time.
+
+## A journal, not a form
+
+v2.3 built a journal as three questions on a schedule: a line under the
+North line in the morning ("Today: ..."), and two on the evening close card
+- what was real today, and what to tell yourself tomorrow. A best moment
+sat beside them on its own switch. All of it worked, and all of it is gone.
+
+The owner's verdict, in their own words: a journal that opens by the timer
+and the notes, showing the day, free roam, write what you want - and of
+everything else, "fuck it, too much".
+
+**A form asks on a schedule; a journal waits.** The difference is not the
+number of boxes, it is who decides there is something to say. Three empty
+fields appearing every evening is a question asked whether or not anybody
+has an answer, and the honest reply on most evenings is nothing - which
+turns into skipping the card, and then into dreading it. That is the exact
+failure this app exists to avoid, built into the one place meant to be kind.
+
+**So: a day, and whatever you wanted to say on it.** One free text field per
+day, at the clock beside Notes, reachable from anywhere with `J`. It saves
+while you type and there is no Save button, because there is nothing to
+decide. No questions, no fields, no length, no prompt beyond a quiet "...".
+
+**And nothing counts.** No streak, no run of days, no mark for a day with
+nothing on it, no "you missed a day". Most days have nothing on them. The
+full view shows a month with a quiet dot on the days that have something,
+and a dot is a mark rather than a score.
+
+**Notes and the journal are different things, and the difference has to
+stay obvious**, or they are two of the same box in two places. A note is a
+thought caught on the way past: short, undated in any way that matters, and
+it turns into a task. A journal entry is a day: dated, kept, turned into
+nothing, read back later. Notes is for doing; the journal is for
+remembering. The panel says so where it is easiest to confuse them.
+
+**Nothing anybody wrote is lost.** `mergeOldJournal` folds the three old
+answers, and the best moment beside them, into one entry for that day - in
+the order the day said them, one per line, with the labels dropped. The
+words are what was kept; the questions they were answers to are the thing
+being removed. It runs in `normalizeLoaded`, so it happens once on load,
+a v2.3 backup still restores, and nothing downstream ever sees two shapes.
+
+**The way out is a copy, and the month is the one that matters.** A day, a
+week or a month as markdown, days with nothing skipped. The owner's use is
+a month of writing pasted into a conversation in one press.
+
+## A setting has to earn its place
+
+Settings accumulate. Every one of them was a good idea on the day it went
+in, and none of them ever comes out on its own, so a settings screen is a
+museum of every question the app has ever wanted to ask. This one had grown
+to five sections and a Nudges list of four switches, most of which had never
+been touched.
+
+**The rule, written into CONVENTIONS section 21:** a setting stays only if
+the owner would actually change it from the default **and** the app cannot
+decide correctly itself. Both, not either. A preference nobody would change
+is clutter even when the app genuinely cannot guess it. A preference
+somebody would change is still clutter if the app can simply be right.
+
+**What went, and why each failed:**
+
+- **"Nudge during focus work"** and **"Before a timed task"**: both could
+  only fire while the app was already open and being looked at, because
+  there is no service worker and no push subscription. A reminder that
+  arrives only when you are already there is not a reminder. Real ones are
+  in STATE's "Asked for, not yet built".
+- **"And on a Monday"**: the Monday goal card and the slow-day goal card
+  are the same card in two moments. Nobody has ever wanted one without the
+  other. One switch now carries both.
+- **"Ask for the best moment"**: the journal covers it, and asks nothing.
+  Existing best-moment answers were merged into that day's journal entry by
+  `mergeOldJournal`, and the calendar's dot now means "there is writing on
+  this day". See "A journal, not a form".
+- **The whole "North" section**: it said what the North tab says, which is
+  the sixth icon and the 6 key.
+- **`enabledWidgets`**: a stored list of which day-view widgets to render,
+  on a registry that has held one widget since v1.2, with no control
+  anywhere that could change it. It failed rule 1 absolutely - there was no
+  default to change it from - and had been carried in types, validation,
+  sync and every backup for three versions.
+
+**What survived, and why.** Everything under General is an action rather
+than a preference: exporting, importing, installing, restoring a snapshot,
+replaying the tour, erasing. An action has no default to change from, so
+the rule does not reach it. Calendars, Backup and Sync are the owner's data
+and the ways out of this app. Sleep profiles, Categories and the week's
+template map are named in the rule itself as never removable. Theme, accent,
+density and text size are all rule 2 in its purest form: the app cannot know
+which room somebody is in or how good their eyesight is, and text size in
+particular has no fallback, because the type scale is in pixels and a
+standalone PWA on iOS has no browser zoom to lean on.
+
+**Removing a setting means removing the code.** The field goes from
+`types.ts`, `validate.ts`, `syncEntities.ts` and the backup. Migration is
+silent: settings normalise by spreading what was stored and then correcting
+it - the fix for an older bug where an optional field added later was lost
+on every load - so a removed field left unnamed would ride along untouched
+and be written back out forever. `REMOVED_SETTINGS` in `storage.ts` names
+each one and deletes it on load, and that list only ever grows. Validation
+is deliberately not tightened against a field this app used to write: an old
+backup has to keep opening, which is the one promise a local-first app's
+backups may never break.

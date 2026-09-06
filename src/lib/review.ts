@@ -31,7 +31,8 @@ export interface DayStat {
   highlights: number
   highlightsDone: number
   /** What somebody wrote when they closed the day, if they did - see eveningClose.ts. */
-  bestMoment?: string
+  /** What was written on the day, if anything - see lib/journal.ts. */
+  journal?: string
 }
 
 export interface PeriodStats {
@@ -89,7 +90,7 @@ function statFor(date: string, day: DayPlan | undefined): DayStat {
       .reduce((sum, t) => sum + t.minutes!, 0),
     highlights: highlights.length,
     highlightsDone: highlights.filter(t => t.done).length,
-    bestMoment: day?.bestMoment,
+    journal: day?.journal,
   }
 }
 

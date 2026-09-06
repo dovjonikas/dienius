@@ -35,6 +35,13 @@ export interface MiniCalendarProps {
    * new prop wiring needed above DayView, see docs/LAYOUT-WIDE.md
    * section 5. */
   onDateChange: (date: string) => void
+  /**
+   * Days to put a quiet dot on. The journal's own reading uses it for the
+   * days that have something written - a mark, not a count, and nothing
+   * anywhere that turns a month of squares into a report card. Absent
+   * everywhere else, which is every other use of this calendar.
+   */
+  marked?: ReadonlySet<string>
 }
 
 /**
@@ -56,7 +63,7 @@ export interface MiniCalendarProps {
  * was last focused keeps the stop, so leaving the grid and coming back
  * lands where the person left. The arithmetic is `lib/gridKeys.ts`.
  */
-export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
+export function MiniCalendar({ date, onDateChange, marked }: MiniCalendarProps) {
   const data = useAppData()
   const [{ year, month }, setYearMonth] = useState(() => monthOf(date))
   // The cell the keyboard last rested on, when that differs from the viewed
@@ -157,6 +164,7 @@ export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
                 cell.key === date ? 'viewing' : '',
                 template ? 'mini-cell-has-template' : '',
                 state !== 'none' ? 'mini-cell-has-tasks' : '',
+                marked?.has(cell.key) ? 'mini-cell-marked' : '',
               ].filter(Boolean).join(' ')
               return (
                 <button

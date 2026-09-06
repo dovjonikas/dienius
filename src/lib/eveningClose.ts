@@ -42,7 +42,6 @@ export const DEFAULT_EVENING_CLOSE: EveningCloseSettings = {
   // 23:00, so this is an hour and a half of slack rather than a nudge on the
   // way to bed.
   at: '21:30',
-  askBestMoment: true,
 }
 
 export interface EveningSummary {
