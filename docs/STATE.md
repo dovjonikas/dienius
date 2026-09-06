@@ -204,7 +204,7 @@ stopping. Twelve stages, six commits.
 | 9 | The tour | `df99d14` | The card never covers what it points at - the scroll knows about the card, and the placement is checked again after it lands - and a step that changed the screen waits for Next instead of running on |
 | 10 | A template is judged as a day | `c19d20a` | The template editor draws the day it makes, live: the same hour scale as Today, sleep first from the chosen profile, blocks as they are typed, overlaps with a warning edge, gap labels, one line of numbers. A week is seven narrow columns each with its own sleep; a phone is one day at a time |
 | 11, 12 | A journal instead of a form, and a settings health check | `2f58d3b` | v2.3's three questions and the best moment beside them are gone, folded into one free text box per day at the clock beside Notes, reachable with `J`, saving as you type, counting nothing. Then every setting walked against one rule - the owner would change it **and** the app cannot decide itself - which four failed: two nudges that could only fire while the app was already open, a second switch for the Monday goal card, and a widget list nothing could ever change. DECISIONS "A journal, not a form" and "A setting has to earn its place" |
-| 8 | Closing and `v2.5` | this commit | Full gates, two critique passes on the phone, and the three blindnesses in the measuring pass that those passes exposed. The docs read against the code, and the tag |
+| 8 | Closing and `v2.5` | `57db593` | Full gates, two critique passes on the phone, and the three blindnesses in the measuring pass that those passes exposed: it could not see a fade, could not see what a field says, and ran at whatever hour it was run. 858 findings out of a report that had said zero for a week of commits, and nine hand-tuned opacities down to one `--faded` token. The docs read against the code, the README's screenshots regenerated, and the tag |
 
 ### The v2.4 wave: the polish wave
 
@@ -512,7 +512,8 @@ and pushed. Nothing below this table is owed.
 | `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
 | `v2.2` | `a7cc157` | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
 | `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: the handoff of the time |
-| `v2.4` | `f544c55` | The polish wave, on top of v2.3. One commit sits above it, untagged: this handoff |
+| `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
+| `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. One commit sits above it, untagged: this handoff |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
