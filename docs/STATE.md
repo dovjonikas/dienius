@@ -6,16 +6,19 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.3, closed and tagged. One stage, the owner's brief for
-the journal: three lines a day that never count - "Today: ..." under the
-North line in the morning, and two questions on the evening close card,
-what was real today and what to tell yourself tomorrow - kept on the day
-entity, read under the day in the week's agenda, and copied as markdown for
-the week or the month to paste into another chat. Before it, v2.2's Replan
-v2. Section 4 has both tables, commit by commit; the tag is `dcec338` and this
-handoff sits one commit above it. **Nothing is owed**: the
-debts table is unchanged and every entry in it is a trade with its reason,
-and the next brief comes from the owner.
+**Last updated:** v2.4, closed and tagged. The polish wave, briefed by the
+owner in one message and run end to end: the navigation rail opening by
+itself whenever another window handed focus back (it opens on intent only
+now - a pointer that comes in and moves and is still there 150ms later, a
+Tab, the pin); a pixel audit of six screens from the owner's own
+screenshots, each measured before and after, with both scales written into
+CONVENTIONS section 5 and a test holding the stylesheet to them; two small
+features for the days the plan was not written for, a low day at 40% and a
+timer on a step; and a critique pass that found the fifth type size nobody
+had declared and five strings under AA that the contrast audit could not
+see. Section 4 has the table, commit by commit. **Nothing is owed**: the debts table
+is unchanged and every entry in it is a trade with its reason, and the next
+brief comes from the owner.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -135,6 +138,7 @@ reading them.
 
 | **v2.2** | Replan v2: "Something came up" for any day of the week, as the phone call it is answered on. One sheet at the app root from six doors - the day header on today and any later day, the week's bar, the calendar's day preview, the palette, the R key. Today, tomorrow and the five days after as chips, then the morning, afternoon, evening or whole day gone against that day's own waking window, a time and a length, or don't know how long; a typed line in Lithuanian or English that the chips follow and that a pressed chip takes its word out of; the plan proposed with the template's blocks skipped and one-offs moved into the gaps after it, key tasks first; a day nobody opened made from its weekday template before the plan lands; the free-windows line above Accept; one undo; "replanned" on the week. `ensuredDay` as the pure half of `ensureDay`, `DayPlan.replannedOn`, and a phone-sized browser test measuring three presses with nothing scrolled |
 
+| **v2.4** | The polish wave. The rail opens on intent only, after four ways in were told apart from a window changing hands. Six screens measured against the owner's screenshots and rebuilt: Today's header as three groups, gap labels as dividers, a two-line floor for an hour or longer; the task sheet's footer; the month as a wash and a strip; the week's 15px floor; the template editors and the library. Two scales, in CONVENTIONS section 5, with `scale.test.ts` reading the stylesheet against them. A low day - one press, the key tasks at 40%, the routine kept, the rest to tomorrow, the score on the key tasks alone - and a step that carries a timer. Then the critique: the browser's 16px as an undeclared fifth size on four screens, five strings under AA behind a colour parser that could not read a `color-mix()`, `--touch` named once for a hundred and twenty five places, and a chosen swatch's ring given its room back and its gap drawn in the ground, which is what the owner saw first |
 | **v2.3** | The journal: "Today: ..." under the North line in the morning, and two questions on the evening close card - what was real today, and what to tell yourself tomorrow - all optional, plain text, never counted or streaked, kept on the day entity with no migration. Read under the day in the week's agenda, the morning line under a day's name on the desktop grid, and copied as markdown for the week under the week or for the week or month in Review, to paste into another chat |
 
 | **v2.0, second half** | Six stages that finish what the first half started, all of them about the app being *understood* rather than being complete. Categories became the owner's: a list in `AppData` rather than a literal in a module, twelve curated colours with a readability gate, and a delete that moves what it would orphan. North became a window with every if-then rule under the goal it protects - a rule with no goal is noise, under a goal it is armour - and the day view's old one-rule-at-a-time surfacing went with the three fields it needed. Twenty invented words got a sentence each, in one file, checked by a test whose data is the list itself. One reading queue of twenty books became three lanes that advance on their own. Then a clean pass over sixteen places: seven text tabs became a rail of icons, month cells started saying what is on a day rather than what the day was called, resting on one shows the whole day, the week gained a second reading and a place for the backlog beside it, and the template editor stopped opening with eight colour balls above the name |
@@ -172,11 +176,11 @@ with the rail down the left.
 
 | # | Stage | Commit | What it became |
 |---|---|---|---|
-| 0 | Written down first | - | The brief and the decisions it forced, in this file, before any code |
-| 1 | The rail opens on intent only | - | The cause: React's `onFocus` is `focusin`, and a browser re-fires focus on the item last pressed whenever another window gives this one back. Three ways in now - a mouse that comes in and moves and is still there 150ms later, a Tab, the pin - and the window changing hands is none of them. Six tests in `NavRail.test.tsx`, checked in the pane at 1920x1080 against the real event stream; DECISIONS "The rail opens on intent only" |
+| 0 | Written down first | `95d65a9` | The brief and the decisions it forced, in this file, before any code |
+| 1 | The rail opens on intent only | `622a883` | The cause: React's `onFocus` is `focusin`, and a browser re-fires focus on the item last pressed whenever another window gives this one back. Three ways in now - a mouse that comes in and moves and is still there 150ms later, a Tab, the pin - and the window changing hands is none of them. Six tests in `NavRail.test.tsx`, checked in the pane at 1920x1080 against the real event stream; DECISIONS "The rail opens on intent only" |
 | 2 | The pixel audit | `536061b`, `57b36be`, `dc27a75`, `5b2bce8`, `afb1275`, `c2e7c04` | Six screens from the owner's screenshots, each measured before and after, one commit per screen: Today (the header as three groups, a masthead from 1500px, gap labels as dividers kept clear of the now line, every block its floor and a two-line floor for an hour or longer, the digest as one card, the day column at 760px); the task sheet (the cross in the corner, a footer with Delete and Done, the size said once); the month (a wash and a strip instead of a pastel, one rule for every day, everything left); the week grid (a 15px floor, a past day offering nothing at rest); the template editors and the library (WHAT and WHERE, "Week default", coloured swatches, a length held, rows of one height, a disabled button that reads as one). Then both scales written into CONVENTIONS section 5 with `scale.test.ts` holding the stylesheet to them, 71 on-scale literals made tokens and 30 off-scale ones moved, and the sweep at zero on the desktop and the phone |
-| 3 | Low day, and a timer on a step | - | One press beside Replan: the key tasks at 40% of their length on the five-minute grid and never under fifteen minutes, the routine where it was, the rest to tomorrow as a proposal with Accept and one undo, a quiet mark under the date, and the score on the key tasks alone. A step's trailing length ("Meditation 10 min") starts the one timer for that step, and the bell ticks the step. `lowDay.test.ts` and `FloatingClock.test.tsx` new, `e2e/lowday.e2e.ts` new, ten test files touched; DAILY "When you do not feel like it" and "A ritual as one block"; DECISIONS "A low day is the 40% doctrine as one press" and "A step can carry a timer". Mid-stage, from the owner's screenshot: the chosen swatch's ring, cut by the task column's scroller and drawn in the card colour on the page - the inset back, `--ground` for the gap, and two new shapes in the sweep's audit with two more screens on its list |
-| 4 | The critique and `v2.4` | - | Every screen at 1920x1080 and 1366x768 in both themes, by the same standard. The fifth type size nobody declared: the browser's own 16px, which every unsized button fell to, plus a template card's name, a step's title and a pace line - the body says `--t-sm` now and a button inherits, the arrows read at the glyph size, and every screen is four sizes with the input floor and the glyph exempt. Five strings under AA that the audit could not see, because Chrome hands a `color-mix()` back as `color(srgb ...)` and the parser read it as nothing. `--touch` for the 44px in a hundred and twenty five places. `scale.test.ts` reads whole lines, which found twenty literals inside one-line rules. Three screens added to the sweep. Both sweeps at zero, desktop and phone; DECISIONS "The pixel standard" |
+| 3 | Low day, and a timer on a step | `b21f346`, `7c5d90a` | One press beside Replan: the key tasks at 40% of their length on the five-minute grid and never under fifteen minutes, the routine where it was, the rest to tomorrow as a proposal with Accept and one undo, a quiet mark under the date, and the score on the key tasks alone. A step's trailing length ("Meditation 10 min") starts the one timer for that step, and the bell ticks the step. `lowDay.test.ts` and `FloatingClock.test.tsx` new, `e2e/lowday.e2e.ts` new, ten test files touched; DAILY "When you do not feel like it" and "A ritual as one block"; DECISIONS "A low day is the 40% doctrine as one press" and "A step can carry a timer". Mid-stage, from the owner's screenshot: the chosen swatch's ring, cut by the task column's scroller and drawn in the card colour on the page - the inset back, `--ground` for the gap, and two new shapes in the sweep's audit with two more screens on its list |
+| 4 | The critique and `v2.4` | the closing commit | Every screen at 1920x1080 and 1366x768 in both themes, by the same standard. The fifth type size nobody declared: the browser's own 16px, which every unsized button fell to, plus a template card's name, a step's title and a pace line - the body says `--t-sm` now and a button inherits, the arrows read at the glyph size, and every screen is four sizes with the input floor and the glyph exempt. Five strings under AA that the audit could not see, because Chrome hands a `color-mix()` back as `color(srgb ...)` and the parser read it as nothing. `--touch` for the 44px in a hundred and twenty five places. `scale.test.ts` reads whole lines, which found twenty literals inside one-line rules. Three screens added to the sweep. Both sweeps at zero, desktop and phone; DECISIONS "The pixel standard" |
 
 #### The brief, as understood
 
@@ -466,7 +470,8 @@ and pushed. Nothing below this table is owed.
 | `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
 | `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
 | `v2.2` | `a7cc157` | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
-| `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: this handoff |
+| `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: the handoff of the time |
+| `v2.4` | the closing commit | The polish wave, on top of v2.3 |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
