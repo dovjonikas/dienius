@@ -3,6 +3,7 @@ import type { Category, Template } from '../../lib/types'
 import type { DayStat } from '../../lib/dayStats'
 import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
+import { formatClock } from '../../widgets/day-plan/timelineLayout'
 import { categoryColor } from '../../lib/categories'
 import { shortWeekday } from '../../lib/dates'
 import type { DayEvent } from '../../lib/calendars'
@@ -11,11 +12,13 @@ import type { WeekBlock, WeekDayLayout } from './weekLayout'
 /**
  * One day of the week, as a column.
  *
- * Everything about it is compressed on purpose. No times on the blocks - the
- * axis on the left says when, and a time printed on a 14px block is two
- * illegible numbers competing with the only word that matters. No checkboxes -
- * a week is for arranging, and ticking things off is what the day view is for,
- * one tap away through any block.
+ * Everything about it is compressed on purpose. Times only on a block an
+ * hour or longer, and only while the block is tall enough for a second line
+ * - the same rule the day's grid keeps, CONVENTIONS section 4; the axis on
+ * the left says when for the rest, and a time printed on a 14px block is
+ * two illegible numbers competing with the only word that matters. No
+ * checkboxes - a week is for arranging, and ticking things off is what the
+ * day view is for, one tap away through any block.
  */
 
 export interface WeekColumnProps {
@@ -256,6 +259,14 @@ export function WeekColumn({
               onPointerDown={e => onBlockPointerDown(block, e)}
             >
               <span className="week-block-title">{block.task.title}</span>
+              {/* Hidden again by the stylesheet while the block is under two
+                  lines tall - a container query on the block's own height,
+                  which is the one thing this component cannot know. */}
+              {block.endMinutes - block.startMinutes >= 60 && (
+                <span className="week-block-time">
+                  {formatClock(block.startMinutes)} - {formatClock(block.endMinutes)}
+                </span>
+              )}
             </button>
           )
         })}

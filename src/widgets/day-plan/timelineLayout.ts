@@ -501,15 +501,28 @@ function packCluster(blocks: TimelineAnchorBlock[], from: number, to: number): v
  *
  * The fix is a piecewise-linear map instead of a straight proportional one:
  * clock time is split into the same segments the grid actually draws -
- * an anchor cluster (touching or overlapping anchors, packed into columns
- * but sharing one vertical extent), the real gap between one cluster and
- * the next, and the one-hour buffer on each end - and every segment is
- * given at least its own pixel floor before segments are stacked in order.
- * A segment that already earns more than its floor from real proportional
- * time is left alone; one that does not is stretched to the floor, and the
- * stretch pushes every later segment down by exactly the same amount. The
- * result reads as an honest hour grid everywhere nothing is too short to
- * draw, and as a grid that made deliberate room everywhere something was.
+ * the stretches inside an anchor cluster (touching or overlapping anchors,
+ * packed into columns but sharing one vertical extent), the real gap
+ * between one cluster and the next, and the one-hour buffer on each end -
+ * and every segment is given at least its own pixel floor before segments
+ * are stacked in order. A segment that already earns more than its floor
+ * from real proportional time is left alone; one that does not is
+ * stretched to the floor, and the stretch pushes every later segment down
+ * by exactly the same amount. The result reads as an honest hour grid
+ * everywhere nothing is too short to draw, and as a grid that made
+ * deliberate room everywhere something was.
+ *
+ * Inside a cluster the floor is kept per block, not per cluster. A cluster
+ * used to be one segment whose floor was its tallest column's stacked
+ * total, mapped proportionally inside - so the fifteen-minute standup that
+ * opens two hours of deep work got fifteen of a hundred and thirty-five
+ * minutes of the cluster's 64px, seven pixels, and a title clipped to
+ * nothing. `clusterSegments` cuts a cluster at every block edge and gives
+ * each stretch the largest share any block spanning it needs of its own
+ * floor, so a block's stretches add up to at least its floor whatever
+ * shares a column or a minute with it, and the block after it starts below
+ * that. Where nothing is short the shares are below the proportional
+ * height and the map is the plain proportional one.
  *
  * `gapFloorPx` is passed in rather than hardcoded because a day with any
  * unsized anchor never draws a gap object at all (its real end is unknown,
@@ -529,19 +542,35 @@ export function computeVerticalLayout(
     unsizedAnchorFloorPx: number
     /** Floor for the real, interior gap between two clusters. 0 when the day draws no gaps at all. */
     gapFloorPx: number
+    /**
+     * The floor for a sized anchor at least `longAnchorMinutes` long - two
+     * lines, because such a block carries its times under its title
+     * (CONVENTIONS section 4). Both or neither: absent, every sized anchor
+     * has the one floor above.
+     */
+    longAnchorFloorPx?: number
+    longAnchorMinutes?: number
   },
 ): { totalHeightPx: number; topPx: (minutes: number) => number; minutesAt: (px: number) => number } {
-  const clusters = buildAnchorClusters(anchors, opts.sizedAnchorFloorPx, opts.unsizedAnchorFloorPx)
+  const clusters = buildAnchorClusters(anchors)
+  const floorFor = (block: TimelineAnchorBlock): number => {
+    if (!block.sized) return opts.unsizedAnchorFloorPx
+    if (opts.longAnchorFloorPx !== undefined && opts.longAnchorMinutes !== undefined && block.minutes! >= opts.longAnchorMinutes) {
+      return opts.longAnchorFloorPx
+    }
+    return opts.sizedAnchorFloorPx
+  }
+  const within = (cluster: AnchorCluster) => clusterSegments(cluster, floorFor)
 
   const segments: Array<{ start: number; end: number; floorPx: number }> = []
   if (clusters.length === 0) {
     segments.push({ start: window.start, end: window.end, floorPx: 0 })
   } else {
     segments.push({ start: window.start, end: clusters[0].start, floorPx: 0 })
-    segments.push(clusters[0])
+    segments.push(...within(clusters[0]))
     for (let i = 1; i < clusters.length; i++) {
       segments.push({ start: clusters[i - 1].end, end: clusters[i].start, floorPx: opts.gapFloorPx })
-      segments.push(clusters[i])
+      segments.push(...within(clusters[i]))
     }
     segments.push({ start: clusters[clusters.length - 1].end, end: window.end, floorPx: 0 })
   }
@@ -668,6 +697,9 @@ export interface VerticalFloors {
   sizedAnchorFloorPx: number
   unsizedAnchorFloorPx: number
   gapFloorPx: number
+  /** See `computeVerticalLayout`: the two-line floor for a block that carries its times. */
+  longAnchorFloorPx?: number
+  longAnchorMinutes?: number
 }
 
 /**
@@ -778,40 +810,76 @@ export function legibleHourLabels(
   return kept
 }
 
+interface AnchorCluster {
+  start: number
+  end: number
+  members: TimelineAnchorBlock[]
+}
+
 /**
  * Anchors that touch or overlap in their drawn interval (see
  * `drawnInterval`) share one vertical extent on the grid regardless of how
- * many side-by-side columns they end up packed into.
- *
- * **A cluster's floor is the tallest of its columns, not the tallest of its
- * blocks.** Two blocks that do not overlap each other share a column, and
- * they are stacked, so that column needs both their floors end to end. The
- * older rule - the largest floor any one member needs - reserved 32px for a
- * column holding two 32px blocks, and the second was drawn eleven pixels
- * below the first's top: a full day at 1920x1080 had "Reply to the
- * landlord" sliced across the middle by "Wash the car". The claim in
- * `TimelineGrid` that a member's own minimum "can never push into whatever
- * comes after the cluster" was true of the cluster and false of a column
- * inside it.
+ * many side-by-side columns they end up packed into. The extent is what
+ * `computeVerticalLayout` puts a gap on either side of; how the minutes
+ * inside it earn their pixels is `clusterSegments`.
  */
-function buildAnchorClusters(
-  anchors: TimelineAnchorBlock[],
-  sizedFloorPx: number,
-  unsizedFloorPx: number,
-): Array<{ start: number; end: number; floorPx: number }> {
-  const clusters: Array<{ start: number; end: number; floorPx: number; perColumn: Map<number, number> }> = []
+function buildAnchorClusters(anchors: TimelineAnchorBlock[]): AnchorCluster[] {
+  const clusters: AnchorCluster[] = []
   for (const block of anchors) {
     const interval = drawnInterval(block)
-    const floorPx = block.sized ? sizedFloorPx : unsizedFloorPx
     const last = clusters[clusters.length - 1]
     if (last && interval.start <= last.end) {
       last.end = Math.max(last.end, interval.end)
-      last.perColumn.set(block.column, (last.perColumn.get(block.column) ?? 0) + floorPx)
+      last.members.push(block)
     } else {
-      clusters.push({ start: interval.start, end: interval.end, floorPx, perColumn: new Map([[block.column, floorPx]]) })
+      clusters.push({ start: interval.start, end: interval.end, members: [block] })
     }
   }
-  return clusters.map(c => ({ start: c.start, end: c.end, floorPx: Math.max(...c.perColumn.values()) }))
+  return clusters
+}
+
+/**
+ * The stretches inside one cluster, cut at every block's edges, each with
+ * the floor it owes.
+ *
+ * **Every block keeps its own floor, whatever it shares a minute with.** A
+ * stretch owes the largest share any block spanning it needs of that
+ * block's floor - the floor spread over the block's minutes, so a block cut
+ * into three stretches by its neighbours' edges gets a third of its floor
+ * from each and the whole of it across the three. Two blocks stacked in one
+ * column occupy different stretches, so the column gets both floors end to
+ * end, which is what the older per-column rule was for; a short block
+ * beside a long one in another column gets its floor from the stretch it
+ * alone occupies and the stretches it shares, which the older rule - one
+ * floor for the cluster, spread proportionally inside - never gave it. A
+ * fifteen-minute standup opening two hours of deep work was drawn seven
+ * pixels tall by that rule, on the owner's own morning.
+ */
+function clusterSegments(
+  cluster: AnchorCluster,
+  floorFor: (block: TimelineAnchorBlock) => number,
+): Array<{ start: number; end: number; floorPx: number }> {
+  const edges = new Set<number>()
+  const spans = cluster.members.map(block => {
+    const interval = drawnInterval(block)
+    edges.add(interval.start)
+    edges.add(interval.end)
+    return { ...interval, floorPx: floorFor(block) }
+  })
+  const points = [...edges].sort((a, b) => a - b)
+  const segments: Array<{ start: number; end: number; floorPx: number }> = []
+  for (let i = 1; i < points.length; i++) {
+    const start = points[i - 1]
+    const end = points[i]
+    let floorPx = 0
+    for (const span of spans) {
+      const length = span.end - span.start
+      if (length <= 0 || span.start >= end || span.end <= start) continue
+      floorPx = Math.max(floorPx, (span.floorPx * (end - start)) / length)
+    }
+    segments.push({ start, end, floorPx })
+  }
+  return segments
 }
 
 /** Every whole hour mark that falls within the window, for the hour gridlines. */
@@ -862,6 +930,55 @@ export function formatClock(minutes: number): string {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/**
+ * The height of a gap's label box as the stylesheet draws it: an 11px line
+ * at 1.4 with 2px above and below - `.timeline-gap-label`. Kept here
+ * because `gapLabelPlacement` reasons about it, and a label the stylesheet
+ * grows without this number following is a label the now line can cross
+ * again.
+ */
+export const GAP_LABEL_HEIGHT_PX = 19
+
+/**
+ * How far the now line has to be from a gap label's edge for the label to
+ * stay where it is. Twelve pixels: a line closer than that reads as
+ * underlining or striking the words, whichever side it lands on.
+ */
+export const NOW_LINE_CLEARANCE_PX = 12
+
+/**
+ * Where a gap's label sits so the now line never runs through it.
+ *
+ * The line runs the width of the grid at whatever minute it is, and a gap's
+ * label sat at the gap's middle whatever that minute was - at three in the
+ * afternoon the owner read "45 min free" with the line through it. Given
+ * the gap's box and the line's own position, this answers with the label at
+ * the gap's middle when the line is clear of it there, at whichever end of
+ * the gap is further from the line when it is not, and with no label at all
+ * when the gap is too short to move it clear: a label under a line is worse
+ * than no label, and the gap's own hover and button say the same thing.
+ * `nowTop` is null on a day that is not today, which is every day but one.
+ */
+export function gapLabelPlacement(
+  topPx: number,
+  heightPx: number,
+  nowTop: number | null,
+): 'middle' | 'high' | 'low' | null {
+  if (nowTop === null) return 'middle'
+  const half = GAP_LABEL_HEIGHT_PX / 2
+  const clear = (centre: number) => Math.abs(nowTop - centre) >= half + NOW_LINE_CLEARANCE_PX
+  const middle = topPx + heightPx / 2
+  if (clear(middle)) return 'middle'
+  const high = topPx + half
+  const low = topPx + heightPx - half
+  const highClear = clear(high)
+  const lowClear = clear(low)
+  if (highClear && lowClear) return Math.abs(nowTop - high) >= Math.abs(nowTop - low) ? 'high' : 'low'
+  if (highClear) return 'high'
+  if (lowClear) return 'low'
+  return null
 }
 
 /**

@@ -41,14 +41,16 @@ function digest(tasks: Task[]) {
 // for `formatDayScore`; the digest computed its own and walked around it,
 // which is what this test is for.
 
-test('the ring is a shape and carries no number of its own', () => {
+test('the ring carries the day score\'s own fraction, and no number of its own', () => {
   const { container } = digest([
     task({ time: '09:00', minutes: 60, done: true }),
     ...Array.from({ length: 8 }, (_, i) => task({ time: `1${i}:00`, minutes: 30 })),
   ])
   const ring = container.querySelector('.digest-ring')
   expect(ring).not.toBeNull()
-  expect(ring!.textContent?.trim()).toBe('')
+  // The same "1/9" the header states - a fraction, which is a count of two
+  // things, and never the eleven that a percentage would make of it.
+  expect(ring!.textContent?.trim()).toBe('1/9')
 })
 
 test('nothing in the digest is a percentage, written or implied', () => {

@@ -150,6 +150,42 @@ Everything else scrolls vertically and that is fine. **Nothing scrolls
 horizontally, ever.** Check with
 `document.documentElement.scrollWidth > clientWidth`.
 
+### A block shows its times when it is an hour or longer
+
+One rule for every grid that draws a task as a block. **An hour or longer,
+the block carries its start and its end under its title; shorter, the
+title alone.** An hour is where the start and the end stop being something
+the block's own height already says: a fifteen-minute block reads as a
+moment and its minutes are one glance away on the card, a two-hour block is
+a stretch of the day and which two hours matters.
+
+- **On Today** the rule is exact. A sized block an hour or longer has a
+  two-line floor (`TWO_LINES_PX` in `TimelineGrid.tsx`, 48px, the padded
+  title and time line measured rather than guessed), so however dense the
+  day is drawn the second line has its room. It used to go by drawn height
+  alone, which showed the times on whatever happened to be tall at today's
+  density and not on the same block tomorrow - and at 41px it showed half
+  a line.
+- **On the week** a block's height is its duration and nothing may floor
+  it, so the same rule has one clause: the times are there on an hour or
+  longer, and hidden by a container query while the block is under two
+  lines tall. A week at 1366x768 is mostly titles; at 1920x1080 the long
+  blocks say their hours.
+
+Never a time on a block that has not got the room for it. Half a line of
+digits under a title is text cut off, which is a defect anywhere in the
+app.
+
+### Text is never clipped, and a control is never shorter than its label
+
+Anywhere. Not a button whose word ends in "wee", not a chip whose count
+wraps under it, not a block whose title runs past its edge. Every control
+is as wide as its longest word in both the languages the app speaks, or
+its text is shortened on purpose - "Week default" rather than "Same as the
+week" - or the word goes and a tooltip carries it. The sweep's "text cut
+off" shape holds this on every screen it opens; the owner's screenshots
+hold it on the ones it does not.
+
 ### One notice above the day
 
 Three things can appear between the day's header and the day: the evening

@@ -516,6 +516,31 @@ test('isWide with a small window.innerHeight never draws thinner than isWide=fal
   expect(wideHeight).toBe(layersHeightPx(narrow.container))
 })
 
+/**
+ * A block an hour or longer shows its times, and a shorter one its title
+ * alone - CONVENTIONS section 4. The times are a second line, so the long
+ * block has a two-line floor and keeps them however dense the day is drawn;
+ * the short one never had them, whatever room it happens to get.
+ */
+test('a block an hour or longer keeps its times however dense the day is drawn, and a shorter one shows its title alone', () => {
+  // An hour of deep work and seven hours of half-hour calls, in a window
+  // far too short for any of it: the fit draws everything at its floor.
+  const tasks = [
+    anchor('Deep work', '08:00', 60),
+    ...Array.from({ length: 14 }, (_, i) =>
+      anchor(`Call ${i}`, `${String(9 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`, 30),
+    ),
+  ]
+  setInnerHeight(300)
+  const { container } = render(<TimelineGrid tasks={tasks} isWide />)
+  const blocks = [...container.querySelectorAll('.timeline-anchor')] as HTMLElement[]
+  const deep = blocks.find(b => b.textContent?.startsWith('Deep work'))!
+  expect(deep.querySelector('.timeline-anchor-time')?.textContent).toBe('08:00 - 09:00')
+  expect(parseFloat(deep.style.minHeight)).toBeGreaterThanOrEqual(48)
+  const call = blocks.find(b => b.textContent?.startsWith('Call 0'))!
+  expect(call.querySelector('.timeline-anchor-time')).toBeNull()
+})
+
 test('a short gap still floors to the 44px touch target at isWide, exactly as it does at any width', () => {
   const tasks = [
     anchor('Commute', '06:30', 30),

@@ -100,6 +100,11 @@ export function DayHeader({
 
   return (
     <div className="day-header">
+      {/* The arrows bracket the day's name and nothing else. They used to
+          bracket the template chip and the Replan link as well, so the
+          right arrow sat half a screen from the left one with a pill and a
+          word between them, and the row read as five things at one weight.
+          Which day is one group; what to do about it is the next. */}
       <div className="day-nav">
         <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
           &larr;
@@ -107,6 +112,20 @@ export function DayHeader({
         <div className="day-title">
           <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
           {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+        </div>
+        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
+          &rarr;
+        </button>
+      </div>
+
+      {/* What the day came from, and the door for when it breaks. The door
+          is a button of the arrows' own height and shape rather than an
+          underlined word: it is in the arrows' row, and a control in a row
+          of controls drawn as running text was the thing that read as an
+          afterthought. Still one door, still quiet - the same surface as the
+          arrows, none of the accent. */}
+      {(template || replan) && (
+        <div className="day-tools">
           {template && (
             <span
               className="day-template"
@@ -116,34 +135,25 @@ export function DayHeader({
               {template.name}
             </span>
           )}
-          {/* Under the title rather than beside the arrows: a fourth thing
-              in the nav row would have to be as loud as the arrows, and
-              this is a door for a bad moment, not a control for every one. */}
-          {replan && (
-            <div className="day-replan">
-              {!replan.isToday ? (
-                <button type="button" className="link-button" onClick={() => replan.onOpen('interrupt')}>
-                  Something came up
+          {replan &&
+            (!replan.isToday ? (
+              <button type="button" className="day-replan-button" onClick={() => replan.onOpen('interrupt')}>
+                Something came up
+              </button>
+            ) : replan.away ? (
+              <>
+                <span className="day-replan-away">Away since {replan.away}</span>
+                <button type="button" className="day-replan-button" onClick={() => replan.onOpen('back')}>
+                  I'm back
                 </button>
-              ) : replan.away ? (
-                <>
-                  <span className="day-replan-away">Away since {replan.away}</span>
-                  <button type="button" className="link-button" onClick={() => replan.onOpen('back')}>
-                    I'm back
-                  </button>
-                </>
-              ) : (
-                <button type="button" className="link-button" onClick={() => replan.onOpen('menu')}>
-                  Replan
-                </button>
-              )}
-            </div>
-          )}
+              </>
+            ) : (
+              <button type="button" className="day-replan-button" onClick={() => replan.onOpen('menu')}>
+                Replan
+              </button>
+            ))}
         </div>
-        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
-          &rarr;
-        </button>
-      </div>
+      )}
 
       {/* Which hours this particular day is measured against. Hidden entirely
           while there is only one schedule, which is the case for nearly
@@ -177,6 +187,16 @@ export function DayHeader({
           a day with a genuine hole in it says nothing here rather than
           inventing a "nothing on" state, since the empty timeline beside it
           already says that better than a sentence would. */}
+      {/* The clock and the day's progress are one group, the status: what
+          minute it is, what is running, and how far the day has come. One
+          group so the header is three things - the day, its status, the
+          view - at three weights, rather than a row of parts with the same
+          gap between each; and the one that gives when the row is short,
+          so the running task's title ellipsises before the view toggle is
+          pushed to a second line. Below the wide breakpoint it is no box at
+          all (display: contents), and the clock and the bar stack as they
+          always did. */}
+      <div className="day-status">
       {isToday && (
         <div className="day-now">
           <span className="day-now-clock">{formatClock(nowMinutes)}</span>
@@ -217,16 +237,6 @@ export function DayHeader({
         </div>
       )}
 
-      {/* The one line the whole app is for - see NorthLine. Inside the header
-          rather than above the day, so it reads as part of the masthead rather
-          than as a notice about today, and so nothing below it moves when it
-          opens. */}
-      <NorthLine date={date} onOpenNorth={onOpenNorth} />
-
-      {/* The morning line, under the one the app wrote: what this day is for,
-          in the person's own words, or nothing. See JournalLine. */}
-      <JournalLine date={date} />
-
       {/* The day's progress, promoted out of the title block it used to sit
           inside as a small trailing fraction. It is the one number worth
           reading first thing on opening the app, and a bar says "most of the
@@ -260,6 +270,17 @@ export function DayHeader({
           )}
         </div>
       )}
+      </div>
+
+      {/* The one line the whole app is for - see NorthLine. Inside the header
+          rather than above the day, so it reads as part of the masthead rather
+          than as a notice about today, and so nothing below it moves when it
+          opens. */}
+      <NorthLine date={date} onOpenNorth={onOpenNorth} />
+
+      {/* The morning line, under the one the app wrote: what this day is for,
+          in the person's own words, or nothing. See JournalLine. */}
+      <JournalLine date={date} />
 
       {/* The "switch fully" request - docs/LAYOUT-WIDE.md section 3.2. A width
           redistribution, not a navigation event: nothing about the underlying

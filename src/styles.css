@@ -1249,6 +1249,41 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .day-title h2 { margin: 0; }
 .day-subtitle { color: var(--muted); font-size: var(--t-sm); }
 
+/* The template chip and the door out of a broken day. A row of their own
+   under the day's name on a phone, where the header is a stack; beside the
+   arrows at the wide breakpoint, where it is a row. */
+.day-tools {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: calc(var(--s2) * -1) 0 var(--s4);
+}
+
+/* The arrows' own surface and edge, none of the accent: a door for a bad
+   moment, drawn as a control rather than as a word in running text. */
+.day-replan-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.day-replan-button:hover { border-color: var(--muted); }
+
+.day-replan-away { color: var(--muted); font-size: var(--t-sm); }
+
+/* No box of its own below the wide breakpoint: the clock and the bar stack
+   in the header's own flow, as they always did. */
+.day-status { display: contents; }
+
 /* The progress meter beside the date - a bar and the same plain fraction
    that used to trail the title. Full width on a phone, where it sits on its
    own line under the day-nav row; a flexible middle column at the wide
@@ -1394,7 +1429,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  margin-left: var(--s2);
   padding: 2px var(--s3);
   border: 1px solid color-mix(in srgb, var(--chip, var(--accent)) 45%, var(--border));
   border-radius: var(--r-pill);
@@ -1470,8 +1504,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
      window opens exactly on the hour, the common case - is never cut by
      this container's own top edge. Confirmed against a real rendered
      11px label, not assumed from the arithmetic alone - see
-     docs/RESEARCH-TIMELINE-UI.md section 5 point 1. */
+     docs/RESEARCH-TIMELINE-UI.md section 5 point 1. The same below, for
+     the last mark's label, which hung 7px past the window's end and had
+     its lower half cut by this container's edge; the fit at the wide
+     breakpoint takes both paddings off the room it aims at, see
+     GRID_SCROLL_PADDING_PX in TimelineGrid.tsx. */
   padding-top: var(--s2);
+  padding-bottom: var(--s2);
 }
 
 /* The stacking context both the decorative grid and the real gap buttons
@@ -1662,12 +1701,40 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
    announce it. Centred and at --t-sm it was the loudest small text in the
    panel, which put the emphasis of the whole grid on the parts of the day with
    nothing in them. */
+/* The space between two blocks, said as the space between: the words at
+   the gap's middle, in italic and the muted ink, with a faint rule out to
+   either side. The label used to sit at the left, in the block titles' own
+   column and a few pixels under the block above, and read as that block's
+   second line - "1h15 free" under Standup looked like what Standup was. A
+   divider cannot be mistaken for a title. The box is 19px: the 11px line
+   at 1.4 and 2px above and below, which is what GAP_LABEL_HEIGHT_PX in
+   timelineLayout.ts counts on when it moves the label off the now line. */
 .timeline-gap-label {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-right: var(--s3);
+  padding: 2px 0;
   color: var(--muted);
   font-size: var(--t-xs);
+  font-style: italic;
   font-variant-numeric: tabular-nums;
-  padding: var(--s1) var(--s2);
+  line-height: 1.4;
+  white-space: nowrap;
 }
+
+.timeline-gap-label:not(.timeline-gap-empty)::before,
+.timeline-gap-label:not(.timeline-gap-empty)::after {
+  content: '';
+  flex: 1 1 auto;
+  border-top: 1px dashed color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+/* Moved off the now line - see gapLabelPlacement in timelineLayout.ts. */
+.timeline-gap.is-label-high { align-items: flex-start; }
+.timeline-gap.is-label-low { align-items: flex-end; }
 
 /* An anchor: real position, real height, the day-type colour it came from.
    The color itself is set inline per-anchor from the day's template;
@@ -2971,12 +3038,16 @@ select:focus {
    so it costs no layout and the row does not know it is there - and the task
    pane's own `overflow-y: auto` makes `overflow-x` auto with it, which
    clipped the left edge of the first swatch's ring against the column. */
+/* No side padding: the first dot starts where the row above it starts, so
+   the capture segment, the time control, the dots and the cards under
+   them share one left edge. The chosen dot's ring reaches 4px past it,
+   which is a ring's business and not the row's. */
 .category-picker {
   display: flex;
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
-  padding: 4px;
+  padding: 4px 0;
 }
 
 /* Unselected swatches sit back at a little over half strength, so the chosen
@@ -5709,7 +5780,12 @@ button.danger:focus-visible {
      change that makes the arithmetic true. */
   .day-view {
     display: grid;
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 1fr) minmax(320px, 380px);
+    /* The day's column stops at 760px and the tasks take what is left. It
+       was the day that took the leftover, which at 2000px drew a block
+       900px wide with 13px of title in its corner - a slab, not a plan.
+       Below about 1500px of window nothing changes: the day still gets
+       everything after the tasks' 320px. */
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 760px) minmax(320px, 1fr);
     grid-template-areas:
       "rail header header"
       "rail cap    cap"
@@ -5815,7 +5891,7 @@ button.danger:focus-visible {
      column landed in a fourth column nobody had declared. One name per
      column, so two rules that both collapse this grid cannot disagree. */
   .day-view.focus-calendar {
-    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
     grid-template-areas:
       "rail header"
       "rail cap"
@@ -5823,7 +5899,7 @@ button.danger:focus-visible {
   }
 
   .day-view.focus-tasks {
-    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
     grid-template-areas:
       "rail header"
       "rail cap"
@@ -5837,12 +5913,20 @@ button.danger:focus-visible {
      you are, and which panes are showing. Everything in it is a fixed height
      except the progress bar, which takes the slack - so the row's height
      does not change as the day fills up. */
+  /* One row, three things at three weights: the day (the arrows, its
+     name, its chip and its door), its status (the clock and how far it has
+     come), and the view toggle on the far right. One gap between groups
+     and a smaller one inside them; the status is the part that gives, so
+     the running title ellipsises before the toggle is pushed onto a second
+     line. It wraps only when even that is not enough, and then the toggle
+     alone goes down, still on the right. It used to be six parts at one
+     gap, with the Replan link and the chip inside the arrows' bracket. */
   .day-header {
     grid-area: header;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 12px 20px;
+    gap: var(--s2) var(--s5);
   }
 
   .day-header .day-nav {
@@ -5858,11 +5942,30 @@ button.danger:focus-visible {
     text-align: left;
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
-    gap: 2px 10px;
+    flex-wrap: nowrap;
+    gap: 2px var(--s2);
+    white-space: nowrap;
   }
 
   .day-header .day-nav > button { width: 36px; height: 36px; min-height: 36px; }
+
+  .day-header .day-tools {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  /* The arrows' own height, so the row is one height end to end. */
+  .day-header .day-replan-button { min-height: 36px; }
+
+  .day-header .day-status {
+    display: flex;
+    align-items: center;
+    gap: var(--s4);
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .day-header .day-now { flex: 0 1 auto; }
 
   /* Hugs what is beside it rather than filling the slack. Given the row's
      spare width it stretched to 420px and floated between the now strip and
@@ -5881,7 +5984,7 @@ button.danger:focus-visible {
      the solid accent .segmented uses everywhere else, and shorter, so the
      header stays one thin line. Scoped to this one control; the same
      component in Settings and Templates is unchanged. */
-  .day-layout-focus button { padding: 6px 12px; min-height: 32px; font-size: var(--t-sm); }
+  .day-layout-focus button { padding: 6px 12px; min-height: 34px; font-size: var(--t-sm); }
 
   .day-layout-focus button.active {
     background: color-mix(in srgb, var(--accent) 18%, transparent);
@@ -6042,11 +6145,53 @@ button.danger:focus-visible {
      invitation gets the width - the same layout the Tasks focus already
      produces, applied automatically for the one state that always needs it. */
   .day-view:has(.first-run) {
-    grid-template-columns: minmax(200px, 240px) 1fr;
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
     grid-template-areas:
       "rail header"
       "rail cap"
       "rail tasks";
+  }
+
+  /* From 1500px the header spans the rail's column as well: a masthead
+     runs the width of the page, and the mini calendar sits under it.
+     Beside the rail it had 1304px at 2000, which is less than the day's
+     name, its chip and its door, the clock with the running task, the bar
+     and the view toggle need in one row - and a flex row wraps on content
+     width before anything in it is allowed to shrink, so the toggle went
+     to a second line on the owner's own screen. Not below 1500: the rail
+     needs the height the header would take from it, and at 1366x768 the
+     digest ended 120px under the window's edge. There the toggle wraps,
+     alone, still on the right, which is the lesser thing. */
+  @media (min-width: 1500px) {
+    .day-view {
+      grid-template-areas:
+        "header header header"
+        "rail   cap    cap"
+        "rail   day    tasks";
+    }
+
+    .day-view:has(.day-notices:not(:empty)) {
+      grid-template-areas:
+        "header header   header"
+        "rail   notices  notices"
+        "rail   cap      cap"
+        "rail   day      tasks";
+    }
+
+    .day-view.focus-calendar {
+      grid-template-areas:
+        "header header"
+        "rail   cap"
+        "rail   day";
+    }
+
+    .day-view.focus-tasks,
+    .day-view:has(.first-run) {
+      grid-template-areas:
+        "header header"
+        "rail   cap"
+        "rail   tasks";
+    }
   }
 
   .day-view:has(.first-run) .day-pane { display: none; }
@@ -6057,6 +6202,11 @@ button.danger:focus-visible {
      screen as tasks are finished. */
   .task-pane .rollover,
   .task-pane .rollover-note { flex: 0 0 auto; margin-top: auto; }
+
+  /* Under the button rather than centred under the column, and with air
+     below it: it sat on the pane's own bottom edge, centred under a
+     left-aligned button. */
+  .task-pane .rollover-note { padding: var(--s2) var(--s1); text-align: left; }
 
   /* The Done fold gets its own bounded scroll for the same reason, so
      opening it on a day with twenty finished tasks pushes nothing off the
@@ -6197,23 +6347,43 @@ button.danger:focus-visible {
 /* The ring and the three figures, side by side. One shape and three numbers,
    all small - the whole block is meant to be taken in without reading, which
    is why it is a row and not a list. */
+/* One card: the ring with the day's fraction in it and the four figures
+   beside it, on the same surface with the same edge as Up next above it.
+   The ring used to float alone at the left of four bare rows with a rule
+   above the lot and nothing binding them, and read as a gauge whose needle
+   had come off. */
 .digest-stats {
   display: flex;
   align-items: center;
-  gap: var(--s3);
+  gap: var(--s4);
   margin-top: var(--s4);
-  padding-top: var(--s4);
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e1);
 }
 
 .digest-ring {
   position: relative;
-  width: 56px;
-  height: 56px;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
 }
 
-.digest-ring svg { width: 100%; height: 100%; display: block; }
+.digest-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* The score's own fraction, the one the header states - see DayDigest. */
+.digest-ring-value {
+  position: relative;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
 
 .digest-ring-track {
   fill: none;
@@ -6235,20 +6405,20 @@ button.danger:focus-visible {
 
 
 
+/* Two columns rather than four flex rows: every label starts on one edge
+   and every figure ends on the other, whatever the widest of each is. */
 .digest-figures {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: var(--s3);
+  row-gap: var(--s1);
+  flex: 1 1 auto;
   margin: 0;
   min-width: 0;
 }
 
-.digest-figures > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s2);
-}
+.digest-figures > div { display: contents; }
 
 .digest-figures dt {
   font-size: var(--t-xs);
@@ -6262,6 +6432,7 @@ button.danger:focus-visible {
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   color: var(--text);
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -7194,6 +7365,7 @@ button.danger:focus-visible {
   justify-content: center;
   padding: var(--s4);
   color: var(--muted);
+  font-style: normal;
   text-align: center;
 }
 
@@ -9221,6 +9393,13 @@ main:has(.week) > .calendar {
   font-size: var(--t-xs);
   line-height: 1.15;
   touch-action: none;
+  /* Its own size container, so the time line below can go by the block's
+     drawn height - the one thing the component cannot know. Containment
+     makes a stacking context, and the z-index says where it sits, the
+     rule stacking.test.ts keeps for every contained rule: under the now
+     line at 5 and the external layer at 3, in DOM order among blocks. */
+  container-type: size;
+  z-index: 1;
 }
 
 .week-block:hover { background: color-mix(in srgb, var(--block, var(--accent)) 46%, var(--surface)); }
@@ -9241,6 +9420,23 @@ main:has(.week) > .calendar {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The times, on a block an hour or longer - the day grid's rule,
+   CONVENTIONS section 4 - and only while the block is tall enough for the
+   second line: two 11px lines at 1.15 and the 2px of padding are 28px, so
+   under that the line goes and the block is a title, as every block was. */
+.week-block-time {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+@container (max-height: 27px) {
+  .week-block-time { display: none; }
 }
 
 .week-col-foot {
@@ -10385,8 +10581,6 @@ main:has(.week) > .calendar {
 .replan-foot-note { color: var(--muted); font-size: var(--t-sm); margin-left: auto; }
 
 /* The door in the day header: a quiet text button under the title. */
-.day-replan { display: flex; align-items: center; justify-content: center; gap: var(--s2); font-size: var(--t-sm); }
-.day-replan-away { color: var(--muted); }
 
 @media (max-width: 599px) {
   .replan-scrim { align-items: flex-end; padding: 0; }

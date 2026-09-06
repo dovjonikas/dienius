@@ -3,7 +3,7 @@ import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
 import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
-import type { DayScore } from './score'
+import { formatDayScore, type DayScore } from './score'
 
 /** Radius of the progress ring's circle, in the SVG's own coordinates. */
 const RING_RADIUS = 26
@@ -90,17 +90,21 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
 
       {score.planned && (
         <div className="digest-stats">
-          {/* The same fraction the header states in digits, as a shape. Two
-              readings of one number is not repetition here: the header answers
-              "how many", this answers "how far", and only one of those can be
-              taken in without counting.
-              A shape and nothing else. It carried `Math.round(fraction * 100)`
-              in its middle until v2.0 - a percentage with the sign taken off,
-              which is not less of a percentage, and this app's day score does
-              not do percentages (STATE section 2, and DECISIONS on why a
-              number that goes up is a report card). It also said nothing the
-              "Done 1 of 9" immediately beside it did not already say, in
-              words, correctly. */}
+          {/* The same fraction the header states in digits, as a shape with
+              the digits in it. Two readings of one number is not repetition
+              here: the header answers "how many", this answers "how far",
+              and only one of those can be taken in without counting.
+              The digits in the middle are the day score's own fraction, the
+              one the header shows - "2/9" - and never anything else. It
+              carried `Math.round(fraction * 100)` until v2.0, a percentage
+              with the sign taken off, which is not less of a percentage, and
+              this app's day score does not do percentages (STATE section 2,
+              and DECISIONS on why a number that goes up is a report card).
+              Then it carried nothing, and an empty ring a finger's width
+              from "Done 2 of 9" read as a gauge whose needle had come off.
+              The fraction is what the ring is a picture of, so it sits
+              inside it. Hidden from the reader that hears "2 of 9 done"
+              from the list beside it. */}
           <div className="digest-ring" aria-hidden="true">
             <svg viewBox="0 0 64 64">
               <circle className="digest-ring-track" cx="32" cy="32" r={RING_RADIUS} />
@@ -114,7 +118,7 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
                 strokeDashoffset={RING_CIRCUMFERENCE * (1 - fraction)}
               />
             </svg>
-
+            <span className="digest-ring-value">{formatDayScore(score)}</span>
           </div>
           <dl className="digest-figures">
             <div>

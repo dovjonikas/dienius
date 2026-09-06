@@ -15,6 +15,7 @@ import {
   halfHourMarks,
   hourMarks,
   fitPxPerMinute,
+  gapLabelPlacement,
   legibleHourLabels,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
@@ -72,16 +73,44 @@ const MIN_ANCHOR_HEIGHT = 44
 const SIZED_MIN_HEIGHT_PX = 32
 
 /**
- * Below this drawn height, a card drops its time-range line and shows only
- * the title. A short anchor (a 20-minute call, say) still gets an honest,
- * proportionally small block - it just cannot fit two lines of readable
- * text inside that block without either the text spilling past the card's
- * own edge or the box growing past what its real duration earned. The
- * title is kept because it is what a person actually scans for; the exact
- * range is one glance away in the task list below, or a wider window away
- * in the block's own aria-hidden neighbours.
+ * A block shows its times when it is an hour or longer, and its title
+ * alone when it is shorter - the one rule for every grid in the app,
+ * CONVENTIONS section 4. An hour is where the start and the end stop being
+ * something the block's own height already says: a fifteen-minute block
+ * reads as a moment and its minutes are one glance away on the card, a
+ * two-hour block is a stretch of the day and which two hours matters. It
+ * used to be a matter of drawn height alone, which showed the times on
+ * whatever happened to be tall at today's density and not on the same
+ * block tomorrow.
+ */
+const TIMES_FROM_MINUTES = 60
+
+/**
+ * Below this drawn height a block has no room for a second line whatever
+ * its length, and shows its title alone: 6px of padding above and below, a
+ * 13px title at 1.4, the 2px gap and an 11px time line at 1.4 come to 48.
+ * It was 40, which is what a two-line block looked as if it needed and
+ * eight pixels less than it does, and "Deep work block" at 41px carried
+ * half a time line under its title for a version.
+ */
+const TWO_LINES_PX = 48
+
+/**
+ * Below this a block gives up its 6px of vertical padding for 3px - see
+ * `.timeline-anchor-compact`. One padded line of title needs about 30px; a
+ * block drawn shorter than this keeps the line and loses the air around it.
  */
 const COMPACT_HEIGHT_PX = 40
+
+/**
+ * The scroller's own vertical padding, 8px above the grid and 8px below it
+ * (`.timeline-grid-scroll`), so the first and the last hour labels - which
+ * hang 7px past the marks they belong to - are not cut by its edges. The
+ * fit at the wide breakpoint aims at the room measured for the wrapper,
+ * and the wrapper holds the padding as well as the grid: not taking it
+ * off left the 24:00 label with its lower half under the wrapper's edge.
+ */
+const GRID_SCROLL_PADDING_PX = 16
 
 /**
  * Below this a block cannot hold a padded line of title, so it draws the
@@ -467,6 +496,11 @@ export function TimelineGrid({
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
     unsizedAnchorFloorPx,
     gapFloorPx: unsizedAnchorCount > 0 ? 0 : gapMinHeightPx,
+    // A block an hour or longer carries its times, which is a second line,
+    // so it is floored at two lines: the rule is then about the block's
+    // length and never about the room the day happened to leave it.
+    longAnchorFloorPx: TWO_LINES_PX,
+    longAnchorMinutes: TIMES_FROM_MINUTES,
   }
 
   // At the wide breakpoint the day view is a fixed-height shell (see the
@@ -479,7 +513,14 @@ export function TimelineGrid({
   // isWide defaults to false and availableHeightPx is always null in that
   // case, so nothing here can change what the phone draws.
   const pxPerMinute = isWide
-    ? fitPxPerMinute(window, anchors, floors, availableHeightPx ?? 0, MAX_PX_PER_MINUTE_WIDE, PX_PER_MINUTE)
+    ? fitPxPerMinute(
+        window,
+        anchors,
+        floors,
+        Math.max(0, (availableHeightPx ?? 0) - GRID_SCROLL_PADDING_PX),
+        MAX_PX_PER_MINUTE_WIDE,
+        PX_PER_MINUTE,
+      )
     : PX_PER_MINUTE
 
   const vertical = computeVerticalLayout(window, anchors, { pxPerMinute, ...floors })
@@ -633,16 +674,21 @@ export function TimelineGrid({
                 .slice(index + 1)
                 .find(other => other.column === anchor.column)
               const room = nextInColumn ? vertical.topPx(nextInColumn.startMinutes) - top : Infinity
-              const minHeightPx = Math.min(anchor.sized ? SIZED_MIN_HEIGHT_PX : unsizedAnchorFloorPx, room)
-              // The cluster this anchor belongs to reserves at least
-              // minHeightPx per *column* (buildAnchorClusters), so a block
-              // raised to its minimum has room stacked for it whether it
-              // sits beside its cluster-mates or under them. Reserved per
-              // block rather than per cluster since v2.0: two blocks that
-              // do not overlap share a column, and one cluster-wide floor
-              // let the second draw over the first's title.
+              const long = anchor.sized && anchor.minutes! >= TIMES_FROM_MINUTES
+              const ownFloorPx = anchor.sized ? (long ? TWO_LINES_PX : SIZED_MIN_HEIGHT_PX) : unsizedAnchorFloorPx
+              const minHeightPx = Math.min(ownFloorPx, room)
+              // The vertical map reserves at least minHeightPx for every
+              // block across the stretch it occupies (clusterSegments in
+              // timelineLayout.ts), so the next block in this column starts
+              // at or below this one's floor and the cap above never bites.
+              // It stays as a belt: a block drawn over its neighbour is the
+              // one picture of a day this grid must never draw.
               const blockHeightPx = Math.max(Math.min(heightPx ?? minHeightPx, room), minHeightPx)
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
+              // The height guard is a belt: the floor above already gives a
+              // long block its two lines, and an unsized block its line only
+              // if the day happens to leave it the room.
+              const showsTimes = blockHeightPx >= TWO_LINES_PX && (!anchor.sized || long)
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
               // A category paints the block itself - a soft wash of its own
@@ -708,7 +754,7 @@ export function TimelineGrid({
                       onPointerDown={e => onAnchorResizePointerDown(anchor.id, e)}
                     />
                   )}
-                  {!compact && (
+                  {showsTimes && (
                     <span className="timeline-anchor-time">
                       {anchor.sized
                         ? formatAnchorTimeRange(anchor.startMinutes, anchor.minutes!)
@@ -747,13 +793,22 @@ export function TimelineGrid({
             {gaps.map(gap => {
               const top = vertical.topPx(gap.startMinutes)
               const bottom = vertical.topPx(gap.endMinutes)
+              const height = Math.max(bottom - top, gapMinHeightPx)
               const isOpen = openGapStart === gap.startMinutes
               const label = `${formatDuration(gap.minutes)} free, ${formatClock(gap.startMinutes)} to ${formatClock(gap.endMinutes)}. Tap to fill this time.`
+              // Where the words go so the now line never runs through them,
+              // or nowhere - see gapLabelPlacement. The button and its own
+              // accessible name are unchanged either way.
+              const labelled = isEmptyDay || gap.minutes >= MIN_LABELLED_GAP_MINUTES
+              const placement = labelled ? gapLabelPlacement(top, height, nowTop) : null
+              const gapClass = ['timeline-gap', placement === 'high' ? 'is-label-high' : '', placement === 'low' ? 'is-label-low' : '']
+                .filter(Boolean)
+                .join(' ')
               return (
                 <button
                   key={`gap-${gap.startMinutes}`}
                   type="button"
-                  className="timeline-gap"
+                  className={gapClass}
                   data-gap-start={gap.startMinutes}
                   aria-label={isEmptyDay ? 'Nothing placed yet. Tap to put a task on the clock.' : label}
                   aria-haspopup="dialog"
@@ -761,7 +816,7 @@ export function TimelineGrid({
                   onClick={() => setOpenGapStart(isOpen ? null : gap.startMinutes)}
                   style={{
                     top: `${top}px`,
-                    height: `${Math.max(bottom - top, gapMinHeightPx)}px`,
+                    height: `${height}px`,
                     left: `${GUTTER_PX}px`,
                     width: `calc(100% - ${GUTTER_PX}px)`,
                   }}
@@ -775,7 +830,7 @@ export function TimelineGrid({
                       Nothing placed yet - tap anywhere to put something here
                     </span>
                   ) : (
-                    gap.minutes >= MIN_LABELLED_GAP_MINUTES && (
+                    placement !== null && (
                       <span className="timeline-gap-label" aria-hidden="true">{formatDuration(gap.minutes)} free</span>
                     )
                   )}

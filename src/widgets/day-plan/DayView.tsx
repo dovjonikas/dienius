@@ -288,7 +288,7 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
                   together, which is exactly the sum that does not mean
                   anything. */}
               <p className="capacity-sleep">
-                Sleep {sleepHours.start}-{sleepHours.end} - {formatDuration(asleepMinutes)}, not free time.
+                Sleep {sleepHours.start}-{sleepHours.end} ({formatDuration(asleepMinutes)}) is not counted as free.
               </p>
             </div>
           )}

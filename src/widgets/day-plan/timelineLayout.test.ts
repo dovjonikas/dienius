@@ -3,6 +3,7 @@ import type { Task } from '../../lib/types'
 import { measureScaling } from '../../test/stress'
 import {
   chooseWidePxPerMinute,
+  gapLabelPlacement,
   computeTimelineLayout,
   computeVerticalLayout,
   currentMinutes,
@@ -551,14 +552,17 @@ test('sleepBands measures a night day against the night sleep setting, not the o
   // back further, to a full 90-minute band ending at the 18:00 boundary.
   expect(layout.sleepBands).toEqual([{ start: 16 * 60 + 30, end: 18 * 60 }])
 })
-// --- a cluster's floor is its tallest column ------------------------------
+// --- every block keeps its floor inside a cluster ---------------------------
 //
 // Two anchors that do not overlap each other share a column. A third that
 // overlaps both pulls all three into one cluster, and the cluster's own
 // floor used to be the largest floor any single member needed - one 32px
 // for a column holding two 32px blocks stacked. On a full day at 1920x1080
 // that drew "Wash the car" across the middle of "Reply to the landlord".
-// The floor is the tallest column's stacked total now.
+// Then the floor became the tallest column's stacked total, spread
+// proportionally inside the cluster, which gave the column its room and
+// still not each block its own. Now every block gets its floor across the
+// stretch it occupies.
 
 test('a column holding two stacked anchors gets room for both their floors', () => {
   // 14:45-15:10 and 15:15-16:15 do not overlap, so they share column 0;
@@ -578,17 +582,102 @@ test('a column holding two stacked anchors gets room for both their floors', () 
   expect(first.column).toBe(second.column)
 
   // The cluster spans 14:45 to 16:15 and its tallest column holds two 32px
-  // blocks, so the whole cluster is 64px rather than the 32 it used to be.
+  // blocks, so the whole cluster is at least 64px rather than the 32 it
+  // used to be.
   const clusterHeight = vertical.topPx(975) - vertical.topPx(885)
-  expect(clusterHeight).toBeCloseTo(64, 5)
+  expect(clusterHeight).toBeGreaterThanOrEqual(64)
 
-  // Inside a cluster the map is still proportional, so the first block's
-  // own share of that is thirty of ninety minutes - twenty-one pixels, not
-  // thirty-two. That is why `TimelineGrid` also caps a block's drawn height
-  // at the next one in its column: the room doubled, and a block that still
-  // cannot have its floor is drawn short rather than over its neighbour.
+  // And the first block has its whole floor before the second one starts.
+  // It used to get thirty of ninety minutes of the cluster's 64px - twenty-
+  // one pixels - because the map was proportional inside a cluster, and
+  // `TimelineGrid` capped it at the next block in its column and drew it
+  // short. The cap is still there as a belt; nothing reaches it now.
   const room = vertical.topPx(second.startMinutes) - vertical.topPx(first.startMinutes)
-  expect(room).toBeCloseTo((30 / 90) * 64, 5)
+  expect(room).toBeGreaterThanOrEqual(32)
+})
+
+/**
+ * A block keeps its floor inside a cluster, not only the cluster as a whole.
+ * A fifteen-minute standup followed straight away by two hours of deep work
+ * used to be one cluster mapped proportionally inside: the cluster had its
+ * 64px, and the standup got fifteen of a hundred and thirty-five minutes of
+ * it - seven pixels, and a title clipped to nothing. The owner's own morning
+ * has that standup. Every block now gets at least its floor across the
+ * stretch it occupies, and the block after it starts below that.
+ */
+test('a short anchor that touches a long one keeps its own floor inside the cluster', () => {
+  const layout = computeTimelineLayout([anchor('Standup', '09:00', 15), anchor('Deep work', '09:15', 120)])
+  const squeezed = { ...OPTS, pxPerMinute: 0.3, gapFloorPx: 0 }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, squeezed)
+  expect(vertical.topPx(555) - vertical.topPx(540)).toBeGreaterThanOrEqual(32)
+  // And the long one is still drawn at its real length, not squeezed to pay
+  // for the short one's floor: 120 minutes at 0.3 is 36px.
+  expect(vertical.topPx(675) - vertical.topPx(555)).toBeCloseTo(36, 5)
+})
+
+test('a short anchor beside an overlapping neighbour in another column keeps its floor too', () => {
+  // Landlord and Wash the car share column 0 and do not overlap; the quarter
+  // numbers overlap both from column 1. Landlord's twenty-five minutes come
+  // to 7.5px at this density, and it used to get exactly that.
+  const layout = computeTimelineLayout([
+    anchor('Landlord', '14:45', 25),
+    anchor('Quarter numbers', '15:00', 60),
+    anchor('Wash the car', '15:15', 60),
+  ])
+  const squeezed = { ...OPTS, pxPerMinute: 0.3 }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, squeezed)
+  const landlord = layout.anchors.find(a => a.id === 'Landlord')!
+  const wash = layout.anchors.find(a => a.id === 'Wash the car')!
+  // The shares add up to the floor exactly, give or take a floating hair.
+  expect(vertical.topPx(wash.startMinutes) - vertical.topPx(landlord.startMinutes)).toBeGreaterThan(32 - 1e-6)
+  expect(vertical.topPx(wash.endMinutes!) - vertical.topPx(wash.startMinutes)).toBeGreaterThan(32 - 1e-6)
+})
+
+// --- a gap's label and the now line ----------------------------------------
+//
+// The now line runs the width of the grid at whatever minute it is, and a
+// gap's label used to sit at the gap's middle whatever that minute was: at
+// three in the afternoon the owner read "45 min free" with the line through
+// it. The label moves off the line while the gap has room, and goes when it
+// does not - a label under a line is worse than no label.
+
+test('a gap keeps its label in the middle while the now line is elsewhere', () => {
+  expect(gapLabelPlacement(100, 60, null)).toBe('middle')
+  expect(gapLabelPlacement(100, 60, 300)).toBe('middle')
+})
+
+test('a gap moves its label off the now line, to whichever end is further from it', () => {
+  // A tall gap with the line through its middle: the label goes to an end.
+  expect(gapLabelPlacement(100, 90, 145)).toBe('high')
+  // The line a little below the middle: the top is the further end.
+  expect(gapLabelPlacement(100, 90, 160)).toBe('high')
+  // And a little above it: the bottom.
+  expect(gapLabelPlacement(100, 90, 130)).toBe('low')
+})
+
+test('a gap too short to move its label off the now line shows none', () => {
+  expect(gapLabelPlacement(100, 28, 114)).toBeNull()
+  expect(gapLabelPlacement(100, 28, 100)).toBeNull()
+})
+
+test('the clearance is twelve pixels either side of the label', () => {
+  // A 19px label centred at 130 spans 120.5 to 139.5; the line at 108 is
+  // 12.5 away from its edge and clear, at 109 it is not.
+  expect(gapLabelPlacement(100, 60, 108)).toBe('middle')
+  expect(gapLabelPlacement(100, 60, 109)).not.toBe('middle')
+})
+
+// A block an hour or longer carries its times - CONVENTIONS section 4 - and
+// the times are a second line, so such a block's floor is two lines. The
+// rule was a matter of drawn height alone for a version, which showed the
+// times on whatever happened to be tall at the day's density and hid them
+// on the same block the next day.
+test('an anchor an hour or longer earns the two-line floor, and a shorter one the one-line floor', () => {
+  const layout = computeTimelineLayout([anchor('Call', '09:00', 30), anchor('Deep work', '11:00', 60)])
+  const squeezed = { ...OPTS, pxPerMinute: 0.2, gapFloorPx: 0, longAnchorFloorPx: 48, longAnchorMinutes: 60 }
+  const vertical = computeVerticalLayout(layout.window!, layout.anchors, squeezed)
+  expect(vertical.topPx(570) - vertical.topPx(540)).toBeCloseTo(32, 5)
+  expect(vertical.topPx(720) - vertical.topPx(660)).toBeCloseTo(48, 5)
 })
 
 test('a lone short anchor still gets exactly its own floor and no more', () => {
