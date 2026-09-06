@@ -235,7 +235,9 @@ that.
   lower it), `--t-glyph`, and the two fluid sizes on the Focus screen
 - Elevation `--e1/e2/e3`, motion `--dur-fast`, `--dur`, `--ease`
 - Palette `--bg`, `--surface`, `--text`, `--muted`, `--faint`, `--accent`,
-  `--border`, `--danger`
+  `--border`, `--danger`; and `--ground`, what is painted under the element
+  at hand - the page by default, and a surface sets it to itself - for the
+  one thing that has to match it exactly, the gap in a chosen swatch's ring
 - Geometry the scales have no step for, named once: `--rail-w`,
   `--rail-open-w`, `--timeline-gutter`
 

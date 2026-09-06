@@ -87,11 +87,20 @@
     return ''
   }
 
-  /** @param {string} c @returns {number[] | null} */
+  /**
+   * A computed colour as [r, g, b, a] on 0-255. Chrome says `rgb()` for
+   * most, and `color(srgb r g b / a)` on 0-1 for anything that came out
+   * of a color-mix() - the washes over a surface, and a ring's gap drawn
+   * in one - which used to read as no colour at all here, so a wash was
+   * invisible to the contrast pass and a mixed gap was the wrong layer.
+   * @param {string} c @returns {number[] | null}
+   */
   function parse(c) {
-    const m = /rgba?\(([^)]+)\)/.exec(c)
+    const srgb = /color[(]srgb ([0-9.]+) ([0-9.]+) ([0-9.]+)(?: *[/] *([0-9.]+))?[)]/.exec(c)
+    if (srgb) return [+srgb[1] * 255, +srgb[2] * 255, +srgb[3] * 255, srgb[4] === undefined ? 1 : +srgb[4]]
+    const m = /rgba?[(]([^)]+)[)]/.exec(c)
     if (!m) return null
-    const parts = m[1].split(/[,\s/]+/).filter(Boolean).map(Number)
+    const parts = m[1].split(/[, /]+/).filter(Boolean).map(Number)
     return [parts[0], parts[1], parts[2], parts[3] === undefined ? 1 : parts[3]]
   }
 
@@ -133,6 +142,54 @@
     const la = luminance(a) + 0.05
     const lb = luminance(b) + 0.05
     return la > lb ? la / lb : lb / la
+  }
+
+  // A chosen swatch's ring is a box-shadow, so it is drawn outside the box
+  // and a scroller between it and the page clips it; and its gap is drawn
+  // in the ground's colour, which is only right when the ground under it is
+  // the one the ring assumed. Both were real once: the first dot under
+  // quick-add lost the left of its ring to the task column's scroller, and
+  // the gap was the card colour on rows that sit on the page.
+  const RINGED = '.category-swatch.selected, .accent-swatch.selected, .swatch.selected, .library-color.is-on'
+  /** @returns {{ kind: 'cut' | 'gap', sel: string, detail: string }[]} */
+  function ringDefects() {
+    const out = []
+    for (const el of document.querySelectorAll(RINGED)) {
+      if (!visible(el)) continue
+      const shadow = getComputedStyle(el).boxShadow
+      if (!shadow || shadow === 'none') continue
+      // Each layer reaches offset + blur + spread past the box; the ring is the farthest.
+      const layers = []
+      const re = /((?:rgba?|color)[(][^)]+[)])[ ]+(-?[0-9.]+)px[ ]+(-?[0-9.]+)px[ ]+(-?[0-9.]+)px[ ]+(-?[0-9.]+)px/g
+      let m
+      while ((m = re.exec(shadow))) layers.push({ color: m[1], reach: Math.max(Math.abs(+m[2]), Math.abs(+m[3])) + +m[4] + +m[5] })
+      if (layers.length === 0) continue
+      const reach = Math.max(...layers.map(l => l.reach))
+      const r = el.getBoundingClientRect()
+      const ring = { left: r.left - reach, top: r.top - reach, right: r.right + reach, bottom: r.bottom + reach }
+      for (let p = el.parentElement; p && p !== document.documentElement; p = p.parentElement) {
+        const cs = getComputedStyle(p)
+        if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue
+        const b = p.getBoundingClientRect()
+        const left = b.left + p.clientLeft
+        const top = b.top + p.clientTop
+        const sides = []
+        if (ring.left < left - 1) sides.push('left')
+        if (ring.top < top - 1) sides.push('top')
+        if (ring.right > left + p.clientWidth + 1) sides.push('right')
+        if (ring.bottom > top + p.clientHeight + 1) sides.push('bottom')
+        if (sides.length) {
+          out.push({ kind: 'cut', sel: sig(el), detail: sig(el) + ' ' + sides.join('+') + ' by ' + sig(p) })
+          break
+        }
+      }
+      // The innermost layer is the gap, and it has to be what is painted beside the swatch.
+      const gap = parse(layers[0].color)
+      const ground = surfaceUnder(el.parentElement)
+      if (gap && gap.slice(0, 3).some((v, i) => Math.abs(v - ground[i]) > 2))
+        out.push({ kind: 'gap', sel: sig(el), detail: sig(el) + ' gap ' + layers[0].color + ' on rgb(' + ground.slice(0, 3).map(Math.round).join(', ') + ')' })
+    }
+    return out
   }
 
   /** @param {string} label */
@@ -260,13 +317,14 @@
       out.faint.push({ sel: sig(el), text: t.slice(0, 40), ratio: +ratio.toFixed(2), need, fg: cs.color, bg: 'rgb(' + bg.slice(0, 3).map(Math.round).join(',') + ')' })
     }
 
+    out.rings = ringDefects()
     return out
   }
 
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length }
   }
 
   /** @param {string} tab */

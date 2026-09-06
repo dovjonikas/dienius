@@ -278,6 +278,7 @@ body {
   z-index: 0;
   margin: 0;
   background: var(--bg);
+  --ground: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -842,10 +843,16 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
  * quick-add and in the template editor, a template's own colour, and a
  * library list's dot.
  *
- * The fill, then a two-pixel gap in the surface, then a two-pixel ring in the
+ * The fill, then a two-pixel gap in the ground, then a two-pixel ring in the
  * swatch's own colour. The gap is the whole of why it reads as a ring rather
- * than a thicker edge, and drawing it in `--surface` rather than in the
- * colour is what stops three shades of one hue turning into a smudge.
+ * than a thicker edge, and drawing it in the ground's own colour rather than
+ * in the swatch's is what stops three shades of one hue turning into a
+ * smudge. The ground is `--ground`: the body sets it to the page, and each
+ * surface that hosts a swatch sets it to itself, in the rule under this one.
+ * The gap used to be `--surface` everywhere, and under quick-add and in the
+ * accent row - both on the page, not on a card - that painted a halo one
+ * shade off the ground, which the owner saw as a ring that was not clean.
+ * The sweep measures it now.
  *
  * It was four different treatments until v2.0: this one, a size jump plus a
  * doubled same-colour ring on the categories, and a `border-color: var(--text)`
@@ -860,7 +867,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 8px; font-weight: 
 .category-swatch.selected,
 .swatch.selected,
 .library-color.is-on {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--pick, var(--accent));
+  box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--pick, var(--accent));
+}
+
+/* What is painted under a swatch row. The page unless a surface says
+   otherwise, and every surface that hosts one says so here, beside the ring
+   that reads it; a translucent wash over one of these says its blend
+   itself, where it is painted (.library-list-settings). */
+.task-detail,
+.template-editor,
+.swatch-picker-panel,
+.library-list {
+  --ground: var(--surface);
 }
 
 
@@ -3081,20 +3099,21 @@ select:focus {
    Real toggle buttons with real names (aria-label plus title), sized to a
    comfortable target, reading as a row of colour rather than a form control -
    picking one is meant to cost a glance, not a decision. */
-/* The four pixels of inset are the selected ring's room. It is a box-shadow,
-   so it costs no layout and the row does not know it is there - and the task
-   pane's own `overflow-y: auto` makes `overflow-x` auto with it, which
-   clipped the left edge of the first swatch's ring against the column. */
-/* No side padding: the first dot starts where the row above it starts, so
-   the capture segment, the time control, the dots and the cards under
-   them share one left edge. The chosen dot's ring reaches 4px past it,
-   which is a ring's business and not the row's. */
+/* Four pixels on the left: the chosen dot's ring is a box-shadow, drawn
+   outside the box at no cost to layout, and the task pane is a scroller -
+   `overflow-y: auto` makes `overflow-x` auto with it - which clips anything
+   past its edge. The inset was here once for exactly this, and the v2.4 pass
+   took it out so the dots would share a left edge with the capture field and
+   the cards; the first dot's ring lost its left side and the owner saw it.
+   With the ring's own width in hand its outer edge sits on the column's
+   edge, which is the alignment that reads as one, and the sweep measures it
+   now. */
 .category-picker {
   display: flex;
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
-  padding: var(--s1) 0;
+  padding: var(--s1) 0 var(--s1) var(--s1);
 }
 
 /* Unselected swatches sit back at a little over half strength, so the chosen
@@ -6761,6 +6780,9 @@ button.danger:focus-visible {
   padding: var(--s3);
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--border) 22%, transparent);
+  /* A wash over the list's surface, so the ground under the colour dots is
+     the two blended, and the chosen dot's ring reads exactly that. */
+  --ground: color-mix(in srgb, var(--border) 22%, var(--surface));
 }
 
 .library-list-settings .field { flex: 1 1 140px; }

@@ -6,8 +6,9 @@
  * size the project promises, on a realistic full day, and `audit.js` reports
  * what a person would actually hit - text cut off, a control with something
  * on top of it, two pieces of text painted over each other, anything past
- * the right edge, a screen that should fit and does not, and every visible
- * string's contrast against whatever is actually painted under it.
+ * the right edge, a screen that should fit and does not, every visible
+ * string's contrast against whatever is actually painted under it, and a
+ * chosen swatch's ring cut off by a scroller or drawn on the wrong ground.
  *
  * It found fourteen defects the first time it ran, including a task list
  * squeezed to zero pixels with seven tasks in it. Zero findings is the
@@ -79,7 +80,7 @@ async function press(page, name) {
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** What scripts/audit.js puts on the page's own window. */
-/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[] }} Audit */
+/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown> }} Screen */
 
@@ -108,6 +109,15 @@ const SCREENS = [
     },
   },
   {
+    // The template's colour popover: eight swatches on a raised panel.
+    name: 'Template colour',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await press(p, /^Edit /)
+      await press(p, /Change it[.]$/)
+    },
+  },
+  {
     // Seven columns of blocks is the widest thing this app draws, and it is
     // drawn inside a card inside a reading-width view - which is exactly the
     // shape that overflows quietly.
@@ -133,6 +143,15 @@ const SCREENS = [
       const row = p.locator('.library-item.is-active .library-item-open').first()
       if (await row.count()) await row.click()
       await p.waitForTimeout(300)
+    },
+  },
+  {
+    // A list's settings, for the row of colour dots and the chosen one's
+    // ring on the wash they sit on.
+    name: 'Library (list settings)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Library')
+      await press(p, /^Settings for /)
     },
   },
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
@@ -180,6 +199,14 @@ const SCREENS = [
     },
   }))),
   {
+    // The fourth door: the low day's proposal, read before Accept.
+    name: 'Low day',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await press(p, 'Low day')
+    },
+  },
+  {
     name: 'Command palette',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
@@ -223,7 +250,7 @@ const browser = await chromium.launch()
 
 if (SELF_CHECK) {
   // Before trusting a clean report, prove the pass can still see a defect.
-  // Four planted ones, on a real screen, in the four shapes it looks for.
+  // Six planted ones, on a real screen, in the seven shapes it looks for.
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } })
   const page = await ctx.newPage()
   await page.goto(BASE)
@@ -244,6 +271,12 @@ if (SELF_CHECK) {
     const wide = document.createElement('div')
     wide.style.cssText = 'width:3000px;height:4px;background:#0f0'
     document.body.appendChild(wide)
+    // A chosen swatch at the corner of a scroller, on a ground that is not
+    // the one its ring's gap is drawn in: two shapes from one plant.
+    const box = document.createElement('div')
+    box.style.cssText = 'position:fixed;left:100px;top:400px;width:200px;height:40px;overflow:auto;background:#222'
+    box.innerHTML = '<button type="button" class="category-swatch selected" style="--cat:#7aa2f7;display:block" aria-label="Planted swatch"></button>'
+    document.body.appendChild(box)
   })
   const planted = await page.evaluate(() => /** @type {AuditWindow} */ (/** @type {unknown} */ (window)).__brief('after'))
   await browser.close()
@@ -253,10 +286,12 @@ if (SELF_CHECK) {
     'text over text': planted.overlap > clean.overlap,
     'a control covered': planted.covered > clean.covered,
     'text under AA': planted.faint > clean.faint,
+    'a ring cut off': planted.ringCut > clean.ringCut,
+    'a ring gap off its ground': planted.ringGap > clean.ringGap,
   }
   for (const [what, ok] of Object.entries(sees)) console.log(`${ok ? 'sees  ' : 'BLIND '} ${what}`)
   const blind = Object.values(sees).filter(v => !v).length
-  console.log(`\n${5 - blind}/5 shapes still detected`)
+  console.log(`\n${7 - blind}/7 shapes still detected`)
   process.exit(blind ? 1 : 0)
 }
 
@@ -302,6 +337,7 @@ for (const run of runs) {
     for (const o of a.overlap) found(where, 'text over text', `${o.a} "${o.ta}" over ${o.b} "${o.tb}"`)
     for (const o of a.offscreen) found(where, 'past the right edge', `${o.sel} right ${o.right} "${o.text}"`)
     for (const f of a.faint) found(where, 'text under AA', `${f.sel} ${f.ratio}:1 (needs ${f.need}) "${f.text}"`)
+    for (const r of a.rings) found(where, r.kind === 'cut' ? 'ring cut off' : 'ring gap off its ground', r.detail)
 
     // The screens that must fit - CONVENTIONS section 4. The day view's own
     // rule is for the wide breakpoint only: on a phone it scrolls
