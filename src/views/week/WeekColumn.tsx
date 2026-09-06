@@ -277,9 +277,7 @@ export function WeekColumn({
           <span className="week-foot-ratio">{stat.done}/{stat.total}</span>
         ) : day.blocks.length + day.untimed.length > 0 ? (
           <span className="week-foot-count">{day.blocks.length + day.untimed.length}</span>
-        ) : (
-          <span className="week-foot-empty" aria-hidden="true">-</span>
-        )}
+        ) : null}
         {focusMinutes > 0 && <span className="week-foot-focus">{formatDuration(focusMinutes)}</span>}
         {day.untimed.length > 0 && (
           <span className="week-foot-untimed" title={`${day.untimed.length} with no time yet`}>

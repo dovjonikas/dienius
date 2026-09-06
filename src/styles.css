@@ -9297,6 +9297,25 @@ main:has(.week) > .calendar {
    only, every control still works. */
 .week-col.is-past .week-col-head { opacity: 0.72; }
 
+/* A day that has passed offers nothing at rest: the "+" and the "+ Working
+   day" that a day ahead shows are invitations to plan, and a plan for a
+   day that is over is a thing nobody was asking to be shown. Both are
+   still there for a pointer that comes looking, and for a keyboard. */
+@media (hover: hover) and (pointer: fine) {
+  .week-col.is-past .week-col-template.is-empty,
+  .week-col.is-past .week-col-template.is-offer {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease);
+  }
+
+  .week-col.is-past:hover .week-col-template.is-empty,
+  .week-col.is-past:hover .week-col-template.is-offer,
+  .week-col.is-past .week-col-template.is-empty:focus-visible,
+  .week-col.is-past .week-col-template.is-offer:focus-visible {
+    opacity: 1;
+  }
+}
+
 .week-col-template {
   display: flex;
   align-items: center;
@@ -9412,8 +9431,10 @@ main:has(.week) > .calendar {
   /* A block's height is its duration, which at a week's scale makes a
      twenty-minute task about nine pixels. Honest, and unusable. The floor is
      a deliberate small lie about very short blocks so that every block is
-     something a pointer can hit and a word can fit inside. */
-  min-height: 14px;
+     something a pointer can hit and a word can fit inside: one 11px line at
+     1.15 and the 2px of padding are 14.65, so 15 - at 14 the line's
+     descenders were under the block's edge. */
+  min-height: 15px;
   padding: 1px 3px;
   border: none;
   border-radius: 3px;
@@ -9480,14 +9501,18 @@ main:has(.week) > .calendar {
   .week-block-time { display: none; }
 }
 
+/* Centred under the column like the day's name above it; a day with
+   nothing on it says nothing here, and keeps the row's height. It printed
+   a bare "-", which read as a figure missing rather than as a day empty. */
 .week-col-foot {
   grid-row: 3;
   grid-column: var(--week-col);
+  min-height: 21px;
   padding-top: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s1);
+  gap: var(--s2);
   font-size: var(--t-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
