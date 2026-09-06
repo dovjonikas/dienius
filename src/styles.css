@@ -4025,6 +4025,19 @@ button.primary {
   white-space: nowrap;
 }
 
+/* The chosen one of a set, said the way every other set in this app says
+   it: the accent behind it, not a border a shade off the one beside it.
+   The generic rule above gives every button in this row the same border,
+   and it is more specific than `.chip.selected`, so for one version the
+   four Add to chips were identical and the owner could not tell which day
+   a block was about to land on. A pressed control is a fact about what
+   happens next, and it is worth the loudest treatment in the row. */
+.block-add button[aria-pressed='true']:not(.category-swatch) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
 /* Settings' own sleep-window controls - two TimeStepInput fields per row
    (bedtime, wake time), wrapping at 375px the same way .block-add's own
    row already does, so neither field is ever squeezed below a usable

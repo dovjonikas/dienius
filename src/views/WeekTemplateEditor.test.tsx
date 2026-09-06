@@ -258,3 +258,37 @@ test('there is nothing to bind to while the library is empty', async () => {
   await newWeek(user)
   expect(screen.queryByLabelText('What the new block draws from')).toBeNull()
 })
+
+/**
+ * The owner's report, in their words: with Add to chosen, you have to be
+ * able to see which one is chosen. Four chips that look identical are four
+ * chips that make somebody guess which day a block is about to land on -
+ * and the guess is only settled after the block has already landed.
+ *
+ * `aria-pressed` was always right; the paint was not, because the generic
+ * rule for buttons in this row is more specific than `.chip.selected` and
+ * gave all four the same border. The class is asserted here because a test
+ * cannot see a border, and the rule that paints it keys off the same
+ * attribute.
+ */
+test('the chosen Add to says so, and choosing another moves the mark', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+
+  const pressed = () =>
+    where
+      .getAllByRole('button')
+      .filter(b => b.getAttribute('aria-pressed') === 'true')
+      .map(b => b.textContent)
+
+  // The first chip is whichever day the editor opened on - today's.
+  const today = pressed()[0]!
+  expect(where.getByRole('button', { name: today })).toHaveClass('selected')
+
+  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  expect(pressed()).toEqual(['Weekdays'])
+  expect(where.getByRole('button', { name: 'Weekdays' })).toHaveClass('selected')
+  expect(where.getByRole('button', { name: today })).not.toHaveClass('selected')
+})
