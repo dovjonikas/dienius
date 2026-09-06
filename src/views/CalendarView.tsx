@@ -4,7 +4,7 @@ import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell }
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
 import { formatDuration } from '../widgets/day-plan/capacity'
-import { cellLabel, cellPoints, resolveTemplate, taskState, type CellPoints } from '../lib/calendarCell'
+import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
 import { DayPreview } from './DayPreview'
 import { useCellLines, useIsWide } from '../lib/viewport'
 import { YearStrip } from '../widgets/year-strip/YearStrip'
@@ -16,7 +16,6 @@ import { requestReplan } from '../lib/replanState'
 /** How long a mouse rests on a cell before the day opens under it. */
 const PREVIEW_DELAY = 400
 
-const EMPTY_POINTS: CellPoints = { points: [], more: 0 }
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -436,18 +435,23 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                   const templateId = effectiveTemplateId(cell.key)
                   const template = resolveTemplate(templateId, data.templates)
                   const state = taskState(data.days[cell.key])
-                  // A day that has happened, or is happening. The future has
-                  // nothing to report and says nothing - a "0/9" on Thursday
-                  // is not information, it is an accusation about a day that
-                  // has not started.
-                  const past = cell.key <= today
+                  // A day that is over. The future has nothing to report and
+                  // says nothing - a "0/9" on Thursday is not information, it
+                  // is an accusation about a day that has not started - and
+                  // neither has today, which is still being lived.
+                  const past = cell.key < today
                   const stat = past ? dayStat(data.days[cell.key]) : undefined
                   const showStats = !!stat && stat.rate !== null
-                  // Two or three, decided by the viewport's height - see
-                  // useCellLines for why that decision cannot live in the
-                  // stylesheet. Below 600px the whole block is hidden the way
-                  // the template name already was.
-                  const points = showStats ? EMPTY_POINTS : cellPoints(data.days[cell.key], cellLines)
+                  // Every day shows what is on it, the same way: two or three
+                  // lines, decided by the viewport's height - see useCellLines
+                  // for why that decision cannot live in the stylesheet - and
+                  // "+N" for the rest. A day that is over gives the last line
+                  // to how it went, so the cell's height never changes for
+                  // it. Below 600px the lines are hidden the way the template
+                  // name already was. Until v2.4 a past day was its score and
+                  // a future day its lines, and the month read as two
+                  // different calendars meeting at today.
+                  const points = cellPoints(data.days[cell.key], showStats ? Math.max(1, cellLines - 1) : cellLines)
                   const classes = [
                     'cell',
                     cell.inMonth ? '' : 'outside',
@@ -465,7 +469,13 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       data-date={cell.key}
                       tabIndex={cell.key === tabStop ? 0 : -1}
                       className={classes}
-                      style={template ? { background: template.color } : undefined}
+                      // The colour as a variable, not a fill: the stylesheet
+                      // mixes a wash of it into the theme's own surface and
+                      // draws a strip of it along the top, so the theme's
+                      // inks stay readable on a stamped day. A solid pastel
+                      // fill with dark ink pinned on it was a piece of the
+                      // light theme sitting in the dark one.
+                      style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
                       aria-label={cellLabel(cell, template?.name, state)}
                       aria-current={cell.key === today ? 'date' : undefined}
                       // The fuller summary on a pointer. A title rather than a
@@ -482,7 +492,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       onClick={() => !stampTemplateId && onOpenDay(cell.key)}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
-                      {showStats ? (
+                      {showStats && (
                         <span className="cell-stats" aria-hidden="true">
                           <span className="cell-ratio">
                             {stat!.done}/{stat!.total}
@@ -490,7 +500,8 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                           {stat!.pushed > 0 && <span className="cell-pushed">&rarr;{stat!.pushed}</span>}
                           {keptEveryKeyTask(stat!) && <span className="cell-kept" />}
                         </span>
-                      ) : points.points.length > 0 ? (
+                      )}
+                      {points.points.length > 0 ? (
                         /* What is actually on the day, rather than what the
                            shape of day was called. A template's name is a
                            word somebody chose two months ago; "09:00 Job

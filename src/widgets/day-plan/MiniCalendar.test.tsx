@@ -43,7 +43,10 @@ test('a stamped day shows the template colour and name in the cell and its acces
   actions.stamp({ '2026-09-12': template.id })
   render(<MiniCalendar date="2026-09-12" onDateChange={() => {}} />)
   const cell = screen.getByRole('gridcell', { name: /September 12.*Work day/ })
-  expect(cell).toHaveStyle({ background: '#8ab6f9' })
+  // The colour reaches the cell as a variable the stylesheet washes into the
+  // surface, not as a fill - a solid pastel was a piece of the light theme
+  // sitting in the dark one.
+  expect(cell.style.getPropertyValue('--chip')).toBe('#8ab6f9')
 })
 
 test("today's cell carries aria-current='date'", () => {

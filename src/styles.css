@@ -4113,21 +4113,26 @@ button.danger {
 
 .cell-num { font-size: var(--t-sm); font-weight: 600; }
 
-/* A stamped cell paints a pastel background inline from the template color,
-   which stays roughly the same lightness in both themes. The theme's own
-   text color (near-white in dark mode) would be unreadable against it, so
-   pin a dark number on stamped cells the same way .cell-template already
-   pins a dark label. Unstamped cells keep the theme's text color. */
-.cell-has-template .cell-num { color: rgba(0, 0, 0, 0.7); }
+/* A stamped cell: a wash of the template's colour in the theme's own
+   surface, and a strip of it along the top. It used to be the colour
+   itself, a solid pastel with dark ink pinned onto everything in the cell,
+   which in the dark theme was a piece of the light theme sitting in the
+   month - the owner's words. The wash keeps every ink the theme's, the
+   strip keeps the colour readable as a colour, and the stamp bar above the
+   grid still carries the full swatch. The colour arrives as --chip from
+   the cell's own style, the way the header chip and the week's column chip
+   already take theirs. */
+.cell-has-template {
+  background: color-mix(in srgb, var(--chip, var(--accent)) 16%, var(--surface));
+  box-shadow: inset 0 3px 0 var(--chip, var(--accent));
+}
 
-/* 0.6 alpha on a pastel measured 3.24:1 - under AA for 11px text, and the
-   only thing in a calendar cell that says which template it is. Taken to a
-   near-solid ink: the softness was buying nothing but illegibility, and the
-   cell already reads as quiet from its own pale fill. */
+/* The template's name, on a stamped day with nothing else to say. The
+   theme's own muted ink, on the theme's own surface with a wash on it. */
 .cell-template {
   font-size: var(--t-xs);
   line-height: 1.2;
-  color: rgba(0, 0, 0, 0.82);
+  color: var(--muted);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4154,37 +4159,31 @@ button.danger {
    the case --safe-ink exists for - see the note on it in src/lib/theme.ts
    and the theme card's own name label above, which uses it for the same
    reason. */
-.cell-has-tasks::after {
-  content: '';
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-round);
-  background: var(--safe-ink);
-}
+/* Only where the cell has no words of its own: on a wide screen every day
+   shows its lines and a day that is over its score, so the dot there was a
+   mark nobody could name - the owner asked what it was. On a phone the
+   lines are hidden and the dot is still the one thing that tells a day
+   with tasks from an empty one. */
+@media (max-width: 599px) {
+  .cell-has-tasks::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: var(--r-round);
+    background: var(--safe-ink);
+  }
 
-/* Same ring-vs-fill language the year strip uses for "complete": a hollow
-   ring instead of a solid dot means everything on the day is already done,
-   so a finished day does not compete for attention with one still waiting
-   on something. */
-.cell-has-tasks.cell-tasks-done::after {
-  background: transparent;
-  border: 1.5px solid var(--safe-ink);
-}
-
-/* A stamped cell's background is the template's own pastel, not --surface,
-   so --safe-ink (derived from --surface) is not guaranteed to read against
-   it - the same reason .cell-has-template .cell-num and .cell-template are
-   pinned dark above instead of using a token. Pin the dot the same way. */
-.cell-has-template.cell-has-tasks::after {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.cell-has-template.cell-has-tasks.cell-tasks-done::after {
-  background: transparent;
-  border-color: rgba(0, 0, 0, 0.7);
+  /* Same ring-vs-fill language the year strip uses for "complete": a hollow
+     ring instead of a solid dot means everything on the day is already
+     done, so a finished day does not compete for attention with one still
+     waiting on something. */
+  .cell-has-tasks.cell-tasks-done::after {
+    background: transparent;
+    border: 1.5px solid var(--safe-ink);
+  }
 }
 
 .stamp-actions {
@@ -6530,7 +6529,10 @@ button.danger:focus-visible {
      stamped cell's inline background is a mid-lightness colour in both
      themes, so the theme's own text colour (near-white in dark mode)
      would be unreadable against it - pin a dark number instead. */
-  .mini-cell-has-template { color: rgba(0, 0, 0, 0.7); }
+  .mini-cell-has-template {
+    background: color-mix(in srgb, var(--chip, var(--accent)) 30%, var(--surface));
+    box-shadow: inset 0 2px 0 var(--chip, var(--accent));
+  }
 
   .mini-cell:focus-visible {
     outline: 2px solid var(--accent);
@@ -9041,9 +9043,6 @@ button.danger:focus-visible {
    the muted ink is right. Both are set here rather than inherited, because a
    ratio that disappears on half the calendar is worse than no ratio. */
 .cell-ratio { color: var(--muted); }
-.cell-has-template .cell-ratio,
-.cell-has-template .cell-pushed { color: rgba(0, 0, 0, 0.7); }
-
 .cell-pushed { color: var(--faint); }
 
 /* A 48px cell holds "3/10" and the kept dot, or "3/10 ->1" - not all three.
@@ -9088,18 +9087,6 @@ button.danger:focus-visible {
 .cell-tone-mid .cell-bar-fill { background: color-mix(in srgb, var(--accent) 70%, var(--muted)); }
 .cell-tone-high .cell-bar-fill { background: color-mix(in srgb, var(--good) 85%, var(--muted)); }
 
-/* A stamped cell is a light pastel in every theme - see .cell-has-template,
-   which pins dark ink on the number for the same reason. The theme inks that
-   read well on a dark surface are all about as light as that pastel, so the
-   bar effectively disappeared on every stamped day. Darkened mixes here,
-   keeping the three registers distinguishable from each other. */
-.cell-has-template .cell-bar { background: rgba(0, 0, 0, 0.14); }
-.cell-has-template .cell-bar-fill { background: rgba(0, 0, 0, 0.42); }
-.cell-has-template.cell-tone-mid .cell-bar-fill { background: color-mix(in srgb, var(--accent) 55%, #000); }
-.cell-has-template.cell-tone-high .cell-bar-fill { background: color-mix(in srgb, var(--good) 55%, #000); }
-
-/* The kept dot too - accent on a pastel is accent on accent. */
-.cell-has-template .cell-kept { background: color-mix(in srgb, var(--accent) 50%, #000); }
 
 @media (min-width: 700px) {
   /* The whole tab is a fixed-height column, and the grid takes what is left -
@@ -9132,7 +9119,13 @@ button.danger:focus-visible {
   .cell {
     aspect-ratio: auto;
     min-height: 0;
-    padding: 4px 3px 6px;
+    /* Everything in a cell starts on one left edge at this width - the
+       number, the score, the lines. The number was centred over
+       left-aligned lines, and read as a heading over a list that had
+       slipped. On a phone, where a cell holds a number and a score and
+       nothing else, both stay centred. */
+    align-items: flex-start;
+    padding: 4px 6px 6px;
     gap: 1px;
   }
 
@@ -11732,8 +11725,11 @@ main:has(.week) > .calendar {
   gap: 1px;
   width: 100%;
   min-width: 0;
-  padding: 0 3px;
+  padding: 0;
   overflow: hidden;
+  /* A button centres its text, and "+6" is the one plain span in here;
+     the lines beside it are flex rows and start at the left regardless. */
+  text-align: left;
 }
 
 .cell-point {
@@ -11747,11 +11743,6 @@ main:has(.week) > .calendar {
   text-overflow: ellipsis;
   color: var(--muted);
 }
-
-/* On a stamped cell the ground is the template's own pastel, so the ink is
-   pinned dark for the same reason .cell-num and .cell-template already pin
-   theirs - a token that reads on --surface does not read on Gold. */
-.cell-has-template .cell-point { color: rgba(0, 0, 0, 0.72); }
 
 .cell-point-time {
   flex: 0 0 auto;
@@ -11773,8 +11764,6 @@ main:has(.week) > .calendar {
   line-height: 1.25;
   color: var(--faint);
 }
-
-.cell-has-template .cell-more { color: rgba(0, 0, 0, 0.5); }
 
 /* How many lines a cell holds is decided in JavaScript, not here - see
    useCellLines in lib/viewport.ts. The cell also says how many did not fit,

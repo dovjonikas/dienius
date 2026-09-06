@@ -166,7 +166,7 @@ export function MiniCalendar({ date, onDateChange }: MiniCalendarProps) {
                   className={classes}
                   data-date={cell.key}
                   tabIndex={cell.key === stop ? 0 : -1}
-                  style={template ? { background: template.color } : undefined}
+                  style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
                   aria-label={cellLabel(cell, template?.name, state)}
                   aria-current={cell.key === today ? 'date' : undefined}
                   onClick={() => onDateChange(cell.key)}
