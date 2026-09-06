@@ -12,7 +12,8 @@ North line in the morning, and two questions on the evening close card,
 what was real today and what to tell yourself tomorrow - kept on the day
 entity, read under the day in the week's agenda, and copied as markdown for
 the week or the month to paste into another chat. Before it, v2.2's Replan
-v2. Section 4 has both tables, commit by commit. **Nothing is owed**: the
+v2. Section 4 has both tables, commit by commit; the tag is `dcec338` and this
+handoff sits one commit above it. **Nothing is owed**: the
 debts table is unchanged and every entry in it is a trade with its reason,
 and the next brief comes from the owner.
 
@@ -176,7 +177,7 @@ with no migration: three optional fields.
 | 0 | Written down first | `8166dbb` | The brief and the decisions it forced, in this file, before any code |
 | 1 | The journal | `2bca9f9` | `DayPlan.journal` with three optional fields and `mergeJournal` dropping blanks; `setJournal`; the morning line under the North line (`JournalLine.tsx`) saving on blur, Enter and leaving the day; the two questions on the evening card saving on blur and on Close; the agenda's lines under a day and the grid's morning line on a desktop; Copy week journal under the week and Copy week / month journal in Review, through one `CopyJournalButton`; the markdown in `lib/journal.ts`; the tests and the two browser tests |
 | - | Found on the way: the explanation's hold timer | `cbc40b1` | The Focus term's sentence painted over the running card at three in the afternoon: a tap re-renders the card under the finger, the release goes elsewhere, and the half-second hold fired anyway. The click that follows a tap cancels the hold now, and so does unmounting. Since v2.0; every earlier phone sweep had run at night with nothing running |
-| 2 | Closing and `v2.3` | the closing commit | Every gate run, the phone walked, DAILY.md's "The evening questions", the docs read against the code, DECISIONS carrying the reasoning, the tag |
+| 2 | Closing and `v2.3` | `dcec338` | Every gate run, the phone walked, DAILY.md's "The evening questions", the docs read against the code, DECISIONS carrying the reasoning, the tag |
 
 #### What the phone pass found
 
@@ -340,7 +341,7 @@ and pushed. Nothing below this table is owed.
 | `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
 | `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
 | `v2.2` | `a7cc157` | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
-| `v2.3` | the closing commit | The journal, on top of v2.2 |
+| `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: this handoff |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
