@@ -278,6 +278,15 @@ const TEMPLATE = record({
   tourCreated: optional(boolean),
 })
 
+// Three optional lines of text and nothing else. A number or an object in
+// one of them is somebody else's write and fails the payload, the same way
+// a task with a numeric title would.
+const DAY_JOURNAL = record({
+  intent: optional(string),
+  real: optional(string),
+  tomorrow: optional(string),
+})
+
 const DAY_PLAN = record({
   date: string,
   templateId: optional(string),
@@ -288,6 +297,7 @@ const DAY_PLAN = record({
   repeatSkips: optional(listOf(string)),
   autoApplied: optional(boolean),
   replannedOn: optional(string),
+  journal: optional(DAY_JOURNAL),
   tasks: listOf(TASK),
 })
 

@@ -173,3 +173,22 @@ test('a press that goes nowhere plans nothing', async () => {
 
   expect(getData().backlog.find(b => b.id === item.id)).toBeTruthy()
 })
+
+// --- the journal under a day ---------------------------------------------------
+
+/**
+ * What was written on a day, under what was on it: the lines it has, with
+ * their labels, and nothing at all for a day with none - not an empty
+ * block, not a prompt.
+ */
+test('a day\'s journal lines read under its tasks, and a day without any shows nothing for it', () => {
+  seed()
+  actions.setJournal('2026-09-07', { intent: 'Ship the pricing page', tomorrow: 'Start with the walk' })
+  render(<WeekAgenda dates={DATES} onOpenDay={() => {}} onOpenTask={() => {}} />)
+
+  expect(screen.getByText('Ship the pricing page')).toBeInTheDocument()
+  expect(screen.getByText('Start with the walk')).toBeInTheDocument()
+  expect(screen.getByText('To myself, tomorrow')).toBeInTheDocument()
+  expect(screen.queryByText('What was real today')).toBeNull()
+  expect(document.querySelectorAll('.agenda-journal')).toHaveLength(1)
+})

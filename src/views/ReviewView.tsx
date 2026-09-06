@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
-import { addDays, todayKey } from '../lib/dates'
+import { addDays, formatWeekTitle, todayKey } from '../lib/dates'
+import { CopyJournalButton } from './CopyJournalButton'
 import { activeGoals, ageLabel } from '../lib/north'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,
+  datesBetween,
   doneRate,
   endOfMonth,
   periodStats,
@@ -47,6 +49,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
   )
 
   const stats = useMemo(() => periodStats(data, from, to), [data, from, to])
+  const dates = useMemo(() => datesBetween(from, to), [from, to])
   const step = range === 'week' ? 7 : 31
   const isCurrent = todayKey() >= from && todayKey() <= to
 
@@ -95,6 +98,17 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         >
           &rarr;
         </button>
+      </div>
+
+      {/* The one thing here that is not a figure: the journal for the stretch
+          being looked at, as text, for somewhere else. Under the arrows so a
+          phone's row of them keeps its width. */}
+      <div className="review-tools">
+        <CopyJournalButton
+          dates={dates}
+          title={range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}
+          label={range === 'week' ? 'Copy week journal' : 'Copy month journal'}
+        />
       </div>
 
       {stats.plannedDays === 0 ? (

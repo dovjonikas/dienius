@@ -243,3 +243,39 @@ test('a replanned day says so in one quiet word, and an ordinary day says nothin
   expect(within(column(TUE)).getByText('replanned')).toBeInTheDocument()
   expect(within(column(MON)).queryByText('replanned')).toBeNull()
 })
+
+// --- the journal ------------------------------------------------------------------
+
+/**
+ * The morning line under a day's name in the grid, and the week as markdown
+ * from one press. The copy covers the whole week under its own heading and
+ * lists only the days with something written.
+ */
+test('the morning line shows under the day, and the week copies as markdown', async () => {
+  const user = userEvent.setup()
+  const writeText = vi.fn().mockResolvedValue(undefined)
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+  actions.resetForTests({
+    ...defaultData(),
+    days: { [TUE]: { date: TUE, tasks: [], journal: { intent: 'Ship it', real: 'It shipped' } } },
+  })
+  renderWeek()
+
+  expect(within(column(TUE)).getByText('Ship it')).toBeInTheDocument()
+  expect(within(column(MON)).queryByText('Ship it')).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Copy week journal' }))
+  expect(writeText).toHaveBeenCalledTimes(1)
+  const text = writeText.mock.calls[0][0] as string
+  expect(text).toContain('# Journal, 31 August - 6 September 2026')
+  expect(text).toContain('## Tuesday, September 1')
+  expect(text).toContain('- **Today:** Ship it')
+  expect(text).toContain('- **What was real today:** It shipped')
+  expect(text).not.toContain('Monday')
+  expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
+})
+
+test('with nothing written in the week the copy button is greyed, not gone', () => {
+  renderWeek()
+  expect(screen.getByRole('button', { name: 'Copy week journal' })).toBeDisabled()
+})

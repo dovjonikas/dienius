@@ -51,6 +51,15 @@ export interface WeekColumnProps {
    * its template is read as arranged rather than as broken. Never a count.
    */
   replanned?: boolean
+  /**
+   * The day's morning line, when it has one - see lib/journal.ts. One line
+   * under the day's name on a desktop, where a column is wide enough for
+   * words; the stylesheet hides it below the wide breakpoint, where the
+   * agenda carries every line in full.
+   */
+  journalLine?: string
+  /** All of the day's lines, for the title behind the one shown. */
+  journalTitle?: string
   onBlockPointerDown: (block: WeekBlock, e: React.PointerEvent) => void
   onEmptyClick: (percent: number) => void
   onStamp: (templateId: string) => void
@@ -72,6 +81,8 @@ export function WeekColumn({
   draggingId,
   weekdayTemplateId,
   replanned = false,
+  journalLine,
+  journalTitle,
   onBlockPointerDown,
   onEmptyClick,
   onStamp,
@@ -156,6 +167,11 @@ export function WeekColumn({
         )}
 
         {replanned && <span className="week-col-mark">replanned</span>}
+        {journalLine && (
+          <span className="week-col-journal" title={journalTitle}>
+            {journalLine}
+          </span>
+        )}
 
         {stampOpen && templates.length > 0 && (
           <div className="week-stamp-menu" role="menu">

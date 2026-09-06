@@ -7910,6 +7910,44 @@ button.danger:focus-visible {
    on the same element beats it whatever the specificity - so the panel was
    always open and the hidden attribute was doing nothing at all. This is the
    line that makes it mean something. */
+/* The morning line, under the North line: the label in the North line's
+   register - faint, small, uppercase, tracked - and beside it an ordinary
+   field, boxed like every other field in the app. A quieter, boxless line
+   was tried and lost to the base input rule, which outranks any one class;
+   and a box is the right answer anyway, because unlike the North line this
+   is a place to type, and a place to type should look like one. The base
+   rule keeps it a 44px target on a finger. */
+.journal-line {
+  flex: 1 1 100%;
+  order: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.journal-line-label {
+  flex: 0 0 auto;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.journal-line-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--t-sm);
+}
+
+.journal-line-input::placeholder { color: var(--faint); }
+
+@media (hover: hover) and (pointer: fine) {
+  .journal-line-input { min-height: 0; padding: var(--s1) var(--s2); }
+}
+
 .north-line-more[hidden] { display: none; }
 
 .north-line-more {
@@ -11273,6 +11311,10 @@ main:has(.week) > .calendar {
 
 .evening-close-moment input { width: 100%; }
 
+/* The two journal questions sit under the moment with the same shape; the
+   gap between three fields is the small one, so the card stays one card. */
+.evening-close-moment + .evening-close-moment { margin-top: 0; }
+
 .evening-close-foot {
   display: flex;
   align-items: center;
@@ -11712,6 +11754,45 @@ main:has(.week) > .calendar {
   color: var(--faint);
   font-size: var(--t-sm);
 }
+
+/* What was written on the day, under what was on it. A rule down the left
+   rather than a box, so it reads as a margin note to the list above it. */
+.agenda-journal {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--s1) 0 0;
+  padding: var(--s1) var(--s3);
+  border-left: 2px solid var(--border);
+}
+
+.agenda-journal div { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: baseline; }
+.agenda-journal dt { flex: 0 0 auto; color: var(--faint); font-size: var(--t-xs); letter-spacing: 0.06em; text-transform: uppercase; }
+.agenda-journal dd { margin: 0; color: var(--text); font-size: var(--t-sm); line-height: 1.4; }
+
+/* The morning line under a day's name in the grid, one line, on a desktop
+   only: a phone's column is 115px and the agenda carries every line there. */
+.week-col-journal {
+  display: block;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1023px) {
+  .week-col-journal { display: none; }
+}
+
+/* The copy button's row, under the week and under Review's arrows. A text
+   button, right-aligned, one line: copying is not what either screen is
+   for. */
+.week-tools, .review-tools { display: flex; justify-content: flex-end; flex: 0 0 auto; }
+.review-tools { margin-top: calc(-1 * var(--s2)); }
+.copy-journal { display: inline-flex; align-items: center; font-size: var(--t-sm); }
+.copy-journal .link-button:disabled { color: var(--faint); text-decoration: none; cursor: default; }
 
 .agenda-list {
   display: flex;

@@ -1,6 +1,7 @@
 import { commit, dayOf, getData, withDay } from './core'
 import { advanceForTask } from './library'
-import type { DayPlan, LibraryRef, Repeat, Subtask, Task } from '../types'
+import type { DayJournal, DayPlan, LibraryRef, Repeat, Subtask, Task } from '../types'
+import { mergeJournal } from '../journal'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
 import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
@@ -123,6 +124,18 @@ export const dayActions = {
     const trimmed = text.trim()
     const { bestMoment: _was, ...rest } = dayOf(date)
     commit(withDay(date, trimmed ? { ...rest, bestMoment: trimmed } : rest))
+  },
+
+  /**
+   * A line of the day's journal - see lib/journal.ts. A patch with one
+   * field leaves the others alone; a blank clears its field; a day whose
+   * last line was cleared carries no journal at all, which is what makes an
+   * unwritten day cost nothing.
+   */
+  setJournal(date: string, patch: Partial<DayJournal>): void {
+    const { journal: was, ...rest } = dayOf(date)
+    const journal = mergeJournal(was, patch)
+    commit(withDay(date, journal ? { ...rest, journal } : rest))
   },
 
   /**

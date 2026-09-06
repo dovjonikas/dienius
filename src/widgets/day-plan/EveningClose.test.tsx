@@ -155,3 +155,49 @@ test('closing without touching the field leaves whatever was already there', asy
   await user.click(screen.getByRole('button', { name: 'Close the day' }))
   expect(getData().days[TODAY].bestMoment).toBe('the coffee was good')
 })
+
+// --- the two evening questions --------------------------------------------------
+
+/**
+ * Two plain questions, both optional, kept on the day - see lib/journal.ts.
+ * A blank answer is nothing rather than an empty string, an answer typed
+ * and left is kept whether or not the day gets closed tonight, and no word
+ * on the card counts, streaks or notices a day that had nothing to say.
+ */
+test('the two questions are kept with the day on Close, and a blank one takes no space', async () => {
+  const user = userEvent.setup()
+  finishedDay()
+  render(<EveningClose date={TODAY} />)
+
+  await user.type(screen.getByRole('textbox', { name: 'What was real today?' }), 'Dad called')
+  await user.click(screen.getByRole('button', { name: 'Close the day' }))
+  expect(getData().days[TODAY].journal).toEqual({ real: 'Dad called' })
+})
+
+test('an answer typed and left is kept even before the day is closed', async () => {
+  const user = userEvent.setup()
+  finishedDay()
+  render(<EveningClose date={TODAY} />)
+
+  await user.type(screen.getByRole('textbox', { name: 'What do I want to tell myself tomorrow?' }), 'Start with the walk')
+  await user.tab()
+  expect(getData().days[TODAY].journal).toEqual({ tomorrow: 'Start with the walk' })
+  expect(screen.getByRole('complementary', { name: 'Closing the day' })).toBeInTheDocument()
+})
+
+test('closing without a word writes no journal, and the card says nothing about that', async () => {
+  const user = userEvent.setup()
+  finishedDay()
+  render(<EveningClose date={TODAY} />)
+  const card = screen.getByRole('complementary', { name: 'Closing the day' })
+  expect(card.textContent).not.toMatch(/streak|skipped|required|\*/i)
+  await user.click(screen.getByRole('button', { name: 'Close the day' }))
+  expect('journal' in getData().days[TODAY]).toBe(false)
+})
+
+test('an answer already given is shown as the value rather than asked again', () => {
+  finishedDay()
+  actions.setJournal(TODAY, { real: 'It shipped' })
+  render(<EveningClose date={TODAY} />)
+  expect(screen.getByRole('textbox', { name: 'What was real today?' })).toHaveValue('It shipped')
+})

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { activeGoals } from '../../lib/north'
@@ -10,6 +10,7 @@ import {
 } from '../../lib/eveningClose'
 import { minutesUntilSleep, sleepProfileWindow, wakingWindow, formatDuration } from './capacity'
 import { requestCloudBackup } from '../../lib/cloudBackup'
+import { JOURNAL_QUESTIONS } from '../../lib/journal'
 
 const DISMISSED_KEY = 'dienius:evening-dismissed'
 
@@ -43,6 +44,16 @@ export function EveningClose({ date }: { date: string }) {
   // fell straight back to showing it again, so a line typed and thought
   // better of could not be removed.
   const [moment, setMoment] = useState<string | null>(null)
+  // The two journal questions, held the same way as the moment - see
+  // lib/journal.ts. Written on blur and again on Close, so an answer typed
+  // and left is kept whether or not the day gets closed tonight.
+  const [real, setReal] = useState<string | null>(null)
+  const [tomorrow, setTomorrow] = useState<string | null>(null)
+  // Mirrors of the two, for the blur handler: a blur that lands in the same
+  // task as the last keystroke runs before that keystroke has re-rendered,
+  // and a handler reading the render's own state would save the line as it
+  // was one character ago.
+  const answers = useRef<{ real: string | null; tomorrow: string | null }>({ real: null, tomorrow: null })
   const [pushOffered, setPushOffered] = useState(false)
 
   const day = data.days[date]
@@ -55,6 +66,9 @@ export function EveningClose({ date }: { date: string }) {
   useEffect(() => {
     setDismissed(readDismissed(date))
     setMoment(null)
+    setReal(null)
+    setTomorrow(null)
+    answers.current = { real: null, tomorrow: null }
     setPushOffered(false)
   }, [date])
 
@@ -67,10 +81,24 @@ export function EveningClose({ date }: { date: string }) {
   const untilSleep = minutesUntilSleep(nowMinutes, waking)
   const unfinished = pushableAtClose(day)
 
+  function answer(field: 'real' | 'tomorrow', text: string) {
+    answers.current[field] = text
+    if (field === 'real') setReal(text)
+    else setTomorrow(text)
+  }
+
+  function saveJournal() {
+    const patch: { real?: string; tomorrow?: string } = {}
+    if (answers.current.real !== null) patch.real = answers.current.real
+    if (answers.current.tomorrow !== null) patch.tomorrow = answers.current.tomorrow
+    if (patch.real !== undefined || patch.tomorrow !== undefined) actions.setJournal(date, patch)
+  }
+
   function close() {
     // Written whenever the field was touched, including to empty: setBestMoment
     // treats an empty string as clearing it, which is how a line gets removed.
     if (settings.askBestMoment && moment !== null) actions.setBestMoment(date, moment)
+    saveJournal()
     rememberDismissed(date)
     setDismissed(true)
     // The day is over, so its copy can be: the one moment a push is owed
@@ -106,6 +134,31 @@ export function EveningClose({ date }: { date: string }) {
           />
         </label>
       )}
+
+      {/* The two journal questions - lib/journal.ts. Plain fields with the
+          question as the label, no limit, no switch, no count: an empty one
+          is a day that had nothing to say, and that is allowed. Not part of
+          the best moment above, which has its own switch and its own place
+          in the month; these are the day's own words, kept for the week's
+          reading and the copy. */}
+      <label className="evening-close-moment">
+        <span className="field-label">{JOURNAL_QUESTIONS.real}</span>
+        <input
+          value={real ?? day?.journal?.real ?? ''}
+          placeholder="Optional."
+          onChange={e => answer('real', e.target.value)}
+          onBlur={saveJournal}
+        />
+      </label>
+      <label className="evening-close-moment">
+        <span className="field-label">{JOURNAL_QUESTIONS.tomorrow}</span>
+        <input
+          value={tomorrow ?? day?.journal?.tomorrow ?? ''}
+          placeholder="Optional."
+          onChange={e => answer('tomorrow', e.target.value)}
+          onBlur={saveJournal}
+        />
+      </label>
 
       <div className="evening-close-foot">
         <button type="button" className="btn-primary" onClick={close}>

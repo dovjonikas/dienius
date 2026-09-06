@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, getData, useAppData } from '../../lib/store'
-import { addDays, shortWeekday, todayKey, weekOf } from '../../lib/dates'
+import { addDays, formatWeekTitle, shortWeekday, todayKey, weekOf } from '../../lib/dates'
+import { JOURNAL_FIELDS, JOURNAL_LABELS } from '../../lib/journal'
+import { CopyJournalButton } from '../CopyJournalButton'
 import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
 import { columnFor } from '../../lib/stamping'
@@ -107,6 +109,9 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
   }, [])
 
   const visible = useMemo(() => visibleWeekDays(date, isWide), [isWide, date])
+  // The copy covers the whole week the date is in, whatever a phone shows of
+  // it: "Copy week journal" says week, and three days of it would not be one.
+  const week = useMemo(() => weekOf(date), [date])
 
   const templateProfile = useMemo(() => {
     return (day: string) => {
@@ -239,6 +244,9 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             setDetailTaskId(taskId)
           }}
         />
+        <div className="week-tools">
+          <CopyJournalButton dates={week} title={formatWeekTitle(week)} label="Copy week journal" />
+        </div>
         <SomedayStrip onScheduled={setAnnouncement} />
         <p className="visually-hidden" aria-live="polite">{announcement}</p>
         {detailTask && detailDate && (
@@ -295,12 +303,22 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             draggingId={draggingId}
             weekdayTemplateId={data.settings.weekdayTemplates[weekdayOf(day.date)]}
             replanned={!!data.days[day.date]?.replannedOn}
+            journalLine={data.days[day.date]?.journal?.intent}
+            journalTitle={journalTitle(data.days[day.date]?.journal)}
             onBlockPointerDown={beginDrag}
             onEmptyClick={percent => addAt(day.date, percent)}
             onStamp={templateId => stampDay(day.date, templateId)}
             onOpenDay={() => onOpenDay(day.date)}
           />
         ))}
+      </div>
+
+      {/* The week's words, as text for somewhere else - see CopyJournalButton.
+          Its own row under the grid rather than a fourth row of the bar,
+          which a phone cannot afford; the grid is a flex child and gives the
+          row its height. */}
+      <div className="week-tools">
+        <CopyJournalButton dates={week} title={formatWeekTitle(week)} label="Copy week journal" />
       </div>
 
       {/* What you have without a day, under what you have with one. Drag one
@@ -323,6 +341,13 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
       )}
     </div>
   )
+}
+
+/** Every line the day has, one per row, for the title behind the one the column shows. */
+function journalTitle(journal: { intent?: string; real?: string; tomorrow?: string } | undefined): string | undefined {
+  if (!journal) return undefined
+  const lines = JOURNAL_FIELDS.filter(f => journal[f]).map(f => `${JOURNAL_LABELS[f]}: ${journal[f]}`)
+  return lines.length > 0 ? lines.join('\n') : undefined
 }
 
 /** Exported for the column footer, which says the same thing about a past day. */

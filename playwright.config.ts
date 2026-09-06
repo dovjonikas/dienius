@@ -32,7 +32,7 @@ export default defineConfig({
     // too, in the phone's words, with the sheets it uses there - and so is
     // the phone call, whose whole promise is three presses with nothing
     // scrolled at this size.
-    { name: 'phone', testMatch: /(tour|interrupt)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
+    { name: 'phone', testMatch: /(tour|interrupt|journal)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',
