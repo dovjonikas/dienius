@@ -3,6 +3,7 @@ import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
 import { resolvedColor } from '../../lib/categories'
 import { progressLabel, progressPercent } from '../../lib/library'
+import { scratchTitle } from '../../lib/scratch'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
 import { TimePicker } from '../../views/TimePicker'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
@@ -34,6 +35,12 @@ export interface TaskDetailProps {
    * itself through the store with its scope, as it always did.
    */
   onDelete?: (taskId: string) => void
+  /**
+   * Opens the note this task was made from, when there is one. The note is
+   * where its pictures live - see `scratchToTaskKeepingNote` - so this is
+   * the way to a meal plan screenshot from the task that came out of it.
+   */
+  onOpenNote?: (noteId: string) => void
 }
 
 /**
@@ -49,7 +56,7 @@ export interface TaskDetailProps {
  * entirely in CSS. Two components would drift, and there is no behavioural
  * difference between them - only where the rectangle sits.
  */
-export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: TaskDetailProps) {
+export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOpenNote }: TaskDetailProps) {
   useRestoreFocus()
   const data = useAppData()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -82,6 +89,11 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: Ta
   const inSeries = !!task.repeat || !!task.repeatOf
   const boundList = task.libraryRef ? library.find(l => l.id === task.libraryRef!.listId) : undefined
   const boundItem = boundList?.items.find(i => i.id === task.libraryRef!.itemId)
+  // The note this task came from, if the note is still in the stream: a
+  // deleted note leaves the task alone rather than the task carrying a dead
+  // link, which is the same rule every reference in this state follows.
+  const fromNote = task.fromNote ? data.scratch.find(n => n.id === task.fromNote) : undefined
+
   const scopeHint =
     scope === 'series'
       ? 'Days already lived keep it - only this one and the ones ahead change.'
@@ -443,6 +455,24 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete }: Ta
               />
             </div>
           </div>
+
+          {/* A task made from a note keeps the way back to it, because the
+              note is where its pictures are - a meal plan screenshot is
+              reachable from the task it turned into, without a copy of it
+              existing anywhere. See scratchToTaskKeepingNote. */}
+          {fromNote && (
+            <div className="task-detail-field">
+              <span className="task-detail-label">From a note</span>
+              <button type="button" className="task-detail-fromnote" onClick={() => onOpenNote?.(fromNote.id)}>
+                {scratchTitle(fromNote.text, 60) || 'A note with a picture'}
+                {fromNote.photos && fromNote.photos.length > 0 && (
+                  <span className="task-detail-fromnote-count">
+                    {fromNote.photos.length === 1 ? '1 picture' : `${fromNote.photos.length} pictures`}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
 
           <div className="task-detail-field">
             <span className="task-detail-label">Note</span>

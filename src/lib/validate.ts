@@ -340,6 +340,9 @@ const BACKLOG_ITEM = record({
   title: string,
   category: categoryRef,
   minutes: optional(minutes),
+  fromNote: optional(string),
+  setAside: optional(boolean),
+  latest: optional(clockTime),
 })
 
 // A picture's id and shape. The blob is in IndexedDB and never in a
@@ -358,6 +361,8 @@ const SCRATCH_NOTE = record({
   createdAt: string,
   date: string,
   pinned: optional(boolean),
+  taskId: optional(string),
+  taskDate: optional(string),
   photos: optional(listOf(NOTE_PHOTO)),
 })
 

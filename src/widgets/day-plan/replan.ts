@@ -5,6 +5,7 @@ import { dayHas, isRoutine } from '../../lib/taskIdentity'
 import { DEFAULT_TITLE } from './interrupt'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Gap, type Interval } from './capacity'
 import { formatClock } from './timelineLayout'
+import { placementOk } from './placement'
 
 /**
  * Replan: what to do with the rest of the day when the plan just broke.
@@ -50,6 +51,14 @@ export interface Interruption {
   category?: CategoryId
 }
 
+/**
+ * What happens to a block the interruption lands on.
+ *
+ * 'drop' is a misnomer kept for the state it is stored in: since v2.5 it
+ * sets the block aside rather than deleting it - see setAside.ts and
+ * DECISIONS "Set aside, not deleted". Nothing an interruption touches
+ * leaves the day; the worst that happens to a block is that it waits.
+ */
 export type ConflictChoice = 'squeeze' | 'tomorrow' | 'drop' | 'keep'
 
 /**
@@ -88,7 +97,7 @@ export interface ReplanPlan {
   moves: { taskId: string; time: string }[]
   /** Tasks that go to the next day, at the time they had. */
   tomorrow: string[]
-  /** Tasks that go. */
+  /** Tasks that stop being on the day's clock and wait at the bottom of it. */
   drop: string[]
   /** Tasks the plan looked at and left alone. */
   keep: string[]
@@ -109,15 +118,23 @@ function titleList(tasks: Task[]): string {
 }
 
 /**
- * The tasks an interruption collides with: anchored, not done, and
- * overlapping it. With no known length the interruption reaches to the end
- * of the day, so everything that starts after it, or is in progress at it,
- * collides.
+ * The tasks an interruption collides with: anchored, not done, overlapping
+ * it, and not routine. With no known length the interruption reaches to the
+ * end of the day, so everything that starts after it, or is in progress at
+ * it, collides.
+ *
+ * **Routine is not in the way.** A block that comes back every day from a
+ * template - the commute, meals, the wake ritual, sleep - is not moved,
+ * not set aside and not offered tomorrow. If the afternoon is gone then
+ * lunch did not happen, and tomorrow has a lunch of its own; moving one is
+ * arithmetic about a thing nobody was going to do twice. It was offered as
+ * a choice until v2.5 and the answer was always the same, which is what a
+ * rule is. See CONVENTIONS section 12 and `routineOf`.
  */
 export function findConflicts(tasks: Task[], interruption: Interruption): Task[] {
   const end = interruption.minutes === undefined ? Number.POSITIVE_INFINITY : interruption.start + interruption.minutes
   return tasks
-    .filter(t => !t.done && isAnchor(t))
+    .filter(t => !t.done && isAnchor(t) && !isRoutine(t))
     .filter(t => startOf(t) < end && endOf(t) > interruption.start)
     .sort((a, b) => startOf(a) - startOf(b))
 }
@@ -143,22 +160,34 @@ function freeGapsAfter(fixed: Interval[], window: Interval, from: number): Gap[]
 }
 
 /**
- * Places tasks one after another into the gaps, first gap that fits, in
- * the order given. Returns what landed and what did not. The gaps are
- * consumed as it goes, so two tasks never share one.
+ * Places tasks one after another into the gaps, first gap that fits and
+ * that the block may actually be at, in the order given. Returns what
+ * landed and what did not. The gaps are consumed as it goes, so two tasks
+ * never share one.
+ *
+ * "May actually be at" is placement.ts: a gap at eleven at night is a gap,
+ * and gym at eleven at night is not gym. `day` is everything the plan is
+ * placing around, so a meal knows where the other meals ended up - a plan
+ * that moves lunch to four is not allowed to put dinner at five.
  */
-function pack(tasks: Task[], gaps: Gap[]): { placed: { taskId: string; time: string }[]; left: Task[] } {
+function pack(tasks: Task[], gaps: Gap[], day: Task[] = []): { placed: { taskId: string; time: string }[]; left: Task[] } {
   const free = gaps.map(g => ({ ...g }))
   const placed: { taskId: string; time: string }[] = []
   const left: Task[] = []
+  // What the next block is placed around: the day, with everything already
+  // placed by this pass at its new time rather than its old one.
+  const around = new Map(day.map(t => [t.id, t]))
   for (const task of tasks) {
     const need = task.minutes ?? UNSIZED_ASSUMED_MINUTES
-    const gap = free.find(g => g.end - g.start >= need)
+    const others = [...around.values()]
+    const gap = free.find(g => g.end - g.start >= need && placementOk(task, g.start, others))
     if (!gap) {
       left.push(task)
       continue
     }
-    placed.push({ taskId: task.id, time: formatClock(gap.start) })
+    const time = formatClock(gap.start)
+    placed.push({ taskId: task.id, time })
+    around.set(task.id, { ...task, time })
     gap.start += need
   }
   return { placed, left }
@@ -173,6 +202,15 @@ function pack(tasks: Task[], gaps: Gap[]): { placed: { taskId: string; time: str
  * tomorrow and named in the summary, never silently kept at a time it can
  * no longer have.
  */
+/**
+ * The routine blocks an interruption runs over. Named so the summary can
+ * say they stay, which is the whole of what happens to them.
+ */
+export function routineOf(tasks: Task[], interruption: Interruption): Task[] {
+  const end = interruption.minutes === undefined ? Number.POSITIVE_INFINITY : interruption.start + interruption.minutes
+  return tasks.filter(t => !t.done && isAnchor(t) && isRoutine(t) && startOf(t) < end && endOf(t) > interruption.start)
+}
+
 export function planInterrupt(
   tasks: Task[],
   interruption: Interruption,
@@ -203,7 +241,11 @@ export function planInterrupt(
   // "I will do it after" is the reading a person gives it, and lunch moved
   // to eight in the morning is arithmetic nobody believes.
   const gaps = freeGapsAfter(fixed, window, opts.from ?? end)
-  const { placed, left } = pack(squeeze, [...gaps.filter(g => g.start >= end), ...gaps.filter(g => g.start < end)])
+  const { placed, left } = pack(
+    squeeze,
+    [...gaps.filter(g => g.start >= end), ...gaps.filter(g => g.start < end)],
+    tasks.filter(t => !moving.has(t.id) && !gone.has(t.id)),
+  )
 
   const parts: string[] = []
   if (placed.length > 0) {
@@ -213,15 +255,14 @@ export function planInterrupt(
   const toTomorrow = [...tomorrow, ...left]
   if (left.length > 0) parts.push(`No room left ${words.day} for ${titleList(left)} - ${words.next}.`)
   if (tomorrow.length > 0) parts.push(`${capitalise(words.next)}: ${titleList(tomorrow)}.`)
-  // Two words for two facts. A routine block skipped for the day is not
-  // lost - its template makes it again on the next day it belongs to - and
-  // saying "dropped" about it would be reporting a loss that did not
-  // happen. A one-off somebody chose to let go of is gone, and says so.
-  const skipped = drop.filter(isRoutine)
-  const dropped = drop.filter(t => !isRoutine(t))
-  if (skipped.length > 0) parts.push(`Skipped ${words.day}: ${titleList(skipped)}.`)
-  if (dropped.length > 0) parts.push(`Dropped: ${titleList(dropped)}.`)
-  if (conflicts.length === 0) parts.push('Nothing in the way. It goes straight in.')
+  // One word for one fact, since v2.5: nothing is dropped any more. A block
+  // taken off the day is waiting at the bottom of it and one press from
+  // coming back - see setAside.ts - so the summary says so rather than
+  // reporting a loss that has not happened.
+  if (drop.length > 0) parts.push(`Set aside, waiting: ${titleList(drop)}.`)
+  const routine = routineOf(tasks, interruption)
+  if (routine.length > 0) parts.push(`The routine stays: ${titleList(routine)}.`)
+  if (conflicts.length === 0 && routine.length === 0) parts.push('Nothing in the way. It goes straight in.')
 
   return {
     kind: 'interrupt',
@@ -321,7 +362,11 @@ export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, 
 
   const fixed: Interval[] = upcoming.map(t => ({ start: startOf(t), end: endOf(t) }))
   fixed.push(...busy)
-  const { placed, left } = pack(candidates, freeGapsAfter(fixed, window, nowMinutes))
+  const { placed, left } = pack(
+    candidates,
+    freeGapsAfter(fixed, window, nowMinutes),
+    tasks.filter(t => !candidates.some(c => c.id === t.id)),
+  )
 
   const keyOpen = open.filter(t => t.highlight)
   const keyWinnable = keyOpen.filter(t => upcoming.includes(t) || placed.some(p => p.taskId === t.id))
@@ -413,11 +458,18 @@ export function splitByPlan(tasks: Task[], plan: ReplanPlan): { staying: Task[];
   const leaving: Task[] = []
   const dropped: Task[] = []
   for (const task of tasks) {
-    if (gone.has(task.id)) dropped.push(task)
-    else if (going.has(task.id)) leaving.push(task)
+    if (gone.has(task.id)) {
+      // Set aside rather than deleted, and still on the day - it is in
+      // `staying` as well, marked, so nothing has to remember it
+      // separately. `dropped` is what it is called for callers that want
+      // to name them; it is no longer what happens to them.
+      dropped.push(task)
+      staying.push(task.setAside ? task : { ...task, setAside: true })
+    } else if (going.has(task.id)) leaving.push(task)
     else {
       const time = newTime.get(task.id)
-      staying.push(time !== undefined && time !== task.time ? { ...task, time } : task)
+      const back = task.setAside ? { ...task, setAside: undefined } : task
+      staying.push(time !== undefined && time !== task.time ? { ...back, time } : back)
     }
   }
   return { staying, leaving, dropped }
@@ -428,9 +480,11 @@ export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId:
   const next = addDays(date, 1)
   const target: DayPlan = data.days[next] ?? { date: next, tasks: [] }
 
-  const { staying, leaving: goingTomorrow, dropped } = splitByPlan(day.tasks, plan)
+  const { staying, leaving: goingTomorrow } = splitByPlan(day.tasks, plan)
+  // No repeat skips any more: a block a replan took off is still on the
+  // day, waiting, so there is nothing for the repeat to re-create. The
+  // skips a day already carries are left exactly as they are.
   const skips = new Set(day.repeatSkips ?? [])
-  for (const task of dropped) if (task.repeatOf) skips.add(task.repeatOf)
 
   if (plan.add) {
     const already = staying.some(t => t.title === plan.add!.title && t.time === plan.add!.time)

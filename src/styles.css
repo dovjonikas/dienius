@@ -2543,8 +2543,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    file, range and colour - are excluded by name rather than by an allow-list,
    so a field added later is styled by default and has to opt out on purpose
    rather than being forgotten by default.
+
+   And one more exclusion, by class: an input that lives inside a control
+   which draws its own box. `.time-stepper` is a bordered box with a number
+   and two arrows in it, and it has always had a rule taking the border off
+   the number - a rule that never once applied, because five `:not()`s make
+   this selector far more specific than `.time-stepper .time-input`. So
+   every stepper in this app has been a box inside a box since v1.0, which
+   the owner finally saw in the library's add row. Excluded here rather than
+   out-specified there: the box belongs to the control, and the control says
+   so in one place.
    ------------------------------------------------------------------------ */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input),
 textarea {
   min-width: 0;
   padding: var(--s2) var(--s3);
@@ -2556,7 +2566,7 @@ textarea {
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color'])::placeholder,
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input)::placeholder,
 textarea::placeholder {
   color: var(--faint);
 }
@@ -6903,6 +6913,11 @@ button.danger:focus-visible {
 
 .library-amount .count-stepper { border-left: 1px solid var(--border); }
 .library-amount .library-unit { border: none; }
+
+/* Narrower than it was: 72px held four digits nothing in a library ever
+   has, and the width was what made the amount look like the biggest thing
+   in a row whose subject is the title on the left. */
+.library-add .count-stepper .count-input { width: 52px; }
 
 /* Flat and quiet while there is nothing to add, rather than a faded copy
    of the button beside it - the owner read the faded one as broken. */
@@ -12843,4 +12858,164 @@ main:has(.week) > .calendar {
 
 @media (pointer: coarse) {
   .clock-note-open { min-height: var(--touch); }
+}
+
+/* ---------------------------------------------------------------------------
+   A note on its way to being a task - views/scratch/NoteToTask.tsx.
+
+   A sheet over the scratch sheet, because that is where the press came from
+   and going back is one Escape. Everything about the task is here before it
+   exists: one press used to make a guess and leave three corrections.
+   ------------------------------------------------------------------------ */
+.note-task-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.note-task {
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+  box-shadow: var(--e3);
+}
+
+.note-task-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--s3);
+}
+
+.note-task-time { flex: 0 0 100px; }
+.note-task-size { flex: 1 1 220px; }
+
+.note-task-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s1);
+}
+
+.note-task-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-left: auto;
+}
+
+/* The note that became a task offers the way to it instead of a second To
+   task. Quiet, in the row of the note's own actions, because it is a fact
+   about the note and not a thing to do to it. */
+.scratch-note-action.is-linked { color: var(--accent); }
+
+.task-detail-fromnote {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  min-height: 0;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.task-detail-fromnote:hover { border-color: var(--muted); }
+.task-detail-fromnote-count { margin-left: auto; color: var(--muted); font-size: var(--t-xs); white-space: nowrap; }
+
+/* ---------------------------------------------------------------------------
+   The shelf under the day - widgets/day-plan/SetAsideStrip.tsx.
+
+   What a replan took off, waiting. The quietest thing on the screen on
+   purpose: no colour, no count, no clock. A block on this shelf is not a
+   failure and the strip must never read as a list of them, which is why it
+   has a label and not a number, and why it is gone after midnight.
+   ------------------------------------------------------------------------ */
+.set-aside {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding: var(--s2) 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.set-aside-label {
+  color: var(--faint);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.set-aside-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.set-aside-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s2);
+  min-height: 0;
+  padding: var(--s1) var(--s3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.set-aside-item:hover,
+.set-aside-item.is-open { color: var(--text); border-color: var(--muted); }
+
+.set-aside-length { color: var(--faint); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+
+/* Beside the chip that opened it, not on a line of its own: the shelf spans
+   the whole width of the day, and an offer pinned to the far right of that
+   is a sentence and two buttons a screen apart from the block they are
+   about. It wraps under the chips when the row runs out. */
+.set-aside-offer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  padding-left: var(--s2);
+  border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.set-aside-line { margin: 0; color: var(--text); font-size: var(--t-sm); }
+.set-aside-actions { display: flex; gap: var(--s2); }
+
+.set-aside-offer .primary,
+.set-aside-offer .btn-secondary { min-height: 32px; padding: var(--s1) var(--s3); font-size: var(--t-sm); }
+
+@media (max-width: 700px) {
+  .set-aside-offer { width: 100%; padding-left: 0; border-left: none; }
+  .set-aside-actions { margin-left: auto; }
+}
+
+@media (pointer: coarse) {
+  .set-aside-item { min-height: var(--touch); }
 }

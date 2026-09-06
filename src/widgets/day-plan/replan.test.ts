@@ -63,7 +63,7 @@ test('each conflict can be sent to tomorrow or dropped instead, and the summary 
   expect(plan.keep).toEqual(['c'])
   expect(plan.moves).toEqual([])
   expect(plan.summary).toContain('Tomorrow: a.')
-  expect(plan.summary).toContain('Dropped: b.')
+  expect(plan.summary).toContain('Set aside, waiting: b.')
 })
 
 test('external calendar time is not a gap', () => {
@@ -148,14 +148,17 @@ function withTasks(tasks: Task[]) {
   return data
 }
 
-test('applying a plan re-times, moves to tomorrow, drops, and adds the interruption', () => {
+test('applying a plan re-times, moves to tomorrow, sets aside, and adds the interruption', () => {
   let n = 0
   const data = withTasks([task('a', '09:00', 60), task('b', '10:00', 60), task('c', '11:00', 60)])
   const plan = planInterrupt(data.days[DAY].tasks, { title: 'Dentist', start: t(9), minutes: 180 }, { b: 'tomorrow', c: 'drop' }, WINDOW)
   const next = applyPlan(data, DAY, plan, () => `new-${++n}`)
-  expect(next.days[DAY].tasks.map(x => [x.id, x.time])).toEqual([
-    ['a', '12:00'],
-    ['new-1', '09:00'],
+  // 'c' is still on the day, waiting - see setAside.ts and DECISIONS "Set
+  // aside, not deleted". Nothing an interruption touches leaves the day.
+  expect(next.days[DAY].tasks.map(x => [x.id, x.time, x.setAside ?? false])).toEqual([
+    ['a', '12:00', false],
+    ['c', '11:00', true],
+    ['new-1', '09:00', false],
   ])
   expect(next.days[NEXT].tasks.map(x => x.id)).toEqual(['b'])
 })
@@ -259,16 +262,28 @@ test('the summary speaks about the day it is for, not about today', () => {
 })
 
 /**
- * Two words for two facts. A routine block skipped for the day is not lost -
- * the template makes it again - so it is not "dropped"; a one-off the person
- * let go of is.
+ * The routine is not in the way, and never was. A commute or a lunch the
+ * afternoon ran over did not happen, and tomorrow has one of its own - so
+ * it is not moved, not set aside and not offered anywhere. It was a choice
+ * until v2.5 and the answer was always the same, which is what a rule is.
+ * See CONVENTIONS section 12.
  */
-test('a skipped routine block and a dropped one-off are named as the two different things they are', () => {
+test('a routine block is never in the way: it is not offered a choice, and the summary says it stays', () => {
   const commute = task('commute', '09:00', 30, { origin: { type: 'template', sourceId: 'work', blockId: 'b1' } })
   const errand = task('errand', '09:30', 30)
   const plan = planInterrupt([commute, errand], { title: 'Dad', start: t(9), minutes: 60 }, { commute: 'drop', errand: 'drop' }, WINDOW)
-  expect(plan.summary).toContain('Skipped today: commute.')
-  expect(plan.summary).toContain('Dropped: errand.')
+
+  expect(plan.drop).toEqual(['errand'])
+  expect(plan.moves).toEqual([])
+  expect(plan.tomorrow).toEqual([])
+  expect(plan.summary).toContain('The routine stays: commute.')
+  expect(plan.summary).toContain('Set aside, waiting: errand.')
+})
+
+test('a routine block is not among the conflicts a sheet would offer choices for', () => {
+  const commute = task('commute', '09:00', 30, { origin: { type: 'template', sourceId: 'work', blockId: 'b1' } })
+  const errand = task('errand', '09:30', 30)
+  expect(findConflicts([commute, errand], { title: 'Dad', start: t(9), minutes: 60 }).map(x => x.id)).toEqual(['errand'])
 })
 
 test('an interruption with no name is called what the sheet is called', () => {
@@ -309,17 +324,87 @@ test('applying writes the day it was replanned on, and only then', () => {
   expect(applyPlan(data, DAY, plan, () => 'id', { replannedOn: '2026-09-01' }).days[DAY].replannedOn).toBe('2026-09-01')
 })
 
-test('dropping a repeat instance records the skip, and nothing else grows a skips list', () => {
+/**
+ * A repeat instance taken off the day used to be deleted, with its series
+ * id written into `repeatSkips` so the rollover would not put it back. Since
+ * v2.5 nothing is deleted: the block waits on the day, so there is nothing
+ * for a skip to prevent and no skip is written. A day that already carries
+ * skips from before keeps them.
+ */
+test('a one-off set aside stays on the day, and no skip is written for anything', () => {
   const data = withTasks([task('pills', '09:00', 10, { repeatOf: 'series' }), task('walk', '10:00', 30)])
   const plan = planInterrupt(data.days[DAY].tasks, { title: 'Dad', start: t(9), minutes: 120 }, { pills: 'drop', walk: 'drop' }, WINDOW)
   const next = applyPlan(data, DAY, plan, () => 'id')
-  expect(next.days[DAY].repeatSkips).toEqual(['series'])
-  const plain = applyPlan(withTasks([task('walk', '10:00', 30)]), DAY, planInterrupt([task('walk', '10:00', 30)], { title: 'X', start: t(10), minutes: 60 }, { walk: 'drop' }, WINDOW), () => 'id')
-  expect(plain.days[DAY].repeatSkips).toBeUndefined()
+
+  expect(next.days[DAY].repeatSkips).toBeUndefined()
+  // 'pills' repeats daily, which makes it routine: it is not in the way and
+  // nothing happens to it. 'walk' is a one-off and waits.
+  expect(next.days[DAY].tasks.filter(x => x.setAside).map(x => x.id)).toEqual(['walk'])
 })
 
 test('the interruption arrives as a manual task, which is what it is', () => {
   const data = withTasks([])
   const plan = planInterrupt([], { title: 'Dad', start: t(9), minutes: 60 }, {}, WINDOW)
   expect(applyPlan(data, DAY, plan, () => 'id').days[DAY].tasks[0].origin).toEqual({ type: 'manual' })
+})
+
+/**
+ * The eleven rules a replan follows, in CONVENTIONS section 12. Most were
+ * already true and had never been written down as a test; these are the
+ * ones a change to the packer could quietly break.
+ */
+
+// 2. Key tasks first. A key task is never pushed out by one that is not.
+test('the key tasks take the gaps first, whatever order they were in', () => {
+  const plain = task('plain', '13:00', 60)
+  const key = { ...task('key', '14:00', 60), highlight: true }
+  const plan = planInterrupt([plain, key], { title: 'X', start: t(13), minutes: 120 }, {}, { start: t(7), end: t(16) })
+  // One gap of an hour is left before four; the key task has it.
+  expect(plan.moves.map(m => m.taskId)).toEqual(['key'])
+  expect(plan.tomorrow).toEqual(['plain'])
+})
+
+// 4. Nothing into the past. A gap that started before now is not a gap.
+test('nothing is placed before the time the plan is made at', () => {
+  const late = task('late', '09:00', 30)
+  const plan = planRescue([late], t(15), WINDOW)
+  expect(plan.moves.every(m => m.time >= '15:00')).toBe(true)
+})
+
+// 5. Sleep is a wall. Nothing is placed past the end of the waking window.
+test('nothing is placed past the start of sleep, however much is left over', () => {
+  const a = task('a', '09:00', 90)
+  const b = task('b', '10:30', 90)
+  const plan = planInterrupt([a, b], { title: 'X', start: t(9), minutes: 60 }, {}, { start: t(7), end: t(12) })
+  const placed = plan.moves.map(m => m.time)
+  expect(placed.every(time => time < '12:00')).toBe(true)
+})
+
+// 6. A block has a window it means anything in. Gym at eleven is not gym.
+test('a block is not placed past the hour it stops being itself, and waits for tomorrow', () => {
+  const gym = { ...task('gym', '18:00', 60), category: 'health' }
+  const wall = task('wall', '18:00', 240)
+  const plan = planInterrupt([gym, wall], { title: 'X', start: t(18), minutes: 60 }, { wall: 'keep' }, WINDOW)
+  // The only room after the interruption is past nine, which is past what
+  // a Health block is - so it goes to tomorrow rather than to 22:00.
+  expect(plan.moves).toEqual([])
+  expect(plan.tomorrow).toEqual(['gym'])
+})
+
+// 7. Two meals do not end up an hour apart because the afternoon moved.
+test('a meal is not placed within two hours of another meal', () => {
+  const lunch = { ...task('lunch', '12:30', 45), category: 'meal' }
+  const dinner = { ...task('dinner', '18:00', 45), category: 'meal' }
+  const plan = planInterrupt([lunch, dinner], { title: 'X', start: t(18), minutes: 30 }, { lunch: 'keep' }, WINDOW)
+  const placed = plan.moves.find(m => m.taskId === 'dinner')
+  expect(placed && placed.time >= '14:30').toBe(true)
+})
+
+// 11. The same plan twice is the same day. Sync hands intentions over twice.
+test('placing the same plan twice lands everything in the same place', () => {
+  const data = withTasks([task('a', '09:00', 60), task('b', '10:00', 60)])
+  const plan = planInterrupt(data.days[DAY].tasks, { title: 'X', start: t(9), minutes: 120 }, {}, WINDOW)
+  const once = applyPlan(data, DAY, plan, () => 'id')
+  const twice = applyPlan(once, DAY, plan, () => 'id')
+  expect(twice.days[DAY].tasks).toEqual(once.days[DAY].tasks)
 })

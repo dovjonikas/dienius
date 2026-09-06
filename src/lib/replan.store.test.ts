@@ -47,13 +47,15 @@ function planAfternoonGone(date: string) {
  * - and the plan goes onto that day, so opening it later shows what was
  * accepted rather than a template stamped over a note.
  */
-test('a replan on a day nobody opened lands on the day its template makes, with the routine blocks it hits skipped', () => {
+test('a replan on a day nobody opened lands on the day its template makes, and leaves its routine alone', () => {
   const template = mapTemplateOnto(SOON)
   expect(getData().days[SOON]).toBeUndefined()
 
   const plan = planAfternoonGone(SOON)
-  expect(plan.drop).toHaveLength(2)
-  expect(plan.summary).toContain('Skipped')
+  // Every block on a stamped day comes from its template, so nothing is in
+  // the way at all: the routine stays and the interruption goes over it.
+  expect(plan.drop).toEqual([])
+  expect(plan.summary).toContain('The routine stays')
   expect(plan.summary).not.toContain('Dropped')
 
   actions.applyReplan(SOON, plan)
@@ -61,7 +63,7 @@ test('a replan on a day nobody opened lands on the day its template makes, with 
   expect(day.templateId).toBe(template.id)
   expect(day.autoApplied).toBe(true)
   expect(day.replannedOn).toBe(TODAY)
-  expect(day.tasks.map(t => `${t.title}@${t.time}`)).toEqual(['Commute@08:00', 'Deep work@09:00', 'Dad@13:00'])
+  expect(day.tasks.map(t => `${t.title}@${t.time}`)).toEqual(['Commute@08:00', 'Deep work@09:00', 'Meetings@13:30', 'Email@16:00', 'Dad@13:00'])
 })
 
 /**
@@ -118,4 +120,41 @@ test('a day the weekday plan says nothing about is made empty and marked, so a l
   mapTemplateOnto(SOON)
   expect(actions.ensureDay(SOON)).toBe(false)
   expect(getData().days[SOON].tasks.map(t => t.title)).toEqual(['Dad'])
+})
+
+/**
+ * The owner's scenario, in their words: you replan not knowing how long it
+ * will take - "something this evening" - and later you get home. An
+ * interruption with no length leaves the day open-ended, which is what
+ * `away` already means, so the header offers "I'm back" and the rescue
+ * recomputes from the moment it is pressed. Nothing new is asked for at
+ * the moment of the interruption, which is the one moment nobody has an
+ * answer.
+ */
+test('an interruption with no length leaves the day away from the time it started', () => {
+  actions.ensureDay(TODAY)
+  const tasks = getData().days[TODAY].tasks
+  const open = { title: 'Something this evening', start: 19 * 60, minutes: undefined }
+  const plan = planInterrupt(tasks, open, {}, WINDOW)
+
+  actions.applyReplan(TODAY, plan)
+  expect(getData().days[TODAY].away).toBe('19:00')
+})
+
+test('an interruption with a length says nothing about being away', () => {
+  actions.ensureDay(TODAY)
+  const tasks = getData().days[TODAY].tasks
+  const plan = planInterrupt(tasks, { title: 'Dentist', start: 13 * 60, minutes: 60 }, {}, WINDOW)
+
+  actions.applyReplan(TODAY, plan)
+  expect(getData().days[TODAY].away).toBeUndefined()
+})
+
+test('an open-ended interruption on another day leaves that day alone', () => {
+  actions.ensureDay(SOON)
+  const tasks = getData().days[SOON].tasks
+  const plan = planInterrupt(tasks, { title: 'Something', start: 19 * 60, minutes: undefined }, {}, WINDOW)
+
+  actions.applyReplan(SOON, plan)
+  expect(getData().days[SOON].away).toBeUndefined()
 })

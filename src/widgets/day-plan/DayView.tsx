@@ -30,6 +30,7 @@ import { TemplateRail } from './TemplateRail'
 import { DayDigest } from './DayDigest'
 import { DayHeader } from './DayHeader'
 import { TaskPane } from './TaskPane'
+import { SetAsideStrip } from './SetAsideStrip'
 import { useDayDrag } from './useDayDrag'
 import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
@@ -44,6 +45,15 @@ export interface DayViewProps {
    * the day view knows the line exists, not where the window is.
    */
   onOpenNorth: () => void
+  /**
+   * A task to open the details of, asked for from outside the day - the
+   * note that became it, so far. Read once and handed back, so asking for
+   * the same task twice opens it twice.
+   */
+  openTask?: { date: string; taskId: string } | null
+  onOpenTaskDone?: () => void
+  /** Opens the note a task was made from - the way back to its pictures. */
+  onOpenNote?: (noteId: string) => void
 }
 
 /**
@@ -69,7 +79,7 @@ export interface DayViewProps {
  */
 const NOW_TICK_MS = 30_000
 
-export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
+export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskDone, onOpenNote }: DayViewProps) {
   const data = useAppData()
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
   // Everything about one task that the row deliberately does not show - see
@@ -79,7 +89,9 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
   const [contextMenu, setContextMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
 
   const day = data.days[date]
-  const tasks = sortTasks(day?.tasks ?? [])
+  // The waiting blocks are not in the list: they are on the shelf under the
+  // day, which is the whole point of setting one aside - see SetAsideStrip.
+  const tasks = sortTasks((day?.tasks ?? []).filter(t => !t.setAside))
   const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
   const isToday = date === todayKey()
   const [nowMinutes, setNowMinutes] = useState(() => currentMinutes())
@@ -157,6 +169,16 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
   }
 
   const actionsSheetTask = actionsSheetTaskId ? day?.tasks.find(t => t.id === actionsSheetTaskId) : undefined
+  // A task asked for from outside - a note that became one. Opened after
+  // the day it is on is the day showing, and cleared as it is taken, so
+  // asking for the same task twice opens it twice.
+  useEffect(() => {
+    if (!openTask || openTask.date !== date) return
+    if (!day?.tasks.some(t => t.id === openTask.taskId)) return
+    setDetailTaskId(openTask.taskId)
+    onOpenTaskDone?.()
+  }, [openTask, date, day, onOpenTaskDone])
+
   const detailTask = detailTaskId ? day?.tasks.find(t => t.id === detailTaskId) : undefined
   const contextTask = contextMenu ? day?.tasks.find(t => t.id === contextMenu.taskId) : undefined
   const selectedTask = selection.selectedTaskId ? tasks.find(t => t.id === selection.selectedTaskId) : undefined
@@ -381,6 +403,10 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
         />
       )}
 
+      {/* The shelf under the day: what a replan took off, waiting. Quiet by
+          design and gone after midnight - see SetAsideStrip. */}
+      <SetAsideStrip date={date} nowMinutes={nowMinutes} isToday={isToday} />
+
       {actionsSheetTask && (
         <TaskActionsSheet
           task={actionsSheetTask}
@@ -411,6 +437,7 @@ export function DayView({ date, onDateChange, onOpenNorth }: DayViewProps) {
           library={data.library}
           onClose={() => setDetailTaskId(null)}
           onDelete={taskId => deleteWithUndo(taskId)}
+          onOpenNote={onOpenNote}
         />
       )}
 

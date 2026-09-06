@@ -13,7 +13,11 @@ import { TIME_RE } from './parse'
  * is a second time.
  */
 export function isAnchor(task: Task): boolean {
-  return task.time !== undefined
+  // A block that is waiting is not on the clock: it is out of the timeline,
+  // out of the capacity line, out of the gaps a replan packs into and out
+  // of what an interruption can collide with. One gate rather than five
+  // places each remembering to ask - see setAside.ts.
+  return task.time !== undefined && !task.setAside
 }
 
 /**

@@ -101,7 +101,7 @@ test('a shape on today names what it hits, moves the one-offs into the evening, 
  * because its template makes it again; a one-off is moved. Either can be
  * overridden by pressing its row, and nobody has to.
  */
-test('a routine block in the way is skipped by default, and one press on its row moves it instead', async () => {
+test('a routine block the afternoon runs over is left alone, and only the one-off is in the way', async () => {
   const user = userEvent.setup()
   clockAt(8)
   actions.resetForTests({
@@ -119,21 +119,19 @@ test('a routine block in the way is skipped by default, and one press on its row
   renderSheet('interrupt')
   await user.click(screen.getByRole('button', { name: 'Afternoon gone' }))
 
+  // Meetings comes from the template, so it is not offered a choice at all:
+  // it stays where it is and the summary says so. Only the one-off is in
+  // the way. See CONVENTIONS section 12 and DECISIONS "Set aside, not
+  // deleted".
   const rows = within(screen.getByRole('list')).getAllByRole('listitem')
-  expect(rows[0]).toHaveTextContent('Meetings')
-  expect(rows[0]).toHaveTextContent('skipped')
-  expect(rows[1]).toHaveTextContent('Post the parcel')
-  expect(rows[1]).toHaveTextContent('at 18:00')
-  expect(screen.getByRole('status')).toHaveTextContent('Skipped today: Meetings.')
-
-  await user.click(within(rows[0]).getByRole('button', { name: /^Meetings, 13:30: skipped/ }))
-  await user.click(within(screen.getByRole('group', { name: 'What to do with Meetings' })).getByRole('button', { name: 'Move' }))
+  expect(rows).toHaveLength(1)
+  expect(rows[0]).toHaveTextContent('Post the parcel')
   expect(rows[0]).toHaveTextContent('at 18:00')
-  expect(rows[1]).toHaveTextContent('at 19:30')
+  expect(screen.getByRole('status')).toHaveTextContent('The routine stays: Meetings.')
   expect(screen.getByRole('status')).not.toHaveTextContent('Skipped')
 
   await user.click(screen.getByRole('button', { name: 'Accept' }))
-  expect(titles()).toEqual(['Meetings@18:00', 'Post the parcel@19:30', 'Something came up@13:00'])
+  expect(titles()).toEqual(['Meetings@13:30', 'Post the parcel@18:00', 'Something came up@13:00'])
 })
 
 /**
@@ -161,12 +159,11 @@ test('choosing tomorrow opens it the way looking at it would, and the plan lands
   expect(getData().days[TOMORROW].templateId).toBe(template.id)
   await user.click(screen.getByRole('button', { name: 'Afternoon gone' }))
 
-  expect(screen.getByRole('list')).toHaveTextContent('Meetings')
   expect(screen.getByRole('status')).toHaveTextContent('Free tomorrow: 07:00-08:00, 08:30-09:00, 11:00-13:00, after 18:00.')
-  expect(screen.getByRole('status')).toHaveTextContent('Skipped tomorrow: Meetings.')
+  expect(screen.getByRole('status')).toHaveTextContent('The routine stays: Meetings.')
 
   await user.click(screen.getByRole('button', { name: 'Accept' }))
-  expect(titles(TOMORROW)).toEqual(['Commute@08:00', 'Deep work@09:00', 'Something came up@13:00'])
+  expect(titles(TOMORROW)).toEqual(['Commute@08:00', 'Deep work@09:00', 'Meetings@13:30', 'Something came up@13:00'])
   expect(getData().days[TOMORROW].replannedOn).toBe(TODAY)
   expect(getData().days[TODAY]?.tasks ?? []).toEqual([])
   expect(getUndo()?.label).toBe('Tomorrow replanned')

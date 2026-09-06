@@ -333,6 +333,33 @@ its name.
 
 ---
 
+## When you get back
+
+Replan when you do not know how long it will take. Press **Replan**, then
+**Something came up**, name it, and leave the length empty - "something this
+evening" is a real answer and the app takes it as one.
+
+What comes off the day does not disappear. It waits on a quiet line under
+the day that says **Set aside**, with each block and how long it is. Nothing
+counts it, nothing nags about it, and after midnight the line is simply
+gone.
+
+When you get home, press one of those blocks. It offers a time - the first
+free stretch from now that holds it - and you press **Bring it back**. If
+there is less time left than the block wants it comes back shorter and says
+so in the same line ("2h shortened to 1h - that is what is left"). If what
+is left is under a quarter of an hour, or under half of what the block was,
+it offers tomorrow instead, because a twenty-minute version of a two-hour
+block is not that block.
+
+The header will also be offering **I'm back** while the day is open-ended.
+That does the whole evening at once: it recomputes what still fits from
+right now, key tasks first.
+
+One undo for any of it, the same as every other replan.
+
+---
+
 ## When you do not feel like it
 
 Some days are not going to be full ones, and the mistake is treating them
@@ -397,6 +424,17 @@ the pictures stay put.
 
 The same is true of **Export backup**: the file names the pictures and says
 so at the top, and restoring it brings the notes back without them.
+
+**Turning a note into something to do.** Press **To task** on a note and the
+task's editor opens with the note as its title, already filled in - change
+the words, give it a time, a length, a category, mark it key, then Save and
+it is on today. Cancel puts nothing anywhere.
+
+The note stays where it is either way. That is deliberate: what you wrote
+and what the task is called are rarely the same sentence, and if the note
+had a picture in it, the picture is still on the note. The note then offers
+**Open the task**, and the task offers the way back under **From a note** -
+so the meal plan screenshot is one press from the task that came out of it.
 
 ---
 

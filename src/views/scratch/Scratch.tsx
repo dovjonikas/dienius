@@ -6,7 +6,7 @@ import { offerUndo } from '../../lib/undo'
 import { isTaskIntent, isTaskMarkOnly, scratchCount, sortScratch, stripTaskMark } from '../../lib/scratch'
 import { keepPhoto, refusePhoto, shrinkPhoto } from '../../lib/photos'
 import { NotePhotos } from './NotePhotos'
-import { parseQuickAdd } from '../../widgets/day-plan/parse'
+import { NoteToTask } from './NoteToTask'
 import type { ScratchNote } from '../../lib/types'
 
 /**
@@ -27,20 +27,23 @@ import type { ScratchNote } from '../../lib/types'
 export interface ScratchProps {
   open: boolean
   onClose: () => void
+  /** Opens a day at a task - the way back from a note to what it became. */
+  onOpenTask?: (date: string, taskId: string) => void
 }
 
-export function Scratch({ open, onClose }: ScratchProps) {
+export function Scratch({ open, onClose, onOpenTask }: ScratchProps) {
   if (!open) return null
-  return <ScratchPanel onClose={onClose} />
+  return <ScratchPanel onClose={onClose} onOpenTask={onOpenTask} />
 }
 
-function ScratchPanel({ onClose }: { onClose: () => void }) {
+function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask?: (date: string, taskId: string) => void }) {
   useRestoreFocus()
   const data = useAppData()
   const [draft, setDraft] = useState('')
   const [draftId, setDraftId] = useState<string | null>(null)
   const [taskMode, setTaskMode] = useState(false)
   const [status, setStatus] = useState('')
+  const [making, setMaking] = useState<string | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -190,14 +193,19 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
 
   const notes = sortScratch(data.scratch).filter(n => n.id !== draftId)
   const draftNote = draftId === null ? undefined : data.scratch.find(n => n.id === draftId)
+  const makingNote = making === null ? undefined : data.scratch.find(n => n.id === making)
 
-  function toTask(note: ScratchNote) {
-    const parsed = parseQuickAdd(note.text)
-    if (!parsed) return
+  // The editor first, the task after. See NoteToTask for why the old
+  // one-press-and-gone was wrong in both directions.
+  function makeTask(note: ScratchNote) {
+    setMaking(note.id)
+  }
+
+  function saveTask(note: ScratchNote, task: { title: string; time?: string; minutes?: number; category?: string; highlight?: boolean }) {
     const today = todayKey()
-    if (actions.scratchToTask(note.id, today, { title: parsed.title, time: parsed.time, minutes: parsed.minutes })) {
-      setStatus(`${parsed.title} is on today${parsed.time ? ` at ${parsed.time}` : ''}.`)
-    }
+    const id = actions.scratchToTaskKeepingNote(note.id, today, task)
+    setMaking(null)
+    if (id) setStatus(`${task.title} is on today${task.time ? ` at ${task.time}` : ''}. The note stays here.`)
   }
 
   function toInbox(note: ScratchNote) {
@@ -299,6 +307,8 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
           </p>
         )}
 
+        {makingNote && <NoteToTask note={makingNote} onSave={task => saveTask(makingNote, task)} onCancel={() => setMaking(null)} />}
+
         {notes.length === 0 ? (
           <p className="scratch-empty">
             {draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet. Type, and it is kept.'}
@@ -317,9 +327,23 @@ function ScratchPanel({ onClose }: { onClose: () => void }) {
                       September 3 17:47" - the four wrap under it together
                       rather than Delete dropping onto a line of its own. */}
                   <span className="scratch-note-actions">
-                    <button type="button" className="scratch-note-action" onClick={() => toTask(note)}>
-                      To task
-                    </button>
+                    {note.taskId && note.taskDate ? (
+                      <button
+                        type="button"
+                        className="scratch-note-action is-linked"
+                        aria-label={`Open the task this note became`}
+                        onClick={() => {
+                          onOpenTask?.(note.taskDate!, note.taskId!)
+                          onClose()
+                        }}
+                      >
+                        Open the task
+                      </button>
+                    ) : (
+                      <button type="button" className="scratch-note-action" onClick={() => makeTask(note)}>
+                        To task
+                      </button>
+                    )}
                     <button type="button" className="scratch-note-action" onClick={() => toInbox(note)}>
                       To inbox
                     </button>

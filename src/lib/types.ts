@@ -176,6 +176,29 @@ export interface Task extends Timestamped {
    */
   core?: boolean
   /**
+   * Taken off the day by a replan, and waiting rather than gone.
+   *
+   * It keeps the time it had, so the offer to bring it back can say what
+   * it was; it is out of the timeline, out of the capacity line and out of
+   * the score while it waits. See widgets/day-plan/setAside.ts and
+   * DECISIONS "Set aside, not deleted".
+   */
+  setAside?: boolean
+  /**
+   * The latest clock time this block is worth starting at, when it has one.
+   *
+   * Optional and rarely set by hand: the rule for its kind covers almost
+   * every case - see widgets/day-plan/placement.ts. Gym at eleven is not
+   * gym, and a plan that would put it there offers tomorrow instead.
+   */
+  latest?: string
+  /**
+   * The note this task was made from, if it was. The note keeps its own
+   * words and its own pictures - see `scratchToTaskKeepingNote` - and this
+   * is the way back to them from the day.
+   */
+  fromNote?: string
+  /**
    * Estimated size in minutes. Absent means unsized, not zero - a task
    * typed through quick-add never gets one automatically, since guessing a
    * duration is worse than admitting it is not known. Usually arrives
@@ -870,6 +893,16 @@ export interface ScratchNote extends Timestamped {
   date: string
   /** Kept at the top of the stream. Absent is not pinned. */
   pinned?: boolean
+  /**
+   * The task this note was made into, and the day it landed on.
+   *
+   * The note is kept rather than consumed - see `scratchToTaskKeepingNote`.
+   * The words somebody wrote are not the same thing as the title of the
+   * task they turned into, and a note with a screenshot in it is where the
+   * screenshot has to stay.
+   */
+  taskId?: string
+  taskDate?: string
   /**
    * Photographs, as ids into IndexedDB plus the shape to lay out before the
    * blob loads - never the picture itself. This is the whole reason a note

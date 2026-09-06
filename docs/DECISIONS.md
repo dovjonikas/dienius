@@ -1565,3 +1565,52 @@ that delete puts both back, because the undo is holding the blobs it just
 took out. A sweep on every open deletes any blob no note points at, for the
 delete that was interrupted by a closed tab and for the device that synced a
 note's deletion without ever having had the picture.
+
+## Set aside, not deleted
+
+The owner's scenario, in their own words: you replan an evening without
+knowing how long it will take - "something this evening" - and something
+comes off the day. That something must not disappear. It stays, faded, and
+one press puts it back when you get home.
+
+Until v2.5 a block an interruption took off was deleted, and a repeat
+instance had its series id written into the day's skip list so the rollover
+would not put it back. Both of those are decisions the app made on
+somebody's behalf at the worst possible moment: during an interruption,
+about a thing they had not decided to give up. Nobody presses "drop"
+meaning "delete this for ever"; they press it meaning "not now".
+
+**So nothing leaves the day.** A block taken off gets `setAside` and stays
+where it is in the data. `isAnchor` is the one gate that decides whether a
+task is on the clock, so one line there takes a waiting block out of the
+timeline, the capacity line, the gaps a replan packs into and the conflicts
+an interruption can have - all at once, with nothing to remember in five
+places. No skips are written any more, because there is nothing for a skip
+to prevent.
+
+**The shelf is the quietest thing on the screen.** A label, a dashed chip
+per block with its length, and nothing else - no count, no clock, no
+colour. A block waiting is not a failure and the strip must never read as a
+list of them.
+
+**Coming back is proposed, not asked.** One press shows where it would go
+and how long it would be; a second takes it. The first free stretch from
+now that holds it whole, or the nearest one worth using with the block cut
+to fit - and it says which, in one line, without ever counting what was
+missed.
+
+**Two floors, and both are about what the block is.** Never under fifteen
+minutes, because under that it is not a sitting; and never under half of
+what it was, because forty minutes of a two-hour deep work block is not
+that block shortened, it is a smaller thing wearing its name. Under either,
+the answer is tomorrow at the time it had.
+
+**It closes after midnight, without a word.** A day that is over has
+nothing to bring anything back into, and a shelf that survived the night
+would be a list of yesterday's leftovers waiting on the next morning -
+which is exactly the counting CONVENTIONS section 12 forbids.
+
+**And an interruption nobody could put a length on leaves the day away.**
+That is what `away` already means, so the header offers "I'm back" without
+anything new being invented, and the rescue recomputes from the moment it
+is pressed rather than from a length nobody had at the time.

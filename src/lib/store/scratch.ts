@@ -142,18 +142,38 @@ export const scratchActions = {
    * already run the text through quick-add's parser, which is where a time
    * and a size come from; this only places what it is handed.
    */
-  scratchToTask(id: string, date: string, task: { title: string; time?: string; minutes?: number }): boolean {
+  /**
+   * A note made into a task, with the note kept.
+   *
+   * It used to consume the note, and that was wrong twice over. The words
+   * somebody wrote down are not the title of the task they turned into -
+   * "charger. the usb c one. from the drawer" becomes "Order a USB-C
+   * charger" and both are worth having. And a note can carry photographs
+   * since v2.5, which have to stay somewhere; the task points back at the
+   * note rather than the pictures being moved or copied.
+   *
+   * Both ends are written in the one commit: the note learns where it went,
+   * the task learns where it came from. A note that already has a task is
+   * left alone, so the same intention arriving twice makes one task.
+   */
+  scratchToTaskKeepingNote(
+    id: string,
+    date: string,
+    task: { title: string; time?: string; minutes?: number; category?: string; highlight?: boolean },
+  ): string | null {
     const data = getData()
     const note = data.scratch.find(n => n.id === id)
-    if (!note || !task.title.trim()) return false
+    if (!note || note.taskId || !task.title.trim()) return null
     const day = dayOf(date)
-    const added: Task = { id: crypto.randomUUID(), title: task.title.trim(), time: task.time, done: false }
+    const added: Task = { id: crypto.randomUUID(), title: task.title.trim(), time: task.time, done: false, fromNote: id }
     if (task.minutes !== undefined) added.minutes = task.minutes
+    if (task.category !== undefined) added.category = task.category
+    if (task.highlight) added.highlight = true
     commit({
       ...data,
       days: { ...data.days, [date]: { ...day, tasks: [...day.tasks, added] } },
-      scratch: data.scratch.filter(n => n.id !== id),
+      scratch: data.scratch.map(n => (n.id === id ? { ...n, taskId: added.id, taskDate: date } : n)),
     })
-    return true
+    return added.id
   },
 }

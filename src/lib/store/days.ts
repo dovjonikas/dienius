@@ -11,6 +11,7 @@ import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
 import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
+import type { ReturnOffer } from '../../widgets/day-plan/setAside'
 import { applyLowDayPlan, type LowDayPlan } from '../../widgets/day-plan/lowDay'
 import { parseStepLine } from '../../widgets/day-plan/parse'
 
@@ -601,7 +602,20 @@ export const dayActions = {
     const previous = getData()
     const ensured = ensuredDay(previous, date)
     const base = ensured ? { ...previous, days: ensured.days } : previous
-    commit(applyPlan(base, date, plan, () => crypto.randomUUID(), { replannedOn: todayKey() }))
+    const next = applyPlan(base, date, plan, () => crypto.randomUUID(), { replannedOn: todayKey() })
+    // An interruption nobody could put a length on - "something this
+    // evening" - leaves the day open-ended, and an open-ended day is what
+    // `away` already means. Setting it here rather than asking again is
+    // what makes "I'm back" appear on the header afterwards, and what makes
+    // the rescue recompute from the moment it is pressed. Only for today,
+    // and only when the plan is an interruption with no end.
+    const open = plan.kind === 'interrupt' && plan.add && plan.add.minutes === undefined && date === todayKey()
+    if (!open) {
+      commit(next)
+      return { undo: () => commit(previous) }
+    }
+    const day = next.days[date]
+    commit({ ...next, days: { ...next.days, [date]: { ...day, away: plan.add!.time } } })
     return { undo: () => commit(previous) }
   },
 
@@ -615,6 +629,62 @@ export const dayActions = {
     const previous = getData()
     commit(applyLowDayPlan(previous, date, plan))
     return { undo: () => commit(previous) }
+  },
+
+  /**
+   * Takes a block off the day's clock without taking it off the day.
+   *
+   * It keeps the time and the length it had, so the offer to bring it back
+   * can say what it was, and it is out of the timeline, the capacity line
+   * and the score while it waits. See widgets/day-plan/setAside.ts.
+   */
+  setTaskAside(date: string, taskId: string): void {
+    const day = dayOf(date)
+    const task = day.tasks.find(t => t.id === taskId)
+    if (!task || task.setAside) return
+    commit(withDay(date, { ...day, tasks: day.tasks.map(t => (t.id === taskId ? { ...t, setAside: true } : t)) }))
+  },
+
+  /**
+   * Brings a waiting block back, and hands back the undo.
+   *
+   * Today: the time the offer found, the length it found room for, and the
+   * mark off. Tomorrow: the next day at the time it had, with the same
+   * `dayHas` check every move between days keeps - so the same intention
+   * arriving twice from two devices adds one block.
+   *
+   * Returns null when there was nothing waiting under that id, which is
+   * what a second press on an offer that has already been taken is.
+   */
+  returnSetAside(date: string, offer: ReturnOffer): (() => void) | null {
+    const previous = getData()
+    const day = dayOf(date)
+    const task = day.tasks.find(t => t.id === offer.taskId)
+    if (!task?.setAside) return null
+
+    if (offer.tomorrow) {
+      const next = addDays(date, 1)
+      const target = previous.days[next] ?? { date: next, tasks: [] }
+      const { setAside: _waiting, ...back } = task
+      const days = { ...previous.days, [date]: { ...day, tasks: day.tasks.filter(t => t.id !== offer.taskId) } }
+      if (!dayHas(target, back)) days[next] = { ...target, tasks: [...target.tasks, back] }
+      else days[next] = target
+      commit({ ...previous, days })
+      return () => commit(previous)
+    }
+
+    commit(
+      withDay(date, {
+        ...day,
+        tasks: day.tasks.map(t => {
+          if (t.id !== offer.taskId) return t
+          const { setAside: _waiting, ...back } = t
+          const moved = offer.time === undefined ? back : { ...back, time: offer.time }
+          return offer.minutes === undefined ? moved : { ...moved, minutes: offer.minutes }
+        }),
+      }),
+    )
+    return () => commit(previous)
   },
 
   /** Which schedule one already-planned day is measured against. */

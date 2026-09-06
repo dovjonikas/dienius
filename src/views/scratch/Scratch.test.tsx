@@ -108,16 +108,19 @@ test('Enter keeps the note and starts the next one; backspacing to nothing remov
  * duration typed in a hurry come out as an anchor with a size - the same
  * reading the day view's box gives the same words.
  */
-test('To task runs the note through quick-add and puts it on today, sized and timed', async () => {
+test('To task opens the editor rather than guessing, and the note stays where it is', async () => {
   const user = userEvent.setup()
   actions.addScratch('14:00 Call the bank 20 min')
   render(<Scratch open onClose={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'To task' }))
+
+  // Nothing is on the day until Save. NoteToTask.test.tsx walks the sheet
+  // itself; what matters here is that the note is not consumed on the way.
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   const tasks = getData().days[todayKey()].tasks
-  expect(tasks).toHaveLength(1)
-  expect(tasks[0]).toMatchObject({ title: 'Call the bank', time: '14:00', minutes: 20 })
-  expect(getData().scratch).toHaveLength(0)
-  expect(screen.getByRole('status')).toHaveTextContent('Call the bank is on today at 14:00.')
+  expect(tasks.map(t => t.title)).toEqual(['14:00 Call the bank 20 min'])
+  expect(getData().scratch).toHaveLength(1)
+  expect(screen.getByRole('status')).toHaveTextContent('The note stays here.')
 })
 
 test('To inbox moves the words exactly as they were written, and leaves the stream', async () => {

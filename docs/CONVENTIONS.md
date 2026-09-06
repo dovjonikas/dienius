@@ -541,6 +541,12 @@ writing, and every addition that asks something takes that value away. So:
 - **A note that needs structure is not scratch any more.** It becomes a task,
   an inbox line, or a document somewhere else. Do not add fields to
   `ScratchNote` to hold structure; add a way out instead.
+- **The way out asks once, and does not eat the note.** "To task" opens the
+  task's editor with the note as the title and everything else a tap away,
+  because a line written as a thought is not a quick-add line and guessing
+  at it turns one press into three corrections. The note is kept and marked
+  with where it went - its words are not the task's title, and its pictures
+  have to stay somewhere.
 - **An old note is not an accusation.** The count is shown in `--faint`, with
   no badge and no accent colour, and nothing ever says "unprocessed". Same
   rule as the day view's score: a number that grows in red is a report card.
@@ -573,9 +579,16 @@ whole day is gone" - so the rules are about tone as much as arithmetic:
 - **Never count what was missed.** A summary says what still fits and what
   moves. "Still winnable: 2 of 3 key" is allowed; "you missed 4 tasks" is
   not, in any wording, in any colour.
-- **Nothing disappears silently.** A task that no longer fits before sleep is
-  named and offered to tomorrow. A plan that would drop something says so
-  before Accept, never after.
+- **Nothing disappears at all.** A task that no longer fits before sleep is
+  named and offered to tomorrow. A block taken off the day is set aside, not
+  deleted: it waits on the shelf under the day and one press puts it back -
+  see DECISIONS "Set aside, not deleted". Nothing an interruption touches
+  leaves the day.
+- **The routine is never in the way.** A block that comes back every day from
+  a template - the commute, meals, the wake ritual - is not moved, not set
+  aside and not offered tomorrow. If the afternoon is gone then lunch did not
+  happen, and tomorrow has a lunch of its own. It was a choice until v2.5 and
+  the answer was always the same, which is what a rule is.
 - **Ten seconds and one press.** Every replan screen is one question, shows
   its answer before it is accepted, and applies in one commit with one undo.
   If a change adds a second question to the path, it is wrong.
@@ -609,6 +622,42 @@ week, and five more rules came with it:
   `actions.ensureDay` for it, exactly as looking at it would, so what is
   planned against is what Accept lands on. A pure preview was tried and
   stamps its own copy with its own task ids.
+
+### The eleven rules a block moves by
+
+Every replan, every push and every return obeys all of these. Most were
+already true and had never been written down; v2.5 walked the lot and gave
+each one a test. If a change to the arithmetic breaks one, the test says
+which rule and not which line.
+
+1. **The routine is never moved.** A template's own blocks - the commute,
+   meals, the wake ritual - are not pushed, not set aside and not offered
+   tomorrow. If the afternoon is gone then lunch did not happen; tomorrow has
+   a lunch of its own.
+2. **Key tasks take the room first.** A key task is never pushed out of a gap
+   by one that is not.
+3. **Two pushes, then a decision.** The third time a task comes up it says
+   so, and offers three ways out: do it, let it go, or mark it ongoing.
+   Deleting is a decision, not a failure, and the sentence says that.
+4. **Nothing into the past.** A gap that started before now is not a gap.
+5. **Sleep is a wall.** Nothing is placed past the start of sleep. If it does
+   not fit before then, it is tomorrow, not 23:40.
+6. **A block has an hour past which it is not itself.** Gym at eleven is not
+   gym. `placement.ts` holds the hour per kind, a block may carry its own
+   `latest`, and a kind with no honest answer is not restricted at all.
+7. **Meals do not clump.** Two meals stay at least two hours apart, start to
+   start, however much the day moved around them.
+8. **A library block never doubles.** A reading block that did not happen
+   does not advance the book and does not arrive tomorrow as two sittings:
+   the book advances on the tick, and the same block by identity is never
+   added twice.
+9. **The score counts a block once.** A block that moved, waited or came back
+   is the same block: 0/9 does not become 0/10.
+10. **A day that is over offers nothing.** After midnight the shelf of
+    set-aside blocks closes without a word - no summary, no count.
+11. **Twice is once.** Every one of these operations can run twice in a row
+    with the same result. Sync hands the same intention over from two
+    devices, and it has to be able to.
 
 ---
 

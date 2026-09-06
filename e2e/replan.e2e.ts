@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await stampWorkingDay(page)
 })
 
-test('something came up at a time: the block lands, what it hits is skipped by default, and Tomorrow sends it there instead', async ({ page }) => {
+test('something came up at a time: the block lands, the routine it hits is left alone, and a one-off waits', async ({ page }) => {
   await page.getByRole('button', { name: 'Replan' }).click()
   const sheet = page.getByRole('dialog', { name: 'Replan' })
   await sheet.getByRole('button', { name: 'Something came up' }).click()
@@ -28,23 +28,53 @@ test('something came up at a time: the block lands, what it hits is skipped by d
   await sheet.getByLabel('Start time').fill('13:30')
   await sheet.getByRole('group', { name: 'How long' }).getByRole('button', { name: '1h', exact: true }).click()
 
-  // Meetings runs 13:30 to 15:00 on the starter day, so it is in the way -
-  // and it is the template's, so the proposal skips it for the day.
+  // Meetings runs 13:30 to 15:00 on the starter day and comes from its
+  // template, so since v2.5 it is not in the way at all: the routine stays
+  // where it is and the dentist goes over it. CONVENTIONS section 12,
+  // rule 1.
   const summary = sheet.getByRole('status')
-  await expect(summary).toContainText('Skipped today: Meetings.')
+  await expect(summary).toContainText('The routine stays: Meetings.')
   await expect(summary).toContainText('Free today:')
   await expect(summary).not.toContainText(/missed|failed|behind|only|should/i)
+  await expect(summary).not.toContainText('Skipped')
 
-  await sheet.getByRole('group', { name: 'For all of them' }).getByRole('button', { name: 'Tomorrow' }).click()
-  await expect(summary).toContainText('Tomorrow: Meetings.')
   await sheet.getByRole('button', { name: 'Accept' }).click()
   await expect(sheet).toHaveCount(0)
 
   await expect(card(page, 'Dentist')).toContainText('13:30')
-  await expect(page.getByRole('checkbox', { name: 'Meetings' })).toHaveCount(0)
-
-  await page.getByRole('button', { name: 'Next day' }).click()
   await expect(page.getByRole('checkbox', { name: 'Meetings' })).toBeAttached()
+})
+
+/**
+ * And the other half of the same rule: a one-off in the way is set aside
+ * rather than dropped, waits on the shelf under the day, and one press
+ * brings it back. The owner's scenario end to end - see DECISIONS "Set
+ * aside, not deleted".
+ */
+test('a one-off in the way waits on the shelf, and one press brings it back', async ({ page }) => {
+  await quickAdd(page, '13:45 Post the parcel 20 min')
+
+  await page.getByRole('button', { name: 'Replan' }).click()
+  const sheet = page.getByRole('dialog', { name: 'Replan' })
+  await sheet.getByRole('button', { name: 'Something came up' }).click()
+  await sheet.getByRole('textbox', { name: 'What came up' }).fill('Dentist')
+  await sheet.getByRole('button', { name: 'A time' }).click()
+  await sheet.getByLabel('Start time').fill('13:30')
+  await sheet.getByRole('group', { name: 'How long' }).getByRole('button', { name: '1h', exact: true }).click()
+
+  await sheet.getByRole('group', { name: 'For all of them' }).getByRole('button', { name: 'Skip' }).click()
+  await expect(sheet.getByRole('status')).toContainText('Set aside, waiting: Post the parcel.')
+  await sheet.getByRole('button', { name: 'Accept' }).click()
+
+  // Off the list, on the shelf, still on the day.
+  await expect(page.getByRole('checkbox', { name: 'Post the parcel' })).toHaveCount(0)
+  const shelf = page.getByRole('button', { name: /^Post the parcel/ })
+  await expect(shelf).toBeVisible()
+
+  await shelf.click()
+  await expect(page.getByRole('button', { name: 'Bring it back' })).toBeVisible()
+  await page.getByRole('button', { name: 'Bring it back' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Post the parcel' })).toBeAttached()
 })
 
 test('shift the rest: everything from now moves later by the same amount, and the running block stays', async ({ page }) => {

@@ -78,6 +78,18 @@ export function App() {
     document.querySelector<HTMLInputElement>('[data-quick-add]')?.focus()
   }, [focusQuickAdd, view])
 
+  // The way back from a note to the task it became. The same shape as the
+  // quick-add focus above and for the same reason: the shell owns which day
+  // is showing, the day view owns which task's sheet is open, and a ref
+  // chain between them would tie one to the other's internals. The day view
+  // reads this once, after the render that put the day on screen.
+  const [openTaskRequest, setOpenTaskRequest] = useState<{ date: string; taskId: string } | null>(null)
+
+  function openTask(date: string, taskId: string) {
+    openDay(date)
+    setOpenTaskRequest({ date, taskId })
+  }
+
   useEffect(() => {
     function applyTheme() {
       const resolved = resolveTheme(data.settings.theme, systemPrefersDark())
@@ -434,6 +446,9 @@ export function App() {
               date={selectedDate}
               onDateChange={setSelectedDate}
               onOpenNorth={() => setView('north')}
+              openTask={openTaskRequest}
+              onOpenTaskDone={() => setOpenTaskRequest(null)}
+              onOpenNote={() => setScratchOpen(true)}
             />
           ))}
         {view === 'calendar' && (
@@ -512,7 +527,7 @@ export function App() {
           somebody had to park somewhere, it sat over the bottom of every
           screen, and the rail put a pen in the same corner of the same bar
           as everything else - one control, one place, both platforms. */}
-      <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} />
+      <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} onOpenTask={openTask} />
     </div>
   )
 }
