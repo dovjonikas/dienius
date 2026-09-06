@@ -6,16 +6,15 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.2, closed and tagged. One wave, the owner's brief for
-Replan v2: "Something came up" for any day of the week, built as the phone
-call it is answered on - one sheet from six doors, a WHEN row and the shape
-of the loss as chips, a typed line read in Lithuanian and English, the plan
-proposed with routine blocks skipped, a day made before it is planned, one
-line to say into the phone, one undo, and a quiet word on the week. From the
-door to Accept in three presses with nothing scrolled on a phone, held by a
-browser test. Section 4 has the table, commit by commit. **Nothing is
-owed**: the debts table is unchanged and every entry in it is a trade with
-its reason, and the next brief comes from the owner.
+**Last updated:** v2.3, closed and tagged. One stage, the owner's brief for
+the journal: three lines a day that never count - "Today: ..." under the
+North line in the morning, and two questions on the evening close card,
+what was real today and what to tell yourself tomorrow - kept on the day
+entity, read under the day in the week's agenda, and copied as markdown for
+the week or the month to paste into another chat. Before it, v2.2's Replan
+v2. Section 4 has both tables, commit by commit. **Nothing is owed**: the
+debts table is unchanged and every entry in it is a trade with its reason,
+and the next brief comes from the owner.
 
 v2.0 itself was six stages - categories the owner names, North as a window
 with every rule under the goal it protects, an explanation for each of the
@@ -70,7 +69,8 @@ reading them.
 | Day digest | In the wide rail: what is next, and how the day is going |
 | North line | One goal under the day's title, rotating daily, expanding on hover/tap/focus |
 | North card | After a slow day or on a Monday, one goal comes forward with its reason - on a Monday with one line of what you do to deserve it, for the week. Never a word about how yesterday went |
-| Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
+| Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, the journal's two optional questions, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
+| Journal | Three lines a day, none required: "Today: ..." under the North line, and the two questions at the close. Never counted, never streaked; read under the day in the week's agenda, copied as markdown for a week or a month. See `lib/journal.ts` |
 
 ### The other tabs
 
@@ -132,9 +132,11 @@ reading them.
 
 | **v2.2** | Replan v2: "Something came up" for any day of the week, as the phone call it is answered on. One sheet at the app root from six doors - the day header on today and any later day, the week's bar, the calendar's day preview, the palette, the R key. Today, tomorrow and the five days after as chips, then the morning, afternoon, evening or whole day gone against that day's own waking window, a time and a length, or don't know how long; a typed line in Lithuanian or English that the chips follow and that a pressed chip takes its word out of; the plan proposed with the template's blocks skipped and one-offs moved into the gaps after it, key tasks first; a day nobody opened made from its weekday template before the plan lands; the free-windows line above Accept; one undo; "replanned" on the week. `ensuredDay` as the pure half of `ensureDay`, `DayPlan.replannedOn`, and a phone-sized browser test measuring three presses with nothing scrolled |
 
+| **v2.3** | The journal: "Today: ..." under the North line in the morning, and two questions on the evening close card - what was real today, and what to tell yourself tomorrow - all optional, plain text, never counted or streaked, kept on the day entity with no migration. Read under the day in the week's agenda, the morning line under a day's name on the desktop grid, and copied as markdown for the week under the week or for the week or month in Review, to paste into another chat |
+
 | **v2.0, second half** | Six stages that finish what the first half started, all of them about the app being *understood* rather than being complete. Categories became the owner's: a list in `AppData` rather than a literal in a module, twelve curated colours with a readability gate, and a delete that moves what it would orphan. North became a window with every if-then rule under the goal it protects - a rule with no goal is noise, under a goal it is armour - and the day view's old one-rule-at-a-time surfacing went with the three fields it needed. Twenty invented words got a sentence each, in one file, checked by a test whose data is the list itself. One reading queue of twenty books became three lanes that advance on their own. Then a clean pass over sixteen places: seven text tabs became a rail of icons, month cells started saying what is on a day rather than what the day was called, resting on one shows the whole day, the week gained a second reading and a place for the backlog beside it, and the template editor stopped opening with eight colour balls above the name |
 
-Tags exist for v1.0 through v2.2, and `v2.0` covers both halves - it was moved
+Tags exist for v1.0 through v2.3, and `v2.0` covers both halves - it was moved
 forward from the desktop close to here, as the plan written at the time said
 it would be. Nothing was published between the two: the first half was tagged
 on a Friday and this is the rest of the same release.
@@ -145,15 +147,16 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2095
-tests in 120 files, plus 27 Playwright tests in 13 files across two
+Still true, and checked rather than assumed. The suite is green - **2120
+tests in 124 files, plus 29 Playwright tests in 14 files across two
 viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop **and nothing on the phone**, and the working
 tree is empty and pushed.
 
-**Where to start:** the v2.3 wave below is being built against its plan;
-the v2.2 table under it is closed, commit by commit; the debts table further
-down is unchanged, and each entry in it is a trade with its reason.
+**Where to start:** nothing is owed. The v2.3 table below is closed, and
+so is the v2.2 one under it, commit by commit; the debts table further down
+is unchanged, and each entry in it is a trade with its reason. The next
+brief comes from the owner.
 
 ### The v2.3 wave: the journal
 
@@ -167,6 +170,24 @@ that copies the week as markdown - the date, the morning line, the two
 answers - to paste into another chat; Review has the same for the month.
 The lines ride on the day entity, so sync, backup and snapshots carry them
 with no migration: three optional fields.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 0 | Written down first | `8166dbb` | The brief and the decisions it forced, in this file, before any code |
+| 1 | The journal | `2bca9f9` | `DayPlan.journal` with three optional fields and `mergeJournal` dropping blanks; `setJournal`; the morning line under the North line (`JournalLine.tsx`) saving on blur, Enter and leaving the day; the two questions on the evening card saving on blur and on Close; the agenda's lines under a day and the grid's morning line on a desktop; Copy week journal under the week and Copy week / month journal in Review, through one `CopyJournalButton`; the markdown in `lib/journal.ts`; the tests and the two browser tests |
+| - | Found on the way: the explanation's hold timer | `cbc40b1` | The Focus term's sentence painted over the running card at three in the afternoon: a tap re-renders the card under the finger, the release goes elsewhere, and the half-second hold fired anyway. The click that follows a tap cancels the hold now, and so does unmounting. Since v2.0; every earlier phone sweep had run at night with nothing running |
+| 2 | Closing and `v2.3` | the closing commit | Every gate run, the phone walked, DAILY.md's "The evening questions", the docs read against the code, DECISIONS carrying the reasoning, the tag |
+
+#### What the phone pass found
+
+One deliberate pass at 390x844 on the sample day with the closing card
+forced open, then the desktop at 1366x768.
+
+| Found | What changed |
+|---|---|
+| The card's blur handler read the answers from the render's own state, so a blur landing in the same task as the last keystroke saved the line as it was one character ago - the walk's synthetic typing produced it, and a fast tap away from the field can too | The answers are mirrored in a ref, which is what the morning line already did for its draft |
+| The morning line was meant to be boxless until touched, and the base input rule - a selector with five `:not()`s - outranked the class; on a desktop it drew as an ordinary field anyway | The rule now says what it does: a boxed field beside a label in the North line's register. A place to type should look like one |
+| The phone browser test measured the card from where the starter's own button had scrolled the page to, and found the fields 259px above the top | The walk starts from the top of the page, as a person opening the app is |
 
 **Decisions taken on the way**, so nobody re-argues them by accident:
 
@@ -199,7 +220,7 @@ because every commit refers to it.
 | 0 | Written down first | `00de297` | The brief and the decisions it forced, in this file, before any code |
 | 1 | The arithmetic | `22db34f` | `ensuredDay` as the pure half of `ensureDay`, and `applyReplan` running it first so a plan for Thursday lands on the Thursday that will exist; `planInterrupt` given a start-from and the day's own words; "Skipped" for a routine block and "Dropped" for a one-off; the free-windows line; the shapes, the WHEN row and the day words in `interrupt.ts`; the two-language line in `interruptParse.ts`; the last three names in `replanPrefs.ts`; `DayPlan.replannedOn` |
 | 2 | The sheet, from six doors | `acd6c48` | The sheet at the root, reading the store given a day; two rows of chips, the words, the plan proposed, Accept; the header on any later day, the week's bar, the day preview's third action, the palette and R; the mark on the week's column and agenda; two phone passes and what they found (below); two browser tests, the phone one measuring three presses with nothing scrolled |
-| 3 | Closing and `v2.2` | the closing commit | Full regression - unit, browser, both sweeps - DAILY.md's "When the phone rings", every doc read against the code, DECISIONS carrying the reasoning, and the tag |
+| 3 | Closing and `v2.2` | `a7cc157` | Full regression - unit, browser, both sweeps - DAILY.md's "When the phone rings", every doc read against the code, DECISIONS carrying the reasoning, and the tag |
 
 #### What the two phone passes found
 
@@ -318,7 +339,8 @@ and pushed. Nothing below this table is owed.
 | `v2.0-desktop` | `46154c6` | Where `v2.0` stood before this wave: the desktop closed as a product |
 | `v2.0` | `890e0ad` | Both halves. The tag was **moved forward** to the closing commit, as the plan written at the time said it would be |
 | `v2.1` | `1384518` | North v2, the phone wave and the bug hunt, on top of the week-templates wave. Two commits sit above it, untagged: the zone-name table and this handoff |
-| `v2.2` | the closing commit | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
+| `v2.2` | `a7cc157` | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
+| `v2.3` | the closing commit | The journal, on top of v2.2 |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
@@ -910,6 +932,13 @@ themes, on the sample day; what each found is beside it.
       segment 44px; the week's bar keeps its three rows with the new door on
       the Grid / Agenda row. *Walked twice in v2.2, both themes; the toast
       and the bar were the findings, both fixed.*
+- [x] **The journal** - the morning line under the North line, a 44px
+      field on a finger; the closing card with the best moment and the two
+      questions, and Close the day inside the viewport with nothing
+      scrolled, measured by `e2e/journal.e2e.ts`; the week's copy row under
+      the grid without a scroll, the agenda's lines under the day, Review's
+      row under its arrows. *Walked once in v2.3, both themes, on the sample
+      day with the card forced open; the blur save was the finding.*
 - [x] **Scratch** - the pen in the bar, and the close cross: on a phone the
       overlay is the whole screen, so there is no scrim to tap. *A note's four
       actions wrapped one at a time under a long date - fixed to wrap as a

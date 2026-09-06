@@ -698,10 +698,13 @@ rest is what it means in practice.
 - **No colour means anything on that card.** No accent bar, no tick, no ring,
   no red, no percentage, no comparison with yesterday. The only filled control
   is the button that ends it, because that is the only action on it.
-- **The one question is optional and asked once.** "Best moment today?" is a
-  plain empty field. Nothing measures whether days have one, nothing prompts
-  for it during the day, and a day that already carries a line shows the line
-  rather than asking again.
+- **The questions are optional and asked once.** "Best moment today?" is a
+  plain empty field, and since v2.3 so are the journal's two under it: "What
+  was real today?" and "What do I want to tell myself tomorrow?" (see
+  `lib/journal.ts`). Nothing measures whether days have one, nothing
+  prompts for them during the day, and a day that already carries a line
+  shows the line rather than asking again. A journal that counted its own
+  days would be the report card this card refuses to be, so it never does.
 - **The offer to push is an offer.** It names a number, because that is a fact
   about a button, and gives no reason, because leaving three things unfinished
   is not a problem this card exists to solve.

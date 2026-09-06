@@ -1282,3 +1282,50 @@ Scratch and Settings, and an eighth icon at 390px is 48px each. The phone's
 doors are the day header on today and any later day, the month through the
 day, and the palette; the week's door shares the Grid / Agenda row rather
 than costing the grid a fourth row of bar.
+
+## A journal that never counts
+
+v2.3 added three lines a day: "Today: ..." under the North line in the
+morning, and two questions on the evening close card - "What was real
+today?" and "What do I want to tell myself tomorrow?". Plain text, optional,
+no length. What it deliberately is not is the thing a journal feature
+usually becomes.
+
+**It never counts.** No streak of days written, no count of days not, no
+badge, no reminder to write, no empty-state that says the week has nothing
+in it. A journal that keeps score of itself is the report card the evening
+card was built to refuse (CONVENTIONS section 15), arriving through a side
+door. A skipped day costs nothing and shows nothing, anywhere: the agenda
+shows a day's lines when it has them and nothing when it does not, and the
+copy lists only the days with words.
+
+**It lives on the day.** `DayPlan.journal` is one optional object with
+three optional fields, and a field is absent when it is blank - the store
+trims and drops on the way in. So a day nobody wrote on carries no key,
+takes no bytes and changes no sync entity, and sync, the backup and the
+snapshots carry the lines the way they carry the tasks without any of them
+knowing the journal exists. No migration: three optional fields.
+
+**The morning line saves when you are done, not as you type.** A controlled
+field bound straight to a store that trims what it keeps eats the space
+being typed. The draft is committed on blur, on Enter, and on leaving the
+day - to the day it was typed on, which is the one detail worth naming,
+because the cleanup that writes it runs after the screen has already moved
+to the next day.
+
+**The two questions sit under the best moment and do not replace it.** The
+best moment has its own switch and its own place in the month's tooltips;
+the journal has no switch of its own, because the owner asked for the
+questions and a plain empty field is not a nudge. Three fields on one card
+was measured on a phone rather than argued about: the questions and Close
+the day sit inside a 390x844 viewport with nothing scrolled, and the
+browser test holds it.
+
+**The only way out is a copy.** Markdown, to paste into another chat: a
+heading for the stretch, a section per day with words, the lines as a
+list. Not an export format and not a sync target - the plan already has
+three copies, and the journal is on it. The button is under the week and
+under Review's arrows rather than in the calendar's bar, which on a phone
+is three rows already and was kept to three in v2.2; greyed rather than
+hidden when the stretch has nothing, because a control that only appears
+once the feature has been used is a control nobody finds.

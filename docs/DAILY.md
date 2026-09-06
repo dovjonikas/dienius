@@ -281,7 +281,8 @@ Skip this entirely if one browser is where you plan; nothing degrades.
   the next section is that one, walked as a phone call.
 - **Evening.** Around half nine, or the moment the last thing is ticked, a
   card offers to close the day. It never says anything about what was not
-  done.
+  done. It asks two questions, both optional - the section after the phone
+  call, below.
 
 Two keys worth learning: **`N`** jumps to the box, **`Ctrl-K`** finds
 anything or runs any command. **`?`** shows the rest - and every icon in the
@@ -329,6 +330,32 @@ A day you have not opened yet is set up first, from your weekday plan, so
 what you see is what you will find when you open it. **Undo** is offered
 for five seconds, and the week shows the day with a quiet *replanned* under
 its name.
+
+---
+
+## The evening questions
+
+A journal that never counts. Three lines a day, none of them required, and
+a day with none is not a day the app notices.
+
+- **Morning.** Under the North line, one field: **Today**. One line about
+  what this day is for, in your own words. It saves when you leave the
+  field, or on Enter; Escape puts the saved line back.
+- **Evening.** The closing card asks two questions under the best moment:
+  **What was real today?** and **What do I want to tell myself tomorrow?**
+  Plain fields, no length, no switch. An answer typed and left is kept even
+  if you never press Close the day.
+
+Nothing streaks, nothing counts the days you wrote, nothing shows the days
+you did not. Skipping costs nothing and is shown nowhere.
+
+The lines live on the day, so sync, the backup and the snapshots carry them
+with everything else. To read them: **Calendar → Week → Agenda** shows each
+day's lines under its tasks. To take them somewhere else: **Copy week
+journal** under the week, or **Copy month journal** in Review, puts the
+stretch on the clipboard as markdown - the date, the morning line, the two
+answers, only for the days that have any - ready to paste into another
+chat.
 
 ---
 

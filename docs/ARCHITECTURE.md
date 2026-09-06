@@ -42,7 +42,7 @@ AppData
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
 │       │                        repeatSkips?, autoApplied?, away?,
-│       │                        bestMoment?
+│       │                        bestMoment?, replannedOn?, journal?
 │       └── tasks: Task[]        the one type most of the app is about
 ├── library: LibraryList[]       name + unit + items, colour?
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
@@ -232,6 +232,7 @@ src/
     review.ts          week/month statistics, all derived, nothing recorded
     north.ts           goals: rotation, ages, the rules under each, when one comes forward; the picture, the deserve lines, and the compose draft applied
     eveningClose.ts    how a day ends, and what may be said about it
+    journal.ts         three lines a day, none required, and the week or month as markdown
     dayStats.ts        one past day, small enough for a calendar cell
     taskIdentity.ts    what makes two tasks the same task across days
     ics.ts             a small iCalendar reader; no library, and none wanted
@@ -290,6 +291,7 @@ src/
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
     DayPreview         the whole of a day, without leaving the month
+    CopyJournalButton  the journal for a stretch of days, put on the clipboard as markdown
     ColorSwatchPicker  one colour from eight, without eight of them on screen
     WeekTemplateEditor seven columns of one template, and the card's preview of it
     TimeColumns        the two scrolling columns inside the time picker
@@ -325,6 +327,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
   interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
+  journal.e2e.ts       the evening questions fitting a phone without a scroll, and the week read back off the clipboard
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
   shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and the #bug export
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
@@ -374,7 +377,8 @@ it delegates:
 | `ReplanSheet.tsx` | The sheet at the root: any day's Something came up, the three doors about today, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
 | `Backlog.tsx` | The fourth shelf: decided, undated, pulled from |
-| `EveningClose.tsx` | The end of the day, said once - tone is the feature |
+| `EveningClose.tsx` | The end of the day, said once - tone is the feature - and the journal's two questions |
+| `JournalLine.tsx` | The morning line under the North line: what this day is for, or nothing |
 | `YesterdayBanner.tsx` | What yesterday left |
 
 `DayView.tsx` itself is now only about the day: what it is made of and how its
