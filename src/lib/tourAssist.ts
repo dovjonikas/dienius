@@ -64,13 +64,27 @@ export function assistWith(event: TourEvent, today: string): boolean {
       actions.toggleTask(today, task.id)
       return true
     }
+    case 'list-added': {
+      // The list the step would have had the person start, named the way the
+      // next two cards name it.
+      actions.addLibraryList({ name: 'Books', unit: 'chapter' })
+      return true
+    }
     case 'item-added': {
-      // The list the step would have had the person start, and the book the
-      // card names, so the caption afterwards is true of what is on screen.
+      // The book the card names, so the caption afterwards is true of what
+      // is on screen. The list is made first if the step before was skipped.
       const books =
         getData().library.find(l => l.name.trim().toLowerCase() === 'books') ??
         actions.addLibraryList({ name: 'Books', unit: 'chapter' })
       return actions.addLibraryItem(books.id, 'Dune, 20 chapters') !== undefined
+    }
+    case 'sitting-placed': {
+      // One sitting of whatever is first in the list, on today - which is
+      // exactly what "Onto today" does from the item's own row.
+      const list = getData().library.find(l => l.items.length > 0)
+      const item = list?.items.find(i => !i.finished) ?? list?.items[0]
+      if (!list || !item) return false
+      return actions.scheduleLibraryItem(today, list.id, item.id)
     }
     case 'goal-added': {
       actions.addGoal({ title: 'Be someone who finishes things', why: 'Because starting was never the hard part' }, today)

@@ -35,7 +35,9 @@ export type TourEvent =
   | 'key-marked'
   | 'focus-started'
   | 'task-done'
+  | 'list-added'
   | 'item-added'
+  | 'sitting-placed'
   | 'goal-added'
   | 'finish'
 
@@ -157,11 +159,12 @@ export const TOUR_EVENTS: Record<TourEvent, (ctx: TourContext) => boolean> = {
   'key-marked': ctx => tourTaskChanged(ctx, t => !!t.highlight),
   'focus-started': ({ focusRunning }) => focusRunning,
   'task-done': ctx => tourTaskChanged(ctx, t => !!t.done),
-  // A list with something in it, not merely a list. Starting a Books list
-  // used to end the step on its own, before the person had seen the field
-  // that makes a list worth having - and the tick landed on an empty
-  // heading.
+  'list-added': ({ before, now }) => now.library.length > before.library.length,
   'item-added': ({ before, now }) => libraryItems(now) > libraryItems(before),
+  // A sitting of something on a day, which is the whole point of a list:
+  // the library is not a shelf, it is a queue that lands on days.
+  'sitting-placed': ({ before, now, today }) =>
+    tasksOn(now, today).filter(t => t.libraryRef).length > tasksOn(before, today).filter(t => t.libraryRef).length,
   'goal-added': ({ before, now }) => now.goals.length > before.goals.length,
 }
 
@@ -205,7 +208,7 @@ export const DESKTOP_STEPS: TourStep[] = [
     targets: [{ selector: '[data-quick-add]', typed: 'Now press Enter.' }],
     view: 'day',
     event: 'task-added',
-    outcome: { text: 'Walk is on the day, in the first free slot, sized already.' },
+    outcome: { text: 'Walk is on the day, in the first free slot, sized already.', wait: true },
   },
   {
     id: 'key',
@@ -218,7 +221,7 @@ export const DESKTOP_STEPS: TourStep[] = [
     ],
     view: 'day',
     event: 'key-marked',
-    outcome: { text: 'Walk is key now. Three a day at most, and the calendar notes them.' },
+    outcome: { text: 'Walk is key now. Three a day at most, and the calendar notes them.', wait: true },
   },
   {
     id: 'focus',
@@ -237,25 +240,48 @@ export const DESKTOP_STEPS: TourStep[] = [
     targets: [{ selector: '[data-task-id="{task}"] [data-tour="task-check"]' }],
     view: 'day',
     event: 'task-done',
-    outcome: { text: 'Walk moved into Done, and the score moved with it.' },
+    outcome: { text: 'Walk moved into Done, and the score moved with it.', wait: true },
   },
+  // The library was one step doing three things - make a list, put a book
+  // in it, and understand what either is for - and the owner walked it and
+  // could not follow: the outcomes went past faster than they could be
+  // read. Three steps now, each ending on one thing happening, each waiting
+  // for Next. See CONVENTIONS section 13.
   {
-    id: 'library',
+    id: 'library-list',
     title: 'Books and series',
-    text: 'Click Start a Books list. Its sessions land on days.',
-    // Three, and the last one present wins. The starter offers only exist
-    // while the library is empty; somebody who already has a list gets New
-    // list pointed at instead of an empty rectangle; and once any list is
-    // there, its own field is the thing to point at, because the step ends
-    // on something being put in it.
+    text: 'Click Start a Books list.',
+    // Two, and the last one present wins: the starter offer exists only
+    // while the library is empty, and somebody who already has a list gets
+    // New list pointed at instead of an empty rectangle.
     targets: [
       { selector: '[data-tour="library-new"]', text: 'Click New list and call it Books.' },
       { selector: '[data-tour="library-starter"]' },
-      { selector: '[data-tour="library-add"]', text: 'Type: Dune, 20 chapters', typed: 'Now press Enter.' },
     ],
     view: 'library',
+    event: 'list-added',
+    outcome: { text: 'The list is there and empty. It is worth having once something is in it.', wait: true },
+  },
+  {
+    id: 'library-book',
+    title: 'Put a book in it',
+    text: 'Type: Dune, 20 chapters',
+    targets: [{ selector: '[data-tour="library-add"]', text: 'Type: Dune, 20 chapters', typed: 'Now press Enter.' }],
+    view: 'library',
     event: 'item-added',
-    outcome: { text: 'A session can now land on any day. Ticking it off moves the book along.' },
+    outcome: { text: 'Dune is first in the queue, twenty chapters long.', wait: true },
+  },
+  {
+    id: 'library-sitting',
+    title: 'A session on a day',
+    text: 'Open Dune, then click Onto today.',
+    targets: [
+      { selector: '[data-tour="library-item"]', text: 'Click Dune to open it.' },
+      { selector: '[data-tour="library-onto-today"]', text: 'Click Onto today.' },
+    ],
+    view: 'library',
+    event: 'sitting-placed',
+    outcome: { text: 'A session of Dune is on today. Ticking it off moves the book along.', wait: true },
   },
   {
     id: 'north',

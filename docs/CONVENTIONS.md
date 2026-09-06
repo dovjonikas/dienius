@@ -685,10 +685,13 @@ What checking it means, concretely:
   can never be finished and a person who cannot get past it.
 - **The words are still true.** "Nine blocks, one click" is a promise about
   a starter template; change the template and the sentence is a lie.
-- **A new feature worth teaching gets a step, and the budget is still 120
-  words.** Adding a tenth step means earning it by cutting somewhere else.
-  The lines a target carries ("Click Details", "Now press Enter") and the
-  captions are bounded separately, per line, in `tour.test.ts`.
+- **A new feature worth teaching gets a step, and the budget is 150 words.**
+  Adding a twelfth step means earning it by cutting somewhere else. The
+  budget went from 120 in v2.5, and only because the library became three
+  steps instead of one: the per-line budgets did not move, because those are
+  what keep a card readable at a glance. The lines a target carries ("Click
+  Details", "Now press Enter") and the captions are bounded separately, per
+  line, in `tour.test.ts`.
 
 ### The three standing rules about the thing being pointed at
 
@@ -709,10 +712,13 @@ through, and the engine applies them to every step without being asked:
    the box" becomes "Now press Enter." on the first keystroke - somebody had
    typed it and waited, because nothing told them the field wanted Enter.
 
-And a fourth, about what happens after: **every step names its outcome.**
-One line, what happened and why it matters, held long enough to read, with
-Next beside it. A step that ended on a tick and a jump read, to the person
-watching the control rather than the card, as the tour skipping by itself.
+And a fourth, about what happens after: **every step names its outcome, and
+waits.** One line, what happened and why it matters, and Next. Nothing moves
+on by itself. A step that ended on a tick and a jump read, to the person
+watching the control rather than the card, as the tour skipping by itself -
+and the owner's walk of v2.4 found the same thing again at the library,
+where three things happened inside one card faster than any of them could
+be read.
 
 ### The three guards, and why they exist
 
@@ -740,19 +746,50 @@ replacing it with something that does the same job:
    actions, never a fake tick, because the next step needs the state the
    previous one was supposed to leave behind.
 
-### Pacing, and the three steps that wait
+### Pacing: a step that changed the screen waits
 
-Every real step ends on a tick and a caption, held for 3.2 seconds before
-the next step: a beat for the tick, which lands somewhere else on the page
-from where the eye was, and two seconds for a line of twelve words. Next is
-there throughout for anybody faster. Three steps wait for Next instead of
-moving on at all - stamping a day, starting Focus, writing a goal - because
-what appeared deserves a proper look; the goal step also moves the shell
-back to the day and points at the North line, so the person sees where the
-goal went rather than being told. The `outcome` lines sit outside the
-120-word budget and are bounded separately, because a caption for something
-that has already happened is read with the eye free rather than standing
-between somebody and a control.
+**Every step that changed something waits for Next.** Not a beat, not a
+hold, not a timer - a press. Every step in this tour ends on something
+actually happening in the app, so every caption is about a change that just
+appeared somewhere other than the card, and a caption that leaves while the
+eye is still on the change is a caption nobody read. That is the owner's
+report, twice: once about the tick-and-jump in v2.0, and once about the
+library in v2.4.
+
+**One step, one thing.** The library was one card that made a list, put a
+book in it and got a session onto a day. It is three now - list, book,
+session - each ending on one event, each waiting. If a step is doing two
+things, it is two steps, and the word budget above is what pays for it.
+
+**The hold is still there for a step that changes nothing**, at six seconds
+rather than 3.2, and there is not one at the moment. A step that only says
+"look at this" may move on by itself; a step that changed the screen may
+not.
+
+**The dots are the progress bar.** Past steps read as a filled run rather
+than as three shades of the same dot, because "how much is left" is a
+question somebody asks in the middle of a tour and the answer was
+decoration.
+
+The `outcome` lines sit outside the word budget and are bounded separately,
+because a caption for something that has already happened is read with the
+eye free rather than standing between somebody and a control.
+
+### The card never covers what it points at
+
+The owner's report, with a screenshot: a card saying "click the checkbox on
+Walk" with Walk behind it. Two mistakes that compound, and both are fixed in
+`cardPlacement.ts`:
+
+- **The card takes the edge furthest from the target.** On a phone it is a
+  sheet against one edge, and the old rule took the bottom whenever the
+  target was not in the top zone - which includes every target *in* the
+  bottom zone. It now takes the edge the target is furthest from.
+- **"In view" means the window minus the card.** The scroll that brings a
+  target into view measured the whole window, so "already visible" included
+  the strip the card was about to fill. `cardPlan` hands back the band the
+  card leaves free and the engine scrolls into that: a card at the bottom
+  sends its target to the top of the screen and the other way round.
 
 ### Three doors in
 

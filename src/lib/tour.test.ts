@@ -37,12 +37,20 @@ function ctx(before: AppData, now: AppData, focusRunning = false): TourContext {
 //
 // A tour is read while the eye is on the thing being pointed at. Every word
 // past the first line is a word between the person and the control, so the
-// budget is a contract, not a guideline: under 120 words in total, five in a
-// title, fifteen in a line. Both platforms, because a phone gets its own copy.
+// budget is a contract, not a guideline: five words in a title, fifteen in a
+// line, and a total. Both platforms, because a phone gets its own copy.
+//
+// The total went from 120 to 150 in v2.5, and only because the library
+// became three steps instead of one. The owner walked that step and could
+// not follow it: making a list, putting a book in it and getting a session
+// onto a day all happened inside one card, and the outcomes went past faster
+// than they could be read. Two more titles and two more lines is what a
+// readable rhythm costs. The per-line budgets did not move, because those
+// are the ones that keep a card readable at a glance.
 
 for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS]] as const) {
-  test(`the ${name} tour is under 120 words in total`, () => {
-    expect(tourWordTotal(steps)).toBeLessThan(120)
+  test(`the ${name} tour is under 150 words in total`, () => {
+    expect(tourWordTotal(steps)).toBeLessThan(150)
   })
 
   test(`every ${name} title is five words or fewer, every line fifteen or fewer`, () => {
@@ -52,8 +60,8 @@ for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS
     }
   })
 
-  test(`the ${name} tour is nine steps, starting with a welcome and ending with a choice`, () => {
-    expect(steps).toHaveLength(9)
+  test(`the ${name} tour is eleven steps, starting with a welcome and ending with a choice`, () => {
+    expect(steps).toHaveLength(11)
     expect(steps[0].event).toBe('start')
     expect(steps[steps.length - 1].event).toBe('finish')
   })
@@ -287,12 +295,33 @@ test('every data-tour name a step points at exists in the source', () => {
  * and the engine takes the last target present on the page - so the field of
  * an existing list, which is where the step actually ends, comes last.
  */
-test('the library step falls back to New list, and ends on the field of whatever list is there', () => {
-  const step = DESKTOP_STEPS.find(s => s.id === 'library')!
-  const selectors = step.targets.map(t => t.selector)
+/**
+ * The library is three steps since v2.5, one thing each: a list, a book in
+ * it, a session of it on a day. It was one step doing all three, and the
+ * owner walked it and could not follow - which is the whole reason the
+ * rhythm changed. Each still falls back sensibly: the starter offer only
+ * exists while the library is empty, so New list is listed first and the
+ * offer wins when it is there.
+ */
+test('the library is three steps, each ending on one thing, each waiting', () => {
+  const ids = DESKTOP_STEPS.filter(s => s.view === 'library').map(s => s.id)
+  expect(ids).toEqual(['library-list', 'library-book', 'library-sitting'])
+
+  const list = DESKTOP_STEPS.find(s => s.id === 'library-list')!
+  const selectors = list.targets.map(t => t.selector)
   expect(selectors.indexOf('[data-tour="library-new"]')).toBeLessThan(selectors.indexOf('[data-tour="library-starter"]'))
-  expect(selectors.at(-1)).toBe('[data-tour="library-add"]')
-  expect(step.targets.at(-1)?.typed).toBe('Now press Enter.')
+  expect(list.event).toBe('list-added')
+
+  const book = DESKTOP_STEPS.find(s => s.id === 'library-book')!
+  expect(book.targets.at(-1)?.selector).toBe('[data-tour="library-add"]')
+  expect(book.targets.at(-1)?.typed).toBe('Now press Enter.')
+  expect(book.event).toBe('item-added')
+
+  const sitting = DESKTOP_STEPS.find(s => s.id === 'library-sitting')!
+  expect(sitting.targets.map(t => t.selector)).toEqual(['[data-tour="library-item"]', '[data-tour="library-onto-today"]'])
+  expect(sitting.event).toBe('sitting-placed')
+
+  for (const step of [list, book, sitting]) expect(step.outcome?.wait, step.id).toBe(true)
 })
 
 /**
@@ -336,11 +365,14 @@ test('the north step relocates its caption to the day, onto the North line', () 
  * free, not while somebody is hunting for a control. That exemption is only
  * honest while each one stays a line, which is what this bounds.
  *
- * Every real step has one. Two used to, and the other five ended on a tick
- * and a jump that read, to the person watching the control rather than the
- * card, as the tour skipping by itself. Three wait for Next - the day
- * filling, the focus bar appearing, the goal landing under the title - and
- * the rest hold the line for a beat and go on.
+ * Every real step has one, and since v2.5 every one of them waits for Next.
+ * Three used to wait and the rest held the line for a beat and went on,
+ * which the owner walked and could not follow: a step that changed the
+ * screen showed what changed and moved off it while they were still looking
+ * at the thing that changed. Every step in this tour ends on something
+ * happening, so every caption is about something that just happened, so
+ * every one of them waits. The beat-and-go path is still there for a step
+ * that changes nothing; there is not one at the moment.
  */
 for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS]] as const) {
   test(`every real ${name} step names its outcome in fifteen words or fewer`, () => {
@@ -348,7 +380,7 @@ for (const [name, steps] of [['desktop', DESKTOP_STEPS], ['mobile', MOBILE_STEPS
       expect(step.outcome, step.id).toBeDefined()
       expect(wordCount(step.outcome!.text), step.id).toBeLessThanOrEqual(15)
     }
-    expect(steps.filter(s => s.outcome?.wait).map(s => s.id)).toEqual(['stamp', 'focus', 'north'])
+    expect(steps.slice(1, -1).every(s => s.outcome?.wait), 'every outcome waits for Next').toBe(true)
   })
 
   test(`every ${name} step that waits for something real names a concrete thing to press`, () => {

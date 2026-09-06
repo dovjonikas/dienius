@@ -604,6 +604,7 @@ function ItemRow({
       <button
         type="button"
         className="library-item-open"
+        data-tour="library-item"
         aria-expanded={detailOpen}
         aria-label={`${item.title}, ${progressLabel(list, item)}`}
         onClick={onToggleDetail}
@@ -825,7 +826,7 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
       </label>
 
       <div className="library-detail-actions">
-        <button type="button" className="btn-secondary" onClick={() => schedule(todayKey(), 'today')}>
+        <button type="button" className="btn-secondary" data-tour="library-onto-today" onClick={() => schedule(todayKey(), 'today')}>
           Onto today
         </button>
         <button type="button" className="btn-secondary" onClick={() => schedule(addDays(todayKey(), 1), 'tomorrow')}>

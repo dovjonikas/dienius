@@ -5,10 +5,16 @@ import { openFreshAt, tick, wednesdayAt } from './app'
 test.use({ timezoneId: 'Europe/Vilnius' })
 
 /**
- * The naive walk: nine steps, doing only and exactly what each card says,
+ * The naive walk: eleven steps, doing only and exactly what each card says,
  * finding every control by the words the card uses for it. Nothing here
  * reaches for the engine's own markup - a test that clicked whatever the
  * spotlight marked would pass with a card that said nothing useful.
+ *
+ * Every caption ends in Next since v2.5. That is the fix for the owner's
+ * second tour report: a step that changed the screen used to say what
+ * changed and then leave while they were still looking at the change. The
+ * Next presses in this walk are the test of it - if a caption moved on by
+ * itself, the press after it would land on the wrong card.
  *
  * Runs on the desktop and on a phone, because the two are taught in
  * different words through different sheets, and the spotlight's first
@@ -36,6 +42,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText('Now press Enter.')
   await box.press('Enter')
   await expect(card).toContainText('Walk is on the day')
+  await card.getByRole('button', { name: 'Next' }).click()
 
   // Make it key - three controls, each named as it appears
   await expect(card).toContainText(`${verb} the dots on the Walk card`)
@@ -45,6 +52,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText(`${verb} Mark as key.`)
   await page.getByRole('button', { name: 'Mark as key' }).click()
   await expect(card).toContainText('Walk is key now')
+  await card.getByRole('button', { name: 'Next' }).click()
 
   // Focus - the panel the last step opened is in the way, and the card says so
   await expect(card).toContainText('Close this panel first.')
@@ -59,16 +67,29 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText(`${verb} the checkbox on Walk.`)
   await tick(page, 'Walk')
   await expect(card).toContainText('Walk moved into Done')
+  await card.getByRole('button', { name: 'Next' }).click()
 
-  // Books and series - the step ends on a book, not on a list
+  // Books and series, at the slower rhythm: a list, a book, a session on a
+  // day - three steps, one thing each, each waiting to be read.
   await expect(card).toContainText(`${verb} Start a Books list`)
   await page.getByRole('button', { name: 'Start a Books list' }).click()
+  await expect(card).toContainText('The list is there and empty')
+  await card.getByRole('button', { name: 'Next' }).click()
+
   await expect(card).toContainText('Type: Dune, 20 chapters')
   const add = page.getByLabel('Add to Books')
   await add.pressSequentially('Dune, 20 chapters')
   await expect(card).toContainText('Now press Enter.')
   await add.press('Enter')
-  await expect(card).toContainText('A session can now land on any day')
+  await expect(card).toContainText('Dune is first in the queue')
+  await card.getByRole('button', { name: 'Next' }).click()
+
+  await expect(card).toContainText(`${verb} Dune to open it.`)
+  await page.getByRole('button', { name: /^Dune, / }).click()
+  await expect(card).toContainText(`${verb} Onto today.`)
+  await page.getByRole('button', { name: 'Onto today' }).click()
+  await expect(card).toContainText('A session of Dune is on today')
+  await card.getByRole('button', { name: 'Next' }).click()
 
   // One direction - the picture's first line, then a goal under it in the
   // North window, then shown under the day

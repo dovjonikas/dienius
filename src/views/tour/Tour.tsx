@@ -8,7 +8,7 @@ import { endTour, readProgress, setTourStep, startTour, useTourState } from '../
 import { leaveTour } from '../../lib/tourExit'
 import { assistWith } from '../../lib/tourAssist'
 import { TOUR_EVENTS, resolveText, stepsFor, tourTask, type TourStep, type TourView } from '../../lib/tour'
-import { CARD_GAP, placeCard, type Rect } from './cardPlacement'
+import { CARD_GAP, cardPlan, type Rect } from './cardPlacement'
 import type { AppData } from '../../lib/types'
 
 /**
@@ -17,9 +17,10 @@ import type { AppData } from '../../lib/types'
  * It knows nothing about what it teaches. It takes the step array for this
  * platform from lib/tour.ts, points at whatever the step names, and asks the
  * step's event whether it has happened yet, on every store change. When it
- * has, the card shows a tick, names what happened, and moves on. There is a
- * Next during every caption, and three steps wait for it - see `outcome` in
- * lib/tour.ts.
+ * has, the card shows a tick, names what happened, and waits for Next. Every
+ * step here ends on something happening, so every caption is about a thing
+ * that just changed on screen, and none of them leave while the eye is still
+ * on it - see `outcome` in lib/tour.ts.
  *
  * The spotlight is four solid shades around the hole and a ring, and none
  * of it catches a pointer event: it dims, the ring points, and the whole app
@@ -65,16 +66,15 @@ export interface TourProps {
 }
 
 /**
- * How long the tick and the caption are held before the next step, on the
- * steps that do not wait for Next.
+ * How long a caption that changed nothing holds before moving on.
  *
- * The tick alone used to be held for 1.2 seconds, which was measured as
- * "long enough to be seen" and was not: the thing being celebrated happens
- * somewhere else on the page, the eye has to travel there and back, and then
- * there is a line to read. A beat for the tick and two seconds for twelve
- * words. Next is there throughout for anybody faster than that.
+ * Every step in this tour ends on something happening, so every one of them
+ * waits for Next instead - see the outcomes in lib/tour.ts. This is here for
+ * a step that only says "look at this", and it is deliberately long: the
+ * owner walked the tour and 3.2 seconds was not enough to read a line, look
+ * up at the thing it names, and look back.
  */
-const OUTCOME_HOLD_MS = 3200
+const OUTCOME_HOLD_MS = 6000
 
 /** How often the target is re-measured. Scroll, resize and mutations also trigger it; this catches motion. */
 const POLL_MS = 200
@@ -187,6 +187,14 @@ function TourOverlay({ onNavigate }: TourProps) {
   const [before, setBefore] = useState<{ step: number; data: AppData }>(() => ({ step: index, data: getData() }))
   const [celebrating, setCelebrating] = useState(false)
   const [stuck, setStuck] = useState(false)
+
+  // Which half of the screen the card leaves free, reported by the card
+  // itself once it knows its own height. A ref beside the state because the
+  // measuring effect below reads it every frame and must not re-run when it
+  // changes - see the scroll inside `measure` below.
+  const [scrollBlock, setScrollBlock] = useState<ScrollLogicalPosition>('center')
+  const scrollBlockRef = useRef<ScrollLogicalPosition>('center')
+  scrollBlockRef.current = scrollBlock
   const [hole, setHole] = useState<Rect | null>(null)
   const [phase, setPhase] = useState<Phase | null>(null)
   const targetRef = useRef<Element | null>(null)
@@ -367,13 +375,22 @@ function TourOverlay({ onNavigate }: TourProps) {
       // to would be fought over every poll. A control already wholly on
       // screen is left where it is: centring it scrolled the whole shell,
       // header and all, to put a checkbox in the middle of the window.
-      const offScreen = r.top < 0 || r.bottom > window.innerHeight || r.left < 0 || r.right > window.innerWidth
+      // "In view" is the window minus the card. On a phone the card is a
+      // sheet against one edge and half the screen is behind it; scrolling
+      // a target into the middle of the *window* can put it squarely under
+      // the card, which is what the owner hit. `scrollBlock` is the half
+      // the card leaves free - see cardPlan - so a card at the bottom sends
+      // its target to the top and the other way round.
+      const band = scrollBlockRef.current
+      const clearTop = band === 'end' ? window.innerHeight * 0.4 : 0
+      const clearBottom = band === 'start' ? window.innerHeight * 0.6 : window.innerHeight
+      const offScreen = r.top < clearTop || r.bottom > clearBottom || r.left < 0 || r.right > window.innerWidth
       const now = Date.now()
       const first = el !== targetRef.current
       if (offScreen && (first || now - lastScrollRef.current > 500)) {
         targetRef.current = el
         lastScrollRef.current = now
-        el.scrollIntoView({ block: 'center', inline: 'nearest' })
+        el.scrollIntoView({ block: band, inline: 'nearest' })
         return
       }
       targetRef.current = el
@@ -513,6 +530,7 @@ function TourOverlay({ onNavigate }: TourProps) {
         celebrating={celebrating}
         stuck={stuck}
         sandbox={sandbox}
+        onBand={setScrollBlock}
         onStart={advance}
         onNext={advance}
         onSkipStep={advance}
@@ -584,6 +602,8 @@ interface TourCardProps {
   onAssist: () => void
   onSkip: () => void
   onFinish: (outcome: 'keep' | 'clean') => void
+  /** Where a target has to be scrolled to so this card is not over it. */
+  onBand: (block: ScrollLogicalPosition) => void
 }
 
 function TourCard({
@@ -602,6 +622,7 @@ function TourCard({
   onAssist,
   onSkip,
   onFinish,
+  onBand,
 }: TourCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(160)
@@ -615,7 +636,18 @@ function TourCard({
   // no layout and this rule is worth a test.
   const vw = typeof window === 'undefined' ? 1024 : window.innerWidth
   const vh = typeof window === 'undefined' ? 768 : window.innerHeight
-  const placement = placeCard(hole, { w: CARD_WIDTH, h: height }, { w: vw, h: vh }, wide)
+  const plan = cardPlan(hole, { w: CARD_WIDTH, h: height }, { w: vw, h: vh }, wide)
+  const placement = plan.placement
+
+  // The scroller is told which half of the screen the card leaves free, so
+  // "bring the target into view" means into the part of the view the person
+  // can actually see. Without this it meant "anywhere in the window", and a
+  // window includes the strip the card is about to cover - which is the
+  // owner's screenshot: a card saying "click the checkbox on Walk" with
+  // Walk behind it.
+  useLayoutEffect(() => {
+    onBand(placement.kind === 'top' ? 'end' : placement.kind === 'bottom' ? 'start' : 'center')
+  }, [placement.kind, onBand])
   let style: React.CSSProperties
   switch (placement.kind) {
     case 'centre':

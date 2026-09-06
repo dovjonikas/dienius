@@ -89,3 +89,51 @@ export function placeCard(hole: Rect | null, card: Size, viewport: Size, wide: b
     top: clamp(chosen.top, CARD_GAP, viewport.h - card.h - CARD_GAP),
   }
 }
+
+/**
+ * Where the card goes, plus the band of screen it leaves for the target.
+ *
+ * The owner's report, with a screenshot: the card "Tick it off - click the
+ * checkbox on Walk" sat over the day and Walk was behind it. Two mistakes,
+ * and they compound.
+ *
+ * On a phone the card is a sheet against one edge, and until v2.5 a target
+ * inside that edge's band was simply covered - `placeCard` returned
+ * 'bottom' for a hole at the bottom of the screen and nothing said
+ * otherwise. And the scroll that brings a target into view measured the
+ * window rather than the window minus the card, so "already in view"
+ * included the strip the card was about to fill.
+ *
+ * So the answer is not only where the card goes: it is also where the
+ * target is allowed to be. `clear` is the band left over, and the engine
+ * scrolls the target into that rather than into the middle of the window.
+ * `needsScroll` says the target is not in it yet, which is what turns a
+ * silent overlap into a scroll.
+ */
+export interface CardPlan {
+  placement: CardPlacement
+  /** The vertical band the card does not cover, in viewport coordinates. */
+  clear: { top: number; bottom: number }
+  /** Whether the target is outside that band and has to be moved into it. */
+  needsScroll: boolean
+}
+
+export function cardPlan(hole: Rect | null, card: Size, viewport: Size, wide: boolean): CardPlan {
+  const whole = { top: 0, bottom: viewport.h }
+  if (!hole) return { placement: placeCard(null, card, viewport, wide), clear: whole, needsScroll: false }
+
+  if (wide) {
+    // Beside the target, so the full height is its to sit in. The four-side
+    // search in `placeCard` already keeps the card off the hole.
+    return { placement: placeCard(hole, card, viewport, wide), clear: whole, needsScroll: false }
+  }
+
+  // A phone: the card is a sheet, and the only question is which edge. Take
+  // the edge the target is furthest from, which is the edge that leaves it
+  // the most room - not the one the first matching rule happened to pick.
+  const sheet = card.h + CARD_GAP * 2
+  const middle = hole.y + hole.h / 2
+  const placement: CardPlacement = middle > viewport.h / 2 ? { kind: 'top' } : { kind: 'bottom' }
+  const clear = placement.kind === 'top' ? { top: sheet, bottom: viewport.h } : { top: 0, bottom: viewport.h - sheet }
+  return { placement, clear, needsScroll: hole.y < clear.top || hole.y + hole.h > clear.bottom }
+}

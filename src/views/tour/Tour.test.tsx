@@ -144,7 +144,14 @@ test('the engine switches the shell to the tab a step lives on', () => {
  * happened, holds the line long enough to read it, and offers Next to
  * anybody faster than that.
  */
-test('a step ends when its action happens in the store, shows a tick and says what happened, then moves on', () => {
+/**
+ * Since v2.5 a step that changed the screen never moves on by itself. The
+ * owner walked the tour and could not follow it: the card said what had
+ * just happened and then left while they were still looking at the thing
+ * that happened. Every step here ends on something happening, so every
+ * caption waits for Next.
+ */
+test('a step ends when its action happens in the store, shows a tick, says what happened, and waits', () => {
   renderTour()
   act(() => startTour('desktop', 2)) // "Add your own"
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Add your own')
@@ -156,12 +163,10 @@ test('a step ends when its action happens in the store, shows a tick and says wh
   expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument()
   expect(getTourState().step).toBe(2)
 
-  // Still there after the old delay - a line takes longer to read than a tick takes to see.
-  act(() => vi.advanceTimersByTime(1300))
+  // However long somebody looks at what changed, the card is still there.
+  act(() => vi.advanceTimersByTime(30_000))
   expect(getTourState().step).toBe(2)
-  act(() => vi.advanceTimersByTime(2200))
-  expect(getTourState().step).toBe(3)
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Make it key')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Walk is on the day')
 })
 
 test('Next during a caption moves on at once', async () => {
@@ -382,7 +387,8 @@ test('Do it for me does the real thing, so the next step arrives in the state it
   const added = getData().days[TODAY].tasks.at(-1)
   expect(added).toMatchObject({ title: 'Walk', minutes: 30 })
   expect(added?.time).toBeTruthy()
-  act(() => vi.advanceTimersByTime(3500))
+  // The caption waits, like every other - Next is what moves on.
+  await user.click(screen.getByRole('button', { name: 'Next' }))
   expect(getTourState().step).toBe(3)
 })
 
@@ -554,7 +560,8 @@ test('a sheet left open over the step gets its close button pointed at, and the 
 test('writing a goal ends the north step, and the caption moves to the day and points at the North line', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const { onNavigate } = renderTour()
-  act(() => startTour('desktop', 7))
+  // North is the ninth step since the library became three.
+  act(() => startTour('desktop', 9))
   expect(onNavigate).toHaveBeenLastCalledWith('north')
   act(() => actions.addGoal({ title: 'Be someone who finishes things' }, TODAY))
   act(() => vi.advanceTimersByTime(250))
@@ -562,9 +569,9 @@ test('writing a goal ends the north step, and the caption moves to the day and p
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('It sits under the day now')
   expect(document.querySelector('[data-tour="north-line"]')!.classList.contains('is-tour-target')).toBe(true)
   act(() => vi.advanceTimersByTime(10_000))
-  expect(getTourState().step).toBe(7)
+  expect(getTourState().step).toBe(9)
   await user.click(screen.getByRole('button', { name: 'Next' }))
-  expect(getTourState().step).toBe(8)
+  expect(getTourState().step).toBe(10)
 })
 
 /**
@@ -578,15 +585,20 @@ test('writing a goal ends the north step, and the caption moves to the day and p
 test('a caption that relocates belongs to its own step, and never fires as the step before it ends', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const { onNavigate } = renderTour()
-  act(() => startTour('desktop', 6))
+  // The last library step, so the one after it is North and its caption is
+  // the one that relocates.
+  act(() => startTour('desktop', 8))
   let list!: ReturnType<typeof actions.addLibraryList>
   act(() => {
     list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
   })
   act(() => actions.addLibraryItem(list.id, 'Dune, 20 chapters'))
+  act(() => {
+    actions.scheduleLibraryItem(TODAY, list.id, getData().library[0].items[0].id)
+  })
   await user.click(screen.getByRole('button', { name: 'Next' }))
   act(() => vi.advanceTimersByTime(250))
-  expect(getTourState().step).toBe(7)
+  expect(getTourState().step).toBe(9)
   expect(onNavigate).toHaveBeenLastCalledWith('north')
 })
 
@@ -623,7 +635,14 @@ test('when the ticked row folds away the ring goes with it, and the caption stan
  * end it, before the person had seen the field - the tick landed on an
  * empty heading and the card moved on.
  */
-test('the library step waits for something in the list, and points at the field once the list exists', () => {
+/**
+ * The library is three steps since v2.5 - a list, a book, a session on a
+ * day - because the owner walked it as one and could not follow it. Each
+ * ends on one thing happening and each waits for Next, so the caption for
+ * what just changed is still there when the eye comes back to the card.
+ */
+test('the library is three steps, and each waits with its own caption', async () => {
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   renderTour()
   act(() => startTour('desktop', 6))
   act(() => vi.advanceTimersByTime(250))
@@ -634,12 +653,26 @@ test('the library step waits for something in the list, and points at the field 
     list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
   })
   act(() => vi.advanceTimersByTime(250))
-  expect(getTourState().step).toBe(6)
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('The list is there and empty')
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+
+  expect(getTourState().step).toBe(7)
+  act(() => vi.advanceTimersByTime(250))
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Type: Dune, 20 chapters')
   expect(screen.getByRole('textbox', { name: 'Add to Books' }).classList.contains('is-tour-target')).toBe(true)
 
   act(() => actions.addLibraryItem(list.id, 'Dune, 20 chapters'))
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('A session can now land on any day')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Dune is first in the queue')
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+
+  expect(getTourState().step).toBe(8)
+  act(() => vi.advanceTimersByTime(250))
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Onto today')
+
+  act(() => {
+    actions.scheduleLibraryItem(TODAY, list.id, getData().library[0].items[0].id)
+  })
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('A session of Dune is on today')
 })
 
 /**

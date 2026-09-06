@@ -13019,3 +13019,10 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .set-aside-item { min-height: var(--touch); }
 }
+
+/* The dots are the progress bar. They were decoration and a count in an
+   aria-label; the owner's walk of the tour said it was never clear how much
+   was left, so the past ones now read as a filled run rather than as three
+   shades of the same dot. */
+.tour-dot.is-past { width: 10px; border-radius: var(--r-pill); }
+.tour-dot.is-now { width: 14px; border-radius: var(--r-pill); transform: none; }
