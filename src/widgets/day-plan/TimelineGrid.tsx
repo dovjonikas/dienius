@@ -150,8 +150,8 @@ const GAP_MIN_HEIGHT_FINE_PX = 28
  * are positioned in the remaining space via `calc()`, so the same single
  * pixel coordinate system - from `computeVerticalLayout` - still drives
  * both the vertical position and the horizontal gutter, with no second
- * layout pass. Kept in sync by hand with the matching pixel value in
- * styles.css.
+ * layout pass. Kept in sync by hand with `--timeline-gutter` in
+ * styles.css, which positions the gutter's own rules and labels by it.
  */
 const GUTTER_PX = 44
 

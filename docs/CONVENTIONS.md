@@ -231,11 +231,53 @@ that.
 `:root`:
 
 - Spacing `--s0`..`--s8`, radius `--r-chip/-control/-card/-pill/-round`
-- Type `--t-xs/sm/md/lg`, plus `--t-input` (16px, the iOS zoom floor - never
-  lower it)
+- Type `--t-2xs`..`--t-xl`, plus `--t-input` (16px, the iOS zoom floor - never
+  lower it), `--t-glyph`, and the two fluid sizes on the Focus screen
 - Elevation `--e1/e2/e3`, motion `--dur-fast`, `--dur`, `--ease`
 - Palette `--bg`, `--surface`, `--text`, `--muted`, `--faint`, `--accent`,
   `--border`, `--danger`
+- Geometry the scales have no step for, named once: `--rail-w`,
+  `--rail-open-w`, `--timeline-gutter`
+
+### The two scales
+
+Written down in v2.4, after the owner's screenshots kept finding a 14px
+here and a 9px there. These are the only sizes there are; `scale.test.ts`
+reads the stylesheet and fails on any other.
+
+| Type | Size | Where |
+|---|---|---|
+| `--t-2xs` | 10px | The month cell's lines and the week preview's letters, where the box is the constraint |
+| `--t-xs` | 11px | Labels, meta, chips, hour marks |
+| `--t-sm` | 13px | Body: cards, fields, buttons, the capacity line |
+| `--t-md` | 15px | The running task, a row's title |
+| `--t-lg` | 20px | The day's name, the clock, a view's heading |
+| `--t-xl` | 34px | The timer's reading |
+| `--t-input` | 16px | Every field on a phone - the iOS zoom floor |
+| `--t-focus`, `--t-focus-title` | fluid | The Focus screen, the one place type fills the window |
+
+**At most four of them on one screen**, not counting the input floor: a
+screen with five sizes is a screen with no hierarchy. Today is 11, 13,
+15 and 20; the month is 10, 11, 13 and 20.
+
+| Spacing | Size | Spacing | Size |
+|---|---|---|---|
+| `--s0` | 2px | `--s5` | 20px |
+| `--s1` | 4px | `--s6` | 24px |
+| `--s2` | 8px | `--s7` | 28px |
+| `--s3` | 12px | `--s8` | 32px |
+| `--s4` | 16px | | |
+
+Every padding, margin and gap is one of these, as a token - which is
+also what lets density redefine all of them at once. Three bare pixel
+values are allowed beside them and nothing else: `1px` for a hairline,
+`3px` and `6px` for the half-steps inside the smallest boxes the app
+draws, a week block and a timeline block. A pixel amount may also stand
+inside a `calc()` beside a token when it names a size the scale has no
+step for - the 32px close button the sheet's title keeps clear of, the
+24px check box the task's meta line starts after. A bare `14px` is a
+defect: it means somebody tuned one screen by eye, and the next screen
+will not match it.
 
 Two are derived at runtime rather than declared: `--safe-ink` (readable on
 `--surface`) and `--on-accent` (readable on whatever accent is in force).
