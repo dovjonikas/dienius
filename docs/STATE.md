@@ -159,6 +159,129 @@ so is the v2.2 one under it, commit by commit; the debts table further down
 is unchanged, and each entry in it is a trade with its reason. The next
 brief comes from the owner.
 
+### The v2.4 wave: the polish wave
+
+Briefed by the owner in one message, in Lithuanian, four stages, to be run
+end to end without stopping. The sentence it is built on is the owner's:
+text that looks even slightly off - a gap too wide, a gap too narrow - is a
+defect, not taste. The goal is an app that looks professional and is a
+pleasure to use, on the screen it is used on most: a desktop at 2000x965
+with the rail down the left.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 0 | Written down first | - | The brief and the decisions it forced, in this file, before any code |
+| 1 | The rail opens on intent only | - | |
+| 2 | The pixel audit | - | |
+| 3 | Low day, and a timer on a step | - | |
+| 4 | Closing and `v2.4` | - | |
+
+#### The brief, as understood
+
+**Stage 0 - where it stands.** The tree clean, everything pushed, `v2.3`
+tagged. Checked before anything else: it was.
+
+**Stage 1 - the rail opens by itself.** The owner sees it every day: the
+rail unfolds into the sidebar with the names on it when Discord is opened
+or closed on another screen, or when the window is returned to. Find the
+cause among window focus and blur, `:focus-visible` after a focus is
+restored, an enter with no real movement, and the Keep open state. The
+rule: the rail opens only from real intent - a pointer that comes in and
+moves in it for at least 150ms, a press, or Keep open. Never from the
+window's focus or blur, never from a keyboard focus being restored, never
+under a pointer that is standing still. A test that simulates blur then
+focus with the pointer over the rail's edge and without it, and the rail
+stays closed. DECISIONS gets "The rail opens on intent only".
+
+**Stage 2 - the pixel audit, screen by screen.** Every place below is from
+the owner's screenshots at 2000x965. For each: fix it, a screenshot before
+and after, then the whole screen walked by one rule - equal gaps, one
+typography (at most four sizes on a screen), everything on the grid,
+nothing clipped, nothing overlapping.
+
+- *Today.* The header row - two big arrows, Replan as bare text, a void,
+  the clock, the 0/9 bar, another void, Both / Calendar / Tasks - becomes
+  one hierarchy: the navigation as one group on the left, the status (the
+  clock and the progress) beside it, the view toggle on the right, equal
+  gaps, Replan a real button in the arrows' row. The now line never
+  crosses a gap's label: the label moves or hides when the line is within
+  12px. A gap's label never reads as part of the block above it - its own
+  register and clear air from the block. A block shorter than its label
+  needs (Standup, 15 min) gets a floor for the label or the label beside
+  it, never clipped and never outside the block. The times show on long
+  blocks and not on short ones by no rule anybody wrote: one rule, in
+  CONVENTIONS, applied on Today and the week alike. The stats ring on the
+  left is empty and apart from the four numbers - one card, the number
+  inside the ring, four aligned rows. The quick-add row has one height for
+  all three controls and the category dots start at the field's left edge;
+  "9 routine tasks stay" gets air from the edge and the helper grey. "Sleep
+  23:00-07:00 - 8h, not free time" becomes "Sleep 23:00-07:00 (8h) is not
+  counted as free." A content max-width, so a 2000px screen does not
+  stretch a block to 1000px of 14px text.
+- *The task sheet.* A thin custom scrollbar, or no scroll at 965px with
+  TIME and SIZE on one row when wide. SIZE says "30" in the stepper and
+  "30 min" beside it: one of them goes. The close cross in the sheet's
+  corner rather than in the title field, and the title field full width.
+  Save and Delete visible without scrolling. A darker backdrop, so the
+  sheet reads as the foreground.
+- *The month.* A stamped day's light blue on dark text reads as a piece of
+  light mode in the dark theme: a 12-18% wash of the template colour with
+  a coloured strip along the top, the text staying light, both themes
+  measured. Past days show 0/9 and future days a list, by no rule: one
+  rule for every day, the first three lines and "+N", a score only on a
+  day that is over. "+6" centred under left-aligned lines - everything
+  left. The dot in the top right corner explained or removed.
+- *The week grid.* A short block's label by Today's rule. A past month's
+  column (Mon 31) without its day-type pill and with a "+": the same
+  height and width as the rest, the "+" on hover only. The foot "0/9 4h30"
+  aligned with its column, the same gap.
+- *The week template editor.* "Same as the wee" clipped: never a clipped
+  word anywhere in the app, every long-worded control checked. The selected
+  Sunday's frame the size of the other columns. The length field showing
+  "min" with no number. Category dots all dark - one chosen, the rest
+  visible. The row "dots | Nothing | Ongoing | Add to [Sunday] Weekdays
+  Weekend All days" with Add block alone far to the right - two rows with
+  a heading each (what, where), Add block with its group. An empty column's
+  "-" becomes a faint "No blocks yet", or nothing.
+- *The library.* Add reads as disabled while the other buttons are white:
+  a real disabled style while the field is empty, or white. The add row's
+  stepper taller than its field - one height.
+- *Everywhere.* Every screen at 1920x1080, 1600x900, 1366x768 and 390x844
+  in both themes by the same rule. A type scale and a spacing scale written
+  into CONVENTIONS, every ad hoc value moved onto them. `npm run sweep` at
+  zero on the desktop and on the phone.
+
+**Stage 3 - two small features from the owner's notes.**
+
+- *Low day*, the 40% doctrine as a button beside Replan. One press: the
+  key tasks stay at 40% of their length (15 minutes at least), the one-offs
+  that are neither key nor routine go to tomorrow as a proposal with
+  Accept, routine stays. Undo as Replan has. The day carries a quiet "low
+  day", and its score counts only the key tasks. Tests, and a DAILY.md
+  paragraph, "When you do not feel like it".
+- *A timer on a step.* A task's steps can carry a length ("Meditation - 10
+  min"); a tap on such a step starts the existing timer widget for that
+  long, and when it ends the step is ticked and the chime is quiet. So the
+  07:30 ritual - water, meditation 10, gratitude, a Pressfield page - is
+  one block with steps and a timer. Tests, and a DAILY.md sentence.
+
+**Stage 4 - closing.** Unit, browser tests and both sweeps; two critique
+passes on the desktop (1920 and 1366) and one on the phone to the same
+pixel standard, every finding fixed rather than written down; the README's
+screenshots regenerated; this table; DECISIONS "The pixel standard"; the
+tag; then the handoff.
+
+**Decisions taken on the way**, so nobody re-argues them by accident:
+
+- The rail has three ways in - a mouse that comes in and moves, and is
+  still there 150ms later; a Tab that brings the focus in; the pin - and
+  the window changing hands is none of them. The focus path stays for a
+  Tab and only a Tab: Escape handing focus back to the pen, or the window
+  returning it to the item last pressed, is not somebody reaching for the
+  rail. An opening needs an arrival: a press, a leave or the window losing
+  focus ends the visit, and a mouse still in the rail after any of those
+  does not reopen it by staying.
+
 ### The v2.3 wave: the journal
 
 Briefed by the owner in one message, one stage. A journal that lives on
