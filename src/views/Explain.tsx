@@ -105,6 +105,9 @@ export function Explain({ id, children, align = 'start', className, inline = fal
     return () => document.removeEventListener('pointerdown', onDown)
   }, [open])
 
+  // A hold still pending when the control goes away goes with it.
+  useEffect(() => () => clearTimeout(timer.current), [])
+
   function openAfter(ms: number) {
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setOpen(true), ms)
@@ -147,6 +150,14 @@ export function Explain({ id, children, align = 'start', className, inline = fal
       }}
       onPointerUp={e => e.pointerType !== 'mouse' && clearTimeout(timer.current)}
       onPointerCancel={() => clearTimeout(timer.current)}
+      // The click that follows a tap cancels the hold as well. A tap on a
+      // control that re-renders the card under the finger - Focus, which
+      // turns the running card into a running one - sends the release to
+      // whatever is under the finger afterwards, and the wrapper never hears
+      // it; the hold then fired half a second after the tap and put the
+      // sentence over the card. The phone's measuring pass found it at three
+      // in the afternoon, on a running card with a wrapped title.
+      onClick={() => clearTimeout(timer.current)}
       onFocus={() => {
         if (Date.now() - pressedAt.current > PRESS_FOCUS_WINDOW) setOpen(true)
       }}

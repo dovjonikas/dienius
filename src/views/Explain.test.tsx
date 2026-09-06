@@ -277,6 +277,26 @@ describe('opening it', () => {
     vi.useRealTimers()
   })
 
+  /**
+   * A tap on a control that re-renders the card under the finger - Focus on
+   * the running card - sends the release to whatever is there afterwards,
+   * and the wrapper never hears it. The click that follows the tap has to
+   * cancel the hold too, or the sentence opens half a second after a tap
+   * that never held anything.
+   */
+  test('a tap whose release goes elsewhere still does not open it', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(host('focus'))
+    const control = screen.getByRole('button', { name: 'Ongoing' })
+
+    await user.pointer({ keys: '[TouchA>]', target: control })
+    control.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    act(() => vi.advanceTimersByTime(EXPLAIN_HOLD + 50))
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveAttribute('hidden')
+    vi.useRealTimers()
+  })
+
   test('a keyboard reaching the control gets it at once - nobody tabs past by accident', async () => {
     const user = userEvent.setup()
     render(host('stamp'))
