@@ -151,10 +151,42 @@ viewports** - the typecheck and the build are clean, `npm run sweep`
 reports nothing on the desktop **and nothing on the phone**, and the working
 tree is empty and pushed.
 
-**Where to start:** nothing is owed. The v2.2 table below is closed, commit
-by commit; the v2.1 table under it is history; the debts table further down
-is unchanged, and each entry in it is a trade with its reason. The next
-brief comes from the owner.
+**Where to start:** the v2.3 wave below is being built against its plan;
+the v2.2 table under it is closed, commit by commit; the debts table further
+down is unchanged, and each entry in it is a trade with its reason.
+
+### The v2.3 wave: the journal
+
+Briefed by the owner in one message, one stage. A journal that lives on
+the day and never counts. One line in the morning under the North line -
+"Today: ..." - and two questions on the evening close card, both optional:
+"What was real today?" and "What do I want to tell myself tomorrow?".
+Plain text, no limits, no streak; a skipped day costs nothing and shows
+nothing. The week shows each day's lines under the day and has a button
+that copies the week as markdown - the date, the morning line, the two
+answers - to paste into another chat; Review has the same for the month.
+The lines ride on the day entity, so sync, backup and snapshots carry them
+with no migration: three optional fields.
+
+**Decisions taken on the way**, so nobody re-argues them by accident:
+
+- The three lines are one optional object on `DayPlan`, `journal`, with
+  three optional fields, and a field is absent when it is blank: the store
+  trims and drops, so an empty journal takes no bytes and a day nobody
+  wrote on changes no sync entity.
+- The morning line saves on blur, on Enter and on leaving the day, not on
+  every keystroke: a controlled field bound to a trimming store eats the
+  space being typed.
+- The evening questions do not replace "Best moment today?", which has its
+  own switch and its own place in the month, and they have no switch of
+  their own: the owner asked for them, and a plain empty field is not a
+  nudge.
+- The copy button sits under the week, not in the bar: the bar on a phone
+  is three rows already, and a fourth was fought off in v2.2. The grid
+  shows the morning line under a day's name on a desktop only; the agenda
+  shows all three lines in full on every screen.
+- The markdown lists only the days with something written, so a pasted
+  week is the week's words and nothing about the days that had none.
 
 ### The v2.2 wave: Replan v2
 
