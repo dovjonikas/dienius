@@ -293,28 +293,38 @@ export function TaskPane({
           nothing anywhere saying how long anything has been in it. */}
       <Backlog date={date} />
 
-      {pushable > 0 && (
-        <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
-          {/* A real arrow, drawn in CSS rather than loaded as an icon or pasted
-              in as an emoji - see the checkbox tick and the Done caret for the
-              same approach. Decorative: the button's own words already say
-              where things are going. */}
-          <span className="rollover-icon" aria-hidden="true" />
-          {held > 0 ? `Push ${pushable} to tomorrow - ${held} staying here` : `Push ${pushable} to tomorrow`}
-        </button>
-      )}
-      {/* Said out loud rather than left as a silent skip: "seven of your nine
-          did not move" is a surprising thing for a button to do without
-          mentioning it. Any one of them can still be moved by hand from its own
-          detail sheet. */}
-      {covered > 0 && (
-        <p className="rollover-note">
-          {covered} routine {covered === 1 ? 'task stays' : 'tasks stay'} - tomorrow has{' '}
-          {covered === 1 ? 'it' : 'them'} anyway.
-        </p>
-      )}
-      {pushable === 0 && held > 0 && (
-        <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+      {/* The end of the day, in a footer of its own. On a desktop the column
+          is a fixed height and this sits on its floor behind a hairline, so
+          the button is in the same place all day and the list above it
+          visibly ends before it rather than the button trailing the last
+          card at whatever height the day happens to be. Below the wide
+          breakpoint the wrapper is no box at all. */}
+      {(pushable > 0 || covered > 0 || held > 0) && (
+        <div className="task-pane-foot">
+          {pushable > 0 && (
+            <button className="rollover" onClick={() => actions.rolloverUnfinished(date)}>
+              {/* A real arrow, drawn in CSS rather than loaded as an icon or
+                  pasted in as an emoji - see the checkbox tick and the Done
+                  caret for the same approach. Decorative: the button's own
+                  words already say where things are going. */}
+              <span className="rollover-icon" aria-hidden="true" />
+              {held > 0 ? `Push ${pushable} to tomorrow - ${held} staying here` : `Push ${pushable} to tomorrow`}
+            </button>
+          )}
+          {/* Said out loud rather than left as a silent skip: "seven of your
+              nine did not move" is a surprising thing for a button to do
+              without mentioning it. Any one of them can still be moved by
+              hand from its own detail sheet. */}
+          {covered > 0 && (
+            <p className="rollover-note">
+              {covered} routine {covered === 1 ? 'task stays' : 'tasks stay'} - tomorrow has{' '}
+              {covered === 1 ? 'it' : 'them'} anyway.
+            </p>
+          )}
+          {pushable === 0 && held > 0 && (
+            <p className="rollover-note">Nothing left to push - the rest are waiting on a decision.</p>
+          )}
+        </div>
       )}
     </div>
   )

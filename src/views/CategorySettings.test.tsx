@@ -106,7 +106,7 @@ test('the last one says why it cannot go, on the button rather than by hiding it
 
   const button = within(row('Deep work')).getByRole('button', { name: 'Delete' })
   expect(button).toBeDisabled()
-  expect(button).toHaveAttribute('title', 'There has to be one')
+  expect(button).toHaveAttribute('data-tip', 'There has to be one')
 })
 
 /**

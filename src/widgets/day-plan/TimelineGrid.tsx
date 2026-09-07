@@ -679,7 +679,6 @@ export function TimelineGrid({
                   key={event.uid}
                   className="timeline-external"
                   style={{ top: `${top}px`, height: `${height}px`, ['--cal' as string]: event.color } as React.CSSProperties}
-                  title={`${event.summary} - ${event.calendarName}`}
                 >
                   <span className="timeline-external-title">{event.summary}</span>
                   {height >= COMPACT_HEIGHT_PX && (

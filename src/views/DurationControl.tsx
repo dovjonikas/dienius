@@ -62,7 +62,6 @@ export function DurationControl({
         className={minutes === undefined ? 'duration-control-value is-empty' : 'duration-control-value'}
         aria-expanded={open}
         aria-label={label}
-        title={minutes === undefined ? 'No length set' : `${formatDuration(minutes)} long`}
         onClick={() => setOpen(o => !o)}
       >
         {minutes === undefined ? 'min' : durationToText(minutes)}

@@ -56,7 +56,7 @@ test('every view has a visible control, named, with its key in the tooltip', () 
 
   for (const item of [...NAV_ITEMS, SETTINGS_ITEM]) {
     const button = within(nav).getByRole('button', { name: item.label })
-    expect(button, item.label).toHaveAttribute('title', `${item.label} - ${item.key === ',' ? 'comma' : item.key}`)
+    expect(button, item.label).toHaveAttribute('data-tip', `${item.label} · ${item.key === ',' ? 'comma' : item.key}`)
   }
 })
 

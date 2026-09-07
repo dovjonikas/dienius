@@ -171,7 +171,7 @@ export function WeekColumn({
 
         {replanned && <span className="week-col-mark">replanned</span>}
         {journalLine && (
-          <span className="week-col-journal" title={journalTitle}>
+          <span className="week-col-journal" data-tip={journalTitle}>
             {journalLine}
           </span>
         )}
@@ -225,7 +225,6 @@ export function WeekColumn({
                 key={event.uid}
                 className="week-external"
                 aria-hidden="true"
-                title={`${event.summary} - ${event.calendarName}`}
                 style={{ top: `${top}%`, height: `${height}%`, ['--cal' as string]: event.color } as React.CSSProperties}
               >
                 <span className="week-external-title">{event.summary}</span>
@@ -280,7 +279,7 @@ export function WeekColumn({
         ) : null}
         {focusMinutes > 0 && <span className="week-foot-focus">{formatDuration(focusMinutes)}</span>}
         {day.untimed.length > 0 && (
-          <span className="week-foot-untimed" title={`${day.untimed.length} with no time yet`}>
+          <span className="week-foot-untimed" data-tip={`${day.untimed.length} with no time yet`}>
             ~{day.untimed.length}
           </span>
         )}

@@ -276,7 +276,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                   style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
                   aria-pressed={c.id === task.category}
                   aria-label={c.label}
-                  title={c.label}
+                  data-tip={c.label}
                   onClick={() => actions.setTaskCategory(date, task.id, c.id)}
                 />
               ))}
@@ -420,7 +420,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                         runningStep?.subtaskId === sub.id && runningStep.taskId === task.id ? 'subtask-timer is-running' : 'subtask-timer'
                       }
                       aria-label={`Start a ${formatDuration(sub.minutes)} timer for ${sub.title}`}
-                      title="Starts the timer for this step"
+                      data-tip="Starts the timer for this step"
                       onClick={e => {
                         e.preventDefault()
                         e.stopPropagation()
@@ -502,7 +502,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
             <button
               type="button"
               className="btn-danger"
-              title={scopeHint}
+              data-tip={scopeHint}
               onClick={() => {
                 actions.deleteTask(date, task.id, scope)
                 onClose()

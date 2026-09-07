@@ -47,7 +47,7 @@ export function CopyJournalButton({ dates, title, label }: CopyJournalButtonProp
         type="button"
         className="link-button"
         disabled={!has}
-        title={has ? 'As markdown, to paste anywhere' : `No journal lines in this ${what.replace(/ journal$/, '')}`}
+        data-tip={has ? 'As markdown, to paste anywhere' : `No journal lines in this ${what.replace(/ journal$/, '')}`}
         onClick={copy}
       >
         {state === 'copied' ? 'Copied' : state === 'failed' ? 'Could not copy' : label}

@@ -268,6 +268,15 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
           <button type="button" className="scratch-photo-add" aria-label="Add a picture" onClick={() => fileRef.current?.click()}>
             +
           </button>
+          {/* The way out, in the row with the other two controls rather than
+              on a bar of its own beside the count, where it read as a
+              control with no obvious job. On a phone the sheet is the whole
+              screen and there is no scrim to tap and no Escape to press, so
+              it has to be a button. Nothing is lost by it: everything is
+              saved already. */}
+          <button type="button" className="scratch-close" aria-label="Close scratch" onClick={onClose}>
+            &times;
+          </button>
           <input
             ref={fileRef}
             type="file"
@@ -289,15 +298,15 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
           </div>
         )}
 
-        <div className="scratch-bar">
-          <span className="scratch-count">{scratchCount(data.scratch.length)}</span>
-          {/* On a phone the sheet is the whole screen and there is no scrim
-              to tap and no Escape to press, so the way out has to be a
-              button. Nothing is lost by it: everything is saved already. */}
-          <button type="button" className="scratch-close" aria-label="Close scratch" onClick={onClose}>
-            &times;
-          </button>
-        </div>
+        {/* The count, once there is something to count. "Nothing yet" on
+            the bar over "Nothing here yet. Type, and it is kept." under it
+            was one fact said twice on an empty stream - CONVENTIONS section
+            23 - and the second of them is the one that says what to do. */}
+        {data.scratch.length > 0 && (
+          <div className="scratch-bar">
+            <span className="scratch-count">{scratchCount(data.scratch.length)}</span>
+          </div>
+        )}
 
         {/* Visible, and announced. One line, replaced by the next thing that
             happens; never a toast stacking up in a corner. */}

@@ -188,16 +188,25 @@ hold it on the ones it does not.
 
 ### One notice above the day
 
-Three things can appear between the day's header and the day: the evening
-close, what yesterday left, and the North card. Only the first of them shows
-at a time, in that order, and the next appears when the one above it is
-dismissed - the stylesheet hides every child of `.day-notices` after the
-first, and each card unmounts itself on dismiss, so the order in
-`DayView.tsx` is the queue. The rule exists because the demo's first
-screen once carried all three above a day the visitor had not seen yet, and
-the day itself was below the fold. The demo line at the very top is not one
-of the three: it is chrome, one 30px row, and never goes away while the
-sample is open.
+Two things can appear between the day's header and the day: the evening
+close and what yesterday left. Only the first of them shows at a time, in
+that order, and the next appears when the one above it is dismissed - the
+stylesheet hides every child of `.day-notices` after the first, and each
+card unmounts itself on dismiss, so the order in `DayView.tsx` is the
+queue. The rule exists because the demo's first screen once carried the
+demo line, the banner and the North card above a day the visitor had not
+seen yet, and the day itself was below the fold. The demo line at the very
+top is not one of the two: it is chrome, one 30px row, and never goes away
+while the sample is open.
+
+The North card - the goal that comes forward on a Monday or after a day
+that got away - was the third of them until v2.6, and is a sheet over the
+day since: it took a fifth of a 768px screen away from the day while it
+stood in the flow, and everything jumped back when Ok was pressed. A sheet
+moves nothing. The evening close stays in the flow on purpose: it arrives at
+a set time while somebody may be typing, and a sheet that lands
+mid-sentence is worse than a card that pushes. See DECISIONS "Nothing moves
+on hover".
 
 The week view is the model for how to do this: every block is a percentage of a
 grid row that takes whatever height it is given, so there is no pixel budget to

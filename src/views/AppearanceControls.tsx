@@ -83,7 +83,7 @@ export function AppearanceControls() {
                 data-accent={a.id}
                 aria-pressed={a.value === currentAccent}
                 aria-label={a.label}
-                title={a.label}
+                data-tip={a.label}
                 onClick={() => pickAccent(a.value)}
               />
             ))}

@@ -319,19 +319,19 @@ export function TaskRow({
               is where they are changed - so none of them spends a tap
               target on a row that already has four. */}
           {subtaskCount > 0 && (
-            <span className="task-steps" title="Steps done">
+            <span className="task-steps" data-tip="Steps done">
               {doneSubtaskCount}/{subtaskCount}
               <span className="visually-hidden"> steps done</span>
             </span>
           )}
           {boundLabel && (
-            <span className={boundNext ? 'task-library is-next' : 'task-library'} title={boundLabel}>
+            <span className={boundNext ? 'task-library is-next' : 'task-library'} data-tip={boundLabel}>
               {boundLabel}
             </span>
           )}
           {boundPace && <span className="task-pace">{boundPace}</span>}
           {task.note && (
-            <span className="task-note-mark" title="Has a note">
+            <span className="task-note-mark" data-tip="Has a note">
               note
             </span>
           )}

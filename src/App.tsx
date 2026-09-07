@@ -5,6 +5,7 @@ import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme
 import { syncThemeColorMeta } from './lib/theme-color'
 import { syncManifestTheme } from './lib/manifest-sync'
 import { UpdateNotice } from './UpdateNotice'
+import { TipLayer } from './views/TipLayer'
 import { UndoToast } from './widgets/UndoToast'
 import { ClockPopover, type ClockTab } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
@@ -582,6 +583,8 @@ export function App() {
       <UndoToast />
       {replan && <ReplanSheet date={replan.date} mode={replan.mode} onClose={() => setReplan(null)} />}
       <UpdateNotice />
+      {/* The one tooltip, for every control carrying data-tip - see TipLayer. */}
+      <TipLayer />
       {/* The tour, at the root: it points at things on every tab and has
           to outlive the tab it is pointing at. See views/tour/Tour.tsx. */}
       <Tour onNavigate={target => (target === 'day' ? openDay(todayKey()) : setView(target))} />

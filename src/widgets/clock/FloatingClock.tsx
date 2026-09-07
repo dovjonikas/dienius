@@ -183,7 +183,7 @@ export function FloatingClock() {
         type="button"
         className="floating-clock-move"
         aria-label="Move to the next corner"
-        title="Move to the next corner"
+        data-tip="Move to the next corner"
         onClick={cycleCorner}
       >
         <span className="floating-clock-grip" aria-hidden="true" />

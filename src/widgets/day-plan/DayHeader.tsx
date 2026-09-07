@@ -229,6 +229,12 @@ export function DayHeader({
           pushed to a second line. Below the wide breakpoint it is no box at
           all (display: contents), and the clock and the bar stack as they
           always did. */}
+      {/* The right zone: the status and the view toggle, one flex item so
+          that when the row is too short for both zones this one goes down
+          a line whole and stays on the right, rather than the toggle alone
+          dropping to the left under the day's name. No box below the wide
+          breakpoint. */}
+      <div className="day-header-right">
       <div className="day-status">
       {isToday && (
         <div className="day-now">
@@ -236,7 +242,7 @@ export function DayHeader({
           {showSleep && (
             <span
               className={untilSleep <= SLEEP_URGENT_MINUTES ? 'day-sleep is-soon' : 'day-sleep'}
-              title="Time until your sleep window starts"
+              data-tip="Time until your sleep window starts"
             >
               Sleep in {formatDuration(untilSleep)}
             </span>
@@ -313,11 +319,6 @@ export function DayHeader({
       )}
       </div>
 
-      {/* The one line the whole app is for - see NorthLine. Inside the header
-          rather than above the day, so it reads as part of the masthead rather
-          than as a notice about today, and so nothing below it moves when it
-          opens. */}
-      <NorthLine date={date} onOpenNorth={onOpenNorth} />
 
       
 
@@ -357,6 +358,13 @@ export function DayHeader({
           </button>
         </div>
       )}
+      </div>
+
+      {/* The one line the whole app is for - see NorthLine. Inside the header
+          rather than above the day, so it reads as part of the masthead rather
+          than as a notice about today, and so nothing below it moves when it
+          opens. */}
+      <NorthLine date={date} onOpenNorth={onOpenNorth} />
     </div>
   )
 }

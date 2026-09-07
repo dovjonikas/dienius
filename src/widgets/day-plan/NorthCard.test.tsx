@@ -31,11 +31,30 @@ beforeEach(() => {
  */
 test('after a slow day the card comes forward, and Ok is remembered in settings for today', async () => {
   render(<NorthCard />)
-  expect(screen.getByRole('complementary', { name: 'Why this matters' })).toHaveTextContent('Finish things')
+  expect(screen.getByRole('dialog', { name: 'Why this matters' })).toHaveTextContent('Finish things')
   await userEvent.click(screen.getByRole('button', { name: 'Ok' }))
-  expect(screen.queryByRole('complementary')).toBeNull()
+  expect(screen.queryByRole('dialog')).toBeNull()
   expect(getData().settings.northDismissedOn).toBe(TODAY)
   expect(localStorage.getItem('dienius:north-dismissed')).toBeNull()
+})
+
+// A sheet since v2.6 - see NorthCard. Escape and the backdrop are the same
+// read as Ok: there is nothing else leaving this card could mean, and a way
+// out that left it for tomorrow to ask again would be the card nagging.
+test('Escape reads the card for the day, and so does the backdrop', async () => {
+  const user = userEvent.setup()
+  const { unmount } = render(<NorthCard />)
+  expect(screen.getByRole('dialog', { name: 'Why this matters' })).toHaveFocus()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(getData().settings.northDismissedOn).toBe(TODAY)
+  unmount()
+
+  actions.dismissNorth(addDays(TODAY, -1))
+  const { container } = render(<NorthCard />)
+  expect(screen.getByRole('dialog', { name: 'Why this matters' })).toBeInTheDocument()
+  await user.click(container.querySelector('.north-scrim')!)
+  expect(screen.queryByRole('dialog')).toBeNull()
 })
 
 test('a dismissal that arrived from another device is honoured here', () => {
@@ -47,7 +66,7 @@ test('a dismissal that arrived from another device is honoured here', () => {
 test('yesterday\'s dismissal does not carry into a new morning', () => {
   actions.dismissNorth(addDays(TODAY, -1))
   render(<NorthCard />)
-  expect(screen.getByRole('complementary', { name: 'Why this matters' })).toBeInTheDocument()
+  expect(screen.getByRole('dialog', { name: 'Why this matters' })).toBeInTheDocument()
 })
 
 /**
@@ -68,7 +87,7 @@ test('the slack card shows one rule, from the goal it is about', () => {
   actions.addIfThen({ trigger: 'the gym bag is by the door', action: 'it goes in the car', goalId: second.id })
 
   render(<NorthCard />)
-  const card = screen.getByRole('complementary', { name: 'Why this matters' })
+  const card = screen.getByRole('dialog', { name: 'Why this matters' })
   expect(card).toHaveTextContent('Here is what you wrote yourself.')
   expect(card.querySelectorAll('.north-card-rule')).toHaveLength(1)
 
@@ -82,7 +101,7 @@ test('the slack card shows one rule, from the goal it is about', () => {
 
 test('a goal with no rules under it shows the why and stops there', () => {
   render(<NorthCard />)
-  expect(screen.getByRole('complementary', { name: 'Why this matters' })).not.toHaveTextContent(
+  expect(screen.getByRole('dialog', { name: 'Why this matters' })).not.toHaveTextContent(
     'Here is what you wrote yourself',
   )
 })
@@ -96,7 +115,7 @@ test('on a Monday the card says one thing you do for this, and nothing about las
   const [g] = getData().goals
   actions.updateGoal(g.id, { deserve: ['train four times', 'sleep by eleven'] })
   render(<NorthCard />)
-  const card = screen.getByRole('complementary', { name: 'Why this matters' })
+  const card = screen.getByRole('dialog', { name: 'Why this matters' })
   expect(card).toHaveTextContent('New week.')
   expect(card).toHaveTextContent('This week.')
   expect(card.textContent).toMatch(/train four times|sleep by eleven/)
@@ -110,7 +129,7 @@ test('on a Monday the card says one thing you do for this, and nothing about las
 test('a Monday card for a goal with nothing written to deserve it shows the why and stops there', () => {
   vi.setSystemTime(new Date('2026-09-07T09:00:00'))
   render(<NorthCard />)
-  const card = screen.getByRole('complementary', { name: 'Why this matters' })
+  const card = screen.getByRole('dialog', { name: 'Why this matters' })
   expect(card).toHaveTextContent('New week.')
   expect(card).not.toHaveTextContent('This week.')
 })

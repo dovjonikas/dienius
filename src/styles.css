@@ -1392,7 +1392,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 /* No box of its own below the wide breakpoint: the clock and the bar stack
    in the header's own flow, as they always did. */
-.day-status { display: contents; }
+.day-status,
+.day-header-right { display: contents; }
 
 /* The progress meter beside the date - a bar and the same plain fraction
    that used to trail the title. Full width on a phone, where it sits on its
@@ -1849,11 +1850,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   white-space: nowrap;
 }
 
+/* The rules either side of the words, at half the border's strength: a
+   gap is the quietest thing on the grid, and two dashed lines running the
+   width of the column at nearly full border strength were louder than the
+   words between them. */
 .timeline-gap-label:not(.timeline-gap-empty)::before,
 .timeline-gap-label:not(.timeline-gap-empty)::after {
   content: '';
   flex: 1 1 auto;
-  border-top: 1px dashed color-mix(in srgb, var(--border) 85%, transparent);
+  border-top: 1px dashed color-mix(in srgb, var(--border) 50%, transparent);
 }
 
 /* Moved off the now line - see gapLabelPlacement in timelineLayout.ts. */
@@ -1954,19 +1959,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    an older backup) still gets the template's own colour inline, exactly as
    before - see TimelineGrid.tsx. */
 .timeline-anchor-cat {
-  /* Two layers, not one. A single flat mix of category and surface reads as
-     one dark mass at any strength that keeps the title legible - which is
-     what "everything is blue" actually was. A gradient from a slightly
-     stronger tint at the left edge to a weaker one across the block gives
-     the eye a place to pick the colour up (right beside the solid edge, where
-     it is already looking) without ever raising the wash under the text. */
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--cat) 30%, var(--surface)) 0,
-      color-mix(in srgb, var(--cat) 17%, var(--surface)) 120px,
-      color-mix(in srgb, var(--cat) 15%, var(--surface)) 100%
-    );
+  /* One flat wash, since v2.6. It was a gradient from a stronger tint at
+     the left edge to a weaker one across the block, meant to give the eye
+     somewhere to pick the colour up beside the solid edge; on a long block
+     it read as a block that faded out before it ended - unfinished, in the
+     owner's word - and a plan is not something that trails off. The edge
+     is the colour, the wash is the quantity, and both are the same across
+     the whole of the block's width. A fifth of the colour, which keeps the
+     title's ordinary --text contrast in both modes. */
+  background: color-mix(in srgb, var(--cat) 20%, var(--surface));
   border-left: 4px solid var(--cat);
   color: var(--text);
 }
@@ -2009,18 +2010,14 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    colour meaning exactly one thing - this is still live - so the day visibly
    goes quiet as it is worked through, which is the whole reward. */
 .timeline-anchor-done {
-  /* 0.72, not 0.6. Desaturation is what says finished; the opacity on top of
-     it was tuned before the themes were rebuilt, and against the new surfaces
-     the two together took a two-hour block down to almost exactly the panel
-     colour. A morning of work is still part of the shape of the day, and a
-     grid whose first half looks empty is telling a lie about it. */
+  /* Two signals, not three. Finished is said by the colour draining and by
+     the line through the title; it used to fade as well, to 0.72, and the
+     three together read as a block that was on its way out of the picture
+     rather than a part of the day that is behind you. CONVENTIONS section
+     22: push a thing back once. The desaturation carries the state; the
+     strike says it on the title itself; the block keeps its full paint, so
+     a morning of finished work is still the shape of a morning. */
   filter: grayscale(0.92);
-  /* 0.6, not 0.55. At 0.55 a finished block's own title measured 4.3:1 in
-     Light - just under AA, and "already done" is not a licence to make text
-     unreadable, only quiet. The desaturation above is what actually carries
-     the finished state; the opacity is a second, smaller voice on top of it
-     and can afford to give a little back. */
-  opacity: 0.72;
 }
 
 /* Finished blocks keep an edge, in grey. Without one they lose the single
@@ -2859,7 +2856,6 @@ textarea:focus {
   gap: 1px;
   max-height: 216px;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .time-picker-option {
@@ -6144,7 +6140,7 @@ button.danger:focus-visible {
    sequence. Only at the wide breakpoint do they become real grid items.
    .day-header (step 4) is the same technique, wrapping day-nav and the
    focus control so both can share the grid's "header" area. */
-.day-pane, .task-pane, .day-header { display: contents; }
+.day-pane, .task-pane, .day-header, .task-pane-foot { display: contents; }
 
 @media (min-width: 1024px) {
   /* .day-view itself becomes the grid - the full three-column layout from
@@ -6268,69 +6264,57 @@ button.danger:focus-visible {
      into 151px and wrapped its own controls onto three lines, and the task
      column landed in a fourth column nobody had declared. One name per
      column, so two rules that both collapse this grid cannot disagree. */
-  /* One column, centred in what is left after the rail - the same shape a
-     day already takes below this breakpoint, where `.day-view` is a 680px
-     column with `margin-inline: auto`.
+  /* One pane, and the rail beside it, as one block centred in the row -
+     the header, the notices and everything else in the same block, so the
+     view has one left edge rather than a header at the row's edge over
+     content that starts a hand's width further in.
 
-     They used to be one wide column hard against the rail, and both halves
-     of that were wrong on a 2000px screen. The timeline grew from 760px to
-     953px, so pressing Calendar made every block 200px wider - and a
-     block's width carries nothing, only its height is a duration, so the
-     only thing the extra width bought was a longer empty bar after each
-     title. Then it stopped, because the column was capped at 960, and left
-     351px of nothing down the right side. A view that ends two thirds of
-     the way across reads as something that failed to load.
-
-     So: the timeline keeps exactly the width it has beside the task list,
-     and the slack is split either side of it. Pressing Calendar takes the
-     task list away and changes nothing about the day itself, which is what
-     the control says it does. */
+     The block fills what it is given. It used to be the rail and a 760px
+     timeline centred in a 1568px row, which on the owner's screen left
+     272px of nothing on either side and read, in their words, as a large
+     empty area on the left with the content drifted right. The pane grows
+     to 1080px, which is the width that leaves no empty band over 120px at
+     1920 and fills the row entirely at 1366 and 1600; wider than that a
+     block or a card is a slab, and the v2.4 worry about a thousand-pixel
+     block was about the two-pane layout, where the task list was paying for
+     it. Alone on a screen, a timeline is allowed the width a calendar takes.
+     The spacers are minmax(0, 1fr): the pane and the rail take their room
+     first and the two spacers share what is left, equally, which is what
+     centres the block. */
   .day-view.focus-calendar {
-    grid-template-columns: 1fr minmax(200px, 240px) minmax(400px, 760px) 1fr;
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 1080px);
     grid-template-areas:
-      "header header header header"
-      ".      rail   day    .";
+      "header header"
+      "rail   day";
+    max-width: calc(240px + var(--s6) + 1080px);
+    margin-inline: auto;
   }
 
   .day-view.focus-calendar:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "header  header  header  header"
-      "notices notices notices notices"
-      ".       rail    day     .";
+      "header  header"
+      "notices notices"
+      "rail    day";
   }
 
+  /* The same columns, and the task column's own name for the one it lands
+     in, so the two single-pane rules cannot disagree about which area the
+     surviving pane takes - see the note above on the first-run rule. */
   .day-view.focus-tasks {
-    grid-template-columns: 1fr minmax(200px, 240px) minmax(360px, 620px) 1fr;
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 1080px);
     grid-template-areas:
-      "header header header header"
-      ".      rail   tasks  .";
+      "header header"
+      "rail   tasks";
+    max-width: calc(240px + var(--s6) + 1080px);
+    margin-inline: auto;
   }
 
   .day-view.focus-tasks:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "header  header  header  header"
-      "notices notices notices notices"
-      ".       rail    tasks   .";
+      "header  header"
+      "notices notices"
+      "rail    tasks";
   }
-
-  /* The surviving pane takes the whole column and then centres itself in it,
-     at the width it already had beside the other one. Spacer tracks were
-     tried first and are the wrong tool: `1fr` either side of a `minmax()`
-     sized off content that is not there, and the timeline came out 248px
-     wide.
-
-     Both halves of the old rule were wrong on a 2000px screen. The column
-     was capped at 960, so the timeline grew from 760px to 953px when
-     Calendar was pressed - and a block's width carries nothing, only its
-     height is a duration, so the only thing the extra bought was a longer
-     empty bar after each title. Then the cap stopped it and left 351px of
-     nothing down the right side, and a view that ends two thirds of the way
-     across reads as something that failed to load.
-
-     Now pressing Calendar takes the task list away and changes nothing
-     about the day itself, which is what the control says it does. Same
-     shape a day already takes below this breakpoint, where `.day-view` is a
-     680px column with `margin-inline: auto` - see the rule near the top. */
 
 
   /* The header row: day-nav plus the focus control, side by side, wrapping
@@ -6386,13 +6370,21 @@ button.danger:focus-visible {
   /* The arrows' own height, so the row is one height end to end. */
   .day-header .day-replan-button { min-height: 36px; }
 
-  .day-header .day-status {
+  .day-header .day-header-right {
     display: flex;
     align-items: center;
     gap: var(--s5);
     flex: 0 1 auto;
     min-width: 0;
     margin-left: auto;
+  }
+
+  .day-header .day-status {
+    display: flex;
+    align-items: center;
+    gap: var(--s5);
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   .day-header .day-now { flex: 0 1 auto; }
@@ -6492,7 +6484,6 @@ button.danger:focus-visible {
        all. A pane that scrolls is worse than one that does not; a pane that
        silently shows none of the day is not a planner. */
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   /* The open list takes the column's slack and, only if a day is genuinely
@@ -6514,7 +6505,6 @@ button.danger:focus-visible {
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   /* Two cards, always - but only once there are cards. Zero height is what
@@ -6540,16 +6530,21 @@ button.danger:focus-visible {
      Which edge fades is a class rather than a media query or a `:has`,
      because it is a fact about scroll position that CSS cannot ask for -
      see useScrollEdges.ts. */
+  /* A whole card's worth of fade, not a sliver. At 22px the cut through
+     the middle of the last visible card was the loudest thing about it and
+     the fade the quietest, and the owner read the list as cut, not as
+     going on. Forty-eight is most of a card on a short screen, so the card
+     under the edge is unmistakably on its way out rather than sliced. */
   .task-pane .task-list.has-more-below {
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
   }
 
   .task-pane .task-list.has-more-above {
-    mask-image: linear-gradient(to bottom, transparent, #000 22px);
+    mask-image: linear-gradient(to bottom, transparent, #000 48px);
   }
 
   .task-pane .task-list.has-more-both {
-    mask-image: linear-gradient(to bottom, transparent, #000 22px, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 48px, #000 calc(100% - 48px), transparent);
   }
 
   /* The pane's own 10px gap already separates quick-add from the list; the
@@ -6566,7 +6561,6 @@ button.danger:focus-visible {
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: thin;
   }
 
   /* A first run has no day yet: no anchors, so no grid, and the middle column
@@ -6605,38 +6599,10 @@ button.danger:focus-visible {
         "rail   day      tasks";
     }
 
-    /* The same four columns as below 1500 - a spacer, the rail, the one
-       surviving pane, a spacer - so the pair reads as centred rather than
-       pushed against the left with the width of a whole task list empty
-       beside it. Redeclared here because this block sets areas only, and a
-       three-line template against a four-track grid puts the pane in the
-       rail's column: that is exactly what happened first, and the timeline
-       came out 240px wide. */
-    .day-view.focus-calendar {
-      grid-template-areas:
-        "header header header header"
-        ".      rail   day    .";
-    }
-
-    .day-view.focus-calendar:has(.day-notices:not(:empty)) {
-      grid-template-areas:
-        "header  header  header  header"
-        "notices notices notices notices"
-        ".       rail    day     .";
-    }
-
-    .day-view.focus-tasks {
-      grid-template-areas:
-        "header header header header"
-        ".      rail   tasks  .";
-    }
-
-    .day-view.focus-tasks:has(.day-notices:not(:empty)) {
-      grid-template-areas:
-        "header  header  header  header"
-        "notices notices notices notices"
-        ".       rail    tasks   .";
-    }
+    /* The single-pane rules above outrank this block's two on specificity
+       alone - two classes against one, and four against three with the
+       notices - so they need no restating here: a single pane is the same
+       two columns at every width. */
 
     .day-view:has(.first-run) {
       grid-template-areas:
@@ -6647,17 +6613,30 @@ button.danger:focus-visible {
 
   .day-view:has(.first-run) .day-pane { display: none; }
 
-  /* The end-of-day action, held at the bottom of the column by the auto
-     margin rather than trailing the list. It is the last thing you do with a
-     day, and it stays in the same place all day instead of walking up the
-     screen as tasks are finished. */
-  .task-pane .rollover,
-  .task-pane .rollover-note { flex: 0 0 auto; margin-top: auto; }
+  /* The end-of-day action, in a footer held on the column's floor by the
+     auto margin rather than trailing the list. It is the last thing you do
+     with a day, and it stays in the same place all day instead of walking
+     up the screen as tasks are finished. A hairline above it and the page
+     behind it: the list ends at the line, and the button is not floating
+     in the column's leftover air. Sticky, so on the one day the pane itself
+     has to scroll the footer still sits on the floor. */
+  .task-pane .task-pane-foot {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: var(--s3);
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .task-pane .rollover { margin-top: 0; }
 
   /* Under the button rather than centred under the column, and with air
      below it: it sat on the pane's own bottom edge, centred under a
      left-aligned button. */
-  .task-pane .rollover-note { padding: var(--s2) var(--s1); text-align: left; }
+  .task-pane .rollover-note { margin-top: var(--s2); padding: 0 var(--s1); text-align: left; }
 
   /* The Done fold gets its own bounded scroll for the same reason, so
      opening it on a day with twenty finished tasks pushes nothing off the
@@ -7533,7 +7512,6 @@ button.danger:focus-visible {
   gap: var(--s3);
   padding: var(--s3) var(--s4) var(--s4);
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 /* Outside the scrolling body, so the way out and the way to be rid of the
@@ -8122,8 +8100,19 @@ button.danger:focus-visible {
    both say the same thing rather than one of them being a fallback with a
    different opinion.
    ------------------------------------------------------------------------ */
-* {
-  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+/* One scrollbar for the whole app, and it is the thin rounded one below.
+   Chromium ignores ::-webkit-scrollbar the moment scrollbar-width or
+   scrollbar-color is set to anything, and a * rule set the colour for
+   every element - so every scroller in the app had been drawing the
+   browser's own square bar, and the rounded rules were dead. The standard
+   pair is Firefox's nearest equivalent and is written only where the
+   pseudo-elements do not exist, which is there. Nothing else in the
+   stylesheet may set either property. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -8572,10 +8561,17 @@ button.danger:focus-visible {
    a grid - a 100% basis is what makes a flex item take a line of its own.
    Ordered last so it sits under the title and the day figures rather than
    between them. */
+/* One height, whatever the goal says and whatever the pointer does. The
+   peek used to open in the flow under the title and slide the whole day
+   down two lines every time the mouse crossed the goal - CONVENTIONS
+   section 24 - so the row is exactly one line of the title's own type and
+   the peek is positioned under it instead. */
 .north-line {
+  position: relative;
   flex: 1 1 100%;
   order: 9;
   min-width: 0;
+  height: calc(var(--t-xs) * 1.4 + var(--s0) * 2);
   margin-top: var(--s0);
 }
 
@@ -8590,6 +8586,7 @@ button.danger:focus-visible {
   font-size: var(--t-xs);
   font-weight: 500;
   letter-spacing: 0.16em;
+  line-height: 1.4;
   text-transform: uppercase;
   text-align: left;
   /* Never wraps to a second line and never truncates mid-thought: a goal
@@ -8662,12 +8659,59 @@ button.danger:focus-visible {
 
 .north-line-more[hidden] { display: none; }
 
+/* The peek: a bubble hanging under the line's left end, with an arrow up
+   at the words, never over them. The same surface, edge and shadow as the
+   explanation bubble and the tooltip, because it is the same kind of thing
+   - an aside that appears and moves nothing. Pointer-transparent for the
+   same reason those are. */
 .north-line-more {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  left: 0;
+  z-index: 60;
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
-  padding: var(--s1) 0 var(--s0);
-  max-width: 62ch;
+  gap: var(--s1);
+  width: max-content;
+  max-width: min(62ch, 100%);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  --ground: var(--surface-raised);
+  box-shadow: var(--e2);
+  pointer-events: none;
+}
+
+.north-line-more::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: var(--s4);
+  width: 8px;
+  height: 8px;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+/* The whole of a goal the line had to cut short, in the line's own words
+   but at reading size and in the reading ink. */
+.north-line-full {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Where the line goes, and the key that goes there too - what the browser's
+   own tooltip used to say, on top of the words. */
+.north-line-key {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -8704,6 +8748,26 @@ button.danger:focus-visible {
    accent at low strength: the shape of a pulled quote rather than of an
    alert. Nothing red exists here and nothing ever will - see NorthCard.
    ------------------------------------------------------------------------ */
+/* A sheet since v2.6, over the day rather than in it: the same backdrop
+   and the same rise as the task sheet, so it is recognisably one of the
+   app's moments. It moves nothing, and nothing moves back when Ok is
+   pressed - see NorthCard. */
+.north-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s4);
+  background: rgba(0, 0, 0, 0.62);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .north-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
+  .north-card { animation: detail-in var(--dur) var(--ease) both; }
+}
+
 .north-card {
   display: flex;
   flex-direction: column;
@@ -8711,23 +8775,18 @@ button.danger:focus-visible {
   /* Capped, so it reads as a note somebody left rather than as a banner the
      system put up. A card running the full width of a 1440px screen with
      four words in it is the second thing. */
-  max-width: 64ch;
+  width: min(64ch, 100%);
+  max-height: 100%;
+  overflow-y: auto;
   gap: var(--s2);
-  margin-bottom: var(--s3);
   padding: var(--s4) var(--s5);
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 55%, var(--border));
   border-radius: var(--r-card);
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .north-card { animation: north-card-in var(--dur) var(--ease) both; }
-}
-
-@keyframes north-card-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: none; }
+  --ground: var(--surface);
+  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  outline: none;
 }
 
 .north-card-lead {
@@ -10761,6 +10820,9 @@ main:has(.week) > .calendar {
    saved; Escape leaves and loses nothing.
    ------------------------------------------------------------------------ */
 
+/* The same backdrop as the task sheet's. At 45% the page behind still
+   competed with the panel and the panel, being the same surface as a card,
+   read as a hole cut in the page rather than a thing raised over it. */
 .scratch-scrim {
   position: fixed;
   inset: 0;
@@ -10769,7 +10831,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -10784,6 +10846,7 @@ main:has(.week) > .calendar {
   border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
+  --ground: var(--surface);
   box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
@@ -10806,7 +10869,12 @@ main:has(.week) > .calendar {
   color: var(--text);
 }
 
-.scratch-input:focus { outline: none; background: none; }
+.scratch-input:focus {
+  outline: none;
+  background: none;
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: none;
+}
 
 .scratch-bar {
   display: flex;
@@ -10933,20 +11001,24 @@ main:has(.week) > .calendar {
    from scrollHeight fits exactly and no scrollbar appears beside one line. */
 .scratch-input { box-sizing: border-box; overflow-y: auto; }
 
+/* The three controls in the field's row - Note, +, the cross - speak one
+   language: 32px, a hairline edge, the control radius, muted until the
+   pointer is on them. They were a pill, a square and a bare glyph. */
 .scratch-close {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
   min-height: 0;
   padding: 0;
-  border: none;
-  border-radius: var(--r-round);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
   background: none;
   color: var(--muted);
-  font-size: var(--t-lg);
+  font-size: var(--t-glyph);
   line-height: 1;
 }
 
-.scratch-close:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
+.scratch-close:hover { color: var(--text); border-color: var(--muted); }
 
 @media (pointer: coarse) {
   .scratch-close { position: relative; }
@@ -10978,7 +11050,7 @@ main:has(.week) > .calendar {
   align-items: center;
   justify-content: center;
   padding: var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -11691,7 +11763,6 @@ main:has(.week) > .calendar {
   margin-bottom: var(--s4);
   padding-bottom: var(--s1);
   overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .library-chip {
@@ -11986,18 +12057,25 @@ main:has(.week) > .calendar {
 
 .scratch-field .scratch-input { flex: 1; min-width: 0; }
 
+/* The controls sit on the first line of the words, not on the panel's
+   edge, and the last of them keeps the same air from the right that the
+   words keep from the left. */
+.scratch-field > button { margin-top: var(--s3); }
+.scratch-field > button:last-of-type { margin-right: var(--s3); }
+
 .scratch-intent {
   flex-shrink: 0;
-  min-height: 32px;
+  height: 32px;
+  min-height: 0;
   padding: 0 var(--s3);
   border: 1px solid var(--border);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: none;
-  color: var(--faint);
-  font-size: var(--t-xs);
+  color: var(--muted);
+  font-size: var(--t-sm);
 }
 
-.scratch-intent:hover { color: var(--text); }
+.scratch-intent:hover { color: var(--text); border-color: var(--muted); }
 
 .scratch-intent.is-task {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
@@ -12155,6 +12233,24 @@ main:has(.week) > .calendar {
    mean something. */
 .explain-bubble[hidden] { display: none; }
 
+.explain-bubble::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: var(--s4);
+  width: 8px;
+  height: 8px;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.explain-bubble.is-end::before {
+  left: auto;
+  right: var(--s4);
+}
+
 .explain-bubble {
   position: absolute;
   top: calc(100% + var(--s2));
@@ -12196,6 +12292,68 @@ main:has(.week) > .calendar {
 @keyframes explain-in {
   from { opacity: 0; transform: translateY(-3px); }
   to { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------------
+   The tooltip - views/TipLayer.tsx.
+
+   One element for the whole app, drawn in the window for whatever control
+   carries `data-tip`, so no scroller and no clipped rail can cut it. Under
+   the control with an arrow up at it; above it when there is no room
+   under; beside it in the rail. Never on the thing it explains - that is
+   the rule the browser's own `title` tooltip kept breaking, and why it is
+   not used anywhere any more. The same surface, edge and shadow as the
+   explanation bubble and the North line's peek.
+   ------------------------------------------------------------------------ */
+.tip {
+  position: fixed;
+  z-index: 120;
+  width: max-content;
+  max-width: 30ch;
+  padding: var(--s1) var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: normal;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: none;
+  white-space: pre-line;
+  pointer-events: none;
+}
+
+.tip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: var(--tip-arrow, var(--s3));
+  width: 8px;
+  height: 8px;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.tip.is-above::before {
+  top: auto;
+  bottom: -5px;
+  transform: rotate(225deg);
+}
+
+.tip.is-right::before {
+  top: var(--tip-arrow, var(--s3));
+  left: -5px;
+  transform: rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tip { animation: explain-in var(--dur-fast) var(--ease) both; }
 }
 
 /* The same copy, printed rather than asked for - see the `inline` prop. */
@@ -13377,9 +13535,12 @@ main:has(.week) > .calendar {
 
 .journal-step:disabled { opacity: var(--faded); }
 
+/* No resize handle: the panel and the overlay each give the box the
+   height it has, and a grip in the corner of a sheet read as something
+   unfinished. */
 .journal-box {
   width: 100%;
-  resize: vertical;
+  resize: none;
   font-size: var(--t-input);
   line-height: 1.5;
 }
@@ -13399,6 +13560,8 @@ main:has(.week) > .calendar {
 }
 
 /* The whole thing, over the app: a month on the left, a day on the right. */
+/* The task sheet's backdrop. At 45% the day behind stayed fully readable
+   and pulled the eye off the page being written on. */
 .journal-scrim {
   position: fixed;
   inset: 0;
@@ -13407,7 +13570,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 .journal-overlay {
@@ -13448,7 +13611,9 @@ main:has(.week) > .calendar {
 .journal-view-side { flex: 0 1 260px; min-width: 0; }
 .journal-view-day { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
 .journal-view-date { margin: 0; color: var(--muted); font-size: var(--t-sm); }
-.journal-box-full { min-height: 320px; }
+/* As tall as the month beside it and no shorter than a page of writing,
+   since the box no longer grows by hand. */
+.journal-box-full { flex: 1 1 auto; min-height: 320px; }
 
 /* A day with something written carries a dot. A mark, not a count.
    The cell is only positioned inside the wide rail's own block, and this

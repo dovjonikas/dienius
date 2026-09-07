@@ -126,7 +126,7 @@ export function CategorySettings() {
                   type="button"
                   className="setting-remove"
                   disabled={categories.length <= 1}
-                  title={categories.length <= 1 ? 'There has to be one' : undefined}
+                  data-tip={categories.length <= 1 ? 'There has to be one' : undefined}
                   onClick={() => {
                     setEditingId(null)
                     setDeletingId(deletingId === category.id ? null : category.id)
@@ -224,7 +224,7 @@ function DeleteCategory({
                 style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
                 aria-pressed={c.id === moveTo}
                 aria-label={c.label}
-                title={c.label}
+                data-tip={c.label}
                 onClick={() => setMoveTo(c.id)}
               />
             ))}
@@ -305,7 +305,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
               style={{ ['--cat' as string]: `var(--cat-${category.id})` } as React.CSSProperties}
               aria-pressed={color === null}
               aria-label="The app's own colour"
-              title="The app's own colour - one value for dark, one for light"
+              data-tip="The app's own colour - one value for dark, one for light"
               onClick={() => setColor(null)}
             />
           )}
@@ -317,11 +317,11 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
               style={{ ['--cat' as string]: c.value } as React.CSSProperties}
               aria-pressed={color === c.value}
               aria-label={c.name}
-              title={c.name}
+              data-tip={c.name}
               onClick={() => setColor(c.value)}
             />
           ))}
-          <label className="category-wheel" title="Any other colour">
+          <label className="category-wheel" data-tip="Any other colour">
             <span className="visually-hidden">Any other colour</span>
             <input
               type="color"

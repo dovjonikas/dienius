@@ -133,7 +133,7 @@ export function CalendarSettings() {
                     ))}
                   </div>
                   <div className="calendar-row-actions">
-                    <label className="switch" title={calendar.enabled ? 'Showing' : 'Hidden'}>
+                    <label className="switch" data-tip={calendar.enabled ? 'Showing' : 'Hidden'}>
                       <input
                         type="checkbox"
                         checked={calendar.enabled}

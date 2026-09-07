@@ -29,7 +29,9 @@ export function JournalView() {
   const [date, setDate] = useState(todayKey)
   const [query, setQuery] = useState('')
   const [text, setText] = useState(() => data.days[todayKey()]?.journal ?? '')
-  const [copied, setCopied] = useState<'day' | 'month' | null>(null)
+  // What one of the two copy buttons is saying instead of its name, for a
+  // moment: Copied, or that there was nothing to copy.
+  const [said, setSaid] = useState<{ which: 'day' | 'month'; text: string } | null>(null)
 
   const stored = data.days[date]?.journal ?? ''
   const written = useMemo(
@@ -67,19 +69,24 @@ export function JournalView() {
     timer.current = window.setTimeout(() => actions.setJournal(date, next), SAVE_AFTER_MS)
   }
 
-  // One flag for both buttons, holding which of them was pressed: two
-  // booleans would let both read "Copied" if somebody pressed one and then
-  // the other inside the second and a half.
-  function said(which: 'day' | 'month') {
-    setCopied(which)
-    window.setTimeout(() => setCopied(null), 1500)
+  // One state for both buttons, holding which of them was pressed: two
+  // would let both read "Copied" if somebody pressed one and then the other
+  // inside the second and a half.
+  function say(which: 'day' | 'month', text: string) {
+    setSaid({ which, text })
+    window.setTimeout(() => setSaid(null), 1500)
   }
 
+  // Neither button is ever disabled. They sit side by side, and a greyed
+  // one beside a live one read as two weights of the same control rather
+  // than as one that had nothing to do; the honest answer to a press with
+  // nothing behind it is the button saying so, the way it says Copied.
   async function copyMonth() {
     const first = `${date.slice(0, 7)}-01`
     const dates = Array.from({ length: 31 }, (_, i) => addDays(first, i)).filter(d => d.startsWith(date.slice(0, 7)))
+    if (daysWithJournal(data.days, dates).length === 0) return say('month', 'Nothing to copy')
     const month = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-    if (await copyText(journalMarkdown(data.days, dates, month))) said('month')
+    if (await copyText(journalMarkdown(data.days, dates, month))) say('month', 'Copied')
   }
 
   // The day on its own. The month is the one this was built for - a stretch
@@ -88,7 +95,8 @@ export function JournalView() {
   // morning and nothing else, and the week already has its own button under
   // the week view and in Review.
   async function copyDay() {
-    if (await copyText(journalMarkdown(data.days, [date], formatDayTitle(date)))) said('day')
+    if (!hasJournal(data.days[date])) return say('day', 'Nothing to copy')
+    if (await copyText(journalMarkdown(data.days, [date], formatDayTitle(date)))) say('day', 'Copied')
   }
 
   return (
@@ -103,11 +111,11 @@ export function JournalView() {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        <button type="button" className="btn-secondary" disabled={!hasJournal(data.days[date])} onClick={copyDay}>
-          {copied === 'day' ? 'Copied' : 'Copy this day'}
+        <button type="button" className="btn-secondary" onClick={copyDay}>
+          {said?.which === 'day' ? said.text : 'Copy this day'}
         </button>
-        <button type="button" className="btn-secondary" disabled={daysWithJournal(data.days, [...written]).length === 0} onClick={copyMonth}>
-          {copied === 'month' ? 'Copied' : 'Copy this month'}
+        <button type="button" className="btn-secondary" onClick={copyMonth}>
+          {said?.which === 'month' ? said.text : 'Copy this month'}
         </button>
       </div>
 

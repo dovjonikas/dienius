@@ -279,13 +279,19 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           had not seen yet, and the day itself was below the fold. What is
           ending comes first, because it is about this minute; what
           yesterday left comes next, because it is the one with a button that
-          changes the plan; the goal comes last, and appears the moment the
-          one above it is dismissed. CONVENTIONS.md section 4 holds the rule. */}
+          changes the plan. CONVENTIONS.md section 4 holds the rule. */}
       <div className="day-notices">
         <EveningClose date={date} />
         <YesterdayBanner date={date} />
-        {isToday && <NorthCard />}
       </div>
+
+      {/* The goal that comes forward on a Monday or after a slow day, as a
+          sheet over the day - see NorthCard. It was the third card in the
+          row above until v2.6, and it took a fifth of a 768px screen away
+          from the day; a sheet moves nothing. Outside the row on purpose: a
+          wrapper with a fixed-position child in it is not :empty, and the
+          row's own height comes from that. */}
+      {isToday && <NorthCard />}
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line and the
           timeline grid group into one region - the "picture of the day" - so

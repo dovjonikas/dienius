@@ -96,10 +96,19 @@ test('the month copies the days with writing on them and skips the rest', async 
   expect(clipboard[0].match(/^## /gm) ?? []).toHaveLength(3)
 })
 
-test('a day with nothing on it cannot be copied', () => {
+// Neither button is ever greyed: side by side, a disabled one beside a live
+// one read as two weights of one control. A press with nothing behind it
+// says so instead, the way a press with something behind it says Copied.
+test('a day with nothing on it says so when asked to copy, and so does its month', async () => {
+  const { user, clipboard } = withClipboard()
   render(<JournalView />)
-  expect(screen.getByRole('button', { name: 'Copy this day' })).toBeDisabled()
-  expect(screen.getByRole('button', { name: 'Copy this month' })).toBeDisabled()
+  await user.click(screen.getByRole('button', { name: 'Copy this day' }))
+  expect(screen.getByRole('button', { name: 'Nothing to copy' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Copy this month' })).toBeEnabled()
+  await user.click(screen.getByRole('button', { name: 'Copy this month' }))
+  expect(screen.getByRole('button', { name: 'Nothing to copy' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Copy this day' })).toBeInTheDocument()
+  expect(clipboard).toHaveLength(0)
 })
 
 // --- the search ------------------------------------------------------------

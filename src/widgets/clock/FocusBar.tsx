@@ -112,7 +112,7 @@ export function FocusBar({ onExpand }: FocusBarProps) {
           type="button"
           className="focus-bar-exit"
           aria-label="Leave focus"
-          title="Leave focus"
+          data-tip="Leave focus"
           onClick={() => clockTools.endFocus()}
         >
           &times;

@@ -112,7 +112,7 @@ export function NoteToTask({ note, onSave, onCancel }: NoteToTaskProps) {
                 style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
                 aria-label={c.label}
                 aria-pressed={c.id === category}
-                title={c.label}
+                data-tip={c.label}
                 onClick={() => setCategory(c.id === category ? undefined : c.id)}
               />
             ))}

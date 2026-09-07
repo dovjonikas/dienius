@@ -287,9 +287,9 @@ test('the rail names every view and the key that also reaches it', () => {
   try {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Views' })
-    expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('title', 'Today - 1')
-    expect(within(nav).getByRole('button', { name: 'North' })).toHaveAttribute('title', 'North - 6')
-    expect(within(nav).getByRole('button', { name: 'Settings' })).toHaveAttribute('title', 'Settings - comma')
+    expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('data-tip', 'Today · 1')
+    expect(within(nav).getByRole('button', { name: 'North' })).toHaveAttribute('data-tip', 'North · 6')
+    expect(within(nav).getByRole('button', { name: 'Settings' })).toHaveAttribute('data-tip', 'Settings · comma')
     expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-current', 'page')
   } finally {
     restore()

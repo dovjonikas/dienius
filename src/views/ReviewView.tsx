@@ -268,7 +268,7 @@ function Chart({ title, days, peak, valueOf, capOf, label, peakLabel, onOpenDay 
               /* The one thing on this chart that is not a number. A week of
                  bars says how the days went; one of them saying "walked home
                  the long way" says what a Tuesday was. */
-              title={day.journal?.trim() ? `${label(day)} - ${day.journal.split(String.fromCharCode(10))[0]}` : undefined}
+              data-tip={day.journal?.trim() ? `${label(day)} - ${day.journal.split(String.fromCharCode(10))[0]}` : undefined}
               disabled={!onOpenDay}
               onClick={() => onOpenDay?.(day.date)}
             >

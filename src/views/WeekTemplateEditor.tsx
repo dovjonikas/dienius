@@ -468,7 +468,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
                 aria-pressed={c.id === blockCategory}
                 aria-label={c.label}
-                title={c.label}
+                data-tip={c.label}
                 onClick={() => setBlockCategory(c.id)}
               />
             ))}

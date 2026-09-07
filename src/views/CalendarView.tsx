@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
-import { dayStat, keptEveryKeyTask, monthSummary, summaryLine, type DayStat } from '../lib/dayStats'
-import { formatDuration } from '../widgets/day-plan/capacity'
+import { dayStat, keptEveryKeyTask, monthSummary, summaryLine } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
 import { DayPreview } from './DayPreview'
 import { useCellLines, useIsWide } from '../lib/viewport'
@@ -295,7 +294,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                 type="button"
                 className="btn-secondary"
                 disabled={Object.keys(weekStamp.stamps).length === 0}
-                title={
+                data-tip={
                   Object.keys(weekStamp.stamps).length === 0
                     ? 'Every day this week already has a template'
                     : 'Stamp the days your weekday plan names, leaving anything you have already arranged alone'
@@ -478,11 +477,6 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
                       aria-label={cellLabel(cell, template?.name, state)}
                       aria-current={cell.key === today ? 'date' : undefined}
-                      // The fuller summary on a pointer. A title rather than a
-                      // custom tooltip: it is a handful of numbers on hover, it
-                      // costs nothing, and it is one less thing that can be left
-                      // open when the pointer moves away.
-                      title={showStats ? cellTooltip(stat!, template?.name) : undefined}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
                       onPointerEnter={e => {
                         handlePointerEnter(cell.key)
@@ -571,23 +565,3 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   )
 }
 
-/**
- * The fuller summary a pointer gets. Deliberately sentence-shaped rather than
- * a table of figures: it is read in passing, once, and a list of labelled
- * numbers takes longer to parse than the cell it is explaining.
- */
-function cellTooltip(stat: DayStat, templateName: string | undefined): string {
-  const parts: string[] = []
-  if (templateName) parts.push(templateName)
-  parts.push(`${stat.done} of ${stat.total} done`)
-  if (stat.pushed > 0) parts.push(`${stat.pushed} carried on`)
-  if (stat.highlights > 0) parts.push(`${stat.highlightsDone} of ${stat.highlights} key`)
-  if (stat.focusMinutes > 0) parts.push(`${formatDuration(stat.focusMinutes)} deep work`)
-  // Last, and on its own line, because it is the only part of this that is
-  // not arithmetic. A month of squares saying "6 of 9 done" says what the
-  // days were like; one of them saying "walked home the long way" says what
-  // a Tuesday was.
-  const counted = parts.join(' - ')
-  const line = stat.journal?.split('\n').find(l => l.trim())?.trim()
-  return line ? `${counted}\n${line}` : counted
-}

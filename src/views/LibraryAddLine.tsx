@@ -121,7 +121,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           className="duration-control-value"
           aria-expanded={unitOpen}
           aria-label={`Counted in ${unitWord(effectiveTrack)}. Change how it is counted.`}
-          title={fromText ? 'Read from what you typed' : 'How this one is counted'}
+          data-tip={fromText ? 'Read from what you typed' : 'How this one is counted'}
           onClick={() => setUnitOpen(o => !o)}
         >
           {unitWord(effectiveTrack)}

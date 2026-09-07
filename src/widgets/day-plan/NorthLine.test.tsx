@@ -1,4 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthLine } from './NorthLine'
@@ -52,13 +54,30 @@ test('a tap opens North too - a finger has no hover to peek with', async () => {
   expect(onOpenNorth).toHaveBeenCalledTimes(1)
 })
 
-test('a goal with nothing behind it has no panel to peek at', async () => {
+// The bubble took over from the browser's own tooltip in v2.6, which had
+// carried the key and landed on the words; so a goal with nothing behind it
+// still has the one line the tooltip used to say, and nothing else.
+test('a goal with nothing behind it peeks at the key alone', async () => {
   const user = userEvent.setup()
   actions.addGoal({ title: 'Ship the thing' }, DATE)
   const { container } = render(<NorthLine date={DATE} onOpenNorth={() => {}} />)
 
   await user.hover(screen.getByRole('button', { name: 'Ship the thing' }))
-  expect(container.querySelector('.north-line-more')).toBeNull()
+  const panel = container.querySelector('.north-line-more')!
+  expect(panel).not.toHaveAttribute('hidden')
+  expect(panel.textContent).toBe('North · 6')
+  expect(screen.getByRole('button', { name: 'Ship the thing' })).not.toHaveAttribute('title')
+})
+
+// The line never moves: the peek is positioned under it, not laid out after
+// it. jsdom has no layout, so the stylesheet is read as text - the same way
+// gridAreas.test.ts holds the grid's names.
+test('the peek hangs under the line rather than sitting in the flow', () => {
+  const css = readFileSync(join(process.cwd(), 'src/styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const rule = css.match(/\.north-line-more \{[^}]*\}/)?.[0] ?? ''
+  expect(rule).toMatch(/position: absolute/)
+  expect(css).toMatch(/\.north-line \{[^}]*position: relative/)
+  expect(css).toMatch(/\.north-line \{[^}]*height: calc/)
 })
 
 // Only for a mouse. On a touch device the browser sends a pointerenter just

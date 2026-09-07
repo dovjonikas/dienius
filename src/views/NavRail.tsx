@@ -244,7 +244,7 @@ export function NavRail({ view, onNavigate, isWide }: NavRailProps) {
       <ul className="nav-rail-list">
         {NAV_ITEMS.map(item => (
           <li key={item.view}>
-            <RailButton
+            <RailButton open={open}
               item={item}
               active={view === item.view}
               onClick={() => {
@@ -264,7 +264,7 @@ export function NavRail({ view, onNavigate, isWide }: NavRailProps) {
             journal it is most often confused with, which is a better place
             for it than a rail of the six views it is not one of. */}
         <li>
-          <RailButton
+          <RailButton open={open}
             item={SETTINGS_ITEM}
             active={view === 'settings'}
             onClick={() => {
@@ -280,7 +280,8 @@ export function NavRail({ view, onNavigate, isWide }: NavRailProps) {
               className="nav-rail-pin"
               aria-pressed={pinned}
               aria-label={pinned ? 'Unpin the sidebar' : 'Keep the sidebar open'}
-              title={pinned ? 'Unpin the sidebar' : 'Keep the sidebar open'}
+              data-tip={open ? undefined : 'Keep the sidebar open'}
+              data-tip-at="right"
               onClick={() => {
                 setPinned(p => {
                   writeRailPinned(!p)
@@ -302,11 +303,14 @@ function RailButton({
   item,
   active,
   pressed,
+  open,
   onClick,
 }: {
   item: NavItem
   active: boolean
   pressed?: boolean
+  /** The rail is showing its labels, so the name is already beside the icon. */
+  open: boolean
   onClick: () => void
 }) {
   const { label, key, Icon } = item
@@ -320,7 +324,10 @@ function RailButton({
       aria-current={active ? 'page' : undefined}
       // Where a shortcut is actually learned: on the control it belongs to,
       // at the moment somebody is already reaching for it. CONVENTIONS 17.
-      title={`${label} - ${key === ',' ? 'comma' : key}`}
+      // Beside the icon, since the rail is 56px wide, and only while the
+      // label is folded away - once the rail opens, the label is the name.
+      data-tip={open ? undefined : `${label} · ${key === ',' ? 'comma' : key}`}
+      data-tip-at="right"
       onClick={onClick}
     >
       <span className="nav-rail-icon" aria-hidden="true">

@@ -294,7 +294,7 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
               className={effectiveTime ? 'quick-add-time-value' : 'quick-add-time-value is-none'}
               aria-expanded={timeOpen}
               aria-label={timeTitle}
-              title={timeTitle}
+              data-tip={timeTitle}
               onClick={() => setTimeOpen(open => !open)}
             >
               {timeLabel}
@@ -405,7 +405,7 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
               style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
               aria-pressed={c.id === newCategory}
               aria-label={c.label}
-              title={c.label}
+              data-tip={c.label}
               onClick={() => setNewCategory(c.id)}
             />
           ))}

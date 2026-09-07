@@ -472,7 +472,7 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
                   className={preset === s.id ? 'replan-chip active' : 'replan-chip'}
                   aria-pressed={preset === s.id}
                   disabled={!possible}
-                  title={possible ? undefined : 'Already behind you'}
+                  data-tip={possible ? undefined : 'Already behind you'}
                   onClick={() => pickPreset(s.id)}
                 >
                   {s.label}
