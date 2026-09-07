@@ -207,10 +207,212 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** nothing is owed. The v2.6 table below is closed, and
-so are the v2.5, v2.4, v2.3 and v2.2 ones under it, commit by commit; the
-debts table further down is unchanged, and each entry in it is a trade with
-its reason. The next brief comes from the owner.
+**Where to start:** the v2.7 wave below, the last one before the app is
+lived in. Its table is being filled stage by stage; the v2.6, v2.5, v2.4,
+v2.3 and v2.2 tables under it are closed, commit by commit, and the debts
+table further down is unchanged.
+
+### The v2.7 wave: the last one before the app is lived in
+
+Briefed by the owner in one message, in Lithuanian, seven stages, to be run
+end to end without stopping. It is the closing wave: after it the app is
+**done**, and a done contract comes into force - anything asked for from
+here goes into "Asked for, not yet built" and waits until the owner has
+lived in the app for a week. The next brief comes out of that week's data,
+not out of a feeling.
+
+One principle joins the wave to the two before it and goes into CONVENTIONS
+as section 25: **a state has to earn its place**. The rule for settings
+(section 21) applied to the places a thing can be: a state stays only if
+the owner would actually tell it apart from the one beside it. Five places
+for "not now" - Notes, Inbox, Backlog, a float on today, Set aside - is
+more than a person whose whole aim was minimal decision energy can be asked
+to choose between at the moment of writing.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 0 | Written down first | | The brief and the decisions it forced, in this file, before any code |
+| 1 | Three small things from the owner's screenshots | | |
+| 2 | Too many: the "not now" states audited | | |
+| 3 | What is missing: where the plan and the week disagreed | | |
+| 4 | The docs told the truth | | |
+| 5 | The open questions closed | | |
+| 6 | One voice | | |
+| 7 | Closing and `v2.7` | | |
+
+#### The brief, as understood
+
+1. **Three small things from the owner's v2.6 desktop screenshots.**
+   - *The chip and the tabs.* The "Working day" template chip in the header
+     sits at its own height, and the segmented tabs on the right at theirs;
+     both are a "what is in force here" control on the same row. One
+     vertical axis: the chip's baseline is the tabs' baseline, the same
+     height, the same distance from the top. Checked in all three views -
+     Both, Calendar, Tasks.
+   - *The arrows come back.* The arrows either side of the date came off
+     the wide header after v2.5 because they overflowed. The rule is not to
+     remove but to make overflow impossible: a fixed width for the date,
+     measured against the longest day ("Wednesday, September 30"), 44px
+     arrows, one row with no wrap from 1366px up. If 1366 cannot hold it,
+     the day's name is shortened ("Wed, 30 Sep"), never the arrows dropped.
+     The left and right arrow keys stay as they were.
+   - *The template chip does not overwrite silently.* Every press on a chip
+     in the rail stamps again today. From now: a day that already has this
+     template - a second press does nothing and says so quietly, "Already
+     on this day"; a day that has another template - one sentence,
+     "Replace Working day with Rest day? Blocks you added by hand stay.",
+     with Replace and Cancel; an empty day - stamped at once, as now.
+     Rule 11 (twice is once) has to cover it: a double press never doubles
+     a block. Tests for all three.
+2. **Too many: the "not now" states.** The settings rule - a setting has to
+   earn its place - applied to states: a state stays only if the owner
+   would really tell it apart from the one next to it. A task that is not
+   for today can live in five places: Notes (Q), Inbox ("!" from notes, or
+   the tab), Backlog (the tab), today with no time (dragged onto the list),
+   Set aside (after a replan). Each pair is weighed from the owner's side.
+   Inbox against Backlog: if the answer is "Backlog has an order and Inbox
+   has none", that is one list with an order, not two. Notes against Inbox:
+   Notes already has "!" into the Inbox; if the Inbox goes, "!" goes to
+   Later. Today-with-no-time against Backlog: the first is today, the
+   second is not - a real difference, and it stays. The recommendation to
+   test, not to follow blindly: Inbox and Backlog become one list, "Later",
+   with an order (the Backlog's mechanics, the Inbox's cheap way in).
+   Migration: Inbox entries at the top of Later, the Backlog after them,
+   order kept. Tabs: Task | Later. Ctrl-K, the keys, DAILY.md and the tour
+   updated. If the analysis finds the difference real, both stay and
+   DECISIONS carries the one sentence that tells them apart from the
+   owner's side; if that sentence cannot be written, they merge. Then the
+   calendar's Year view: will the owner ever open it? If its only purpose
+   is that it was easy to build, it goes with its code; if it shows
+   something Month does not, it stays and the reason is written down. And
+   Review, read against RESEARCH-ADHD section 8: percentages, "best week",
+   any comparison with last week that reads as a verdict - out. Facts
+   without a verdict stay.
+3. **What is missing: one thing, and it is for the testing week.** "Where
+   the plan and the week disagreed" - a reading, not a game. In Review (or
+   under Calendar -> Week) after a week: for every template block, on how
+   many days it happened at its time, how many times it was moved (and by
+   how much on average), how many times it went to Set aside, how many
+   times it was skipped. Facts only, in this form: "Deep work 09:00 -
+   happened at its time 2 of 5 days, moved later 3 times (avg +1h10)". No
+   percentages, no colours, no good or bad, no streak. Sorted with the
+   largest disagreement on top. One Copy button - markdown to the
+   clipboard. This is the one thing the next brief will come out of after
+   the testing week: from the data, not from a feeling. The data already
+   exists - push counts, set-aside, done times - nothing new is collected
+   and nothing extra is stored. Tests: the computation from a fixture week,
+   an empty week shows nothing, the copy format. And nothing else: no other
+   feature in this wave. A new idea goes to "Asked for, not yet built".
+4. **The docs tell the truth** - RESEARCH-ADHD section 14, all four of the
+   owner's decisions accepted. Wherever capture or Notes rests on the
+   Zeigarnik effect ("unfinished tasks occupy your mind"), the argument is
+   replaced by what holds: writing a plan reduces intrusion - one study, no
+   replication - and the maintenance burden. The feature stays, the reason
+   changes. The no-new-decisions rule moves off decision fatigue and ego
+   depletion (not replicated in 23 labs) onto maintenance burden and the
+   planner-abandonment literature (RESEARCH-ADHD section 11). Wherever the
+   docs say the proportional-height timeline is "evidence-backed", softened
+   to "a reasoned design choice consistent with Barkley's point of
+   performance; no direct study". A new DECISIONS entry, "Relatedness is a
+   known cost": self-determination theory's three needs, and local-first
+   without accounts gives up the third on purpose. A grep over every doc
+   for "Zeigarnik", "decision fatigue", "ego depletion" and "evidence
+   shows" - each hit fixed or justified.
+5. **OPEN-QUESTIONS closed.** Both items - the mini calendar's 33px cells
+   and the 29px task title - the owner accepts the recommendation to leave
+   as built. They move to DECISIONS as accepted decisions with their
+   reasons, and OPEN-QUESTIONS is left empty, with the date.
+6. **The final coherence pass: one voice.** Every text in the app - buttons,
+   empty states, tooltips, DAILY.md - read in a row as one document. One
+   register: short, direct, no exclamations, no "Great!", no emoji. Where
+   two things do the same, they carry the same word - not Remove, Delete
+   and Clear for three things. Every empty state says one sentence: what
+   will appear here and how. Not two. The key table behind `?` matches
+   what really fires - every row checked. The tour walked from the first
+   step to the last on the desktop after v2.5 to v2.7: every step points
+   at something that exists and says something that is true.
+7. **Closing.** Typecheck, unit, browser, the sweep on the desktop in both
+   themes and on the phone at zero, the README's screenshots, STATE with
+   the v2.7 table, CONVENTIONS ("a state has to earn its place"),
+   DECISIONS (Later or not, Year or not, the four research corrections,
+   the two open questions), the tag `v2.7`, the handoff. The last message
+   to the owner: three sentences - what changed, where to find "Where the
+   plan and the week disagreed", and that the app is finished from here.
+
+**Decisions taken up front**, after reading the code against the brief,
+so nobody re-argues them by accident:
+
+- **Inbox and Backlog become one list, Later.** The test the brief set was
+  one sentence, from the owner's side, that tells an Inbox line from a
+  Backlog item. The honest sentence is "by which fold it is under": the
+  rows look the same, both have the same two ways out (this day, or gone),
+  and "decided" was never visible - a line sent on from the Inbox arrived
+  in the Backlog with no size and no category while one typed in Backlog
+  mode arrived with both, so the only thing the word tracked was which
+  button had been pressed. That sentence fails the test, so the lists
+  merge. Later keeps the Backlog's mechanics - an order that is the
+  array's own, a grip, one press onto the day at the next free slot, no
+  age - and the Inbox's cheap way in: Later mode on the field asks for no
+  time, and a note that starts with `!` goes there. The storage field and
+  the sync kind keep their wire name, `backlog`, so an older device's
+  tombstones still match; everything a person reads says Later. On load
+  and after every merge the inbox is folded into the top of Later in its
+  own order, once, with a tombstone per line.
+- **The Year view goes, with its code.** What it showed that Month does
+  not is the shape of a year on one screen, which the owner would open at
+  most once a year; what it had become was a fullness heatmap in three
+  tones, which is the one thing DECISIONS "A year strip with no in-between"
+  said the strip must never be, and nobody noticed for five versions
+  because nobody opened it - its legend described a ring the stylesheet no
+  longer drew, and one of its rules was dead. Nothing routed to it but the
+  segment button: no key, no palette entry, no tour step, no screenshot,
+  no browser test. That is a view whose purpose was that it was easy to
+  build.
+- **Review loses its streak, and the month its percentage.** "Streak: 3
+  days with a key task done" was the one number in the app that resets to
+  zero, and RESEARCH-ADHD section 8's argument reaches it wherever it is
+  shown: a missed day does not damage a habit, so a counter that resets
+  encodes a falsehood, described or not. The calendar's month line said
+  "62% done - 14 active days - longest run 5", the same two figures on a
+  second screen; it says how many days had a plan and nothing else.
+- **The reading lives in Review, on the week.** Review is the one screen
+  that already looks back at a finished Monday-to-Sunday week and already
+  has a Copy control; the week view is built to fit its columns without a
+  scroll and shows three days on a phone. It sits above North, only for
+  the week range, and only when a past day of that week had a template.
+- **"Happened at its time" is defined from what exists.** No timestamp of
+  a tick is stored and none is added. A block happened at its time when
+  its task is done and its time still equals the block's; it moved when
+  its task is on the day at another time, done or not; it was set aside
+  when the flag says so; otherwise it was not done - unticked at its time,
+  or gone from the day. The block's time is the template's current time,
+  so an edit to the template after the week changes what the reading
+  says, and DECISIONS says so.
+- **The arrows are 44px and the date does not move.** A hidden copy of
+  "Wednesday, September 30" in the title's own type sizes the title box,
+  so the right arrow stands at one x on every day of the year; the row
+  cannot wrap because the arrows and the title are one flex item that
+  does not. Measured at 1366 with the fullest header the app draws, the
+  long name fits with room, so the shortened form the brief allowed was
+  not needed and is not built.
+- **The chip's question is asked in the rail, not in a sheet.** One line
+  under the chips with Replace and Cancel, in the place the press was
+  made; a modal for a one-line question is a second surface for one
+  decision. "Already on this day" is the same line without buttons, and
+  it leaves on the next press or after a few seconds.
+- **The docs never made the three arguments.** A grep of every living doc
+  for Zeigarnik, decision fatigue, ego depletion and "evidence shows" found
+  the terms only in the research documents, where they are named to be
+  refused, and in the push-bound entry, which refuses them. What the brief
+  asks for is therefore written down once in DECISIONS as what capture,
+  the no-new-decisions rule and the grid rest on instead; and the
+  relatedness entry, which already existed, takes the brief's name.
+- **One word per gesture.** The armed second press says the verb and a
+  question mark - Delete?, Erase?, Replace? - in place of seven wordings.
+  Delete is for a thing that is gone, Remove for a part taken off a whole,
+  Close for a surface, Dismiss for a notice, Cancel for stepping back.
+  Notes is the word on screen for the stream; Scratch stays the module's
+  name and the docs' name for the rule.
 
 ### The v2.6 wave: the desktop, so that it is a pleasure to use
 
