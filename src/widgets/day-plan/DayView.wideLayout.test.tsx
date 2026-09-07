@@ -405,31 +405,48 @@ test('at a wide viewport with real vertical room, the grid draws taller than the
 // --- one place to change the day ----------------------------------------
 
 /**
- * The owner, on the arrows either side of the date: they come out where
- * they should not, and they belong with the calendar.
- *
- * They do. At the wide breakpoint the month sits in the rail two inches
- * away with its own arrows on it, and every day of it is one click - so
- * the pair beside the title is a second control for a job already done
- * better beside it, drawn as two 44px boxes bracketing the one piece of
- * text the header exists to say.
- *
- * They stay on a narrow screen, where there is no rail and no month, and
- * they are the only thing on the page that moves a day. Nothing is lost
- * either way: the left and right arrow keys move a day at any width, and
- * T comes back to today.
+ * The arrows either side of the date are on the header at every width.
+ * They came off the wide header in v2.6 because they overflowed - a long
+ * day pushed the right one out where it should not be - and the month in
+ * the rail two inches away, with its own pair, looked like answer enough.
+ * The owner's rule is the other way round: a control that overflows is
+ * fixed by making overflow impossible, not by removing the control. So
+ * the title sits in a box of one fixed width, measured by the longest day
+ * the app can print, in a row that cannot wrap - and the arrows are back
+ * beside the month, not instead of it. The left and right arrow keys move
+ * a day at any width too, and T comes back to today.
  */
-test('the day arrows come off the header at the wide breakpoint, where the month is beside it', () => {
+test('the day arrows stay on the wide header, beside the month', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
   render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  expect(screen.queryByRole('button', { name: 'Previous day' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Next day' })).toBeNull()
-  // The month that replaces them, with its own pair and a day to click.
+  expect(screen.getByRole('button', { name: 'Previous day' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Next day' })).toBeInTheDocument()
+  // And the month, with its own pair and a day to click - both, not either.
   expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument()
   expect(screen.getAllByRole('gridcell').length).toBeGreaterThan(27)
+})
+
+// The ghost is what fixes the title's width: the longest day the format
+// prints, in the heading's own type, under the real title. It is layout and
+// nothing else, so a reader is never told about a Wednesday that is not
+// showing - and the heading's own name stays the day that is.
+test('the title is measured by the longest day the app can print, and the measure is hidden from a reader', () => {
+  viewport = mockViewport(true)
+  seed(anchoredTasks, true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  // By class, because the ghost is deliberately outside the accessibility
+  // tree: there is no role to find it by, and that absence is half of what
+  // this test is for.
+  const ghost = container.querySelector('.day-title .day-title-measure')
+  expect(ghost).not.toBeNull()
+  expect(ghost).toHaveTextContent('Wednesday, September 30')
+  expect(ghost).toHaveAttribute('aria-hidden', 'true')
+  expect(screen.getByRole('heading', { name: 'Tuesday, September 1' })).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: /Wednesday/ })).toBeNull()
 })
 
 test('the day arrows stay on a narrow screen, which has no month to use instead', () => {

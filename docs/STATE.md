@@ -232,7 +232,7 @@ to choose between at the moment of writing.
 | # | Stage | Commit | What it became |
 |---|---|---|---|
 | 0 | Written down first | | The brief and the decisions it forced, in this file, before any code |
-| 1 | Three small things from the owner's screenshots | | |
+| 1 | Three small things from the owner's screenshots, and a fourth the owner added | named in the handoff | The header's chip, Replan and the two toggles are one 36px box on one baseline, and the field's Task toggle takes the header toggle's tint; the arrows are back at every width at 44px, the title sits in a box sized by a hidden "Wednesday, September 30", and from 1500px the right zone never leaves the row (the running title ellipsises instead) while the single pane grows to the calendar's 1336px so the owner's own desktop holds one row in all three views; the rail's chip says "Already on this day" for the template already there, asks "Replace X with Y? Blocks you added by hand stay." for another, and stamps an empty day at once - a day still carrying a deleted template's blocks asks too. Found on the way: on an iPad in landscape the header's buttons were 36px under a finger; they are 44 with the chip now. Nine tests in `TemplateRail.test.tsx`, three rewritten in `DayView.wideLayout.test.tsx` and `dates.test.ts` |
 | 2 | Too many: the "not now" states audited | | |
 | 3 | What is missing: where the plan and the week disagreed | | |
 | 4 | The docs told the truth | | |
@@ -264,6 +264,12 @@ to choose between at the moment of writing.
      with Replace and Cancel; an empty day - stamped at once, as now.
      Rule 11 (twice is once) has to cover it: a double press never doubles
      a block. Tests for all three.
+   - *Every block says when.* Added by the owner while stage 1 was being
+     built, with a screenshot of Today: the start and the end showed on
+     Deep work and on Meetings and on nothing else - Lunch, Standup,
+     Commute and Dinner were titles alone. The rule since v2.4 was "an
+     hour or longer"; the rule from now is every block, whatever its
+     length, on every grid that draws one.
 2. **Too many: the "not now" states.** The settings rule - a setting has to
    earn its place - applied to states: a state stays only if the owner
    would really tell it apart from the one next to it. A task that is not
@@ -395,6 +401,28 @@ so nobody re-argues them by accident:
   does not. Measured at 1366 with the fullest header the app draws, the
   long name fits with room, so the shortened form the brief allowed was
   not needed and is not built.
+- **Every block carries its start and end, and where it goes depends on
+  the room.** Under the title where the block has two lines of room, as
+  the long blocks always had it; after the title, on the same line, where
+  it has one. The floors do not move: an hour or longer keeps its two-line
+  floor, a shorter block keeps its one-line floor and carries the times
+  beside its title, so a day of eight short blocks is not sixteen pixels
+  taller per block and the day still fits 1366x768 without a scroll. On the
+  week the same rule has the one clause it always had - a column is too
+  narrow for a time beside a title, so the times are there on any block two
+  lines tall and hidden by the container query under that, with the hour
+  condition gone. The phone's title ellipsises before the time does.
+- **The header is one row from 1500px, and two below it.** Measured with
+  the fullest header Today draws - a running task, a key count, Replan,
+  Low day, the arrows - the two zones need about 1530px. At 1366 the header
+  is 1004px wide in the Both view and 1268 alone, so the right zone goes
+  down whole there, as v2.6 decided. From 1500, where the masthead spans
+  the rail, the zone is given a flex basis of zero so the row never breaks
+  on its content width; what gives is the running task's title, which ends
+  in an ellipsis. And the single pane grows from 1080 to 1336px, the width
+  that with the rail makes the shell's own 1600, because at 1080 the toggle
+  stood under the chip in the Calendar and Tasks views on the owner's own
+  2000px desktop.
 - **The chip's question is asked in the rail, not in a sheet.** One line
   under the chips with Replace and Cancel, in the place the press was
   made; a modal for a one-line question is a second surface for one

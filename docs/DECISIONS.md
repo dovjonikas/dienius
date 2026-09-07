@@ -1915,3 +1915,71 @@ which leaves no band over 120px at 1920 and fills the row at 1366 and 1600.
 The v2.4 worry about a thousand-pixel block was about the two-pane layout,
 where the task list was paying for it; alone on a screen, a timeline is
 allowed the width a calendar takes.
+
+## The arrows come back, and the date stops moving
+
+The arrows either side of the date came off the wide header after v2.5
+because they overflowed: the owner saw them out where they should not be,
+and the month in the rail had its own pair, so they went. The v2.7 brief
+reversed that with a rule worth keeping: the answer to a control that
+overflows is not to remove the control but to make overflow impossible.
+
+So the header carries them again at every width, 44px squares as they are
+on the phone, and the date sits in a box that cannot change size: a hidden
+copy of "Wednesday, September 30" - the longest title the app can print,
+in the title's own type - is stacked under the visible title, so the box is
+always that wide and the right arrow stands at one x on every day of the
+year. The arrows and the title are one flex item that does not wrap, so
+the row cannot break between them. Measured at 1366x768 with the fullest
+header Today draws - a running task, a key count, Replan and Low day - the
+long name fits with room, so the shorter form the brief allowed ("Wed, 30
+Sep") was not needed and is not built; below the wide breakpoint the ghost
+is not laid out at all, because a 360px phone cannot spare a 240px box and
+its title was always allowed to shrink between the arrows.
+
+The rest of the row followed. The two zones of the fullest header - a
+running task, a key count, Replan, Low day and now the arrows - need about
+1530px, so at 1366 the right zone goes down a line whole, as v2.6 decided,
+and it cannot do otherwise in 1004px. From 1500, where the masthead spans
+the rail, the zone is given a flex basis of zero, so the row never breaks
+on the zone's content width and what gives is the running task's title,
+which ends in an ellipsis: 132px of it at 1500, most of it at 1600, all of
+it at 1920. And the single pane grows from 1080 to 1336px, which with the
+rail is the shell's own 1600 - the width the calendar takes - because at
+1080 the toggle stood under the chip in the Calendar and Tasks views on the
+owner's own 2000px desktop, the two views the brief said to check.
+
+The chip beside them, which said which template the day came from, sat at
+its own height - a 24px pill in a row of 36px controls - and the toggle
+that says which panes are showing and the toggle that says what Enter does
+were two different heights and two different type sizes. They are one
+control drawn three times now: the same box, the same type, the same
+baseline, and the field's toggle takes the header toggle's tinted fill
+rather than the solid accent the rest of the app's segments use, because
+what is in force is a fact and not the loudest thing on the screen.
+
+## The chip asks before it replaces
+
+Every press on a template chip in the rail used to stamp the open day
+again, with an undo. A press on the template already there rebuilt its
+blocks and snapped any block that had been moved back to the template's
+time; a press on another template replaced the day's blocks with no
+question asked. Three cases, three answers now, and only in the rail - the
+week's column menu, the calendar's staged stamp and the weekday map keep
+their own doors as they were:
+
+- **The template already on the day** does nothing and says so, in one
+  line under the chips: "Already on this day". No commit, no undo offer,
+  and the line leaves on the next press or after three seconds. This is
+  rule 11 of section 12 made visible: twice is once.
+- **Another template** asks one question in the same place: "Replace
+  Working day with Rest day? Blocks you added by hand stay." with Replace
+  and Cancel. A hand-added block - anything without `fromTemplate` - was
+  always kept by the stamp; the sentence says so because the person about
+  to press does not know it. The question clears on Cancel, on any other
+  press and when the day changes.
+- **An empty day** is stamped at once, as it always was.
+
+The question is asked in the rail rather than in a sheet because a modal
+for a one-line question is a second surface for one decision, and the
+press was made here.

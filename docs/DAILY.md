@@ -387,12 +387,19 @@ Pressfield - and one timer, rather than four blocks on the grid.
 
 ## Getting to another day
 
-On a laptop the month sits down the left of the day: press any day of it,
-and the arrows above it turn the month. The left and right arrow keys move
-a day from wherever you are, and `T` comes back to today.
+The day's name has an arrow either side of it, on a laptop and on a phone
+alike; press one and the day changes. On a laptop the month also sits down
+the left of the day: press any day of it, and the arrows above it turn the
+month. The left and right arrow keys move a day while you are on the day
+view, and `T` comes back to today.
 
-On a phone there is no month beside the day, so the day's name has an arrow
-either side of it instead. Same three ways otherwise.
+The template chip beside the date says which template the day came from.
+The chips under the month are the templates themselves: press one and the
+day is laid out from it. A day that already has that template says
+"Already on this day" and nothing changes; a day that has another one asks
+first - "Replace Working day with Rest day? Blocks you added by hand stay."
+- and Replace does it, with Undo offered for five seconds. Blocks you typed
+yourself are never taken by a template.
 
 ---
 

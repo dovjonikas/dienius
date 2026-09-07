@@ -1352,14 +1352,33 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-size: var(--t-glyph);
 }
 
-/* Bare: no arrows either side, so nothing to sit between and nothing to
-   centre against. The title starts at the left edge of its row like every
-   other heading in the app. */
-.day-nav-bare { justify-content: flex-start; gap: 0; }
-.day-nav-bare .day-title { text-align: left; }
-
 .day-title { min-width: 0; text-align: center; }
-.day-title h2 { margin: 0; }
+
+/* The heading and the ghost that measures its box - see DayHeader.tsx - in
+   one rule, so the ghost can only ever be in the heading's own type: a
+   second copy of the size and the weight is a box measured in a face the
+   title is not set in, the day somebody changes one and not the other. The
+   weight is the one a heading has by default, written down because the
+   ghost is a span and has none of its own. */
+.day-title h2,
+.day-title-measure {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 700;
+}
+
+/* Out of the flow entirely on a phone: a 360px screen cannot spare the
+   240px the widest day takes, and the title there shrinks and wraps as it
+   always has. The wide header, below, puts it back in. Never selectable,
+   so copying the header does not copy a day that is not showing. */
+.day-title-measure {
+  display: none;
+  visibility: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
 .day-subtitle { color: var(--muted); font-size: var(--t-sm); }
 
 /* The template chip and the door out of a broken day. A row of their own
@@ -1544,7 +1563,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .day-low {
   display: inline-flex;
   align-items: center;
-  padding: var(--s0) var(--s3);
+  min-height: 36px;
+  padding: 0 var(--s3);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 40%, transparent);
@@ -1553,16 +1573,32 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   white-space: nowrap;
 }
 
+/* The chip is the height of the controls beside it and of the view toggle
+   across the row - 36px, which is the toggle's 34 inside its border - so
+   the four of them stand on one axis and their 13px labels sit on one
+   baseline. At 24px it was the one short box in a row of tall ones, and
+   its word floated a few pixels above the words either side of it. */
 .day-template {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  padding: var(--s0) var(--s3);
+  min-height: 36px;
+  padding: 0 var(--s3);
   border: 1px solid color-mix(in srgb, var(--chip, var(--accent)) 45%, var(--border));
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--chip, var(--accent)) 12%, var(--surface));
   color: var(--text);
   font-size: var(--t-sm);
+}
+
+/* Under a finger the row is 44px end to end: the arrows are, every button
+   is, and the chip and the mark follow. The wide header's own 36px rules
+   for Replan and the view toggle get the same floor in the coarse block
+   near the end of the file, so an iPad in landscape - wide and coarse at
+   once - draws the row at one height as well. */
+@media (pointer: coarse) {
+  .day-template,
+  .day-low { min-height: var(--touch); }
 }
 
 /* The capacity line - see docs/TIMELINE.md section 8. Plain body text at
@@ -6245,20 +6281,25 @@ button.danger:focus-visible {
      timeline centred in a 1568px row, which on the owner's screen left
      272px of nothing on either side and read, in their words, as a large
      empty area on the left with the content drifted right. The pane grows
-     to 1080px, which is the width that leaves no empty band over 120px at
-     1920 and fills the row entirely at 1366 and 1600; wider than that a
-     block or a card is a slab, and the v2.4 worry about a thousand-pixel
-     block was about the two-pane layout, where the task list was paying for
-     it. Alone on a screen, a timeline is allowed the width a calendar takes.
+     to 1336px - with the rail beside it, the 1600px the shell itself is
+     capped at, which is the width the calendar takes - so the block fills
+     the row at 1366 and 1600 and leaves bands of about 108px at 1920 and
+     148px at 2000. It was 1080px in v2.6, and at that width the header's
+     right zone dropped under the chip in these two views on the owner's own
+     2000px desktop, because a header with a running task, its key count,
+     Replan, Low day and the arrows needs about 1530px; the v2.4 worry about
+     a thousand-pixel block was about the two-pane layout, where the task
+     list was paying for it. Alone on a screen, a timeline is allowed the
+     width a calendar takes.
      The spacers are minmax(0, 1fr): the pane and the rail take their room
      first and the two spacers share what is left, equally, which is what
      centres the block. */
   .day-view.focus-calendar {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 1080px);
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
     grid-template-areas:
       "header header"
       "rail   day";
-    max-width: calc(240px + var(--s6) + 1080px);
+    max-width: calc(240px + var(--s6) + 1336px);
     margin-inline: auto;
   }
 
@@ -6273,11 +6314,11 @@ button.danger:focus-visible {
      in, so the two single-pane rules cannot disagree about which area the
      surviving pane takes - see the note above on the first-run rule. */
   .day-view.focus-tasks {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 1080px);
+    grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
     grid-template-areas:
       "header header"
       "rail   tasks";
-    max-width: calc(240px + var(--s6) + 1080px);
+    max-width: calc(240px + var(--s6) + 1336px);
     margin-inline: auto;
   }
 
@@ -6314,17 +6355,41 @@ button.danger:focus-visible {
     gap: var(--s2) var(--s5);
   }
 
+  /* One flex item that cannot wrap: the arrows and the title are never on
+     different lines, whatever the rest of the row does when it is short.
+     The arrows keep the 44px they have at every width - the day view's
+     one control for moving a day is not drawn smaller where there is the
+     most room for it. */
   .day-header .day-nav {
     flex: 0 0 auto;
+    flex-wrap: nowrap;
     gap: var(--s2);
     margin-bottom: 0;
   }
 
+  /* The title's box is measured by the longest day the app can print, not
+     by the day showing: a ghost of "Wednesday, September 30" in the
+     heading's own type sits under the real title in the same grid cell,
+     hidden, so the box is as wide as the ghost on every day and the
+     visible title starts at its left edge. This is what makes the row
+     unable to overflow. The arrows came off this header once because a
+     long day pushed the right one out past the row, and a control that
+     overflows is fixed by making overflow impossible, not by removing the
+     control. */
+  .day-header .day-title {
+    display: inline-grid;
+    text-align: left;
+  }
+
+  .day-header .day-title > * { grid-area: 1 / 1; }
+
+  .day-header .day-title-measure { display: block; }
+
   /* Left-aligned beside the arrows at this width, rather than centred
      between them the way it is on a phone where the nav row is the full
-     width of the screen. */
-  .day-header .day-title {
-    text-align: left;
+     width of the screen; and the date beside Today rather than under it,
+     on one line. */
+  .day-header .day-title-text {
     display: flex;
     align-items: baseline;
     flex-wrap: nowrap;
@@ -6332,14 +6397,13 @@ button.danger:focus-visible {
     white-space: nowrap;
   }
 
-  .day-header .day-nav > button { width: 36px; height: 36px; min-height: 36px; }
-
   .day-header .day-tools {
     flex: 0 0 auto;
     margin: 0;
   }
 
-  /* The arrows' own height, so the row is one height end to end. */
+  /* The view toggle's height - 34px inside its border - so the chip, the
+     doors and the toggle are one height across the row. */
   .day-header .day-replan-button { min-height: 36px; }
 
   .day-header .day-header-right {
@@ -6376,11 +6440,22 @@ button.danger:focus-visible {
      information about the day, so it does not get to be the loudest accent
      on it - the progress bar next to it earns that. A tinted fill instead of
      the solid accent .segmented uses everywhere else, and shorter, so the
-     header stays one thin line. Scoped to this one control; the same
-     component in Settings and Templates is unchanged. */
-  .day-layout-focus button { padding: 6px var(--s3); min-height: 34px; font-size: var(--t-sm); }
+     header stays one thin line. Scoped to this control and one other; the
+     same component in Settings and Templates is unchanged.
 
-  .day-layout-focus button.active {
+     The other is the capture toggle at the top of the task column. The two
+     are one control drawn twice: what is in force in this header row, and
+     what is in force on the field. One rule for both, so they can only
+     ever be one height, one size of type and one tint - the field's was
+     28px at 11px type beside the header's 36 at 13, and two segmented
+     controls of two sizes on one screen read as two kinds of thing. Below
+     the breakpoint the capture toggle keeps its own rule, and under a
+     finger the coarse-pointer floor further down still raises it to 44. */
+  .day-layout-focus button,
+  .capture-mode button { padding: 6px var(--s3); min-height: 34px; font-size: var(--t-sm); }
+
+  .day-layout-focus button.active,
+  .capture-mode button.active {
     background: color-mix(in srgb, var(--accent) 18%, transparent);
     color: var(--text);
   }
@@ -6569,6 +6644,23 @@ button.danger:focus-visible {
         "header header   header"
         "rail   notices  notices"
         "rail   day      tasks";
+    }
+
+    /* And from here the right zone never goes down a line. A flex row
+       breaks on each item's content width before anything is allowed to
+       shrink, so the zone is given no content width to break on: a basis
+       of zero, and it then grows into whatever the row has left after the
+       day's name, the arrows, the chip and the doors. The header is at
+       least 1400px here, which is more than every control in it needs;
+       what does not fit is the running task's title, and a title that
+       ends in an ellipsis is a better header than a toggle standing alone
+       under the chip. The North line, a full-width item of its own, still
+       wraps under the row as it always did. Below 1500 the header is
+       narrower than the zone's own controls, and there it goes down whole. */
+    .day-header .day-header-right {
+      flex: 1 1 0;
+      min-width: 0;
+      justify-content: flex-end;
     }
 
     /* The single-pane rules above outrank this block's two on specificity
@@ -7809,6 +7901,24 @@ button.danger:focus-visible {
 .template-chip:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* What the rail says under the chips when a press did not stamp - see
+   TemplateRail.tsx. The quiet line and the question are one register, the
+   rail's own muted type a step under the chips, so neither reads as an
+   alert; the question's two buttons sit in a row under its sentence. */
+.template-rail-note,
+.template-rail-ask p {
+  margin: var(--s2) 0 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.template-rail-ask-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s2);
 }
 
 .library-schedule-note {
@@ -10370,6 +10480,16 @@ main:has(.week) > .calendar {
   .task-detail-clear,
   .task-detail-toggle,
   .library-finished-toggle {
+    min-height: var(--touch);
+  }
+
+  /* The wide header's row: Replan, Low day and the view toggle are 36px on
+     a mouse, and an iPad in landscape is wide and coarse at once. The chip
+     beside them already follows a finger (see .day-template); without this
+     it stood 44px tall between two 36px buttons in the one row that is
+     meant to be one height. */
+  .day-header .day-replan-button,
+  .day-layout-focus button {
     min-height: var(--touch);
   }
 

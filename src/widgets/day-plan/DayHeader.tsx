@@ -86,9 +86,6 @@ export function DayHeader({
   lowDay,
 }: DayHeaderProps) {
   const isToday = date === todayKey()
-  // Only where there is no month in the rail to use instead - see the
-  // comment on the row itself.
-  const showArrows = !isWide
   const isPast = date < todayKey()
   const formattedScore = formatDayScore(score)
   const scoreLabel = score.planned
@@ -125,31 +122,40 @@ export function DayHeader({
           word between them, and the row read as five things at one weight.
           Which day is one group; what to do about it is the next.
 
-          And on a wide screen there are no arrows at all. The month sits in
-          the rail two inches to the left with its own pair on it and every
-          day of it one click away, so a second control here was a worse
-          answer to a question already answered better beside it - two 44px
-          boxes bracketing the one piece of text this header exists to say.
-          The owner's words: they come out where they should not, and they
-          belong with the calendar.
-
-          Nothing is lost at either width. The left and right arrow keys move
-          a day wherever you are, and T comes back to today. */}
-      <div className={showArrows ? 'day-nav' : 'day-nav day-nav-bare'}>
-        {showArrows && (
-          <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
-            &larr;
-          </button>
-        )}
+          They are on the wide header too, at every width, since v2.7. They
+          came off it in v2.6 because they overflowed - a long day pushed
+          the right one out where it should not be, and the month in the
+          rail looked like answer enough. The owner's rule is the other way
+          round: the answer to a control that overflows is to make overflow
+          impossible, not to remove the control. So the title sits in a box
+          of one fixed width, measured by the longest day the app can print
+          (the ghost under it, below), the row is one flex item that cannot
+          wrap, and the arrows are the same 44px squares here as on a
+          phone. The left and right arrow keys still move a day on the day
+          view, and T comes back to today. */}
+      <div className="day-nav">
+        <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
+          &larr;
+        </button>
         <div className="day-title">
-          <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
-          {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+          <div className="day-title-text">
+            <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
+            {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+          </div>
+          {/* The longest day the format prints, in the heading's own type
+              and hidden, stacked under the real title so the box holds one
+              width on every day - see .day-title in styles.css. Only in the
+              flow at the wide breakpoint; a phone keeps its shrinking
+              title. dates.test.ts pins the string, so a change to the
+              format shows up there before it shows up as a wrapped
+              header. */}
+          <span className="day-title-measure" aria-hidden="true">
+            Wednesday, September 30
+          </span>
         </div>
-        {showArrows && (
-          <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
-            &rarr;
-          </button>
-        )}
+        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
+          &rarr;
+        </button>
       </div>
 
       {/* What the day came from, and the door for when it breaks. The door

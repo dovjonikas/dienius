@@ -53,3 +53,12 @@ test('every grid is a whole number of weeks and covers every day of its month', 
 test('formatDayTitle renders a readable title', () => {
   expect(formatDayTitle('2026-09-01')).toBe('Tuesday, September 1')
 })
+
+// The day header's measuring ghost - DayHeader.tsx - is this exact string in
+// the heading's own type, so the title's box is as wide as the widest day
+// the format can print: the longest weekday, the longest month, two digits.
+// A change to the format shows up here before it shows up as a wrapped
+// header.
+test('the header ghost is measured against what 2026-09-30 prints: Wednesday, September 30', () => {
+  expect(formatDayTitle('2026-09-30')).toBe('Wednesday, September 30')
+})
