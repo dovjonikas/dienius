@@ -165,6 +165,13 @@ const GUTTER_PX = 44
 const MIN_HOUR_LABEL_GAP_PX = 28
 
 /**
+ * How close an hour label may sit to the now line before it is dropped. An
+ * 11px label is about 15px tall, so anything inside ten pixels of the line
+ * would have the line drawn through its digits.
+ */
+const NOW_CLEARS_LABEL_PX = 10
+
+/**
  * The shortest free stretch that gets its size written on it. Below this the
  * gap is still a real, tappable button at its full 44px target - nothing about
  * what it does changes - it just goes quiet.
@@ -573,6 +580,17 @@ export function TimelineGrid({
   // of this grid already follows for an empty or unsized day.
   const showNowLine = isToday && nowMinutes >= window.start && nowMinutes <= window.end
   const nowTop = showNowLine ? vertical.topPx(nowMinutes) : null
+  // The hour mark the now line is crossing keeps its rule and loses its
+  // number. The line used to carry the clock time on a chip over that label
+  // - which was the header's own clock, said a second time in the same
+  // eyeline, and CONVENTIONS section 23 is about exactly that. The header
+  // says the minute; the line only has to say where it falls, and a rule
+  // with no number beside it still says an hour passed here.
+  if (nowTop !== null) {
+    for (const mark of [...labelledMarks]) {
+      if (Math.abs(vertical.topPx(mark) - nowTop) < NOW_CLEARS_LABEL_PX) labelledMarks.delete(mark)
+    }
+  }
 
   // A day too full to fit its column at any density scrolls inside the
   // column (see .day-pane > .timeline-grid-wrap in styles.css), and a
@@ -817,19 +835,12 @@ export function TimelineGrid({
 
             {showNowLine && (
               <>
+                {/* The line and its dot, and no clock chip on it since v2.6:
+                    the chip said the minute the header already says, and the
+                    hour label it would have covered is dropped instead - see
+                    NOW_CLEARS_LABEL_PX. */}
                 <div className="timeline-now-line" style={{ top: `${nowTop}px` }} />
                 <div className="timeline-now-dot" style={{ top: `${nowTop}px` }} />
-                {/* The clock time, printed in the gutter on the line itself.
-                    Without it the line says "somewhere around here" and the
-                    reader has to interpolate between two hour marks that a
-                    compressed day may have drawn unevenly - see
-                    computeVerticalLayout. It sits in the same decorative,
-                    aria-hidden layer as the line: this is the same number the
-                    header already states in real text, said again in the one
-                    place the eye is already looking. */}
-                <div className="timeline-now-label" style={{ top: `${nowTop}px` }}>
-                  {formatClock(nowMinutes)}
-                </div>
               </>
             )}
           </div>

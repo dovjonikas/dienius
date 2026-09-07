@@ -43,11 +43,6 @@ export interface TaskRowProps {
    */
   active?: boolean
   /**
-   * How many minutes of the active task are left, when it is this row. Passed
-   * in rather than computed here so the card, the block on the timeline and
-   * the header's own line are all counting from the same tick.
-   */
-  minutesLeft?: number
   /** Opens the full-screen countdown for this task - see `FocusView.tsx`. */
   onFocus?: () => void
   sizeEditingId: string | null
@@ -122,7 +117,6 @@ export function TaskRow({
   isFullDay,
   leaving = false,
   active = false,
-  minutesLeft,
   onFocus,
   sizeEditingId,
   sizeDraft,
@@ -305,12 +299,10 @@ export function TaskRow({
               carries it at a glance, this carries it for anyone who cannot
               use the colour, and both say the same thing. */}
           {catName && <span className="task-cat-name">{catName}</span>}
-          {/* The countdown, on the one card that is currently running. Real
-              text, not a bar: "38 min left" is a number a person can act on,
-              where a bar only says "some of it". */}
-          {active && minutesLeft !== undefined && (
-            <span className="task-left">{formatDuration(minutesLeft)} left</span>
-          )}
+          {/* No countdown here since v2.6. The running card carried "38 min
+              left" beside the header's own "38 min left", two inches apart -
+              CONVENTIONS section 23. The ring says which card is running; the
+              header says how long is left. */}
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}

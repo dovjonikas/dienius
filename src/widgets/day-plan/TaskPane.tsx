@@ -37,7 +37,6 @@ export interface TaskPaneProps {
   isFullDay: boolean
   library: LibraryList[]
   runningTaskId: string | undefined
-  runningLeft: number | undefined
   selectedTaskId: string | null
   taskListRef: React.RefObject<HTMLUListElement | null>
   onToggleSelect: (taskId: string) => void
@@ -54,7 +53,6 @@ export function TaskPane({
   isFullDay,
   library,
   runningTaskId,
-  runningLeft,
   selectedTaskId,
   taskListRef,
   onToggleSelect,
@@ -237,7 +235,6 @@ export function TaskPane({
             {...rowProps(task)}
             leaving={task.id === leavingId}
             active={task.id === runningTaskId}
-            minutesLeft={task.id === runningTaskId ? runningLeft : undefined}
             onFocus={() => clockTools.startFocus(date, task.id)}
           />
         ))}

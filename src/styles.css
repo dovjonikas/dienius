@@ -899,10 +899,13 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   border: 2px solid transparent;
   --pick: var(--swatch, var(--accent));
   background: var(--pick);
-  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
-.accent-swatch:hover { transform: scale(1.12); }
+/* A change of edge under the pointer, never a change of size: it grew by
+   twelve percent until v2.6, and a swatch that swells under the mouse is a
+   thing moving on hover - CONVENTIONS section 24. */
+.accent-swatch:hover { border-color: var(--muted); }
 
 /**
  * One way to say "this colour is the chosen one", wherever a round colour
@@ -2103,17 +2106,17 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   z-index: 2;
 }
 
-/* A block under the pointer lifts, and shows the two things you can do to it
-   from here. Transform and box-shadow only - nothing in this rule changes the
-   grid's own layout, so hovering across a busy day never reflows anything and
-   never moves the block you were aiming at. */
+/* A block under the pointer takes a shadow, and shows the two things you
+   can do to it from here. Shadow only: it used to rise a pixel as well, and
+   a block that moves under the mouse is a block moving on hover, which
+   CONVENTIONS section 24 forbids - so hovering across a busy day changes
+   nothing about where anything is. */
 @media (hover: hover) and (pointer: fine) {
   .timeline-anchor-draggable {
-    transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
+    transition: box-shadow var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
   }
 
   .timeline-anchor-draggable:hover {
-    transform: translateY(-1px);
     box-shadow: var(--e2);
     z-index: 2;
   }
@@ -2254,27 +2257,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 3;
-}
-
-/* The clock time on the line, printed in the hour gutter. Sits on its own
-   filled chip rather than as bare text, because it lands wherever the minute
-   happens to fall - often right on top of an hour label - and two numbers
-   sharing four pixels is exactly the unreadable text this app does not
-   allow. The chip covers the label underneath instead of blending with it. */
-.timeline-now-label {
-  position: absolute;
-  left: 2px;
-  transform: translateY(-50%);
-  padding: 1px var(--s1);
-  border-radius: var(--r-chip);
-  background: var(--mark);
-  color: rgba(0, 0, 0, 0.78);
-  font-size: var(--t-xs);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-  pointer-events: none;
-  z-index: 4;
 }
 
 /* Where the block being held will land, while it is still being held.
@@ -3192,16 +3174,6 @@ select:focus {
   background: color-mix(in srgb, var(--mark) 5%, var(--surface));
 }
 
-.task-left {
-  padding: 1px var(--s2);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--mark) 20%, transparent);
-  color: var(--text);
-  font-size: var(--t-sm);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 /* Opens the full-screen countdown. Only ever on the running card, so it is
    allowed to look like a real button rather than the quiet ghost controls the
    rest of the card carries - there is exactly one of these on screen at a
@@ -3877,16 +3849,13 @@ select:focus {
   border-radius: var(--r-control);
   color: var(--muted);
   font-size: var(--t-sm);
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
 .rollover:hover {
   color: var(--text);
   border-color: var(--muted);
-  transform: translateY(-1px);
 }
-
-.rollover:active { transform: none; }
 
 /* An arrow drawn from a chevron plus a rule - the same borders-of-a-rotated-
    box technique the checkmark and the Done caret use, so this app still loads
@@ -5128,12 +5097,16 @@ button.danger {
   .template-card button,
   .up-next {
     transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
-      color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+      color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
   }
 
-  .theme-card:hover { transform: translateY(-2px); box-shadow: var(--e2); }
-  .chip:hover, .swatch:hover { transform: translateY(-1px); }
-  .day-nav > button:hover { border-color: var(--muted); transform: translateY(-1px); }
+  /* Colour, edge and shadow under the pointer, and nothing that moves. Every
+     one of these rose a pixel or two on hover until v2.6; a control that
+     shifts under the mouse is the thing CONVENTIONS section 24 is about,
+     however small the shift. */
+  .theme-card:hover { box-shadow: var(--e2); }
+  .chip:hover, .swatch:hover { filter: brightness(1.1); }
+  .day-nav > button:hover { border-color: var(--muted); }
   .mini-cell:hover { border-color: var(--muted); }
   .task-menu-button:hover { color: var(--text); }
   .up-next:hover { border-color: color-mix(in srgb, var(--cat) 45%, var(--border)); }
@@ -5347,11 +5320,10 @@ button.danger {
   color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
-  transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  transition: border-color var(--dur-fast) var(--ease);
 }
 
-.clock-preset:hover { border-color: var(--accent); transform: translateY(-1px); }
-.clock-preset:active { transform: none; }
+.clock-preset:hover { border-color: var(--accent); }
 
 .clock-preset:focus-visible {
   outline: 2px solid var(--accent);

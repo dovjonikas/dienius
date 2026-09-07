@@ -405,7 +405,6 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           isFullDay={isFullDay}
           library={data.library}
           runningTaskId={runningTask?.id}
-          runningLeft={runningLeft}
           selectedTaskId={selection.selectedTaskId}
           taskListRef={selection.taskListRef}
           onToggleSelect={selection.toggleSelect}
