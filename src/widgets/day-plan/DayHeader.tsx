@@ -78,6 +78,9 @@ export function DayHeader({
   lowDay,
 }: DayHeaderProps) {
   const isToday = date === todayKey()
+  // Only where there is no month in the rail to use instead - see the
+  // comment on the row itself.
+  const showArrows = !isWide
   const isPast = date < todayKey()
   const formattedScore = formatDayScore(score)
   const scoreLabel = score.planned
@@ -107,18 +110,33 @@ export function DayHeader({
           bracket the template chip and the Replan link as well, so the
           right arrow sat half a screen from the left one with a pill and a
           word between them, and the row read as five things at one weight.
-          Which day is one group; what to do about it is the next. */}
-      <div className="day-nav">
-        <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
-          &larr;
-        </button>
+          Which day is one group; what to do about it is the next.
+
+          And on a wide screen there are no arrows at all. The month sits in
+          the rail two inches to the left with its own pair on it and every
+          day of it one click away, so a second control here was a worse
+          answer to a question already answered better beside it - two 44px
+          boxes bracketing the one piece of text this header exists to say.
+          The owner's words: they come out where they should not, and they
+          belong with the calendar.
+
+          Nothing is lost at either width. The left and right arrow keys move
+          a day wherever you are, and T comes back to today. */}
+      <div className={showArrows ? 'day-nav' : 'day-nav day-nav-bare'}>
+        {showArrows && (
+          <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
+            &larr;
+          </button>
+        )}
         <div className="day-title">
           <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
           {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
         </div>
-        <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
-          &rarr;
-        </button>
+        {showArrows && (
+          <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
+            &rarr;
+          </button>
+        )}
       </div>
 
       {/* What the day came from, and the door for when it breaks. The door

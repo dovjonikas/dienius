@@ -65,8 +65,8 @@ test('a week template is built once and stamps each day its own column', async (
   await expect(page.getByRole('checkbox', { name: 'Commute' })).toBeAttached()
   await expect(page.getByRole('checkbox', { name: 'Physio' })).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Next day' }).click()
-  await page.getByRole('button', { name: 'Next day' }).click()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('checkbox', { name: 'Physio' })).toBeAttached()
   await expect(page.getByRole('checkbox', { name: 'Commute' })).toBeAttached()
 })

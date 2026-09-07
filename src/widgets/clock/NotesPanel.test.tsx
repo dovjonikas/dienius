@@ -1,17 +1,22 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { NotesPanel } from './NotesPanel'
 import { ClockPopover } from './ClockPopover'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 
 /**
- * Notes beside the timer and the stopwatch.
+ * One line, kept, and the panel is gone.
  *
- * The clock button is the one control that is on screen from every tab, so
- * it is where a thought goes when there is no time to go anywhere. This is
- * deliberately not a second Scratch: one line, Enter, gone. Anything more
- * than that is the full stream, and the panel says where that is.
+ * It was the clock panel's third tab for one version - these tests rendered
+ * `ClockPopover` with `tab="notes"` - which meant reaching a line somebody
+ * wanted to write by pressing a picture of a clock and reading four labels
+ * to find the one that was not about time. It has its own button now, and
+ * its own panel, and this file follows it.
+ *
+ * Deliberately not a second Scratch: one line, Enter, gone. Anything more is
+ * the full stream, and the panel says where that is.
  */
 
 beforeEach(() => {
@@ -19,14 +24,14 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
-function open(onOpenNotes = () => {}) {
-  render(<ClockPopover onClose={() => {}} onOpenNotes={onOpenNotes} onOpenJournal={() => {}} tab="notes" />)
+function open(onOpenFull = () => {}, onClose = () => {}) {
+  render(<NotesPanel onOpenFull={onOpenFull} onClose={onClose} />)
 }
 
 test('one line and Enter keeps the note and closes the panel', async () => {
   const user = userEvent.setup()
   const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} onOpenJournal={() => {}} tab="notes" />)
+  open(() => {}, onClose)
 
   const box = screen.getByRole('textbox', { name: 'A quick note' })
   await user.type(box, 'Ada: her sister is called Nel{Enter}')
@@ -38,7 +43,7 @@ test('one line and Enter keeps the note and closes the panel', async () => {
 test('Enter on an empty line does nothing, so a stray keystroke leaves no note', async () => {
   const user = userEvent.setup()
   const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={() => {}} onOpenJournal={() => {}} tab="notes" />)
+  open(() => {}, onClose)
 
   await user.type(screen.getByRole('textbox', { name: 'A quick note' }), '   {Enter}')
   expect(getData().scratch).toEqual([])
@@ -66,18 +71,28 @@ test('with nothing written yet the panel says so instead of showing an empty box
   expect(screen.getByText('Nothing written down yet.')).toBeInTheDocument()
 })
 
-test('Open notes hands over to the full stream, and closes the panel behind it', async () => {
+test('Open notes hands over to the full stream', async () => {
   const user = userEvent.setup()
-  const onOpenNotes = vi.fn()
-  const onClose = vi.fn()
-  render(<ClockPopover onClose={onClose} onOpenNotes={onOpenNotes} onOpenJournal={() => {}} tab="notes" />)
+  const onOpenFull = vi.fn()
+  open(onOpenFull)
 
   await user.click(screen.getByRole('button', { name: 'Open notes' }))
-  expect(onOpenNotes).toHaveBeenCalled()
-  expect(onClose).toHaveBeenCalled()
+  expect(onOpenFull).toHaveBeenCalled()
 })
 
-test('the panel still opens on the timer when nothing asked for notes', () => {
-  render(<ClockPopover onClose={() => {}} onOpenNotes={() => {}} onOpenJournal={() => {}} />)
+// The cursor is already in the box: the whole point of this door is that a
+// thought reaches a line without a second gesture in between.
+test('the box has the cursor the moment the panel opens', () => {
+  open()
+  expect(screen.getByRole('textbox', { name: 'A quick note' })).toHaveFocus()
+})
+
+// --- and what the clock kept ---------------------------------------------
+
+test('the clock panel is two tools, and neither of them is a note', () => {
+  render(<ClockPopover onClose={() => {}} />)
   expect(screen.getByRole('button', { name: 'Timer' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: 'Stopwatch' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Notes' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Journal' })).toBeNull()
 })

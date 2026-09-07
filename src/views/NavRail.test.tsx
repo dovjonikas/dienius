@@ -31,18 +31,16 @@ function arriveAndMove(rail: Element) {
 
 function renderRail(props: Partial<React.ComponentProps<typeof NavRail>> = {}) {
   const onNavigate = vi.fn()
-  const onOpenScratch = vi.fn()
+
   const view = render(
     <NavRail
       view="day"
       isWide
-      scratchOpen={false}
       onNavigate={onNavigate}
-      onOpenScratch={onOpenScratch}
       {...props}
     />,
   )
-  return { ...view, onNavigate, onOpenScratch }
+  return { ...view, onNavigate }
 }
 
 /**
@@ -91,13 +89,14 @@ test('the view you are on carries the mark, and nothing else does', () => {
   }
 })
 
-// Scratch is a layer over whatever is showing rather than a seventh view, so
-// it never claims to be the page you are on - it only shows as pressed.
-test('Scratch is lit while it is open but never marked as the current view', () => {
-  renderRail({ scratchOpen: true })
-  const pen = screen.getByRole('button', { name: 'Scratch' })
-  expect(pen).toHaveClass('is-active')
-  expect(pen).not.toHaveAttribute('aria-current')
+// The pen stood here for two versions, because Scratch had no visible way
+// in on a desktop. It has one in the header now, beside the journal, so the
+// rail is the six views and the two things under them and nothing else.
+test('the rail is the six views, Settings and the pin - no pen among them', () => {
+  renderRail()
+  expect(screen.queryByRole('button', { name: 'Scratch' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()
 })
 
 /**
@@ -209,16 +208,17 @@ test('the window losing focus closes it, and getting it back does not reopen it'
   expect(rail).not.toHaveClass('is-open')
 })
 
-// Escape on the Scratch overlay hands focus back to the pen that opened it.
-// That is a sheet closing, not somebody reaching for the rail.
-test('focus handed back to the pen after Escape does not open it', () => {
+// Escape on an overlay hands focus back to whatever opened it, and where
+// that is a rail button the rail must not read it as somebody arriving.
+// That is a sheet closing, not a reach for the navigation.
+test('focus handed back to a rail button after Escape does not open it', () => {
   const { container } = renderRail()
   const rail = container.querySelector('.nav-rail')!
-  const pen = screen.getByRole('button', { name: 'Scratch' })
+  const settings = screen.getByRole('button', { name: 'Settings' })
 
   fireEvent.keyDown(document.body, { key: 'Escape' })
   fireEvent.keyUp(document.body, { key: 'Escape' })
-  fireEvent.focus(pen)
+  fireEvent.focus(settings)
   expect(rail).not.toHaveClass('is-open')
 })
 

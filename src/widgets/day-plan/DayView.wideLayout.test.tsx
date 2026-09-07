@@ -396,3 +396,42 @@ test('at a wide viewport with real vertical room, the grid draws taller than the
   const wideLayers = wide.container.querySelector('.timeline-grid-layers') as HTMLElement
   expect(parseFloat(wideLayers.style.height)).toBeGreaterThan(narrowHeight)
 })
+
+// --- one place to change the day ----------------------------------------
+
+/**
+ * The owner, on the arrows either side of the date: they come out where
+ * they should not, and they belong with the calendar.
+ *
+ * They do. At the wide breakpoint the month sits in the rail two inches
+ * away with its own arrows on it, and every day of it is one click - so
+ * the pair beside the title is a second control for a job already done
+ * better beside it, drawn as two 44px boxes bracketing the one piece of
+ * text the header exists to say.
+ *
+ * They stay on a narrow screen, where there is no rail and no month, and
+ * they are the only thing on the page that moves a day. Nothing is lost
+ * either way: the left and right arrow keys move a day at any width, and
+ * T comes back to today.
+ */
+test('the day arrows come off the header at the wide breakpoint, where the month is beside it', () => {
+  viewport = mockViewport(true)
+  seed(anchoredTasks, true)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  expect(screen.queryByRole('button', { name: 'Previous day' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Next day' })).toBeNull()
+  // The month that replaces them, with its own pair and a day to click.
+  expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument()
+  expect(screen.getAllByRole('gridcell').length).toBeGreaterThan(27)
+})
+
+test('the day arrows stay on a narrow screen, which has no month to use instead', () => {
+  viewport = mockViewport(false)
+  seed(anchoredTasks, true)
+  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  expect(screen.getByRole('button', { name: 'Previous day' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Next day' })).toBeInTheDocument()
+})

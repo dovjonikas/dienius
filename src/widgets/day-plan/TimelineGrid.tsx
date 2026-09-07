@@ -250,6 +250,17 @@ export interface TimelineGridProps {
   /** The task id currently being dragged, if any - dims its own anchor block so the drag reads as "picked up." */
   draggingTaskId?: string | null
   /**
+   * Where the edge being held will land, as a minute of the day, while a
+   * drag is still running - see `dropMinutes` in useDayDrag.
+   *
+   * Drawn as a hairline across the grid with the time in the gutter, in the
+   * same decorative layer as the now line and for the same reason: the hour
+   * marks either side of a compressed day are unevenly spaced, so a position
+   * on its own says "somewhere around here". Absent when nothing is being
+   * dragged, and absent until the pointer has actually moved.
+   */
+  dropMinutes?: number | null
+  /**
    * The task happening right now, if any - see `activeTask` in capacity.ts.
    * `DayView` works it out once and hands the same id to both this grid and
    * the task list, so the block and the card can never disagree about which
@@ -394,6 +405,7 @@ export function TimelineGrid({
   onAnchorPointerDown,
   onAnchorResizePointerDown,
   draggingTaskId,
+  dropMinutes,
   activeTaskId,
   onGeometry,
   isToday = false,
@@ -790,6 +802,20 @@ export function TimelineGrid({
                 examined for docs/RESEARCH-TIMELINE-UI.md draws it - "now"
                 stays visible even when it falls inside an occupied block,
                 rather than disappearing under one. */}
+            {/* Where the block being held will land. Quieter than the now
+                line - a hairline and a plain label, no fill - because it is
+                an answer to a question the hand is asking this second, not a
+                fact about the day. It is painted after the blocks so it
+                reads across the one being moved. */}
+            {dropMinutes != null && (
+              <>
+                <div className="timeline-drop-line" style={{ top: `${vertical.topPx(dropMinutes)}px` }} />
+                <div className="timeline-drop-label" style={{ top: `${vertical.topPx(dropMinutes)}px` }}>
+                  {formatClock(dropMinutes)}
+                </div>
+              </>
+            )}
+
             {showNowLine && (
               <>
                 <div className="timeline-now-line" style={{ top: `${nowTop}px` }} />

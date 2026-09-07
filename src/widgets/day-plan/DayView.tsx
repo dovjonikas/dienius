@@ -351,6 +351,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
               onAnchorResizePointerDown={drag.startResize}
               onGeometry={drag.onGeometry}
               draggingTaskId={drag.draggingTaskId}
+              dropMinutes={drag.dropMinutes}
               activeTaskId={runningTask?.id}
               isToday={isToday}
               isWide={isWide}

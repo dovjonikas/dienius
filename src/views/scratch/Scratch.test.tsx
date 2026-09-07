@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../../App'
 import { Scratch } from './Scratch'
@@ -49,14 +49,29 @@ test('S opens the box with the cursor in it, from every tab', async () => {
   }
 })
 
-test('the backtick opens it too, and Ctrl-K offers it as a command', async () => {
+/**
+ * The backtick, and finding a note through the palette.
+ *
+ * The second half of this used to press Ctrl-K and then click a button
+ * named "Scratch" - which was the rail's own pen, sitting behind the open
+ * palette, not anything the palette offered. It passed for four versions
+ * while testing nothing about the palette at all, and the pen leaving the
+ * rail is what finally said so. The palette has no standing Scratch
+ * command; what it has is every note, by its own words, which is the thing
+ * worth holding: a line written in a hurry is only worth writing down if it
+ * can be found again.
+ */
+test('the backtick opens it, and a note is findable through the palette', async () => {
   const user = userEvent.setup()
+  actions.addScratch('Ada: her sister is called Nel')
   render(<App />)
   press('`')
   expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
   press('Escape')
+
   fireEvent.keyDown(document, { key: 'k', ctrlKey: true })
-  await user.click(screen.getByRole('button', { name: /^Scratch/ }))
+  await user.keyboard('Nel')
+  await user.click(await screen.findByRole('option', { name: /her sister/ }))
   expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
 })
 
@@ -216,11 +231,13 @@ test('a plan saved before Scratch existed loads with an empty stream', () => {
   expect(loadData().scratch).toEqual([])
 })
 
-// The pen in the rail, on a phone. It used to be a draggable floating circle
-// here and a pen in the header on a desktop; the rail put one control in one
-// place on both, which is what section 17 wanted and could not have while
-// there was nowhere a control could live on both platforms.
-test('the pen in the bar opens Scratch on a phone', () => {
+// The way in on a phone. A draggable floating circle here and a pen in the
+// header on a desktop, then one pen in the rail on both, and now a Notes
+// button in the header on both - each move keeping the one thing section 17
+// asks for, which is a visible way in that is the same everywhere. The panel
+// it opens is the one-line door; Open notes inside it is the whole stream.
+test('the Notes button reaches the stream on a phone', async () => {
+  const user = userEvent.setup()
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: false,
     media: query,
@@ -228,10 +245,9 @@ test('the pen in the bar opens Scratch on a phone', () => {
     removeEventListener: () => {},
   }))
   render(<App />)
-  const pen = screen.getByRole('button', { name: 'Scratch' })
-  act(() => {
-    pen.click()
-  })
+
+  await user.click(screen.getByRole('button', { name: 'Notes' }))
+  await user.click(screen.getByRole('button', { name: 'Open notes' }))
   expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
   vi.unstubAllGlobals()
 })

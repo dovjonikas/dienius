@@ -215,3 +215,82 @@ test('deleting a task through the actions menu removes it', () => {
   expect(screen.queryByText('Guitar')).not.toBeInTheDocument()
   expect(getData().days[DATE]?.tasks ?? []).toHaveLength(0)
 })
+
+// --- where it will land, while it is still being held --------------------
+
+/**
+ * The owner, on dragging a block before this existed: it is just a guess.
+ *
+ * And it was. The block dims when it is picked up and nothing else moves,
+ * so the only way to find out where it lands is to let go and look. The
+ * hour marks either side are no help - a compressed day draws them
+ * unevenly, which is the same reason the now line carries its own clock
+ * label in the gutter.
+ *
+ * So a drag says where it will land, in the gutter beside the timeline,
+ * while it is still being held. Quiet: the time, and a hairline to carry
+ * the eye across to it. It is the number the release is about to commit,
+ * snapped exactly as the release will snap it.
+ */
+test('a drag says where it will land, in the gutter, before it is let go', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  const block = container.querySelector('.timeline-anchor')!
+  fireEvent.pointerDown(block, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 300 })
+
+  const label = container.querySelector('.timeline-drop-label')
+  expect(label).toBeInTheDocument()
+  expect(label!.textContent).toMatch(/^\d\d:\d\d$/)
+  expect(container.querySelector('.timeline-drop-line')).toBeInTheDocument()
+})
+
+// A tap is not a drag. Flashing a time in the gutter for a press that never
+// moved would be the app answering a question nobody asked, on every tap.
+test('a press that has not moved says nothing', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  const block = container.querySelector('.timeline-anchor')!
+  fireEvent.pointerDown(block, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 101, clientY: 102 })
+
+  expect(container.querySelector('.timeline-drop-label')).toBeNull()
+})
+
+test('letting go takes the label away, and so does Escape', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  const block = container.querySelector('.timeline-anchor')!
+  mockElementFromPoint(container.querySelector('.timeline-grid'))
+
+  fireEvent.pointerDown(block, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 300 })
+  expect(container.querySelector('.timeline-drop-label')).toBeInTheDocument()
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 300 })
+  expect(container.querySelector('.timeline-drop-label')).toBeNull()
+
+  fireEvent.pointerDown(block, { pointerId: 2, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 2, clientX: 100, clientY: 300 })
+  expect(container.querySelector('.timeline-drop-label')).toBeInTheDocument()
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(container.querySelector('.timeline-drop-label')).toBeNull()
+})
+
+/**
+ * A resize is holding the bottom edge, so the number it owes you is where
+ * that edge lands - the end of the block - not where it started.
+ */
+test('resizing says where the bottom edge lands, not where the block starts', () => {
+  seed([{ id: 'guitar', title: 'Guitar', done: false, time: '10:00', minutes: 20 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+
+  const grip = container.querySelector('.timeline-anchor-resize')!
+  fireEvent.pointerDown(grip, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 400 })
+
+  const label = container.querySelector('.timeline-drop-label')
+  expect(label).toBeInTheDocument()
+  expect(label!.textContent).toMatch(/^\d\d:\d\d$/)
+})

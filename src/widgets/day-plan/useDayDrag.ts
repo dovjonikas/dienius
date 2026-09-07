@@ -55,6 +55,23 @@ export interface DayDrag {
   /** The task being dragged right now, for the grid to draw differently. */
   draggingTaskId: string | null
   /**
+   * Where the edge being held will land, as a minute of the day, while the
+   * pointer is still down. Null when nothing is being dragged, and null
+   * until the pointer has actually moved - see MIN_DRAG_DISTANCE_PX.
+   *
+   * The owner's report on dragging before this existed: it is just a guess.
+   * And it was. The block dims when it is picked up and nothing else moves,
+   * so the only way to learn where it lands was to let go and look. The hour
+   * marks either side are no help, because a compressed day draws them
+   * unevenly - which is the same reason the now line carries its own clock
+   * label in the gutter rather than trusting the reader to interpolate.
+   *
+   * It is the number the release is about to commit, computed by the same
+   * snap: a move reports the block's new start, a resize reports where its
+   * bottom edge lands, because that is the edge the hand is holding.
+   */
+  dropMinutes: number | null
+  /**
    * What to put in the day's live region.
    *
    * The announcer lives here rather than in its own hook because a drag is
@@ -84,6 +101,7 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
   const dragGrabRef = useRef<{ offsetPx: number; startMinutes: number }>({ offsetPx: 0, startMinutes: 0 })
   const geometryRef = useRef<GridGeometry | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
+  const [dropMinutes, setDropMinutes] = useState<number | null>(null)
   const [announcement, announce] = useState('')
 
   function endDrag() {
@@ -91,6 +109,24 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
     dragStartRef.current = null
     dragKindRef.current = null
     setDraggingTaskId(null)
+    setDropMinutes(null)
+  }
+
+  /**
+   * Where the held edge is right now, by exactly the arithmetic the release
+   * uses. Shared with `commitPointerDrag` rather than reimplemented beside
+   * it: a preview that rounds differently from the commit is worse than no
+   * preview, because it is confidently wrong.
+   */
+  function edgeAt(taskId: string, kind: 'move' | 'resize', clientY: number): number | null {
+    const geometry = geometryRef.current
+    const task = day?.tasks.find(t => t.id === taskId)
+    if (!geometry || !task?.time) return null
+    if (kind === 'move') {
+      return Math.max(0, snapToStep(geometry.minutesAtClientY(clientY - dragGrabRef.current.offsetPx)))
+    }
+    const length = Math.max(MIN_TASK_MINUTES, snapToStep(geometry.minutesAtClientY(clientY) - dragGrabRef.current.startMinutes))
+    return dragGrabRef.current.startMinutes + length
   }
 
   function beginPointerDrag(taskId: string, kind: 'move' | 'resize', e: React.PointerEvent) {
@@ -187,6 +223,16 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
       }
       if (movedEnough) commitPointerDrag(taskId, kind, e.clientY)
     }
+    function handleMove(e: PointerEvent) {
+      const taskId = dragRef.current
+      if (!taskId) return
+      const start = dragStartRef.current
+      // Nothing is said until the gesture is a drag rather than a press. The
+      // same threshold the release uses to decide the same question, so a
+      // press that never became a drag never flashes a time at anybody.
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < MIN_DRAG_DISTANCE_PX) return
+      setDropMinutes(edgeAt(taskId, dragKindRef.current ?? 'move', e.clientY))
+    }
     function handleCancel() {
       // A drag that goes nowhere - the gesture was cancelled by the browser,
       // or interrupted some other way - leaves state untouched, never a
@@ -196,10 +242,12 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape' && dragRef.current) endDrag()
     }
+    document.addEventListener('pointermove', handleMove)
     document.addEventListener('pointerup', handleUp)
     document.addEventListener('pointercancel', handleCancel)
     document.addEventListener('keydown', handleKeyDown)
     return () => {
+      document.removeEventListener('pointermove', handleMove)
       document.removeEventListener('pointerup', handleUp)
       document.removeEventListener('pointercancel', handleCancel)
       document.removeEventListener('keydown', handleKeyDown)
@@ -209,6 +257,7 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
 
   return {
     draggingTaskId,
+    dropMinutes,
     announcement,
     announce,
     startDrag: (taskId, e) => beginPointerDrag(taskId, 'move', e),

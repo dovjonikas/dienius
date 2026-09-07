@@ -6,7 +6,6 @@ import {
   NorthIcon,
   PinIcon,
   ReviewIcon,
-  ScratchIcon,
   SettingsIcon,
   TemplatesIcon,
   TodayIcon,
@@ -50,8 +49,7 @@ export const RAIL_OPEN_DWELL_MS = 150
 export interface NavRailProps {
   view: NavView
   onNavigate: (view: NavView) => void
-  onOpenScratch: () => void
-  scratchOpen: boolean
+
   /** Below the wide breakpoint this is a bar along the bottom, not a rail. */
   isWide: boolean
 }
@@ -113,7 +111,7 @@ export interface NavRailProps {
  * device. Labels go, because seven of them do not fit at 390px and that was
  * exactly what made the old row scroll.
  */
-export function NavRail({ view, onNavigate, onOpenScratch, scratchOpen, isWide }: NavRailProps) {
+export function NavRail({ view, onNavigate, isWide }: NavRailProps) {
   const [pinned, setPinned] = useState(readRailPinned)
   const [hovering, setHovering] = useState(false)
 
@@ -259,22 +257,12 @@ export function NavRail({ view, onNavigate, onOpenScratch, scratchOpen, isWide }
       </ul>
 
       <ul className="nav-rail-list nav-rail-foot">
-        <li>
-          {/* Not a view, so it is not one of the six and never carries the
-              active mark - it opens a layer over whatever is showing. It is
-              here because a rail is where somebody looks for the app's own
-              controls, and on a desktop Scratch had only a pen in the header
-              and two keys nobody had been told about. */}
-          <RailButton
-            item={{ view: 'day', label: 'Scratch', key: 'S', Icon: ScratchIcon }}
-            active={false}
-            pressed={scratchOpen}
-            onClick={() => {
-              onOpenScratch()
-              closeAfterPress()
-            }}
-          />
-        </li>
+        {/* The pen stood here for two versions, because Scratch had no
+            visible way in on a desktop - CONVENTIONS section 17: a feature
+            reached only by a key nobody has been told about is a feature
+            they do not have. It has one now, in the header, beside the
+            journal it is most often confused with, which is a better place
+            for it than a rail of the six views it is not one of. */}
         <li>
           <RailButton
             item={SETTINGS_ITEM}

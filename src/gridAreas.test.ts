@@ -61,18 +61,30 @@ test('every grid-area names an area some template actually declares', () => {
 })
 
 /**
- * The two rules that collapse the day view to two columns have to agree
- * about what the surviving column is called, because both can match at once
- * - an empty day, with the Tasks focus.
+ * The two rules that collapse the day view to one pane have to agree about
+ * what the surviving column is called, because both can match at once - an
+ * empty day, with the Tasks focus. A template naming an area the pane does
+ * not ask for puts the pane in an implicit track: the header was squeezed
+ * to 151px and wrapped onto three lines the one time this disagreed.
+ *
+ * Read as "the last row names the pane somewhere", not "the pane is the
+ * last column". It was the second until the focus layouts gained a spacer
+ * track either side, so that a single pane is centred rather than pushed
+ * against the rail with the width of a whole task list empty beside it -
+ * and the last token of the last row became a dot.
  */
 test('the first-run day and the Tasks focus name the task column the same way', () => {
   const css = stylesheet()
-  const columnOf = (selector: string) => {
+  const lastRowOf = (selector: string) => {
     const rule = css.match(new RegExp(`${selector}\\s*\\{[^}]*grid-template-areas:([^;]+);`))
     if (!rule) throw new Error(`no grid-template-areas for ${selector}`)
     const rows = [...rule[1].matchAll(/"([^"]*)"/g)].map(m => m[1].trim())
-    return rows[rows.length - 1].split(/\s+/).at(-1)
+    return rows[rows.length - 1].split(/\s+/)
   }
-  expect(columnOf('\\.day-view\\.focus-tasks')).toBe('tasks')
-  expect(columnOf('\\.day-view:has\\(\\.first-run\\)')).toBe('tasks')
+  expect(lastRowOf('\\.day-view\\.focus-tasks')).toContain('tasks')
+  expect(lastRowOf('\\.day-view:has\\(\\.first-run\\)')).toContain('tasks')
+
+  // And the calendar focus names its own pane in its own last row, by the
+  // name the timeline actually asks for.
+  expect(lastRowOf('\\.day-view\\.focus-calendar')).toContain('day')
 })

@@ -19,6 +19,9 @@ import { isTourRunning, startTour } from './lib/tourState'
 import { leaveTour } from './lib/tourExit'
 import { Scratch } from './views/scratch/Scratch'
 import { JournalOverlay } from './views/JournalView'
+import { HeaderPopover } from './widgets/clock/HeaderPopover'
+import { NotesPanel } from './widgets/clock/NotesPanel'
+import { JournalPanel } from './widgets/clock/JournalPanel'
 import { useIsWide } from './lib/viewport'
 import { requestReplan, useReplanRequest, type ReplanMode } from './lib/replanState'
 import { ReplanSheet } from './widgets/day-plan/ReplanSheet'
@@ -61,6 +64,11 @@ export function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [scratchOpen, setScratchOpen] = useState(false)
+  // The two small panels beside the clock. Each is its own door: they were
+  // tabs three and four of the clock panel for one version, which meant
+  // reaching a line you wanted to write by pressing a picture of a clock.
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [journalPanelOpen, setJournalPanelOpen] = useState(false)
   // The replan sheet - see widgets/day-plan/ReplanSheet.tsx. At the root
   // rather than inside the day view since v2.2, because "Something came up"
   // is about any day and is opened from the week, the calendar and the
@@ -215,17 +223,14 @@ export function App() {
           setFocusQuickAdd(n => n + 1)
           break
         case 'q':
-          // A line written down without leaving the screen: the clock panel's
-          // Notes tab, which is the short way in. S opens the whole stream,
-          // which is the long one. N was taken by quick-add years ago.
-          setClockTab('notes')
-          setClockOpen(true)
+          // A line written down without leaving the screen. S opens the whole
+          // stream, which is the long way in. N was taken by quick-add years
+          // ago.
+          setNotesOpen(true)
           break
         case 'j':
-          // Today's journal, with the cursor already in it. The same door as
-          // the clock's Journal tab, because there is only one.
-          setClockTab('journal')
-          setClockOpen(true)
+          // Today's journal, with the cursor already in it.
+          setJournalPanelOpen(true)
           break
         case 't':
           openDay(todayKey())
@@ -401,8 +406,6 @@ export function App() {
       <NavRail
         view={view}
         isWide={isWide}
-        scratchOpen={scratchOpen}
-        onOpenScratch={() => setScratchOpen(open => !open)}
         onNavigate={next => (next === 'day' ? openDay(todayKey()) : setView(next))}
       />
       <header className="app-header">
@@ -411,12 +414,70 @@ export function App() {
             than on the day view, because both are used while doing something
             other than planning - which is also why the running widget lives at
             the app root and not inside a tab. */}
-        {/* The pen that used to sit here moved into the rail, which is where
-            somebody looks for the app's own controls rather than the day's.
-            The rule it exists for is unchanged - CONVENTIONS section 17, a
-            feature reached only by a key somebody has not been told about is
-            a feature they do not have. */}
-        <div className="clock-launcher">
+        {/* Three doors, not one with four rooms. Notes and the journal were
+            tabs of the clock panel for a version - the clock is the one
+            control on screen from every tab, which made it the shortest path
+            from a thought to a line written down. The path was short and the
+            sign on it was wrong: a timer and a stopwatch are the same kind of
+            thing at different moments, and a note is neither of those nor a
+            clock. Each names itself now.
+
+            Which also puts Notes and Journal next to each other, where the
+            one thing somebody has to understand about them is easiest to
+            see: they are two different boxes. See DECISIONS "A journal, not
+            a form".
+
+            The rail's pen went with the change. It was there because Scratch
+            had no visible way in on a desktop - CONVENTIONS section 17, a
+            feature reached only by a key nobody has been told about is a
+            feature they do not have - and it has one here now. */}
+        <div className="header-tools">
+          <div className="clock-launcher">
+            <button
+              type="button"
+              className={notesOpen ? 'header-tool active' : 'header-tool'}
+              aria-haspopup="dialog"
+              aria-expanded={notesOpen}
+              onClick={() => setNotesOpen(open => !open)}
+            >
+              Notes
+            </button>
+            {notesOpen && (
+              <HeaderPopover label="Notes" className="notes-popover" onClose={() => setNotesOpen(false)}>
+                <NotesPanel
+                  onOpenFull={() => {
+                    setNotesOpen(false)
+                    setScratchOpen(true)
+                  }}
+                  onClose={() => setNotesOpen(false)}
+                />
+              </HeaderPopover>
+            )}
+          </div>
+
+          <div className="clock-launcher">
+            <button
+              type="button"
+              className={journalPanelOpen ? 'header-tool active' : 'header-tool'}
+              aria-haspopup="dialog"
+              aria-expanded={journalPanelOpen}
+              onClick={() => setJournalPanelOpen(open => !open)}
+            >
+              Journal
+            </button>
+            {journalPanelOpen && (
+              <HeaderPopover label="Journal" className="journal-popover" onClose={() => setJournalPanelOpen(false)}>
+                <JournalPanel
+                  onOpenFull={() => {
+                    setJournalPanelOpen(false)
+                    setJournalOpen(true)
+                  }}
+                />
+              </HeaderPopover>
+            )}
+          </div>
+
+          <div className="clock-launcher">
           <button
             type="button"
             className={clockOpen ? 'clock-button active' : 'clock-button'}
@@ -427,17 +488,16 @@ export function App() {
           >
             <span className="clock-button-face" aria-hidden="true" />
           </button>
-          {clockOpen && (
-            <ClockPopover
-              onClose={() => {
-                setClockOpen(false)
-                setClockTab(undefined)
-              }}
-              onOpenNotes={() => setScratchOpen(true)}
-              onOpenJournal={() => setJournalOpen(true)}
-              tab={clockTab}
-            />
-          )}
+            {clockOpen && (
+              <ClockPopover
+                onClose={() => {
+                  setClockOpen(false)
+                  setClockTab(undefined)
+                }}
+                tab={clockTab}
+              />
+            )}
+          </div>
         </div>
       </header>
 

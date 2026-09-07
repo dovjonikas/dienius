@@ -1349,6 +1349,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-size: var(--t-glyph);
 }
 
+/* Bare: no arrows either side, so nothing to sit between and nothing to
+   centre against. The title starts at the left edge of its row like every
+   other heading in the app. */
+.day-nav-bare { justify-content: flex-start; gap: 0; }
+.day-nav-bare .day-title { text-align: left; }
+
 .day-title { min-width: 0; text-align: center; }
 .day-title h2 { margin: 0; }
 .day-subtitle { color: var(--muted); font-size: var(--t-sm); }
@@ -2268,6 +2274,52 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   color: rgba(0, 0, 0, 0.78);
   font-size: var(--t-xs);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Where the block being held will land, while it is still being held.
+   ------------------------------------------------------------------------
+   Dragging a block used to be a guess: it dims when it is picked up, nothing
+   else moves, and the only way to learn where it lands was to let go and
+   look. The hour marks either side are no help - a compressed day draws them
+   unevenly, which is the same reason the now line carries its own label.
+
+   Quieter than the now line on purpose, and in every way at once: a hairline
+   rather than a rule, a dashed one rather than solid, the accent rather than
+   the mark, and a label that is bordered rather than filled. The now line is
+   a fact about the day and stays put; this is an answer to a question the
+   hand is asking this second and is gone the moment the finger lifts, so it
+   must never be the loudest thing on the grid while it is there. */
+.timeline-drop-line {
+  position: absolute;
+  left: var(--timeline-gutter);
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Filled with the surface rather than left transparent for the same reason
+   the now label is filled: it lands wherever the minute falls, often right
+   on an hour label, and two numbers sharing four pixels is the unreadable
+   text this app does not allow. The accent is on the border and the text,
+   not the ground, which is what keeps it quieter than the now chip. */
+.timeline-drop-label {
+  position: absolute;
+  left: 2px;
+  transform: translateY(-50%);
+  padding: 1px var(--s1);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-chip);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: var(--t-xs);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   pointer-events: none;
@@ -5126,7 +5178,61 @@ button.danger {
    the button was the thing that wrapped - landing alone on a row of its own
    under the tabs, with a hole above the day. Two deliberate rows instead: the
    name and the button, then the tabs across the full width. */
-.clock-launcher { position: relative; order: 1; }
+/* Three doors at the right of the header: Notes, Journal, and the clock.
+   One row, so the three read as a set and the eye does not have to find
+   them separately - and Notes beside Journal, where the one thing somebody
+   has to understand about the pair is easiest to see. */
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  order: 1;
+}
+
+.clock-launcher { position: relative; }
+
+/* The two worded ones. Quiet by default and lit while their panel is up,
+   exactly like the clock beside them - a header is a place to leave from,
+   not a row of buttons competing with the day underneath it. */
+.header-tool {
+  min-height: 36px;
+  padding: var(--s1) var(--s3);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.header-tool:hover { color: var(--text); }
+
+.header-tool.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--e1);
+}
+
+/* On a finger every one of the three is 44px, without the row growing to
+   match: the overlay reaches past the button the way every other small
+   control in this app does. */
+@media (pointer: coarse) {
+  .header-tool { position: relative; }
+  .header-tool::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: var(--touch);
+    transform: translateY(-50%);
+  }
+}
+
+/* The notes panel is a box and two lines under it; the journal is a date, a
+   box and one line. Neither wants the clock's width. */
+.notes-popover,
+.journal-popover { width: min(300px, calc(100vw - var(--s5) * 2)); }
 
 
 
@@ -6171,21 +6277,74 @@ button.danger:focus-visible {
      into 151px and wrapped its own controls onto three lines, and the task
      column landed in a fourth column nobody had declared. One name per
      column, so two rules that both collapse this grid cannot disagree. */
+  /* One column, centred in what is left after the rail - the same shape a
+     day already takes below this breakpoint, where `.day-view` is a 680px
+     column with `margin-inline: auto`.
+
+     They used to be one wide column hard against the rail, and both halves
+     of that were wrong on a 2000px screen. The timeline grew from 760px to
+     953px, so pressing Calendar made every block 200px wider - and a
+     block's width carries nothing, only its height is a duration, so the
+     only thing the extra width bought was a longer empty bar after each
+     title. Then it stopped, because the column was capped at 960, and left
+     351px of nothing down the right side. A view that ends two thirds of
+     the way across reads as something that failed to load.
+
+     So: the timeline keeps exactly the width it has beside the task list,
+     and the slack is split either side of it. Pressing Calendar takes the
+     task list away and changes nothing about the day itself, which is what
+     the control says it does. */
   .day-view.focus-calendar {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
+    grid-template-columns: 1fr minmax(200px, 240px) minmax(400px, 760px) 1fr;
     grid-template-areas:
-      "rail header"
-      "rail cap"
-      "rail day";
+      "header header header header"
+      "cap    cap    cap    cap"
+      ".      rail   day    .";
+  }
+
+  .day-view.focus-calendar:has(.day-notices:not(:empty)) {
+    grid-template-areas:
+      "header  header  header  header"
+      "notices notices notices notices"
+      "cap     cap     cap     cap"
+      ".       rail    day     .";
   }
 
   .day-view.focus-tasks {
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
+    grid-template-columns: 1fr minmax(200px, 240px) minmax(360px, 620px) 1fr;
     grid-template-areas:
-      "rail header"
-      "rail cap"
-      "rail tasks";
+      "header header header header"
+      "cap    cap    cap    cap"
+      ".      rail   tasks  .";
   }
+
+  .day-view.focus-tasks:has(.day-notices:not(:empty)) {
+    grid-template-areas:
+      "header  header  header  header"
+      "notices notices notices notices"
+      "cap     cap     cap     cap"
+      ".       rail    tasks   .";
+  }
+
+  /* The surviving pane takes the whole column and then centres itself in it,
+     at the width it already had beside the other one. Spacer tracks were
+     tried first and are the wrong tool: `1fr` either side of a `minmax()`
+     sized off content that is not there, and the timeline came out 248px
+     wide.
+
+     Both halves of the old rule were wrong on a 2000px screen. The column
+     was capped at 960, so the timeline grew from 760px to 953px when
+     Calendar was pressed - and a block's width carries nothing, only its
+     height is a duration, so the only thing the extra bought was a longer
+     empty bar after each title. Then the cap stopped it and left 351px of
+     nothing down the right side, and a view that ends two thirds of the way
+     across reads as something that failed to load.
+
+     Now pressing Calendar takes the task list away and changes nothing
+     about the day itself, which is what the control says it does. Same
+     shape a day already takes below this breakpoint, where `.day-view` is a
+     680px column with `margin-inline: auto` - see the rule near the top. */
+
 
   /* The header row: day-nav plus the focus control, side by side, wrapping
      if the window is narrow enough at the breakpoint's own edge that they
@@ -6459,14 +6618,43 @@ button.danger:focus-visible {
         "rail   day      tasks";
     }
 
+    /* The same four columns as below 1500 - a spacer, the rail, the one
+       surviving pane, a spacer - so the pair reads as centred rather than
+       pushed against the left with the width of a whole task list empty
+       beside it. Redeclared here because this block sets areas only, and a
+       three-line template against a four-track grid puts the pane in the
+       rail's column: that is exactly what happened first, and the timeline
+       came out 240px wide. */
     .day-view.focus-calendar {
       grid-template-areas:
-        "header header"
-        "rail   cap"
-        "rail   day";
+        "header header header header"
+        "cap    cap    cap    cap"
+        ".      rail   day    .";
     }
 
-    .day-view.focus-tasks,
+    .day-view.focus-calendar:has(.day-notices:not(:empty)) {
+      grid-template-areas:
+        "header  header  header  header"
+        "notices notices notices notices"
+        "cap     cap     cap     cap"
+        ".       rail    day     .";
+    }
+
+    .day-view.focus-tasks {
+      grid-template-areas:
+        "header header header header"
+        "cap    cap    cap    cap"
+        ".      rail   tasks  .";
+    }
+
+    .day-view.focus-tasks:has(.day-notices:not(:empty)) {
+      grid-template-areas:
+        "header  header  header  header"
+        "notices notices notices notices"
+        "cap     cap     cap     cap"
+        ".       rail    tasks   .";
+    }
+
     .day-view:has(.first-run) {
       grid-template-areas:
         "header header"

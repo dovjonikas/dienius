@@ -94,6 +94,6 @@ test('phone: the phone rings, and from the door to Accept is three presses with 
   await expect(sheet).toHaveCount(0)
   await expect(page.getByRole('status').filter({ hasText: 'Tomorrow replanned' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Next day' }).click()
+  await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('checkbox', { name: 'Something came up' })).toBeAttached()
 })

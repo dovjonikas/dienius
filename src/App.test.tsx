@@ -245,27 +245,36 @@ function pretendViewport(wide: boolean): () => void {
 }
 
 /**
- * Scratch used to have two different ways in, one per platform: a pen in the
- * header on a desktop and a draggable floating button on a phone. The rail
- * replaced both with one pen in the same place on both, which is what
- * CONVENTIONS section 17 was asking for all along - it only ever needed two
- * because there was nowhere a control could live on both platforms.
+ * Notes has had three homes and this is the argument each move settled.
  *
- * These two tests replace "the header carries a pen" and "on a phone the
- * floating button is the way in", which asserted exactly the split that is
- * gone.
+ * A pen in the header on a desktop and a draggable floating button on a
+ * phone: two ways in for one feature, because there was nowhere a control
+ * could live on both. Then one pen in the rail, on both - which is what
+ * CONVENTIONS section 17 was asking for all along. Then a tab of the clock
+ * panel, for the shortest path from a thought to a line.
+ *
+ * Now a button of its own in the header, on both, beside the journal. The
+ * clock tab was short and mislabelled: a note is not a clock, and finding
+ * the box meant reading four labels to see which one was not about time.
+ * The rail was honest but filed a thing that is not a view among the six
+ * that are.
+ *
+ * What has not changed through any of it: one visible way in, the same on
+ * every platform, and the key said out loud beside it.
  */
-test('the rail carries a pen on both platforms, and says which key does the same', async () => {
+test('the way into notes is one button in the header, the same on both platforms', async () => {
   for (const wide of [true, false]) {
     const restore = pretendViewport(wide)
     try {
       const { unmount } = render(<App />)
-      const pen = screen.getByRole('button', { name: 'Scratch' })
-      expect(pen, String(wide)).toHaveAttribute('title', 'Scratch - S')
+      const notes = screen.getByRole('button', { name: 'Notes' })
+      expect(notes, String(wide)).toBeInTheDocument()
+      // And no leftover from either of the two homes before it.
+      expect(screen.queryByRole('button', { name: 'Scratch' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'Scratch: write something down' })).toBeNull()
 
-      await userEvent.click(pen)
-      expect(screen.getByRole('dialog', { name: 'Scratch' })).toBeInTheDocument()
+      await userEvent.click(notes)
+      expect(screen.getByRole('dialog', { name: 'Notes' })).toBeInTheDocument()
       unmount()
     } finally {
       restore()
@@ -341,4 +350,60 @@ test('the week\'s bar has the door too, on the day the week is centred on', asyn
   await user.click(screen.getByRole('button', { name: 'Something came up' }))
   const sheet = screen.getByRole('dialog', { name: 'Replan' })
   expect(within(sheet).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+// --- three doors in the header, not one with four rooms ------------------
+
+/**
+ * Notes and the journal were the third and fourth tabs of the clock panel
+ * when they were built, on the reasoning that the clock button is the one
+ * control on screen from every tab. The reasoning held; the shape did not.
+ *
+ * A timer and a stopwatch are the same kind of thing at different moments,
+ * which is what tabs are for. A note and a journal entry are not that, and
+ * neither is either of them a clock - so reaching a line you want to write
+ * meant pressing a picture of a clock and then reading four labels to find
+ * the one that was not about time. The owner asked for them separately and
+ * they are separate: three buttons, each opening the one thing it names.
+ *
+ * The rail lost its pen with the change. It was there because Scratch had
+ * no visible way in on a desktop; it has one now, in the header, next to
+ * the journal it is most often confused with - which is also the clearest
+ * place to see that they are two different boxes.
+ */
+test('the header carries a button each for notes, the journal and the clock', () => {
+  render(<App />)
+  expect(screen.getByRole('button', { name: 'Notes' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Journal' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Timer and stopwatch' })).toBeInTheDocument()
+})
+
+test('the clock panel is a timer and a stopwatch, and says nothing about notes', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(screen.getByRole('button', { name: 'Timer and stopwatch' }))
+
+  const tools = within(screen.getByRole('dialog'))
+  expect(tools.getByRole('button', { name: 'Timer' })).toBeInTheDocument()
+  expect(tools.getByRole('button', { name: 'Stopwatch' })).toBeInTheDocument()
+  expect(tools.queryByRole('button', { name: 'Notes' })).toBeNull()
+  expect(tools.queryByRole('button', { name: 'Journal' })).toBeNull()
+})
+
+test('the notes button opens the one-line note, and the journal button the day', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+
+  await user.click(screen.getByRole('button', { name: 'Notes' }))
+  expect(screen.getByRole('textbox', { name: 'A quick note' })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+
+  await user.click(screen.getByRole('button', { name: 'Journal' }))
+  expect(screen.getByRole('textbox', { name: /^Journal for / })).toBeInTheDocument()
+})
+
+test('the rail no longer carries a pen, because the header does', () => {
+  render(<App />)
+  const rail = screen.getByRole('navigation', { name: 'Views' })
+  expect(within(rail).queryByRole('button', { name: /Scratch/ })).toBeNull()
 })

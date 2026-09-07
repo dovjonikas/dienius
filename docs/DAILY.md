@@ -384,15 +384,44 @@ Pressfield - and one timer, rather than four blocks on the grid.
 
 ---
 
+
+## Getting to another day
+
+On a laptop the month sits down the left of the day: press any day of it,
+and the arrows above it turn the month. The left and right arrow keys move
+a day from wherever you are, and `T` comes back to today.
+
+On a phone there is no month beside the day, so the day's name has an arrow
+either side of it instead. Same three ways otherwise.
+
+---
+
+## Moving a block on the day
+
+Drag it. While you are holding it, the time it will land on is printed in
+the gutter down the left, on a dashed line across the day - so you can put
+a block where you meant to instead of dropping it and looking. The bottom
+edge of a block resizes it the same way, and the number then says where
+that edge lands rather than where the block starts.
+
+Both snap to the same step the release uses, so what the line says is what
+you get. Let go anywhere off the timeline and nothing moves; Escape while
+still holding cancels it.
+
+Dragging a block onto the task list takes its time away and leaves it as
+something to do today with no hour on it.
+
+---
+
 ## Notes, and pictures in them
 
-Press the pencil at the bottom right, or `S` on a laptop, and write. It
-saves as you type - there is no save button and nothing to lose by closing
-it. A line starting with `!` goes to your inbox as something to do instead;
-the marker beside the box says which before you press enter.
+Press **Notes** in the top right and then **Open notes**, or `S`, and
+write. It saves as you type - there is no save button and nothing to lose
+by closing it. A line starting with `!` goes to your inbox as something to
+do instead; the marker beside the box says which before you press enter.
 
-For one line and nothing else, there is a shorter way: press `Q`, or the
-clock in the top right and then **Notes**. Type the line, press enter, and
+For one line and nothing else, there is a shorter way: press `Q`, or
+**Notes** in the top right. Type the line, press enter, and
 it is gone - you are still looking at whatever you were looking at. The
 last three notes are in that panel to recognise, and **Open notes** goes to
 the whole stream.
@@ -442,7 +471,7 @@ so the meal plan screenshot is one press from the task that came out of it.
 
 A day, and whatever you wanted to say on it. Nothing is asked.
 
-Press `J`, or the clock in the top right and then **Journal**. There is a
+Press `J`, or **Journal** in the top right, next to Notes. There is a
 date, an arrow either side of it, and one box. Write as much or as little as
 you like. It saves as you type; there is no Save button.
 

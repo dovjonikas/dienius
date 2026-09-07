@@ -1,13 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { useRestoreFocus } from '../../lib/useRestoreFocus'
+import { useEffect, useState } from 'react'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
-import { actions, useAppData } from '../../lib/store'
-import { scratchTitle, sortScratch } from '../../lib/scratch'
-import { JournalPanel } from './JournalPanel'
-
-const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+import { HeaderPopover } from './HeaderPopover'
 
 /**
  * The four lengths worth one tap. Short enough to be a nudge, long enough to
@@ -16,20 +11,13 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  */
 const PRESETS = [5, 10, 15, 30]
 
-/** How many of the last notes the panel shows. Enough to recognise one, few enough not to be a list. */
-const RECENT_NOTES = 3
-
 export interface ClockPopoverProps {
   onClose: () => void
-  /** Hands over to the full stream - see the Notes tab. */
-  onOpenNotes: () => void
-  /** Hands over to the whole journal - a month at a time, and the search. */
-  onOpenJournal: () => void
-  /** Which tool the panel opens on. The quick-note key asks for 'notes'. */
+  /** Which tool the panel opens on. */
   tab?: ClockTab
 }
 
-export type ClockTab = 'timer' | 'stopwatch' | 'notes' | 'journal'
+export type ClockTab = 'timer' | 'stopwatch'
 
 /**
  * Timer and stopwatch, in one small panel hung off the header button.
@@ -40,34 +28,21 @@ export type ClockTab = 'timer' | 'stopwatch' | 'notes' | 'journal'
  * left to say - the floating widget takes over and this closes itself, so the
  * panel is only ever a way in, never a place to sit and watch.
  *
- * Notes and Journal are the third and fourth tabs since v2.5. The clock
- * button is the one control on screen from every tab, which makes it the
- * shortest path from a thought to a line written down.
- *
- * The two are deliberately different things, and the difference has to stay
- * obvious or they become two of the same box. A note is a thought caught on
- * the way past: short, undated in any way that matters, and it turns into a
- * task. A journal entry is a day: dated, kept, turned into nothing, read
- * later. Notes is for doing; the journal is for remembering.
- *
- * Notes here is not a second Scratch - one line, Enter, gone, with the last
- * three to recognise and a button to the whole stream. The journal is one
- * box that saves itself, with no questions on it at all; see JournalPanel
- * and DECISIONS "A journal, not a form".
+ * Notes and Journal were the third and fourth tabs of this panel for one
+ * version, on the reasoning that the clock button is the one control on
+ * screen from every tab. The reasoning held; the shape did not. A timer and
+ * a stopwatch are the same kind of thing at different moments, which is
+ * what tabs are for - a note and a journal entry are not that, and neither
+ * of them is a clock, so reaching a line somebody wanted to write meant
+ * pressing a picture of a clock and reading four labels to find the one
+ * that was not about time. They have their own buttons beside this one now,
+ * and this panel is two tools again.
  */
-export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn }: ClockPopoverProps) {
-  useRestoreFocus()
+export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
   const tools = useClockTools()
-  const data = useAppData()
-  const panelRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<ClockTab>(openOn ?? (tools.stopwatch && !tools.timer ? 'stopwatch' : 'timer'))
   const [custom, setCustom] = useState('')
-  const [note, setNote] = useState('')
   const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    panelRef.current?.focus()
-  }, [])
 
   // Only ticks while the stopwatch tab is showing something running - the
   // panel is not where either tool is meant to be watched, and a timer that
@@ -77,40 +52,6 @@ export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn 
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [tab, tools.stopwatch])
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      onClose()
-      return
-    }
-    if (e.key !== 'Tab') return
-    const focusables = panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    if (!focusables || focusables.length === 0) return
-    const list = Array.from(focusables)
-    const first = list[0]
-    const last = list[list.length - 1]
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
-
-  // One line, kept, and the panel is gone. Not the draft-per-keystroke the
-  // Scratch overlay does: that exists because the overlay is a place to sit
-  // and this is a door somebody is already halfway through.
-  const recent = sortScratch(data.scratch).slice(0, RECENT_NOTES)
-
-  function keepNote() {
-    const text = note.trim()
-    if (!text) return
-    actions.addScratch(text)
-    setNote('')
-    onClose()
-  }
 
   function start(minutes: number) {
     clockTools.startTimer(minutes * 60_000)
@@ -130,18 +71,8 @@ export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn 
   const stopwatch = tools.stopwatch
 
   return (
-    <>
-      <button type="button" className="clock-scrim" aria-hidden="true" tabIndex={-1} onClick={onClose} />
-      <div
-        className="clock-popover"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Timer and stopwatch"
-        ref={panelRef}
-        tabIndex={-1}
-        onKeyDown={handleKeyDown}
-      >
-        <div className="segmented clock-tabs" role="group" aria-label="Tool">
+    <HeaderPopover label="Timer and stopwatch" onClose={onClose}>
+      <div className="segmented clock-tabs" role="group" aria-label="Tool">
           <button
             type="button"
             className={tab === 'timer' ? 'active' : ''}
@@ -158,67 +89,9 @@ export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn 
           >
             Stopwatch
           </button>
-          <button
-            type="button"
-            className={tab === 'notes' ? 'active' : ''}
-            aria-pressed={tab === 'notes'}
-            onClick={() => setTab('notes')}
-          >
-            Notes
-          </button>
-          <button
-            type="button"
-            className={tab === 'journal' ? 'active' : ''}
-            aria-pressed={tab === 'journal'}
-            onClick={() => setTab('journal')}
-          >
-            Journal
-          </button>
         </div>
 
-        {tab === 'journal' ? (
-          <JournalPanel
-            onOpenFull={() => {
-              onOpenJournal()
-              onClose()
-            }}
-          />
-        ) : tab === 'notes' ? (
-          <div className="clock-panel clock-notes">
-            <textarea
-              className="clock-note-input"
-              aria-label="A quick note"
-              placeholder="One line. Enter keeps it."
-              rows={2}
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              onKeyDown={e => {
-                if (e.key !== 'Enter' || e.shiftKey) return
-                e.preventDefault()
-                keepNote()
-              }}
-            />
-            {recent.length === 0 ? (
-              <p className="clock-note">Nothing written down yet.</p>
-            ) : (
-              <ul className="clock-note-list">
-                {recent.map(n => (
-                  <li key={n.id}>{scratchTitle(n.text, 60)}</li>
-                ))}
-              </ul>
-            )}
-            <button
-              type="button"
-              className="clock-note-open"
-              onClick={() => {
-                onOpenNotes()
-                onClose()
-              }}
-            >
-              Open notes
-            </button>
-          </div>
-        ) : tab === 'timer' ? (
+        {tab === 'timer' ? (
           <div className="clock-panel">
             <div className="clock-presets">
               {PRESETS.map(m => (
@@ -272,8 +145,7 @@ export function ClockPopover({ onClose, onOpenNotes, onOpenJournal, tab: openOn 
             </div>
           </div>
         )}
-      </div>
-    </>
+    </HeaderPopover>
   )
 }
 

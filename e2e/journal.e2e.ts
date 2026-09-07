@@ -23,7 +23,9 @@ test('phone: the journal opens, takes a sentence and closes, with nothing scroll
   await stampWorkingDay(page)
   await page.evaluate(() => window.scrollTo(0, 0))
 
-  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  // Its own button in the header now, next to Notes. It was the clock
+  // panel's fourth tab, and this walk opened the clock first - which now
+  // puts a scrim over the very button it is reaching for.
   await page.getByRole('button', { name: 'Journal' }).click()
 
   const box = page.getByRole('textbox', { name: /^Journal for / })
