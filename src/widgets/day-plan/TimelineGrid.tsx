@@ -73,25 +73,35 @@ const MIN_ANCHOR_HEIGHT = 44
 const SIZED_MIN_HEIGHT_PX = 32
 
 /**
- * A block shows its times when it is an hour or longer, and its title
- * alone when it is shorter - the one rule for every grid in the app,
- * CONVENTIONS section 4. An hour is where the start and the end stop being
- * something the block's own height already says: a fifteen-minute block
- * reads as a moment and its minutes are one glance away on the card, a
- * two-hour block is a stretch of the day and which two hours matters. It
- * used to be a matter of drawn height alone, which showed the times on
- * whatever happened to be tall at today's density and not on the same
- * block tomorrow.
+ * From this length a block is floored at two lines - see TWO_LINES_PX and
+ * the floors handed to computeVerticalLayout below. It used to decide
+ * whether a block showed its times at all: an hour or longer said them, a
+ * shorter block was a title alone, from v2.4 to v2.7, on the argument that
+ * a short block's height already says it is a moment. The owner's
+ * screenshot of a Today with the times on two blocks out of nine settled
+ * that a moment still has a time - Lunch, Standup and Commute were the ones
+ * a person has to be somewhere for - so every block says when it starts
+ * and ends now, CONVENTIONS section 4, and the only thing an hour still
+ * decides is the room reserved for saying it. A long block's times are a
+ * line of their own under the title, and the two-line floor is what keeps
+ * that line whole however dense the day is drawn; a shorter block keeps
+ * the one-line floor and says its times beside the title on that line.
+ * The floor stayed where it was on purpose when the rule changed: a day of
+ * eight short blocks floored at two lines would be sixteen pixels taller
+ * per block and stop fitting 1366x768 without a scroll.
  */
 const TIMES_FROM_MINUTES = 60
 
 /**
- * Below this drawn height a block has no room for a second line whatever
- * its length, and shows its title alone: 6px of padding above and below, a
- * 13px title at 1.4, the 2px gap and an 11px time line at 1.4 come to 48.
- * It was 40, which is what a two-line block looked as if it needed and
- * eight pixels less than it does, and "Deep work block" at 41px carried
- * half a time line under its title for a version.
+ * The drawn height a block needs for its times to have a line of their own
+ * under the title: 6px of padding above and below, a 13px title at 1.4,
+ * the 2px gap and an 11px time line at 1.4 come to 48. Under this the
+ * times go beside the title instead, never away - `timeline-anchor-inline`
+ * in the stylesheet - because a block with one line of room still has a
+ * line, and a time is short enough to share it. It was 40, which is what a
+ * two-line block looked as if it needed and eight pixels less than it
+ * does, and "Deep work block" at 41px carried half a time line under its
+ * title for a version.
  */
 const TWO_LINES_PX = 48
 
@@ -534,9 +544,11 @@ export function TimelineGrid({
     sizedAnchorFloorPx: SIZED_MIN_HEIGHT_PX,
     unsizedAnchorFloorPx,
     gapFloorPx: unsizedAnchorCount > 0 ? 0 : gapMinHeightPx,
-    // A block an hour or longer carries its times, which is a second line,
-    // so it is floored at two lines: the rule is then about the block's
-    // length and never about the room the day happened to leave it.
+    // A block an hour or longer is floored at two lines, so its times keep
+    // a line of their own under the title however dense the day is drawn.
+    // A shorter block says its times beside the title on its one line and
+    // keeps the one-line floor - see TIMES_FROM_MINUTES for why the floor
+    // stayed put when every block started saying its times.
     longAnchorFloorPx: TWO_LINES_PX,
     longAnchorMinutes: TIMES_FROM_MINUTES,
   }
@@ -733,10 +745,18 @@ export function TimelineGrid({
               // one picture of a day this grid must never draw.
               const blockHeightPx = Math.max(Math.min(heightPx ?? minHeightPx, room), minHeightPx)
               const compact = blockHeightPx < COMPACT_HEIGHT_PX
-              // The height guard is a belt: the floor above already gives a
-              // long block its two lines, and an unsized block its line only
-              // if the day happens to leave it the room.
-              const showsTimes = blockHeightPx >= TWO_LINES_PX && (!anchor.sized || long)
+              // Every block says its times; the drawn room decides where.
+              // Two lines of room put them under the title, which is where
+              // a long block always had them and what its floor reserves.
+              // One line puts them after the title on that line - where a
+              // short block's floor leaves it, and where any block lands
+              // once its column is crowded enough to cap it. By drawn
+              // height rather than by length, so a half-hour block on a
+              // generously drawn afternoon gets its second line too, and
+              // the floor above is a guarantee rather than the rule: the
+              // room is what decides, and the floor makes sure a long
+              // block always has it.
+              const inline = blockHeightPx < TWO_LINES_PX
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
               // A category paints the block itself - a soft wash of its own
@@ -764,6 +784,7 @@ export function TimelineGrid({
               if (sourceTask?.done) classNames.push('timeline-anchor-done')
               if (activeTaskId === anchor.id) classNames.push('timeline-anchor-now')
               if (compact) classNames.push('timeline-anchor-compact')
+              if (inline) classNames.push('timeline-anchor-inline')
               // Not enough room for one padded line of title. See the CSS.
               if (blockHeightPx < SQUEEZED_HEIGHT_PX) classNames.push('timeline-anchor-squeezed')
               if (clashIds?.includes(anchor.id)) classNames.push('timeline-anchor-clash')
@@ -803,13 +824,11 @@ export function TimelineGrid({
                       onPointerDown={e => onAnchorResizePointerDown(anchor.id, e)}
                     />
                   )}
-                  {showsTimes && (
-                    <span className="timeline-anchor-time">
-                      {anchor.sized
-                        ? formatAnchorTimeRange(anchor.startMinutes, anchor.minutes!)
-                        : `${anchor.time} - size unknown`}
-                    </span>
-                  )}
+                  <span className="timeline-anchor-time">
+                    {anchor.sized
+                      ? formatAnchorTimeRange(anchor.startMinutes, anchor.minutes!)
+                      : `${anchor.time} - no length`}
+                  </span>
                 </div>
               )
             })}

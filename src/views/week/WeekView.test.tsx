@@ -81,6 +81,25 @@ test('only tasks with a time are drawn - the rest are counted, not invented onto
   expect(column(MON).textContent).toContain('~1')
 })
 
+/**
+ * Every block says when it starts and ends - CONVENTIONS section 4. The week
+ * used to say it on an hour or longer only; the line is on every block now,
+ * and whether it is drawn is the stylesheet's container query on the
+ * block's height, which jsdom cannot lay out. What is held here is that the
+ * line is there to be drawn, on a half-hour block as on an hour.
+ */
+test('a half-hour block carries its start and end, the same as an hour would', () => {
+  actions.addTask(MON, 'Standup', '09:00')
+  actions.addTask(TUE, 'Deep work', '10:00')
+  actions.setTaskMinutes(TUE, getData().days[TUE].tasks[0].id, 60)
+  renderWeek()
+
+  const standup = within(column(MON)).getByRole('button', { name: /Standup/ })
+  expect(standup.querySelector('.week-block-time')?.textContent).toBe('09:00 - 09:30')
+  const deep = within(column(TUE)).getByRole('button', { name: /Deep work/ })
+  expect(deep.querySelector('.week-block-time')?.textContent).toBe('10:00 - 11:00')
+})
+
 // --- moving a block between days ----------------------------------------
 
 /**

@@ -91,6 +91,14 @@ test('an unsized anchor renders with the unsized class and no colored background
   expect(block).not.toHaveClass('timeline-anchor-colored')
 })
 
+// A block with a time and no length has a start and no end, and says so
+// in the same line every other block uses for its times - the words are
+// what a person can act on, since a length is one tap away on the card.
+test('an unsized block says its start and that it has no length', () => {
+  const { container } = render(<TimelineGrid tasks={[anchor('Mystery', '09:00')]} />)
+  expect(container.querySelector('.timeline-anchor-time')).toHaveTextContent('09:00 - no length')
+})
+
 test('a note explaining hidden gaps only appears when an anchor is unsized', () => {
   const sized = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />)
   expect(sized.container.querySelector('.timeline-note')).toBeNull()
@@ -517,12 +525,14 @@ test('isWide with a small window.innerHeight never draws thinner than isWide=fal
 })
 
 /**
- * A block an hour or longer shows its times, and a shorter one its title
- * alone - CONVENTIONS section 4. The times are a second line, so the long
- * block has a two-line floor and keeps them however dense the day is drawn;
- * the short one never had them, whatever room it happens to get.
+ * Every block says when it starts and ends - CONVENTIONS section 4 - and
+ * the drawn room decides where. A block an hour or longer has a two-line
+ * floor, so its times keep a line of their own under the title however
+ * dense the day is drawn; a shorter one keeps the one-line floor and says
+ * its times after the title on that line. It was "an hour or longer" from
+ * v2.4 to v2.7, and the short block was its title alone.
  */
-test('a block an hour or longer keeps its times however dense the day is drawn, and a shorter one shows its title alone', () => {
+test('every block says when it starts and ends: under the title with two lines of room, after it with one', () => {
   // An hour of deep work and seven hours of half-hour calls, in a window
   // far too short for any of it: the fit draws everything at its floor.
   const tasks = [
@@ -537,8 +547,25 @@ test('a block an hour or longer keeps its times however dense the day is drawn, 
   const deep = blocks.find(b => b.textContent?.startsWith('Deep work'))!
   expect(deep.querySelector('.timeline-anchor-time')?.textContent).toBe('08:00 - 09:00')
   expect(parseFloat(deep.style.minHeight)).toBeGreaterThanOrEqual(48)
+  expect(deep).not.toHaveClass('timeline-anchor-inline')
   const call = blocks.find(b => b.textContent?.startsWith('Call 0'))!
-  expect(call.querySelector('.timeline-anchor-time')).toBeNull()
+  expect(call.querySelector('.timeline-anchor-time')?.textContent).toBe('09:00 - 09:30')
+  expect(call).toHaveClass('timeline-anchor-inline')
+})
+
+// By the room, not by the length: the same half-hour block on an afternoon
+// drawn generously is taller than two lines, and then its times go under
+// the title like a long block's. The one-line layout is what a short block
+// gets when the day is dense, never a mark of being short.
+test('a short block drawn with two lines of room carries its times under the title, not beside it', () => {
+  const tasks = [anchor('Deep work', '09:00', 60), anchor('Call', '11:00', 30), anchor('Gym', '12:00', 60)]
+  setInnerHeight(2000)
+  const { container } = render(<TimelineGrid tasks={tasks} isWide />)
+  const blocks = [...container.querySelectorAll('.timeline-anchor')] as HTMLElement[]
+  const call = blocks.find(b => b.textContent?.startsWith('Call'))!
+  expect(parseFloat(call.style.height)).toBeGreaterThan(48)
+  expect(call.querySelector('.timeline-anchor-time')?.textContent).toBe('11:00 - 11:30')
+  expect(call).not.toHaveClass('timeline-anchor-inline')
 })
 
 test('a short gap still floors to the 44px touch target at isWide, exactly as it does at any width', () => {

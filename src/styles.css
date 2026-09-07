@@ -1924,6 +1924,17 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .timeline-anchor {
   position: absolute;
   overflow: hidden;
+  /* A query container on its own width, so the stylesheet can decide
+     whether a time fits beside the title, or at all, from the width the
+     block was actually drawn at - a crowded column on a phone, a week
+     column in the template editor - rather than from a guess made in the
+     component, which knows the lane count and nothing else. Inline-size
+     containment makes the box its own stacking context, so the z-index is
+     said here as CONVENTIONS section 4 asks of every containment boundary:
+     zero, which keeps the anchors in document order under the now line
+     that is painted after them. */
+  container-type: inline-size;
+  z-index: 0;
   display: flex;
   flex-direction: column;
   /* Top-aligned, not centered: a tall anchor's own title otherwise sits
@@ -1950,17 +1961,74 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   padding: 3px var(--s2);
 }
 
+/* One line of room, so the times sit beside the title - see TWO_LINES_PX
+   in TimelineGrid.tsx. Beside rather than under, because under is a second
+   line and the block has not got one: a block shorter than an hour is
+   floored at one line on purpose, so that a day of eight short blocks is
+   not sixteen pixels taller per block and still fits 1366x768 without a
+   scroll, and until v2.7 every block under an hour was a title alone for
+   that reason. A time is short enough to share the title's line, and a
+   line that says "Standup 09:00 - 09:15" is the whole block in one read.
+
+   On that line the title gives way first: it shrinks to nothing before the
+   time loses a digit, since the title is on the card a glance away and the
+   time is what the line is there to say. The time is held at its own width
+   rather than shrunk beside the title - two items shrinking together lose
+   their ends together, and a time with its last digit gone is no time -
+   and capped at the block, so in a column crowded enough that the time
+   alone does not fit it ellipsises instead of running under the block's
+   edge, which is the sweep's text-cut-off shape. Baseline-aligned, since a
+   13px title and an 11px time centred on each other sit a pixel apart at
+   the foot, where a line is read. The time keeps the 0.75 it has under a
+   title; beside one it is pushed back the same once, no more. */
+.timeline-anchor.timeline-anchor-inline {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.timeline-anchor-inline .timeline-anchor-title {
+  flex: 0 1 auto;
+}
+
+.timeline-anchor-inline .timeline-anchor-time {
+  flex: 0 0 auto;
+  max-width: calc(100% - var(--s2));
+}
+
+/* And the width has the last word. Under about 144px a line cannot hold a
+   word of title, the gap and "11:30 - 11:45" together, and the title
+   giving way first would leave a block that says its minutes and not its
+   name; there the time goes and the block is its title, as every short
+   block was before v2.7 - the axis on the left still says when. Under
+   about 96px not even the time line under a title is whole, which is the
+   template editor's seven week columns and a three-lane clash on a phone:
+   a title alone. Measured on the block's own drawn width, which is the
+   one thing the component cannot know. */
+@container (max-width: 143px) {
+  .timeline-anchor-inline .timeline-anchor-time { display: none; }
+}
+
+@container (max-width: 95px) {
+  .timeline-anchor-time { display: none; }
+}
+
 /* Shorter than one padded line. A block whose column is crowded is capped
    at the room before the next block in it (see TimelineGrid), so on a full
    afternoon a 25-minute task can come out at twenty pixels. Its one line of
-   title still has to be a whole line rather than a row of sliced glyphs, so
-   the padding goes and the line is centred in whatever height is left. */
+   title and times still has to be a whole line rather than a row of sliced
+   glyphs, so the padding goes and the line is centred in whatever height is
+   left. A squeezed block is always an inline one - 26px is under the 48 a
+   second line needs - so the line is a row, and centring it in the height
+   is align-items: it used to be justify-content, which in a row would have
+   centred the words across the block instead. */
 .timeline-anchor.timeline-anchor-squeezed {
-  justify-content: center;
+  align-items: center;
   padding-block: 0;
 }
 
-.timeline-anchor-squeezed .timeline-anchor-title { line-height: 1.1; }
+.timeline-anchor-squeezed .timeline-anchor-title,
+.timeline-anchor-squeezed .timeline-anchor-time { line-height: 1.1; }
 
 .timeline-anchor-title,
 .timeline-anchor-time {
@@ -10126,10 +10194,14 @@ main:has(.week) > .calendar {
   white-space: nowrap;
 }
 
-/* The times, on a block an hour or longer - the day grid's rule,
-   CONVENTIONS section 4 - and only while the block is tall enough for the
-   second line: two 11px lines at 1.15 and the 2px of padding are 28px, so
-   under that the line goes and the block is a title, as every block was. */
+/* The times, on every block - the day grid's rule, CONVENTIONS section 4 -
+   while the block is tall enough for the second line: two 11px lines at
+   1.15 and the 2px of padding are 28px, so under that the line goes and
+   the block is a title. The day grid puts the times beside the title where
+   a block has one line of room; a week's column is too narrow for that, so
+   here a short block is its title and nothing else. The hour condition the
+   week shared with the day grid went in v2.7: any block that reaches two
+   lines says its times, whatever its length. */
 .week-block-time {
   display: block;
   overflow: hidden;

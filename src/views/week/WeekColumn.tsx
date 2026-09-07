@@ -12,11 +12,11 @@ import type { WeekBlock, WeekDayLayout } from './weekLayout'
 /**
  * One day of the week, as a column.
  *
- * Everything about it is compressed on purpose. Times only on a block an
- * hour or longer, and only while the block is tall enough for a second line
- * - the same rule the day's grid keeps, CONVENTIONS section 4; the axis on
- * the left says when for the rest, and a time printed on a 14px block is
- * two illegible numbers competing with the only word that matters. No
+ * Everything about it is compressed on purpose. Times on every block, but
+ * only while the block is tall enough for a second line - the day grid's
+ * rule, CONVENTIONS section 4, with the one clause a narrow column adds; the
+ * axis on the left says when for the rest, and a time printed on a 14px
+ * block is two illegible numbers competing with the only word that matters. No
  * checkboxes - a week is for arranging, and ticking things off is what the
  * day view is for, one tap away through any block.
  */
@@ -258,14 +258,16 @@ export function WeekColumn({
               onPointerDown={e => onBlockPointerDown(block, e)}
             >
               <span className="week-block-title">{block.task.title}</span>
-              {/* Hidden again by the stylesheet while the block is under two
-                  lines tall - a container query on the block's own height,
-                  which is the one thing this component cannot know. */}
-              {block.endMinutes - block.startMinutes >= 60 && (
-                <span className="week-block-time">
-                  {formatClock(block.startMinutes)} - {formatClock(block.endMinutes)}
-                </span>
-              )}
+              {/* On every block, whatever its length. Hidden again by the
+                  stylesheet while the block is under two lines tall - a
+                  container query on the block's own height, which is the
+                  one thing this component cannot know. A column is too
+                  narrow to put the times beside the title the way the day
+                  grid does with one line of room, so under two lines the
+                  block is its title. */}
+              <span className="week-block-time">
+                {formatClock(block.startMinutes)} - {formatClock(block.endMinutes)}
+              </span>
             </button>
           )
         })}

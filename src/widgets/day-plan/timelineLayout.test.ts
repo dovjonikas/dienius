@@ -667,11 +667,12 @@ test('the clearance is twelve pixels either side of the label', () => {
   expect(gapLabelPlacement(100, 60, 109)).not.toBe('middle')
 })
 
-// A block an hour or longer carries its times - CONVENTIONS section 4 - and
-// the times are a second line, so such a block's floor is two lines. The
-// rule was a matter of drawn height alone for a version, which showed the
-// times on whatever happened to be tall at the day's density and hid them
-// on the same block the next day.
+// A block an hour or longer is floored at two lines: its times are a line
+// of their own under the title - CONVENTIONS section 4 - and the floor is
+// what keeps that line whole however dense the day is drawn. A shorter
+// block keeps the one-line floor and says its times beside the title (see
+// TimelineGrid): since v2.7 every block says them, and the floors did not
+// move with the rule, so a day of short blocks is no taller than it was.
 test('an anchor an hour or longer earns the two-line floor, and a shorter one the one-line floor', () => {
   const layout = computeTimelineLayout([anchor('Call', '09:00', 30), anchor('Deep work', '11:00', 60)])
   const squeezed = { ...OPTS, pxPerMinute: 0.2, gapFloorPx: 0, longAnchorFloorPx: 48, longAnchorMinutes: 60 }

@@ -150,27 +150,40 @@ Everything else scrolls vertically and that is fine. **Nothing scrolls
 horizontally, ever.** Check with
 `document.documentElement.scrollWidth > clientWidth`.
 
-### A block shows its times when it is an hour or longer
+### A block carries its start and its end
 
-One rule for every grid that draws a task as a block. **An hour or longer,
-the block carries its start and its end under its title; shorter, the
-title alone.** An hour is where the start and the end stop being something
-the block's own height already says: a fifteen-minute block reads as a
-moment and its minutes are one glance away on the card, a two-hour block is
-a stretch of the day and which two hours matters.
+One rule for every grid that draws a task as a block. **Every sized block
+says when it starts and when it ends**, whatever its length: under its
+title where the block has two lines of room, after its title on the same
+line where it has one. It was "an hour or longer" from v2.4 to v2.7, on
+the argument that a short block's height already says it is a moment; the
+owner's screenshot of a Today with the times on two blocks out of nine
+settled that a moment still has a time, and Lunch, Standup and Commute
+were the ones a person actually has to be somewhere for.
 
-- **On Today** the rule is exact. A sized block an hour or longer has a
-  two-line floor (`TWO_LINES_PX` in `TimelineGrid.tsx`, 48px, the padded
-  title and time line measured rather than guessed), so however dense the
-  day is drawn the second line has its room. It used to go by drawn height
-  alone, which showed the times on whatever happened to be tall at today's
-  density and not on the same block tomorrow - and at 41px it showed half
-  a line.
+- **On Today** the floors do not move. A sized block an hour or longer
+  keeps its two-line floor (`TWO_LINES_PX` in `TimelineGrid.tsx`, 48px,
+  the padded title and time line measured rather than guessed), so however
+  dense the day is drawn its second line has its room; a shorter block
+  keeps its one-line floor and carries the times beside its title, so a
+  day of eight short blocks is not sixteen pixels taller per block. On
+  that line the title gives way first and the time keeps its digits. A
+  block with a time and no length says its start and "no length" in the
+  same line.
+- **And the width has the last word**, measured on the block itself by a
+  container query: under about 144px a line cannot hold a word of title,
+  the gap and a time, so the time goes and the block is its title, as
+  every short block was before v2.7; under about 96px - the template
+  editor's seven week columns, a three-lane clash on a phone - not even
+  the line under a title is whole, and the block is its title alone. The
+  axis on the left still says when.
 - **On the week** a block's height is its duration and nothing may floor
-  it, so the same rule has one clause: the times are there on an hour or
-  longer, and hidden by a container query while the block is under two
-  lines tall. A week at 1366x768 is mostly titles; at 1920x1080 the long
-  blocks say their hours.
+  it, and a column is too narrow for a time beside a title, so the same
+  rule has one clause: the times are there on any block two lines tall
+  and hidden by a container query under that. At 1366x768 only the
+  hour-long blocks reach two lines and the rest are titles; at 1920x1080
+  everything from about forty minutes says its hours and the quarter- and
+  half-hour blocks are titles.
 
 Never a time on a block that has not got the room for it. Half a line of
 digits under a title is text cut off, which is a defect anywhere in the
