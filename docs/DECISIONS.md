@@ -385,11 +385,13 @@ since the worker has already taken over in the background regardless - nothing i
 the old page a while longer, and nothing is silently stuck forever the way the pre-existing risk this
 whole feature was built to close would have allowed.
 
-## Relatedness is the motivator local-first cannot serve
+## Relatedness is a known cost
 
 Self-determination theory identifies three needs that sustain motivation, and is the best-evidenced
 account of what motivates people with ADHD specifically (Morsink et al. 2022): autonomy, competence,
-relatedness. Dienius serves the first two. Autonomy - the app never auto-schedules and never decides
+relatedness. This entry was written when the research was, on 2026-09-01, as "the motivator
+local-first cannot serve"; the v2.7 brief asked for it under the name RESEARCH-ADHD section 14 uses,
+a known cost, and the owner accepted that reading with the app's closing. Nothing below changed. Dienius serves the first two. Autonomy - the app never auto-schedules and never decides
 for the person, see "No accounts" above and every decision in this file that assumes the person stays
 in control of their own plan. Competence - the fraction, the capacity line, and the year strip's own
 ring all show real progress honestly, against no invented target.
@@ -1983,3 +1985,97 @@ their own doors as they were:
 The question is asked in the rail rather than in a sheet because a modal
 for a one-line question is a second surface for one decision, and the
 press was made here.
+
+## Three arguments the docs do not make
+
+RESEARCH-ADHD section 14 named three things the research refuses that the
+app's own reasoning might have leaned on, and the owner accepted all three
+when the app closed. Before rewriting anything, every living doc - this
+file, CONVENTIONS, ARCHITECTURE, DAILY, README, and the copy in
+`explain.ts` and `tour.ts` - was searched for "Zeigarnik", "decision
+fatigue", "ego depletion" and "evidence shows". The terms occur only in the
+research documents, where they are named in order to be refused, and in
+"The push bound is a design choice" above, which refuses them. So nothing
+had to be taken out. What follows is what each of the three rests on
+instead, written once so the next person does not reach for the popular
+version.
+
+**Capture does not rest on the Zeigarnik effect.** The famous claim - an
+unfinished task occupies the mind until it is written down - does not
+survive meta-analysis (section 6: the recall ratio pools to about 0.99).
+Scratch, Later and the field that writes to either rest on two narrower
+things. One study, without an independent replication, found that writing
+a specific plan removed the intrusion of an unfinished goal even though the
+goal stayed unfinished (Masicampo and Baumeister 2011); it is plausible and
+evidenced once, and that is the strength it is given. The other is the
+maintenance burden: a thing that has to be written down in the next second
+is lost if the app asks a question first, and an app that loses what
+people bring to it is one they stop bringing things to (section 11). The
+features stay; the reason is that one.
+
+**The no-new-decisions rule does not rest on decision fatigue.** The rule
+- no change may add a question before the day can start, and no feature
+may cost one more decision a day - is CONVENTIONS section 25 now, and it
+was never argued from a battery that each choice drains: ego depletion, the
+theory under that picture, came out at d = 0.04 across twenty three
+laboratories (section 9). The reason that holds is the planner-abandonment
+literature (section 11): the time cost of upkeep is a leading cause of
+people quitting a tool, a median of seventy percent inside a hundred days,
+and a planner whose upkeep needs the executive function it exists to lend
+is self-defeating. Every extra step is another place to leave.
+
+**The proportional grid is not evidence-backed, and says so.** "The
+timeline grid changes how the day feels, not how much gets done" above
+already states it: no study compares a proportional-height grid against the
+same day written as text, in any population. The grid is a reasoned design
+choice consistent with Barkley's point of performance - information present
+where the behaviour happens - with no direct study behind it, and nothing
+in these docs says "the evidence shows" about it. The one adjacent result
+(Hallez and Vallier 2025) found a visible timer changed anxiety and
+attention, not accuracy, which is the claim the app makes and the only one.
+
+## The mini calendar's cells stay at 33px
+
+`MiniCalendar.tsx` in the day view's rail draws a seven-column month inside
+a rail that is `minmax(200px, 240px)` wide, which comes out at 33px cells at
+every width from 1280 to 1920 because the rail's own cap holds it there.
+Every other control the app draws holds the 44px touch target, and this one
+was built under it on purpose rather than by silently narrowing the rule
+for one control: `.mini-cell` in `styles.css` says so beside the number.
+It sat in OPEN-QUESTIONS from v2.0 to v2.7 with a recommendation to leave
+it, and the owner accepted the recommendation when the app closed.
+
+The reason it stays: the mini calendar is a way to another day, not a
+surface anybody spends the day tapping - it fires once per navigation and
+never per task - and it is the desktop's control; the phone has no rail
+and its header carries the day arrows at 44px instead. The two honest
+fixes were both visible trades and neither was worth making: widening the
+rail past 240px takes about 320px to clear 44px and every one of those
+pixels comes out of the day pane or the task pane, which were sized to fit
+1024px together; and thinning the grid to fewer weeks or a list would make
+it a worse calendar to save a target the finger does not use. If a real
+tablet ever shows it matters, those are the two changes, in
+`MiniCalendar.tsx` and `.mini-cell`, and nowhere else.
+
+## A task's title is a 29px target, on purpose
+
+`.task-title-select` is the title of a float - a task on the day with no
+time - and doubles as the control that selects it for the gap offers. It
+escapes the 44px floor: holding 44px there made a float's card sixteen
+pixels taller than an anchor's, measured at 66px against 50px in the same
+column, because this button is the tallest thing in the title row, and a
+list whose rows change height by whether a task happens to have a time is
+a list that is harder to scan - which is the only job that list has. The
+padding gives the control a hit area 29px tall running the full width of
+the title, and a negative margin keeps that area out of layout so the card
+stays the height of its content.
+
+It stays as built, with the owner's word. A target 29px tall and 200px
+wide is a different thing from a 29px square - the dimension a thumb
+misses on is the one this keeps generous - and the same card's actions
+menu sits at the full 44px and reaches the same placement, so nothing here
+is the only way to anything. If real hardware ever says otherwise, the fix
+is a fixed content height on the label row with the hit area extended on
+both axes by the same padding-and-negative-margin, and then a check that
+the selected state's outline does not cross the meta line under it, which
+is why it was not done that way first.

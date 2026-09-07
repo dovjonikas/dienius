@@ -235,8 +235,8 @@ to choose between at the moment of writing.
 | 1 | Three small things from the owner's screenshots, and a fourth the owner added | named in the handoff | The header's chip, Replan and the two toggles are one 36px box on one baseline, and the field's Task toggle takes the header toggle's tint; the arrows are back at every width at 44px, the title sits in a box sized by a hidden "Wednesday, September 30", and from 1500px the right zone never leaves the row (the running title ellipsises instead) while the single pane grows to the calendar's 1336px so the owner's own desktop holds one row in all three views; the rail's chip says "Already on this day" for the template already there, asks "Replace X with Y? Blocks you added by hand stay." for another, and stamps an empty day at once - a day still carrying a deleted template's blocks asks too. Found on the way: on an iPad in landscape the header's buttons were 36px under a finger; they are 44 with the chip now. Nine tests in `TemplateRail.test.tsx`, three rewritten in `DayView.wideLayout.test.tsx` and `dates.test.ts` |
 | 2 | Too many: the "not now" states audited | | |
 | 3 | What is missing: where the plan and the week disagreed | | |
-| 4 | The docs told the truth | | |
-| 5 | The open questions closed | | |
+| 4 | The docs told the truth | named in the handoff | Every living doc and the copy in `explain.ts` and `tour.ts` searched for "Zeigarnik", "decision fatigue", "ego depletion" and "evidence shows": the terms occur only in the research documents, where they are named to be refused, and in the push-bound entry, which refuses them - nothing had to come out. What the brief asked for is written once in DECISIONS "Three arguments the docs do not make" (what capture, the no-new-decisions rule and the grid rest on instead), the no-new-decisions rule is stated in CONVENTIONS section 25 with the abandonment literature as its reason, and "Relatedness is the motivator local-first cannot serve", which had said everything 4d asked for since 2026-09-01, takes the brief's name, "Relatedness is a known cost" |
+| 5 | The open questions closed | named in the handoff | Both items moved to DECISIONS as accepted, with their reasons and the two honest fixes each named - "The mini calendar's cells stay at 33px", "A task's title is a 29px target, on purpose" - and OPEN-QUESTIONS is empty with the date. The standing touch-hardware note became the done contract's first line: the owner's week on the phone is the first touch test |
 | 6 | One voice | | |
 | 7 | Closing and `v2.7` | | |
 
@@ -1182,6 +1182,17 @@ gate this file specified rather than invent a second one, and it is the first
 thing to look at if a hand-picked colour ever looks wrong on a card.
 
 ### Asked for, not yet built
+
+**The done contract, from v2.7.** The app is finished. Anything asked for
+from here goes into this list and waits until the owner has lived in the
+app for a week, on the phone it was written for and on the desktop; the
+next brief comes out of that week - out of "Where the plan and the week
+disagreed" in Review, and out of what the week turns up by hand - not out
+of a feeling. That week is also the first time a real finger touches the
+block drag, the resize strip, the long-press menu and the calendar's
+paint-across-dates gesture, all of which were built and verified with
+synthesised pointer events; OPEN-QUESTIONS carried that note from v2.0 and
+this is where it ends.
 
 - **Dragging a block inside the template editor's timeline.** The picture
   arrived in v2.5 and is read-only: it draws the day a template makes, live,
