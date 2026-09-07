@@ -199,7 +199,108 @@ so are the v2.4, v2.3 and v2.2 ones under it, commit by commit; the debts
 table further down is unchanged, and each entry in it is a trade with its
 reason. The next brief comes from the owner.
 
-### The v2.5 wave: notes, replan, the journal, and the settings
+### The v2.6 wave: the desktop, so that it is a pleasure to use
+
+Briefed by the owner in one message, in Lithuanian, ten stages, to be run
+end to end without stopping. The phone is not this wave's concern - the
+owner said so - and nothing here may break it, but nothing new is built for
+it either. Two principles govern the whole wave and go into CONVENTIONS:
+
+- **Information appears exactly once.** The same number in two places means
+  one of them is not needed.
+- **Nothing moves on hover.** A pointer resting on something may show
+  something, but may not push anything that is already drawn. A layout
+  shift under the mouse is a defect, not a style.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 0 | Written down first | - | The brief and the decisions it forced, in this file, before any code |
+
+#### The brief, as understood
+
+1. **Today's header and the doubles.** The two lines under the header -
+   "Timed tasks: 8h55. Free: 7h05 across 8 gaps." and "Sleep 23:00-07:00
+   (8h) is not counted as free." - go: every number in them is in the rail's
+   card. What the card does not say - across how many gaps, and that sleep is
+   not counted - moves into the card as a small grey note beside the row.
+   The card stays four rows; under the header stays empty. The header row
+   itself becomes two zones: the day on the left (its name, its chip, Replan,
+   Low day), the status on the right (the clock, what is running, how far
+   the day has come), one gap between them. "6/11" and "1/3 key" side by
+   side with no explanation become one thing.
+2. **The North line.** A fixed height that hover, focus and the length of
+   the goal cannot change; a long goal on one line with an ellipsis and the
+   whole of it in the tooltip; the tooltip never over the text it explains -
+   above or below, with an arrow - and that rule for every tooltip in the
+   app; the hover itself only a change of colour.
+3. **The New week card.** It stood in the flow and pushed the whole day
+   down, and after Ok everything jumped back. Either a sheet over the day
+   with the same backdrop as every other sheet, or a thin fixed-height strip;
+   one of them, chosen and argued in DECISIONS. The demo line and the card
+   stacked on each other is the squeeze the owner sees.
+4. **Calendar and Tasks alone.** Pressing either left a wide empty band on
+   the left with the content drifted right. One pane centres in the whole
+   width together with the rail, and at 1920, 1600 and 1366 no empty vertical
+   band over 120px is left without a purpose.
+5. **The bottom of the task column.** The list was cut through the middle
+   of a card with the Push button hanging under it on its own. The list ends
+   on a whole card or fades clearly; Push sits on a footer with a hairline
+   above it; the list's scrollbar is the app's own thin one, not the
+   browser's.
+6. **Notes.** Two empty states at once - "Nothing yet" and "Nothing here
+   yet" - become one; the field's blue underline, the Note and + controls in
+   two styles and a cross with no obvious job become one language, on a
+   surface that reads as raised rather than as a hole cut in the page.
+7. **The journal.** No native resize handle on the box; a backdrop as dark
+   as the other sheets'; the two copy buttons at one weight.
+8. **The blocks.** The gradient that fades to the right, checked for the
+   unfinished feeling it gives a long block - the recommendation is a solid
+   dark wash with the coloured edge it already has; a finished block down
+   from three signals to two; the gap labels the quietest thing on screen.
+9. **The whole desktop, by the two principles.** Every screen at 1920x1080
+   and 1366x768 in both themes: a number or a text in two places, anything
+   moving under the pointer, spacing off the scale, more than four type
+   sizes. Each fixed on the spot, and a table of screen, finding, change.
+10. **Closing.** Unit, browser tests and the sweep at zero; two critique
+    passes on the desktop with one question - does this look like a product
+    somebody would pay for; the README's screenshots regenerated; the two
+    principles in CONVENTIONS; DECISIONS "Nothing moves on hover" and "Once
+    and only once"; this file; the tag; the handoff.
+
+**Decisions taken on the way**, so nobody re-argues them by accident:
+
+- **The rail's card is the only place the day's figures are said, and the
+  header is the only place its progress is.** The capacity sentence is not
+  drawn at the wide breakpoint at all; the phone keeps it, because the phone
+  has no rail. The card's ring and its Done row went with the sentence: the
+  header's bar and fraction already say how far the day has come, and a
+  ring saying it again a hand's width away was the same number three times
+  on one screen. The card's four rows are Timed, Focus, Free and Sleep;
+  Free carries "8 gaps" and, when the untimed tasks do not fit, how far
+  over; Sleep carries "not counted".
+- **The North card is a sheet.** The owner offered the choice and named the
+  sheet first. It is a moment - a Monday, or the morning after a day that
+  got away - shown once, read once, dismissed with one press; that is what
+  every other sheet in this app is for, and a card in the flow was the one
+  notice that took a fifth of a 768px screen away from the day. The evening
+  close stays in the flow: it arrives at a set time while somebody may be
+  typing, and a modal that lands mid-sentence is worse than a card that
+  pushes. Yesterday's banner is already the thin strip.
+- **One pane fills the width it is given.** The single-pane layout stops
+  centring a 1024px pair in a 1568px row: the rail and the pane are one
+  centred block that grows to the width available, capped so that a block
+  or a card is never absurdly wide, and the header, the notices and the
+  caption span the same block. The v2.4 worry about a thousand-pixel block
+  was about the two-pane layout, where the tasks were paying for it; alone
+  on a screen, a timeline is allowed the width a calendar takes.
+- **A tooltip is an attribute, and it sits under the thing.** Native
+  `title` tooltips land wherever the browser puts them, which is on the
+  text as often as not, so they go: `data-tip` draws the same words under
+  the control with an arrow, 400ms after the pointer rests, on focus at
+  once, and never over what it explains. One that only repeated the visible
+  text is removed rather than converted.
+
+
 
 Three briefs in one sitting, in Lithuanian, run end to end without
 stopping. Twelve stages, six commits.
