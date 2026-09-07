@@ -1644,9 +1644,18 @@ turns into skipping the card, and then into dreading it. That is the exact
 failure this app exists to avoid, built into the one place meant to be kind.
 
 **So: a day, and whatever you wanted to say on it.** One free text field per
-day, at the clock beside Notes, reachable from anywhere with `J`. It saves
-while you type and there is no Save button, because there is nothing to
-decide. No questions, no fields, no length, no prompt beyond a quiet "...".
+day, on its own button in the header beside Notes, reachable from anywhere
+with `J`. It saves while you type and there is no Save button, because
+there is nothing to decide. No questions, no fields, no length, no prompt
+beyond a quiet "...".
+
+It was the clock panel's fourth tab when it was built, on the reasoning
+that the clock is the one control on screen from every tab. The reasoning
+held; the shape did not. A timer and a stopwatch are the same kind of thing
+at different moments, which is what tabs are for - a note and a journal
+entry are not that, and neither of them is a clock, so reaching a line
+somebody wanted to write meant pressing a picture of a clock and reading
+four labels to find the one that was not about time.
 
 **And nothing counts.** No streak, no run of days, no mark for a day with
 nothing on it, no "you missed a day". Most days have nothing on them. The

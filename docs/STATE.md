@@ -23,6 +23,14 @@ the app now pushes something back once, never below 3:1, on one token. That
 is DECISIONS "A tool that cannot see a thing will say it is fine" and
 CONVENTIONS section 22, and it is the most useful thing in this wave.
 
+**Three commits sit above the tag**, and section 4's "After the tag" table
+names them: this handoff, a read of the four briefs back against the code,
+and four things the owner saw on their own screen - a drag that was a guess,
+the arrows beside the date, Notes and Journal sharing the clock's panel, and
+Calendar stretching one pane across a screen and a half. All four of those
+came from looking, not from a failing test, which is the same lesson the
+closing critique had just written down.
+
 **Before that: v2.4**, closed and tagged at `f544c55`. The polish wave, briefed by the
 owner in one message and run end to end: the navigation rail opening by
 itself whenever another window handed focus back (it opens on intent only
@@ -84,7 +92,7 @@ reading them.
 | Yesterday banner | What yesterday left, stated once, moved forward in one tap - never automatically |
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back. The first works for any day of the week since v2.2 - a phone call answered in three presses, with one line saying when you are still free. See `widgets/day-plan/replan.ts` |
 | Low day | Beside Replan, for a day that is not going to be a full one: the key tasks stay at 40% of their length, the routine stays, the rest goes to tomorrow, and the score counts the key tasks alone. One press, one undo, a quiet mark under the date |
-| Scratch | One key (S or backtick) or the pen in the rail, and you are typing. Its own stream, the text kept exactly as written, photographs in a note. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
+| Scratch | One key (S or backtick), or **Notes** in the header and then Open notes, and you are typing. Its own stream, the text kept exactly as written, photographs in a note. A leading `!` or the Note/Task toggle sends the line to the inbox instead |
 | Quick-add time | The control on the left: the next free slot by default, arrows for a quarter hour either way, the picker on a tap, and No time when you want a float |
 | Task detail | Everything the card does not show: exact minute, note, sub-steps, repeat, the three-a-day key mark. The size is a stepper with six chips beside it; the repeat is four buttons. Panel on desktop, bottom sheet on a phone, right-click menu for the common ones |
 | Step timer | A step with a length ("Meditation 10 min") carries the one timer: a tap on its minutes starts it for that step, and the bell ticks the step |
@@ -172,7 +180,7 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2320
+Still true, and checked rather than assumed. The suite is green - **2331
 tests in 140 files, plus 35 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
 the desktop and nothing on the phone at 09:00, 15:00 and 22:00, with
@@ -205,8 +213,19 @@ stopping. Twelve stages, six commits.
 | 5 | The library's add row | `4a63ffe` | One amount, one button, and a stepper that is one box instead of two - the base input rule's five `:not()`s had outranked `.time-stepper .time-input` since v1.0, so every stepper in the app had been a box inside a box |
 | 9 | The tour | `df99d14` | The card never covers what it points at - the scroll knows about the card, and the placement is checked again after it lands - and a step that changed the screen waits for Next instead of running on |
 | 10 | A template is judged as a day | `c19d20a` | The template editor draws the day it makes, live: the same hour scale as Today, sleep first from the chosen profile, blocks as they are typed, overlaps with a warning edge, gap labels, one line of numbers. A week is seven narrow columns each with its own sleep; a phone is one day at a time |
-| 11, 12 | A journal instead of a form, and a settings health check | `2f58d3b` | v2.3's three questions and the best moment beside them are gone, folded into one free text box per day at the clock beside Notes, reachable with `J`, saving as you type, counting nothing. Then every setting walked against one rule - the owner would change it **and** the app cannot decide itself - which four failed: two nudges that could only fire while the app was already open, a second switch for the Monday goal card, and a widget list nothing could ever change. DECISIONS "A journal, not a form" and "A setting has to earn its place" |
+| 11, 12 | A journal instead of a form, and a settings health check | `2f58d3b` | v2.3's three questions and the best moment beside them are gone, folded into one free text box per day, saving as you type, counting nothing - at the clock beside Notes then, on a button of its own since the follow-up below. Then every setting walked against one rule - the owner would change it **and** the app cannot decide itself - which four failed: two nudges that could only fire while the app was already open, a second switch for the Monday goal card, and a widget list nothing could ever change. DECISIONS "A journal, not a form" and "A setting has to earn its place" |
 | 8 | Closing and `v2.5` | `57db593` | Full gates, two critique passes on the phone, and the three blindnesses in the measuring pass that those passes exposed: it could not see a fade, could not see what a field says, and ran at whatever hour it was run. 858 findings out of a report that had said zero for a week of commits, and nine hand-tuned opacities down to one `--faded` token. The docs read against the code, the README's screenshots regenerated, and the tag |
+
+### After the tag
+
+Two waves, both from the owner looking at the app rather than at the tests.
+The tag stays on `57db593`: none of this is a stage of v2.5, and none of it
+is big enough to be a version of its own.
+
+| # | What | Commit | What it became |
+|---|---|---|---|
+| 1 | The briefs read back against the code | `f2c29ea` | Three gaps. The day copy the brief asked for and DECISIONS described as though it existed - the week and the month had buttons, the day had none. The journal's month washing every cell in its template colour, so the dots it exists to show were the quietest thing on it. And the shape the owner had reported twice by hand - a chosen control drawn exactly like the ones beside it - which nothing measured, because `aria-pressed` is a string a test can assert while nothing at all is drawn. The sweep compares a set control against an unset sibling on six properties now, and its self-check plants the owner's own bug. `JournalView` also had no unit test at all: nine now |
+| 2 | Four things the owner saw | `2e62a4a` | Dragging a block was a guess - it dims and nothing else moves - so a drag says where it will land while it is still held, in the gutter, by the same arithmetic the release uses. The arrows either side of the date came off the wide header, where the month in the rail does the job better; they stay on a phone. Notes and Journal left the clock panel for buttons of their own, and the rail gave up its pen. And a single pane centres itself instead of stretching: Calendar had been growing the timeline 200px and then leaving 351px of nothing beside it |
 
 ### The v2.4 wave: the polish wave
 
@@ -515,7 +534,7 @@ and pushed. Nothing below this table is owed.
 | `v2.2` | `a7cc157` | Replan v2, on top of everything above: the plan, the arithmetic, the sheet, and the closing |
 | `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: the handoff of the time |
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
-| `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. One commit sits above it, untagged: this handoff |
+| `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
