@@ -457,9 +457,16 @@ them.
 
 **Open full** gives you the whole thing: the month on the left with a quiet
 dot on the days that have something, that day's words on the right, and a
-search box that looks through everything you have written. **Copy this
-month** puts the month on the clipboard as markdown, days with nothing
-skipped, ready to paste into a conversation. That is the one you will use.
+search box that looks through everything you have written. That calendar
+shows nothing but the dots - no template colours on it, unlike the one on
+the day view - because the only question it is answering is which days you
+wrote on.
+
+Two ways out, both markdown with the empty days left out. **Copy this
+month** is the one you will use: a month of writing into a conversation in
+one press. **Copy this day** is beside it for when you want to send what
+you wrote this morning and nothing else. A week is under **Calendar → Week**
+and in **Review**.
 
 **Notes and the journal are different boxes on purpose.** A note is a
 thought caught on the way past - short, and it turns into a task. A journal

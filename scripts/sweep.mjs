@@ -7,8 +7,9 @@
  * what a person would actually hit - text cut off, a control with something
  * on top of it, two pieces of text painted over each other, anything past
  * the right edge, a screen that should fit and does not, every visible
- * string's contrast against whatever is actually painted under it, and a
- * chosen swatch's ring cut off by a scroller or drawn on the wrong ground.
+ * string's contrast against whatever is actually painted under it, a chosen
+ * swatch's ring cut off by a scroller or drawn on the wrong ground, and a
+ * chosen control drawn exactly like the ones beside it.
  *
  * It found fourteen defects the first time it ran, including a task list
  * squeezed to zero pixels with seven tasks in it. Zero findings is the
@@ -104,7 +105,7 @@ async function press(page, name) {
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** What scripts/audit.js puts on the page's own window. */
-/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[] }} Audit */
+/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown> }} Screen */
 
@@ -322,6 +323,16 @@ if (SELF_CHECK) {
     box.style.cssText = 'position:fixed;left:100px;top:400px;width:200px;height:40px;overflow:auto;background:#222'
     box.innerHTML = '<button type="button" class="category-swatch selected" style="--cat:#7aa2f7;display:block" aria-label="Planted swatch"></button>'
     document.body.appendChild(box)
+    // The owner's own bug, planted: a row of chips where one is chosen and
+    // all of them are drawn identically, so nothing but the attribute says
+    // which. The style is inline and the same on both.
+    const row = document.createElement('div')
+    row.style.cssText = 'position:fixed;left:100px;top:460px;background:#333;padding:4px;display:flex;gap:4px'
+    const chip = 'border:1px solid #555;background:#222;color:#ccc;padding:4px 8px;font-weight:400'
+    row.innerHTML =
+      '<button type="button" aria-pressed="true" style="' + chip + '">Chosen</button>' +
+      '<button type="button" aria-pressed="false" style="' + chip + '">Not chosen</button>'
+    document.body.appendChild(row)
   })
   const planted = await page.evaluate(() => /** @type {AuditWindow} */ (/** @type {unknown} */ (window)).__brief('after'))
   await browser.close()
@@ -331,12 +342,17 @@ if (SELF_CHECK) {
     'text over text': planted.overlap > clean.overlap,
     'a control covered': planted.covered > clean.covered,
     'text under AA': planted.faint > clean.faint,
+    'the chosen one looks unchosen': planted.chosen > clean.chosen,
     'a ring cut off': planted.ringCut > clean.ringCut,
     'a ring gap off its ground': planted.ringGap > clean.ringGap,
   }
   for (const [what, ok] of Object.entries(sees)) console.log(`${ok ? 'sees  ' : 'BLIND '} ${what}`)
   const blind = Object.values(sees).filter(v => !v).length
-  console.log(`\n${7 - blind}/7 shapes still detected`)
+  // Counted rather than written down: the seven became eight when the
+  // chosen-looks-unchosen shape went in, and a hardcoded total is a line
+  // that quietly starts lying the first time the list changes.
+  const shapes = Object.keys(sees).length
+  console.log(`\n${shapes - blind}/${shapes} shapes still detected`)
   process.exit(blind ? 1 : 0)
 }
 
@@ -384,6 +400,7 @@ for (const run of runs) {
     for (const o of a.offscreen) found(where, 'past the right edge', `${o.sel} right ${o.right} "${o.text}"`)
     for (const f of a.faint) found(where, 'text under AA', `${f.sel} ${f.ratio}:1 (needs ${f.need}) "${f.text}"`)
     for (const r of a.rings) found(where, r.kind === 'cut' ? 'ring cut off' : 'ring gap off its ground', r.detail)
+    for (const c of a.chosen) found(where, 'the chosen one looks unchosen', `${c.sel} "${c.text}" is drawn exactly like "${c.like}" beside it, though ${c.attr} says otherwise`)
 
     // The screens that must fit - CONVENTIONS section 4. The day view's own
     // rule is for the wide breakpoint only: on a phone it scrolls

@@ -191,6 +191,67 @@
   // the gap was the card colour on rows that sit on the page.
   const RINGED = '.category-swatch.selected, .accent-swatch.selected, .swatch.selected, .library-color.is-on'
   /** @returns {{ kind: 'cut' | 'gap', sel: string, detail: string }[]} */
+  /**
+   * A chosen control that looks exactly like the ones beside it.
+   *
+   * The owner has reported this shape twice, in the two places it happened:
+   * the category swatch whose ring was clipped, and the week template
+   * editor's "Add to" row, where all four chips carried the same border
+   * because a generic rule for buttons in that row outranked
+   * `.chip.selected`. Both times `aria-pressed` was correct and the paint
+   * was not, so a screen reader knew which day the block was about to land
+   * on and a person did not.
+   *
+   * Nothing measured that. `aria-pressed` is a string in the DOM and a test
+   * asserting it passes whether or not anything is drawn; the contrast pass
+   * reads one element at a time and has no opinion about two of them looking
+   * alike. So: within a group of siblings that carry the same state
+   * attribute, where at least one is set and at least one is not, the set
+   * one has to differ from an unset one in something somebody can see.
+   *
+   * Background, border, colour, shadow, outline, weight. Any one of them is
+   * enough - this is not an opinion about how a selection should look, only
+   * that it should look like something.
+   */
+  function chosenDefects() {
+    const out = []
+    const seen = new Set()
+    for (const attr of ['aria-pressed', 'aria-checked', 'aria-selected']) {
+      for (const el of document.querySelectorAll('[' + attr + '=true]')) {
+        if (!visible(el) || seen.has(el)) continue
+        const parent = el.parentElement
+        if (!parent) continue
+        const family = [...parent.children].filter(
+          k => k !== el && k.hasAttribute(attr) && k.getAttribute(attr) === 'false' && visible(k),
+        )
+        if (family.length === 0) continue
+        seen.add(el)
+        const mine = look(el)
+        const twin = family.find(k => same(mine, look(k)))
+        if (twin) {
+          out.push({
+            sel: sig(el),
+            text: (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 28),
+            like: (twin.textContent || twin.getAttribute('aria-label') || '').trim().slice(0, 28),
+            attr,
+          })
+        }
+      }
+    }
+    return out
+  }
+
+  /** The six things a selection is allowed to be drawn with. */
+  function look(el) {
+    const s = getComputedStyle(el)
+    return [s.backgroundColor, s.borderColor, s.color, s.boxShadow, s.outlineStyle + ' ' + s.outlineColor, s.fontWeight].join('|')
+  }
+
+  /** @param {string} a @param {string} b */
+  function same(a, b) {
+    return a === b
+  }
+
   function ringDefects() {
     const out = []
     for (const el of document.querySelectorAll(RINGED)) {
@@ -247,6 +308,7 @@
       overlap: [],
       offscreen: [],
       faint: [],
+      chosen: [],
       layer: null,
     }
 
@@ -380,13 +442,14 @@
     }
 
     out.rings = ringDefects()
+    out.chosen = chosenDefects()
     return out
   }
 
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length }
   }
 
   /** @param {string} tab */

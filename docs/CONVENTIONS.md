@@ -1163,6 +1163,24 @@ toward the surface and its text with it - "Save template" greyed out read
 2.61:1. A disabled primary keeps a quarter-strength tint of the accent so
 it is still recognisably the loud one, with muted text on it.
 
+### A chosen thing has to look chosen
+
+The owner has reported this twice, in the two places it happened: a category
+swatch whose selected ring was clipped away by a scroller, and the week
+template editor's "Add to" row, where all four chips carried the same border
+because a generic rule for buttons in that row outranked `.chip.selected`.
+Both times `aria-pressed` was right and the paint was not, so a screen
+reader knew which day the block was about to land on and a person did not.
+
+Nothing measured it. `aria-pressed` is a string in the DOM and a test
+asserting it passes whether or not anything is drawn; the contrast pass
+reads one element at a time and has no opinion about two of them looking
+alike. The sweep checks it now: within a group of siblings carrying the same
+state attribute, where one is set and another is not, the set one must
+differ in background, border, colour, shadow, outline or weight. Any one of
+the six is enough - this is not an opinion about how a selection should
+look, only that it should look like something.
+
 ### How this went unseen for five versions
 
 The sweep's contrast pass read `color` and nothing else, so an element at

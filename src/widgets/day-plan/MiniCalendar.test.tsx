@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MiniCalendar } from './MiniCalendar'
-import { actions } from '../../lib/store'
+import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 
 beforeEach(() => {
@@ -139,4 +139,39 @@ test('an arrow off the edge of the grid turns the month and lands on the day', a
   await user.keyboard('{ArrowDown}')
   expect(screen.getByText('October 2026')).toBeInTheDocument()
   expect(screen.getByRole('gridcell', { name: /October 14/ })).toHaveFocus()
+})
+
+// --- the marked month answers one question ------------------------------
+
+/**
+ * The journal passes `marked` and nothing else uses it. That calendar is
+ * there to answer one question - which days have writing on them - and it
+ * answers it with a quiet dot.
+ *
+ * A dot is quiet. A cell washed in a template colour is not, and the day
+ * view's calendar washes every day that was stamped. Side by side the
+ * wash won: a month of blue and green squares with two small dots in it
+ * reads as a month of templates, which is the question the journal was not
+ * asking. So a marked calendar draws no template tone.
+ */
+test('a calendar given marks drops the template wash, so the dot is the loudest thing on a day', () => {
+  const template = actions.addTemplate({ name: 'Working day', color: '#a7c4f5', blocks: [] })
+  const base = getData()
+  actions.resetForTests({
+    ...base,
+    days: {
+      '2026-09-14': { date: '2026-09-14', tasks: [], templateId: template.id },
+      '2026-09-16': { date: '2026-09-16', tasks: [], templateId: template.id },
+    },
+  })
+
+  const { container, unmount } = render(<MiniCalendar date="2026-09-16" onDateChange={() => {}} />)
+  expect(container.querySelectorAll('.mini-cell-has-template').length).toBeGreaterThan(0)
+  unmount()
+
+  const { container: marked } = render(
+    <MiniCalendar date="2026-09-16" onDateChange={() => {}} marked={new Set(["2026-09-16"])} />,
+  )
+  expect(marked.querySelectorAll('.mini-cell-has-template')).toHaveLength(0)
+  expect(marked.querySelectorAll('.mini-cell-marked')).toHaveLength(1)
 })

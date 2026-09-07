@@ -40,6 +40,10 @@ export interface MiniCalendarProps {
    * days that have something written - a mark, not a count, and nothing
    * anywhere that turns a month of squares into a report card. Absent
    * everywhere else, which is every other use of this calendar.
+   *
+   * Passing it also takes the template wash off every cell: a calendar that
+   * marks is answering one question, and two answers at once means the
+   * louder one wins.
    */
   marked?: ReadonlySet<string>
 }
@@ -155,7 +159,13 @@ export function MiniCalendar({ date, onDateChange, marked }: MiniCalendarProps) 
         {weeks.map((week, i) => (
           <div key={i} role="row" style={{ display: 'contents' }}>
             {week.map(cell => {
-              const template = resolveTemplate(data.days[cell.key]?.templateId, data.templates)
+              // A calendar that carries marks answers one question, and the
+              // template wash answers a different one loudly enough to bury
+              // it: a month of blue and green squares with two small dots in
+              // it reads as a month of templates. The journal is the only
+              // caller that marks, so the tone comes off there and nowhere
+              // else. See DECISIONS "A journal, not a form".
+              const template = marked ? undefined : resolveTemplate(data.days[cell.key]?.templateId, data.templates)
               const state = taskState(data.days[cell.key])
               const classes = [
                 'mini-cell',

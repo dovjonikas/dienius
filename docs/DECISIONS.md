@@ -1285,6 +1285,14 @@ than costing the grid a fourth row of bar.
 
 ## A journal that never counts
 
+> **Superseded in v2.5.** Everything below about the *shape* is gone - the
+> three fields, the morning line, the two questions on the closing card,
+> the best moment beside them, and `DayPlan.journal` as an object. It is
+> one string per day now, written into one box that asks nothing. The half
+> that survived is the half this entry was named for: it still never
+> counts. See "A journal, not a form", below, and read this one as the
+> record of how the app got there.
+
 v2.3 added three lines a day: "Today: ..." under the North line in the
 morning, and two questions on the evening close card - "What was real
 today?" and "What do I want to tell myself tomorrow?". Plain text, optional,
@@ -1301,7 +1309,9 @@ copy lists only the days with words.
 
 **It lives on the day.** `DayPlan.journal` is one optional object with
 three optional fields, and a field is absent when it is blank - the store
-trims and drops on the way in. So a day nobody wrote on carries no key,
+trims and drops on the way in. (One optional string since v2.5, with
+`mergeOldJournal` folding the three old answers and the best moment into
+it on load.) So a day nobody wrote on carries no key,
 takes no bytes and changes no sync entity, and sync, the backup and the
 snapshots carry the lines the way they carry the tasks without any of them
 knowing the journal exists. No migration: three optional fields.
@@ -1659,7 +1669,19 @@ a v2.3 backup still restores, and nothing downstream ever sees two shapes.
 
 **The way out is a copy, and the month is the one that matters.** A day, a
 week or a month as markdown, days with nothing skipped. The owner's use is
-a month of writing pasted into a conversation in one press.
+a month of writing pasted into a conversation in one press. The day sits
+beside it for the narrower thing - what was written this morning and
+nothing else - and the week already had its own button under the week view
+and in Review.
+
+**And the calendar in that view carries no template wash.** The day view's
+month colours a day by the template stamped on it, which is the right
+answer to the question that calendar is asked. Here the question is which
+days have writing, the answer is a quiet dot, and a month of blue and green
+squares with two small dots in it reads as a month of templates. So
+`MiniCalendar` drops the tone whenever it is given marks - the journal is
+its only caller that marks - because two answers at once means the louder
+one wins.
 
 ## A setting has to earn its place
 
@@ -1759,6 +1781,18 @@ strings, and then declared the contrast pass blind because planting one
 more defect did not raise a number that had been inflated by animation. A
 measurement taken during an animation is not a measurement.
 
+**And a fifth, found by asking the question the other four taught.** A
+chosen control drawn exactly like the ones beside it. The owner reported
+this shape twice - the category swatch whose ring was clipped, and the week
+template editor's "Add to" row where all four chips carried the same border
+- and both times the fix was a stylesheet line and a unit test asserting a
+class. Neither could catch it happening somewhere else: `aria-pressed` is a
+string in the DOM and a test asserting it passes whether or not anything is
+drawn, and the contrast pass reads one element at a time with no opinion
+about two of them looking alike. The sweep compares a set control against
+an unset sibling now, on six properties, and the self-check plants the
+owner's own bug to prove it still sees it.
+
 **The shape, and it is the thing to remember.** Each of these is the same
 mistake: *the tool could only see what it had been told to look at, and
 silence was read as absence.* A clean report means "nothing was found",
@@ -1768,7 +1802,10 @@ at a picture, not by the tool, which is the whole argument for still
 looking.
 
 So the pass now reads the painted share, reads a field's value, walks a
-pinned afternoon with `--hour=` for the others, and settles a page before
-reading it. What it found is written up in CONVENTIONS section 22: push
+pinned afternoon with `--hour=` for the others, settles a page before
+reading it, and checks that a chosen thing looks chosen. The shape count in
+the self-check is counted rather than written down, because a hardcoded
+seven is a line that starts lying the first time the list grows - which it
+did, the same day. What it found is written up in CONVENTIONS section 22: push
 something back once, never below 3:1, one `--faded` token, and a filled
 button that stops being filled rather than fading.

@@ -29,7 +29,7 @@ export function JournalView() {
   const [date, setDate] = useState(todayKey)
   const [query, setQuery] = useState('')
   const [text, setText] = useState(() => data.days[todayKey()]?.journal ?? '')
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<'day' | 'month' | null>(null)
 
   const stored = data.days[date]?.journal ?? ''
   const written = useMemo(
@@ -67,14 +67,28 @@ export function JournalView() {
     timer.current = window.setTimeout(() => actions.setJournal(date, next), SAVE_AFTER_MS)
   }
 
+  // One flag for both buttons, holding which of them was pressed: two
+  // booleans would let both read "Copied" if somebody pressed one and then
+  // the other inside the second and a half.
+  function said(which: 'day' | 'month') {
+    setCopied(which)
+    window.setTimeout(() => setCopied(null), 1500)
+  }
+
   async function copyMonth() {
     const first = `${date.slice(0, 7)}-01`
     const dates = Array.from({ length: 31 }, (_, i) => addDays(first, i)).filter(d => d.startsWith(date.slice(0, 7)))
     const month = new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-    if (await copyText(journalMarkdown(data.days, dates, month))) {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1500)
-    }
+    if (await copyText(journalMarkdown(data.days, dates, month))) said('month')
+  }
+
+  // The day on its own. The month is the one this was built for - a stretch
+  // of writing into a conversation in one press - but a single day is what
+  // somebody reaches for when they want to send what they wrote this
+  // morning and nothing else, and the week already has its own button under
+  // the week view and in Review.
+  async function copyDay() {
+    if (await copyText(journalMarkdown(data.days, [date], formatDayTitle(date)))) said('day')
   }
 
   return (
@@ -89,8 +103,11 @@ export function JournalView() {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
+        <button type="button" className="btn-secondary" disabled={!hasJournal(data.days[date])} onClick={copyDay}>
+          {copied === 'day' ? 'Copied' : 'Copy this day'}
+        </button>
         <button type="button" className="btn-secondary" disabled={daysWithJournal(data.days, [...written]).length === 0} onClick={copyMonth}>
-          {copied ? 'Copied' : 'Copy this month'}
+          {copied === 'month' ? 'Copied' : 'Copy this month'}
         </button>
       </div>
 

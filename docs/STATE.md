@@ -172,17 +172,19 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2310
-tests in 139 files, plus 35 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2320
+tests in 140 files, plus 35 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
 the desktop and nothing on the phone at 09:00, 15:00 and 22:00, with
-`--self-check` at 7/7. The working tree is empty and pushed.
+`--self-check` at 8/8. The working tree is empty and pushed.
 
-Read that sweep line as stronger than the same sentence in v2.4: the pass
-now sees through a fade, reads what a field says, and walks a pinned clock
-rather than whatever hour it was run at. Each of those three was a hole it
-had been reporting clean through - see DECISIONS "A tool that cannot see a
-thing will say it is fine".
+Read that sweep line as stronger than the same sentence in v2.4. The pass
+now sees through a fade, reads what a field says, walks a pinned clock
+rather than whatever hour it was run at, settles a page before reading it,
+and checks that a chosen control is drawn differently from the ones beside
+it. Every one of those five was a hole it had been reporting clean through,
+and the last one is the shape the owner had reported twice by hand. See
+DECISIONS "A tool that cannot see a thing will say it is fine".
 
 **Where to start:** nothing is owed. The v2.5 table below is closed, and
 so are the v2.4, v2.3 and v2.2 ones under it, commit by commit; the debts
