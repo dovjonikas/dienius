@@ -41,6 +41,12 @@ export interface DayDigestProps {
  * under the header, on a desktop where every number in that sentence was
  * already in this card; the phone still has the sentence, because the phone
  * has no rail.
+ *
+ * A fifth row, Calendar, only on a day that has somebody else's events on
+ * it: how long they take and how many there are, counted apart from Timed
+ * because a meeting is not something you planned, and "Timed 6h" would be a
+ * lie about a day spent in somebody else's calendar. Free counts them - see
+ * the busy argument to computeCapacity - and this is where that is said.
  */
 export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
@@ -121,6 +127,17 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
                 {timed}
               </dd>
             </div>
+            {capacity.externalMinutes > 0 && (
+              <div>
+                <dt>Calendar</dt>
+                <dd>
+                  <span className="digest-note">
+                    {capacity.externalCount} {capacity.externalCount === 1 ? 'event' : 'events'}
+                  </span>
+                  {formatDuration(capacity.externalMinutes)}
+                </dd>
+              </div>
+            )}
             <div>
               <dt>Focus</dt>
               <dd>{focusMinutes > 0 ? formatDuration(focusMinutes) : 'none'}</dd>

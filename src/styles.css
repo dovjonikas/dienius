@@ -6588,19 +6588,17 @@ button.danger:focus-visible {
   /* The end-of-day action, in a footer held on the column's floor by the
      auto margin rather than trailing the list. It is the last thing you do
      with a day, and it stays in the same place all day instead of walking
-     up the screen as tasks are finished. A hairline above it and the page
-     behind it: the list ends at the line, and the button is not floating
-     in the column's leftover air. Sticky, so on the one day the pane itself
-     has to scroll the footer still sits on the floor. */
+     up the screen as tasks are finished. A hairline above it: the list ends
+     at the line, and the button is not floating in the column's leftover
+     air. Not sticky, on purpose: on the one screen where the pane itself
+     has to scroll - Focus at 1366x768 - a sticky footer sat over the
+     Backlog fold and the sweep read it as a covered control, which it was. */
   .task-pane .task-pane-foot {
     display: block;
-    position: sticky;
-    bottom: 0;
     flex: 0 0 auto;
     margin-top: auto;
     padding-top: var(--s3);
     border-top: 1px solid var(--border);
-    background: var(--bg);
   }
 
   .task-pane .rollover { margin-top: 0; }
@@ -12086,8 +12084,6 @@ main:has(.week) > .calendar {
   color: var(--muted);
   font-size: var(--t-sm);
 }
-
-.evening-close-sleep { color: var(--faint); }
 
 /* The whole of what the app says about how the day went. Larger than the
    rest of the card and quieter than a heading: it is a sentence somebody

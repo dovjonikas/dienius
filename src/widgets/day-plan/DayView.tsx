@@ -35,6 +35,7 @@ import { useDayDrag } from './useDayDrag'
 import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
 import { requestReplan } from '../../lib/replanState'
+import { useClockTools } from '../../lib/clockTools'
 
 export interface DayViewProps {
   date: string
@@ -110,6 +111,11 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
   // future - the same rule the grid's own time indicator already follows.
   const runningTask = isToday ? findActiveTask(day?.tasks ?? [], nowMinutes) : undefined
   const runningLeft = runningTask ? minutesLeft(runningTask, nowMinutes) : undefined
+  // The focus session, if one is running on this day: the strip at the top
+  // of the app names its task and its countdown, and the header yields
+  // both to it while they are the same task - see DayHeader.
+  const focus = useClockTools().focus
+  const focusedTaskId = focus?.date === date ? focus.taskId : undefined
 
   // Which schedule this day is measured against: its own if it has one, else
   // whatever its template chose, else the default.
@@ -248,6 +254,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         nowMinutes={nowMinutes}
         runningTask={runningTask}
         runningLeft={runningLeft}
+        focusedTaskId={focusedTaskId}
         sleepProfiles={sleepProfiles}
         daySleepProfileId={daySleepProfileId}
         isWide={isWide}

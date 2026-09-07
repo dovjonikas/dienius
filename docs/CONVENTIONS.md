@@ -978,8 +978,10 @@ What "visible" means, concretely:
   control mounted for one is not automatically mounted for the other. One
   control in the rail is better than two that agree, because two that agree
   today are two that can disagree tomorrow.
-- **The tooltip names the key.** `title="Scratch - S"`: the visible control
-  is where somebody learns the shortcut, which is the order that works.
+- **The tooltip names the key.** The rail's first icon carries
+  `data-tip="Today · 1"`: the visible control is where somebody learns the
+  shortcut, which is the order that works. Under the icon, never on it -
+  section 24.
 
 ---
 
@@ -1215,3 +1217,82 @@ fading its first screen in, counted fourteen mid-animation strings as
 defects, and then reported the contrast pass blind because the planted
 defect did not raise the count. It settles first now. **A measurement taken
 during an animation is not a measurement.**
+
+## 23. Once and only once
+
+A number or a sentence appears in exactly one place on a screen. The same
+figure in two places means one of them is not needed, and the one that is
+not needed is noise sitting beside the one that is. The owner's rule, from
+the v2.6 brief, after two lines under Today's header said what the rail's
+card two inches away already said.
+
+What it settled, so the same doubles do not come back:
+
+- **The header says how the day is going; the rail's card says how the day
+  is made.** The bar and the fraction are the header's; the card carries
+  Timed, Focus, Free and Sleep and nothing that counts what is done. It
+  carried a ring with the fraction in it and a Done row beside the ring
+  until v2.6 - one number, three times.
+- **The capacity sentence is not drawn where the card is.** At the wide
+  breakpoint every number in it is in the card, and the two things the card
+  did not say - across how many gaps, and that sleep is not counted - are
+  small grey notes beside the card's rows. Somebody else's calendar, which
+  the sentence counted apart from the timed tasks, is a Calendar row that
+  only appears on a day with events on it. The phone keeps the sentence,
+  because the phone has no rail.
+- **The now line carries no clock.** The header's clock is the minute; the
+  line only has to say where it falls. The hour label the line crosses is
+  dropped rather than covered.
+- **The running card carries no countdown.** Its ring says which card is
+  running; the header says how long is left.
+- **The header yields to the focus strip.** While a session runs on the
+  running task, the strip at the top of the app names it with its
+  countdown and its controls, and the header keeps the clock alone.
+- **A count of nothing is not shown.** "Nothing yet" over "Nothing here yet"
+  was one fact said twice on an empty stream.
+- **A tooltip that only repeats the visible text is removed**, not
+  converted. Six went in v2.6.
+
+What is not a double, so nobody removes the product by accident: the
+timeline and the task list are two readings of one day - a calendar and a
+list - and the two of them side by side is the whole of the wide layout.
+Up next in the rail is a pointer to the next thing, not a figure. A number
+on a scale beside the same number on a task - 09:00 in the gutter and
+09:00 on a card - is a coincidence, not a repeat. Everything else that says
+the same thing twice is a finding.
+
+The check is a script over every visible text node on a screen, counting
+the ones that appear in two elements; stage 9 of v2.6 ran it on every
+screen at 1920x1080 and the table is in STATE.
+
+## 24. Nothing moves on hover
+
+A pointer resting on something may show something; it may not push
+anything that is already drawn. A layout shift under the mouse is a defect,
+not a style - the owner's words, after the North line's peek opened in the
+flow and slid the whole day down two lines every time the cursor crossed
+the goal on its way to anything else.
+
+Two halves. **Nothing in the flow changes under the pointer.** A hover may
+change colour, ink, edge, shadow and opacity, and may reveal a control that
+already has its box. It may not change size or position: no transform, no
+padding or margin, no border that was not there, nothing shown in the flow
+that was hidden. Seven rules lifted or grew a control by a pixel or two
+until v2.6; each had survived the older rule about hover and layout because
+none of them moved anything *else*. `hoverStillness.test.ts` reads the
+stylesheet and fails on any `:hover` rule that sets a property from the
+list of ones that move.
+
+**And a tooltip is never on the thing it explains.** Under it, with an
+arrow; above it when there is no room under; beside it in the rail. The
+browser's own `title` tooltip lands wherever the browser puts it, which
+on a line of small caps was on the words, so it is not used anywhere:
+the words go in `data-tip`, and one element at the root
+(`views/TipLayer.tsx`) draws them in the window, 400ms after a mouse
+rests and at once when a keyboard arrives, positioned in the window rather
+than inside whatever scroller or clipped rail the control lives in. The
+North line's peek and the explanation bubble are the same shape by hand.
+
+The North card is the same rule from the other side: a card that arrives
+in the flow above the day and leaves again moves the day twice, so it is a
+sheet over the day since v2.6 (section 4).

@@ -8,7 +8,6 @@ import {
   pushableAtClose,
   shouldClose,
 } from '../../lib/eveningClose'
-import { minutesUntilSleep, sleepProfileWindow, wakingWindow, formatDuration } from './capacity'
 import { requestCloudBackup } from '../../lib/cloudBackup'
 
 const DISMISSED_KEY = 'dienius:evening-dismissed'
@@ -58,8 +57,6 @@ export function EveningClose({ date }: { date: string }) {
   if (!open || !summary) return null
 
   const goal = activeGoals(data.goals)[0]
-  const waking = wakingWindow(sleepProfileWindow(day?.sleepProfileId, { profiles: data.settings.sleepProfiles }))
-  const untilSleep = minutesUntilSleep(nowMinutes, waking)
   const unfinished = pushableAtClose(day)
 
   function close() {
@@ -72,12 +69,10 @@ export function EveningClose({ date }: { date: string }) {
 
   return (
     <aside className="evening-close" aria-label="Closing the day">
-      <p className="evening-close-lead">
-        That was today
-        {untilSleep !== null && untilSleep > 0 && (
-          <span className="evening-close-sleep"> - sleep in {formatDuration(untilSleep)}</span>
-        )}
-      </p>
+      {/* Just the lead. It carried " - sleep in 1h" until v2.6, under a
+          header that says "Sleep in 1h" in the same hour, which is the same
+          fact twice on one screen - CONVENTIONS section 23. */}
+      <p className="evening-close-lead">That was today</p>
 
       {/* The whole of what the app says about how the day went. One sentence,
           and nothing in it about what was not done. */}

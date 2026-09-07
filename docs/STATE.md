@@ -6,14 +6,25 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.5, closed and tagged. Twelve stages from three briefs
-in one sitting: notes stop pretending to be a database, they hold pictures,
-and one press turns a note into a task with its editor open; nothing an
-interruption touches leaves the day; the library's add row is one row; the
-tour never covers what it points at; a template is judged as a day; the
-evening's three questions become a journal that asks nothing; and every
-setting is walked against a rule that most of them fail. Section 4 has the
+**Last updated:** v2.6, closed and tagged. The desktop polish wave, ten
+stages from one brief, built on two rules the owner wrote down and that now
+sit in CONVENTIONS sections 23 and 24: information appears exactly once,
+and nothing moves on hover. Today's header is two zones and says nothing
+the rail's card says; the North line's peek hangs under the line instead of
+pushing the day; every tooltip in the app sits under its control; the
+Monday card is a sheet; a single pane fills its width; the task column ends
+on a footer; Scratch, the journal and the blocks each lost the thing that
+made them read as unfinished; and a health pass over every screen took
+seven hovers that moved and two numbers said twice. Section 4 has the
 table, stage by stage. **Nothing is owed.**
+
+**Before that: v2.5**, twelve stages from three briefs in one sitting:
+notes stop pretending to be a database, they hold pictures, and one press
+turns a note into a task with its editor open; nothing an interruption
+touches leaves the day; the library's add row is one row; the tour never
+covers what it points at; a template is judged as a day; the evening's
+three questions become a journal that asks nothing; and every setting is
+walked against a rule that most of them fail.
 
 The closing critique found what a wave of measuring had not: the sweep's
 contrast pass could not see `opacity`, could not see what a field says, and
@@ -164,6 +175,7 @@ reading them.
 
 | **v2.2** | Replan v2: "Something came up" for any day of the week, as the phone call it is answered on. One sheet at the app root from six doors - the day header on today and any later day, the week's bar, the calendar's day preview, the palette, the R key. Today, tomorrow and the five days after as chips, then the morning, afternoon, evening or whole day gone against that day's own waking window, a time and a length, or don't know how long; a typed line in Lithuanian or English that the chips follow and that a pressed chip takes its word out of; the plan proposed with the template's blocks skipped and one-offs moved into the gaps after it, key tasks first; a day nobody opened made from its weekday template before the plan lands; the free-windows line above Accept; one undo; "replanned" on the week. `ensuredDay` as the pure half of `ensureDay`, `DayPlan.replannedOn`, and a phone-sized browser test measuring three presses with nothing scrolled |
 
+| **v2.6** | The desktop wave, on two rules the owner wrote down: information appears once, and nothing moves on hover. Today's header as two zones with nothing under it but the North line; the rail's card as four figures with the gaps and the sleep note beside them, its ring gone; the North line's peek as a bubble under a fixed-height line; every native tooltip replaced by one drawn under its control; the Monday card as a sheet; a single pane filling its width with the header aligned; the task column's footer, fade and the app's own scrollbar; Scratch, the journal and the blocks each losing what read as unfinished; a health pass that took seven hovers that moved and two numbers said twice, held by `hoverStillness.test.ts` |
 | **v2.4** | The polish wave. The rail opens on intent only, after four ways in were told apart from a window changing hands. Six screens measured against the owner's screenshots and rebuilt: Today's header as three groups, gap labels as dividers, a two-line floor for an hour or longer; the task sheet's footer; the month as a wash and a strip; the week's 15px floor; the template editors and the library. Two scales, in CONVENTIONS section 5, with `scale.test.ts` reading the stylesheet against them. A low day - one press, the key tasks at 40%, the routine kept, the rest to tomorrow, the score on the key tasks alone - and a step that carries a timer. Then the critique: the browser's 16px as an undeclared fifth size on four screens, five strings under AA behind a colour parser that could not read a `color-mix()`, `--touch` named once for a hundred and twenty five places, and a chosen swatch's ring given its room back and its gap drawn in the ground, which is what the owner saw first |
 | **v2.3** | The journal: "Today: ..." under the North line in the morning, and two questions on the evening close card - what was real today, and what to tell yourself tomorrow - all optional, plain text, never counted or streaked, kept on the day entity with no migration. Read under the day in the week's agenda, the morning line under a day's name on the desktop grid, and copied as markdown for the week under the week or for the week or month in Review, to paste into another chat |
 
@@ -180,11 +192,11 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2331
-tests in 140 files, plus 35 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2346
+tests in 143 files, plus 35 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
-the desktop and nothing on the phone at 09:00, 15:00 and 22:00, with
-`--self-check` at 8/8. The working tree is empty and pushed.
+the desktop and nothing on the phone, with `--self-check` at 8/8. The
+working tree is empty and pushed.
 
 Read that sweep line as stronger than the same sentence in v2.4. The pass
 now sees through a fade, reads what a field says, walks a pinned clock
@@ -194,10 +206,10 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** nothing is owed. The v2.5 table below is closed, and
-so are the v2.4, v2.3 and v2.2 ones under it, commit by commit; the debts
-table further down is unchanged, and each entry in it is a trade with its
-reason. The next brief comes from the owner.
+**Where to start:** nothing is owed. The v2.6 table below is closed, and
+so are the v2.5, v2.4, v2.3 and v2.2 ones under it, commit by commit; the
+debts table further down is unchanged, and each entry in it is a trade with
+its reason. The next brief comes from the owner.
 
 ### The v2.6 wave: the desktop, so that it is a pleasure to use
 
@@ -214,7 +226,33 @@ it either. Two principles govern the whole wave and go into CONVENTIONS:
 
 | # | Stage | Commit | What it became |
 |---|---|---|---|
-| 0 | Written down first | - | The brief and the decisions it forced, in this file, before any code |
+| 0 | Written down first | `0154d79` | The brief and the decisions it forced, in this file, before any code |
+| 1 | Today's header, and the figures said once | `15f9e96`, and the closing commit for the Calendar row | The capacity sentence is not drawn at the wide breakpoint; "8 gaps" and "not counted" are notes beside the card's rows, and an external calendar's events are a Calendar row that only appears on a day that has them (the browser test that read them off the sentence reads the card now); the card's ring and Done row went, because the header already has the bar and the fraction; the card is Timed, Focus, Free, Sleep. The header is two zones with the row's slack between them, and "6/11 · 1 of 3 key" is one phrase |
+| 2, 3, 4, 5, 6, 7, 8 | The line, the tooltips, the sheet, one pane, the footer, Scratch, the journal, the blocks | `7e76791` | The North line at one fixed height with its peek as a bubble under it; `title` gone from the app and `data-tip` drawn by one element under the control (`views/TipLayer.tsx`), six repeating tooltips removed; the Monday card as a sheet with the task sheet's backdrop; the rail and a single pane as one centred block that grows to 1080px; the task column's footer behind a hairline and a card's worth of fade; every scrollbar the app's own thin one at last (Chromium had been ignoring the rounded rules since v2.0); Scratch with one empty state and one control language on a darker backdrop; the journal with no resize grip and two copy buttons at one weight; the blocks flat, a finished block down to two signals, the gap rules at half strength |
+| 9 | The health pass | `8151ef1`, and the closing commit | Every screen at 1920x1080 and 1366x768 in both themes by the two rules. Four type sizes on every screen held. The now line's clock chip and the running card's countdown went as doubles of the header; seven hover rules that lifted or grew a control lost their transform; the footer stopped being sticky when the sweep found it over the Backlog fold on the Focus screen; the two critique passes found the closing card repeating the header's sleep note, Review's count carrying its own percentage, and Review's week spelled from the machine's locale. Table below |
+| 10 | Closing and `v2.6` | the commit after this table was written; named in the handoff | Full gates, two critique passes on the desktop, the README's screenshots regenerated, CONVENTIONS 23 and 24, DECISIONS "Once and only once" and "Nothing moves on hover", `hoverStillness.test.ts`, the tag |
+
+#### What the health pass found
+
+Every screen at 1920x1080 and 1366x768, both themes, four questions each:
+a number or text in two places, anything moving under the pointer, spacing
+off the scale, more than four type sizes. Spacing is held by
+`scale.test.ts` and was clean; the type count was four on every screen
+with the input floor and the glyph exempt.
+
+| Screen | Finding | What changed |
+|---|---|---|
+| Today | "15:00" four times: the header's clock, the hour label, the now line's chip, a card's time | The chip is gone; the line and its dot stay, and the hour label the line crosses is dropped instead of covered. The card's time and the scale's label are a coincidence, not a repeat |
+| Today | "1h left" on the header and on the running card | The card keeps its ring and loses the countdown |
+| Today | "17:30 Walk" on Up next, the list and the grid | Kept: Up next is a pointer, and the two panes are the product. Written into CONVENTIONS 23 so it is not removed by accident |
+| Today | The now line's chip and the hour label under it | Covered by the row above |
+| Every screen | Seven hover rules moving a control: the accent swatch scaled 1.12, the theme card rose 2px, chips, the day arrows, the timer presets, the rollover and every draggable block rose 1px | Transforms removed, colour or shadow kept, transitions no longer name transform; `hoverStillness.test.ts` holds it |
+| Today (Focus, 1366x768) | The new sticky footer sat over the Backlog fold - the sweep's one finding on the wave | The footer sits on the column's floor without being sticky |
+| Today (22:00) | "Sleep in 1h" in the header and " - sleep in 1h" on the closing card's lead, in the same hour | The card's lead is "That was today"; the header keeps the hour. The card's own sentence - "2 of 9 - the day gave what it gave" - stays beside the header's "2/9": it is the one place the day is said in words, not a second status |
+| Today, during a focus session | The focus strip at the top of the app and the header's own line, stacked: "Draft the launch email 45 min left" twice, which the README's hero showed | While the session is on the running task the header keeps the clock alone and the strip carries the task, the countdown and the session's controls; the header says the task again the moment the session ends or is about some other task. `DayView.focus.test.tsx` |
+| Review | "2 of 11" with "18%" beside it | The count alone; the percentage was the same number a second time, and the one form the app declines beside a score |
+| Review | The week under the arrows read "07 - 09-13" | The range was spelled from the machine's locale, which on this desktop is Lithuanian. The week is named by `formatWeekTitle`, as the week view names it, and the month in the app's own locale like every other date it prints |
+| Month, Week, Templates, Library, North, Settings | Nothing repeated but a scale beside a time and the same count on three series items; four sizes each | Nothing changed |
 
 #### The brief, as understood
 
@@ -223,7 +261,7 @@ it either. Two principles govern the whole wave and go into CONVENTIONS:
    (8h) is not counted as free." - go: every number in them is in the rail's
    card. What the card does not say - across how many gaps, and that sleep is
    not counted - moves into the card as a small grey note beside the row.
-   The card stays four rows; under the header stays empty. The header row
+   The card stays four rows - a fifth, Calendar, only on a day with somebody else's events on it, where the sentence used to count them apart; under the header stays empty. The header row
    itself becomes two zones: the day on the left (its name, its chip, Replan,
    Low day), the status on the right (the clock, what is running, how far
    the day has come), one gap between them. "6/11" and "1/3 key" side by
@@ -636,6 +674,7 @@ and pushed. Nothing below this table is owed.
 | `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: the handoff of the time |
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
+| `v2.6` | the closing commit, named in the handoff | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth

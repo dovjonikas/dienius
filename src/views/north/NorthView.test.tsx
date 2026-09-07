@@ -124,6 +124,10 @@ test('the deserve field stops at four lines rather than trimming a fifth on save
 
 // --- Compose ----------------------------------------------------------------
 
+// Fifteen seconds rather than the runner's five. Compose types a picture and
+// four goals through real key presses, which is four seconds on its own and
+// past five once the suite runs a hundred and forty files in parallel - the
+// same trade the 20MB import test makes, for the same reason.
 test('Compose edits the picture and every goal in place, and Cancel drops the draft', async () => {
   const user = userEvent.setup()
   picture('I wake early.')
@@ -153,7 +157,7 @@ test('Compose edits the picture and every goal in place, and Cancel drops the dr
   expect(getData().picture?.text).toBe('I wake before the house does.')
   expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at sixty'])
   expect(getData().goals[0].why).toBe('Because.')
-})
+}, 15_000)
 
 test('Escape leaves Compose without saving', async () => {
   const user = userEvent.setup()

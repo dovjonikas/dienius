@@ -122,7 +122,10 @@ test('an imported .ics file lays its events over the day, and free time counts t
 
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
   await expect(page.locator('.timeline-external-title', { hasText: 'Design review' })).toBeVisible()
-  await expect(page.locator('.capacity-line')).toContainText('Calendar: 1h across 1 event.')
+  // On the rail's card since v2.6, where the desktop says every figure of
+  // the day; the capacity sentence is the phone's.
+  await expect(page.locator('.digest-figures')).toContainText('Calendar')
+  await expect(page.locator('.digest-figures')).toContainText('1 event')
   // The all-day one is drawn nowhere and counted nowhere: it takes no time.
   await expect(page.locator('.timeline-external-title', { hasText: 'Offsite' })).toHaveCount(0)
 })

@@ -51,7 +51,10 @@ test('the month copies the month, named as the month', async () => {
   await user.click(screen.getByRole('button', { name: 'Month' }))
   await user.click(screen.getByRole('button', { name: 'Copy month journal' }))
   const text = writeText.mock.calls[0][0] as string
-  const month = new Date(`${TODAY}T00:00:00`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  // In the app's own locale, the way every date it prints is - the review
+  // used to spell this one from the machine's, which named a week
+  // "07 - 09-13" on a Lithuanian desktop.
+  const month = new Date(`${TODAY}T00:00:00`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   expect(text.startsWith(`# Journal, ${month}`)).toBe(true)
   expect(text).toContain('Dad called')
 })

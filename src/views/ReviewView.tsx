@@ -7,7 +7,6 @@ import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,
   datesBetween,
-  doneRate,
   endOfMonth,
   periodStats,
   startOfMonth,
@@ -55,7 +54,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
 
   const peak = Math.max(1, ...stats.days.map(d => d.total))
   const peakFocus = Math.max(1, ...stats.days.map(d => d.focusMinutes))
-  const rate = doneRate(stats)
 
   return (
     <section className="review">
@@ -89,7 +87,12 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         >
           &larr;
         </button>
-        <span className="review-range">{formatRange(from, to, range)}</span>
+        {/* The week's heading is the week view's own, so the two screens name
+            a week the same way; the month is the month's name. formatRange
+            used to spell the week from the machine's locale, which on a
+            Lithuanian desktop read "07 - 09-13" - the critique pass of v2.6
+            found it under the arrows. */}
+        <span className="review-range">{range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}</span>
         <button
           type="button"
           aria-label={range === 'week' ? 'The week after' : 'The month after'}
@@ -121,7 +124,11 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
       ) : (
         <>
           <dl className="review-figures">
-            <Figure label="Done" value={`${stats.done} of ${stats.total}`} note={rate !== null ? `${Math.round(rate * 100)}%` : undefined} />
+            {/* The count alone. It carried its own percentage beside it until
+                v2.6 - "2 of 11 18%" - which is the same number said twice on
+                one line, and the second time as the percentage this app
+                declines to put beside a score. CONVENTIONS section 23. */}
+            <Figure label="Done" value={`${stats.done} of ${stats.total}`} />
             <Figure label="Deep work" value={stats.focusMinutes > 0 ? formatDuration(stats.focusMinutes) : 'none'} />
             <Figure
               label="Key tasks"
@@ -295,14 +302,20 @@ function Chart({ title, days, peak, valueOf, capOf, label, peakLabel, onOpenDay 
   )
 }
 
+/**
+ * The month's name for the heading and the copy button; a week is named by
+ * `formatWeekTitle`, the way the week view names it. In the app's own
+ * locale, like every other date this app prints - left to the machine's it
+ * spelled a week as "07 - 09-13" on a Lithuanian desktop.
+ */
 function formatRange(from: string, to: string, range: Range): string {
   const start = new Date(`${from}T00:00:00`)
   const end = new Date(`${to}T00:00:00`)
   if (range === 'month') {
-    return start.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    return start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   }
   const sameMonth = from.slice(0, 7) === to.slice(0, 7)
-  const startText = start.toLocaleDateString(undefined, { day: 'numeric', month: sameMonth ? undefined : 'short' })
-  const endText = end.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  const startText = start.toLocaleDateString('en-US', { day: 'numeric', month: sameMonth ? undefined : 'short' })
+  const endText = end.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
   return `${startText} - ${endText}`
 }

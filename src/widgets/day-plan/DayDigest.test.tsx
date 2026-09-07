@@ -79,6 +79,24 @@ test('when the untimed tasks do not fit, free says how far over', () => {
   expect(screen.getByText('1 gap · 2h over')).toBeInTheDocument()
 })
 
+test('a day with somebody else\'s events on it says so, in a row that is not there otherwise', () => {
+  const tasks = [task({ time: '09:00', minutes: 60 })]
+  render(
+    <DayDigest
+      tasks={tasks}
+      capacity={computeCapacity(tasks, undefined, undefined, [{ start: 14 * 60, end: 15 * 60 }])}
+      score={dayScore(tasks)}
+      sleepMinutes={480}
+      nowMinutes={13 * 60}
+      isToday
+    />,
+  )
+  expect(screen.getByText('Calendar')).toBeInTheDocument()
+  expect(screen.getByText('1 event')).toBeInTheDocument()
+  // Counted apart from Timed: a meeting is not something you planned.
+  expect(screen.getAllByText('1h')).toHaveLength(2)
+})
+
 test('a timed task with no size leaves free unknown, and says why', () => {
   digest([task({ time: '09:00' })])
   expect(screen.getByText('a timed task has no size')).toBeInTheDocument()

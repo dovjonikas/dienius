@@ -642,14 +642,17 @@ the conclusion changed anyway: categories put a blue almost exactly the accent's
 block, and an indicator the colour of the blocks it crosses is not an indicator. `--mark` is the
 highlighter every preset already defines, warm and loud in all of them, and nothing else on the grid
 uses it - so "now" is the one thing on the day drawn in that colour, which is also what it means. The
-line carries the clock time on a filled chip in the gutter, because it lands wherever the minute falls,
-often straight on top of an hour label.
+line carried the clock time on a filled chip in the gutter until v2.6, because it lands wherever the
+minute falls, often straight on top of an hour label; the chip was the header's own clock said a second
+time, so the header says the minute now and the hour label the line crosses is dropped rather than
+covered - see "Once and only once", below.
 
 **One task is current, and three places say so.** `activeTask` in `capacity.ts` picks it: timed, sized,
 not done, containing the clock, later start wins where two overlap. Its block gets a ring in the now
 colour over whatever category colour it already had - "current" and "what kind" are two signals that
-never overwrite each other - its card gets the same ring plus a countdown, and the header states it in
-plain text: `15:21 · Meetings · 39 min left`. Deliberately narrow about all three conditions: an unsized
+never overwrite each other - its card gets the same ring (and, until v2.6, a countdown beside the
+header's own; see "Once and only once"), and the header states it in plain text:
+`15:21 · Meetings · 39 min left`. Deliberately narrow about all three conditions: an unsized
 task has no known end, so claiming it is still running would be an invention, and a finished task is
 not what you are doing whatever the clock says.
 
@@ -767,7 +770,9 @@ unreadable, only quiet.
 speed on the same easing, taken from the motion tokens. That single fact is most of what separates
 software that feels like one piece from software that feels like several - and it is entirely invisible
 until it is missing. Nothing animated here touches layout: transform, opacity, colour and shadow only, so
-hovering across a busy grid never reflows anything and never moves the block being aimed at.
+hovering across a busy grid never reflows anything and never moves the block being aimed at. (Since v2.6
+transform is off the hover list as well: a block that rises a pixel under the mouse moves nothing else
+and still moves - see "Nothing moves on hover", below.)
 
 **The checkmark is drawn, not faded in.** Two registered custom properties animate the tick's two strokes
 in sequence - the short one, then the long one - which is the order a hand draws a tick in, and is why it
@@ -1818,3 +1823,95 @@ seven is a line that starts lying the first time the list grows - which it
 did, the same day. What it found is written up in CONVENTIONS section 22: push
 something back once, never below 3:1, one `--faded` token, and a filled
 button that stops being filled rather than fading.
+
+## Once and only once
+
+The owner's brief for v2.6 opened with two lines under Today's header:
+"Timed tasks: 6h40. Free: 9h20 across 8 gaps." and "Sleep 23:00-07:00 (8h)
+is not counted as free." - useless, in their word, because every number in
+them was in the rail's card two inches to the left. The principle they
+drew from it governs the whole wave and is CONVENTIONS section 23:
+information appears exactly once, and the same number in two places means
+one of them is not needed.
+
+**What went, and where each thing now lives.** The capacity sentence is
+not drawn at the wide breakpoint; the card carries the two facts it did
+not - "8 gaps" beside Free, "not counted" beside Sleep - as small grey
+notes, and somebody else's calendar as a Calendar row on the days that
+have one. The card's ring and its Done row went with it: the header's bar and
+fraction already say how far the day has come, and a ring saying it again
+a hand's width away was the same number three times on the one screen the
+app is opened to. The now line lost its clock chip, the running card its
+countdown, the empty stream one of its two empty states, and six tooltips
+that only repeated the visible text were removed rather than converted.
+The closing card's lead lost its "sleep in 1h", which the header says in
+the same hour; Review's count lost the percentage beside it; and while a
+focus session runs on the running task, the header keeps the clock alone
+and leaves the task and the countdown to the strip that is already saying
+them with the session's own controls.
+
+**What stayed, and why.** The timeline and the task list say the same day
+twice on purpose: a calendar and a list are two readings of one day, and
+the two side by side is the whole of the wide layout. Up next in the rail
+was kept as a pointer rather than a figure. A time on the hour scale
+beside the same time on a card is a coincidence.
+
+**What it cost.** The ring was the one shape in the rail; the card is four
+rows of type now, and the rail is quieter for it. The now line is a line
+and a dot, and a person reading the minute reads it off the header. Both
+are the trade the principle asks for, and both were checked on the screen
+before being kept.
+
+## Nothing moves on hover
+
+The owner's words: a pointer resting on something may show something, but
+may not push anything that is already drawn; a layout shift under the mouse
+is a defect, not a style. It came from the North line, whose peek - the
+why and the identity under the goal - opened in the flow and slid the
+whole day down two lines every time the cursor crossed it, which on a line
+the width of the header it does on the way to almost anything. CONVENTIONS
+section 24 holds it; this is what it changed.
+
+**The peek is a bubble, and the row is one height.** Positioned under the
+line with an arrow, in the explanation bubble's own surface; the row is
+exactly one line of the title's type whatever the goal says; the only
+thing that changes in the line itself is its ink.
+
+**Every tooltip sits under its control.** Native `title` tooltips land
+wherever the browser puts them - on the words, as often as not - so they
+are gone. The words moved to `data-tip` and one element at the root draws
+them in the window, under the control with an arrow, above it when there
+is no room, beside it in the rail, 400ms after a mouse rests and at once
+for a keyboard. In the window rather than inside the control's box, because
+the rail is 56px wide with overflow hidden and a bubble inside it was a
+bubble nobody saw. Found on the way: the rail scrolls itself a pixel when
+a control in it is brought into view, and the first version cancelled
+every pending tooltip on any scroll.
+
+**Seven hovers stopped moving.** The accent swatch grew by twelve percent;
+the theme card rose two pixels; the category chip, the day arrows, the
+timer presets, the rollover button and every draggable block rose one.
+None shifted anything else, which is why they survived the v2.0 rule about
+hover and layout. Each keeps its colour, edge or shadow change and loses
+the transform, and `hoverStillness.test.ts` reads the stylesheet so no
+hover rule can set a moving property again.
+
+**The Monday card is a sheet.** The same rule from the other side: a card
+that arrives in the flow above the day and leaves again moves the day
+twice, and on a 768px screen it took a fifth of the day away while it
+stood. It is a sheet with the task sheet's backdrop and rise - a moment,
+shown once and read once - and Ok, Escape and the backdrop are the same
+read. The evening close stays in the flow on purpose: it arrives at a set
+time while somebody may be typing, and a sheet that lands mid-sentence is
+worse than a card that pushes.
+
+**One pane fills its width.** Not a hover, but the same family of
+complaint - the content not where the eye expects it. Pressing Calendar or
+Tasks centred the rail and a 760px pane in a 1568px row and left 272px of
+nothing either side, with the header at the row's edge over content that
+started a hand's width in. The rail and the pane are one block now,
+centred by its own max-width, header included; the pane grows to 1080px,
+which leaves no band over 120px at 1920 and fills the row at 1366 and 1600.
+The v2.4 worry about a thousand-pixel block was about the two-pane layout,
+where the task list was paying for it; alone on a screen, a timeline is
+allowed the width a calendar takes.

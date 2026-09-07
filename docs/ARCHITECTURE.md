@@ -291,6 +291,7 @@ src/
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
+    TipLayer           the one tooltip, drawn in the window under whatever control carries data-tip
     DayPreview         the whole of a day, without leaving the month
     CopyJournalButton  the journal for a stretch of days, put on the clipboard as markdown
     ColorSwatchPicker  one colour from eight, without eight of them on screen
@@ -672,7 +673,7 @@ ever needed to influence anything outside it.
 
 ## 9. Tests
 
-Vitest + Testing Library + jsdom. 2095 tests in 120 files, no worker limits, no skips; plus 27 Playwright tests in 13 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
+Vitest + Testing Library + jsdom. 2346 tests in 143 files, no worker limits, no skips; plus 35 Playwright tests across two viewports in 16 files against the production build (section 4's `e2e/`), and `npm run sweep` measuring every screen in a real browser (CONVENTIONS section 9).
 
 Two kinds, deliberately:
 

@@ -42,6 +42,13 @@ export interface DayHeaderProps {
   nowMinutes: number
   runningTask: Task | undefined
   runningLeft: number | undefined
+  /**
+   * The task a focus session is running on, when there is one on this day.
+   * While it is the running task, the focus strip above the app already says
+   * its name and its countdown, and the header says only the clock - the
+   * same line twice, stacked, is CONVENTIONS section 23's whole subject.
+   */
+  focusedTaskId?: string
   sleepProfiles: SleepProfile[]
   daySleepProfileId: string | undefined
   isWide: boolean
@@ -69,6 +76,7 @@ export function DayHeader({
   nowMinutes,
   runningTask,
   runningLeft,
+  focusedTaskId,
   sleepProfiles,
   daySleepProfileId,
   isWide,
@@ -95,6 +103,11 @@ export function DayHeader({
   // - and without a word in the header the day reads as empty rather than as
   // finished, which is the one distinction the whole app turns on.
   const dayCleared = score.planned && score.done === score.total
+
+  // The strip is saying it. While a focus session runs on the running task,
+  // the bar at the top of the app carries the title and the countdown with
+  // the session's own controls, and this line keeps the clock alone.
+  const stripSaysIt = runningTask !== undefined && focusedTaskId === runningTask.id
 
   // Only on today, and only once bedtime is close enough to matter. Measured
   // against the same waking window the grid greys and the capacity line counts
@@ -253,7 +266,8 @@ export function DayHeader({
               <span className="day-now-done">Day cleared</span>
             </>
           ) : (
-            runningTask && (
+            runningTask &&
+            !stripSaysIt && (
               <>
                 <span className="day-now-sep" aria-hidden="true" />
                 <span className="day-now-task">{runningTask.title}</span>

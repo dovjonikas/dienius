@@ -36,6 +36,11 @@ function press(key: string) {
  * that one second.
  */
 
+// Fifteen seconds rather than the runner's five. This opens the box from
+// every tab through real key presses, which is a second on its own and five
+// or more on a machine running a hundred and forty test files in parallel -
+// honest work, not a hang, and the same trade the 20MB import test makes
+// rather than letting the default act as an absolute budget.
 test('S opens the box with the cursor in it, from every tab', async () => {
   const user = userEvent.setup()
   render(<App />)
@@ -47,7 +52,7 @@ test('S opens the box with the cursor in it, from every tab', async () => {
     press('Escape')
     expect(screen.queryByRole('dialog', { name: 'Scratch' })).toBeNull()
   }
-})
+}, 15_000)
 
 /**
  * The backtick, and finding a note through the palette.
