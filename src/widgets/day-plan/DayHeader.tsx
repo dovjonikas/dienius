@@ -290,17 +290,25 @@ export function DayHeader({
             <span aria-hidden="true">
               {formattedScore}
               {!isFullDay && <span className="day-score-note"> core</span>}
+              {/* Only once at least one exists. A cap stated on an empty day
+                  is a rule nobody asked about yet; stated the moment somebody
+                  uses one, it is the answer to "how many of these do I get".
+                  Inside the fraction's own phrase rather than a second number
+                  in its own box: "6/11" and "1/3 key" side by side read as
+                  two scores, and the second was never a score - it is how
+                  many of the three a day allows have been marked. */}
+              {keyCount > 0 && (
+                <span className="day-key-count">
+                  {' '}
+                  · {keyCount} of {MAX_HIGHLIGHTS} key
+                </span>
+              )}
             </span>
-            <span className="visually-hidden">{scoreLabel}</span>
+            <span className="visually-hidden">
+              {scoreLabel}
+              {keyCount > 0 && `, ${keyCount} of ${MAX_HIGHLIGHTS} key tasks marked`}
+            </span>
           </span>
-          {/* Only once at least one exists. A cap stated on an empty day is a
-              rule nobody asked about yet; stated the moment somebody uses one,
-              it is the answer to "how many of these do I get". */}
-          {keyCount > 0 && (
-            <span className="day-key-count">
-              {keyCount}/{MAX_HIGHLIGHTS} key
-            </span>
-          )}
         </div>
       )}
       </div>

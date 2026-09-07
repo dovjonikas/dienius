@@ -6175,14 +6175,15 @@ button.danger:focus-visible {
     grid-template-columns: minmax(200px, 240px) minmax(400px, 760px) minmax(320px, 1fr);
     grid-template-areas:
       "rail header header"
-      "rail cap    cap"
       "rail day    tasks";
-    /* Header and caption rows take what they need; the content row takes
-       everything left, and no more - minmax(0, 1fr) rather than a plain 1fr
-       for the same reason the flex chain above needs min-height: 0. A bare
-       1fr row has an implicit auto minimum and will happily grow past the
-       grid. */
-    grid-template-rows: auto auto minmax(0, 1fr);
+    /* The header row takes what it needs; the content row takes everything
+       left, and no more - minmax(0, 1fr) rather than a plain 1fr for the
+       same reason the flex chain above needs min-height: 0. A bare 1fr row
+       has an implicit auto minimum and will happily grow past the grid.
+       There was a caption row between them for the capacity sentence until
+       v2.6; the rail's card says everything it said, so it is not drawn at
+       this width and the row went with it. */
+    grid-template-rows: auto minmax(0, 1fr);
     height: 100%;
     gap: var(--s2) var(--s6);
   }
@@ -6203,9 +6204,8 @@ button.danger:focus-visible {
     grid-template-areas:
       "rail header   header"
       "rail notices  notices"
-      "rail cap      cap"
       "rail day      tasks";
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   .day-notices { grid-area: notices; }
@@ -6226,15 +6226,6 @@ button.danger:focus-visible {
      `display: contents` for exactly the same reason. */
   .day-pane {
     display: contents;
-  }
-
-  /* The capacity sentence, in its own thin band under the header rather than
-     as the first thing in the timeline column. Same words, one line, muted:
-     it describes the whole day, which is what the header band is for, and it
-     was taking the top of the column the day itself should start at. */
-  .day-pane > .capacity-line {
-    grid-area: cap;
-    margin-bottom: 0;
   }
 
   /* overflow-y: auto is what makes "nothing scrolls" true for a day that
@@ -6298,7 +6289,6 @@ button.danger:focus-visible {
     grid-template-columns: 1fr minmax(200px, 240px) minmax(400px, 760px) 1fr;
     grid-template-areas:
       "header header header header"
-      "cap    cap    cap    cap"
       ".      rail   day    .";
   }
 
@@ -6306,7 +6296,6 @@ button.danger:focus-visible {
     grid-template-areas:
       "header  header  header  header"
       "notices notices notices notices"
-      "cap     cap     cap     cap"
       ".       rail    day     .";
   }
 
@@ -6314,7 +6303,6 @@ button.danger:focus-visible {
     grid-template-columns: 1fr minmax(200px, 240px) minmax(360px, 620px) 1fr;
     grid-template-areas:
       "header header header header"
-      "cap    cap    cap    cap"
       ".      rail   tasks  .";
   }
 
@@ -6322,7 +6310,6 @@ button.danger:focus-visible {
     grid-template-areas:
       "header  header  header  header"
       "notices notices notices notices"
-      "cap     cap     cap     cap"
       ".       rail    tasks   .";
   }
 
@@ -6353,14 +6340,16 @@ button.danger:focus-visible {
      you are, and which panes are showing. Everything in it is a fixed height
      except the progress bar, which takes the slack - so the row's height
      does not change as the day fills up. */
-  /* One row, three things at three weights: the day (the arrows, its
-     name, its chip and its door), its status (the clock and how far it has
-     come), and the view toggle on the far right. One gap between groups
-     and a smaller one inside them; the status is the part that gives, so
-     the running title ellipsises before the toggle is pushed onto a second
-     line. It wraps only when even that is not enough, and then the toggle
-     alone goes down, still on the right. It used to be six parts at one
-     gap, with the Replan link and the chip inside the arrows' bracket. */
+  /* One row, two zones. On the left, the day: its name, its chip, Replan
+     and Low day. On the right, its status: the clock, what is running, how
+     far the day has come - and the view toggle, which is about this screen
+     rather than the day, at the row's end. One gap between the zones, the
+     slack of the row, and the same smaller gap inside each. The status used
+     to take the slack itself, so it sat in the middle with the toggle alone
+     at the far right and three different gaps between the parts; it hugs
+     the right now and the running title ellipsises before anything wraps.
+     When the row is too short for both zones the right one goes down a
+     line, whole, still on the right. */
   .day-header {
     grid-area: header;
     display: flex;
@@ -6400,9 +6389,10 @@ button.danger:focus-visible {
   .day-header .day-status {
     display: flex;
     align-items: center;
-    gap: var(--s4);
-    flex: 1 1 auto;
+    gap: var(--s5);
+    flex: 0 1 auto;
     min-width: 0;
+    margin-left: auto;
   }
 
   .day-header .day-now { flex: 0 1 auto; }
@@ -6416,7 +6406,7 @@ button.danger:focus-visible {
     margin-bottom: 0;
   }
 
-  .day-header .day-layout-focus { margin-left: auto; }
+  .day-header .day-layout-focus { flex: 0 0 auto; }
 
   /* Which panes are showing is a preference about this screen, not
      information about the day, so it does not get to be the loudest accent
@@ -6588,7 +6578,6 @@ button.danger:focus-visible {
     grid-template-columns: minmax(200px, 240px) minmax(400px, 960px);
     grid-template-areas:
       "rail header"
-      "rail cap"
       "rail tasks";
   }
 
@@ -6606,7 +6595,6 @@ button.danger:focus-visible {
     .day-view {
       grid-template-areas:
         "header header header"
-        "rail   cap    cap"
         "rail   day    tasks";
     }
 
@@ -6614,7 +6602,6 @@ button.danger:focus-visible {
       grid-template-areas:
         "header header   header"
         "rail   notices  notices"
-        "rail   cap      cap"
         "rail   day      tasks";
     }
 
@@ -6628,7 +6615,6 @@ button.danger:focus-visible {
     .day-view.focus-calendar {
       grid-template-areas:
         "header header header header"
-        "cap    cap    cap    cap"
         ".      rail   day    .";
     }
 
@@ -6636,14 +6622,12 @@ button.danger:focus-visible {
       grid-template-areas:
         "header  header  header  header"
         "notices notices notices notices"
-        "cap     cap     cap     cap"
         ".       rail    day     .";
     }
 
     .day-view.focus-tasks {
       grid-template-areas:
         "header header header header"
-        "cap    cap    cap    cap"
         ".      rail   tasks  .";
     }
 
@@ -6651,14 +6635,12 @@ button.danger:focus-visible {
       grid-template-areas:
         "header  header  header  header"
         "notices notices notices notices"
-        "cap     cap     cap     cap"
         ".       rail    tasks   .";
     }
 
     .day-view:has(.first-run) {
       grid-template-areas:
         "header header"
-        "rail   cap"
         "rail   tasks";
     }
   }
@@ -6813,18 +6795,11 @@ button.danger:focus-visible {
   line-height: 1.45;
 }
 
-/* The ring and the three figures, side by side. One shape and three numbers,
-   all small - the whole block is meant to be taken in without reading, which
-   is why it is a row and not a list. */
-/* One card: the ring with the day's fraction in it and the four figures
-   beside it, on the same surface with the same edge as Up next above it.
-   The ring used to float alone at the left of four bare rows with a rule
-   above the lot and nothing binding them, and read as a gauge whose needle
-   had come off. */
+/* One card, four figures, on the same surface with the same edge as Up
+   next above it. It held a ring with the day's fraction in it until v2.6;
+   the header's bar is that shape already, and a number said three times on
+   one screen is CONVENTIONS section 23's whole subject. */
 .digest-stats {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
   margin-top: var(--s4);
   padding: var(--s3);
   border: 1px solid var(--border);
@@ -6832,47 +6807,6 @@ button.danger:focus-visible {
   background: var(--surface);
   box-shadow: var(--e1);
 }
-
-.digest-ring {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
-}
-
-.digest-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-
-/* The score's own fraction, the one the header states - see DayDigest. */
-.digest-ring-value {
-  position: relative;
-  color: var(--text);
-  font-size: var(--t-sm);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
-.digest-ring-track {
-  fill: none;
-  stroke: color-mix(in srgb, var(--border) 80%, transparent);
-  stroke-width: 6;
-}
-
-.digest-ring-fill {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke-dashoffset var(--dur) var(--ease);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .digest-ring-fill { transition: none; }
-}
-
-
 
 /* Two columns rather than four flex rows: every label starts on one edge
    and every figure ends on the other, whatever the widest of each is. */
@@ -6903,6 +6837,17 @@ button.danger:focus-visible {
   color: var(--text);
   text-align: right;
   white-space: nowrap;
+}
+
+/* The small grey word beside a figure: across how many gaps, that sleep is
+   not counted. Before the figure rather than after it, so the figures keep
+   one right edge whatever the note beside them says. Muted, not faint: it
+   is meant to be read, once, and CONVENTIONS section 22 holds a whisper to
+   three to one. */
+.digest-note {
+  margin-right: var(--s2);
+  color: var(--muted);
+  font-size: var(--t-xs);
 }
 
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only
@@ -7853,11 +7798,11 @@ button.danger:focus-visible {
 
 .task-key .task-title { font-weight: 650; }
 
+/* Part of the score's own phrase - "6/11 · 1 of 3 key" - in the same ink
+   and size, so the two read as one fact about the day rather than as two
+   numbers in two boxes. */
 .day-key-count {
-  flex-shrink: 0;
   color: var(--muted);
-  font-size: var(--t-xs);
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

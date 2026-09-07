@@ -6,13 +6,15 @@ import { dayScore } from './score'
 import type { Task } from '../../lib/types'
 
 /**
- * The rail's lower half, and the one rule it kept breaking.
+ * The rail's lower half, and the rule it kept breaking.
  *
- * A digest is four numbers and a shape, and every one of the numbers is
- * already stated in words somewhere else on the screen. That is the whole
- * licence for repeating them: small, together, glanceable. The moment one of
- * them says something the words do not, it has stopped being a repeat and
- * started being a second opinion about the day.
+ * Every figure on this card is said here and nowhere else - CONVENTIONS
+ * section 23, "once and only once". Until v2.6 it carried a ring with the
+ * day's fraction in it and a Done row beside the ring, while the header
+ * already had the bar and the same fraction: one number, three times, on one
+ * screen. These hold the card to its four rows, to the two notes it took over
+ * from the capacity sentence when that sentence left the desktop, and to the
+ * older rule that nothing in it is a percentage in any disguise.
  */
 
 function task(over: Partial<Task> = {}): Task {
@@ -32,26 +34,58 @@ function digest(tasks: Task[]) {
   )
 }
 
-// --- no percentage, in any disguise ---------------------------------------
-//
-// The ring used to carry `Math.round(fraction * 100)` in its middle. A
-// percentage with the sign taken off is not less of a percentage, and this
-// app's day score does not do them - STATE section 2, and DECISIONS on why a
-// number that goes up is a report card. `score.test.ts` already held the rule
-// for `formatDayScore`; the digest computed its own and walked around it,
-// which is what this test is for.
+// --- what the header already says is not said again ------------------------
 
-test('the ring carries the day score\'s own fraction, and no number of its own', () => {
+test('the card says nothing the header already does: no ring, no done count', () => {
   const { container } = digest([
     task({ time: '09:00', minutes: 60, done: true }),
     ...Array.from({ length: 8 }, (_, i) => task({ time: `1${i}:00`, minutes: 30 })),
   ])
-  const ring = container.querySelector('.digest-ring')
-  expect(ring).not.toBeNull()
-  // The same "1/9" the header states - a fraction, which is a count of two
-  // things, and never the eleven that a percentage would make of it.
-  expect(ring!.textContent?.trim()).toBe('1/9')
+  expect(container.querySelector('.digest-ring')).toBeNull()
+  expect(screen.queryByText('Done')).toBeNull()
+  // The fraction the header shows, in digits or in words: neither is here.
+  expect(container.textContent).not.toMatch(/1\/9|1 of 9/)
 })
+
+test('four rows, and they are the shape of the day: timed, focus, free and sleep', () => {
+  digest([task({ time: '09:00', minutes: 60, category: 'core' }), task({ time: '14:00', minutes: 30 })])
+  const labels = screen.getAllByRole('term').map(dt => dt.textContent)
+  expect(labels).toEqual(['Timed', 'Focus', 'Free', 'Sleep'])
+  expect(screen.getByText('1h30')).toBeInTheDocument()
+  expect(screen.getByText('1h')).toBeInTheDocument()
+})
+
+// --- the two notes the capacity sentence used to carry ----------------------
+
+test('free says across how many gaps it is spread', () => {
+  // 07:00-09:00, 10:00-12:00, 13:00-15:00 and 16:00-23:00 are the four holes
+  // in the default waking window around these three.
+  digest([
+    task({ time: '09:00', minutes: 60 }),
+    task({ time: '12:00', minutes: 60 }),
+    task({ time: '15:00', minutes: 60 }),
+  ])
+  expect(screen.getByText('4 gaps')).toBeInTheDocument()
+})
+
+test('sleep says, once, that it is not counted', () => {
+  digest([task({ time: '09:00', minutes: 60 })])
+  expect(screen.getAllByText('not counted')).toHaveLength(1)
+  expect(screen.getByText('8h')).toBeInTheDocument()
+})
+
+test('when the untimed tasks do not fit, free says how far over', () => {
+  digest([task({ time: '07:00', minutes: 900 }), task({ minutes: 180 })])
+  expect(screen.getByText('1 gap · 2h over')).toBeInTheDocument()
+})
+
+test('a timed task with no size leaves free unknown, and says why', () => {
+  digest([task({ time: '09:00' })])
+  expect(screen.getByText('a timed task has no size')).toBeInTheDocument()
+  expect(screen.getByText('1 unsized')).toBeInTheDocument()
+})
+
+// --- no percentage, in any disguise ---------------------------------------
 
 test('nothing in the digest is a percentage, written or implied', () => {
   const { container } = digest([
@@ -65,20 +99,9 @@ test('nothing in the digest is a percentage, written or implied', () => {
   expect(text).not.toMatch(/\b11\b/)
 })
 
-test('how far along the day is, is said in words and only in words', () => {
-  digest([
-    task({ time: '09:00', minutes: 60, done: true }),
-    task({ time: '11:00', minutes: 30 }),
-    task({ time: '13:00', minutes: 30 }),
-  ])
-  expect(screen.getByText('Done')).toBeInTheDocument()
-  expect(screen.getByText('1 of 3')).toBeInTheDocument()
-})
-
 // --- a day with no plan says nothing about itself -------------------------
 
-test('an empty day draws no ring and no figures at all', () => {
+test('an empty day draws no figures at all', () => {
   const { container } = digest([])
   expect(container.querySelector('.digest-stats')).toBeNull()
-  expect(container.querySelector('.digest-ring')).toBeNull()
 })

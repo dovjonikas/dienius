@@ -161,13 +161,18 @@ test('day-pane and task-pane wrapper regions exist in the DOM at any viewport, n
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
 })
 
-test('the capacity line, if-then rule and grid all land inside day-pane', () => {
+test('the grid lands inside day-pane, and the capacity line is not drawn beside a rail that says it', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   const dayPane = container.querySelector('.day-pane')!
-  expect(dayPane.querySelector('.capacity-line')).not.toBeNull()
   expect(dayPane.querySelector('.timeline-grid-wrap')).not.toBeNull()
+  // Every number in the sentence is in the rail's card at this width, and
+  // the gaps and the sleep note moved into the card in v2.6 - CONVENTIONS
+  // section 23. The phone, which has no rail, keeps the sentence: the
+  // DOM-order test below renders narrow and still finds it.
+  expect(container.querySelector('.capacity-line')).toBeNull()
+  expect(container.querySelector('.digest-stats')).not.toBeNull()
 })
 
 test('quick-add, the task list and the rollover button all land inside task-pane', () => {

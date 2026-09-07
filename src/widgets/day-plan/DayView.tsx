@@ -300,8 +300,14 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           {/* Purely informational - no embedded action. Being over is stated as
               a fact; which float moves to tomorrow, if any, is decided on that
               float's own row below, not pre-selected here. See
-              docs/TIMELINE.md section 8. */}
-          {capacityLine && (
+              docs/TIMELINE.md section 8.
+
+              Not drawn at the wide breakpoint at all. Every number in it is
+              in the rail's card there - the gaps and the sleep note moved into
+              the card in v2.6 - and a sentence that repeats a card two inches
+              to its left is the thing CONVENTIONS section 23 forbids. The
+              phone keeps it, because the phone has no rail. */}
+          {capacityLine && !isWide && (
             <div className="capacity-line">
               <p>{capacityLine}</p>
               {/* Its own line, in its own weight. Deliberately not a sentence

@@ -3,11 +3,7 @@ import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
 import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
-import { formatDayScore, type DayScore } from './score'
-
-/** Radius of the progress ring's circle, in the SVG's own coordinates. */
-const RING_RADIUS = 26
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
+import type { DayScore } from './score'
 
 export interface DayDigestProps {
   tasks: Task[]
@@ -22,29 +18,29 @@ export interface DayDigestProps {
 }
 
 /**
- * The rail's lower half: what is coming, and how the day is going.
+ * The rail's lower half: what is coming, and the shape of the day in four
+ * figures.
  *
- * The rail used to end after the template chips, leaving a third of a wide
- * screen as dead space - and dead space in a layout is not neutral, it reads
- * as "this half was not finished." What belongs there is what a glance at the
- * side of the screen should answer while the middle is busy being a day: what
- * is next, and how far along am I.
+ * Every figure here is said here and nowhere else. That is the rule
+ * CONVENTIONS section 23 was written for, and until v2.6 this card broke it
+ * worse than anything else on the screen: it carried a ring with the day's
+ * fraction in it and a Done row beside the ring, while the header two inches
+ * above already had the bar and the same fraction - one number, three times.
+ * The argument at the time was that a shape is read faster than digits. It
+ * is, and the header's bar is that shape. The ring and the row are gone. How
+ * far the day has come is the header's to say; how the day is made is this
+ * card's.
  *
- * Deliberately four numbers and one shape, not a dashboard. Every figure here
- * is already stated somewhere else in the app - the ring is the header's own
- * fraction, the free time is the capacity line's - and repeating them is only
- * worth it because they are being repeated *small and together*, as a shape
- * you glance at rather than a sentence you read. See docs/RESEARCH-ADHD.md
- * section 7.
- *
- * Sleep is the fourth, and it earned the slot the other candidates did not.
- * Free time has always been measured inside the waking window, so sleep has
- * never been counted as free - but with three figures on screen and no fourth,
- * Free 12h30 sat next to nothing that explained the missing eight hours, and a
- * reader is entitled to assume a day adds up. Stating it makes the arithmetic
- * legible instead of leaving it to be trusted. It is also the one number here
- * that does not move with what you plan, which is exactly why it belongs last
- * and quiet.
+ * Four rows. Timed is what is on the clock. Focus is how much of that is the
+ * thing that matters - the one figure nothing else on the screen states.
+ * Free is what is left of the waking window, and across how many gaps,
+ * because eight ten-minute holes and one eighty-minute one are different
+ * days with the same figure. Sleep is the one number that does not move with
+ * the plan, said so a reader can see the day adds up, with the note that it
+ * is not counted as free. Those two notes used to be a sentence of their own
+ * under the header, on a desktop where every number in that sentence was
+ * already in this card; the phone still has the sentence, because the phone
+ * has no rail.
  */
 export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
@@ -60,8 +56,35 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
     .filter(t => t.category === 'core' && t.minutes !== undefined)
     .reduce((sum, t) => sum + t.minutes!, 0)
 
-  const fraction = score.planned && score.total > 0 ? score.done / score.total : 0
   const anchored = tasks.filter(t => isAnchor(t) && !t.done).length
+
+  // What is on the clock. A day whose only timed tasks have no size yet has
+  // no honest figure, and says so with a dash rather than a zero.
+  const timed = capacity.anchorCount === 0 ? 'none' : capacity.anchorsMinutes ? formatDuration(capacity.anchorsMinutes) : '-'
+  const timedNote =
+    capacity.unsizedAnchorCount > 0
+      ? `${capacity.unsizedAnchorCount} unsized`
+      : capacity.anchorsClippedByWindow
+        ? "within today's window"
+        : undefined
+
+  // What the free figure cannot say on its own: across how many gaps it is
+  // spread, and - when the untimed tasks need more than the day has left -
+  // how far over, which used to be the capacity sentence's last line. A dash
+  // with no reason is a dash somebody has to go and find the reason for.
+  const gaps = capacity.gaps.length
+  const gapWord = gaps === 1 ? 'gap' : 'gaps'
+  const free = capacity.freeMinutes === null ? '-' : capacity.freeMinutes > 0 ? formatDuration(capacity.freeMinutes) : 'none'
+  const freeNote =
+    capacity.freeMinutes === null
+      ? capacity.unsizedAnchorCount > 0
+        ? 'a timed task has no size'
+        : undefined
+      : capacity.overMinutes !== null && capacity.overMinutes > 0
+        ? `${gaps} ${gapWord} · ${formatDuration(capacity.overMinutes)} over`
+        : gaps > 0
+          ? `${gaps} ${gapWord}`
+          : undefined
 
   return (
     <div className="day-digest">
@@ -90,41 +113,12 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
 
       {score.planned && (
         <div className="digest-stats">
-          {/* The same fraction the header states in digits, as a shape with
-              the digits in it. Two readings of one number is not repetition
-              here: the header answers "how many", this answers "how far",
-              and only one of those can be taken in without counting.
-              The digits in the middle are the day score's own fraction, the
-              one the header shows - "2/9" - and never anything else. It
-              carried `Math.round(fraction * 100)` until v2.0, a percentage
-              with the sign taken off, which is not less of a percentage, and
-              this app's day score does not do percentages (STATE section 2,
-              and DECISIONS on why a number that goes up is a report card).
-              Then it carried nothing, and an empty ring a finger's width
-              from "Done 2 of 9" read as a gauge whose needle had come off.
-              The fraction is what the ring is a picture of, so it sits
-              inside it. Hidden from the reader that hears "2 of 9 done"
-              from the list beside it. */}
-          <div className="digest-ring" aria-hidden="true">
-            <svg viewBox="0 0 64 64">
-              <circle className="digest-ring-track" cx="32" cy="32" r={RING_RADIUS} />
-              <circle
-                className="digest-ring-fill"
-                cx="32"
-                cy="32"
-                r={RING_RADIUS}
-                transform="rotate(-90 32 32)"
-                strokeDasharray={RING_CIRCUMFERENCE}
-                strokeDashoffset={RING_CIRCUMFERENCE * (1 - fraction)}
-              />
-            </svg>
-            <span className="digest-ring-value">{formatDayScore(score)}</span>
-          </div>
           <dl className="digest-figures">
             <div>
-              <dt>Done</dt>
+              <dt>Timed</dt>
               <dd>
-                {score.done} of {score.total}
+                {timedNote && <span className="digest-note">{timedNote}</span>}
+                {timed}
               </dd>
             </div>
             <div>
@@ -133,15 +127,17 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
             </div>
             <div>
               <dt>Free</dt>
-              {/* null, not zero, when there is nothing trustworthy to report -
-                  no anchors at all, or one whose size is unknown. Said as a
-                  dash rather than as a number this app would have had to
-                  guess. See computeCapacity. */}
-              <dd>{capacity.freeMinutes === null ? '-' : capacity.freeMinutes > 0 ? formatDuration(capacity.freeMinutes) : 'none'}</dd>
+              <dd>
+                {freeNote && <span className="digest-note">{freeNote}</span>}
+                {free}
+              </dd>
             </div>
             <div>
               <dt>Sleep</dt>
-              <dd>{formatDuration(sleepMinutes)}</dd>
+              <dd>
+                <span className="digest-note">not counted</span>
+                {formatDuration(sleepMinutes)}
+              </dd>
             </div>
           </dl>
         </div>
