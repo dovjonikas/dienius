@@ -16,7 +16,8 @@ Monday card is a sheet; a single pane fills its width; the task column ends
 on a footer; Scratch, the journal and the blocks each lost the thing that
 made them read as unfinished; and a health pass over every screen took
 seven hovers that moved and two numbers said twice. Section 4 has the
-table, stage by stage. **Nothing is owed.**
+table, stage by stage. The tag is `493d9de` and this handoff sits one
+commit above it. **Nothing is owed.**
 
 **Before that: v2.5**, twelve stages from three briefs in one sitting:
 notes stop pretending to be a database, they hold pictures, and one press
@@ -227,10 +228,10 @@ it either. Two principles govern the whole wave and go into CONVENTIONS:
 | # | Stage | Commit | What it became |
 |---|---|---|---|
 | 0 | Written down first | `0154d79` | The brief and the decisions it forced, in this file, before any code |
-| 1 | Today's header, and the figures said once | `15f9e96`, and the closing commit for the Calendar row | The capacity sentence is not drawn at the wide breakpoint; "8 gaps" and "not counted" are notes beside the card's rows, and an external calendar's events are a Calendar row that only appears on a day that has them (the browser test that read them off the sentence reads the card now); the card's ring and Done row went, because the header already has the bar and the fraction; the card is Timed, Focus, Free, Sleep. The header is two zones with the row's slack between them, and "6/11 · 1 of 3 key" is one phrase |
+| 1 | Today's header, and the figures said once | `15f9e96`, and `493d9de` for the Calendar row | The capacity sentence is not drawn at the wide breakpoint; "8 gaps" and "not counted" are notes beside the card's rows, and an external calendar's events are a Calendar row that only appears on a day that has them (the browser test that read them off the sentence reads the card now); the card's ring and Done row went, because the header already has the bar and the fraction; the card is Timed, Focus, Free, Sleep. The header is two zones with the row's slack between them, and "6/11 · 1 of 3 key" is one phrase |
 | 2, 3, 4, 5, 6, 7, 8 | The line, the tooltips, the sheet, one pane, the footer, Scratch, the journal, the blocks | `7e76791` | The North line at one fixed height with its peek as a bubble under it; `title` gone from the app and `data-tip` drawn by one element under the control (`views/TipLayer.tsx`), six repeating tooltips removed; the Monday card as a sheet with the task sheet's backdrop; the rail and a single pane as one centred block that grows to 1080px; the task column's footer behind a hairline and a card's worth of fade; every scrollbar the app's own thin one at last (Chromium had been ignoring the rounded rules since v2.0); Scratch with one empty state and one control language on a darker backdrop; the journal with no resize grip and two copy buttons at one weight; the blocks flat, a finished block down to two signals, the gap rules at half strength |
-| 9 | The health pass | `8151ef1`, and the closing commit | Every screen at 1920x1080 and 1366x768 in both themes by the two rules. Four type sizes on every screen held. The now line's clock chip and the running card's countdown went as doubles of the header; seven hover rules that lifted or grew a control lost their transform; the footer stopped being sticky when the sweep found it over the Backlog fold on the Focus screen; the two critique passes found the closing card repeating the header's sleep note, Review's count carrying its own percentage, and Review's week spelled from the machine's locale. Table below |
-| 10 | Closing and `v2.6` | the commit after this table was written; named in the handoff | Full gates, two critique passes on the desktop, the README's screenshots regenerated, CONVENTIONS 23 and 24, DECISIONS "Once and only once" and "Nothing moves on hover", `hoverStillness.test.ts`, the tag |
+| 9 | The health pass | `8151ef1`, `493d9de` | Every screen at 1920x1080 and 1366x768 in both themes by the two rules. Four type sizes on every screen held. The now line's clock chip and the running card's countdown went as doubles of the header; seven hover rules that lifted or grew a control lost their transform; the footer stopped being sticky when the sweep found it over the Backlog fold on the Focus screen; the two critique passes found the closing card repeating the header's sleep note, Review's count carrying its own percentage, and Review's week spelled from the machine's locale. Table below |
+| 10 | Closing and `v2.6` | `493d9de` | Full gates, two critique passes on the desktop, the README's screenshots regenerated, CONVENTIONS 23 and 24, DECISIONS "Once and only once" and "Nothing moves on hover", `hoverStillness.test.ts`, the tag |
 
 #### What the health pass found
 
@@ -674,7 +675,7 @@ and pushed. Nothing below this table is owed.
 | `v2.3` | `dcec338` | The journal, on top of v2.2. One commit sits above it, untagged: the handoff of the time |
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
-| `v2.6` | the closing commit, named in the handoff | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
+| `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
