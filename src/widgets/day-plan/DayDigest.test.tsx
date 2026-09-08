@@ -125,3 +125,22 @@ test('an empty day draws no figures at all', () => {
   const { container } = digest([])
   expect(container.querySelector('.digest-stats')).toBeNull()
 })
+
+// --- the door on the card the owner says they will use most ---------------
+
+/**
+ * Up next carries the link because that is where it is wanted: the card says
+ * what is coming, and one press is the thing itself. The link comes from the
+ * task or from the library item it is bound to - see `linkFor`.
+ */
+test('up next carries the door to what is next, in a new tab', () => {
+  digest([task({ time: '14:00', minutes: 45, title: 'Spanish', link: 'http://localhost:8080/easy' })])
+  const link = screen.getByRole('link', { name: /Open Spanish at localhost:8080/ })
+  expect(link).toHaveAttribute('target', '_blank')
+  expect(link.getAttribute('rel')).toContain('noopener')
+})
+
+test('a next thing with no address carries no door', () => {
+  digest([task({ time: '14:00', minutes: 45, title: 'Spanish' })])
+  expect(screen.queryByRole('link')).toBeNull()
+})

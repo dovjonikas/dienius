@@ -310,3 +310,54 @@ test('a step with a length carries a timer, and a tap starts it for that long, f
   const sub = getData().days[DATE].tasks[0].subtasks!.find(s => s.title === 'Meditation')!
   expect(timer?.step).toEqual({ date: DATE, taskId: id, subtaskId: sub.id })
 })
+
+// --- the link -------------------------------------------------------------
+
+/**
+ * One field, one address, and nothing that goes to the network - see
+ * lib/link.ts. The refusal is the part worth holding: a string that is not an
+ * address leaves the task exactly as it was and says nothing about it.
+ */
+test('an address typed into the field is kept on the task', async () => {
+  const user = userEvent.setup()
+  seed()
+  openFirst()
+
+  await user.type(screen.getByLabelText('Link (optional)'), 'localhost:8080/spanish')
+  await user.tab()
+
+  // The scheme it is missing is filled in, and http rather than https
+  // because a machine on your own network is what serves that. The door
+  // itself is on the card, Up next and the focus screen - see LinkOut and
+  // TaskRow; this sheet is where it is typed, not where it is pressed.
+  expect(tasks()[0].link).toBe('http://localhost:8080/spanish')
+})
+
+test('something that is not an address is not saved, and nothing is said about it', async () => {
+  const user = userEvent.setup()
+  seed()
+  openFirst()
+
+  await user.type(screen.getByLabelText('Link (optional)'), 'spanish lessons')
+  await user.tab()
+
+  expect(tasks()[0].link).toBeUndefined()
+  // No error, no warning, no red: there is nothing to correct.
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.queryByRole('link')).toBeNull()
+})
+
+test('emptying the field takes the address off the task', async () => {
+  const user = userEvent.setup()
+  seed()
+  openFirst()
+
+  const field = screen.getByLabelText('Link (optional)')
+  await user.type(field, 'example.com/x')
+  await user.tab()
+  expect(tasks()[0].link).toBe('https://example.com/x')
+
+  await user.clear(field)
+  await user.tab()
+  expect(tasks()[0].link).toBeUndefined()
+})

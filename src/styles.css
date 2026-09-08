@@ -2999,11 +2999,11 @@ textarea:focus {
   content: '';
   position: absolute;
   left: 0;
-  bottom: 0;
-  width: var(--taken);
-  height: 3px;
+  top: 15%;
+  bottom: 15%;
+  width: 2px;
   border-radius: var(--r-pill);
-  background: var(--cat);
+  background: var(--border);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -14077,3 +14077,69 @@ main:has(.week) > .calendar {
 .journal-hit-date { color: var(--muted); font-size: var(--t-2xs); }
 .journal-hit-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; font-size: var(--t-xs); }
 .journal-hits-none { color: var(--faint); font-size: var(--t-xs); }
+
+/* The one door out of a task or a library item - see views/LinkOut.tsx.
+
+   Its own target, at the app's own 44px, sitting inside a row that has other
+   controls in it: the icon is 20px and the rest is hit area, taken with
+   negative margin so a row's height is not decided by this. It is drawn in
+   the muted ink and comes up to the body's on hover and focus, which is the
+   whole of its hover state - CONVENTIONS section 24, nothing moves. The
+   address itself is in the bubble under it, from data-tip. */
+.link-out {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--touch);
+  height: var(--touch);
+  margin: calc((var(--touch) - 20px) / -2);
+  color: var(--muted);
+  border-radius: var(--r-control);
+}
+
+.link-out svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.link-out:hover,
+.link-out:focus-visible { color: var(--text); }
+
+.link-out:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -6px;
+}
+
+/* In the task card's meta line, which is a row of small marks: the icon sits
+   with them at their own size rather than towering over them. */
+.task-link { margin-left: 0; }
+
+/* At the end of a library row, after the count, where the hover actions
+   appear. Never hidden with them: a link is a property of the item and reads
+   the same whether a pointer is anywhere near it. */
+.library-item-link { margin-right: var(--s1); }
+
+/* On the Up next card, at the end of the title's own line - and the line
+   itself, which exists only to hold the two side by side. */
+.up-next-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.up-next-line .up-next-title { min-width: 0; }
+
+/* On the focus screen, under the title and above the ring, centred with
+   them. The one screen where it is the only other control. */
+.focus-link {
+  margin: 0 auto var(--s2);
+  color: var(--muted);
+}

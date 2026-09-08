@@ -15,6 +15,8 @@ import {
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
+import { parseLink } from '../lib/link'
+import { LinkOut } from './LinkOut'
 import { PALETTE_COLORS } from '../lib/colors'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
 import { useListReorder } from './useListReorder'
@@ -622,6 +624,12 @@ function ItemRow({
         <span className="library-item-count">{progressLabel(list, item)}</span>
       </button>
 
+      {/* Outside the button rather than beside the title inside it: an anchor
+          within a button is a control inside a control, which no screen
+          reader and no keyboard has a good answer for. It sits at the end of
+          the same row instead, with its own target. */}
+      {item.link && <LinkOut link={item.link} title={item.title} className="library-item-link" />}
+
       {/* The two commonest things, revealed by a pointer. A finger opens the
           panel instead, which has these and everything else - see the CSS.
           Gone while the panel is open, because the panel has them: two
@@ -674,6 +682,7 @@ interface ItemDetailProps {
  */
 function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   const [pace, setPace] = useState(item.pace ?? '')
+  const [link, setLink] = useState(item.link ?? '')
   const [page, setPage] = useState(String(itemProgress(item)))
   const [scheduled, setScheduled] = useState<string | null>(null)
   const [templateOpen, setTemplateOpen] = useState(false)
@@ -821,6 +830,27 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
           placeholder="one chapter a day"
           onChange={e => setPace(e.target.value)}
           onBlur={() => actions.updateLibraryItem(list.id, item.id, { pace: pace.trim() === '' ? null : pace })}
+        />
+      </label>
+
+      {/* Where the thing itself is. It goes with the item when the item
+          goes, which is the whole of what should happen to a finished book's
+          address. Nothing here asks the network anything - see lib/link.ts. */}
+      <label className="field library-detail-link">
+        <span className="field-label">Link (optional)</span>
+        <input
+          inputMode="url"
+          maxLength={300}
+          placeholder="localhost:8080/spanish"
+          value={link}
+          onChange={e => setLink(e.target.value)}
+          onBlur={() => {
+            if (link.trim() === '') return actions.updateLibraryItem(list.id, item.id, { link: null })
+            const parsed = parseLink(link)
+            // Not an address: the item keeps what it had, and nothing is
+            // said about it. There is no half-typed state worth an error.
+            if (parsed !== undefined) actions.updateLibraryItem(list.id, item.id, { link: parsed })
+          }}
         />
       </label>
 

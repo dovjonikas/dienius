@@ -392,3 +392,52 @@ test('a list whose last book ended offers nothing, because there is nothing to o
   expect(screen.queryByText(/finished\. Next on this list/)).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Onto today' })).not.toBeInTheDocument()
 })
+
+// --- the door to the thing itself ----------------------------------------
+
+/**
+ * One field, one address, and nothing that goes to the network - see
+ * lib/link.ts. The icon on the row is the door; the field in the panel is
+ * where it is typed.
+ */
+test('an address typed into an item is kept, and the row grows a door to it', async () => {
+  const user = userEvent.setup()
+  seed()
+  render(<LibraryView />)
+
+  await openDetail(user, 'Daring Greatly')
+  await user.type(screen.getByLabelText('Link (optional)'), 'localhost:8080/spanish')
+  await user.tab()
+
+  expect(getData().library[0].items[0].link).toBe('http://localhost:8080/spanish')
+  const link = screen.getByRole('link', { name: /Open Daring Greatly at localhost:8080/ })
+  expect(link).toHaveAttribute('target', '_blank')
+  expect(link.getAttribute('rel')).toContain('noreferrer')
+})
+
+test('something that is not an address is not kept, and nothing is said about it', async () => {
+  const user = userEvent.setup()
+  seed()
+  render(<LibraryView />)
+
+  await openDetail(user, 'Daring Greatly')
+  await user.type(screen.getByLabelText('Link (optional)'), 'the spanish one')
+  await user.tab()
+
+  expect(getData().library[0].items[0].link).toBeUndefined()
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.queryByRole('link')).toBeNull()
+})
+
+test('emptying the field takes the address off the item', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  actions.updateLibraryItem(list.id, getData().library[0].items[0].id, { link: 'https://example.com/x' })
+  render(<LibraryView />)
+
+  await openDetail(user, 'Daring Greatly')
+  await user.clear(screen.getByLabelText('Link (optional)'))
+  await user.tab()
+
+  expect(getData().library[0].items[0].link).toBeUndefined()
+})

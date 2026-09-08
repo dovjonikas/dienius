@@ -230,6 +230,8 @@ export const libraryActions = {
       total?: number | null
       season?: number | null
       seasons?: number | null
+      /** Already parsed by the caller - see `parseLink`. Never a raw typed string. */
+      link?: string | null
     },
   ): void {
     commit(mapList(listId, list =>
@@ -238,6 +240,11 @@ export const libraryActions = {
         if (patch.title !== undefined && patch.title.trim()) next.title = patch.title.trim()
         if (patch.pace === null) delete next.pace
         else if (patch.pace !== undefined && patch.pace.trim()) next.pace = patch.pace.trim()
+        // Cleared or set, and nothing in between: a string that did not parse
+        // as an address never reaches this - the field hands over undefined
+        // and the item keeps what it had, silently. See lib/link.ts.
+        if (patch.link === null) delete next.link
+        else if (patch.link !== undefined) next.link = patch.link
         // Switching how something is counted never touches how far through it
         // you are. Turning "chapter 4 of 20" into pages leaves the 4 and the
         // 20 exactly where they were, because the app has no way to convert

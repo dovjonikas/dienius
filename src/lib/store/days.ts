@@ -247,6 +247,20 @@ export const dayActions = {
     }))
   },
 
+  /**
+   * The task's own address, already parsed - see `parseLink`. `undefined`
+   * clears it, which is what an emptied field hands over; a string that did
+   * not parse never gets here, so a typo leaves the task exactly as it was
+   * and says nothing.
+   */
+  setTaskLink(date: string, taskId: string, link: string | undefined): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, link } : t)),
+    }))
+  },
+
   setTaskNote(date: string, taskId: string, note: string): void {
     const day = dayOf(date)
     commit(withDay(date, {

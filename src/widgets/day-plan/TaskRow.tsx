@@ -5,6 +5,7 @@ import { formatDuration, isAnchor } from './capacity'
 import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useLongPress } from './useLongPress'
 import { Explain } from '../../views/Explain'
+import { LinkOut } from '../../views/LinkOut'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -179,6 +180,10 @@ export function TaskRow({
   // whether the pace was kept - nothing in this app measures it - it is just
   // the sentence being repeated back at the moment it is useful.
   const boundPace = boundItem?.pace
+  // The task's own address first, then the bound item's - a reading block
+  // does not have to carry the address the book already has, and one typed
+  // onto this task is about this task and wins. See lib/link.ts and LinkOut.
+  const link = task.link ?? boundItem?.link
 
   // Selecting has to live somewhere that (a) is not the checkbox, so it
   // cannot be mistaken for completing the task, and (b) is not the row's
@@ -325,6 +330,10 @@ export function TaskRow({
             </span>
           )}
           {boundPace && <span className="task-pace">{boundPace}</span>}
+          {/* A control among marks, which is why it is an anchor with its own
+              target rather than another chip: pressing the card still means
+              what it meant, and this means the other thing. */}
+          {link && <LinkOut link={link} title={task.title} className="task-link" />}
           {task.note && (
             <span className="task-note-mark" data-tip="Has a note">
               note

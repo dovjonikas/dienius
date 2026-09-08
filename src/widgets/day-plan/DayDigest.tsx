@@ -4,6 +4,8 @@ import { useAppData } from '../../lib/store'
 import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
 import type { DayScore } from './score'
+import { linkFor } from '../../lib/link'
+import { LinkOut } from '../../views/LinkOut'
 
 export interface DayDigestProps {
   tasks: Task[]
@@ -50,8 +52,9 @@ export interface DayDigestProps {
  */
 export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
-  const categories = useAppData().categories
+  const { categories, library } = useAppData()
   const upNextColor = upNext ? categoryColor(upNext.category, categories) : undefined
+  const upNextLink = upNext ? linkFor(upNext, library) : undefined
   const minutesAway = upNext ? timeToMinutes(upNext.time!) - nowMinutes : undefined
 
   // Only tasks in the Deep work category, timed or not. This is the one number
@@ -103,7 +106,16 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
           style={upNextColor ? ({ ['--cat' as string]: upNextColor } as React.CSSProperties) : undefined}
         >
           <span className="up-next-time">{upNext.time}</span>
-          <span className="up-next-title">{upNext.title}</span>
+          {/* The card the owner says they will use most: what is next, and
+              one press to the thing itself. Its own address or the one on
+              the library item it is bound to - the same order TaskRow uses.
+              On the title's own line rather than under it: the card is a
+              stack of three short lines and a fourth would make the door the
+              tallest thing on it. */}
+          <span className="up-next-line">
+            <span className="up-next-title">{upNext.title}</span>
+            {upNextLink && <LinkOut link={upNextLink} title={upNext.title} className="up-next-link" />}
+          </span>
           <span className="up-next-meta">
             {categoryLabel(upNext.category, categories) ?? 'Scheduled'}
             {minutesAway !== undefined && minutesAway > 0 && ` · in ${formatDuration(minutesAway)}`}

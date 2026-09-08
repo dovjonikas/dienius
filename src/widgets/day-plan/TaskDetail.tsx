@@ -68,6 +68,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
   const [pullY, setPullY] = useState(0)
   const [title, setTitle] = useState(task.title)
   const [note, setNote] = useState(task.note ?? '')
+  const [link, setLink] = useState(task.link ?? '')
   const [subtaskDraft, setSubtaskDraft] = useState('')
   // Which of the two a change means, held while the sheet is open. Defaults
   // to the series, because that is what somebody who set up a repeat almost
@@ -506,6 +507,27 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               </button>
             </div>
           )}
+
+          {/* One address this task is a door to. Nothing checks whether it
+              answers - see lib/link.ts - and a string that is not an address
+              is not saved and says nothing about it: there is no mistake to
+              report, only a field that stayed as it was. */}
+          <div className="task-detail-field">
+            <span className="task-detail-label">Link (optional)</span>
+            <input
+              className="task-detail-link"
+              aria-label="Link (optional)"
+              inputMode="url"
+              placeholder="localhost:8080/spanish"
+              value={link}
+              onChange={e => setLink(e.target.value)}
+              onBlur={() => {
+                const parsed = link.trim() === '' ? undefined : parseLink(link)
+                if (link.trim() !== '' && parsed === undefined) return
+                actions.setTaskLink(date, task.id, parsed)
+              }}
+            />
+          </div>
 
           <div className="task-detail-field">
             <span className="task-detail-label">Note</span>

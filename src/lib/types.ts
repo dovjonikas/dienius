@@ -267,6 +267,15 @@ export interface Task extends Timestamped {
    */
   note?: string
   /**
+   * One address this task is a door to - see `lib/link.ts`.
+   *
+   * A task bound to a library item shows that item's link when it has none
+   * of its own, so a reading block does not have to repeat the address the
+   * book already carries; its own always wins. Optional, and nothing in the
+   * app ever asks whether it answers.
+   */
+  link?: string
+  /**
    * Marks this task as one of the day's few that genuinely matter. Capped at
    * `MAX_HIGHLIGHTS` per day by `actions.toggleTaskHighlight` - a day where
    * everything is important is a day with no highlights at all, which is the
@@ -434,6 +443,15 @@ export interface LibraryItem extends Timestamped {
   season?: number
   /** Series only: how many seasons there are. Absent is unknown, not one. */
   seasons?: number
+  /**
+   * Where the thing itself is - see `lib/link.ts`. The course's own page,
+   * the machine at home that serves it, the edition online.
+   *
+   * It rides along to whatever the item is bound to, the way `pace` does, so
+   * the block on the day is one press from the thing. It goes when the item
+   * goes: a finished book's link is not something to keep a list of.
+   */
+  link?: string
 }
 
 /**

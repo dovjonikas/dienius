@@ -4,6 +4,8 @@ import type { Task } from '../../lib/types'
 import { categoryColor } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
 import { timeToMinutes } from './capacity'
+import { linkFor } from '../../lib/link'
+import { LinkOut } from '../../views/LinkOut'
 
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -97,7 +99,9 @@ export function FocusView({ task, onDone, onClose }: FocusViewProps) {
   const elapsed = Math.min(Math.max(0, nowSeconds - startSeconds), totalSeconds)
   const remaining = Math.max(0, totalSeconds - elapsed)
   const fraction = totalSeconds > 0 ? elapsed / totalSeconds : 0
-  const color = categoryColor(task.category, useAppData().categories)
+  const data = useAppData()
+  const color = categoryColor(task.category, data.categories)
+  const link = linkFor(task, data.library)
 
   return (
     <div
@@ -116,6 +120,12 @@ export function FocusView({ task, onDone, onClose }: FocusViewProps) {
       </button>
 
       <p className="focus-task">{task.title}</p>
+
+      {/* One press to the thing this session is about, on the one screen
+          where there is nothing else. Under the title rather than beside it:
+          the title is the only other thing here, and a control on the same
+          line as it would read as part of it. */}
+      {link && <LinkOut link={link} title={task.title} className="focus-link" />}
 
       <div className="focus-ring">
         {/* Decorative: the same number the countdown under it already states
