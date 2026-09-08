@@ -46,10 +46,11 @@ them:
 1. Type what happens, pick a time and a length the way you would anywhere
    else. If it reads or watches something, point it at a Library list here
    too - that is section 5, and a week is where it earns its keep.
-2. **Add to** decides which days it lands on: the day you have picked, the
-   weekdays, the weekend, or all seven. Most of a week is the same on several
-   days, and this is the press that says so. Tap a column's name to change
-   which day "this day" means.
+2. **Add to** is seven switches - M T W T F S S - and the block lands on
+   every one you have turned on. The line under them says where that is.
+   **Weekdays**, **Weekend**, **All days** and **Only** *(whichever column
+   you are on)* set the switches for you. They stay as you left them, so a
+   rotation is set once and the next block in it is a title and Return.
 3. Blocks you added together are treated as one thing. Removing one takes it
    off every day it is on - unless you switch the choice above the columns to
    **Just this day**, which stays switched until you switch it back.
@@ -60,8 +61,13 @@ them:
    makes a week worth having: Saturday is a rest day and Wednesday is a night
    shift, and they are the same template.
 
-A block is written once and not edited afterwards: to change one, remove it
-and add it again. That is a real limit and it is worth knowing before you
+A block can carry a **note** and a list of **steps** - press **Note** on it -
+and both land on every day it stamps. A block marked **Key** arrives as one
+of the day's three that matter; a fourth on the same day is refused, and the
+three already there are named.
+
+Apart from those, a block is written once and not edited afterwards: to
+change one, remove it and add it again. That is a real limit and it is worth knowing before you
 start, because it makes the order matter - get the time and the length right
 in the row before you press Add to, rather than after.
 
@@ -209,9 +215,10 @@ the arrow keys. The order *is* the queue; nothing else decides what is next.
 ## 6. Name the kinds of task you actually have
 
 The six the app ships with - Deep work, Routine, Personal and the rest - are
-a starting point, not a vocabulary you have to live in. **Settings →
-Categories** is where they become yours: rename one, pick its colour from the
-same eight everything else uses, add one, drop one.
+a starting point, not a vocabulary you have to live in. The **+** at the end of any row of category dots makes one on the spot, and
+the pencil beside the chosen dot renames or recolours it - in either template
+editor and in quick-add, without leaving what you are typing. **Settings →
+Categories** does the same, and is the only place that deletes one.
 
 Two things worth knowing before you rearrange them:
 
