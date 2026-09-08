@@ -225,3 +225,109 @@ test('applying a different template does not carry over done state', () => {
   const restamped = applyStamps(stamped, [workDay, other], { '2026-09-01': 't2' })
   expect(restamped['2026-09-01'].tasks.find(t => t.title === 'Gym')?.done).toBe(false)
 })
+
+// The note and the steps a template carries onto a day - the field that did
+// not exist until v2.11, so a template could hold a recipe and never deliver
+// it. See the rule in stamping.ts: `match?.note ?? b.note`.
+
+const withNote: Template = {
+  id: 't-note',
+  name: 'Meals',
+  color: '#8ab6f9',
+  blocks: [
+    {
+      id: 'nb1',
+      time: '12:00',
+      title: 'Meal',
+      note: 'Rice, chicken, whatever green is in the fridge.\n  200 g rice\n  300 g chicken',
+      steps: [
+        { id: 's1', title: 'Rice on' },
+        { id: 's2', title: 'Sit down and eat', minutes: 20 },
+      ],
+    },
+    { id: 'nb2', time: '18:00', title: 'Evening close' },
+  ],
+}
+
+test("a template's note reaches a fresh day", () => {
+  const days = applyStamps({}, [withNote], { '2026-09-01': 't-note' })
+  const meal = days['2026-09-01'].tasks.find(t => t.title === 'Meal')
+  expect(meal?.note).toBe('Rice, chicken, whatever green is in the fridge.\n  200 g rice\n  300 g chicken')
+  // And a block with nothing to say still says nothing, rather than an
+  // empty string that would light the card's note mark.
+  expect(days['2026-09-01'].tasks.find(t => t.title === 'Evening close')?.note).toBeUndefined()
+})
+
+test("a template's steps reach a fresh day, unticked and with their timers", () => {
+  const days = applyStamps({}, [withNote], { '2026-09-01': 't-note' })
+  const meal = days['2026-09-01'].tasks.find(t => t.title === 'Meal')
+  expect(meal?.subtasks?.map(s => ({ title: s.title, done: s.done, minutes: s.minutes }))).toEqual([
+    { title: 'Rice on', done: false, minutes: undefined },
+    { title: 'Sit down and eat', done: false, minutes: 20 },
+  ])
+  expect(days['2026-09-01'].tasks.find(t => t.title === 'Evening close')?.subtasks).toBeUndefined()
+})
+
+test('two days stamped from one block get their own copies of its steps', () => {
+  const days = applyStamps({}, [withNote], { '2026-09-01': 't-note', '2026-09-02': 't-note' })
+  const first = days['2026-09-01'].tasks.find(t => t.title === 'Meal')!
+  const second = days['2026-09-02'].tasks.find(t => t.title === 'Meal')!
+  expect(first.subtasks![0].id).not.toBe(second.subtasks![0].id)
+})
+
+test("a day's own note wins over the template's, and re-stamping does not erase it", () => {
+  const stamped = applyStamps({}, [withNote], { '2026-09-01': 't-note' })
+  const written = {
+    ...stamped,
+    '2026-09-01': {
+      ...stamped['2026-09-01'],
+      tasks: stamped['2026-09-01'].tasks.map(t =>
+        t.title === 'Meal' ? { ...t, note: 'Used the last of the rice - buy more' } : t,
+      ),
+    },
+  }
+  const edited: Template = {
+    ...withNote,
+    blocks: withNote.blocks.map(b => (b.id === 'nb1' ? { ...b, note: 'Something else entirely' } : b)),
+  }
+  const again = applyStamps(written, [edited], { '2026-09-01': 't-note' })
+  expect(again['2026-09-01'].tasks.find(t => t.title === 'Meal')?.note).toBe('Used the last of the rice - buy more')
+})
+
+test("editing a template's note reaches every day nobody wrote on", () => {
+  const stamped = applyStamps({}, [withNote], { '2026-09-01': 't-note' })
+  const edited: Template = {
+    ...withNote,
+    blocks: withNote.blocks.map(b => (b.id === 'nb1' ? { ...b, note: 'Pasta this week' } : b)),
+  }
+  const again = applyStamps(stamped, [edited], { '2026-09-01': 't-note' })
+  expect(again['2026-09-01'].tasks.find(t => t.title === 'Meal')?.note).toBe('Pasta this week')
+})
+
+test('steps ticked on a day survive a re-stamp, and an emptied list stays empty', () => {
+  const stamped = applyStamps({}, [withNote], { '2026-09-01': 't-note' })
+  const lived: Record<string, DayPlan> = {
+    ...stamped,
+    '2026-09-01': {
+      ...stamped['2026-09-01'],
+      tasks: stamped['2026-09-01'].tasks.map(t =>
+        t.title === 'Meal' ? { ...t, subtasks: t.subtasks!.map((s, i) => (i === 0 ? { ...s, done: true } : s)) } : t,
+      ),
+    },
+  }
+  const again = applyStamps(lived, [withNote], { '2026-09-01': 't-note' })
+  const meal = again['2026-09-01'].tasks.find(t => t.title === 'Meal')
+  expect(meal?.subtasks?.[0].done).toBe(true)
+
+  // A list somebody deleted every step from is an answer, not an absence:
+  // the `??` has to see [] as the day's own and leave it alone.
+  const cleared: Record<string, DayPlan> = {
+    ...again,
+    '2026-09-01': {
+      ...again['2026-09-01'],
+      tasks: again['2026-09-01'].tasks.map(t => (t.title === 'Meal' ? { ...t, subtasks: [] } : t)),
+    },
+  }
+  const third = applyStamps(cleared, [withNote], { '2026-09-01': 't-note' })
+  expect(third['2026-09-01'].tasks.find(t => t.title === 'Meal')?.subtasks).toEqual([])
+})

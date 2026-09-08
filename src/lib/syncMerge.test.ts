@@ -403,3 +403,54 @@ test('a state whose picture is not an object is not one this app will merge with
   expect(isSyncableState({ ...base, picture: 'text' })).toBe(false)
   expect(isSyncableState({ ...base, picture: { text: 'I wake early.' } })).toBe(true)
 })
+
+test("a block's note and steps travel between devices like any other field", () => {
+  const shared = device(
+    d => ({
+      ...d,
+      templates: [{ id: 't', name: 'Meals', color: '#a7c4f5', blocks: [{ id: 'b', title: 'Meal' }] }],
+    }),
+    MORNING,
+  )
+  const pc = device(
+    d => ({
+      ...d,
+      templates: [
+        {
+          ...d.templates[0],
+          blocks: [
+            {
+              id: 'b',
+              title: 'Meal',
+              note: 'Rice and chicken',
+              steps: [{ id: 's1', title: 'Rice on' }],
+            },
+          ],
+        },
+      ],
+    }),
+    EVENING,
+    shared,
+  )
+  const block = mergeStates(shared, pc, NOW).data.templates[0].blocks[0]
+  expect(block.note).toBe('Rice and chicken')
+  expect(block.steps).toEqual([{ id: 's1', title: 'Rice on' }])
+})
+
+test("a day's own note beats the one its template brought, on either device", () => {
+  const stamped = device(
+    d =>
+      withTasks(d, [
+        task({ id: 'k1', title: 'Meal', note: 'Rice and chicken', templateNote: 'Rice and chicken' }),
+      ]),
+    MORNING,
+  )
+  // The phone writes on it. The field that says where the note came from
+  // travels too, or the next stamp on either device would read the owner's
+  // sentence as the template's and replace it.
+  const phone = editTask(stamped, 'k1', { note: 'Out of rice - pasta instead' }, DATE)
+  const merged = mergeStates(stamped, device(() => phone, EVENING, stamped), NOW).data
+  const meal = taskOn(merged).find(t => t.id === 'k1')
+  expect(meal?.note).toBe('Out of rice - pasta instead')
+  expect(meal?.templateNote).toBe('Rice and chicken')
+})

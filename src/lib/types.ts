@@ -93,6 +93,37 @@ export interface TemplateBlock {
    * block's own title - a template never breaks because a list ran out.
    */
   libraryListId?: string
+  /**
+   * What this block says when it arrives on a day - the recipe, the four
+   * things the routine is, the weight to start the set at.
+   *
+   * Until this existed a template could only bring a title and a time, so
+   * text written into a template never reached a day at all: `applyStamps`
+   * took `note` from the matching prior task, which on a fresh day is
+   * nothing. A block that means "make the same thing every Tuesday" had
+   * nowhere to put what the thing is.
+   *
+   * A day that was written on keeps every word of it; a day that was not
+   * takes what the block says. Telling those two apart needs
+   * `Task.templateNote` - see its comment, and the rule in `stamping.ts`.
+   */
+  note?: string
+  /**
+   * The steps this block arrives carrying, stamped onto `Task.subtasks` by
+   * the same rule as `note`: the day's own list wins where it has one.
+   *
+   * A `Subtask` without `done`, because a template holds a shape and not a
+   * state - the ticks belong to the day, and a template that remembered
+   * them would hand yesterday's progress to tomorrow.
+   */
+  steps?: TemplateStep[]
+}
+
+export interface TemplateStep {
+  id: string
+  title: string
+  /** Minutes, where the step is a timer - see `Subtask.minutes`. */
+  minutes?: number
 }
 
 /**
@@ -261,11 +292,27 @@ export interface Task extends Timestamped {
    */
   libraryRef?: LibraryRef
   /**
-   * Free text the owner attached to this task - see the task detail sheet.
-   * Absent and empty are the same thing; the card shows a small mark when
-   * there is something here, never the text itself.
+   * Free text the owner attached to this task - see the task detail sheet -
+   * or, on a task a template stamped, what the block had to say. Absent and
+   * empty are the same thing; the card shows a small mark when there is
+   * something here, and one press opens it.
    */
   note?: string
+  /**
+   * The note this task arrived with, where a template block gave it one.
+   *
+   * It exists to answer one question a re-stamp has to ask and could not:
+   * is the note on this day the owner's words or the block's? After the
+   * first stamp `note` holds the block's text either way, so keeping the
+   * day's note unconditionally would freeze every day against a later
+   * template edit, and overwriting it unconditionally would throw away what
+   * somebody wrote. Comparing the two says which happened.
+   *
+   * Absent on every task written by hand, on every task stamped before this
+   * existed, and on any block with no note - in all of which the comparison
+   * comes out as 'the day's own', which is the safe answer.
+   */
+  templateNote?: string
   /**
    * One address this task is a door to - see `lib/link.ts`.
    *

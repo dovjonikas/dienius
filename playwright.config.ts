@@ -31,8 +31,9 @@ export default defineConfig({
     // The owner is an iPhone user: the tour is walked on a phone's viewport
     // too, in the phone's words, with the sheets it uses there - and so is
     // the phone call, whose whole promise is three presses with nothing
-    // scrolled at this size.
-    { name: 'phone', testMatch: /(tour|interrupt|journal)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
+    // scrolled at this size. A block's note joins them because reading one
+    // is a press on a card the finger is already on.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

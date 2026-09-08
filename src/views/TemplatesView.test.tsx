@@ -710,3 +710,65 @@ test('nudging the first block up changes nothing rather than losing it', async (
     'Second',
   ])
 })
+
+// A block's note and its steps - closed until asked for, so a template of
+// ten blocks is still a list of ten lines. See BlockNote.tsx.
+
+test('a block carries no note field until one is asked for', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Meal')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+
+  expect(screen.queryByLabelText('Note on Meal')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  expect(screen.getByLabelText('Note on Meal')).toBeInTheDocument()
+})
+
+test('a note and a step typed into a block are saved with the template', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Meal')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  await user.type(screen.getByLabelText('Note on Meal'), 'Rice and whatever green is in the fridge')
+  await user.type(screen.getByLabelText('Add a step to Meal'), 'Sit down and eat 20 min{Enter}')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const block = getData().templates[0].blocks[0]
+  expect(block.note).toBe('Rice and whatever green is in the fridge')
+  expect(block.steps).toEqual([{ id: expect.any(String), title: 'Sit down and eat', minutes: 20 }])
+})
+
+test('a note opened and left empty does not become a field on the block', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Meal')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  await user.type(screen.getByLabelText('Note on Meal'), '   ')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].blocks[0].note).toBeUndefined()
+})
+
+test('a block that carries a note says so before it is opened, and reopening the template shows it', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Meals',
+    color: '#f9d48a',
+    blocks: [{ time: '12:00', title: 'Meal', note: 'Rice and chicken' }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: /^Edit Meals/ }))
+  const mark = screen.getByRole('button', { name: 'Note and steps on Meal' })
+  expect(mark.className).toContain('has-note')
+  await user.click(mark)
+  expect(screen.getByLabelText('Note on Meal')).toHaveValue('Rice and chicken')
+})

@@ -326,3 +326,66 @@ test('the hour column speaks about the days the block would land on', async () =
   await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
   expect(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' })).toBeInTheDocument()
 })
+
+// A note on a block of a week template. The panel is drawn under all seven
+// columns rather than inside one of them - see the comment in the editor.
+
+test('a block on a column carries a note, written in one panel under the week', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Meal')
+
+  await user.click(within(column('Wednesday')).getByRole('button', { name: 'Add a note or steps to Meal on Wednesday' }))
+  await user.type(screen.getByLabelText('Note on Meal'), 'Rice and chicken')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const blocks = getData().templates[0].blocks
+  expect(blocks).toHaveLength(1)
+  expect(blocks[0].note).toBe('Rice and chicken')
+})
+
+test('a note on a block added to every day is written onto all seven at once', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await user.click(screen.getByRole('button', { name: 'All days' }))
+  await addBlock(user, 'Morning routine')
+
+  await user.click(
+    within(column('Monday')).getByRole('button', { name: 'Add a note or steps to Morning routine on Monday' }),
+  )
+  // One event rather than 29: every keystroke here redraws seven columns
+  // and the timeline over them, which is fine at human speed and slow enough
+  // under a loaded test run to reach the timeout.
+  await user.click(screen.getByLabelText('Note on Morning routine'))
+  await user.paste('Water, light, out of the room')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const blocks = getData().templates[0].blocks
+  expect(blocks).toHaveLength(7)
+  // The standing scope above the columns is "every day it is on", and a note
+  // follows it exactly as a removal does.
+  expect(blocks.every(b => b.note === 'Water, light, out of the room')).toBe(true)
+})
+
+test('a step added to a block on a week template reaches every day it is on', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await user.click(screen.getByRole('button', { name: 'All days' }))
+  await addBlock(user, 'Morning routine')
+
+  await user.click(
+    within(column('Monday')).getByRole('button', { name: 'Add a note or steps to Morning routine on Monday' }),
+  )
+  await user.type(screen.getByLabelText('Add a step to Morning routine'), 'Meditation 10 min{Enter}')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const blocks = getData().templates[0].blocks
+  expect(blocks).toHaveLength(7)
+  expect(blocks.every(b => b.steps?.[0].title === 'Meditation' && b.steps?.[0].minutes === 10)).toBe(true)
+})

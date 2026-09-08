@@ -4,12 +4,13 @@ import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { Category, DayType, LibraryList, SleepProfile, Template } from '../lib/types'
+import type { Category, DayType, LibraryList, SleepProfile, Template, TemplateStep } from '../lib/types'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
+import { BlockNoteButton, BlockNotePanel } from './BlockNote'
 import { blocksAsTasks, type DrawableBlock } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
@@ -100,6 +101,10 @@ interface DraftBlock {
    * named after the next unfinished book, rather than the word "Reading".
    */
   libraryListId?: string
+  /** What the block says when it lands on a day - see TemplateBlock.note. */
+  note?: string
+  /** The steps it lands carrying - see TemplateBlock.steps. */
+  steps?: TemplateStep[]
 }
 
 interface Draft {
@@ -140,6 +145,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   // type: the value is on the line above it either way, and what is hidden
   // is the question, not the answer.
   const [typeOpen, setTypeOpen] = useState(false)
+  // Which block has its note open, by position. Closed on a reorder and on a
+  // removal rather than followed, because a panel that lands on a different
+  // block than the one it was opened for is worse than one that shuts.
+  const [noteOpen, setNoteOpen] = useState<number | null>(null)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
@@ -200,6 +209,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   }
 
   function removeBlock(index: number) {
+    setNoteOpen(null)
     setDraft(d => ({ ...d, blocks: d.blocks.filter((_, i) => i !== index) }))
   }
 
@@ -208,6 +218,14 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
       ...d,
       blocks: d.blocks.map((b, i) => (i === index ? { ...b, core: !b.core } : b)),
     }))
+  }
+
+  function setBlockNote(index: number, note: string) {
+    setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, note } : b)) }))
+  }
+
+  function setBlockSteps(index: number, steps: TemplateStep[]) {
+    setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, steps } : b)) }))
   }
 
   function setBlockLibrary(index: number, libraryListId: string | undefined) {
@@ -225,6 +243,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
    * the same gesture.
    */
   function moveBlock(from: number, to: number) {
+    setNoteOpen(null)
     setDraft(d => {
       const target = Math.max(0, Math.min(d.blocks.length - 1, to))
       if (from === target) return d
@@ -447,9 +466,25 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 ))}
               </select>
             )}
+            <BlockNoteButton
+              note={b.note}
+              steps={b.steps}
+              open={noteOpen === i}
+              label={b.title}
+              onToggle={() => setNoteOpen(open => (open === i ? null : i))}
+            />
             <button className="block-remove" aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
               &times;
             </button>
+            {noteOpen === i && (
+              <BlockNotePanel
+                note={b.note}
+                steps={b.steps}
+                label={b.title}
+                onNote={next => setBlockNote(i, next)}
+                onSteps={next => setBlockSteps(i, next)}
+              />
+            )}
           </li>
         ))}
       </ul>
@@ -588,6 +623,8 @@ export function TemplatesView() {
         unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
         libraryListId: b.libraryListId,
+        note: b.note,
+        steps: b.steps,
       })),
     })
   }
@@ -672,6 +709,10 @@ export function TemplatesView() {
       unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),
       libraryListId: b.libraryListId,
+      // Blank is absent, so a note opened and left empty does not become a
+      // field on every block it was opened on.
+      note: b.note?.trim() || undefined,
+      steps: b.steps?.length ? b.steps : undefined,
     }))
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)

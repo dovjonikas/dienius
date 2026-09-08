@@ -1,5 +1,5 @@
 import { commit, getData } from './core'
-import type { DayType, Template, TemplateKind, WeekDayOverride } from '../types'
+import type { DayType, Template, TemplateKind, TemplateStep, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
 
@@ -30,6 +30,8 @@ export const templateActions = {
       libraryListId?: string
       weekday?: number
       groupId?: string
+      note?: string
+      steps?: TemplateStep[]
     }[]
   }): Template {
     const data = getData()
@@ -52,6 +54,8 @@ export const templateActions = {
         libraryListId: b.libraryListId,
         weekday: b.weekday,
         groupId: b.groupId,
+        note: b.note,
+        steps: b.steps,
       })),
     }
     commit({ ...data, templates: [...data.templates, template] })

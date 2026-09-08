@@ -1,7 +1,7 @@
 import { currentItem } from './library'
 import { originFor } from './taskIdentity'
 import { weekdayOf } from './repeats'
-import type { DayPlan, LibraryList, Task, Template, TemplateBlock } from './types'
+import type { DayPlan, LibraryList, Subtask, Task, Template, TemplateBlock } from './types'
 
 /**
  * The blocks a given date takes from a template, and the day type and sleep
@@ -53,6 +53,42 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
   const item = currentItem(list)
   if (!item) return undefined
   return { title: item.title, ref: { listId: list.id, itemId: item.id } }
+}
+
+/**
+ * A block's steps, as a day's own list of them.
+ *
+ * Fresh ids and every one unticked, because what a template holds is the
+ * shape of the routine and not how far through it anybody got - two days
+ * stamped from the same block have two independent lists, and neither can
+ * hand its progress to the other. A block with no steps resolves to nothing
+ * rather than an empty list, so `?? ` below reads "the template has an
+ * answer" rather than "the template has a field".
+ */
+function stepsFrom(block: TemplateBlock): Subtask[] | undefined {
+  if (!block.steps?.length) return undefined
+  return block.steps.map(step => ({
+    id: crypto.randomUUID(),
+    title: step.title,
+    done: false,
+    minutes: step.minutes,
+  }))
+}
+
+/**
+ * The note a day wrote for itself, as opposed to the one its template handed
+ * it.
+ *
+ * A task that still carries exactly what the block last gave it has not been
+ * written on, whatever it says, so the block is free to change its mind. Both
+ * absent is the same answer by the same test. A note the owner deleted comes
+ * back at the next stamp, which is the one case this reads as "has none":
+ * the block's note is the default for a day without one, and an empty day is
+ * without one.
+ */
+function ownNote(match: Task | undefined): string | undefined {
+  if (!match || match.note === undefined) return undefined
+  return match.note === match.templateNote ? undefined : match.note
 }
 
 /**
@@ -127,12 +163,30 @@ export function applyStamps(
         minutes: b.minutes,
         unbounded: b.unbounded,
         category: b.category,
-        // State a day earned, kept: a note written on it, the steps ticked
-        // off, whether it was one of the day's key tasks, how far it has been
-        // carried. Editing a template is a statement about its shape, not
-        // permission to erase what happened on a day it was stamped onto.
-        note: match?.note,
-        subtasks: match?.subtasks,
+        // State a day earned, kept: whether it was one of the day's key
+        // tasks, how far it has been carried. Editing a template is a
+        // statement about its shape, not permission to erase what happened on
+        // a day it was stamped onto.
+        //
+        // The note the day actually earned, and the block's own behind it.
+        // Before this, `match?.note` on a fresh day was nothing, so a template
+        // could carry a recipe and never deliver it.
+        //
+        // `match?.note ?? b.note` alone was not enough, and the test that
+        // says so is in stamping.test.ts: after one stamp the day's note IS
+        // the block's text, so a second stamp could no longer tell a day
+        // somebody wrote on from a day the template had filled, and editing
+        // the block reached neither. `templateNote` is what the block gave
+        // last time, so a note that still matches it is the block's to
+        // replace and anything else is the day's to keep.
+        note: ownNote(match) ?? b.note,
+        templateNote: b.note,
+        // Steps take the simpler rule, and deliberately: a list is state a
+        // day works through rather than words it re-reads, so once a day has
+        // one - ticked, added to, or emptied on purpose - the template has
+        // nothing to say about it. A day with no list of its own takes the
+        // block's.
+        subtasks: match?.subtasks ?? stepsFrom(b),
         highlight: match?.highlight,
         pushCount: match?.pushCount,
       }

@@ -1443,3 +1443,69 @@ test('the sentence is not state: importing a file that has it gives an ordinary 
   expect('about' in back).toBe(false)
   expect(back.scratch[0].photos).toEqual([{ id: 'p1', width: 10, height: 10 }])
 })
+
+test('a template block carries its note and its steps through a backup', () => {
+  const data = defaultData()
+  data.templates = [
+    {
+      id: 't-note',
+      name: 'Meals',
+      color: '#8ab6f9',
+      blocks: [
+        {
+          id: 'nb1',
+          time: '12:00',
+          title: 'Meal',
+          note: 'Rice and whatever green is in the fridge.\n  200 g rice',
+          steps: [
+            { id: 's1', title: 'Rice on' },
+            { id: 's2', title: 'Sit down and eat', minutes: 20 },
+          ],
+        },
+      ],
+    },
+  ]
+  const back = importJson(exportJson(data))
+  expect(back.templates[0].blocks[0].note).toBe('Rice and whatever green is in the fridge.\n  200 g rice')
+  expect(back.templates[0].blocks[0].steps).toEqual([
+    { id: 's1', title: 'Rice on' },
+    { id: 's2', title: 'Sit down and eat', minutes: 20 },
+  ])
+})
+
+test('a stamped task carries the note it arrived with through a backup', () => {
+  const data = defaultData()
+  data.days = {
+    '2026-09-01': {
+      date: '2026-09-01',
+      tasks: [
+        {
+          id: 'k1',
+          title: 'Meal',
+          done: false,
+          note: 'Rice and chicken',
+          // The field that lets a re-stamp tell the block's words from the
+          // day's own - see Task.templateNote. A backup that dropped it
+          // would make every restored day look written-on.
+          templateNote: 'Rice and chicken',
+          subtasks: [{ id: 's1', title: 'Rice on', done: true }],
+        },
+      ],
+    },
+  }
+  const back = importJson(exportJson(data))
+  const task = back.days['2026-09-01'].tasks[0]
+  expect(task.templateNote).toBe('Rice and chicken')
+  expect(task.subtasks).toEqual([{ id: 's1', title: 'Rice on', done: true }])
+})
+
+test('a template block with a malformed step is refused whole, not partly trusted', () => {
+  const data = defaultData()
+  const bad = JSON.parse(exportJson(data))
+  bad.templates = [
+    { id: 't', name: 'T', color: '#8ab6f9', blocks: [{ id: 'b', title: 'Meal', steps: [{ id: 's', title: 5 }] }] },
+  ]
+  // Refused whole rather than imported with one field quietly dropped -
+  // the same treatment every other bad value gets here.
+  expect(() => importJson(JSON.stringify(bad))).toThrow(/Invalid/)
+})

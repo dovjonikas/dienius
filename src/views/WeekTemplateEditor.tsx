@@ -13,6 +13,7 @@ import { TemplateTimeline } from './TemplateTimeline'
 import { blocksAsTasks } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { TimePicker } from './TimePicker'
+import { BlockNoteButton, BlockNotePanel } from './BlockNote'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
@@ -131,6 +132,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   // "Week default". The value still shows; the choosing is a press away.
   const [typeOpenDay, setTypeOpenDay] = useState<number | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  // Which block has its note open. One at a time, and the panel is drawn
+  // under all seven columns rather than inside one of them: a column is a
+  // seventh of the width and a recipe is not.
+  const [noteBlockId, setNoteBlockId] = useState<string | null>(null)
 
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
@@ -191,6 +196,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
     }
   }, [draft, onChange])
 
+  // The block whose note is open, resolved rather than held: it is removed
+  // and re-made by every edit above, so a held copy would go stale.
+  const noteBlock = draft.blocks.find(b => b.id === noteBlockId)
+
   function blocksOn(day: number) {
     return draft.blocks.filter(b => b.weekday === day)
   }
@@ -220,11 +229,26 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
     setBlockTitle('')
   }
 
+  /**
+   * Writes a note or a list of steps onto a block, and onto its group where
+   * the scope above says so - the same reading `removeBlock` takes of the
+   * same choice, and for the same reason: a block put on five days by one
+   * press is one thing to the person who made it.
+   */
+  function editBlock(block: TemplateBlock, change: Partial<TemplateBlock>) {
+    const hits =
+      editScope === 'group' && block.groupId
+        ? (b: TemplateBlock) => b.groupId === block.groupId
+        : (b: TemplateBlock) => b.id === block.id
+    onChange({ ...draft, blocks: draft.blocks.map(b => (hits(b) ? { ...b, ...change } : b)) })
+  }
+
   function removeBlock(block: TemplateBlock) {
     const gone =
       editScope === 'group' && block.groupId
         ? (b: TemplateBlock) => b.groupId === block.groupId
         : (b: TemplateBlock) => b.id === block.id
+    setNoteBlockId(null)
     onChange({ ...draft, blocks: draft.blocks.filter(b => !gone(b)) })
   }
 
@@ -389,6 +413,13 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                         </span>
                       )}
                     </button>
+                    <BlockNoteButton
+                      note={block.note}
+                      steps={block.steps}
+                      open={noteBlockId === block.id}
+                      label={`${block.title} on ${label}`}
+                      onToggle={() => setNoteBlockId(id => (id === block.id ? null : block.id))}
+                    />
                     <button
                       type="button"
                       className="setting-remove"
@@ -485,6 +516,31 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           )
         })}
       </div>
+
+      {/* The open block's note, under all seven columns rather than inside
+          the one it belongs to. A column is a seventh of the editor and a
+          recipe typed into a 110px box is a recipe nobody will type. The
+          heading names the block and its day, because down here the panel
+          has left the column that would have said so. */}
+      {noteBlock && (
+        <div className="wt-note">
+          <span className="wt-note-head">
+            {noteBlock.title}
+            <span className="wt-note-day">
+              {editScope === 'group' && noteBlock.groupId
+                ? ' - on every day it is on'
+                : ` - ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? ''}`}
+            </span>
+          </span>
+          <BlockNotePanel
+            note={noteBlock.note}
+            steps={noteBlock.steps}
+            label={noteBlock.title}
+            onNote={next => editBlock(noteBlock, { note: next })}
+            onSteps={next => editBlock(noteBlock, { steps: next })}
+          />
+        </div>
+      )}
 
       {/* Two groups under two headings: what the block is, and where it
           goes. The day editor's add row has the first; a week needs the

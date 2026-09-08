@@ -231,6 +231,7 @@ const TASK = record({
   category: categoryRef,
   libraryRef: optional(LIBRARY_REF),
   note: optional(string),
+  templateNote: optional(string),
   link: optional(string),
   highlight: optional(boolean),
   subtasks: optional(listOf(SUBTASK)),
@@ -251,6 +252,10 @@ const TASK = record({
   latest: optional(string),
 })
 
+// A step on a template block: SUBTASK without `done`, which is the day's to
+// hold rather than the template's.
+const TEMPLATE_STEP = record({ id: string, title: string, minutes: optional(minutes) })
+
 const TEMPLATE_BLOCK = record({
   id: string,
   title: string,
@@ -260,6 +265,8 @@ const TEMPLATE_BLOCK = record({
   unbounded: optional(boolean),
   category: categoryRef,
   libraryListId: optional(string),
+  note: optional(string),
+  steps: optional(listOf(TEMPLATE_STEP)),
   // 0 = Sunday through 6 = Saturday, the numbering Date.getDay() uses and
   // the one WeekdayMap already keys by. Bounded rather than any number,
   // because a block on weekday 9 is a block that stamps onto nothing and

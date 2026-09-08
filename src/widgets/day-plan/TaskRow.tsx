@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Category, LibraryList, Task } from '../../lib/types'
 import { currentItem, isItemFinished, progressLabel } from '../../lib/library'
 import { isPushable } from '../../lib/pushRules'
@@ -6,6 +7,7 @@ import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useLongPress } from './useLongPress'
 import { Explain } from '../../views/Explain'
 import { LinkOut } from '../../views/LinkOut'
+import { NoteLines } from '../../views/NoteLines'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -134,6 +136,10 @@ export function TaskRow({
   selected,
   onToggleSelect,
 }: TaskRowProps) {
+  // Closed on every mount, including on a day full of notes: the mark says
+  // one is there, and a day that opened all of them would be a day of
+  // paragraphs where the point is a list of times.
+  const [noteOpen, setNoteOpen] = useState(false)
   const pushCount = task.pushCount ?? 0
   const isUnbounded = !!task.unbounded
   // isPushable already returns true for an unbounded task regardless of
@@ -334,10 +340,23 @@ export function TaskRow({
               target rather than another chip: pressing the card still means
               what it meant, and this means the other thing. */}
           {link && <LinkOut link={link} title={task.title} className="task-link" />}
+          {/* A press, not a label. It said "note" and could not be pressed,
+              so the only way to what it named was the actions menu and then
+              Details - three presses to read one line, on the card already
+              showing that the line exists. It opens under the row instead:
+              a template can now put a recipe on a block and every day it
+              stamps arrives carrying it, which is only useful if reading it
+              is one press. Editing is still the detail sheet's. */}
           {task.note && (
-            <span className="task-note-mark" data-tip="Has a note">
+            <button
+              type="button"
+              className={noteOpen ? 'task-note-mark is-open' : 'task-note-mark'}
+              aria-expanded={noteOpen}
+              aria-label={noteOpen ? `Hide the note on ${task.title}` : `Read the note on ${task.title}`}
+              onClick={() => setNoteOpen(open => !open)}
+            >
               note
-            </span>
+            </button>
           )}
           {/* The one quiet mark for whichever of the three mutually
               exclusive push states applies - see the comment on
@@ -427,6 +446,7 @@ export function TaskRow({
           &#8942;
         </button>
       </div>
+      {task.note && noteOpen && <NoteLines text={task.note} />}
     </li>
   )
 }
