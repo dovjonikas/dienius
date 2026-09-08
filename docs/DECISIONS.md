@@ -2396,6 +2396,12 @@ waking is a floor on the second, so one stray block at two in the morning
 cannot drag the column back into a night nobody plans in. Night is still
 there, one scroll away; it is only not where the column starts.
 
+**Superseded in v2.9**, in the paragraph on colour below: the wash and the
+bar came out of the column and the candidate went into the timeline. What
+held is the rest of it - the column still opens at the day, still blocks
+nothing, and still says in words what it says in marks. See "The colours
+leave the column" at the end of this file.
+
 **An hour a block covers carries that block's colour**, in the same wash the
 timeline paints, with a bar along the bottom as wide as the share of the hour
 that is gone. The bar grows sideways rather than filling from the top,
@@ -2417,3 +2423,167 @@ at all where there is no day, so Settings' sleep fields keep the plain
 columns they always had. The arithmetic is a pure module, because it is
 arithmetic; the component draws what it is handed and never reaches for the
 store.
+
+## Both arrows stand inside the month they point at
+
+The owner, on the day's header: that arrow after the date cannot leave the
+calendar underneath it. Measured, the left arrow sat exactly on the month's
+left edge and the right one 113 pixels past its right edge, out in the middle
+of the row - from about 1500px up, which is the width the owner works at and
+where the header spans both columns and stands over the rail.
+
+The arrows bracketed the day's name, which is why. The longest day this app
+prints is "Wednesday, September 30" at 250px, each arrow is 44, so a bracket
+is 353px wide standing over a month that is 240. The name cannot give those
+pixels back without abbreviating a word - "Wed, 30 Sep" fits and is not what
+this app sounds like - and the arrows cannot give them back at all: 44px is
+the touch target, and v2.7 already settled that a control which overflows is
+fixed by making overflow impossible rather than by removing the control.
+
+So the name came out from between them. The two arrows are a pair at the
+row's left edge now and the day's name follows, which puts both inside the
+month's width with 144px to spare, reads as one control, and means moving a
+few days back and forth no longer crosses the row. The bracket stays on the
+phone, where the row is the width of the screen and each arrow sits at an
+edge a thumb can reach.
+
+Two smaller things came with it. The title keeps its hidden ghost even though
+nothing after it moves now, because the chip and the doors still sit after
+the name and would otherwise walk a hundred pixels every time the day
+changed. And the reordering is CSS `order` rather than markup, so the two
+controls keep their document order: tab reaches previous and then next, which
+is also how they read left to right.
+
+## The day type says its answer and folds its question away
+
+The template editor opened on four buttons - Full day, Shift, Overnight, Rest
+- above the timeline, above the blocks, the largest question on a screen that
+exists to hold a day's worth of blocks. The answer is Full day on all but a
+handful of templates anybody builds.
+
+Nothing about the mechanism moved. All four values still exist, still save,
+still stamp, and still decide what `dayScore` counts; shift and night are
+still separate values for the reason `types.ts` gives. What changed is the
+room the question takes before it is asked: one quiet line under the name -
+the value, and the word "change" - and the four buttons one press behind it.
+The week editor's seven columns did the same, where the word each of them was
+showing was "Week default". CONVENTIONS section 25 is a state has to earn its
+place; this is that rule applied to a control.
+
+**The value stays on screen and the choosing is what hides.** A template that
+carries Overnight says Overnight on the line, closed. What is folded away is
+the offer, not the fact.
+
+**The four explanations say what changes rather than what a day is.** They
+read "Everything on the list counts toward the day" and "Only blocks marked
+Core count toward the day", which is the whole of what a day type does. The
+owner's brief said "key tasks"; the app's mark for this is Core, and "key" is
+already the star on a task that a low day is scored against, so using it here
+would have named the wrong mark. The word on the toggle and the word in the
+sentence are the same word.
+
+**And one line for what it does not change.** Free time is measured against
+the sleep schedule the template points at - `computeCapacity` takes a profile
+id and no day type at all - so the panel says so, where there is a second
+schedule for it to mean anything. Written because the question the four
+buttons raise is worth an answer, even when the answer is "not this".
+
+## The colours leave the column, and the candidate goes into the timeline
+
+v2.8 painted the hour column of the time picker with the categories of
+whatever held each hour. The owner, living in it, found what that could not
+do: an hour is a box of sixty minutes, so a block from 09:05 to 10:05 painted
+nine and ten exactly alike. A column that looked precise was rounding in both
+directions, a picked hour was carrying two meanings at once - what is chosen
+and what is taken - and the same fact was on the screen twice, drawn properly
+in the timeline and approximately in the picker. CONVENTIONS section 23 has
+one answer for a fact said twice: say it where it can be said properly.
+
+**The column is back to one meaning.** What is left of the old paint is a 2px
+rule down the edge of an hour that has something on it, in the border's own
+grey, with no category colour anywhere. It answers "is this empty" and
+stops.
+
+**The candidate is drawn on the timeline instead**, live, as the hours and
+minutes are moved through: a dashed, half-there block in the category colour
+it would carry, with its length on it, at the minute, on the day's own scale.
+The place, the length and the overlap are the real ones because it is the
+same picture the day is drawn in. Where it crosses a block, both wear the
+border two overlapping blocks already wear - nothing is refused, the clash is
+just seen before the choice rather than after it.
+
+**The window grows rather than clamping.** A candidate outside the drawn day
+would otherwise be pinned to the edge of it, claiming a place it does not
+have; the window widens to hold it and shrinks back when the pointer moves
+somewhere the day already covers. And where the column does scroll, it
+scrolls to bring the candidate into view, with a margin, only when it is
+actually out of sight.
+
+**Quick-add and the task sheet draw on that day's own timeline.** The channel
+between them is one small module on the shape `replanState` already uses -
+the picker is three components away from the grid in every direction, and the
+alternative was a preview prop threaded through the day view, the task sheet,
+quick-add and both template editors. Each timeline answers to a name: a date
+for the day, 'template' for the day editor, one per weekday for the week
+editor's columns, so a time picked for Wednesday is drawn on Wednesday and
+nowhere else. A field with no picture behind it - Settings' sleep window, the
+library's own time - publishes nothing and draws nothing.
+
+**The words kept the amount the marks gave up.** A screen reader still hears
+"09, 55 min taken by Deep work", because it can be said exactly there and
+taking it away to match a deliberately quieter drawing would leave somebody
+who is not looking at the screen with less than the screen holds. Levelling
+down is the wrong direction to even that up in.
+
+## One link, and nothing that goes to the network
+
+The owner: "at the details you could put a link in, say if you take a book
+out - if it is Spanish learning, then you see easy, where up next you can
+press and it throws you straight there, but so it throws you into a new tab
+so that Dienius does not close."
+
+A library item and a task each carry one optional address. The task's own
+wins; without one it shows the address on the library item it is bound to,
+so a reading block does not repeat what the book already knows - the same
+way `pace` already rides along. It appears in four places, all of them
+places you are already looking: the library row, the day's task card, Up
+next, and the focus screen. Up next is the one the owner named, and it is
+the one this is for.
+
+**It is a separate target and never changes what pressing the card does.**
+Rows in this app already mean something when pressed - open the task, open
+the book, tick it - and a control whose meaning depends on where inside it
+the pointer landed is worse than no control. So the anchor stops the press
+reaching what is under it, and it carries the app's own 44px.
+
+**A new tab, always, with `rel="noopener noreferrer"`.** The first because
+the whole point is that the planner is still there when the lesson is
+finished. The second two because a page opened this way can otherwise reach
+back through `window.opener`, and because a referrer is this app telling
+somebody else's server what its owner is doing at nine on a Tuesday.
+
+**Two icons, because there are two kinds of place.** A machine of your own -
+localhost, a private LAN address, a Tailscale name or its 100.64.0.0/10
+range - reads differently from a website: it works on one network and not
+another, and it is yours. Two drawings rather than one in two colours, since
+colour alone is a fact only some people get, and the address itself is in the
+app's own bubble under the control, never on it (CONVENTIONS section 24).
+
+**Nothing here touches the network.** No reachability check, no favicon, no
+title fetch, no preview, no list of links and nothing to search. Whether an
+address answers is between the owner and their own machine, and a planner
+that quietly asks the internet about the contents of somebody's day is a
+different kind of program from this one. The one thing that is checked is
+that a string looks like an address at all, and only http and https survive
+- `javascript:` is not a link to anywhere, it is a way to run code inside
+this app.
+
+**A refusal says nothing.** Type something that is not an address and it is
+not saved; there is no error, no red and no message. There is nothing to
+correct, and a planner that scolds is the thing this app is built not to be.
+The field is forgiving on the way in - "localhost:8080/spanish" and
+"example.com/x" both work, and the scheme is filled in, http for a machine of
+your own because that is what those actually serve.
+
+**It goes when the item goes.** A finished book's address is not something to
+keep a list of, and there is no list to keep it in.

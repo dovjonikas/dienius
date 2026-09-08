@@ -1298,6 +1298,14 @@ What it settled, so the same doubles do not come back:
 - **The header yields to the focus strip.** While a session runs on the
   running task, the strip at the top of the app names it with its
   countdown and its controls, and the header keeps the clock alone.
+- **What a day already holds is said in the timeline, not in the picker.**
+  The hour column of the time picker was painted with the categories of
+  whatever held each hour for one wave; an hour is a box of sixty minutes,
+  so it could only round, and the timeline beside it was already saying the
+  same thing to the minute. Where a fact is on the screen twice, the copy
+  that has to approximate is the one that goes. The column keeps a grey
+  rule for "not empty" and a time being chosen is drawn on the timeline
+  instead. See DECISIONS "The colours leave the column".
 - **A count of nothing is not shown.** "Nothing yet" over "Nothing here yet"
   was one fact said twice on an empty stream.
 - **A tooltip that only repeats the visible text is removed**, not
@@ -1381,6 +1389,21 @@ What it settled:
   of a year, opened at most once a year; what it had become was a
   three-tone heatmap, the one thing its own decision said it must never
   be, and nothing routed to it. See DECISIONS "The Year view goes".
+
+### The same rule for a control
+
+A control earns its place the same way a state does, and a question that
+is asked once in fifty templates does not earn four buttons at the top of
+the form. **The answer stays on the screen; the asking folds away.** One
+quiet line carrying the value and a way in, and the choices one press
+behind it - which is not the same as hiding the setting, because the value
+is never hidden and never has to be looked for.
+
+The day type is where this was settled, in v2.9: four buttons opened the
+template editor and the answer was Full day on all but a handful of
+templates. Nothing about the mechanism moved - the four values still save
+and still decide what the day is scored on. See DECISIONS "The day type
+says its answer and folds its question away".
 
 ### No new decisions
 

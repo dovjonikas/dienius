@@ -6,21 +6,35 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.8, closed and tagged at `1282b3d`, with this handoff one
-commit above it. The first wave the done contract
-produced: the owner lived in the app for a stretch and brought back seven
-things they met, and every stage is one of them in their own words. The
-calendar's day opens into a card that stays instead of a peek nobody could
-reach; a day can be cleared and stays cleared; a week template stamped
-mid-week fills that day and the ones after it and never reaches back, and
-opening a past day no longer invents a plan for it; a day with writing on it
-says so with two quiet marks; the month's arrows stand still all year; the
-focus screen is centred on the window rather than on the box the scrollbar's
-gutter leaves; and a time is chosen against the day, with the column opening
-where the day is and every hour a block covers wearing that block's colour.
-Section 4 has the table, stage by stage. **Nothing is owed**, and the done
-contract still stands: what is asked for next waits in "Asked for, not yet
-built" until it has been met in a week of use.
+**Last updated:** v2.9, closed and tagged, with this handoff one commit
+above it. Four things the owner met while using the app, and a document for
+somebody auditing it cold. The day's two arrows are a pair at the row's left
+edge, both inside the month they stand over, because a bracket around the
+longest day this app prints is 353px and the month under it is 240. The day
+type is one quiet line saying its answer, with the four values one press
+behind it and the mechanism untouched. The time picker's category colours
+are gone - an hour is a box of sixty minutes and could only round - and what
+is being chosen is drawn on the day's own timeline instead, at the minute,
+with its overlaps marked. And a library item or a task can carry one
+address, shown as a small door on the row, the card, Up next and the focus
+screen, opening a new tab and touching the network nowhere else.
+
+`docs/AUDIT-v2.9.md` is the fifth stage and a document only: every screen and
+every press, thirty-four screenshots in both themes, what is known to be
+imperfect, what would be decided differently, and what the two open debts
+would cost. Section 4 has the table, stage by stage. **Nothing is owed**, and
+the done contract still stands: what is asked for next waits in "Asked for,
+not yet built" until it has been met in a week of use.
+
+**Before that: v2.8**, closed and tagged at `1282b3d`. The first wave the
+done contract produced: the calendar's day opens into a card that stays
+instead of a peek nobody could reach; a day can be cleared and stays
+cleared; a week template stamped mid-week fills that day and the ones after
+it and never reaches back, and opening a past day no longer invents a plan
+for it; a day with writing on it says so with two quiet marks; the month's
+arrows stand still all year; the focus screen is centred on the window
+rather than on the box the scrollbar's gutter leaves; and a time is chosen
+against the day, with the column opening where the day is.
 
 **Before that: v2.7, and the app was declared done there.** The
 last wave, seven stages from one brief plus a fourth small thing the owner
@@ -160,6 +174,7 @@ reading them.
 | Repeating tasks | Daily, weekdays or weekly, materialised as real tasks. "Just this day" vs "every day it repeats" is a standing choice |
 | If-then rules | Trigger plus action, under the goal it protects, in North. Never measured, never surfaced onto the day; one appears under the why on the card after a slow day |
 | Later | Something to do, on no day, in the order you would pull it: one list since v2.7, where an Inbox and a Backlog were. Collapsed behind a plain count, nothing ever says how old anything is; one press puts an item on the day at the next free slot |
+| Links | One optional address on a library item and on a task, typed in either editor. A small door on the library row, the day's task card, Up next and the focus screen, always opening a new tab, always its own target so the card's own press is unchanged. One icon for a machine of your own and another for the internet, with the address in a bubble under it. Nothing about it goes to the network |
 | Keyboard layer | Single keys for common actions; a card behind `?`. Never fires while typing in a box, except Escape |
 | Command palette | Ctrl-K / Cmd-K: run a command or find a thing. Linear scan, no index |
 | Undo | One app-wide offer, five seconds, on the expensive mistakes |
@@ -215,11 +230,19 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2341
-tests in 143 files, plus 35 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2475
+tests in 150 files, plus 38 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
-the desktop at three hours and nothing on the phone, with `--self-check` at
-8/8. The working tree is empty and pushed.
+the desktop at 15:00, 22:00 and 09:00 and nothing on the phone, with
+`--self-check` at 8/8. The working tree is empty and pushed.
+
+One thing about running that sweep, found in v2.9 and worth the next
+session's time: **it hangs when it is started from a backgrounded shell**
+and finishes in about nine minutes in the foreground. Twice it sat for
+twenty minutes on five seconds of CPU, and the phone pass needs more than
+ten minutes, which is longer than one foreground call gets - it was run in
+groups with `--only` instead. Nothing about the app; something about how
+the process is started.
 
 The count is five lower than v2.6's and the app is larger, which is the
 shape of this wave: the Year strip took forty-two tests with it and Review's
@@ -235,12 +258,59 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** the v2.8 wave below, which is the first one the done
-contract produced: the owner lived in the app and brought back seven things
-they met, and every stage is one of them in their own words. Its table is
-being filled stage by stage; the v2.7 table under it is closed, and so are
-v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts table further
-down is unchanged.
+**Where to start:** the v2.9 wave below - four things the owner met while
+using the app, and a document written for somebody auditing it cold. Two of
+the four undo something an earlier wave built, which is what the done
+contract is for. The v2.8 table under it is closed, and so are v2.7, v2.6,
+v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts table further down is
+unchanged: both are still owed, and `docs/AUDIT-v2.9.md` names what each
+would cost.
+
+### The v2.9 wave: an arrow, a question, and what a picker was pretending to know
+
+Three briefs from the owner in one sitting, each one a thing met while using
+the app rather than a plan. Two of them undo something an earlier wave built,
+which is what a done contract is for: the wave that shipped it was not the
+wave that lived with it.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1 | The day's arrows come inside the month | `08bc202` | "That arrow after September 8 cannot leave the calendar below it." Measured: from about 1500px up, where the header stands over the rail, the left arrow sat on the month's left edge and the right one 113px past its right edge. A bracket around the longest day this app prints is 353px and the month under it is 240; the name cannot shrink without abbreviating a word and 44px arrows cannot shrink at all, so the name came out from between them. The two arrows are a pair at the row's left edge now, both inside the month, reading as one control, with the name after them. The phone keeps its bracket, where each arrow sits at a screen edge a thumb reaches |
+| 2 | The day type shrinks to a line | `066a024` | The mechanism stays, the control shrinks. Four buttons opened the template editor for a question whose answer is Full day on all but a handful of templates; now one quiet line under the name says the value and offers "change", and the four are one press behind it. The week editor's seven columns do the same. Nothing was removed - shift and overnight still exist, still save, still decide what `dayScore` counts - and the four explanations were rewritten to say what changes rather than what a day is: everything on the list counts, or only the blocks marked Core |
+| 3 | The colours leave the time column | `9b9c01e` | An hour is a box of sixty minutes, so painting it by category could only round: a block from 09:05 to 10:05 painted nine and ten alike, and the day's own timeline was already saying the same thing to the minute. The wash and the bar are gone; what is left is a 2px grey rule for "not empty". What a time being chosen would look like is drawn on the timeline instead - dashed, half there, in its category's colour, with its length, at the minute, on the day's own scale - and where it crosses a block both wear the border two overlapping blocks already wear. The window grows to hold a candidate outside the drawn day rather than pinning it to the edge, and a column that scrolls scrolls to it. Quick-add, the task sheet and both template editors all draw on the timeline that is theirs |
+| 4 | A link to the thing itself | `3d380bf` | A library item and a task each carry one optional address, shown as a small door on the library row, the day's task card, Up next and the focus screen. Always a new tab with `noopener noreferrer` - "so that Dienius does not close" - and always its own 44px target, so pressing the card still means what it meant. Two icons: a machine of your own (localhost, a private address, a Tailscale name or its range) and the open internet. The address is in the bubble under the control. Nothing anywhere goes to the network: no reachability check, no favicon, no preview, and a string that is not an address is simply not saved, with nothing said about it |
+| 5 | An audit for the owner | `PENDING` | `docs/AUDIT-v2.9.md` and the screenshots under `docs/screenshots/audit/` |
+
+#### The brief, as understood
+
+1. **"That arrow cannot leave the calendar below."** The day's forward arrow
+   in the header, which stands over the month in the rail from about 1500px
+   up. Both arrows inside the month's width, the 44px target kept, and
+   nothing moving as the day's name changes length.
+2. **The day type: the mechanism stays, the control shrinks.** Default Full
+   day and no choice on the screen until it is asked for; one quiet line
+   under the name; four options behind one press; each explanation saying
+   what changes rather than what kind of day it is; the same in the week
+   editor's columns; nothing removed from the code or the data; and the
+   scoring untouched for every type.
+3. **The colours out of the column, the candidate into the timeline.** The
+   column back to one meaning, a live dashed block on the timeline as the
+   hours and minutes are moved through, the overlap border on both sides of
+   a clash, the timeline scrolling to it, one quiet grey mark left in the
+   column, and the same in quick-add and the task sheet.
+4. **A link to the thing itself.** "At the details you could put a link in
+   ... where up next you can press and it throws you straight there, but so
+   it throws you into a new tab so that Dienius does not close." One optional
+   address on a library item and on a task, on the library row, the task
+   card, Up next and the focus screen; a new tab every time; its own target,
+   never changing what the card's own press does; one icon for a machine of
+   your own and another for the internet, with the address in a bubble under
+   the control. No list of links, no search, no favicons, nothing that goes
+   to the network.
+5. **An audit for the owner**, and a document only: every screen and every
+   press, screenshots at 1920x1080 in both themes on a realistic day, what
+   is known to be imperfect, what would be done differently, the two open
+   debts, and no recommendations of any kind. The owner decides.
 
 ### The v2.8 wave: the calendar, the focus screen and choosing a time
 
