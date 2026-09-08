@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.10, a bug hunt that added nothing.
+**Last updated:** v2.11, a template block that carries what to do.
 
 Four passes over a real day: every screen at three sizes in both themes, every
 screen on a keyboard alone, ten data shapes nobody checks, and every action
@@ -217,6 +217,7 @@ reading them.
 | **v1.8** | Replan (something came up / shift the rest / away and back), Scratch, the quick-add time picker, and a responsive pass over every view at seven viewports |
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
+| **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
 | **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
 
 | **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
@@ -270,7 +271,9 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** the v2.10 wave below, which added nothing and fixed two
+**Where to start:** the v2.11 wave below - a template block can carry a
+note and a list of steps, so a meal block arrives with the recipe on it and
+a morning routine arrives with its four steps. Under it, the v2.10 wave, which added nothing and fixed two
 things - both about where focus lands when a panel closes, both found by
 crossing the app on a keyboard alone. Its table also says what each of the
 four passes measured, so the next session can measure the same things
@@ -278,6 +281,26 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.11 wave: a block that says what to do
+
+The owner's words: "kai ateina meal, matai pasirinkimus ir adhd ready
+receptukus". A template could not do it. `TemplateBlock` held a title, a
+time, a size, a category and a binding - nothing anybody writes in
+sentences - so `applyStamps` read `note` off the matching prior task, which
+on a fresh day is nothing. Text typed into a template reached no day, ever.
+
+| # | Stage | Commit | What it is |
+|---|---|---|---|
+| 1 | The two fields, and two rules for them | `978f661` | `TemplateBlock.note` and `TemplateBlock.steps`. The note: a day that was written on keeps every word, a day that was not takes the block's - which needs `Task.templateNote`, what the block gave last time, because after one stamp the day's note **is** the block's text and `match?.note ?? b.note` alone can no longer tell them apart. The steps: `match?.subtasks ?? stepsFrom(b)` and no more, because a list is state a day works through rather than words it re-reads |
+| 2 | In both editors | `978f661` | One quiet word at the end of a block's row, a panel behind it. Closed unless asked, solid when it carries something. In the week editor the panel is drawn under all seven columns - a column is a seventh of the editor - and it follows the standing "this day / every day it is on" scope exactly as removing a block does |
+| 3 | On the day | `978f661` | The card's note mark was a span: it said "note" and could not be pressed, so the route to what it named was the actions menu and then Details. It is a button and opens the text under the row. Plain lines, no markdown engine; a line typed with an indent is drawn fixed-width so quantities line up |
+| 4 | Two defects found on the way | `978f661` | `addTemplate` enumerates the block fields it copies and would have dropped both new ones - the comment above it already records this happening once with `category`. And `.block-list li` never wrapped, so a full-width child was laid out beside the row and overflowed the card |
+
+Sixteen tests: the note reaching a fresh day, the day's own winning, a
+template edit reaching the untouched days and not the written-on ones, steps
+arriving unticked with their timers and never shared between two days, both
+editors, the card's mark, sync, backup, and a walk on the phone.
 
 ### The v2.10 wave: a bug hunt, and nothing added
 
@@ -1144,6 +1167,7 @@ and pushed. Nothing below this table is owed.
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
 | `v2.10` | `8a18e25` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
+| `v2.11` | `978f661` | A template block carries a note and a list of steps onto every day it stamps, and the card's note mark became a press |
 | `v2.9` | `595975b` | Four things met in use and one document: both day arrows inside the month, the day type as one line, the colours out of the time column and the candidate onto the timeline, one link on an item and a task, and an audit written for somebody who has not seen the app |
 | `v2.8` | `1282b3d` | The calendar wave, the first the done contract produced: the day card, clearing a day, a week template that never reaches back, the writing marks, the arrows, the focus screen, and choosing a time against the day |
 | `v2.7` | `b735de6` | The last wave: the header's three small things and the times on every block, Later where two shelves were, the Year view and Review's streak gone, where the plan and the week disagreed, the docs told the truth, the open questions closed, one voice over every string, and the closing. The app is done at this tag |
