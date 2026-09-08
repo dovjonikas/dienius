@@ -1143,7 +1143,7 @@ and pushed. Nothing below this table is owed.
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
-| `v2.10` | `PENDING` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
+| `v2.10` | `8a18e25` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
 | `v2.9` | `595975b` | Four things met in use and one document: both day arrows inside the month, the day type as one line, the colours out of the time column and the candidate onto the timeline, one link on an item and a task, and an audit written for somebody who has not seen the app |
 | `v2.8` | `1282b3d` | The calendar wave, the first the done contract produced: the day card, clearing a day, a week template that never reaches back, the writing marks, the arrows, the focus screen, and choosing a time against the day |
 | `v2.7` | `b735de6` | The last wave: the header's three small things and the times on every block, Later where two shelves were, the Year view and Review's streak gone, where the plan and the week disagreed, the docs told the truth, the open questions closed, one voice over every string, and the closing. The app is done at this tag |
