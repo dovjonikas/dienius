@@ -83,11 +83,6 @@ because that is the thing worth reading about a week.
 **A worked one**, which is what this was built for. In the order you would
 actually do it:
 
-**Add to** is a row of seven switches - M T W T F S S - and one block goes on
-every day you have switched on. Under them, a line says what the next press
-will do: *Adds to Mon, Thu*. Weekdays, Weekend and All days are presets that
-set those switches for you.
-
 | Press | What lands |
 |---|---|
 | **Weekdays**, then three blocks | Commute 08:15, Deep work 09:00, Commute home 17:00, on Mon to Fri |
