@@ -12,6 +12,7 @@ import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
+import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 import { blocksAsTasks, type DrawableBlock } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
@@ -582,6 +583,16 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
               onClick={() => setBlockCategory(c.id)}
             />
           ))}
+          {/* Made here rather than four screens away - see
+              CategoryQuickAdd.tsx. The pencil is only on the one that is
+              chosen, which is the one anybody is about to want to fix. */}
+          {blockCategory !== undefined && categories.some(c => c.id === blockCategory) && (
+            <CategoryEdit
+              category={categories.find(c => c.id === blockCategory)!}
+              categories={categories}
+            />
+          )}
+          <CategoryQuickAdd categories={categories} onMade={setBlockCategory} />
         </div>
         {draft.type !== 'full' && (
           <button

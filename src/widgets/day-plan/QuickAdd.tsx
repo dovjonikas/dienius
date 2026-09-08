@@ -14,6 +14,7 @@ import { parseQuickAdd, replaceLeadingTime, replaceTrailingDuration } from './pa
 import { formatDuration, windowFor } from './capacity'
 import { stepToQuarter, suggestSlot } from './autoSlot'
 import { DURATION_CHOICES, readLastDuration, rememberDuration } from './quickAddPrefs'
+import { CategoryEdit, CategoryQuickAdd } from '../../views/CategoryQuickAdd'
 
 /**
  * Quick-add: a time control, a line of text, and a duration control.
@@ -410,6 +411,17 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
             onClick={() => setNewCategory(c.id)}
           />
         ))}
+        {/* The same door as the template editors, for the same reason: the
+            moment somebody wants a colour for something is the moment they
+            are typing the thing, not a trip to Settings. See
+            views/CategoryQuickAdd.tsx. */}
+        {newCategory !== undefined && data.categories.some(c => c.id === newCategory) && (
+          <CategoryEdit
+            category={data.categories.find(c => c.id === newCategory)!}
+            categories={data.categories}
+          />
+        )}
+        <CategoryQuickAdd categories={data.categories} onMade={setNewCategory} />
       </div>
     </div>
   )

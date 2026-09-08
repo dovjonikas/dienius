@@ -3426,6 +3426,69 @@ select:focus {
 
 .category-swatch:hover { background: var(--cat); }
 
+/* ------------------------------------------------------------------------
+   Making a category where it is needed - CategoryQuickAdd.tsx. */
+
+/* A plus rather than a colour, so it reads as a door and not as a seventh
+   category. Same 20px as the swatches beside it: a row of dots with one
+   taller thing in it has stopped being a row. */
+.category-swatch.is-add,
+.category-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1;
+}
+
+.category-edit { border-style: solid; }
+
+.category-swatch.is-add:hover,
+.category-edit:hover { border-color: var(--accent); color: var(--text); }
+
+/* The sheet. Its own line under the row rather than a layer over it: the
+   thing being named is the block being typed, and covering that to name its
+   colour is the trip to Settings this exists to remove. */
+.category-quick {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s2);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface);
+}
+
+/* .block-add input carries flex: 1 1 120px for the row it was written for.
+   In a column the basis is a height, so the name box opened 120px tall. */
+.category-quick .field input { flex: 0 0 auto; max-width: 280px; }
+
+/* An svg sized by its attributes collapses to nothing inside a flex box. */
+.category-edit svg { flex: 0 0 auto; width: 14px; height: 14px; }
+
+/* A grid, not a line. Nine colours in a row read as a setting to squint at;
+   a block of them with a name under the pointer reads as a choice. */
+.category-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 28px);
+  gap: var(--s3);
+  max-width: 320px;
+}
+
+.category-quick-grid .category-swatch { width: 28px; height: 28px; }
+
+.category-quick-actions { display: flex; gap: var(--s3); }
+
 .category-swatch.selected { background: var(--cat); }
 
 .category-swatch:focus-visible {
@@ -12526,6 +12589,10 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .library-chip,
   .library-preset { min-height: var(--touch); }
+  /* Two more targets on a row of dots that already meets 44px through its
+     ::after - these get theirs the same way. */
+  .category-swatch.is-add,
+  .category-edit { width: 28px; height: 28px; }
   /* A week of switches a finger has to hit one of without hitting its
      neighbour. */
   .wt-day-toggle { width: var(--touch); min-height: var(--touch); }

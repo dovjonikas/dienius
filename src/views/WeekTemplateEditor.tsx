@@ -15,6 +15,7 @@ import { takenBlocks } from './takenHours'
 import { TimePicker } from './TimePicker'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
+import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
@@ -680,6 +681,13 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 onClick={() => setBlockCategory(c.id)}
               />
             ))}
+            {/* Made here rather than four screens away - see
+                CategoryQuickAdd.tsx. The pencil is only on the one that is
+                chosen, which is the one anybody is about to want to fix. */}
+            {blockCategory !== undefined && categories.some(c => c.id === blockCategory) && (
+              <CategoryEdit category={categories.find(c => c.id === blockCategory)!} categories={categories} />
+            )}
+            <CategoryQuickAdd categories={categories} onMade={setBlockCategory} />
           </div>
           {/* The binding, per block, exactly as the day editor has it - a
               week is where it earns its keep, because "Reading on six days
