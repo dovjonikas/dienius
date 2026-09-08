@@ -30,9 +30,9 @@
  * ## What it can and cannot see
  *
  * Text is normalised to lowercase, split on anything that is not a letter or
- * a digit, and rebuilt as runs of one to four words. So "Interactive_Journal"
- * and "interactive journal" and "Interactive-Journal" are the same thing to
- * it, and a four-word goal is findable while a five-word one is not. Single
+ * a digit, and rebuilt as runs of one to four words. So "Other_Project",
+ * "other project" and "Other-Project" are one thing to it, and a four-word
+ * goal is findable while a five-word one is not. Single
  * common words are a bad term - "morning" would fire on half the repo - and
  * the adder warns about them rather than refusing, because only the owner
  * knows which of their words are theirs.
@@ -56,6 +56,7 @@ const MAX_WORDS = 4
 /** Binary and generated files: nothing anybody types by hand lives in them. */
 const SKIP = /\.(png|jpe?g|gif|webp|ico|svg|woff2?|ttf|eot|mp[34]|zip|pdf|lock)$/i
 
+/** @param {string} term */
 const hash = term => createHash('sha256').update(term).digest('hex').slice(0, 32)
 
 /**
@@ -65,12 +66,26 @@ const hash = term => createHash('sha256').update(term).digest('hex').slice(0, 32
  * punctuation, underscores, camel case boundaries and line breaks all stop
  * mattering. The same function normalises a term when it is added, which is
  * the only reason the two ever agree.
+ *
+ * Only the run lengths the list actually holds are built. Every length from
+ * one to four over every tracked file is a few million strings, which is a
+ * second on its own and past the test runner's patience with a hundred and
+ * fifty other files rendering beside it - and a list of two-word terms needs
+ * none of the one-, three- and four-word runs. The lengths are the one thing
+ * about the terms that file may say out loud: "there are terms of two words"
+ * is not a fact about anybody.
+ *
+ * @param {string} text
+ * @param {number[] | number} [lengths] which run lengths to build, or a maximum
+ * @returns {Map<string, number>}
  */
-export function runsOf(text, maxWords = MAX_WORDS) {
+export function runsOf(text, lengths = MAX_WORDS) {
+  const want = typeof lengths === 'number' ? Array.from({ length: lengths }, (_, i) => i + 1) : lengths
   const words = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
   const runs = new Map()
   for (let i = 0; i < words.length; i++) {
-    for (let n = 1; n <= maxWords && i + n <= words.length; n++) {
+    for (const n of want) {
+      if (i + n > words.length) continue
       const run = words.slice(i, i + n).join(' ')
       if (!runs.has(run)) runs.set(run, i)
     }
@@ -78,15 +93,17 @@ export function runsOf(text, maxWords = MAX_WORDS) {
   return runs
 }
 
+/** @param {string} term */
 export function normalise(term) {
   return term.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join(' ')
 }
 
-function loadTerms() {
+function loadList() {
   try {
-    return new Set(JSON.parse(readFileSync(LIST, 'utf8')).terms)
+    const list = JSON.parse(readFileSync(LIST, 'utf8'))
+    return { terms: new Set(list.terms), lengths: list.lengths ?? [1, 2, 3, 4] }
   } catch {
-    return new Set()
+    return { terms: new Set(), lengths: [] }
   }
 }
 
@@ -102,8 +119,19 @@ function trackedFiles() {
  * Every tracked file, checked. Returns one finding per file and term, with
  * the line it was on - and never the term itself, because the point of the
  * hashing is that the guard cannot say it either.
+ *
+ * @param {{ files?: string[]; terms?: Set<string>; lengths?: number[]; root?: string }} [opts]
  */
-export function check({ files = trackedFiles(), terms = loadTerms(), root = ROOT } = {}) {
+export function check({ files = trackedFiles(), terms, lengths, root = ROOT } = {}) {
+  if (terms === undefined) {
+    const list = loadList()
+    terms = list.terms
+    lengths = lengths ?? list.lengths
+  }
+  // A set of terms handed in without its lengths - which is every test - has
+  // to be looked for at every length, because nothing else knows them.
+  const runLengths = lengths ?? [1, 2, 3, 4]
+  /** @type {{ file: string; line: number; words: number }[]} */
   const findings = []
   if (terms.size === 0) return findings
   for (const file of files) {
@@ -117,7 +145,7 @@ export function check({ files = trackedFiles(), terms = loadTerms(), root = ROOT
     // term - but reading it costs nothing to skip and saying so here is
     // cheaper than somebody wondering later.
     if (file.endsWith('personal-terms.json')) continue
-    const runs = runsOf(text)
+    const runs = runsOf(text, runLengths)
     const hit = new Set()
     for (const [run] of runs) {
       const h = hash(run)
@@ -138,6 +166,7 @@ export function check({ files = trackedFiles(), terms = loadTerms(), root = ROOT
   return findings
 }
 
+/** @param {string} term */
 function add(term) {
   const normalised = normalise(term)
   if (!normalised) {
@@ -158,6 +187,8 @@ function add(term) {
   }
   list.terms.push(h)
   list.terms.sort()
+  // How long the terms are, so a check builds only the runs it could match.
+  list.lengths = [...new Set([...(list.lengths ?? []), words.length])].sort()
   writeFileSync(LIST, `${JSON.stringify(list, null, 2)}\n`)
   console.log(`Added. The list now holds ${list.terms.length} terms, none of them readable.`)
   if (words.length === 1) {

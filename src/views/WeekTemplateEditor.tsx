@@ -66,6 +66,38 @@ export function ghostKeyFor(day: number): string {
 /** Which days one press puts a block on. */
 export type AddScope = 'day' | 'weekdays' | 'weekend' | 'all'
 
+/**
+ * The three named answers, kept as presets over the switches rather than as
+ * the only answers available.
+ *
+ * They were the whole control until v2.12, and the argument for stopping
+ * there is in DECISIONS: three names plus one picked day is four things to
+ * understand, and a chip for every combination is thirty-one. What that
+ * argument missed is that the days themselves are seven things, not
+ * thirty-one, and they say every combination there is.
+ */
+export const PRESETS: { key: string; label: string; days: number[] }[] = [
+  { key: 'weekdays', label: 'Weekdays', days: WEEKDAYS },
+  { key: 'weekend', label: 'Weekend', days: WEEKEND },
+  { key: 'all', label: 'All days', days: ALL },
+]
+
+/**
+ * What one press will do, in words: the days by name while they can be read
+ * at a glance, and a count once they cannot.
+ *
+ * Four is the line because "Adds to Mon, Tue, Wed, Thu" is already longer
+ * than the row of switches above it, and past that the number is the thing
+ * somebody actually wants to know.
+ */
+export function addsToLine(days: number[]): string {
+  if (days.length === 0) return 'No days chosen - nothing to add to.'
+  if (days.length === 7) return 'Adds to every day'
+  const inWeekOrder = WEEK.filter(w => days.includes(w.day))
+  if (inWeekOrder.length <= 4) return `Adds to ${inWeekOrder.map(w => w.short).join(', ')}`
+  return `Adds to ${inWeekOrder.length} days`
+}
+
 export function daysFor(scope: AddScope, activeDay: number): number[] {
   if (scope === 'weekdays') return WEEKDAYS
   if (scope === 'weekend') return WEEKEND
@@ -123,7 +155,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   const data = useAppData()
   const nameRef = useRef<HTMLInputElement>(null)
   const [activeDay, setActiveDay] = useState(() => new Date().getDay())
-  const [addScope, setAddScope] = useState<AddScope>('day')
+  // Which days one press puts a block on. Seven switches rather than a
+  // named scope, and it survives the add: the owner builds a rotation by
+  // setting Mon and Thu once and typing three blocks, not by re-answering
+  // the question for each of them. It starts on the column being worked in,
+  // which is what the old default meant.
+  const [addDays, setAddDays] = useState<number[]>(() => [new Date().getDay()])
   const [editScope, setEditScope] = useState<'one' | 'group'>('group')
   const [copyFrom, setCopyFrom] = useState<number | null>(null)
   // Which column has its day type open, if any. One at a time, and closed
@@ -162,9 +199,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   // hour the block would land on something - which is the thing worth knowing
   // before the time is chosen rather than after.
   const taken = useMemo(() => {
-    const days = daysFor(addScope, activeDay)
-    return takenBlocks(blocksAsTasks(draft.blocks.filter(b => b.weekday !== undefined && days.includes(b.weekday))), categories)
-  }, [draft.blocks, addScope, activeDay, categories])
+    return takenBlocks(blocksAsTasks(draft.blocks.filter(b => b.weekday !== undefined && addDays.includes(b.weekday))), categories)
+  }, [draft.blocks, addDays, categories])
   const waking = windowFor(draft.sleepProfileId, { profiles: sleepProfiles })
 
   useEffect(() => {
@@ -200,6 +236,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   // and re-made by every edit above, so a held copy would go stale.
   const noteBlock = draft.blocks.find(b => b.id === noteBlockId)
 
+  function toggleAddDay(day: number) {
+    setAddDays(days => (days.includes(day) ? days.filter(d => d !== day) : [...days, day]))
+  }
+
   function blocksOn(day: number) {
     return draft.blocks.filter(b => b.weekday === day)
   }
@@ -207,7 +247,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   function addBlocks() {
     const title = blockTitle.trim()
     if (!title) return
-    const targets = daysFor(addScope, activeDay)
+    const targets = addDays
     // A group only exists where there is something to group. One block on one
     // day is a block, and giving it a group of one would mean the edit scope
     // question appears for something that has nowhere else to apply.
@@ -631,31 +671,75 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         <div className="block-add-group">
         <span className="block-add-heading">Where</span>
         <div className="block-add-where">
+          <div className="wt-where-main">
+          {/* Seven switches, not a list of named answers. A rotation of
+              Mon/Thu, Tue/Fri, Wed/Sat has no name, and naming every
+              combination is thirty-one chips - so the days themselves are
+              the control and the names become presets on top of it. See
+              DECISIONS, where the old argument and what overturned it both
+              stand. */}
           <div className="wt-add-to" role="group" aria-label="Add to">
             <Explain id="add-to">
               <span className="muted">Add to</span>
             </Explain>
-            {(
-              [
-                ['day', WEEK.find(w => w.day === activeDay)!.label],
-                ['weekdays', 'Weekdays'],
-                ['weekend', 'Weekend'],
-                ['all', 'All days'],
-              ] as [AddScope, string][]
-            ).map(([scope, label]) => (
+            <div className="wt-day-toggles">
+              {WEEK.map(({ day, label, short }) => (
+                <button
+                  key={day}
+                  type="button"
+                  className={addDays.includes(day) ? 'wt-day-toggle is-on' : 'wt-day-toggle'}
+                  aria-pressed={addDays.includes(day)}
+                  aria-label={label}
+                  onClick={() => toggleAddDay(day)}
+                >
+                  {/* The initial to read, the day to hear: two of these are
+                      T and two are S, which is fine on a row somebody is
+                      pointing at and useless to anybody who is not. */}
+                  <span aria-hidden="true">{short[0]}</span>
+                </button>
+              ))}
+            </div>
+            {/* The fourth of the old named scopes, converted the same way
+                the other three were. Without it, going from Weekdays to one
+                Thursday block is four switches off - which the week
+                editor&apos;s own browser walk caught the moment the switches
+                landed. Named for the day so it cannot be read as the switch
+                beside it. */}
+            <button
+              type="button"
+              className="chip"
+              onClick={() => setAddDays([activeDay])}
+            >
+              Only {WEEK.find(w => w.day === activeDay)!.short}
+            </button>
+            {PRESETS.map(({ key, label, days }) => (
               <button
-                key={scope}
+                key={key}
                 type="button"
-                className={addScope === scope ? 'chip selected' : 'chip'}
-                aria-pressed={addScope === scope}
-                onClick={() => setAddScope(scope)}
+                className="chip"
+                // Not aria-pressed: a preset is a press that sets the
+                // switches, and the switches are what holds the answer. A
+                // preset that looked selected would be a second place the
+                // same fact is kept - CONVENTIONS section 23.
+                onClick={() => setAddDays(days)}
               >
                 {label}
               </button>
             ))}
           </div>
 
-          <button className="btn-secondary" disabled={!blockTitle.trim()} onClick={addBlocks}>
+          {/* What the press will actually do, so nobody counts switches with
+              their eyes. */}
+          <p className="wt-add-summary" role="status">
+            {addsToLine(addDays)}
+          </p>
+          </div>
+
+          <button
+            className="btn-secondary"
+            disabled={!blockTitle.trim() || addDays.length === 0}
+            onClick={addBlocks}
+          >
             Add a block
           </button>
         </div>

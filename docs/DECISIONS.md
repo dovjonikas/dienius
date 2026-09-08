@@ -1072,14 +1072,45 @@ Two entities that are 90% the same drift, and the 10% that differs is not
 where the drift happens.
 
 **The three things that make it not a chore.** Most of a week is the same on
-several days, so "Add to" puts a block on this day, the weekdays, the weekend
-or all seven in one press. Blocks made together share a `groupId`, so the
-next edit can ask "this day, or everywhere?" - and it asks it the way a
-repeating task already does, as a standing choice above the columns rather
-than a dialog per press, because a confirmation that appears every time you
-touch something is a confirmation people learn to dismiss without reading.
-"Copy to" is the same idea for a column somebody has already built, and a
-drag is for a block on the wrong day.
+several days, so "Add to" puts a block on several days in one press. Blocks
+made together share a `groupId`, so the next edit can ask "this day, or
+everywhere?" - and it asks it the way a repeating task already does, as a
+standing choice above the columns rather than a dialog per press, because a
+confirmation that appears every time you touch something is a confirmation
+people learn to dismiss without reading. "Copy to" is the same idea for a
+column somebody has already built, and a drag is for a block on the wrong
+day.
+
+**"Add to" was four named answers until v2.12, and real use overturned it.**
+Written v2.0 and overturned 2026-09-09. The original argument, kept here
+because it was not wrong about what it was looking at:
+
+> Three named scopes and one picked day are four things to understand, and a
+> chip for every combination is thirty-one. So: this day, the weekdays, the
+> weekend, all seven - and a rotation is added a day at a time.
+
+The owner then built a real 74-block week. Their training rotation is
+Mon/Thu, Tue/Fri, Wed/Sat - three pairs, none of which has a name - so every
+one of those blocks had to be added twice, once per day, and the count of
+"eleven presses" in DAILY was a count of the easy week rather than theirs.
+
+What the argument missed is that a chip per combination is not the only
+alternative to a chip per name. **The days themselves are seven controls,
+not thirty-one**, and seven switches say all thirty-one combinations
+including the ones nobody would name. So the seven weekdays are the control
+now, each turned on and off on its own, and the three names survive as
+presets over them: Weekdays sets Monday to Friday, Weekend sets Saturday and
+Sunday, All days sets all seven. Pressing one shows what it set rather than
+lighting a chip, so the switches stay the only place the answer is kept -
+CONVENTIONS section 23.
+
+Two things make it hold. A line under the switches says what one press will
+do - "Adds to Mon, Thu" - so nobody counts squares with their eyes, and it
+turns into a count past four days because at that width the number is what
+somebody wants. And the combination survives the add, so a rotation is set
+once and three blocks are three titles. Grouping did not change at all:
+blocks made together still share a `groupId`, and the standing "this day /
+every day it is on" question is the same question.
 
 **A week template fills the whole weekday map.** Choosing one for Monday sets
 all seven, and clearing one of its days clears all seven. A week template's

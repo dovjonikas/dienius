@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-// @ts-expect-error - a plain script, deliberately: the guard has to run from
-// a clone with nothing built, and a .ts file would need the toolchain it is
-// meant to protect.
+// A plain script, deliberately: the guard has to run from a clone with
+// nothing built, and a .ts file would need the toolchain it is meant to
+// protect. Typed with JSDoc so this import still checks.
 import { check, normalise, runsOf } from '../../scripts/no-personal-data.mjs'
 import { createHash } from 'node:crypto'
 import { mkdtempSync, writeFileSync } from 'node:fs'
@@ -21,27 +21,27 @@ function repoWith(files: Record<string, string>) {
 }
 
 test('a term on the list is found, and the file and line are named', () => {
-  const { root, files } = repoWith({ 'a.ts': 'const x = 1\n// planted: Interactive_Journal\n' })
-  const found = check({ files, terms: new Set([hash('Interactive Journal')]), root })
+  const { root, files } = repoWith({ 'a.ts': 'const x = 1\n// planted: Other_Project\n' })
+  const found = check({ files, terms: new Set([hash('Other Project')]), root })
   expect(found).toEqual([{ file: 'a.ts', line: 2, words: 2 }])
 })
 
 test('punctuation, case and underscores do not hide a term', () => {
-  const terms = new Set([hash('stick season')])
-  for (const written of ['stick-season', 'Stick_Season', 'STICK   season', 'stickSeason.json']) {
+  const terms = new Set([hash('ridge lantern')])
+  for (const written of ['ridge-lantern', 'Ridge_Lantern', 'RIDGE   lantern', 'ridgeLantern.json']) {
     const { root, files } = repoWith({ 'a.ts': `path = '${written}'` })
     // camelCase is the one shape this cannot see: there is no separator in
-    // "stickSeason" to split on, so it reads as one word. Said out loud here
+    // "ridgeLantern" to split on, so it reads as one word. Said out loud here
     // rather than left for somebody to discover.
     const found = check({ files, terms, root })
-    if (written === 'stickSeason.json') expect(found).toEqual([])
+    if (written === 'ridgeLantern.json') expect(found).toEqual([])
     else expect(found, written).toHaveLength(1)
   }
 })
 
 test('a file with nothing on the list comes back clean', () => {
   const { root, files } = repoWith({ 'a.ts': 'const morning = "Morning routine"\n' })
-  expect(check({ files, terms: new Set([hash('Interactive Journal')]), root })).toEqual([])
+  expect(check({ files, terms: new Set([hash('Other Project')]), root })).toEqual([])
 })
 
 test('an empty list finds nothing rather than everything', () => {

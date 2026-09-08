@@ -31,7 +31,9 @@ test('a week template is built once and stamps each day its own column', async (
   // having over a day template stamped five times.
   await page.getByRole('region', { name: 'Thursday' }).getByRole('button', { name: /^Thursday/ }).click()
   await page.getByPlaceholder('What happens').fill('Physio')
-  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Thursday' }).click()
+  // One press back to a single day, from the five the preset above left
+  // switched on.
+  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Only Thu' }).click()
   await page.getByRole('button', { name: 'Add a block' }).click()
 
   await expect(page.getByRole('region', { name: 'Thursday' }).getByText('Physio')).toBeVisible()
@@ -69,4 +71,35 @@ test('a week template is built once and stamps each day its own column', async (
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('checkbox', { name: 'Physio' })).toBeAttached()
   await expect(page.getByRole('checkbox', { name: 'Commute' })).toBeAttached()
+})
+
+test('the day switches put a rotation on two days at once, and hold for the next block', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(9))
+  await page.getByRole('button', { name: 'Templates', exact: true }).first().click()
+  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByRole('button', { name: /^A week/ }).click()
+  await page.getByPlaceholder('Week name').fill('My week')
+
+  const where = page.getByRole('group', { name: 'Add to' })
+  // Wednesday is on because the editor opened on it, so the rotation needs
+  // it switched off - which is exactly what the line under the switches is
+  // for, and what this asserts.
+  await where.getByRole('button', { name: 'Wednesday' }).click()
+  await where.getByRole('button', { name: 'Monday' }).click()
+  await where.getByRole('button', { name: 'Thursday' }).click()
+  await expect(page.getByText('Adds to Mon, Thu')).toBeVisible()
+
+  await page.getByPlaceholder('What happens').fill('Training A')
+  await page.getByRole('button', { name: 'Add a block' }).click()
+  // Set once. The second block of the rotation is a title and a press.
+  await expect(page.getByText('Adds to Mon, Thu')).toBeVisible()
+  await page.getByPlaceholder('What happens').fill('Training B')
+  await page.getByRole('button', { name: 'Add a block' }).click()
+
+  for (const day of ['Monday', 'Thursday']) {
+    const column = page.getByRole('region', { name: day })
+    await expect(column.getByText('Training A')).toBeVisible()
+    await expect(column.getByText('Training B')).toBeVisible()
+  }
+  await expect(page.getByRole('region', { name: 'Wednesday' }).getByText('Training A')).toHaveCount(0)
 })

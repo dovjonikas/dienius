@@ -12491,6 +12491,9 @@ main:has(.week) > .calendar {
 @media (pointer: coarse) {
   .library-chip,
   .library-preset { min-height: var(--touch); }
+  /* A week of switches a finger has to hit one of without hitting its
+     neighbour. */
+  .wt-day-toggle { width: var(--touch); min-height: var(--touch); }
   /* The fold is the whole width of the head, so the target is the
      card rather than a caret somebody has to aim at - but a button
      whose content is a heading and a line of meta is only as tall as
@@ -13585,6 +13588,37 @@ main:has(.week) > .calendar {
 .wt-scope { align-self: flex-start; }
 
 .wt-add-to { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1); }
+
+/* Seven switches, one per day. A square each so the row reads as a week
+   rather than as seven words, and 44px on a finger like everything else. */
+.wt-day-toggles { display: flex; gap: var(--s1); }
+
+.wt-day-toggle {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.wt-day-toggle.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+/* What the press will do. A line rather than a count next to the switches,
+   because the question it answers is "which days" and the answer is the
+   days. */
+/* The switches and the sentence about them are one thing, so Add a block
+   stays on the first line beside them rather than being pushed under. */
+.wt-where-main { display: flex; flex-direction: column; gap: var(--s1); flex: 1 1 auto; min-width: 0; }
+
+.wt-add-summary { margin: var(--s1) 0 0; color: var(--muted); font-size: var(--t-sm); }
 
 @media (pointer: coarse) {
   .wt-day { min-height: var(--touch); }

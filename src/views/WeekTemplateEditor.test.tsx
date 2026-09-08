@@ -282,26 +282,96 @@ test('there is nothing to bind to while the library is empty', async () => {
  * cannot see a border, and the rule that paints it keys off the same
  * attribute.
  */
-test('the chosen Add to says so, and choosing another moves the mark', async () => {
+/** Which day switches are on, by name, in week order. */
+function switchedOn() {
+  return within(screen.getByRole('group', { name: 'Add to' }))
+    .getAllByRole('button')
+    .filter(b => b.getAttribute('aria-pressed') === 'true')
+    .map(b => b.getAttribute('aria-label'))
+}
+
+test('the switches open on the column being worked in, and each one is its own answer', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
   const where = within(screen.getByRole('group', { name: 'Add to' }))
 
-  const pressed = () =>
-    where
-      .getAllByRole('button')
-      .filter(b => b.getAttribute('aria-pressed') === 'true')
-      .map(b => b.textContent)
+  // The editor opens on today, which the fake clock pins to a Wednesday.
+  expect(switchedOn()).toEqual(['Wednesday'])
+  expect(screen.getByText('Adds to Wed')).toBeInTheDocument()
 
-  // The first chip is whichever day the editor opened on - today's.
-  const today = pressed()[0]!
-  expect(where.getByRole('button', { name: today })).toHaveClass('selected')
+  // A day is a switch, not a choice among four: turning Saturday on leaves
+  // Wednesday on. This is the whole point - a rotation has no name.
+  await user.click(where.getByRole('button', { name: 'Saturday' }))
+  expect(switchedOn()).toEqual(['Wednesday', 'Saturday'])
+  expect(screen.getByText('Adds to Wed, Sat')).toBeInTheDocument()
+
+  await user.click(where.getByRole('button', { name: 'Wednesday' }))
+  expect(switchedOn()).toEqual(['Saturday'])
+})
+
+test('a preset sets the switches, and shows what it set', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
   await user.click(where.getByRole('button', { name: 'Weekdays' }))
-  expect(pressed()).toEqual(['Weekdays'])
-  expect(where.getByRole('button', { name: 'Weekdays' })).toHaveClass('selected')
-  expect(where.getByRole('button', { name: today })).not.toHaveClass('selected')
+  expect(switchedOn()).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
+  expect(screen.getByText('Adds to 5 days')).toBeInTheDocument()
+
+  // It sets rather than adds: the weekend is the weekend, not the weekend
+  // plus whatever was on before it.
+  await user.click(where.getByRole('button', { name: 'Weekend' }))
+  expect(switchedOn()).toEqual(['Saturday', 'Sunday'])
+  expect(screen.getByText('Adds to Sat, Sun')).toBeInTheDocument()
+
+  await user.click(where.getByRole('button', { name: 'All days' }))
+  expect(switchedOn()).toHaveLength(7)
+  expect(screen.getByText('Adds to every day')).toBeInTheDocument()
+})
+
+test('a rotation is set once and holds for the next block', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+
+  // Mon and Thu - the shape that took two passes per block before this.
+  await user.click(where.getByRole('button', { name: 'Monday' }))
+  await user.click(where.getByRole('button', { name: 'Wednesday' }))
+  await user.click(where.getByRole('button', { name: 'Thursday' }))
+  expect(switchedOn()).toEqual(['Monday', 'Thursday'])
+
+  await addBlock(user, 'Training A')
+  // Still Mon and Thu. The next block in the rotation is a title and Enter.
+  expect(switchedOn()).toEqual(['Monday', 'Thursday'])
+  await addBlock(user, 'Training B')
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const blocks = getData().templates[0].blocks
+  expect(blocks.filter(b => b.title === 'Training A').map(b => b.weekday).sort()).toEqual([1, 4])
+  expect(blocks.filter(b => b.title === 'Training B').map(b => b.weekday).sort()).toEqual([1, 4])
+  // Made together, so they are one group and the standing scope can act on
+  // them as one - unchanged by any of this.
+  const a = blocks.filter(b => b.title === 'Training A')
+  expect(a[0].groupId).toBeDefined()
+  expect(a[0].groupId).toBe(a[1].groupId)
+  expect(a[0].groupId).not.toBe(blocks.find(b => b.title === 'Training B')!.groupId)
+})
+
+test('with no day switched on there is nothing to add to, and the button says so', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+  await user.click(where.getByRole('button', { name: 'Wednesday' }))
+
+  expect(switchedOn()).toEqual([])
+  expect(screen.getByText('No days chosen - nothing to add to.')).toBeInTheDocument()
+  await user.type(screen.getByPlaceholderText('What happens'), 'Nowhere')
+  expect(screen.getByRole('button', { name: 'Add a block' })).toBeDisabled()
 })
 
 /**
@@ -388,4 +458,21 @@ test('a step added to a block on a week template reaches every day it is on', as
   const blocks = getData().templates[0].blocks
   expect(blocks).toHaveLength(7)
   expect(blocks.every(b => b.steps?.[0].title === 'Meditation' && b.steps?.[0].minutes === 10)).toBe(true)
+})
+
+test('one press goes back to a single day, from whatever a preset left on', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+
+  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  expect(switchedOn()).toHaveLength(5)
+
+  // Without this, one Thursday-only block after a run of weekday blocks is
+  // four switches off. It is the old "this day" scope, converted to a preset
+  // the same way the other three were, and named for the day so it cannot be
+  // read as the switch beside it.
+  await user.click(where.getByRole('button', { name: 'Only Wed' }))
+  expect(switchedOn()).toEqual(['Wednesday'])
 })

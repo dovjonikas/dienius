@@ -77,18 +77,24 @@ because that is the thing worth reading about a week.
 **A worked one**, which is what this was built for. In the order you would
 actually do it:
 
+**Add to** is a row of seven switches - M T W T F S S - and one block goes on
+every day you have switched on. Under them, a line says what the next press
+will do: *Adds to Mon, Thu*. Weekdays, Weekend and All days are presets that
+set those switches for you.
+
 | Press | What lands |
 |---|---|
-| Add to → **Weekdays**, three times | Commute 08:15, Deep work 09:00, Commute home 17:00, on Mon to Fri |
-| Add to → **All days** | Reading 21:30, bound to your MIND list |
-| Add to → **this day**, on Mon, then Wed, then Fri | Gym: Upper 18:30 |
-| Add to → **this day**, on Tue, then Thu | Gym: Lower 18:30 |
-| Add to → **this day**, on Sat | Long walk 10:00 |
+| **Weekdays**, then three blocks | Commute 08:15, Deep work 09:00, Commute home 17:00, on Mon to Fri |
+| **All days**, then one block | Reading 21:30, bound to your MIND list |
+| **M**, **W**, **F**, then one block | Gym: Upper 18:30, on all three at once |
+| **T**, **T**, then one block | Gym: Lower 18:30, on both at once |
+| **S**, then one block | Long walk 10:00 |
 | The Saturday column's day type → **Rest** | Saturday stops being scored like a workday |
 
-Eleven presses, and the rotation is the only fiddly part - there is no
-"Mon, Wed, Fri" chip, on purpose: three named scopes and one picked day are
-four things to understand, and a chip for every combination is thirty-one.
+The switches stay as you left them, so a rotation is set once and the next
+block is a title and Enter. Watch the line under them before you press Add:
+the day you are looking at starts switched on, so a rotation of Mon and Thu
+set on a Wednesday is three days until you switch Wednesday off.
 
 Want the Wednesday's reading to come from CRAFT instead of MIND? Switch the
 choice above the columns to **Just this day**, remove Wednesday's Reading,
