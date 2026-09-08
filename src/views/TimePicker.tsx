@@ -23,6 +23,12 @@ export interface TimePickerProps {
    */
   taken?: TakenBlock[]
   wakingStart?: number
+  /**
+   * Which timeline draws a candidate while the columns are open, and what it
+   * would look like there - passed straight through to `TimeColumns`, and
+   * absent for a field with no picture behind it.
+   */
+  ghost?: { key: string; minutes?: number; color?: string }
 }
 
 /**
@@ -49,6 +55,7 @@ export function TimePicker({
   required = false,
   taken,
   wakingStart,
+  ghost,
 }: TimePickerProps) {
   const [draft, setDraft] = useState(value)
   const [open, setOpen] = useState(false)
@@ -153,7 +160,16 @@ export function TimePicker({
         </button>
       </div>
 
-      {open && <TimeColumns value={current} onPick={pick} id={listId} taken={taken} wakingStart={wakingStart} />}
+      {open && (
+        <TimeColumns
+          value={current}
+          onPick={pick}
+          id={listId}
+          taken={taken}
+          wakingStart={wakingStart}
+          ghost={ghost}
+        />
+      )}
     </div>
   )
 }

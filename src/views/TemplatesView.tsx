@@ -28,6 +28,13 @@ const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 /** How many block titles a template card previews before it says "+n more". */
 const PREVIEW_BLOCKS = 4
 
+/**
+ * The name this editor's own picture answers to while a time is being chosen
+ * against it - see `lib/timeGhost.ts`. One editor, one timeline, one name;
+ * the week editor has seven and keys them by weekday.
+ */
+const GHOST_KEY = 'template'
+
 const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'full', label: 'Full day' },
   { value: 'shift', label: 'Shift' },
@@ -352,7 +359,12 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
       {/* The template as the day it makes, live - see TemplateTimeline. A
           list says what is on the day; only the picture says whether there
           is room for it, which is the question a template is about. */}
-      <TemplateTimeline blocks={draft.blocks.map(drawable)} sleepProfileId={draft.sleepProfileId} color={draft.color} />
+      <TemplateTimeline
+        blocks={draft.blocks.map(drawable)}
+        sleepProfileId={draft.sleepProfileId}
+        color={draft.color}
+        ghostKey={GHOST_KEY}
+      />
 
       <ul className="block-list" ref={blockListRef}>
         {draft.blocks.map((b, i) => (
@@ -455,6 +467,12 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             ariaLabel="Block time"
             taken={taken}
             wakingStart={waking.start}
+            /* What is being built, drawn on the picture above while the time
+               is chosen: its real place, its real length and whatever it runs
+               into - see lib/timeGhost.ts. The length and the colour are the
+               two the row beneath already holds, so the candidate is the
+               block that would actually be added rather than a marker. */
+            ghost={{ key: GHOST_KEY, minutes: parseMinutesInput(blockMinutes), color: categoryColor(blockCategory, categories) }}
           />
           <input
             placeholder="What happens"

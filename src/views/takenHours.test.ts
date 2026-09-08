@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { hourCover, openingHour, takenBlocks, type TakenBlock } from './takenHours'
+import { crossedBy, hourCover, openingHour, takenBlocks, type TakenBlock } from './takenHours'
 import { DEFAULT_CATEGORIES } from '../lib/categories'
 import type { Task } from '../lib/types'
 
@@ -157,4 +157,34 @@ test('a day booked to the last minute opens on its last hour rather than past th
 // gets midnight, which is where this control has always opened.
 test('a field with no day behind it opens where it always did', () => {
   expect(openingHour('', [], 0)).toBe(0)
+})
+
+/**
+ * What a candidate would run into. Half-open on both sides, so a day that
+ * runs block to block with no air in it is a day, not a pile of collisions.
+ */
+const MORNING = [
+  { id: 'shower', start: 420, end: 450 },
+  { id: 'deep', start: 540, end: 660 },
+]
+
+test('a candidate over a block names that block', () => {
+  expect(crossedBy({ start: 600, end: 630 }, MORNING)).toEqual(['deep'])
+})
+
+test('a candidate that only touches a block edge names nothing', () => {
+  expect(crossedBy({ start: 660, end: 690 }, MORNING)).toEqual([])
+  expect(crossedBy({ start: 510, end: 540 }, MORNING)).toEqual([])
+})
+
+test('a candidate across two blocks names both', () => {
+  expect(crossedBy({ start: 400, end: 700 }, MORNING)).toEqual(['shower', 'deep'])
+})
+
+test('a candidate with no length crosses nothing, however it is placed', () => {
+  expect(crossedBy({ start: 600, end: 600 }, MORNING)).toEqual([])
+})
+
+test('an empty day has nothing to run into', () => {
+  expect(crossedBy({ start: 600, end: 660 }, [])).toEqual([])
 })

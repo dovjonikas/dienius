@@ -5,6 +5,11 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Task } from '../../lib/types'
 import { TimelineGrid } from './TimelineGrid'
+import { resetTimeGhostForTests, showTimeGhost } from '../../lib/timeGhost'
+
+// Nothing is being chosen at the start of a test, and a candidate left
+// standing by one test is a block the next one never asked for.
+afterEach(() => resetTimeGhostForTests())
 
 function anchor(id: string, time: string, minutes?: number, done = false): Task {
   return { id, title: id, done, time, minutes }
@@ -671,4 +676,123 @@ test('the accessible sleep sentence follows whichever schedule the day is on', (
   const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }, { id: 'shift', name: 'Shift', window: { start: '17:00', end: '09:00' } }] }
   render(<TimelineGrid tasks={[anchor('Shift', '10:00', 60)]} sleepProfileId="shift" sleep={sleep} />)
   expect(screen.getByText('Asleep from 17:00 to 09:00.')).toBeInTheDocument()
+})
+
+/**
+ * The candidate a time picker is holding, drawn on the day it belongs to.
+ *
+ * The place and the length are the day's own scale, so what is asserted here
+ * is the wiring and the arithmetic: the block is at the minute it was
+ * published for, it is as long as it was published as, and it is not drawn at
+ * all on a timeline that answers to another name. What it looks like is the
+ * browser walk's job.
+ */
+/** A day wide enough that a candidate in the morning falls inside its window. */
+const LONG_DAY = [anchor('Breakfast', '08:00', 30), anchor('Wind down', '20:00', 30)]
+
+/** Where an hour label sits, in the same pixels the blocks are placed with. */
+function hourTop(container: HTMLElement, label: string): number {
+  const mark = [...container.querySelectorAll('.timeline-hour')].find(h => h.textContent === label) as HTMLElement
+  return Number(mark.style.top.replace('px', ''))
+}
+
+function px(value: string): number {
+  return Number((value || '0').replace('px', ''))
+}
+
+test('a published candidate is drawn at its own time, on the day own scale', () => {
+  showTimeGhost({ key: 'day', start: 600, minutes: 60, color: 'var(--cat-core)' })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+
+  const ghost = container.querySelector('.timeline-ghost') as HTMLElement
+  expect(ghost).toBeTruthy()
+  expect(ghost.style.getPropertyValue('--cat')).toBe('var(--cat-core)')
+  // Ten o'clock is where ten o'clock is, and an hour is as tall as the hour
+  // between the day's own marks. Not "somewhere below the top": the whole
+  // claim this makes is that the place and the length are the real ones.
+  expect(px(ghost.style.top)).toBeCloseTo(hourTop(container, '10:00'), 0)
+  expect(px(ghost.style.height)).toBeCloseTo(hourTop(container, '11:00') - hourTop(container, '10:00'), 0)
+})
+
+test('a candidate twice as long is drawn twice as tall', () => {
+  showTimeGhost({ key: 'day', start: 600, minutes: 60 })
+  const { container: one } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  const short = px((one.querySelector('.timeline-ghost') as HTMLElement).style.height)
+
+  showTimeGhost({ key: 'day', start: 600, minutes: 120 })
+  const { container: two } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  const long = px((two.querySelector('.timeline-ghost') as HTMLElement).style.height)
+
+  expect(long).toBeCloseTo(short * 2, 0)
+})
+
+/**
+ * A candidate the day's own window does not reach is not clamped to the edge
+ * of it. Clamping would draw a block at the top of the day claiming a place
+ * it does not have, which is worse than drawing nothing; the window grows
+ * instead, and shrinks back when the pointer moves back inside.
+ */
+test('a candidate outside the drawn day widens the day rather than being pinned to its edge', () => {
+  const { container: before } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  const earliest = [...before.querySelectorAll('.timeline-hour')][0].textContent
+
+  showTimeGhost({ key: 'day', start: 240, minutes: 30 })
+  const { container: after } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  const grown = [...after.querySelectorAll('.timeline-hour')][0].textContent
+
+  expect(earliest).not.toBe('04:00')
+  expect(grown).toBe('04:00')
+  expect(px((after.querySelector('.timeline-ghost') as HTMLElement).style.top)).toBeCloseTo(hourTop(after, '04:00'), 0)
+})
+
+test('a candidate for another timeline is drawn on this one nowhere', () => {
+  showTimeGhost({ key: 'another-day', start: 600, minutes: 60 })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  expect(container.querySelector('.timeline-ghost')).toBeNull()
+})
+
+/**
+ * Nobody has said how long it is, so nothing here says either: a rule at the
+ * time it would start, and no fill to imply a length. The same silence
+ * `takenBlocks` and `computeCapacity` keep about an unsized anchor.
+ */
+test('a candidate nobody has sized is a line, not a block', () => {
+  showTimeGhost({ key: 'day', start: 600 })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  const ghost = container.querySelector('.timeline-ghost') as HTMLElement
+  expect(ghost.className).toContain('timeline-ghost-line')
+  expect(ghost.style.height).toBe('')
+})
+
+/**
+ * What it would run into, marked on both sides, in the border two
+ * overlapping blocks already wear. Nothing is refused - the overlap is
+ * allowed and always was; it is only visible before the choice now.
+ */
+test('a candidate that crosses a block marks the block and itself, and refuses nothing', () => {
+  // Half past eight, over the back of breakfast.
+  showTimeGhost({ key: 'day', start: 495, minutes: 30 })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+
+  expect((container.querySelector('.timeline-ghost') as HTMLElement).className).toContain('timeline-ghost-clash')
+  expect(container.querySelector('.timeline-anchor-clash')).toBeTruthy()
+})
+
+test('a candidate that lands where nothing is marks nothing', () => {
+  // Eleven, with the morning empty behind it.
+  showTimeGhost({ key: 'day', start: 660, minutes: 30 })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+
+  expect((container.querySelector('.timeline-ghost') as HTMLElement).className).not.toContain('timeline-ghost-clash')
+  expect(container.querySelector('.timeline-anchor-clash')).toBeNull()
+})
+
+/**
+ * A block ending exactly where the next begins is a morning, not a collision.
+ */
+test('a candidate that starts where a block ends is not a clash', () => {
+  // Exactly where breakfast ends.
+  showTimeGhost({ key: 'day', start: 510, minutes: 30 })
+  const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
+  expect((container.querySelector('.timeline-ghost') as HTMLElement).className).not.toContain('timeline-ghost-clash')
 })

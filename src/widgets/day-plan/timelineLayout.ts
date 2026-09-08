@@ -1023,3 +1023,64 @@ function computeInteriorGaps(anchors: Task[], window: Interval): TimelineGap[] {
     .filter(g => g.start > window.start && g.end < window.end)
     .map(g => ({ startMinutes: g.start, endMinutes: g.end, minutes: g.minutes }))
 }
+
+/**
+ * Where a scroller has to move to bring a stretch of it into view, or null
+ * when the stretch is already there.
+ *
+ * Its own function because the effect that uses it cannot be tested: jsdom
+ * reports every height as zero, so a column that scrolls is a column no unit
+ * test can see scroll. The decision is arithmetic and the arithmetic is
+ * here; the effect is three lines of assignment around it.
+ *
+ * Null rather than the current position, so a caller can tell "already
+ * visible" from "move to exactly where you are" and leave a scroller it does
+ * not need to touch entirely alone - a scroll set on every render is a
+ * picture that fights the hand scrolling it.
+ */
+export function scrollToShow(
+  top: number,
+  height: number,
+  scrollTop: number,
+  viewport: number,
+  margin: number,
+): number | null {
+  const above = top - margin
+  const below = top + height + margin
+  if (above < scrollTop) return Math.max(0, above)
+  if (below > scrollTop + viewport) return below - viewport
+  return null
+}
+
+/**
+ * The drawn window, grown to hold a candidate that falls outside it.
+ *
+ * Returns the window it was given, by identity, when nothing has to change -
+ * which is what lets a caller tell "the day already covers this" from "the
+ * day had to grow", and keep the bands and marks it already computed in the
+ * first case.
+ *
+ * A candidate with no length takes a moment rather than a stretch: nothing
+ * here invents a duration for something nobody has sized, the same silence
+ * `computeCapacity` and `takenBlocks` keep.
+ */
+export function widenToHold(window: Interval, start: number, minutes: number | undefined): Interval {
+  const end = start + (minutes ?? 0)
+  if (start >= window.start && end <= window.end) return window
+  return { start: Math.min(window.start, start), end: Math.max(window.end, end) }
+}
+
+/**
+ * The stretches of a window that are outside the waking day - the same two
+ * segments `computeTimelineLayout` clips, pulled out so a window that had to
+ * grow around a candidate can have them computed again for its new edges
+ * rather than keeping bands cut to the old ones.
+ */
+export function sleepBandsIn(window: Interval, waking: Interval): Interval[] {
+  return [
+    { start: 0, end: waking.start },
+    { start: waking.end, end: DAY_MINUTES },
+  ]
+    .map(segment => clipToWindow(segment, window))
+    .filter((segment): segment is Interval => segment !== null)
+}

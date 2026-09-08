@@ -335,6 +335,12 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
                   onPick={pickTime}
                   taken={taken}
                   wakingStart={waking.start}
+                  /* The task about to be added, drawn on the day's own
+                     timeline while its time is chosen - the length the
+                     duration control is holding and the colour the category
+                     row is, so what is drawn is the task that would land.
+                     See lib/timeGhost.ts. */
+                  ghost={{ key: date, minutes: effectiveMinutes, color: categoryColor(newCategory, data.categories) }}
                 />
               </div>
             )}

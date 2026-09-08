@@ -2988,11 +2988,13 @@ textarea:focus {
    read as *which* half of the hour is taken, which is a claim this cannot make
    honestly once two blocks share one hour - the amount is the honest thing to
    say, and the picker is a picker, not a second timeline. */
-.time-picker-option.is-taken {
-  --taken-wash: color-mix(in srgb, var(--cat) 20%, var(--ground));
-  background: var(--taken-wash);
-}
-
+/* One rule down the edge of an hour with something on it, in the border's
+   own grey. It answers "is this empty" and stops there. The wash of the
+   category colour and the bar under the numeral that used to be here are
+   gone: an hour is a box of sixty minutes, so a block from 09:05 to 10:05
+   painted nine and ten alike, and the same fact was already drawn properly
+   one component away. How much, and what, is the timeline's answer now -
+   see lib/timeGhost.ts. */
 .time-picker-option.is-taken::after {
   content: '';
   position: absolute;
@@ -3006,14 +3008,6 @@ textarea:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .time-picker-option:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
-
-  /* Mixed into the wash rather than laid over it. The plain hover colour is
-     semi-transparent, so it replaces the wash rather than tinting it, and an
-     hour that looked taken went clean under the pointer - a hover changing
-     what a thing means, which is worse than one moving it. */
-  .time-picker-option.is-taken:not([aria-selected='true']):hover {
-    background: color-mix(in srgb, var(--border) 40%, var(--taken-wash));
-  }
 }
 
 .time-picker-option[aria-selected='true'] {
@@ -3022,11 +3016,10 @@ textarea:focus {
   font-weight: 600;
 }
 
-/* The hour that has been chosen keeps its bar, in the ink of the fill it is
-   drawn on. A category colour on top of --accent is ink on accent, and
-   CONVENTIONS section 5 has one answer for that - hard-coding white there has
-   measured 2.42:1 twice. The words still name the category; the mark only has
-   to say the hour is spoken for. */
+/* The chosen hour keeps its rule, in the ink of the fill it is drawn on: a
+   fixed colour on top of --accent is ink on accent, and CONVENTIONS section 5
+   has one answer for that - hard-coding white there has measured 2.42:1
+   twice. */
 .time-picker-option[aria-selected='true'].is-taken::after { background: var(--on-accent, #fff); }
 
 .time-picker-option:focus-visible {
@@ -13861,6 +13854,49 @@ main:has(.week) > .calendar {
 
 .timeline-anchor-clash {
   box-shadow: inset 0 0 0 2px var(--danger);
+}
+
+/* Where a time being chosen would land - see lib/timeGhost.ts. Dashed and
+   half there, in the category colour it would carry, on the same scale and
+   in the same column as the day's own blocks, so its place, its length and
+   its overlap are the real ones rather than an hour rounded to a colour.
+   Above the blocks, because it is the answer to a question being asked this
+   second; and through to them, because what it lands on is the point. */
+.timeline-ghost {
+  position: absolute;
+  /* left comes from TimelineGrid, off the same gutter the blocks are placed
+     against, so the two can never drift apart. */
+  right: 4px;
+  z-index: 3;
+  border: 2px dashed color-mix(in srgb, var(--cat) 70%, var(--text));
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--cat) 22%, transparent);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* A candidate nobody has sized is a moment, not a block: one dashed rule at
+   the time it would start, and no fill to imply a length. */
+.timeline-ghost-line {
+  height: 0;
+  border-width: 2px 0 0;
+  background: none;
+  border-radius: 0;
+}
+
+/* The same border two overlapping blocks already wear, on the candidate as
+   well as on what it crosses, so the picture says which. */
+.timeline-ghost-clash {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.timeline-ghost-length {
+  display: block;
+  padding: 1px var(--s1);
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
 }
 
 /* One column of a week, at a glance. Narrow enough that seven fit, tall

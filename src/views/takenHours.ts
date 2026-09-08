@@ -179,3 +179,25 @@ export function openingHour(value: string, taken: TakenBlock[], wakingStart: num
   const from = lastEnd < 0 ? wakingStart : Math.max(lastEnd, wakingStart)
   return Math.max(0, Math.min(HOURS_IN_DAY - 1, Math.floor(from / HOUR)))
 }
+
+/**
+ * Which of a day's blocks a candidate time would run into.
+ *
+ * Half-open on both sides, so a block that ends exactly where the next one
+ * starts is not a clash: nine to ten and ten to eleven are a morning, not a
+ * collision. A candidate with no length crosses nothing at all - it is a
+ * moment, and this app has never claimed a length for something nobody has
+ * sized.
+ *
+ * Nothing is refused on the strength of this. It is drawn, in the border the
+ * timeline already uses for two blocks that overlap, so a clash is seen
+ * before the choice rather than after it.
+ */
+export function crossedBy(ghost: Interval, blocks: { id: string; start: number; end: number }[]): string[] {
+  // A moment has no extent, so it runs into nothing - including a block it
+  // sits in the middle of. The half-open test alone would call that an
+  // overlap, which would be this app reasoning about the length of something
+  // nobody has given one.
+  if (ghost.end <= ghost.start) return []
+  return blocks.filter(block => block.start < ghost.end && ghost.start < block.end).map(block => block.id)
+}

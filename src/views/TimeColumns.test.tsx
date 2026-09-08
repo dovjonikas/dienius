@@ -31,16 +31,37 @@ test('an hour covered in part says how much of it is gone rather than all of it'
 })
 
 /**
- * jsdom paints nothing, so the wash itself is a job for the browser walk. What
- * can be held here is the wiring underneath it: the category's own colour, and
- * the share of the hour that is gone, actually reach the option the stylesheet
- * reads them off.
+ * No category colour reaches the column any more, and no share of an hour
+ * either.
+ *
+ * The wash and the bar under the numeral said what the timeline says, less
+ * well: an hour is a box of sixty minutes, so a block from 09:05 to 10:05
+ * painted nine and ten identically and the column looked precise while
+ * rounding in both directions. What is left is one class - the stylesheet
+ * draws a 2px rule in the border's own grey off it - and the words. Held
+ * here because a colour creeping back into these options is exactly the kind
+ * of thing that reads as an improvement while it is being written.
  */
-test('the option carries the category colour and how much of the hour it holds', () => {
+test('an hour with something on it carries a mark and no colour of any kind', () => {
   render(<TimeColumns value="" onPick={() => {}} taken={[{ start: 540, end: 570, color: 'var(--cat-core)' }]} />)
-  const style = hours().getByRole('option', { name: /^09,/ }).getAttribute('style') ?? ''
-  expect(style).toContain('--cat: var(--cat-core)')
-  expect(style).toContain('--taken: 50%')
+  const nine = hours().getByRole('option', { name: /^09,/ })
+  expect(nine.className).toContain('is-taken')
+  expect(nine.getAttribute('style')).toBeNull()
+  // And a free hour carries neither.
+  expect(hours().getByRole('option', { name: '11' }).className).not.toContain('is-taken')
+})
+
+/**
+ * The mark says an hour is not empty; how much of it is gone, and to what, is
+ * the timeline's answer. The words keep the amount because they can say it
+ * exactly - taking it away would leave somebody who is not looking at the
+ * screen with less than the screen holds, which is the wrong direction to
+ * even it up in.
+ */
+test('the words under a partly taken hour say how much, without rounding it to the hour', () => {
+  render(<TimeColumns value="" onPick={() => {}} taken={[{ start: 545, end: 605, label: 'Deep work' }]} />)
+  expect(hours().getByRole('option', { name: '09, 55 min taken by Deep work' })).toBeInTheDocument()
+  expect(hours().getByRole('option', { name: '10, 5 min taken by Deep work' })).toBeInTheDocument()
 })
 
 /**

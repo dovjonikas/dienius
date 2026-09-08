@@ -12,6 +12,8 @@ import {
   formatClock,
   halfHourMarks,
   hourMarks,
+  scrollToShow,
+  widenToHold,
 } from './timelineLayout'
 
 function anchor(id: string, time: string, minutes?: number): Task {
@@ -762,4 +764,48 @@ test('nothing measured yet falls back to the phone density rather than to the fl
   // drawing every segment at its bare floor for no reason.
   expect(fitInto(0)).toBe(FIT_BASE)
   expect(fitInto(-10)).toBe(FIT_BASE)
+})
+
+/**
+ * Bringing a candidate into view, without touching a scroller that already
+ * shows it. jsdom reports every height as zero, so this is the level the
+ * decision can be seen at - the effect around it is three lines of
+ * assignment.
+ */
+const VIEWPORT = 400
+const SCROLL_MARGIN = 24
+
+test('a stretch already in view moves the column not at all', () => {
+  expect(scrollToShow(100, 60, 0, VIEWPORT, SCROLL_MARGIN)).toBeNull()
+})
+
+test('a stretch above the fold scrolls up to it, with its margin above', () => {
+  expect(scrollToShow(100, 60, 300, VIEWPORT, SCROLL_MARGIN)).toBe(76)
+})
+
+test('a stretch below the fold scrolls down until its margin is in view', () => {
+  expect(scrollToShow(900, 60, 0, VIEWPORT, SCROLL_MARGIN)).toBe(584)
+})
+
+test('nothing scrolls past the top of the column', () => {
+  expect(scrollToShow(10, 30, 200, VIEWPORT, SCROLL_MARGIN)).toBe(0)
+})
+
+/** The window grows only when it has to, and says so by handing back the same object. */
+const DRAWN = { start: 420, end: 1320 }
+
+test('a candidate the window already holds leaves it untouched, by identity', () => {
+  expect(widenToHold(DRAWN, 600, 60)).toBe(DRAWN)
+})
+
+test('a candidate before the day grows the window at the front', () => {
+  expect(widenToHold(DRAWN, 240, 30)).toEqual({ start: 240, end: 1320 })
+})
+
+test('a candidate running past the end grows it at the back', () => {
+  expect(widenToHold(DRAWN, 1300, 60)).toEqual({ start: 420, end: 1360 })
+})
+
+test('a candidate with no length takes a moment rather than a stretch', () => {
+  expect(widenToHold(DRAWN, 240, undefined)).toEqual({ start: 240, end: 1320 })
 })

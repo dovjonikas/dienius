@@ -5,6 +5,8 @@ import { categoryColor } from '../../lib/categories'
 import type { DayEvent } from '../../lib/calendars'
 import { GapPicker } from './GapPicker'
 import { offerForGap } from './gapPlacement'
+import { useTimeGhost } from '../../lib/timeGhost'
+import { crossedBy } from '../../views/takenHours'
 import {
   computeTimelineLayout,
   emptyDayLayout,
@@ -17,6 +19,9 @@ import {
   fitPxPerMinute,
   gapLabelPlacement,
   legibleHourLabels,
+  scrollToShow,
+  sleepBandsIn,
+  widenToHold,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
 import { usePointerCoarse } from '../../lib/viewport'
@@ -203,6 +208,18 @@ const MIN_LABELLED_GAP_MINUTES = 30
  */
 const EXTERNAL_MIN_HEIGHT_PX = 18
 
+/** A candidate block never draws thinner than this, so a five-minute one is still a shape. */
+const GHOST_MIN_HEIGHT_PX = 10
+
+/** And carries its length only where there is a line's room for it. */
+const GHOST_LABEL_HEIGHT_PX = 22
+
+/** Room left above and below a candidate when the column has to scroll to it. */
+const GHOST_SCROLL_MARGIN_PX = 24
+
+/** One array, so a grid with no candidate on it hands the same identity every render. */
+const EMPTY_IDS: string[] = []
+
 /**
  * What an empty grid says, printed and announced from the one string. It used
  * to be two: a spoken "Nothing placed yet. Tap to put a task on the clock."
@@ -336,6 +353,13 @@ export interface TimelineGridProps {
    */
   clashIds?: string[]
   /**
+   * Which timeline this is, so a time being chosen right now can be drawn on
+   * it - see `lib/timeGhost.ts`. The day view passes its date, the day
+   * template editor 'template', a week column 'template:<weekday>'. Absent
+   * draws no candidate, which is every other caller.
+   */
+  ghostKey?: string
+  /**
    * Draws the rules without the hour numbers beside them, and gives the
    * gutter back to the blocks.
    *
@@ -443,6 +467,7 @@ export function TimelineGrid({
   sleep,
   events = [],
   clashIds,
+  ghostKey,
   hideHours = false,
 }: TimelineGridProps) {
   // A day with nothing anchored still gets a grid - see emptyDayLayout.
@@ -452,6 +477,33 @@ export function TimelineGrid({
   const layout = derived.displayWindow ? derived : emptyDayLayout(sleepProfileId, sleep)
   const isEmptyDay = derived.displayWindow === null
   const wrapRef = useRef<HTMLDivElement>(null)
+  const ghostRef = useRef<HTMLDivElement>(null)
+  // Where a time being chosen right now would land, drawn to the minute on
+  // the day's own scale. Read here rather than passed down because the picker
+  // that publishes it is three components away in every direction - see
+  // lib/timeGhost.ts. Up here with the other hooks because there is an early
+  // return further down for a day with no window to draw.
+  const ghost = useTimeGhost(ghostKey)
+  // Its place and its height once the vertical map is built, kept for the
+  // scroll effect below, which runs after this render and cannot recompute
+  // them - the same way the drag geometry is kept in layoutRef above.
+  const ghostGeometry = useRef<{ top: number; height: number } | null>(null)
+
+  // A candidate outside the scrolled column is a candidate nobody can see,
+  // and seeing it before choosing is the whole of this. Only when it is
+  // actually out of view, and only far enough to bring it in with a little
+  // room either side: a column that jumped on every hover would be the
+  // picture moving under the hand asking about it. The rest of the time the
+  // scroll position is theirs, the same promise the now line's one-time
+  // scroll makes.
+  useEffect(() => {
+    const wrap = wrapRef.current
+    const geometry = ghostGeometry.current
+    if (!wrap || !ghostRef.current || !geometry) return
+    if (wrap.scrollHeight <= wrap.clientHeight + 1) return
+    const to = scrollToShow(geometry.top, geometry.height, wrap.scrollTop, wrap.clientHeight, GHOST_SCROLL_MARGIN_PX)
+    if (to !== null) wrap.scrollTop = to
+  }, [ghost?.start, ghost?.minutes, ghostKey])
   const layersRef = useRef<HTMLDivElement>(null)
   const layoutRef = useRef<{
     vertical: ReturnType<typeof computeVerticalLayout>
@@ -527,7 +579,18 @@ export function TimelineGrid({
   // drives computeTimelineLayout's own gap arithmetic, but has no further
   // role once the layout comes back - see that function's own doc comment
   // for why the two are meant to differ at the edges here too.
-  const { displayWindow: window, anchors, gaps, unsizedAnchorCount, sleepBands } = layout
+  const { anchors, gaps, unsizedAnchorCount } = layout
+  // The picture has to contain what it is being asked to show. A candidate
+  // outside the drawn window would otherwise be clamped to the window's edge,
+  // which is worse than not drawing it at all: a block pinned to the top of
+  // the day, claiming a place it does not have. So the window grows to hold
+  // it - and shrinks back the moment the pointer moves somewhere the day
+  // already covers, because nothing here is remembered between renders.
+  const window = ghost ? widenToHold(layout.displayWindow, ghost.start, ghost.minutes) : layout.displayWindow
+  // Redrawn only where the window actually grew, so a day with no candidate
+  // on it keeps exactly the bands the layout computed for it.
+  const sleepBands =
+    window === layout.displayWindow ? layout.sleepBands : sleepBandsIn(window, windowFor(sleepProfileId, sleep))
   const marks = hourMarks(window)
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
@@ -621,6 +684,26 @@ export function TimelineGrid({
   // when the grid first overflows, it is scrolled to put now a third of the
   // way down - the way a calendar opens. Once: after that the scroll
   // position is theirs, and a re-render must never pull it back.
+  const ghostTopPx = ghost ? vertical.topPx(ghost.start) : null
+  const ghostHeightPx =
+    ghost && ghost.minutes !== undefined ? Math.max(GHOST_MIN_HEIGHT_PX, vertical.topPx(ghost.start + ghost.minutes) - vertical.topPx(ghost.start)) : null
+  // What it would run into. The same border two overlapping blocks already
+  // wear, on both sides of the clash, so the picture says which block rather
+  // than only that there is one. Nothing is refused: an overlap was always
+  // allowed and is only visible earlier now.
+  const ghostClashIds =
+    ghost && ghost.minutes !== undefined
+      ? crossedBy(
+          { start: ghost.start, end: ghost.start + ghost.minutes },
+          anchors
+            .filter(a => a.sized && a.endMinutes !== undefined)
+            .map(a => ({ id: a.id, start: a.startMinutes, end: a.endMinutes! })),
+        )
+      : EMPTY_IDS
+  // Handed to the scroll effect, which runs after this render and has no way
+  // to build the vertical map itself.
+  ghostGeometry.current = ghostTopPx === null ? null : { top: ghostTopPx, height: ghostHeightPx ?? 0 }
+
   const scrolledToNow = useRef(false)
   useEffect(() => {
     const wrap = wrapRef.current
@@ -797,7 +880,7 @@ export function TimelineGrid({
               if (inline) classNames.push('timeline-anchor-inline')
               // Not enough room for one padded line of title. See the CSS.
               if (blockHeightPx < SQUEEZED_HEIGHT_PX) classNames.push('timeline-anchor-squeezed')
-              if (clashIds?.includes(anchor.id)) classNames.push('timeline-anchor-clash')
+              if (clashIds?.includes(anchor.id) || ghostClashIds.includes(anchor.id)) classNames.push('timeline-anchor-clash')
               if (draggable) classNames.push('timeline-anchor-draggable')
               if (draggingTaskId === anchor.id) classNames.push('timeline-anchor-dragging')
               return (
@@ -842,6 +925,45 @@ export function TimelineGrid({
                 </div>
               )
             })}
+
+            {/* Where a time being chosen would land: the real place, the real
+                length and the real overlap, proportionally, because this is
+                the scale the day itself is drawn at. Dashed and half there,
+                so it never reads as something already on the day; and with
+                no title, because it has none yet - the length is what it can
+                honestly say about itself. A candidate nobody has sized is a
+                line rather than a block: this app has never drawn a length
+                for something nobody has given one. */}
+            {ghost && ghostTopPx !== null && (
+              <div
+                className={[
+                  'timeline-ghost',
+                  ghostHeightPx === null ? 'timeline-ghost-line' : '',
+                  ghostClashIds.length > 0 ? 'timeline-ghost-clash' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                ref={ghostRef}
+                aria-hidden="true"
+                style={
+                  {
+                    top: `${ghostTopPx}px`,
+                    height: ghostHeightPx !== null ? `${ghostHeightPx}px` : undefined,
+                    // The blocks' own left edge, from the same constant they
+                    // are placed with: a candidate half a centimetre to the
+                    // left of the day would be a different column, and this
+                    // is a picture whose whole claim is that the place is the
+                    // real one.
+                    left: `${GUTTER_PX}px`,
+                    ['--cat' as string]: ghost.color ?? 'var(--muted)',
+                  } as React.CSSProperties
+                }
+              >
+                {ghost.minutes !== undefined && ghostHeightPx !== null && ghostHeightPx >= GHOST_LABEL_HEIGHT_PX && (
+                  <span className="timeline-ghost-length">{formatDuration(ghost.minutes)}</span>
+                )}
+              </div>
+            )}
 
             {/* Painted last within this layer so the line reads across an
                 anchor's own colored fill too, matching how every calendar

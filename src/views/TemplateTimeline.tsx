@@ -43,9 +43,16 @@ export interface TemplateTimelineProps {
   weekday?: number
   /** A short summary instead of the full line, for a narrow week column. */
   compact?: boolean
+  /**
+   * The name this timeline answers to when a time is being chosen against it
+   * - see `lib/timeGhost.ts`. 'template' for the day editor, and one per
+   * weekday in the week editor, so a time picked for Wednesday is drawn on
+   * Wednesday and on no other column.
+   */
+  ghostKey?: string
 }
 
-export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact }: TemplateTimelineProps) {
+export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact, ghostKey }: TemplateTimelineProps) {
   const data = useAppData()
   const mine = weekday === undefined ? blocks : blocks.filter(b => b.weekday === weekday)
   const tasks = blocksAsTasks(blocks, weekday)
@@ -73,6 +80,7 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
         sleepProfileId={sleepProfileId}
         sleep={{ profiles: data.settings.sleepProfiles }}
         clashIds={clashes.flatMap(c => c.ids)}
+        ghostKey={ghostKey}
         hideHours={compact}
         isToday={false}
         isWide={!compact}

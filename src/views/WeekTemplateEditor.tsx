@@ -320,6 +320,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         weekday={activeDay}
         sleepProfileId={draft.weekDays[activeDay]?.sleepProfileId ?? draft.sleepProfileId}
         color={draft.color}
+        ghostKey={ghostKeyFor(activeDay)}
       />
 
       <div className="wt-columns">
@@ -358,6 +359,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 sleepProfileId={override?.sleepProfileId ?? draft.sleepProfileId}
                 color={draft.color}
                 compact
+                ghostKey={ghostKeyFor(day)}
               />
 
               <ul className="wt-blocks">
@@ -502,6 +504,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             ariaLabel="Block time"
             taken={taken}
             wakingStart={waking.start}
+            /* Drawn on the column being worked on, and on that one only: a
+               block added while Wednesday is open is a Wednesday block, and
+               the week's other six say nothing about it. */
+            ghost={{ key: ghostKeyFor(activeDay), minutes: parseMinutesInput(blockMinutes), color: categoryColor(blockCategory, data.categories) }}
           />
           <input
             placeholder="What happens"

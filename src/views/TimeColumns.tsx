@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { clearTimeGhost, showTimeGhost } from '../lib/timeGhost'
+import { timeToMinutes } from '../widgets/day-plan/capacity'
 import { hourCover, openingHour, pad, type HourCover, type TakenBlock } from './takenHours'
 
 /** Every hour of the day, and every five minutes within one. */
@@ -7,9 +9,6 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
 
 /** What an hour picked on its own means, and what a minute picked first hangs off. */
 const DEFAULT_HOUR = 9
-
-/** Minutes in the hour one option stands for - what the bar's width is a share of. */
-const HOUR = 60
 
 /**
  * One array, so a caller that has no day behind it does not hand the memo
@@ -39,6 +38,16 @@ export interface TimeColumnsProps {
    * field with no day behind it has always opened.
    */
   wakingStart?: number
+  /**
+   * Where a candidate time is drawn while it is being chosen, and what it
+   * would look like there - see `lib/timeGhost.ts`.
+   *
+   * `key` names the timeline that draws it: the day view passes its date, the
+   * template editors their own. Absent draws nothing anywhere, which is right
+   * for the two fields with no timeline behind them - Settings' sleep window
+   * and the library's own time.
+   */
+  ghost?: { key: string; minutes?: number; color?: string }
 }
 
 /**
@@ -63,7 +72,7 @@ export interface TimeColumnsProps {
  * chosen and the clash discovered afterwards. The arithmetic for both is in
  * `takenHours.ts` - this only draws it.
  */
-export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingStart = 0 }: TimeColumnsProps) {
+export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingStart = 0, ghost }: TimeColumnsProps) {
   const hoursRef = useRef<HTMLDivElement>(null)
   const minutesRef = useRef<HTMLDivElement>(null)
   const [hour, minute] = value ? value.split(':').map(Number) : [null, null]
@@ -103,8 +112,45 @@ export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingSt
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // The candidate, drawn on the timeline this picker belongs to for as long
+  // as the panel is open. The value the field holds is shown the moment it
+  // opens, because that is a real answer already; an empty field shows
+  // nothing until a pointer or the keyboard reaches an option, because the
+  // hour the column happens to open on is not a choice anybody has made.
+  const ghostKey = ghost?.key
+  const ghostMinutes = ghost?.minutes
+  const ghostColor = ghost?.color
+  const publish = useCallback(
+    (time: string | null) => {
+      if (ghostKey === undefined) return
+      if (time === null) return clearTimeGhost(ghostKey)
+      const start = timeToMinutes(time)
+      const next = { key: ghostKey, start } as { key: string; start: number; minutes?: number; color?: string }
+      if (ghostMinutes !== undefined) next.minutes = ghostMinutes
+      if (ghostColor !== undefined) next.color = ghostColor
+      showTimeGhost(next)
+    },
+    [ghostKey, ghostMinutes, ghostColor],
+  )
+
+  useEffect(() => {
+    publish(value === '' ? null : value)
+    // Cleared on close rather than on every value change: the picker is the
+    // only thing that put one up, so it is the only thing that takes it down.
+    return () => {
+      if (ghostKey !== undefined) clearTimeGhost(ghostKey)
+    }
+  }, [publish, value, ghostKey])
+
   return (
-    <div className="time-picker-panel" id={id}>
+    <div
+      className="time-picker-panel"
+      id={id}
+      // Back to what the field holds when the pointer leaves the options: a
+      // ghost left standing on the last hour the pointer crossed would be a
+      // claim about a time nobody is choosing any more.
+      onPointerLeave={() => publish(value === '' ? null : value)}
+    >
       <div className="time-picker-column" role="listbox" aria-label="Hour" ref={hoursRef}>
         {HOURS.map(h => (
           <button
@@ -117,7 +163,8 @@ export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingSt
                is only visible now. */
             aria-label={cover[h].saying}
             className={optionClass(hour === h, cover[h])}
-            style={washOf(cover[h])}
+            onPointerEnter={() => publish(`${pad(h)}:${pad(minute ?? 0)}`)}
+            onFocus={() => publish(`${pad(h)}:${pad(minute ?? 0)}`)}
             onClick={() => onPick(`${pad(h)}:${pad(minute ?? 0)}`)}
           >
             {pad(h)}
@@ -132,6 +179,8 @@ export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingSt
             role="option"
             aria-selected={minute === m}
             className={minute === m ? 'time-picker-option selected' : 'time-picker-option'}
+            onPointerEnter={() => publish(`${pad(hour ?? DEFAULT_HOUR)}:${pad(m)}`)}
+            onFocus={() => publish(`${pad(hour ?? DEFAULT_HOUR)}:${pad(m)}`)}
             onClick={() => onPick(`${pad(hour ?? DEFAULT_HOUR)}:${pad(m)}`)}
           >
             {pad(m)}
@@ -167,19 +216,11 @@ function optionClass(selected: boolean, cover: HourCover): string {
   return classes.join(' ')
 }
 
-/**
- * The colour of whatever holds the hour, and how much of it is held - the
- * stylesheet turns the pair into a wash over the option and a bar under the
- * numeral. A free hour carries neither and stays clean.
- *
- * `--muted` for a stretch with no category of its own, which is a real case:
- * a meeting out of somebody else's calendar has an hour and no colour, and so
- * does a task written before categories existed.
- */
-function washOf(cover: HourCover): React.CSSProperties | undefined {
-  if (cover.minutes <= 0) return undefined
-  return {
-    ['--cat' as string]: cover.color ?? 'var(--muted)',
-    ['--taken' as string]: `${Math.round((cover.minutes / HOUR) * 100)}%`,
-  } as React.CSSProperties
-}
+/* The wash and the bar that used to be here are gone - see lib/timeGhost.ts
+   for why. An hour is a box of sixty minutes and a block from 09:05 to 10:05
+   painted nine and ten identically, so a column that looked precise was
+   rounding in both directions; and the same fact was drawn twice, once
+   properly in the timeline and once approximately here. What is left is one
+   2px rule down the edge of an hour that has something on it, in the border's
+   own grey, which answers "is this empty" and nothing else. How much, and
+   what, is the timeline's answer, at the minute, on the day's own scale. */

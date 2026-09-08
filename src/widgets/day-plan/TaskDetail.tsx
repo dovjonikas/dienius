@@ -2,7 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
-import { resolvedColor } from '../../lib/categories'
+import { categoryColor, resolvedColor } from '../../lib/categories'
+import { parseLink } from '../../lib/link'
 import { progressLabel, progressPercent } from '../../lib/library'
 import { scratchTitle } from '../../lib/scratch'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
@@ -252,6 +253,11 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                 onChange={next => actions.setTaskTime(date, task.id, next || undefined)}
                 taken={taken}
                 wakingStart={waking.start}
+                /* Where this task would move to, on the day's own timeline
+                   behind the sheet. The block it is now stays where it is
+                   until the move is made, so the two are on screen together:
+                   here and there, at the same scale. */
+                ghost={{ key: date, minutes: task.minutes, color: categoryColor(task.category, data.categories) }}
               />
               <button type="button" className="task-detail-nudge" disabled={!task.time} onClick={() => nudge(-5)}>
                 &minus;5

@@ -372,6 +372,10 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
               draggingTaskId={drag.draggingTaskId}
               dropMinutes={drag.dropMinutes}
               activeTaskId={runningTask?.id}
+              /* This day answers for a time being chosen anywhere on it -
+                 quick-add's clock and the task sheet both publish against
+                 the date. See lib/timeGhost.ts. */
+              ghostKey={date}
               isToday={isToday}
               isWide={isWide}
               sleepProfileId={daySleepProfileId}
