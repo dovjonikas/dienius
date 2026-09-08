@@ -1,6 +1,7 @@
 import { currentItem } from './library'
 import { originFor } from './taskIdentity'
 import { weekdayOf } from './repeats'
+import { MAX_HIGHLIGHTS } from './types'
 import type { DayPlan, LibraryList, Subtask, Task, Template, TemplateBlock } from './types'
 
 /**
@@ -89,6 +90,32 @@ function stepsFrom(block: TemplateBlock): Subtask[] | undefined {
 function ownNote(match: Task | undefined): string | undefined {
   if (!match || match.note === undefined) return undefined
   return match.note === match.templateNote ? undefined : match.note
+}
+
+/**
+ * The day's key tasks, held to `MAX_HIGHLIGHTS`.
+ *
+ * Both editors already refuse a fourth key block on a day, so a template
+ * built here cannot produce one. This is for everything that did not come
+ * from an editor: a template from a backup, a hand-edited file, a group of
+ * blocks copied onto a column that already had three, a future migration.
+ *
+ * The earliest three by the clock keep their mark and the rest arrive
+ * unmarked. **Nothing is dropped** - a block that loses its KEY is still a
+ * task on the day, because the cap is about how many things can be
+ * important and not about how many things there are. Untimed blocks sort
+ * last, since a task with no time is not competing for the morning.
+ *
+ * `budget` is what the day has left after the tasks this stamp is not
+ * touching: a person's own key task on a manual entry is theirs, and a
+ * template arriving is not a reason to take it away.
+ */
+function capHighlights(tasks: Task[], budget: number): Task[] {
+  const marked = tasks.filter(t => t.highlight)
+  if (marked.length <= budget) return tasks
+  const byTime = [...marked].sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'))
+  const keep = new Set(byTime.slice(0, Math.max(0, budget)).map(t => t.id))
+  return tasks.map(t => (t.highlight && !keep.has(t.id) ? { ...t, highlight: false } : t))
 }
 
 /**
@@ -187,7 +214,11 @@ export function applyStamps(
         // nothing to say about it. A day with no list of its own takes the
         // block's.
         subtasks: match?.subtasks ?? stepsFrom(b),
-        highlight: match?.highlight,
+        // The same reading as the note, and the day wins in both directions:
+        // `toggleTaskHighlight` writes `false` rather than removing the
+        // field, so KEY taken off this morning's task is not handed back by
+        // the next stamp. Capped below, across the day.
+        highlight: match?.highlight ?? b.highlight,
         pushCount: match?.pushCount,
       }
     })
@@ -196,6 +227,9 @@ export function applyStamps(
     // every task the template does not account for - including repeat
     // instances, which are not this template's to replace.
     const kept = manual.filter(t => !templateTasks.some(s => s.id === t.id))
+    // What the day has left for key tasks after the ones this stamp is not
+    // touching - see capHighlights.
+    const capped = capHighlights(templateTasks, MAX_HIGHLIGHTS - kept.filter(t => t.highlight).length)
     next[date] = {
       ...existing,
       date,
@@ -209,7 +243,7 @@ export function applyStamps(
       // here would pin a stamped day's sleep against a later template edit,
       // which is a change to how day templates have always behaved and is not
       // this feature's to make.
-      tasks: [...templateTasks, ...kept],
+      tasks: [...capped, ...kept],
     }
   }
   return next

@@ -267,6 +267,10 @@ const TEMPLATE_BLOCK = record({
   libraryListId: optional(string),
   note: optional(string),
   steps: optional(listOf(TEMPLATE_STEP)),
+  // Deliberately not derived from `core` on import: core counts on a
+  // non-full day type, KEY is the day's three that matter, and merging
+  // them would be a guess about somebody's data.
+  highlight: optional(boolean),
   // 0 = Sunday through 6 = Saturday, the numbering Date.getDay() uses and
   // the one WeekdayMap already keys by. Bounded rather than any number,
   // because a block on weekday 9 is a block that stamps onto nothing and

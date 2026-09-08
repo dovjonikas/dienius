@@ -32,6 +32,7 @@ export const templateActions = {
       groupId?: string
       note?: string
       steps?: TemplateStep[]
+      highlight?: boolean
     }[]
   }): Template {
     const data = getData()
@@ -56,6 +57,7 @@ export const templateActions = {
         groupId: b.groupId,
         note: b.note,
         steps: b.steps,
+        highlight: b.highlight,
       })),
     }
     commit({ ...data, templates: [...data.templates, template] })

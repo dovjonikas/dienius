@@ -51,6 +51,10 @@ export function blocksAsTasks(blocks: DrawableBlock[], weekday?: number): Task[]
       if (b.minutes !== undefined) task.minutes = b.minutes
       if (b.category !== undefined) task.category = b.category
       if (b.core) task.core = true
+      // So the picture marks a key block the way the day marks a key task:
+      // the same mark, drawn by the same code, rather than a second one that
+      // would then have to be kept looking like the first.
+      if (b.highlight) task.highlight = true
       return task
     })
 }
@@ -111,7 +115,15 @@ export interface TemplateSummary {
   /** What is left of the waking day. */
   freeMinutes: number
   sleepMinutes: number
-  /** How many blocks are marked as the ones that count. */
+  /**
+   * How many of the day's three that matter this template already names.
+   *
+   * It counted `core` until v2.12, and said "key" while doing it - which was
+   * the word for a different thing the whole time. Core is what scores on a
+   * day type that does not score everything; KEY is the three that matter,
+   * which every kind of day has. There was no `TemplateBlock.highlight` to
+   * count back then. There is now, so the word and the number agree.
+   */
   keyCount: number
 }
 
@@ -135,6 +147,6 @@ export function templateSummary(blocks: DrawableBlock[], window: Interval): Temp
     timedMinutes,
     freeMinutes: waking - timedMinutes,
     sleepMinutes: 24 * 60 - waking,
-    keyCount: blocks.filter(b => b.core).length,
+    keyCount: blocks.filter(b => b.highlight).length,
   }
 }

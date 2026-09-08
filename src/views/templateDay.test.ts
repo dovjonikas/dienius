@@ -94,13 +94,16 @@ test('two separate clashes are two lines, not one', () => {
 test('the summary is the day in four numbers', () => {
   const summary = templateSummary(
     [
-      block({ time: '09:00', minutes: 120, core: true }),
+      block({ time: '09:00', minutes: 120, highlight: true }),
       block({ time: '12:30', minutes: 45 }),
+      // Core and not key: the two are different questions, and the number
+      // beside the word "key" answers the second one. Until v2.12 this
+      // counted core and said key, because there was no key to count.
       block({ time: '18:00', minutes: 60, core: true }),
     ],
     WINDOW,
   )
-  expect(summary).toEqual({ timedMinutes: 225, freeMinutes: 735, sleepMinutes: 480, keyCount: 2 })
+  expect(summary).toEqual({ timedMinutes: 225, freeMinutes: 735, sleepMinutes: 480, keyCount: 1 })
 })
 
 test('an untimed block is counted in neither the timed nor the free', () => {

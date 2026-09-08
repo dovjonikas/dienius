@@ -1509,3 +1509,27 @@ test('a template block with a malformed step is refused whole, not partly truste
   // the same treatment every other bad value gets here.
   expect(() => importJson(JSON.stringify(bad))).toThrow(/Invalid/)
 })
+
+test('a template block carries KEY through a backup, and core is never read as KEY', () => {
+  const data = defaultData()
+  data.templates = [
+    {
+      id: 't-key',
+      name: 'Workday',
+      color: '#8ab6f9',
+      type: 'shift',
+      blocks: [
+        { id: 'a', time: '07:00', title: 'Morning', highlight: true },
+        // core without highlight, which is what every template saved before
+        // KEY existed looks like. Nothing converts it: core counts on a
+        // non-full day type and KEY is the day's three that matter, and
+        // merging them would be a guess about somebody's data.
+        { id: 'b', time: '08:00', title: 'The shift', core: true },
+      ],
+    },
+  ]
+  const back = importJson(exportJson(data))
+  expect(back.templates[0].blocks[0].highlight).toBe(true)
+  expect(back.templates[0].blocks[1].core).toBe(true)
+  expect(back.templates[0].blocks[1].highlight).toBeUndefined()
+})

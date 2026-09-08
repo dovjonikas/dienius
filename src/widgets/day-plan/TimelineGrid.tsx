@@ -875,6 +875,11 @@ export function TimelineGrid({
               // with its afternoon quietly deleted out of it is not the same
               // picture.
               if (sourceTask?.done) classNames.push('timeline-anchor-done')
+              // One of the day's three that matter, marked here as well as on
+              // the card - the picture is where somebody looks first, and a
+              // key task the picture does not mark is a key task nobody sees
+              // until they read the list.
+              if (sourceTask?.highlight) classNames.push('timeline-anchor-key')
               if (activeTaskId === anchor.id) classNames.push('timeline-anchor-now')
               if (compact) classNames.push('timeline-anchor-compact')
               if (inline) classNames.push('timeline-anchor-inline')

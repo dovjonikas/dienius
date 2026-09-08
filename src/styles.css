@@ -8031,6 +8031,41 @@ button.task-note-mark.is-open {
 
 .task-key .task-title { font-weight: 650; }
 
+/* The same mark on the picture and on the block list in the editor, drawn
+   from the same token as .task-key above: three per day is a thing you see
+   before reading anything, and it has to look the same wherever the day is
+   drawn. */
+/* The same warm ink .task-key uses, as a left edge rather than a ring: the
+   anchor already carries a category stripe on that edge, and a ring around
+   the whole block competed with the overlap warning that also draws one.
+   Wide enough to read at the 15px a squeezed block gets. */
+.timeline-anchor-key { border-left: 3px solid color-mix(in srgb, var(--mark) 70%, transparent); }
+
+.timeline-anchor-key .timeline-anchor-title { font-weight: 650; }
+
+.block-list li.is-key .block-title { font-weight: 650; }
+
+.wt-block-key {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0 var(--s1);
+  border: 1px solid transparent;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-2xs);
+}
+
+.wt-block-key.is-on {
+  border-color: color-mix(in srgb, var(--mark) 45%, var(--border));
+  background: color-mix(in srgb, var(--mark) 12%, transparent);
+  color: var(--text);
+}
+
+/* Why a KEY press did nothing. Said in the ink a refusal deserves, which is
+   the ordinary muted one - it is a limit somebody chose, not an error. */
+.template-key-note { margin: var(--s2) 0 0; color: var(--muted); font-size: var(--t-sm); }
+
 /* Part of the score's own phrase - "6/11 · 1 of 3 key" - in the same ink
    and size, so the two read as one fact about the day rather than as two
    numbers in two boxes. */

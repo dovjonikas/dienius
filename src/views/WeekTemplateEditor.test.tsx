@@ -476,3 +476,78 @@ test('one press goes back to a single day, from whatever a preset left on', asyn
   await user.click(where.getByRole('button', { name: 'Only Wed' }))
   expect(switchedOn()).toEqual(['Wednesday'])
 })
+
+// KEY on a week template, where the cap is a fact about a column and not
+// about the template: three per day, seven days, twenty-one in all.
+
+test('the key limit is counted per day, not per template', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+
+  // Three key blocks on every day at once - twenty-one marked blocks, and
+  // not one day over its three.
+  await user.click(where.getByRole('button', { name: 'All days' }))
+  for (const title of ['Morning', 'Deep work', 'Training']) {
+    await addBlock(user, title)
+    await user.click(
+      within(column('Monday')).getByRole('button', { name: `Mark ${title} on Monday as a key task` }),
+    )
+  }
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const blocks = getData().templates[0].blocks
+  expect(blocks.filter(b => b.highlight)).toHaveLength(21)
+  for (const day of [0, 1, 2, 3, 4, 5, 6]) {
+    expect(blocks.filter(b => b.weekday === day && b.highlight), `day ${day}`).toHaveLength(3)
+  }
+}, 30000)
+
+test('a fourth key block on one column is refused, and the day is named', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+
+  for (const title of ['Morning', 'Deep work', 'Training', 'Reading']) {
+    await addBlock(user, title)
+    await user.click(
+      within(column('Wednesday')).getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }),
+    )
+  }
+
+  expect(
+    screen.getByText('Wednesday: 3 already matter here: Morning, Deep work, Training. Take one off first.'),
+  ).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks.filter(b => b.highlight)).toHaveLength(3)
+}, 30000)
+
+test('a block on five days is refused if any one of those days is full', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  const where = within(screen.getByRole('group', { name: 'Add to' }))
+
+  // Wednesday alone gets three key blocks.
+  await user.click(where.getByRole('button', { name: 'Only Wed' }))
+  for (const title of ['One', 'Two', 'Three']) {
+    await addBlock(user, title)
+    await user.click(within(column('Wednesday')).getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }))
+  }
+
+  // Then a block across all the weekdays. Monday to Friday could each take
+  // one, except Wednesday - and a template that marked four things on
+  // Wednesday and three everywhere else would be doing something different
+  // on Wednesday without saying so.
+  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  await addBlock(user, 'Everywhere')
+  await user.click(within(column('Monday')).getByRole('button', { name: 'Mark Everywhere on Monday as a key task' }))
+
+  expect(screen.getByText(/^Wednesday: 3 already matter here/)).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks.filter(b => b.title === 'Everywhere' && b.highlight)).toHaveLength(0)
+}, 30000)

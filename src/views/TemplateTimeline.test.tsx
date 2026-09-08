@@ -28,12 +28,12 @@ function block(over: Partial<TemplateBlock> = {}): TemplateBlock {
 }
 
 test('the line under it is the day in four numbers, live', () => {
-  render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 120, core: true })]} />)
+  render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 120, highlight: true })]} />)
   expect(screen.getByText(/^Timed 2h - Free 14h - Sleep 8h - 1 key$/)).toBeInTheDocument()
 })
 
 test('a narrow column says the same thing in two', () => {
-  render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 120, core: true })]} compact />)
+  render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 120, highlight: true })]} compact />)
   expect(screen.getByText('2h / 1 key')).toBeInTheDocument()
 })
 

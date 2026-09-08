@@ -117,6 +117,26 @@ export interface TemplateBlock {
    * them would hand yesterday's progress to tomorrow.
    */
   steps?: TemplateStep[]
+  /**
+   * Marks this block as one of the day's key tasks - see `Task.highlight`.
+   *
+   * The same gap `note` and `steps` had, and the same fix. `applyStamps` read
+   * `highlight` off the matching prior task, which on a fresh day is nothing,
+   * so a stamped day arrived with no key tasks at all and the same three
+   * blocks had to be marked by hand every morning. That is precisely the
+   * decision the app exists to have already made.
+   *
+   * Stamped as `match?.highlight ?? b.highlight`: the day's own answer wins
+   * in both directions, so taking KEY off today's task is not undone by a
+   * re-stamp - `toggleTaskHighlight` writes `false` rather than removing the
+   * field, which is what makes that work.
+   *
+   * `MAX_HIGHLIGHTS` applies here too. Both editors refuse a fourth key
+   * block on a day and say which three are already there; stamping caps
+   * whatever reaches it, keeping the earliest by time and letting the rest
+   * arrive unmarked rather than dropping them.
+   */
+  highlight?: boolean
 }
 
 export interface TemplateStep {

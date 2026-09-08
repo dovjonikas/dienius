@@ -14,6 +14,7 @@ import { blocksAsTasks } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { TimePicker } from './TimePicker'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
+import { canMarkKey } from './blockHighlights'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
@@ -173,6 +174,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   // under all seven columns rather than inside one of them: a column is a
   // seventh of the width and a recipe is not.
   const [noteBlockId, setNoteBlockId] = useState<string | null>(null)
+  // Why a KEY press did nothing. One line, cleared by the next press.
+  const [keyNote, setKeyNote] = useState<string | null>(null)
 
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
@@ -281,6 +284,32 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         ? (b: TemplateBlock) => b.groupId === block.groupId
         : (b: TemplateBlock) => b.id === block.id
     onChange({ ...draft, blocks: draft.blocks.map(b => (hits(b) ? { ...b, ...change } : b)) })
+  }
+
+  /**
+   * KEY on a block, checked against every day it would be marked on.
+   *
+   * A block on five days is five days' worth of the question, and any one
+   * of them being full is a no - a template that marked four things on
+   * Wednesday and three everywhere else would be a template that quietly
+   * did something different on Wednesday. The first day that refuses is the
+   * one named, because that is the one to go and look at.
+   */
+  function toggleBlockKey(block: TemplateBlock) {
+    const affected =
+      editScope === 'group' && block.groupId
+        ? draft.blocks.filter(b => b.groupId === block.groupId)
+        : [block]
+    for (const one of affected) {
+      const verdict = canMarkKey(blocksOn(one.weekday ?? -1), one)
+      if (!verdict.allowed) {
+        const label = WEEK.find(w => w.day === one.weekday)?.label ?? 'that day'
+        setKeyNote(`${label}: ${verdict.message}`)
+        return
+      }
+    }
+    setKeyNote(null)
+    editBlock(block, { highlight: !block.highlight })
   }
 
   function removeBlock(block: TemplateBlock) {
@@ -453,6 +482,19 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                         </span>
                       )}
                     </button>
+                    <button
+                      type="button"
+                      className={block.highlight ? 'wt-block-key is-on' : 'wt-block-key'}
+                      aria-pressed={!!block.highlight}
+                      aria-label={
+                        block.highlight
+                          ? `${block.title} on ${label} is a key task`
+                          : `Mark ${block.title} on ${label} as a key task`
+                      }
+                      onClick={() => toggleBlockKey(block)}
+                    >
+                      Key
+                    </button>
                     <BlockNoteButton
                       note={block.note}
                       steps={block.steps}
@@ -562,6 +604,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           recipe typed into a 110px box is a recipe nobody will type. The
           heading names the block and its day, because down here the panel
           has left the column that would have said so. */}
+      {keyNote && (
+        <p className="template-key-note" role="status">
+          {keyNote}
+        </p>
+      )}
+
       {noteBlock && (
         <div className="wt-note">
           <span className="wt-note-head">

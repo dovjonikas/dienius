@@ -331,3 +331,110 @@ test('steps ticked on a day survive a re-stamp, and an emptied list stays empty'
   const third = applyStamps(cleared, [withNote], { '2026-09-01': 't-note' })
   expect(third['2026-09-01'].tasks.find(t => t.title === 'Meal')?.subtasks).toEqual([])
 })
+
+// KEY on a template block: the same shape as the note, and the cap that
+// makes three mean three.
+
+const withKey: Template = {
+  id: 't-key',
+  name: 'Workday',
+  color: '#8ab6f9',
+  blocks: [
+    { id: 'kb1', time: '07:00', title: 'Morning routine', highlight: true },
+    { id: 'kb2', time: '09:00', title: 'Deep work', highlight: true },
+    { id: 'kb3', time: '13:00', title: 'Lunch' },
+  ],
+}
+
+test("a template's key tasks reach a fresh day", () => {
+  const days = applyStamps({}, [withKey], { '2026-09-01': 't-key' })
+  const marked = days['2026-09-01'].tasks.filter(t => t.highlight).map(t => t.title)
+  expect(marked).toEqual(['Morning routine', 'Deep work'])
+})
+
+test('KEY taken off on the day is not handed back by a re-stamp', () => {
+  const stamped = applyStamps({}, [withKey], { '2026-09-01': 't-key' })
+  // This is what toggleTaskHighlight writes: false, not absent. The whole
+  // rule rests on it.
+  const cleared: Record<string, DayPlan> = {
+    ...stamped,
+    '2026-09-01': {
+      ...stamped['2026-09-01'],
+      tasks: stamped['2026-09-01'].tasks.map(t => (t.title === 'Deep work' ? { ...t, highlight: false } : t)),
+    },
+  }
+  const again = applyStamps(cleared, [withKey], { '2026-09-01': 't-key' })
+  expect(again['2026-09-01'].tasks.find(t => t.title === 'Deep work')?.highlight).toBe(false)
+  expect(again['2026-09-01'].tasks.find(t => t.title === 'Morning routine')?.highlight).toBe(true)
+})
+
+test('KEY added on the day survives a re-stamp of a block that does not carry it', () => {
+  const stamped = applyStamps({}, [withKey], { '2026-09-01': 't-key' })
+  const marked: Record<string, DayPlan> = {
+    ...stamped,
+    '2026-09-01': {
+      ...stamped['2026-09-01'],
+      tasks: stamped['2026-09-01'].tasks.map(t => (t.title === 'Lunch' ? { ...t, highlight: true } : t)),
+    },
+  }
+  const again = applyStamps(marked, [withKey], { '2026-09-01': 't-key' })
+  expect(again['2026-09-01'].tasks.find(t => t.title === 'Lunch')?.highlight).toBe(true)
+})
+
+test('a template carrying four key blocks stamps three, keeps them all, and takes the earliest', () => {
+  const tooMany: Template = {
+    id: 't-four',
+    name: 'Too much matters',
+    color: '#8ab6f9',
+    blocks: [
+      { id: 'a', time: '13:00', title: 'Afternoon', highlight: true },
+      { id: 'b', time: '07:00', title: 'Morning', highlight: true },
+      { id: 'c', title: 'Whenever', highlight: true },
+      { id: 'd', time: '09:00', title: 'Mid-morning', highlight: true },
+    ],
+  }
+  const day = applyStamps({}, [tooMany], { '2026-09-01': 't-four' })['2026-09-01']
+  // Nothing dropped: the cap is about how many things can matter, not how
+  // many things there are.
+  expect(day.tasks).toHaveLength(4)
+  expect(day.tasks.filter(t => t.highlight).map(t => t.title).sort()).toEqual([
+    'Afternoon',
+    'Mid-morning',
+    'Morning',
+  ])
+  // The untimed one is last in the queue, not first.
+  expect(day.tasks.find(t => t.title === 'Whenever')?.highlight).toBe(false)
+})
+
+test("a key task the person put on a manual entry is not taken away by a stamp", () => {
+  const withManual: Record<string, DayPlan> = {
+    '2026-09-01': {
+      date: '2026-09-01',
+      tasks: [
+        { id: 'm1', title: 'Call the bank', done: false, time: '11:00', highlight: true },
+        { id: 'm2', title: 'Post the form', done: false, time: '12:00', highlight: true },
+      ],
+    },
+  }
+  const day = applyStamps(withManual, [withKey], { '2026-09-01': 't-key' })['2026-09-01']
+  // Both of the person's own stay, and the template gets the one place left.
+  expect(day.tasks.filter(t => t.highlight).map(t => t.title).sort()).toEqual([
+    'Call the bank',
+    'Morning routine',
+    'Post the form',
+  ])
+  expect(day.tasks).toHaveLength(5)
+})
+
+test('core is not read as KEY, in either direction', () => {
+  const coreOnly: Template = {
+    id: 't-core',
+    name: 'Shift',
+    color: '#8ab6f9',
+    type: 'shift',
+    blocks: [{ id: 'c1', time: '08:00', title: 'The shift', core: true }],
+  }
+  const day = applyStamps({}, [coreOnly], { '2026-09-01': 't-core' })['2026-09-01']
+  expect(day.tasks[0].core).toBe(true)
+  expect(day.tasks[0].highlight).toBeFalsy()
+})

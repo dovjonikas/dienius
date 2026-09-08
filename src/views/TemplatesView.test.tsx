@@ -772,3 +772,75 @@ test('a block that carries a note says so before it is opened, and reopening the
   await user.click(mark)
   expect(screen.getByLabelText('Note on Meal')).toHaveValue('Rice and chicken')
 })
+
+// KEY on a template block: set once here rather than on the day every
+// morning, and capped at three the way the day itself is.
+
+async function blockNamed(user: ReturnType<typeof userEvent.setup>, title: string, time: string) {
+  await user.clear(screen.getByPlaceholderText('09:00'))
+  await user.type(screen.getByPlaceholderText('09:00'), time)
+  await user.type(screen.getByPlaceholderText('What happens'), title)
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+}
+
+test('a key block is saved as one, and arrives on the day already marked', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Workday')
+  await blockNamed(user, 'Deep work', '09:00')
+  await user.click(screen.getByRole('button', { name: 'Mark Deep work as a key task' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const template = getData().templates[0]
+  expect(template.blocks[0].highlight).toBe(true)
+
+  actions.stamp({ '2026-09-01': template.id })
+  expect(getData().days['2026-09-01'].tasks[0].highlight).toBe(true)
+}, 15000)
+
+test('a fourth key block is refused, and the three already there are named', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Too much')
+  for (const [title, time] of [
+    ['Morning', '07:00'],
+    ['Deep work', '09:00'],
+    ['Training', '18:00'],
+    ['Reading', '21:00'],
+  ] as const) {
+    await blockNamed(user, title, time)
+    await user.click(screen.getByRole('button', { name: `Mark ${title} as a key task` }))
+  }
+
+  // The fourth press did nothing, and said why rather than being ignored.
+  expect(screen.getByText('3 already matter here: Morning, Deep work, Training. Take one off first.')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const marked = getData().templates[0].blocks.filter(b => b.highlight).map(b => b.title)
+  expect(marked).toEqual(['Morning', 'Deep work', 'Training'])
+}, 20000)
+
+test('taking one off makes room for another', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Workday')
+  for (const [title, time] of [
+    ['Morning', '07:00'],
+    ['Deep work', '09:00'],
+    ['Training', '18:00'],
+    ['Reading', '21:00'],
+  ] as const) {
+    await blockNamed(user, title, time)
+  }
+  for (const title of ['Morning', 'Deep work', 'Training']) {
+    await user.click(screen.getByRole('button', { name: `Mark ${title} as a key task` }))
+  }
+  await user.click(screen.getByRole('button', { name: 'Training is a key task' }))
+  await user.click(screen.getByRole('button', { name: 'Mark Reading as a key task' }))
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const marked = getData().templates[0].blocks.filter(b => b.highlight).map(b => b.title)
+  expect(marked).toEqual(['Morning', 'Deep work', 'Reading'])
+}, 20000)

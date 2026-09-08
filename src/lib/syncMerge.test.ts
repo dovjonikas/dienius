@@ -454,3 +454,22 @@ test("a day's own note beats the one its template brought, on either device", ()
   expect(meal?.note).toBe('Out of rice - pasta instead')
   expect(meal?.templateNote).toBe('Rice and chicken')
 })
+
+test("a block's KEY travels between devices", () => {
+  const shared = device(
+    d => ({
+      ...d,
+      templates: [{ id: 't', name: 'Workday', color: '#a7c4f5', blocks: [{ id: 'b', title: 'Deep work' }] }],
+    }),
+    MORNING,
+  )
+  const pc = device(
+    d => ({
+      ...d,
+      templates: [{ ...d.templates[0], blocks: [{ id: 'b', title: 'Deep work', highlight: true }] }],
+    }),
+    EVENING,
+    shared,
+  )
+  expect(mergeStates(shared, pc, NOW).data.templates[0].blocks[0].highlight).toBe(true)
+})

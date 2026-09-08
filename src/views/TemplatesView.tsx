@@ -11,6 +11,7 @@ import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
+import { canMarkKey } from './blockHighlights'
 import { blocksAsTasks, type DrawableBlock } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
@@ -105,6 +106,8 @@ interface DraftBlock {
   note?: string
   /** The steps it lands carrying - see TemplateBlock.steps. */
   steps?: TemplateStep[]
+  /** One of the day's three that matter - see TemplateBlock.highlight. */
+  highlight?: boolean
 }
 
 interface Draft {
@@ -149,6 +152,9 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   // removal rather than followed, because a panel that lands on a different
   // block than the one it was opened for is worse than one that shuts.
   const [noteOpen, setNoteOpen] = useState<number | null>(null)
+  // Why a KEY press did nothing, said once and cleared by the next one. A
+  // refusal with no reason is the app being obstinate.
+  const [keyNote, setKeyNote] = useState<string | null>(null)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
@@ -218,6 +224,23 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
       ...d,
       blocks: d.blocks.map((b, i) => (i === index ? { ...b, core: !b.core } : b)),
     }))
+  }
+
+  /**
+   * KEY on a block, refused past three on the day and saying which three.
+   * A day template is one day, so every block on it is on the same day.
+   */
+  function toggleBlockKey(index: number) {
+    setDraft(d => {
+      const block = d.blocks[index]
+      const verdict = canMarkKey(
+        d.blocks.map((b, i) => ({ id: String(i), title: b.title, time: b.time, highlight: b.highlight })),
+        { id: String(index), title: block.title, time: block.time, highlight: block.highlight },
+      )
+      setKeyNote(verdict.message ?? null)
+      if (!verdict.allowed) return d
+      return { ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, highlight: !b.highlight } : b)) }
+    })
   }
 
   function setBlockNote(index: number, note: string) {
@@ -390,6 +413,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           <li
             key={i}
             className={[
+              b.highlight ? 'is-key' : '',
               blockReorder.draggingId === String(i) ? 'is-dragging' : '',
               blockReorder.overIndex === i && blockReorder.draggingId !== null && blockReorder.draggingId !== String(i)
                 ? 'is-over'
@@ -435,6 +459,20 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 Core
               </button>
             )}
+            {/* The day's three that matter, set here rather than every
+                morning on the day itself. Not gated on draft.type: KEY is
+                about which three things matter, which every kind of day
+                has, while Core above is about what counts on a day type
+                that does not score everything. */}
+            <button
+              type="button"
+              aria-pressed={!!b.highlight}
+              aria-label={b.highlight ? `${b.title} is a key task` : `Mark ${b.title} as a key task`}
+              className={b.highlight ? 'core-toggle active' : 'core-toggle'}
+              onClick={() => toggleBlockKey(i)}
+            >
+              Key
+            </button>
             {/* Not gated on draft.type, unlike Core above - a standing
                 task is just as real on a full day as on a shift day. */}
             <button
@@ -488,6 +526,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           </li>
         ))}
       </ul>
+      {keyNote && (
+        <p className="template-key-note" role="status">
+          {keyNote}
+        </p>
+      )}
       {/* Two levels, not one. This was a single row carrying a time, a title
           field, a duration, six category dots, Core, Ongoing and Add - eight
           controls competing with the one thing anybody actually types. The
@@ -625,6 +668,7 @@ export function TemplatesView() {
         libraryListId: b.libraryListId,
         note: b.note,
         steps: b.steps,
+        highlight: b.highlight,
       })),
     })
   }
@@ -713,6 +757,7 @@ export function TemplatesView() {
       // field on every block it was opened on.
       note: b.note?.trim() || undefined,
       steps: b.steps?.length ? b.steps : undefined,
+      highlight: b.highlight || undefined,
     }))
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)
