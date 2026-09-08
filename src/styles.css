@@ -6321,16 +6321,31 @@ button.danger:focus-visible {
     margin-bottom: 0;
   }
 
-  /* The title's box is measured by the longest day the app can print, not
-     by the day showing: a ghost of "Wednesday, September 30" in the
-     heading's own type sits under the real title in the same grid cell,
-     hidden, so the box is as wide as the ghost on every day and the
-     visible title starts at its left edge. This is what makes the row
-     unable to overflow. The arrows came off this header once because a
-     long day pushed the right one out past the row, and a control that
-     overflows is fixed by making overflow impossible, not by removing the
-     control. */
+  /* The arrows are a pair at the row's left edge and the day's name comes
+     after them, rather than sitting between them. The name is 250px on the
+     longest day this app prints and each arrow is 44px, so a bracket is
+     353px wide standing over a month 240px wide: the right arrow landed 113
+     pixels past the right edge of the calendar it belongs to, out in the
+     middle of the row, where the owner found it. The name cannot give those
+     pixels back without abbreviating a word, and the arrows cannot give
+     them back at all, so the name comes out from between the arrows. Both
+     are inside the month's width now, they read as one control, and moving
+     a few days back and forth no longer crosses the row.
+
+     The bracket stays on the phone, where the nav is the width of the
+     screen and each arrow sits at an edge a thumb can reach.
+
+     Order rather than markup, so the two controls keep their document
+     order: tab reaches previous and then next, which is also how they read
+     left to right.
+
+     The title's box is still measured by the longest day the app can print
+     - a ghost of "Wednesday, September 30" in the heading's own type, in
+     the same grid cell, hidden - because the chip and the doors sit after
+     the name and would otherwise walk a hundred pixels every time the day
+     changed. */
   .day-header .day-title {
+    order: 1;
     display: inline-grid;
     text-align: left;
   }

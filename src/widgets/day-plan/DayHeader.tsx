@@ -116,11 +116,17 @@ export function DayHeader({
 
   return (
     <div className="day-header">
-      {/* The arrows bracket the day's name and nothing else. They used to
+      {/* The arrows and the day's name, and nothing else. They used to
           bracket the template chip and the Replan link as well, so the
           right arrow sat half a screen from the left one with a pill and a
           word between them, and the row read as five things at one weight.
           Which day is one group; what to do about it is the next.
+
+          They bracket the name on a phone, where the row is the width of
+          the screen. On the wide header they are a pair at the left instead
+          and the name follows: see .day-header .day-title in styles.css for
+          the measurement that moved them - a bracket around the longest day
+          is 353px and the month it stands over is 240px.
 
           They are on the wide header too, at every width, since v2.7. They
           came off it in v2.6 because they overflowed - a long day pushed
