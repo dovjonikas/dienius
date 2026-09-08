@@ -1014,7 +1014,7 @@ export interface Picture extends Timestamped {
 export interface NorthSettings {
   /** A quiet card after a day that got away - never a scolding, never a number. */
   afterASlowDay: boolean
-  /** The same card, softer, on the first open of a Monday. */
+  /** The same card, softer, on the first open of a Monday. */
 }
 
 /**
