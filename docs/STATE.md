@@ -281,6 +281,12 @@ wave that lived with it.
 | 4 | A link to the thing itself | `3d380bf` | A library item and a task each carry one optional address, shown as a small door on the library row, the day's task card, Up next and the focus screen. Always a new tab with `noopener noreferrer` - "so that Dienius does not close" - and always its own 44px target, so pressing the card still means what it meant. Two icons: a machine of your own (localhost, a private address, a Tailscale name or its range) and the open internet. The address is in the bubble under the control. Nothing anywhere goes to the network: no reachability check, no favicon, no preview, and a string that is not an address is simply not saved, with nothing said about it |
 | 5 | An audit for the owner | `595975b` | `docs/AUDIT-v2.9.md` and the screenshots under `docs/screenshots/audit/` |
 
+#### After the tag
+
+| Commit | What it is |
+|---|---|
+| `PENDING` | The header read again by the owner: "the date text should not leave the calendar's bounds, and Working day and Replan and all the rest are somehow at random gaps." Both were the same cause. The day's block is the month's own 240px now - its left edge and its right edge the calendar's - holding two rows: the arrows and the day's word, then the date across the whole block. The heading is "Today" or the weekday and the line under it is the rest, because the whole form is 250px in that type and the cell beside the arrows is 136. The measuring ghost is gone: the block is one width because the column is, which is what it was for, and what was left of it after a short day's name was the dead space being read as a gap. The chip after the block now starts where the timeline starts |
+
 #### The brief, as understood
 
 1. **"That arrow cannot leave the calendar below."** The day's forward arrow

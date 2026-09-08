@@ -1,4 +1,4 @@
-import { dateKey, addDays, monthGrid, formatDayTitle } from './dates'
+import { dateKey, addDays, monthAndDay, monthGrid, formatDayTitle, weekdayName } from './dates'
 
 test('dateKey formats local date as YYYY-MM-DD', () => {
   expect(dateKey(new Date(2026, 8, 1))).toBe('2026-09-01')
@@ -54,11 +54,21 @@ test('formatDayTitle renders a readable title', () => {
   expect(formatDayTitle('2026-09-01')).toBe('Tuesday, September 1')
 })
 
-// The day header's measuring ghost - DayHeader.tsx - is this exact string in
-// the heading's own type, so the title's box is as wide as the widest day
-// the format can print: the longest weekday, the longest month, two digits.
-// A change to the format shows up here before it shows up as a wrapped
-// header.
-test('the header ghost is measured against what 2026-09-30 prints: Wednesday, September 30', () => {
+// The widest day this format can print - the longest weekday, the longest
+// month, two digits - which is what the day header's block was sized
+// against while it was measured by a hidden copy of it. The block is the
+// month's own width now and the two halves below are what it prints, but
+// the string is still the worst case any of them has to fit, so it is
+// pinned here where a change to the format shows up first.
+test('the widest day the format prints is 2026-09-30: Wednesday, September 30', () => {
   expect(formatDayTitle('2026-09-30')).toBe('Wednesday, September 30')
+})
+
+// The two halves the wide header prints instead, because the whole form is
+// 250px in the heading's type and the block is 240 with two arrows in it.
+// Together they say the same date.
+test('the header prints the day in two halves, and they add up to the whole', () => {
+  expect(weekdayName('2026-09-30')).toBe('Wednesday')
+  expect(monthAndDay('2026-09-30')).toBe('September 30')
+  expect(`${weekdayName('2026-09-30')}, ${monthAndDay('2026-09-30')}`).toBe(formatDayTitle('2026-09-30'))
 })

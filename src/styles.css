@@ -6371,62 +6371,75 @@ button.danger:focus-visible {
     gap: var(--s2) var(--s5);
   }
 
-  /* One flex item that cannot wrap: the arrows and the title are never on
-     different lines, whatever the rest of the row does when it is short.
-     The arrows keep the 44px they have at every width - the day view's
-     one control for moving a day is not drawn smaller where there is the
-     most room for it. */
+  /* Which day it is, in the width of the month it stands over.
+
+     One block, exactly the rail's own 240px, so its left edge and its right
+     edge are the calendar's. Two rows inside it: the arrows and the day's
+     word on the first, the date across the whole block on the second.
+
+     What this replaced was one line - two 44px arrows and a title measured
+     by the longest day this app prints - which came to 353px standing over
+     a 240px month. The date ran 55 pixels past the calendar's edge, and the
+     fixed box left 58 pixels of dead space between the date and the chip
+     after it. The owner read the first as text escaping the calendar and
+     the second as a gap left by accident; they were the same cause.
+
+     The date takes the whole width rather than the cell beside the arrows,
+     because that cell is 136px and the longest date in this type is 153.
+     Taking the row is also what makes it safe at every text size: a longer
+     date wraps inside the block rather than pushing out of it.
+
+     Nothing is measured by a hidden copy any more. The block is one width
+     because the column is one width, so the chip cannot move whatever the
+     day is called - which is what the ghost was for. */
   .day-header .day-nav {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "prev next word"
+      "date date date";
+    align-items: center;
+    column-gap: var(--s2);
+    row-gap: 0;
+    width: 240px;
     flex: 0 0 auto;
-    flex-wrap: nowrap;
-    gap: var(--s2);
     margin-bottom: 0;
   }
 
-  /* The arrows are a pair at the row's left edge and the day's name comes
-     after them, rather than sitting between them. The name is 250px on the
-     longest day this app prints and each arrow is 44px, so a bracket is
-     353px wide standing over a month 240px wide: the right arrow landed 113
-     pixels past the right edge of the calendar it belongs to, out in the
-     middle of the row, where the owner found it. The name cannot give those
-     pixels back without abbreviating a word, and the arrows cannot give
-     them back at all, so the name comes out from between the arrows. Both
-     are inside the month's width now, they read as one control, and moving
-     a few days back and forth no longer crosses the row.
+  .day-header .day-nav > button:first-of-type { grid-area: prev; }
+  .day-header .day-nav > button:last-of-type { grid-area: next; }
 
-     The bracket stays on the phone, where the nav is the width of the
-     screen and each arrow sits at an edge a thumb can reach.
+  /* The title's two elements are the grid's own items: the heading in the
+     cell beside the arrows, the date across the row under them. Both
+     wrappers step out of the way rather than being laid out - see
+     DayHeader, where they are what a phone lays out instead. */
+  .day-header .day-title,
+  .day-header .day-title-text {
+    display: contents;
+  }
 
-     Order rather than markup, so the two controls keep their document
-     order: tab reaches previous and then next, which is also how they read
-     left to right.
-
-     The title's box is still measured by the longest day the app can print
-     - a ghost of "Wednesday, September 30" in the heading's own type, in
-     the same grid cell, hidden - because the chip and the doors sit after
-     the name and would otherwise walk a hundred pixels every time the day
-     changed. */
-  .day-header .day-title {
-    order: 1;
-    display: inline-grid;
+  /* Both against the block's left edge, which is the calendar's: the base
+     rule centres them for the phone, where the nav row is the width of the
+     screen and centred is right. */
+  .day-header .day-title h2 {
+    grid-area: word;
+    min-width: 0;
     text-align: left;
   }
 
-  .day-header .day-title > * { grid-area: 1 / 1; }
-
-  .day-header .day-title-measure { display: block; }
-
-  /* Left-aligned beside the arrows at this width, rather than centred
-     between them the way it is on a phone where the nav row is the full
-     width of the screen; and the date beside Today rather than under it,
-     on one line. */
-  .day-header .day-title-text {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: nowrap;
-    gap: var(--s0) var(--s2);
-    white-space: nowrap;
+  .day-header .day-subtitle {
+    grid-area: date;
+    min-width: 0;
+    text-align: left;
   }
+
+  /* The heading and the date, in the block's own two rows rather than side
+     by side: this wrapper laid them out on one line until the block became
+     the width of the month, which is not wide enough for both. It steps out
+     of the way now and the grid above places each of them. The heading
+     never wraps - it is one word - and the date is allowed to, which is
+     what keeps it inside the block at a larger text size. */
+  .day-header .day-title h2 { white-space: nowrap; }
 
   .day-header .day-tools {
     flex: 0 0 auto;

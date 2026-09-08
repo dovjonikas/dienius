@@ -2447,12 +2447,43 @@ few days back and forth no longer crosses the row. The bracket stays on the
 phone, where the row is the width of the screen and each arrow sits at an
 edge a thumb can reach.
 
-Two smaller things came with it. The title keeps its hidden ghost even though
-nothing after it moves now, because the chip and the doors still sit after
-the name and would otherwise walk a hundred pixels every time the day
-changed. And the reordering is CSS `order` rather than markup, so the two
-controls keep their document order: tab reaches previous and then next, which
-is also how they read left to right.
+Two smaller things came with it. The title kept its hidden ghost even though
+nothing after it moved, because the chip and the doors still sat after the
+name and would otherwise walk a hundred pixels every time the day changed.
+And the reordering was CSS `order` rather than markup, so the two controls
+keep their document order: tab reaches previous and then next, which is also
+how they read left to right.
+
+### Then the owner looked again, and it was the same cause twice
+
+"The date text should not leave the calendar's bounds, and Working day and
+Replan and all the rest are somehow at random gaps." Measured: the date ran
+55 pixels past the calendar's right edge, and the ghost left 58 pixels of
+dead space between the date and the template chip. Moving the arrows had
+fixed the arrows and left the two halves of the same problem standing.
+
+So the block is the month's own width - 240px, the rail's own column, its
+left edge and its right edge the calendar's - and it holds two rows: the
+arrows and the day's word on the first, the date across the whole block on
+the second. The chip after it starts at 332, which is where the timeline
+starts, so the header's three groups sit over the three the day is made of.
+
+**The word is never the whole date.** "Wednesday, September 30" is 250px in
+the heading's type and the cell beside the arrows is 136, so the heading
+carries "Today" or the weekday and the line under it carries the rest. The
+two halves print the same day the phone's one line does, and `dates.test.ts`
+holds them to it.
+
+**The date takes the whole row rather than the cell beside the arrows.** That
+cell is 136px and the longest date in that type is 153. Taking the row is
+also what makes it safe at a larger text size: a longer date wraps inside the
+block instead of pushing out of it.
+
+**And the ghost went.** It existed to stop the chip moving as the day's name
+changed length; the block is one width because the column is one width, which
+answers the same question without a hidden copy of a string in the markup.
+That hidden copy was also the dead space the owner was reading as a random
+gap: what was left of the box after a short day's name.
 
 ## The day type says its answer and folds its question away
 

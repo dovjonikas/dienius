@@ -57,6 +57,26 @@ export function formatDayTitle(key: string): string {
 }
 
 /**
+ * The weekday on its own - "Wednesday".
+ *
+ * The day header's heading at the wide breakpoint, where the whole title has
+ * to fit the width of the month it stands over: the full form is 250px in
+ * that type and the month is 240 wide with two arrows in front of it, so the
+ * heading carries the word and the line under it carries the date. See
+ * DayHeader.
+ */
+export function weekdayName(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long' })
+}
+
+/** The rest of it - "September 30" - for the line under that heading. */
+export function monthAndDay(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+}
+
+/**
  * The seven date keys of the week a date falls in, Monday first.
  *
  * Monday first because a week does - the same numbering `weekdayOf` and the

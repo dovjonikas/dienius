@@ -433,20 +433,20 @@ test('the day arrows stay on the wide header, beside the month', () => {
 // prints, in the heading's own type, under the real title. It is layout and
 // nothing else, so a reader is never told about a Wednesday that is not
 // showing - and the heading's own name stays the day that is.
-test('the title is measured by the longest day the app can print, and the measure is hidden from a reader', () => {
+test('a day that is not today is a weekday over its date, and no hidden copy of either', () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  // By class, because the ghost is deliberately outside the accessibility
-  // tree: there is no role to find it by, and that absence is half of what
-  // this test is for.
-  const ghost = container.querySelector('.day-title .day-title-measure')
-  expect(ghost).not.toBeNull()
-  expect(ghost).toHaveTextContent('Wednesday, September 30')
-  expect(ghost).toHaveAttribute('aria-hidden', 'true')
-  expect(screen.getByRole('heading', { name: 'Tuesday, September 1' })).toBeInTheDocument()
-  expect(screen.queryByRole('heading', { name: /Wednesday/ })).toBeNull()
+  // The heading is the word alone: the whole form is 250px in this type and
+  // the block is the month's own 240 with two arrows in front of it, so the
+  // date goes on the line under it. Together they print the same day.
+  expect(screen.getByRole('heading', { name: 'Tuesday' })).toBeInTheDocument()
+  expect(container.querySelector('.day-subtitle')).toHaveTextContent('September 1')
+  // And nothing is measured by a hidden copy any more - the block is one
+  // width because the column is one width. A ghost coming back would be a
+  // second answer to a question that is already answered.
+  expect(container.querySelector('.day-title-measure')).toBeNull()
 })
 
 test('the day arrows stay on a narrow screen, which has no month to use instead', () => {

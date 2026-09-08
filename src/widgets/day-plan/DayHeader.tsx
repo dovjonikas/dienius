@@ -1,6 +1,6 @@
 import { MAX_HIGHLIGHTS, type SleepProfile, type Task, type Template } from '../../lib/types'
 import { actions } from '../../lib/store'
-import { addDays, formatDayTitle, todayKey } from '../../lib/dates'
+import { addDays, formatDayTitle, monthAndDay, todayKey, weekdayName } from '../../lib/dates'
 import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
@@ -116,48 +116,42 @@ export function DayHeader({
 
   return (
     <div className="day-header">
-      {/* The arrows and the day's name, and nothing else. They used to
-          bracket the template chip and the Replan link as well, so the
-          right arrow sat half a screen from the left one with a pill and a
-          word between them, and the row read as five things at one weight.
-          Which day is one group; what to do about it is the next.
+      {/* Which day it is, in the width of the month it stands over.
 
-          They bracket the name on a phone, where the row is the width of
-          the screen. On the wide header they are a pair at the left instead
-          and the name follows: see .day-header .day-title in styles.css for
-          the measurement that moved them - a bracket around the longest day
-          is 353px and the month it stands over is 240px.
+          The arrows and the day used to be one line: two 44px squares and a
+          title measured by the longest day this app prints, which is 353px
+          standing over a 240px month. The date ran 55 pixels past the
+          calendar's right edge, and the fixed box left 58 pixels of dead
+          space between the date and the template chip, which read as a hole
+          somebody had left by accident. Both were the same cause.
 
-          They are on the wide header too, at every width, since v2.7. They
-          came off it in v2.6 because they overflowed - a long day pushed
-          the right one out where it should not be, and the month in the
-          rail looked like answer enough. The owner's rule is the other way
-          round: the answer to a control that overflows is to make overflow
-          impossible, not to remove the control. So the title sits in a box
-          of one fixed width, measured by the longest day the app can print
-          (the ghost under it, below), the row is one flex item that cannot
-          wrap, and the arrows are the same 44px squares here as on a
-          phone. The left and right arrow keys still move a day on the day
-          view, and T comes back to today. */}
+          So the block is the month's own width and holds two lines: the
+          arrows and the day's word on the first, the date on the second,
+          across the whole block. The word is "Today" or the weekday, never
+          the full form - "Wednesday, September 30" is 250px in this type
+          and the cell beside the arrows is 136. Nothing here is measured by
+          a hidden copy any more: the block is one width because the column
+          is, so the chip after it cannot move whatever the day is called,
+          and the date cannot leave the calendar however long the word for
+          it gets. See .day-header .day-nav in styles.css.
+
+          The phone keeps its own row: the nav is the width of the screen
+          there, the arrows bracket the name, and both lines have all the
+          room they need. The left and right arrow keys still move a day,
+          and T comes back to today. */}
       <div className="day-nav">
         <button aria-label="Previous day" onClick={() => onDateChange(addDays(date, -1))}>
           &larr;
         </button>
         <div className="day-title">
           <div className="day-title-text">
-            <h2>{isToday ? 'Today' : formatDayTitle(date)}</h2>
-            {isToday && <span className="day-subtitle">{formatDayTitle(date)}</span>}
+            <h2>{isToday ? 'Today' : weekdayName(date)}</h2>
+            {/* The full date on today, because "Today" does not say which
+                day it is; the rest of it on any other day, because the
+                heading has already said the weekday. Together they always
+                print the same date the phone's one line does. */}
+            <span className="day-subtitle">{isToday ? formatDayTitle(date) : monthAndDay(date)}</span>
           </div>
-          {/* The longest day the format prints, in the heading's own type
-              and hidden, stacked under the real title so the box holds one
-              width on every day - see .day-title in styles.css. Only in the
-              flow at the wide breakpoint; a phone keeps its shrinking
-              title. dates.test.ts pins the string, so a change to the
-              format shows up there before it shows up as a wrapped
-              header. */}
-          <span className="day-title-measure" aria-hidden="true">
-            Wednesday, September 30
-          </span>
         </div>
         <button aria-label="Next day" onClick={() => onDateChange(addDays(date, 1))}>
           &rarr;

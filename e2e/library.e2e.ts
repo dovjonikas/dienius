@@ -52,7 +52,11 @@ test('a list bound to a template puts the current book on the day, and a tick ad
   // Two taps from the library to a day: the panel, then the day.
   await page.getByRole('button', { name: 'Dune, ch 1/12' }).click()
   await page.getByRole('button', { name: 'Onto tomorrow' }).click()
-  await expect(page.getByRole('heading', { name: 'Thursday, September 17' })).toBeVisible()
+  // The wide header prints the day in two halves - the weekday as the
+  // heading, the date on the line under it - because the whole form does
+  // not fit the width of the month it stands over. See DayHeader.
+  await expect(page.getByRole('heading', { name: 'Thursday' })).toBeVisible()
+  await expect(page.locator('.day-subtitle')).toHaveText('September 17')
   await expect(page.getByRole('checkbox', { name: 'Dune' })).toBeAttached()
 })
 /**
