@@ -1,0 +1,7 @@
+{
+  "note": "A privacy guard, not a content filter. See scripts/no-personal-data.mjs. These are SHA-256 hashes (first 32 hex characters) of the owner's own strings, normalised to lowercase words joined by single spaces: names of people close to them, where they live, the names of their other projects, the wording of their goals, and the real titles from their own schedule. Hashes rather than words because this file is public, and a readable list of private words would make the guard the leak. Add one with: node scripts/no-personal-data.mjs --add \"the phrase\"",
+  "terms": [
+    "71c3ef8336e5759c0e6c957e672447a0",
+    "c23d8f03ad81b7f485434353280e8254"
+  ]
+}
