@@ -91,21 +91,28 @@ test('every other tab keeps a plain main with no main-day class', async () => {
 
 // --- stress test: every theme preset, with two years of stamped data loaded
 
-// Genuinely heavy, not artificially slow: the year strip renders roughly
-// 700 cells, and this re-renders it through every one of 11 presets and
-// their modes in turn. Comfortably under 2s on its own, but full-suite runs
-// have every test file's own worker rendering at once - the same
-// contention that already pushed two other YearStrip-adjacent tests over
-// the default 5s timeout (see CalendarView.test.tsx's own comment on the
-// same class of test). An explicit timeout here is the honest fix: the
-// work itself is real and worth doing, not something to trim down just to
-// fit inside a budget meant for ordinary tests.
-test('every theme preset and mode applies cleanly on the year view with roughly two years of stamped days loaded, with no crash', async () => {
+// Genuinely heavy, not artificially slow: two years of stamped days ending
+// today sit in the store, so the month on screen is a full one, and the
+// month grid - every cell of it resolving a template and a stat - is
+// re-rendered through every one of 11 presets and their modes in turn. Comfortably under 2s on its own, but full-suite runs have every test
+// file's own worker rendering at once - the same contention that has pushed
+// other render-heavy tests over the default 5s timeout (see
+// CalendarView.test.tsx's own comment on the same class of test). An
+// explicit timeout here is the honest fix: the work itself is real and worth
+// doing, not something to trim down just to fit inside a budget meant for
+// ordinary tests. It ran on the year view until v2.7 took that view out; the
+// month is now the heaviest calendar there is.
+test('every theme preset and mode applies cleanly on the month view with roughly two years of stamped days loaded, with no crash', async () => {
   const user = userEvent.setup({ delay: null })
   const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
   const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
   const stamps: Record<string, string> = {}
-  let d = new Date(2024, 0, 1)
+  // Seven hundred days that end today, not two fixed years from 2024: the
+  // grid App opens on is this month's, and a fixture that ends the year
+  // before last would leave every cell on screen empty.
+  const start = new Date()
+  start.setDate(start.getDate() - 699)
+  let d = new Date(start.getFullYear(), start.getMonth(), start.getDate())
   for (let i = 0; i < 700; i++) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     stamps[key] = i % 2 === 0 ? work.id : rest.id
@@ -115,7 +122,7 @@ test('every theme preset and mode applies cleanly on the year view with roughly 
 
   render(<App />)
   await user.click(screen.getByRole('button', { name: 'Calendar' }))
-  await user.click(screen.getByRole('button', { name: 'Year' }))
+  await user.click(screen.getByRole('button', { name: 'Month' }))
 
   for (const preset of PRESETS) {
     act(() => actions.setThemePreset(preset.id))

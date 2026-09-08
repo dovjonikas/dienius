@@ -26,10 +26,10 @@ import { LaterStrip } from './LaterStrip'
  * needs the days side by side and to scale, because the answer is a shape -
  * three heavy days and a hollow Thursday - not a number.
  *
- * **Why a third mode in Calendar rather than a seventh tab.** The tab bar is
+ * **Why a second mode in Calendar rather than a seventh tab.** The tab bar is
  * already six items and already scrolls sideways at 390px, so a seventh makes
  * the app's primary navigation worse for everybody in order to reach one view.
- * Month / Week / Year is also where anybody who has used a calendar will look
+ * Month / Week is also where anybody who has used a calendar will look
  * for it: the segmented control is the convention, and matching a convention
  * costs nothing where inventing one costs a discovery.
  *
@@ -82,7 +82,7 @@ export interface WeekViewProps {
   onOpenDay: (date: string) => void
   /**
    * Grid or agenda. Owned by the calendar bar, because the toggle for it sits
-   * beside Month / Week / Year rather than inside the week - a second
+   * beside Month / Week rather than inside the week - a second
    * segmented control one row down would be two controls saying "which view"
    * on the same screen.
    */

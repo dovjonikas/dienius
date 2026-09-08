@@ -174,7 +174,8 @@ needed its own themed chip background rather than the tag filter's bare `.chip`,
 the browser's native button chrome and reads as an unstyled leftover on a dark surface - scoped to
 the new picker specifically so the tag pills and filter chips elsewhere are untouched.
 
-**Year strip.** A GitHub-graph style row, one cell per day of a chosen year, colour drawn straight
+**Year strip.** (Shipped in v1.4 and removed in v2.7 - see DECISIONS "The Year view goes"; what
+follows is the record of what it was.) A GitHub-graph style row, one cell per day of a chosen year, colour drawn straight
 from `src/widgets/year-strip/yearGrid.ts` - a pure function separate from the component so the whole
 question of "what does this year look like" is unit tested on its own, with no rendering involved.
 An unplanned day carries no colour and no mark; a day with a plan is coloured by its template, the
@@ -592,7 +593,7 @@ never struck from this list; each one below says which.
   only worked around in views. Fix at the source.~~ Reviewed, not fixed - kept as-is on purpose. A
   stamped day genuinely happened, and deleting the template it was stamped from should not rewrite
   that, the same reasoning that already bakes `dayType` and `core` onto the day instead of looking
-  them up live. `DayView`, `CalendarView`, and `yearGrid` already treat a dangling `templateId` as
+  them up live. `DayView` and `CalendarView` (and `yearGrid`, while the strip existed) already treat a dangling `templateId` as
   no template rather than crashing; the guards are the correct handling, not a workaround waiting on
   a fix. Written up in `docs/DECISIONS.md` and pinned by a test in `store.test.ts` that checks
   `templateId` directly rather than only the day's presence.

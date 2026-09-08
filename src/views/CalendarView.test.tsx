@@ -12,44 +12,43 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
-// The year view renders 365 cells, and a `getByRole` name query computes the
-// accessible name of every one of them. Dropping userEvent's inter-event
-// delay bought this test time once already; as the suite grew it went back
-// over the 5s timeout under full parallelism, which is a sign the query
-// itself is wrong rather than that the budget is tight.
-//
-// Both nav arrows are addressed by `button[aria-label=...]` instead: one
-// attribute selector against the DOM rather than a walk that builds an
-// accessible name for several hundred buttons to find one. It still asserts
-// both halves of what the old query did - that the thing is a button, and
-// what it is called - and the mode switcher is still clicked through
-// `getByRole`, scoped to its own group, because that part is genuinely about
-// roles and costs nothing. Same coverage, none of the walk.
+// A `getByRole` name query computes the accessible name of every button in
+// the document to find one. That walk was written out of these tests when the
+// calendar still had a year view of 365 cells and the query went over the 5s
+// timeout under full parallelism; the year view is gone, but a grid of
+// forty-two cells plus a bar is still a walk that buys nothing here. The nav
+// arrows are addressed by `button[aria-label=...]` instead: one attribute
+// selector against the DOM. It still asserts both halves of what the role
+// query did - that the thing is a button, and what it is called - and
+// everything else is still found through `getByRole`, because there the
+// roles are the point.
 function navButton(container: HTMLElement, label: string): HTMLElement | null {
   return container.querySelector<HTMLElement>(`button[aria-label="${label}"]`)
 }
 
-test('switching to the year view shows the year strip and hides the month grid', async () => {
-  const user = userEvent.setup({ delay: null })
+// The bar's arrows turn whatever is on screen: a month in Month, a week in
+// Week (called "Earlier days" on a narrow screen, which is what jsdom is).
+// Switching the segment swaps them, and switching back restores them - the
+// half of the old three-mode test that still holds now that there are two.
+test('switching between Month and Week swaps the arrows in the bar, and back', async () => {
+  const user = userEvent.setup()
   const { container } = render(<CalendarView onOpenDay={() => {}} />)
   const modes = screen.getByRole('group', { name: 'Calendar view' })
-  expect(navButton(container, 'Previous month')).toBeInTheDocument()
-
-  await user.click(within(modes).getByRole('button', { name: 'Year' }))
-  expect(navButton(container, 'Previous month')).not.toBeInTheDocument()
-  expect(navButton(container, 'Previous year')).toBeInTheDocument()
-
+  expect(navButton(container, 'Previous month')).not.toBeNull()
+  await user.click(within(modes).getByRole('button', { name: 'Week' }))
+  expect(navButton(container, 'Previous month')).toBeNull()
+  expect(navButton(container, 'Earlier days') ?? navButton(container, 'Previous week')).not.toBeNull()
   await user.click(within(modes).getByRole('button', { name: 'Month' }))
-  expect(navButton(container, 'Previous month')).toBeInTheDocument()
-  expect(navButton(container, 'Previous year')).not.toBeInTheDocument()
+  expect(navButton(container, 'Previous month')).not.toBeNull()
+  expect(navButton(container, 'Earlier days') ?? navButton(container, 'Previous week')).toBeNull()
 })
 
 test('the month grid wraps each week in a row, so gridcells never sit directly inside the grid', () => {
   // role="grid" requires role="row" children wrapping the row="gridcell"
   // buttons - this is a genuine two-dimensional calendar (weeks as visual
   // rows, weekdays as visual columns, and the same axes for keyboard
-  // navigation), unlike the year strip, so the fix here is to complete the
-  // structure rather than drop it.
+  // navigation), so the fix here is to complete the structure rather than
+  // drop the role.
   render(<CalendarView onOpenDay={() => {}} />)
   const grid = screen.getByRole('grid')
   const rows = screen.getAllByRole('row')

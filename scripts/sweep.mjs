@@ -75,7 +75,7 @@ const DESKTOP = [
  * Controls allowed under 44px on a coarse pointer, each for a reason
  * written down in STATE.md's debt table. Anything else is a finding.
  */
-const SMALL_ON_PURPOSE = ['week-block', 'year-cell', 'link-button']
+const SMALL_ON_PURPOSE = ['week-block', 'link-button']
 
 /** @param {Page} page @param {string} name */
 async function tab(page, name) {
@@ -129,7 +129,6 @@ const SCREENS = [
   },
   { name: 'Calendar month', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Month') } },
   { name: 'Calendar week', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Week') } },
-  { name: 'Calendar year', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Year') } },
   { name: 'Templates', go: /** @param {Page} p */ p => tab(p, 'Templates') },
   {
     name: 'Template editor',

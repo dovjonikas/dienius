@@ -312,7 +312,6 @@ src/
 
   widgets/
     day-plan/          the day view and everything on it
-    year-strip/        the year-at-a-glance strip
     clock/             timer popover, floating widget, focus bar, nudges
     UndoToast.tsx      the one undo offer
     registry.ts        which widgets the day view mounts

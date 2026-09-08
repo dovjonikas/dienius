@@ -496,9 +496,9 @@ export interface DayPlan extends Timestamped {
    * Which template this day was stamped from, if any. Deliberately left in
    * place if that template is later deleted - a stamped day genuinely
    * happened, and deleting the template that described it does not undo
-   * it. Every reader of this field (DayView, CalendarView, yearGrid) treats
-   * a templateId with no matching template the same as no templateId at
-   * all, so a dangling reference degrades gracefully rather than crashing.
+   * it. Every reader of this field (DayView, CalendarView) treats a
+   * templateId with no matching template the same as no templateId at all,
+   * so a dangling reference degrades gracefully rather than crashing.
    * See `docs/DECISIONS.md` for the reasoning.
    */
   templateId?: string

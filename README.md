@@ -77,7 +77,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Six categories, one colour each, the same on the card and on the timeline block
 - Day types and core tasks, so a twelve-hour shift is not scored like an ordinary Tuesday
 - Sleep as a named schedule, greyed on the grid and counted out of free time
-- A month calendar that fits without scrolling, a year strip shaded by fullness
+- A month calendar that fits without scrolling, and a week of one shared timeline
 - External calendars as a read-only layer that free time counts: an .ics file needs nothing, a live feed needs the sync server to fetch it
 - A keyboard layer with a card behind `?`, and Ctrl-K for commands and search
 - A tour of nine steps, each ending when you actually do the thing

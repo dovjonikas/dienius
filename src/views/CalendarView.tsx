@@ -6,7 +6,6 @@ import { dayStat, keptEveryKeyTask, monthSummary, summaryLine } from '../lib/day
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
 import { DayPreview } from './DayPreview'
 import { useCellLines, useIsWide } from '../lib/viewport'
-import { YearStrip } from '../widgets/year-strip/YearStrip'
 import { NARROW_DAYS, WeekView, visibleWeekDays, type WeekReading } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
 import { Explain } from './Explain'
@@ -63,11 +62,10 @@ interface CalendarViewProps {
 export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }: CalendarViewProps) {
   const data = useAppData()
   const now = new Date()
-  // Week sits between Month and Year because that is the order of magnitude,
-  // and because a segmented control that jumps scale non-monotonically reads
-  // as three unrelated buttons. See WeekView.tsx for why this is a mode here
-  // rather than a seventh tab.
-  const [mode, setMode] = useState<'month' | 'week' | 'year'>('month')
+  // Month first, then Week: the larger scale is the one the tab opens on,
+  // and the segment reads down from it. See WeekView.tsx for why this is a
+  // mode here rather than a seventh tab.
+  const [mode, setMode] = useState<'month' | 'week'>('month')
   const [weekDate, setWeekDate] = useState(() => date ?? todayKey())
   const isWide = useIsWide()
   const cellLines = useCellLines()
@@ -242,7 +240,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
     >
       {/* One row: the arrows, the month, and the mode toggle. It used to be
           three stacked blocks, which cost about 130px of vertical space on a
-          screen whose whole job is to fit twelve months of squares without
+          screen whose whole job is to fit a month of squares without
           scrolling. */}
       <div className="calendar-bar">
         {mode === 'month' ? (
@@ -251,7 +249,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             <h2>{MONTHS[month]} {year}</h2>
             <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
-        ) : mode === 'week' ? (
+        ) : (
           <>
             <div className="calendar-nav">
               <button
@@ -309,11 +307,6 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             )}
             <p className="visually-hidden" aria-live="polite">{weekAnnouncement}</p>
           </>
-        ) : (
-          // The year strip carries its own arrows and its own heading, so
-          // the bar shows nothing but the toggle here. It used to repeat the
-          // year above the strip's own "2026", two headings for one fact.
-          null
         )}
 
         {/* One quiet line about the month, where a heading's subtitle would
@@ -336,14 +329,6 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
             onClick={() => setMode('week')}
           >
             Week
-          </button>
-          <button
-            type="button"
-            className={mode === 'year' ? 'active' : ''}
-            aria-pressed={mode === 'year'}
-            onClick={() => setMode('year')}
-          >
-            Year
           </button>
         </div>
 
@@ -559,8 +544,6 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
       {mode === 'week' && (
         <WeekView date={weekDate} onDateChange={changeWeekDate} onOpenDay={onOpenDay} reading={reading} />
       )}
-
-      {mode === 'year' && <YearStrip onOpenDay={onOpenDay} />}
     </section>
   )
 }

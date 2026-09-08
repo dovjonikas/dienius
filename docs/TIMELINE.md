@@ -321,8 +321,9 @@ push rule and no-guilt score that are already this app's own.
    Entirely `aria-hidden`. Every anchor the grid draws is also an ordinary row in the task list
    below it, already reachable with its title, time, checkbox and controls intact - the grid adds a
    second, purely visual reading of the same information rather than a second, worse copy of an
-   interactive one, following the same reasoning `YearStrip.tsx` already documents for dropping a
-   half-true role rather than asserting one. When gap interaction arrives in step 5, the gap elements
+   interactive one, following the reasoning the grid's own wrapper comment carries for dropping a
+   half-true role rather than asserting one (it was first written for the year strip, which went
+   in v2.7). When gap interaction arrives in step 5, the gap elements
    that become genuinely interactive should be pulled out from under this wrapper and given their own
    accessible name at that point.
 5. **Done.** Gap interaction: tap a gap, pick a float that fits.

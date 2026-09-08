@@ -92,52 +92,31 @@ export function keptEveryKeyTask(stat: DayStat): boolean {
 }
 
 export interface MonthSummary {
-  /** Days with a plan. Every figure below is over these, never over the calendar. */
+  /** Days with a plan, over the month's own dates and never over the calendar around them. */
   activeDays: number
-  done: number
-  total: number
-  rate: number | null
-  /** The longest run of consecutive planned days at or above HIGH_RATE. */
-  longestStreak: number
 }
 
 /**
  * One line about a month, for the calendar header.
  *
- * The streak here is over *full* days rather than key tasks - the Review
- * tab's streak asks a different question and they are deliberately different
- * numbers. A day with no plan does not break it and does not extend it: it is
- * skipped, because a weekend nobody planned is not a lapse.
+ * A count of the days that had a plan, and nothing else. Until v2.7 the line
+ * also said what share of the month's tasks got done and how long the best
+ * run of full days was, and both were verdicts: the share is the score this
+ * app declines to put beside anything, and a longest run is a streak under a
+ * softer name - a counter that resets to zero encodes a rule the psychology
+ * does not support, whichever screen it is on (docs/RESEARCH-ADHD.md
+ * section 8). How many days were used has no direction to it.
  */
 export function monthSummary(days: Record<string, DayPlan>, dates: string[]): MonthSummary {
-  let done = 0
-  let total = 0
   let activeDays = 0
-  let streak = 0
-  let longest = 0
-
   for (const date of dates) {
-    const stat = dayStat(days[date])
-    if (stat.rate === null) continue
-    activeDays++
-    done += stat.done
-    total += stat.total
-    if (stat.rate >= HIGH_RATE) {
-      streak++
-      longest = Math.max(longest, streak)
-    } else {
-      streak = 0
-    }
+    if (dayStat(days[date]).rate !== null) activeDays++
   }
-
-  return { activeDays, done, total, rate: total > 0 ? done / total : null, longestStreak: longest }
+  return { activeDays }
 }
 
-/** "62% done, 14 active days, longest run 5". Null when there is nothing to say. */
+/** "14 days with a plan". Null when there is nothing to say. */
 export function summaryLine(summary: MonthSummary): string | null {
   if (summary.activeDays === 0) return null
-  const parts = [`${Math.round((summary.rate ?? 0) * 100)}% done`]
-  parts.push(`${summary.activeDays} active ${summary.activeDays === 1 ? 'day' : 'days'}`)
-  if (summary.longestStreak > 1) parts.push(`longest run ${summary.longestStreak}`)
-  return parts.join(' - ')
+  return `${summary.activeDays} ${summary.activeDays === 1 ? 'day' : 'days'} with a plan`
 }

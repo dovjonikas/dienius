@@ -1,11 +1,9 @@
 import { beforeEach, expect, test } from 'vitest'
 import { defaultData } from './storage'
-import { addDays, todayKey } from './dates'
 import {
   datesBetween,
   doneRate,
   endOfMonth,
-  highlightStreak,
   libraryProgress,
   periodStats,
   startOfMonth,
@@ -122,55 +120,4 @@ test('a session outside the period does not count toward it', () => {
     task({ done: true, libraryRef: { listId: 'books', itemId: 'b1' } }),
   ])
   expect(libraryProgress(data, datesBetween(MON, SUN))).toEqual([])
-})
-
-// --- the streak ----------------------------------------------------------
-
-test('a streak counts back from the day given, one day at a time', () => {
-  data.days[MON] = day(MON, [task({ highlight: true, done: true })])
-  data.days[TUE] = day(TUE, [task({ highlight: true, done: true })])
-  data.days[WED] = day(WED, [task({ highlight: true, done: true })])
-  expect(highlightStreak(data.days, WED)).toBe(3)
-})
-
-test('a day where a key task was set and not done breaks it', () => {
-  data.days[MON] = day(MON, [task({ highlight: true, done: true })])
-  data.days[TUE] = day(TUE, [task({ highlight: true, done: false })])
-  data.days[WED] = day(WED, [task({ highlight: true, done: true })])
-  expect(highlightStreak(data.days, WED)).toBe(1)
-})
-
-// The streak is about following through on what you decided mattered, and a
-// day where nothing was decided cannot have been followed through on.
-test('a day with no key task at all breaks it, however busy it was', () => {
-  data.days[MON] = day(MON, [task({ highlight: true, done: true })])
-  data.days[TUE] = day(TUE, [task({ done: true }), task({ done: true })])
-  data.days[WED] = day(WED, [task({ highlight: true, done: true })])
-  expect(highlightStreak(data.days, WED)).toBe(1)
-})
-
-test('a streak with nothing behind it is zero, not one', () => {
-  expect(highlightStreak(data.days, WED)).toBe(0)
-})
-
-test('an ordinary task being done is not a key task being done', () => {
-  data.days[WED] = day(WED, [task({ highlight: true, done: false }), task({ done: true })])
-  expect(highlightStreak(data.days, WED)).toBe(0)
-})
-
-// A streak measured from three days in the future breaks on the first empty
-// day and reports zero for somebody in the middle of a perfectly good run.
-test('the current period measures its streak from today, not from its own last day', () => {
-  const today = todayKey()
-  data.days[today] = day(today, [task({ highlight: true, done: true })])
-  data.days[addDays(today, -1)] = day(addDays(today, -1), [task({ highlight: true, done: true })])
-
-  const stats = periodStats(data, addDays(today, -3), addDays(today, 3))
-  expect(stats.streak).toBe(2)
-})
-
-test('a period wholly in the past still measures from its own last day', () => {
-  data.days[MON] = day(MON, [task({ highlight: true, done: true })])
-  data.days[TUE] = day(TUE, [task({ highlight: true, done: true })])
-  expect(periodStats(data, MON, TUE).streak).toBe(2)
 })

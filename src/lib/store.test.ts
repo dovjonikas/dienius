@@ -516,10 +516,10 @@ test('updateTemplate with an id that matches nothing leaves every template as it
 test('deleteTemplate removes the template but keeps stamped days, templateId included', () => {
   // A stamped day genuinely happened - deleting the template it was stamped
   // from does not undo that. templateId is left dangling on purpose rather
-  // than cleared: every place that reads it (DayView, CalendarView,
-  // yearGrid) already resolves a missing template to "no template" instead
-  // of throwing, so clearing the reference would only erase real history to
-  // satisfy call sites that already handle its absence correctly.
+  // than cleared: every place that reads it (DayView, CalendarView) already
+  // resolves a missing template to "no template" instead of throwing, so
+  // clearing the reference would only erase real history to satisfy call
+  // sites that already handle its absence correctly.
   const t = actions.addTemplate({ name: 'X', color: '#f9d48a', blocks: [] })
   actions.stamp({ '2026-09-01': t.id })
   actions.deleteTemplate(t.id)
@@ -937,15 +937,16 @@ test('once localStorage has room again, the very next commit recovers and getSav
 
 // --- stress test: switching themes with a large data set loaded -----------
 //
-// The year strip's own `cells` is a useMemo keyed on `[year, data.days,
-// data.templates]` - it only recomputes when one of those three actually
-// changes reference. setTheme/setThemePreset write into `data.settings`
-// through an object spread that leaves `days` and `templates` referentially
-// untouched, so a theme change alone must never invalidate that memo. This
-// is what actually lets 11 preset switches over 700 stamped days stay cheap
-// (see the year-strip render benchmark in the stress-test report) - pinned
-// here at the store level, independent of any specific component's memo
-// wiring, so the guarantee holds regardless of which view reads theme data.
+// A view's memo over `days` or `templates` is keyed on their references and
+// only recomputes when one of them actually changes - the calendar's month
+// line, the journal's set of written days. setTheme/setThemePreset write into
+// `data.settings` through an object spread that leaves `days` and
+// `templates` referentially untouched, so a theme change alone must never
+// invalidate those memos. This is what actually lets 11 preset switches over
+// 700 stamped days stay cheap (see the render benchmark in the stress-test
+// report) - pinned here at the store level, independent of any specific
+// component's memo wiring, so the guarantee holds regardless of which view
+// reads theme data.
 
 test('changing the theme preset or mode never changes the object identity of days or templates', () => {
   const t = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })

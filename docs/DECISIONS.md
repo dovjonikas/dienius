@@ -38,6 +38,11 @@ friction before the plan even loads.
 
 ## No streak on the day view - and one, described rather than kept, on the review
 
+(The review's streak went too, in v2.7 - see "Review says facts, and no
+longer a streak" near the end of this file. The line this entry drew
+between a number you can lose and a number you read did not hold, and the
+paragraphs below stand as the record of why it was drawn.)
+
 `dayScore` in `src/widgets/day-plan/score.ts` computes a score from one day's own tasks and
 nothing else. Nothing on the day view, the calendar or the North card counts consecutive days,
 nothing records a longest run, and no notice ever says a run has ended.
@@ -80,11 +85,15 @@ else - but nothing in the app yet knows what that difference should be, and inve
 real case behind it would have been complexity standing in for a decision nobody had actually made.
 
 Four values exist anyway because they name four kinds of day a person recognizes at a glance when
-picking a template, and because the year strip (`src/widgets/year-strip/`, colored per day) wants
+picking a template, and because the year strip that stood until v2.7 (coloured per day) wanted
 exactly this distinction to color by. The type is there to hang a real scoring difference on if one
 ever turns up; today it hangs a label and nothing else.
 
 ## A year strip with no in-between
+
+(The strip went in v2.7 - see "The Year view goes" near the end of this
+file. What follows is what it was meant to be, kept because it says how a
+picture becomes a scoreboard without anybody deciding it should.)
 
 The year strip (`src/widgets/year-strip/`) is the single feature in this codebase closest to
 becoming the thing the app is defined against. A row of one cell per day, colored by template, is
@@ -154,11 +163,12 @@ reference so nothing has to guard against it - was rejected because a stamped da
 slate on deletion, while its tasks, its color history, and its score all stay put, would be the odd
 one out rather than the consistent choice.
 
-The cost is that every place that reads `templateId` - `DayView`, `CalendarView`,
-`src/widgets/year-strip/yearGrid.ts` - has to treat a template lookup that comes back empty as
-"no template" rather than assuming it always resolves. All three already did, before this was ever
-written down: a dangling `templateId` degrades to an uncolored, unlabeled day rather than crashing,
-which is pinned by tests in `store.test.ts`, `DayView.test.tsx`, and `yearGrid.test.ts`.
+The cost is that every place that reads `templateId` - `DayView`, `CalendarView`, and the
+year strip's `yearGrid.ts` while it existed - has to treat a template lookup that comes back empty
+as "no template" rather than assuming it always resolves. All of them already did, before this was
+ever written down: a dangling `templateId` degrades to an uncolored, unlabeled day rather than
+crashing, which is pinned by tests in `store.test.ts` and `DayView.test.tsx` (and was in
+`yearGrid.test.ts` until the strip went in v2.7).
 
 ## Templates instead of recurring tasks - and the small repeat that came later
 
@@ -2128,3 +2138,57 @@ field's Later mode keeps the duration and category controls the Backlog
 mode had. That is a default, not a question - both controls open holding
 an answer, section 16 - and the alternative was a third mode on the toggle,
 which is the state this decision removed.
+
+## The Year view goes
+
+Calendar had three readings: Month, Week and Year, the last a strip of one
+cell per day coloured by template and, since v1.4, shaded by how much of
+the day got done. The v2.7 brief asked one question of it: will the owner
+ever open it? If its only purpose was that it was easy to build, it goes
+with its code; if it shows something Month does not, it stays and the
+reason is written down.
+
+It did show something Month does not: a whole year on one screen, which
+kinds of day fell where, a gap of weeks as an absence of texture. That is
+a picture the owner would open at most once a year. And what the strip had
+become was the thing "A year strip with no in-between" above said it must
+never be - a fullness heatmap in three tones, grading days against each
+other, which is a streak's own currency. Nobody noticed for five versions
+because nobody opened it: its legend described a ring the stylesheet no
+longer drew distinctly, one of its rules was dead, and nothing routed to it
+but the segment button - no key, no palette entry, no tour step, no
+screenshot, no browser test. A view nothing points at and nothing checks
+is a view whose purpose was that it was easy to build.
+
+So it is gone, with `widgets/year-strip/`, its 42 tests, its 150 lines of
+stylesheet, its sweep screen and its seed. Month and Week are the calendar.
+The entry above stays as the record of what the strip was meant to be and
+of how a picture becomes a scoreboard without anybody deciding it should.
+
+## Review says facts, and no longer a streak
+
+RESEARCH-ADHD section 8 settled the refusal of streaks with a better
+reason than the app had: Lally et al. found a missed day does not
+measurably disrupt habit formation, so a counter that resets to zero
+encodes a rule the psychology does not support. "No streak on the day view
+- and one, described rather than kept, on the review" above drew a line
+between a number you can lose while living the day and a number you read
+about a week afterwards. The v2.7 brief read Review against section 8
+again and the line did not hold: "Streak: 3 days with a key task done" was
+still the one figure in the app that resets to zero, and a described
+streak is a streak the moment the number is smaller than last week's. It
+is gone, with `highlightStreak` and its seven tests. The calendar's month
+line, which said "62% done - 14 active days - longest run 5", said the
+same two figures on a second screen; it says how many days had a plan and
+nothing else.
+
+What Review still says, and why each survives the same reading: Done as a
+count of done over planned, because a count is a fact and the percentage
+beside it went in v2.6; Deep work as hours; Key tasks as a count against
+the day's own cap; the two charts, because the bars are the shape of what
+happened and carry one colour at every height; North as ages, which cannot
+be earned or lost; and what was read and watched, in each list's own unit.
+Nothing compares a week with the week before, nothing is called best, and
+nothing in the tab is coloured by a value. The month cell's bar keeps its
+three tones from the v2.4 month decision; it is the day's own ratio drawn
+once, and it is the owner's to revisit after the week in the app.

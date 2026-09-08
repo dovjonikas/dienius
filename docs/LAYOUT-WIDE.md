@@ -50,7 +50,7 @@ missing is a layout wide enough to put them in.
   coloured list of blocks, stamped onto a date through `actions.stamp`. This is the one list-shaped
   thing in the whole data model, and it is the strongest candidate for what replaces CHANNELS - see
   section 3.
-- **The month grid and the year strip** (`src/views/CalendarView.tsx`, `src/widgets/year-strip/`).
+- **The month grid** (`src/views/CalendarView.tsx`; the year strip that stood beside it until v2.7 is gone).
   Dienius already has its own calendar, at two zoom levels. A wide day view does not need to invent a
   second one; it needs a smaller version of the one that exists, for navigation, not for stamping.
 - **The if-then rule's placement** (`docs/TIMELINE.md` section 6, `docs/RESEARCH-ADHD.md` section 2).

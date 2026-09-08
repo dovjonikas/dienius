@@ -116,37 +116,17 @@ test('the summary is over planned days, never over the calendar', () => {
     '2026-09-01': [task({ done: true }), task({ done: true })],
     '2026-09-03': [task({ done: true }), task()],
   })
-  const summary = monthSummary(store, MONTH)
-  expect(summary.activeDays).toBe(2)
-  expect(summary.done).toBe(3)
-  expect(summary.total).toBe(4)
-  expect(summary.rate).toBeCloseTo(0.75)
+  expect(monthSummary(store, MONTH).activeDays).toBe(2)
 })
 
-test('the streak counts consecutive full days', () => {
-  const full = [task({ done: true }), task({ done: true })]
-  const store = days({
-    '2026-09-01': full,
-    '2026-09-02': full,
-    '2026-09-03': [task(), task()],
-    '2026-09-04': full,
-  })
-  expect(monthSummary(store, MONTH).longestStreak).toBe(2)
-})
-
-// A weekend nobody planned is not a lapse.
-test('a day with no plan neither breaks nor extends the streak', () => {
-  const full = [task({ done: true }), task({ done: true })]
-  const store = days({ '2026-09-01': full, '2026-09-03': full })
-  expect(monthSummary(store, MONTH).longestStreak).toBe(2)
-})
-
-test('the line names the rate and the active days, and the run only when there is one', () => {
+// Whether the days went well is not the line's business: a month of nothing
+// finished and a month of everything finished read the same here.
+test('the line says how many days had a plan, and nothing about how they went', () => {
   const full = [task({ done: true })]
-  expect(summaryLine(monthSummary(days({ '2026-09-01': full }), MONTH))).toBe('100% done - 1 active day')
-  expect(summaryLine(monthSummary(days({ '2026-09-01': full, '2026-09-02': full }), MONTH))).toBe(
-    '100% done - 2 active days - longest run 2',
-  )
+  const empty = [task(), task()]
+  expect(summaryLine(monthSummary(days({ '2026-09-01': full }), MONTH))).toBe('1 day with a plan')
+  expect(summaryLine(monthSummary(days({ '2026-09-01': full, '2026-09-02': full }), MONTH))).toBe('2 days with a plan')
+  expect(summaryLine(monthSummary(days({ '2026-09-01': empty, '2026-09-02': empty }), MONTH))).toBe('2 days with a plan')
 })
 
 // --- a low day -------------------------------------------------------------

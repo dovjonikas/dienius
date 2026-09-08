@@ -1,4 +1,4 @@
-import { addDays, todayKey } from './dates'
+import { addDays } from './dates'
 import { weekdayOf } from './repeats'
 import { MAX_HIGHLIGHTS, type AppData, type DayPlan, type LibraryList } from './types'
 
@@ -46,8 +46,6 @@ export interface PeriodStats {
   highlightsDone: number
   /** Units finished per list in this period - see `libraryProgress`. */
   library: { list: LibraryList; units: number }[]
-  /** Consecutive days ending at the period's last day with a key task done. */
-  streak: number
 }
 
 /** The Monday on or before a date. Weeks start on Monday here, as they do. */
@@ -115,32 +113,6 @@ export function libraryProgress(data: AppData, dates: string[]): { list: Library
     .filter(entry => entry.units > 0)
 }
 
-/**
- * Days in a row, counting back from `endingAt`, on which at least one key
- * task was finished.
- *
- * Key tasks rather than any task, because "I did something today" is true of
- * almost every day and says nothing. A day with no key task at all breaks it:
- * the streak is about following through on what you decided mattered, and a
- * day where nothing was decided cannot have been followed through on.
- *
- * Deliberately not stored, and deliberately not shown anywhere but here. See
- * docs/RESEARCH-ADHD.md on why this app has no streak on the day view: a
- * number you can lose is a number that starts making decisions for you. In a
- * weekly review, looking back, it is a description rather than a lever.
- */
-export function highlightStreak(days: Record<string, DayPlan>, endingAt: string, limit = 400): number {
-  let streak = 0
-  for (let i = 0; i < limit; i++) {
-    const date = addDays(endingAt, -i)
-    const tasks = days[date]?.tasks ?? []
-    const highlights = tasks.filter(t => t.highlight)
-    if (highlights.length === 0 || !highlights.some(t => t.done)) break
-    streak++
-  }
-  return streak
-}
-
 export function periodStats(data: AppData, from: string, to: string): PeriodStats {
   const dates = datesBetween(from, to)
   const days = dates.map(date => statFor(date, data.days[date]))
@@ -155,11 +127,6 @@ export function periodStats(data: AppData, from: string, to: string): PeriodStat
     highlights: days.reduce((n, d) => n + d.highlights, 0),
     highlightsDone: days.reduce((n, d) => n + d.highlightsDone, 0),
     library: libraryProgress(data, dates),
-    // Counted back from the last day that has actually happened. For the
-    // current week that is today, not Sunday: a streak measured from a day
-    // three days in the future breaks on the first empty one and reports
-    // zero for somebody in the middle of a perfectly good run.
-    streak: highlightStreak(data.days, to > todayKey() ? todayKey() : to),
   }
 }
 

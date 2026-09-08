@@ -3253,7 +3253,7 @@ select:focus {
 }
 
 /* The category's name, in the meta line - colour is never the only signal
-   here, the same rule a rule's own tag and the year strip's legend follow. */
+   here, the same rule a rule's own tag follows. */
 /* The category name carries a trace of its own colour rather than being
    plain muted grey, which is what lets a card be identified from the meta
    line alone when the 4px edge is out of the corner of the eye. Mixed 30%
@@ -4524,10 +4524,10 @@ button.danger {
     background: var(--safe-ink);
   }
 
-  /* Same ring-vs-fill language the year strip uses for "complete": a hollow
-     ring instead of a solid dot means everything on the day is already
-     done, so a finished day does not compete for attention with one still
-     waiting on something. */
+  /* A hollow ring instead of a solid dot means everything on the day is
+     already done, so a finished day does not compete for attention with one
+     still waiting on something - and a ring survives grayscale or a
+     colour-vision deficiency where a second colour would not. */
   .cell-has-tasks.cell-tasks-done::after {
     background: transparent;
     border: 1.5px solid var(--safe-ink);
@@ -4851,146 +4851,6 @@ button.danger {
 .task-gap-offers-more:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-/* The cell size is fixed rather than shrinking on a narrow phone - the
-   grid already has to scroll horizontally at any width smaller than a
-   full year, so making cells smaller there would only make them harder
-   to tell apart and harder to tap, without actually avoiding the scroll. */
-.year-strip {
-  --year-cell: 10px;
-  margin-top: var(--s6);
-}
-
-/* A window wide enough to hold the whole year at a size somebody can aim
-   at. Ten pixels is the phone's floor, where the grid scrolls sideways
-   whatever it is; a 1280px desktop has room for fourteen, and 366 cells at
-   ten pixels in a 1920 window was a stamp in the corner of a screen with
-   nothing else on it. Still fixed rather than fluid: the cell is a target
-   as well as a mark, and a size that moves with the window would make the
-   same day a different thing to click on two machines. */
-@media (min-width: 1280px) {
-  .year-strip { --year-cell: 14px; }
-}
-
-.year-scroll {
-  display: flex;
-  gap: var(--s2);
-}
-
-.year-weekdays {
-  display: grid;
-  grid-template-rows: 14px repeat(7, var(--year-cell));
-  gap: var(--s0);
-  flex: 0 0 20px;
-}
-
-.year-weekdays span {
-  font-size: var(--t-xs);
-  line-height: var(--year-cell);
-  color: var(--muted);
-}
-
-/* The scroll container is the one thing on the page allowed to scroll
-   sideways - a year of days at a legible cell size is wider than a phone
-   screen, and cramming it to fit would make every cell too small to tell
-   apart. `min-width: 0` lets this flex child actually shrink below its
-   content size so the overflow can kick in instead of stretching its
-   flex row parent. `overscroll-behavior-x` keeps a fast swipe here from
-   also triggering the browser's own back/forward navigation gesture. */
-.year-grid-scroll {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-}
-
-.year-grid {
-  display: grid;
-  grid-template-rows: 14px repeat(7, var(--year-cell));
-  gap: var(--s0);
-}
-
-.year-month-label {
-  align-self: end;
-  padding-bottom: var(--s0);
-  font-size: var(--t-xs);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-/* Every day is the same size and shape, whether it carries a plan or not -
-   an unplanned day is a plain tile in the neutral border color, not a hole
-   punched in the grid or a darker shade of a "bad" one. Color is the only
-   thing that changes, and only for a day that actually had a plan. */
-.year-cell {
-  min-height: 0;
-  min-width: 0;
-  width: var(--year-cell);
-  height: var(--year-cell);
-  padding: 0;
-  border: none;
-  border-radius: var(--r-pill);
-  background: var(--border);
-}
-
-.year-cell.today {
-  outline: 1.5px solid var(--accent);
-  outline-offset: -1.5px;
-}
-
-/* A day with real, unfinished tasks and no template to color it used to
-   paint exactly like an empty one - the same blind spot the month grid had,
-   for the same reason: a cell built only from templateId cannot see a
-   hand-planned day, a day something was just pushed onto, or a day whose
-   template was later deleted. A cell this small (10px) has no room for a
-   corner mark, so the fill itself carries the signal here instead - mixed
-   from --safe-ink rather than any theme hue, so it stays a legible step
-   away from the plain "nothing here" fill in every preset, light or dark,
-   without being mistaken for a template's own pastel. The completed ring
-   above already covers a planned day that is finished, so this only
-   applies short of that - the two are never shown at once. See
-   formatYearCellLabel in yearGrid.ts for how the same distinction reaches
-   the accessible name. */
-.year-cell-planned {
-  background: color-mix(in srgb, var(--safe-ink) 45%, var(--border));
-}
-
-/* A ring, not a fill or a color change, so a completed day looks like a
-   variation on the same tile rather than a different (implicitly better)
-   one - and so the signal survives grayscale or a color-vision deficiency
-   without depending on which hue it lands on. */
-.year-cell-complete {
-  box-shadow: inset 0 0 0 1.5px var(--text);
-}
-
-.year-cell:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.year-template-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s2);
-  margin-top: var(--s3);
-}
-
-.year-legend-chip {
-  display: inline-block;
-  padding: var(--s0) var(--s2);
-  border-radius: var(--r-pill);
-  font-size: var(--t-sm);
-  color: rgba(0, 0, 0, 0.65);
-}
-
-/* A measure, like every other paragraph in this app. It ran the full width
-   of the window - 1270px of one line on a 1920 screen - because it was the
-   only explanatory paragraph with nothing capping it. */
-.year-strip-legend {
-  margin-top: var(--s2);
-  max-width: 68ch;
 }
 
 /* The focus countdown - src/widgets/day-plan/FocusView.tsx. A whole screen
@@ -9618,8 +9478,8 @@ button.danger:focus-visible {
    Today and Stamp week where it was written. Below the wide breakpoint the
    bar wraps into rows, and a button of its own was a fourth row - 55px off
    a grid whose whole job is to be a picture - so it is ordered after the
-   Month / Week / Year segment and shares the Grid / Agenda row, which had
-   the room. */
+   Month / Week segment and shares the Grid / Agenda row, which had the
+   room. */
 @media (max-width: 1023px) {
   .calendar-came-up { order: 1; }
   .calendar-bar .segmented-quiet { order: 2; }
@@ -9760,20 +9620,6 @@ button.danger:focus-visible {
   .cell { padding: var(--s1) var(--s0) 6px; }
   .cell-stats { font-size: var(--t-2xs); }
 }
-
-/* The year as a heatmap. The same four registers the month cells use, drawn
-   as a fill rather than a bar - a 10px square has no room for a bar, and at
-   that size a fill is the only thing legible anyway. A template colour still
-   wins where there is one: which kind of day it was outranks how full it
-   got, and the two together would be two signals in one square. */
-.year-cell.year-tone-low:not([style*='background']) { background: color-mix(in srgb, var(--muted) 18%, transparent); }
-.year-cell.year-tone-mid:not([style*='background']) { background: color-mix(in srgb, var(--accent) 42%, transparent); }
-.year-cell.year-tone-high:not([style*='background']) { background: color-mix(in srgb, var(--good) 62%, transparent); }
-
-/* On a day that carries a template colour the tone shows as a rim instead,
-   so both facts fit without either being lost. */
-.year-cell.year-tone-high { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--good) 70%, transparent); }
-.year-cell.year-tone-mid { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 45%, transparent); }
 
 /* ------------------------------------------------------------------------
    The week - seven columns of one shared timeline.
@@ -12865,7 +12711,7 @@ main:has(.week) > .calendar {
   text-decoration: line-through;
 }
 
-/* The Grid / Agenda pair, beside Month / Week / Year but quieter: it is a
+/* The Grid / Agenda pair, beside Month / Week but quieter: it is a
    question about the week rather than about the calendar, and two segmented
    controls at the same weight would read as two equal choices. */
 .segmented-quiet button { font-size: var(--t-sm); }

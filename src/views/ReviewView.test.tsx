@@ -65,5 +65,5 @@ test('with nothing written the button is greyed and says why, and never says wha
   const button = screen.getByRole('button', { name: 'Copy week journal' })
   expect(button).toBeDisabled()
   expect(button).toHaveAttribute('data-tip', 'No journal lines in this week')
-  expect(document.body.textContent).not.toMatch(/skipped|missed|streak of/i)
+  expect(document.body.textContent).not.toMatch(/skipped|missed|streak/i)
 })

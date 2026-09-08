@@ -57,9 +57,9 @@ export interface StressResult {
  * built by `load`, and reports how much the second cost over the first.
  *
  * The baseline is a parameter rather than always-empty because the honest
- * baseline differs per test. For a year strip it is an empty store, because
- * the same 366 cells are drawn either way and only the lookups change. For a
- * list of two hundred rows it is a *small* list, because two hundred rows
+ * baseline differs per test. For a month grid it is an empty store, because
+ * the same forty-two cells are drawn either way and only the lookups change.
+ * For a list of two hundred rows it is a *small* list, because two hundred rows
  * genuinely do cost more than none and the question worth asking is whether
  * they cost proportionally more or quadratically more.
  *

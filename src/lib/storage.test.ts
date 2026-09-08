@@ -954,8 +954,8 @@ test('a day stored under a key that is not a real date loads without throwing, a
   // days is a Record<string, DayPlan> - nothing validates that the key
   // itself looks like a date, only that each value is a well-formed
   // DayPlan. A garbage key is not corruption the app needs to guard
-  // against: every reader (DayView, CalendarView, yearGrid) only ever
-  // looks a day up by a key it computed itself from a real Date, so an
+  // against: every reader (DayView, CalendarView) only ever looks a day
+  // up by a key it computed itself from a real Date, so an
   // entry filed under a nonsense key is inert - present in the data,
   // never reachable through the UI - not a crash waiting to happen.
   const payload = JSON.stringify({

@@ -101,8 +101,9 @@ millisecond assertion left in the suite. Two shapes:
 
 - `measureSlowdown(baseline, load, operation)` for anything that reads the
   store. The baseline is a parameter rather than always-empty, because the
-  honest baseline differs per test: for a year strip it is an empty store,
-  since the same 366 cells are drawn either way and only the lookups change;
+  honest baseline differs per test: for a month grid it is an empty store,
+  since the same forty-two cells are drawn either way and only the lookups
+  change;
   for a list of two hundred rows it is a *small* list, because two hundred rows
   genuinely do cost more than none, and the question worth asking is whether
   they cost proportionally more or quadratically more.
@@ -1322,3 +1323,57 @@ North line's peek and the explanation bubble are the same shape by hand.
 The North card is the same rule from the other side: a card that arrives
 in the flow above the day and leaves again moves the day twice, so it is a
 sheet over the day since v2.6 (section 4).
+
+## 25. A state has to earn its place
+
+Section 21's rule for a setting, applied to the places a thing can be. A
+state - a shelf, a list, a view, a mode - stays only if **the owner would
+actually tell it apart from the one beside it.** Not "they are different in
+the code"; different from the chair, in what the person does with each and
+what each does back. If the one sentence that tells them apart cannot be
+written from the owner's side, they are one state drawn twice, and the
+extra one is a decision at the moment of writing that this app exists to
+take away.
+
+The owner's rule, from the v2.7 brief, after a count: a task that was not
+for today could live in five places - Notes, Inbox, Backlog, today with no
+time, Set aside - for a person whose whole aim was minimal decision energy.
+
+What it settled:
+
+- **Inbox and Backlog are one list, Later.** The sentence that told them
+  apart was "by which fold it is under": the rows looked the same, both had
+  the same two ways out, and "decided" was never visible on a row. Later
+  keeps the Backlog's mechanics and the Inbox's cheap way in. See DECISIONS
+  "Later, where two shelves were".
+- **A float and Later are two states.** One is on today, the other is on
+  no day. That is a difference the owner acts on every morning, and it
+  stays.
+- **Set aside and a float are two states.** A set-aside block keeps its
+  time and its length and waits off the list, off the grid and off the
+  score, on a strip that only exists on today; a float is on the list and
+  counted. Nothing an interruption takes off the day leaves it - section
+  12 - and the strip is where it waits.
+- **The Year view went.** What it showed that Month does not is the shape
+  of a year, opened at most once a year; what it had become was a
+  three-tone heatmap, the one thing its own decision said it must never
+  be, and nothing routed to it. See DECISIONS "The Year view goes".
+
+### No new decisions
+
+The older rule this one grew from, written down at last: **no change may
+add a question before the day can start, and no feature may cost one more
+decision a day.** Quick-add's controls open holding an answer (section
+16), a template decides a Tuesday once (DAILY section 1), the replan sheet
+proposes rather than asks (section 12), and the evening card asks nothing
+(section 15) - each is this rule in one place.
+
+Its reason is not decision fatigue. That picture - each choice drains a
+finite battery - rests on ego depletion, which came out indistinguishable
+from zero across twenty three laboratories (RESEARCH-ADHD section 9). The
+reason that holds is the maintenance burden: the time cost of upkeep is a
+leading cause of people quitting a planner, seventy percent inside a
+hundred days by the largest review (section 11), and a planner whose
+upkeep needs the executive function it exists to lend is self-defeating.
+Every extra step is another place to leave, and a person who has left is
+not helped by anything the app does next.

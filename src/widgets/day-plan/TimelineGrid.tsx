@@ -394,8 +394,10 @@ export interface TimelineGridProps {
  * ordinary, fully accessible row in the task list below, with its title,
  * time, checkbox and controls intact, and duplicating that as a second,
  * worse, non-interactive structure would only flood the page with
- * redundant stops - see `YearStrip.tsx`'s own reasoning for the same
- * trade. Gaps are different: they are the one thing on this grid with a
+ * redundant stops; hiding a structure that only repeats what an accessible
+ * one already says takes nothing from anybody, and a screen reader that
+ * met the same anchor twice would be worse off than one that met it once.
+ * Gaps are different: they are the one thing on this grid with a
  * real action behind them, so they render as real, focusable buttons in
  * their own layer, deliberately pulled out from under the aria-hidden
  * decorative layer rather than nested inside it - an aria-hidden ancestor

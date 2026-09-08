@@ -108,8 +108,8 @@
   const days = {}
   days[today] = { date: today, templateId: tmplWork, dayType: 'full', autoApplied: true, updatedAt: stamp, tasks: todayTasks }
 
-  // A fortnight behind, so the calendar, the year strip and Review have
-  // something real to draw rather than an empty grid.
+  // A fortnight behind, so the calendar and Review have something real to
+  // draw rather than an empty grid.
   for (let back = 1; back <= 40; back++) {
     const d = shift(-back)
     const weekday = new Date(now.getTime() - back * 86400e3).getDay()
@@ -175,15 +175,12 @@
     days,
     settings: {
       theme: { presetId: 'dark', mode: 'dark', overrides: {} },
-      enabledWidgets: ['day-plan', 'year-strip'],
       timelineExpanded: true,
       dayLayoutFocus: 'both',
       density: 'comfortable',
       textScale: 'm',
-      reminder: { enabled: false, everyMinutes: 20, text: 'Stand up, drink water' },
       sleepProfiles: [{ id: 'default', name: 'Weeknights', window: { start: '23:00', end: '07:00' } }],
       weekdayTemplates: { 1: tmplWork, 2: tmplWork, 3: tmplWork, 4: tmplWork, 5: tmplWork, 0: tmplRest, 6: tmplRest },
-      taskReminder: { enabled: true, minutesBefore: 10 },
       north: { afterASlowDay: true, onMonday: true },
       eveningClose: { enabled: true, at: '21:30', askBestMoment: true },
     },

@@ -30,9 +30,10 @@ const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
  * useful; a tracker that turns the week into a target is the thing this app
  * has refused to be since its first commit. So there are no goals here, no
  * percentages presented as scores, nothing red, and nothing that says a week
- * was bad. The bars are the shape of what happened. The streak is the one
- * borderline figure, and it lives here rather than on the day view for
- * exactly that reason - see `highlightStreak`.
+ * was bad. The bars are the shape of what happened. There was a streak here
+ * until v2.7, kept off the day view and worded as a description rather than
+ * a score, but a counter that resets to zero is a rule however it is worded,
+ * and a missed day does not damage a habit - docs/RESEARCH-ADHD.md section 8.
  */
 export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }) {
   const data = useAppData()
@@ -134,11 +135,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
               label="Key tasks"
               value={stats.highlights > 0 ? `${stats.highlightsDone} of ${stats.highlights}` : 'none set'}
               note={stats.highlights > 0 ? `up to ${KEY_TASKS_PER_DAY} a day` : undefined}
-            />
-            <Figure
-              label="Streak"
-              value={stats.streak === 0 ? 'none' : `${stats.streak} ${stats.streak === 1 ? 'day' : 'days'}`}
-              note={stats.streak > 0 ? 'with a key task done' : undefined}
             />
           </dl>
 
