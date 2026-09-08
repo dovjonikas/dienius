@@ -225,7 +225,7 @@ function NewListForm({ onDone }: { onDone: () => void }) {
         {/* Singular, because that is the form somebody thinks in when naming
             it, and the plural is derivable from it far more often than the
             other way round. */}
-        <div className="field">
+        <div className="field field-unit">
           <span className="field-label">One of them is a</span>
           {/* The words lists are usually counted in, as chips, and a box for
               the rest. Typing was never hard; choosing is one press. */}
@@ -244,7 +244,7 @@ function NewListForm({ onDone }: { onDone: () => void }) {
           </div>
           <input value={unit} onChange={e => pickUnit(e.target.value)} placeholder="or type one" aria-label="Another unit" />
         </div>
-        <label className="field">
+        <label className="field field-short">
           <span className="field-label">Short form</span>
           <input
             value={short}
@@ -375,7 +375,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
               this value is stored, where `validate` only accepts a hex, and
               the categories are the owner's to rename now, so a dot would
               have quietly meant something else a week later. */}
-          <div className="field">
+          <div className="field field-dot">
             <span className="field-label">Dot</span>
             <div className="library-colors" role="group" aria-label={`Colour for ${list.name}`}>
               <button
