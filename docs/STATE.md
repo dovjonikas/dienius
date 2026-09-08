@@ -285,7 +285,8 @@ wave that lived with it.
 
 | Commit | What it is |
 |---|---|
-| `PENDING` | The header read again by the owner: "the date text should not leave the calendar's bounds, and Working day and Replan and all the rest are somehow at random gaps." Both were the same cause. The day's block is the month's own 240px now - its left edge and its right edge the calendar's - holding two rows: the arrows and the day's word, then the date across the whole block. The heading is "Today" or the weekday and the line under it is the rest, because the whole form is 250px in that type and the cell beside the arrows is 136. The measuring ghost is gone: the block is one width because the column is, which is what it was for, and what was left of it after a short day's name was the dead space being read as a gap. The chip after the block now starts where the timeline starts |
+| `6aa72a1` | The header read again by the owner: "the date text should not leave the calendar's bounds, and Working day and Replan and all the rest are somehow at random gaps." Both were the same cause. The day's block is the month's own 240px now - its left edge and its right edge the calendar's - holding two rows: the arrows and the day's word, then the date across the whole block. The heading is "Today" or the weekday and the line under it is the rest, because the whole form is 250px in that type and the cell beside the arrows is 136. The measuring ghost is gone: the block is one width because the column is, which is what it was for, and what was left of it after a short day's name was the dead space being read as a gap. The chip after the block now starts where the timeline starts |
+| `0f0cae1` | The audit's thirteen screenshots that show that header, retaken on it |
 
 #### The brief, as understood
 
