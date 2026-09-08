@@ -46,6 +46,22 @@ const DAY_TYPES: { value: DayType; label: string }[] = [
   { value: 'rest', label: 'Rest' },
 ]
 
+/** The word a column's day type shows when it is not being chosen. Absent
+ *  means the column takes the week's own type, which is what the option in
+ *  the select says too - the same words in both places. */
+function typeLabel(type: DayType | undefined): string {
+  return DAY_TYPES.find(t => t.value === type)?.label ?? 'Week default'
+}
+
+/**
+ * The name one column answers to while a time is being chosen against it -
+ * see `lib/timeGhost.ts`. Per weekday rather than per editor, so the
+ * candidate is drawn on the day it would land on and on no other.
+ */
+export function ghostKeyFor(day: number): string {
+  return `template:${day}`
+}
+
 /** Which days one press puts a block on. */
 export type AddScope = 'day' | 'weekdays' | 'weekend' | 'all'
 
@@ -109,6 +125,11 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   const [addScope, setAddScope] = useState<AddScope>('day')
   const [editScope, setEditScope] = useState<'one' | 'group'>('group')
   const [copyFrom, setCopyFrom] = useState<number | null>(null)
+  // Which column has its day type open, if any. One at a time, and closed
+  // on open: the seven column feet carried seven select boxes for a question
+  // most weeks never answer, and the word each of them was showing was
+  // "Week default". The value still shows; the choosing is a press away.
+  const [typeOpenDay, setTypeOpenDay] = useState<number | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
   const [blockTime, setBlockTime] = useState('')
@@ -384,19 +405,36 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               </ul>
 
               <div className="wt-column-foot">
-                <select
-                  className="setting-select wt-day-type"
-                  aria-label={`Day type for ${label}`}
-                  value={override?.type ?? ''}
-                  onChange={e => setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })}
-                >
-                  <option value="">Week default</option>
-                  {DAY_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
+                {typeOpenDay === day ? (
+                  <select
+                    className="setting-select wt-day-type"
+                    aria-label={`Day type for ${label}`}
+                    autoFocus
+                    value={override?.type ?? ''}
+                    onChange={e => {
+                      setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })
+                      setTypeOpenDay(null)
+                    }}
+                    onBlur={() => setTypeOpenDay(null)}
+                  >
+                    <option value="">Week default</option>
+                    {DAY_TYPES.map(t => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    type="button"
+                    className="wt-day-type-summary"
+                    aria-expanded={false}
+                    aria-label={`Day type for ${label}: ${typeLabel(override?.type)}. Change`}
+                    onClick={() => setTypeOpenDay(day)}
+                  >
+                    {typeLabel(override?.type)}
+                  </button>
+                )}
 
                 {sleepProfiles.length > 1 && (
                   <select

@@ -129,6 +129,10 @@ interface TemplateEditorProps {
 // needed on save or cancel the way a single shared state tree would need.
 function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSave, onCancel }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
+  // Closed on every open, including on a template that already carries a
+  // type: the value is on the line above it either way, and what is hidden
+  // is the question, not the answer.
+  const [typeOpen, setTypeOpen] = useState(false)
   const [blockTime, setBlockTime] = useState('')
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
@@ -231,6 +235,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
     }))
   }
 
+  // The word on the summary line. A template saved before day types existed
+  // has no type at all and is a full day everywhere else in the app, so it
+  // says so here too rather than falling back to a blank line.
+  const typeLabel = DAY_TYPES.find(t => t.value === draft.type)?.label ?? 'Full day'
+
   return (
     <div className="template-editor">
       {/* The name, and the colour as a bullet beside it. This opened with a
@@ -252,33 +261,75 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           onChange={color => setDraft({ ...draft, color })}
         />
       </div>
-      <div className="day-type-picker">
-        <Explain id="day-type">
-          <span className="muted">Day type</span>
-        </Explain>
-        <div className="segmented" role="group" aria-label="Day type">
-          {DAY_TYPES.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              className={draft.type === opt.value ? 'active' : ''}
-              aria-pressed={draft.type === opt.value}
-              onClick={() => setDraft({ ...draft, type: opt.value })}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+      {/* The day type: one quiet line under the name, and the four values
+          one press behind it.
+
+          It used to open the form - a segmented control of four buttons
+          above the timeline and the blocks, the largest question on a screen
+          that exists to hold a day's worth of blocks, and the answer is Full
+          day on all but a handful of templates anybody builds. The mechanism
+          is untouched. All four values still exist, still save, still stamp,
+          and still decide what `dayScore` counts; shift and night are still
+          separate values for the reason types.ts gives. What changed is how
+          much room a rare question takes before it is asked - CONVENTIONS
+          section 25, a state has to earn its place, applied to a control.
+
+          The value is always on screen, because the value is a fact about
+          this template. Only the choosing is folded away. */}
+      <div className="day-type">
+        <button
+          type="button"
+          className="day-type-summary"
+          aria-expanded={typeOpen}
+          aria-controls="day-type-options"
+          aria-label={`Day type: ${typeLabel}. Change`}
+          onClick={() => setTypeOpen(open => !open)}
+        >
+          <span>{typeLabel}</span>
+          <span className="day-type-change">change</span>
+        </button>
+        {typeOpen && (
+          <div className="day-type-options" id="day-type-options">
+            <div className="day-type-picker">
+              <Explain id="day-type">
+                <span className="muted">Day type</span>
+              </Explain>
+              <div className="segmented" role="group" aria-label="Day type">
+                {DAY_TYPES.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={draft.type === opt.value ? 'active' : ''}
+                    aria-pressed={draft.type === opt.value}
+                    onClick={() => setDraft({ ...draft, type: opt.value })}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* What the choice changes, in the words of the value selected -
+                what counts toward the day, which is the whole of what a day
+                type does. The four labels say what a day is called; this
+                says what picking one does. */}
+            <p className="muted day-type-note" aria-live="polite">
+              <Explain id={`day-type-${draft.type}` as const} inline />
+            </p>
+            {/* And what it does not do. The window free time is measured
+                against comes from the sleep schedule the template points at
+                - see computeCapacity, which takes a profile id and no day
+                type at all - so the question the four buttons raise is
+                answered here rather than left to be guessed. Only where
+                there is a second schedule to point at: with one, there is
+                nothing this could change. */}
+            {sleepProfiles.length > 1 && (
+              <p className="muted day-type-note">
+                Free time is measured against the sleep schedule, not against this.
+              </p>
+            )}
+          </div>
+        )}
       </div>
-      {/* What the choice actually changes, under the choice, in the words of
-          the value that is selected. Four buttons labelled Full, Shift,
-          Night and Rest say what they are called and nothing about what
-          picking one does to the day, and the one line that used to sit here
-          only appeared once a day type other than Full had already been
-          picked - which is after the moment somebody needed it. */}
-      <p className="muted day-type-note" aria-live="polite">
-        <Explain id={`day-type-${draft.type}` as const} inline />
-      </p>
       {sleepProfiles.length > 1 && (
         <div className="day-type-picker">
           <Explain id="sleep-schedule">

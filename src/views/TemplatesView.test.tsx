@@ -181,11 +181,62 @@ test('editing a template loads each block\'s ongoing state', async () => {
   expect(screen.getByRole('button', { name: 'Standing item is ongoing' })).toBeInTheDocument()
 })
 
+/**
+ * The four values sit behind the summary line - see the day type note in
+ * TemplatesView. Every test that picks one opens it the way a person does.
+ */
+async function openDayType(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: /^Day type: .+. Change$/ }))
+}
+
+test('the editor opens on Full day, with no choice on the screen until it is asked for', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+
+  // The value is there, because the value is a fact about this template.
+  expect(screen.getByRole('button', { name: 'Day type: Full day. Change' })).toBeInTheDocument()
+  // The question is not.
+  expect(screen.queryByRole('group', { name: 'Day type' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Shift' })).not.toBeInTheDocument()
+
+  await openDayType(user)
+  expect(screen.getByRole('group', { name: 'Day type' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Full day' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('a template saved with no press at all is a full day', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Plain')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].type).toBe('full')
+})
+
+test('a type chosen behind the line is kept, and shows on the line when the template is opened again', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Rest')
+  await openDayType(user)
+  await user.click(screen.getByRole('button', { name: 'Rest' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].type).toBe('rest')
+
+  await user.click(screen.getByRole('button', { name: 'Edit Rest' }))
+  expect(screen.getByRole('button', { name: 'Day type: Rest. Change' })).toBeInTheDocument()
+  // Still closed: what is folded away is the question, not the answer.
+  expect(screen.queryByRole('group', { name: 'Day type' })).not.toBeInTheDocument()
+})
+
 test('picking a day type reveals the core toggle, and a block marked core saves that way', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Night shift')
+  await openDayType(user)
   await user.click(screen.getByRole('button', { name: 'Shift' }))
   await user.type(screen.getByPlaceholderText('09:00'), '19:00')
   await user.type(screen.getByPlaceholderText('What happens'), 'Clock in')
@@ -211,6 +262,8 @@ test('editing a shift template loads its type and each block\'s core state', asy
   })
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  expect(screen.getByRole('button', { name: 'Day type: Shift. Change' })).toBeInTheDocument()
+  await openDayType(user)
   expect(screen.getByRole('button', { name: 'Shift' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('button', { name: 'Clock in is core' })).toBeInTheDocument()
 })
@@ -225,6 +278,7 @@ test('switching a template from shift back to full hides the core toggles withou
   })
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  await openDayType(user)
   await user.click(screen.getByRole('button', { name: 'Full day' }))
   expect(screen.queryByRole('button', { name: 'Clock in is core' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Save template' }))

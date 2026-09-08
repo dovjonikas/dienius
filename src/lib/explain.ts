@@ -111,23 +111,23 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   },
   'day-type': {
     term: 'Day type',
-    text: 'What kind of day this is, which is the app deciding what counts as a good one. A day you were never going to spend planning should not be scored as though you were.',
+    text: 'What counts toward the day, and nothing else: a full day counts everything on the list, and a shift, an overnight or a rest day counts only the blocks marked Core. That mark appears on the blocks the moment one of the three is chosen.',
   },
   'day-type-full': {
     term: 'Full day',
-    text: 'A day that is yours, where everything on the list counts toward how it went.',
+    text: 'Everything on the list counts toward the day.',
   },
   'day-type-shift': {
     term: 'Shift',
-    text: 'A day mostly spent at work, where only the blocks you marked core are scored.',
+    text: 'Only blocks marked Core count toward the day.',
   },
   'day-type-night': {
     term: 'Overnight',
-    text: 'A night shift, scored on its core blocks, with sleep landing in the day rather than around it.',
+    text: 'Only blocks marked Core count toward the day.',
   },
   'day-type-rest': {
     term: 'Rest',
-    text: 'A day off, scored on its core blocks only. Doing nothing else on it is the point, not a shortfall.',
+    text: 'Only blocks marked Core count toward the day.',
   },
   'replan-interrupt': {
     term: 'Something came up',

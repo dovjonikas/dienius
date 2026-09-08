@@ -4115,6 +4115,75 @@ button.primary {
   flex-wrap: wrap;
 }
 
+/* The day type as one line until it is asked for - see TemplatesView. The
+   value in the body's own colour because it is a fact about this template,
+   and the way in beside it in the muted one because it is an offer. No
+   border and no fill: a segmented control of four buttons is what this
+   replaced, and drawing the summary as a control of its own would have kept
+   the weight it was folded away to lose. */
+.day-type,
+.day-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  align-items: flex-start;
+}
+
+.day-type { margin-bottom: var(--s3); }
+
+.day-type-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--touch);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.day-type-change {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.day-type-summary:hover .day-type-change,
+.day-type-summary:focus-visible .day-type-change {
+  color: var(--text);
+}
+
+.day-type-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
+/* The week editor's own, in a column foot that is 128px wide at its
+   narrowest: the same line, the same two weights, one size down. */
+.wt-day-type-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-align: left;
+}
+
+.wt-day-type-summary:hover,
+.wt-day-type-summary:focus-visible { color: var(--text); }
+
+.wt-day-type-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-control);
+}
+
 /* The plan's spec called for 32x32 swatches; bumped to the 44x44 minimum
    touch target so they are comfortably tappable on a phone. The gap is
    trimmed to 8px so the row still fits without horizontal scroll at 375px. */

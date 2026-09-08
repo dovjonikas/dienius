@@ -175,6 +175,11 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     if (id === 'ongoing' || id === 'day-type' || id.startsWith('day-type-') || id === 'sleep-schedule') {
       await user.click(screen.getByRole('button', { name: /Edit Workday/ }))
     }
+    // The day type's four values, and the term over them, live behind the
+    // summary line since the control was folded away.
+    if (id === 'day-type' || id.startsWith('day-type-')) {
+      await user.click(screen.getByRole('button', { name: /^Day type: / }))
+    }
     // The kind question is behind New template, and the week editor's own two
     // terms are behind choosing the week.
     if (id === 'template-day' || id === 'template-week' || id === 'add-to' || id === 'copy-to') {
