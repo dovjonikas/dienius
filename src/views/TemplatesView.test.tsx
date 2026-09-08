@@ -615,7 +615,7 @@ test('a block can be moved up the list with the keyboard, and stays where it is 
 })
 
 // A nudge past either end is somebody meaning "first", not a mistake to
-// reject - the same reading moveBacklogItem already takes of the same gesture.
+// reject - the same reading moveLaterItem already takes of the same gesture.
 test('nudging the first block up changes nothing rather than losing it', async () => {
   const user = userEvent.setup()
   actions.addTemplate({

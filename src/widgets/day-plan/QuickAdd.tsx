@@ -45,13 +45,12 @@ export interface QuickAddProps {
 }
 
 /**
- * Where Enter sends what is typed. Three shelves, one field: the day, the
- * inbox, or the backlog. A mode rather than three boxes - one input with one
- * cursor, and the thing being typed goes wherever the toggle says, so
- * capturing costs a tap once rather than a decision every time about which
- * box to aim at.
+ * Where Enter sends what is typed. Two shelves, one field: the day, or
+ * Later. A mode rather than two boxes - one input with one cursor, and the
+ * thing being typed goes wherever the toggle says, so capturing costs a tap
+ * once rather than a decision every time about which box to aim at.
  */
-type CaptureMode = 'task' | 'inbox' | 'backlog'
+type CaptureMode = 'task' | 'later'
 
 /** What each shelf asks for, in its own words. */
 const PLACEHOLDERS: Record<CaptureMode, string> = {
@@ -60,8 +59,7 @@ const PLACEHOLDERS: Record<CaptureMode, string> = {
   // longer than this fits beside the two controls. The tour is where Enter
   // is taught; a placeholder is not the place for a sentence.
   task: 'Add a task',
-  inbox: 'Catch a thought, decide later...',
-  backlog: 'Something to do, just not today...',
+  later: 'Something to do, just not today',
 }
 
 
@@ -199,25 +197,15 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   }
 
   function handleAdd() {
-    if (captureMode === 'backlog') {
-      // Parsed like a task, because that is what it is - a decided task that
-      // simply has no day. A time typed into the line is dropped rather than
-      // kept: there is no day for it to be a time on, and silently storing
-      // one would make the item disagree with itself the moment it is pulled
-      // onto a Tuesday.
+    if (captureMode === 'later') {
+      // Parsed like a task, because that is what it will be - a task that
+      // simply has no day yet. A time typed into the line is dropped rather
+      // than kept: there is no day for it to be a time on, and silently
+      // storing one would make the item disagree with itself the moment it
+      // is pulled onto a Tuesday.
       const parsed = parseQuickAdd(input)
       if (!parsed) return
-      actions.addBacklogItem({ title: parsed.title, category: newCategory, minutes: effectiveMinutes })
-      setInput('')
-      clearDraft()
-      return
-    }
-    if (captureMode === 'inbox') {
-      // Straight in, exactly as typed - no parsing, because an inbox item is
-      // not a task yet and a time or a duration in it is just part of the note
-      // somebody wrote to themselves.
-      if (!input.trim()) return
-      actions.addInboxItem(input)
+      actions.addLaterItem({ title: parsed.title, category: newCategory, minutes: effectiveMinutes })
       setInput('')
       clearDraft()
       return
@@ -238,10 +226,11 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
     clearDraft()
   }
 
-  // A backlog item has no day, so it has no hour - but it does have a size,
-  // which is the whole difference between it and an inbox line.
+  // A Later item has no day, so it has no hour - but it does have a size and
+  // a colour, and both are carried onto the day when it is pulled, so the
+  // duration control and the category picker stay in both modes. Only the
+  // time control follows the mode.
   const showsTime = captureMode === 'task'
-  const showsDuration = captureMode !== 'inbox'
 
   const timeLabel = effectiveTime ?? 'No time'
   const timeTitle = fromText
@@ -267,26 +256,18 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
         </button>
         <button
           type="button"
-          className={captureMode === 'inbox' ? 'active' : ''}
-          aria-pressed={captureMode === 'inbox'}
-          onClick={() => setCaptureMode('inbox')}
+          className={captureMode === 'later' ? 'active' : ''}
+          aria-pressed={captureMode === 'later'}
+          onClick={() => setCaptureMode('later')}
         >
-          Inbox
-        </button>
-        <button
-          type="button"
-          className={captureMode === 'backlog' ? 'active' : ''}
-          aria-pressed={captureMode === 'backlog'}
-          onClick={() => setCaptureMode('backlog')}
-        >
-          Backlog
+          Later
         </button>
       </div>
 
       <div className="quick-add-row">
-        {/* An inbox line has no day and therefore no hour and no length, so
-            both controls go rather than sit there greyed out - a disabled
-            control still asks to be read. */}
+        {/* A Later line has no day and therefore no hour, so the time control
+            goes rather than sitting there greyed out - a disabled control
+            still asks to be read. */}
         {showsTime && (
           <div className="quick-add-time-control time-stepper" ref={timeRef} data-tour="quick-add-time">
             <button
@@ -358,14 +339,12 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
         {/* The one duration control - DurationControl.tsx - opening on the
             length remembered from last time. Four chips here rather than
             six: the row is narrow, and quick-add's tasks are the short ones. */}
-        {showsDuration && (
-          <DurationControl
-            minutes={effectiveMinutes}
-            choices={DURATION_CHOICES}
-            onChange={minutes => minutes !== undefined && pickDuration(minutes)}
-            tour="quick-add-duration"
-          />
-        )}
+        <DurationControl
+          minutes={effectiveMinutes}
+          choices={DURATION_CHOICES}
+          onChange={minutes => minutes !== undefined && pickDuration(minutes)}
+          tour="quick-add-duration"
+        />
       </div>
 
       {/* What the line was understood as, live, before Enter is pressed.
@@ -375,7 +354,7 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
           the parse removes the doubt at the moment it exists, which is
           cheaper than an error afterwards. Nothing here is a control: it is
           the input describing itself. */}
-      {draft && showsDuration && (
+      {draft && (
         <div className="quick-add-chips" aria-live="polite">
           {showsTime && effectiveTime && <span className="quick-add-chip is-time">{effectiveTime}</span>}
           <span className="quick-add-chip is-size">{formatDuration(effectiveMinutes)}</span>
@@ -395,22 +374,20 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
           moment the thought is meant to be leaving your head. Each is a real
           toggle button carrying its own name, so the choice is reachable and
           readable without relying on the colour. */}
-      {showsDuration && (
-        <div className="category-picker" role="group" aria-label="Category for the next task">
-          {data.categories.map(c => (
-            <button
-              key={c.id}
-              type="button"
-              className={c.id === newCategory ? 'category-swatch selected' : 'category-swatch'}
-              style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
-              aria-pressed={c.id === newCategory}
-              aria-label={c.label}
-              data-tip={c.label}
-              onClick={() => setNewCategory(c.id)}
-            />
-          ))}
-        </div>
-      )}
+      <div className="category-picker" role="group" aria-label="Category for the next task">
+        {data.categories.map(c => (
+          <button
+            key={c.id}
+            type="button"
+            className={c.id === newCategory ? 'category-swatch selected' : 'category-swatch'}
+            style={{ ['--cat' as string]: resolvedColor(c) } as React.CSSProperties}
+            aria-pressed={c.id === newCategory}
+            aria-label={c.label}
+            data-tip={c.label}
+            onClick={() => setNewCategory(c.id)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

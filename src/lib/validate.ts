@@ -237,6 +237,17 @@ const TASK = record({
   repeatOf: optional(string),
   origin: optional(ORIGIN),
   tourCreated: optional(boolean),
+  // These three sat on the backlog item's table until v2.7, where they
+  // checked nothing: a backlog item never carried them. They are Task's -
+  // the note a task was made from, the set-aside flag, the latest start -
+  // and a payload with a set-aside that is not a boolean is exactly the
+  // kind of half-trusted file this guard exists to refuse whole.
+  fromNote: optional(string),
+  setAside: optional(boolean),
+  // A bare string like `time` above, for the same reason: a "9:30" typed by
+  // hand into the latest-start field breaks one placement, not the whole
+  // backup that carries it.
+  latest: optional(string),
 })
 
 const TEMPLATE_BLOCK = record({
@@ -323,6 +334,10 @@ const IF_THEN_ENTRY = record({
   goalId: optional(string),
 })
 
+// Nothing has written one since v2.7, but a backup or a sync payload from
+// before then still carries them, and a file is refused whole when any part
+// of it fails - so the shape stays until no such payload can turn up. What
+// arrives here is folded into Later on the way in; see lib/later.ts.
 const INBOX_ITEM = record({ id: string, text: string, captured: string })
 
 // A label is capped like every other free string in a payload, and required
@@ -339,14 +354,13 @@ const CATEGORY = record({
   color: optional(color),
 })
 
-const BACKLOG_ITEM = record({
+// A Later item. The list it sits in is still called `backlog` in the file -
+// see `LaterItem` in types.ts for why the wire name did not move.
+const LATER_ITEM = record({
   id: string,
   title: string,
   category: categoryRef,
   minutes: optional(minutes),
-  fromNote: optional(string),
-  setAside: optional(boolean),
-  latest: optional(clockTime),
 })
 
 // A picture's id and shape. The blob is in IndexedDB and never in a
@@ -518,7 +532,7 @@ const STORED_APP_DATA = record({
   settings: SETTINGS,
   ifThens: optional(listOf(IF_THEN_ENTRY)),
   inbox: optional(listOf(INBOX_ITEM)),
-  backlog: optional(listOf(BACKLOG_ITEM)),
+  backlog: optional(listOf(LATER_ITEM)),
   scratch: optional(listOf(SCRATCH_NOTE)),
   library: optional(listOf(LIBRARY_LIST)),
   goals: optional(listOf(GOAL)),

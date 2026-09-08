@@ -11,11 +11,11 @@ import { useSyncExternalStore } from 'react'
  * answers.
  *
  * A counter rather than a flag, so asking twice works twice - somebody who
- * types "backlog" into the palette, thinks better of it, and comes back a
+ * types "later" into the palette, thinks better of it, and comes back a
  * minute later gets the same behaviour both times.
  */
 
-export type CaptureShelf = 'task' | 'inbox' | 'backlog'
+export type CaptureShelf = 'task' | 'later'
 
 export interface CaptureRequest {
   shelf: CaptureShelf

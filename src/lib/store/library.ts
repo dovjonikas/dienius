@@ -216,9 +216,9 @@ export const libraryActions = {
    * what is wrong, it saves. Six actions would be six commits, six undo
    * entries and six sync stamps for one sitting.
    *
-   * `null` clears a field, `undefined` leaves it alone - the same distinction
-   * `updateBacklogItem` draws, and the only way one call can both set and
-   * unset without a second argument saying which.
+   * `null` clears a field, `undefined` leaves it alone - an emptied field
+   * and an untouched one are two different edits, and this is the only way
+   * one call can both set and unset without a second argument saying which.
    */
   updateLibraryItem(
     listId: string,

@@ -8,7 +8,7 @@ import { card, openFreshAt, quickAdd, stampWorkingDay, wednesdayAt } from './app
  *
  * The delete is the reason this test exists. Everything else here is a form,
  * and a form is what the unit tests are for; a delete rewrites tasks,
- * template blocks and backlog items in one commit, and the only honest way to
+ * template blocks and Later items in one commit, and the only honest way to
  * know that reached the day view is to look at the day view.
  */
 

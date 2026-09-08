@@ -202,7 +202,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
    * Moves a block to another position, clamped rather than refused.
    *
    * A drop past either end is somebody meaning "first" or "last", not a
-   * mistake to reject - the same reading `moveBacklogItem` already takes of
+   * mistake to reject - the same reading `moveLaterItem` already takes of
    * the same gesture.
    */
   function moveBlock(from: number, to: number) {
@@ -315,7 +315,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 to bottom, and until v2.0 the only way to change one was to
                 delete it and add it again in the right place. Dragged with a
                 finger or a pointer, nudged a place at a time with the arrows -
-                the same grip the backlog and the library lists already use. */}
+                the same grip Later and the library lists already use. */}
             <button
               type="button"
               className="library-item-grip"

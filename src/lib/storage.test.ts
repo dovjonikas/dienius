@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { defaultData, loadData, saveData, importJson, exportJson, STORAGE_KEY } from './storage'
 import { validate } from './validate'
+import { foldInbox } from './later'
 import type { Template } from './types'
 import { measureScaling } from '../test/stress'
 
@@ -533,22 +534,21 @@ test('importJson backfills ifThens for a legacy backup file', () => {
   expect(imported.ifThens).toEqual([])
 })
 
-test('a backup written before the backlog existed loads with an empty one', () => {
+test('a backup written before Later existed loads with an empty one', () => {
   // Every field added since v1.0 is optional so that data written before it
-  // existed still loads. This is the same test the inbox and ifThens already
-  // have, for the field added most recently.
+  // existed still loads. This is the same test ifThens already has, for the
+  // list that is called `backlog` in the file.
   const legacy = JSON.stringify({
     templates: [],
     days: {},
-    inbox: [{ id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' }],
     settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
   })
   const imported = importJson(legacy)
   expect(imported.backlog).toEqual([])
-  expect(imported.inbox).toHaveLength(1)
+  expect(imported.inbox).toEqual([])
 })
 
-test('a backlog item whose size is not a size is refused with the whole payload', () => {
+test('a Later item whose size is not a size is refused with the whole payload', () => {
   // validate() discards a payload whole rather than partly trusting it -
   // this is also the import path for a file somebody may have edited.
   const bad = JSON.stringify({
@@ -558,6 +558,57 @@ test('a backlog item whose size is not a size is refused with the whole payload'
     settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
   })
   expect(() => importJson(bad)).toThrow()
+})
+
+// --- the inbox, folded into Later on the way in ---------------------------
+//
+// Until v2.7 there were two undated shelves. A backup, a snapshot or an
+// older device's payload still carries both, and nothing past the storage
+// boundary should have to know: `foldInbox` in later.ts turns every inbox
+// line into a Later item at the door, once. See the doc comment there for
+// why the ids are kept and why the lines go on top.
+
+test('an old backup with inbox lines opens with them at the top of Later, in their order, and a tombstone for each', () => {
+  const old = JSON.stringify({
+    templates: [],
+    days: {},
+    inbox: [
+      { id: 'i2', text: 'Ask about the boiler', captured: '2026-09-02T08:00:00.000Z', updatedAt: '2026-09-02T08:00:00.000Z' },
+      { id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' },
+    ],
+    backlog: [{ id: 'b1', title: 'Move the ISA', minutes: 30 }],
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  const imported = importJson(old)
+  expect(imported.inbox).toEqual([])
+  expect(imported.backlog).toEqual([
+    // The inbox's own order first - it was newest-first - then Later as it was.
+    { id: 'i2', title: 'Ask about the boiler', updatedAt: '2026-09-02T08:00:00.000Z' },
+    { id: 'i1', title: 'Book the dentist' },
+    { id: 'b1', title: 'Move the ISA', minutes: 30 },
+  ])
+  // One tombstone per folded line, under its old name, so an older device
+  // that still holds the line deletes its copy rather than handing it back.
+  expect(imported.tombstones?.['inbox:i1']).toEqual(expect.any(String))
+  expect(imported.tombstones?.['inbox:i2']).toEqual(expect.any(String))
+  expect(imported.tombstones?.['backlog:b1']).toBeUndefined()
+})
+
+test('folding twice is folding once', () => {
+  const old = JSON.stringify({
+    templates: [],
+    days: {},
+    inbox: [{ id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' }],
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'] },
+  })
+  const once = importJson(old)
+  // Saved and loaded again: nothing is left to fold, so the state comes back
+  // as it was - one Later item, not two - and the second pass is a no-op
+  // that hands back the very same object rather than a copy.
+  const twice = importJson(JSON.stringify(once))
+  expect(twice.backlog).toEqual(once.backlog)
+  expect(twice.inbox).toEqual([])
+  expect(foldInbox(twice, '2026-09-03T00:00:00.000Z')).toBe(twice)
 })
 
 // --- color and CSS-value validation -------------------------------------
@@ -1251,7 +1302,7 @@ test('validate rejects a category with no label, an over-long one, or a colour t
  * wrote - but it is a loosening to "a string of a sane length", not to
  * anything at all.
  */
-test('validate accepts a made-up category id on a task, a block and a backlog item', () => {
+test('validate accepts a made-up category id on a task, a block and a Later item', () => {
   const data = defaultData()
   data.categories = [{ id: 'core', label: 'Deep work' }, { id: 'abc-123', label: 'Gym', color: '#4fa46a' }]
   data.days = { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 't1', title: 'Run', done: false, category: 'abc-123' }] } }

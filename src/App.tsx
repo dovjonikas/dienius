@@ -345,16 +345,16 @@ export function App() {
         requestReplan('low')
       },
     },
-    // The fourth shelf, reachable without going to the day view and finding
-    // the fold. What is typed here is a decided task with no day - see the
-    // doc comment on BacklogItem for why it is not an inbox line.
+    // Later, reachable without going to the day view and finding the fold.
+    // What is typed here has no day and is not asked for one - see the doc
+    // comment on LaterItem.
     {
-      id: 'backlog-add',
-      label: 'Add to backlog',
-      detail: 'Decided, but not for any particular day',
+      id: 'later-add',
+      label: 'Add to Later',
+      detail: 'Something to do, just not today',
       run: () => {
         openDay(todayKey())
-        requestCapture('backlog')
+        requestCapture('later')
         setFocusQuickAdd(n => n + 1)
       },
     },

@@ -66,7 +66,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - A template per weekday, so a new day opens already set up. A stamp by hand always wins
 - Repeating tasks: daily, weekdays or weekly, made into real tasks you can tick and move
 - Quick-add: a time control, the words, a length. "14:00 Call mom 45min" parses too, and the controls redraw to match
-- Four shelves for what is not on the day: scratch (one key, nothing asked), an inbox, a backlog with no dates and no ages, and a float on a day with no time
+- Three shelves for what is not on the day: notes (one key, nothing asked), Later - a list with no dates and no ages, in the order you would pull from it - and a float on a day with no time
 - Push twice, then decide: an unfinished task moves to tomorrow twice, after that you finish it, drop it, or mark it ongoing
 - What yesterday left, said once in a banner, moved forward in one tap, never on its own
 - An evening close: one sentence about the day at a time you set, or when the last thing is ticked. It never mentions what was not done

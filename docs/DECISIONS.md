@@ -877,7 +877,8 @@ thirty minutes it stops being information and takes the accent. Measured against
 the grid greys and the capacity line counts against, so the three can never disagree about when the day
 ends.
 
-**The inbox is a mode on the field that is already there.** One input with one cursor, and a toggle that
+**The inbox is a mode on the field that is already there.** (The inbox became Later in v2.7 - see "Later,
+where two shelves were" - and the mode is Later now; the reasoning below is why it is a mode.) One input with one cursor, and a toggle that
 says where the next Enter goes - capturing costs a tap once rather than a decision every time about which
 box to aim at. The text goes in exactly as typed, with no parsing: an inbox item is not a task yet, and a
 time inside it is part of the note somebody wrote to themselves.
@@ -1528,7 +1529,7 @@ in the sentence as a character. No migration, no rewrite, nothing to
 explain the next time an old note is read: it says what it said.
 
 **What is left is the way out, which was never a question.** A leading
-"!" or the Note/Task marker sends a line to the inbox instead, and it is
+"!" or the Note/Task marker sends a line to the inbox (Later, since v2.7) instead, and it is
 decided before Enter rather than after. That is not structure asked for
 at the moment of writing; it is the same one keystroke either way.
 
@@ -2079,3 +2080,51 @@ is a fixed content height on the label row with the hit area extended on
 both axes by the same padding-and-negative-margin, and then a check that
 the selected state's outline does not cross the meta line under it, which
 is why it was not done that way first.
+
+## Later, where two shelves were
+
+Until v2.7 a task that was not for today could be in an Inbox - a line
+nobody had decided about, kept exactly as typed, newest first - or in a
+Backlog - a decided task with no day, in the order you would pull it, with
+a size and a category if you gave it one. Two shelves, two folds under the
+day's list, two words on the field's toggle, two ways out of Notes. The
+v2.7 brief set one test for the pair: a sentence, from the owner's side,
+that tells an Inbox line from a Backlog item. If it could be written the
+two would stay; if not, they would merge.
+
+The honest sentence was "by which fold it is under". The rows looked the
+same. Both had the same two ways out - this day, or gone. And "decided",
+the word the Backlog was built on, was never visible on a row: a line sent
+on from the Inbox with one press arrived in the Backlog with no size and
+no category, while a line typed in Backlog mode arrived with both, so the
+only thing the word ever tracked was which button had been pressed. That
+sentence fails the test, and the two are one list called Later.
+
+**What Later keeps from each.** The Backlog's mechanics: an order that is
+the array's own, a grip and the arrow keys to change it, one press onto
+the day at the next free slot that holds the item, its size and colour
+carried, no age recorded, a plain count in `--faint` on the fold and on the
+week. The Inbox's cheap way in: Later on the field asks for no time, and a
+note that starts with `!` goes straight there without a second question.
+A new item lands at the end, as it did in the Backlog, because the order is
+the owner's and nothing in this app sorts a list for them.
+
+**What the code keeps, and why.** `LaterItem` is the old `BacklogItem`
+shape; the storage field is still `backlog` and the sync kind is still
+`'backlog'`, because those are the wire, and a device on an older build
+carries tombstones keyed `backlog:<id>` that have to keep matching. Every
+name a person reads says Later. On load, `normalizeLoaded` folds whatever
+an `inbox` holds into the top of Later in its own order - newest first, as
+the Inbox kept it - then the Backlog after it in its order, once, writing a
+tombstone for each folded line so a device that still has the old list
+deletes its copy on the next merge; the merge runs the same fold on its
+result before committing, so a payload from an older device is folded as
+soon as it arrives. `AppData.inbox` stays declared and empty for as long
+as such a payload can turn up.
+
+**What it cost.** A line typed in the field with no thought given to it
+now has a size and a category on it from the moment it lands, because the
+field's Later mode keeps the duration and category controls the Backlog
+mode had. That is a default, not a question - both controls open holding
+an answer, section 16 - and the alternative was a third mode on the toggle,
+which is the state this decision removed.

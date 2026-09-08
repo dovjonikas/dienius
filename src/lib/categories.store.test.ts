@@ -2,7 +2,7 @@ import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
 import { categorySlice, categoryUsage } from './store/categories'
 import { defaultData } from './storage'
-import type { AppData, BacklogItem, DayPlan, Task, Template } from './types'
+import type { AppData, DayPlan, LaterItem, Task, Template } from './types'
 
 /**
  * The list the owner authors, and the one part of it with a real decision in
@@ -77,7 +77,7 @@ test('the order is the array’s own, and a drag moves one place in it', () => {
   expect(getData().categories[0].id).toBe('routine')
 })
 
-test('a delete moves every task, template block and backlog item onto the target, in one commit', () => {
+test('a delete moves every task, template block and Later item onto the target, in one commit', () => {
   const templates: Template[] = [
     {
       id: 't1',
@@ -89,10 +89,11 @@ test('a delete moves every task, template block and backlog item onto the target
       ],
     },
   ]
-  const backlog: BacklogItem[] = [{ id: 'k1', title: 'Physio', category: 'health' }]
+  // Later, under its wire name - see LaterItem.
+  const later: LaterItem[] = [{ id: 'k1', title: 'Physio', category: 'health' }]
   seed({
     templates,
-    backlog,
+    backlog: later,
     days: day('2026-09-01', [
       task({ title: 'Run', category: 'health' }),
       task({ title: 'Write', category: 'core' }),
@@ -159,6 +160,6 @@ test('the usage count reads the three places a category can be pointed at, and n
       ...day('2026-09-02', [task({ category: 'core' })]),
     },
   })
-  expect(categoryUsage(getData(), 'health')).toEqual({ tasks: 2, blocks: 1, backlog: 1 })
-  expect(categoryUsage(getData(), 'meal')).toEqual({ tasks: 0, blocks: 0, backlog: 0 })
+  expect(categoryUsage(getData(), 'health')).toEqual({ tasks: 2, blocks: 1, later: 1 })
+  expect(categoryUsage(getData(), 'meal')).toEqual({ tasks: 0, blocks: 0, later: 0 })
 })

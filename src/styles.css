@@ -3869,11 +3869,11 @@ select:focus {
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-/* The Done fold and the Inbox fold are the same control with different
-   contents, and they now say so: one shape, one height, one caret, and a
-   count in a badge on both rather than parentheses on one and a pill on the
-   other. Two folds that look like two different components is the kind of
-   detail nobody names and everybody notices. */
+/* The Done fold and the Later fold are the same control with different
+   contents, and they say so: one shape, one height, one caret, and a count
+   on both rather than parentheses on one and a pill on the other. Two folds
+   that look like two different components is the kind of detail nobody
+   names and everybody notices. */
 .done-toggle {
   display: flex;
   align-items: center;
@@ -5241,7 +5241,7 @@ button.danger {
 }
 
 /* ------------------------------------------------------------------------
-   The utility dock: the timer, the stopwatch, the inbox and the nudge. All
+   The utility dock: the timer, the stopwatch, the notes and the nudge. All
    four are built from the same tokens as everything else and share the card's
    own radius and elevation - a floating widget that looks like it belongs to
    a different application is a floating widget people close.
@@ -5708,19 +5708,11 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
   font-size: var(--t-xs);
 }
 
-/* Everything caught and not yet decided about - see Inbox.tsx. Same fold as
-   the Done section, and the same reasoning: a place things go, not a place
-   work happens. */
-.inbox-section {
-  margin-top: var(--s1);
-  padding-top: var(--s1);
-  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-}
-
-.inbox-section.open .done-caret { transform: rotate(90deg); }
-
-/* The count, which is what this fold says most of the time. */
-.inbox-badge {
+/* The Done fold's count, which is what that fold says most of the time.
+   Accent-tinted where the Later count under it is plain --faint: a count
+   of finished things is the one number on this screen allowed to look like
+   something, and it is the only badge the column draws. */
+.done-badge {
   min-width: 20px;
   padding: 0 var(--s2);
   border-radius: var(--r-pill);
@@ -5731,83 +5723,6 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
   font-weight: 700;
   text-align: center;
   line-height: 18px;
-}
-
-.inbox-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.inbox-section:not(.open) .inbox-list { display: none; }
-
-.inbox-item {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  padding: var(--s2) var(--s1) var(--s2) var(--s3);
-  border-radius: var(--r-control);
-}
-
-.inbox-item + .inbox-item { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
-
-.inbox-item-text {
-  flex: 1;
-  min-width: 0;
-  color: var(--text);
-  font-size: var(--t-sm);
-  line-height: 1.4;
-}
-
-.inbox-item-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s1);
-  flex-shrink: 0;
-}
-
-.inbox-item-plan {
-  min-height: 28px;
-  padding: var(--s1) var(--s2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-xs);
-  white-space: nowrap;
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-
-.inbox-item-plan:hover { color: var(--text); border-color: var(--accent); }
-
-.inbox-item-delete {
-  width: 28px;
-  height: 28px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--r-round);
-  background: none;
-  color: var(--faint);
-  font-size: var(--t-md);
-  line-height: 1;
-}
-
-.inbox-item-delete:hover { color: var(--danger); }
-
-.inbox-item-delete.danger {
-  width: auto;
-  padding: 0 var(--s2);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--danger) 16%, transparent);
-  color: var(--danger);
-  font-size: var(--t-xs);
-}
-
-.inbox-item-plan:focus-visible,
-.inbox-item-delete:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 /* Bedtime, once it is close enough to matter - see SLEEP_NOTICE_MINUTES. */
@@ -6752,7 +6667,7 @@ button.danger:focus-visible {
      at the line, and the button is not floating in the column's leftover
      air. Not sticky, on purpose: on the one screen where the pane itself
      has to scroll - Focus at 1366x768 - a sticky footer sat over the
-     Backlog fold and the sweep read it as a covered control, which it was. */
+     Later fold and the sweep read it as a covered control, which it was. */
   .task-pane .task-pane-foot {
     display: block;
     flex: 0 0 auto;
@@ -11748,28 +11663,28 @@ main:has(.week) > .calendar {
   .quick-add-time-panel .time-picker-column { max-height: 160px; }
 }
 
-/* The backlog: decided, undated, pulled from.
+/* Later: undated, pulled from - widgets/day-plan/Later.tsx.
    ------------------------------------------------------------------------
-   Almost everything here is shared with the inbox above it, because they are
-   the same shape of thing: a fold, a count, rows with two actions. The two
-   differences are the two that matter.
+   The same fold as the Done section above it, and the same reasoning: a
+   place things go, not a place work happens. The two things it does
+   differently are the two that matter.
 
-   The count is in --faint on nothing, where the inbox badge is accent-tinted.
-   An inbox count is a queue length and it is meant to be emptied; a backlog
-   count is just how many things you have decided to do one day, and a number
-   that grows in a colour is a report card. Same rule as the scratch count -
-   see CONVENTIONS.md section 11.
+   The count is in --faint on nothing, where the Done badge is accent-tinted.
+   A count of finished things is a number worth looking at; a count of things
+   you have not got round to is just how many there are, and a number that
+   grows in a colour is a report card. Same rule as the scratch count - see
+   CONVENTIONS.md section 11.
 
    And a row carries a grip, because order is the only ranking this list has. */
-.backlog-section {
+.later-section {
   margin-top: var(--s1);
   padding-top: var(--s1);
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-.backlog-section.open .done-caret { transform: rotate(90deg); }
+.later-section.open .done-caret { transform: rotate(90deg); }
 
-.backlog-count {
+.later-count {
   min-width: 20px;
   color: var(--faint);
   font-size: var(--t-xs);
@@ -11777,15 +11692,15 @@ main:has(.week) > .calendar {
   text-align: center;
 }
 
-.backlog-list {
+.later-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.backlog-section:not(.open) .backlog-list { display: none; }
+.later-section:not(.open) .later-list { display: none; }
 
-.backlog-item {
+.later-item {
   display: flex;
   align-items: center;
   gap: var(--s2);
@@ -11793,12 +11708,12 @@ main:has(.week) > .calendar {
   border-radius: var(--r-control);
 }
 
-.backlog-item + .backlog-item { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
+.later-item + .later-item { border-top: 1px solid color-mix(in srgb, var(--border) 45%, transparent); }
 
-.backlog-item.is-dragging { opacity: 0.45; }
-.backlog-item.is-over { box-shadow: inset 0 2px 0 var(--accent); }
+.later-item.is-dragging { opacity: 0.45; }
+.later-item.is-over { box-shadow: inset 0 2px 0 var(--accent); }
 
-.backlog-item-main {
+.later-item-main {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -11806,13 +11721,13 @@ main:has(.week) > .calendar {
   gap: var(--s0);
 }
 
-.backlog-item-title {
+.later-item-title {
   color: var(--text);
   font-size: var(--t-sm);
   line-height: 1.35;
 }
 
-.backlog-item-meta {
+.later-item-meta {
   display: flex;
   align-items: center;
   gap: var(--s2);
@@ -11824,87 +11739,109 @@ main:has(.week) > .calendar {
    `.chip` sets a dark ink for a coloured background its callers supply
    inline, so borrowing it here without one would give a white pill with
    near-black text - loud, and wrong in the dark theme. */
-.backlog-item-cat {
+.later-item-cat {
   color: var(--cat, var(--muted));
 }
 
-.backlog-item-size { font-variant-numeric: tabular-nums; }
+.later-item-size { font-variant-numeric: tabular-nums; }
 
-.backlog-item-actions {
+.later-item-actions {
   display: flex;
   align-items: center;
   gap: var(--s1);
   flex-shrink: 0;
 }
 
-/* The third answer to an inbox line, beside "put it on this day" and
-   "delete it". Same shape as the first, quieter than both. */
-.inbox-item-later {
+/* The two ways out of a row: onto this day, or gone. */
+.later-item-plan {
   min-height: 28px;
   padding: var(--s1) var(--s2);
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: none;
-  color: var(--faint);
+  color: var(--muted);
   font-size: var(--t-xs);
   white-space: nowrap;
   transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
-.inbox-item-later:hover { color: var(--text); border-color: var(--border); }
+.later-item-plan:hover { color: var(--text); border-color: var(--accent); }
 
-@media (pointer: coarse) {
-  .inbox-item-later { min-height: var(--touch); }
-  .backlog-item .library-item-grip { min-height: var(--touch); }
+.later-item-delete {
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-md);
+  line-height: 1;
 }
 
-/* The inbox and backlog rows on a finger.
+.later-item-delete:hover { color: var(--danger); }
+
+.later-item-delete.danger {
+  width: auto;
+  padding: 0 var(--s2);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+  font-size: var(--t-xs);
+}
+
+.later-item-plan:focus-visible,
+.later-item-delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .later-item .library-item-grip { min-height: var(--touch); }
+}
+
+/* A Later row on a finger.
    ------------------------------------------------------------------------
    Found by measuring, which is the only way it could have been: the two
-   controls on an inbox row have been 28px tall since v1.4 and survived the
-   v1.6 touch pass because an inbox is collapsed by default and was empty
-   every time the audit ran. The backlog reuses the same two classes, so this
-   is one fix for both rather than a second copy of the same mistake.
+   controls on this row were 28px tall from v1.4 and survived the v1.6 touch
+   pass because the fold is collapsed by default and was empty every time
+   the audit ran.
 
    Height rather than a ::after overlay, which is the other way this app
-   reaches 44px. An overlay would work for one control and not for three:
-   a 44px-wide hit area on each of "Add to day", "Backlog" and the cross
+   reaches 44px. An overlay would work for one control and not for two side
+   by side: a 44px-wide hit area on each of "Onto this day" and the cross
    would have them stealing each other's taps, which is worse than the small
    target it replaced - the same reason .category-picker spaces its swatches
    out instead. So the row gives the actions their own line and lets them be
    full size, which on a phone reads better anyway: the words of the thing
    above, and what you can do about it below. */
 @media (pointer: coarse) {
-  .inbox-item,
-  .backlog-item {
+  .later-item {
     flex-wrap: wrap;
     row-gap: var(--s1);
   }
 
-  .inbox-item-text { flex: 1 0 100%; }
+  /* The row has a grip in front of its words, and the words share the
+     grip's line; only the actions wrap under. With the words on a full row
+     of their own the grip sat alone on a line above them, which the phone
+     walk found looking like a row that had lost its text. */
+  .later-item-main { flex: 1 1 0; min-width: 0; }
 
-  /* The backlog row has a grip in front of its words, and the words share
-     the grip's line; only the actions wrap under. With the words on a full
-     row of their own the grip sat alone on a line above them, which the
-     phone walk found looking like a row that had lost its text. */
-  .backlog-item-main { flex: 1 1 0; min-width: 0; }
-
-  .inbox-item-actions,
-  .backlog-item-actions {
+  .later-item-actions {
     flex: 1 0 100%;
     justify-content: flex-end;
     gap: var(--s2);
   }
 
-  .inbox-item-plan,
-  .inbox-item-later,
-  .inbox-item-delete {
+  .later-item-plan,
+  .later-item-delete {
     min-height: var(--touch);
     padding-left: var(--s3);
     padding-right: var(--s3);
   }
 
-  .inbox-item-delete { width: var(--touch); }
+  .later-item-delete { width: var(--touch); }
 }
 
 /* Library v2: one loud thing per list, everything else quiet.
@@ -12934,23 +12871,23 @@ main:has(.week) > .calendar {
 .segmented-quiet button { font-size: var(--t-sm); }
 
 /* ------------------------------------------------------------------------
-   Someday - views/week/SomedayStrip.tsx.
+   Later, under the week - views/week/LaterStrip.tsx.
 
-   The backlog, under the week, still saying nothing until it is opened. Every
-   rule the fourth shelf keeps on the day view it keeps here: a plain count in
-   --faint, no badge, no accent, no age, no nag.
+   The same list, still saying nothing until it is opened. Every rule the
+   shelf keeps on the day view it keeps here: a plain count in --faint, no
+   badge, no accent, no age, no nag.
    ------------------------------------------------------------------------ */
-.someday {
+.later-strip {
   flex: 0 0 auto;
   padding-top: var(--s1);
   border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
-.someday.open .done-caret { transform: rotate(90deg); }
+.later-strip.open .done-caret { transform: rotate(90deg); }
 
-.someday-list[hidden] { display: none; }
+.later-strip-list[hidden] { display: none; }
 
-.someday-list {
+.later-strip-list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s2);
@@ -12961,7 +12898,7 @@ main:has(.week) > .calendar {
   overflow-y: auto;
 }
 
-.someday-item {
+.later-strip-item {
   min-height: 30px;
   padding: var(--s1) var(--s3);
   border: 1px dashed var(--border);
@@ -12976,19 +12913,19 @@ main:has(.week) > .calendar {
   cursor: grab;
 }
 
-.someday-item:hover { border-style: solid; border-color: var(--muted); }
+.later-strip-item:hover { border-style: solid; border-color: var(--muted); }
 
-.someday-item.is-dragging {
+.later-strip-item.is-dragging {
   cursor: grabbing;
   border-style: solid;
   border-color: var(--accent);
   box-shadow: var(--e2);
 }
 
-.someday-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.later-strip-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @media (pointer: coarse) {
-  .someday-item { min-height: var(--touch); }
+  .later-strip-item { min-height: var(--touch); }
 }
 
 /* ------------------------------------------------------------------------
@@ -13062,8 +12999,8 @@ main:has(.week) > .calendar {
 .wt-column.is-active { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
 
 /* Every column is a drop target while something is being dragged, and says so
-   quietly - a dashed edge, the same language the Someday chips use for "no
-   day yet". */
+   quietly - a dashed edge, the same language the Later chips under the week
+   use for "no day yet". */
 .wt-column.is-dropping { border-style: dashed; border-color: var(--border); }
 
 .wt-day {

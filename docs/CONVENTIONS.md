@@ -561,7 +561,7 @@ writing, and every addition that asks something takes that value away. So:
   a question asked at the moment of writing, which is the thing this layer
   exists to avoid.
 - **A note that needs structure is not scratch any more.** It becomes a task,
-  an inbox line, or a document somewhere else. Do not add fields to
+  a Later item, or a document somewhere else. Do not add fields to
   `ScratchNote` to hold structure; add a way out instead.
 - **The way out asks once, and does not eat the note.** "To task" opens the
   task's editor with the note as the title and everything else a tap away,
@@ -573,7 +573,7 @@ writing, and every addition that asks something takes that value away. So:
   no badge and no accent colour, and nothing ever says "unprocessed". Same
   rule as the day view's score: a number that grows in red is a report card.
 - **The way out costs one character.** A leading `!`, or the toggle beside
-  the field, sends the line to the inbox as something to do instead of into
+  the field, sends the line to Later as something to do instead of into
   the stream. It is never written as a note first and moved afterwards -
   changing your mind mid-sentence would leave one behind every time - and
   the marker says which it is going to be before Enter, not after. This is
@@ -840,41 +840,54 @@ the page; dispatch the key on the element when the press has to land.
 
 ---
 
-## 14. The four shelves, and what each is for
+## 14. The three shelves, and what each is for
 
-Something that is not on a day can be in one of four places, and the whole
-value of having four is that each one asks a different amount of you at the
-moment of writing. Adding a fifth means proving it is not one of these.
+Something that is not on a day can be in one of three places, and the
+whole value of having three is that each one asks a different amount of
+you at the moment of writing. Adding a fourth means proving it is not one
+of these - section 25.
 
 | Shelf | What it holds | What it asks |
 |---|---|---|
-| **Scratch** | Text, and nothing attached | Nothing at all |
-| **Inbox** | A line nobody has decided about | Nothing at all |
-| **Backlog** | A decided task with no day | A title, and whatever else you feel like |
+| **Notes** | Text, and nothing attached | Nothing at all |
+| **Later** | Something to do, on no day | A title, and whatever else you feel like |
 | **A float** | A task on a day, with no time | It is already on a day |
 
-The two rules that keep the backlog from becoming the thing this app exists
-to take away:
+There were four until v2.7: an Inbox for a line nobody had decided about,
+and a Backlog for a decided task with no day. From the owner's side the two
+were told apart by which fold they were under and by nothing else - the
+rows looked the same, both had the same two ways out, and "decided" was
+never visible on a row - so they are one list now, with the Backlog's
+mechanics and the Inbox's cheap way in. DECISIONS "Later, where two shelves
+were" has the reasoning.
 
-- **Nothing records how old an item is, so nothing can show it.** `BacklogItem`
-  has no `createdAt`, deliberately. A list that says "you have been meaning to
-  do this for six weeks" is a list that accuses you every time you open it -
-  the same reasoning as the scratch count in section 11 and the day score's
-  refusal to grow red. `updatedAt` exists for sync and is a fact about a
-  device, never rendered.
+The two rules that keep Later from becoming the thing this app exists to
+take away:
+
+- **Nothing records how old an item is, so nothing can show it.**
+  `LaterItem` has no `createdAt`, deliberately. A list that says "you have
+  been meaning to do this for six weeks" is a list that accuses you every
+  time you open it - the same reasoning as the scratch count in section 11
+  and the day score's refusal to grow red. `updatedAt` exists for sync and
+  is a fact about a device, never rendered.
 - **It never comes looking for you.** Collapsed behind a plain count in
-  `--faint`, below the inbox, on the day view only. No badge, no colour, no
-  offer inside a gap, no nudge, no mention anywhere else. A backlog with two
-  hundred things in it has to be able to sit there saying nothing.
+  `--faint`, under the day's list, on the day view and under the week's
+  columns. No badge, no colour, no offer inside a gap, no nudge, no mention
+  anywhere else. A Later with two hundred things in it has to be able to
+  sit there saying nothing.
 
-What it *is* allowed to be is easy to pull from: one press puts an item on the
-day at the next free slot that holds it - the same `widgets/day-plan/autoSlot.ts` arithmetic
-quick-add's own time control uses - and it leaves the backlog in the same
-commit, because a thing that is on today and still in the backlog is the same
-thing written down twice.
+What it *is* allowed to be is easy to reach and easy to pull from. Three
+ways in: Later on the field, which asks for no time; a leading `!` or the
+Note/Task toggle in Notes; and Ctrl-K. One press puts an item on the day at
+the next free slot that holds it - the same `widgets/day-plan/autoSlot.ts`
+arithmetic quick-add's own time control uses - and it leaves Later in the
+same commit, because a thing that is on today and still in Later is the
+same thing written down twice.
 
-Order is priority and is the array's own order. There is no star, no urgency,
-no due date, and no sort: a drag or an arrow key is the entire ranking model.
+Order is priority and is the array's own order. A new item goes to the
+end, where the Backlog put it; nothing is sorted for you. There is no star,
+no urgency, no due date, and no sort: a drag or an arrow key is the entire
+ranking model.
 
 ---
 
@@ -1001,9 +1014,9 @@ What "visible" means, concretely:
 ## 18. Every invented word is explained where it is used
 
 This app invented, or bent, about twenty terms: Ongoing, Key, Push, Stamp,
-Focus, day type and its four values, the difference between the inbox and
-the backlog, what a unit is in the library, what North is for, what a sleep
-schedule does, and how sync differs from a backup. Every one of them means
+Focus, day type and its four values, what Later is, what a unit is in the
+library, what North is for, what a sleep schedule does, and how sync
+differs from a backup. Every one of them means
 something precise here and something else, or nothing, everywhere else.
 
 - **The copy lives in one file**, [`src/lib/explain.ts`](../src/lib/explain.ts),

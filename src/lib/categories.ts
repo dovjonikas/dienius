@@ -64,7 +64,7 @@ export type { Category }
  * left that is unmistakably a hue, which keeps the intent (this is the plain,
  * unremarkable part of the day) without borrowing a meaning that is taken.
  *
- * These ids are load-bearing. Every task, template block and backlog item on
+ * These ids are load-bearing. Every task, template block and Later item on
  * disk points at one of them by name, so they keep the literals they have
  * always had and nothing had to be rewritten when the list moved into the
  * data.

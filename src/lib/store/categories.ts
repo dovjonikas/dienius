@@ -1,13 +1,17 @@
 import { commit, getData } from './core'
-import type { AppData, BacklogItem, Category, DayPlan, Template } from '../types'
+import type { AppData, Category, DayPlan, LaterItem, Template } from '../types'
 import { isCategoryColorReadable } from '../categories'
 
-/** What a delete rewrote, kept so one press can put it all back. */
+/**
+ * What a delete rewrote, kept so one press can put it all back. The keys
+ * are AppData's own, because the restore spreads the slice straight over
+ * the state - which is why Later is under its wire name here.
+ */
 export interface CategorySlice {
   categories: Category[]
   days: Record<string, DayPlan>
   templates: Template[]
-  backlog: BacklogItem[]
+  backlog: LaterItem[]
 }
 
 export function categorySlice(data: AppData): CategorySlice {
@@ -111,9 +115,10 @@ export const categoryActions = {
       return blocks.some((b, i) => b !== template.blocks[i]) ? { ...template, blocks } : template
     })
 
-    const backlog = data.backlog.map(item => (item.category === id ? { ...item, category: moveTo } : item))
+    // Later, written back under its field name.
+    const later = data.backlog.map(item => (item.category === id ? { ...item, category: moveTo } : item))
 
-    commit({ ...data, categories: data.categories.filter(c => c.id !== id), days, templates, backlog })
+    commit({ ...data, categories: data.categories.filter(c => c.id !== id), days, templates, backlog: later })
   },
 
   /** The one undo behind a delete: the four lists it rewrote, exactly as they were. */
@@ -128,11 +133,11 @@ export const categoryActions = {
  * A fact about a button, not a warning, and it is stated once. Nothing uses
  * it? The sentence goes and the button reads plain "Delete".
  */
-export function categoryUsage(data: AppData, id: string): { tasks: number; blocks: number; backlog: number } {
+export function categoryUsage(data: AppData, id: string): { tasks: number; blocks: number; later: number } {
   let tasks = 0
   for (const day of Object.values(data.days)) for (const task of day.tasks) if (task.category === id) tasks++
   let blocks = 0
   for (const template of data.templates) for (const block of template.blocks) if (block.category === id) blocks++
-  const backlog = data.backlog.filter(item => item.category === id).length
-  return { tasks, blocks, backlog }
+  const later = data.backlog.filter(item => item.category === id).length
+  return { tasks, blocks, later }
 }

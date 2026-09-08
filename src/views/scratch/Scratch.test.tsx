@@ -143,13 +143,14 @@ test('To task opens the editor rather than guessing, and the note stays where it
   expect(screen.getByRole('status')).toHaveTextContent('The note stays here.')
 })
 
-test('To inbox moves the words exactly as they were written, and leaves the stream', async () => {
+test('To Later moves the words exactly as they were written, and leaves the stream', async () => {
   const user = userEvent.setup()
   actions.addScratch('Look up the #idea about pricing')
   render(<Scratch open onClose={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'To inbox' }))
-  expect(getData().inbox.map(i => i.text)).toEqual(['Look up the #idea about pricing'])
+  await user.click(screen.getByRole('button', { name: 'To Later' }))
+  expect(getData().backlog.map(i => i.title)).toEqual(['Look up the #idea about pricing'])
   expect(getData().scratch).toHaveLength(0)
+  expect(screen.getByRole('status')).toHaveTextContent('Moved to Later.')
 })
 
 test('Pin brings a note to the top; Delete removes it and offers an undo', async () => {
@@ -264,7 +265,7 @@ test('the Notes button reaches the stream on a phone', async () => {
 // character somebody types deliberately, never one that falls out of ordinary
 // prose.
 
-test('a line starting with ! goes to the inbox, without the mark and without a note', async () => {
+test('a line starting with ! goes to Later, without the mark and without a note', async () => {
   const user = userEvent.setup()
   render(<Scratch open onClose={() => {}} />)
   const field = screen.getByRole('textbox', { name: 'Scratch note' })
@@ -275,8 +276,9 @@ test('a line starting with ! goes to the inbox, without the mark and without a n
   expect(getData().scratch).toHaveLength(0)
 
   await user.keyboard('{Enter}')
-  expect(getData().inbox.map(i => i.text)).toEqual(['book the dentist'])
+  expect(getData().backlog.map(i => i.title)).toEqual(['book the dentist'])
   expect(getData().scratch).toHaveLength(0)
+  expect(screen.getByRole('status')).toHaveTextContent('Sent to Later.')
 })
 
 test('the mark only counts at the front, so an ordinary line is still a note', async () => {
@@ -284,7 +286,7 @@ test('the mark only counts at the front, so an ordinary line is still a note', a
   render(<Scratch open onClose={() => {}} />)
   await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'That went well!{Enter}')
   expect(getData().scratch.map(n => n.text)).toEqual(['That went well!'])
-  expect(getData().inbox).toHaveLength(0)
+  expect(getData().backlog).toHaveLength(0)
 })
 
 test('the marker says where the line is going before Enter', async () => {
@@ -294,7 +296,7 @@ test('the marker says where the line is going before Enter', async () => {
   expect(screen.getByRole('button', { name: /Staying as a note/ })).toHaveTextContent('Note')
 
   await user.type(field, '!call the bank')
-  expect(screen.getByRole('button', { name: /Going to the inbox as a task/ })).toHaveTextContent('Task')
+  expect(screen.getByRole('button', { name: /Going to Later as a task/ })).toHaveTextContent('Task')
 })
 
 test('the toggle is the same intent said with a tap', async () => {
@@ -303,7 +305,7 @@ test('the toggle is the same intent said with a tap', async () => {
   await user.click(screen.getByRole('button', { name: /Staying as a note/ }))
   await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), 'call the bank{Enter}')
 
-  expect(getData().inbox.map(i => i.text)).toEqual(['call the bank'])
+  expect(getData().backlog.map(i => i.title)).toEqual(['call the bank'])
   expect(getData().scratch).toHaveLength(0)
 })
 
@@ -321,7 +323,7 @@ test('a note already started is taken back out of the stream when the line becom
   await user.type(field, '!call the bank')
   expect(getData().scratch).toHaveLength(0)
   await user.keyboard('{Enter}')
-  expect(getData().inbox.map(i => i.text)).toEqual(['call the bank'])
+  expect(getData().backlog.map(i => i.title)).toEqual(['call the bank'])
 })
 
 test('turning the toggle off takes the mark off with it', async () => {
@@ -332,7 +334,7 @@ test('turning the toggle off takes the mark off with it', async () => {
 
   // Otherwise the line would still read as a task and the toggle would look
   // like it had not worked.
-  await user.click(screen.getByRole('button', { name: /Going to the inbox as a task/ }))
+  await user.click(screen.getByRole('button', { name: /Going to Later as a task/ }))
   expect(field).toHaveValue('call the bank')
   expect(screen.getByRole('button', { name: /Staying as a note/ })).toBeInTheDocument()
 })
@@ -353,7 +355,7 @@ test('a line that is only a mark sends nothing', async () => {
   const user = userEvent.setup()
   render(<Scratch open onClose={() => {}} />)
   await user.type(screen.getByRole('textbox', { name: 'Scratch note' }), '!{Enter}')
-  expect(getData().inbox).toHaveLength(0)
+  expect(getData().backlog).toHaveLength(0)
   expect(getData().scratch).toHaveLength(0)
 })
 

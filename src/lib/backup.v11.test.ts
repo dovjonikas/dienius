@@ -83,18 +83,34 @@ function full(): AppData {
     ],
   }
 
-  data.inbox = [{ id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' }]
+  return data
+}
 
+/** The same payload with the one v1.1 field that no longer survives as itself. */
+function withInbox(): AppData {
+  const data = full()
+  data.inbox = [{ id: 'i1', text: 'Book the dentist', captured: '2026-09-01T08:00:00.000Z' }]
   return data
 }
 
 test('a payload carrying every v1.1 field validates', () => {
-  expect(validate(JSON.parse(exportJson(full())))).toBe(true)
+  expect(validate(JSON.parse(exportJson(withInbox())))).toBe(true)
 })
 
 test('every v1.1 field survives export and re-import byte for byte', () => {
   const before = full()
   expect(importJson(exportJson(before))).toEqual(before)
+})
+
+// The inbox is the one v1.1 field that does not come back as itself: since
+// v2.7 it is folded into Later on the way in, with the line's own id and a
+// tombstone under its old name - see lib/later.ts. The words survive, which
+// is the promise; the shelf they sat on does not, which is the decision.
+test('a v1.1 inbox line comes back as the first thing in Later, not as an inbox line', () => {
+  const after = importJson(exportJson(withInbox()))
+  expect(after.inbox).toEqual([])
+  expect(after.backlog[0]).toEqual({ id: 'i1', title: 'Book the dentist' })
+  expect(after.tombstones?.['inbox:i1']).toEqual(expect.any(String))
 })
 
 test('the task detail fields in particular come back whole', () => {

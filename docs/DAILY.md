@@ -272,9 +272,9 @@ Skip this entirely if one browser is where you plan; nothing degrades.
   never moves anything on its own.
 - **All day.** Type a title into the box and press enter. The time and the
   length beside it already hold real answers, so that is the whole gesture.
-  A thought with no home goes to the Inbox; something for another week goes
-  to the Backlog; a number said once on the phone goes into Scratch (the pen
-  at the foot of the rail, or the `S` key).
+  Something to do that is not for today goes to Later - switch the box to
+  Later, or start a line in Notes with `!` - and a number said once on the
+  phone goes into Notes (the button in the top right, or the `S` key).
 - **When the plan breaks.** **Replan**, under the date. Three doors:
   something came up, shift the rest, I was away. Each shows its answer
   before you accept it. The first of them works for any day of the week -
@@ -424,8 +424,8 @@ something to do today with no hour on it.
 
 Press **Notes** in the top right and then **Open notes**, or `S`, and
 write. It saves as you type - there is no save button and nothing to lose
-by closing it. A line starting with `!` goes to your inbox as something to
-do instead; the marker beside the box says which before you press enter.
+by closing it. A line starting with `!` goes to Later as something to do
+instead; the marker beside the box says which before you press enter.
 
 For one line and nothing else, there is a shorter way: press `Q`, or
 **Notes** in the top right. Type the line, press enter, and

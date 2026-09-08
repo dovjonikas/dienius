@@ -58,9 +58,9 @@ test('writing while in demo mode leaves the real plan untouched', () => {
 // moment somebody actually means "I am done here".
 test('a demo that has been used reloads as it was left, not as a fresh sample', () => {
   setDemoModeForTests(true)
-  saveData({ ...loadData(), inbox: [{ id: 'typed', text: 'Something I typed', captured: TODAY }] })
+  saveData({ ...loadData(), backlog: [{ id: 'typed', title: 'Something I typed' }] })
 
-  expect(loadData().inbox.map(i => i.text)).toEqual(['Something I typed'])
+  expect(loadData().backlog.map(i => i.title)).toEqual(['Something I typed'])
 })
 
 test('with no demo mode there is nothing to seed', () => {
@@ -113,7 +113,7 @@ test('the parts of the app that need data to say anything have some', () => {
   expect(data.library[0].items.length).toBeGreaterThan(1)
   expect(data.library[0].items.some(i => i.finished)).toBe(true)
   expect(data.ifThens.length).toBeGreaterThan(0)
-  expect(data.inbox.length).toBeGreaterThan(0)
+  expect(data.backlog.length).toBeGreaterThan(0)
   expect(Object.keys(data.settings.weekdayTemplates)).toHaveLength(7)
 })
 

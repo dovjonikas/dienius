@@ -17,7 +17,7 @@
  *
  *   npm run sweep                  three desktop sizes, both themes
  *   npm run sweep -- --phone       390x844 as well, with the 44px audit
- *   npm run sweep -- --heavy       twenty tasks, thirty backlog, fifteen books
+ *   npm run sweep -- --heavy       twenty tasks, thirty-two in Later, fifteen books
  *   npm run sweep -- --only=Today  one screen, while working on it
  *   npm run sweep -- --self-check  plant defects and prove the audit sees them
  *
@@ -117,7 +117,12 @@ const SCREENS = [
     name: 'Today (notice dismissed)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
-      const c = p.getByRole('button', { name: /Not tonight|Later|Close the day/ }).first()
+      // Only the close's own button. The evening notice used to offer
+      // "Later" as well, and since v2.7 a fold under the task list is
+      // called "Later N" - a pattern that still matched it would open the
+      // shelf instead of dismissing the notice, and the screen would be
+      // audited with the wrong thing on it.
+      const c = p.getByRole('button', { name: /Close the day/ }).first()
       if (await c.count()) await c.click().catch(() => {})
       await p.waitForTimeout(300)
     },

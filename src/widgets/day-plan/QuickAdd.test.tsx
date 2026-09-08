@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QuickAdd } from './QuickAdd'
 import { actions, getData } from '../../lib/store'
@@ -216,23 +216,6 @@ test('on today the suggestion is now itself, so the task is the running one', ()
   expect(tasksOn(todayKey())[0].time).toBe('14:07')
 })
 
-/** An inbox line has no day, so it has no hour and no length to argue about. */
-test('switching to Inbox takes both controls away rather than greying them out', async () => {
-  const user = userEvent.setup()
-  render(<QuickAdd date={DATE} tasks={[]} />)
-
-  await user.click(screen.getByRole('button', { name: 'Inbox' }))
-
-  expect(screen.queryByRole('button', { name: /next free slot/i })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /min long/i })).not.toBeInTheDocument()
-
-  await user.type(screen.getByPlaceholderText(/Catch a thought/), '14:00 Call mom 45min{Enter}')
-  // Exactly as typed: an inbox item is not a task yet, and a time inside it
-  // is part of the note somebody wrote to themselves.
-  expect(getData().inbox).toMatchObject([{ text: '14:00 Call mom 45min' }])
-  expect(tasksOn(DATE)).toHaveLength(0)
-})
-
 test('two presses of an arrow inside one frame move two quarters, not one', async () => {
   const user = userEvent.setup()
   render(<QuickAdd date={DATE} tasks={[]} />)
@@ -249,30 +232,38 @@ test('two presses of an arrow inside one frame move two quarters, not one', asyn
 })
 
 /**
- * The third shelf. One field, three destinations, chosen by the toggle above
- * it - the day, the inbox, or the backlog. A backlog item is a decided task
- * with no day, so it keeps everything a task has except the hour.
+ * The other shelf. One field, two destinations, chosen by the toggle above
+ * it - the day, or Later. A Later item is a task with no day yet, so it
+ * keeps everything a task has except the hour, and asks for none of it.
  */
-test('the Backlog shelf takes the size and the colour, and drops the hour', async () => {
+test('the toggle offers exactly two places for Enter to send a line', () => {
+  render(<QuickAdd date={DATE} tasks={[]} />)
+  const group = screen.getByRole('group', { name: 'What Enter does' })
+  expect(within(group).getAllByRole('button').map(b => b.textContent)).toEqual(['Task', 'Later'])
+})
+
+test('Later mode keeps the size and the colour, drops the hour, and asks for no time', async () => {
   const user = userEvent.setup()
   render(<QuickAdd date={DATE} tasks={[]} />)
 
-  await user.click(screen.getByRole('button', { name: 'Backlog' }))
+  await user.click(screen.getByRole('button', { name: 'Later' }))
   // There is no day for a time to be a time on, so the control goes.
   expect(screen.queryByRole('button', { name: /next free slot/i })).not.toBeInTheDocument()
-  // The size stays, because that is the whole difference from an inbox line.
+  // The size and the colour stay: both are carried onto the day when the
+  // item is pulled, and both open already holding an answer.
   expect(screen.getByRole('button', { name: /30 min long/i })).toBeInTheDocument()
+  expect(screen.getByRole('group', { name: 'Category for the next task' })).toBeInTheDocument()
 
-  await user.type(screen.getByPlaceholderText(/just not today/i), 'Fix the bike light{Enter}')
+  await user.type(screen.getByPlaceholderText('Something to do, just not today'), 'Fix the bike light{Enter}')
   expect(getData().backlog).toMatchObject([{ title: 'Fix the bike light', minutes: 30, category: 'core' }])
   expect(tasksOn(DATE)).toHaveLength(0)
 })
 
-test('a time typed into a backlog line is dropped rather than quietly stored', async () => {
+test('a time typed into a Later line is dropped rather than quietly stored', async () => {
   const user = userEvent.setup()
   render(<QuickAdd date={DATE} tasks={[]} />)
 
-  await user.click(screen.getByRole('button', { name: 'Backlog' }))
+  await user.click(screen.getByRole('button', { name: 'Later' }))
   await user.type(screen.getByPlaceholderText(/just not today/i), '14:00 Fix the bike light 45min{Enter}')
 
   // The duration is real and is kept; the hour has no day to belong to, and
@@ -282,17 +273,18 @@ test('a time typed into a backlog line is dropped rather than quietly stored', a
   expect(getData().backlog[0]).not.toHaveProperty('time')
 })
 
-test('the palette can ask for the backlog shelf, and asking twice works twice', async () => {
+test('the palette can ask for Later, and asking twice works twice', async () => {
   const user = userEvent.setup()
   render(<QuickAdd date={DATE} tasks={[]} />)
 
-  act(() => requestCapture('backlog'))
+  act(() => requestCapture('later'))
   expect(screen.getByPlaceholderText(/just not today/i)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Later' })).toHaveAttribute('aria-pressed', 'true')
 
   // Switched back by hand, then asked for again: the request is keyed on its
   // own counter, so it is not fought over in between.
   await user.click(screen.getByRole('button', { name: 'Task' }))
   expect(screen.getByPlaceholderText(/Add a task/)).toBeInTheDocument()
-  act(() => requestCapture('backlog'))
+  act(() => requestCapture('later'))
   expect(screen.getByPlaceholderText(/just not today/i)).toBeInTheDocument()
 })

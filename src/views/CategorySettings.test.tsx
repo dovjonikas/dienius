@@ -60,7 +60,7 @@ test('the delete dialog states what uses the category, once, as a fact', async (
 
   await user.click(within(row('Health')).getByRole('button', { name: 'Delete' }))
   expect(screen.getByText('Delete Health?')).toBeTruthy()
-  expect(screen.getByText('2 tasks, 1 template block and 1 backlog item use it.')).toBeTruthy()
+  expect(screen.getByText('2 tasks, 1 template block and 1 in Later use it.')).toBeTruthy()
 })
 
 test('the target is already chosen, so the ordinary path is one press', async () => {
@@ -150,8 +150,8 @@ test('one of the six can be given a colour and handed back its own', async () =>
 })
 
 test('the sentence names only the parts that are not zero, and joins them the way a person would', () => {
-  expect(usageSentence({ tasks: 14, blocks: 2, backlog: 1 })).toBe('14 tasks, 2 template blocks and 1 backlog item')
-  expect(usageSentence({ tasks: 1, blocks: 0, backlog: 0 })).toBe('1 task')
-  expect(usageSentence({ tasks: 0, blocks: 3, backlog: 2 })).toBe('3 template blocks and 2 backlog items')
-  expect(usageSentence({ tasks: 0, blocks: 0, backlog: 0 })).toBe('')
+  expect(usageSentence({ tasks: 14, blocks: 2, later: 1 })).toBe('14 tasks, 2 template blocks and 1 in Later')
+  expect(usageSentence({ tasks: 1, blocks: 0, later: 0 })).toBe('1 task')
+  expect(usageSentence({ tasks: 0, blocks: 3, later: 2 })).toBe('3 template blocks and 2 in Later')
+  expect(usageSentence({ tasks: 0, blocks: 0, later: 0 })).toBe('')
 })

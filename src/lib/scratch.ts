@@ -5,12 +5,12 @@ import type { ScratchNote } from './types'
  * written down in the next second.
  *
  * A phone number said once, a bug noticed while doing something else, a
- * thought with nowhere to go yet. The inbox is for tasks that have not been
- * given a day; this is for text that has not been given anything, and the
- * whole design is that nothing is asked at the moment of writing - not where
- * it goes, not what kind of thing it is, not whether it matters. Sorting
- * happens later, if at all, from the note itself: it can become a task, go
- * to the inbox, be pinned, or be deleted.
+ * thought with nowhere to go yet. Later is for things to do that have not
+ * been given a day; this is for text that has not been given anything, and
+ * the whole design is that nothing is asked at the moment of writing - not
+ * where it goes, not what kind of thing it is, not whether it matters.
+ * Sorting happens later, if at all, from the note itself: it can become a
+ * task, go to Later, be pinned, or be deleted.
  *
  * One stream. No folders, no notebooks, no formatting. A note that needs
  * structure has stopped being scratch and is a task or a document somewhere
@@ -84,7 +84,7 @@ export function isTaskMarkOnly(text: string): boolean {
 
 /**
  * The line without its mark. "!" is punctuation about where the line is
- * going, not part of what it says, so an inbox line that arrives reading
+ * going, not part of what it says, so a line arriving in Later reading
  * "!book the dentist" would be the mark leaking into the thing it was
  * steering.
  */

@@ -1,4 +1,4 @@
-import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, ScratchNote, Task, Template } from './types'
+import type { AppData, Category, DayPlan, Goal, IfThenEntry, InboxItem, LaterItem, LibraryItem, LibraryList, ScratchNote, Task, Template } from './types'
 import { PICTURE_KEY, SYNCED_SETTINGS, collectEntities, idOf, keyFor, kindOf, pruneTombstones, type EntityKey } from './syncEntities'
 
 /**
@@ -187,8 +187,11 @@ function rebuild(local: AppData, remote: AppData, winner: Map<EntityKey, 'local'
     templates: mergeList<Template>('template', winner, local.templates, remote.templates),
     goals: mergeList<Goal>('goal', winner, local.goals, remote.goals),
     ifThens: mergeList<IfThenEntry>('ifthen', winner, local.ifThens, remote.ifThens),
+    // 'inbox' is merged so an older device's lines and this device's
+    // tombstones for them meet; the client folds whatever survives into
+    // Later straight after. 'backlog' is Later's wire name - see LaterItem.
     inbox: mergeList<InboxItem>('inbox', winner, local.inbox, remote.inbox),
-    backlog: mergeList<BacklogItem>('backlog', winner, local.backlog, remote.backlog),
+    backlog: mergeList<LaterItem>('backlog', winner, local.backlog, remote.backlog),
     scratch: mergeList<ScratchNote>('scratch', winner, local.scratch, remote.scratch),
     categories: mergeList<Category>('category', winner, local.categories, remote.categories),
     ...mergeSettings(local, remote, winner),

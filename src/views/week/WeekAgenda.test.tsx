@@ -2,7 +2,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WeekAgenda } from './WeekAgenda'
-import { SomedayStrip } from './SomedayStrip'
+import { LaterStrip } from './LaterStrip'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { addDays, todayKey } from '../../lib/dates'
@@ -102,33 +102,33 @@ test('it counts nothing', () => {
   expect(container.textContent).not.toMatch(/\d+\s*(of|\/)\s*\d+|%|left|remaining/i)
 })
 
-// --- Someday ------------------------------------------------------------------
+// --- Later, under the week -----------------------------------------------------
 
 /**
- * The fourth shelf keeps every rule it keeps on the day view - CONVENTIONS
- * section 14 - and gains exactly one thing here: what you have without a day,
- * beside what you have with one.
+ * The shelf keeps every rule it keeps on the day view - CONVENTIONS section
+ * 14 - and gains exactly one thing here: what you have without a day, beside
+ * what you have with one.
  */
-test('Someday says nothing but a count until it is opened', async () => {
+test('Later says nothing but a count until it is opened', async () => {
   const user = userEvent.setup()
-  actions.addBacklogItem({ title: 'Move the ISA' })!
-  actions.addBacklogItem({ title: 'Reread the lease' })
-  const { container } = render(<SomedayStrip onScheduled={() => {}} />)
+  actions.addLaterItem({ title: 'Move the ISA' })!
+  actions.addLaterItem({ title: 'Reread the lease' })
+  const { container } = render(<LaterStrip onScheduled={() => {}} />)
 
-  const fold = screen.getByRole('button', { name: /^Someday/ })
+  const fold = screen.getByRole('button', { name: /^Later/ })
   expect(fold).toHaveTextContent('2')
-  expect(container.querySelector('.someday-list')).toHaveAttribute('hidden')
+  expect(container.querySelector('.later-strip-list')).toHaveAttribute('hidden')
   // No age, no badge, no accent, nothing that says how long any of it has sat
-  // there - BacklogItem has no createdAt on purpose.
+  // there - LaterItem has no createdAt on purpose.
   expect(container.textContent).not.toMatch(/\d+\s*(day|week|month)s?\b|ago|since then|waiting|unprocessed/i)
 
   await user.click(fold)
-  expect(container.querySelector('.someday-list')).not.toHaveAttribute('hidden')
+  expect(container.querySelector('.later-strip-list')).not.toHaveAttribute('hidden')
   expect(screen.getByRole('button', { name: 'Move the ISA' })).toBeInTheDocument()
 })
 
-test('an empty backlog shows nothing at all, not an empty fold', () => {
-  const { container } = render(<SomedayStrip onScheduled={() => {}} />)
+test('an empty Later shows nothing at all, not an empty fold', () => {
+  const { container } = render(<LaterStrip onScheduled={() => {}} />)
   expect(container).toBeEmptyDOMElement()
 })
 
@@ -136,20 +136,24 @@ test('an empty backlog shows nothing at all, not an empty fold', () => {
  * The drop lands the item at the day's next free slot rather than at the
  * height it was dropped on. A week column is a timeline and a drop halfway
  * down it looks like it means 13:40, but the item has no time and often no
- * size - `scheduleBacklogItem` puts it where the day genuinely has room.
+ * size - `nextSlotFor` puts it where the day genuinely has room. Until v2.7
+ * the drop landed the item with no time at all while its comment promised
+ * this; the time is asserted now, not only the day.
  */
-test('dragging one onto a day plans it there and takes it off the shelf', async () => {
+test('dragging one onto a day plans it there, at a time, and takes it off the shelf', async () => {
   const user = userEvent.setup()
   const onScheduled = vi.fn()
-  const item = actions.addBacklogItem({ title: 'Move the ISA' })!
+  actions.addTask('2026-09-08', 'Standup', '07:00')
+  actions.setTaskMinutes('2026-09-08', getData().days['2026-09-08'].tasks[0].id, 60)
+  const item = actions.addLaterItem({ title: 'Move the ISA', minutes: 45 })!
 
   render(
     <div>
       <div data-week-date="2026-09-08" style={{ width: 100, height: 100 }} />
-      <SomedayStrip onScheduled={onScheduled} />
+      <LaterStrip onScheduled={onScheduled} />
     </div>,
   )
-  await user.click(screen.getByRole('button', { name: /^Someday/ }))
+  await user.click(screen.getByRole('button', { name: /^Later/ }))
 
   const chip = screen.getByRole('button', { name: 'Move the ISA' })
   const column = document.querySelector('[data-week-date]')!
@@ -162,8 +166,12 @@ test('dragging one onto a day plans it there and takes it off the shelf', async 
   document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 200, clientY: 200 }))
 
   expect(getData().backlog.find(b => b.id === item.id)).toBeUndefined()
-  expect(getData().days['2026-09-08']?.tasks.map(t => t.title)).toEqual(['Move the ISA'])
-  expect(onScheduled).toHaveBeenCalled()
+  const landed = getData().days['2026-09-08']?.tasks.at(-1)
+  expect(landed).toMatchObject({ title: 'Move the ISA', minutes: 45 })
+  // The first gap after Standup that holds three quarters of an hour.
+  expect(landed?.time).toBe('08:00')
+  // Said as a day's name, not as a date key.
+  expect(onScheduled).toHaveBeenCalledWith('Move the ISA is on Tue')
 })
 
 // A press that does not move is not a drag. An item here has no day, so there
@@ -171,9 +179,9 @@ test('dragging one onto a day plans it there and takes it off the shelf', async 
 // would be the one thing this shelf must never do.
 test('a press that goes nowhere plans nothing', async () => {
   const user = userEvent.setup()
-  const item = actions.addBacklogItem({ title: 'Move the ISA' })!
-  render(<SomedayStrip onScheduled={() => {}} />)
-  await user.click(screen.getByRole('button', { name: /^Someday/ }))
+  const item = actions.addLaterItem({ title: 'Move the ISA' })!
+  render(<LaterStrip onScheduled={() => {}} />)
+  await user.click(screen.getByRole('button', { name: /^Later/ }))
 
   const chip = screen.getByRole('button', { name: 'Move the ISA' })
   chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }))

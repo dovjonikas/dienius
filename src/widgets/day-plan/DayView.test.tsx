@@ -1266,17 +1266,18 @@ test('No time puts the task back to being a float', async () => {
   expect(getData().days['2026-09-01'].tasks[0].time).toBeUndefined()
 })
 
-// An inbox line is not a task yet, so an hour or a length on it would be a
-// decision the inbox exists to postpone - see the capture mode comment in
-// QuickAdd. Both controls go rather than sit there greyed out: a disabled
-// control still asks to be read.
-test('neither control is offered while the field is writing to the inbox', async () => {
+// A Later line has no day yet, so an hour on it would be a decision Later
+// exists to postpone - see the capture mode comment in QuickAdd. The time
+// control goes rather than sitting there greyed out, because a disabled
+// control still asks to be read; the size stays, because it is carried
+// onto the day when the item is pulled.
+test('the time control is not offered while the field is writing to Later, and the size still is', async () => {
   const user = userEvent.setup()
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: /next free slot/i })).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Inbox' }))
+  await user.click(screen.getByRole('button', { name: 'Later' }))
   expect(screen.queryByRole('button', { name: /next free slot/i })).toBeNull()
-  expect(screen.queryByRole('button', { name: /min long/i })).toBeNull()
+  expect(screen.getByRole('button', { name: /min long/i })).toBeInTheDocument()
 })
 // --- a bound task, and what it says when the book ends --------------------
 //

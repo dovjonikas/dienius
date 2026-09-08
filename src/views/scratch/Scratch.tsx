@@ -21,7 +21,7 @@ import type { ScratchNote } from '../../lib/types'
  *
  * What a note can become is on the note itself, later: a task on today
  * (through quick-add's own parser, so "14:00 Call the bank 20 min" lands
- * timed and sized), an inbox line, a pinned note, or nothing.
+ * timed and sized), a line in Later, a pinned note, or nothing.
  */
 
 export interface ScratchProps {
@@ -166,10 +166,10 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
 
   function finishNote() {
     if (intent) {
-      const text = stripTaskMark(draft).trim()
-      if (!text) return
-      actions.addInboxItem(text)
-      setStatus('Sent to the inbox.')
+      const title = stripTaskMark(draft).trim()
+      if (!title) return
+      actions.addLaterItem({ title })
+      setStatus('Sent to Later.')
       // Back to a note afterwards. The toggle is about this line, not about
       // the rest of the sitting: the next thing somebody blurts out is far
       // more often a note, which is what this box is for.
@@ -208,8 +208,8 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
     if (id) setStatus(`${task.title} is on today${task.time ? ` at ${task.time}` : ''}. The note stays here.`)
   }
 
-  function toInbox(note: ScratchNote) {
-    if (actions.scratchToInbox(note.id, note.text)) setStatus('Moved to the inbox.')
+  function toLater(note: ScratchNote) {
+    if (actions.scratchToLater(note.id, note.text)) setStatus('Moved to Later.')
   }
 
   async function remove(note: ScratchNote) {
@@ -235,7 +235,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
             ref={inputRef}
             className="scratch-input"
             aria-label="Scratch note"
-            placeholder={intent ? 'Something to do. Enter sends it to the inbox.' : 'Write it down. Enter keeps it.'}
+            placeholder={intent ? 'Something to do. Enter sends it to Later.' : 'Write it down. Enter keeps it.'}
             rows={1}
             value={draft}
             onChange={e => handleChange(e.target.value)}
@@ -251,7 +251,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
             type="button"
             className={intent ? 'scratch-intent is-task' : 'scratch-intent'}
             aria-pressed={intent}
-            aria-label={intent ? 'Going to the inbox as a task. Make it a note instead' : 'Staying as a note. Make it a task instead'}
+            aria-label={intent ? 'Going to Later as a task. Make it a note instead' : 'Staying as a note. Make it a task instead'}
             onClick={() => {
               // Turning it off has to take the mark off too, or the line would
               // still read as a task and the toggle would appear not to work.
@@ -353,8 +353,8 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
                         To task
                       </button>
                     )}
-                    <button type="button" className="scratch-note-action" onClick={() => toInbox(note)}>
-                      To inbox
+                    <button type="button" className="scratch-note-action" onClick={() => toLater(note)}>
+                      To Later
                     </button>
                     <button
                       type="button"

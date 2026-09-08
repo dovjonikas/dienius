@@ -15,7 +15,7 @@ import { TaskDetail } from '../../widgets/day-plan/TaskDetail'
 import { computeWeekLayout, timeAtPercent, type WeekBlock } from './weekLayout'
 import { WeekColumn } from './WeekColumn'
 import { WeekAgenda } from './WeekAgenda'
-import { SomedayStrip } from './SomedayStrip'
+import { LaterStrip } from './LaterStrip'
 
 /**
  * The week, as seven columns of one shared timeline.
@@ -246,7 +246,7 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
         <div className="week-tools">
           <CopyJournalButton dates={week} title={formatWeekTitle(week)} label="Copy week journal" />
         </div>
-        <SomedayStrip onScheduled={setAnnouncement} />
+        <LaterStrip onScheduled={setAnnouncement} />
         <p className="visually-hidden" aria-live="polite">{announcement}</p>
         {detailTask && detailDate && (
           <TaskDetail
@@ -321,8 +321,8 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
       </div>
 
       {/* What you have without a day, under what you have with one. Drag one
-          onto a column and it is planned - see SomedayStrip. */}
-      <SomedayStrip onScheduled={setAnnouncement} />
+          onto a column and it is planned - see LaterStrip. */}
+      <LaterStrip onScheduled={setAnnouncement} />
 
       <p className="visually-hidden" aria-live="polite">{announcement}</p>
 

@@ -14,15 +14,14 @@ import { rolloverSplit } from './rollover'
 import { StarterOffers } from '../onboarding/StarterOffers'
 import { QuickAdd } from './QuickAdd'
 import { TaskRow } from './TaskRow'
-import { Inbox } from './Inbox'
-import { Backlog } from './Backlog'
+import { Later } from './Later'
 
 /**
  * The task column: capturing something, the list of what is on the day, what
  * is already finished, and what happens to the leftovers.
  *
- * What is left in here is the column itself - the list, the Done fold, the
- * inbox under it, the rollover button at the bottom, and which row is having
+ * What is left in here is the column itself - the list, the Done fold, Later
+ * under it, the rollover button at the bottom, and which row is having
  * its size edited. Capture is its own component (QuickAdd), because the time
  * control, the text and the duration control are one feature that has to
  * behave identically wherever it appears and is what the tour points at.
@@ -268,7 +267,7 @@ export function TaskPane({
           >
             <span className="done-caret" aria-hidden="true" />
             Done
-            <span className="inbox-badge">{doneTasks.length}</span>
+            <span className="done-badge">{doneTasks.length}</span>
           </button>
           <ul className="task-list task-list-done" id={doneListId}>
             {doneTasks.map(task => (
@@ -278,17 +277,12 @@ export function TaskPane({
         </div>
       )}
 
-      {/* Everything caught and not yet decided about - see Inbox.tsx. Under the
-          Done fold, because both are places things go rather than places work
-          happens, and the open list stays the only thing above them. */}
-      <Inbox date={date} />
-
-      {/* And the shelf under that one: things already decided on, waiting
-          for a day with room. Below the inbox because it is read less often,
-          not because it matters less - the inbox is a queue you empty, this
-          is a list you pull from. Collapsed behind a plain count, with
-          nothing anywhere saying how long anything has been in it. */}
-      <Backlog date={date} />
+      {/* Things to do that have no day yet - see Later.tsx. Under the Done
+          fold, because both are places things go rather than places work
+          happens, and the open list stays the only thing above them. A list
+          you pull from, collapsed behind a plain count, with nothing anywhere
+          saying how long anything has been in it. */}
+      <Later date={date} />
 
       {/* The end of the day, in a footer of its own. On a desktop the column
           is a fixed height and this sits on its floor behind a hairline, so

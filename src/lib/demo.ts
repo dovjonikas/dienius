@@ -237,16 +237,18 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         action: 'I go anyway and do half of it',
       },
     ],
-    inbox: [
-      { id: 'demo-inbox-1', text: 'Look into that cycling route', captured: addDays(today, -1) },
-      { id: 'demo-inbox-2', text: 'Ask about the standing desk', captured: today },
-    ],
-    // Decided, undated, in the order they would be pulled - the fourth
-    // shelf. Sized and coloured so a pull onto the day carries both.
+    // Nothing has been written here since v2.7 - see LaterItem.
+    inbox: [],
+    // Later, under its wire name: undated, in the order they would be
+    // pulled. The first two are bare lines, the way something blurted into
+    // the field arrives; the rest are sized and coloured so a pull onto the
+    // day carries both.
     backlog: [
-      { id: 'demo-backlog-1', title: 'Renew the passport', category: 'personal', minutes: 30 },
-      { id: 'demo-backlog-2', title: 'Sort the photo archive', category: 'personal', minutes: 90 },
-      { id: 'demo-backlog-3', title: 'Try the new climbing gym', category: 'health' },
+      { id: 'demo-later-1', title: 'Look into that cycling route' },
+      { id: 'demo-later-2', title: 'Ask about the standing desk' },
+      { id: 'demo-later-3', title: 'Renew the passport', category: 'personal', minutes: 30 },
+      { id: 'demo-later-4', title: 'Sort the photo archive', category: 'personal', minutes: 90 },
+      { id: 'demo-later-5', title: 'Try the new climbing gym', category: 'health' },
     ],
     // The stream under everything else: a number said once, a bug noticed
     // while doing something else, in the words it was noticed in.

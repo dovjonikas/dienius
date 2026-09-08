@@ -111,6 +111,58 @@ test('what the other device did arrives, and what this one did survives it', asy
   expect(posted.at(-1)!.days[DATE].tasks).toHaveLength(2)
 })
 
+// An older device still has an inbox and pushes it. The merge lets its lines
+// in under their old kind so the tombstones can meet them; what survives is
+// folded into Later before anything is committed here or posted back, so
+// the server never holds a line under a name this device no longer reads.
+// See lib/later.ts.
+// Device A deleted an inbox line while this device was away, and this
+// device folded the same line into Later at its next open, before it could
+// sync. A's inbox tombstone must still win over the folded row, or a thing
+// deleted once would stand on both devices. See dropDeletedFolds in
+// lib/later.ts.
+test('a line deleted on another device before this one folded it does not come back through the merge', async () => {
+  actions.resetForTests({
+    ...defaultData(),
+    backlog: [{ id: 'phone-line', title: 'Deleted on the phone', updatedAt: '2026-09-01T08:00:00.000Z' }],
+    tombstones: { 'inbox:phone-line': '2026-09-03T08:00:00.000Z' },
+  })
+
+  const remote = defaultData()
+  remote.tombstones = { 'inbox:phone-line': '2026-09-02T08:00:00.000Z' }
+  const posted = serverHolding(remote)
+
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(getData().backlog).toEqual([])
+  expect(getData().tombstones?.['backlog:phone-line']).toEqual(expect.any(String))
+  const back = posted.at(-1)!
+  expect(back.backlog).toEqual([])
+  expect(back.tombstones?.['backlog:phone-line']).toEqual(expect.any(String))
+})
+
+test('a remote that still carries an inbox arrives folded into Later', async () => {
+  actions.addLaterItem({ title: 'On the PC' })
+
+  const remote = defaultData()
+  remote.inbox = [{ id: 'phone-line', text: 'On the phone', captured: '2026-09-01T08:00:00.000Z', updatedAt: '2026-09-01T08:00:00.000Z' }]
+  const posted = serverHolding(remote)
+
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(getData().inbox).toEqual([])
+  expect(getData().backlog.map(i => i.title)).toEqual(['On the phone', 'On the PC'])
+  expect(getData().tombstones?.['inbox:phone-line']).toEqual(expect.any(String))
+  // And what goes back is the folded state, so the phone deletes its copy
+  // and finds the same line in its Later on the next round trip.
+  const back = posted.at(-1)!
+  expect(back.inbox).toEqual([])
+  expect(back.backlog.map(i => i.id)).toContain('phone-line')
+  expect(back.tombstones?.['inbox:phone-line']).toEqual(expect.any(String))
+})
+
 /**
  * The rule that matters more than any feature here. A server answering with
  * a login page, a proxy error, or somebody else's JSON must never be treated

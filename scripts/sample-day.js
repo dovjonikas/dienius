@@ -5,13 +5,13 @@
  * Not the demo. The demo (src/lib/demo.ts) is a sample fortnight under its
  * own storage key, built to be shown to a stranger; this is one person's
  * ordinary Friday under the real key, built to be measured - ten tasks with
- * three key ones, a reading block bound to a library list, four goals, five
- * in the backlog, two in the inbox, a scratch stream, three templates, a
+ * three key ones, a reading block bound to a library list, four goals, seven
+ * in Later (two of them bare lines), a scratch stream, three templates, a
  * weekday map, and forty days behind it so the calendar and Review have
  * something to draw.
  *
  * Options, all off by default:
- *   heavy           twenty tasks today, thirty backlog items, fifteen books
+ *   heavy           twenty tasks today, thirty-two in Later, fifteen books
  *   extraToday      that many more anchors on today, for a crowded grid
  *   calendarEvents  that many external calendar events in the local cache
  *
@@ -136,7 +136,7 @@
     T({ time: '14:00', title: 'Dentist', minutes: 60, category: 'health' }),
   ] }
 
-  const backlogTitles = heavy
+  const laterTitles = heavy
     ? Array.from({ length: 30 }, (_, i) => [
         'Fix the loose cupboard door', 'Move the ISA', 'Write up the Rota notes',
         'Book the car in for its service', 'Replace the bathroom bulb',
@@ -193,11 +193,15 @@
       { id: id('if'), goalId: goals[1].id, trigger: 'A meeting ends early', action: 'Walk to the end of the road and back', updatedAt: stamp },
       { id: id('if'), goalId: goals[2].id, trigger: 'I sit down and reach for the phone', action: 'The book is already on the arm of the chair', updatedAt: stamp },
     ],
-    inbox: [
-      { id: id('in'), text: 'Ask Ada whether the Q3 deck is still the right one', captured: stamp, updatedAt: stamp },
-      { id: id('in'), text: 'Something about the boiler pressure', captured: stamp, updatedAt: stamp },
+    // Nothing has been written here since v2.7 - see LaterItem in types.ts.
+    inbox: [],
+    // Later, under its wire name. Two bare lines first, the way something
+    // blurted into the field arrives, then the sized and coloured ones.
+    backlog: [
+      { id: id('lt'), title: 'Ask Ada whether the Q3 deck is still the right one', updatedAt: stamp },
+      { id: id('lt'), title: 'Something about the boiler pressure', updatedAt: stamp },
+      ...laterTitles.map((title, i) => ({ id: id('lt'), title, category: ['personal', 'core', 'routine', 'personal', 'routine'][i % 5], minutes: [30, 45, 60, 20, 10][i % 5], updatedAt: stamp })),
     ],
-    backlog: backlogTitles.map((title, i) => ({ id: id('bk'), title, category: ['personal', 'core', 'routine', 'personal', 'routine'][i % 5], minutes: [30, 45, 60, 20, 10][i % 5], updatedAt: stamp })),
     // No hashes in here. Three of these notes carried "#house" and "#bug"
     // from when the stream filtered on them - v2.5 took that out, and a
     // sample that still shows the syntax is teaching a shape that does
@@ -210,7 +214,7 @@
       { id: id('sc'), text: 'Reading light, warm white, under 20 quid', createdAt: stamp, date: shift(-2), updatedAt: stamp },
     ],
     library: [
-      { id: listBooks, name: 'Books', unit: 'chapter', unitShort: 'ch', color: '#a7c4f5', items: heavy ? books.concat(Array.from({ length: 7 }, (_, i) => ({ id: id('item'), title: `Backlog book number ${i + 1}`, total: 10 + i, progress: 0, updatedAt: stamp }))) : books, updatedAt: stamp },
+      { id: listBooks, name: 'Books', unit: 'chapter', unitShort: 'ch', color: '#a7c4f5', items: heavy ? books.concat(Array.from({ length: 7 }, (_, i) => ({ id: id('item'), title: `Unread book number ${i + 1}`, total: 10 + i, progress: 0, updatedAt: stamp }))) : books, updatedAt: stamp },
       { id: listWatch, name: 'Watching', unit: 'episode', unitShort: 'ep', color: '#c9b3f0', items: watching, updatedAt: stamp },
     ],
     goals,
@@ -249,7 +253,7 @@
     today,
     tasks: data.days[today].tasks.length,
     days: Object.keys(data.days).length,
-    backlog: data.backlog.length,
+    later: data.backlog.length,
     library: data.library.map(l => `${l.name}: ${l.items.length}`),
     goals: data.goals.length,
   }

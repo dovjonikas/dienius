@@ -5,7 +5,7 @@
  * time I would not even know what Ongoing means."* It is right, and the
  * problem is bigger than one word. This app has invented, or bent, about
  * twenty terms - Ongoing, Key, Push, Stamp, Focus, day type and its four
- * values, the difference between the inbox and the backlog, what a unit is
+ * values, what Later is for, what a unit is
  * in the library, what North is for, what a sleep schedule does, and how
  * sync differs from a backup. Every one of them means something precise
  * here and something else, or nothing, everywhere else.
@@ -42,8 +42,7 @@ export const EXPLAIN_IDS = [
   'push',
   'ongoing',
   'focus',
-  'inbox',
-  'backlog',
+  'later',
   'stamp',
   'day-type',
   'day-type-full',
@@ -102,13 +101,9 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
     term: 'Focus',
     text: 'Puts one task on the screen with a clock on it and everything else out of the way. It is offered on the task that is running right now, and you can leave it whenever you like.',
   },
-  inbox: {
-    term: 'Inbox',
-    text: 'A line you wrote down without deciding anything about it. It has no day, no time and no size, because being asked to decide is what stops people writing things down at all.',
-  },
-  backlog: {
-    term: 'Backlog',
-    text: 'Something you have decided to do, but not on any particular day. It never comes looking for you and nothing records how long it has been there.',
+  later: {
+    term: 'Later',
+    text: 'Something to do, but not on any particular day. It never comes looking for you, and nothing records how long it has been there.',
   },
   stamp: {
     term: 'Stamp',

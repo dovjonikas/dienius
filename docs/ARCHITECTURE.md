@@ -51,8 +51,9 @@ AppData
 ├── picture?: Picture            who I am becoming: one text, one entity - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
 ├── ifThens: IfThenEntry[]       trigger + action under a goal, never measured
-├── inbox: InboxItem[]           one line of text, no date
-├── backlog: BacklogItem[]       decided, undated, in priority order
+├── backlog: LaterItem[]         Later: something to do on no day, in the owner's order
+│                                (the field keeps its wire name - see section 7)
+├── inbox: InboxItem[]           empty since v2.7; folded into Later on load
 ├── scratch: ScratchNote[]       the stream under everything, text and an instant
 ├── settings: Settings           theme, sleepProfiles, weekdayTemplates,
 │                                reminders, eveningClose, density, ...
@@ -98,7 +99,7 @@ tested.
 used to be a closed union of six ids that `validate` could refuse anything
 outside; an id from `crypto.randomUUID()` cannot be checked against a list
 nobody wrote, so the three fields that point at one - on `Task`,
-`TemplateBlock` and `BacklogItem` - are `optional(text(1, 64))` now. That is a
+`TemplateBlock` and `LaterItem` - are `optional(text(1, 64))` now. That is a
 loosening, and it is the deliberate one: a number, an object or an empty
 string in that field still fails the whole payload.
 
@@ -220,13 +221,14 @@ src/
       library.ts       lists, items, progress, sessions onto days and templates
       templates.ts     templates, stamping, the weekday map
       goals.ts         North: the goals, the picture, Compose's one commit, and the card switches
-      backlog.ts       the inbox and the backlog, and the doors between them
+      later.ts         Later, the one undated shelf, and the door from it onto a day
       scratch.ts       the scratch stream and its two ways out
       calendars.ts     external calendar subscriptions
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
       ifThen.ts        the rules under a goal, and the cap that refuses
       categories.ts    the category list, and the delete that moves what it would orphan
       lifecycle.ts     import, snapshot restore, the tour's two endings
+    later.ts           the fold: an older payload's inbox into the top of Later, once, with tombstones
     stamping.ts        template + dates -> day plans, and which column a date takes
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
@@ -332,7 +334,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   interrupt.e2e.ts     something came up for another day: from the week on a desktop, and three presses on a phone
   journal.e2e.ts       the evening questions fitting a phone without a scroll, and the week read back off the clipboard
   library.e2e.ts       a book bound to a template, on the day by name, advanced by a tick, and the next one named when it ends
-  shelves.e2e.ts       a backlog pull onto the day; scratch's "!" and a note kept as typed
+  shelves.e2e.ts       a Later pull onto the day; a note's "!" and a note kept as typed
   rollover.e2e.ts      a night passes: the daily repeat is there, yesterday is pushed once
   week.e2e.ts          a block dragged onto another day, with a real mouse
   week-template.e2e.ts a week built, dragged between columns, saved and stamped
@@ -380,7 +382,8 @@ it delegates:
 | `replanPrefs.ts` | The last three names an interruption was given, per device |
 | `ReplanSheet.tsx` | The sheet at the root: any day's Something came up, the three doors about today, and the one press that applies |
 | `TaskActionsSheet`, `TaskContextMenu` | The two menus |
-| `Backlog.tsx` | The fourth shelf: decided, undated, pulled from |
+| `Later.tsx` | The undated shelf: in the owner's order, pulled onto the day at the next free slot |
+| `laterSlot.ts` | The next free slot a Later item lands in, the same arithmetic quick-add's time control opens on |
 | `EveningClose.tsx` | The end of the day, said once - tone is the feature - and the journal's two questions |
 | `JournalLine.tsx` | The morning line under the North line: what this day is for, or nothing |
 | `YesterdayBanner.tsx` | What yesterday left |
@@ -563,8 +566,8 @@ erases the other's morning. Every entity therefore carries its own
 | Goal | `goal:<id>` | |
 | Picture | `picture:north` | One text, one fixed key. Absent is a tombstone, so an erase sticks; a blank string in a settings field would be a body that wins the next merge and comes back |
 | If-then | `ifthen:<id>` | |
-| Inbox item | `inbox:<id>` | |
-| Backlog item | `backlog:<id>` | |
+| Later item | `backlog:<id>` | The list is called Later on screen since v2.7; the kind keeps the wire name an older device's tombstones carry |
+| Inbox item | `inbox:<id>` | Nothing writes one since v2.7; the kind stays so a tombstone for a folded line still matches on an older device |
 | Scratch note | `scratch:<id>` | |
 | Category | `category:<id>` | Renaming Health on the laptop and recolouring Meals on the phone are two edits to two things. This is exactly why the list is in `AppData` rather than in `Settings`: at a settings field's grain one of those two would simply vanish |
 | Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
@@ -720,7 +723,7 @@ because six views is already the whole of what the navigation carries.
 |---|---|
 | `weekLayout.ts` | All the arithmetic: one shared axis, blocks as percentages, side-by-side lanes for overlaps |
 | `WeekAgenda.tsx` | The same week as a list, for the question the grid answers badly: what is on it |
-| `SomedayStrip.tsx` | The backlog under the columns, and one drag from there to a day |
+| `LaterStrip.tsx` | Later under the columns, and one drag from there to a day, landing at the next free slot |
 | `WeekView.tsx` | The grid, the drag between days, stamping, the phone's three-day window |
 | `WeekColumn.tsx` | One day: header, track, footer |
 
@@ -793,12 +796,12 @@ a pure module that decides, and a component that only asks and shows.
 ### Scratch - `lib/scratch.ts`, `views/scratch/`
 
 The layer under everything else, for text that has to be down in the next
-second. The inbox is for a task with no day; this is for a line with nothing
+second. Later is for a task with no day; this is for a line with nothing
 attached at all - a number said once, a bug noticed while doing something
 else.
 
 `ScratchNote` is text, an instant, a date key and an optional `pinned`. It
-is a sync entity at the same grain as an inbox line, and nothing in the text
+is a sync entity at the same grain as a Later item, and nothing in the text
 is parsed: a `#word` was a filter for four versions and is a word again
 since v2.5, because reading the text for meaning is a question asked at the
 moment of writing. See DECISIONS "Notes are notes".
@@ -806,7 +809,7 @@ moment of writing. See DECISIONS "Notes are notes".
 **The constraint is the feature, and it is in CONVENTIONS.md section 11.**
 One stream, no folders, no rich text. A note that needs structure has stopped
 being scratch: it becomes a task (through quick-add's own parser, so a time
-and a size come out right), an inbox line, or nothing. Adding a field to
+and a size come out right), a Later item, or nothing. Adding a field to
 `ScratchNote` to hold structure is the wrong move; adding a way out is the
 right one.
 

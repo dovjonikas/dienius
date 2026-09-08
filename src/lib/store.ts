@@ -1,9 +1,9 @@
-import { backlogActions } from './store/backlog'
 import { calendarActions } from './store/calendars'
 import { categoryActions } from './store/categories'
 import { dayActions } from './store/days'
 import { goalActions } from './store/goals'
 import { ifThenActions } from './store/ifThen'
+import { laterActions } from './store/later'
 import { libraryActions } from './store/library'
 import { lifecycleActions } from './store/lifecycle'
 import { scratchActions } from './store/scratch'
@@ -21,9 +21,9 @@ export type { RolloverResult } from './store/days'
  *
  * It was one 1600-line file until v1.10, a flat list of ninety-odd actions
  * that read fine and grew by a dozen every wave. It is eleven files now, one per
- * area of the data - the day, the library, templates, goals, the two undated
- * shelves, scratch, calendars, settings, if-then rules, categories, and the
- * whole-state writes - each importing the same two things from `store/core.ts`: the
+ * area of the data - the day, the library, templates, goals, Later, scratch,
+ * calendars, settings, if-then rules, categories, and the whole-state
+ * writes - each importing the same two things from `store/core.ts`: the
  * state through `getData()`, and the one way to change it, `commit()`.
  *
  * This file is the seam that made the split invisible: every import of
@@ -37,7 +37,7 @@ export const actions = {
   ...libraryActions,
   ...templateActions,
   ...goalActions,
-  ...backlogActions,
+  ...laterActions,
   ...scratchActions,
   ...calendarActions,
   ...settingsActions,
@@ -53,7 +53,7 @@ export const AREAS = {
   libraryActions,
   templateActions,
   goalActions,
-  backlogActions,
+  laterActions,
   scratchActions,
   calendarActions,
   settingsActions,

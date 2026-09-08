@@ -1,5 +1,5 @@
 import { commit, dayOf, getData } from './core'
-import type { NotePhoto, Task, ScratchNote } from '../types'
+import type { LaterItem, NotePhoto, Task, ScratchNote } from '../types'
 import { todayKey } from '../dates'
 import { deletePhotos, photoIds, readPhoto, restorePhoto } from '../photos'
 
@@ -9,7 +9,7 @@ export const scratchActions = {
    * Scratch - see lib/scratch.ts. A note exists from its first keystroke:
    * the overlay creates it on the first character and rewrites it on every
    * one after, so closing the overlay mid-sentence loses nothing. Newest
-   * first, the same reading the inbox has.
+   * first: a stream is read from the top.
    */
   addScratch(text: string): ScratchNote {
     const data = getData()
@@ -125,15 +125,19 @@ export const scratchActions = {
   },
 
   /**
-   * A note becomes an inbox line and leaves the stream in the same commit -
-   * the same one-action shape as scheduleInboxItem, for the same reason.
+   * A note becomes a Later item and leaves the stream in the same commit -
+   * the same one-action shape as scheduleLaterItem, for the same reason: a
+   * line that is in Later and still in the stream is written down twice.
+   * It joins the end, like anything else added to Later; the words are the
+   * title, exactly as written.
    */
-  scratchToInbox(id: string, text: string): boolean {
+  scratchToLater(id: string, text: string): boolean {
     const data = getData()
     const note = data.scratch.find(n => n.id === id)
     if (!note || !text.trim()) return false
-    const item = { id: crypto.randomUUID(), text: text.trim(), captured: new Date().toISOString() }
-    commit({ ...data, inbox: [item, ...data.inbox], scratch: data.scratch.filter(n => n.id !== id) })
+    const item: LaterItem = { id: crypto.randomUUID(), title: text.trim() }
+    // Later's field keeps its wire name - see LaterItem in types.ts.
+    commit({ ...data, backlog: [...data.backlog, item], scratch: data.scratch.filter(n => n.id !== id) })
     return true
   },
 

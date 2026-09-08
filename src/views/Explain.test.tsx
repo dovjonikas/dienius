@@ -12,8 +12,7 @@ import { TemplatesView } from './TemplatesView'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { NorthView } from './north/NorthView'
-import { Inbox } from '../widgets/day-plan/Inbox'
-import { Backlog } from '../widgets/day-plan/Backlog'
+import { Later } from '../widgets/day-plan/Later'
 import { TaskRow } from '../widgets/day-plan/TaskRow'
 import { TaskDetail } from '../widgets/day-plan/TaskDetail'
 import { TaskActionsSheet } from '../widgets/day-plan/TaskActionsSheet'
@@ -123,8 +122,7 @@ const PLACED: Record<ExplainId, () => ReactElement> = {
   ),
   ongoing: () => <TemplatesView />,
   focus: () => <TaskRow task={task} isFullDay active onFocus={() => {}} {...rowChrome} />,
-  inbox: () => <Inbox date={DATE} />,
-  backlog: () => <Backlog date={DATE} />,
+  later: () => <Later date={DATE} />,
   stamp: () => <CalendarView onOpenDay={() => {}} onOpenTemplates={() => {}} date={DATE} onDateChange={() => {}} />,
   'day-type': () => <TemplatesView />,
   'day-type-full': () => <TemplatesView />,
@@ -153,7 +151,7 @@ describe.each(EXPLAIN_IDS)('%s', id => {
   test('is explained where it is used', async () => {
     // Enough of a store that every screen in the table has something to draw:
     // a template with a day type and a block, a sleep schedule to choose
-    // between, a library list to count in, an inbox line and a backlog item.
+    // between, a library list to count in, and one thing in Later.
     actions.resetForTests({
       ...defaultData(),
       settings: {
@@ -165,7 +163,6 @@ describe.each(EXPLAIN_IDS)('%s', id => {
       },
       templates: [{ id: 'tpl', name: 'Workday', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Deep work', time: '09:00', minutes: 60 }] }],
       library: [{ id: 'lst', name: 'Books', unit: 'chapter', items: [] }],
-      inbox: [{ id: 'i1', text: 'Ask about the boiler', captured: DATE }],
       backlog: [{ id: 'b1', title: 'Move the ISA' }],
       days: { [DATE]: { date: DATE, tasks: [{ ...task, time: undefined }] } },
     })

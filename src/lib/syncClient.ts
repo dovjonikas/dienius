@@ -3,6 +3,7 @@ import { getData, onStateCommitted, replaceState } from './store'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
+import { dropDeletedFolds, foldInbox } from './later'
 
 /**
  * The sync client: pull on open, push shortly after every change, and never
@@ -248,12 +249,23 @@ async function runSync(): Promise<void> {
     }
 
     const local = getData()
+    const now = new Date().toISOString()
     const merged =
-      remote === null ? { data: local, applied: 0, deleted: 0 } : mergeStates(local, normaliseRemote(remote), new Date().toISOString())
+      remote === null ? { data: local, applied: 0, deleted: 0 } : mergeStates(local, normaliseRemote(remote), now)
 
-    if (merged.applied > 0 || merged.deleted > 0) replaceState(merged.data)
+    // A merge result never passes through loadData, so the fold that turns
+    // an older device's inbox into Later has to run here as well - before
+    // the result is committed and before it goes back to the server, or the
+    // server would hold a line under a name this device no longer reads.
+    // See later.ts.
+    const folded = dropDeletedFolds(
+      foldInbox(merged.data, now),
+      remote === null ? undefined : normaliseRemote(remote).tombstones,
+      now,
+    )
+    if (merged.applied > 0 || merged.deleted > 0 || folded !== merged.data) replaceState(folded)
 
-    await request('POST', merged.data)
+    await request('POST', folded)
 
     retryDelay = RETRY_BASE_MS
     setStatus({ phase: 'idle', lastSyncedAt: new Date().toISOString(), message: null, pending: false })

@@ -1,4 +1,4 @@
-import type { AppData, BacklogItem, Category, DayPlan, Goal, IfThenEntry, InboxItem, LibraryItem, LibraryList, Picture, ScratchNote, Settings, Task, Template } from './types'
+import type { AppData, Category, DayPlan, Goal, IfThenEntry, InboxItem, LaterItem, LibraryItem, LibraryList, Picture, ScratchNote, Settings, Task, Template } from './types'
 
 /**
  * State, seen as a bag of individually addressable things.
@@ -74,6 +74,12 @@ export function idOf(key: EntityKey): string {
   return key.slice(key.indexOf(':') + 1)
 }
 
+// 'inbox' stays listed although nothing has written an inbox line since
+// v2.7. An older device still sends them, and the tombstone that tells it to
+// delete its copy is keyed `inbox:<id>` - a kind this table does not know is
+// a key `kindOf` refuses, and a refused key is a tombstone that never lands.
+// 'backlog' is Later's wire name, kept for the same reason from the other
+// side: every `backlog:<id>` already on a device has to keep matching.
 const KINDS: EntityKind[] = ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'picture', 'setting']
 
 /**
@@ -226,6 +232,10 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
+  // Empty on this device since v2.7 - the fold in later.ts has run before
+  // anything reaches here - but an older device's payload still lists its
+  // lines under this kind, and the merge has to be able to name them to
+  // delete them.
   for (const item of data.inbox) {
     out.set(keyFor('inbox', item.id), {
       key: keyFor('inbox', item.id),
@@ -236,10 +246,10 @@ export function collectEntities(data: AppData): Map<EntityKey, Entity> {
     })
   }
 
-  // Its own entity per item, the same grain as an inbox line. Two devices
-  // adding to the backlog on the same evening must both keep what they added -
-  // this is the list you reach for when a day has room, and losing half of it
-  // to a merge would be the one failure that makes somebody stop using it.
+  // Later, under its wire name. Its own entity per item: two devices adding
+  // to it on the same evening must both keep what they added - this is the
+  // list you reach for when a day has room, and losing half of it to a merge
+  // would be the one failure that makes somebody stop using it.
   for (const item of data.backlog) {
     out.set(keyFor('backlog', item.id), {
       key: keyFor('backlog', item.id),
@@ -541,7 +551,7 @@ function applyStamps(data: AppData, changed: Set<EntityKey>, removed: EntityKey[
     ...(data.picture ? { picture: stampOne<Picture>(data.picture, changed.has(PICTURE_KEY), now) } : {}),
     ifThens: mapIfChanged<IfThenEntry>(data.ifThens, e => touched('ifthen', e.id), now),
     inbox: mapIfChanged<InboxItem>(data.inbox, i => touched('inbox', i.id), now),
-    backlog: mapIfChanged<BacklogItem>(data.backlog, i => touched('backlog', i.id), now),
+    backlog: mapIfChanged<LaterItem>(data.backlog, i => touched('backlog', i.id), now),
     scratch: mapIfChanged<ScratchNote>(data.scratch, n => touched('scratch', n.id), now),
     categories: mapIfChanged<Category>(data.categories, c => touched('category', c.id), now),
     settingsUpdatedAt,

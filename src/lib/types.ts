@@ -834,15 +834,6 @@ export interface IfThenEntry extends Timestamped {
 export const MAX_RULES_PER_GOAL = 5
 
 /**
- * One line of text caught before it had anywhere to go.
- *
- * The inbox exists because the moment a thought arrives is almost never the
- * moment to decide what day it belongs on, and being asked to decide is
- * exactly what makes people stop writing things down. An item has no date, no
- * time, no size and no category - deliberately nothing to fill in. It becomes
- * a real task, on a real day, when someone chooses to make it one.
- */
-/**
  * One line in the scratch stream - see lib/scratch.ts.
  *
  * Text, and when it was written. Nothing else is asked for at the time,
@@ -888,25 +879,32 @@ export interface NotePhoto {
   height: number
 }
 
+/**
+ * One line caught before v2.7, when the inbox was a shelf of its own.
+ *
+ * Nothing writes one any more. The shape is kept so a payload from an older
+ * device or an older backup still validates, and `foldInbox` in later.ts
+ * turns every one it meets into a `LaterItem` on the way in.
+ */
 export interface InboxItem extends Timestamped {
   id: string
   text: string
-  /** When it was caught, as an ISO instant - the only order an inbox has. */
+  /** When it was caught, as an ISO instant - the only order the inbox had. */
   captured: string
 }
 
 /**
- * Something you have decided to do, that is not for any particular day.
+ * Something to do, that is not for any particular day.
  *
- * The fourth shelf, and it had to justify itself against three that already
- * existed: a scratch note is text with nothing attached, an inbox line is a
- * thought nobody has decided about yet, and a float is a task on a day with
- * no time. This is the one none of them cover - the thing you *have* decided
- * on, that has a size and a colour and everything else a task has, and that
- * simply is not for this week. You pull from it when a day has room; it never
- * comes looking for you.
+ * Later is where a line goes when the moment of writing it is not the moment
+ * to decide when. Until v2.7 there were two such shelves - an inbox for a
+ * line nobody had decided about, and a backlog for one somebody had - and
+ * the only thing "decided" ever tracked was which button had been pressed:
+ * the rows looked the same and had the same two ways out. So there is one
+ * list now, with the backlog's mechanics and the inbox's cheap way in. See
+ * docs/STATE.md, the v2.7 decisions.
  *
- * **There is no `createdAt`, and that is the design.** A backlog that shows
+ * **There is no `createdAt`, and that is the design.** A list that shows
  * how long something has been sitting there is a list that accuses you every
  * time you open it, which is exactly the pressure this app exists to take
  * away - see docs/RESEARCH-ADHD.md and CONVENTIONS.md section 11 for the same
@@ -916,8 +914,14 @@ export interface InboxItem extends Timestamped {
  *
  * Order is priority, and it is the array's own order: dragging a row up is
  * the only ranking this list has. No stars, no urgency, no due dates.
+ *
+ * On the wire the list is still called `backlog` and its sync kind is still
+ * `'backlog'`. Renaming the field would have made every older device's
+ * tombstones - `backlog:<id>` - miss, so a delete on one device would come
+ * back from the other. The name a person reads is Later, everywhere; the
+ * name the file uses is the one it has always used.
  */
-export interface BacklogItem extends Timestamped {
+export interface LaterItem extends Timestamped {
   id: string
   title: string
   /** One of `AppData.categories`, the same as a task's. Absent means uncategorised. */
@@ -1066,16 +1070,20 @@ export interface AppData {
   settings: Settings
   ifThens: IfThenEntry[]
   /**
-   * Absent in every payload written before the inbox existed, which
-   * `normalizeLoaded` backfills to an empty list - the same treatment
-   * `ifThens` already gets.
+   * Empty since v2.7. Whatever an older payload carries here is folded into
+   * the top of Later by `foldInbox` - on load, and after every sync merge -
+   * so this is `[]` the moment anything reads it. Still declared, and still
+   * required, for as long as an older device's payload can turn up: its
+   * `inbox` list has to validate and its `inbox:<id>` tombstones have to
+   * keep matching, and both need the field to exist.
    */
   inbox: InboxItem[]
   /**
-   * Decided, undated tasks, in priority order. Backfilled to empty like the
-   * rest; absent in every payload written before it existed.
+   * Later: undated things to do, in priority order. The field keeps the name
+   * it was written under - see `LaterItem` for why. Backfilled to empty like
+   * the rest; absent in every payload written before it existed.
    */
-  backlog: BacklogItem[]
+  backlog: LaterItem[]
   /**
    * The scratch stream. Backfilled to empty like the rest; absent in every
    * payload written before it existed.

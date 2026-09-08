@@ -201,7 +201,7 @@ function DeleteCategory({
   const data = useAppData()
   const others = data.categories.filter(c => c.id !== category.id)
   const usage = categoryUsage(data, category.id)
-  const total = usage.tasks + usage.blocks + usage.backlog
+  const total = usage.tasks + usage.blocks + usage.later
   const [moveTo, setMoveTo] = useState(others[0]?.id ?? '')
 
   return (
@@ -243,12 +243,12 @@ function DeleteCategory({
   )
 }
 
-/** "14 tasks, 2 template blocks and 1 backlog item" - only the parts that are not zero. */
-export function usageSentence(usage: { tasks: number; blocks: number; backlog: number }): string {
+/** "14 tasks, 2 template blocks and 1 in Later" - only the parts that are not zero. */
+export function usageSentence(usage: { tasks: number; blocks: number; later: number }): string {
   const parts: string[] = []
   if (usage.tasks > 0) parts.push(`${usage.tasks} ${usage.tasks === 1 ? 'task' : 'tasks'}`)
   if (usage.blocks > 0) parts.push(`${usage.blocks} ${usage.blocks === 1 ? 'template block' : 'template blocks'}`)
-  if (usage.backlog > 0) parts.push(`${usage.backlog} ${usage.backlog === 1 ? 'backlog item' : 'backlog items'}`)
+  if (usage.later > 0) parts.push(`${usage.later} in Later`)
   if (parts.length <= 1) return parts[0] ?? ''
   return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }

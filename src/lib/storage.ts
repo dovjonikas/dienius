@@ -6,6 +6,7 @@ import { dedupeTasks } from './taskIdentity'
 import { isLegacyTheme, isStoredTheme, validate, type StoredAppData, type StoredTheme } from './validate'
 import { DEFAULT_CATEGORIES } from './categories'
 import { mergeOldJournal } from './journal'
+import { foldInbox } from './later'
 
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -215,7 +216,11 @@ function migrateSleepProfiles(data: StoredAppData): SleepProfile[] {
 function normalizeLoaded(data: StoredAppData): AppData {
   const settings = { ...data.settings } as Record<string, unknown>
   for (const gone of REMOVED_SETTINGS) delete settings[gone]
-  return {
+  // The inbox is backfilled and then folded into Later in the same breath,
+  // so nothing past this function ever sees a line in it - see later.ts.
+  // Stamped now rather than with anything from the file: the tombstone has
+  // to outrank the line on whichever device still holds it.
+  return foldInbox({
     ...data,
     days: repairDuplicates(data.days),
     ifThens: data.ifThens ?? [],
@@ -250,7 +255,7 @@ function normalizeLoaded(data: StoredAppData): AppData {
       north: data.settings.north ? { afterASlowDay: data.settings.north.afterASlowDay } : { ...DEFAULT_NORTH },
       eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
     },
-  }
+  }, new Date().toISOString())
 }
 
 /**
