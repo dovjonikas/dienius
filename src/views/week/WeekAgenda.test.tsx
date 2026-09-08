@@ -5,7 +5,7 @@ import { WeekAgenda } from './WeekAgenda'
 import { LaterStrip } from './LaterStrip'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
-import { addDays, todayKey } from '../../lib/dates'
+import { addDays, shortWeekday, todayKey } from '../../lib/dates'
 
 const DATES = ['2026-09-07', '2026-09-08', '2026-09-09']
 
@@ -139,17 +139,24 @@ test('an empty Later shows nothing at all, not an empty fold', () => {
  * size - `nextSlotFor` puts it where the day genuinely has room. Until v2.7
  * the drop landed the item with no time at all while its comment promised
  * this; the time is asserted now, not only the day.
+ *
+ * Tomorrow rather than a date written out, because a written date is today
+ * once a year: `nextSlotFor` starts from the clock on today and from the
+ * waking window on any other day, so this test passed all morning on the
+ * eighth of September 2026 and failed at ten, when the first free slot
+ * stopped being the one after Standup.
  */
 test('dragging one onto a day plans it there, at a time, and takes it off the shelf', async () => {
   const user = userEvent.setup()
   const onScheduled = vi.fn()
-  actions.addTask('2026-09-08', 'Standup', '07:00')
-  actions.setTaskMinutes('2026-09-08', getData().days['2026-09-08'].tasks[0].id, 60)
+  const day = addDays(todayKey(), 1)
+  actions.addTask(day, 'Standup', '07:00')
+  actions.setTaskMinutes(day, getData().days[day].tasks[0].id, 60)
   const item = actions.addLaterItem({ title: 'Move the ISA', minutes: 45 })!
 
   render(
     <div>
-      <div data-week-date="2026-09-08" style={{ width: 100, height: 100 }} />
+      <div data-week-date={day} style={{ width: 100, height: 100 }} />
       <LaterStrip onScheduled={onScheduled} />
     </div>,
   )
@@ -166,12 +173,14 @@ test('dragging one onto a day plans it there, at a time, and takes it off the sh
   document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 200, clientY: 200 }))
 
   expect(getData().backlog.find(b => b.id === item.id)).toBeUndefined()
-  const landed = getData().days['2026-09-08']?.tasks.at(-1)
+  const landed = getData().days[day]?.tasks.at(-1)
   expect(landed).toMatchObject({ title: 'Move the ISA', minutes: 45 })
-  // The first gap after Standup that holds three quarters of an hour.
+  // The first gap after Standup that holds three quarters of an hour, from
+  // the waking window rather than from the clock, because this is not today.
   expect(landed?.time).toBe('08:00')
   // Said as a day's name, not as a date key.
-  expect(onScheduled).toHaveBeenCalledWith('Move the ISA is on Tue')
+  expect(onScheduled).toHaveBeenCalledWith(`Move the ISA is on ${shortWeekday(day)}`)
+  expect(onScheduled.mock.calls[0][0]).not.toContain(day)
 })
 
 // A press that does not move is not a drag. An item here has no day, so there

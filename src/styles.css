@@ -8291,6 +8291,30 @@ button.danger:focus-visible {
 .review-library-name { color: var(--text); font-size: var(--t-sm); }
 .review-library-units { color: var(--muted); font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
 
+/* Where the plan and the week disagreed - ReadingSection in ReviewView.tsx,
+   one line of counts per template block from lib/planReading.ts. The
+   block's name and time carry the ink and the counts after the dash are
+   muted, on one line, so the eye finds the block and the sentence is still
+   one sentence when it is read out. Nothing is coloured by its value and
+   nothing is a bar: a line is a count, not a verdict. */
+.review-reading-list { display: flex; flex-direction: column; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
+.review-reading-list li { font-size: var(--t-sm); line-height: 1.4; }
+.review-reading-block { color: var(--text); font-weight: 600; }
+.review-reading-facts { color: var(--muted); }
+
+/* The template's name over its lines, drawn only when the week used more
+   than one template - the same small label the figures' terms wear, and a
+   step of room above every group but the first. */
+.review-reading-template {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.review-reading-list + .review-reading-template { margin-top: var(--s2); }
+
 @media (max-width: 599px) {
   .review { padding: var(--s4) var(--s3) var(--s7); }
   .review-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -2192,3 +2192,47 @@ Nothing compares a week with the week before, nothing is called best, and
 nothing in the tab is coloured by a value. The month cell's bar keeps its
 three tones from the v2.4 month decision; it is the day's own ratio drawn
 once, and it is the owner's to revisit after the week in the app.
+
+## Where the plan and the week disagreed
+
+The one thing v2.7 added, and it is built for the week after the app
+closed: the owner lives in it for a week, and the next brief comes out of
+what the week said rather than out of a feeling. It is a reading, not a
+game. In Review, on a week, under the charts and above North: for every
+block of every template the week's finished days were stamped from, on how
+many of those days it happened at its time, how many times it moved and by
+how much on average, how many times it was set aside, and how many times
+it was not done. One line per block, in this form and no other:
+
+    Deep work 09:00 - happened at its time 2 of 5 days, moved later 3 times (avg +1h10)
+
+Sorted with the largest disagreement on top. No percentage, no colour, no
+good or bad, no streak. One Copy, which puts the same lines on the
+clipboard as markdown, grouped under the template's name, so a week can be
+pasted into a conversation about what to change.
+
+**It is defined from what exists, and nothing new is stored.** The app
+records no timestamp of a tick and this did not add one: a block happened
+at its time when its task is done and its time still equals the block's;
+it moved when its task is on the day at another time, done or not, and the
+distance is the difference between the two clock times; it was set aside
+when the task carries the flag; and otherwise it was not done - unticked at
+its time, or gone from the day, which a hand delete and a push absorbed by
+tomorrow's stamp both leave looking the same. Only days before today count,
+so the current week reads its Monday to yesterday and an empty week shows
+nothing at all. The block's time is the template's time now, not the time
+it had when the day was stamped, because the stamped task keeps no copy of
+it; edit a template mid-week and the reading for that week says so
+honestly by disagreeing more.
+
+**Why Review and not the week view.** Review is the one screen that
+already looks back at a finished Monday-to-Sunday week and already has a
+Copy control beside it; the week view is built to fit its columns without
+a scroll, shows three days on a phone, and a second status region under
+it would sit ahead of the one it already has.
+
+**What it must never become.** A verdict. The words "missed", "skipped"
+and "failed" are not in it and `ReviewView.test.tsx` refuses them; the
+lines are sorted by size of disagreement, not by anything called good; and
+if a later wave ever wants to colour a line, that is the streak coming
+back through a side door and the answer is no.

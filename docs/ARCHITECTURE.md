@@ -229,6 +229,7 @@ src/
       categories.ts    the category list, and the delete that moves what it would orphan
       lifecycle.ts     import, snapshot restore, the tour's two endings
     later.ts           the fold: an older payload's inbox into the top of Later, once, with tombstones
+    planReading.ts     where the plan and the week disagreed: one line of facts per template block
     stamping.ts        template + dates -> day plans, and which column a date takes
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded

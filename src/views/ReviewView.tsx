@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, todayKey } from '../lib/dates'
 import { CopyJournalButton } from './CopyJournalButton'
 import { activeGoals, ageLabel } from '../lib/north'
+import { copyText } from '../lib/journal'
+import { planReading, readingGroups, readingLine, readingMarkdown, type BlockReading } from '../lib/planReading'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,
@@ -50,8 +52,10 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
 
   const stats = useMemo(() => periodStats(data, from, to), [data, from, to])
   const dates = useMemo(() => datesBetween(from, to), [from, to])
+  const today = todayKey()
+  const readings = useMemo(() => planReading(data, dates, today), [data, dates, today])
   const step = range === 'week' ? 7 : 31
-  const isCurrent = todayKey() >= from && todayKey() <= to
+  const isCurrent = today >= from && today <= to
 
   const peak = Math.max(1, ...stats.days.map(d => d.total))
   const peakFocus = Math.max(1, ...stats.days.map(d => d.focusMinutes))
@@ -159,6 +163,17 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
             onOpenDay={onOpenDay}
           />
 
+          {/* Where the plan and the week disagreed: a reading, not a game.
+              One line of counts per template block, over the week's past
+              days, with the largest disagreement first, and a Copy for the
+              clipboard - because the next brief comes out of these lines
+              rather than out of a feeling. Only on a week, which is the
+              stretch a plan is made for, and only when there is something
+              to read; a heading over nothing would be a prompt. */}
+          {range === 'week' && readings.length > 0 && (
+            <ReadingSection readings={readings} title={formatWeekTitle(dates)} />
+          )}
+
           <NorthSection />
 
           {stats.library.length > 0 && (
@@ -207,6 +222,70 @@ function NorthSection() {
           </li>
         ))}
       </ul>
+    </div>
+  )
+}
+
+/**
+ * The reading's block: the lines by template, and the one control on it.
+ *
+ * A template's name is drawn over its lines only when the week used more
+ * than one; over a single template it would say what the rail already said
+ * every day. Each line is split at its dash into the block's name and the
+ * counts, so the eye finds the block and a reader still hears one sentence.
+ *
+ * Copy is CopyJournalButton's shape without its greyed state - the block is
+ * not drawn at all when there is nothing to copy - and its name is the one
+ * word, so it does not read as a second journal button.
+ */
+function ReadingSection({ readings, title }: { readings: BlockReading[]; title: string }) {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const groups = readingGroups(readings)
+
+  useEffect(() => {
+    if (state === 'idle') return
+    const timer = setTimeout(() => setState('idle'), 2000)
+    return () => clearTimeout(timer)
+  }, [state])
+
+  async function copy() {
+    const ok = await copyText(readingMarkdown(readings, title))
+    setState(ok ? 'copied' : 'failed')
+  }
+
+  return (
+    <div className="review-block review-reading">
+      <div className="review-block-head">
+        <h3>Where the plan and the week disagreed</h3>
+        <span className="copy-journal">
+          <button type="button" className="link-button" data-tip="As markdown, to paste anywhere" onClick={copy}>
+            {state === 'copied' ? 'Copied' : state === 'failed' ? 'Could not copy' : 'Copy'}
+          </button>
+          {/* A status rather than an aria-live attribute, for the reason
+              CopyJournalButton gives: the page has live regions of its own
+              ahead of this one. */}
+          <span className="visually-hidden" role="status">
+            {state === 'copied' ? 'The reading copied as text.' : state === 'failed' ? 'The clipboard could not be written.' : ''}
+          </span>
+        </span>
+      </div>
+      {groups.map(group => (
+        <Fragment key={group.templateId}>
+          {groups.length > 1 && <h4 className="review-reading-template">{group.templateName}</h4>}
+          <ul className="review-reading-list">
+            {group.readings.map(reading => {
+              const line = readingLine(reading)
+              const cut = line.indexOf(' - ')
+              return (
+                <li key={reading.blockId}>
+                  <span className="review-reading-block">{line.slice(0, cut)}</span>
+                  <span className="review-reading-facts">{line.slice(cut)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </Fragment>
+      ))}
     </div>
   )
 }
