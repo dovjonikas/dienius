@@ -12,13 +12,16 @@
   <a href="docs/DAILY.md">Set it up</a>
   &nbsp;·&nbsp;
   <a href="docs/ARCHITECTURE.md">How it is built</a>
+  &nbsp;·&nbsp;
+  <a href="docs/AUDIT-v2.9.md">Read the audit</a>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <img alt="React 19 + TypeScript" src="https://img.shields.io/badge/React_19-TypeScript-61dafb.svg">
   <img alt="PWA" src="https://img.shields.io/badge/PWA-offline--first-5a0fc8.svg">
-  <img alt="1800+ tests" src="https://img.shields.io/badge/tests-1800%2B-brightgreen.svg">
+  <img alt="2500+ tests" src="https://img.shields.io/badge/tests-2500%2B-brightgreen.svg">
+  <img alt="Accessibility: WCAG AA, keyboard throughout" src="https://img.shields.io/badge/a11y-AA_%2B_keyboard-4c1.svg">
   <img alt="No dependencies at runtime" src="https://img.shields.io/badge/runtime_deps-react_only-lightgrey.svg">
 </p>
 
@@ -132,7 +135,7 @@ Merging is per entity, so a morning on the phone and an evening on the PC both s
 
 React 19 and TypeScript, built with Vite. No UI framework, no router, no state library. The whole state is one object behind `useSyncExternalStore`, saved straight to `localStorage`. Everything that is not a component - parsing, sorting, scoring, stamping, capacity, the timeline's geometry, iCalendar - is a plain function in `src/lib` or beside its widget, tested directly.
 
-- `src/lib` holds the data model (`types.ts`), the store (`store.ts`, ten area modules under `store/`), the storage boundary and its validator, sync, the calendar reader, the tour as data
+- `src/lib` holds the data model (`types.ts`), the store (`store.ts`, eleven area modules under `store/`), the storage boundary and its validator, sync, the calendar reader, the tour as data
 - `src/widgets/day-plan` is the day view: quick-add, the timeline grid, capacity, replan, the task detail sheet
 - `src/views` is every other tab, the week view, the tour engine, the shared controls
 - `server/sync-server.mjs` is the optional sync server; `scripts/` builds the service worker's cache list and the README's screenshots, and holds the measuring sweep and the sample day it runs on
@@ -164,7 +167,18 @@ Requires Node 22 or newer.
 - [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) - how work is done here, and why each rule exists
 - [`docs/DECISIONS.md`](docs/DECISIONS.md) - the harder calls, with what each one costs
 - [`docs/RESEARCH-ADHD.md`](docs/RESEARCH-ADHD.md) - the evidence behind the push rule and the rules under a goal, and what not to build
+- [`docs/AUDIT-v2.9.md`](docs/AUDIT-v2.9.md) - the whole app in one read, for somebody who has not seen it: every screen and where you press, screenshots in both themes, what is known to be imperfect, and what would be decided differently
 
 ## License
 
-[MIT](LICENSE).
+**[MIT](LICENSE)** - © 2026 Quicasha.
+
+In one sentence: take it, change it, ship it, sell it. No permission needed
+and nothing owed. Keep the copyright line and the license text with any copy
+you pass on, and take it as it is - there is no warranty of any kind.
+
+Code and documentation are both covered. So are the screenshots: every one
+of them is of the demo's own sample fortnight under a pinned clock, so there
+is nothing personal in them and they travel with the rest.
+
+If you build something out of this, a link back is welcome and not required.

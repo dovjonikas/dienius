@@ -180,7 +180,7 @@ localStorage ──loadData()──> validate() ──> normalizeLoaded() ──
   `normalizeLoaded()` backfills every field added since, which is what makes an
   old backup still load.
 - [`store.ts`](../src/lib/store.ts) is the facade over that object: one `actions`
-  object spread together from ten area modules under [`store/`](../src/lib/store),
+  object spread together from eleven area modules under [`store/`](../src/lib/store),
   each reading through `getData()` and writing through `commit()` in `store/core.ts`.
   Every one is `commit(next)`: replace the whole object, save, notify. There
   are no reducers and no action types - the function *is* the action.
