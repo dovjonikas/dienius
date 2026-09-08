@@ -159,7 +159,7 @@ const SCREENS = [
       if (await field.count()) {
         await field.fill('Deep work block, and a long title to push a column')
         await press(p, 'All days')
-        await press(p, 'Add block')
+        await press(p, 'Add a block')
       }
       await p.waitForTimeout(300)
     },

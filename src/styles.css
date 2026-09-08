@@ -3694,8 +3694,17 @@ select:focus {
   background: none;
   border: none;
   min-height: 0;
-  margin: calc(var(--s1) * -1) calc(var(--s2) * -1);
-  padding: var(--s1) var(--s2);
+  /* The hit area is as tall as it was, and all of it is above the words.
+     Four pixels above and four below hung the box over the meta line under
+     it, and at 1600x900 the sweep read the bottom of this button and the
+     size chip as two pieces of text painted over each other - which they
+     were, by four pixels, since the day the negative margin was written.
+     Above only: the negative margin keeps it out of the layout either way,
+     and above the title is the card's own padding rather than anybody's
+     text. See DECISIONS "A task's title is a 29px target, on purpose",
+     which named this as the thing to check. */
+  margin: calc(var(--s2) * -1) calc(var(--s2) * -1) 0;
+  padding: var(--s2) var(--s2) 0;
   border-radius: var(--r-control);
   font: inherit;
   /* After the shorthand, which would reset it: the title's own size, the

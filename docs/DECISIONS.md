@@ -2085,7 +2085,17 @@ It stays as built, with the owner's word. A target 29px tall and 200px
 wide is a different thing from a 29px square - the dimension a thumb
 misses on is the one this keeps generous - and the same card's actions
 menu sits at the full 44px and reaches the same placement, so nothing here
-is the only way to anything. If real hardware ever says otherwise, the fix
+is the only way to anything.
+
+**The thing this entry said to check turned out to be true.** The hit area
+was four pixels above the words and four below, and the four below hung
+over the meta line under them: at 1600x900 the closing sweep read the
+bottom of the title and the size chip as two pieces of text painted over
+each other, which by four pixels they were, and had been since the negative
+margin was written. All of the room is above the words now - the same 29px,
+out of layout the same way, and above a title is the card's own padding
+rather than anybody's text. The target did not shrink and the entry stands;
+only the direction the box grows in changed. If real hardware ever says otherwise, the fix
 is a fixed content height on the label row with the hit area extended on
 both axes by the same padding-and-negative-margin, and then a check that
 the selected state's outline does not cross the meta line under it, which

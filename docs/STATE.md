@@ -6,18 +6,25 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.6, closed and tagged. The desktop polish wave, ten
-stages from one brief, built on two rules the owner wrote down and that now
-sit in CONVENTIONS sections 23 and 24: information appears exactly once,
-and nothing moves on hover. Today's header is two zones and says nothing
-the rail's card says; the North line's peek hangs under the line instead of
-pushing the day; every tooltip in the app sits under its control; the
-Monday card is a sheet; a single pane fills its width; the task column ends
-on a footer; Scratch, the journal and the blocks each lost the thing that
-made them read as unfinished; and a health pass over every screen took
-seven hovers that moved and two numbers said twice. Section 4 has the
-table, stage by stage. The tag is `493d9de` and this handoff sits one
-commit above it. **Nothing is owed.**
+**Last updated:** v2.7, closed and tagged, and **the app is done**. The
+last wave, seven stages from one brief plus a fourth small thing the owner
+added while it ran, on a third rule that now sits in CONVENTIONS section
+25: a state has to earn its place. The header's chip and its toggles stand
+on one line with the date's arrows back at 44px and the date in a box that
+cannot move; every block on both grids says when it starts and ends; the
+Inbox and the Backlog are one list called Later; the Year view and Review's
+streak are gone, and the month line says how many days had a plan; Review
+carries "Where the plan and the week disagreed", which is the reading the
+next brief comes out of; the research the docs never leaned on is written
+down as what they rest on instead; OPEN-QUESTIONS is empty; and every
+string in the app was read as one document and brought to one word per
+gesture. Section 4 has the table, stage by stage.
+
+**What happens now is the done contract**, under "Asked for, not yet built"
+in this section: the owner lives in the app for a week, on the phone it was
+written for and on the desktop it was polished on, and the next brief comes
+out of that week - out of Review's reading and out of what real use turns
+up - rather than out of a session with time left over. **Nothing is owed.**
 
 **Before that: v2.5**, twelve stages from three briefs in one sitting:
 notes stop pretending to be a database, they hold pictures, and one press
@@ -191,11 +198,17 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2346
+Still true, and checked rather than assumed. The suite is green - **2341
 tests in 143 files, plus 35 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
-the desktop and nothing on the phone, with `--self-check` at 8/8. The
-working tree is empty and pushed.
+the desktop at three hours and nothing on the phone, with `--self-check` at
+8/8. The working tree is empty and pushed.
+
+The count is five lower than v2.6's and the app is larger, which is the
+shape of this wave: the Year strip took forty-two tests with it and Review's
+streak seven, and the twenty-six that came in - the fold into Later, the
+next free slot, the week's disagreements, the keys, the chip that asks -
+are about things that exist.
 
 Read that sweep line as stronger than the same sentence in v2.4. The pass
 now sees through a fade, reads what a field says, walks a pinned clock
@@ -238,7 +251,7 @@ to choose between at the moment of writing.
 | 4 | The docs told the truth | named in the handoff | Every living doc and the copy in `explain.ts` and `tour.ts` searched for "Zeigarnik", "decision fatigue", "ego depletion" and "evidence shows": the terms occur only in the research documents, where they are named to be refused, and in the push-bound entry, which refuses them - nothing had to come out. What the brief asked for is written once in DECISIONS "Three arguments the docs do not make" (what capture, the no-new-decisions rule and the grid rest on instead), the no-new-decisions rule is stated in CONVENTIONS section 25 with the abandonment literature as its reason, and "Relatedness is the motivator local-first cannot serve", which had said everything 4d asked for since 2026-09-01, takes the brief's name, "Relatedness is a known cost" |
 | 5 | The open questions closed | named in the handoff | Both items moved to DECISIONS as accepted, with their reasons and the two honest fixes each named - "The mini calendar's cells stay at 33px", "A task's title is a 29px target, on purpose" - and OPEN-QUESTIONS is empty with the date. The standing touch-hardware note became the done contract's first line: the owner's week on the phone is the first touch test |
 | 6 | One voice | named in the handoff | The keyboard card behind `?` made true key by key: `1` opens today as the rail's button does, `F` starts Focus on today's running task whatever day is on screen, the arrow rows say they work on the day view, the backtick is on the card at last, and the card itself is two columns from 720px because nineteen rows in one ran 802px into a 640px box and hid the Ctrl-K row, the note and the way into the tour. Escape closes one layer per press: five popovers stopped the event as the actions sheet already did, and the clock joined the guard that keeps a bare key from reaching the shell under a dialog. The tour's one false sentence - "That bar along the bottom is Focus" - says "That strip under the header" and was walked on both platforms. Then every string in the app read as one document: one word per gesture (Delete for a whole thing, Remove for a part, Erase for everything, Close for a surface, Dismiss for a notice, Cancel for stepping back, Save for a form, "Add a" for a countable thing, Onto for a day, Push for a task that was not done), the armed second press as the verb and a question mark, no contractions, every empty state one sentence, "How long" for every length control, Notes for the stream on screen, and a tooltip that only repeated its own control removed. About a hundred and thirty strings, every test and browser test that named one, and DAILY read against the app |
-| 7 | Closing and `v2.7` | | |
+| 7 | Closing and `v2.7` | named in the handoff | Every gate: typecheck, 2341 unit tests in 143 files, the build, 35 browser tests across two viewports including the tour walked step by step on a desktop and a phone, and the sweep at zero on the desktop at 15:00, 22:00 and 09:00 and on the phone, with the self-check at 8 of 8. The README's screenshots regenerated from the same pinned Wednesday. The one finding on the wave was the sweep's, at 22:00 and 1600x900: the float title's 29px hit area hung four pixels over the meta line under it and painted its bottom over the size chip, which it had done since the negative margin was written, and which this app's own DECISIONS entry had named as the thing to check - the room is all above the words now. This table, the tags table, CONVENTIONS 25, the DECISIONS entries, and the tag |
 
 #### The brief, as understood
 
@@ -906,6 +919,7 @@ and pushed. Nothing below this table is owed.
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
+| `v2.7` | named in the handoff | The last wave: the header's three small things and the times on every block, Later where two shelves were, the Year view and Review's streak gone, where the plan and the week disagreed, the docs told the truth, the open questions closed, one voice over every string, and the closing. The app is done at this tag |
 
 The move is why `v2.0-desktop` exists: nothing was published between the two
 halves, so one version number is honest, but the earlier commit is worth
