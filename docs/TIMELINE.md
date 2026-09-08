@@ -307,7 +307,7 @@ push rule and no-guilt score that are already this app's own.
    nothing anchors a window, so there is nothing to crop to and nothing to show.
 
    An anchor with no `minutes` has no honest height, so none is invented. It draws at its real start
-   time with a fixed placeholder height (a UI floor, not a duration guess) and a plain "size unknown"
+   time with a fixed placeholder height (a UI floor, not a duration guess) and a plain "no length"
    label instead of a time range. Exactly like `computeCapacity`, one unsized anchor suppresses every
    gap for that day - its real length is unknown, so it might run through what would otherwise look
    like free time, and reporting a gap around it would be a guess dressed up as arithmetic. A quiet
@@ -333,7 +333,7 @@ push rule and no-guilt score that are already this app's own.
    this feature takes. A sized float fits when its own `minutes` is no larger than the gap's; equal
    counts as fitting. An unsized float is never said to fit - `capacity.ts` already refuses to
    invent a duration rather than guess one that could poison the arithmetic, and this is the same
-   refusal applied to one gap - so it is offered separately, under its own "size unknown" label,
+   refusal applied to one gap - so it is offered separately, under its own "no length" label,
    rather than hidden outright or claimed to fit. A float larger than every gap is left out of
    every picker entirely; there is nothing honest to say about it there. The picker caps what it
    shows to four rows before asking - `docs/RESEARCH-ADHD.md` section 7, visual working memory

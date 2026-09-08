@@ -123,8 +123,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         // A quiet empty state, not a prompt. Nothing was planned; that is a
         // fact about a week, not a failing to be corrected.
         <p className="review-empty">
-          Nothing was planned {range === 'week' ? 'this week' : 'this month'}. There is nothing to look back
-          at yet, which is fine - this fills itself in as days get used.
+          Nothing was planned {range === 'week' ? 'this week' : 'this month'} - it fills in as days are used.
         </p>
       ) : (
         <>

@@ -316,8 +316,11 @@ export function TaskRow({
               <span className="visually-hidden"> steps done</span>
             </span>
           )}
+          {/* No tooltip on this one: it used to carry boundLabel, which is the
+              text printed inside it, so the pointer was told the same words it
+              was already reading. */}
           {boundLabel && (
-            <span className={boundNext ? 'task-library is-next' : 'task-library'} data-tip={boundLabel}>
+            <span className={boundNext ? 'task-library is-next' : 'task-library'}>
               {boundLabel}
             </span>
           )}
@@ -355,14 +358,20 @@ export function TaskRow({
           <input
             className="task-size-input"
             inputMode="numeric"
-            aria-label={`Size in minutes for ${task.title}`}
+            aria-label={`How long, in minutes, for ${task.title}`}
             value={sizeDraft}
             autoFocus
             onChange={e => onSizeDraftChange(e.target.value)}
             onBlur={() => onCommitSizeEdit(task.id)}
             onKeyDown={e => {
               if (e.key === 'Enter') onCommitSizeEdit(task.id)
-              if (e.key === 'Escape') onCancelSizeEdit(task)
+              if (e.key === 'Escape') {
+                // One press, one layer: the shell's own Escape chain listens
+                // on the document, so without this abandoning a size edit
+                // also collapsed Focus or ended a running tour underneath it.
+                e.stopPropagation()
+                onCancelSizeEdit(task)
+              }
             }}
           />
         ) : (
@@ -370,7 +379,7 @@ export function TaskRow({
             className={task.minutes !== undefined ? 'task-size' : 'task-size task-size-empty'}
             aria-label={
               task.minutes !== undefined
-                ? `Change size for ${task.title}, currently ${formatDuration(task.minutes)}`
+                ? `Change how long ${task.title} takes, currently ${formatDuration(task.minutes)}`
                 : `Set size for ${task.title}`
             }
             onClick={() => onStartSizeEdit(task)}

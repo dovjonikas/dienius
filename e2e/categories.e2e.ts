@@ -26,7 +26,7 @@ test('a category is made with a picked colour, used on a task, and deleted onto 
   await page.getByRole('button', { name: 'Add a category' }).click()
   await page.getByLabel('Name').fill('Gym')
   await page.getByRole('group', { name: 'Colour', exact: true }).getByRole('button', { name: 'Green' }).click()
-  await page.getByRole('button', { name: 'Add it' }).click()
+  await page.getByRole('button', { name: 'Save' }).click()
 
   await expect(page.getByText('Gym')).toBeVisible()
 

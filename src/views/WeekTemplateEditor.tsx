@@ -454,7 +454,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           <DurationControl
             minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
             allowEmpty
-            stepperLabel="Size in minutes"
+            stepperLabel="How long, in minutes"
             onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
           />
         </div>
@@ -536,7 +536,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           </div>
 
           <button className="btn-secondary" disabled={!blockTitle.trim()} onClick={addBlocks}>
-            Add block
+            Add a block
           </button>
         </div>
         </div>

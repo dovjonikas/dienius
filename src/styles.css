@@ -2646,12 +2646,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   color: var(--text);
 }
 
-.first-run-note {
-  margin: var(--s4) 0 0;
-  color: var(--muted);
-  font-size: var(--t-sm);
-}
-
 /* Single column at 375px (each card comfortably clears the 240px minimum
    before a second one would fit inside the app's own 343px content width),
    opening into a real grid once there is room - see docs/BACKLOG.md for the
@@ -7231,6 +7225,12 @@ button.danger:focus-visible {
 
 .library-schedule button:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
+/* The item panel reuses this class for a button with a word in it rather
+   than the glyph the circle was sized for, and "Delete" overflowed its own
+   click target - measured at 1366x768, scrollWidth 43 in a 26px box. Only
+   in the panel: the hover crosses on the rows stay circles. */
+.library-detail-actions .library-item-remove { width: auto; padding: 0 var(--s2); }
+
 .library-item-remove {
   width: 26px;
   height: 26px;
@@ -7882,6 +7882,21 @@ button.danger:focus-visible {
 .shortcuts-head h2 { margin: 0; font-size: var(--t-lg); }
 
 .shortcuts-list { display: flex; flex-direction: column; gap: var(--s2); margin: 0; }
+
+/* Two columns as soon as the window can hold them. Nineteen rows in one
+   column ran 802px into a card capped at 640, so the Ctrl K row, the note
+   saying what fires while you are typing, and the way into the tour all sat
+   below the fold - on the one screen whose whole job is to be read at a
+   glance, and which nobody scrolls because it looks finished. The phone
+   keeps the single column, where the card is the width of the screen. */
+@media (min-width: 720px) {
+  .shortcuts { width: min(720px, 100%); }
+  .shortcuts-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s2) var(--s5);
+  }
+}
 .shortcuts-list > div { display: flex; align-items: baseline; gap: var(--s3); }
 .shortcuts-list dt { flex: 0 0 var(--touch); margin: 0; }
 .shortcuts-list dd { margin: 0; color: var(--muted); font-size: var(--t-sm); }

@@ -603,7 +603,7 @@ export const dayActions = {
     // An interruption nobody could put a length on - "something this
     // evening" - leaves the day open-ended, and an open-ended day is what
     // `away` already means. Setting it here rather than asking again is
-    // what makes "I'm back" appear on the header afterwards, and what makes
+    // what makes "Back" appear on the header afterwards, and what makes
     // the rescue recompute from the moment it is pressed. Only for today,
     // and only when the plan is an interruption with no end.
     const open = plan.kind === 'interrupt' && plan.add && plan.add.minutes === undefined && date === todayKey()

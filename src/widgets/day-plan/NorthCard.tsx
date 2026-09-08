@@ -46,7 +46,7 @@ import { useRestoreFocus } from '../../lib/useRestoreFocus'
  * or the morning after a day that got away, read once, gone in one press,
  * which is exactly what the task sheet and the replan sheet are for. A strip
  * could hold the goal's name and nothing else, and the why and the identity
- * are the card. Every way out of it - Ok, Escape, the backdrop - is the same
+ * are the card. Every way out of it - Close, Escape, the backdrop - is the same
  * "I have read this", because there is nothing else it could mean. The
  * evening close stays in the flow: it arrives at a set time while somebody
  * may be typing, and a sheet that lands mid-sentence is worse than a card
@@ -102,13 +102,15 @@ function NorthSheet({ goal, kind, ifThens, today }: { goal: Goal; kind: 'slack' 
           dismiss()
         }}
       >
-        <p className="north-card-lead">{kind === 'monday' ? 'New week.' : 'A reminder of why.'}</p>
+        {/* A lead, not a sentence, so no stop - see CONVENTIONS on what ends
+            in a full stop and what does not. */}
+        <p className="north-card-lead">{kind === 'monday' ? 'New week' : 'A reminder of why'}</p>
         <h2 className="north-card-title">{goal.title}</h2>
         {goal.why && <p className="north-card-why">{goal.why}</p>}
         {goal.identity && <p className="north-card-identity">{goal.identity}</p>}
         {line && (
           <p className="north-card-deserve">
-            <span className="north-card-rule-lead">This week.</span>
+            <span className="north-card-rule-lead">This week</span>
             {line}
           </p>
         )}
@@ -125,7 +127,7 @@ function NorthSheet({ goal, kind, ifThens, today }: { goal: Goal; kind: 'slack' 
           </p>
         )}
         <button type="button" className="north-card-ok" onClick={dismiss}>
-          Ok
+          Close
         </button>
       </div>
     </div>

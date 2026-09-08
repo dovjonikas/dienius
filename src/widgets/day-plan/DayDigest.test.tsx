@@ -47,10 +47,12 @@ test('the card says nothing the header already does: no ring, no done count', ()
   expect(container.textContent).not.toMatch(/1\/9|1 of 9/)
 })
 
-test('four rows, and they are the shape of the day: timed, focus, free and sleep', () => {
+// The second row sums the Deep work category, not the focus session, so it is
+// named after the category - Focus is the countdown, and one word does one job.
+test('four rows, and they are the shape of the day: timed, deep work, free and sleep', () => {
   digest([task({ time: '09:00', minutes: 60, category: 'core' }), task({ time: '14:00', minutes: 30 })])
   const labels = screen.getAllByRole('term').map(dt => dt.textContent)
-  expect(labels).toEqual(['Timed', 'Focus', 'Free', 'Sleep'])
+  expect(labels).toEqual(['Timed', 'Deep work', 'Free', 'Sleep'])
   expect(screen.getByText('1h30')).toBeInTheDocument()
   expect(screen.getByText('1h')).toBeInTheDocument()
 })
@@ -100,7 +102,7 @@ test('a day with somebody else\'s events on it says so, in a row that is not the
 test('a timed task with no size leaves free unknown, and says why', () => {
   digest([task({ time: '09:00' })])
   expect(screen.getByText('a timed task has no size')).toBeInTheDocument()
-  expect(screen.getByText('1 unsized')).toBeInTheDocument()
+  expect(screen.getByText('1 with no length')).toBeInTheDocument()
 })
 
 // --- no percentage, in any disguise ---------------------------------------

@@ -36,7 +36,7 @@ test('desktop: from the week, Friday afternoon is gone, and Friday is made and m
   // day around the loss, said the way it would be said into the phone.
   const status = sheet.getByRole('status')
   await expect(status).toContainText('Free on Friday: 07:00-13:00, after 18:00.')
-  await expect(status).toContainText('Nothing in the way. It goes straight in.')
+  await expect(status).toContainText('Nothing in the way - it goes straight in.')
   await expect(status).not.toContainText(/missed|failed|behind|only|should/i)
 
   await sheet.getByRole('button', { name: 'Accept' }).click()

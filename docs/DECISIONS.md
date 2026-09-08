@@ -1639,7 +1639,7 @@ would be a list of yesterday's leftovers waiting on the next morning -
 which is exactly the counting CONVENTIONS section 12 forbids.
 
 **And an interruption nobody could put a length on leaves the day away.**
-That is what `away` already means, so the header offers "I'm back" without
+That is what `away` already means, so the header offers "Back" without
 anything new being invented, and the rescue recomputes from the moment it
 is pressed rather than from a length nobody had at the time.
 

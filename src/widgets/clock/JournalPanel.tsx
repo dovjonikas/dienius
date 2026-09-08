@@ -92,7 +92,7 @@ export function JournalPanel({ onOpenFull }: JournalPanelProps) {
         ref={boxRef}
         className="journal-box"
         aria-label={`Journal for ${formatDayTitle(date)}`}
-        placeholder="..."
+        placeholder="Whatever today was"
         rows={6}
         value={text}
         onChange={e => setText(e.target.value)}

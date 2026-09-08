@@ -36,8 +36,8 @@ test('a Later item is pulled onto the day at the first slot that holds it, and l
 
 test('a scratch line starting with "!" goes to Later, and the rest is kept exactly as typed', async ({ page }) => {
   await page.keyboard.press('s')
-  const scratch = page.getByRole('dialog', { name: 'Scratch' })
-  const note = scratch.getByRole('textbox', { name: 'Scratch note' })
+  const scratch = page.getByRole('dialog', { name: 'Notes' })
+  const note = scratch.getByRole('textbox', { name: 'Note' })
 
   // The marker says where the line is going before Enter, not after.
   const toggle = scratch.getByRole('button', { name: /Make it a (note|task) instead/ })

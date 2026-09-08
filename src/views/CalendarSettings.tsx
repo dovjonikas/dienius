@@ -159,7 +159,7 @@ export function CalendarSettings() {
                       }
                       onBlur={() => setConfirmDelete(null)}
                     >
-                      {confirmDelete === calendar.id ? 'Confirm remove?' : 'Remove'}
+                      {confirmDelete === calendar.id ? 'Delete?' : 'Delete'}
                     </button>
                   </div>
                 </li>
@@ -193,7 +193,7 @@ export function CalendarSettings() {
             {blocker && <p className="setting-desc calendar-blocker">{blocker}</p>}
             <div className="calendar-form-actions">
               <button className="primary" disabled={!name.trim() || !url.trim() || !!blocker} onClick={() => void handleAdd()}>
-                Add calendar
+                Add a calendar
               </button>
               <button className="btn-secondary" onClick={() => setAdding(false)}>Cancel</button>
             </div>

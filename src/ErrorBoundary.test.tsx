@@ -21,7 +21,7 @@ test('shows a recovery screen instead of a blank page when a child throws', () =
   )
   expect(screen.getByText('Something went wrong')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Export backup' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Reset app data' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Erase all data' })).toBeInTheDocument()
   spy.mockRestore()
 })
 
@@ -52,12 +52,12 @@ test('reset requires a second confirming tap before it clears storage and reload
     </ErrorBoundary>,
   )
 
-  await user.click(screen.getByRole('button', { name: 'Reset app data' }))
-  expect(screen.getByRole('button', { name: 'Confirm reset?' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Erase all data' }))
+  expect(screen.getByRole('button', { name: 'Erase?' })).toBeInTheDocument()
   expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
   expect(reload).not.toHaveBeenCalled()
 
-  await user.click(screen.getByRole('button', { name: 'Confirm reset?' }))
+  await user.click(screen.getByRole('button', { name: 'Erase?' }))
   expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
   expect(reload).toHaveBeenCalledTimes(1)
 

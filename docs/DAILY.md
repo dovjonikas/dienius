@@ -18,7 +18,7 @@ A template is a set of blocks you stamp onto a day, so a Tuesday does not
 have to be typed out every Tuesday.
 
 Open **Templates → New template**. Give it a name and a colour. Then, for
-each block, set the time, type what happens, pick a length, and press **Add
+each block, set the time, type what happens, pick a length, and press **Add a
 block**. Leave the time empty on anything that happens but not at an hour.
 **Save template** when the list looks right.
 
@@ -191,7 +191,7 @@ and finishing one moves the block on to the next by itself.
    pages`; a series is `Andor, 2 seasons`. Or use the two controls beside the
    box, which say the same thing without typing.
 3. Tap the top book, then **Add to template**. Pick the template, give the
-   block a time and a length, **Add block**.
+   block a time and a length, **Add a block**.
 
 That is the whole binding. From then on, stamping that template puts the
 current book on the day by name, and ticking the block off advances it. When
@@ -202,8 +202,8 @@ the arrow keys. The order *is* the queue; nothing else decides what is next.
 
 ## 6. Name the kinds of task you actually have
 
-The six the app ships with - core, routine, personal and the rest - are a
-starting point, not a vocabulary you have to live in. **Settings →
+The six the app ships with - Deep work, Routine, Personal and the rest - are
+a starting point, not a vocabulary you have to live in. **Settings →
 Categories** is where they become yours: rename one, pick its colour from the
 same eight everything else uses, add one, drop one.
 
@@ -276,13 +276,13 @@ Skip this entirely if one browser is where you plan; nothing degrades.
   Later, or start a line in Notes with `!` - and a number said once on the
   phone goes into Notes (the button in the top right, or the `S` key).
 - **When the plan breaks.** **Replan**, under the date. Three doors:
-  something came up, shift the rest, I was away. Each shows its answer
-  before you accept it. The first of them works for any day of the week -
+  something came up, shift the rest, away. Each shows its answer before
+  you accept it. The first of them works for any day of the week -
   the next section is that one, walked as a phone call.
 - **Evening.** Around half nine, or the moment the last thing is ticked, a
   card offers to close the day. It never says anything about what was not
-  done. It asks two questions, both optional - the section after the phone
-  call, below.
+  done, and it asks nothing; the journal is a button of its own - the
+  section after the phone call, below.
 
 Two keys worth learning: **`N`** jumps to the box, **`Ctrl-K`** finds
 anything or runs any command. **`?`** shows the rest - and every icon in the
@@ -306,7 +306,7 @@ day; in the week's bar; on a day in the month when the pointer rests on it;
    **Pick a day** for anything further out than the week.
 2. **What is gone.** **Morning gone**, **Afternoon gone**, **Evening gone**
    or **Whole day gone** - or **A time** and a length when the call named
-   one, or **Don't know how long** when it did not.
+   one, or **Not sure how long** when it did not.
 3. **Accept.**
 
 That is the three presses. Before the third, read the line in bold to the
@@ -345,14 +345,14 @@ counts it, nothing nags about it, and after midnight the line is simply
 gone.
 
 When you get home, press one of those blocks. It offers a time - the first
-free stretch from now that holds it - and you press **Bring it back**. If
+free stretch from now that holds it - and you press **Bring back**. If
 there is less time left than the block wants it comes back shorter and says
 so in the same line ("2h shortened to 1h - that is what is left"). If what
 is left is under a quarter of an hour, or under half of what the block was,
 it offers tomorrow instead, because a twenty-minute version of a two-hour
 block is not that block.
 
-The header will also be offering **I'm back** while the day is open-ended.
+The header will also be offering **Back** while the day is open-ended.
 That does the whole evening at once: it recomputes what still fits from
 right now, key tasks first.
 
@@ -523,14 +523,14 @@ In this order, and the order matters:
 Settings → General → **Export backup** if GitHub is not set up. Whatever is
 wrong, having a copy of it is better than not.
 
-**2. Write it down while you can see it.** Press the pencil (or `S`) and
+**2. Write it down while you can see it.** Press **Notes** (or `S`) and
 type what you saw:
 
 ```
 the week arrows are too close to the edge on my thumb
 ```
 
-It saves as you type. Later, open Scratch and the note is there, newest
+It saves as you type. Later, open Notes and the note is there, newest
 first, in the words you wrote.
 
 **3. Then, if you need the plan back:**

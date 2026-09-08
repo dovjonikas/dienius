@@ -24,7 +24,7 @@ import { placementOk } from './placement'
  *   tomorrow, or gone.
  * - **Shift the rest** (`planShift`): everything from now moves later by
  *   the same amount. What no longer fits before sleep is named, not lost.
- * - **I'm back** (`planRescue`): after a stretch away, what is still
+ * - **Back** (`planRescue`): after a stretch away, what is still
  *   winnable in the time left. Key tasks first; what fits, fits; the rest
  *   goes to tomorrow.
  *
@@ -262,7 +262,7 @@ export function planInterrupt(
   if (drop.length > 0) parts.push(`Set aside, waiting: ${titleList(drop)}.`)
   const routine = routineOf(tasks, interruption)
   if (routine.length > 0) parts.push(`The routine stays: ${titleList(routine)}.`)
-  if (conflicts.length === 0 && routine.length === 0) parts.push('Nothing in the way. It goes straight in.')
+  if (conflicts.length === 0 && routine.length === 0) parts.push('Nothing in the way - it goes straight in.')
 
   return {
     kind: 'interrupt',
@@ -325,7 +325,7 @@ export function describeDelta(delta: number): string {
 }
 
 /**
- * I'm back.
+ * Back.
  *
  * Everything not done whose time has passed, plus every untimed task, is
  * fitted into the time left - key tasks first, then core, then the order
@@ -376,7 +376,7 @@ export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, 
   if (keyOpen.length > 0) parts.push(`Still winnable: ${keyWinnable.length} of ${keyOpen.length} key.`)
   if (onToday > 0) parts.push(`${onToday} on today${left.length > 0 ? `, ${left.length} to tomorrow` : ''}.`)
   else if (left.length > 0) parts.push(`No room left today - ${left.length} to tomorrow.`)
-  else parts.push('Nothing left on the list. The day is yours.')
+  else parts.push('Nothing left on the list - the day is yours.')
   if (passedRoutine.length > 0) {
     const word = passedRoutine.length === 1 ? 'Routine block' : 'Routine blocks'
     parts.push(`${word} left where ${passedRoutine.length === 1 ? 'it is' : 'they are'}.`)

@@ -59,6 +59,16 @@ test('a start with no end is open-ended, until something closes it', () => {
 })
 
 /**
+ * The chip and the line say the same thing. The chip reads "Not sure how
+ * long" since v2.7, so those are the words most likely to be typed at it -
+ * and before this they parsed as a title.
+ */
+test('the words the chip itself uses are read as open-ended', () => {
+  expect(parsed('from 10 dad, not sure how long')).toEqual({ start: t(10), open: true, title: 'dad' })
+  expect(parsed('14:00 dentist not sure')).toEqual({ start: t(14), open: true, title: 'dentist' })
+})
+
+/**
  * What is not a token. A bare number is a number, "an" before a vowel is
  * the article, "St." is a saint, and yesterday is not the evening.
  */

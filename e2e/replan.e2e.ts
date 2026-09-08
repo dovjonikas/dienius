@@ -72,8 +72,8 @@ test('a one-off in the way waits on the shelf, and one press brings it back', as
   await expect(shelf).toBeVisible()
 
   await shelf.click()
-  await expect(page.getByRole('button', { name: 'Bring it back' })).toBeVisible()
-  await page.getByRole('button', { name: 'Bring it back' }).click()
+  await expect(page.getByRole('button', { name: 'Bring back' })).toBeVisible()
+  await page.getByRole('button', { name: 'Bring back' }).click()
   await expect(page.getByRole('checkbox', { name: 'Post the parcel' })).toBeAttached()
 })
 
@@ -106,7 +106,7 @@ test('away and back: the day pauses, and one press fits what still fits into the
   // The menu choice carries its own explanation in its name; the primary
   // button on the next screen is the bare word.
   await sheet.getByRole('button', { name: /^Away/ }).click()
-  await expect(sheet).toContainText('The day pauses at 10:00.')
+  await expect(sheet).toContainText('The day pauses at 10:00 and nothing nudges you')
   await sheet.getByRole('button', { name: 'Away', exact: true }).click()
   await expect(sheet).toHaveCount(0)
   await expect(page.getByText('Away since 10:00')).toBeVisible()
@@ -114,7 +114,7 @@ test('away and back: the day pauses, and one press fits what still fits into the
   // Back at half past three, which is what opening the app again is.
   await reopenAt(page, wednesdayAt(15, 30))
   await expect(page.getByText('Away since 10:00')).toBeVisible()
-  await page.getByRole('button', { name: "I'm back" }).click()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
   await expect(sheet).toContainText('Away since 10:00. Here is the rest of the day, from 15:30.')
 
   const summary = sheet.getByRole('status')

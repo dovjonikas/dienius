@@ -25,6 +25,32 @@ test('no key is listed twice', () => {
   expect(new Set(SHORTCUTS.map(s => s.key)).size).toBe(SHORTCUTS.length)
 })
 
+/**
+ * The arrows move the day and nothing else: App's handler returns without
+ * acting anywhere but the day view. A row that said only "the day before"
+ * promised the calendar and the library something the app has never done, so
+ * the row says where it works.
+ */
+test('the arrow rows name the view they work on', () => {
+  expect(SHORTCUTS.find(s => s.key === 'arrowleft')!.description).toBe('The day before, on the day view')
+  expect(SHORTCUTS.find(s => s.key === 'arrowright')!.description).toBe('The day after, on the day view')
+})
+
+/**
+ * Two keys open Scratch and the card named one of them, which made the
+ * backtick a feature nobody had - CONVENTIONS section 17. The row names both.
+ */
+test('the Scratch row names both keys that open it', () => {
+  const scratch = SHORTCUTS.find(s => s.key === 's')!
+  expect(scratch.label).toContain('S')
+  expect(scratch.label).toContain('`')
+})
+
+/** The rail's Today button and the palette both land on today; so does the key. */
+test('the row for 1 says Today, which is the day it opens', () => {
+  expect(SHORTCUTS.find(s => s.key === '1')!.description).toBe('Today')
+})
+
 // --- rule one: a bare letter never fires while a field has focus ---------
 
 test('a field, a textarea and a select are all typing targets', () => {

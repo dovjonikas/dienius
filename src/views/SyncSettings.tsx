@@ -29,7 +29,7 @@ import {
 function statusLine(status: SyncStatus): { text: string; tone: 'ok' | 'busy' | 'bad' } {
   switch (status.phase) {
     case 'off':
-      return { text: 'Off. This device keeps its own plan.', tone: 'busy' }
+      return { text: 'Off - this device keeps its own plan.', tone: 'busy' }
     case 'syncing':
       return { text: 'Syncing...', tone: 'busy' }
     case 'offline':
@@ -119,7 +119,7 @@ export function SyncSettings() {
           )}
           {saved.enabled && dirty && (
             <button className="btn-secondary" onClick={() => save(true)}>
-              Save changes
+              Save
             </button>
           )}
           {saved.enabled && !dirty && (

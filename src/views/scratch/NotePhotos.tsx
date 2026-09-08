@@ -127,7 +127,7 @@ function Viewer({ photos, at, onMove, onClose }: { photos: NotePhoto[]; at: numb
             </button>
           </>
         )}
-        <button type="button" className="photo-viewer-close" aria-label="Close the picture" onClick={onClose}>
+        <button type="button" className="photo-viewer-close" aria-label="Close" onClick={onClose}>
           &times;
         </button>
       </div>

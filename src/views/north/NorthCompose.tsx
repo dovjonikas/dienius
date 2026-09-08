@@ -286,7 +286,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
       )}
 
       {full ? (
-        <p className="setting-state north-compose-full">{MAX_ACTIVE_GOALS} is the limit. Archive one to make room.</p>
+        <p className="setting-state north-compose-full">{MAX_ACTIVE_GOALS} is the limit - archive one to make room.</p>
       ) : (
         <button type="button" className="setting-quiet north-compose-add" onClick={addRow}>
           {activeRows === 0 ? 'Write one down' : 'Add another'}

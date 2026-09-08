@@ -81,7 +81,7 @@ test('unfinished work is one offer that can be ignored, and gone once taken', as
   actions.setEveningClose({ ...DEFAULT_EVENING_CLOSE, at: '00:00' })
   render(<EveningClose date={TODAY} />)
 
-  await user.click(screen.getByRole('button', { name: '2 unfinished - push to tomorrow?' }))
+  await user.click(screen.getByRole('button', { name: 'Push 2 to tomorrow' }))
   expect(screen.queryByRole('button', { name: /push to tomorrow/ })).toBeNull()
   expect(getData().days[TODAY].tasks.filter(t => !t.done)).toHaveLength(0)
 })

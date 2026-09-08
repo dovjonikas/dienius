@@ -224,7 +224,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
       <div
         className="scratch"
         role="dialog"
-        aria-label="Scratch"
+        aria-label="Notes"
         data-keeps-keys=""
         onClick={e => e.stopPropagation()}
         onDrop={onDrop}
@@ -234,7 +234,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
           <textarea
             ref={inputRef}
             className="scratch-input"
-            aria-label="Scratch note"
+            aria-label="Note"
             placeholder={intent ? 'Something to do. Enter sends it to Later.' : 'Write it down. Enter keeps it.'}
             rows={1}
             value={draft}
@@ -274,7 +274,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
               screen and there is no scrim to tap and no Escape to press, so
               it has to be a button. Nothing is lost by it: everything is
               saved already. */}
-          <button type="button" className="scratch-close" aria-label="Close scratch" onClick={onClose}>
+          <button type="button" className="scratch-close" aria-label="Close" onClick={onClose}>
             &times;
           </button>
           <input
@@ -299,7 +299,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
         )}
 
         {/* The count, once there is something to count. "Nothing yet" on
-            the bar over "Nothing here yet. Type, and it is kept." under it
+            the bar over "Nothing here yet - type, and it is kept." under it
             was one fact said twice on an empty stream - CONVENTIONS section
             23 - and the second of them is the one that says what to do. */}
         {data.scratch.length > 0 && (
@@ -320,7 +320,7 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
 
         {notes.length === 0 ? (
           <p className="scratch-empty">
-            {draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet. Type, and it is kept.'}
+            {draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet - type, and it is kept.'}
           </p>
         ) : (
           <ul className="scratch-list">

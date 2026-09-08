@@ -27,7 +27,7 @@ import {
 function statusLine(status: CloudBackupStatus): { text: string; tone: 'ok' | 'busy' | 'bad' } {
   switch (status.phase) {
     case 'off':
-      return { text: 'Off. Add a repo and a token to keep a copy on GitHub.', tone: 'busy' }
+      return { text: 'Off - add a repo and a token to keep a copy on GitHub.', tone: 'busy' }
     case 'working':
       return { text: 'Backing up...', tone: 'busy' }
     case 'offline':
@@ -180,10 +180,10 @@ export function BackupSettings() {
                 onClick={() => (armed ? restore() : setArmed(true))}
                 onBlur={() => setArmed(false)}
               >
-                {armed ? 'Replace everything here?' : 'Replace what is here with the cloud copy'}
+                {armed ? 'Replace?' : 'Replace what is here with the cloud copy'}
               </button>
               <button type="button" className="btn-secondary" onClick={() => setPreview(null)}>
-                Keep what is here
+                Cancel
               </button>
             </div>
           </div>

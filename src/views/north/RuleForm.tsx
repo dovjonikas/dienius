@@ -106,7 +106,7 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
       </div>
       <div className="rule-form-actions">
         <button type="button" className="btn-primary" disabled={!ready} onClick={save}>
-          {draft ? 'Save' : 'Write it down'}
+          Save
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel

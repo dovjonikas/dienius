@@ -360,7 +360,7 @@ test('the north step relocates its caption to the day, onto the North line', () 
 
 /**
  * The outcome lines - what the card says after each step, once the thing has
- * happened. They sit outside the 120-word instructional budget on purpose: a
+ * happened. They sit outside the 150-word instructional budget on purpose: a
  * caption for something that has already happened is read with the eye
  * free, not while somebody is hunting for a control. That exemption is only
  * honest while each one stays a line, which is what this bounds.

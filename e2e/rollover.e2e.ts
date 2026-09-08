@@ -25,7 +25,7 @@ test('a daily repeat is on the next morning, and yesterday is pushed forward in 
   const detail = page.getByRole('dialog', { name: 'Water the plants' })
   await detail.getByRole('group', { name: 'Repeats' }).getByRole('button', { name: 'Every day' }).click()
   await expect(detail.getByRole('group', { name: 'Changes apply to' })).toBeVisible()
-  await page.getByRole('button', { name: 'Close details' }).click()
+  await detail.getByRole('button', { name: 'Close', exact: true }).click()
 
   await reopenAt(page, WEDNESDAY_MORNING)
   await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
@@ -36,12 +36,12 @@ test('a daily repeat is on the next morning, and yesterday is pushed forward in 
 
   // The same status element before and after the press: it swaps its own
   // sentence for what it did, so the filter has to accept both.
-  const banner = page.getByRole('status').filter({ hasText: /^(Yesterday: \d+ unfinished|Moved \d+ to today)/ })
+  const banner = page.getByRole('status').filter({ hasText: /^(Yesterday: \d+ unfinished|Pushed \d+ to today)/ })
   await expect(banner).toContainText(/^Yesterday: \d+ unfinished/)
   await expect(banner).not.toContainText(/missed|failed|behind|overdue/i)
   await banner.getByRole('button', { name: 'Push to today' }).click()
-  await expect(banner).toContainText(/Moved \d+ to today\./)
-  await banner.getByRole('button', { name: 'Close' }).click()
+  await expect(banner).toContainText(/Pushed \d+ to today\./)
+  await banner.getByRole('button', { name: 'Dismiss' }).click()
   await expect(banner).toHaveCount(0)
 
   // Standup came forward carrying its count; the plants were not doubled.

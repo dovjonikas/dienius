@@ -80,7 +80,7 @@ export function SetAsideStrip({ date, nowMinutes, isToday }: SetAsideStripProps)
               Not now
             </button>
             <button type="button" className="primary" onClick={take}>
-              Bring it back
+              Bring back
             </button>
           </span>
         </div>

@@ -209,7 +209,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
           <button
             type="button"
             className="task-detail-close"
-            aria-label="Close details"
+            aria-label="Close"
             data-tour-modal-close=""
             onClick={onClose}
           >
@@ -241,7 +241,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                   className="task-detail-clear"
                   onClick={() => actions.setTaskTime(date, task.id, undefined)}
                 >
-                  No set time
+                  Remove time
                 </button>
               )}
             </div>
@@ -253,16 +253,19 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               number carries its unit and nothing repeats it: a "2h" beside
               "120" read as the same size said twice. */}
           <div className="task-detail-field">
-            <span className="task-detail-label">Size</span>
+            <span className="task-detail-label">How long</span>
             <div className="task-detail-time">
               <MinuteStepInput
                 value={task.minutes === undefined ? '' : String(task.minutes)}
-                ariaLabel="Size in minutes"
+                ariaLabel="How long, in minutes"
                 unit="min"
                 onChange={next => actions.setTaskMinutes(date, task.id, next === '' ? undefined : Number(next))}
               />
             </div>
-            <DurationChips minutes={task.minutes} onChange={minutes => actions.setTaskMinutes(date, task.id, minutes)} label="Size" />
+            {/* No label of its own: DurationChips already names itself "How
+                long", which is what the row above it says, and a group named
+                anything else here would give one control two names. */}
+            <DurationChips minutes={task.minutes} onChange={minutes => actions.setTaskMinutes(date, task.id, minutes)} />
           </div>
 
           <div className="task-detail-field">
@@ -498,11 +501,14 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
             away. A task in a series still deletes with its scope, and the
             scope's own line above says what that reaches. */}
         <div className="task-detail-foot">
+          {/* Neither delete carries a tooltip. The series one carried
+              scopeHint, which is printed in full two fields above as the
+              scope's own line - the same sentence twice on one sheet, the
+              second time only for a pointer. */}
           {inSeries ? (
             <button
               type="button"
               className="btn-danger"
-              data-tip={scopeHint}
               onClick={() => {
                 actions.deleteTask(date, task.id, scope)
                 onClose()

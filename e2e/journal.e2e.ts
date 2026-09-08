@@ -63,7 +63,7 @@ test('the evening card asks nothing, and offers only the way out of the day', as
   await expect(card).toBeVisible()
   await expect(card.getByRole('textbox')).toHaveCount(0)
   await expect(card.getByRole('button', { name: 'Close the day' })).toBeVisible()
-  await expect(card.getByRole('button', { name: /unfinished - push to tomorrow/ })).toBeVisible()
+  await expect(card.getByRole('button', { name: /Push \d+ to tomorrow/ })).toBeVisible()
 })
 
 test('desktop: a month copies as markdown, read back off the clipboard', async ({ page, isMobile, context }) => {

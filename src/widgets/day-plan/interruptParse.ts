@@ -45,7 +45,7 @@ export interface ParsedLine {
   end?: number
   /** A length written as one - "2h", "30min", "1h30". */
   minutes?: number
-  /** Open-ended: "don't know" said in words, a "?" at the end, or "from 10" with nothing closing it. */
+  /** Open-ended: "not sure" said in words, a "?" at the end, or "from 10" with nothing closing it. */
   open?: boolean
   /** Whatever the tokens did not claim. Empty when the line was all tokens. */
   title: string
@@ -111,7 +111,10 @@ const VAL_RE = /\b(\d{1,2})\s*val\b/g
 const HOURS_RE = /\b(\d{1,2})\s*(?:h|hr|hrs|hour|hours|valand\w*)(?:\s*(\d{1,2})(?:\s*(?:min\w*|m))?)?\b/g
 const MINUTES_RE = /\b(\d{1,3})\s*(?:min|mins|minute|minutes|minuciu|minutes|minutems|m)\b/g
 
-const OPEN_RE = /\b(?:don'?t know(?: how long)?|dont know|dunno|no idea|nezinau|nezinia|neaisku|open[- ]ended)\b|\?\s*$/g
+// "not sure" earns its place here because it is what the chip now says - see
+// ReplanSheet's "Not sure how long". The chips and the typed line are one
+// truth, so a word the app offers has to be a word the line understands.
+const OPEN_RE = /\b(?:don'?t know(?: how long)?|dont know|dunno|not sure(?: how long)?|no idea|nezinau|nezinia|neaisku|open[- ]ended)\b|\?\s*$/g
 
 // --- folding -----------------------------------------------------------------
 

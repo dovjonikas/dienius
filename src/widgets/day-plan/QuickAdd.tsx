@@ -233,14 +233,17 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   const showsTime = captureMode === 'task'
 
   const timeLabel = effectiveTime ?? 'No time'
+  // One clause each, and nothing after it. Two of these used to end on
+  // "Change it, or leave it." - a second sentence saying what every control in
+  // the app already offers, read out on every pass of the time button.
   const timeTitle = fromText
     ? `${effectiveTime} - read from what you typed`
     : timeMode === 'none'
-      ? 'No time: this goes on the day without a slot'
+      ? 'No time - this goes on the day without a slot'
       : effectiveTime
         ? timeMode === 'auto'
-          ? `${effectiveTime} - the next free slot. Change it, or leave it.`
-          : `${effectiveTime}. Change it, or leave it.`
+          ? `${effectiveTime} - the next free slot`
+          : `${effectiveTime} - set by hand`
         : 'Nothing free left today - this goes on the day without a slot'
 
   return (

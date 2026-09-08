@@ -44,7 +44,7 @@ test('what is left is counted, and only on today', () => {
 // The push moves the tasks off yesterday, so the moment it works there is
 // nothing unfinished there any more - and an early return on that emptiness
 // used to fire before the confirmation could render. The banner vanished on
-// the press, and "Moved 2 to today." was only ever reachable when something
+// the press, and "Pushed 2 to today." was only ever reachable when something
 // had stayed behind. The rollover e2e test found it in v1.11.
 test('after the press the banner says what moved, then closes for the day', async () => {
   actions.addTask(YESTERDAY, 'Call the bank')
@@ -52,11 +52,13 @@ test('after the press the banner says what moved, then closes for the day', asyn
   render(<YesterdayBanner date={TODAY} />)
 
   await userEvent.click(screen.getByRole('button', { name: 'Push to today' }))
-  expect(screen.getByRole('status')).toHaveTextContent('Moved 2 to today.')
+  expect(screen.getByRole('status')).toHaveTextContent('Pushed 2 to today.')
   expect(getData().days[TODAY].tasks.map(t => t.title)).toEqual(['Call the bank', 'Reply to Ana'])
   expect(getData().days[YESTERDAY].tasks).toHaveLength(0)
 
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }))
+  // The same word before and after the press: the notice does not change how
+  // it is got rid of half way through.
+  await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
   expect(screen.queryByRole('status')).toBeNull()
 })
 
@@ -78,7 +80,7 @@ test('a task at the push bound stays, and the banner says so rather than moving 
   expect(screen.getByRole('status')).toHaveTextContent('Yesterday: 2 unfinished - 1 can still move')
 
   await userEvent.click(screen.getByRole('button', { name: 'Push to today' }))
-  expect(screen.getByRole('status')).toHaveTextContent('Moved 1 to today. 1 stayed - already pushed as far as it goes.')
+  expect(screen.getByRole('status')).toHaveTextContent('Pushed 1 to today. 1 stayed - already pushed as far as it goes.')
 })
 
 test('dismissing is remembered for the rest of the day, on this device', () => {

@@ -155,42 +155,40 @@ export function TaskPane({
     <div className="task-pane" data-tray-zone>
       <QuickAdd date={date} tasks={tasks} />
 
+      {/* Three paragraphs and the offers, and nothing else. It was four
+          paragraphs and seven sentences, the last of them an advertisement for
+          the theme picker - which is a thing to find on a second visit, not a
+          thing to read on the first. One paragraph per offer now: what a
+          template is, the tour, the sample week. */}
       {tasks.length === 0 && firstRun && (
         <div className="first-run">
           <p className="first-run-lede">
-            Dienius plans a day from a template: a reusable set of blocks you stamp onto a date instead
-            of retyping it every morning. Tap one below to add it as a real template and set up today -
-            edit or delete it any time afterward.
+            A template is a reusable set of blocks stamped onto a date. Pick one below to plan today.
           </p>
-          {/* The other way in, for somebody who would rather look than build.
-              Offered here rather than as a first screen: an app that asks
-              "demo or real?" before showing anything is asking a question you
-              cannot answer yet. Its own key, thrown away on the way out - see
-              demoMode.ts. */}
           {/* The tour: nine real actions on this very plan, two minutes.
               Offered before the starters because it starts by tapping one
               of them - and a person who takes it has, by the end, planned a
               day, which is what this screen is for. */}
           <p className="first-run-tour">
             <button type="button" className="btn-primary" onClick={() => startTour(isWide ? 'desktop' : 'mobile')}>
-              Show me around
+              Take the tour
             </button>
-            <span className="muted">Two minutes. Every step is a real action, and you keep what you make.</span>
+            <span className="muted">Two minutes of real actions, and you keep what you make.</span>
           </p>
+          {/* The other way in, for somebody who would rather look than build.
+              Offered here rather than as a first screen: an app that asks
+              "demo or real?" before showing anything is asking a question you
+              cannot answer yet. Its own key, thrown away on the way out - see
+              demoMode.ts. */}
           {!isDemoMode() && (
             <p className="first-run-demo">
-              Not sure yet?{' '}
               <button type="button" className="link-button" onClick={enterDemoMode}>
-                Try it with a sample week
+                Try a sample week
               </button>{' '}
-              - a fortnight of somebody's real-looking days, kept entirely separate from yours.
+              - a fortnight of somebody else's days, kept separate from yours.
             </p>
           )}
           <StarterOffers onUse={handleUseStarter} />
-          <p className="first-run-note">
-            Dark, Light and Midnight are all under Settings, along with an accent colour and how
-            spacious you want everything.
-          </p>
         </div>
       )}
       {tasks.length === 0 && !firstRun && (
@@ -199,7 +197,7 @@ export function TaskPane({
           <p className="empty-state-title">{isPast ? 'Nothing planned' : 'Nothing planned yet'}</p>
           <p className="empty-state-note">
             {isPast
-              ? 'This day went by without a plan. That is allowed.'
+              ? 'This day went by without a plan.'
               : 'Tap a template on the left to lay out the whole day, or type the first thing above.'}
           </p>
         </div>

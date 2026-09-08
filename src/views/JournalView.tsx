@@ -145,7 +145,7 @@ export function JournalView() {
           <textarea
             className="journal-box journal-box-full"
             aria-label={`Journal for ${formatDayTitle(date)}`}
-            placeholder="..."
+            placeholder="Whatever today was"
             value={text === stored ? stored : text}
             onChange={e => write(e.target.value)}
           />
@@ -178,7 +178,7 @@ export function JournalOverlay({ onClose }: { onClose: () => void }) {
           onClose()
         }}
       >
-        <button type="button" className="task-detail-close journal-close" aria-label="Close the journal" onClick={onClose}>
+        <button type="button" className="task-detail-close journal-close" aria-label="Close" onClick={onClose}>
           &times;
         </button>
         <JournalView />

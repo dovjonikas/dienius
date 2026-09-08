@@ -67,7 +67,7 @@ test('a second press takes the offer, and the block is back on the day', async (
   strip()
 
   await user.click(screen.getByRole('button', { name: /^Gym/ }))
-  await user.click(screen.getByRole('button', { name: 'Bring it back' }))
+  await user.click(screen.getByRole('button', { name: 'Bring back' }))
 
   const task = getData().days[DATE].tasks[0]
   expect(task.setAside).toBeUndefined()
@@ -84,7 +84,7 @@ test('a block with no room left today offers tomorrow instead, and says so', asy
 
   await user.click(screen.getByRole('button', { name: /^Gym/ }))
   expect(screen.getByRole('status')).toHaveTextContent('Tomorrow, at the time it had')
-  await user.click(screen.getByRole('button', { name: 'Bring it back' }))
+  await user.click(screen.getByRole('button', { name: 'Bring back' }))
   expect(getData().days[DATE].tasks.map(t => t.title)).toEqual(['Dinner'])
   expect(getData().days['2026-09-17'].tasks.map(t => t.title)).toEqual(['Gym'])
 })

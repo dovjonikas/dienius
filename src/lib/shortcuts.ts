@@ -27,8 +27,11 @@ export interface Shortcut {
 export const SHORTCUTS: Shortcut[] = [
   { key: 'n', label: 'N', description: 'Add a task - jumps to the box and starts typing' },
   { key: 't', label: 'T', description: 'Back to today' },
-  { key: 'arrowleft', label: '←', description: 'The day before' },
-  { key: 'arrowright', label: '→', description: 'The day after' },
+  // Both say where they work. The arrows only move the day on the day view,
+  // and a card that promised "the day before" from the calendar was promising
+  // something the handler has never done.
+  { key: 'arrowleft', label: '←', description: 'The day before, on the day view' },
+  { key: 'arrowright', label: '→', description: 'The day after, on the day view' },
   { key: '1', label: '1', description: 'Today' },
   { key: '2', label: '2', description: 'Calendar' },
   { key: '3', label: '3', description: 'Templates' },
@@ -38,7 +41,9 @@ export const SHORTCUTS: Shortcut[] = [
   { key: ',', label: ',', description: 'Settings' },
   { key: 'f', label: 'F', description: 'Start Focus on the task that is running now' },
   { key: 'r', label: 'R', description: 'Something came up - fit it into today or any day this week' },
-  { key: 's', label: 'S', description: 'Scratch - write it down now, sort it out later' },
+  // Two keys open Scratch and the card says both, because a key nobody has
+  // been told about is a key nobody has - CONVENTIONS section 17.
+  { key: 's', label: 'S or `', description: 'Notes - write it down now, sort it out later' },
   { key: 'q', label: 'Q', description: 'A quick note, without leaving the screen' },
   { key: 'j', label: 'J', description: "Today's journal, with the cursor in it" },
   { key: 'escape', label: 'Esc', description: 'Close whatever is open' },

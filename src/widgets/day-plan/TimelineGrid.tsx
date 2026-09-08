@@ -203,6 +203,14 @@ const MIN_LABELLED_GAP_MINUTES = 30
  */
 const EXTERNAL_MIN_HEIGHT_PX = 18
 
+/**
+ * What an empty grid says, printed and announced from the one string. It used
+ * to be two: a spoken "Nothing placed yet. Tap to put a task on the clock."
+ * over a printed line that said the same thing in different words, so the
+ * screen reader and the eye were told about the same button twice, differently.
+ */
+const EMPTY_GRID_LINE = 'Nothing placed yet - tap anywhere to put something here.'
+
 export interface TimelineGridProps {
   /**
    * Applied to the grid's own outer wrapper so the disclosure toggle that
@@ -887,7 +895,7 @@ export function TimelineGrid({
                   type="button"
                   className={gapClass}
                   data-gap-start={gap.startMinutes}
-                  aria-label={isEmptyDay ? 'Nothing placed yet. Tap to put a task on the clock.' : label}
+                  aria-label={isEmptyDay ? EMPTY_GRID_LINE : label}
                   aria-haspopup="dialog"
                   aria-expanded={isOpen}
                   onClick={() => setOpenGapStart(isOpen ? null : gap.startMinutes)}
@@ -904,7 +912,7 @@ export function TimelineGrid({
                       tasks. It says what to do instead. */}
                   {isEmptyDay ? (
                     <span className="timeline-gap-label timeline-gap-empty" aria-hidden="true">
-                      Nothing placed yet - tap anywhere to put something here
+                      {EMPTY_GRID_LINE}
                     </span>
                   ) : (
                     placement !== null && (
@@ -931,7 +939,7 @@ export function TimelineGrid({
       <p className="visually-hidden">Asleep from {formatClock(waking.end)} to {formatClock(waking.start)}.</p>
 
       {unsizedAnchorCount > 0 && (
-        <p className="timeline-note">Gaps aren't shown - not every timed task above has a size yet.</p>
+        <p className="timeline-note">Gaps are not shown - not every timed task above has a size yet.</p>
       )}
 
       <p className="visually-hidden" aria-live="polite">{announcement}</p>

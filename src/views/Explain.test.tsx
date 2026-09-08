@@ -186,7 +186,7 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     if (id === 'copy-to') {
       // Copy to only exists on a column that has something to copy.
       await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
-      await user.click(screen.getByRole('button', { name: 'Add block' }))
+      await user.click(screen.getByRole('button', { name: 'Add a block' }))
     }
     if (id.startsWith('day-type-')) {
       // The segment's own labels are the copy's `term` for each value, which

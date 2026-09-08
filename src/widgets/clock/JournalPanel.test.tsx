@@ -60,7 +60,9 @@ test('a day with nothing on it is an empty box and says nothing else', () => {
   open()
   const box = screen.getByRole('textbox')
   expect(box).toHaveValue('')
-  expect(box).toHaveAttribute('placeholder', '...')
+  // Words rather than three dots, which said nothing about what the box is
+  // for - the one place the journal is opened without a screen around it.
+  expect(box).toHaveAttribute('placeholder', 'Whatever today was')
   expect(document.body.textContent).not.toMatch(/missed|streak|empty|nothing written|\d+ days/i)
 })
 

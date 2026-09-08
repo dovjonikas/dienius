@@ -318,7 +318,7 @@ test('the day header offers Replan on today, and "I\'m back" while away', () => 
   actions.setAway(TODAY, '11:00')
   rerender(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Away since 11:00')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: "I'm back" })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
 })
 
 test('a day still ahead offers Something came up straight onto it', () => {

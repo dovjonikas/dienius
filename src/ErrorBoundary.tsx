@@ -75,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className={this.state.confirmReset ? 'danger' : ''}
             onClick={this.handleResetClick}
           >
-            {this.state.confirmReset ? 'Confirm reset?' : 'Reset app data'}
+            {this.state.confirmReset ? 'Erase?' : 'Erase all data'}
           </button>
         </div>
       </div>

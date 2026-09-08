@@ -91,12 +91,12 @@ test('nothing using it means no sentence and a plain Delete', async () => {
   expect(getData().categories.map(c => c.id)).not.toContain('commute')
 })
 
-test('"Keep it" changes nothing at all', async () => {
+test('Cancel on the delete panel changes nothing at all', async () => {
   const user = userEvent.setup()
   render(<CategorySettings />)
 
   await user.click(within(row('Health')).getByRole('button', { name: 'Delete' }))
-  await user.click(screen.getByRole('button', { name: 'Keep it' }))
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(getData().categories).toHaveLength(6)
 })
 
@@ -119,16 +119,16 @@ test('adding one takes a name and a colour, and lands at the end of the list', a
   render(<CategorySettings />)
 
   await user.click(screen.getByRole('button', { name: 'Add a category' }))
-  expect(screen.getByRole('button', { name: 'Add it' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 
   await user.type(screen.getByLabelText('Name'), 'Gym')
   // Still refused: a name alone is not enough for a category with no pair
   // in the stylesheet behind it.
-  expect(screen.getByRole('button', { name: 'Add it' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   expect(screen.queryByRole('button', { name: "The app's own colour" })).toBeNull()
 
   await user.click(screen.getByRole('button', { name: 'Green' }))
-  await user.click(screen.getByRole('button', { name: 'Add it' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
   const list = getData().categories
   expect(list[6]).toMatchObject({ label: 'Gym', color: '#4fa46a' })

@@ -320,7 +320,7 @@ test('staged changes survive navigating to another month and back, and save appl
 
 test('with no templates saved, the calendar explains why there is nothing to stamp instead of just omitting the stamp bar', () => {
   render(<CalendarView onOpenDay={() => {}} />)
-  expect(screen.queryByText('Stamp:')).not.toBeInTheDocument()
+  expect(screen.queryByText('Stamp')).not.toBeInTheDocument()
   expect(screen.getByText(/no templates yet/i)).toBeInTheDocument()
 })
 

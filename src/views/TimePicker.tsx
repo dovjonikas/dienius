@@ -82,6 +82,10 @@ export function TimePicker({ value, onChange, ariaLabel, placeholder = '09:00', 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Escape' && open) {
       e.preventDefault()
+      // One press, one layer: the shell's own Escape chain listens on the
+      // document, so without this a press meant to shut the wheel also
+      // collapsed Focus or ended a running tour underneath it.
+      e.stopPropagation()
       setOpen(false)
       return
     }

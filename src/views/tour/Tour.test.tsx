@@ -69,7 +69,7 @@ function TourTargets() {
 function OpenSheet({ children }: { children?: ReactNode }) {
   return (
     <div role="dialog" data-tour-modal="">
-      <button type="button" aria-label="Close details" data-tour-modal-close="" />
+      <button type="button" aria-label="Close" data-tour-modal-close="" />
       {children}
     </div>
   )
@@ -204,7 +204,7 @@ test('starting Focus ends the focus step, names the result, and waits', async ()
   act(() => clockTools.startFocus(TODAY, id))
   act(() => vi.advanceTimersByTime(5000))
   expect(getTourState().step).toBe(4)
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('That bar along the bottom is Focus')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('That strip under the header is Focus')
   await user.click(screen.getByRole('button', { name: 'Next' }))
   expect(getTourState().step).toBe(5)
 })
@@ -277,7 +277,7 @@ test('declining the offer ends the tour for good', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   localStorage.setItem('dienius:tour-progress', JSON.stringify({ step: 4 }))
   renderTour()
-  await user.click(screen.getByRole('button', { name: 'No thanks' }))
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(screen.queryByText('Pick the tour up where you left it?')).toBeNull()
   expect(readProgress()).toEqual({ done: true })
 })
@@ -531,7 +531,7 @@ test('a sheet left open over the step gets its close button pointed at, and the 
   act(() => startTour('desktop', 2))
   act(() => vi.advanceTimersByTime(250))
   expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('Close this panel first.')
-  expect(screen.getByRole('button', { name: 'Close details' }).classList.contains('is-tour-target')).toBe(true)
+  expect(screen.getByRole('button', { name: 'Close' }).classList.contains('is-tour-target')).toBe(true)
 
   // A sheet that holds the step's own control is not in the way - the key
   // step walks into one on purpose.

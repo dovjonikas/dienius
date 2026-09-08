@@ -3,6 +3,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from './App'
 import { actions, getData } from './lib/store'
+import { clockTools } from './lib/clockTools'
 import { defaultData } from './lib/storage'
 import { todayKey } from './lib/dates'
 import { PRESETS } from './lib/themes'
@@ -150,8 +151,10 @@ test('the shortcut card offers the tour, and taking it starts one', async () => 
   const user = userEvent.setup()
   render(<App />)
   await user.keyboard('?')
-  expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Take the tour' }))
+  const card = screen.getByRole('dialog', { name: 'Keyboard shortcuts' })
+  // Scoped to the card: Settings offers the same words on its own row, and
+  // both doors saying the same thing is the point - CONVENTIONS section 1.
+  await user.click(within(card).getByRole('button', { name: 'Take the tour' }))
   expect(getTourState().active).toBe(true)
   // The card gets out of the way: a spotlight behind a modal points at
   // nothing anybody can reach.
@@ -225,6 +228,23 @@ test('Escape leaves a running tour, after everything sitting over it', async () 
   expect(getTourState().active).toBe(true)
   await user.keyboard('{Escape}')
   expect(getTourState().active).toBe(false)
+})
+
+/**
+ * The same one press, one layer rule as the actions menu above, on the small
+ * panels that were still letting Escape through to the shell. Notes stands
+ * for the group - the header popovers, the gap picker, the gap offers, the
+ * time picker and the size box all run the one branch this checks.
+ */
+test('Escape closes a header popover and leaves the tour running underneath it', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  act(() => startTour('desktop', 2))
+  await user.click(screen.getByRole('button', { name: 'Notes' }))
+  expect(screen.getByRole('dialog', { name: 'Notes' })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'Notes' })).toBeNull()
+  expect(getTourState().active).toBe(true)
 })
 
 // --- a visible way into Scratch, on both platforms - CONVENTIONS section 17
@@ -301,6 +321,51 @@ test('the rail names every view and the key that also reaches it', () => {
   } finally {
     restore()
   }
+})
+
+/**
+ * The tooltip above promises the button's behaviour, and the button opens
+ * today. The key used to switch to the day tab and leave whichever day was
+ * on screen there, so "Today · 1" was a lie for anybody who had arrowed a
+ * week ahead and pressed 1 to get back.
+ */
+test("pressing 1 opens today, as the rail's button does", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('{ArrowRight}')
+  expect(screen.queryByRole('heading', { name: 'Today', level: 2 })).toBeNull()
+  await user.keyboard('1')
+  expect(screen.getByRole('heading', { name: 'Today', level: 2 })).toBeInTheDocument()
+})
+
+/**
+ * Focus is a thing happening now. The key read the day being looked at, so F
+ * from next Tuesday started a session on that day pointing at a task id from
+ * today - a session FocusBar then ended by itself, having found nothing
+ * behind it. The Focus button on screen only ever exists on today's running
+ * card, and the key now does what the button does.
+ */
+test("F starts Focus on today's running task, whatever day is being looked at", async () => {
+  const user = userEvent.setup()
+  clockTools.resetForTests()
+  // Five minutes ago, an hour long, so the clock is inside it whenever this
+  // runs. Clamped at midnight rather than reaching back into yesterday.
+  const now = new Date()
+  const start = Math.max(0, now.getHours() * 60 + now.getMinutes() - 5)
+  const time = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}`
+  const data = defaultData()
+  data.days[todayKey()] = {
+    date: todayKey(),
+    tasks: [{ id: 'sitting', title: 'Sit with the book', time, minutes: 60, done: false }],
+  }
+  actions.resetForTests(data)
+
+  render(<App />)
+  await user.keyboard('{ArrowRight}')
+  expect(screen.queryByRole('heading', { name: 'Today', level: 2 })).toBeNull()
+
+  await user.keyboard('f')
+  expect(screen.getByRole('region', { name: 'Focus' })).toHaveTextContent('Sit with the book')
 })
 
 // --- something came up, from anywhere ----------------------------------------

@@ -24,7 +24,7 @@ export function DemoBanner() {
     <div className="demo-banner" role="status">
       <span className="demo-banner-mark" aria-hidden="true" />
       <span className="demo-banner-text">
-        <strong>Demo data.</strong>{' '}
+        <strong>Demo data</strong>{' '}
         {isWide
           ? 'Nothing here is yours - it lives under its own key and is thrown away when you leave.'
           : 'Nothing here is yours.'}

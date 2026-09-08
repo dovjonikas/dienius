@@ -51,7 +51,7 @@ test('a gap at the edge of the window names only the side that has a neighbour',
 test('a task with no size says so plainly instead of listing anything', () => {
   const tasks = [float('Guitar')]
   render(<TaskGapOffers task={float('Guitar')} tasks={tasks} sleepProfileId={undefined} onPlace={() => {}} onClose={() => {}} />)
-  expect(screen.getByText(/size isn't set/i)).toBeInTheDocument()
+  expect(screen.getByText(/size is not set/i)).toBeInTheDocument()
   expect(screen.queryByRole('list')).not.toBeInTheDocument()
 })
 

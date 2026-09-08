@@ -29,17 +29,17 @@ beforeEach(() => {
  * and the phone asked again after the laptop had already answered. Found by
  * reading ARCHITECTURE against the code.
  */
-test('after a slow day the card comes forward, and Ok is remembered in settings for today', async () => {
+test('after a slow day the card comes forward, and closing it is remembered in settings for today', async () => {
   render(<NorthCard />)
   expect(screen.getByRole('dialog', { name: 'Why this matters' })).toHaveTextContent('Finish things')
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }))
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(getData().settings.northDismissedOn).toBe(TODAY)
   expect(localStorage.getItem('dienius:north-dismissed')).toBeNull()
 })
 
 // A sheet since v2.6 - see NorthCard. Escape and the backdrop are the same
-// read as Ok: there is nothing else leaving this card could mean, and a way
+// read as Close: there is nothing else leaving this card could mean, and a way
 // out that left it for tomorrow to ask again would be the card nagging.
 test('Escape reads the card for the day, and so does the backdrop', async () => {
   const user = userEvent.setup()
@@ -116,8 +116,8 @@ test('on a Monday the card says one thing you do for this, and nothing about las
   actions.updateGoal(g.id, { deserve: ['train four times', 'sleep by eleven'] })
   render(<NorthCard />)
   const card = screen.getByRole('dialog', { name: 'Why this matters' })
-  expect(card).toHaveTextContent('New week.')
-  expect(card).toHaveTextContent('This week.')
+  expect(card).toHaveTextContent('New week')
+  expect(card).toHaveTextContent('This week')
   expect(card.textContent).toMatch(/train four times|sleep by eleven/)
   expect(card.querySelectorAll('.north-card-deserve')).toHaveLength(1)
   expect(card.textContent).not.toMatch(/missed|last week|did not|%/i)
@@ -130,6 +130,6 @@ test('a Monday card for a goal with nothing written to deserve it shows the why 
   vi.setSystemTime(new Date('2026-09-07T09:00:00'))
   render(<NorthCard />)
   const card = screen.getByRole('dialog', { name: 'Why this matters' })
-  expect(card).toHaveTextContent('New week.')
-  expect(card).not.toHaveTextContent('This week.')
+  expect(card).toHaveTextContent('New week')
+  expect(card).not.toHaveTextContent('This week')
 })

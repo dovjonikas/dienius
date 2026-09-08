@@ -30,8 +30,8 @@ test('export, erase, import: the day comes back exactly', async ({ page }) => {
 
   // Two presses, the second on the armed button, then the app reloads empty.
   await page.getByRole('button', { name: 'Erase all data' }).click()
-  await page.getByRole('button', { name: 'Confirm reset?' }).click()
-  await page.getByRole('button', { name: 'Show me around' }).waitFor()
+  await page.getByRole('button', { name: 'Erase?' }).click()
+  await page.getByRole('button', { name: 'Take the tour' }).waitFor()
   await expect(page.getByRole('checkbox')).toHaveCount(0)
 
   await settings(page)
@@ -54,11 +54,11 @@ test('a snapshot from the first open of the day restores the app to that moment'
   const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Today' }).filter({ hasText: '0 tasks, 0 templates' })
   await expect(row).toBeVisible()
   await row.getByRole('button', { name: 'Restore' }).click()
-  await row.getByRole('button', { name: 'Replace everything?' }).click()
+  await row.getByRole('button', { name: 'Replace?' }).click()
 
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
   await expect(page.getByRole('checkbox')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Show me around' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Take the tour' })).toBeVisible()
 })
 
 /**
@@ -94,7 +94,7 @@ test('a snapshot taken this morning brings yesterday back after it is wrecked', 
   const row = page.getByRole('main').getByRole('listitem').filter({ hasText: 'Today' }).first()
   await expect(row).toContainText('11 tasks')
   await row.getByRole('button', { name: 'Restore' }).click()
-  await row.getByRole('button', { name: 'Replace everything?' }).click()
+  await row.getByRole('button', { name: 'Replace?' }).click()
   await page.waitForTimeout(600)
 
   const back = await page.evaluate(date => {

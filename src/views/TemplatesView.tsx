@@ -399,7 +399,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           <DurationControl
             minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
             allowEmpty
-            stepperLabel="Size in minutes"
+            stepperLabel="How long, in minutes"
             onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
           />
         </div>
@@ -447,7 +447,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             Ongoing
           </button>
         </Explain>
-        <button className="btn-secondary" onClick={addBlock}>Add block</button>
+        <button className="btn-secondary" onClick={addBlock}>Add a block</button>
         </div>
       </div>
       <div className="row">
@@ -709,7 +709,7 @@ export function TemplatesView() {
       {!draft && !weekDraft && !asking && data.templates.length === 0 && (
         <div className="first-run">
           <p className="empty">
-            No templates yet. Start from one of these, or build your own with New template above.
+            No templates yet - start from one of these, or build your own with New template above.
           </p>
           <StarterOffers onUse={useStarter} />
         </div>
@@ -763,7 +763,7 @@ export function TemplatesView() {
               onClick={() => handleDeleteClick(t)}
               onBlur={() => setConfirmDeleteId(prev => (prev === t.id ? null : prev))}
             >
-              {confirmDeleteId === t.id ? 'Confirm?' : 'Delete'}
+              {confirmDeleteId === t.id ? 'Delete?' : 'Delete'}
             </button>
           </li>
         ))}

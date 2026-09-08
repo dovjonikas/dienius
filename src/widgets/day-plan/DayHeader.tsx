@@ -184,7 +184,7 @@ export function DayHeader({
               <>
                 <span className="day-replan-away">Away since {replan.away}</span>
                 <button type="button" className="day-replan-button" onClick={() => replan.onOpen('back')}>
-                  I'm back
+                  Back
                 </button>
               </>
             ) : (
@@ -261,7 +261,7 @@ export function DayHeader({
           {showSleep && (
             <span
               className={untilSleep <= SLEEP_URGENT_MINUTES ? 'day-sleep is-soon' : 'day-sleep'}
-              data-tip="Time until your sleep window starts"
+              data-tip="Time until sleep"
             >
               Sleep in {formatDuration(untilSleep)}
             </span>

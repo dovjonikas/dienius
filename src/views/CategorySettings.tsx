@@ -236,7 +236,7 @@ function DeleteCategory({
           {total > 0 ? 'Delete and move' : 'Delete'}
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
-          Keep it
+          Cancel
         </button>
       </div>
     </div>
@@ -348,7 +348,7 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
           disabled={!canSave}
           onClick={() => onSave({ label, color })}
         >
-          {category ? 'Save' : 'Add it'}
+          Save
         </button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel

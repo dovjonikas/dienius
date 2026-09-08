@@ -198,9 +198,24 @@ export function App() {
         return
       }
 
-      // While either of them is open it is the only thing listening, so a
-      // stray "3" behind it cannot navigate the page out from under it.
-      if (shortcutsOpen || paletteOpen || scratchOpen) return
+      // While any of these is open it is the only thing listening, so a stray
+      // "3" behind it cannot navigate the page out from under it. The two
+      // header popovers, the journal and the clock joined the list in v2.7:
+      // each is a dialog over the page with buttons in it, and a bare key
+      // pressed with focus on one of those buttons was still reaching the
+      // shell and changing the tab underneath. The replan sheet and the
+      // North card are not named here because they carry data-keeps-keys,
+      // which stops a key one step earlier, in shortcutKeyFor.
+      if (
+        shortcutsOpen ||
+        paletteOpen ||
+        scratchOpen ||
+        notesOpen ||
+        journalPanelOpen ||
+        journalOpen ||
+        clockOpen
+      )
+        return
 
       switch (key) {
         // Two keys for the same thing, because the one that is fastest to
@@ -250,7 +265,12 @@ export function App() {
           else return
           break
         case '1':
-          setView('day')
+          // The day view *on today*, which is what the rail's Today button
+          // and the palette both do. setView('day') alone left whichever day
+          // was being looked at on screen, so the rail's own tooltip -
+          // "Today · 1" - promised something the key did not do for anybody
+          // who had arrowed a week ahead.
+          openDay(todayKey())
           break
         case '2':
           setView('calendar')
@@ -271,9 +291,13 @@ export function App() {
           setView('settings')
           break
         case 'f': {
+          // Today's running task, whatever day is on screen. Focus is a thing
+          // happening now and the button that starts it exists only on
+          // today's running card; reading the selected day instead meant F
+          // from next Tuesday started Focus on a block nobody was sitting at.
           const running = activeTaskToday()
           if (!running) return
-          clockTools.startFocus(selectedDate, running.id)
+          clockTools.startFocus(todayKey(), running.id)
           break
         }
         default:
@@ -358,7 +382,7 @@ export function App() {
         setFocusQuickAdd(n => n + 1)
       },
     },
-    { id: 'scratch', label: 'Scratch', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },
+    { id: 'scratch', label: 'Notes', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },
     { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(25 * 60_000) },
     { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
@@ -393,9 +417,15 @@ export function App() {
     },
   ]
 
-  /** The task the clock says is happening right now, or nothing. */
+  /**
+   * The task the clock says is happening right now, or nothing.
+   *
+   * Today's day, not the selected one - the name always said so and the body
+   * did not. "Running now" is a fact about today: a block at 15:00 in next
+   * Tuesday's plan is not happening, whatever the clock reads.
+   */
   function activeTaskToday() {
-    const day = data.days[selectedDate]
+    const day = data.days[todayKey()]
     if (!day) return undefined
     const now = new Date()
     const minutes = now.getHours() * 60 + now.getMinutes()

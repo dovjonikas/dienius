@@ -72,12 +72,14 @@ test('the nudges are dead on a task with no time - there is nothing to nudge', (
   expect(screen.getByRole('button', { name: '+5' })).toBeDisabled()
 })
 
-test('a task with a time can be given none again', async () => {
+// Remove, not Delete: the time is a part of the task coming off, not the task
+// itself - and it is what the actions sheet has always called the same gesture.
+test('a task with a time can have that time removed', async () => {
   const user = userEvent.setup()
   const id = seed()
   actions.setTaskTime(DATE, id, '09:00')
   openFirst()
-  await user.click(screen.getByRole('button', { name: 'No set time' }))
+  await user.click(screen.getByRole('button', { name: 'Remove time' }))
   expect(tasks()[0].time).toBeUndefined()
 })
 
@@ -98,7 +100,7 @@ test('a size typed in minutes is committed, and a note beside it', async () => {
   const user = userEvent.setup()
   seed()
   openFirst()
-  await user.type(screen.getByLabelText('Size in minutes'), '90')
+  await user.type(screen.getByLabelText('How long, in minutes'), '90')
   await user.tab()
   expect(tasks()[0].minutes).toBe(90)
 
@@ -211,7 +213,7 @@ test('the close button is a real, named control rather than only a gesture', asy
   const onClose = vi.fn()
   seed()
   openFirst(onClose)
-  await user.click(screen.getByRole('button', { name: 'Close details' }))
+  await user.click(screen.getByRole('button', { name: 'Close' }))
   expect(onClose).toHaveBeenCalled()
 })
 
@@ -221,10 +223,10 @@ test('a size can be a chip, and the chip in force is marked', async () => {
   const user = userEvent.setup()
   seed()
   openFirst()
-  await user.click(within(screen.getByRole('group', { name: 'Size' })).getByRole('button', { name: '1h30' }))
+  await user.click(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '1h30' }))
   expect(tasks()[0].minutes).toBe(90)
-  expect(within(screen.getByRole('group', { name: 'Size' })).getByRole('button', { name: '1h30' })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.getByLabelText('Size in minutes')).toHaveValue('90')
+  expect(within(screen.getByRole('group', { name: 'How long' })).getByRole('button', { name: '1h30' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByLabelText('How long, in minutes')).toHaveValue('90')
 })
 
 // --- the footer: the way out, and the way to be rid of it ------------------
@@ -280,7 +282,7 @@ test('the size is stated once: a number with its unit, and the chips', () => {
   const id = seed()
   actions.setTaskMinutes(DATE, id, 120)
   openFirst()
-  expect(screen.getByLabelText('Size in minutes')).toHaveValue('120')
+  expect(screen.getByLabelText('How long, in minutes')).toHaveValue('120')
   expect(screen.queryByText('2h', { selector: '.task-detail-hint' })).toBeNull()
   expect(screen.getByText('min', { selector: '.time-stepper-unit' })).toBeInTheDocument()
 })

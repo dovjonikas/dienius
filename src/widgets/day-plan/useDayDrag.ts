@@ -240,17 +240,25 @@ export function useDayDrag(date: string, day: DayPlan | undefined): DayDrag {
       endDrag()
     }
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && dragRef.current) endDrag()
+      if (e.key !== 'Escape' || !dragRef.current) return
+      // One press, one layer, the same rule the dialogs follow: somebody
+      // dropping a card they have picked up is calling off the drag, not
+      // asking to leave the tour or to collapse Focus. Both this and the
+      // shell's chain listen on the document, where stopping the event only
+      // works from the earlier phase - hence the capture below. Kept narrow
+      // on purpose: nothing is stopped unless a drag is actually in hand.
+      e.stopPropagation()
+      endDrag()
     }
     document.addEventListener('pointermove', handleMove)
     document.addEventListener('pointerup', handleUp)
     document.addEventListener('pointercancel', handleCancel)
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', handleKeyDown, true)
     return () => {
       document.removeEventListener('pointermove', handleMove)
       document.removeEventListener('pointerup', handleUp)
       document.removeEventListener('pointercancel', handleCancel)
-      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', handleKeyDown, true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day, date])

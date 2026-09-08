@@ -214,7 +214,7 @@ function Menu({ away, onPick, onClose }: { away: string | undefined; onPick: (m:
         </button>
         {away ? (
           <button type="button" className="replan-choice" onClick={() => onPick('back')}>
-            <strong>I'm back</strong>
+            <strong>Back</strong>
             <span>Away since {away}. See what still fits in the time left.</span>
           </button>
         ) : (
@@ -237,8 +237,10 @@ function Head({ title, onClose, onBack }: { title: string; onClose?: () => void;
         </button>
       )}
       <h2 className="replan-title">{title}</h2>
+      {/* Just "Close": the dialog it sits in already carries its own name, so
+          "Close replan" was the surface saying its name twice. */}
       {onClose && (
-        <button type="button" className="task-detail-close" aria-label="Close replan" onClick={onClose}>
+        <button type="button" className="task-detail-close" aria-label="Close" onClick={onClose}>
           &times;
         </button>
       )}
@@ -493,7 +495,7 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
               aria-pressed={preset === 'open'}
               onClick={() => pickPreset('open')}
             >
-              Don't know how long
+              Not sure how long
             </button>
           </div>
           {(preset === 'custom' || preset === 'open') && (
@@ -714,8 +716,8 @@ function Away({ nowMinutes, onAway, onBack }: { nowMinutes: number; onAway: () =
       <Head title="Away" onBack={onBack} />
       <div className="replan-body">
         <p className="replan-text">
-          The day pauses at {formatClock(nowMinutes)}. Nothing nudges you while you are gone. When you are back, one
-          press fits what still fits into the time left.
+          The day pauses at {formatClock(nowMinutes)} and nothing nudges you until you are back, then one press fits
+          what still fits.
         </p>
       </div>
       <div className="replan-foot">
@@ -746,7 +748,7 @@ function Back({ tasks, nowMinutes, window, busy, titles, away, onAccept, onNotNo
   const nothing = plan.moves.length + plan.tomorrow.length === 0
   return (
     <>
-      <Head title="I'm back" />
+      <Head title="Back" />
       <div className="replan-body">
         {away && <p className="replan-text">Away since {away}. Here is the rest of the day, from {formatClock(nowMinutes)}.</p>}
         <PlanList plan={plan} tasks={tasks} titles={titles} />

@@ -41,8 +41,8 @@ async function pasteAPicture(page: import('@playwright/test').Page) {
 
 test('a pasted screenshot is shrunk, kept in IndexedDB, and never in the state', async ({ page }) => {
   await page.keyboard.press('s')
-  const scratch = page.getByRole('dialog', { name: 'Scratch' })
-  await scratch.getByRole('textbox', { name: 'Scratch note' }).pressSequentially('the meal plan')
+  const scratch = page.getByRole('dialog', { name: 'Notes' })
+  await scratch.getByRole('textbox', { name: 'Note' }).pressSequentially('the meal plan')
 
   await pasteAPicture(page)
   await expect(scratch.getByRole('status')).toContainText('Picture added.')
@@ -75,8 +75,8 @@ test('a pasted screenshot is shrunk, kept in IndexedDB, and never in the state',
 
 test('a picture opens full screen, walks nowhere on its own, and Escape brings the note back', async ({ page }) => {
   await page.keyboard.press('s')
-  const scratch = page.getByRole('dialog', { name: 'Scratch' })
-  await scratch.getByRole('textbox', { name: 'Scratch note' }).pressSequentially('a whiteboard')
+  const scratch = page.getByRole('dialog', { name: 'Notes' })
+  await scratch.getByRole('textbox', { name: 'Note' }).pressSequentially('a whiteboard')
   await pasteAPicture(page)
 
   await scratch.getByRole('button', { name: 'Open the picture' }).click()
@@ -90,8 +90,8 @@ test('a picture opens full screen, walks nowhere on its own, and Escape brings t
 
 test('the cross takes the picture off the note and out of the database', async ({ page }) => {
   await page.keyboard.press('s')
-  const scratch = page.getByRole('dialog', { name: 'Scratch' })
-  await scratch.getByRole('textbox', { name: 'Scratch note' }).pressSequentially('a receipt')
+  const scratch = page.getByRole('dialog', { name: 'Notes' })
+  await scratch.getByRole('textbox', { name: 'Note' }).pressSequentially('a receipt')
   await pasteAPicture(page)
   await expect(scratch.getByRole('button', { name: 'Open the picture' })).toBeVisible()
 

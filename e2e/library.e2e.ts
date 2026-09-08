@@ -26,12 +26,18 @@ test('a list bound to a template puts the current book on the day, and a tick ad
   await page.getByRole('button', { name: 'Dune, ch 0/12' }).click()
   await page.getByRole('button', { name: 'Add to template' }).click()
   await page.getByLabel('At', { exact: true }).fill('21:00')
-  await page.getByRole('button', { name: 'Add block' }).click()
+  await page.getByRole('button', { name: 'Add a block' }).click()
 
-  // Stamping the template again onto today adds only what the day is
-  // missing, and what it is missing arrives named after the book.
+  // Onto a day that has no template yet, two days on, where the block
+  // arrives named after the book. Not onto today: since v2.7 the chip for
+  // the template a day already carries does nothing and says so, so a day
+  // stamped before the template gained this block keeps the day it had.
+  // That re-stamping adds only what a day is missing is held by
+  // stamping.test.ts, which does not need three tabs to say it.
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
-  await page.getByRole('button', { name: 'Working day', pressed: true }).click()
+  await page.getByRole('button', { name: 'Next day' }).click()
+  await page.getByRole('button', { name: 'Next day' }).click()
+  await page.getByRole('button', { name: 'Working day', pressed: false }).click()
   const dune = page.getByRole('checkbox', { name: 'Dune' })
   await expect(dune).toBeAttached()
   await expect(page.getByRole('listitem').filter({ has: dune })).toContainText('21:00')
@@ -76,7 +82,7 @@ test('finishing a book names the next one on the card and offers a sitting on it
 
   await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
   await expect(page.getByText(/Dune finished\. Next on this list/)).toBeVisible()
-  await page.getByRole('button', { name: 'Put a sitting on today' }).click()
+  await page.locator('.library-upnext').getByRole('button', { name: 'Onto today' }).click()
   // The press answers where it stands rather than following you to the day.
   await expect(page.getByText('On today.')).toBeVisible()
 

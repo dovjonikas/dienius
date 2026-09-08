@@ -12,7 +12,7 @@ export async function openFresh(page: Page): Promise<void> {
     sessionStorage.clear()
   })
   await page.reload()
-  await page.getByRole('button', { name: 'Show me around' }).waitFor()
+  await page.getByRole('button', { name: 'Take the tour' }).waitFor()
 }
 
 /** The one starter template the tour and the smoke test both stamp. */

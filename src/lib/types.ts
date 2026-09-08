@@ -519,7 +519,7 @@ export interface DayPlan extends Timestamped {
   /**
    * The clock time the person went away, while they are - see replan.ts.
    * Present means the day is paused: no task nudges fire, and the header
-   * offers "I'm back" instead of "Replan". Absent is the ordinary state, and
+   * offers "Back" instead of "Replan". Absent is the ordinary state, and
    * every plan written before this field existed is in it.
    */
   away?: string

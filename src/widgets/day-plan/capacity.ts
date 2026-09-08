@@ -584,7 +584,7 @@ export function formatCapacityLine(capacity: Capacity): string | null {
     }
 
     if (capacity.unsizedAnchorCount > 0) {
-      sentences.push("Free time isn't known until every timed task has a size.")
+      sentences.push('Free time is not known until every timed task has a size.')
     } else if (capacity.gaps.length > 0) {
       const gapWord = capacity.gaps.length === 1 ? 'gap' : 'gaps'
       sentences.push(`Free: ${formatDuration(capacity.freeMinutes!)} across ${capacity.gaps.length} ${gapWord}.`)
@@ -597,7 +597,7 @@ export function formatCapacityLine(capacity: Capacity): string | null {
     const unsized = capacity.unsizedFloatCount > 0 ? `, plus ${capacity.unsizedFloatCount} unsized` : ''
     sentences.push(`Untimed tasks: about ${formatDuration(capacity.floatsMinutes)}${unsized}.`)
     if (capacity.overMinutes !== null && capacity.overMinutes > 0) {
-      sentences.push(`You are ${formatDuration(capacity.overMinutes)} over.`)
+      sentences.push(`${formatDuration(capacity.overMinutes)} over.`)
     }
   } else if (capacity.unsizedFloatCount > 0) {
     const floatWord = capacity.unsizedFloatCount === 1 ? 'untimed task' : 'untimed tasks'

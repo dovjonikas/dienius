@@ -120,7 +120,7 @@ export function searchEverything(data: AppData, query: string, today: string): S
       kind: 'scratch',
       id: `scratch:${note.id}`,
       title: scratchTitle(note.text),
-      detail: `Scratch - ${formatDayTitle(note.date)}`,
+      detail: `Note - ${formatDayTitle(note.date)}`,
       target: { type: 'scratch', id: note.id },
       score: score + (note.date >= today ? 0.6 : 0.4),
     })

@@ -42,8 +42,8 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  * rather than a generic "gaps" label, since that is the one thing every
  * state below has in common.
  *
- * Every non-matched state - no size, already timed, some other anchor's
- * size unknown - is said in a single plain sentence rather than an empty
+ * Every non-matched state - no size, already timed, some other anchor with
+ * no length - is said in a single plain sentence rather than an empty
  * list, and a matched task with nothing that fits is said just as plainly:
  * a full day is a real outcome, not a failure to explain away. Nothing
  * here ever ranks the gaps it lists or pre-selects one; they are offered in
@@ -66,6 +66,10 @@ export function TaskGapOffers({ task, tasks, sleepProfileId, sleep, onPlace, onC
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {
       e.preventDefault()
+      // One press, one layer: the shell's own Escape chain listens on the
+      // document, so without this a press meant for these offers also
+      // collapsed Focus or ended a running tour underneath them.
+      e.stopPropagation()
       onClose()
       return
     }
@@ -93,11 +97,11 @@ export function TaskGapOffers({ task, tasks, sleepProfileId, sleep, onPlace, onC
   function renderBody() {
     switch (match.kind) {
       case 'no-size':
-        return <p className="task-gap-offers-note">{task.title}'s size isn't set - give it a size to see where it fits.</p>
+        return <p className="task-gap-offers-note">{task.title}'s size is not set - give it a size to see where it fits.</p>
       case 'already-timed':
         return <p className="task-gap-offers-note">{task.title} already has a time.</p>
       case 'unknown':
-        return <p className="task-gap-offers-note">Gaps aren't shown - not every timed task above has a size yet.</p>
+        return <p className="task-gap-offers-note">Gaps are not shown - not every timed task above has a size yet.</p>
       case 'matched': {
         if (match.gaps.length === 0) {
           return <p className="task-gap-offers-note">No gap today is {formatDuration(task.minutes!)} or longer.</p>

@@ -158,8 +158,8 @@ function PictureInvitation() {
         <Explain id="picture">The picture</Explain>
       </p>
       <p className="north-invite-lead">
-        Who you are becoming: how you look, how you live, what you do in the morning. One line is enough to
-        start.
+        Who you are becoming: how you look, how you live, what you do in the morning - one line is enough
+        to start.
       </p>
       <input
         className="north-invite-line"
@@ -239,7 +239,7 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
         </ul>
       ) : (
         <p className="north-goal-deserve-empty">
-          Two to four things you do most days for this. They are written in Compose.
+          Two to four things you do most days for this, written in Compose.
         </p>
       )}
 
@@ -289,7 +289,7 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
         // MAX_RULES_PER_GOAL. A limit that quietly drops the newest entry is
         // a limit nobody can see and a rule somebody thinks they wrote.
         <p className="setting-state north-rule-full">
-          {MAX_RULES_PER_GOAL} is the limit here. Delete one to make room.
+          {MAX_RULES_PER_GOAL} is the limit - delete one to make room.
         </p>
       )}
     </article>
@@ -324,7 +324,7 @@ function RuleLine({ rule, onEdit }: { rule: IfThenEntry; onEdit: () => void }) {
           }}
           onBlur={() => setConfirmDelete(false)}
         >
-          {confirmDelete ? 'Confirm?' : 'Delete'}
+          {confirmDelete ? 'Delete?' : 'Delete'}
         </button>
       </div>
     </>
@@ -374,8 +374,8 @@ function UnfiledRules({ rules, goals, ifThens }: { rules: IfThenEntry[]; goals: 
     <section className="north-unfiled" aria-label="Rules with no goal">
       <h3>Not under a goal yet</h3>
       <p className="muted">
-        These were written before rules belonged to anything. Put each one under what it protects, or leave
-        it here.
+        These were written before rules belonged to anything - put each one under what it protects, or
+        leave it here.
       </p>
       <ul className="north-rules">
         {rules.map(rule => (

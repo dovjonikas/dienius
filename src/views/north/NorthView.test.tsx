@@ -207,7 +207,7 @@ test('Add another in Compose puts the cursor in a new goal, and a full window of
   await user.type(screen.getAllByLabelText('What')[3], 'Four')
 
   expect(screen.queryByRole('button', { name: 'Add another' })).toBeNull()
-  expect(screen.getByText(`${MAX_ACTIVE_GOALS} is the limit. Archive one to make room.`)).toBeInTheDocument()
+  expect(screen.getByText(`${MAX_ACTIVE_GOALS} is the limit - archive one to make room.`)).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(activeGoals(getData().goals).map(g => g.title)).toEqual(['One', 'Two', 'Three', 'Four'])
@@ -302,7 +302,7 @@ test('a rule written under a goal appears under that goal and not under another'
   await user.click(within(card).getByRole('button', { name: 'Write one down' }))
   await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
   await user.type(screen.getByLabelText('Then'), 'I open today and do the first unticked thing')
-  await user.click(screen.getByRole('button', { name: 'Write it down' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(getData().ifThens).toHaveLength(1)
   expect(getData().ifThens[0].goalId).toBe(ship.id)
@@ -325,7 +325,7 @@ test('a goal with five rules offers no way to write a sixth, and says why', () =
   render(<NorthView />)
 
   expect(screen.queryByRole('button', { name: 'Add another' })).toBeNull()
-  expect(screen.getByText(`${MAX_RULES_PER_GOAL} is the limit here. Delete one to make room.`)).toBeTruthy()
+  expect(screen.getByText(`${MAX_RULES_PER_GOAL} is the limit - delete one to make room.`)).toBeTruthy()
 })
 
 test('a rule written before rules had goals waits in its own group, and one press files it', async () => {

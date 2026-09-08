@@ -42,7 +42,7 @@ export function YesterdayBanner({ date }: { date: string }) {
   // Checked before "is there anything left", not after. A push moves the
   // tasks off yesterday, so the moment the button works there is nothing
   // unfinished there any more - and the early return below used to fire
-  // first, taking the "Moved 3 to today." line with it. The banner simply
+  // first, taking the "Pushed 3 to today." line with it. The banner simply
   // vanished on the press, and the sentence written to confirm it was only
   // ever reachable when something had stayed behind. Found by the rollover
   // e2e test in v1.11.
@@ -50,11 +50,13 @@ export function YesterdayBanner({ date }: { date: string }) {
     return (
       <div className="yesterday-banner is-done" role="status">
         <p>
-          {pushed.moved > 0 ? `Moved ${pushed.moved} to today.` : 'Nothing could move.'}
+          {pushed.moved > 0 ? `Pushed ${pushed.moved} to today.` : 'Nothing could move.'}
           {pushed.held > 0 && ` ${pushed.held} stayed - already pushed as far as it goes.`}
         </p>
+        {/* Dismiss both before and after the press: the notice is the same
+            notice, and its way out does not change word half way through. */}
         <button type="button" className="yesterday-dismiss" onClick={dismiss}>
-          Close
+          Dismiss
         </button>
       </div>
     )

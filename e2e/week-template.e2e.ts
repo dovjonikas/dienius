@@ -25,14 +25,14 @@ test('a week template is built once and stamps each day its own column', async (
   // for: most of a week is the same on several days.
   await page.getByPlaceholder('What happens').fill('Commute')
   await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Weekdays' }).click()
-  await page.getByRole('button', { name: 'Add block' }).click()
+  await page.getByRole('button', { name: 'Add a block' }).click()
 
   // And one that is only on a Thursday, which is what makes a week worth
   // having over a day template stamped five times.
   await page.getByRole('region', { name: 'Thursday' }).getByRole('button', { name: /^Thursday/ }).click()
   await page.getByPlaceholder('What happens').fill('Physio')
   await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Thursday' }).click()
-  await page.getByRole('button', { name: 'Add block' }).click()
+  await page.getByRole('button', { name: 'Add a block' }).click()
 
   await expect(page.getByRole('region', { name: 'Thursday' }).getByText('Physio')).toBeVisible()
 

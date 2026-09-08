@@ -31,8 +31,8 @@ export interface DayDigestProps {
  * far the day has come is the header's to say; how the day is made is this
  * card's.
  *
- * Four rows. Timed is what is on the clock. Focus is how much of that is the
- * thing that matters - the one figure nothing else on the screen states.
+ * Four rows. Timed is what is on the clock. Deep work is how much of that is
+ * the thing that matters - the one figure nothing else on the screen states.
  * Free is what is left of the waking window, and across how many gaps,
  * because eight ten-minute holes and one eighty-minute one are different
  * days with the same figure. Sleep is the one number that does not move with
@@ -54,11 +54,13 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
   const upNextColor = upNext ? categoryColor(upNext.category, categories) : undefined
   const minutesAway = upNext ? timeToMinutes(upNext.time!) - nowMinutes : undefined
 
-  // Only tasks marked as Focus work, timed or not. This is the one number here
-  // that is not already on screen somewhere else, and it is the one people
+  // Only tasks in the Deep work category, timed or not. This is the one number
+  // here that is not already on screen somewhere else, and it is the one people
   // actually want at the end of a day: not how busy it was, but how much of it
-  // went to the thing that mattered.
-  const focusMinutes = tasks
+  // went to the thing that mattered. The row is named after the category it
+  // sums, not "Focus" - Focus is the countdown session, and one word for one
+  // thing.
+  const deepWorkMinutes = tasks
     .filter(t => t.category === 'core' && t.minutes !== undefined)
     .reduce((sum, t) => sum + t.minutes!, 0)
 
@@ -69,7 +71,7 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
   const timed = capacity.anchorCount === 0 ? 'none' : capacity.anchorsMinutes ? formatDuration(capacity.anchorsMinutes) : '-'
   const timedNote =
     capacity.unsizedAnchorCount > 0
-      ? `${capacity.unsizedAnchorCount} unsized`
+      ? `${capacity.unsizedAnchorCount} with no length`
       : capacity.anchorsClippedByWindow
         ? "within today's window"
         : undefined
@@ -139,8 +141,8 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
               </div>
             )}
             <div>
-              <dt>Focus</dt>
-              <dd>{focusMinutes > 0 ? formatDuration(focusMinutes) : 'none'}</dd>
+              <dt>Deep work</dt>
+              <dd>{deepWorkMinutes > 0 ? formatDuration(deepWorkMinutes) : 'none'}</dd>
             </div>
             <div>
               <dt>Free</dt>

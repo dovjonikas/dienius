@@ -25,7 +25,7 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   const verb = isMobile ? 'Tap' : 'Click'
 
   await openFreshAt(page, wednesdayAt(10))
-  await page.getByRole('button', { name: 'Show me around' }).click()
+  await page.getByRole('button', { name: 'Take the tour' }).click()
   await expect(card).toContainText('Two minutes, one real day')
   await card.getByRole('button', { name: 'Start' }).click()
 
@@ -56,11 +56,11 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
 
   // Focus - the panel the last step opened is in the way, and the card says so
   await expect(card).toContainText('Close this panel first.')
-  await page.getByRole('button', { name: 'Close details' }).click()
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
   // Between two blocks there is no running card, and the card says so instead.
   await expect(card).toContainText(/Focus on the card running now|Nothing is running this minute/)
   await focusOrLetTheTour(page)
-  await expect(card).toContainText('That bar along the bottom is Focus')
+  await expect(card).toContainText('That strip under the header is Focus')
   await card.getByRole('button', { name: 'Next' }).click()
 
   // Tick it off

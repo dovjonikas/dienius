@@ -163,7 +163,7 @@ export function Tour({ onNavigate }: TourProps) {
           setDeclined(true)
         }}
       >
-        No thanks
+        Cancel
       </button>
     </div>
   )

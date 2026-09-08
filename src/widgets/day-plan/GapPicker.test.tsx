@@ -32,11 +32,11 @@ test('a fitting float shows its duration, tapping it places it', async () => {
   expect(onPlace).toHaveBeenCalledWith('Guitar')
 })
 
-test('an unsized float is offered with a plain "size unknown" label', () => {
+test('an unsized float is offered with a plain "no length" label', () => {
   const offer: GapOffer = { fitting: [], unsized: [option('Mystery')] }
   render(<GapPicker gapLabel="1h30 free" offer={offer} onPlace={() => {}} onClose={() => {}} />)
-  const row = screen.getByRole('button', { name: /place mystery, size unknown/i })
-  expect(row).toHaveTextContent('size unknown')
+  const row = screen.getByRole('button', { name: /place mystery, no length/i })
+  expect(row).toHaveTextContent('no length')
 })
 
 test('nothing that fits shows a plain message and no list', () => {

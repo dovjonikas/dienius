@@ -304,8 +304,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 <span className="setting-name">Restore from a snapshot</span>
                 <span className="setting-desc">
                   {snapshots.length === 0
-                    ? `A copy of everything is kept once a day, on this device, and the last ${SNAPSHOTS_KEPT} are held. The first one is taken today; there is nothing to restore yet.`
-                    : `Taken automatically, once a day, on this device. The last ${SNAPSHOTS_KEPT} are kept. Restoring replaces everything here with that day's copy.`}
+                    ? `A copy of everything is kept once a day on this device, and the last ${SNAPSHOTS_KEPT} are held - the first is taken today.`
+                    : `The last ${SNAPSHOTS_KEPT} days are kept on this device, and restoring replaces everything here with that day's copy.`}
                 </span>
               </div>
               {snapshots.length > 0 && (
@@ -326,7 +326,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                           else setRestoring(snap.date)
                         }}
                       >
-                        {restoring === snap.date ? 'Replace everything?' : 'Restore'}
+                        {restoring === snap.date ? 'Replace?' : 'Restore'}
                       </button>
                     </li>
                   ))}
@@ -361,14 +361,14 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 lib/tourMode.ts. */}
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Replay the tour</span>
+                <span className="setting-name">The tour</span>
                 <span className="setting-desc">
                   Two minutes, nine real actions, in a sandbox that is thrown away when you finish. Your plan is not touched.
                 </span>
               </div>
               <div className="setting-control">
                 <button type="button" className="btn-secondary" onClick={enterTourSandbox}>
-                  Replay tour
+                  Take the tour
                 </button>
               </div>
             </div>
@@ -377,8 +377,9 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Erase all data</span>
                 <span className="setting-desc">
-                  Removes everything on this device - every template, every day of tasks, if-then rules,
-                  and any theme changes you have made. Export a backup first if you want to keep a copy.
+                  Removes everything on this device - every template, every day of tasks, the rules under
+                  your goals, and any theme changes you have made. Export a backup first if you want to
+                  keep a copy.
                 </span>
               </div>
               <div className="setting-control">
@@ -387,7 +388,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                   onClick={handleResetClick}
                   onBlur={() => setConfirmReset(false)}
                 >
-                  {confirmReset ? 'Confirm reset?' : 'Erase all data'}
+                  {confirmReset ? 'Erase?' : 'Erase all data'}
                 </button>
               </div>
             </div>
@@ -430,7 +431,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                       aria-label={'Remove schedule ' + (index + 1)}
                       onClick={() => actions.deleteSleepProfile(profile.id)}
                     >
-                      Remove this schedule
+                      Delete
                     </button>
                   )}
                 </div>
@@ -470,7 +471,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               </div>
               <div className="setting-control">
                 <button type="button" className="btn-secondary" onClick={() => actions.addSleepProfile('Shift')}>
-                  Add another schedule
+                  Add a sleep schedule
                 </button>
               </div>
             </div>
@@ -486,8 +487,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 <span className="setting-name">A template per weekday</span>
                 <span className="setting-desc">
                   {data.templates.length === 0
-                    ? 'Build a template first and this is where you say which days it belongs to. A day whose weekday has no template starts empty, exactly as it does now.'
-                    : 'A new day opens already set up from the template its weekday points at. A day you stamp by hand always wins, and deleting what arrived leaves it deleted - this is a starting point, not a rule.'}
+                    ? 'Build a template first, and this is where you say which days it belongs to.'
+                    : 'A new day opens already set up from the template its weekday points at - a day you stamp by hand always wins.'}
                 </span>
               </div>
               {data.templates.length > 0 && (
@@ -617,8 +618,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Theme</span>
                 <span className="setting-desc">
-                  Three, and every one of them is a theme somebody would actually keep. All text on
-                  all surfaces is checked against WCAG AA before either ships.
+                  Three, and every one is a theme somebody would keep - every text is checked for
+                  contrast in each.
                 </span>
               </div>
               <ThemeGallery />

@@ -594,7 +594,7 @@ test('when floats exceed free time, the line states it plainly with no embedded 
   // before the window opened, so the sentence says the figure is only
   // today's portion rather than implying the shift itself was 11 hours.
   expect(
-    screen.getByText("Timed tasks: 11h within today's window. Free: 5h across 1 gap. Untimed tasks: about 7h. You are 2h over."),
+    screen.getByText("Timed tasks: 11h within today's window. Free: 5h across 1 gap. Untimed tasks: about 7h. 2h over."),
   ).toBeInTheDocument()
   // The capacity line itself carries no button - it only ever states the arithmetic.
   expect(container.querySelector('.capacity-line button')).toBeNull()
@@ -614,7 +614,7 @@ test('the capacity line never uses an alarming word for the over case', () => {
     },
   })
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  expect(screen.getByText(/you are/i)).toBeInTheDocument()
+  expect(container.querySelector('.capacity-line')).toHaveTextContent('3h20 over.')
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
 })
 
@@ -762,11 +762,11 @@ test('setting a task size through its own control updates the task, not the quic
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
   await user.click(screen.getByRole('button', { name: 'Set size for Guitar' }))
-  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  const sizeInput = screen.getByRole('textbox', { name: /how long, in minutes, for guitar/i })
   await user.type(sizeInput, '20{Enter}')
 
   expect(getData().days['2026-09-01'].tasks[0].minutes).toBe(20)
-  expect(screen.getByRole('button', { name: /change size for guitar, currently 20 min/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /change how long guitar takes, currently 20 min/i })).toBeInTheDocument()
   // The quick-add input is untouched by any of this - it stays one field, one Enter.
   expect(screen.getByPlaceholderText(/add a task/i)).toHaveValue('')
 })
@@ -778,8 +778,8 @@ test('an existing task size can be changed and cleared back to unsized', async (
   actions.setTaskMinutes('2026-09-01', id, 20)
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
-  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.click(screen.getByRole('button', { name: /change how long guitar takes/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /how long, in minutes, for guitar/i })
   await user.clear(sizeInput)
   await user.keyboard('{Enter}')
 
@@ -794,8 +794,8 @@ test('typing garbage into the size field leaves an existing size untouched', asy
   actions.setTaskMinutes('2026-09-01', id, 20)
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
-  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.click(screen.getByRole('button', { name: /change how long guitar takes/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /how long, in minutes, for guitar/i })
   await user.clear(sizeInput)
   await user.type(sizeInput, 'abc{Enter}')
 
@@ -809,8 +809,8 @@ test('pressing Escape while editing a size cancels without changing it', async (
   actions.setTaskMinutes('2026-09-01', id, 20)
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  await user.click(screen.getByRole('button', { name: /change size for guitar/i }))
-  const sizeInput = screen.getByRole('textbox', { name: /size in minutes for guitar/i })
+  await user.click(screen.getByRole('button', { name: /change how long guitar takes/i }))
+  const sizeInput = screen.getByRole('textbox', { name: /how long, in minutes, for guitar/i })
   await user.clear(sizeInput)
   await user.type(sizeInput, '99')
   await user.keyboard('{Escape}')
@@ -1141,7 +1141,7 @@ test('a task with no size says so plainly instead of an empty list', async () =>
   actions.addTask('2026-09-01', 'Guitar')
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Guitar' }))
-  expect(screen.getByText(/size isn't set/i)).toBeInTheDocument()
+  expect(screen.getByText(/size is not set/i)).toBeInTheDocument()
 })
 
 test('tapping a fitting gap places the task, ends the selection, and moves focus to the task list', async () => {

@@ -50,6 +50,10 @@ export function GapPicker({ gapLabel, offer, onPlace, onClose }: GapPickerProps)
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {
       e.preventDefault()
+      // One press, one layer: the shell's own Escape chain listens on the
+      // document, so without this a press meant for this picker also
+      // collapsed Focus or ended a running tour underneath it.
+      e.stopPropagation()
       onClose()
       return
     }
@@ -99,7 +103,7 @@ export function GapPicker({ gapLabel, offer, onPlace, onClose }: GapPickerProps)
             <>
               <ul className="gap-picker-list">
                 {rows.map(row => {
-                  const sizeLabel = row.minutes !== undefined ? formatDuration(row.minutes) : 'size unknown'
+                  const sizeLabel = row.minutes !== undefined ? formatDuration(row.minutes) : 'no length'
                   return (
                     <li key={row.id}>
                       <button

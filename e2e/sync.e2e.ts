@@ -126,7 +126,7 @@ test('a tick here and an edit there both survive, and a delete stays deleted', a
   const title = pc.getByLabel('Title')
   await title.fill('Ring the bank about the standing order')
   await title.blur()
-  await pc.getByRole('button', { name: 'Close details' }).click()
+  await pc.getByRole('button', { name: 'Close', exact: true }).click()
 
   // And one deletes a third task the other still has.
   await pc.getByRole('button', { name: 'More actions for Cancel the trial' }).click()

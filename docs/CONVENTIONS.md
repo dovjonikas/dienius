@@ -616,7 +616,7 @@ whole day is gone" - so the rules are about tone as much as arithmetic:
   its answer before it is accepted, and applies in one commit with one undo.
   If a change adds a second question to the path, it is wrong.
 - **Away is a pause, not a verdict.** While `DayPlan.away` is set nothing
-  nudges; "I'm back" offers one rescue and clears it. A day that was paused
+  nudges; "Back" offers one rescue and clears it. A day that was paused
   is scored like any other, because the score is a fact and the pause was a
   choice.
 

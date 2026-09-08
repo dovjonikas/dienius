@@ -145,8 +145,8 @@ function atMinutes(at: string): number {
  * How many tasks would move if the offer to push were taken.
  *
  * Reported as a plain number on a plain offer, never as a reason. The card
- * says "3 unfinished - push them to tomorrow?"; it does not say that leaving
- * them is a problem, because it is not one.
+ * says "Push 3 to tomorrow"; it does not say that leaving them is a problem,
+ * because it is not one.
  */
 export function pushableAtClose(day: DayPlan | undefined): number {
   return (day?.tasks ?? []).filter(t => !t.done).length

@@ -365,7 +365,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
           {data.templates.length > 0 && (
             <div className="stamp-bar">
               <Explain id="stamp">
-                <span className="muted">Stamp:</span>
+                <span className="muted">Stamp</span>
               </Explain>
               {data.templates.map(t => (
                 <button

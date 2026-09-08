@@ -167,7 +167,7 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   },
   'template-week': {
     term: 'A week',
-    text: 'Seven days in one template, each with its own blocks, so a gym rotation or a shift pattern lives in one place. Stamping a date takes that weekday’s column.',
+    text: "Seven days in one template, each with its own blocks, so a gym rotation or a shift pattern lives in one place. Stamping a date takes that weekday's column.",
   },
   'add-to': {
     term: 'Add to',

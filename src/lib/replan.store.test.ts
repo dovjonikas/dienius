@@ -126,7 +126,7 @@ test('a day the weekday plan says nothing about is made empty and marked, so a l
  * The owner's scenario, in their words: you replan not knowing how long it
  * will take - "something this evening" - and later you get home. An
  * interruption with no length leaves the day open-ended, which is what
- * `away` already means, so the header offers "I'm back" and the rescue
+ * `away` already means, so the header offers "Back" and the rescue
  * recomputes from the moment it is pressed. Nothing new is asked for at
  * the moment of the interruption, which is the one moment nobody has an
  * answer.

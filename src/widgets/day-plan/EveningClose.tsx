@@ -105,7 +105,7 @@ export function EveningClose({ date }: { date: string }) {
               setPushOffered(true)
             }}
           >
-            {unfinished} unfinished - push to tomorrow?
+            Push {unfinished} to tomorrow
           </button>
         )}
       </div>

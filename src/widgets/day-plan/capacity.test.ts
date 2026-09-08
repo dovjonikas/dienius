@@ -284,7 +284,7 @@ test('an anchor entirely outside the window is flagged as clipped, even though i
 test('the clipped-window note appears before the unsized-anchor note, in one clause', () => {
   const capacity = computeCapacity([anchor('Runs late', '22:00', 180), anchor('No size', '10:00', undefined)])
   expect(formatCapacityLine(capacity)).toBe(
-    "Timed tasks: 1h within today's window, plus 1 unsized. Free time isn't known until every timed task has a size.",
+    "Timed tasks: 1h within today's window, plus 1 unsized. Free time is not known until every timed task has a size.",
   )
 })
 
@@ -330,14 +330,14 @@ test('two unsized anchors report zero known occupied time and no free-time figur
   expect(capacity.anchorsMinutes).toBe(0)
   expect(capacity.freeMinutes).toBeNull()
   expect(formatCapacityLine(capacity)).toBe(
-    "2 timed tasks with no size yet. Free time isn't known until every timed task has a size.",
+    '2 timed tasks with no size yet. Free time is not known until every timed task has a size.',
   )
 })
 
 test('a single unsized anchor uses the singular in the sentence', () => {
   const capacity = computeCapacity([anchor('Call', '10:00', undefined)])
   expect(formatCapacityLine(capacity)).toBe(
-    "1 timed task with no size yet. Free time isn't known until every timed task has a size.",
+    '1 timed task with no size yet. Free time is not known until every timed task has a size.',
   )
 })
 
@@ -393,14 +393,14 @@ test('a single gap uses the singular word "gap"', () => {
 test('never uses a warning word for the over case', () => {
   const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 800)]
   const line = formatCapacityLine(computeCapacity(tasks))
-  expect(line).toMatch(/you are/i)
+  expect(line).toMatch(/\bover\.$/)
   expect(line).not.toMatch(/warning|danger|alert|fail|!/i)
 })
 
 test('being over is stated plainly, with the word about only on the floats estimate', () => {
   const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 700)]
   const line = formatCapacityLine(computeCapacity(tasks))
-  expect(line).toBe('Timed tasks: 5h. Free: 11h across 3 gaps. Untimed tasks: about 11h40. You are 40 min over.')
+  expect(line).toBe('Timed tasks: 5h. Free: 11h across 3 gaps. Untimed tasks: about 11h40. 40 min over.')
 })
 
 // --- parseMinutesInput ---------------------------------------------------------
@@ -739,5 +739,5 @@ test('the line says which of the two the day went to', () => {
 test('an unsized task still means free time is unknown, meetings or not', () => {
   const capacity = computeCapacity([task({ time: '14:00' })], undefined, undefined, [{ start: 540, end: 660 }])
   expect(capacity.freeMinutes).toBeNull()
-  expect(formatCapacityLine(capacity)).toContain("Free time isn't known")
+  expect(formatCapacityLine(capacity)).toContain('Free time is not known')
 })

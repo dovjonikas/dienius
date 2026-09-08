@@ -131,11 +131,11 @@ test('erasing all data requires a second confirming tap before it clears storage
   try {
     render(<SettingsView />)
     await user.click(screen.getByRole('button', { name: 'Erase all data' }))
-    expect(screen.getByRole('button', { name: 'Confirm reset?' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Erase?' })).toBeInTheDocument()
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
     expect(reload).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: 'Confirm reset?' }))
+    await user.click(screen.getByRole('button', { name: 'Erase?' }))
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
     expect(reload).toHaveBeenCalledTimes(1)
   } finally {
@@ -147,7 +147,7 @@ test('the reset confirmation resets when focus moves elsewhere, the same as a te
   const user = userEvent.setup()
   render(<SettingsView />)
   await user.click(screen.getByRole('button', { name: 'Erase all data' }))
-  expect(screen.getByRole('button', { name: 'Confirm reset?' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Erase?' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Import backup' }))
   expect(screen.getByRole('button', { name: 'Erase all data' })).toBeInTheDocument()
 })
@@ -162,7 +162,7 @@ test('confirming the erase clears every part of storage, not just some of it, an
   try {
     render(<SettingsView />)
     await user.click(screen.getByRole('button', { name: 'Erase all data' }))
-    await user.click(screen.getByRole('button', { name: 'Confirm reset?' }))
+    await user.click(screen.getByRole('button', { name: 'Erase?' }))
 
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
     const fresh = loadData()
@@ -274,7 +274,7 @@ test('a second schedule appears only once it is added, and is seeded from the fi
   render(<SettingsView />)
   expect(screen.queryByLabelText('Name of schedule 2')).not.toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Add another schedule' }))
+  await user.click(screen.getByRole('button', { name: 'Add a sleep schedule' }))
 
   expect(screen.getByLabelText('Name of schedule 2')).toHaveValue('Shift')
   expect(getData().settings.sleepProfiles).toHaveLength(2)

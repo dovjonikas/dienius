@@ -7,10 +7,12 @@ const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabi
 /**
  * The shortcut card, opened with "?".
  *
- * Every shortcut in this app is listed here and nowhere else - there is no
- * second copy in a tooltip or a settings page to fall out of step, because
- * this renders straight from the same `SHORTCUTS` array the handler reads.
- * A shortcut added without a description simply cannot exist.
+ * Every key the handler fires is listed here, aliases included - the card
+ * renders straight from the same `SHORTCUTS` array the handler reads, so a
+ * shortcut added without a description simply cannot exist. The rail names
+ * one key each in its tooltips, on the control it belongs to, which is where
+ * a shortcut is actually learned; NavRail.test.tsx holds those to this list
+ * so the two cannot drift.
  */
 export interface ShortcutsOverlayProps {
   onClose: () => void
@@ -64,7 +66,7 @@ export function ShortcutsOverlay({ onClose, onStartTour }: ShortcutsOverlayProps
       >
         <div className="shortcuts-head">
           <h2>Keyboard</h2>
-          <button type="button" className="task-detail-close" aria-label="Close shortcuts" onClick={onClose}>
+          <button type="button" className="task-detail-close" aria-label="Close" onClick={onClose}>
             &times;
           </button>
         </div>
@@ -79,8 +81,8 @@ export function ShortcutsOverlay({ onClose, onStartTour }: ShortcutsOverlayProps
           ))}
         </dl>
         <p className="shortcuts-note">
-          Single keys, so none of them fire while you are typing in a box - except Escape, which is usually
-          how you leave the box.
+          Single keys never fire while you are typing in a box - except Escape, which is usually how you
+          leave it. Ctrl K works anywhere, typing or not.
         </p>
         <p className="shortcuts-tour">
           <button type="button" className="btn-secondary" onClick={onStartTour}>

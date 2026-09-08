@@ -103,7 +103,7 @@ test('deltas read as words', () => {
 })
 
 /**
- * I'm back. Key tasks first, then core, then the rest; what fits in the
+ * Back. Key tasks first, then core, then the rest; what fits in the
  * time left is placed, the rest goes to tomorrow. The summary leads with
  * what is still winnable and never with what was missed.
  */
@@ -137,7 +137,7 @@ test('what does not fit goes to tomorrow and the summary counts it, not the fail
 
 test('with nothing open the rescue has nothing to say but that', () => {
   const plan = planRescue([task('a', '09:00', 30, { done: true })], t(15), WINDOW)
-  expect(plan.summary).toBe('Nothing left on the list. The day is yours.')
+  expect(plan.summary).toBe('Nothing left on the list - the day is yours.')
 })
 
 // --- applying ---------------------------------------------------------------

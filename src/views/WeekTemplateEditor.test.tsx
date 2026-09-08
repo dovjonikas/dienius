@@ -23,7 +23,7 @@ async function newWeek(user: ReturnType<typeof userEvent.setup>) {
 
 async function addBlock(user: ReturnType<typeof userEvent.setup>, title: string) {
   await user.type(screen.getByPlaceholderText('What happens'), title)
-  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
 }
 
 function column(label: string) {

@@ -77,8 +77,7 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
         ) : (
           <div className="library-empty">
             <p className="muted">
-              Things you work through a bit at a time - books, series, courses. Each list counts in its own
-              word, and a session on one can go straight onto a day.
+              Books, series and courses you work through a bit at a time - start a list below.
             </p>
             <div className="library-starters">
               {STARTER_LISTS.map(starter => (
@@ -200,7 +199,7 @@ function NewListForm({ onDone }: { onDone: () => void }) {
           instead of it. The form was never hard; it was three decisions in a
           row at the moment somebody had one idea. */}
       <div className="library-presets">
-        <span className="muted">Quick start:</span>
+        <span className="muted">Quick start</span>
         {LIST_PRESETS.map(preset => (
           <button
             key={preset.name}
@@ -258,7 +257,7 @@ function NewListForm({ onDone }: { onDone: () => void }) {
       </div>
       <div className="library-new-actions">
         <button type="button" className="btn-primary" disabled={!name.trim() || !unit.trim()} onClick={save}>
-          Create list
+          Save
         </button>
         <button type="button" className="btn-secondary" onClick={onDone}>
           Cancel
@@ -303,7 +302,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
   function removeItem(itemId: string, title: string) {
     const before = list
     actions.deleteLibraryItem(list.id, itemId)
-    offerUndo(`${title} removed from ${list.name}`, () => actions.replaceLibraryList(before))
+    offerUndo(`${title} deleted from ${list.name}`, () => actions.replaceLibraryList(before))
   }
 
   const rowProps = (item: LibraryItem, index: number) => ({
@@ -403,7 +402,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             onClick={() => (confirmDelete ? actions.deleteLibraryList(list.id) : setConfirmDelete(true))}
             onBlur={() => setConfirmDelete(false)}
           >
-            {confirmDelete ? 'Delete, really' : 'Delete list'}
+            {confirmDelete ? 'Delete?' : 'Delete list'}
           </button>
         </div>
       )}
@@ -461,7 +460,7 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
                       <button
                         type="button"
                         className="library-item-remove"
-                        aria-label={`Remove ${item.title}`}
+                        aria-label={`Delete ${item.title}`}
                         onClick={() => removeItem(item.id, item.title)}
                       >
                         &times;
@@ -522,7 +521,7 @@ function UpNextLine({ list, offer }: { list: LibraryList; offer: { finished: Lib
         <span className="library-upnext-done">On today.</span>
       ) : (
         <button type="button" className="btn-secondary library-upnext-go" onClick={putOnToday}>
-          Put a sitting on today
+          Onto today
         </button>
       )}
     </p>
@@ -643,7 +642,7 @@ function ItemRow({
         <button
           type="button"
           className="library-item-remove"
-          aria-label={`Remove ${item.title}`}
+          aria-label={`Delete ${item.title}`}
           onClick={onRemove}
         >
           &times;
@@ -705,7 +704,7 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
                 actions.updateLibraryItem(list.id, item.id, { track: option === 'units' ? null : option })
               }
             >
-              {option === 'units' ? unitPlural(list) : option === 'movie' ? 'one sitting' : option}
+              {option === 'units' ? unitPlural(list) : option === 'movie' ? 'a film' : option === 'series' ? 'seasons and episodes' : option}
             </button>
           ))}
         </div>
@@ -835,8 +834,8 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         <button type="button" className="btn-secondary" onClick={() => setTemplateOpen(o => !o)}>
           Add to template
         </button>
-        <button type="button" className="library-item-remove" aria-label={`Remove ${item.title}`} onClick={onRemove}>
-          Remove
+        <button type="button" className="library-item-remove" aria-label={`Delete ${item.title}`} onClick={onRemove}>
+          Delete
         </button>
       </div>
       {scheduled && (
@@ -919,7 +918,7 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
             Change that one
           </button>
           <button type="button" className="btn-secondary" onClick={() => setClash(null)}>
-            Leave it
+            Cancel
           </button>
         </div>
       ) : (
@@ -932,7 +931,7 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
               else setClash(data.templates.find(t => t.id === templateId) ?? null)
             }}
           >
-            Add block
+            Add a block
           </button>
           <button type="button" className="btn-secondary" onClick={onDone}>
             Cancel

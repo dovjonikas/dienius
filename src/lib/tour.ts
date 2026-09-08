@@ -14,7 +14,7 @@ import type { AppData, DayPlan } from './types'
  * same things in different words ("tap" is not "click") and, when they
  * differ, through different controls.
  *
- * The instructional lines are under 120 words. A tour is read while the eye
+ * The instructional lines are under 150 words. A tour is read while the eye
  * is on the thing being pointed at, and every word past the first line is a
  * word between the person and the control. The test in tour.test.ts holds
  * the budget: a title is five words at most, a line fifteen.
@@ -81,7 +81,7 @@ export interface TourTarget {
  * the relocation the person is told it "never shows progress" while looking
  * at a form, and never sees where it went.
  *
- * Deliberately outside the 120-word instructional budget the titles and
+ * Deliberately outside the 150-word instructional budget the titles and
  * lines share, and bounded separately - see tour.test.ts. A caption for
  * something that has already happened is read with the eye free, not while
  * hunting for a control.
@@ -231,7 +231,11 @@ export const DESKTOP_STEPS: TourStep[] = [
     view: 'day',
     event: 'focus-started',
     absent: 'Nothing is running this minute, so there is no Focus button. Let the tour start it.',
-    outcome: { text: 'That bar along the bottom is Focus. Leave it whenever you like.', wait: true },
+    // "That bar along the bottom" was wrong on both platforms: FocusBar is a
+    // strip between the header and the page, and on a phone the thing along
+    // the bottom is the nav bar - so the line pointed a first-time reader at
+    // the wrong control on the smaller screen of the two.
+    outcome: { text: 'That strip under the header is Focus. Leave it whenever you like.', wait: true },
   },
   {
     id: 'done',

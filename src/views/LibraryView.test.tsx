@@ -46,7 +46,7 @@ test('a list of a kind nobody shipped can be built by hand, with the unit a chip
   await user.type(screen.getByLabelText('List name'), 'Courses')
   await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'lesson' }))
   expect(screen.getByLabelText('Short form')).toHaveValue('ls')
-  await user.click(screen.getByRole('button', { name: 'Create list' }))
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(getData().library[0]).toMatchObject({ name: 'Courses', unit: 'lesson', unitShort: 'ls' })
 })
 
@@ -69,7 +69,7 @@ test('a list with no name or no unit cannot be created', async () => {
   render(<LibraryView />)
   await user.click(screen.getByRole('button', { name: 'Something else' }))
   await user.type(screen.getByLabelText('List name'), 'Courses')
-  expect(screen.getByRole('button', { name: 'Create list' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 })
 
 // --- items ---------------------------------------------------------------
@@ -213,7 +213,7 @@ test('deleting a list takes two taps, not one', async () => {
   await user.click(screen.getByRole('button', { name: 'Settings for Books' }))
   await user.click(screen.getByRole('button', { name: 'Delete list' }))
   expect(getData().library).toHaveLength(1)
-  await user.click(screen.getByRole('button', { name: 'Delete, really' }))
+  await user.click(screen.getByRole('button', { name: 'Delete?' }))
   expect(getData().library).toHaveLength(0)
 })
 
@@ -344,7 +344,7 @@ test('add to template builds the block and binds it, and refuses a second for th
   await user.click(screen.getByRole('button', { name: /^Daring Greatly,/ }))
   await user.click(screen.getByRole('button', { name: 'Add to template' }))
   await user.type(screen.getByRole('textbox', { name: 'At' }), '21:00')
-  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
 
   expect(getData().templates[0].blocks).toMatchObject([
     { title: 'Books session', time: '21:00', minutes: 30, libraryListId: list.id },
@@ -352,7 +352,7 @@ test('add to template builds the block and binds it, and refuses a second for th
 
   // A second one for the same list is offered as a change, never added.
   await user.click(screen.getByRole('button', { name: 'Add to template' }))
-  await user.click(screen.getByRole('button', { name: 'Add block' }))
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
   expect(screen.getByText(/already has a Books block/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Change that one' }))
   expect(getData().templates.find(t => t.id === template.id)!.blocks).toHaveLength(1)
@@ -376,7 +376,7 @@ test('finishing a book names the next one, and puts a sitting on today in one pr
   expect(within(said).getByText('Deep Work')).toBeInTheDocument()
   expect(said).toHaveTextContent('7 chapters')
 
-  await user.click(screen.getByRole('button', { name: 'Put a sitting on today' }))
+  await user.click(screen.getByRole('button', { name: 'Onto today' }))
 
   const tasks = getData().days[todayKey()].tasks
   expect(tasks.map(t => t.title)).toEqual(['Deep Work'])
@@ -390,5 +390,5 @@ test('a list whose last book ended offers nothing, because there is nothing to o
   actions.setLibraryItemProgress(list.id, only.id, 12, todayKey())
   render(<LibraryView />)
   expect(screen.queryByText(/finished\. Next on this list/)).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Put a sitting on today' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Onto today' })).not.toBeInTheDocument()
 })

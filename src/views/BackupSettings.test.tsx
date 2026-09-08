@@ -40,7 +40,7 @@ afterEach(() => {
 
 test('with nothing set up the section says so, and Save waits for both fields', async () => {
   render(<BackupSettings />)
-  expect(screen.getByRole('status')).toHaveTextContent('Off. Add a repo and a token')
+  expect(screen.getByRole('status')).toHaveTextContent('Off - add a repo and a token')
   await userEvent.type(screen.getByLabelText('Repo'), 'me/dienius-data')
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   await userEvent.type(screen.getByLabelText('Token'), 'github_pat_x')
@@ -77,7 +77,7 @@ test('restore describes both copies first, replaces only on the armed second pre
   expect(preview).toHaveTextContent(`Here: 1 task across 1 day, newest`)
   expect(getData().days[todayKey()].tasks[0].title).toBe('Mine')
 
-  await userEvent.click(screen.getByRole('button', { name: 'Keep what is here' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(screen.queryByRole('group', { name: 'Restore from cloud' })).toBeNull()
   expect(getData().days[todayKey()].tasks[0].title).toBe('Mine')
 
@@ -85,7 +85,7 @@ test('restore describes both copies first, replaces only on the armed second pre
   await screen.findByRole('group', { name: 'Restore from cloud' })
   await userEvent.click(screen.getByRole('button', { name: 'Replace what is here with the cloud copy' }))
   expect(getData().days[todayKey()].tasks[0].title).toBe('Mine')
-  await userEvent.click(screen.getByRole('button', { name: 'Replace everything here?' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Replace?' }))
   expect(getData().days['2026-08-20'].tasks.map(t => t.title)).toEqual(['From the cloud', 'Also'])
   expect(getData().days[todayKey()]).toBeUndefined()
 })

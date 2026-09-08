@@ -38,6 +38,10 @@ export function HeaderPopover({ label, className, onClose, children }: HeaderPop
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Escape') {
       e.preventDefault()
+      // One press, one layer: the shell's own Escape chain listens on the
+      // document, so without this a press meant for this panel also collapsed
+      // Focus, closed the clock or ended a running tour underneath it.
+      e.stopPropagation()
       onClose()
       return
     }
