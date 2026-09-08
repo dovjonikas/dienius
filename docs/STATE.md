@@ -6,7 +6,22 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.7, closed and tagged, and **the app is done**. The
+**Last updated:** v2.8, closed and tagged. The first wave the done contract
+produced: the owner lived in the app for a stretch and brought back seven
+things they met, and every stage is one of them in their own words. The
+calendar's day opens into a card that stays instead of a peek nobody could
+reach; a day can be cleared and stays cleared; a week template stamped
+mid-week fills that day and the ones after it and never reaches back, and
+opening a past day no longer invents a plan for it; a day with writing on it
+says so with two quiet marks; the month's arrows stand still all year; the
+focus screen is centred on the window rather than on the box the scrollbar's
+gutter leaves; and a time is chosen against the day, with the column opening
+where the day is and every hour a block covers wearing that block's colour.
+Section 4 has the table, stage by stage. **Nothing is owed**, and the done
+contract still stands: what is asked for next waits in "Asked for, not yet
+built" until it has been met in a week of use.
+
+**Before that: v2.7, and the app was declared done there.** The
 last wave, seven stages from one brief plus a fourth small thing the owner
 added while it ran, on a third rule that now sits in CONVENTIONS section
 25: a state has to earn its place. The header's chip and its toggles stand
@@ -219,10 +234,83 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** the v2.7 wave below, the last one before the app is
-lived in. Its table is being filled stage by stage; the v2.6, v2.5, v2.4,
-v2.3 and v2.2 tables under it are closed, commit by commit, and the debts
-table further down is unchanged.
+**Where to start:** the v2.8 wave below, which is the first one the done
+contract produced: the owner lived in the app and brought back seven things
+they met, and every stage is one of them in their own words. Its table is
+being filled stage by stage; the v2.7 table under it is closed, and so are
+v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts table further
+down is unchanged.
+
+### The v2.8 wave: the calendar, the focus screen and choosing a time
+
+Briefed by the owner in one message, in Lithuanian, eight stages, to be run
+end to end. It is the first wave after the done contract, and it is what
+that contract is for: every stage below is something the owner met while
+living in the app rather than something a session thought of. Their words
+are quoted in each stage, because the words are the specification.
+
+| # | Stage | Commit | What it became |
+|---|---|---|---|
+| 1, 2, 3, 4 | The calendar day opens, clears, and says what is written on it | `91cdb30` | The hover peek is gone with its delay, its timer and its two handlers - the pointer could never reach what it showed. A press opens a card anchored to its own cell, touching it, bounded by the grid, that stays until Escape, an outside press or its own Close, and hands focus back to the cell. On it: the day and its template, its tasks tickable where they stand, Open day, Notes, Journal, Something came up, and Clear this day. Clearing asks once with the count and the day, offers Undo, and stays cleared - `autoApplied` and a repeat skip per instance, so opening the day again does not refill it - and the week column offers the same. A week template stamped mid-week fills that day and the later ones and never reaches back; opening a past day the weekday map names no longer invents a plan for it, which was a real bug. A month cell with writing on it carries two 5px marks, filled for the journal and open for a note, counting nothing |
+| 5, 6 | The arrows stand still, and the focus screen is centred | `8ef2448` | The month's name sits in a box the longest month fills, so the arrow after it stops walking sixty pixels between May and September - the owner's "one of them has flown out" was the word between them, not the arrow. And the focus screen: the guess in the brief was the navigation rail, but the rail is covered; what moved it was `scrollbar-gutter: stable`, which makes every fixed element ten pixels narrower than the window, so a screen that centres one big ring in that box sits five pixels left of where the eye measures from. The left padding carries `100vw - 100%` now, which is the gutter where there is one and zero where the scrollbar floats over the page |
+| 7 | Choosing a time | `8ef2448` | The column opens at the day rather than at midnight - the value the field holds, else the end of the last block, else the waking time, with waking as a floor so one stray block at two in the morning cannot drag it back into the night - and an hour a block covers carries that block category colour, the same wash the timeline paints, with a bar along the bottom as wide as the share of the hour that is gone. Sideways because the column own axis runs down: a fill from the top would claim which half of the hour is taken, and two blocks in one hour make that claim unanswerable. Nothing is blocked and a screen reader hears the words. One component, three sources: the day blocks and its calendars, the template own blocks in both editors, and nothing at all where there is no day. Found on the way, both pre-existing: the day view clock panel was clipped to a 66px box and had never been visible at all, and in both template editors a rule for the block-add row outranked the picker so the chosen hour looked exactly like the thirty-five that were not |
+| 8 | Closing and `v2.8` | named in the handoff | Every gate: typecheck, 2424 unit tests in 148 files, the build, 35 browser tests across two viewports, and the sweeps. Two critique passes on the scenario the owner asked for - a real week built from nothing at 1920 dark and 1366 light: a week template with its times chosen from the new columns, the weekday map, Stamp week pressed on a Wednesday, then the month, a day card and a day cleared. Both passes end with the same two facts and no console error: the stamp filled Wednesday to Sunday and left Monday and Tuesday alone, and the cleared day stayed cleared with its template gone. The README's screenshots regenerated |
+
+#### The brief, as understood
+
+1. **The calendar day opens rather than shows.** "When we hover over a
+   calendar day we see the whole list, but we cannot move the mouse down
+   onto that list ... it would be logical that when you press a day the
+   list shows and then you navigate from there." The hover model either
+   becomes a quiet hint or goes; a press opens a card that stays. On the
+   card: tick a task where it stands, Open day, that day's Notes or
+   Journal, and clear the day. Reachable by mouse with no gap to cross, by
+   keyboard, and by tap. No two mechanisms at once: the old preview logic
+   is reworked or removed with its code.
+2. **Clearing a day.** "There should be a delete button so you could easily
+   clear any day, which helps especially if you put a week template in
+   mid-week." One sentence with the count, then Undo. A cleared day stays
+   cleared - the weekday template does not refill it - and the same action
+   is on the week column's head.
+3. **A week template does not climb onto the past.** "If you put it in
+   mid-week, then the week template should start from the day you put it
+   in, and not put anything on the days already past." The same rule for
+   the weekday map: a day is materialised when it is opened, never
+   backwards.
+4. **Notes and the journal are visible in the calendar.** "If we write
+   notes on a day, in the calendar we should also see a mark for a note or
+   a journal and be able to press it and see what is written." A quiet mark
+   in the corner, no count and no verdict, and the card opens that day's
+   writing rather than the general view. At most two marks, and they do not
+   compete with the template colour or the day's number.
+5. **The arrows above the calendar.** "Those arrows above the calendar, one
+   has randomly flown out, it needs to be tucked in more and not go outside
+   the calendar's bounds." Symmetric, aligned to the grid's edges, inside
+   the rail's column at 1920, 1600 and 1366 in both themes, the 44px target
+   kept, and the month's name between them at a fixed width so a longer
+   month does not push them.
+6. **The focus screen is centred.** "You can see in the focus main window
+   that it is not centred." Find the cause and fix it, at 1920, 1600, 1366
+   and 390x844 in both themes, with a test that the centre of what is drawn
+   and the centre of the visible area agree within two pixels.
+7. **Choosing a time**, the most important stage of the wave. "It is very
+   awkward to change the time by scrolling ... if we get up at 7, start
+   from there, so there is nothing to scroll past; and once we have a block
+   from 9 to 10, we should see what is free and it should scroll there by
+   itself, so that when picking a time we actually see what is taken and
+   what is not, by colour." The column opens at the day: the value it
+   holds, else the first free stretch after the last block, else the waking
+   time. An hour a block covers carries that block's category colour as a
+   wash, a partly covered hour says so, and a free hour is clean. Nothing
+   is blocked: an overlap is allowed and now visible before the choice
+   rather than after it. One component, two sources - the template's own
+   blocks in the editor, the day's blocks everywhere else. Typing and the
+   keyboard do not change.
+8. **Closing.** Every gate, two critique passes on the desktop with one
+   scenario - building a real week from nothing, template, times, blocks
+   and a week stamped mid-week - the README's screenshots, this table,
+   CONVENTIONS if a rule was born, DECISIONS for each decision, the tag,
+   the push and the handoff.
 
 ### The v2.7 wave: the last one before the app is lived in
 

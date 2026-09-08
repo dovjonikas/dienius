@@ -2246,3 +2246,174 @@ and "failed" are not in it and `ReviewView.test.tsx` refuses them; the
 lines are sorted by size of disagreement, not by anything called good; and
 if a later wave ever wants to colour a line, that is the streak coming
 back through a side door and the answer is no.
+
+## The day card opens, and the hover peek goes
+
+The owner, on the month: the cell shows the whole day when the pointer rests
+on it, and the pointer cannot then travel to what it shows - the card closes
+on the way. A thing that can be read and not used is not a control, and
+CONVENTIONS section 25's rule for a state reaches it: it never earned its
+place beside a cell that already says what is on the day.
+
+So the peek is gone, with its four-hundred-millisecond delay, its timer and
+its two pointer handlers, and pressing a day opens a card that stays until it
+is closed. What was a glance is a place: the day and its template, its tasks
+with their times and colours each tickable where it stands, and the ways on -
+open the day, its journal, its notes, something came up, and clear it.
+Escape closes it, a press outside closes it, and focus goes back to the cell
+it came from, which is the contract every sheet in this app keeps.
+
+**It is anchored, not floated.** The card touches its own cell with no gap,
+because the gap was the whole defect, and it is bounded by the grid rather
+than the window, so it never hangs off the calendar. That is its own module
+(`views/dayCardPlacement.ts`) rather than the tour's, which promises the
+opposite of both: the tour's card must never cover what it points at, and
+this one may cover its own cell, which is the one thing on the screen it is a
+longer copy of. The single escape is a screen too small to hold it either
+way - a phone's month is 358x284 - where the window becomes the bound on that
+axis, because "inside the grid" exists to keep the card reachable and a card
+past the bottom of the screen is not reachable at all.
+
+**Stamp came off it.** A template in hand turns every cell into a brush, so
+the press that used to open a peek now stamps, and the card cannot be open
+while one is held. Open day and Something came up both still mean something
+from a cell and stayed.
+
+## Two marks, because there are two things to open
+
+A month cell whose day carries writing says so in its corner: 5px, `--muted`,
+filled for the journal and the same circle left open for a note. Two marks
+rather than one with two states, because the card behind the cell offers two
+buttons and the corner is what says which of them has anything behind it -
+one mark could not say "both". One shape and one ink so they read as a pair
+rather than as two facts, and no number anywhere: the mark says something is
+written here and nothing about how much, which is the same refusal the scratch
+count and the day's score already make.
+
+**Reading a day's notes is honest; writing into one is not.** A note carries
+the date it was written on, so the stream can be read at a day. A line typed
+now is dated now, though, so on any day but today the box is not drawn at all
+and the card's sentence stands in its place; on today it is there as usual.
+The three instant ways in - the key, the palette, the header - pass no date
+and are unchanged.
+
+## A cleared day stays cleared
+
+The owner's case: a week template put in mid-week leaves the days behind it
+holding a plan they never had. So a day can be cleared, from its card and
+from the week column's own head, and the two ask the same one sentence with
+the count and the day - "Clear 9 tasks from Wednesday?" - with Undo for five
+seconds after, like every other expensive press.
+
+What makes it stick is the rule the app already had for a different reason:
+deleting what arrived leaves it deleted. The clear writes `autoApplied` and a
+repeat skip for every instance it removes, so opening the day again does not
+bring the weekday template's blocks or the day's own repeats back. What it
+keeps is what the day itself knows rather than what a template gave it: the
+journal, the away mark, the sleep profile. What goes with the tasks is the
+template id, the day type copied from it, and the replan mark, because none
+of the three is true of an empty day.
+
+## A template never fills a day that is behind you
+
+"If you put it in mid-week, then the week template should start from the day
+you put it in, and not put anything on the days already past." Two things
+were doing the opposite, and only one of them was the one asked about.
+
+**Stamp week** filled every mapped day of the week, including the days behind
+the press. It fills from the day it is pressed on now, that day included, and
+a week wholly in the past offers no button at all rather than a disabled one:
+there is nothing it could honestly do.
+
+**And opening a past day stamped it.** The weekday map materialises a day on
+first open, which is right for a day still ahead and wrong for one that is
+gone: it invented a plan for a Friday nobody lived, which the month then drew
+a ratio for and Review counted in where the plan and the week disagreed.
+`ensuredDay` takes the day it is working from and refuses to stamp behind it.
+Repeats are deliberately untouched: a series that was running was running,
+which is a fact about the day rather than an invention.
+
+Both take that day as a parameter with today as the default, which is the
+shape this repo already uses, and it is what lets every test say which day it
+means instead of reading the clock - a test that hardcodes a date is a test
+that passes all morning and fails at noon, which this repo learned the hard
+way in v2.7.
+
+## The focus screen was five pixels off, and the scrollbar was holding them
+
+The owner said the focus screen did not look centred, and the guess in the
+brief was the navigation rail: that focus draws over the page while the rail
+keeps a higher stacking order, so the content centres in the window and looks
+pushed inside what is left. Measured, that is not it - the rail is z-index 40
+and the focus screen 60, so the rail is covered - and the content is centred
+exactly, in a box that is not the window.
+
+`html` carries `scrollbar-gutter: stable`, which reserves the classic
+scrollbar's width whether or not the page scrolls, so a `position: fixed`
+element is laid out in an initial containing block ten pixels narrower than
+the window. The focus screen is that element. Its content centred at 995 in a
+2000px window: five pixels left of where the eye measures from, which is the
+window's own edges, because the ten pixels it stops short of are painted in
+the same background colour and cannot be seen. Five pixels is under the
+threshold for most things and over it for one big ring with nothing beside
+it.
+
+The fix gives those pixels back rather than moving the content: the screen's
+own left padding carries `100vw - 100%`, the gutter's width where there is
+one and zero where the scrollbar floats over the page, as it does on a phone.
+Measured after: at 1920, 1600 and 1366 the ring's centre and the window's
+centre are the same pixel, and `centring.test.ts` holds the declaration,
+because jsdom has no layout and cannot measure a centre.
+
+**Nine other overlays sit five pixels left for the same reason and are left
+alone.** Each of them is a card with its own visible edges on a scrim, and a
+card's edges are what an eye lines a card up by; the focus screen is the one
+surface in this app that is a single block on a bare ground, with nothing to
+line it up against but the window.
+
+## The month's name was moving the arrow
+
+"Those arrows above the calendar, one has randomly flown out." Neither arrow
+had moved: the name between them sizes the row, so September's is sixty
+pixels wider than May's and the arrow after it stands sixty pixels further
+right, once a month, for no reason a person can see.
+
+The name sits in a box the longest month fills - a hidden "September" in the
+heading's own type, stacked under the real one and never read out, which is
+the technique the day header's own date already uses. Both arrows are 44px,
+the left one flush with the grid's edge, and neither moves all year.
+
+## What is taken is visible while a time is chosen
+
+The owner: "It is very awkward to change the time by scrolling ... if we get
+up at 7, start from there, so there is nothing to scroll past; and once we
+have a block from 9 to 10, we should see what is free and what is not, by
+colour."
+
+**The column opens at the day.** The value the field holds, else the end of
+the last block on that day, else the waking time from its sleep profile - and
+waking is a floor on the second, so one stray block at two in the morning
+cannot drag the column back into a night nobody plans in. Night is still
+there, one scroll away; it is only not where the column starts.
+
+**An hour a block covers carries that block's colour**, in the same wash the
+timeline paints, with a bar along the bottom as wide as the share of the hour
+that is gone. The bar grows sideways rather than filling from the top,
+because the column's own axis runs down: a fill from the top reads as a claim
+about *which* part of the hour is taken, and two blocks in one hour - a
+quarter past nine and twenty to ten - make that claim unanswerable. The
+amount is what is knowable, so the amount is what is drawn, and the numeral
+always sits on one ground, so there is one contrast to check rather than two.
+Worst measured: 7.81:1.
+
+**Nothing is blocked.** An overlap was always allowed and still is; it is
+simply visible before the choice instead of after it. A screen reader hears
+the words rather than the colour - "09, taken by Deep work", "12, 30 min
+taken by Meals" - because a colour alone is a fact only some people get.
+
+**One component, three sources.** The day's blocks and its external calendars
+where there is a day, the template's own blocks in both editors, and nothing
+at all where there is no day, so Settings' sleep fields keep the plain
+columns they always had. The arithmetic is a pure module, because it is
+arithmetic; the component draws what it is handed and never reaches for the
+store.

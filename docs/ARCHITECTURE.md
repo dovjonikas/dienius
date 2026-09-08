@@ -295,7 +295,10 @@ src/
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     Explain            the sentence behind a term, on a rest, a hold or a focus
     TipLayer           the one tooltip, drawn in the window under whatever control carries data-tip
-    DayPreview         the whole of a day, without leaving the month
+    DayCard            the whole of a day, without leaving the month: opened by a press, and where a day is ticked, opened, read or cleared
+    dayCardPlacement   where that card goes: touching its own cell, inside the grid
+    clearDay           the one sentence and the one press behind clearing a day
+    takenHours         which hours of a day are already taken, and where a time column opens
     CopyJournalButton  the journal for a stretch of days, put on the clipboard as markdown
     ColorSwatchPicker  one colour from eight, without eight of them on screen
     WeekTemplateEditor seven columns of one template, and the card's preview of it

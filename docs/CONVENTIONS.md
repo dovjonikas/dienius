@@ -151,6 +151,21 @@ Everything else scrolls vertically and that is fine. **Nothing scrolls
 horizontally, ever.** Check with
 `document.documentElement.scrollWidth > clientWidth`.
 
+### A full-screen overlay centres on the window, not on what is left of it
+
+`html` carries `scrollbar-gutter: stable`, so the classic scrollbar's width
+is reserved whether or not the page scrolls, and every `position: fixed`
+element is laid out ten pixels narrower than the window on a desktop. A
+surface that centres one block in that box therefore sits five pixels left
+of where an eye measures from, and the ten pixels it stops short of are
+painted in the same background, so nothing shows there but the offset. Where
+that matters - a surface with no edges of its own to line up against, which
+today is the focus screen - the left padding carries `100vw - 100%`: the
+gutter's width where there is a gutter, zero where the scrollbar floats over
+the page. `centring.test.ts` holds it, because jsdom has no layout and
+cannot measure a centre; the measurement itself was taken in a browser at
+1920, 1600 and 1366.
+
 ### A block carries its start and its end
 
 One rule for every grid that draws a task as a block. **Every sized block
@@ -971,6 +986,14 @@ a unit control, a count control, and the same one-truth rule between them.
   category does not persist at all: it follows the sitting, because most tasks
   typed in one go belong together and carrying that to tomorrow would be a
   guess.
+- **A control shows what its answer sits in.** Choosing a time opens on the
+  day rather than at midnight - the value it holds, else the end of the last
+  block, else waking - and an hour a block already covers carries that
+  block's colour, so what is taken is seen before the choice instead of
+  after it. Nothing is refused for it: an overlap is allowed, and the point
+  is that it stops being a surprise. The same rule is why the quick-add time
+  control opens on a real free slot and why the replan sheet shows its plan
+  before anybody accepts it.
 - **A suggestion is now, to the minute.** Not rounded up to the next quarter.
   Focus is only ever offered on the *running* card, so a task starting eight
   minutes from now would be quietly out of reach of the one feature for doing
