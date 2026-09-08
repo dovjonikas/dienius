@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { parseTimeInput, stepTime } from '../widgets/day-plan/capacity'
 import { TimeColumns } from './TimeColumns'
+import type { TakenBlock } from './takenHours'
 
 const STEP_MINUTES = 5
 const BIG_STEP_MINUTES = 60
@@ -14,6 +15,14 @@ export interface TimePickerProps {
   placeholder?: string
   /** Refuses to commit an empty value - for a field that must always hold a time. */
   required?: boolean
+  /**
+   * What the day, or the template, already has on it - see `TimeColumns`. Both
+   * are optional and both are passed straight through: a field with nothing
+   * behind it, like Settings' sleep window, has no busy stretches to show and
+   * no waking hour to open on, and gets the plain columns.
+   */
+  taken?: TakenBlock[]
+  wakingStart?: number
 }
 
 /**
@@ -32,7 +41,15 @@ export interface TimePickerProps {
  * finer is still reachable by typing, which is the right split: the common
  * case is two taps, and the rare one is not blocked.
  */
-export function TimePicker({ value, onChange, ariaLabel, placeholder = '09:00', required = false }: TimePickerProps) {
+export function TimePicker({
+  value,
+  onChange,
+  ariaLabel,
+  placeholder = '09:00',
+  required = false,
+  taken,
+  wakingStart,
+}: TimePickerProps) {
   const [draft, setDraft] = useState(value)
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -136,7 +153,7 @@ export function TimePicker({ value, onChange, ariaLabel, placeholder = '09:00', 
         </button>
       </div>
 
-      {open && <TimeColumns value={current} onPick={pick} id={listId} />}
+      {open && <TimeColumns value={current} onPick={pick} id={listId} taken={taken} wakingStart={wakingStart} />}
     </div>
   )
 }

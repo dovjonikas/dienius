@@ -80,7 +80,13 @@ describe('building a week', () => {
     const commutes = saved.blocks.filter(b => b.title === 'Commute')
     expect(commutes.map(b => b.weekday).sort()).toEqual([1, 2, 3, 4, 5])
     expect(new Set(commutes.map(b => b.groupId)).size).toBe(1)
-  })
+    // Fifteen seconds of its own, for the reason the two tests in
+    // Scratch.test.tsx and NorthView.test.tsx already have theirs: this one
+    // types a week's name and a block's through real key presses and draws
+    // seven day pictures for every keystroke, which is 1.5s alone and over
+    // the runner's five-second default when a hundred and forty-eight files
+    // are rendering beside it. Nothing it asserts has changed.
+  }, 15000)
 
   /**
    * A group only exists where there is something to group. Giving one block
@@ -293,4 +299,27 @@ test('the chosen Add to says so, and choosing another moves the mark', async () 
   expect(pressed()).toEqual(['Weekdays'])
   expect(where.getByRole('button', { name: 'Weekdays' })).toHaveClass('selected')
   expect(where.getByRole('button', { name: today })).not.toHaveClass('selected')
+})
+
+/**
+ * The week editor's own answer to "what is already taken". "Add to" is one
+ * question about several days at once, so the hours the time field calls
+ * taken are the hours taken on the days this press would land on - and they
+ * change when the scope does, because that is a different question.
+ */
+test('the hour column speaks about the days the block would land on', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('09:00'), '09:00')
+  await addBlock(user, 'Standup')
+
+  await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
+  expect(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: /^09, .* taken/ })).toBeInTheDocument()
+
+  // Nothing has been put on a Saturday or a Sunday, so nine o'clock is free
+  // the moment the question is about those two days instead.
+  await user.click(screen.getByRole('button', { name: 'Weekend' }))
+  await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
+  expect(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: '09' })).toBeInTheDocument()
 })

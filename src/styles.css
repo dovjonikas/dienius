@@ -2919,6 +2919,11 @@ textarea:focus {
   border-radius: var(--r-card);
   background: var(--surface-raised, var(--surface));
   box-shadow: var(--e2), 0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  /* Said once, here, because the wash on a taken hour has to be mixed into
+     whatever is actually painted behind it. Inside quick-add's own panel the
+     columns drop their background and this value is still the right one - the
+     panel around them is the same raised surface. */
+  --ground: var(--surface-raised, var(--surface));
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -2939,6 +2944,7 @@ textarea:focus {
 }
 
 .time-picker-option {
+  position: relative;
   min-width: 46px;
   min-height: 30px;
   padding: 0 var(--s2);
@@ -2949,10 +2955,65 @@ textarea:focus {
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
   text-align: center;
+  /* So the bar below keeps to the chip's own rounded box rather than poking
+     out of the bottom corners of it. */
+  overflow: hidden;
+}
+
+/* A row of numerals a thumb has to land on. Every other control in this panel
+   already has the 44px floor - the two mode buttons, the duration chips - and
+   these did not, which is half of why changing a time by scrolling was awkward
+   in the first place. An overlay is no use here: the options are stacked, and
+   two 44px overlays thirty pixels apart steal each other's taps. */
+@media (pointer: coarse) {
+  .time-picker-option { min-height: var(--touch); }
+}
+
+/* An hour something already covers.
+   ------------------------------------------------------------------------
+   The same mixture the timeline paints a block with - a fifth of the colour
+   over the ground it sits on - so the two screens agree about what an hour of
+   Deep work looks like, and so the numeral keeps its ordinary --text contrast
+   on top of it. Measured across all three themes and all six categories: the
+   worst is 7.85:1, on Health in Dark.
+
+   A wash, never a fill: this says an hour is spoken for, and it never says the
+   hour cannot be had. Nothing here is disabled and nothing refuses - see
+   TimeColumns.tsx.
+
+   The bar under the numeral is how much of the hour is gone: full width for a
+   whole hour, half for half of it, and the full-strength colour so it reads
+   from further away than the wash does. It grows sideways on purpose. The
+   column's own time axis runs down, so a bar that filled from the top would be
+   read as *which* half of the hour is taken, which is a claim this cannot make
+   honestly once two blocks share one hour - the amount is the honest thing to
+   say, and the picker is a picker, not a second timeline. */
+.time-picker-option.is-taken {
+  --taken-wash: color-mix(in srgb, var(--cat) 20%, var(--ground));
+  background: var(--taken-wash);
+}
+
+.time-picker-option.is-taken::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--taken);
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--cat);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .time-picker-option:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
+
+  /* Mixed into the wash rather than laid over it. The plain hover colour is
+     semi-transparent, so it replaces the wash rather than tinting it, and an
+     hour that looked taken went clean under the pointer - a hover changing
+     what a thing means, which is worse than one moving it. */
+  .time-picker-option.is-taken:not([aria-selected='true']):hover {
+    background: color-mix(in srgb, var(--border) 40%, var(--taken-wash));
+  }
 }
 
 .time-picker-option[aria-selected='true'] {
@@ -2960,6 +3021,13 @@ textarea:focus {
   color: var(--on-accent, #fff);
   font-weight: 600;
 }
+
+/* The hour that has been chosen keeps its bar, in the ink of the fill it is
+   drawn on. A category colour on top of --accent is ink on accent, and
+   CONVENTIONS section 5 has one answer for that - hard-coding white there has
+   measured 2.42:1 twice. The words still name the category; the mark only has
+   to say the hour is spoken for. */
+.time-picker-option[aria-selected='true'].is-taken::after { background: var(--on-accent, #fff); }
 
 .time-picker-option:focus-visible {
   outline: 2px solid var(--accent);
@@ -4232,7 +4300,13 @@ button.primary {
 
 .block-add input { flex: 1 1 120px; }
 .block-add .duration-control { flex: 0 0 auto; }
-.block-add button:not(.category-swatch) {
+/* Not the hour and minute options either, for the reason the swatches are
+   named above: this rule is more specific than any of the picker's own, so
+   every one of the thirty-six options came out a bordered chip on the page's
+   ground - and the one that was chosen came out looking exactly like the
+   thirty-five that were not, which is the thing CONVENTIONS section 22 is
+   about. The picker is the same control here as everywhere else. */
+.block-add button:not(.category-swatch):not(.time-picker-option) {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
@@ -4338,6 +4412,27 @@ button.danger {
   justify-content: space-between;
   gap: var(--s2);
   margin-bottom: var(--s3);
+}
+
+/* The month's name in a box the longest month fills, so the arrow after it
+   does not walk when the word changes. The ghost is stacked under the name
+   rather than beside it, takes the box's width and is never read: same
+   technique, same reason, as the day header's own date. */
+.calendar-nav-title {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.calendar-nav-title > * {
+  grid-area: 1 / 1;
+}
+
+.calendar-nav-measure {
+  visibility: hidden;
+  white-space: nowrap;
+  font-size: var(--t-lg);
+  font-weight: 700;
+  user-select: none;
 }
 
 .calendar-nav button {
@@ -4873,7 +4968,20 @@ button.danger {
   align-items: center;
   justify-content: center;
   gap: var(--s6);
-  padding: max(var(--s6), env(safe-area-inset-top)) var(--s6) calc(var(--s6) + env(safe-area-inset-bottom));
+  /* The left padding carries the scrollbar's gutter as well as its own step.
+     `html` reserves that gutter whether or not the page scrolls, so a fixed
+     element is laid out in a box ten pixels narrower than the window, and
+     this screen - one big ring with nothing beside it - centred five pixels
+     left of where the eye measures from, which is the window's own edges.
+     The ten pixels it stops short of are painted in the same background, so
+     nothing shows there but the offset. `100vw - 100%` is that gutter where
+     there is one and zero where the scrollbar floats over the page, as it
+     does on a phone. */
+  padding:
+    max(var(--s6), env(safe-area-inset-top))
+    var(--s6)
+    calc(var(--s6) + env(safe-area-inset-bottom))
+    calc(var(--s6) + (100vw - 100%));
   background: var(--bg);
 }
 
@@ -11425,6 +11533,17 @@ main:has(.week) > .calendar {
 .quick-add-time-control {
   position: relative;
   flex: 0 0 auto;
+  /* The columns hang out of this box, so it cannot be a clipped one. It
+     borrows `.time-stepper`'s shell for its border and its corners, and that
+     shell clips - which is right for a stepper with a field in it and wrong
+     for a control with a panel under it. The duration control beside it says
+     the same thing in its own rule, for the same reason.
+
+     Without this the whole picker was painted inside a 66px box and nothing of
+     it reached the screen: the day view's clock button opened onto nothing.
+     Nothing could see it - jsdom has no layout, and the sweep never opens
+     these panels, which is the same blindness the v2.1 stacking bug had. */
+  overflow: visible;
 }
 
 .quick-add-time-value,
@@ -11644,8 +11763,13 @@ main:has(.week) > .calendar {
      North line and the capacity sentence are above it, which leaves roughly
      300px underneath. The picker's full 216px columns plus its two mode
      buttons come to 312 and hang twelve pixels off the bottom of the screen.
-     The columns scroll anyway, so they are the part that gives. */
-  .quick-add-time-panel .time-picker-column { max-height: 160px; }
+     The columns scroll anyway, so they are the part that gives.
+
+     Four rows of a finger-sized option rather than a flat 160px, which was
+     five and a bit of the 30px ones and became three and a half the moment
+     the options grew to 44. The panel comes to 272 that way, still inside
+     the room there is. */
+  .quick-add-time-panel .time-picker-column { max-height: calc(var(--touch) * 4); }
 }
 
 /* Later: undated, pulled from - widgets/day-plan/Later.tsx.

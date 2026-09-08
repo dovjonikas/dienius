@@ -43,6 +43,27 @@ test('switching between Month and Week swaps the arrows in the bar, and back', a
   expect(navButton(container, 'Earlier days') ?? navButton(container, 'Previous week')).toBeNull()
 })
 
+/**
+ * The arrows either side of the month stand in one place all year. They did
+ * not: the name between them sizes the row, so turning from May to September
+ * walked the right-hand arrow sixty pixels, which is the owner's "one of
+ * them has flown out" - nothing had moved but the word. jsdom cannot measure
+ * a width, so what is pinned here is the ghost that fixes it: the longest
+ * month, in the box, and never read out.
+ */
+test('the month sits in a box the longest month fills, and the measure is hidden from a reader', () => {
+  const { container } = render(<CalendarView onOpenDay={() => {}} />)
+  const heading = screen.getByRole('heading', { level: 2 })
+  const year = heading.textContent?.match(/\d{4}/)?.[0]
+  // By class, because the ghost is deliberately outside the accessibility
+  // tree: there is no role to find it by, and that absence is half of what
+  // this test is for.
+  const ghost = container.querySelector('.calendar-nav-title .calendar-nav-measure')
+  expect(ghost).toHaveTextContent(`September ${year}`)
+  expect(ghost).toHaveAttribute('aria-hidden', 'true')
+  expect(heading).not.toContainElement(ghost as HTMLElement)
+})
+
 test('the month grid wraps each week in a row, so gridcells never sit directly inside the grid', () => {
   // role="grid" requires role="row" children wrapping the row="gridcell"
   // buttons - this is a genuine two-dimensional calendar (weeks as visual

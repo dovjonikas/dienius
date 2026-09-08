@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PALETTE_COLORS, paletteColorName } from '../lib/colors'
 import { categoryColor, resolvedColor } from '../lib/categories'
 import { useAppData } from '../lib/store'
-import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
+import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import type { CategoryId } from '../lib/categories'
 import type { DayType, Template, TemplateBlock, WeekDayOverride } from '../lib/types'
@@ -10,6 +10,8 @@ import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { DurationControl } from './DurationControl'
 import { Explain } from './Explain'
 import { TemplateTimeline } from './TemplateTimeline'
+import { blocksAsTasks } from './templateDay'
+import { takenBlocks } from './takenHours'
 import { TimePicker } from './TimePicker'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
@@ -127,6 +129,17 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   const sleepProfiles = data.settings.sleepProfiles
   const categories = data.categories
   const grouped = draft.blocks.some(b => b.groupId)
+
+  // What the time field's hour column paints: the blocks already on the days
+  // this press would put the new one on. Adding to the weekdays is one
+  // question about five days at once, so an hour taken on any of them is an
+  // hour the block would land on something - which is the thing worth knowing
+  // before the time is chosen rather than after.
+  const taken = useMemo(() => {
+    const days = daysFor(addScope, activeDay)
+    return takenBlocks(blocksAsTasks(draft.blocks.filter(b => b.weekday !== undefined && days.includes(b.weekday))), categories)
+  }, [draft.blocks, addScope, activeDay, categories])
+  const waking = windowFor(draft.sleepProfileId, { profiles: sleepProfiles })
 
   useEffect(() => {
     nameRef.current?.focus()
@@ -444,7 +457,14 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         <div className="block-add-group">
         <span className="block-add-heading">What</span>
         <div className="block-add-line">
-          <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
+          <TimePicker
+            value={blockTime}
+            onChange={setBlockTime}
+            placeholder="09:00"
+            ariaLabel="Block time"
+            taken={taken}
+            wakingStart={waking.start}
+          />
           <input
             placeholder="What happens"
             value={blockTitle}

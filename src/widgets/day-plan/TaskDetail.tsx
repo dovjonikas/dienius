@@ -1,16 +1,18 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, useAppData } from '../../lib/store'
+import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { resolvedColor } from '../../lib/categories'
 import { progressLabel, progressPercent } from '../../lib/library'
 import { scratchTitle } from '../../lib/scratch'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
 import { TimePicker } from '../../views/TimePicker'
+import { takenBlocks } from '../../views/takenHours'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
 import { clockTools, useClockTools } from '../../lib/clockTools'
-import { formatDuration, stepTime } from './capacity'
+import { formatDuration, stepTime, windowFor } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -93,6 +95,26 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
   // deleted note leaves the task alone rather than the task carrying a dead
   // link, which is the same rule every reference in this state follows.
   const fromNote = task.fromNote ? data.scratch.find(n => n.id === task.fromNote) : undefined
+
+  // The day behind the time field, so the hour column opens where the day is
+  // and says which hours are already gone - the same two answers quick-add's
+  // own control gives, from the same arithmetic. This task's own block is left
+  // out of it: an hour is not taken by the thing being moved into it.
+  const day = data.days[date]
+  const dayTemplate = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
+  const calendarCache = useCalendarCache()
+  const taken = useMemo(
+    () =>
+      takenBlocks(
+        tasks.filter(t => t.id !== task.id),
+        data.categories,
+        busyIntervals(date, data.settings.calendars, calendarCache),
+      ),
+    [tasks, task.id, data.categories, date, data.settings.calendars, calendarCache],
+  )
+  const waking = windowFor(day?.sleepProfileId ?? dayTemplate?.sleepProfileId, {
+    profiles: data.settings.sleepProfiles,
+  })
 
   const scopeHint =
     scope === 'series'
@@ -228,6 +250,8 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                 value={task.time ?? ''}
                 ariaLabel="Task time"
                 onChange={next => actions.setTaskTime(date, task.id, next || undefined)}
+                taken={taken}
+                wakingStart={waking.start}
               />
               <button type="button" className="task-detail-nudge" disabled={!task.time} onClick={() => nudge(-5)}>
                 &minus;5

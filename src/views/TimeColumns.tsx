@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { hourCover, openingHour, pad, type HourCover, type TakenBlock } from './takenHours'
 
 /** Every hour of the day, and every five minutes within one. */
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
@@ -7,15 +8,37 @@ const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
 /** What an hour picked on its own means, and what a minute picked first hangs off. */
 const DEFAULT_HOUR = 9
 
-function pad(n: number): string {
-  return String(n).padStart(2, '0')
-}
+/** Minutes in the hour one option stands for - what the bar's width is a share of. */
+const HOUR = 60
+
+/**
+ * One array, so a caller that has no day behind it does not hand the memo
+ * below a new empty one on every render.
+ */
+const NOTHING_TAKEN: TakenBlock[] = []
 
 export interface TimeColumnsProps {
   /** The committed value, or '' for nothing chosen yet. */
   value: string
   onPick: (time: string) => void
   id?: string
+  /**
+   * What the day - or the template - already has on it, so an hour that is
+   * spoken for says so before it is picked rather than after.
+   *
+   * Handed in rather than read from the store here: the same two columns are
+   * the template editors' time field, where the busy stretches are the
+   * template's own blocks and there is no day at all, and Settings' sleep
+   * window, where there is nothing to be busy against. A caller with no day
+   * passes nothing and gets the plain columns this control has always been.
+   */
+  taken?: TakenBlock[]
+  /**
+   * When the day wakes, in minutes from midnight - where the hour column opens
+   * on a day with nothing on it yet. Absent means midnight, which is where a
+   * field with no day behind it has always opened.
+   */
+  wakingStart?: number
 }
 
 /**
@@ -32,10 +55,21 @@ export interface TimeColumnsProps {
  * template editor and Settings (`TimePicker`), and the quiet clock button
  * beside quick-add on the day view. One implementation, so the hours are in
  * the same order and the fives are the same fives in both.
+ *
+ * **The hour column opens at the day, and says which hours are gone.** Both
+ * come from the owner, who found it very awkward to change the time by
+ * scrolling: it opened at midnight however late you get up, and it said
+ * nothing at all about which hours were already spoken for, so a time was
+ * chosen and the clash discovered afterwards. The arithmetic for both is in
+ * `takenHours.ts` - this only draws it.
  */
-export function TimeColumns({ value, onPick, id }: TimeColumnsProps) {
-  const ref = useRef<HTMLDivElement>(null)
+export function TimeColumns({ value, onPick, id, taken = NOTHING_TAKEN, wakingStart = 0 }: TimeColumnsProps) {
+  const hoursRef = useRef<HTMLDivElement>(null)
+  const minutesRef = useRef<HTMLDivElement>(null)
   const [hour, minute] = value ? value.split(':').map(Number) : [null, null]
+
+  const cover = useMemo(() => hourCover(taken), [taken])
+  const opening = openingHour(value, taken, wakingStart)
 
   // Both columns open scrolled to what is already set. Twenty-four hours do
   // not fit in a panel that has to stay on screen, so without this the hour
@@ -44,32 +78,53 @@ export function TimeColumns({ value, onPick, id }: TimeColumnsProps) {
   // 'auto' rather than 'smooth': the panel has only just appeared, so there is
   // nothing for a scroll animation to explain.
   useEffect(() => {
-    for (const column of ref.current?.querySelectorAll('.time-picker-column') ?? []) {
-      const selected = column.querySelector('[aria-selected="true"]')
-      if (selected) column.scrollTop = (selected as HTMLElement).offsetTop - column.clientHeight / 2 + 15
+    const hours = hoursRef.current
+    if (hours) {
+      const selected = hours.querySelector('[aria-selected="true"]')
+      // A value already set is a place you are moving *from*, so it opens with
+      // its neighbours either side of it. An opening hour worked out from the
+      // day is a place you are moving *forward* from, so it goes to the top
+      // and the rest of the day follows it - the owner's "start from there, so
+      // there is nothing to scroll past".
+      if (selected) hours.scrollTop = centreOn(selected as HTMLElement, hours)
+      else {
+        const start = hours.children[opening] as HTMLElement | undefined
+        if (start) hours.scrollTop = offsetWithin(start, hours)
+      }
     }
+    const minutes = minutesRef.current
+    const chosen = minutes?.querySelector('[aria-selected="true"]')
+    // Nothing is invented for the minute column: with no value it stays where
+    // it is. An opening hour is an answer about the day; an opening minute
+    // would be a claim about a minute nobody has said anything about.
+    if (minutes && chosen) minutes.scrollTop = centreOn(chosen as HTMLElement, minutes)
     // Once, on open: re-running this on every pick would drag the column back
     // under the finger that just chose from it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="time-picker-panel" id={id} ref={ref}>
-      <div className="time-picker-column" role="listbox" aria-label="Hour">
+    <div className="time-picker-panel" id={id}>
+      <div className="time-picker-column" role="listbox" aria-label="Hour" ref={hoursRef}>
         {HOURS.map(h => (
           <button
             key={h}
             type="button"
             role="option"
             aria-selected={hour === h}
-            className={hour === h ? 'time-picker-option selected' : 'time-picker-option'}
+            /* An hour that is gone says so in words as well as in colour, and
+               nothing here is ever disabled: overlapping is still allowed, it
+               is only visible now. */
+            aria-label={cover[h].saying}
+            className={optionClass(hour === h, cover[h])}
+            style={washOf(cover[h])}
             onClick={() => onPick(`${pad(h)}:${pad(minute ?? 0)}`)}
           >
             {pad(h)}
           </button>
         ))}
       </div>
-      <div className="time-picker-column" role="listbox" aria-label="Minute">
+      <div className="time-picker-column" role="listbox" aria-label="Minute" ref={minutesRef}>
         {MINUTES.map(m => (
           <button
             key={m}
@@ -85,4 +140,46 @@ export function TimeColumns({ value, onPick, id }: TimeColumnsProps) {
       </div>
     </div>
   )
+}
+
+/**
+ * Where an option sits inside its own column.
+ *
+ * Measured rather than read off `offsetTop`, which is relative to the nearest
+ * *positioned* ancestor and not to the scroller: the column is static, so
+ * every option's offsetTop was really an offset from the whole control, and
+ * the column opened a little under where it meant to. Nothing in jsdom could
+ * see that either.
+ */
+function offsetWithin(option: HTMLElement, column: HTMLElement): number {
+  return option.getBoundingClientRect().top - column.getBoundingClientRect().top + column.scrollTop
+}
+
+/** Half a row past the middle, so the option sits on the centre line rather than under it. */
+function centreOn(option: HTMLElement, column: HTMLElement): number {
+  return offsetWithin(option, column) - column.clientHeight / 2 + option.offsetHeight / 2
+}
+
+function optionClass(selected: boolean, cover: HourCover): string {
+  const classes = ['time-picker-option']
+  if (selected) classes.push('selected')
+  if (cover.minutes > 0) classes.push('is-taken')
+  return classes.join(' ')
+}
+
+/**
+ * The colour of whatever holds the hour, and how much of it is held - the
+ * stylesheet turns the pair into a wash over the option and a bar under the
+ * numeral. A free hour carries neither and stays clean.
+ *
+ * `--muted` for a stretch with no category of its own, which is a real case:
+ * a meeting out of somebody else's calendar has an hour and no colour, and so
+ * does a task written before categories existed.
+ */
+function washOf(cover: HourCover): React.CSSProperties | undefined {
+  if (cover.minutes <= 0) return undefined
+  return {
+    ['--cat' as string]: cover.color ?? 'var(--muted)',
+    ['--taken' as string]: `${Math.round((cover.minutes / HOUR) * 100)}%`,
+  } as React.CSSProperties
 }

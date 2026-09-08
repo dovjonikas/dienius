@@ -6,11 +6,12 @@ import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { useCaptureRequest } from '../../lib/captureRequest'
 import { categoryColor, categoryLabel, defaultCategoryId, resolvedColor, type CategoryId } from '../../lib/categories'
 import { TimeColumns } from '../../views/TimeColumns'
+import { takenBlocks } from '../../views/takenHours'
 import { DurationControl } from '../../views/DurationControl'
 import { useClickAway } from '../../lib/useClickAway'
 import { clearDraft, consumeDraft, saveDraft } from './draft'
 import { parseQuickAdd, replaceLeadingTime, replaceTrailingDuration } from './parse'
-import { formatDuration } from './capacity'
+import { formatDuration, windowFor } from './capacity'
 import { stepToQuarter, suggestSlot } from './autoSlot'
 import { DURATION_CHOICES, readLastDuration, rememberDuration } from './quickAddPrefs'
 
@@ -130,6 +131,14 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
       }),
     [tasks, slotMinutes, busy, sleepProfileId, sleepProfiles, isToday, nowMinutes],
   )
+
+  // What the hour column paints, and where it opens: the day's own blocks and
+  // anything somebody else's calendar has booked, read from the same two
+  // sources the free-slot suggestion above is measured against rather than
+  // gathered a second time. Memoised for the same reason they are - typing is
+  // what renders this component, and neither of these moves on a keystroke.
+  const taken = useMemo(() => takenBlocks(tasks, data.categories, busy), [tasks, data.categories, busy])
+  const waking = useMemo(() => windowFor(sleepProfileId, { profiles: sleepProfiles }), [sleepProfileId, sleepProfiles])
 
   // What Enter would actually use, in the order the three sources outrank each
   // other: the typed line first, then whatever the control was pushed to, then
@@ -321,7 +330,12 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
                     No time
                   </button>
                 </div>
-                <TimeColumns value={effectiveTime ?? ''} onPick={pickTime} />
+                <TimeColumns
+                  value={effectiveTime ?? ''}
+                  onPick={pickTime}
+                  taken={taken}
+                  wakingStart={waking.start}
+                />
               </div>
             )}
           </div>

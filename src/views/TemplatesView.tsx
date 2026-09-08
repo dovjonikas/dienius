@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from '../lib/categories'
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
 import type { Category, DayType, LibraryList, SleepProfile, Template } from '../lib/types'
-import { formatDuration, parseMinutesInput } from '../widgets/day-plan/capacity'
+import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
-import type { DrawableBlock } from './templateDay'
+import { blocksAsTasks, type DrawableBlock } from './templateDay'
+import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
@@ -149,6 +150,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   // the list is short enough that its position is a stable identity for the
   // length of one drag.
   const blockReorder = useListReorder(blockListRef, (id, to) => moveBlock(Number(id), to))
+
+  // What the time field's hour column paints. A template has no day behind
+  // it, so its own blocks are the busy stretches - read through the same
+  // conversion the picture above the list uses, so the hours the field calls
+  // taken are exactly the ones the timeline draws.
+  const taken = useMemo(() => takenBlocks(blocksAsTasks(draft.blocks.map(drawable)), categories), [draft.blocks, categories])
+  const waking = windowFor(draft.sleepProfileId, { profiles: sleepProfiles })
 
   // Moves focus into the name field the moment the form appears, for both a
   // brand new template and an in-place edit - the same pattern the if-then
@@ -389,7 +397,14 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           second, where it can be ignored until it is wanted. */}
       <div className="block-add">
         <div className="block-add-line">
-          <TimePicker value={blockTime} onChange={setBlockTime} placeholder="09:00" ariaLabel="Block time" />
+          <TimePicker
+            value={blockTime}
+            onChange={setBlockTime}
+            placeholder="09:00"
+            ariaLabel="Block time"
+            taken={taken}
+            wakingStart={waking.start}
+          />
           <input
             placeholder="What happens"
             value={blockTitle}

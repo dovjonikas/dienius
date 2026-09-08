@@ -430,6 +430,28 @@ test('the dropdown beside the field sets a time in two taps', async () => {
   expect(timeField).toHaveValue('14:30')
 })
 
+/**
+ * Where the hour column gets what it draws in here: the template's own blocks.
+ * A template has no day behind it, and that is the whole of "one component,
+ * two sources" - the same two columns the day view opens, given the picture
+ * this editor is already drawing above the list.
+ */
+test('the block time field says which hours the template has already filled', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Work day',
+    color: '#f9d48a',
+    blocks: [{ time: '09:00', title: 'Gym', minutes: 60, category: 'health' }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Work day' }))
+  await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
+
+  const hours = within(screen.getByRole('listbox', { name: 'Hour' }))
+  expect(hours.getByRole('option', { name: '09, taken by Health' })).toBeInTheDocument()
+  expect(hours.getByRole('option', { name: '14' })).toBeInTheDocument()
+})
+
 test('a time committed straight to the block-add row is used even without leaving the field first', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)

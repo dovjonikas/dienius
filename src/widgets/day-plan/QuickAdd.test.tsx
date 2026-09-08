@@ -76,6 +76,24 @@ test('the suggestion goes round whatever is already on the day', async () => {
   expect(tasksOn(DATE)[0].time).toBe('08:00')
 })
 
+/**
+ * Where the hour column gets what it draws on the day view: the day's own
+ * blocks, the same ones the free-slot suggestion above is measured against.
+ * One reading of the day, so the column cannot call an hour free while the
+ * suggestion steps around it.
+ */
+test("the hour column says which of the day's hours are already gone", async () => {
+  const user = userEvent.setup()
+  const tasks = [{ id: 'a', title: 'Standup', done: false, time: '09:00', minutes: 60, category: 'core' }]
+  render(<QuickAdd date={DATE} tasks={tasks} />)
+
+  await user.click(screen.getByRole('button', { name: /next free slot/i }))
+
+  const hours = within(screen.getByRole('listbox', { name: 'Hour' }))
+  expect(hours.getByRole('option', { name: '09, taken by Deep work' })).toBeInTheDocument()
+  expect(hours.getByRole('option', { name: '14' })).toBeInTheDocument()
+})
+
 test('a full day offers no time rather than a squeezed-in one', async () => {
   const user = userEvent.setup()
   const tasks = [{ id: 'a', title: 'Shift', done: false, time: '07:00', minutes: 16 * 60 }]

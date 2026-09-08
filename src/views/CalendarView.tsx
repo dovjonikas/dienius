@@ -252,7 +252,17 @@ export function CalendarView({
         {mode === 'month' ? (
           <div className="calendar-nav">
             <button aria-label="Previous month" onClick={() => shiftMonth(-1)}>&larr;</button>
-            <h2>{MONTHS[month]} {year}</h2>
+            {/* The name sits in a box the longest month can fill, so the
+                arrow after it stands in one place all year. Turning from
+                May to September used to walk it sixty pixels to the right,
+                which is the owner's "one of them has flown out": nothing
+                had moved except the word between them. The measure is the
+                same hidden ghost the day's header uses for its own date,
+                and it is hidden from a reader for the same reason. */}
+            <div className="calendar-nav-title">
+              <h2>{MONTHS[month]} {year}</h2>
+              <span className="calendar-nav-measure" aria-hidden="true">September {year}</span>
+            </div>
             <button aria-label="Next month" onClick={() => shiftMonth(1)}>&rarr;</button>
           </div>
         ) : (
