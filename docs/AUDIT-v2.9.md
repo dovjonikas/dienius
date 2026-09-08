@@ -8,8 +8,10 @@ imperfect; what would be decided differently; the two pieces of work that are
 owed. **No recommendations anywhere in this file.** The decisions are the
 owner's.
 
-Written 2026-09-08 against `main` at v2.9. Nothing in this wave changed code:
-this file and its screenshots are the whole of it.
+Written 2026-09-08 against `main` at v2.9, and its screenshots retaken one
+commit later, when the day's header was rebuilt to the width of the month it
+stands over. Nothing in the audit itself changed code: this file and its
+screenshots are the whole of it.
 
 ---
 
@@ -38,8 +40,8 @@ timeline. Right: the task list.
 
 | Control | What it does |
 |---|---|
-| Previous day, Next day | Move a day. Arrow keys do the same; `T` returns to today. The pair sits at the row's left edge, inside the month below it |
-| The date, and Today | Says which day. Not a control |
+| Previous day, Next day | Move a day. Arrow keys do the same; `T` returns to today. The pair sits at the row's left edge, inside a block exactly the width of the month below it |
+| Today, or the weekday, and the date under it | Says which day. Not a control. Two lines because the whole form does not fit the month's width |
 | The template chip | Which template the day came from. Read, not pressed |
 | The template list, in the rail | Stamps one onto the day. The same template again says the day already has it; a different one asks before replacing, and blocks added by hand stay |
 | Replan | Three doors for a day that broke: something came up, shift the rest, away and back |
@@ -290,7 +292,7 @@ with their own visible edges, which is what an eye lines a card up by.
 33px, and a task's title is a 29px target. Both are written down in DECISIONS
 with the honest fix for each, should real hardware say otherwise.
 
-**`src/styles.css` is one file of 14,145 lines.** Every rule in the app is in
+**`src/styles.css` is one file of about fourteen thousand lines.** Every rule in the app is in
 it, in rough screen order, heavily commented. Nothing is scoped by tooling;
 the discipline is the naming and the comments.
 
