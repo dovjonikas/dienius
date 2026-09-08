@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.11, a template block that carries what to do.
+**Last updated:** v2.12, the night before the owner builds their real week.
 
 Four passes over a real day: every screen at three sizes in both themes, every
 screen on a keyboard alone, ten data shapes nobody checks, and every action
@@ -218,6 +218,7 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
+| **v2.12** | The wave that came out of the owner building a real 74-block week. "Add to" became seven day switches with the named scopes as presets over them, because a rotation of Mon/Thu, Tue/Fri, Wed/Sat has no name and every block was going on twice. A block carries KEY the way it now carries a note and steps, with the three-per-day cap enforced in both editors per day and at stamp time. A category is made from the swatch row rather than four screens away. A privacy guard reads every tracked file and refuses the owner's own words, hashed so the guard is not itself the leak. A Playwright walk builds the whole week - ninety-seven presses - and a second one lives seven days on top of it. And `docs/MORNING.md`, the one page to open at 07:00 |
 | **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
 
 | **v2.0** | The desktop closed as a product. The library's queue says it is a queue: what ended today, what the list moved on to, and one press that puts a sitting on it - plus the bound card on the day reading "finished - next is Deep Work" instead of "ch 12/12". Typing lag measured rather than assumed and found not to reproduce at 4x, then fixed where it does reproduce, with `contain: layout style` rather than a debounce. Fourteen defects from walking the app as its owner at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic full day and a twenty-task one - the worst being a task list squeezed to zero pixels with seven tasks in it, and a month grid drawing a whole extra week of the next month. Every copy of the plan driven live in a browser: the GitHub chain in thirteen steps against a stand-in Contents API, two devices ticking, editing and deleting at each other, and a snapshot that really brings a day back. `DAILY.md`, walked step by step on an empty install rather than written and hoped for |
@@ -271,7 +272,7 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** the v2.11 wave below - a template block can carry a
+**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.12 wave below, then the v2.11 wave - a template block can carry a
 note and a list of steps, so a meal block arrives with the recipe on it and
 a morning routine arrives with its four steps. Under it, the v2.10 wave, which added nothing and fixed two
 things - both about where focus lands when a panel closes, both found by
@@ -281,6 +282,23 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.12 wave: the night before a real week
+
+Everything here came out of the owner building a 74-block week by hand and
+hitting the same wall three times: the template could hold the shape of a
+day but not what was in it.
+
+| # | Stage | Commit | What it is |
+|---|---|---|---|
+| 1 | Library, both forms | `7bf0e23` | The owner said the screen looked random. Every gap on it had a cause: two margins added to a parent's flex gap rather than replacing it, a wrapping row that stretched one field down a 62px column of nothing, and a row aligned to `flex-end` that put a 51px void above three text fields. Two dead CSS rules found on the way, both overridden by a later rule with the same specificity |
+| 2 | A block carries a note and steps | `978f661` | See the v2.11 table below - tagged separately because it closed before this wave started |
+| 3 | The privacy guard | `a4a3026` | A scratch file naming another of the owner's projects was swept into a commit by `git add -A`. `scripts/no-personal-data.mjs` reads every tracked file and refuses if anything on a private list is in one. The list is hashed, because a list of private words in a public repo publishes them |
+| 4 | Seven day switches | `e13328a` | "Add to" was four named answers, and a rotation of Mon/Thu, Tue/Fri, Wed/Sat has no name - so every block went on twice. Seven switches say all thirty-one combinations; the names survive as presets over them. DECISIONS carries the old argument with the date real use overturned it |
+| 5 | A block carries KEY | `7822f93` | Same gap as the note, same fix. Plus the three-per-day cap where it had never applied: both editors refuse a fourth and name the three in the way, the week editor counts per column, and stamping caps whatever reaches it by keeping the earliest three and dropping nothing |
+| 6 | The rehearsal and `MORNING.md` | `8ac88e1` | A whole week built through the screen in the shape a real one has. **Ninety-seven presses**, against a budget of 120 - the first run measured 138, and all of the difference was the walk using the controls the long way. And one page, numbered, every button named exactly, written from the steps the walk actually took |
+| 7 | A category made where it is needed | `5c421f9` | A "+" on the swatch row in both editors and in quick-add, and a pencil on whichever swatch is chosen. The curated palette and no colour wheel: every colour offered already passes the readability gate, so it is kept by construction rather than by a warning nobody in a hurry reads |
+| 8 | The soak | `d982446` | Seven days of use on the built week, four checks after each. **It passed for four runs while doing almost nothing** - every gesture skips a control that is not there, which is also how a soak stops soaking. Five defects in the walk came out of making each gesture assert its own effect |
 
 ### The v2.11 wave: a block that says what to do
 
@@ -1167,6 +1185,7 @@ and pushed. Nothing below this table is owed.
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
 | `v2.10` | `8a18e25` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
+| `v2.12` | `d982446` | The night before a real week: seven day switches, a block that carries KEY, a category made where it is needed, a privacy guard, the rehearsal, the soak, and one page for 07:00 |
 | `v2.11` | `978f661` | A template block carries a note and a list of steps onto every day it stamps, and the card's note mark became a press |
 | `v2.9` | `595975b` | Four things met in use and one document: both day arrows inside the month, the day type as one line, the colours out of the time column and the candidate onto the timeline, one link on an item and a task, and an audit written for somebody who has not seen the app |
 | `v2.8` | `1282b3d` | The calendar wave, the first the done contract produced: the day card, clearing a day, a week template that never reaches back, the writing marks, the arrows, the focus screen, and choosing a time against the day |
@@ -1459,6 +1478,16 @@ paint-across-dates gesture, all of which were built and verified with
 synthesised pointer events; OPEN-QUESTIONS carried that note from v2.0 and
 this is where it ends.
 
+- **Return adds a block, and nothing says so.** The week rehearsal measured
+  ninety-seven presses for a whole week when the controls are used as
+  designed and a hundred and thirty-eight when they are not, and twenty-two
+  of the difference were clicking "Add a block" where Return in the title
+  field already does it. The presets are on the screen; this is not.
+- **The soak drives ten gestures and proves five of them landed.** The low
+  day, the replan, the two set aside and the photo are still best-effort:
+  they press whatever is on the screen and carry on if it is not there.
+  Each needs the same treatment the other five got - an assertion on its own
+  effect, where it happens.
 - **Dragging a block inside the template editor's timeline.** The picture
   arrived in v2.5 and is read-only: it draws the day a template makes, live,
   with its sleep and its clashes, and the blocks are moved in the list under

@@ -8408,11 +8408,17 @@ button.task-note-mark.is-open {
   .accent-swatch,
   .switch,
   .template-chip,
+  .category-edit,
+  .wt-block-key,
+  .task-note-mark,
   .task-title-select {
     position: relative;
   }
 
   .category-swatch::after,
+  .category-edit::after,
+  .wt-block-key::after,
+  .task-note-mark::after,
   .library-color::after,
   .category-wheel::after,
   .task-size::after,
@@ -12595,7 +12601,6 @@ main:has(.week) > .calendar {
   .category-edit { width: 28px; height: 28px; }
   /* A week of switches a finger has to hit one of without hitting its
      neighbour. */
-  .wt-day-toggle { width: var(--touch); min-height: var(--touch); }
   /* The fold is the whole width of the head, so the target is the
      card rather than a caret somebody has to aim at - but a button
      whose content is a heading and a line of meta is only as tall as
@@ -13711,6 +13716,14 @@ main:has(.week) > .calendar {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent, #fff);
+}
+
+/* A week of switches a finger has to hit one of without hitting its
+   neighbour. Here rather than in the coarse block further up the file:
+   the rule above it has the same specificity and comes later, so an
+   override written up there never applied at all. */
+@media (pointer: coarse) {
+  .wt-day-toggle { width: var(--touch); min-height: var(--touch); }
 }
 
 /* What the press will do. A line rather than a count next to the switches,
