@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test, type Browser, type Page } from '@playwright/test'
-import { openFresh, quickAdd, tick } from './app'
+import { openFresh, quickAdd, tick, wednesdayAt } from './app'
 
 /**
  * Two devices, one server, one task.
@@ -63,6 +63,15 @@ async function syncNow(page: Page): Promise<void> {
 
 async function device(browser: Browser): Promise<Page> {
   const context = await browser.newContext()
+  const page = await context.newPage()
+  await openFresh(page)
+  return page
+}
+
+/** The same, with the clock pinned before the page loads - see `openFreshAt`. */
+async function deviceAt(browser: Browser, time: Date): Promise<Page> {
+  const context = await browser.newContext()
+  await context.clock.setFixedTime(time)
   const page = await context.newPage()
   await openFresh(page)
   return page
@@ -152,5 +161,61 @@ test('a tick here and an edit there both survive, and a delete stays deleted', a
       return tasks.find((t: { title: string }) => t.title === 'Morning pages')
     })
     expect(morning?.done).toBe(true)
+  }
+})
+
+/**
+ * A replan is the one action that moves several blocks at once, so it is the
+ * one most able to arrive twice: the day it touches is rewritten whole, and a
+ * merge that took the wrong half would leave the moved blocks on both sides
+ * of the move. Nothing in the suite had asked, and "sync after a replan does
+ * not double anything" is the kind of thing you find in the data a week
+ * later.
+ */
+test('a day put through a replan syncs across without doubling a block', async ({ browser }) => {
+  // Both devices on the same pinned Wednesday morning, so the afternoon is
+  // still ahead and the sheet offers the same chips on every run - the same
+  // reason interrupt.e2e.ts pins its own clock.
+  const phone = await deviceAt(browser, wednesdayAt(10))
+  const pc = await deviceAt(browser, wednesdayAt(10))
+
+  await turnSyncOn(phone)
+  await phone.getByRole('button', { name: 'Today' }).click()
+  await quickAdd(phone, '09:00 Morning pages 20min')
+  await quickAdd(phone, '11:00 Ring the bank 15min')
+  await quickAdd(phone, '15:00 Cancel the trial 10min')
+  await syncNow(phone)
+
+  await turnSyncOn(pc)
+  await syncNow(pc)
+  await pc.getByRole('button', { name: 'Today' }).click()
+  await expect(pc.getByRole('checkbox', { name: 'Ring the bank' })).toBeAttached()
+
+  // The afternoon goes, on the phone, the way it goes when the phone rings.
+  await phone.getByRole('button', { name: 'Today' }).click()
+  await phone.getByRole('button', { name: 'Replan' }).click()
+  const sheet = phone.getByRole('dialog', { name: 'Replan' })
+  await sheet.getByRole('button', { name: 'Something came up' }).click()
+  await sheet.getByRole('button', { name: 'Afternoon gone' }).click()
+  await sheet.getByRole('button', { name: 'Accept' }).click()
+  await expect(sheet).toHaveCount(0)
+
+  await syncNow(phone)
+  await syncNow(pc)
+  await syncNow(phone)
+
+  // Both devices hold one of each title, and the same set. A merge that took
+  // the wrong half would leave a block on both sides of its own move.
+  for (const page of [phone, pc]) {
+    await page.getByRole('button', { name: 'Today' }).click()
+    const titles = await page.evaluate(() => {
+      const now = new Date()
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const data = JSON.parse(localStorage.getItem('dienius:data') ?? '{}')
+      return ((data.days?.[key]?.tasks ?? []) as { title: string }[]).map(t => t.title)
+    })
+    expect(titles.filter(t => t === 'Morning pages')).toHaveLength(1)
+    expect(titles.filter(t => t === 'Ring the bank')).toHaveLength(1)
+    expect(new Set(titles).size).toBe(titles.length)
   }
 })
