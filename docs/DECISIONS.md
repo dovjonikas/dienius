@@ -2618,3 +2618,38 @@ your own because that is what those actually serve.
 
 **It goes when the item goes.** A finished book's address is not something to
 keep a list of, and there is no list to keep it in.
+
+## The opener is read while the surface renders, not after it
+
+Found by crossing every screen with nothing but a keyboard, which is a thing
+this repo had never done end to end.
+
+Every sheet, panel and popover in this app hands focus back to whatever had
+it when the surface opened - `useRestoreFocus`, since v2.1, because Escape
+landing on the body means the next Tab starts again from the navigation rail
+and the walk back is thirty controls long. Two surfaces were not doing it.
+
+**The Notes and Journal popovers captured themselves.** The hook read
+`document.activeElement` in an effect, and being first in the component was
+enough only while every surface took focus in an effect of its own: React
+runs a child's effects before its parent's, so by the time the popover asked
+who had focus, the note field inside it had already taken it. The restore
+then had nothing to give focus back to, because the field left with the
+panel. Reading during render fixes it - render happens before any effect,
+and asking which element has focus is a question rather than a change.
+
+**And the detail sheet captured a button that was leaving.** Pressing Details
+on a task's actions sheet closes that sheet and opens the detail sheet in the
+same commit, so the opener it captured was about to go with the menu it sat
+in. Nothing to restore to, and Escape landed on the body again - the same
+defect one step along. So the openers are kept in a short list, pruned of
+anything that has left the page, and a restore that finds its own gone takes
+the newest one still there: the menu button the whole chain started from.
+
+The first version of that list took its own entry out on the way down, which
+put the bug straight back - the menu's cleanup removed the very button the
+detail sheet was about to need. Nothing is removed when a surface closes,
+only when the element has left the page.
+
+Both are held by tests in `useRestoreFocus.test.tsx`, each of which fails
+against the old hook.

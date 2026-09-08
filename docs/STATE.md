@@ -6,9 +6,21 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.9, closed and tagged, with this handoff one commit
-above it. Four things the owner met while using the app, and a document for
-somebody auditing it cold. The day's two arrows are a pair at the row's left
+**Last updated:** v2.10, a bug hunt that added nothing.
+
+Four passes over a real day: every screen at three sizes in both themes, every
+screen on a keyboard alone, ten data shapes nobody checks, and every action
+that adds to a day pressed twice. **Two defects, both about focus** - the
+Notes and Journal popovers and the task's detail sheet all left focus on the
+document body when Escape closed them, so the next Tab started again from the
+navigation rail. One cause, in `useRestoreFocus`, now held by two tests. One
+hole closed in the suite rather than in the app: a replan syncing to the
+second device had never been tested and does not double a block. And the
+README's figures were made true again, with a license section that says what
+MIT actually allows. Section 4 has the table, and what each pass measured.
+
+**Before that: v2.9.** Four things the owner met while using the app, and a
+document for somebody auditing it cold. The day's two arrows are a pair at the row's left
 edge, both inside the month they stand over, because a bracket around the
 longest day this app prints is 353px and the month under it is 240. The day
 type is one quiet line saying its answer, with the four values one press
@@ -19,12 +31,12 @@ with its overlaps marked. And a library item or a task can carry one
 address, shown as a small door on the row, the card, Up next and the focus
 screen, opening a new tab and touching the network nowhere else.
 
-`docs/AUDIT-v2.9.md` is the fifth stage and a document only: every screen and
-every press, thirty-four screenshots in both themes, what is known to be
-imperfect, what would be decided differently, and what the two open debts
-would cost. Section 4 has the table, stage by stage. **Nothing is owed**, and
-the done contract still stands: what is asked for next waits in "Asked for,
-not yet built" until it has been met in a week of use.
+`docs/AUDIT-v2.9.md` is that wave's fifth stage and a document only: every
+screen and every press, thirty-four screenshots in both themes, what is known
+to be imperfect, what would be decided differently, and what the two open
+debts would cost. **Nothing is owed**, and the done contract still stands:
+what is asked for next waits in "Asked for, not yet built" until it has been
+met in a week of use.
 
 **Before that: v2.8**, closed and tagged at `1282b3d`. The first wave the
 done contract produced: the calendar's day opens into a card that stays
@@ -230,8 +242,8 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2475
-tests in 150 files, plus 38 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2478
+tests in 150 files, plus 39 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
 the desktop at 15:00, 22:00 and 09:00 and nothing on the phone, with
 `--self-check` at 8/8. The working tree is empty and pushed.
@@ -258,13 +270,58 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** the v2.9 wave below - four things the owner met while
-using the app, and a document written for somebody auditing it cold. Two of
-the four undo something an earlier wave built, which is what the done
-contract is for. The v2.8 table under it is closed, and so are v2.7, v2.6,
-v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts table further down is
-unchanged: both are still owed, and `docs/AUDIT-v2.9.md` names what each
-would cost.
+**Where to start:** the v2.10 wave below, which added nothing and fixed two
+things - both about where focus lands when a panel closes, both found by
+crossing the app on a keyboard alone. Its table also says what each of the
+four passes measured, so the next session can measure the same things
+without inventing them again. The v2.9 table under it is closed, and so are
+v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
+table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
+names what the two old ones would cost.
+
+### The v2.10 wave: a bug hunt, and nothing added
+
+No feature in it, by the brief: **find and fix**. Four passes over a real
+day, each one measuring something the suite had never asked about, and every
+finding fixed where it was found rather than written down.
+
+| # | Pass | Commit | What it found |
+|---|---|---|---|
+| 1 | Every screen, three sizes, both themes | none needed | Nothing. Sixteen screens at 1920x1080, 1600x900 and 1366x768 in dark and light, read for console errors, more than four type sizes, spacing off the scale, a figure printed twice inside one card (section 23), and anything that moved under a real pointer (section 24). The pass plants four defects of its own on request and sees all four, which is why its clean report is worth reading |
+| 2 | Every screen, keyboard only | `f08dfb1` | **Two real defects, both about focus.** The Notes and Journal popovers left focus on the body when Escape closed them, and so did the task's detail sheet when it was opened from the actions menu. Both came from `useRestoreFocus` capturing the wrong opener; see DECISIONS. Otherwise clean: every tab stop shows a ring, nothing is reachable only with a pointer, the order does not climb the screen, and Escape closes every overlay |
+| 3 | The shapes nobody checks | none needed | Nothing. Thirty tasks on a day, a title of two hundred characters, a template of twenty blocks, an empty day, a day with everything done, a week of empty days, a month with one entry, a library list of a hundred, a journal entry of five thousand characters, and photographs of 4.8MB and 7.3MB - each seeded, opened at two sizes, and read with the app's own audit pass |
+| 4 | The same press, twice | `632013c` | Nothing doubled: the same template stamped twice, a week stamped twice, push-to-tomorrow twice, a low day twice, a day cleared twice. And one gap closed in the suite rather than in the app - **sync after a replan** had never been tested, so a day rewritten whole could have arrived twice without anything noticing. It does not, and a browser test now says so |
+| 5 | The README and the license | `376aa1c` | The test badge said 1800 when the suite is past 2400, and three files said the store had ten area modules when it has eleven. The license was one word and a link; it says what MIT actually allows now, and what it covers |
+
+#### What was measured, so the next session can measure it again
+
+The four passes were throwaway tooling in a session scratchpad rather than
+scripts in the repo, because the brief for this wave was to add nothing. What
+each one did:
+
+- **The visual pass** walks the sixteen screens listed in `sweep.mjs` plus
+  the overlays, and for each reads: console errors and warnings; every
+  `font-size` actually printing text, counted against the scale in
+  CONVENTIONS section 5 and against the four-per-screen rule; every `gap` and
+  `padding`, against the spacing steps and the values the stylesheet composes
+  out of them (36, 48, 52 and 64 today, read from the stylesheet rather than
+  allowed as a class - every sum of two steps would admit 7px); a figure
+  printed twice inside one card; and, with a real pointer rather than a
+  synthesised event, whether hovering a control moves anything that was
+  already drawn. A synthesised `pointerover` fires every handler and no CSS,
+  and the first version of the pass reported a planted `:hover { padding }`
+  as clean.
+- **The keyboard pass** tabs through every screen and asks whether each stop
+  shows a ring, whether anything on the screen is reachable only with a
+  pointer, whether the order climbs back up a column, and whether Escape
+  closes each overlay and hands focus back. A grid with a roving tabindex and
+  a checkbox drawn as a box beside a zero-width input both look like defects
+  and are not.
+- **The edge shapes** are seeded into the store directly and read with
+  `scripts/audit.js`, the same pass the sweep uses, so a clipped line is
+  reported in the same words.
+- **The doubles** press each action twice and compare the store: how many
+  tasks each day holds, and how many share a title.
 
 ### The v2.9 wave: an arrow, a question, and what a picker was pretending to know
 
@@ -1086,6 +1143,7 @@ and pushed. Nothing below this table is owed.
 | `v2.4` | `f544c55` | The polish wave, on top of v2.3. Two commits sit above it before the next tag |
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
+| `v2.10` | `PENDING` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
 | `v2.9` | `595975b` | Four things met in use and one document: both day arrows inside the month, the day type as one line, the colours out of the time column and the candidate onto the timeline, one link on an item and a task, and an audit written for somebody who has not seen the app |
 | `v2.8` | `1282b3d` | The calendar wave, the first the done contract produced: the day card, clearing a day, a week template that never reaches back, the writing marks, the arrows, the focus screen, and choosing a time against the day |
 | `v2.7` | `b735de6` | The last wave: the header's three small things and the times on every block, Later where two shelves were, the Year view and Review's streak gone, where the plan and the week disagreed, the docs told the truth, the open questions closed, one voice over every string, and the closing. The app is done at this tag |
@@ -1385,6 +1443,13 @@ this is where it ends.
   rather than written a second time, which is why it is a piece of work of
   its own and not a follow-up commit. The owner named it as a v2.6
   candidate when the timeline was briefed.
+- **The keyboard walk and the visual pass, as scripts beside the sweep.**
+  Both were throwaway tooling in v2.10 and both found things the suite could
+  not: the keyboard one found two focus defects, and the visual one is the
+  only thing that has ever measured CONVENTIONS 24 with a real pointer. As
+  `npm run keys` and a few more shapes inside `sweep.mjs`, they would be run
+  every wave instead of rebuilt. Written down here rather than done, because
+  the wave that wrote them was told to add nothing.
 - **A reminder that can arrive while the app is closed.** Two nudges were
   removed in v2.5 - one before a timed task, one during focus work - not
   because nobody wants them but because neither could do the thing its name
