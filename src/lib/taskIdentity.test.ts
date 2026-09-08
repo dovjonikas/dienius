@@ -2,11 +2,24 @@ import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
 import { STORAGE_KEY, defaultData, loadData } from './storage'
 import { addWithoutDuplicates, dedupeTasks, identityOf, isRoutine } from './taskIdentity'
+import { addDays, todayKey } from './dates'
+import { weekdayOf } from './repeats'
 import type { Task } from './types'
 
-const MON = '2026-08-31'
-const TUE = '2026-09-01'
-const WED = '2026-09-02'
+// A Monday and the two days after it, worked out from today rather than
+// pinned. One test here maps a template onto the Wednesday and then opens it,
+// and since v2.8 the weekday map does not stamp a day that is already past -
+// see lib/ensureDay.ts. Pinned dates would have made that a test which passed
+// until the Wednesday it names went by.
+function mondayAhead(): string {
+  let day = todayKey()
+  while (weekdayOf(day) !== 1) day = addDays(day, 1)
+  return day
+}
+
+const MON = mondayAhead()
+const TUE = addDays(MON, 1)
+const WED = addDays(MON, 2)
 
 beforeEach(() => {
   localStorage.clear()

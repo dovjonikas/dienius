@@ -394,3 +394,74 @@ test('a note older than yesterday says its date short enough to sit on one line'
   expect(older).not.toMatch(/January|February|March|April|May|June|July|August|September|October|November|December/)
   expect(older.length).toBeLessThanOrEqual(17)
 })
+
+/**
+ * One day of the stream, read - the month's day card asks for "that day's
+ * notes". A note is not filed under a day, but every note records the day it
+ * was written on, so this is a reading of the one stream and not a second
+ * place to put things.
+ */
+test('opened at a day, it shows what was written on that day and nothing else', () => {
+  const now = new Date().toISOString()
+  const older = addDays(todayKey(), -4)
+  actions.resetForTests({
+    ...defaultData(),
+    scratch: [
+      { id: 'n1', text: 'Written today', date: todayKey(), createdAt: now },
+      { id: 'n2', text: 'Written that Thursday', date: older, createdAt: now },
+    ],
+  })
+  render(<Scratch open date={older} onClose={() => {}} />)
+
+  expect(screen.getByText('Written that Thursday')).toBeInTheDocument()
+  expect(screen.queryByText('Written today')).toBeNull()
+})
+
+/**
+ * The one thing this could offer that would be a lie. A line typed now is
+ * dated now, so on any day but today there is no box at all and the surface
+ * says what it is.
+ */
+test('a day that is not today can be read but not written into', () => {
+  render(<Scratch open date={addDays(todayKey(), -4)} onClose={() => {}} />)
+
+  expect(screen.queryByRole('textbox', { name: 'Note' })).toBeNull()
+  expect(screen.getByText(/^What was written on /)).toBeInTheDocument()
+  expect(screen.getByText('Nothing was written on this day.')).toBeInTheDocument()
+})
+
+test('the box is there when the day being read is today', () => {
+  render(<Scratch open date={todayKey()} onClose={() => {}} />)
+  expect(screen.getByRole('textbox', { name: 'Note' })).toBeInTheDocument()
+})
+
+// A reading that could not be left would be a filter standing in front of
+// the stream, which is the thing the tags were taken out for.
+test('one press goes back from a day to the whole stream', async () => {
+  const user = userEvent.setup()
+  const now = new Date().toISOString()
+  actions.resetForTests({
+    ...defaultData(),
+    scratch: [{ id: 'n1', text: 'Written today', date: todayKey(), createdAt: now }],
+  })
+  render(<Scratch open date={addDays(todayKey(), -4)} onClose={() => {}} />)
+
+  expect(screen.queryByText('Written today')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Show every note' }))
+  expect(screen.getByText('Written today')).toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'Note' })).toBeInTheDocument()
+})
+
+// The three ways in that exist to be instant are unchanged: no date, the
+// whole stream, the cursor in the box.
+test('the key still opens the whole stream, with nothing filtered', () => {
+  const now = new Date().toISOString()
+  actions.resetForTests({
+    ...defaultData(),
+    scratch: [{ id: 'n1', text: 'Written last week', date: addDays(todayKey(), -6), createdAt: now }],
+  })
+  render(<Scratch open onClose={() => {}} />)
+
+  expect(screen.getByText('Written last week')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Show every note' })).toBeNull()
+})

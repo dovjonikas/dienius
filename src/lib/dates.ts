@@ -115,3 +115,15 @@ export function shortWeekday(key: string): string {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short' })
 }
+
+/**
+ * "Wednesday", on its own.
+ *
+ * For a sentence that names a day inside a surface that already says which
+ * date it is about - "Clear 9 tasks from Wednesday?" on a card headed
+ * "Wednesday, September 30". The full title there would say the date twice.
+ */
+export function longWeekday(key: string): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long' })
+}

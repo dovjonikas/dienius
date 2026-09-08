@@ -4,15 +4,14 @@ import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell }
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
-import { DayPreview } from './DayPreview'
+import { DayCard } from './DayCard'
 import { useCellLines, useIsWide } from '../lib/viewport'
 import { NARROW_DAYS, WeekView, visibleWeekDays, type WeekReading } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
 import { Explain } from './Explain'
 import { requestReplan } from '../lib/replanState'
-
-/** How long a mouse rests on a cell before the day opens under it. */
-const PREVIEW_DELAY = 400
+import { hasJournal } from '../lib/journal'
+import { datesWithNotes } from '../lib/scratch'
 
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -57,9 +56,24 @@ interface CalendarViewProps {
    */
   date?: string
   onDateChange?: (date: string) => void
+  /**
+   * What was written on one day: the stream read at that day, and that day's
+   * journal. Both optional, so every existing render of this view keeps
+   * working with no wiring change - the buttons simply do nothing rather
+   * than the whole component requiring the shell's two overlays.
+   */
+  onOpenNotes?: (date: string) => void
+  onOpenJournal?: (date: string) => void
 }
 
-export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }: CalendarViewProps) {
+export function CalendarView({
+  onOpenDay,
+  onOpenTemplates,
+  date,
+  onDateChange,
+  onOpenNotes,
+  onOpenJournal,
+}: CalendarViewProps) {
   const data = useAppData()
   const now = new Date()
   // Month first, then Week: the larger scale is the one the tab opens on,
@@ -83,11 +97,11 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
   const [staged, setStaged] = useState<Record<string, string | null>>({})
-  // Which cell the pointer has been resting on long enough to open. Null is
-  // every other moment, which is nearly all of them.
   const [reading, setReading] = useState<WeekReading>('grid')
-  const [previewDate, setPreviewDate] = useState<string | null>(null)
-  const previewTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  // Which day is open, and null every other moment. A press opens it and it
+  // stays open until it is closed - see DayCard.tsx for why the 400ms hover
+  // that used to do this could not work.
+  const [openDate, setOpenDate] = useState<string | null>(null)
   const painting = useRef<'apply' | 'erase' | null>(null)
   // One tab stop for the whole grid and the arrows to walk it - the same
   // roving pattern as the day view's mini calendar, for the same reason:
@@ -106,6 +120,12 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
   const weeks = useMemo(() => weeksOf(cells), [cells])
   const today = todayKey()
   const tabStop = tabStopFor(cells, [roving, date, today])
+  // One walk of the stream for the whole grid rather than one per cell - see
+  // datesWithNotes.
+  const noteDays = useMemo(() => datesWithNotes(data.scratch), [data.scratch])
+  // Read during render rather than held in state: the card is drawn in the
+  // same pass as the grid it is anchored to, so the cell is already there.
+  const anchorEl = openDate ? gridRef.current?.querySelector<HTMLElement>(`[data-date="${openDate}"]`) ?? null : null
 
   useEffect(() => {
     if (!pendingFocus) return
@@ -137,6 +157,9 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
     const d = new Date(year, month + delta, 1)
     setYear(d.getFullYear())
     setMonth(d.getMonth())
+    // The card is anchored to a cell, and turning the month takes that cell
+    // off the screen. Nothing to anchor to is nothing to show.
+    setOpenDate(null)
   }
 
   function effectiveTemplateId(date: string): string | null {
@@ -167,26 +190,6 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
     if (painting.current) stampCell(date, painting.current)
   }
 
-  /**
-   * The preview, opened by a mouse resting on a cell.
-   *
-   * A mouse only: a finger taps the cell and gets the day itself, which is
-   * the better answer on a phone anyway. Not while a template is in hand and
-   * being painted across the grid either - a popover appearing under a drag
-   * is a popover in the way of it.
-   */
-  function previewEnter(date: string, e: React.PointerEvent) {
-    if (e.pointerType !== 'mouse' || painting.current) return
-    clearTimeout(previewTimer.current)
-    previewTimer.current = setTimeout(() => setPreviewDate(date), PREVIEW_DELAY)
-  }
-
-  function previewLeave(e: React.PointerEvent) {
-    if (e.pointerType !== 'mouse') return
-    clearTimeout(previewTimer.current)
-    setPreviewDate(null)
-  }
-
   function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
     if (!painting.current) return
     const el = document.elementFromPoint(e.clientX, e.clientY)
@@ -214,6 +217,9 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
 
   function selectTemplate(id: string) {
     setStampTemplateId(prev => (prev === id ? null : id))
+    // A template in hand turns every cell into a brush, and a card standing
+    // over four of them is a card in the way of the stroke.
+    setOpenDate(null)
   }
 
   function save() {
@@ -294,7 +300,7 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                 disabled={Object.keys(weekStamp.stamps).length === 0}
                 data-tip={
                   Object.keys(weekStamp.stamps).length === 0
-                    ? 'Every day this week already has a template'
+                    ? 'Nothing left to stamp this week'
                     : 'Stamp the days your weekday plan names, leaving anything you have already arranged alone'
                 }
                 onClick={() => {
@@ -436,6 +442,11 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                   // a future day its lines, and the month read as two
                   // different calendars meeting at today.
                   const points = cellPoints(data.days[cell.key], showStats ? Math.max(1, cellLines - 1) : cellLines)
+                  // Whether anything is written on the day. Two marks, never
+                  // a number and never a colour that means a value - see the
+                  // .cell-written rules in the stylesheet.
+                  const journalled = hasJournal(data.days[cell.key])
+                  const noted = noteDays.has(cell.key)
                   const classes = [
                     'cell',
                     cell.inMonth ? '' : 'outside',
@@ -460,15 +471,16 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                       // fill with dark ink pinned on it was a piece of the
                       // light theme sitting in the dark one.
                       style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
-                      aria-label={cellLabel(cell, template?.name, state)}
+                      aria-label={cellLabel(cell, template?.name, state, { journal: journalled, note: noted })}
                       aria-current={cell.key === today ? 'date' : undefined}
+                      aria-expanded={stampTemplateId ? undefined : openDate === cell.key}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
-                      onPointerEnter={e => {
-                        handlePointerEnter(cell.key)
-                        previewEnter(cell.key, e)
-                      }}
-                      onPointerLeave={previewLeave}
-                      onClick={() => !stampTemplateId && onOpenDay(cell.key)}
+                      onPointerEnter={() => handlePointerEnter(cell.key)}
+                      // A press opens the day's card, here, against this
+                      // cell. Opening the day itself is one of the things on
+                      // it, because the month is what somebody came to the
+                      // month for and leaving it should be asked for.
+                      onClick={() => !stampTemplateId && setOpenDate(cell.key)}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
                       {showStats && (
@@ -508,13 +520,15 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
                           <span className="cell-bar-fill" style={{ width: `${Math.round((stat!.rate ?? 0) * 100)}%` }} />
                         </span>
                       )}
-                      {previewDate === cell.key && (
-                        <DayPreview
-                          date={cell.key}
-                          onOpenDay={() => onOpenDay(cell.key)}
-                          onStamp={stampTemplateId ? () => stampCell(cell.key, 'apply') : undefined}
-                          onInterrupt={cell.key >= today ? () => requestReplan('interrupt', cell.key) : undefined}
-                        />
+                      {/* Something is written on this day, and that is all
+                          either mark says. The journal's is filled and a
+                          note's is an outline of the same ink, both in the
+                          corner the number is not in. */}
+                      {(journalled || noted) && (
+                        <span className="cell-written" aria-hidden="true">
+                          {journalled && <span className="cell-written-journal" />}
+                          {noted && <span className="cell-written-note" />}
+                        </span>
                       )}
                     </button>
                   )
@@ -522,6 +536,28 @@ export function CalendarView({ onOpenDay, onOpenTemplates, date, onDateChange }:
               </div>
             ))}
           </div>
+
+          {/* After the grid in the document, so Tab from the cell that opened
+              it walks straight into it, and outside the grid so that its own
+              buttons are not buttons inside a button. Placed against its cell
+              by measurement - see dayCardPlacement.ts. */}
+          {openDate && (
+            <DayCard
+              // Keyed on the day, so walking the grid with the arrows and
+              // pressing Enter on a second cell builds a new card rather than
+              // moving this one - which would carry an armed "Clear 9 tasks
+              // from Wednesday?" over onto Thursday.
+              key={openDate}
+              date={openDate}
+              anchor={anchorEl}
+              bounds={gridRef.current}
+              onClose={() => setOpenDate(null)}
+              onOpenDay={() => onOpenDay(openDate)}
+              onOpenNotes={() => onOpenNotes?.(openDate)}
+              onOpenJournal={() => onOpenJournal?.(openDate)}
+              onInterrupt={openDate >= today ? () => requestReplan('interrupt', openDate) : undefined}
+            />
+          )}
 
           {hasChanges && (
             <div className="stamp-actions">

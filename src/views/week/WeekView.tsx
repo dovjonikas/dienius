@@ -11,6 +11,7 @@ import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayo
 import { useIsWide } from '../../lib/viewport'
 import { eventsOn, useCalendarCache } from '../../lib/calendars'
 import { offerUndo } from '../../lib/undo'
+import { clearDayNow } from '../clearDay'
 import { TaskDetail } from '../../widgets/day-plan/TaskDetail'
 import { computeWeekLayout, timeAtPercent, type WeekBlock } from './weekLayout'
 import { WeekColumn } from './WeekColumn'
@@ -304,10 +305,12 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
             replanned={!!data.days[day.date]?.replannedOn}
             journalLine={firstLine(data.days[day.date]?.journal)}
             journalTitle={data.days[day.date]?.journal?.trim() || undefined}
+            taskCount={data.days[day.date]?.tasks.length ?? 0}
             onBlockPointerDown={beginDrag}
             onEmptyClick={percent => addAt(day.date, percent)}
             onStamp={templateId => stampDay(day.date, templateId)}
             onOpenDay={() => onOpenDay(day.date)}
+            onClear={() => clearDayNow(day.date)}
           />
         ))}
       </div>

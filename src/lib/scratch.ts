@@ -26,6 +26,43 @@ import type { ScratchNote } from './types'
  * DECISIONS "Notes are notes".
  */
 
+/**
+ * Whether a note says anything at all. A note is its words or its pictures,
+ * and the empty one that exists for the moment between opening the box and
+ * typing the first letter is neither.
+ */
+export function noteHasSomething(note: ScratchNote): boolean {
+  return !!note.text.trim() || !!note.photos?.length
+}
+
+/**
+ * The notes written on one day, newest first.
+ *
+ * A note is not filed under a day - it is one stream, and it always will be
+ * (CONVENTIONS section 11) - but every note records the day it was written
+ * on, so "what was written on Wednesday" is a reading of the stream rather
+ * than a second place to put things. Nothing about writing changes: a line
+ * typed now is dated now, whatever day is being read.
+ */
+export function notesOn(notes: ScratchNote[], date: string): ScratchNote[] {
+  return sortScratch(notes.filter(n => n.date === date && noteHasSomething(n)))
+}
+
+/**
+ * Every day that has a note on it, as a set, for the month grid.
+ *
+ * A set rather than a per-cell scan: forty-two cells against a stream of a
+ * few hundred notes is forty-two walks of the same list, and the month grid
+ * redraws on every commit.
+ */
+export function datesWithNotes(notes: ScratchNote[]): Set<string> {
+  const out = new Set<string>()
+  for (const note of notes) {
+    if (noteHasSomething(note)) out.add(note.date)
+  }
+  return out
+}
+
 /** Pinned first, then newest first. The one order a stream has. */
 export function sortScratch(notes: ScratchNote[]): ScratchNote[] {
   return [...notes].sort((a, b) => {

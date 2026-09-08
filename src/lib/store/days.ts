@@ -118,6 +118,58 @@ export const dayActions = {
   },
 
   /**
+   * Takes everything planned off one day, and leaves it that way.
+   *
+   * The moment it is for: a week template stamped on a Wednesday afternoon,
+   * which fills the three days already half-lived with blocks nobody is
+   * going to do. Clearing them one at a time is nine presses on a day that
+   * has already gone wrong.
+   *
+   * **What goes** is what the day was planned with: every task on it,
+   * set-aside blocks included - a block waiting off the list is still a task
+   * on the day, and a strip on today holding one thing on an otherwise empty
+   * day is the opposite of cleared - the template id, the day type that was
+   * copied from it, and the replan mark, which describes a plan that no
+   * longer exists.
+   *
+   * **What stays** is what somebody wrote or lived: the journal, and the
+   * facts about the day itself - `away`, and which sleep schedule it is
+   * measured against. Clearing a plan is not an opinion about what happened.
+   *
+   * **And it stays cleared.** `autoApplied` is written the way opening the
+   * day writes it, so `ensuredDay` returns null on the next open and the
+   * weekday template does not stamp itself back on; every repeat series that
+   * had an instance here is added to `repeatSkips`, which is the same
+   * tombstone `deleteTask` writes for one instance, so nothing generates it
+   * again through any other door. That is the rule this app already keeps
+   * everywhere else - deleting what arrived leaves it deleted - and a clear
+   * that a re-open undid would be the loudest possible way to break it.
+   *
+   * Returns how many tasks went and the undo for them, or null on a day with
+   * nothing to clear, which is what a second press on the offer is.
+   */
+  clearDay(date: string): { cleared: number; undo: () => void } | null {
+    const previous = getData()
+    const day = previous.days[date]
+    if (!day || day.tasks.length === 0) return null
+
+    const skips = new Set(day.repeatSkips ?? [])
+    for (const task of day.tasks) {
+      if (task.repeatOf) skips.add(task.repeatOf)
+    }
+    const { templateId: _stamped, dayType: _kind, replannedOn: _moved, ...kept } = day
+    commit(
+      withDay(date, {
+        ...kept,
+        tasks: [],
+        repeatSkips: skips.size > 0 ? [...skips] : undefined,
+        autoApplied: true,
+      }),
+    )
+    return { cleared: day.tasks.length, undo: () => commit(previous) }
+  },
+
+  /**
    * A line of the day's journal - see lib/journal.ts. A patch with one
    * field leaves the others alone; a blank clears its field; a day whose
    * last line was cleared carries no journal at all, which is what makes an

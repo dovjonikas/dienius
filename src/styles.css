@@ -9509,6 +9509,10 @@ button.danger:focus-visible {
   flex-direction: column;
   gap: var(--s3);
   min-height: 0;
+  /* The corner the day card measures from. It is drawn outside the grid so
+     that its buttons are not buttons inside a button, and absolutely
+     positioned so it takes no room in this column - see DayCard.tsx. */
+  position: relative;
 }
 
 .calendar-bar {
@@ -9585,6 +9589,47 @@ button.danger:focus-visible {
   border-radius: var(--r-round);
   background: var(--accent);
 }
+
+/* Something is written on this day, and that is the whole of what these say.
+   No number, no colour that means a value: a mark that graded the writing
+   would be the report card the journal exists not to be.
+
+   Two marks rather than one with two states, because a person pressing the
+   cell is choosing between two buttons on the card and the corner is what
+   tells them which one has anything behind it. One shape and one ink for
+   both, so they read as a pair: the journal's is filled and a note's is the
+   same circle left open - the journal is the day's own writing and a note is
+   something that happened to be written on it.
+
+   Top right, the one corner of a 52px cell that is free: the number is top
+   left, the ratio under it, the lines under that and the bar along the
+   bottom. --muted rather than --accent, which is what the kept-key dot uses
+   and is the only colour in a cell that means anything. */
+.cell-written {
+  position: absolute;
+  /* Under the 3px strip a stamped day draws along its top, not on it: the
+     template's colour is the loudest thing in the cell and a mark sitting in
+     it reads as part of it. */
+  top: 6px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+
+/* Five pixels, the size the kept-key dot already is: a cell has one
+   vocabulary of marks and a sixth pixel would make these the loudest of
+   them. */
+.cell-written-journal,
+.cell-written-note {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-round);
+  border: 1px solid var(--muted);
+}
+
+.cell-written-journal { background: var(--muted); }
 
 /* The bar, along the bottom edge, inside the cell's own rounding. */
 .cell-bar {
@@ -9903,6 +9948,52 @@ main:has(.week) > .calendar {
 }
 
 .week-stamp-option:hover { background: color-mix(in srgb, var(--chip) 20%, transparent); }
+
+/* The one item in the menu that takes something away, told apart by its ink
+   and by the hairline over it rather than by a colour fill - it is a way in
+   to a question, not the destructive press itself. */
+.week-stamp-option.is-clear {
+  margin-top: var(--s1);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--danger);
+}
+
+.week-stamp-option.is-clear:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+/* The question, in a panel the same shape as the menu it came from, so the
+   seven columns keep the heights the week's picture is made of. */
+.week-col-ask {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: max(100%, 180px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding: var(--s2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--e3);
+}
+
+.week-col-question {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--text);
+}
+
+.week-col-ask-actions { display: flex; gap: var(--s2); }
+
+.week-col-ask-actions button { flex: 1 1 auto; min-height: 32px; font-size: var(--t-sm); }
+
+@media (pointer: coarse) {
+  .week-col-ask-actions button { min-height: var(--touch); }
+  .week-stamp-option { min-height: var(--touch); }
+}
 
 .week-track {
   grid-row: 2;
@@ -12050,6 +12141,20 @@ main:has(.week) > .calendar {
 
 .scratch-field .scratch-input { flex: 1; min-width: 0; }
 
+/* One day of the stream, read rather than written into - see Scratch.tsx.
+   The sentence stands where the box would be, at the box's own weight, so
+   the surface says what it is instead of showing a field that would file a
+   line under the wrong day. */
+.scratch-reading {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: var(--s4);
+  font-size: var(--t-md);
+  line-height: 1.35;
+  color: var(--muted);
+}
+
 /* The controls sit on the first line of the words, not on the panel's
    edge, and the last of them keeps the same air from the right that the
    words keep from the left. */
@@ -12445,24 +12550,30 @@ main:has(.week) > .calendar {
 }
 
 /* ------------------------------------------------------------------------
-   The day preview - views/DayPreview.tsx.
+   The day card - views/DayCard.tsx.
 
    A cell holds three lines and a day has ten, and everything past the third
    used to be reachable only by leaving the month. This is the rest of it, in
-   place, on a mouse that stopped moving.
+   place, on a cell that was pressed.
+
+   Placed by measurement, not by four nth-child flips: it touches its cell on
+   whichever side has room and never leaves the grid - see dayCardPlacement.ts.
+   The stylesheet only says what it looks like and where its corner starts
+   from, which is the positioned .calendar around it.
    ------------------------------------------------------------------------ */
-.day-preview {
+.day-card {
   position: absolute;
-  top: calc(100% + var(--s1));
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
   z-index: 70;
   display: flex;
   flex-direction: column;
   gap: var(--s2);
   width: max-content;
-  min-width: 210px;
-  max-width: min(300px, 90vw);
+  min-width: 240px;
+  max-width: min(320px, 90vw);
+  max-height: 70vh;
+  overflow: hidden;
   padding: var(--s3);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -12470,33 +12581,22 @@ main:has(.week) > .calendar {
   box-shadow: var(--e3);
   color: var(--text);
   text-align: left;
-  /* It hangs over the cells around it, and a popover that swallows a click is
-     a popover that has to be got out of. The two buttons take their own
-     pointer events back below. */
-  pointer-events: none;
 }
-
-.day-preview button { pointer-events: auto; }
-
-/* The cell's own overflow: hidden would clip this to the cell it hangs off,
-   so the grid's cells stop clipping while one is open. Only while one is
-   open: the clip is what keeps a long template name inside its cell. */
-.cell:has(.day-preview) { overflow: visible; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .day-preview { animation: explain-in var(--dur-fast) var(--ease) both; }
+  .day-card { animation: explain-in var(--dur-fast) var(--ease) both; }
 }
 
-.day-preview-head {
+.day-card-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--s2);
 }
 
-.day-preview-date { font-size: var(--t-sm); font-weight: 600; }
+.day-card-date { font-size: var(--t-sm); font-weight: 600; }
 
-.day-preview-template {
+.day-card-template {
+  min-width: 0;
   font-size: var(--t-xs);
   color: var(--muted);
   overflow: hidden;
@@ -12504,9 +12604,32 @@ main:has(.week) > .calendar {
   white-space: nowrap;
 }
 
-.day-preview-empty { margin: 0; font-size: var(--t-sm); color: var(--muted); }
+/* The one control that is not a word, so it keeps the sheet's own cross
+   rather than inventing a third shape for the same gesture. */
+.day-card-close {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-lg);
+  line-height: 1;
+}
 
-.day-preview-list {
+.day-card-close:hover { color: var(--text); border-color: var(--border); }
+
+.day-card-empty { margin: 0; font-size: var(--t-sm); color: var(--muted); }
+
+.day-card-list {
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -12517,38 +12640,87 @@ main:has(.week) > .calendar {
   list-style: none;
 }
 
-.day-preview-list li {
+/* The category's colour as an edge rather than a fill, the same reading the
+   timeline block and the week block already give it. Transparent when the
+   task has no category and the day no template, so no row is ever a
+   different width from the one above it. */
+.day-card-list li {
+  border-left: 3px solid var(--block, transparent);
+  border-radius: 1px;
+  padding-left: var(--s2);
+}
+
+.day-card-check {
   display: flex;
+  align-items: center;
   gap: var(--s2);
+  min-width: 0;
   font-size: var(--t-sm);
   line-height: 1.45;
   color: var(--text);
+  cursor: pointer;
 }
 
-.day-preview-list li.is-key .day-preview-title { font-weight: 600; }
+/* The drawn box the task list uses, at the size a list of ten of them can
+   afford: the real input carries the name and the box beside it is what a
+   finger lands on - see .check, and TaskRow.tsx for the contract. The tick
+   is drawn statically rather than by the task list's keyframe, because a
+   card that opens on a finished day would otherwise draw nine ticks at once
+   as an animation of work being done that nobody just did. */
+.day-card-check input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+}
 
-/* Done is said by the ink going quiet and a rule through it, not by a tick in
-   a colour: a preview is for reading a day, not for working through one. */
-.day-preview-list li.is-done .day-preview-title {
+.day-card-check .check {
+  width: 18px;
+  height: 18px;
+}
+
+.day-card-check input:checked + .check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.day-card-check input:checked + .check::after {
+  left: 5px;
+  top: 2px;
+  width: 3.5px;
+  height: 7px;
+  border-width: 0 2px 2px 0;
+  opacity: 1;
+}
+
+.day-card-check input:focus-visible + .check {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.day-card-list li.is-key .day-card-title { font-weight: 600; }
+
+/* Done is said by the ink going quiet and a rule through it - the same two
+   signals a finished block on the day carries. */
+.day-card-list li.is-done .day-card-title {
   color: var(--faint);
   text-decoration: line-through;
 }
 
-.day-preview-time {
+.day-card-time {
   flex: 0 0 3.2em;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-.day-preview-title {
+.day-card-title {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Two facts, and neither is a verdict - see DayPreview.tsx. */
-.day-preview-stats {
+/* Two facts, and neither is a verdict - see DayCard.tsx. */
+.day-card-stats {
   display: flex;
   gap: var(--s3);
   margin: 0;
@@ -12558,31 +12730,41 @@ main:has(.week) > .calendar {
   color: var(--muted);
 }
 
-.day-preview-actions { display: flex; gap: var(--s2); }
+.day-card-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
 
-.day-preview-actions button { flex: 1 1 auto; min-height: 32px; font-size: var(--t-sm); }
+.day-card-actions button { flex: 1 1 auto; min-height: 32px; font-size: var(--t-sm); }
 
-/* A preview on the last row would hang below the grid and off the screen, and
-   one on the last column would hang past the right edge. Flipped rather than
-   measured: three rules beat a resize observer and a layout effect, and the
-   grid's own columns are the only thing that decides which way it goes. */
-.calendar-grid > [role='row']:last-child .day-preview {
-  top: auto;
-  bottom: calc(100% + var(--s1));
+/* The question, in the place the press was made. It replaces the actions
+   rather than sitting under them, so there is one decision on the card. */
+.day-card-ask {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
 }
 
-.cell:nth-child(7) .day-preview,
-.cell:nth-child(6) .day-preview {
-  left: auto;
-  right: 0;
-  transform: none;
+.day-card-question { margin: 0; font-size: var(--t-sm); color: var(--text); }
+
+/* Its own row under the others, because it is the one action here that takes
+   something away and a row it shared would read as a fifth way out. */
+.day-card-clear { flex: 0 1 auto; }
+
+@media (pointer: coarse) {
+  .day-card-actions button { min-height: var(--touch); }
+  .day-card-check { min-height: var(--touch); }
+  .day-card-close { width: var(--touch); height: var(--touch); }
 }
 
-.cell:nth-child(1) .day-preview,
-.cell:nth-child(2) .day-preview {
-  left: 0;
-  right: auto;
-  transform: none;
+/* A phone's month is 358 by 284 and cannot hold a day, so the card is bounded
+   by the window instead - see dayCardPlacement.ts. What this does is stop it
+   filling that window: a shorter list scrolls, and the day still ends on its
+   actions rather than under the bottom edge. */
+@media (max-width: 699px) {
+  .day-card {
+    max-width: min(320px, 92vw);
+    max-height: 66vh;
+  }
+
+  .day-card-list { max-height: 26vh; }
 }
 
 /* ------------------------------------------------------------------------

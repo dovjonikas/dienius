@@ -1,4 +1,5 @@
 import type { AppData, DayPlan } from './types'
+import { todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
 import { applyStamps } from './stamping'
@@ -34,7 +35,15 @@ export interface EnsuredDay {
   changed: boolean
 }
 
-export function ensuredDay(data: AppData, date: string): EnsuredDay | null {
+/**
+ * @param today The day the person is standing on. An argument rather than a
+ * `todayKey()` read inside, so a test can say which day that is instead of
+ * asking the wall clock and hoping - a fixture dated as a literal passes
+ * until the morning that date goes by. Both callers pass nothing, because for
+ * both of them it really is today: the day view opens the day on screen, and
+ * the replan sheet opens the day somebody chose in it.
+ */
+export function ensuredDay(data: AppData, date: string, today: string = todayKey()): EnsuredDay | null {
   const existing = data.days[date]
   if (existing?.autoApplied) return null
 
@@ -43,7 +52,15 @@ export function ensuredDay(data: AppData, date: string): EnsuredDay | null {
   // A day that already carries a templateId was stamped on purpose - by
   // hand, or from the calendar - and the weekday map does not get to argue
   // with it.
-  const shouldStamp = !!template && !existing?.templateId
+  //
+  // Nor does the map reach backwards. Scrolling back to look at a Friday
+  // nobody opened is not a reason to fill it in: a plan stamped onto a day
+  // that was already over is a plan nobody made, and the month grid draws it
+  // a ratio and Review counts it in "where the plan and the week disagreed"
+  // as though it had been. Repeats are the other promise on this function and
+  // are deliberately left alone - a series that was running was running, and
+  // that is a fact about the day rather than an invention.
+  const shouldStamp = !!template && !existing?.templateId && date >= today
 
   let days = data.days
   if (shouldStamp) {

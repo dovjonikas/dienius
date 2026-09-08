@@ -215,6 +215,40 @@ test('a column header stamps a template straight onto its own day', async () => 
 
 // Stamp week and the arrows moved to the calendar bar - see CalendarView.test.
 
+/**
+ * Clearing a day, offered in the menu the stamp is chosen from, because that
+ * is one moment rather than two: a week template put in on a Wednesday
+ * afternoon fills two days that have already been half lived, and the owner's
+ * words for it were that a delete "helps especially if you put a week
+ * template in mid-week".
+ */
+test('the column head offers a way to empty the day, and asks once with the count and the day', async () => {
+  const user = userEvent.setup()
+  const template = actions.addTemplate({
+    name: 'Work',
+    color: '#8ab6f9',
+    blocks: [{ time: '09:00', title: 'Standup' }, { time: '11:00', title: 'Deep work' }],
+  })
+  actions.stamp({ [MON]: template.id })
+  renderWeek()
+
+  await user.click(within(column(MON)).getByRole('button', { name: /Work on Mon/i }))
+  await user.click(within(column(MON)).getByRole('menuitem', { name: 'Clear this day' }))
+  expect(within(column(MON)).getByText('Clear 2 tasks from Monday?')).toBeInTheDocument()
+
+  await user.click(within(column(MON)).getByRole('button', { name: 'Clear' }))
+  expect(getData().days[MON].tasks).toEqual([])
+})
+
+test('a day with nothing on it is not offered a way to clear it', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  renderWeek()
+
+  await user.click(within(column(TUE)).getByRole('button', { name: /Stamp a template onto Tue/i }))
+  expect(within(column(TUE)).queryByRole('menuitem', { name: 'Clear this day' })).toBeNull()
+})
+
 test('a column header opens that day', async () => {
   const user = userEvent.setup()
   const { onOpenDay } = renderWeek()

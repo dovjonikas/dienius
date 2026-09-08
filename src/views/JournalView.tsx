@@ -24,11 +24,21 @@ import { useRestoreFocus } from '../lib/useRestoreFocus'
 /** How long typing settles before it is written. The same as the panel's. */
 const SAVE_AFTER_MS = 500
 
-export function JournalView() {
+export interface JournalViewProps {
+  /**
+   * The day it opens on. Today when nobody says otherwise, which is every
+   * way in but one: the month's day card opens this at the day it is about,
+   * because "Journal" on a card headed Wednesday that opened on today would
+   * be the wrong day's writing under the right day's button.
+   */
+  date?: string
+}
+
+export function JournalView({ date: opensOn }: JournalViewProps = {}) {
   const data = useAppData()
-  const [date, setDate] = useState(todayKey)
+  const [date, setDate] = useState(() => opensOn ?? todayKey())
   const [query, setQuery] = useState('')
-  const [text, setText] = useState(() => data.days[todayKey()]?.journal ?? '')
+  const [text, setText] = useState(() => data.days[opensOn ?? todayKey()]?.journal ?? '')
   // What one of the two copy buttons is saying instead of its name, for a
   // moment: Copied, or that there was nothing to copy.
   const [said, setSaid] = useState<{ which: 'day' | 'month'; text: string } | null>(null)
@@ -162,7 +172,7 @@ export function JournalView() {
  * place to be, and the rail is for the six places a day is planned from. It
  * closes on Escape and on the scrim, like every other overlay here.
  */
-export function JournalOverlay({ onClose }: { onClose: () => void }) {
+export function JournalOverlay({ onClose, date }: { onClose: () => void; date?: string }) {
   useRestoreFocus()
   return (
     <div className="journal-scrim" onClick={onClose}>
@@ -181,7 +191,7 @@ export function JournalOverlay({ onClose }: { onClose: () => void }) {
         <button type="button" className="task-detail-close journal-close" aria-label="Close" onClick={onClose}>
           &times;
         </button>
-        <JournalView />
+        <JournalView date={date} />
       </div>
     </div>
   )

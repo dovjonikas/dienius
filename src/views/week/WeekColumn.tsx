@@ -7,6 +7,7 @@ import { formatClock } from '../../widgets/day-plan/timelineLayout'
 import { categoryColor } from '../../lib/categories'
 import { shortWeekday } from '../../lib/dates'
 import type { DayEvent } from '../../lib/calendars'
+import { clearDayQuestion } from '../clearDay'
 import type { WeekBlock, WeekDayLayout } from './weekLayout'
 
 /**
@@ -63,10 +64,19 @@ export interface WeekColumnProps {
   journalLine?: string
   /** All of the day's lines, for the title behind the one shown. */
   journalTitle?: string
+  /**
+   * Everything on the day, which is what "Clear 9 tasks" counts - not the
+   * blocks the column draws. A done task and a set-aside block are both on
+   * the day and both go, and a question that named a smaller number than it
+   * was about would be the one thing an armed press must not do.
+   */
+  taskCount: number
   onBlockPointerDown: (block: WeekBlock, e: React.PointerEvent) => void
   onEmptyClick: (percent: number) => void
   onStamp: (templateId: string) => void
   onOpenDay: () => void
+  /** Empties the day - see views/clearDay.ts. Offered here because a week stamped on a Wednesday is the moment it is wanted. */
+  onClear: () => void
 }
 
 export function WeekColumn({
@@ -86,12 +96,15 @@ export function WeekColumn({
   replanned = false,
   journalLine,
   journalTitle,
+  taskCount,
   onBlockPointerDown,
   onEmptyClick,
   onStamp,
   onOpenDay,
+  onClear,
 }: WeekColumnProps) {
   const [stampOpen, setStampOpen] = useState(false)
+  const [clearing, setClearing] = useState(false)
   const span = window.end - window.start
   const nowPercent = ((nowMinutes - window.start) / span) * 100
   const showNow = isToday && nowPercent >= 0 && nowPercent <= 100
@@ -194,6 +207,48 @@ export function WeekColumn({
                 {t.name}
               </button>
             ))}
+            {/* In the menu the stamp is chosen from, because emptying a day
+                is the other half of the same moment: a week stamped on a
+                Wednesday afternoon fills two days nobody is going to live.
+                Only on a day that has something to clear. */}
+            {taskCount > 0 && (
+              <button
+                type="button"
+                role="menuitem"
+                className="week-stamp-option is-clear"
+                onClick={() => {
+                  setStampOpen(false)
+                  setClearing(true)
+                }}
+              >
+                Clear this day
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Asked where the press was made, in a panel the same shape as the
+            menu it came from, so the seven columns keep their heights - the
+            week is a picture, and a row that grows to hold a question is a
+            picture that changes size to ask one. */}
+        {clearing && (
+          <div className="week-col-ask">
+            <p className="week-col-question">{clearDayQuestion(day.date, taskCount)}</p>
+            <div className="week-col-ask-actions">
+              <button
+                type="button"
+                className="btn-danger is-armed"
+                onClick={() => {
+                  onClear()
+                  setClearing(false)
+                }}
+              >
+                Clear
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setClearing(false)}>
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>

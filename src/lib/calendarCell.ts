@@ -44,12 +44,31 @@ export function resolveTemplate(templateId: string | null | undefined, templates
  * needs to reach. It also carries whether the day has tasks at all and
  * whether they are finished - see taskState above for why that cannot be
  * left to the cell's color alone.
+ *
+ * `written` is the same rule for the two corner marks: a five pixel dot
+ * says nothing to somebody who is not looking at it, and "something is
+ * written here" is exactly the kind of thing a person walking the month
+ * with a keyboard wants to hear before deciding whether to open a day.
+ * Absent for a caller that does not draw the marks - the mini calendar
+ * does not - and it says which of the two, never how much.
  */
-export function cellLabel(cell: MonthCell, templateName: string | undefined, state: TaskState): string {
+export interface CellWriting {
+  journal: boolean
+  note: boolean
+}
+
+export function cellLabel(
+  cell: MonthCell,
+  templateName: string | undefined,
+  state: TaskState,
+  written?: CellWriting,
+): string {
   const parts = [formatDayTitle(cell.key)]
   if (templateName) parts.push(templateName)
   if (state === 'unfinished') parts.push('has unfinished tasks')
   if (state === 'done') parts.push('tasks completed')
+  if (written?.journal) parts.push('journal written')
+  if (written?.note) parts.push('note written')
   return parts.join(', ')
 }
 

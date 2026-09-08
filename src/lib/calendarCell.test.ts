@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { cellPoints } from './calendarCell'
+import { cellLabel, cellPoints } from './calendarCell'
 import type { Task } from './types'
 
 function task(id: string, title: string, extra: Partial<Task> = {}): Task {
@@ -61,5 +61,36 @@ describe('the lines a month cell shows', () => {
   test('a day with nothing on it has nothing to say', () => {
     expect(cellPoints(undefined, 3)).toEqual({ points: [], more: 0 })
     expect(cellPoints({ tasks: [] }, 3)).toEqual({ points: [], more: 0 })
+  })
+})
+
+/**
+ * The two corner marks, in the cell's name.
+ *
+ * A five pixel dot says nothing to somebody walking the month with a
+ * keyboard, and the month grid is one tab stop and the arrow keys. The name
+ * says which of the two there is and never how much: a count would be the
+ * grading the marks themselves refuse.
+ */
+describe('what a cell says about writing on the day', () => {
+  const CELL = { key: '2026-09-07', inMonth: true }
+
+  test('it names the journal and the note apart, and says nothing when there is neither', () => {
+    expect(cellLabel(CELL, undefined, 'none')).toBe('Monday, September 7')
+    expect(cellLabel(CELL, undefined, 'none', { journal: true, note: false })).toBe(
+      'Monday, September 7, journal written',
+    )
+    expect(cellLabel(CELL, undefined, 'none', { journal: false, note: true })).toBe(
+      'Monday, September 7, note written',
+    )
+    expect(cellLabel(CELL, undefined, 'none', { journal: true, note: true })).toBe(
+      'Monday, September 7, journal written, note written',
+    )
+  })
+
+  test('it comes after what the day is and what is on it, which is what a cell is for', () => {
+    expect(cellLabel(CELL, 'Working day', 'unfinished', { journal: true, note: true })).toBe(
+      'Monday, September 7, Working day, has unfinished tasks, journal written, note written',
+    )
   })
 })

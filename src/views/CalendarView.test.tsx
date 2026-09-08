@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { CalendarView } from './CalendarView'
 import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
-import { todayKey } from '../lib/dates'
+import { addDays, formatDayTitle, todayKey, weekOf } from '../lib/dates'
 import { SLOWDOWN_LIMIT, STRESS_TIMEOUT_MS, measureSlowdown, timed } from '../test/stress'
 
 beforeEach(() => {
@@ -80,12 +80,65 @@ test('each day cell announces its full date, not just the bare day number', () =
   }
 })
 
-test('clicking a day outside stamp mode opens it', async () => {
+/**
+ * The card that used to appear on hover and leave again the moment the
+ * pointer travelled toward it - so nothing on it could be reached. It opens
+ * on a press now, and opening the day itself is one of the things on it.
+ * Rewritten from "clicking a day outside stamp mode opens it", which
+ * asserted the old contract.
+ */
+test('pressing a day opens its card, and the card is where the day itself is opened from', async () => {
   const user = userEvent.setup()
   let opened = ''
   render(<CalendarView onOpenDay={d => (opened = d)} />)
+  const cell = screen.getAllByRole('gridcell')[10]
+  const date = cell.getAttribute('data-date') as string
+
+  await user.click(cell)
+  expect(opened).toBe('')
+  const card = screen.getByRole('dialog')
+  expect(card).toBeInTheDocument()
+
+  await user.click(within(card).getByRole('button', { name: 'Open day' }))
+  expect(opened).toBe(date)
+})
+
+test('the card stays open until it is closed, and Escape closes it', async () => {
+  const user = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+
+  await user.click(cells[10])
+  // Nothing about moving the pointer away closes it any more.
+  fireEvent.pointerLeave(cells[10])
+  fireEvent.pointerEnter(cells[20])
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+// Enter on a focused cell is the same press, so the grid's one tab stop and
+// its arrow keys still reach everything - lib/gridKeys.ts.
+test('Enter on the focused cell opens that cell\'s card', async () => {
+  const user = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cell = screen.getAllByRole('gridcell')[10]
+  const date = cell.getAttribute('data-date') as string
+
+  cell.focus()
+  await user.keyboard('{Enter}')
+  expect(screen.getByRole('dialog', { name: formatDayTitle(date) })).toBeInTheDocument()
+})
+
+test('a template in hand keeps the card away, because every cell is a brush', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Work day', color: '#a7c4f5', blocks: [] })
+  render(<CalendarView onOpenDay={() => {}} />)
+
+  await user.click(screen.getByRole('button', { name: 'Work day' }))
   await user.click(screen.getAllByRole('gridcell')[10])
-  expect(opened).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  expect(screen.queryByRole('dialog')).toBeNull()
 })
 
 test('stamping a day stages it and save commits it', async () => {
@@ -271,6 +324,76 @@ test('a stamped day with an extra hand-added unfinished task still reads as unfi
   expect(updated.getAttribute('aria-label')).toMatch(/unfinished/i)
 })
 
+/**
+ * A mark in the corner of a day that has writing on it, and nothing else:
+ * the owner's third point, "if we write notes on a day, in the calendar we
+ * should also see a mark for a note or a journal and be able to press it and
+ * see what is written". Two marks, so the two doors on the card are told
+ * apart; no number and no colour that means a value, because a mark that
+ * graded the writing would be the report card the journal exists not to be.
+ */
+test('a day with a journal line and a day with a note each carry their own mark', () => {
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  // A note is dated the day it is written on, so today is the honest day to
+  // write one for - see lib/scratch.ts.
+  const noted = todayKey()
+  const written = cells.map(c => c.getAttribute('data-date') as string).find(d => d !== noted) as string
+
+  expect(cells[0].querySelector('.cell-written')).toBeNull()
+
+  act(() => {
+    actions.setJournal(written, 'It rained all afternoon.')
+    actions.addScratch('The number is 8812')
+  })
+
+  const cell = (date: string) => screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(cell(written).querySelector('.cell-written-journal')).not.toBeNull()
+  expect(cell(written).querySelector('.cell-written-note')).toBeNull()
+  expect(cell(noted).querySelector('.cell-written-note')).not.toBeNull()
+  expect(cell(noted).querySelector('.cell-written-journal')).toBeNull()
+})
+
+// A dot says nothing to somebody who is not looking at one, and the month
+// grid is one tab stop walked with the arrow keys.
+test('the marks are in the cell\'s name too, so a keyboard hears them', () => {
+  render(<CalendarView onOpenDay={() => {}} />)
+  const date = todayKey()
+
+  act(() => {
+    actions.setJournal(date, 'A good one.')
+    actions.addScratch('Ring the dentist')
+  })
+
+  const cell = screen.getAllByRole('gridcell').find(c => c.getAttribute('data-date') === date)!
+  expect(cell.getAttribute('aria-label')).toMatch(/journal written/)
+  expect(cell.getAttribute('aria-label')).toMatch(/note written/)
+  expect(cell.getAttribute('aria-label')).not.toMatch(/\d+ notes?/)
+})
+
+test('the card opens Notes and Journal at the day it is about', async () => {
+  const user = userEvent.setup()
+  const notes: string[] = []
+  const journal: string[] = []
+  render(
+    <CalendarView
+      onOpenDay={() => {}}
+      onOpenNotes={d => notes.push(d)}
+      onOpenJournal={d => journal.push(d)}
+    />,
+  )
+  const cell = screen.getAllByRole('gridcell')[10]
+  const date = cell.getAttribute('data-date') as string
+
+  await user.click(cell)
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Notes' }))
+  await user.click(cell)
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Journal' }))
+
+  expect(notes).toEqual([date])
+  expect(journal).toEqual([date])
+})
+
 test('a day whose template was deleted still shows its remaining tasks', () => {
   const t = actions.addTemplate({ name: 'Work day', color: '#a7c4f5', blocks: [{ title: 'Gym' }] })
   render(<CalendarView onOpenDay={() => {}} />)
@@ -403,16 +526,21 @@ async function openWeek(date = '2026-09-02') {
   return { ...result, user, onDateChange }
 }
 
+// Next week rather than a week written out as dates. Since v2.8 the button
+// stamps from the day it is pressed on and never behind it, so a week spelled
+// in literal dates is a week it correctly refuses the moment those dates go
+// by - see views/week/weekStamp.ts.
+const NEXT_WEEK = weekOf(addDays(todayKey(), 7))
+
 test('Stamp week fills every day the weekday plan names', async () => {
   wideScreen(true)
   const template = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
   for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, template.id)
-  const { user } = await openWeek()
+  const { user } = await openWeek(NEXT_WEEK[0])
 
   await user.click(screen.getByRole('button', { name: 'Stamp week' }))
 
-  const week = ['2026-08-31', '2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05', '2026-09-06']
-  expect(week.filter(d => getData().days[d]?.templateId === template.id)).toHaveLength(5)
+  expect(NEXT_WEEK.filter(d => getData().days[d]?.templateId === template.id)).toHaveLength(5)
 })
 
 /**
@@ -425,12 +553,25 @@ test('Stamp week leaves a day that already has a template alone', async () => {
   const work = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Standup' }] })
   const rest = actions.addTemplate({ name: 'Rest', color: '#cde39e', blocks: [] })
   for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, work.id)
-  actions.stamp({ '2026-08-31': rest.id })
-  const { user } = await openWeek()
+  actions.stamp({ [NEXT_WEEK[0]]: rest.id })
+  const { user } = await openWeek(NEXT_WEEK[0])
 
   await user.click(screen.getByRole('button', { name: 'Stamp week' }))
-  expect(getData().days['2026-08-31'].templateId).toBe(rest.id)
-  expect(getData().days['2026-09-01'].templateId).toBe(work.id)
+  expect(getData().days[NEXT_WEEK[0]].templateId).toBe(rest.id)
+  expect(getData().days[NEXT_WEEK[1]].templateId).toBe(work.id)
+})
+
+/**
+ * The rule the button keeps since v2.8, from the owner's own case: a week
+ * template put in mid-week starts at the day it is put in. A week wholly
+ * behind you has nothing it could honestly fill, so it offers nothing.
+ */
+test('a week wholly in the past has no Stamp week button at all', async () => {
+  wideScreen(true)
+  const template = actions.addTemplate({ name: 'Work', color: '#8ab6f9', blocks: [] })
+  for (const weekday of [1, 2, 3, 4, 5]) actions.setWeekdayTemplate(weekday, template.id)
+  await openWeek(addDays(todayKey(), -14))
+  expect(screen.queryByRole('button', { name: 'Stamp week' })).toBeNull()
 })
 
 test('with no weekday plan at all there is no Stamp week button to wonder about', async () => {
@@ -488,4 +629,29 @@ test('the month grid is one tab stop, and the arrows walk it across a month boun
   const next = document.activeElement?.getAttribute('data-date')
   expect(next).not.toBe(from)
   expect(next! > from).toBe(true)
+})
+
+/**
+ * Walking the grid with the arrows and pressing Enter on a second cell builds
+ * a new card. Without that, an armed "Clear 9 tasks from Wednesday?" would be
+ * carried onto Thursday and the next press would empty a day nobody asked
+ * about.
+ */
+test('a question armed on one day does not travel to the next one', async () => {
+  const user = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} />)
+  const cells = screen.getAllByRole('gridcell')
+  const first = cells[10].getAttribute('data-date') as string
+
+  act(() => {
+    actions.addTask(first, 'Finish the report')
+  })
+  await user.click(screen.getAllByRole('gridcell')[10])
+  await user.click(screen.getByRole('button', { name: 'Clear this day' }))
+  expect(screen.getByText(/^Clear 1 task from /)).toBeInTheDocument()
+
+  cells[10].focus()
+  await user.keyboard('{ArrowRight}{Enter}')
+  expect(screen.queryByText(/^Clear /)).toBeNull()
+  expect(getData().days[first].tasks).toHaveLength(1)
 })

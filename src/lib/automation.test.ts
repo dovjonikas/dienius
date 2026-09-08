@@ -1,6 +1,8 @@
 import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
 import { defaultData } from './storage'
+import { addDays, todayKey } from './dates'
+import { weekdayOf } from './repeats'
 
 // The same Wednesday-anchored week repeats.test.ts uses.
 const WED = '2026-09-02'
@@ -128,6 +130,23 @@ test('changing it for just this day detaches the instance and leaves the series 
 })
 
 // --- ensureDay: the weekday map ------------------------------------------
+//
+// These days are worked out from today rather than pinned like the Wednesday
+// above, because since v2.8 the map does not stamp a day that is already past
+// - see lib/ensureDay.ts. A Thursday written down as a literal is a fixture
+// that passes until that Thursday goes by, which is a failure nobody reading
+// the test would be able to explain.
+
+/** The next Thursday there is, today included. */
+function thursdayAhead(): string {
+  let day = todayKey()
+  while (weekdayOf(day) !== 4) day = addDays(day, 1)
+  return day
+}
+
+const MAPPED_THU = thursdayAhead()
+const MAPPED_FRI = addDays(MAPPED_THU, 1)
+const A_PAST_DAY = addDays(todayKey(), -7)
 
 function seedTemplate(name: string) {
   return actions.addTemplate({
@@ -138,23 +157,35 @@ function seedTemplate(name: string) {
 }
 
 test('a weekday with no template starts empty, exactly as it always has', () => {
-  actions.ensureDay(THU)
-  expect(titles(THU)).toEqual([])
+  actions.ensureDay(MAPPED_THU)
+  expect(titles(MAPPED_THU)).toEqual([])
 })
 
 test('a mapped weekday opens already stamped', () => {
   const template = seedTemplate('Working day')
   actions.setWeekdayTemplate(4, template.id) // Thursday
-  actions.ensureDay(THU)
-  expect(titles(THU)).toEqual(['Working day block'])
-  expect(getData().days[THU].templateId).toBe(template.id)
+  actions.ensureDay(MAPPED_THU)
+  expect(titles(MAPPED_THU)).toEqual(['Working day block'])
+  expect(getData().days[MAPPED_THU].templateId).toBe(template.id)
+})
+
+// The owner's rule at the door it is actually reached through: "not put
+// anything on the days already past". Scrolling back to a day nobody opened
+// must not invent the plan it would have had, because the month grid and
+// Review then read that invention back as a day somebody planned and dropped.
+test('a mapped weekday that is already past opens empty rather than being filled in behind you', () => {
+  const template = seedTemplate('Working day')
+  actions.setWeekdayTemplate(weekdayOf(A_PAST_DAY), template.id)
+  expect(actions.ensureDay(A_PAST_DAY)).toBe(false)
+  expect(titles(A_PAST_DAY)).toEqual([])
+  expect(getData().days[A_PAST_DAY].templateId).toBeUndefined()
 })
 
 test('only the mapped weekday is stamped', () => {
   const template = seedTemplate('Working day')
   actions.setWeekdayTemplate(4, template.id)
-  actions.ensureDay(FRI)
-  expect(titles(FRI)).toEqual([])
+  actions.ensureDay(MAPPED_FRI)
+  expect(titles(MAPPED_FRI)).toEqual([])
 })
 
 // A deliberate choice outranks a standing one, always.
@@ -162,28 +193,28 @@ test('a day stamped by hand is never re-stamped by the map', () => {
   const working = seedTemplate('Working day')
   const rest = seedTemplate('Rest day')
   actions.setWeekdayTemplate(4, working.id)
-  actions.stamp({ [THU]: rest.id })
+  actions.stamp({ [MAPPED_THU]: rest.id })
 
-  actions.ensureDay(THU)
-  expect(titles(THU)).toEqual(['Rest day block'])
-  expect(getData().days[THU].templateId).toBe(rest.id)
+  actions.ensureDay(MAPPED_THU)
+  expect(titles(MAPPED_THU)).toEqual(['Rest day block'])
+  expect(getData().days[MAPPED_THU].templateId).toBe(rest.id)
 })
 
 test('a template deleted off an auto-stamped day stays deleted', () => {
   const template = seedTemplate('Working day')
   actions.setWeekdayTemplate(4, template.id)
-  actions.ensureDay(THU)
-  actions.deleteTask(THU, tasks(THU)[0].id)
-  actions.ensureDay(THU)
-  expect(titles(THU)).toEqual([])
+  actions.ensureDay(MAPPED_THU)
+  actions.deleteTask(MAPPED_THU, tasks(MAPPED_THU)[0].id)
+  actions.ensureDay(MAPPED_THU)
+  expect(titles(MAPPED_THU)).toEqual([])
 })
 
 test('a map pointing at a template that was deleted stamps nothing rather than failing', () => {
   const template = seedTemplate('Working day')
   actions.setWeekdayTemplate(4, template.id)
   actions.deleteTemplate(template.id)
-  expect(() => actions.ensureDay(THU)).not.toThrow()
-  expect(titles(THU)).toEqual([])
+  expect(() => actions.ensureDay(MAPPED_THU)).not.toThrow()
+  expect(titles(MAPPED_THU)).toEqual([])
 })
 
 test('clearing a weekday removes it from the map rather than storing an empty id', () => {
@@ -198,9 +229,9 @@ test('clearing a weekday removes it from the map rather than storing an empty id
 test('a mapped day gets its template and its repeats together', () => {
   const template = seedTemplate('Working day')
   actions.setWeekdayTemplate(4, template.id)
-  seedRepeating('daily')
-  actions.ensureDay(THU)
-  expect(titles(THU).sort()).toEqual(['Medication', 'Working day block'])
+  seedRepeating('daily', addDays(MAPPED_THU, -1))
+  actions.ensureDay(MAPPED_THU)
+  expect(titles(MAPPED_THU).sort()).toEqual(['Medication', 'Working day block'])
 })
 
 // The two nudges that used to be tested here - one before a timed task, one

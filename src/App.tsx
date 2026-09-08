@@ -55,7 +55,12 @@ export function App() {
   // The whole journal, as an overlay rather than a seventh tab in the rail:
   // it is a place to read back rather than a place to be, the same shape as
   // Scratch. See views/JournalView.
-  const [journalOpen, setJournalOpen] = useState(false)
+  //
+  // Open is an object rather than a boolean because since v2.8 both of these
+  // can be opened *at a day* - the month's day card asks for that day's
+  // writing, not for the general view. One state rather than a flag beside a
+  // date, so the two can never disagree about which day is being read.
+  const [journalOpen, setJournalOpen] = useState<{ date?: string } | null>(null)
   const [focusExpanded, setFocusExpanded] = useState(false)
   const tools = useClockTools()
   const focusTask = tools.focus
@@ -64,7 +69,7 @@ export function App() {
   const [selectedDate, setSelectedDate] = useState(todayKey())
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const [scratchOpen, setScratchOpen] = useState(false)
+  const [scratchOpen, setScratchOpen] = useState<{ date?: string } | null>(null)
   // The two small panels beside the clock. Each is its own door: they were
   // tabs three and four of the clock panel for one version, which meant
   // reaching a line you wanted to write by pressing a picture of a clock.
@@ -183,7 +188,7 @@ export function App() {
         // (the detail sheet, the actions menu) stops the event before it
         // reaches here, so those close themselves first and this never
         // fires underneath them.
-        if (scratchOpen) setScratchOpen(false)
+        if (scratchOpen) setScratchOpen(null)
         else if (paletteOpen) setPaletteOpen(false)
         else if (shortcutsOpen) setShortcutsOpen(false)
         else if (focusExpanded) setFocusExpanded(false)
@@ -223,7 +228,7 @@ export function App() {
         // backtick is the corner key nothing else in this app wants.
         case 's':
         case '`':
-          setScratchOpen(true)
+          setScratchOpen({})
           break
         case '?':
           setShortcutsOpen(true)
@@ -382,7 +387,7 @@ export function App() {
         setFocusQuickAdd(n => n + 1)
       },
     },
-    { id: 'scratch', label: 'Notes', detail: 'Write something down now, sort it out later', run: () => setScratchOpen(true) },
+    { id: 'scratch', label: 'Notes', detail: 'Write something down now, sort it out later', run: () => setScratchOpen({}) },
     { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(25 * 60_000) },
     { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
@@ -478,7 +483,7 @@ export function App() {
                 <NotesPanel
                   onOpenFull={() => {
                     setNotesOpen(false)
-                    setScratchOpen(true)
+                    setScratchOpen({})
                   }}
                   onClose={() => setNotesOpen(false)}
                 />
@@ -501,7 +506,7 @@ export function App() {
                 <JournalPanel
                   onOpenFull={() => {
                     setJournalPanelOpen(false)
-                    setJournalOpen(true)
+                    setJournalOpen({})
                   }}
                 />
               </HeaderPopover>
@@ -549,7 +554,7 @@ export function App() {
               onOpenNorth={() => setView('north')}
               openTask={openTaskRequest}
               onOpenTaskDone={() => setOpenTaskRequest(null)}
-              onOpenNote={() => setScratchOpen(true)}
+              onOpenNote={() => setScratchOpen({})}
             />
           ))}
         {view === 'calendar' && (
@@ -558,6 +563,8 @@ export function App() {
             onOpenTemplates={() => setView('templates')}
             date={selectedDate}
             onDateChange={setSelectedDate}
+            onOpenNotes={date => setScratchOpen({ date })}
+            onOpenJournal={date => setJournalOpen({ date })}
           />
         )}
         {view === 'north' && <NorthView />}
@@ -602,7 +609,7 @@ export function App() {
           actions={paletteActions}
           onOpenDay={openDay}
           onOpenLibrary={() => setView('library')}
-          onOpenScratch={() => setScratchOpen(true)}
+          onOpenScratch={() => setScratchOpen({})}
           onClose={() => setPaletteOpen(false)}
         />
       )}
@@ -625,8 +632,13 @@ export function App() {
           somebody had to park somewhere, it sat over the bottom of every
           screen, and the rail put a pen in the same corner of the same bar
           as everything else - one control, one place, both platforms. */}
-      <Scratch open={scratchOpen} onClose={() => setScratchOpen(false)} onOpenTask={openTask} />
-      {journalOpen && <JournalOverlay onClose={() => setJournalOpen(false)} />}
+      <Scratch
+        open={scratchOpen !== null}
+        date={scratchOpen?.date}
+        onClose={() => setScratchOpen(null)}
+        onOpenTask={openTask}
+      />
+      {journalOpen && <JournalOverlay date={journalOpen.date} onClose={() => setJournalOpen(null)} />}
     </div>
   )
 }

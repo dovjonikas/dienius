@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
 import { actions, getData, useAppData } from '../../lib/store'
-import { addDays, formatDayShort, todayKey } from '../../lib/dates'
+import { addDays, formatDayShort, formatDayTitle, todayKey } from '../../lib/dates'
 import { offerUndo } from '../../lib/undo'
-import { isTaskIntent, isTaskMarkOnly, scratchCount, sortScratch, stripTaskMark } from '../../lib/scratch'
+import { isTaskIntent, isTaskMarkOnly, notesOn, scratchCount, sortScratch, stripTaskMark } from '../../lib/scratch'
 import { keepPhoto, refusePhoto, shrinkPhoto } from '../../lib/photos'
 import { NotePhotos } from './NotePhotos'
 import { NoteToTask } from './NoteToTask'
@@ -22,6 +22,18 @@ import type { ScratchNote } from '../../lib/types'
  * What a note can become is on the note itself, later: a task on today
  * (through quick-add's own parser, so "14:00 Call the bank 20 min" lands
  * timed and sized), a line in Later, a pinned note, or nothing.
+ *
+ * ## Reading one day of it
+ *
+ * `date` opens the stream at a day: what was written on it, and a way back
+ * to all of it. Every note records the day it was written on, so this is a
+ * reading of the one stream and not a second place to put things - the
+ * distinction that matters is that it never changes where a *new* line
+ * goes. A note written now is dated now, whatever day is on screen, so on
+ * any day but today the box is not drawn at all and the surface is what was
+ * written then. Writing into last Wednesday is the one thing this could
+ * offer that would be a lie. The three ways in that exist to be instant -
+ * the key, the palette, the header - pass no date and are unchanged.
  */
 
 export interface ScratchProps {
@@ -29,16 +41,31 @@ export interface ScratchProps {
   onClose: () => void
   /** Opens a day at a task - the way back from a note to what it became. */
   onOpenTask?: (date: string, taskId: string) => void
+  /** Opens the stream at one day: what was written on it - see above. */
+  date?: string
 }
 
-export function Scratch({ open, onClose, onOpenTask }: ScratchProps) {
+export function Scratch({ open, onClose, onOpenTask, date }: ScratchProps) {
   if (!open) return null
-  return <ScratchPanel onClose={onClose} onOpenTask={onOpenTask} />
+  return <ScratchPanel onClose={onClose} onOpenTask={onOpenTask} date={date} />
 }
 
-function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask?: (date: string, taskId: string) => void }) {
+function ScratchPanel({
+  onClose,
+  onOpenTask,
+  date,
+}: {
+  onClose: () => void
+  onOpenTask?: (date: string, taskId: string) => void
+  date?: string
+}) {
   useRestoreFocus()
   const data = useAppData()
+  // Which day is being read, and null for the whole stream. State rather
+  // than the prop alone, because "Show every note" is the way back and a
+  // reading that could not be left would be a filter in the way of the
+  // stream - the thing the tags were removed for.
+  const [reading, setReading] = useState<string | null>(date ?? null)
   const [draft, setDraft] = useState('')
   const [draftId, setDraftId] = useState<string | null>(null)
   const [taskMode, setTaskMode] = useState(false)
@@ -191,7 +218,12 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
     }
   }
 
-  const notes = sortScratch(data.scratch).filter(n => n.id !== draftId)
+  // A note is dated the day it was written, so a day that is not today can
+  // be read but not written into - see the module comment.
+  const writing = reading === null || reading === todayKey()
+  const notes = (reading === null ? sortScratch(data.scratch) : notesOn(data.scratch, reading)).filter(
+    n => n.id !== draftId,
+  )
   const draftNote = draftId === null ? undefined : data.scratch.find(n => n.id === draftId)
   const makingNote = making === null ? undefined : data.scratch.find(n => n.id === making)
 
@@ -224,50 +256,61 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
       <div
         className="scratch"
         role="dialog"
-        aria-label="Notes"
+        aria-label={reading ? `Notes on ${formatDayTitle(reading)}` : 'Notes'}
         data-keeps-keys=""
         onClick={e => e.stopPropagation()}
         onDrop={onDrop}
         onDragOver={e => e.preventDefault()}
       >
-        <div className="scratch-field">
-          <textarea
-            ref={inputRef}
-            className="scratch-input"
-            aria-label="Note"
-            placeholder={intent ? 'Something to do. Enter sends it to Later.' : 'Write it down. Enter keeps it.'}
-            rows={1}
-            value={draft}
-            onChange={e => handleChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={onPaste}
-          />
+        <div className={writing ? 'scratch-field' : 'scratch-field is-reading'}>
+          {writing ? (
+            <textarea
+              ref={inputRef}
+              className="scratch-input"
+              aria-label="Note"
+              placeholder={intent ? 'Something to do. Enter sends it to Later.' : 'Write it down. Enter keeps it.'}
+              rows={1}
+              value={draft}
+              onChange={e => handleChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onPaste={onPaste}
+            />
+          ) : (
+            /* No box on a day that is not today, because a line typed now
+               is dated now - see the module comment. The sentence stands
+               where the box would be, so the surface says what it is. */
+            <p className="scratch-reading">What was written on {formatDayTitle(reading!)}</p>
+          )}
           {/* Where this line is going, said before Enter rather than after.
               The toggle and the leading "!" are the same intent expressed two
               ways - one for a thumb, one for somebody already typing - and
               the marker shows whichever is in force, so a line that starts
               with "!" reads as a task without the toggle having been touched. */}
-          <button
-            type="button"
-            className={intent ? 'scratch-intent is-task' : 'scratch-intent'}
-            aria-pressed={intent}
-            aria-label={intent ? 'Going to Later as a task. Make it a note instead' : 'Staying as a note. Make it a task instead'}
-            onClick={() => {
-              // Turning it off has to take the mark off too, or the line would
-              // still read as a task and the toggle would appear not to work.
-              if (typedIntent) handleChange(stripTaskMark(draft))
-              setTaskMode(!intent)
-            }}
-          >
-            {intent ? 'Task' : 'Note'}
-          </button>
+          {writing && (
+            <button
+              type="button"
+              className={intent ? 'scratch-intent is-task' : 'scratch-intent'}
+              aria-pressed={intent}
+              aria-label={intent ? 'Going to Later as a task. Make it a note instead' : 'Staying as a note. Make it a task instead'}
+              onClick={() => {
+                // Turning it off has to take the mark off too, or the line would
+                // still read as a task and the toggle would appear not to work.
+                if (typedIntent) handleChange(stripTaskMark(draft))
+                setTaskMode(!intent)
+              }}
+            >
+              {intent ? 'Task' : 'Note'}
+            </button>
+          )}
           {/* The third way in, for a phone: the picker it opens offers the
               camera and the gallery both, which is what `image/*` with no
               `capture` means. A screenshot on a desktop arrives by paste
               and never touches this button. */}
-          <button type="button" className="scratch-photo-add" aria-label="Add a picture" onClick={() => fileRef.current?.click()}>
-            +
-          </button>
+          {writing && (
+            <button type="button" className="scratch-photo-add" aria-label="Add a picture" onClick={() => fileRef.current?.click()}>
+              +
+            </button>
+          )}
           {/* The way out, in the row with the other two controls rather than
               on a bar of its own beside the count, where it read as a
               control with no obvious job. On a phone the sheet is the whole
@@ -301,11 +344,23 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
         {/* The count, once there is something to count. "Nothing yet" on
             the bar over "Nothing here yet - type, and it is kept." under it
             was one fact said twice on an empty stream - CONVENTIONS section
-            23 - and the second of them is the one that says what to do. */}
-        {data.scratch.length > 0 && (
+            23 - and the second of them is the one that says what to do.
+
+            While one day is being read the bar carries the way back to all
+            of it instead: the count would be of the whole stream, which is
+            not the list underneath. */}
+        {reading ? (
           <div className="scratch-bar">
-            <span className="scratch-count">{scratchCount(data.scratch.length)}</span>
+            <button type="button" className="scratch-note-action" onClick={() => setReading(null)}>
+              Show every note
+            </button>
           </div>
+        ) : (
+          data.scratch.length > 0 && (
+            <div className="scratch-bar">
+              <span className="scratch-count">{scratchCount(data.scratch.length)}</span>
+            </div>
+          )
         )}
 
         {/* Visible, and announced. One line, replaced by the next thing that
@@ -320,7 +375,11 @@ function ScratchPanel({ onClose, onOpenTask }: { onClose: () => void; onOpenTask
 
         {notes.length === 0 ? (
           <p className="scratch-empty">
-            {draftId ? 'Enter keeps it and starts the next.' : 'Nothing here yet - type, and it is kept.'}
+            {reading
+              ? 'Nothing was written on this day.'
+              : draftId
+                ? 'Enter keeps it and starts the next.'
+                : 'Nothing here yet - type, and it is kept.'}
           </p>
         ) : (
           <ul className="scratch-list">

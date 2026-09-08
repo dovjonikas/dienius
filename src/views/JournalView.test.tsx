@@ -55,6 +55,20 @@ test('it opens on today, with that day beside the month', () => {
   expect(screen.getByRole('textbox', { name: /^Journal for / })).toHaveValue('Today I finally rang the dentist.')
 })
 
+/**
+ * The month's day card asks for that day's journal, not for the general
+ * view: "Journal" on a card headed Wednesday that opened on today would be
+ * the wrong day's writing under the right day's button.
+ */
+test('it opens on the day it was asked for, when a caller names one', () => {
+  seed()
+  const yesterday = addDays(todayKey(), -1)
+  render(<JournalView date={yesterday} />)
+  expect(screen.getByRole('textbox', { name: /^Journal for / })).toHaveValue(
+    'A long walk, and the boiler is still making that noise.',
+  )
+})
+
 test('a day with nothing on it is an empty box and says nothing else', () => {
   render(<JournalView />)
   expect(screen.getByRole('textbox', { name: /^Journal for / })).toHaveValue('')

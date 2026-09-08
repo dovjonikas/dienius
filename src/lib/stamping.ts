@@ -55,6 +55,20 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
   return { title: item.title, ref: { listId: list.id, itemId: item.id } }
 }
 
+/**
+ * Puts a template onto each date it is handed, or takes one off where the id
+ * is null. The one place a day is written from a template, so every door -
+ * the rail's chip, the calendar's painted range, a week column, "Stamp week",
+ * the weekday map - arrives at the same answer.
+ *
+ * It stamps whatever date it is given, including one already past, and that
+ * is deliberate: painting a template over last week in the month view is
+ * somebody saying what those days held, and refusing it here would be this
+ * function overruling a person who is looking straight at the day. The rule
+ * that a stamp never reaches backwards belongs to the doors that act on a
+ * stretch of days without being asked day by day - `planWeekStamp` and the
+ * weekday map in `ensureDay.ts` - and it is written down in both.
+ */
 export function applyStamps(
   days: Record<string, DayPlan>,
   templates: Template[],
