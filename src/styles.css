@@ -8160,21 +8160,29 @@ button.task-note-mark.is-open {
 /* The way into a note the card had to cut, under the text it belongs to. */
 .note-intro-more { margin: 0; }
 
-/* Filled quietly rather than outlined, and the same pill the card's other
-   marks are - see .task-note-mark, which is this shape with less in it.
+/* Filled quietly rather than outlined, and squared off rather than rounded.
 
    Three outlined boxes stacked under a card is a lot of edge for "here are
    the three parts of the note": the outline is the loudest thing on the card
-   after the title, and it is drawn three times. A tint lifts the chip off the
-   card enough to say it can be pressed without drawing a line round it, and
-   a row of them reads as one thing with parts rather than as three buttons.
-   The border stays as a transparent one, so the hover has something to
-   colour without anything moving - CONVENTIONS 24. */
+   after the title, and it is drawn once per choice. A tint lifts a chip off
+   the card enough to say it can be pressed without drawing a line round it,
+   and a row of them reads as one thing with parts rather than as three
+   buttons.
+
+   The corner is the app's chip radius and not the pill every other mark on a
+   card wears, because this is the only mark on a card that carries a
+   sentence. A pill on "note" or "2h" is a mark that happens to be round; the
+   same pill on "Read it back out loud" is a lozenge, and a row of lozenges is
+   what made a tidy card look like it had bubbles stuck to it. The short marks
+   stay pills - the shape was never the problem there.
+
+   The border stays as a transparent one, so the hover has something to colour
+   without anything moving - CONVENTIONS 24. */
 .note-section-button {
   min-height: 0;
   padding: var(--s1) var(--s3);
   border: 1px solid transparent;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text);
   font-size: var(--t-sm);

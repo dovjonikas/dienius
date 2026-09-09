@@ -117,14 +117,20 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
             <span className="up-next-title">{upNext.title}</span>
             {upNextLink && <LinkOut link={upNextLink} title={upNext.title} className="up-next-link" />}
           </span>
-          {/* The block's choices, on the card the owner says they use most.
-              A meal at noon is three recipes and a press, here rather than
-              two screens away. */}
-          <NoteSections note={upNext.note} expanded={upNext.noteExpanded} label={upNext.title} className="up-next-note" />
           <span className="up-next-meta">
             {categoryLabel(upNext.category, categories) ?? 'Scheduled'}
             {minutesAway !== undefined && minutesAway > 0 && ` · in ${formatDuration(minutesAway)}`}
           </span>
+          {/* The block's choices, on the card the owner says they use most.
+              A meal at noon is three recipes and a press, here rather than
+              two screens away.
+
+              Under the meta line rather than above it, which is where they
+              were until v2.15: this card is a time, a name, and what kind of
+              thing it is, and putting the note in the middle of those three
+              split the name from the line that qualifies it. A task card has
+              always had this order, and this is that card, smaller. */}
+          <NoteSections note={upNext.note} expanded={upNext.noteExpanded} label={upNext.title} className="up-next-note" />
         </div>
       ) : (
         <p className="up-next-empty">
