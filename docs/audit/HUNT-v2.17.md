@@ -153,8 +153,6 @@ to 44, standing twelve pixels taller than its neighbours. CONVENTIONS 6 names
 the condition exactly: the overlay is "for an inline control where growing the
 box would grow its row".
 
----
-
 ### B-06 · The task list, any size · CONFIRMED · fixed `e14e893`
 
 **What a person sees.** A task whose title has no space in it - a URL pasted
@@ -178,6 +176,32 @@ nothing, because a realistic day has spaces in its titles.
 app's answer in the North picture and a scratch note and changes nothing for a
 title that has somewhere else to break. Plus a third measuring pass - a
 scroller whose content is wider than it is - so the next one is caught.
+
+### B-07 · Both template editors · CONFIRMED · fixed `ad92bbc`
+
+**The owner's own find, the second half of B-04.** The binding control was
+three different controls. The week editor's add row had the select and the
+day editor's had none, so binding a reading block in the day editor meant
+adding it first and finding its row again. The block panel had a visible
+label and neither add row did. And all three hid the control outright while
+the library was empty - which keeps a template editor a template editor for
+the many people who never build a list, and also guarantees that the one
+moment somebody wants a reading block, building their first template with
+an empty library by definition, is the one moment the app shows no sign
+that reading blocks exist. Leaving to make a list lost the draft.
+
+One component for all three now, a visible label everywhere, and a list can be
+made from the block that is about to be bound to it - `CategoryQuickAdd` one
+shelf over, with the short form derived rather than asked because this is a
+detour off a template and not a visit to the Library. Two tests changed and
+both called out, one of them because the behaviour Stage 9 asked to keep is
+the behaviour Stage 9 later asked to change.
+
+And the stylesheet's own warning, sprung again a version later: `.block-add`
+gives every button in that row a fill, a border and a control's corners, and
+the comment above those rules says what it did to a 20px circle. The new plus
+came out 26x20 the moment it stood there. Measured after the fix: 20x20 with a
+44px target on a finger, the same as the plus beside it that makes a category.
 
 ---
 
@@ -380,19 +404,19 @@ seconds of work that turned "flaky CI" into a fact with a cause.
 
 | | |
 |---|---|
-| Findings | 14 |
+| Findings | 15 |
 | **A** | **2** |
-| **B** | **6** |
+| **B** | **7** |
 | **C** | **6** |
-| Fixed | 12 |
+| Fixed | 13 |
 | Left on purpose | 2 |
 | Suspected, not reproduced | 1 |
-| Raised by the owner | 2 (C-01, B-04) |
+| Raised by the owner | 3 (C-01, B-04, B-07) |
 | Passes over stages 1-4 | 3 |
 | New measuring passes the sweep gained | 3 |
 
-Two of the fourteen were the owner's, from looking at one screen. That is the
-finding about the findings, and the argument for the three measuring passes
+Three of the fifteen were the owner's, two of them from one screenshot of one
+row. That is the finding about the findings, and the argument for the three measuring passes
 this wave added rather than for anything else it did: the note header's Close
 had been eleven pixels out at every size for six versions, and the only thing
 in this project capable of noticing was a person's eye.

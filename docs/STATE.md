@@ -31,11 +31,13 @@ Playwright ships its own chromium, from its own CDN - failed a job that did not
 need it. The install is in two steps now and the job is green again.
 
 The wave added nothing to the app on purpose, with one exception the owner
-asked for mid-wave: a list can now be bound to a template block that already
-exists, instead of only to one being made. Everything else is a fix. Two of the
-fourteen findings were the owner's own, from looking at one screen - which is
-the argument for the three measuring passes this wave added to the sweep rather
-than for anything else it did. The full account, finding by finding with how to
+asked for mid-wave and then extended: a list can now be bound to a template
+block that already exists rather than only to one being made, and a list can be
+made from the block that is about to be bound to it rather than four screens
+away. Everything else is a fix. Three of the fifteen findings were the owner's
+own, two of them from one screenshot of one row - which is the argument for the
+three measuring passes this wave added to the sweep rather than for anything
+else it did. The full account, finding by finding with how to
 repeat each one, is in [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md).
 
 **Before that: v2.13.** Four passes over a real day: every screen at three sizes in both themes, every
@@ -252,7 +254,7 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
-| **v2.17** | The hunt before the week the owner lives in this app, which added nothing and looked for what was already there. Two defects that would have spoilt a real morning: an app left open overnight kept the day it read at mount, so the header said Today over yesterday and the morning first task was written onto the day before - and the update notice covered the whole tab bar on a phone, so not one of the seven tabs could be pressed while a notice that is deliberately ignorable stood on it. Five more that would have grated - a 17px touch target, a Delete drawn exactly like the Edit beside it because one rule out-specified btn-danger and had defeated its own fix for versions, an undo toast over four tabs, a scratch row with one control twelve pixels taller than its neighbours, and the library binding reachable only while making a block. Five cosmetic, three of them rows whose contents did not line up. Two of the twelve were the owner own, from one screenshot - so the sweep gained the two passes that would have caught them, and the screen it had never opened |
+| **v2.17** | The hunt before the week the owner lives in this app, which added nothing and looked for what was already there. Two defects that would have spoilt a real morning: an app left open overnight kept the day it read at mount, so the header said Today over yesterday and the morning first task was written onto the day before - and the update notice covered the whole tab bar on a phone, so not one of the seven tabs could be pressed while a notice that is deliberately ignorable stood on it. Five more that would have grated - a 17px touch target, a Delete drawn exactly like the Edit beside it because one rule out-specified btn-danger and had defeated its own fix for versions, an undo toast over four tabs, a scratch row with one control twelve pixels taller than its neighbours, and the library binding, which turned out to be three different controls: reachable only while making a block in one editor, absent from the other one's add row, unlabelled in both, and hidden outright while the library is empty - which is the state a first template is built in. One component now, a visible label everywhere, and a list can be made from the block being bound to it. Five cosmetic, three of them rows whose contents did not line up. Three of the fifteen were the owner own, two from one screenshot - so the sweep gained the two passes that would have caught them, and the screen it had never opened |
 | **v2.16** | Books into the library without a martyrdom. A whole shelf pasted at once - one line an item, an optional total after a vertical bar, and a live count of what the press will do including how many the list already has. A row moves by button as well as by drag and by key, and the loud row says what it is: the item every bound block will carry onto its next day. The binding says which book from the end that only named a list, and the empty case - the block keeps its own title - is finally said rather than discovered. And a quick-start preset that makes three empty reading lanes in one press |
 | **v2.15** | What the timer sounds like, and what things actually took. Four sounds from one synthesiser and one table of parameters - off, soft, bell, alarm - chosen where the timer is started, with a start bell for the ten minutes nobody can look at the screen and five ways to end an alarm that is filling the room. The stopwatch stopped pouring its number away: started on a task, it offers to write down what that task actually took, and the number reaches the card and the week's reading. And the timer panel folded down to what it is for |
 | **v2.14** | What the app knew and did not say. The note editor demonstrates the `## ` rule in its placeholder, says it in one line under the box, draws the card's own choices live as they are typed, and carries a button that writes the heading; a long note is cut to four lines on the card with a Read into the reader. Return adds a block, and the field's right edge says so in all four rows that do it. The door beside a title is three quarters of the title, in the meta ink, off its last word. A length reads as a number and a unit. And one pass over the whole interface asking what else it can do and never mentions, with a verdict written down against each answer |
@@ -403,11 +405,11 @@ name, which is the other half of why it was not found.
 
 ### What the sweep can see now, and could not before
 
-Two of the fourteen findings were the owner's, from looking at one screen.
-That is the finding about the findings, and it is what most of this wave's
-tooling work is for. Both were shapes nothing in the repo could report - jsdom
-has no layout, and neither is text cut off, a control covered, or anything else
-`scripts/audit.js` looked for. Three passes went in, and each one found
+Three of the fifteen findings were the owner's, two of them from one
+screenshot of one row. That is the finding about the findings, and it is what
+most of this wave's tooling work is for. Both of those were shapes nothing in
+the repo could report - jsdom has no layout, and neither is text cut off, a
+control covered, or anything else `scripts/audit.js` looked for. Three passes went in, and each one found
 something on its first run that nothing had reported before.
 
 - **Not centred in a row that centres.** A child more than a pixel and a half
