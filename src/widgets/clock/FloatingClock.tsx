@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTimerTick, useTitleCountdown } from './useTimerTick'
-import { DEFAULT_CHIME_PROFILE, DEFAULT_CHIME_VOLUME, playChime } from '../../lib/chime'
+import { DEFAULT_CHIME, playChime, type ChimeHandle } from '../../lib/chime'
+import { useAppData } from '../../lib/store'
 import {
   clockTools,
   elapsedMs,
@@ -38,7 +39,11 @@ const CORNERS: ClockTools['corner'][] = ['bottom-right', 'bottom-left', 'top-lef
  * ever information you might be late against.
  */
 export function FloatingClock() {
-  const tools = useClockTools()  // Which run has already chimed. Held per mount rather than in storage: the
+  const tools = useClockTools()
+  const chime = useAppData().settings.chime ?? DEFAULT_CHIME
+  // The sound that is currently playing, so the alarm can be stopped.
+  const ringing = useRef<ChimeHandle | null>(null)
+  // Which run has already chimed. Held per mount rather than in storage: the
   // stored `rungOut` flag is what stops a reload from re-alarming, and this
   // only stops the same tab from alarming twice on consecutive ticks.
   const chimedRef = useRef<number | null>(null)
@@ -80,14 +85,11 @@ export function FloatingClock() {
     // finds `rungOut` already set and shows the finished state silently,
     // rather than alarming about something that happened an hour ago.
     if (!timer.rungOut) {
-      // The profile and the volume are a setting from the next stage; until
-      // then this is the sound the app has always made, through the one
-      // engine that now makes all of them - see lib/chime.ts.
-      playChime(DEFAULT_CHIME_PROFILE, DEFAULT_CHIME_VOLUME)
+      ringing.current = playChime(chime.profile, chime.volume)
       notify('Timer finished')
     }
     clockTools.markRungOut()
-  }, [timer, isUp])
+  }, [timer, isUp, chime.profile, chime.volume])
 
   // Nothing starts a timer from a step any more - steps were folded into
   // the note in v2.13 - so a timer is a timer and says only how long is

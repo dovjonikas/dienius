@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
+import { CHIME_PROFILES, DEFAULT_CHIME, playChime, type ChimeHandle, type ChimeProfile } from '../../lib/chime'
+import { actions, useAppData } from '../../lib/store'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { HeaderPopover } from './HeaderPopover'
@@ -10,6 +12,14 @@ import { HeaderPopover } from './HeaderPopover'
  * a break, thirty for a stretch of real work. Anything else is typed.
  */
 const PRESETS = [5, 10, 15, 30]
+
+/** What each sound is called on its chip. Off first, because it is an answer. */
+const SOUND_LABELS: Record<ChimeProfile, string> = {
+  off: 'Off',
+  soft: 'Soft',
+  bell: 'Bell',
+  alarm: 'Alarm',
+}
 
 export interface ClockPopoverProps {
   onClose: () => void
@@ -118,6 +128,7 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
             {tools.timer && (
               <p className="clock-note">A timer is already running. Starting another replaces it.</p>
             )}
+            <SoundPicker />
           </div>
         ) : (
           <div className="clock-panel">
@@ -146,6 +157,98 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
           </div>
         )}
     </HeaderPopover>
+  )
+}
+
+/**
+ * What the timer will sound like, chosen where the timer is started.
+ *
+ * In this panel and not in Settings, which is the rule v2.14 was about:
+ * visibility lives where the action is. Somebody setting a ten minute timer
+ * for a meditation and somebody setting one for a pan are the same person
+ * two minutes apart, and the moment they need to change the sound is the
+ * moment they are already here starting the timer.
+ *
+ * Four chips and a slider, and that is all of it. No library of sounds, no
+ * per-preset override, no second screen: the four are one function with four
+ * settings (see lib/chime.ts) and a fifth would be a fifth thing to choose
+ * between rather than a fifth thing to hear.
+ *
+ * The slider and the try button both go when the answer is Off, because
+ * neither of them controls anything then - CONVENTIONS 25, a state has to
+ * earn its place.
+ */
+function SoundPicker() {
+  const data = useAppData()
+  const chime = data.settings.chime ?? DEFAULT_CHIME
+  // The preview that is playing, so a second press stops it rather than
+  // starting a second one on top of the first. A ref rather than state: what
+  // is drawn does not depend on it, only what the next press does.
+  const trying = useRef<ChimeHandle | null>(null)
+  const [playing, setPlaying] = useState(false)
+
+  useEffect(() => () => trying.current?.stop(), [])
+
+  function stopTrying() {
+    trying.current?.stop()
+    trying.current = null
+    setPlaying(false)
+  }
+
+  function tryIt() {
+    if (playing) return stopTrying()
+    trying.current = playChime(chime.profile, chime.volume)
+    setPlaying(true)
+    // The alarm repeats for a minute and this is a preview, not an alarm: one
+    // round is enough to know what it is. Everything else ends on its own
+    // well before this and stopping a finished sound is a no-op.
+    window.setTimeout(stopTrying, 4000)
+  }
+
+  return (
+    <div className="clock-sound">
+      <span className="field-label">Sound</span>
+      <div className="clock-sound-row">
+        <div className="duration-chips clock-sound-chips" role="group" aria-label="Sound">
+          {CHIME_PROFILES.map(profile => (
+            <button
+              key={profile}
+              type="button"
+              className={chime.profile === profile ? 'is-on' : ''}
+              aria-pressed={chime.profile === profile}
+              onClick={() => {
+                stopTrying()
+                actions.setChime({ ...chime, profile })
+              }}
+            >
+              {SOUND_LABELS[profile]}
+            </button>
+          ))}
+        </div>
+        {/* Without this the choice is made deaf. A name is not a sound, and
+            the difference between Bell and Alarm is the whole reason there
+            are four of them. */}
+        {chime.profile !== 'off' && (
+          <button type="button" className="clock-sound-try" onClick={tryIt}>
+            {playing ? 'Stop' : 'Try'}
+          </button>
+        )}
+      </div>
+      {chime.profile !== 'off' && (
+        <label className="clock-volume">
+          <span className="clock-volume-label">Volume</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={chime.volume}
+            aria-label="How loud"
+            onChange={e => actions.setChime({ ...chime, volume: Number(e.target.value) })}
+          />
+        </label>
+      )}
+    </div>
   )
 }
 

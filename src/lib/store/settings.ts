@@ -1,5 +1,6 @@
 import { commit, getData } from './core'
-import type { Settings, SleepWindow, ThemeState } from '../types'
+import { readChimeSettings } from '../chime'
+import type { ChimeSettings, Settings, SleepWindow, ThemeState } from '../types'
 
 /** Everything under Settings that is not a goal, a calendar or a rule: theme, density, sleep, the day view's own switches. */
 export const settingsActions = {
@@ -118,6 +119,19 @@ export const settingsActions = {
   setEveningClose(eveningClose: Settings['eveningClose']): void {
     const data = getData()
     commit({ ...data, settings: { ...data.settings, eveningClose } })
+  },
+
+  /**
+   * What the timer sounds like, how loud, and whether it rings at the start.
+   *
+   * All three at once rather than three setters, because they are answered on
+   * one row of one panel and a caller that has one of them has all of them -
+   * see ClockPopover. `readChimeSettings` is what everything else reads them
+   * back through, so a caller cannot store a volume of five here either.
+   */
+  setChime(chime: ChimeSettings): void {
+    const data = getData()
+    commit({ ...data, settings: { ...data.settings, chime: readChimeSettings(chime) } })
   },
 
   /**

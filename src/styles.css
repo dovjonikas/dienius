@@ -5747,6 +5747,46 @@ button.danger {
 
 .clock-custom .primary { flex: 1; min-height: 38px; }
 
+/* What the timer will sound like, under the presets that start one - see
+   ClockPopover. Here rather than in Settings because this is where a timer is
+   started, and the moment somebody wants a different sound is the moment they
+   are already here. */
+.clock-sound {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+/* The chips and the way to hear one, on one line. The button holds the right
+   end so it stays with the row when the chips wrap on a narrow panel. */
+.clock-sound-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.clock-sound-chips { flex: 1 1 auto; margin: 0; }
+
+.clock-sound-try {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
+.clock-sound-try:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+.clock-volume { display: flex; align-items: center; gap: var(--s3); }
+.clock-volume-label { color: var(--muted); font-size: var(--t-xs); flex: 0 0 auto; }
+.clock-volume input[type='range'] { flex: 1 1 auto; min-width: 0; accent-color: var(--accent); }
+
 .clock-note {
   margin: 0;
   color: var(--muted);
