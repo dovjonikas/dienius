@@ -328,6 +328,14 @@
       })
       if (kids.length < 2) continue
       for (const c of kids) {
+        // Not a transformed one. A chevron here is two borders of a square
+        // turned 45 degrees, and the translate inside that rotation is what
+        // pulls the ink back to the middle of a box that is now bigger than
+        // it - so its rect is 11px where its box is 8, and off centre by
+        // exactly the translate. This reported sixteen of them on the clock
+        // panels, which is the drawing technique and not a defect. A
+        // transform is also how CONVENTIONS 24 allows a state to be drawn.
+        if (getComputedStyle(c).transform !== 'none') continue
         const r = c.getBoundingClientRect()
         const off = r.top + r.height / 2 - centre
         if (Math.abs(off) <= 1.5) continue

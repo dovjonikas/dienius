@@ -13319,8 +13319,31 @@ main:has(.week) > .calendar {
   color: var(--text);
 }
 
+/* The target grows and the pill does not - CONVENTIONS 6's second way, and
+   the one this row needs.
+ *
+ * It took the first way, `min-height: var(--touch)`, and grew to 44px in a
+ * row where the + and the x beside it are 32px squares that reach their
+ * target through an overlay. So on a phone one of three controls on one line
+ * stood twelve pixels taller than the other two, which is the shape the
+ * v2.17 sweep's two-heights pass reported at 390x844. Growing the box "would
+ * grow its row" is exactly the condition the convention names for choosing
+ * the overlay instead. */
 @media (pointer: coarse) {
-  .scratch-intent { min-height: var(--touch); }
+  .scratch-intent {
+    position: relative;
+    min-height: 0;
+  }
+
+  .scratch-intent::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch));
+    height: max(100%, var(--touch));
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* The evening close.
