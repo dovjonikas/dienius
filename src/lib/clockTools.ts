@@ -67,6 +67,19 @@ export interface StopwatchState {
   startedAt: number
   elapsedBeforeMs: number
   paused: boolean
+  /**
+   * The task this is measuring, when it was started from one.
+   *
+   * Only a pointer - a date and an id - exactly like `TimerStep` and
+   * `FocusSession` above, and for the same reason: the stopwatch does not
+   * own anything about the work. Everything shown about the task is read live
+   * off the day, so it can be renamed, resized or ticked while the stopwatch
+   * runs without this holding a stale copy of any of it.
+   *
+   * Optional, and that is not a compromise. Sometimes you are timing how long
+   * the pasta takes, and that is not a task and never will be.
+   */
+  of?: { date: string; taskId: string }
 }
 
 /**
@@ -137,12 +150,20 @@ function readFocus(x: unknown): FocusSession | null {
   return { date: f.date, taskId: f.taskId }
 }
 
+function readOf(x: unknown): { date: string; taskId: string } | undefined {
+  if (typeof x !== 'object' || x === null) return undefined
+  const o = x as Record<string, unknown>
+  if (typeof o.date !== 'string' || typeof o.taskId !== 'string') return undefined
+  return { date: o.date, taskId: o.taskId }
+}
+
 function readStopwatch(x: unknown): StopwatchState | null {
   if (typeof x !== 'object' || x === null) return null
   const s = x as Record<string, unknown>
   if (!isFiniteNumber(s.startedAt) || !isFiniteNumber(s.elapsedBeforeMs)) return null
   if (typeof s.paused !== 'boolean' || s.elapsedBeforeMs < 0) return null
-  return { startedAt: s.startedAt, elapsedBeforeMs: s.elapsedBeforeMs, paused: s.paused }
+  const of = readOf(s.of)
+  return { startedAt: s.startedAt, elapsedBeforeMs: s.elapsedBeforeMs, paused: s.paused, ...(of ? { of } : {}) }
 }
 
 /**
@@ -261,8 +282,9 @@ export const clockTools = {
     commit({ ...state, focus: null })
   },
 
-  startStopwatch(): void {
-    commit({ ...state, stopwatch: { startedAt: Date.now(), elapsedBeforeMs: 0, paused: false } })
+  /** `of` is the task this is measuring, when it was started from one. */
+  startStopwatch(of?: { date: string; taskId: string }): void {
+    commit({ ...state, stopwatch: { startedAt: Date.now(), elapsedBeforeMs: 0, paused: false, ...(of ? { of } : {}) } })
   },
 
   pauseStopwatch(): void {

@@ -52,6 +52,16 @@ export interface BlockReading {
   avgEarlier?: number
   setAside: number
   notDone: number
+  /**
+   * Days of the stretch on which somebody actually measured this block - see
+   * `Task.actualMinutes`. Almost always zero, because measuring is a press
+   * and nothing does it on its own.
+   */
+  timed: number
+  /** Mean measured minutes over those days; absent when nobody measured it. */
+  avgActual?: number
+  /** The block's planned length, for the number beside it. */
+  minutes?: number
 }
 
 /** The lines of one template, in the order the sorted list gave them. */
@@ -65,6 +75,7 @@ export interface ReadingGroup {
 interface Tally extends BlockReading {
   laterMinutes: number
   earlierMinutes: number
+  actualMinutes: number
 }
 
 type Outcome =
@@ -178,7 +189,10 @@ export function planReading(data: AppData, dates: string[], today: string): Bloc
           blockId: block.id,
           title: block.title,
           time: block.time,
+          minutes: block.minutes,
           days: 0,
+          timed: 0,
+          actualMinutes: 0,
           atTime: 0,
           movedLater: 0,
           movedEarlier: 0,
@@ -190,6 +204,15 @@ export function planReading(data: AppData, dates: string[], today: string): Bloc
         tallies.set(key, tally)
       }
       tally.days += 1
+      // What it actually took, on the days somebody said so. Counted apart
+      // from the four outcomes rather than inside them: a block can be moved
+      // and still be measured, and a measurement is a fact about its length
+      // rather than about when it happened.
+      const actual = matched.get(block.id)?.actualMinutes
+      if (actual !== undefined) {
+        tally.timed += 1
+        tally.actualMinutes += actual
+      }
       const outcome = outcomeOf(block, matched.get(block.id))
       if (outcome.state === 'moved') {
         if (outcome.minutes > 0) {
@@ -206,10 +229,11 @@ export function planReading(data: AppData, dates: string[], today: string): Bloc
   }
 
   return [...tallies.values()]
-    .map(({ laterMinutes, earlierMinutes, ...reading }) => ({
+    .map(({ laterMinutes, earlierMinutes, actualMinutes, ...reading }) => ({
       ...reading,
       avgLater: reading.movedLater > 0 ? Math.round(laterMinutes / reading.movedLater) : undefined,
       avgEarlier: reading.movedEarlier > 0 ? Math.round(earlierMinutes / reading.movedEarlier) : undefined,
+      avgActual: reading.timed > 0 ? Math.round(actualMinutes / reading.timed) : undefined,
     }))
     .sort(byDisagreement)
 }
@@ -249,6 +273,14 @@ export function readingLine(reading: BlockReading): string {
     facts.push(
       `moved earlier ${times(reading.movedEarlier)} (${byHowMuch(reading.movedEarlier, '-', reading.avgEarlier ?? 0)})`,
     )
+  }
+  // The one fact here that is about how long rather than about when. Last,
+  // because it is the newest and the rarest: nothing measures anything on its
+  // own, so this is only ever on a block somebody chose to time.
+  if (reading.timed > 0 && reading.avgActual !== undefined) {
+    const took = reading.timed === 1 ? 'took' : `took on average`
+    const against = reading.minutes !== undefined ? ` against ${formatDuration(reading.minutes)} planned` : ''
+    facts.push(`${took} ${formatDuration(reading.avgActual)}${against} (${times(reading.timed)} measured)`)
   }
   if (reading.setAside > 0) facts.push(`set aside ${times(reading.setAside)}`)
   if (reading.notDone > 0) facts.push(`not done ${times(reading.notDone)}`)

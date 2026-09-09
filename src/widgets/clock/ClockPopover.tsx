@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
+import { clockTools, elapsedMs, formatClockMs, useClockTools, type StopwatchState } from '../../lib/clockTools'
 import { CHIME_PROFILES, DEFAULT_CHIME, playChime, ringAtStart, type ChimeHandle, type ChimeProfile } from '../../lib/chime'
 import { startRinging, stopRinging } from '../../lib/ringing'
 import { actions, useAppData } from '../../lib/store'
-import { parseMinutesInput } from '../day-plan/capacity'
+import { formatDuration, parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { HeaderPopover } from './HeaderPopover'
 
@@ -162,9 +162,64 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
               )}
               {stopwatch && <button type="button" onClick={() => clockTools.resetStopwatch()}>Reset</button>}
             </div>
+            <RecordOffer stopwatch={stopwatch} />
           </div>
         )}
     </HeaderPopover>
+  )
+}
+
+/**
+ * The one line a stopped stopwatch offers, when it was measuring something.
+ *
+ * Every block in this app has had a planned length since v1.0 and not one has
+ * ever had a real one, so "where the plan and the week disagreed" has had to
+ * be read off *when* things happened rather than off how long they took. This
+ * is the only thing in the app that writes one down.
+ *
+ * **It is an offer and never a question.** Nothing is asked twice, there is
+ * no "are you sure", and walking away is a complete answer: closing the panel
+ * without pressing it leaves the day exactly as it was, which is what the
+ * stopwatch has always done. Reset without recording is still Reset.
+ *
+ * It only appears once the stopwatch is stopped, because a running one has no
+ * number yet - it has a number that is still changing.
+ */
+function RecordOffer({ stopwatch }: { stopwatch: StopwatchState | null }) {
+  const data = useAppData()
+  const [recorded, setRecorded] = useState(false)
+
+  const of = stopwatch?.of
+  const task = of ? data.days[of.date]?.tasks.find(t => t.id === of.taskId) : undefined
+  if (!stopwatch || !stopwatch.paused || !of || !task) return null
+
+  const ms = elapsedMs(stopwatch, Date.now())
+  const took = Math.max(0, Math.round(ms / 60_000))
+
+  return (
+    <p className="clock-record" role="status">
+      <span className="clock-record-line">
+        <strong>{task.title}</strong> took {formatDuration(took)}
+        {/* The plan, beside what happened, and only when there is one to be
+            beside it. A task nobody sized has nothing for this to disagree
+            with. */}
+        {task.minutes !== undefined && `. Planned ${formatDuration(task.minutes)}`}
+      </span>
+      {recorded ? (
+        <span className="clock-record-done">Written down</span>
+      ) : (
+        <button
+          type="button"
+          className="btn-secondary clock-record-go"
+          onClick={() => {
+            actions.setTaskActualMinutes(of.date, of.taskId, ms)
+            setRecorded(true)
+          }}
+        >
+          Record
+        </button>
+      )}
+    </p>
   )
 }
 

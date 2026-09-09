@@ -280,3 +280,52 @@ test('a week stamped through applyStamps and then lived reads the same as one bu
     'Lunch 12:30 - happened at its time 0 of 5 days, moved later once (+30 min), not done 4 times',
   )
 })
+
+// How long it actually took, in the reading that already says when things
+// happened - from v2.15. The line is about length rather than about time, so
+// it is counted apart from the four outcomes: a block can be moved and still
+// be measured.
+
+test('a measured block says what it took, against what it was planned at', () => {
+  // Two of the five days measured, at ninety and a hundred minutes, against
+  // the two hours the block is planned at.
+  const data = weekOf(
+    WORKDAYS.map((date, i) =>
+      dayOf(date, [taskFor('b1', { done: true, ...(i < 2 ? { actualMinutes: i === 0 ? 90 : 100 } : {}) })]),
+    ),
+  )
+  const reading = planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!
+
+  expect(reading.timed).toBe(2)
+  expect(reading.avgActual).toBe(95)
+  const line = readingLine(reading)
+  expect(line).toContain('took on average 1h35')
+  expect(line).toContain('against 2h planned')
+  expect(line).toContain('twice measured')
+})
+
+test('one measurement says took rather than took on average', () => {
+  const data = weekOf(WORKDAYS.map((date, i) => dayOf(date, [taskFor('b1', { done: true, ...(i === 0 ? { actualMinutes: 90 } : {}) })])))
+  const line = readingLine(planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!)
+  expect(line).toContain('took 1h30')
+  expect(line).not.toContain('on average')
+})
+
+test('a block nobody measured says nothing about how long it took', () => {
+  const data = weekOf(WORKDAYS.map(date => dayOf(date, [taskFor('b1', { done: true })])))
+  const reading = planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!
+  expect(reading.timed).toBe(0)
+  expect(reading.avgActual).toBeUndefined()
+  // Nothing measures anything on its own, so this is the ordinary case.
+  expect(readingLine(reading)).not.toContain('took')
+})
+
+test('a measurement is counted even on a day the block moved', () => {
+  // A block can be moved and still be measured: one is a fact about when, the
+  // other about how long, and they are tallied apart.
+  const data = weekOf(WORKDAYS.map(date => dayOf(date, [taskFor('b1', { done: true, time: '11:00', actualMinutes: 80 })])))
+  const reading = planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!
+  expect(reading.movedLater).toBe(5)
+  expect(reading.timed).toBe(5)
+  expect(readingLine(reading)).toContain('took on average 1h20')
+})

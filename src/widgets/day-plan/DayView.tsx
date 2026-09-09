@@ -35,7 +35,7 @@ import { useDayDrag } from './useDayDrag'
 import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
 import { requestReplan } from '../../lib/replanState'
-import { useClockTools } from '../../lib/clockTools'
+import { clockTools, useClockTools } from '../../lib/clockTools'
 
 export interface DayViewProps {
   date: string
@@ -448,6 +448,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
           onDelete={taskId => deleteWithUndo(taskId)}
           onOpenDetails={() => setDetailTaskId(actionsSheetTask.id)}
+          onTime={() => clockTools.startStopwatch({ date, taskId: actionsSheetTask.id })}
           onClose={() => setActionsSheetTaskId(null)}
         />
       )}

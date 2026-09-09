@@ -1573,3 +1573,44 @@ test('rubbish in the sound settings does not cost somebody their days', () => {
   expect(loaded.templates).toHaveLength(1)
   expect(loaded.settings.chime).toEqual({ profile: 'soft', volume: 1, atStart: false })
 })
+
+// --- how long it actually took ------------------------------------------
+//
+// Task.actualMinutes, from v2.15. The other half of Task.minutes: one is how
+// long a block was meant to take and this is how long it did, on the days
+// somebody measured it. Held to exactly what `minutes` is held to, and for
+// the stronger reason - this one is measured rather than typed, so a bad
+// value in a file is a file that has been edited.
+
+function dayWith(task: Record<string, unknown>) {
+  return JSON.stringify({
+    templates: [],
+    days: { '2026-09-16': { date: '2026-09-16', tasks: [{ id: 'a', title: 'Deep work', done: false, ...task }] } },
+    settings: { theme: 'light' },
+  })
+}
+
+test('a task written before anything measured it loads exactly as it did', () => {
+  localStorage.setItem(STORAGE_KEY, dayWith({ minutes: 30 }))
+  const task = loadData().days['2026-09-16'].tasks[0]
+  expect(task.minutes).toBe(30)
+  expect(task.actualMinutes).toBeUndefined()
+})
+
+test('a measured task keeps its number, and carries it through a backup', () => {
+  localStorage.setItem(STORAGE_KEY, dayWith({ minutes: 30, actualMinutes: 52 }))
+  const loaded = loadData()
+  expect(loaded.days['2026-09-16'].tasks[0].actualMinutes).toBe(52)
+  expect(importJson(exportJson(loaded))?.days['2026-09-16'].tasks[0].actualMinutes).toBe(52)
+})
+
+test('a measurement that is not a whole positive number refuses the payload', () => {
+  // The same treatment an out-of-range Task.minutes gets, and for the same
+  // reason: nothing in this app can produce one, so a file carrying one has
+  // been edited and the rest of it is not to be trusted either.
+  for (const bad of [-1, 1.5, '52', null, NaN]) {
+    localStorage.clear()
+    localStorage.setItem(STORAGE_KEY, dayWith({ minutes: 30, actualMinutes: bad }))
+    expect(loadData().days, String(bad)).toEqual({})
+  }
+})

@@ -255,6 +255,27 @@ export interface Task extends Timestamped {
    */
   minutes?: number
   /**
+   * How long it actually took, in minutes, when somebody measured it.
+   *
+   * The other half of `minutes`, which is how long it was *meant* to take.
+   * Every block in this app has had a planned length since v1.0 and not one
+   * has ever had a real one, so "where the plan and the week disagreed" has
+   * had to be read off when things happened rather than off how long they
+   * took.
+   *
+   * **Only ever written by a person**, from a stopwatch they started on this
+   * task and chose to record - see `StopwatchState.of`. Nothing measures
+   * anything on its own here: a day full of numbers nobody meant to collect
+   * is a day of numbers nobody can read, and the app does not grade anybody.
+   *
+   * Absent on every task written before this existed, and on every task
+   * nobody timed, which is almost all of them. Recording a second time on
+   * the same day replaces it rather than adding to it - two measurements of
+   * one thing are two measurements, and summing them would be the app
+   * guessing at something nobody asked it to guess.
+   */
+  actualMinutes?: number
+  /**
    * Marks this task as exempt from the push bound - `MAX_PUSHES` never
    * applies to it, on this day or any day it is pushed to after. Absent
    * means false, the same pattern every other optional field on `Task`

@@ -147,6 +147,9 @@ export function TaskRow({
   // nothing - CONVENTIONS section 25.
   const noteIntro = parseNote(task.note).intro
   const showNoteMark = noteIntro !== '' && !task.noteExpanded
+  // Measured, and different from the plan. Equal is the plan working, and a
+  // number that agrees with the one beside it is not information.
+  const showActual = task.actualMinutes !== undefined && task.actualMinutes !== task.minutes
   const pushCount = task.pushCount ?? 0
   const isUnbounded = !!task.unbounded
   // isPushable already returns true for an unbounded task regardless of
@@ -431,6 +434,13 @@ export function TaskRow({
             {task.minutes !== undefined ? formatDuration(task.minutes) : 'size'}
           </button>
         )}
+        {/* What it actually took, beside what it was meant to take. Only when
+            somebody measured it and only when the two disagree: a block that
+            took the half hour it was given is the plan working, and saying
+            "30 min, 30 actual" is one number twice - CONVENTIONS 23. The
+            planned figure is the control to the left of this, so this says
+            only the half that is not already on the row. */}
+        {showActual && <span className="task-actual">{formatDuration(task.actualMinutes!)} actual</span>}
         </div>
         {/* The single door to everything else this task can do - place or
             un-anchor, push, mark ongoing, delete - see

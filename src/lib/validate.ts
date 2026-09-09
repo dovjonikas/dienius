@@ -227,6 +227,10 @@ const TASK = record({
   pushCount: optional(wholeNumber(0)),
   core: optional(boolean),
   minutes: optional(minutes),
+  // Held to exactly what `minutes` is held to, and for the stronger reason:
+  // this one is measured rather than typed, so a negative or fractional value
+  // in a file is not somebody's mistake, it is a file that has been edited.
+  actualMinutes: optional(minutes),
   unbounded: optional(boolean),
   category: categoryRef,
   libraryRef: optional(LIBRARY_REF),

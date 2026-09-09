@@ -5833,6 +5833,35 @@ button.danger {
   color: var(--text);
 }
 
+/* How long it actually took, at the end of the meta line beside how long it
+   was meant to take - see TaskRow. Drawn as quietly as the marks around it:
+   this is a fact about a day that has happened, not a verdict on it, and
+   nothing in this app grades anybody. */
+.task-actual {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The one line a stopped stopwatch offers - see RecordOffer in ClockPopover. */
+.clock-record {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: var(--s2) 0 0;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  font-size: var(--t-sm);
+  color: var(--text);
+}
+
+.clock-record-line { flex: 1 1 auto; min-width: 0; }
+.clock-record-done { color: var(--muted); font-size: var(--t-xs); }
+.clock-record-go { flex: 0 0 auto; }
+
 .clock-sound-start { align-self: flex-start; }
 
 .clock-volume { display: flex; align-items: center; gap: var(--s3); }

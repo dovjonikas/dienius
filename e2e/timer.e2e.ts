@@ -136,3 +136,90 @@ test('Off makes no sound at all, and hides what it does not control', async ({ p
   await expect(page.getByText('Timer finished')).toBeVisible()
   expect((await audio(page)).contexts).toBe(0)
 })
+
+/**
+ * The stopwatch writes down what actually took how long.
+ *
+ * Every block in this app has had a planned length since v1.0 and not one has
+ * had a real one, so "where the plan and the week disagreed" has had to be
+ * read off when things happened rather than off how long they took. This is
+ * the only path that writes one, and every step of it is a press: nothing
+ * measures anything on its own.
+ */
+test('a stopwatch started on a task records what it took, and the number survives a reload', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-09-16T12:00:00') })
+  await openFresh(page)
+
+  const box = page.getByPlaceholder('Add a task')
+  await box.fill('Write the letter')
+  await box.press('Enter')
+
+  await page.getByRole('button', { name: /^More actions for Write the letter/ }).click()
+  await page.getByRole('button', { name: 'Time this' }).click()
+
+  // The floating widget takes over, as it does for every clock in this app.
+  await expect(page.getByRole('status', { name: 'Stopwatch' })).toBeVisible()
+
+  await page.clock.fastForward('52:00')
+  await page.getByRole('status', { name: 'Stopwatch' }).getByRole('button', { name: 'Pause' }).click()
+
+  // The offer, in the panel where the stopwatch lives. One line, and walking
+  // away from it is a complete answer.
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  const offer = page.getByText(/Write the letter took/)
+  await expect(offer).toBeVisible()
+  await expect(page.getByText(/Planned 30/)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Record', exact: true }).click()
+  await expect(page.getByText('Written down')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // On the card, beside the length it was planned at, and only because the
+  // two disagree.
+  await expect(page.getByText('52 min actual')).toBeVisible()
+
+  await page.reload()
+  await expect(page.getByText('52 min actual')).toBeVisible()
+})
+
+test('a stopwatch on nothing behaves exactly as it always did', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-09-16T12:00:00') })
+  await openFresh(page)
+
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  await page.getByRole('button', { name: 'Stopwatch', exact: true }).click()
+  await page.getByRole('button', { name: 'Start', exact: true }).click()
+
+  await page.clock.fastForward('01:00')
+  await page.getByRole('status', { name: 'Stopwatch' }).getByRole('button', { name: 'Pause' }).click()
+
+  // Nothing to record, because it was not measuring anything - sometimes you
+  // are timing how long the pasta takes.
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  const panel = page.getByRole('dialog')
+  await expect(panel.getByRole('button', { name: 'Record', exact: true })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Reset', exact: true })).toBeVisible()
+})
+
+test('walking away from the offer leaves the day as it was', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-09-16T12:00:00') })
+  await openFresh(page)
+
+  const box = page.getByPlaceholder('Add a task')
+  await box.fill('Write the letter')
+  await box.press('Enter')
+
+  await page.getByRole('button', { name: /^More actions for Write the letter/ }).click()
+  await page.getByRole('button', { name: 'Time this' }).click()
+  await page.clock.fastForward('52:00')
+  await page.getByRole('status', { name: 'Stopwatch' }).getByRole('button', { name: 'Pause' }).click()
+
+  // Reset without recording is still Reset. Nothing is asked twice.
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  const panel = page.getByRole('dialog')
+  await expect(panel.getByRole('button', { name: 'Record', exact: true })).toBeVisible()
+  await panel.getByRole('button', { name: 'Reset', exact: true }).click()
+  await page.keyboard.press('Escape')
+
+  await expect(page.getByText(/actual/)).toHaveCount(0)
+})

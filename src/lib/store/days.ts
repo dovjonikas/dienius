@@ -445,6 +445,27 @@ export const dayActions = {
   },
 
   /**
+   * How long it actually took - see `Task.actualMinutes`.
+   *
+   * Only ever called from a person pressing the offer that appears when a
+   * stopwatch they started on this task is stopped. **It replaces rather than
+   * adds.** Two measurements of one thing on one day are two measurements,
+   * and summing them would be the app deciding that the second one continued
+   * the first - which it has no way of knowing and nobody asked it to guess.
+   *
+   * Rounded to a whole minute here rather than at the call site, because
+   * `validate` refuses a fraction and the caller has milliseconds.
+   */
+  setTaskActualMinutes(date: string, taskId: string, ms: number): void {
+    const day = dayOf(date)
+    const actualMinutes = Math.max(0, Math.round(ms / 60_000))
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, actualMinutes } : t)),
+    }))
+  },
+
+  /**
    * Sets or clears whether a task is exempt from the push bound - the
    * third choice offered once a task reaches `MAX_PUSHES`, and its own
    * undo. Writes `undefined` rather than a literal `false` when clearing,

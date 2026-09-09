@@ -24,6 +24,8 @@ export interface TaskActionsSheetProps {
    * had a door to it still compiles and renders exactly as it did.
    */
   onOpenDetails?: () => void
+  /** Starts the stopwatch on this task - see `StopwatchState.of`. */
+  onTime?: () => void
   onClose: () => void
 }
 
@@ -67,7 +69,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  *   The only action a done task ever has left, since everything else above
  *   is gated on the task not being done.
  */
-export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onOpenDetails, onClose }: TaskActionsSheetProps) {
+export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onOpenDetails, onTime, onClose }: TaskActionsSheetProps) {
   useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const anchor = isAnchor(task)
@@ -177,6 +179,24 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
               }}
             >
               Details
+            </button>
+          )}
+
+          {/* Every block in this app has had a planned length since v1.0 and
+              not one has had a real one. This is the only thing that writes
+              one, and it is a press: nothing here measures anything on its
+              own, because a day full of numbers nobody meant to collect is a
+              day of numbers nobody can read. */}
+          {onTime && !task.done && (
+            <button
+              type="button"
+              className="task-actions-row"
+              onClick={() => {
+                onClose()
+                onTime()
+              }}
+            >
+              Time this
             </button>
           )}
 

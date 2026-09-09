@@ -122,3 +122,28 @@ test('a timer started with no step has none, and a stored step with a piece miss
   )
   expect(loadClockTools().timer?.step).toBeUndefined()
 })
+
+// The stopwatch's pointer to what it is measuring, from v2.15. The same shape
+// and the same rule as TimerStep: a pointer, never a copy.
+
+test('a stopwatch remembers the task it was started on, across a reload', () => {
+  clockTools.startStopwatch({ date: '2026-09-16', taskId: 't-1' })
+  expect(loadClockTools().stopwatch?.of).toEqual({ date: '2026-09-16', taskId: 't-1' })
+})
+
+test('a stopwatch started on nothing has no pointer, and that is an answer', () => {
+  clockTools.startStopwatch()
+  expect(loadClockTools().stopwatch?.of).toBeUndefined()
+  // Sometimes you are timing how long the pasta takes.
+  expect(loadClockTools().stopwatch?.paused).toBe(false)
+})
+
+test('a half-written pointer is dropped rather than half-believed', () => {
+  const stored = { stopwatch: { startedAt: 1, elapsedBeforeMs: 0, paused: false, of: { date: '2026-09-16' } } }
+  localStorage.setItem('dienius:clock-tools', JSON.stringify(stored))
+  const back = loadClockTools()
+  // The stopwatch itself survives; only the pointer that cannot be followed
+  // is left out, the same way readStep treats a half-written TimerStep.
+  expect(back.stopwatch?.startedAt).toBe(1)
+  expect(back.stopwatch?.of).toBeUndefined()
+})
