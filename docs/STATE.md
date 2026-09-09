@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.12, the night before the owner builds their real week.
+**Last updated:** v2.13, one place text goes.
 
 Four passes over a real day: every screen at three sizes in both themes, every
 screen on a keyboard alone, ten data shapes nobody checks, and every action
@@ -218,6 +218,7 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
+| **v2.13** | One place text goes. Steps are gone and every one of them is a line in the note it sat beside, migrated at the single gate both loading and importing pass through and safe to run twice. A note with `## ` lines shows its headings as choices on the card and on Up next, and opens one at a time over the day. The week template is drawn by the calendar's own week layout instead of seven lists of chips. The link icon moved onto the title line, the day switches became seven identical squares, a category is made from the swatch row, and the current-time line stopped striking out the time of the block that is running |
 | **v2.12** | The wave that came out of the owner building a real 74-block week. "Add to" became seven day switches with the named scopes as presets over them, because a rotation of Mon/Thu, Tue/Fri, Wed/Sat has no name and every block was going on twice. A block carries KEY the way it now carries a note and steps, with the three-per-day cap enforced in both editors per day and at stamp time. A category is made from the swatch row rather than four screens away. A privacy guard reads every tracked file and refuses the owner's own words, hashed so the guard is not itself the leak. A Playwright walk builds the whole week - ninety-seven presses - and a second one lives seven days on top of it. And `docs/MORNING.md`, the one page to open at 07:00 |
 | **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
 
@@ -272,7 +273,7 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.12 wave below, then the v2.11 wave - a template block can carry a
+**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.13 wave below, then the v2.12 wave, then the v2.11 wave - a template block can carry a
 note and a list of steps, so a meal block arrives with the recipe on it and
 a morning routine arrives with its four steps. Under it, the v2.10 wave, which added nothing and fixed two
 things - both about where focus lands when a panel closes, both found by
@@ -282,6 +283,51 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.13 wave: one place text goes
+
+Steps were a list beside a note. A template block could carry both, and so
+could a task. In a year of use the list was never the thing anybody reached
+for and the note always was - so the note became the only place, and it
+learned to hold more than one thing at a time.
+
+The owner's case: a lunch block carrying three recipes. One note held all
+three, and reading any of it meant opening the whole thing and scrolling past
+the other two.
+
+| # | Stage | Commit | What it is |
+|---|---|---|---|
+| 0 | Where steps lived | `00903f5` | Written down before a line changed - section 5b below, kept because the field is called `steps` on a block and `subtasks` on a task, and the repo has five other things called step that must not be touched |
+| 1 | The parser | `9264056` | `parseNote`: a line beginning with `## ` starts a section, everything above the first one is the intro. One rule, no engine, and a note with no such line parses to exactly what it always was |
+| 2-4 | Sections on the card, the reader, the toggle | `9f989fd` | The headings are on the task card and on Up next; pressing one opens it over the day with the others beside it. `noteExpanded` is one checkbox in the block's panel, governing the intro only - headings are choices, and a choice you cannot see is not one |
+| 5 | Steps folded in, and taken out | `9bef54e` | Every step becomes a line at the end of its note - `- Water`, `- Meditation (10 min)`. It runs at the one gate both loading and importing pass through, and twice safely: a line already in the note is not added again |
+| 6 | The week as a picture | `bd83939` | Seven lists of chips became the calendar's own week, fed template blocks - the same layout code and the same stylesheet, so a template week and a real week are drawn by one set of rules rather than two kept in step by hand |
+| 7 | The door on the title line | `7f9bd0f` | The link icon left the meta row, which is facts about a task, for the title's own line, bound to the last word. And Focus found its centre, ten pixels late |
+| 8 | Seven identical squares | `4614c48` | The day switches were all 30px wide and still looked untidy: the sizing came from padding, so every letter overflowed its own box by a different amount |
+
+Two more things the owner found while it ran, both fixed here: **the running
+block's time was struck through** by the current-time line (`7b9e0a5`), which
+had been true since the anchors became stacking contexts and was only ever
+visible on a short block; and **a category is made from the swatch row**
+(`5c421f9`) rather than four screens away in Settings.
+
+#### What this wave is worth remembering for
+
+- **The migration is the feature.** Removing steps was easy; not losing them
+  was the work. `lib/stepsToNote.ts` is idempotent by content rather than by
+  flag - a line already in the note is not added again - so a half-migrated
+  file, and a migrated file exported and imported, both come back the same.
+- **`validate` still refuses a malformed step.** A v1.1 backup may carry one,
+  and the migration runs after validation, never instead of it.
+- **A brace-blind removal broke the build silently.** Cutting CSS rules by
+  "selector to the next closing brace" ate two enclosing media blocks, and
+  vite then transformed 209 modules and emitted nothing at all, with an error
+  about a service worker. The stylesheet is one file of fourteen thousand
+  lines; remove from it brace-for-brace or not at all.
+- **Three separate slices took more than they meant to** - the library marks
+  on a task card, `setTaskLibraryRef`, and the whole stylesheet - each caught
+  by a typecheck or a test rather than by reading. Cut by exact text, not by
+  a scan for the next delimiter.
 
 ### The v2.12 wave: the night before a real week
 
@@ -1185,6 +1231,7 @@ and pushed. Nothing below this table is owed.
 | `v2.5` | `57db593` | Notes, pictures, set-aside, the library's add row, the tour, the template timeline, the journal, the settings health check, and the closing. On top of v2.4. Three commits sit above it, untagged: the handoff, and the two waves of follow-up in the table under this one |
 | `v2.6` | `493d9de` | The desktop wave, on top of everything above: the brief, the header, the seven stages in one commit, the health pass, and the closing |
 | `v2.10` | `8a18e25` | The bug hunt: nothing added, two focus defects fixed, one hole closed in the suite, and the README made true again |
+| `v2.13` | `7b9e0a5` | Steps folded into the note, which learned to hold sections; the week template drawn as a week; the link on the title line |
 | `v2.12` | `d982446` | The night before a real week: seven day switches, a block that carries KEY, a category made where it is needed, a privacy guard, the rehearsal, the soak, and one page for 07:00 |
 | `v2.11` | `978f661` | A template block carries a note and a list of steps onto every day it stamps, and the card's note mark became a press |
 | `v2.9` | `595975b` | Four things met in use and one document: both day arrows inside the month, the day type as one line, the colours out of the time column and the candidate onto the timeline, one link on an item and a task, and an audit written for somebody who has not seen the app |
@@ -1895,12 +1942,13 @@ The measurement snippet that has been used for the target audit:
 
 ---
 
-## 5b. Where steps live, before they are removed
+## 5b. Where steps lived, before they were removed
 
-Taken on 2026-09-09, before a line of it was changed. Steps are being folded
-into the note - see the v2.13 wave in section 4 - and this is the list the
-removal works from, so that nothing is left behind by a grep that missed a
-synonym. The field is called `steps` on a template block and `subtasks` on a
+Taken on 2026-09-09, before a line of it was changed, and kept as the record
+of what the removal worked from. Steps are folded into the note now - see the
+v2.13 wave in section 4. Nothing in this list is still in the app; it is here
+because the next person to remove a feature this wide will want to see what
+the list looked like. The field is called `steps` on a template block and `subtasks` on a
 task, which is most of why a grep alone was not enough.
 
 **The data**
