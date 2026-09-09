@@ -97,11 +97,64 @@ test('the door is on the title line, and pressing it does not open the editor', 
   expect(inTitle).toBe(true)
   expect(await card(page, 'Spanish').locator('.task-meta .task-link').count()).toBe(0)
 
-  // And pressing it opens the address, not the task.
+  // And pressing it opens the address, not the task. The icon sits inside
+  // the check box's own <label>, so this is two promises: no editor, and no
+  // tick either - a press that quietly finished the task would be the worst
+  // of the three things this could do.
   const opened = page.waitForEvent('popup')
   await door.click()
   await (await opened).close()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('checkbox', { name: 'Spanish' })).not.toBeChecked()
+})
+
+/**
+ * The door reads as a mark beside the title, not as the last letter of it.
+ *
+ * Every number here is against the title's own type rather than in pixels,
+ * which is the whole of what changed in v2.14: the icon was 1.15em of the
+ * card's 13px - a 15px icon beside 15px letters - centred on the x-height of
+ * a size the line it sits on does not contain, with a plain space for a gap.
+ * Measured in a browser because none of it exists in jsdom.
+ */
+test('the door is three quarters of the title, in the meta ink, off its last word', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await quickAdd(page, '09:00 Spanish')
+
+  await card(page, 'Spanish').getByRole('button', { name: /^More actions for Spanish/ }).click()
+  await page.getByRole('button', { name: /Details/ }).click()
+  const sheet = page.getByRole('dialog')
+  await sheet.getByLabel('Link (optional)').fill('example.com/spanish')
+  await sheet.getByLabel('Link (optional)').blur()
+  await sheet.getByRole('button', { name: 'Done' }).click()
+
+  const read = await card(page, 'Spanish').evaluate(el => {
+    const a = el.querySelector('.task-link') as HTMLElement
+    const svg = a.querySelector('svg') as SVGElement
+    const title = el.querySelector('.task-title') as HTMLElement
+    const time = el.querySelector('.task-time') as HTMLElement
+    const size = parseFloat(getComputedStyle(title).fontSize)
+    const range = document.createRange()
+    range.selectNodeContents(title)
+    const rects = [...range.getClientRects()]
+    const last = rects[rects.length - 1]
+    const sr = svg.getBoundingClientRect()
+    return {
+      titleSize: size,
+      iconSize: sr.width,
+      gap: sr.left - last.right,
+      iconInk: getComputedStyle(a).color,
+      metaInk: getComputedStyle(time).color,
+      titleInk: getComputedStyle(title).color,
+    }
+  })
+
+  // Three quarters of the title, and 0.4em off its last word.
+  expect(read.iconSize).toBeCloseTo(read.titleSize * 0.75, 1)
+  expect(read.gap).toBeCloseTo(read.titleSize * 0.4, 1)
+  // The ink of the line under it, not the ink of the title beside it.
+  expect(read.iconInk).toBe(read.metaInk)
+  expect(read.iconInk).not.toBe(read.titleInk)
 })
 
 test('an address this cannot open says so instead of saving nothing', async ({ page }) => {

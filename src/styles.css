@@ -14780,20 +14780,44 @@ main:has(.week) > .calendar {
    centred against the whole wrapped title instead of following its last
    word. One inline item, and the non-breaking space inside it does the
    binding. */
-.task-title-line { flex: 1; min-width: 0; }
+/* The title's own size and leading, so the line box is the title's line box
+   and nothing else. It is not decoration: `vertical-align: middle` centres
+   against the x-height of the line, and at the card's inherited 13px that is
+   the x-height of a size the line does not contain - which put the door
+   most of a pixel below the letters at every scale. The leading matches
+   .task-title exactly, so the strut adds no height of its own. */
+.task-title-line { flex: 1; min-width: 0; font-size: var(--t-md); line-height: 1.35; }
 
 /* On the title line, sized against the title rather than in pixels, so it
    grows with the text scale. The negative margin keeps the 44px target
    without the icon pushing the line taller than the words - see .link-out,
-   which this only adjusts. */
+   which this only adjusts.
+
+   Its own font-size, because the em it is measured in has to be the title's.
+   The line it sits on inherits the card's 13px, so 1.15em here was 1.15 of
+   the wrong number: a 15px icon beside 15px letters, which is not a mark
+   beside a title, it is a second word. Three quarters of the title reads as
+   what it is - the door, not the name of the thing. */
 .task-link {
-  margin: calc((var(--touch) - 1.15em) / -2);
+  font-size: var(--t-md);
+  margin: calc((var(--touch) - 0.75em) / -2);
+  /* The gap from the last word, on top of the negative pull. Set here rather
+     than typed as a space in the markup, so it is 0.4em at every text scale
+     instead of whatever a space happens to be. */
+  margin-left: calc((var(--touch) - 0.75em) / -2 + 0.4em);
   width: var(--touch);
   height: var(--touch);
+  /* Centred on the title's x-height, which is what `middle` means: the
+     midpoint of this box against the baseline plus half the x-height of the
+     line it is on. */
   vertical-align: middle;
 }
 
-.task-link svg { width: 1.15em; height: 1.15em; }
+/* The shared 1.5 is drawn for a 20px icon; at 0.75em it lands under a
+   device pixel and the mark goes soft beside letters that do not. Scaled by
+   the same ratio the box was, so the stroke reads at the weight of the muted
+   text it shares its colour with rather than at the weight of the title. */
+.task-link svg { width: 0.75em; height: 0.75em; stroke-width: 1.75; }
 
 /* At the end of a library row, after the count, where the hover actions
    appear. Never hidden with them: a link is a property of the item and reads

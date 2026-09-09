@@ -310,12 +310,18 @@ export function TaskRow({
           )}
           {/* The door, on the title's own line rather than among the marks
               below it. The meta row is facts about the task - when, how long,
-              what kind - and this is a thing you do. Bound to the last word
-              with a non-breaking space so a title that wraps never leaves the
-              icon alone on a line of its own. */}
+              what kind - and this is a thing you do.
+
+              Bound to the last word by a word joiner: no break allowed on
+              either side of it, so a title that wraps never leaves the icon
+              alone on a line of its own. It was a non-breaking space, which
+              binds the same way but is also a space - so the gap before the
+              icon was whatever a space happened to be at the size in force.
+              The joiner has no width and the gap is 0.4em in the stylesheet,
+              which is the same gap at every text scale. */}
           {link && (
             <>
-              {' '}
+              {'⁠'}
               <LinkOut link={link} title={task.title} className="task-link" />
             </>
           )}
