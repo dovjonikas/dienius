@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { todayKey } from './lib/dates'
+import { useToday } from './lib/useToday'
 import { useAppData } from './lib/store'
 import { applyResolvedTheme, resolveTheme, systemPrefersDark } from './lib/theme'
 import { syncThemeColorMeta } from './lib/theme-color'
@@ -14,6 +15,7 @@ import { FocusView } from './widgets/day-plan/FocusView'
 import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
 import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
+import { requestCloudBackup } from './lib/cloudBackup'
 import { DemoBanner } from './views/DemoBanner'
 import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
@@ -98,6 +100,18 @@ export function App() {
     ? data.days[tools.focus.date]?.tasks.find(t => t.id === tools.focus!.taskId)
     : undefined
   const [selectedDate, setSelectedDate] = useState(todayKey())
+  // The clock going past midnight under an app nobody reloaded - see
+  // lib/useToday.ts. The day on screen follows it, but only when the day on
+  // screen *was* today: somebody who has walked forward to Friday is looking
+  // at Friday on purpose and is not moved off it at midnight.
+  const today = useToday()
+  const wasToday = useRef(today)
+  useEffect(() => {
+    const before = wasToday.current
+    if (before === today) return
+    wasToday.current = today
+    setSelectedDate(d => (d === before ? today : d))
+  }, [today])
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [scratchOpen, setScratchOpen] = useState<{ date?: string } | null>(null)
@@ -166,16 +180,26 @@ export function App() {
   // whole reason those scales exist as tokens: changing how spacious or how
   // large the entire app is costs six declarations, and nothing anywhere else
   // has to know either setting exists.
-  // One snapshot a day, on first open - see lib/snapshots.ts. Fired once
-  // per mount and never awaited: it is a courtesy against a bad five
-  // minutes, and nothing about the app may wait on IndexedDB to answer.
+  // One snapshot a day - see lib/snapshots.ts. Never awaited: it is a
+  // courtesy against a bad five minutes, and nothing about the app may wait
+  // on IndexedDB to answer.
+  //
+  // Keyed on the day rather than on the mount since v2.17. "Once per open"
+  // was the same assumption the day view made about which day it was, and it
+  // has the same hole: a tab that is open all week is opened once, so the
+  // seven days of snapshots the file promises would have been one.
   useEffect(() => {
-    void snapshotToday(getData(), todayKey())
-    // And any picture no note points at any more. Same rules: once per
-    // mount, never awaited, and a failure is nothing anybody sees. See
-    // sweepPhotos for why an orphan is possible at all.
+    void snapshotToday(getData(), today)
+    // And any picture no note points at any more. Same rules: never awaited,
+    // and a failure is nothing anybody sees. See sweepPhotos for why an
+    // orphan is possible at all.
     void storeActions.sweepPhotos()
-  }, [])
+    // The copy on GitHub, for the same reason - lib/cloudBackup.ts asks for
+    // one on the first open of a new day, so that the day that just ended is
+    // stored in its final state. A no-op with no repo set, and spaced by the
+    // interval every automatic reason goes through.
+    void requestCloudBackup('new-day')
+  }, [today])
 
   useEffect(() => {
     document.documentElement.dataset.density = data.settings.density
