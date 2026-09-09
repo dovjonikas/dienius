@@ -768,6 +768,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           <button
             className="btn-secondary"
             disabled={!blockTitle.trim() || addDays.length === 0}
+            data-tip="Return in the title does this too"
             onClick={addBlocks}
           >
             Add a block

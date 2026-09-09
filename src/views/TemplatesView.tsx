@@ -619,7 +619,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             Ongoing
           </button>
         </Explain>
-        <button className="btn-secondary" onClick={addBlock}>Add a block</button>
+        {/* The gesture that halves the cost of building a week, and nothing
+            said so: Return in the title adds the block, the same way Enter
+            adds a task on the day. Measured at twenty-two presses across one
+            week - see the rehearsal walk. */}
+        <button className="btn-secondary" data-tip="Return in the title does this too" onClick={addBlock}>
+          Add a block
+        </button>
         </div>
       </div>
       <div className="row">

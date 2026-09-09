@@ -82,14 +82,20 @@ async function read(page: Page): Promise<Reading> {
 }
 
 /** How many tasks anywhere carry the mark a gesture was meant to leave. */
-async function count(page: Page, what: 'pushed' | 'journals' | 'notes'): Promise<number> {
+async function count(page: Page, what: 'pushed' | 'journals' | 'notes' | 'low' | 'replanned' | 'away'): Promise<number> {
   return page.evaluate(kind => {
     const data = JSON.parse(localStorage.getItem('dienius:data') || '{}')
     const days = Object.values(data.days ?? {}) as {
       tasks?: { pushCount?: number }[]
       journal?: unknown
+      lowDay?: boolean
+      replannedOn?: string
+      away?: string
     }[]
     if (kind === 'journals') return days.filter(d => d.journal).length
+    if (kind === 'low') return days.filter(d => d.lowDay).length
+    if (kind === 'replanned') return days.filter(d => d.replannedOn).length
+    if (kind === 'away') return days.filter(d => d.away).length
     // scratch is the array itself, not an object holding one - the first
     // version of this counter read a field that has never existed and so
     // reported zero notes however many were written.
@@ -130,7 +136,11 @@ async function checkDay(page: Page, label: string) {
 async function confirm(page: Page) {
   const dialog = page.getByRole('dialog').first()
   if ((await dialog.count()) === 0) return
-  const yes = dialog.getByRole('button').filter({ hasNotText: /Cancel|Close|Not now/ }).first()
+  // Accept by name where a sheet has one. Taking 'the first button that is
+  // not Cancel' found the close cross in the sheet's own head, which shut the
+  // sheet and left the day exactly as it was.
+  const named = dialog.getByRole('button', { name: /^(Accept|Use this plan|Clear|Yes)$/ })
+  const yes = (await named.count()) > 0 ? named.first() : dialog.getByRole('button').filter({ hasNotText: /Cancel|Close|Not now/ }).first()
   if ((await yes.count()) === 0) return
   await yes.click()
   await page.waitForTimeout(300)
@@ -221,6 +231,10 @@ test('a week of ordinary use leaves the day adding up and the file loading', asy
   // days later is a gesture nobody can tell did nothing.
   expect(await count(page, 'pushed'), 'the banner moved nothing').toBeGreaterThan(0)
   if (await pressIfThere(page, 'Low day')) await confirm(page)
+  // Asserted where it happens. Every gesture here skips a control that is
+  // not on the screen, which is also how a soak stops soaking - so each one
+  // has to say what it left behind.
+  expect(await count(page, 'low'), 'the low day did not take').toBeGreaterThan(0)
   await checkDay(page, 'Tuesday')
 
   // --- Wednesday: something came up, for an unknown length, and back. -----
@@ -233,21 +247,35 @@ test('a week of ordinary use leaves the day adding up and the file loading', asy
     await pressIfThere(page, /^Accept|^Use this plan|^Replan the day/)
     await page.keyboard.press('Escape')
   }
+  expect(await count(page, 'replanned'), 'the replan changed no day').toBeGreaterThan(0)
+  {
+  }
   await checkDay(page, 'Wednesday')
 
-  // --- Thursday: two things set aside, and one brought back. -------------
-  await page.clock.setFixedTime(dayAt(3, 14))
+  // --- Thursday: away for the afternoon ---------------------------------
+  // The day pauses: nothing nudges and nothing counts against you while you
+  // are not there.
+  //
+  // Nothing in this app has ever had a "Set aside" menu item - the first
+  // version of this step opened a task's menu and pressed a control that
+  // does not exist, then carried on, which is why it passed while doing
+  // nothing. The flag is written in exactly one place, the return half of
+  // this door, and it only writes it for a task that no longer fits in what
+  // is left of the day. Producing that needs a day shaped for it rather than
+  // the ordinary week this soak lives on, so what is asserted here is the
+  // half this day can honestly reach: the day pauses. The return half is
+  // covered by replan.e2e.ts, on a day built for it.
+  await page.clock.setFixedTime(dayAt(3, 13))
   await page.reload()
   await goTo(page, 'Today')
-  for (let i = 0; i < 2; i++) {
-    const menu = page.getByRole('button', { name: /^More actions for / }).first()
-    if ((await menu.count()) === 0) break
-    await menu.click()
-    if (!(await pressIfThere(page, /Set aside/))) await page.keyboard.press('Escape')
-  }
-  await pressIfThere(page, /Bring back|Set aside \(\d+\)/)
+  await pressIfThere(page, 'Replan')
+  await pressIfThere(page, /^Away/)
+  // The door and its confirm carry the same word, so the second press is
+  // the one inside the sheet.
+  await page.getByRole('dialog').getByRole('button', { name: 'Away', exact: true }).click()
+  await page.waitForTimeout(400)
+  expect(await count(page, 'away'), 'the day did not pause').toBeGreaterThan(0)
   await checkDay(page, 'Thursday')
-
   // --- Friday: the journal, on a day that has one. -----------------------
   await page.clock.setFixedTime(dayAt(4, 22))
   await page.reload()

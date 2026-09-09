@@ -1528,16 +1528,12 @@ paint-across-dates gesture, all of which were built and verified with
 synthesised pointer events; OPEN-QUESTIONS carried that note from v2.0 and
 this is where it ends.
 
-- **Return adds a block, and nothing says so.** The week rehearsal measured
-  ninety-seven presses for a whole week when the controls are used as
-  designed and a hundred and thirty-eight when they are not, and twenty-two
-  of the difference were clicking "Add a block" where Return in the title
-  field already does it. The presets are on the screen; this is not.
-- **The soak drives ten gestures and proves five of them landed.** The low
-  day, the replan, the two set aside and the photo are still best-effort:
-  they press whatever is on the screen and carry on if it is not there.
-  Each needs the same treatment the other five got - an assertion on its own
-  effect, where it happens.
+- **The return half of the Away door is not driven by the soak.** It is the
+  one place `Task.setAside` is written, and only for a task that no longer
+  fits in what is left of the day - which needs a day shaped for it rather
+  than the ordinary week the soak lives on. `replan.e2e.ts` covers it on
+  such a day; the soak asserts the half it can honestly reach, that the day
+  pauses.
 - **Dragging a block inside the template editor's timeline.** The picture
   arrived in v2.5 and is read-only: it draws the day a template makes, live,
   with its sleep and its clashes, and the blocks are moved in the list under
