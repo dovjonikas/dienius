@@ -2,20 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PALETTE_COLORS, paletteColorName } from '../lib/colors'
 import { categoryColor, resolvedColor } from '../lib/categories'
 import { useAppData } from '../lib/store'
-import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
+import { parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import type { CategoryId } from '../lib/categories'
 import type { DayType, Template, TemplateBlock, WeekDayOverride } from '../lib/types'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { DurationControl } from './DurationControl'
 import { Explain } from './Explain'
-import { TemplateTimeline } from './TemplateTimeline'
 import { blocksAsTasks } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { TimePicker } from './TimePicker'
-import { BlockNoteButton, BlockNotePanel } from './BlockNote'
+import { BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
+import { WeekTemplateGrid } from './WeekTemplateGrid'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
 
@@ -156,6 +156,9 @@ export interface WeekTemplateEditorProps {
 export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTemplateEditorProps) {
   const data = useAppData()
   const nameRef = useRef<HTMLInputElement>(null)
+  // The block title, so a press on empty track lands the cursor where the
+  // next thing typed is the block that goes there.
+  const titleRef = useRef<HTMLInputElement>(null)
   const [activeDay, setActiveDay] = useState(() => new Date().getDay())
   // Which days one press puts a block on. Seven switches rather than a
   // named scope, and it survives the add: the owner builds a rotation by
@@ -406,199 +409,119 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         </div>
       )}
 
-      {/* The day the pressed column makes, at full width with its hours -
-          seven narrow columns show the shape of a week, and this shows the
-          detail of the one being worked on. */}
-      <TemplateTimeline
+      {/* The week as a picture, drawn by the calendar's own layout - see
+          WeekTemplateGrid.tsx. It was seven lists of chips, and at a seventh
+          of the editor's width every chip wrapped into five stacked pieces. */}
+      <WeekTemplateGrid
         blocks={draft.blocks}
-        weekday={activeDay}
-        sleepProfileId={draft.weekDays[activeDay]?.sleepProfileId ?? draft.sleepProfileId}
+        weekDays={draft.weekDays}
+        sleepProfileId={draft.sleepProfileId}
+        sleepProfiles={sleepProfiles}
+        categories={categories}
         color={draft.color}
-        ghostKey={ghostKeyFor(activeDay)}
-      />
-
-      <div className="wt-columns">
-        {WEEK.map(({ day, label, short }) => {
-          const blocks = blocksOn(day)
+        libraryNames={Object.fromEntries(data.library.map(l => [l.id, l.name]))}
+        activeDay={activeDay}
+        draggingId={draggingId}
+        openBlockId={noteBlockId}
+        onPickDay={setActiveDay}
+        onOpenBlock={block => setNoteBlockId(id => (id === block.id ? null : block.id))}
+        onBlockPointerDown={(block, e) => {
+          if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId)
+          }
+          dragRef.current = { id: block.id, x: e.clientX, y: e.clientY }
+          setDraggingId(block.id)
+        }}
+        onEmptyPress={(day, time) => {
+          // The gesture the day's own grid takes: a press on empty track is
+          // a time, and the row below is already where a block is written.
+          setAddDays([day])
+          setBlockTime(time)
+          titleRef.current?.focus()
+        }}
+        foot={day => {
           const override = draft.weekDays[day]
+          const label = WEEK.find(w => w.day === day)!.label
+          const count = draft.blocks.filter(b => b.weekday === day).length
           return (
-            <section
-              key={day}
-              className={
-                ['wt-column', day === activeDay ? 'is-active' : '', draggingId ? 'is-dropping' : '']
-                  .filter(Boolean)
-                  .join(' ')
-              }
-              data-wt-day={day}
-              aria-label={label}
-            >
-              <button
-                type="button"
-                className="wt-day"
-                aria-pressed={day === activeDay}
-                aria-label={`${label}${day === activeDay ? ', the day Add to uses' : ''}`}
-                onClick={() => setActiveDay(day)}
-              >
-                {short}
-              </button>
+            <>
+              {typeOpenDay === day ? (
+                <select
+                  className="setting-select wt-day-type"
+                  aria-label={`Day type for ${label}`}
+                  autoFocus
+                  value={override?.type ?? ''}
+                  onChange={e => {
+                    setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })
+                    setTypeOpenDay(null)
+                  }}
+                  onBlur={() => setTypeOpenDay(null)}
+                >
+                  <option value="">Week default</option>
+                  {DAY_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  type="button"
+                  className="wt-day-type-summary"
+                  aria-expanded={false}
+                  aria-label={`Day type for ${label}: ${typeLabel(override?.type)}. Change`}
+                  onClick={() => setTypeOpenDay(day)}
+                >
+                  {typeLabel(override?.type)}
+                </button>
+              )}
 
-              {/* The column as the day it makes. Its own scale, because a
-                  column carries its own sleep - one shared scale down the
-                  left would be a picture of a week where every day wakes at
-                  the same hour, which is the thing a week template exists
-                  to stop being true. */}
-              <TemplateTimeline
-                blocks={draft.blocks}
-                weekday={day}
-                sleepProfileId={override?.sleepProfileId ?? draft.sleepProfileId}
-                color={draft.color}
-                compact
-                ghostKey={ghostKeyFor(day)}
-              />
+              {sleepProfiles.length > 1 && (
+                <select
+                  className="setting-select wt-day-sleep"
+                  aria-label={`Sleep schedule for ${label}`}
+                  value={override?.sleepProfileId ?? ''}
+                  onChange={e => setOverride(day, { sleepProfileId: e.target.value || undefined })}
+                >
+                  <option value="">Week default</option>
+                  {sleepProfiles.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
 
-              <ul className="wt-blocks">
-                {blocks.map(block => (
-                  <li key={block.id} className={draggingId === block.id ? 'wt-block is-dragging' : 'wt-block'}>
-                    <button
-                      type="button"
-                      className="wt-block-body"
-                      aria-label={`${block.title} on ${label}. Drag to another day.`}
-                      style={{ ['--cat' as string]: categoryColor(block.category, categories) } as React.CSSProperties}
-                      onPointerDown={e => {
-                        if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
-                          e.currentTarget.releasePointerCapture(e.pointerId)
-                        }
-                        dragRef.current = { id: block.id, x: e.clientX, y: e.clientY }
-                        setDraggingId(block.id)
-                      }}
-                    >
-                      {block.time && <span className="wt-block-time">{block.time}</span>}
-                      <span className="wt-block-title">{block.title}</span>
-                      {block.minutes !== undefined && (
-                        <span className="wt-block-size">{formatDuration(block.minutes)}</span>
-                      )}
-                      {block.libraryListId && (
-                        <span className="wt-block-size">
-                          from {data.library.find(l => l.id === block.libraryListId)?.name ?? 'a list'}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={block.highlight ? 'wt-block-key is-on' : 'wt-block-key'}
-                      aria-pressed={!!block.highlight}
-                      aria-label={
-                        block.highlight
-                          ? `${block.title} on ${label} is a key task`
-                          : `Mark ${block.title} on ${label} as a key task`
-                      }
-                      onClick={() => toggleBlockKey(block)}
-                    >
-                      Key
-                    </button>
-                    <BlockNoteButton
-                      note={block.note}
-                      steps={block.steps}
-                      open={noteBlockId === block.id}
-                      label={`${block.title} on ${label}`}
-                      onToggle={() => setNoteBlockId(id => (id === block.id ? null : block.id))}
-                    />
-                    <button
-                      type="button"
-                      className="setting-remove"
-                      aria-label={
-                        editScope === 'group' && block.groupId
-                          ? `Remove ${block.title} from every day it is on`
-                          : `Remove ${block.title} from ${label}`
-                      }
-                      onClick={() => removeBlock(block)}
-                    >
-                      &times;
-                    </button>
-                  </li>
-                ))}
-                {blocks.length === 0 && <li className="wt-empty">No blocks yet</li>}
-              </ul>
-
-              <div className="wt-column-foot">
-                {typeOpenDay === day ? (
-                  <select
-                    className="setting-select wt-day-type"
-                    aria-label={`Day type for ${label}`}
-                    autoFocus
-                    value={override?.type ?? ''}
-                    onChange={e => {
-                      setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })
-                      setTypeOpenDay(null)
-                    }}
-                    onBlur={() => setTypeOpenDay(null)}
-                  >
-                    <option value="">Week default</option>
-                    {DAY_TYPES.map(t => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
+              {count > 0 && (
+                <Explain id="copy-to">
                   <button
                     type="button"
-                    className="wt-day-type-summary"
-                    aria-expanded={false}
-                    aria-label={`Day type for ${label}: ${typeLabel(override?.type)}. Change`}
-                    onClick={() => setTypeOpenDay(day)}
+                    className="setting-quiet wt-copy"
+                    aria-expanded={copyFrom === day}
+                    onClick={() => setCopyFrom(copyFrom === day ? null : day)}
                   >
-                    {typeLabel(override?.type)}
+                    Copy to
                   </button>
-                )}
+                </Explain>
+              )}
 
-                {sleepProfiles.length > 1 && (
-                  <select
-                    className="setting-select wt-day-sleep"
-                    aria-label={`Sleep schedule for ${label}`}
-                    value={override?.sleepProfileId ?? ''}
-                    onChange={e => setOverride(day, { sleepProfileId: e.target.value || undefined })}
-                  >
-                    <option value="">Week default</option>
-                    {sleepProfiles.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-
-                {blocks.length > 0 && (
-                  <Explain id="copy-to">
-                    <button
-                      type="button"
-                      className="setting-quiet wt-copy"
-                      aria-expanded={copyFrom === day}
-                      onClick={() => setCopyFrom(copyFrom === day ? null : day)}
-                    >
-                      Copy to
-                    </button>
-                  </Explain>
-                )}
-
-                {copyFrom === day && (
-                  <div className="wt-copy-panel" role="group" aria-label={`Copy ${label} to`}>
-                    <button type="button" className="chip" onClick={() => copyColumn(day, 'weekdays')}>
-                      Weekdays
-                    </button>
-                    <button type="button" className="chip" onClick={() => copyColumn(day, 'weekend')}>
-                      Weekend
-                    </button>
-                    <button type="button" className="chip" onClick={() => copyColumn(day, 'all')}>
-                      All days
-                    </button>
-                  </div>
-                )}
-              </div>
-            </section>
+              {copyFrom === day && (
+                <div className="wt-copy-panel" role="group" aria-label={`Copy ${label} to`}>
+                  <button type="button" className="chip" onClick={() => copyColumn(day, 'weekdays')}>
+                    Weekdays
+                  </button>
+                  <button type="button" className="chip" onClick={() => copyColumn(day, 'weekend')}>
+                    Weekend
+                  </button>
+                  <button type="button" className="chip" onClick={() => copyColumn(day, 'all')}>
+                    All days
+                  </button>
+                </div>
+              )}
+            </>
           )
-        })}
-      </div>
+        }}
+      />
 
       {/* The open block's note, under all seven columns rather than inside
           the one it belongs to. A column is a seventh of the editor and a
@@ -613,14 +536,54 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
 
       {noteBlock && (
         <div className="wt-note">
-          <span className="wt-note-head">
-            {noteBlock.title}
-            <span className="wt-note-day">
-              {editScope === 'group' && noteBlock.groupId
-                ? ' - on every day it is on'
-                : ` - ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? ''}`}
+          <div className="wt-note-head">
+            <span className="wt-note-title">
+              {noteBlock.title}
+              <span className="wt-note-day">
+                {editScope === 'group' && noteBlock.groupId
+                  ? ' - on every day it is on'
+                  : ` - ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? ''}`}
+              </span>
             </span>
-          </span>
+            {/* Everything a block can be told, in the one place a block is
+                open. These were four controls on a chip in a 110px column
+                before the grid replaced it. */}
+            <div className="wt-note-actions">
+              <button
+                type="button"
+                className={noteBlock.highlight ? 'core-toggle active' : 'core-toggle'}
+                aria-pressed={!!noteBlock.highlight}
+                aria-label={
+                  noteBlock.highlight
+                    ? `${noteBlock.title} on ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'} is a key task`
+                    : `Mark ${noteBlock.title} on ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'} as a key task`
+                }
+                onClick={() => toggleBlockKey(noteBlock)}
+              >
+                Key
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                aria-label={
+                  editScope === 'group' && noteBlock.groupId
+                    ? `Remove ${noteBlock.title} from every day it is on`
+                    : `Remove ${noteBlock.title} from ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'}`
+                }
+                onClick={() => removeBlock(noteBlock)}
+              >
+                Remove
+              </button>
+              <button
+                type="button"
+                className="setting-quiet"
+                aria-label={`Close ${noteBlock.title}`}
+                onClick={() => setNoteBlockId(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
           <BlockNotePanel
             note={noteBlock.note}
             steps={noteBlock.steps}
@@ -655,6 +618,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             ghost={{ key: ghostKeyFor(activeDay), minutes: parseMinutesInput(blockMinutes), color: categoryColor(blockCategory, data.categories) }}
           />
           <input
+            ref={titleRef}
             placeholder="What happens"
             value={blockTitle}
             onChange={e => setBlockTitle(e.target.value)}

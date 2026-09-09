@@ -14,6 +14,7 @@ beforeEach(() => {
   // group scopes and a test that confused them would fail.
   vi.useFakeTimers({ shouldAdvanceTime: true })
   vi.setSystemTime(new Date('2026-09-09T09:00:00'))
+  addedAt = 6
 })
 
 async function newWeek(user: ReturnType<typeof userEvent.setup>) {
@@ -21,9 +22,39 @@ async function newWeek(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: /^A week/ }))
 }
 
-async function addBlock(user: ReturnType<typeof userEvent.setup>, title: string) {
+/**
+ * A block, at a time of its own.
+ *
+ * The time matters now: a block without one is not on the week picture at
+ * all, because there is nowhere on a clock to draw it - it goes under its
+ * column as an untimed chip instead. Every block a person makes has a time,
+ * so the tests make them that way too. The times climb in the order blocks
+ * are added, which is also the order anything sorted by time reports them in.
+ */
+let addedAt = 6
+
+async function addBlockAt(user: ReturnType<typeof userEvent.setup>, time: string, title: string) {
+  await user.clear(screen.getByPlaceholderText('09:00'))
+  await user.type(screen.getByPlaceholderText('09:00'), time)
   await user.type(screen.getByPlaceholderText('What happens'), title)
   await user.click(screen.getByRole('button', { name: 'Add a block' }))
+}
+
+async function addBlock(user: ReturnType<typeof userEvent.setup>, title: string) {
+  await user.clear(screen.getByPlaceholderText('09:00'))
+  await user.type(screen.getByPlaceholderText('09:00'), `${String(addedAt).padStart(2, '0')}:00`)
+  addedAt = addedAt >= 22 ? 6 : addedAt + 1
+  await user.type(screen.getByPlaceholderText('What happens'), title)
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+}
+
+/**
+ * Opens a block from the week picture. Its controls - Key, Note, Remove -
+ * live in the panel under the grid rather than on the block itself, because
+ * a column is a seventh of the editor and four controls do not fit in one.
+ */
+async function openBlock(user: ReturnType<typeof userEvent.setup>, day: string, title: string) {
+  await user.click(within(column(day)).getByRole('button', { name: new RegExp(`^${title}[ ,]`) }))
 }
 
 function column(label: string) {
@@ -133,8 +164,9 @@ describe('editing something that is on several days', () => {
     await addBlock(user, 'Commute')
 
     // Seven of them, one per column, and pressing any one is the same press.
+    await openBlock(user, 'Wednesday', 'Commute')
     await user.click(
-      within(column('Wednesday')).getByRole('button', { name: 'Remove Commute from every day it is on' }),
+      screen.getByRole('button', { name: 'Remove Commute from every day it is on' }),
     )
     expect(screen.queryByText('Commute')).toBeNull()
   })
@@ -147,6 +179,7 @@ describe('editing something that is on several days', () => {
     await addBlock(user, 'Commute')
 
     await user.click(screen.getByRole('button', { name: 'Just this day' }))
+    await openBlock(user, 'Wednesday', 'Commute')
     await user.click(screen.getByRole('button', { name: 'Remove Commute from Wednesday' }))
 
     expect(within(column('Wednesday')).queryByText('Commute')).toBeNull()
@@ -384,8 +417,9 @@ test('the hour column speaks about the days the block would land on', async () =
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  await user.type(screen.getByPlaceholderText('09:00'), '09:00')
-  await addBlock(user, 'Standup')
+  // addBlock gives a block its own climbing time, so this one says nine
+  // for itself - the hour it then asks the column about.
+  await addBlockAt(user, '09:00', 'Standup')
 
   await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
   expect(within(screen.getByRole('listbox', { name: 'Hour' })).getByRole('option', { name: /^09, .* taken/ })).toBeInTheDocument()
@@ -407,7 +441,7 @@ test('a block on a column carries a note, written in one panel under the week', 
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
   await addBlock(user, 'Meal')
 
-  await user.click(within(column('Wednesday')).getByRole('button', { name: 'Add a note or steps to Meal on Wednesday' }))
+  await openBlock(user, 'Wednesday', 'Meal')
   await user.type(screen.getByLabelText('Note on Meal'), 'Rice and chicken')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
@@ -424,9 +458,7 @@ test('a note on a block added to every day is written onto all seven at once', a
   await user.click(screen.getByRole('button', { name: 'All days' }))
   await addBlock(user, 'Morning routine')
 
-  await user.click(
-    within(column('Monday')).getByRole('button', { name: 'Add a note or steps to Morning routine on Monday' }),
-  )
+  await openBlock(user, 'Monday', 'Morning routine')
   // One event rather than 29: every keystroke here redraws seven columns
   // and the timeline over them, which is fine at human speed and slow enough
   // under a loaded test run to reach the timeout.
@@ -449,9 +481,7 @@ test('a step added to a block on a week template reaches every day it is on', as
   await user.click(screen.getByRole('button', { name: 'All days' }))
   await addBlock(user, 'Morning routine')
 
-  await user.click(
-    within(column('Monday')).getByRole('button', { name: 'Add a note or steps to Morning routine on Monday' }),
-  )
+  await openBlock(user, 'Monday', 'Morning routine')
   await user.type(screen.getByLabelText('Add a step to Morning routine'), 'Meditation 10 min{Enter}')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
@@ -492,8 +522,9 @@ test('the key limit is counted per day, not per template', async () => {
   await user.click(where.getByRole('button', { name: 'All days' }))
   for (const title of ['Morning', 'Deep work', 'Training']) {
     await addBlock(user, title)
+    await openBlock(user, 'Monday', title)
     await user.click(
-      within(column('Monday')).getByRole('button', { name: `Mark ${title} on Monday as a key task` }),
+      screen.getByRole('button', { name: `Mark ${title} on Monday as a key task` }),
     )
   }
 
@@ -513,8 +544,9 @@ test('a fourth key block on one column is refused, and the day is named', async 
 
   for (const title of ['Morning', 'Deep work', 'Training', 'Reading']) {
     await addBlock(user, title)
+    await openBlock(user, 'Wednesday', title)
     await user.click(
-      within(column('Wednesday')).getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }),
+      screen.getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }),
     )
   }
 
@@ -536,7 +568,8 @@ test('a block on five days is refused if any one of those days is full', async (
   await user.click(where.getByRole('button', { name: 'Only Wed' }))
   for (const title of ['One', 'Two', 'Three']) {
     await addBlock(user, title)
-    await user.click(within(column('Wednesday')).getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }))
+    await openBlock(user, 'Wednesday', title)
+    await user.click(screen.getByRole('button', { name: `Mark ${title} on Wednesday as a key task` }))
   }
 
   // Then a block across all the weekdays. Monday to Friday could each take
@@ -545,7 +578,8 @@ test('a block on five days is refused if any one of those days is full', async (
   // on Wednesday without saying so.
   await user.click(where.getByRole('button', { name: 'Weekdays' }))
   await addBlock(user, 'Everywhere')
-  await user.click(within(column('Monday')).getByRole('button', { name: 'Mark Everywhere on Monday as a key task' }))
+  await openBlock(user, 'Monday', 'Everywhere')
+  await user.click(screen.getByRole('button', { name: 'Mark Everywhere on Monday as a key task' }))
 
   expect(screen.getByText(/^Wednesday: 3 already matter here/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Save template' }))

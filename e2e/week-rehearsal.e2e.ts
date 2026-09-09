@@ -87,6 +87,16 @@ async function block(page: Page, time: string, title: string, days: string[] = [
 /** Monday's column, where every per-block edit below is made. */
 const MON = '[data-wt-day="1"]'
 
+/**
+ * Opens a block from the week picture. Key, Note and Remove live in the
+ * panel under the grid - a column is a seventh of the editor and four
+ * controls do not fit across one.
+ */
+async function openBlock(page: Page, title: string) {
+  await page.locator(MON).getByRole('button', { name: new RegExp(`^${title} at `) }).first().click()
+  presses += 1
+}
+
 test("a week of the owner's own shape is built through the screen", async ({ page }) => {
   test.slow()
   await openFreshAt(page, wednesdayAt(7))
@@ -109,7 +119,7 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   await block(page, '22:30', 'Evening close')
 
   // The morning gets its four steps once, and every day it is on takes them.
-  await press(page, 'Add a note or steps to Morning routine on Monday', MON)
+  await openBlock(page, 'Morning routine')
   for (const step of ['Water', 'Light', 'Meditation 10 min', 'Out of the room']) {
     await page.getByLabel('Add a step to Morning routine').fill(step)
     await page.getByLabel('Add a step to Morning routine').press('Enter')
@@ -122,7 +132,7 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
     // Always the first meal that has no note yet: a block that gets one
     // renames its own button, so an index into this list would walk past the
     // meal it was aiming at.
-    await page.locator(MON).getByRole('button', { name: 'Add a note or steps to Meal on Monday' }).first().click()
+    await page.locator(MON).getByRole('button', { name: /^Meal at / }).nth(i).click()
     presses += 1
     await page.getByLabel('Note on Meal').fill(mealNotes[i])
     presses += 1
@@ -138,9 +148,10 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   await block(page, '20:00', 'Practice')
   await block(page, '20:45', 'Tidy')
 
-  await press(page, 'Mark Deep work on Monday as a key task', MON)
-  await press(page, 'Mark Practice on Monday as a key task', MON)
-  await press(page, 'Add a note or steps to Practice on Monday', MON)
+  await openBlock(page, 'Deep work')
+  await press(page, 'Mark Deep work on Monday as a key task')
+  await openBlock(page, 'Practice')
+  await press(page, 'Mark Practice on Monday as a key task')
   await page.getByLabel('Add a step to Practice').fill('Warm up 5 min')
   await page.getByLabel('Add a step to Practice').press('Enter')
   presses += 1

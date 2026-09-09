@@ -23,6 +23,7 @@ test('a week template is built once and stamps each day its own column', async (
 
   // One block on every weekday, in one press. This is what the feature is
   // for: most of a week is the same on several days.
+  await page.getByPlaceholder('09:00').fill('08:00')
   await page.getByPlaceholder('What happens').fill('Commute')
   await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Weekdays' }).click()
   await page.getByRole('button', { name: 'Add a block' }).click()
@@ -30,6 +31,7 @@ test('a week template is built once and stamps each day its own column', async (
   // And one that is only on a Thursday, which is what makes a week worth
   // having over a day template stamped five times.
   await page.getByRole('region', { name: 'Thursday' }).getByRole('button', { name: /^Thursday/ }).click()
+  await page.getByPlaceholder('09:00').fill('14:00')
   await page.getByPlaceholder('What happens').fill('Physio')
   // One press back to a single day, from the five the preset above left
   // switched on.
@@ -39,9 +41,14 @@ test('a week template is built once and stamps each day its own column', async (
   await expect(page.getByRole('region', { name: 'Thursday' }).getByText('Physio')).toBeVisible()
 
   // Dragged from Thursday to Friday with a real mouse.
-  const block = page.getByRole('button', { name: 'Physio on Thursday. Drag to another day.' })
+  // The block on the week picture, which is what a drag now takes hold of.
+  const block = page.getByRole('button', { name: /^Physio at .* on Thursday/ })
   const from = await block.boundingBox()
-  const friday = await page.locator('[data-wt-day="5"]').boundingBox()
+  // The track, not the column: a column is display: contents, so it has no
+  // box of its own - its three parts are placed straight into the grid.
+  // The drop still finds the column, because closest() walks the DOM and
+  // not the layout.
+  const friday = await page.locator('[data-wt-day="5"] .week-track').boundingBox()
   if (!from || !friday) throw new Error('the week editor did not lay out')
 
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)

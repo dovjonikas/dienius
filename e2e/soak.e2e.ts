@@ -174,7 +174,9 @@ test('a week of ordinary use leaves the day adding up and the file loading', asy
     await page.getByPlaceholder('What happens').fill(title)
     await page.getByPlaceholder('What happens').press('Enter')
   }
-  await page.locator('[data-wt-day="1"]').getByRole('button', { name: 'Mark Deep work on Monday as a key task' }).click()
+  // A block opens from the week picture, and Key lives in its panel.
+  await page.locator('[data-wt-day="1"]').getByRole('button', { name: /^Deep work at / }).click()
+  await page.getByRole('button', { name: 'Mark Deep work on Monday as a key task' }).click()
   await page.getByRole('button', { name: 'Save template' }).click()
 
   // Every weekday points at it, so opening a day is enough to plan it.

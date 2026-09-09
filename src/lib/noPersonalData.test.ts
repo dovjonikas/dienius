@@ -61,4 +61,9 @@ test('every tracked file in this repo is clean', () => {
   // matters. It runs here rather than only in a script so that `npm test`
   // is enough - a guard nobody remembers to run is not a guard.
   expect(check()).toEqual([])
-})
+  // Twenty seconds of its own. This one reads every tracked file in the repo
+  // and builds every two-word run in each of them; alone that is three
+  // seconds, and past the runner's five-second default when a hundred and
+  // fifty other files are rendering beside it. It has failed that way once
+  // already, which reads as a privacy finding and is not one.
+}, 20000)
