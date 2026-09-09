@@ -542,6 +542,10 @@ live at every wide width. See `docs/OPEN-QUESTIONS.md` item 14.
 
 ## Tier 2 - brief features not built yet
 
+**Empty, reviewed 2026-09-09.** The one entry below is struck through and
+stays for its reasoning about the template editor's time field, which is
+still the design in the code. Nothing in this tier is waiting.
+
 ~~**Time anchors, not free text.** `time` currently accepts anything, so "banana" is a valid time
 (the team's own review flagged this as deferred). The brief says times are anchors: fix only what is
 really fixed, let the rest float.
@@ -623,12 +627,14 @@ never struck from this list; each one below says which.
   open. The if-then board had the same gap and had it fixed; this one is still open.~~ Fixed,
   following the same pattern the if-then board already uses: the editor is its own component,
   mounted fresh each time a draft opens, and focuses its name field on mount.
-- The calendar's month grid had `role="grid"` with `role="gridcell"` children and no `role="row"`
-  between them - not logged here before this review, found while re-checking the same defect that
+- ~~The calendar's month grid had `role="grid"` with `role="gridcell"` children and no `role="row"`
+  between them~~ - not logged here before that review, found while re-checking the same defect that
   was fixed on the year strip. Unlike the strip, a month calendar is genuinely two-dimensional with
   the visual and keyboard axes in agreement, so the fix completes the structure (weeks wrapped in
   `role="row"`, weekday headers as `role="columnheader"`) instead of dropping the grid roles the way
   the strip did. Fixed, pinned by a test on the structure and one on each cell's accessible name.
+  Struck through on 2026-09-09: it read as open work for nine days because it was the one entry in
+  this tier written without the strikethrough the other fixed ones carry.
 - **Standing task, not a defect - needs a real phone, so it stays open:** verify every pointer-based
   drag in the app on actual iOS Safari and Android Chrome hardware, not just a desktop browser's touch
   emulation. Originally the calendar's stamp drag alone; widened by step 7 of `docs/TIMELINE.md` to
@@ -642,7 +648,8 @@ never struck from this list; each one below says which.
   opens its menu without also scrolling the page or toggling the checkbox underneath it. The real
   test for all of this arrives on its own: the owner is starting to use the app on his own phone
   daily, which will exercise every one of these gestures on real hardware far more thoroughly than a
-  dedicated verification pass could.
+  dedicated verification pass could. **That day is 2026-09-09**, and this is
+  the last line in these four tiers that is still waiting for anything.
 - ~~Four exported symbols nothing outside their own file imports: `SYSTEM_CONDENSED` in `themes.ts`,
   `TEMPLATE_COLORS` in `TemplatesView.tsx`, `gapsInWindow` in `capacity.ts`, `pushCountLabel` in
   `TaskRow.tsx`.~~ Decided per symbol rather than dropping `export` from all four reflexively. Three
@@ -684,12 +691,32 @@ never struck from this list; each one below says which.
 
 ## Tier 4 - the portfolio layer
 
-- GitHub repo description and topics: "Dienius - decision-free day planner PWA".
+**Empty, reviewed 2026-09-09.**
 
-## Suggested order for the next session
+- ~~GitHub repo description and topics: "Dienius - decision-free day planner PWA".~~
+  Done, and better than the line proposed here: the repo carries a real
+  description saying what it is and what it does not do ("No streak on the
+  day view"), ten topics, and the deployed URL as its homepage.
 
-Tier 3 is now clear, and time anchors are fixed. What is left:
+## What is actually left
 
-1. Theme system, steps 1-4 of `docs/THEMES.md` - the pre-paint script (step 3's other half) is
-   already done, but the preset architecture, the token layers, and the gallery are not.
-2. The phone verification task carried over in Tier 3
+Reviewed tier by tier on 2026-09-09. **Every tier above is clear except one
+line**, and this file is no longer where the next piece of work comes from.
+
+The one thing still waiting is the phone verification in Tier 3: every
+pointer-based drag and the long-press menu, on real iOS Safari and Android
+Chrome rather than a desktop browser's touch emulation. It is not a defect
+and it cannot be closed from here. It closes itself on 2026-09-09, when the
+owner starts building and living in a real week on their own phone - which
+exercises every gesture on that list more thoroughly than a dedicated pass
+would.
+
+**Where the next brief comes from instead:** the done contract in
+[`STATE.md`](STATE.md), section 4, under "Asked for, not yet built". That is
+the live list. This file is the ledger of what was asked for before the app
+was declared done, and it has been paid.
+
+The previous version of this section said the theme system's steps 1 to 4
+were unbuilt. All eight steps of [`THEMES.md`](THEMES.md) have landed,
+including the twelve presets, the override panel and its contrast warnings -
+the section had simply not been rewritten since.
