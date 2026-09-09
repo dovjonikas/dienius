@@ -4549,9 +4549,17 @@ button.primary {
    20x32 oval, and with the generic block-add button rule below giving it
    the page's ground for a fill, a border and a control's corners, it was a
    dark rounded square - six of them, and the owner could not see the
-   colours. A swatch is a swatch wherever it sits. */
+   colours. A swatch is a swatch wherever it sits.
+
+   Nor the plus that makes a library list, which is drawn as the same 20px
+   circle as the one that makes a category and came out 25x32 the moment it
+   joined this row - the same oval, in the same place, a version later. A
+   round mark is round wherever it sits, and its target grows underneath it
+   on a finger rather than by growing the mark. The worded form of the same
+   control is a pill and is deliberately not excluded: it belongs to this row
+   the way Ongoing does. */
 @media (hover: hover) and (pointer: fine) {
-  .block-add-marks button:not(.category-swatch),
+  .block-add-marks button:not(.category-swatch):not(.library-quick-round),
   .block-add-marks .category-picker { min-height: 32px; }
 }
 
@@ -4595,7 +4603,7 @@ button.primary {
    ground - and the one that was chosen came out looking exactly like the
    thirty-five that were not, which is the thing CONVENTIONS section 22 is
    about. The picker is the same control here as everywhere else. */
-.block-add button:not(.category-swatch):not(.time-picker-option) {
+.block-add button:not(.category-swatch):not(.time-picker-option):not(.library-quick-round) {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
@@ -8196,6 +8204,117 @@ button.danger:focus-visible {
 .library-items.is-finished { margin-top: var(--s1); }
 
 .library-item.done .library-item-title { color: var(--muted); text-decoration: line-through; }
+
+/* ------------------------------------------------------------------------
+   The library binding, wherever a block is being composed - see
+   views/LibraryQuickAdd.tsx.
+
+   A label, the select, and a way to make a list. The label is the point:
+   this was a bare dropdown between the category swatches and Ongoing, which
+   is a control nobody can name, and a control nobody can name is a feature
+   nobody finds. The owner looked straight at it and reported the feature
+   missing.
+   ------------------------------------------------------------------------ */
+.library-binding {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.library-binding-label {
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* The plus, drawn exactly like the one that makes a category, because it is
+   the same gesture one shelf over. Two class names rather than one and a
+   modifier, so the exclusions the add row needs can name the round one
+   without also naming the worded one - see .block-add's rules, which give
+   every button in that row a fill, a border and a control's corners, and
+   which turned this into a 26x20 rounded rectangle the first time it stood
+   there. */
+.library-quick-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-round);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-glyph);
+  line-height: 1;
+}
+
+/* The worded form, for the empty library, where there is no select beside it
+   to say what a plus would add to. This one is a pill among pills and takes
+   the row's own height and treatment, which is why it is not excluded from
+   anything. */
+/* 32px and a control's corners rather than a pill's, because the add row
+   it usually stands in gives every button exactly that and would win - so
+   a pill here would be a pill in the block panel and a rounded rectangle
+   in the row, which is one control drawn two ways. It matches Ongoing, and
+   Ongoing is what it stands beside. */
+.library-quick-word {
+  min-height: 32px;
+  padding: 0 var(--s3);
+  border-radius: var(--r-control);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+
+.library-quick-round:hover,
+.library-quick-word:hover { border-color: var(--accent); color: var(--text); }
+
+.library-quick-round:focus-visible,
+.library-quick-word:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The sheet, on the same terms as .category-quick: a full-width break in
+   whatever row it opened from, so the row it hangs off does not reflow
+   around it. */
+.library-quick {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s2);
+  padding: var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface);
+}
+
+/* .block-add input carries flex: 1 1 120px for the row it was written for.
+   In a column the basis is a height, so the name box opened 120px tall -
+   the same trap .category-quick had to write this line for. */
+.library-quick .field input { flex: 0 0 auto; max-width: 280px; }
+
+.library-quick-actions { display: flex; gap: var(--s3); }
+
+/* A finger gets the target without the mark growing - CONVENTIONS 6's second
+   way, the one for a control in a row whose height it would otherwise set. */
+@media (pointer: coarse) {
+  .library-quick-round { position: relative; }
+
+  .library-quick-round::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch));
+    height: max(100%, var(--touch));
+    transform: translate(-50%, -50%);
+  }
+
+  .library-quick-word { min-height: var(--touch); }
+}
 
 /* The per-block binding in the template editor. Sized down to sit in a row
    of chips rather than to look like a form field. */

@@ -15,6 +15,7 @@ import { bindingLine } from '../lib/library'
 import { ReturnField } from './ReturnField'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
+import { LibraryBindingField } from './LibraryQuickAdd'
 import { blocksAsTasks, type DrawableBlock } from './templateDay'
 import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
@@ -162,6 +163,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
+  // What the next block draws from, answered before it exists - the shape
+  // the week editor has always had and this one did not, so a reading block
+  // here meant adding it first and then finding its row again.
+  const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
   // Opens holding an answer, the rule every control in this app keeps
   // (CONVENTIONS section 16): the length quick-add last used. It opened
   // empty and read as the bare word "min". No length is one press away in
@@ -208,6 +213,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           core: blockCore,
           unbounded: blockUnbounded,
           minutes: blockMinutes.trim(),
+          libraryListId: blockLibraryListId,
         },
       ],
     }))
@@ -215,6 +221,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
     setBlockTitle('')
     setBlockCore(false)
     setBlockUnbounded(false)
+    // The binding is not cleared, the way the time and the category are
+    // not: somebody adding a reading block is usually adding two.
   }
 
   function removeBlock(index: number) {
@@ -489,9 +497,17 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             </button>
             {/* The binding, per block rather than per template: one day has
                 a reading block and a language block, and they draw from
-                different lists. Hidden entirely while the library is empty,
-                so a template editor stays a template editor for the many
-                people who never build a list. */}
+                different lists.
+
+                No label and no way to make a list, unlike the add row below
+                and the week editor's open block - this is a row of seven
+                controls per block on a list that can be nine blocks long, and
+                a word plus a plus on every one of them is sixteen more things
+                to read. The add row is where a list gets made; this is where
+                one gets chosen, and by the time somebody is here there is
+                something to choose. Still hidden while the library is empty,
+                for the same reason: nothing to choose from and nowhere here
+                to say so. */}
             {libraryLists.length > 0 && (
               <select
                 className="block-library"
@@ -634,6 +650,16 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             Ongoing
           </button>
         </Explain>
+        {/* And what it draws from, before it exists. The week editor has
+            asked this on its add row since the feature shipped; this one
+            only asked it afterwards, on the block row, so the answer came
+            after the question was over. */}
+        <LibraryBindingField
+          id="block-add-library"
+          lists={libraryLists}
+          value={blockLibraryListId}
+          onChange={setBlockLibraryListId}
+        />
         {/* The button stays, and it is not a double of the mark in the title
             field: the mark is for the hand already on the keys, this is the
             answer for anybody who has never tried Return. What went with the

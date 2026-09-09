@@ -872,3 +872,59 @@ test('an empty list says the block will keep its own name rather than leaving it
   // Deliberate behaviour, said out loud rather than discovered by stamping.
   expect(screen.getByText('Nothing going in Shelf, so the block keeps its own name')).toBeInTheDocument()
 })
+
+/**
+ * The day editor's add row asks what the next block draws from.
+ *
+ * The week editor has asked it there since the feature shipped; this one only
+ * asked afterwards, on the block's own row, so the answer came after the
+ * question was over. Two editors, one job, two shapes.
+ */
+test('a day template block is bound to a list as it is added, not after', async () => {
+  const user = userEvent.setup()
+  const mind = actions.addLibraryList({ name: 'MIND', unit: 'chapter' })
+  actions.addLibraryItem(mind.id, 'Sapiens, 20 chapters')
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A day/ }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Evening')
+
+  const row = within(document.querySelector('.block-add') as HTMLElement)
+  await user.selectOptions(row.getByLabelText('Library list'), mind.id)
+  await user.type(screen.getByPlaceholderText('What happens'), 'Reading')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].blocks[0].libraryListId).toBe(mind.id)
+})
+
+test('the binding stays set for the next block, the way the time and the category do', async () => {
+  const user = userEvent.setup()
+  const mind = actions.addLibraryList({ name: 'MIND', unit: 'chapter' })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A day/ }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Evening')
+
+  const row = within(document.querySelector('.block-add') as HTMLElement)
+  await user.selectOptions(row.getByLabelText('Library list'), mind.id)
+  await user.type(screen.getByPlaceholderText('What happens'), 'Reading')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  // Somebody adding a reading block is usually adding two.
+  await user.type(screen.getByPlaceholderText('What happens'), 'Language')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].blocks.map(b => b.libraryListId)).toEqual([mind.id, mind.id])
+})
+
+test('with no library at all, the day editor still offers a way to make a list', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A day/ }))
+
+  const row = within(document.querySelector('.block-add') as HTMLElement)
+  expect(row.queryByLabelText('Library list')).toBeNull()
+  expect(row.getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+})

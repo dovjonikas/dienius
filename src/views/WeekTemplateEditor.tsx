@@ -16,6 +16,7 @@ import { BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 import { bindingLine } from '../lib/library'
+import { LibraryBindingField } from './LibraryQuickAdd'
 import { ReturnField } from './ReturnField'
 import { WeekTemplateGrid } from './WeekTemplateGrid'
 
@@ -614,42 +615,26 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
            * control nobody can name. Hidden while the library is empty, the
            * same rule the add row follows: a template editor stays a
            * template editor for the many people who never build a list. */}
-          {data.library.length > 0 && (
-            <>
-              <div className="wt-note-field">
-                <label className="wt-note-label" htmlFor={`wt-note-library-${noteBlock.id}`}>
-                  Library list
-                </label>
-                <select
-                  id={`wt-note-library-${noteBlock.id}`}
-                  className="block-library"
-                  value={noteBlock.libraryListId ?? ''}
-                  onChange={e => editBlock(noteBlock, { libraryListId: e.target.value || undefined })}
-                >
-                  <option value="">Nothing</option>
-                  {data.library.map(list => (
-                    <option key={list.id} value={list.id}>
-                      From {list.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* What this block would actually put on a day. See bindingLine:
-                  a list is not a book, and the control above names a list.
-                  Keyed on the list being found rather than on the id being
-                  set, because the add row's id is always one the person just
-                  chose and this one is read off a saved block. Deleting a
-                  list clears it from every block that pointed at it, so a
-                  dangling id only arrives on an imported file - and there it
-                  would render an empty paragraph, which reads as something
-                  failing rather than as nothing to say. The block stamps its
-                  own title in that case, which is already the promise. */}
-              {data.library.find(l => l.id === noteBlock.libraryListId) && (
-                <p className="wt-note-binding">
-                  {bindingLine(data.library.find(l => l.id === noteBlock.libraryListId))}
-                </p>
-              )}
-            </>
+          <LibraryBindingField
+            id={`wt-note-library-${noteBlock.id}`}
+            lists={data.library}
+            value={noteBlock.libraryListId}
+            onChange={libraryListId => editBlock(noteBlock, { libraryListId })}
+          />
+          {/* What this block would actually put on a day. See bindingLine: a
+              list is not a book, and the control above names a list. Keyed on
+              the list being found rather than on the id being set, because the
+              add row's id is always one the person just chose and this one is
+              read off a saved block. Deleting a list clears it from every
+              block that pointed at it, so a dangling id only arrives on an
+              imported file - and there it would render an empty paragraph,
+              which reads as something failing rather than as nothing to say.
+              The block stamps its own title in that case, which is already the
+              promise. */}
+          {data.library.find(l => l.id === noteBlock.libraryListId) && (
+            <p className="wt-note-binding">
+              {bindingLine(data.library.find(l => l.id === noteBlock.libraryListId))}
+            </p>
           )}
           <BlockNotePanel
             note={noteBlock.note}
@@ -731,21 +716,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               week and cannot be said with a day template at all. Hidden while
               the library is empty, so a template editor stays a template
               editor for the many people who never build a list. */}
-          {data.library.length > 0 && (
-            <select
-              className="block-library"
-              aria-label="What the new block draws from"
-              value={blockLibraryListId ?? ''}
-              onChange={e => setBlockLibraryListId(e.target.value || undefined)}
-            >
-              <option value="">Nothing</option>
-              {data.library.map(list => (
-                <option key={list.id} value={list.id}>
-                  From {list.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <LibraryBindingField
+            id="wt-add-library"
+            lists={data.library}
+            value={blockLibraryListId}
+            onChange={setBlockLibraryListId}
+          />
           {/* What the block being added would actually carry onto a day. See
               bindingLine: a list is not a book, and the control above names a
               list. */}

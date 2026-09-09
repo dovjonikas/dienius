@@ -147,7 +147,10 @@ test('a list bound to a block already on the week puts the book on the stamped d
   // The block exists. Now bind it, from its own panel - the thing that could
   // not be done at all before.
   await page.getByRole('region', { name: 'Wednesday' }).getByRole('button', { name: /^Reading[ ,]/ }).click()
-  await page.getByLabel('Library list').selectOption({ label: 'From Books' })
+  // Scoped to the open block: since v2.17 the add row carries the same
+  // labelled field, so a bare query finds two. On screen they are never
+  // confusable - one is under the block's name, the other under WHAT.
+  await page.locator('.wt-note').getByLabel('Library list').selectOption({ label: 'From Books' })
   await expect(page.getByText('Next: Deep Work')).toBeVisible()
 
   await page.getByRole('button', { name: 'Save template' }).click()

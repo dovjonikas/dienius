@@ -57,6 +57,27 @@ async function openBlock(user: ReturnType<typeof userEvent.setup>, day: string, 
   await user.click(within(column(day)).getByRole('button', { name: new RegExp(`^${title}[ ,]`) }))
 }
 
+/**
+/**
+ * The two places the binding control now lives, told apart.
+ *
+ * Both carry the visible label the owner asked for, so both answer to
+ * "Library list" and a bare query finds two. On screen they are never
+ * confusable - one sits under the block's own name and the other under
+ * WHAT, where a block is being composed - but a test has to say which.
+ */
+function openBlockPanel() {
+  const panel = document.querySelector('.wt-note')
+  if (!panel) throw new Error('no block is open')
+  return within(panel as HTMLElement)
+}
+
+function addRow() {
+  const row = document.querySelector('.block-add')
+  if (!row) throw new Error('no add row')
+  return within(row as HTMLElement)
+}
+
 function column(label: string) {
   return screen.getByRole('region', { name: label })
 }
@@ -283,7 +304,7 @@ test('a block can be bound to a library list as it is added, and says which', as
   render(<TemplatesView />)
   await newWeek(user)
 
-  await user.selectOptions(screen.getByLabelText('What the new block draws from'), mind.id)
+  await user.selectOptions(addRow().getByLabelText('Library list'), mind.id)
   await user.click(within(screen.getByRole('group', { name: 'Add to' })).getByRole('button', { name: 'All days' }))
   await addBlock(user, 'Reading')
 
@@ -294,13 +315,18 @@ test('a block can be bound to a library list as it is added, and says which', as
   expect(getData().templates[0].blocks.every(b => b.libraryListId === mind.id)).toBe(true)
 })
 
-// The control is not there at all while the library is empty, so a template
-// editor stays a template editor for the many people who never build a list.
-test('there is nothing to bind to while the library is empty', async () => {
+// While the library is empty there is nothing to choose from, so no select
+// is drawn - but there is a way to make one, which there was not until
+// v2.17. The old shape of this test asserted the control was absent
+// entirely; that was the behaviour the owner asked to keep and then asked
+// to change, once it turned out that a first template is built against an
+// empty library by definition.
+test('an empty library offers no choice, and a way to make one', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  expect(screen.queryByLabelText('What the new block draws from')).toBeNull()
+  expect(addRow().queryByLabelText('Library list')).toBeNull()
+  expect(addRow().getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
 })
 
 /**
@@ -612,7 +638,7 @@ test('an existing block is bound to a list from its own panel, and the binding s
   await addBlock(user, 'Reading')
 
   await openBlock(user, 'Wednesday', 'Reading')
-  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  await user.selectOptions(openBlockPanel().getByLabelText('Library list'), 'From MIND')
   // The line under it says what would actually land on a day, which is a book
   // and not a list - see bindingLine.
   expect(screen.getByText('Next: Deep Work')).toBeInTheDocument()
@@ -621,7 +647,7 @@ test('an existing block is bound to a list from its own panel, and the binding s
   // rather than off a field that happened to still be filled in.
   await user.click(screen.getByRole('button', { name: /^Close Reading/ }))
   await openBlock(user, 'Wednesday', 'Reading')
-  expect(screen.getByLabelText('Library list')).toHaveValue(getData().library[0]?.id ?? '')
+  expect(openBlockPanel().getByLabelText('Library list')).toHaveValue(getData().library[0]?.id ?? '')
 
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   const blocks = getData().templates[0].blocks
@@ -639,7 +665,7 @@ test('binding a block that is on every day binds all seven, the way its note doe
   await addBlock(user, 'Reading')
 
   await openBlock(user, 'Monday', 'Reading')
-  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  await user.selectOptions(openBlockPanel().getByLabelText('Library list'), 'From MIND')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
   const listId = getData().library[0].id
@@ -657,8 +683,8 @@ test('a bound block can be unbound again, without being removed and rebuilt', as
   await addBlock(user, 'Reading')
 
   await openBlock(user, 'Wednesday', 'Reading')
-  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
-  await user.selectOptions(screen.getByLabelText('Library list'), 'Nothing')
+  await user.selectOptions(openBlockPanel().getByLabelText('Library list'), 'From MIND')
+  await user.selectOptions(openBlockPanel().getByLabelText('Library list'), 'Nothing')
 
   expect(screen.queryByText('Next: Deep Work')).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Save template' }))
@@ -673,7 +699,7 @@ test('the panel offers no binding at all while there is no library to bind to', 
   await addBlock(user, 'Reading')
 
   await openBlock(user, 'Wednesday', 'Reading')
-  expect(screen.queryByLabelText('Library list')).not.toBeInTheDocument()
+  expect(openBlockPanel().queryByLabelText('Library list')).not.toBeInTheDocument()
 })
 
 test('a block pointing at a list that is not there says nothing, rather than an empty line', async () => {
@@ -684,7 +710,7 @@ test('a block pointing at a list that is not there says nothing, rather than an 
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
   await addBlock(user, 'Reading')
   await openBlock(user, 'Wednesday', 'Reading')
-  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  await user.selectOptions(openBlockPanel().getByLabelText('Library list'), 'From MIND')
   expect(screen.getByText('Next: Deep Work')).toBeInTheDocument()
 
   // Deleting a list clears it off every block that pointed at it, so this is
@@ -693,7 +719,79 @@ test('a block pointing at a list that is not there says nothing, rather than an 
   await act(async () => {
     actions.deleteLibraryList(list.id)
   })
-  expect(screen.queryByLabelText('Library list')).not.toBeInTheDocument()
+  expect(openBlockPanel().queryByLabelText('Library list')).not.toBeInTheDocument()
   expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
   expect(document.querySelector('.wt-note-binding')).toBeNull()
+})
+
+// Making a list without leaving the editor.
+//
+// The control was hidden outright while the library was empty, which is the
+// state every person is in the first time they build a template - so the one
+// moment somebody wants a reading block was the one moment the app showed no
+// sign that reading blocks exist. Leaving to make a list lost the draft.
+
+test('with no library at all, the block panel still offers a way to make a list', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+
+  // No select, because there is nothing to choose - and a door anyway.
+  expect(openBlockPanel().queryByLabelText('Library list')).not.toBeInTheDocument()
+  expect(openBlockPanel().getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+})
+
+test('a list made from the block binds that block to it, without a second choice', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+
+  await user.click(openBlockPanel().getByRole('button', { name: 'Make a list' }))
+  await user.type(screen.getByLabelText('List name'), 'MIND')
+  await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'chapter' }))
+  await user.click(within(screen.getByRole('dialog', { name: 'A new list' })).getByRole('button', { name: 'Save' }))
+
+  // The list exists, and the block is on it - one answer, not two.
+  expect(getData().library.map(l => l.name)).toEqual(['MIND'])
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].libraryListId).toBe(getData().library[0].id)
+})
+
+test('the short form is derived rather than asked for, so the sheet is two answers', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+
+  await user.click(openBlockPanel().getByRole('button', { name: 'Make a list' }))
+  const sheet = within(screen.getByRole('dialog', { name: 'A new list' }))
+  expect(sheet.queryByText('Short form')).not.toBeInTheDocument()
+  await user.type(sheet.getByLabelText('List name'), 'MIND')
+  await user.click(sheet.getByRole('button', { name: 'chapter' }))
+  await user.click(sheet.getByRole('button', { name: 'Save' }))
+
+  expect(getData().library[0].unitShort).toBe('ch')
+})
+
+test('the add row asks what the next block draws from, under a label somebody can read', async () => {
+  const user = userEvent.setup()
+  await withList('MIND')
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+
+  // Answered before the block exists, which is what an add row is for.
+  await user.selectOptions(addRow().getByLabelText('Library list'), 'From MIND')
+  await addBlock(user, 'Reading')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].blocks[0].libraryListId).toBe(getData().library[0].id)
 })
