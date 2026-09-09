@@ -746,6 +746,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                   className={addDays.includes(day) ? 'wt-day-toggle is-on' : 'wt-day-toggle'}
                   aria-pressed={addDays.includes(day)}
                   aria-label={label}
+                  data-tip={label}
                   onClick={() => toggleAddDay(day)}
                 >
                   {/* The initial to read, the day to hear: two of these are
@@ -761,6 +762,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 editor&apos;s own browser walk caught the moment the switches
                 landed. Named for the day so it cannot be read as the switch
                 beside it. */}
+            <div className="wt-presets">
             <button
               type="button"
               className="chip"
@@ -782,6 +784,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 {label}
               </button>
             ))}
+            </div>
           </div>
 
           {/* What the press will actually do, so nobody counts switches with

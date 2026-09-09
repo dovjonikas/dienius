@@ -4425,7 +4425,10 @@ button.primary {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .block-add-where button { min-height: 32px; }
+  /* Not the day squares: they are sized in em and have to stay square,
+     and this rule is more specific than theirs, so it was making seven
+     rectangles out of them. */
+  .block-add-where button:not(.wt-day-toggle) { min-height: 32px; }
 }
 
 .block-add input { flex: 1 1 120px; }
@@ -13698,32 +13701,66 @@ main:has(.week) > .calendar {
 
 /* Seven switches, one per day. A square each so the row reads as a week
    rather than as seven words, and 44px on a finger like everything else. */
+/* Seven squares of one size. The letters differ in width and the sizing used
+   to come from padding, so an M and an I sat in content boxes of different
+   widths inside boxes of the same width - which is what made the row look
+   untidy. The box is square and the letter is centred by flex; nothing about
+   it is measured in characters.
+
+   In em rather than px so it grows with the text scale and stays square. */
 .wt-day-toggles { display: flex; gap: var(--s1); }
 
 .wt-day-toggle {
-  width: 30px;
-  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2.3em;
+  height: 2.3em;
+  min-height: 0;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--r-control);
   background: var(--bg);
   color: var(--muted);
   font-size: var(--t-sm);
+  /* One weight for both states. A bold on the chosen one moves the letter
+     by a fraction and the row reads as shifting when you press it. */
   font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
+/* Ground and edge, never size. */
 .wt-day-toggle.is-on {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--on-accent, #fff);
 }
 
+/* The shortcuts are a different kind of thing from the days, and the row
+   read as one long list of nine. Pills rather than squares, quieter, and
+   set off by a gap wider than the one between the days. */
+.wt-presets { display: flex; align-items: center; gap: var(--s1); margin-left: var(--s4); }
+
+.wt-presets .chip {
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.wt-presets .chip:hover { color: var(--text); }
+
+
+
 /* A week of switches a finger has to hit one of without hitting its
    neighbour. Here rather than in the coarse block further up the file:
    the rule above it has the same specificity and comes later, so an
    override written up there never applied at all. */
 @media (pointer: coarse) {
-  .wt-day-toggle { width: var(--touch); min-height: var(--touch); }
+  /* Square still: a height without a matching width would make seven
+     rectangles out of seven squares the moment a finger touched them. */
+  .wt-day-toggle { width: var(--touch); height: var(--touch); }
 }
 
 /* What the press will do. A line rather than a count next to the switches,
