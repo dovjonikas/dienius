@@ -3824,8 +3824,17 @@ select:focus {
   to { opacity: 1; transform: none; }
 }
 
+/* Backwards, not both. `both` also fills forwards, and a forwards fill holds
+   the `to` keyframe's value rather than releasing the property - so
+   `transform: none` came out of it as the identity matrix and stayed there
+   for the life of the card. A computed transform that is not `none` makes
+   its element a containing block for anything fixed inside it, which is how
+   the note reader - a scrim pinned to the window since v2.13, with the
+   comment above it saying so - was being drawn inside a 318px card in the
+   task column instead of over the day. The `to` state here is the card's
+   ordinary state, so there is nothing worth filling forwards. */
 @media (prefers-reduced-motion: no-preference) {
-  .task-list > li { animation: task-enter var(--dur) var(--ease) both; }
+  .task-list > li { animation: task-enter var(--dur) var(--ease) backwards; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -8119,6 +8128,13 @@ button.task-note-mark.is-open {
 .up-next-note { margin-top: var(--s1); }
 .up-next-note .note-section-row { margin-left: 0; }
 
+/* The way into a note the card had to cut. It lines up under the text it
+   belongs to rather than with the choices below, which are a different
+   question - see NoteSections.tsx, where four lines is counted in lines
+   somebody typed. */
+.note-intro-more { margin: 0 0 var(--s1) var(--s5); }
+.up-next-note .note-intro-more { margin-left: 0; }
+
 .note-section-button {
   min-height: 0;
   padding: var(--s1) var(--s3);
@@ -8134,7 +8150,12 @@ button.task-note-mark.is-open {
 }
 
 .note-section-button:hover { border-color: var(--accent); }
+/* Neither of these is a choice. One says there are more headings than the
+   card had room for and the other says there is more text than it had room
+   for, so both take the ink the app uses for "there is more of this" rather
+   than the ink a heading takes. */
 .note-section-button.is-more { color: var(--muted); font-variant-numeric: tabular-nums; }
+.note-section-button.is-read { color: var(--muted); }
 
 /* The one that is open, over the day rather than inside the card: a recipe
    is longer than a task row and reading it should not push the day about. */

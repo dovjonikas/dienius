@@ -111,3 +111,56 @@ test('a heading with nothing under it says so rather than opening empty', async 
   await user.click(screen.getByRole('button', { name: 'Empty, on Meal' }))
   expect(within(screen.getByRole('dialog')).getByText('Nothing written under this one.')).toBeInTheDocument()
 })
+
+// A long note open on the card, from v2.14. Four lines and a way in, so a
+// forty-line recipe costs the card the same as a four-line one.
+
+const FORTY = Array.from({ length: 40 }, (_, i) => `Step ${i + 1}`).join('\n')
+
+test('an open intro is cut to four lines, with Read under it', () => {
+  render(<NoteSections note={FORTY} expanded label="Meal" />)
+  expect(screen.getByText('Step 4')).toBeInTheDocument()
+  expect(screen.queryByText('Step 5')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Read the whole note on Meal' })).toBeInTheDocument()
+})
+
+test('a short intro is not cut, and has nothing to press', () => {
+  render(<NoteSections note={'One\nTwo\nThree\nFour'} expanded label="Meal" />)
+  expect(screen.getByText('Four')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Read the whole note/ })).not.toBeInTheDocument()
+})
+
+test('Read opens the whole note, with the choices beside it', async () => {
+  const user = userEvent.setup()
+  render(<NoteSections note={`${FORTY}\n## Soup\nWhatever is in the fridge.`} expanded label="Meal" />)
+
+  await user.click(screen.getByRole('button', { name: 'Read the whole note on Meal' }))
+  const dialog = screen.getByRole('dialog', { name: 'The note on Meal' })
+  // All forty, not the four the card had room for.
+  expect(within(dialog).getByText('Step 40')).toBeInTheDocument()
+
+  // And the section is a press away from it, in the same reader.
+  await user.click(within(dialog).getByRole('button', { name: 'Soup' }))
+  expect(screen.getByRole('dialog', { name: 'Soup, on Meal' })).toBeInTheDocument()
+  expect(screen.getByText('Whatever is in the fridge.')).toBeInTheDocument()
+})
+
+test('a choice opened from the card still lands on that choice, not the intro', async () => {
+  const user = userEvent.setup()
+  render(<NoteSections note={`${FORTY}\n## Soup\nIn the fridge.\n## Eggs\nAnd bread.`} expanded label="Meal" />)
+
+  await user.click(screen.getByRole('button', { name: 'Eggs, on Meal' }))
+  expect(screen.getByRole('dialog', { name: 'Eggs, on Meal' })).toBeInTheDocument()
+})
+
+test('the note mark and an open intro are never both on the row', () => {
+  // The mark reveals what is already showing, which is the same fact twice -
+  // CONVENTIONS 23. TaskRow has read it that way since v2.13 and this holds
+  // the reading it depends on: an expanded note draws its intro with no
+  // press, so there is nothing for the mark to do.
+  const { rerender } = render(<NoteSections note="Rice and chicken" expanded label="Meal" />)
+  expect(screen.getByText('Rice and chicken')).toBeInTheDocument()
+
+  rerender(<NoteSections note="Rice and chicken" label="Meal" />)
+  expect(screen.queryByText('Rice and chicken')).not.toBeInTheDocument()
+})
