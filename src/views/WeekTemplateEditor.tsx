@@ -600,6 +600,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           <BlockNotePanel
             note={noteBlock.note}
             label={noteBlock.title}
+            category={noteBlock.category}
             expanded={noteBlock.noteExpanded}
             onNote={next => editBlock(noteBlock, { note: next })}
             onExpanded={next => editBlock(noteBlock, { noteExpanded: next })}

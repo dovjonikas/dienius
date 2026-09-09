@@ -518,7 +518,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             {noteOpen === i && (
               <BlockNotePanel
                 note={b.note}
-                  label={b.title}
+                label={b.title}
+                category={b.category}
                 expanded={b.noteExpanded}
                 onNote={next => setBlockNote(i, next)}
                 onExpanded={next => setBlockExpanded(i, next)}

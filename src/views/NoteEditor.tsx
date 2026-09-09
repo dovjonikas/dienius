@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import type { CategoryId } from '../lib/categories'
 import { insertSectionHeading, parseNote } from '../lib/note'
 import { NoteSections } from './NoteSections'
 
@@ -15,10 +16,12 @@ import { NoteSections } from './NoteSections'
  *
  * Three ways it says it, in the order somebody meets them:
  *
- * 1. **The placeholder is an example, not an instruction.** A recipe with a
- *    second one under a `## ` line. A person copying the shape of what is in
- *    front of them learns the rule without reading a sentence about it, and
- *    the rule is one line long, so an example is enough to carry all of it.
+ * 1. **The placeholder is an example, not an instruction**, and it is an
+ *    example of the kind of thing this block is - see `notePlaceholder`.
+ *    A person copying the shape in front of them has the whole rule without
+ *    reading a sentence about it, which works only because the rule is one
+ *    line long, and only while the shape looks like what they were about to
+ *    write anyway.
  * 2. **One quiet line under the box**, because an example alone leaves the
  *    reader guessing at which part of it mattered. No button opening it, no
  *    tooltip: a rule that has to be hunted for is a rule nobody has.
@@ -35,7 +38,8 @@ export function NoteEditor({
   value,
   label,
   ariaLabel,
-  placeholder = PLACEHOLDER,
+  category,
+  placeholder,
   className,
   onChange,
   onBlur,
@@ -44,6 +48,8 @@ export function NoteEditor({
   /** What the note belongs to, for the choices' own names. */
   label: string
   ariaLabel: string
+  /** Which kind of thing this is, for the example the box opens on. */
+  category?: CategoryId
   placeholder?: string
   className?: string
   onChange: (next: string) => void
@@ -106,7 +112,7 @@ export function NoteEditor({
         className="note-editor-text"
         value={value}
         aria-label={ariaLabel}
-        placeholder={placeholder}
+        placeholder={placeholder ?? notePlaceholder(category)}
         onChange={e => onChange(e.target.value)}
         onBlur={e => {
           left.current = e.target.selectionStart
@@ -142,15 +148,68 @@ export function NoteEditor({
 }
 
 /**
- * The example every note editor opens on.
+ * The example a note editor opens on, in the shape of the thing it belongs
+ * to.
  *
- * A meal, because that is the case the sections were built for - the owner's
- * lunch block carrying three recipes - and two of them, because one would
- * not show what the `## ` line is separating. Nothing here is anybody's real
- * food: `scripts/no-personal-data.mjs` reads this file like every other.
+ * An example only teaches while it looks like what you were about to write.
+ * A meal block opening on two dishes says "these are your two options
+ * today"; the same two dishes over a Deep work block say nothing about deep
+ * work, and a person reads past them. So the box opens on the category's own
+ * shape, and every one of them is the same lesson underneath: something, a
+ * blank line, and a `## ` heading with its own thing under it.
+ *
+ * **Keyed on the id, never on the label.** The six ids are load-bearing and
+ * fixed - see `DEFAULT_CATEGORIES` - and the labels are the owner's to
+ * rename, so a Meals category renamed Food keeps its recipes. A category
+ * somebody made themselves has an id in none of these and gets the last one,
+ * which teaches the rule without pretending to know what the category is
+ * for.
+ *
+ * None of it is anybody's real day: `scripts/no-personal-data.mjs` reads
+ * this file like every other tracked one.
  */
-const PLACEHOLDER = `Omelette in a tortilla
+const PLACEHOLDERS: Record<string, string> = {
+  // The case the sections were built for - the owner's lunch block carrying
+  // more than one recipe - and the reason two are shown rather than one.
+  meal: `Omelette in a tortilla
 4 eggs, a tortilla, cheese
 
 ## Curd with berries
-200 g curd, a handful of berries`
+200 g curd, a handful of berries`,
+
+  core: `Finish the pricing section.
+
+## If the numbers are not in yet
+Draft the shape of it and come back.`,
+
+  routine: `Water, window, teeth.
+
+## The short version
+Teeth and the alarm, nothing else.`,
+
+  health: `Three sets of eight, slowly.
+Ninety seconds between them.
+
+## If the knee complains
+Twenty minutes of walking instead.`,
+
+  commute: `The 12 from the corner, 18 minutes.
+
+## If it is raining
+The tram, and ten minutes earlier.`,
+
+  personal: `Ring about the appointment.
+
+## If nobody picks up
+The form on their site instead.`,
+}
+
+/** The one for a category nobody here has an example for, including none. */
+const PLACEHOLDER = `What this one is, in the words you would say to yourself.
+
+## And a second one, if there are two
+What that one needs instead.`
+
+export function notePlaceholder(category: CategoryId | undefined): string {
+  return (category !== undefined && PLACEHOLDERS[category]) || PLACEHOLDER
+}

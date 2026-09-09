@@ -1,3 +1,4 @@
+import type { CategoryId } from '../lib/categories'
 import { NoteEditor } from './NoteEditor'
 
 /**
@@ -69,12 +70,15 @@ export function BlockNoteButton({
 export function BlockNotePanel({
   note,
   label,
+  category,
   expanded = false,
   onNote,
   onExpanded,
 }: {
   note?: string
   label: string
+  /** What kind of block it is, for the example the box opens on. */
+  category?: CategoryId
   expanded?: boolean
   onNote: (next: string) => void
   onExpanded?: (next: boolean) => void
@@ -91,6 +95,7 @@ export function BlockNotePanel({
           value={note ?? ''}
           label={label}
           ariaLabel={`Note on ${label}`}
+          category={category}
           onChange={onNote}
         />
       </div>

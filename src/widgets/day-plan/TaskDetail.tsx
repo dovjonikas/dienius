@@ -450,7 +450,13 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               className="task-detail-link"
               aria-label="Link (optional)"
               inputMode="url"
-              placeholder="localhost:8080/spanish"
+              /* An ordinary web address, because that is what most of them
+                 are. It showed a host and a port until v2.14, which is the
+                 rarer of the two kinds this field takes and read as a
+                 requirement rather than an example - the icon on the card
+                 already says which kind an address turned out to be, and
+                 the field takes either with no scheme typed. */
+              placeholder="www.example.com/spanish"
               value={link}
               aria-describedby={linkError ? `${titleId}-link-error` : undefined}
               aria-invalid={linkError || undefined}
@@ -485,6 +491,7 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               value={note}
               label={task.title}
               ariaLabel="Note"
+              category={task.category}
               onChange={setNote}
               onBlur={() => actions.setTaskNote(date, task.id, note)}
             />

@@ -8800,8 +8800,19 @@ button.task-note-mark.is-open {
 /* The two-way scope switch inside the detail sheet. Full width and wrapping,
    because both labels are sentences rather than words - "Every day it
    repeats" says what it does; "All" would not. */
-.task-detail-scope { flex-wrap: wrap; width: 100%; }
-.task-detail-scope button { flex: 1 1 auto; font-size: var(--t-sm); }
+/* A field in this sheet is a full-width stack - the label above, the answer
+   under it - and every other answer in it fills the row: the title, the link,
+   the note, the time and its length. A segmented control that stopped two
+   thirds of the way across read as a gap somebody had left rather than as a
+   control that had finished, and the giveaway was that the scope row under
+   Repeats had filled the row since it arrived while Repeats itself did not.
+
+   `1 1 auto` rather than four equal columns: the basis is the width of the
+   word, so the leftover is shared and nothing is ever squeezed narrower than
+   what it says. Four equal columns would clip "Every week" on a phone, and a
+   clipped word is worse than an uneven one. */
+.task-detail-field .segmented { display: flex; flex-wrap: wrap; width: 100%; }
+.task-detail-field .segmented button { flex: 1 1 auto; }
 
 /* ------------------------------------------------------------------------
    Review - ReviewView.tsx.

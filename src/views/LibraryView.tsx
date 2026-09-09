@@ -841,7 +841,8 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         <input
           inputMode="url"
           maxLength={300}
-          placeholder="localhost:8080/spanish"
+          /* The same example as the task sheet's - see the comment there. */
+          placeholder="www.example.com/spanish"
           value={link}
           onChange={e => setLink(e.target.value)}
           onBlur={() => {

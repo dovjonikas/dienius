@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { expect, test } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { NoteEditor } from './NoteEditor'
+import { DEFAULT_CATEGORIES } from '../lib/categories'
+import { parseNote } from '../lib/note'
+import { NoteEditor, notePlaceholder } from './NoteEditor'
 
 // The editor's whole job in v2.14 is to say what the parser already does.
 // Everything below is a thing somebody can see without pressing anything,
@@ -95,4 +97,34 @@ test('a heading can be started and typed with no pointer at all', async () => {
   await user.keyboard('{Enter}')
   expect(box).toHaveValue('Pick one.\n\n## Rice and chicken')
   expect(box).toHaveFocus()
+})
+
+// The example the box opens on is the shape of the thing it belongs to, and
+// every one of them still has to teach the one rule there is.
+
+test('every category the app ships has an example, and every example teaches the rule', () => {
+  for (const category of DEFAULT_CATEGORIES) {
+    const example = notePlaceholder(category.id)
+    const { intro, sections } = parseNote(example)
+    expect(intro, category.label).not.toBe('')
+    expect(sections, category.label).toHaveLength(1)
+    expect(sections[0].title, category.label).not.toBe('')
+  }
+})
+
+test('a category somebody made themselves gets the one that assumes nothing', () => {
+  const made = notePlaceholder('cat-8f2a-made-by-hand')
+  expect(made).toBe(notePlaceholder(undefined))
+  // Still an example rather than an instruction: it has a heading in it.
+  expect(parseNote(made).sections).toHaveLength(1)
+})
+
+test('the box opens on the example for the block it is on', () => {
+  const { rerender } = render(<NoteEditor value="" label="Lunch" ariaLabel="Note on Lunch" category="meal" onChange={() => {}} />)
+  expect(screen.getByLabelText('Note on Lunch')).toHaveAttribute('placeholder', notePlaceholder('meal'))
+
+  rerender(<NoteEditor value="" label="Lunch" ariaLabel="Note on Lunch" category="core" onChange={() => {}} />)
+  expect(screen.getByLabelText('Note on Lunch')).toHaveAttribute('placeholder', notePlaceholder('core'))
+  // Two different examples, not one text with a word swapped.
+  expect(notePlaceholder('meal')).not.toBe(notePlaceholder('core'))
 })
