@@ -1900,52 +1900,52 @@ The measurement snippet that has been used for the target audit:
 Taken on 2026-09-09, before a line of it was changed. Steps are being folded
 into the note - see the v2.13 wave in section 4 - and this is the list the
 removal works from, so that nothing is left behind by a grep that missed a
-synonym. The field is called  on a template block and  on a
+synonym. The field is called `steps` on a template block and `subtasks` on a
 task, which is most of why a grep alone was not enough.
 
 **The data**
 
 | Where | What |
 |---|---|
-|  |  interface; ;  interface;  |
-|  |  table |
-|  |  on  |
-|  |  table |
-|  |  on  |
+| `src/lib/types.ts` | `Subtask` interface; `Task.subtasks?`; `TemplateStep` interface; `TemplateBlock.steps?` |
+| `src/lib/validate.ts:217` | the `SUBTASK` table |
+| `src/lib/validate.ts:237` | `subtasks` on the `TASK` table |
+| `src/lib/validate.ts:257` | the `TEMPLATE_STEP` table |
+| `src/lib/validate.ts:269` | `steps` on the `TEMPLATE_BLOCK` table |
 
 **What moves them**
 
 | Where | What |
 |---|---|
-|  |  - a block's steps as a day's own list |
-|  |  |
-|  | , , ,  |
-|  |  in 's input table and its body |
-|  | a repeat instance copies its source's subtasks, unticked |
-|  | the demo's one task with sub-steps |
+| `src/lib/stamping.ts:60-77` | `stepsFrom(block)` - a block's steps as a day's own list |
+| `src/lib/stamping.ts:216` | the stamping rule that reads a match's subtasks, then the block's steps |
+| `src/lib/store/days.ts:336-388` | `addSubtask`, `completeSubtask`, `toggleSubtask`, `deleteSubtask` |
+| `src/lib/store/templates.ts:34,58` | `steps` in `addTemplate`'s input table and in its body |
+| `src/lib/repeats.ts:118` | a repeat instance copies its source's subtasks, unticked |
+| `src/lib/demo.ts:179` | the demo's one task with sub-steps |
 
 **What shows them**
 
 | Where | What |
 |---|---|
-|  | the  mark on a card |
-|  | the Steps section, its add line and the per-step timer |
-|  | the steps half of a block's panel, and  |
-|  | the draft field, its setter, both panel props, load and save |
-|  | the same, through  |
-|  | the timer that ticks a step when it rings |
-|  |  is what a step timer points at |
-|  | , , ,  |
+| `src/widgets/day-plan/TaskRow.tsx:163-165,325-327` | the "0/2" mark on a card |
+| `src/widgets/day-plan/TaskDetail.tsx:72,88-89,427-500` | the Steps section, its add line, and the per-step timer |
+| `src/views/BlockNote.tsx` | the steps half of a block's panel, and `blockCarries` |
+| `src/views/TemplatesView.tsx:108,251,510,521,681,770` | the draft field, its setter, both panel props, load and save |
+| `src/views/WeekTemplateEditor.tsx:277,417,536` | the same, through `editBlock` |
+| `src/widgets/clock/FloatingClock.tsx:145,153` | the timer that ticks a step when it rings out |
+| `src/lib/clockTools.ts:33` | `Subtask.minutes` is what a step timer points at |
+| `src/styles.css` | `.task-steps`, `.subtask`, `.task-detail-subtasks`, `.block-note-steps` |
 
-**Tests that mention either name**: , , ,
-, , , , , ,
-, , , ,
-, , and the  and  walks.
+**Tests that mention either name**: `backup.v11`, `repeats`, `scale`,
+`stamping`, `storage`, `syncMerge`, `taskDetail`, `tour`, `tourAssist`,
+`TemplatesView`, `WeekTemplateEditor`, `FloatingClock`, `autoSlot`,
+`QuickAdd`, `TaskDetail`, and the `blocknote` and `week-rehearsal` walks.
 
-**Not steps, despite the word**: the tour's own steps (,
-),  (a numeric stepper), ,
- in , and every  in the
-browser walks.
+**Not steps, despite the word**: the tour's own steps (`Tour.tsx`,
+`lib/tour.ts`), `CountStepInput.tsx` which is a numeric stepper,
+`.library-step`, `stepTime` in `capacity.ts`, and every `mouse.move` in the
+browser walks that takes a `steps` option.
 
 ## 6. Things that will bite you
 
