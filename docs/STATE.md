@@ -303,6 +303,90 @@ v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
 
+### The v2.15 wave: what the timer sounds like
+
+The owner runs one timer for two jobs that want opposite sounds. Ten minutes
+of meditation with the eyes shut wants something quiet enough not to jolt,
+and a mark that it has *started*, because there is no way to check from
+behind closed eyes. Something on the stove wants a sound that reaches the
+next room. The one two-tone this app had served neither, and the middle of
+the two would serve neither either.
+
+| # | Stage | What it is |
+|---|---|---|
+| 1 | One engine, four shapes | `lib/chime.ts`: the synthesis out of the widget and into a table of parameters, with thirteen tests against a fake `AudioContext` that records rather than plays |
+| 5 | Where it is kept | `Settings.chime` - three fields, synced like every other setting, and sanitised on load rather than able to refuse a payload |
+| 2 | Where it is chosen | Four chips, a Try button and a volume slider at the foot of the timer panel, which is where a timer is started |
+| 3 | The start bell | One switch, and the alarm starts as a bell because an alarm at the moment somebody presses Start is nonsense |
+| 4 | Five ways to end it | Stop on the widget, Escape, Done, starting another timer, and closing the tab |
+| 6 | Heard rather than assumed | `scripts/chime-wavs.mjs` renders all four to `docs/audio/` through the app's own code |
+
+Stage 5 came before stage 2 because the picker needed somewhere to write.
+
+#### The numbers, so the next session does not guess them
+
+Every profile is a list of tones and every tone is a frequency, a start, an
+attack, a release and a gain. The gain is multiplied by the volume setting on
+one node the whole sound passes through, and the profiles are calibrated at
+the default half volume rather than at full, since that is where most of them
+will ever be heard.
+
+| Profile | Wave | Tones (Hz at s, attack / release, gain) | Repeat |
+|---|---|---|---|
+| off | - | nothing; no audio context is opened at all | - |
+| soft | sine | 880 at 0.00, 0.02 / 0.20, 0.18 · 1320 at 0.18, 0.02 / 0.20, 0.18 | once |
+| bell | sine | 440 at 0.00, 0.08 / 4.00, 0.22 · 880 at 0.01, 0.09 / 3.20, 0.08 | once |
+| alarm | triangle | 659 at 0.00, 0.01 / 0.18, 0.72 · 880 at 0.14, 0.01 / 0.18, 0.72 · 1175 at 0.28, 0.01 / 0.34, 0.80 | every 3s, for 60s |
+
+Rendered at volume 0.5, that is peak 0.089 for soft, 0.145 for bell and 0.389
+for alarm - which is what makes "soft at full volume" quieter than "alarm at
+half", the whole reason there are four profiles rather than one sound and a
+slider.
+
+**Which one is for what.** Bell for a meditation, with "ring at the start
+too" switched on: it arrives rather than starts, its attack is four times
+slower than the soft chime's, and it dies away over four seconds. Alarm for
+the kitchen, at whatever volume reaches the other room. Soft is the default
+because the quiet one is wrong in the fewest places, and off exists because
+sometimes the screen is enough.
+
+#### What was protected, and stayed protected
+
+Every one of these was right before this wave and is untouched by it: a
+timer is stored as an instant plus a length and never as a countdown; a
+separate timeout to the end instant carries a backgrounded tab; the countdown
+is in the tab title; the sound is synthesised and nothing is loaded;
+`hasSeenAGesture` guards the audio context and a refusal is swallowed
+silently; and there is one timer and one stopwatch, never several.
+
+#### Four decisions worth the reading
+
+- **The alarm's repeats are on the audio clock, not on a chain of timeouts.**
+  A background tab may clamp a timeout to once a minute, and a tab nobody is
+  looking at is exactly the tab an alarm is for. All twenty rounds are
+  scheduled at once and `stop()` takes them all down.
+- **A triangle wave, in the one place.** A sine puts all its energy at a
+  single frequency, which is the quietest a waveform can be for a given peak
+  and the wrong property for a sound crossing a room out of a laptop's
+  speakers. A triangle's harmonics fall away as the square of their number,
+  so it carries much further and is still a soft-edged tone rather than a
+  buzz. Loud is a parameter; harsh is a mistake, and a harsh alarm measurably
+  leaves people worse off than a melodic one (McFarlane and colleagues, PLOS
+  ONE 2020).
+- **The sound settings are clamped on load rather than able to refuse a
+  payload.** `validate` refuses a whole file over a malformed `density`,
+  and that is right for the plan - a file edited by hand is a file to be
+  careful with. Refusing to open a year of somebody's days because a timer's
+  volume says "banana" is the wrong trade in both directions.
+- **The files in `docs/audio` are rendered by the app's own code.** A node
+  script computing the same sine waves would be a second implementation that
+  can drift, and a reference file that no longer matches the app is worse
+  than none.
+
+**And the one thing nothing here can answer**: whether the alarm reaches the
+next room. That is a room, a door and a pair of laptop speakers, and it is
+the owner's to check - `docs/audio/alarm.wav` is there to check it with.
+
 ### The v2.14 wave: what the app knew and did not say
 
 The owner used the app for a week and did not know about two features that

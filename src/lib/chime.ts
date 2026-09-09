@@ -174,13 +174,20 @@ const PROFILES: Record<Exclude<ChimeProfile, 'off'>, Profile> = {
    * The three tones sit at 659, 880 and 1175 Hz - two rising fourths, ending
    * in the band a small speaker is loudest in and an ear is most sensitive
    * to.
+   *
+   * They ring on longer than they need to be heard from a metre away, and
+   * the last one longest. Getting a sound across a room is not only a
+   * question of how loud its peak is; a burst has to stay above the noise in
+   * the other room long enough to be noticed, and lengthening the release
+   * buys that without raising the peak or sharpening the timbre - which are
+   * the two ways of making a sound louder that also make it worse.
    */
   alarm: {
     wave: 'triangle',
     tones: [
-      { hz: 659, at: 0, attack: 0.01, release: 0.12, gain: 0.64 },
-      { hz: 880, at: 0.14, attack: 0.01, release: 0.12, gain: 0.64 },
-      { hz: 1175, at: 0.28, attack: 0.01, release: 0.22, gain: 0.72 },
+      { hz: 659, at: 0, attack: 0.01, release: 0.18, gain: 0.72 },
+      { hz: 880, at: 0.14, attack: 0.01, release: 0.18, gain: 0.72 },
+      { hz: 1175, at: 0.28, attack: 0.01, release: 0.34, gain: 0.8 },
     ],
     repeatEvery: 3,
   },
