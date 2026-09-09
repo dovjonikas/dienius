@@ -287,6 +287,35 @@ v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
 
+### What the app can do and does not say - the v2.14 sweep
+
+The wave's own question, asked once over the whole interface: **where does
+this app know how to do something and never mention it?** Not a list of
+things to add - a list of things already written that a hand cannot find.
+The rule it was measured against is CONVENTIONS 17, which is older than the
+question: every feature has one control somebody can see, in the place the
+feature belongs, and the tooltip on that control names the key.
+
+Two came out as work and are done here. The rest are written down with a
+verdict, which is the other half of what the brief asked for: a thing that
+is deliberately not on the screen has to be a decision somebody made, not a
+gap nobody noticed.
+
+| What | Verdict |
+|---|---|
+| **Q and J, on the header's two tools** | **Made visible.** The rail has named its key on every icon since v2.0 - `Today · 1` - and the header's Notes and Journal buttons never did, so the two keys that open them lived in the `?` card and nowhere a hand would meet them. Both carry `Notes · Q` and `Journal · J` now, read out of `SHORTCUTS` so the bubble cannot drift from the handler, with a test on it beside the rail's |
+| **Shift on a stepper's arrows** | **Made visible.** A press moves five minutes, or one of whatever is being counted; Shift moves fifteen, or ten. Nothing anywhere said so - the `?` card holds the shell's keys and a widget's own keys are not in it. The arrow pair carries `Shift for 15 min` and `Shift for 10`. Nothing on a phone, where there is no Shift and no pointer to rest |
+| **Shift on a time field's arrows** | **Written down instead.** The same accelerator, an hour at a time, in `TimePicker` - which has no arrow buttons to hang a bubble on. Its visible road is the column of times behind the caret, and the caret's own bubble is about that list. A tooltip on the field would sit over the thing being typed |
+| **Ctrl-K, the command palette** | **Written down.** It has no control anywhere in the app, and on a phone there is no chord to press, so on a phone it does not exist. That is the shape it was built in and it holds, because of the rule in its own doc comment: every command in it is already reachable by hand, and the palette is a faster route rather than the only one. Checked command by command in this pass, and the claim is true with one exception below |
+| **"Load my reading plan"** | **Written down.** The one palette command with no other door, deliberately: it fills a Books list with the owner's standing queue, and it is asked for rather than offered because loading it on first open is what put the owner's bookshelf in front of anybody opening the demo - see `lib/librarySeed.ts`. A phone gets the list by sync once a desktop has run it, which is the only way it is meant to arrive there |
+| **Hold a card for the actions menu** | **Written down.** The three dots beside the card do the same thing, are drawn at all times and on both platforms, and are the road; the hold is the accelerator for a finger already on the card |
+| **Double-click a card or a block** | **Written down.** Opens the detail sheet, which the actions menu reaches by name from a button that is always there |
+| **The resize strip on a block** | **Written down.** Always drawn on touch, where there is no hover to reveal it, and revealed by hovering the block on a pointer - which is a control that already has its box, the one thing CONVENTIONS 24 allows a hover to show. Changing a length without it is the sheet's own How long field |
+| **Drag across the month to stamp** | **Already said.** One line under the grid: "Click or drag across days to stamp. Click a stamped day to clear it." This is the shape the rest of the list is measured against |
+| **Quick-add's leading time and trailing length** | **Written down.** "09:00 Walk 20min" is read as all three, and nothing invites it. What the app does say is the answer rather than the offer: the chips under the box show the time, the length and the category the moment anything is typed, so the parse is never a guess once it has happened. The placeholder cannot carry it - "Add a task, and press Enter" was already cut to "Add a task" at 380px in v1.9, and the field now carries the Return mark as well |
+| **Enter finishes a note in Scratch** | **Already said.** In the placeholder, and again in the line under the box: "Enter keeps it and starts the next." The pattern stage 1 and stage 2 of this wave generalised |
+| **Swipe a sheet down to close** | **Written down.** From the grab bar only, which is drawn; Done and the close cross are both on screen the whole time |
+
 ### The v2.13 wave: one place text goes
 
 Steps were a list beside a note. A template block could carry both, and so

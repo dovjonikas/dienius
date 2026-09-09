@@ -13,6 +13,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
  */
 
 const MAX_COUNT = 100_000
+/** Held with Shift, an arrow key moves ten at a time rather than one. */
+const BIG_STEP = 10
 /** How long an arrow is held before it starts repeating, and how fast it then goes. */
 const HOLD_DELAY_MS = 400
 const HOLD_START_MS = 120
@@ -94,7 +96,8 @@ export function CountStepInput({ value, onChange, ariaLabel, placeholder = '', m
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
     e.preventDefault()
-    step(e.key === 'ArrowUp' ? (e.shiftKey ? 10 : 1) : e.shiftKey ? -10 : -1)
+    const size = e.shiftKey ? BIG_STEP : 1
+    step(e.key === 'ArrowUp' ? size : -size)
   }
 
   return (
@@ -109,7 +112,10 @@ export function CountStepInput({ value, onChange, ariaLabel, placeholder = '', m
         onBlur={() => commit(draft)}
         onKeyDown={handleKeyDown}
       />
-      <div className="time-stepper-buttons">
+      {/* The accelerator, said where it is used - the same line the minute
+          stepper carries and for the same reason: a widget's own key is not
+          in the "?" card, which holds the shell's. */}
+      <div className="time-stepper-buttons" data-tip={`Shift for ${BIG_STEP}`}>
         <button
           type="button"
           className="time-step"

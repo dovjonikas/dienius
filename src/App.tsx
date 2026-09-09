@@ -31,7 +31,7 @@ import { clockTools, useClockTools } from './lib/clockTools'
 import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
 import { CommandPalette, type PaletteAction } from './views/CommandPalette'
-import { shortcutKeyFor } from './lib/shortcuts'
+import { shortcutKeyFor, SHORTCUTS } from './lib/shortcuts'
 import { addDays } from './lib/dates'
 import { LibraryView } from './views/LibraryView'
 import { ReviewView } from './views/ReviewView'
@@ -46,6 +46,21 @@ import { WIDGETS } from './widgets/registry'
 // page and one quiet line under the day, and neither half was somewhere a
 // person could go.
 type View = NavView
+
+/**
+ * The bubble a header tool carries: its own name, then the key that does the
+ * same thing.
+ *
+ * The same shape the rail draws (`Today · 1`), and read out of the same
+ * array the handler reads, because a key typed into a string here is a key
+ * that can drift from the one that fires. A key that has been taken out of
+ * `SHORTCUTS` leaves the control with its name and no promise, rather than
+ * with a promise nothing keeps.
+ */
+function tipFor(label: string, key: string): string {
+  const shortcut = SHORTCUTS.find(s => s.key === key)
+  return shortcut ? `${label} · ${shortcut.label}` : label
+}
 
 export function App() {
   const data = useAppData()
@@ -469,11 +484,17 @@ export function App() {
             feature they do not have - and it has one here now. */}
         <div className="header-tools">
           <div className="clock-launcher">
+            {/* The key, on the control it belongs to - CONVENTIONS 17. The
+                rail has named its keys on its icons since v2.0 and these two
+                never did, so Q and J were in the "?" card and nowhere a hand
+                would meet them. Read out of SHORTCUTS rather than typed here,
+                the way the rail does it, so the two cannot drift. */}
             <button
               type="button"
               className={notesOpen ? 'header-tool active' : 'header-tool'}
               aria-haspopup="dialog"
               aria-expanded={notesOpen}
+              data-tip={tipFor('Notes', 'q')}
               onClick={() => setNotesOpen(open => !open)}
             >
               Notes
@@ -497,6 +518,7 @@ export function App() {
               className={journalPanelOpen ? 'header-tool active' : 'header-tool'}
               aria-haspopup="dialog"
               aria-expanded={journalPanelOpen}
+              data-tip={tipFor('Journal', 'j')}
               onClick={() => setJournalPanelOpen(open => !open)}
             >
               Journal

@@ -100,7 +100,12 @@ export function MinuteStepInput({ value, onChange, placeholder = 'min', ariaLabe
           {unit}
         </span>
       )}
-      <div className="time-stepper-buttons">
+      {/* The accelerator, on the control it belongs to - CONVENTIONS 17. A
+          press moves five minutes and Shift moves fifteen, and until v2.14
+          the fifteen was written down nowhere in the app: the "?" card holds
+          the shell's own keys, not a widget's. Nothing to say on a phone,
+          where there is no Shift and no pointer to rest. */}
+      <div className="time-stepper-buttons" data-tip={`Shift for ${BIG_STEP} min`}>
         <button type="button" className="time-step" aria-label={`${ariaLabel} up`} onClick={() => step(STEP)} />
         <button type="button" className="time-step is-down" aria-label={`${ariaLabel} down`} onClick={() => step(-STEP)} />
       </div>

@@ -8,6 +8,7 @@ import { defaultData } from './lib/storage'
 import { todayKey } from './lib/dates'
 import { PRESETS } from './lib/themes'
 import { WIDGETS } from './widgets/registry'
+import { SHORTCUTS } from './lib/shortcuts'
  import { getTourState, resetTourForTests, startTour } from './lib/tourState'
 import { resetReplanForTests } from './lib/replanState'
 
@@ -307,6 +308,28 @@ test('the way into notes is one button in the header, the same on both platforms
       restore()
     }
   }
+})
+
+/**
+ * The header's two tools, held to the same rule the rail is held to.
+ *
+ * CONVENTIONS 17: the visible control is where a shortcut is learned. The
+ * rail has named its keys on its icons since v2.0; these two never did, so Q
+ * and J lived in the "?" card and nowhere a hand would meet them. The names
+ * are read out of SHORTCUTS, and this is what stops the two drifting.
+ */
+test('the header tools name the keys that also reach them', () => {
+  render(<App />)
+  const notes = screen.getByRole('button', { name: 'Notes' })
+  const journal = screen.getByRole('button', { name: 'Journal' })
+
+  const q = SHORTCUTS.find(s => s.key === 'q')
+  const j = SHORTCUTS.find(s => s.key === 'j')
+  expect(q, 'Q is still the key for a quick note').toBeDefined()
+  expect(j, 'J is still the key for the journal').toBeDefined()
+
+  expect(notes).toHaveAttribute('data-tip', `Notes · ${q!.label}`)
+  expect(journal).toHaveAttribute('data-tip', `Journal · ${j!.label}`)
 })
 
 test('the rail names every view and the key that also reaches it', () => {
