@@ -222,6 +222,8 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
+| **v2.16** | Books into the library without a martyrdom. A whole shelf pasted at once - one line an item, an optional total after a vertical bar, and a live count of what the press will do including how many the list already has. A row moves by button as well as by drag and by key, and the loud row says what it is: the item every bound block will carry onto its next day. The binding says which book from the end that only named a list, and the empty case - the block keeps its own title - is finally said rather than discovered. And a quick-start preset that makes three empty reading lanes in one press |
+| **v2.15** | What the timer sounds like, and what things actually took. Four sounds from one synthesiser and one table of parameters - off, soft, bell, alarm - chosen where the timer is started, with a start bell for the ten minutes nobody can look at the screen and five ways to end an alarm that is filling the room. The stopwatch stopped pouring its number away: started on a task, it offers to write down what that task actually took, and the number reaches the card and the week's reading. And the timer panel folded down to what it is for |
 | **v2.14** | What the app knew and did not say. The note editor demonstrates the `## ` rule in its placeholder, says it in one line under the box, draws the card's own choices live as they are typed, and carries a button that writes the heading; a long note is cut to four lines on the card with a Read into the reader. Return adds a block, and the field's right edge says so in all four rows that do it. The door beside a title is three quarters of the title, in the meta ink, off its last word. A length reads as a number and a unit. And one pass over the whole interface asking what else it can do and never mentions, with a verdict written down against each answer |
 | **v2.13** | One place text goes. Steps are gone and every one of them is a line in the note it sat beside, migrated at the single gate both loading and importing pass through and safe to run twice. A note with `## ` lines shows its headings as choices on the card and on Up next, and opens one at a time over the day. The week template is drawn by the calendar's own week layout instead of seven lists of chips. The link icon moved onto the title line, the day switches became seven identical squares, a category is made from the swatch row, and the current-time line stopped striking out the time of the block that is running |
 | **v2.12** | The wave that came out of the owner building a real 74-block week. "Add to" became seven day switches with the named scopes as presets over them, because a rotation of Mon/Thu, Tue/Fri, Wed/Sat has no name and every block was going on twice. A block carries KEY the way it now carries a note and steps, with the three-per-day cap enforced in both editors per day and at stamp time. A category is made from the swatch row rather than four screens away. A privacy guard reads every tracked file and refuses the owner's own words, hashed so the guard is not itself the leak. A Playwright walk builds the whole week - ninety-seven presses - and a second one lives seven days on top of it. And `docs/MORNING.md`, the one page to open at 07:00 |
@@ -250,8 +252,8 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2572
-tests in 158 files, plus 59 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2629
+tests in 160 files, plus 69 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
 the desktop at 15:00, 22:00 and 09:00 and nothing on the phone, with
 `--self-check` at 8/8. The working tree is empty and pushed.
@@ -292,7 +294,7 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.14 wave below - which adds nothing and puts six things the app already did where a hand can find them - and the sweep under it, which is everything else it can do and does not say, with a verdict on each. Then the v2.13 wave, then the v2.12 wave, then the v2.11 wave - a template block can carry a
+**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.16 wave below - which begins with an inventory of what already worked, because most of it did - then v2.15, which gave the timer four sounds and the stopwatch somewhere to put its number. Then the v2.14 wave - which adds nothing and puts six things the app already did where a hand can find them - and the sweep under it, which is everything else it can do and does not say, with a verdict on each. Then the v2.13 wave, then the v2.12 wave, then the v2.11 wave - a template block can carry a
 note and a list of steps, so a meal block arrives with the recipe on it and
 a morning routine arrives with its four steps. Under it, the v2.10 wave, which added nothing and fixed two
 things - both about where focus lands when a panel closes, both found by
@@ -302,6 +304,85 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.16 wave: books into the library without a martyrdom
+
+Twenty-eight books, one at a time, through a field that clears itself between
+each. Nothing about that is hard and all of it is tedious, which is the exact
+shape of thing that stops a list from ever being filled in - and an empty list
+is a reading block that stamps its own title forever.
+
+| # | Stage | What it is |
+|---|---|---|
+| 0 | Read first | The inventory above, written before a line changed |
+| 1 | Paste many | "Add many" beside the add line: one line an item, a total after a bar, a live count of what the press will do |
+| 2 | Order is a queue | Up and down buttons beside the drag and the keys, and the loud row saying what will take it |
+| 3 | The binding says which book | One line under the control that names a list, in both editors |
+| 4 | Three lanes in one press | A fourth quick-start preset making MIND, CRAFT and LIGHT, empty, in three colours |
+
+#### The decisions worth keeping
+
+- **A vertical bar, and nothing else.** A pasted line carries a total after
+  `|` and no other punctuation is read: no trailing count, no comma shape,
+  none of what `parseLibraryItemInput` reads on the add line. A pasted list
+  comes from somewhere else and its titles have commas and numbers in them
+  for their own reasons. The bar is the one character that almost never
+  appears in a title - "x 34" and "- 34" both do, since half the books on a
+  shelf have a dash and a hyphen is how a subtitle is written.
+- **Nothing typed is ever thrown away.** A bar with something other than a
+  whole positive number after it is not a total, so the whole line keeps the
+  bar and is the title. A person pasting a title with a bar in it meant the
+  bar.
+- **A duplicate never blocks and never doubles.** The count says "3 already
+  in this list" before the press and those lines are skipped, which is the
+  app neither deciding for somebody nor making duplicates behind their back.
+- **The drag stayed.** A row already moved two ways - dragged with a pointer
+  or a finger, nudged with the arrow keys off the grip - and both are still
+  there. What was missing is the way that is neither a gesture nor a key,
+  because a drag on a phone is a guess about whether the list or the page is
+  going to move. Three ways now, and the buttons are the ones named for what
+  they do.
+- **The empty binding is an answer, not an error.** A list with nothing going
+  resolves to nothing and the block keeps its own title. True since v1.9,
+  said nowhere, so somebody who bound an empty list saw a block that had
+  ignored them. The line says it now and the behaviour is untouched.
+- **The preset's names are shapes rather than subjects.** MIND, CRAFT and
+  LIGHT, empty. What somebody reads is theirs to put in, and a preset that
+  arrived with titles in it would be this app deciding what an evening is
+  for. Three, because three lists are three folders and the folders are the
+  part this app does not need.
+
+#### Three defects it walked into
+
+- **The disabled reorder arrows failed contrast**, at 2.17:1 on Light against
+  the 3 a mark like that needs. A disabled button in this app inherits
+  `opacity: var(--faded)`, which puts a muted grey on a white row; switching
+  the ink alone made it 2.15 because the opacity was still underneath. Faded
+  by ink at full opacity, which is the lesson `.btn-secondary:disabled`
+  already carries in its own comment. Found by the sweep, not by looking.
+- **An 18px checkbox drew its tick through its own border.** The mark is two
+  borders of a box rotated forty-five degrees about its *top left corner*, so
+  the long arm sweeps down and to the left by the box's height over root two
+  - which means `left` has to be bigger than that rather than smaller, and
+  the numbers it had were five in a box with fourteen pixels of room. The
+  size was wrong too: the app's 24px tick fills about two thirds of its box
+  and this one filled nearly three quarters, which reads as a tick crammed in
+  rather than the same mark, smaller. `.day-card-check` had the identical
+  numbers and had been drawing through its own border since v2.8.
+- **The quick-start pills were not centred.** All the same height and the
+  same position - measured - with their words three pixels under the top edge
+  and sixteen above the bottom. `align-items: baseline` lines a name up with
+  its unit and then puts the pair at the top of a pill taller than it, which
+  is what flexbox does with a baseline group.
+
+#### What the wave refused
+
+No folders inside a list, because three lists are three folders and a flat
+model is right here. No book lookup and no API - this app does not go to the
+internet, and `lib/link.ts` says why in its own comment. No reading speeds,
+no forecasts, no statistics: units are already counted and a week of data is
+not data. And `currentItem` is untouched - first unfinished in order is
+correct, and every line this wave added is about saying so out loud.
 
 ### The v2.16 wave: what was already there, before a line was written
 

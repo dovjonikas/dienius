@@ -93,3 +93,55 @@ test('finishing a book names the next one on the card and offers a sitting on it
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
   await expect(page.getByRole('checkbox', { name: 'Deep Work' })).toBeAttached()
 })
+
+/**
+ * The v2.16 path, end to end: a shelf pasted in, put in the order it should
+ * be read in, bound to a block, and stamped onto a day.
+ *
+ * Four tabs' worth of parts, each with its own unit test, and none of those
+ * can show that the third line somebody pasted is the title on the task once
+ * they have moved it to the top. That is the whole promise, so it is walked.
+ */
+test('a pasted shelf, reordered, bound to a block, arrives on the day by name', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
+  await page.getByRole('button', { name: 'Start a Books list' }).click()
+
+  // Five at once, one of them carrying how many chapters it has.
+  await page.getByRole('button', { name: 'Add many' }).click()
+  const box = page.getByRole('textbox', { name: 'Paste a list into Books, one a line' })
+  await box.fill(['First one', '', 'Second one', 'Third one | 21', '', 'Fourth one', 'Fifth one'].join('\n'))
+  await expect(page.getByText('5 items will be added')).toBeVisible()
+  await page.getByRole('button', { name: 'Add 5' }).click()
+
+  await expect(page.getByRole('button', { name: /^First one/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Third one, ch 0\/21/ })).toBeVisible()
+
+  // The third one is the one to read first, so it goes to the top.
+  await page.getByRole('button', { name: 'Move Third one up, to position 2' }).click()
+  await page.getByRole('button', { name: 'Move Third one up, to position 1' }).click()
+
+  // Bound to a block, which says which book before the editor is closed.
+  await page.getByRole('navigation').getByRole('button', { name: 'Templates' }).click()
+  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByRole('button', { name: /^A day/ }).click()
+  await page.getByPlaceholder('Template name').fill('Evening')
+  await page.getByPlaceholder('09:00').fill('21:00')
+  await page.getByPlaceholder('What happens').fill('Reading')
+  await page.getByRole('button', { name: 'Add a block' }).click()
+  await page.getByRole('combobox', { name: 'What Reading draws from' }).selectOption({ label: 'From Books' })
+  await expect(page.getByText('Next: Third one')).toBeVisible()
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  // And the day gets the book rather than the block's own name.
+  await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
+  await page.locator('.template-rail').getByRole('button', { name: 'Evening' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Third one' })).toBeAttached()
+  await expect(page.getByRole('checkbox', { name: 'Reading' })).toHaveCount(0)
+
+  // And the list says where it is used, from its own end.
+  await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
+  await expect(page.getByText('Used by Reading in Evening')).toBeVisible()
+  await expect(page.getByText('Next on Reading')).toBeVisible()
+})
