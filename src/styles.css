@@ -3243,14 +3243,25 @@ select:focus {
   border-left: 1px solid var(--border);
 }
 
-/* The unit after the number, inside the box - see MinuteStepInput. */
+/* The unit after the number, inside the box - see MinuteStepInput.
+
+   The thin gap is the whole reason this is a separate element rather than
+   part of the value: the field is right-aligned with no padding of its own,
+   so "120" and "min" met with nothing between them and the box read "120min",
+   which is a word. A fifth of the unit's own size is enough to make it two
+   things and small enough that it is still one value. */
 .time-stepper-unit {
   align-self: center;
+  margin-left: 0.15em;
   padding-right: var(--s2);
   color: var(--muted);
   font-size: var(--t-sm);
   user-select: none;
 }
+
+/* The same gap on the chips and on the value button, where the two halves
+   come out of one string - see DurationText in DurationControl.tsx. */
+.duration-unit { margin-left: 0.15em; }
 
 .time-stepper:has(.time-stepper-unit) .minutes-input {
   width: 58px;

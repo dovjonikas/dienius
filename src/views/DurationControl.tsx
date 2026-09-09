@@ -64,7 +64,7 @@ export function DurationControl({
         aria-label={label}
         onClick={() => setOpen(o => !o)}
       >
-        {minutes === undefined ? 'min' : durationToText(minutes)}
+        {minutes === undefined ? 'min' : <DurationText minutes={minutes} />}
       </button>
       {open && (
         <div className="duration-control-panel">
@@ -80,7 +80,7 @@ export function DurationControl({
                   setOpen(false)
                 }}
               >
-                {durationToText(choice)}
+                <DurationText minutes={choice} />
               </button>
             ))}
             {allowEmpty && (
@@ -145,9 +145,35 @@ export function DurationChips({
           aria-pressed={minutes === choice}
           onClick={() => onChange(choice)}
         >
-          {durationToText(choice)}
+          <DurationText minutes={choice} />
         </button>
       ))}
     </div>
+  )
+}
+
+/**
+ * A length, as a number and its unit rather than as one word.
+ *
+ * `durationToText` is this app's *written* form: it is what
+ * `replaceTrailingDuration` types into a quick-add line and what
+ * `parseQuickAdd` reads back out, so it cannot carry a space of its own -
+ * the round trip is a test. On a control the same value has to read as a
+ * number and a unit, because "45min" is a word and the eye takes it as one.
+ * So the gap is drawn rather than typed, and the string is untouched.
+ *
+ * "1h30" keeps its own shape. It is a clock-shaped reading of a length
+ * rather than a number with a unit after it, and a gap inside it would make
+ * it look like two numbers.
+ */
+function DurationText({ minutes }: { minutes: number }) {
+  const text = durationToText(minutes)
+  const split = /^(\d+)(min|h)$/.exec(text)
+  if (!split) return <>{text}</>
+  return (
+    <>
+      {split[1]}
+      <span className="duration-unit">{split[2]}</span>
+    </>
   )
 }
