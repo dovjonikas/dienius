@@ -407,6 +407,15 @@
    * task list 1753px of sideways scroll, painting over everything to its
    * right. `hScroll` read zero throughout.
    *
+   * **Only when one thing in it does not fit**, which is what tells a defect
+   * from a design. A strip that is a row of things - the week editor's seven
+   * columns at 390px, Settings' section nav - scrolls sideways on purpose and
+   * every child of it fits: 104px in 314px, 105px in 358px. A defect is a
+   * single child wider than the box it is in, which is the shape a title with
+   * nothing to break at makes and the shape a strip never makes. Reported
+   * without that clause, the two known strips were six findings a run and the
+   * one real defect would have sat among them.
+   *
    * Reports what is forcing it wide as well as which scroller, because the
    * scroller is never the thing to fix.
    */
@@ -422,12 +431,11 @@
       const widest = [...el.querySelectorAll('*')]
         .map(c => ({ el: c, w: c.getBoundingClientRect().width }))
         .sort((a, b) => b.w - a.w)[0]
+      if (!widest || widest.w <= el.clientWidth + 1) continue
       out.push({
         sel: sig(el),
         over,
-        detail: widest
-          ? `${sig(widest.el)} is ${Math.round(widest.w)}px in ${el.clientWidth}px "${(widest.el.textContent || '').trim().slice(0, 24)}"`
-          : `${over}px of it`,
+        detail: `${sig(widest.el)} is ${Math.round(widest.w)}px in ${el.clientWidth}px "${(widest.el.textContent || '').trim().slice(0, 24)}"`,
       })
     }
     return out

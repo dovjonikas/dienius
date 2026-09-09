@@ -84,7 +84,7 @@ test('it says how much happened and how much moved on, and never what was missed
 
 test('a day nobody has planned says so, rather than showing a zero', () => {
   render(card())
-  expect(screen.getByText('Nothing on this day yet.')).toBeInTheDocument()
+  expect(screen.getByText('Nothing on this day.')).toBeInTheDocument()
   expect(screen.queryByText(/of 0 done/)).toBeNull()
 })
 

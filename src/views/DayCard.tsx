@@ -144,8 +144,13 @@ export function DayCard({
         </button>
       </div>
 
+      {/* The same sentence the week's agenda uses for the same fact. It said
+          "Nothing on this day yet." until v2.17, which is two lines saying one
+          thing two ways - and the "yet" was wrong besides, because this card
+          opens on any date the calendar can reach and a Tuesday three weeks
+          gone is not waiting for anything. */}
       {tasks.length === 0 ? (
-        <p className="day-card-empty">Nothing on this day yet.</p>
+        <p className="day-card-empty">Nothing on this day.</p>
       ) : (
         <ul className="day-card-list">
           {tasks.map(t => {
