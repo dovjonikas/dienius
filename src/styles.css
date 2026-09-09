@@ -5823,6 +5823,16 @@ button.danger {
 /* The one line that is about the start rather than the end. It reads a
    little quieter than the chips above it, which is what .check-line gives
    every switch on a line of text. */
+/* The way out of a sound that is filling the room, on the floating widget -
+   see lib/ringing.ts. Loud enough to be found from the doorway: it takes the
+   same fill the finished timer's own button does, because at that moment
+   there are two things worth pressing and neither is quieter than the other. */
+.floating-clock-silence {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  color: var(--text);
+}
+
 .clock-sound-start { align-self: flex-start; }
 
 .clock-volume { display: flex; align-items: center; gap: var(--s3); }

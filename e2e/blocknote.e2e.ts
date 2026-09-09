@@ -76,10 +76,17 @@ test('the note mark is a real target, and opens under the card it belongs to', a
   await expect(text).toBeVisible()
 
   // Under the card, inside it - not a layer over the day.
+  //
+  // The mark is measured again rather than reused from above: opening a note
+  // makes the card taller, and on a phone that can move the card itself. A
+  // y from before the press against a y from after it is two different
+  // layouts being compared, which passed for as long as the card happened not
+  // to move and failed the first time it did.
+  const markNow = await meal.getByRole('button', { name: /(Read|Hide) the note on Meal/ }).boundingBox()
   const textBox = await text.boundingBox()
   const cardBox = await meal.boundingBox()
-  if (!textBox || !cardBox) throw new Error('the note or its card is not on the screen')
-  expect(textBox.y).toBeGreaterThan(markBox.y)
+  if (!textBox || !cardBox || !markNow) throw new Error('the note or its card is not on the screen')
+  expect(textBox.y).toBeGreaterThan(markNow.y)
   expect(textBox.y + textBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height + 1)
 })
 

@@ -68,10 +68,18 @@ export const DEFAULT_CHIME_VOLUME = 0.5
 /** A sound that has started. `stop` is safe to call twice, and after the end. */
 export interface ChimeHandle {
   stop(): void
+  /**
+   * Whether this one goes on until something stops it.
+   *
+   * Only the alarm does, and it is the only sound that needs a way out drawn
+   * on the screen - see `lib/ringing.ts`. A chime that is over in half a
+   * second does not want a Stop button flashing up beside it.
+   */
+  repeats: boolean
 }
 
 /** Returned when nothing is going to be heard, so a caller never has a null to check. */
-const SILENT: ChimeHandle = { stop() {} }
+const SILENT: ChimeHandle = { stop() {}, repeats: false }
 
 /** One tone in a profile, in seconds from the start of its round. */
 interface Tone {
@@ -285,7 +293,7 @@ export function playChime(profile: ChimeProfile, volume: number): ChimeHandle {
     // sound nobody stops does not leave an audio graph open for the session.
     setTimeout(close, Math.max(0, (last - start) * 1000) + 100)
 
-    return { stop: close }
+    return { stop: close, repeats: spec.repeatEvery !== undefined }
   } catch {
     // See the module comment: a missing sound is not a failure worth saying
     // anything about.
@@ -352,7 +360,7 @@ export function startChimeProfile(profile: ChimeProfile): ChimeProfile {
  * meditation with the eyes shut, where there is no way to tell whether the
  * timer took the press.
  */
-export function ringAtStart(settings: ChimeSettings): void {
-  if (!settings.atStart) return
-  playChime(startChimeProfile(settings.profile), settings.volume)
+export function ringAtStart(settings: ChimeSettings): ChimeHandle {
+  if (!settings.atStart) return SILENT
+  return playChime(startChimeProfile(settings.profile), settings.volume)
 }

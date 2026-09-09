@@ -33,6 +33,7 @@ import { ShortcutsOverlay } from './views/ShortcutsOverlay'
 import { CommandPalette, type PaletteAction } from './views/CommandPalette'
 import { shortcutKeyFor, SHORTCUTS } from './lib/shortcuts'
 import { DEFAULT_CHIME, ringAtStart } from './lib/chime'
+import { isRinging, startRinging, stopRinging } from './lib/ringing'
 import { addDays } from './lib/dates'
 import { LibraryView } from './views/LibraryView'
 import { ReviewView } from './views/ReviewView'
@@ -56,8 +57,10 @@ type View = NavView
  * timer started by pressing "25 min", start bell included.
  */
 function startTimerWithSound(minutes: number): void {
+  // Whatever the last timer was still saying, this one supersedes it.
+  stopRinging()
   clockTools.startTimer(minutes * 60_000)
-  ringAtStart(getData().settings.chime ?? DEFAULT_CHIME)
+  startRinging(ringAtStart(getData().settings.chime ?? DEFAULT_CHIME))
 }
 
 /**
@@ -216,7 +219,10 @@ export function App() {
         // (the detail sheet, the actions menu) stops the event before it
         // reaches here, so those close themselves first and this never
         // fires underneath them.
-        if (scratchOpen) setScratchOpen(null)
+        // Before anything on screen: a sound filling the room is the
+        // loudest thing open, whatever else is drawn over what.
+        if (isRinging()) stopRinging()
+        else if (scratchOpen) setScratchOpen(null)
         else if (paletteOpen) setPaletteOpen(false)
         else if (shortcutsOpen) setShortcutsOpen(false)
         else if (focusExpanded) setFocusExpanded(false)

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTimerTick, useTitleCountdown } from './useTimerTick'
-import { DEFAULT_CHIME, playChime, type ChimeHandle } from '../../lib/chime'
+import { DEFAULT_CHIME, playChime } from '../../lib/chime'
+import { startRinging, stopRinging, useIsRinging } from '../../lib/ringing'
 import { useAppData } from '../../lib/store'
 import {
   clockTools,
@@ -41,8 +42,9 @@ const CORNERS: ClockTools['corner'][] = ['bottom-right', 'bottom-left', 'top-lef
 export function FloatingClock() {
   const tools = useClockTools()
   const chime = useAppData().settings.chime ?? DEFAULT_CHIME
-  // The sound that is currently playing, so the alarm can be stopped.
-  const ringing = useRef<ChimeHandle | null>(null)
+  // Whether a sound is going on that somebody has to be able to end - see
+  // lib/ringing.ts, which is where the five ways out meet.
+  const ringing = useIsRinging()
   // Which run has already chimed. Held per mount rather than in storage: the
   // stored `rungOut` flag is what stops a reload from re-alarming, and this
   // only stops the same tab from alarming twice on consecutive ticks.
@@ -85,7 +87,7 @@ export function FloatingClock() {
     // finds `rungOut` already set and shows the finished state silently,
     // rather than alarming about something that happened an hour ago.
     if (!timer.rungOut) {
-      ringing.current = playChime(chime.profile, chime.volume)
+      startRinging(playChime(chime.profile, chime.volume))
       notify('Timer finished')
     }
     clockTools.markRungOut()
@@ -172,10 +174,26 @@ export function FloatingClock() {
             {stopwatch!.paused ? 'Resume' : 'Pause'}
           </button>
         )}
+        {/* Only while something is actually filling the room. A sound that
+            is over in half a second needs no way out, and a button that
+            appears for four hundred milliseconds is worse than no button.
+            In words rather than as an icon: this is the control somebody
+            reaches for from across the room. */}
+        {ringing && (
+          <button type="button" className="floating-clock-silence" onClick={stopRinging}>
+            Stop
+          </button>
+        )}
         <button
           type="button"
           className={isUp ? 'primary' : ''}
-          onClick={() => (showing === 'timer' ? clockTools.acknowledgeTimer() : clockTools.resetStopwatch())}
+          onClick={() => {
+            // Done is the press that already means "yes, I have seen this",
+            // so it silences as well - nobody should have to say it twice.
+            stopRinging()
+            if (showing === 'timer') clockTools.acknowledgeTimer()
+            else clockTools.resetStopwatch()
+          }}
         >
           {isUp ? 'Done' : showing === 'timer' ? 'Cancel' : 'Reset'}
         </button>

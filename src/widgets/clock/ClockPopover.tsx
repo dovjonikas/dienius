@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
 import { CHIME_PROFILES, DEFAULT_CHIME, playChime, ringAtStart, type ChimeHandle, type ChimeProfile } from '../../lib/chime'
+import { startRinging, stopRinging } from '../../lib/ringing'
 import { actions, useAppData } from '../../lib/store'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
@@ -64,11 +65,13 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
   }, [tab, tools.stopwatch])
 
   function start(minutes: number) {
+    // A new timer supersedes whatever the last one was still saying.
+    stopRinging()
     clockTools.startTimer(minutes * 60_000)
     // Rung from the press rather than from anything watching the timer,
     // because the press is the user gesture a browser needs before it will
     // open an AudioContext at all - see ringAtStart.
-    ringAtStart(data.settings.chime ?? DEFAULT_CHIME)
+    startRinging(ringAtStart(data.settings.chime ?? DEFAULT_CHIME))
     // Asked for at the moment somebody first starts a timer, which is the one
     // moment the request explains itself - a permission prompt on page load
     // is a prompt about nothing, and gets denied on reflex.
