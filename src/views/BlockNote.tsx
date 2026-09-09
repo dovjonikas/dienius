@@ -1,3 +1,5 @@
+import { NoteEditor } from './NoteEditor'
+
 /**
  * The note a template block carries onto every day it stamps.
  *
@@ -58,6 +60,11 @@ export function BlockNoteButton({
  * here would mean a template note and a task note render differently, and
  * `TaskDetail` shows a note as the lines somebody typed. What the owner asked
  * for was a recipe in a block, and a recipe is a list of lines.
+ *
+ * The box itself is `NoteEditor`, shared with the task sheet since v2.14, so
+ * that the one rule a note has - `## ` starts a choice - is said in the same
+ * words wherever a note is typed. A rule taught in one of two editors is a
+ * rule half the app denies.
  */
 export function BlockNotePanel({
   note,
@@ -74,17 +81,19 @@ export function BlockNotePanel({
 }) {
   return (
     <div className="block-note">
-      <label className="field">
+      <div className="field">
         <span className="field-label">Note</span>
-        <textarea
-          className="block-note-text"
-          rows={3}
+        {/* Not a <label> wrapping the box any more: the editor under this
+            carries a button and a row of choices as well as the text, and a
+            label around all of them means a press anywhere in the group
+            lands in the textarea. The box names itself instead. */}
+        <NoteEditor
           value={note ?? ''}
-          aria-label={`Note on ${label}`}
-          placeholder="What this block is, in the words you would say to yourself"
-          onChange={e => onNote(e.target.value)}
+          label={label}
+          ariaLabel={`Note on ${label}`}
+          onChange={onNote}
         />
-      </label>
+      </div>
       {/* One line, here rather than in Settings: it is a fact about this
           block and not a preference about all of them. A meal block whose
           recipe is the reason you look at the card says so; the rest stay

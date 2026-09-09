@@ -12,6 +12,7 @@ import { takenBlocks } from '../../views/takenHours'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
+import { NoteEditor } from '../../views/NoteEditor'
 import { stepTime, windowFor } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -476,13 +477,15 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
 
           <div className="task-detail-field">
             <span className="task-detail-label">Note</span>
-            <textarea
-              className="task-detail-note"
-              aria-label="Note"
-              rows={3}
-              placeholder="Anything worth remembering when this comes round"
+            {/* The same box as a block's note - see views/NoteEditor.tsx. A
+                task's note is read by the same parser and drawn as the same
+                choices on the same card, so it is typed into the same thing
+                and told the same rule. */}
+            <NoteEditor
               value={note}
-              onChange={e => setNote(e.target.value)}
+              label={task.title}
+              ariaLabel="Note"
+              onChange={setNote}
               onBlur={() => actions.setTaskNote(date, task.id, note)}
             />
           </div>

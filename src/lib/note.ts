@@ -85,3 +85,37 @@ export function parseNote(note: string | undefined): ParsedNote {
 
   return { intro: trimBlankEdges(intro), sections }
 }
+
+/**
+ * Where a `## ` heading goes when a button writes it, and where the caret
+ * lands after.
+ *
+ * The rule is one somebody can hold in their head, but only once they know
+ * it is there - so the editor carries a button that writes it, and this is
+ * the half of that button worth a test. A heading starts its own line with a
+ * blank one above it, the way a person leaving room would type it.
+ *
+ * What it refuses to do is stack another blank line onto text that already
+ * ends in one. Pressing the button twice on an empty tail would otherwise
+ * walk the note down the page a line at a time, and the second press would
+ * look like it had done something different from the first.
+ *
+ * The caret is left after the space, so the next thing typed is the heading.
+ * Whatever followed the caret is now under it, which is what makes this work
+ * for a line already written: put the caret at its start and it becomes a
+ * choice.
+ */
+export function insertSectionHeading(text: string, at: number): { text: string; caret: number } {
+  const cut = Math.max(0, Math.min(at, text.length))
+  const before = text.slice(0, cut)
+  const after = text.slice(cut)
+  // A press with the caret already in a heading nobody has typed into has
+  // nothing to add - the choice it offers to start is started. Without this
+  // a second press leaves a second empty heading, and an empty heading is a
+  // choice on the card: a mark somebody then has to go back and delete.
+  if (/(?:^|\n)## *$/.test(before) && (after === '' || after.startsWith('\n'))) return { text, caret: cut }
+  // At the very top there is nothing to be separated from.
+  const already = before === '' ? 2 : (before.match(/\n*$/)?.[0].length ?? 0)
+  const head = `${'\n'.repeat(Math.max(0, 2 - already))}## `
+  return { text: `${before}${head}${after}`, caret: before.length + head.length }
+}

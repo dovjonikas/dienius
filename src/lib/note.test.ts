@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { parseNote, sectionLabel, SECTION_TITLE_MAX } from './note'
+import { insertSectionHeading, parseNote, sectionLabel, SECTION_TITLE_MAX } from './note'
 
 // A note is a string and stays one. The only thing read out of it is a line
 // beginning with "## ", and everything below is a case that has to keep
@@ -75,4 +75,42 @@ test('a long heading is cut for a control and never in the data', () => {
   expect(sectionLabel(long)).toHaveLength(SECTION_TITLE_MAX)
   expect(sectionLabel(long).endsWith('…')).toBe(true)
   expect(sectionLabel('short')).toBe('short')
+})
+
+test('a heading written by the button opens its own line, with room above it', () => {
+  const { text, caret } = insertSectionHeading('Rice and chicken', 16)
+  expect(text).toBe('Rice and chicken\n\n## ')
+  expect(text.slice(caret)).toBe('')
+  expect(parseNote(text).sections).toHaveLength(1)
+})
+
+test('the button does not stack blank lines on a note that already ends in them', () => {
+  expect(insertSectionHeading('Rice\n', 5).text).toBe('Rice\n\n## ')
+  expect(insertSectionHeading('Rice\n\n', 6).text).toBe('Rice\n\n## ')
+  expect(insertSectionHeading('Rice\n\n\n', 7).text).toBe('Rice\n\n\n## ')
+})
+
+test('an empty note gets the heading and nothing above it', () => {
+  expect(insertSectionHeading('', 0)).toEqual({ text: '## ', caret: 3 })
+})
+
+test('a line already written becomes a choice when the caret is at its start', () => {
+  const { text, caret } = insertSectionHeading('Omelette\n\nCurd with berries', 10)
+  expect(text).toBe('Omelette\n\n## Curd with berries')
+  expect(text.slice(caret)).toBe('Curd with berries')
+  expect(parseNote(text).sections[0].title).toBe('Curd with berries')
+})
+
+test('a caret past the end of the text is the end of the text', () => {
+  expect(insertSectionHeading('Rice', 999).text).toBe('Rice\n\n## ')
+  expect(insertSectionHeading('Rice', -3).text).toBe('## Rice')
+})
+
+test('a second heading is not started while the first one is still empty', () => {
+  expect(insertSectionHeading('Rice\n\n## ', 9)).toEqual({ text: 'Rice\n\n## ', caret: 9 })
+  expect(insertSectionHeading('## ', 3)).toEqual({ text: '## ', caret: 3 })
+  // Empty here, but with the note going on under it: still nothing to add.
+  expect(insertSectionHeading('## \nsoup', 3).text).toBe('## \nsoup')
+  // The moment something is typed into it, the button works again.
+  expect(insertSectionHeading('## S', 4).text).toBe('## S\n\n## ')
 })
