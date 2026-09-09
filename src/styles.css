@@ -4681,17 +4681,15 @@ button.core-toggle.active {
   font-size: var(--t-sm);
 }
 
-/* No indent here. On a card the choices hang under a task's title and line
-   up with the words above them; in an editor there is no title to hang
-   from, and the box's own left edge is the line to keep. */
-.note-editor-preview .note-section-row { margin: 0; }
+/* The edge is the wrapper's now - see .note-sections - and off a card it is
+   the box's own left edge, which .note-editor-preview above sets to zero. */
 
 /* And their own edges back, for the same reason the button above needs its
    own: a preview whose choices are drawn as plain words is not showing what
    the card will show. */
 .note-editor-preview .note-section-button {
-  border: 1px solid var(--border);
-  background: none;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text);
   font-size: var(--t-sm);
 }
@@ -8117,10 +8115,12 @@ button.task-note-mark.is-open {
 /* The note itself, under the row rather than in a sheet over the day. Full
    width and indented past the checkbox, so it reads as belonging to the task
    above it rather than as another task. */
+/* The note's own text: quiet, and on the same left edge as everything else
+   it belongs to. It carried its own indent and a rule down its left side
+   until v2.15, which put a second left edge on a card that already had one -
+   see .note-sections below, where the edge is set once for the whole block. */
 .note-lines {
-  margin: var(--s1) 0 var(--s1) var(--s5);
-  padding: var(--s2) var(--s3);
-  border-left: 2px solid var(--border);
+  margin: 0;
   color: var(--muted);
   font-size: var(--t-sm);
 }
@@ -8131,30 +8131,51 @@ button.task-note-mark.is-open {
 /* ------------------------------------------------------------------------
    A note read as choices - NoteSections.tsx. */
 
-.note-sections { display: flex; flex-direction: column; gap: var(--s1); }
+/* One left edge for the whole block, set here and nowhere else.
 
-/* The headings, on the card. A row that wraps: three recipes is three
-   words, and a fourth line of them is still cheaper than one long note
-   nobody scrolls. */
-.note-section-row { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s1) 0 var(--s1) var(--s5); }
+   A task card starts its title after the check box, and .task-meta lines up
+   under the title with the same number so the meta reads as belonging to the
+   title rather than as a second item. The note is the third thing in that
+   column and it had an edge of its own - sixteen pixels to the left of the
+   other two, and each of its three parts carrying that number separately. A
+   card with a note on it had two left edges, which is what makes a tidy card
+   look untidy without anything on it being wrong. */
+.note-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin-top: var(--s1);
+  padding-left: calc(var(--s6) + var(--s3));
+}
 
-/* No indent on the rail's card - it is not a task row, it is the card. */
-.up-next-note { margin-top: var(--s1); }
-.up-next-note .note-section-row { margin-left: 0; }
+/* Away from a task card there is no check box to clear: the rail's Up next
+   card and the editor's preview both start at their own container's edge. */
+.up-next-note,
+.note-editor-preview { padding-left: 0; }
 
-/* The way into a note the card had to cut. It lines up under the text it
-   belongs to rather than with the choices below, which are a different
-   question - see NoteSections.tsx, where four lines is counted in lines
-   somebody typed. */
-.note-intro-more { margin: 0 0 var(--s1) var(--s5); }
-.up-next-note .note-intro-more { margin-left: 0; }
+/* The headings. A row that wraps: three recipes is three words, and a fourth
+   line of them is still cheaper than one long note nobody scrolls. */
+.note-section-row { display: flex; flex-wrap: wrap; gap: var(--s2); margin: 0; }
 
+/* The way into a note the card had to cut, under the text it belongs to. */
+.note-intro-more { margin: 0; }
+
+/* Filled quietly rather than outlined, and the same pill the card's other
+   marks are - see .task-note-mark, which is this shape with less in it.
+
+   Three outlined boxes stacked under a card is a lot of edge for "here are
+   the three parts of the note": the outline is the loudest thing on the card
+   after the title, and it is drawn three times. A tint lifts the chip off the
+   card enough to say it can be pressed without drawing a line round it, and
+   a row of them reads as one thing with parts rather than as three buttons.
+   The border stays as a transparent one, so the hover has something to
+   colour without anything moving - CONVENTIONS 24. */
 .note-section-button {
   min-height: 0;
   padding: var(--s1) var(--s3);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-pill);
-  background: none;
+  background: color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text);
   font-size: var(--t-sm);
   max-width: 100%;
@@ -8220,7 +8241,7 @@ button.task-note-mark.is-open {
 
 /* The text scrolls, not the page behind it. */
 .note-reader-body { overflow-y: auto; min-height: 0; }
-.note-reader-body .note-lines { margin: 0; padding: 0; border: none; color: var(--text); font-size: var(--t-md); }
+.note-reader-body .note-lines { color: var(--text); font-size: var(--t-md); }
 
 /* One line in the block editor - see BlockNote.tsx.
 
