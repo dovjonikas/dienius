@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useTimerTick, useTitleCountdown } from './useTimerTick'
+import { DEFAULT_CHIME_PROFILE, DEFAULT_CHIME_VOLUME, playChime } from '../../lib/chime'
 import {
   clockTools,
   elapsedMs,
@@ -12,61 +13,6 @@ import {
 
 const RING_RADIUS = 20
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
-
-/**
- * A short, quiet two-tone chime, synthesised rather than loaded.
- *
- * No audio file: this app ships no assets it does not need, works offline by
- * design, and a bundled sound would be one more thing to cache and one more
- * thing to get wrong. Two sine tones a fifth apart, each about a fifth of a
- * second, with their gain ramped down to silence rather than cut - an
- * abruptly-ended tone clicks, and a click is exactly the sound nobody wants
- * from a planner.
- *
- * Everything is wrapped: AudioContext does not exist everywhere, and a
- * browser that has not seen a user gesture yet will refuse to start one.
- * Failing silently is correct - the widget and the notification are the real
- * signal, and the sound is the part that is allowed not to arrive.
- */
-function playChime(): void {
-  try {
-    if (!hasSeenAGesture()) return
-    const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!Ctor) return
-    const ctx = new Ctor()
-    const now = ctx.currentTime
-    for (const [index, frequency] of [880, 1320].entries()) {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.value = frequency
-      const at = now + index * 0.18
-      gain.gain.setValueAtTime(0.0001, at)
-      gain.gain.exponentialRampToValueAtTime(0.12, at + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.22)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(at)
-      osc.stop(at + 0.24)
-    }
-    setTimeout(() => void ctx.close(), 900)
-  } catch {
-    // See above - a missing chime is not a failure worth surfacing.
-  }
-}
-
-/**
- * Whether the page has had a user gesture yet. A browser refuses to start
- * an AudioContext before one and says so on the console - which is exactly
- * what a timer that ran out while the app was closed did on the next open:
- * it rang before anybody had touched anything, no sound came, and a warning
- * did. The widget and the notification carry that case; the chime stays
- * quiet rather than logging a sound it could not play. Browsers without
- * `userActivation` answer yes and behave as before.
- */
-export function hasSeenAGesture(): boolean {
-  const activation = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
-  return !activation || activation.hasBeenActive
-}
 
 function notify(body: string): void {
   try {
@@ -134,7 +80,10 @@ export function FloatingClock() {
     // finds `rungOut` already set and shows the finished state silently,
     // rather than alarming about something that happened an hour ago.
     if (!timer.rungOut) {
-      playChime()
+      // The profile and the volume are a setting from the next stage; until
+      // then this is the sound the app has always made, through the one
+      // engine that now makes all of them - see lib/chime.ts.
+      playChime(DEFAULT_CHIME_PROFILE, DEFAULT_CHIME_VOLUME)
       notify('Timer finished')
     }
     clockTools.markRungOut()
