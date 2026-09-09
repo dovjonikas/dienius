@@ -1895,6 +1895,58 @@ The measurement snippet that has been used for the target audit:
 
 ---
 
+## 5b. Where steps live, before they are removed
+
+Taken on 2026-09-09, before a line of it was changed. Steps are being folded
+into the note - see the v2.13 wave in section 4 - and this is the list the
+removal works from, so that nothing is left behind by a grep that missed a
+synonym. The field is called  on a template block and  on a
+task, which is most of why a grep alone was not enough.
+
+**The data**
+
+| Where | What |
+|---|---|
+|  |  interface; ;  interface;  |
+|  |  table |
+|  |  on  |
+|  |  table |
+|  |  on  |
+
+**What moves them**
+
+| Where | What |
+|---|---|
+|  |  - a block's steps as a day's own list |
+|  |  |
+|  | , , ,  |
+|  |  in 's input table and its body |
+|  | a repeat instance copies its source's subtasks, unticked |
+|  | the demo's one task with sub-steps |
+
+**What shows them**
+
+| Where | What |
+|---|---|
+|  | the  mark on a card |
+|  | the Steps section, its add line and the per-step timer |
+|  | the steps half of a block's panel, and  |
+|  | the draft field, its setter, both panel props, load and save |
+|  | the same, through  |
+|  | the timer that ticks a step when it rings |
+|  |  is what a step timer points at |
+|  | , , ,  |
+
+**Tests that mention either name**: , , ,
+, , , , , ,
+, , , ,
+, , and the  and  walks.
+
+**Not steps, despite the word**: the tour's own steps (,
+),  (a numeric stepper), ,
+ in , and every  in the
+browser walks.
+
 ## 6. Things that will bite you
 
 Collected from waves where they actually did.
