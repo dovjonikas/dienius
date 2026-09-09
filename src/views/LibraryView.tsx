@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { actions, useAppData } from '../lib/store'
+import { actions, getData, useAppData } from '../lib/store'
 import { addDays, todayKey } from '../lib/dates'
 import {
   LIST_PRESETS,
@@ -13,6 +13,7 @@ import {
   stepsOneAtATime,
   unitPlural,
   listUsedBy,
+  presetLists,
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
@@ -210,7 +211,15 @@ function NewListForm({ onDone }: { onDone: () => void }) {
             type="button"
             className="library-preset"
             onClick={() => {
-              actions.addLibraryList(preset)
+              // A preset usually makes the list it is named after and one of
+              // them makes three. Named rather than counted: a list that is
+              // already there is left alone, so pressing twice is pressing
+              // once - see presetLists.
+              const existing = new Set(getData().library.map(l => l.name.trim().toLowerCase()))
+              for (const made of presetLists(preset)) {
+                if (existing.has(made.name.toLowerCase())) continue
+                actions.addLibraryList({ name: made.name, unit: preset.unit, unitShort: preset.unitShort, color: made.color })
+              }
               onDone()
             }}
           >

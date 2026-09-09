@@ -12946,9 +12946,18 @@ main:has(.week) > .calendar {
   font-size: var(--t-sm);
 }
 
+/* Centred, not baseline-aligned.
+
+   `baseline` lines the name up with its unit, which is right, and then puts
+   the pair at the *top* of the pill - because that is what flexbox does with
+   a baseline group in a box taller than it. The pills were the same height
+   and the same position all along; the words inside them sat three pixels
+   under the top edge and sixteen above the bottom, which reads as a row of
+   buttons that do not line up. The two sizes are thirteen and eleven, so
+   centring them separately moves their baselines apart by under a pixel. */
 .library-preset {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s2);
   min-height: 34px;
   padding: 0 var(--s3);

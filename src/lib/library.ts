@@ -23,11 +23,52 @@ export const STARTER_LISTS: { name: string; unit: string; unitShort: string }[] 
  * three that kept being typed by hand, so they stopped being worth typing.
  * Anything else still goes through the form, which is why it is still there.
  */
-export const LIST_PRESETS: { name: string; unit: string; unitShort: string }[] = [
+export interface ListPreset {
+  /** What the button says. The list's own name too, unless it makes several. */
+  name: string
+  unit: string
+  unitShort: string
+  /**
+   * The lists one press makes, when it makes more than one.
+   *
+   * Absent for a preset that makes a list called what the button says, which
+   * is all three of the originals. The three-lane one is a shape rather than
+   * a subject: a person who reads three kinds of thing at once wants three
+   * queues, and three queues is what a folder inside a list would be
+   * pretending to be. There are no folders here and there will not be.
+   */
+  lists?: { name: string; color: string }[]
+}
+
+export const LIST_PRESETS: ListPreset[] = [
   { name: 'Courses', unit: 'lesson', unitShort: 'ls' },
   { name: 'Guitar', unit: 'song', unitShort: 'sg' },
   { name: 'Recipes', unit: 'try', unitShort: 'try' },
+  /**
+   * Three reading lanes at once, empty, in three colours.
+   *
+   * The names are shapes and not subjects on purpose: what somebody reads is
+   * theirs to put in, and a preset that arrived with titles in it would be
+   * this app deciding what a person's evening is for. Three because that is
+   * the number a flat model handles well - three lists are three folders, and
+   * the folders are the part this app does not need.
+   */
+  {
+    name: 'Three reading lanes',
+    unit: 'chapter',
+    unitShort: 'ch',
+    lists: [
+      { name: 'MIND', color: '#a7c4f5' },
+      { name: 'CRAFT', color: '#a7e3bd' },
+      { name: 'LIGHT', color: '#f5db9e' },
+    ],
+  },
 ]
+
+/** The lists a preset makes: the ones it names, or one called what it is. */
+export function presetLists(preset: ListPreset): { name: string; color?: string }[] {
+  return preset.lists ?? [{ name: preset.name }]
+}
 
 /** "chapter" -> "chapters", unless the list names its own plural. */
 export function unitPlural(list: Pick<LibraryList, 'unit' | 'unitPlural'>): string {

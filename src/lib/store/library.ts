@@ -75,7 +75,7 @@ export const libraryActions = {
     commit(withLibrary(data.library.map(l => (l.id === list.id ? list : l))))
   },
 
-  addLibraryList(input: { name: string; unit: string; unitShort?: string; unitPlural?: string }): LibraryList {
+  addLibraryList(input: { name: string; unit: string; unitShort?: string; unitPlural?: string; color?: string }): LibraryList {
     const data = getData()
     const list: LibraryList = {
       id: crypto.randomUUID(),
@@ -83,6 +83,9 @@ export const libraryActions = {
       unit: input.unit.trim().toLowerCase() || 'item',
       unitShort: input.unitShort?.trim() || undefined,
       unitPlural: input.unitPlural?.trim() || undefined,
+      // Only a preset passes one; a list made through the form takes its
+      // colour afterwards, from the same swatch row every list uses.
+      color: input.color,
       items: [],
     }
     commit(withLibrary([...data.library, list]))

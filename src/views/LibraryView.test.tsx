@@ -529,3 +529,29 @@ test('the loud row says what will take it, and only when something will', async 
   expect(screen.getByText('Next on Reading')).toBeInTheDocument()
   expect(screen.getByText('Used by Reading in Working day')).toBeInTheDocument()
 })
+
+// The three-lane preset, from v2.16.
+
+test('one press makes three empty lanes, in three colours', async () => {
+  const user = userEvent.setup()
+  render(<LibraryView />)
+  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
+
+  const lists = getData().library
+  expect(lists.map(l => l.name)).toEqual(['MIND', 'CRAFT', 'LIGHT'])
+  expect(lists.every(l => l.items.length === 0)).toBe(true)
+  expect(lists.every(l => l.unit === 'chapter')).toBe(true)
+  expect(new Set(lists.map(l => l.color)).size).toBe(3)
+})
+
+test('pressing the preset twice is pressing it once', async () => {
+  const user = userEvent.setup()
+  render(<LibraryView />)
+  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
+  await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
+
+  expect(getData().library.map(l => l.name)).toEqual(['MIND', 'CRAFT', 'LIGHT'])
+})
