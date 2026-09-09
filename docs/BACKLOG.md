@@ -720,3 +720,34 @@ The previous version of this section said the theme system's steps 1 to 4
 were unbuilt. All eight steps of [`THEMES.md`](THEMES.md) have landed,
 including the twelve presets, the override panel and its contrast warnings -
 the section had simply not been rewritten since.
+
+---
+
+## Raised by the v2.17 hunt, and deliberately not done in it
+
+The hunt's rule was that it adds nothing: anything that read as "it would
+also be good if" goes here rather than into the wave. Three did.
+
+- **45 React `act(...)` warnings in the unit run**, across 22 components.
+  Real, and worth clearing. Not cleared in v2.17 because clearing them means
+  touching twenty-two test files during the week the owner is living in this
+  app, which is the wave for changing tests least. The reason to do it is not
+  tidiness: a genuine act warning - one pointing at a real update landing
+  after a test has moved on - is invisible in this much noise. See
+  [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md) C-05.
+
+- **One 664 kB JavaScript chunk**, which `vite build` warns about on every
+  run. Left on purpose: the app is a single screen that switches views and
+  every view is one press from every other, so splitting it trades a build
+  warning for a spinner on the press that matters. 196 kB gzipped, cached by
+  the service worker after the first visit. Worth revisiting only if the
+  owner meets that first visit on mobile data and it is slow. C-04.
+
+- **`cacheFirst` in `public/sw.js` swallows the reason a fetch failed.** Its
+  `catch` returns `cached`, a variable that is provably `undefined` at that
+  point, so `respondWith` gets undefined and the browser reports a bare
+  `net::ERR_FAILED` with nothing in it. Nothing better could be served in
+  that case either - the asset is not in the cache and the network is gone -
+  so the effect is only that a real failure is unreadable. Written down
+  because if S-01 in the hunt ever reproduces, this is the line that will be
+  hiding why.

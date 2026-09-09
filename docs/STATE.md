@@ -6,9 +6,26 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.13, one place text goes.
+**Last updated:** v2.17, the hunt before the week.
 
-Four passes over a real day: every screen at three sizes in both themes, every
+**Is it ready for the week? Yes, with one thing to watch.** Two defects that
+would have spoilt a real morning were found and fixed - an app left open
+overnight kept yesterday and wrote the morning's first task onto it, and the
+update notice covered the whole tab bar on a phone so no tab could be pressed.
+Both are held by tests that were red before the fix. Nothing A-level is
+outstanding. The one thing to watch is written down as S-01 in
+[`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md): if the app ever comes back
+*blank* after a deploy, that is the suspected one, it was never reproduced on a
+clean run, and the file says which line to look at first.
+
+The wave added nothing to the app on purpose, with one exception the owner
+asked for mid-wave: a list can now be bound to a template block that already
+exists, instead of only to one being made. Everything else is a fix. Twelve
+findings, two of them the owner's own from looking at one screen - which is
+the argument for the two measuring passes this wave added to the sweep. The
+full account is in [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md).
+
+**Before that: v2.13.** Four passes over a real day: every screen at three sizes in both themes, every
 screen on a keyboard alone, ten data shapes nobody checks, and every action
 that adds to a day pressed twice. **Two defects, both about focus** - the
 Notes and Journal popovers and the task's detail sheet all left focus on the
@@ -222,6 +239,7 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
+| **v2.17** | The hunt before the week the owner lives in this app, which added nothing and looked for what was already there. Two defects that would have spoilt a real morning: an app left open overnight kept the day it read at mount, so the header said Today over yesterday and the morning first task was written onto the day before - and the update notice covered the whole tab bar on a phone, so not one of the seven tabs could be pressed while a notice that is deliberately ignorable stood on it. Five more that would have grated - a 17px touch target, a Delete drawn exactly like the Edit beside it because one rule out-specified btn-danger and had defeated its own fix for versions, an undo toast over four tabs, a scratch row with one control twelve pixels taller than its neighbours, and the library binding reachable only while making a block. Five cosmetic, three of them rows whose contents did not line up. Two of the twelve were the owner own, from one screenshot - so the sweep gained the two passes that would have caught them, and the screen it had never opened |
 | **v2.16** | Books into the library without a martyrdom. A whole shelf pasted at once - one line an item, an optional total after a vertical bar, and a live count of what the press will do including how many the list already has. A row moves by button as well as by drag and by key, and the loud row says what it is: the item every bound block will carry onto its next day. The binding says which book from the end that only named a list, and the empty case - the block keeps its own title - is finally said rather than discovered. And a quick-start preset that makes three empty reading lanes in one press |
 | **v2.15** | What the timer sounds like, and what things actually took. Four sounds from one synthesiser and one table of parameters - off, soft, bell, alarm - chosen where the timer is started, with a start bell for the ten minutes nobody can look at the screen and five ways to end an alarm that is filling the room. The stopwatch stopped pouring its number away: started on a task, it offers to write down what that task actually took, and the number reaches the card and the week's reading. And the timer panel folded down to what it is for |
 | **v2.14** | What the app knew and did not say. The note editor demonstrates the `## ` rule in its placeholder, says it in one line under the box, draws the card's own choices live as they are typed, and carries a button that writes the heading; a long note is cut to four lines on the card with a Read into the reader. Return adds a block, and the field's right edge says so in all four rows that do it. The door beside a title is three quarters of the title, in the meta ink, off its last word. A length reads as a number and a unit. And one pass over the whole interface asking what else it can do and never mentions, with a verdict written down against each answer |
@@ -304,6 +322,124 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.17 wave: the hunt before the week
+
+The wave that added nothing. The owner starts living in this app for a real
+week - real mornings at 07:00, on a phone and on a desk - and every wave
+before this one ended on "done" and then had one more bug crawl out of it. So
+this one went looking, first, for him. The whole account, finding by finding
+with how to repeat each one, is in
+[`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md). What matters here is what it
+changes about the app and about how it is measured.
+
+**Twelve findings: two A, five B, five C. Ten fixed, two left on purpose, one
+suspected and never reproduced.** Every gate was green before it started -
+2629 unit tests, 62 browser tests, a clean typecheck and build, ten of ten CI
+runs - which is exactly the point: none of the twelve was going to be found by
+running the suite again.
+
+**The day the app is standing on.** `todayKey()` is a reading, not a
+subscription, and every caller in this app took it once. That was invisible
+for as long as every session began with a page load, because a phone swaps the
+tab out overnight and the morning's first look is a fresh mount. It is not
+true of the desk the owner works at all day. Left open overnight, the header
+said "Today" over yesterday's date until the day view's own thirty-second tick
+re-rendered it, then said "Past" and stayed there - and the first task typed
+that morning was written onto the day before. `lib/useToday.ts` is the signal
+the app never had: one timeout aimed at the next local midnight, re-arming
+unconditionally so a fire that finds the same date does not go quiet for a
+day, plus `visibilitychange` and `focus`, because a laptop asleep at midnight
+fires no timeout at all and those are the events a real morning carries. The
+shell follows it **only when the day on screen was today** - somebody who
+walked forward to Friday is looking at Friday on purpose. Two more things were
+keyed on the mount for the same wrong reason and are now keyed on the day: the
+daily snapshot, which promises seven days and would have taken one on a tab
+open all week, and the cloud backup's copy of the day that just ended.
+
+**The tab bar, with two things sitting on top of it.** Below 1024px the rail
+is a bar along the bottom, and both surfaces fixed to that edge were on it.
+The update notice covered it edge to edge at 390x844 - all seven tabs failed a
+hit test - and it is deliberately ignorable, so somebody who ignored it could
+not change tabs at all until they reloaded. Every deploy raises it. The undo
+toast covered four tabs for the five seconds it is up. `--rail-bar-h` names
+the bar's height, the rail states that height rather than letting its content
+decide it, and both surfaces sit above it.
+
+**A Delete that was never red.** `.template-card button` is a class and an
+element, so it out-specified `.btn-danger` wherever that sat in the file, and
+painted the destructive button on every template card in the muted ink with
+the plain border - exactly like the Edit beside it. The comment above that
+button describes the fix for that precise defect. The fix had never taken
+effect: only `.is-armed`, at two classes, ever got through, so the danger
+colour first appeared on the *confirming* press, after the decision it was
+there to inform. Found while chasing a six-pixel height difference in the
+same row, which is the argument for measuring small things.
+
+**A binding you could only make once.** Raised by the owner mid-wave. The
+library binding lived on the add row alone, so a list could be bound to a
+block being made and never to one already on the week - changing your mind
+meant deleting the block and rebuilding it with its time, its category, its
+note and its days. It is on the open block now, going through the same
+`editBlock` as every other field, so a block on seven days binds on seven at
+once. It carries a visible label where the add row's has only an aria-label,
+and that difference is the point: on the add row it is one of a line of chips
+in a sentence being written, and in the panel it is a field on a form. An
+unlabelled dropdown between a note and two buttons is a control nobody can
+name, which is the other half of why it was not found.
+
+### What the sweep can see now, and could not before
+
+Two of the twelve findings were the owner's, from looking at one screen. That
+is the finding about the findings, and it is what most of this wave's tooling
+work is for. Both were shapes nothing in the repo could report - jsdom has no
+layout, and neither is text cut off, a control covered, or anything else
+`scripts/audit.js` looked for.
+
+- **Not centred in a row that centres.** A child more than a pixel and a half
+  off the middle of a row whose `align-items` is `center`. `.setting-quiet`
+  and `.setting-remove` both carry `align-self: flex-start` with a two-pixel
+  nudge, written for the column they were born in, and `align-self` on a child
+  beats `align-items` on its row. Eleven pixels in the week editor's note
+  header; eight on six rows of Settings at once. Measured against the row's
+  *content* box, and skipping any child with a transform - a chevron here is
+  two borders of a square turned 45 degrees, and the translate inside that
+  rotation is what pulls the ink back to the middle of a box the rotation has
+  made bigger, so its rect is 11px where its box is 8. Sixteen of those were
+  reported before that clause went in, and none of them was a defect.
+- **Two heights in one row.** Two controls drawn as boxes, side by side, more
+  than two pixels apart. `.block-add-marks` was fixed for exactly this in v2.9
+  - "everything here was between 28px and 44px, which put three baselines in
+  one row" - and the fix was written for that one row rather than looked for
+  anywhere else. Only boxed controls are compared: a quiet word with no
+  background and no border is deliberately the height of its own text.
+
+And one screen: **the week template editor with a block open**. The sweep
+built the seven-column grid and never pressed anything on it, so the panel
+inside it had been unmeasured at every size for six versions. Three findings
+sat on it.
+
+### What the hunt checked and found nothing in
+
+Worth having written down, so a later pass does not spend the time again.
+
+- **The timer across midnight and across both daylight-saving switches.** A
+  run is an instant and a duration in epoch milliseconds and no date
+  arithmetic touches it, which is why the day view had a defect there and the
+  clock did not. Now held by `lib/clockTools.midnight.test.ts` so a later
+  change that introduces some fails there rather than on a Sunday morning.
+- **The tour started on a real day** from the palette or the shortcut card,
+  rather than in Settings' sandbox. Reads like a defect, is deliberate and
+  documented, and is safe: everything the tour makes is flagged `tourCreated`
+  and "Start clean" removes exactly that.
+- **Three accent things on one screen.** Measured rather than eyed on the
+  busiest screen the app draws: exactly two elements carry the full-strength
+  accent - the day's progress bar and the mini calendar's ring on today.
+  Everything else that reads as tinted is a `color-mix` at reduced strength.
+- **The two daily paths.** An ordinary morning - stamp the day, tick three
+  things, run a timer, write a note - is seven presses with nothing to hunt
+  for and no wrong press. An evening - move what is left, write the journal
+  line - is three, and the line is on the day by the time focus leaves the box.
 
 ### The v2.16 wave: books into the library without a martyrdom
 
