@@ -21,12 +21,14 @@ if the app ever comes back *blank* after a deploy, that is the suspected one, it
 was never reproduced on a clean run, and the file says which line to look at
 first.
 
-One gate is not green and it is not this repo: CI's browser job fails at
-`playwright install --with-deps` because Google's Chrome apt repository is
-serving a `Packages.gz` whose hash does not match its own `Release` file. The
-build and the deploy are green, the same 74 browser tests pass locally on the
-same commit, and the workflow no longer lets a repository this project does not
-use fail a job that does not need it.
+Every gate is green, including CI - but one of them took a change to get
+there, and it is worth knowing why. The browser job failed three runs in a row
+at `playwright install --with-deps`, before a single test ran, because Google's
+Chrome apt repository was serving a `Packages.gz` whose hash did not match its
+own `Release` file. `--with-deps` runs `apt-get update` across every repo on
+the runner, so an outage in a repository this project never touches -
+Playwright ships its own chromium, from its own CDN - failed a job that did not
+need it. The install is in two steps now and the job is green again.
 
 The wave added nothing to the app on purpose, with one exception the owner
 asked for mid-wave: a list can now be bound to a template block that already

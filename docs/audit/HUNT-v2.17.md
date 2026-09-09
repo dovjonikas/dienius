@@ -339,9 +339,9 @@ every screen, four widths, both themes, all three new passes armed - reports
 | `npm run privacy` | clean |
 | `npm run sweep -- --phone` | **0 findings** |
 | `npm run sweep -- --self-check` | 8/8 shapes still detected |
-| CI | `build` and `deploy` green; `e2e` red for a reason that is not this repo's - see below |
+| CI | `build`, `e2e` and `deploy` all green - after the fix below |
 
-### The one gate that is not green, and why it is not the app
+### The gate that was red, and why it was not the app
 
 CI's `e2e` job failed three runs in a row at `npx playwright install
 --with-deps chromium`, before a single test ran:
@@ -364,8 +364,15 @@ that step is a belt whose braces are the image itself; if it is ever genuinely
 needed and genuinely fails, the test run below it says so in words somebody
 can read rather than an apt error about a mirror.
 
-The same 74 browser tests pass locally, on the same commit, against the same
-production build.
+**Green on the next push**, all three jobs, with Google's mirror still serving
+the same bad index. The same 74 browser tests also pass locally, on the same
+commit, against the same production build.
+
+Worth keeping as a lesson rather than only as a fix: this was three red runs
+that said nothing about the code, and the temptation with one of those is to
+press re-run until it goes away. What made it cheap to settle was fetching the
+file the error named and comparing it to the hash the error quoted - four
+seconds of work that turned "flaky CI" into a fact with a cause.
 
 ---
 
