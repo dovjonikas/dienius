@@ -223,7 +223,14 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
       dragRef.current = null
       setDraggingId(null)
       if (!drag) return
-      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('[data-wt-day]')
+      // Guarded, because a drop needs a layout to land on and not every
+      // document has one. jsdom does not implement elementFromPoint at all,
+      // and since the week became a picture every press on a block starts a
+      // drag - so this threw on every test that opened one, fifteen times a
+      // run, which failed CI for twelve hours while the tests themselves all
+      // passed. A pointer that came up over nothing is a drag that dropped
+      // nowhere, which is already what this says.
+      const target = document.elementFromPoint?.(e.clientX, e.clientY)?.closest<HTMLElement>('[data-wt-day]')
       const day = target?.dataset.wtDay
       if (day === undefined) return
       onChange({
