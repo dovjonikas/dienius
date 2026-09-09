@@ -29,6 +29,9 @@ const here = dirname(fileURLToPath(import.meta.url))
 const OUT = join(here, '..', 'docs', 'audio')
 const PORT = process.env.PORT ?? '4176'
 const BASE = `http://localhost:${PORT}/dienius/`
+/** Where the dev server serves the module from. A variable, not a literal, so
+ *  the typechecker reads it as a URL to fetch rather than as a file to find. */
+const MODULE = '/dienius/src/lib/chime.ts'
 
 /**
  * How much of each sound is rendered.
@@ -53,22 +56,25 @@ async function main() {
   const report = []
   for (const [profile, seconds] of Object.entries(SECONDS)) {
     const rendered = await page.evaluate(
-      async ([profile, seconds, volume, rate]) => {
-        const { playChime } = await import('/dienius/src/lib/chime.ts')
+      async (/** @type {{ profile: string; seconds: number; volume: number; rate: number; module: string }} */ { profile, seconds, volume, rate, module }) => {
+        const { playChime } = await import(/* @vite-ignore */ module)
 
         // The one substitution: playChime asks for `new AudioContext()` with
         // no arguments, so the offline one is wrapped in a class that knows
         // how long it is rendering for. Everything else is the real thing.
+        /** @type {any} */
         let made = null
-        const Real = window.AudioContext
-        window.AudioContext = class {
+        /** @type {any} */
+        const w = window
+        const Real = w.AudioContext
+        w.AudioContext = class {
           constructor() {
             made = new OfflineAudioContext(1, Math.ceil(seconds * rate), rate)
             return made
           }
         }
         const handle = playChime(profile, volume)
-        window.AudioContext = Real
+        w.AudioContext = Real
         if (!made) return null
 
         const buffer = await made.startRendering()
@@ -88,7 +94,9 @@ async function main() {
         // A 16-bit mono wav, written here because the whole point is a file
         // that opens in anything.
         const bytes = new DataView(new ArrayBuffer(44 + samples.length * 2))
-        const ascii = (at, text) => { for (let i = 0; i < text.length; i += 1) bytes.setUint8(at + i, text.charCodeAt(i)) }
+        const ascii = (/** @type {number} */ at, /** @type {string} */ text) => {
+          for (let i = 0; i < text.length; i += 1) bytes.setUint8(at + i, text.charCodeAt(i))
+        }
         ascii(0, 'RIFF')
         bytes.setUint32(4, 36 + samples.length * 2, true)
         ascii(8, 'WAVEfmt ')
@@ -111,7 +119,7 @@ async function main() {
         for (let i = 0; i < raw.length; i += 1) binary += String.fromCharCode(raw[i])
         return { wav: btoa(binary), peak, rms: Math.sqrt(sum / samples.length) }
       },
-      [profile, seconds, VOLUME, RATE],
+      { profile, seconds, volume: VOLUME, rate: RATE, module: MODULE },
     )
 
     if (!rendered) {
