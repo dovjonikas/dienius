@@ -955,7 +955,9 @@ export function TemplatesView() {
                   ` · ${data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? ''}`}
               </span>
             </div>
-            <button aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>Edit</button>
+            <button className="btn-secondary" aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>
+              Edit
+            </button>
             {/* Outlined from the start, filled once armed - the two states
                 CONVENTIONS section 6 describes. It used to be a plain button
                 until the first press, which made the control that destroys a
