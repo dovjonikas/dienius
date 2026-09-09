@@ -1,3 +1,4 @@
+import { currentItem } from '../lib/library'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -482,4 +483,49 @@ test('titles the list already has are counted and skipped, never a blocker', asy
   // The press is still there: a duplicate never stops the rest.
   await user.click(screen.getByRole('button', { name: 'Add 1' }))
   expect(getData().library[0].items.map(i => i.title)).toEqual(['One', 'Two'])
+})
+
+// Moving a row, and saying why the loud one is loud - from v2.16.
+
+test('a row moves with a button, and the order survives a reload', async () => {
+  const user = userEvent.setup()
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  for (const title of ['One', 'Two', 'Three']) actions.addLibraryItemShaped(listId, { title })
+  render(<LibraryView />)
+
+  await user.click(screen.getByRole('button', { name: 'Move Three up, to position 2' }))
+  await user.click(screen.getByRole('button', { name: 'Move Three up, to position 1' }))
+
+  expect(getData().library[0].items.map(i => i.title)).toEqual(['Three', 'One', 'Two'])
+  // Which is what a bound block would take next, because currentItem reads
+  // the first unfinished one in this order.
+  expect(currentItem(getData().library[0])?.title).toBe('Three')
+})
+
+test('the ends of a list have nowhere further to go', () => {
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  for (const title of ['One', 'Two']) actions.addLibraryItemShaped(listId, { title })
+  render(<LibraryView />)
+
+  expect(screen.getByRole('button', { name: 'Move One up, to position 0' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Move Two down, to position 3' })).toBeDisabled()
+})
+
+test('the loud row says what will take it, and only when something will', async () => {
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  actions.addLibraryItemShaped(listId, { title: 'One' })
+  const { rerender } = render(<LibraryView />)
+
+  // Nothing points at the list yet, so there is no promise to make.
+  expect(screen.queryByText(/Next on/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Used by/)).not.toBeInTheDocument()
+
+  actions.addTemplate({ name: 'Working day', color: '#8ab6f9', blocks: [{ time: '21:00', title: 'Reading', libraryListId: listId }] })
+  rerender(<LibraryView />)
+
+  expect(screen.getByText('Next on Reading')).toBeInTheDocument()
+  expect(screen.getByText('Used by Reading in Working day')).toBeInTheDocument()
 })

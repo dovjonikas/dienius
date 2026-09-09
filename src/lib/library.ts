@@ -1,4 +1,4 @@
-import type { LibraryItem, LibraryList, LibraryTrack } from './types'
+import type { LibraryItem, LibraryList, LibraryTrack, Template } from './types'
 
 /**
  * The library: lists of things worked through a unit at a time.
@@ -439,4 +439,34 @@ export function parsePastedItems(text: string, existing: Pick<LibraryItem, 'titl
   }
 
   return { items, duplicates }
+}
+
+/**
+ * Which template blocks draw from a list.
+ *
+ * The other half of the binding, answered from the list's side. The block's
+ * side already answers "where does this block get its book"; this answers
+ * "where does this list get used", which is a different question with a
+ * different reader - and so not the same fact twice (CONVENTIONS 23).
+ *
+ * It is also what lets a list say why its first unfinished row is the loud
+ * one: that row is what every one of these blocks will carry onto the next
+ * day it stamps. A list nothing points at makes no such promise and says
+ * nothing.
+ */
+export interface ListUse {
+  templateId: string
+  templateName: string
+  blockTitle: string
+}
+
+export function listUsedBy(templates: Pick<Template, 'id' | 'name' | 'blocks'>[], listId: string): ListUse[] {
+  const uses: ListUse[] = []
+  for (const template of templates) {
+    for (const block of template.blocks) {
+      if (block.libraryListId !== listId) continue
+      uses.push({ templateId: template.id, templateName: template.name, blockTitle: block.title })
+    }
+  }
+  return uses
 }

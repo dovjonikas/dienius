@@ -7632,6 +7632,64 @@ button.danger:focus-visible {
    button until it is asked for, because one book is still one line typed into
    the field above it and this is the afternoon somebody sits down with a
    shelf. */
+/* Where a list is used, under its own name. One quiet line, and only when
+   something points at it - see listUsedBy. */
+.library-list-used {
+  margin: 0;
+  padding: 0 var(--s3) var(--s2) calc(var(--s6) + var(--s2));
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* Why the loud row is the loud one: it is what a bound block will carry onto
+   the next day it stamps. Said on the row rather than in a legend, and only
+   where a block actually points at this list. */
+.library-item-next {
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* The third way to move a row, and the only one that is neither a gesture nor
+   a key. A drag on a phone is a guess about whether the list or the page is
+   about to move; a button is not. */
+.library-item-move { display: flex; flex: 0 0 auto; gap: var(--s0); }
+
+.library-item-move-button {
+  min-height: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: 1;
+}
+
+.library-item-move-button:hover { color: var(--text); border-color: var(--border); }
+/* Faded by ink rather than by opacity, which is the lesson .btn-secondary's
+   own disabled state already carries: half opacity puts a muted grey on a
+   grey surface, and the sweep measured this arrow at 2.17:1 on Light against
+   the 3 a mark like this needs. The step from --muted to --faint reads as
+   "not now" and stays readable. */
+.library-item-move-button:disabled { color: var(--faint); opacity: 1; }
+
+/* The 44px every control in this app gets under a finger, taken as an overlay
+   so a row's height is not decided by two arrows - CONVENTIONS 6. */
+@media (pointer: coarse) {
+  .library-item-move-button { position: relative; }
+  .library-item-move-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 .library-add-many-open { align-self: flex-start; margin-top: var(--s2); }
 
 .library-add-many {

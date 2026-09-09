@@ -12,6 +12,7 @@ import {
   progressPercent,
   stepsOneAtATime,
   unitPlural,
+  listUsedBy,
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
@@ -278,6 +279,7 @@ interface ListSectionProps {
 }
 
 function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) {
+  const data = useAppData()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [showFinished, setShowFinished] = useState(false)
@@ -285,6 +287,12 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
   const [detailId, setDetailId] = useState<string | null>(null)
   const itemsRef = useRef<HTMLUListElement>(null)
   const reorder = useListReorder(itemsRef, (id, to) => actions.moveLibraryItem(list.id, id, to))
+
+  // Which template blocks draw from this list. Two lines come out of it: the
+  // one under the list's name saying where it is used, and the one on the
+  // loud row saying that this is the item those blocks will take.
+  const uses = listUsedBy(data.templates, list.id)
+  const usedBy = uses.map(u => u.blockTitle)
 
   const going = list.items.filter(i => !isItemFinished(i))
   const finished = list.items.filter(isItemFinished)
@@ -313,6 +321,8 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
     item,
     index,
     dragging: reorder.draggingId === item.id,
+    total: list.items.length,
+    usedBy,
     over: reorder.overIndex === index && reorder.draggingId !== null && reorder.draggingId !== item.id,
     detailOpen: detailId === item.id,
     onToggleDetail: () => setDetailId(id => (id === item.id ? null : item.id)),
@@ -408,6 +418,17 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             {confirmDelete ? 'Delete?' : 'Delete list'}
           </button>
         </div>
+      )}
+
+      {/* Where this list is used, from the list's side. The block's own editor
+          answers the other half - which book this block will carry - and the
+          two are different questions with different readers, so neither is
+          the other said twice (CONVENTIONS 23). Nothing points at it, no
+          line. */}
+      {uses.length > 0 && (
+        <p className="library-list-used">
+          Used by {uses.map(u => `${u.blockTitle} in ${u.templateName}`).join(', ')}
+        </p>
       )}
 
       {open && (
@@ -539,6 +560,10 @@ interface ItemRowProps {
   list: LibraryList
   item: LibraryItem
   index: number
+  /** How many rows there are, so the ends know they are the ends. */
+  total: number
+  /** The template blocks pointing at this list, for the line on the loud row. */
+  usedBy: string[]
   active?: boolean
   dragging: boolean
   /** True when a drop right now would land on this row. */
@@ -565,6 +590,8 @@ function ItemRow({
   list,
   item,
   index,
+  total,
+  usedBy,
   active = false,
   dragging,
   over,
@@ -590,9 +617,11 @@ function ItemRow({
         .join(' ')}
       data-reorder-index={index}
     >
-      {/* A real button, not a decorative handle: it is dragged with a pointer
-          or a finger, and moved a place at a time with the arrow keys, so the
-          order is reachable by every input this app supports. */}
+      {/* Three ways to move a row and this is two of them: dragged with a
+          pointer or a finger, and nudged a place at a time with the arrow
+          keys. The third is the pair of buttons at the end of the row - a
+          drag on a phone is a guess about whether the list or the page is
+          going to move, and a button is not. */}
       <button
         type="button"
         className="library-item-grip"
@@ -625,6 +654,15 @@ function ItemRow({
           {/* Only on the card that is loud. On a quiet row it would be a
               second line of prose on every line of a list of thirteen. */}
           {active && item.pace && <span className="library-item-pace">{item.pace}</span>}
+          {/* Why this one is the loud one. It has been the first unfinished
+              row since v1.9 and the app has been putting exactly this on
+              every day a bound block stamps for just as long, and nothing
+              ever said so - the same silence as "## " and Return. Only where
+              a block actually points at this list: a list nothing draws from
+              has no such promise to make. */}
+          {active && usedBy.length > 0 && (
+            <span className="library-item-next">Next on {usedBy.join(', ')}</span>
+          )}
         </span>
         <span className="library-item-count">{progressLabel(list, item)}</span>
       </button>
@@ -634,6 +672,30 @@ function ItemRow({
           reader and no keyboard has a good answer for. It sits at the end of
           the same row instead, with its own target. */}
       {item.link && <LinkOut link={item.link} title={item.title} className="library-item-link" />}
+
+      {/* The third way, and the only one that is neither a gesture nor a key.
+          Named for what moves and where it goes, because "up" on its own is a
+          direction and not an action. */}
+      <span className="library-item-move">
+        <button
+          type="button"
+          className="library-item-move-button"
+          disabled={index === 0}
+          aria-label={`Move ${item.title} up, to position ${index}`}
+          onClick={() => onNudge(-1)}
+        >
+          <span aria-hidden="true">↑</span>
+        </button>
+        <button
+          type="button"
+          className="library-item-move-button"
+          disabled={index === total - 1}
+          aria-label={`Move ${item.title} down, to position ${index + 2}`}
+          onClick={() => onNudge(1)}
+        >
+          <span aria-hidden="true">↓</span>
+        </button>
+      </span>
 
       {/* The two commonest things, revealed by a pointer. A finger opens the
           panel instead, which has these and everything else - see the CSS.
