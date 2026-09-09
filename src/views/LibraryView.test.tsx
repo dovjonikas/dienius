@@ -441,3 +441,45 @@ test('emptying the field takes the address off the item', async () => {
 
   expect(getData().library[0].items[0].link).toBeUndefined()
 })
+
+// Pasting a whole list in, from v2.16. The parser has its own tests in
+// library.test.ts; what is checked here is that the panel says what the
+// press will do before it is pressed, and that the press does it.
+
+test('a pasted list says how many it will add, and adds them in order', async () => {
+  const user = userEvent.setup()
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  render(<LibraryView />)
+
+  await user.click(screen.getByRole('button', { name: 'Add many' }))
+  const box = screen.getByLabelText('Paste a list into Shelf, one a line')
+  await user.click(box)
+  await user.paste(['One', '', 'Two', 'Three | 34', '', 'Four'].join('\n'))
+
+  expect(screen.getByText('4 items will be added')).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Add 4' }))
+
+  const items = getData().library[0].items
+  expect(items.map(i => i.title)).toEqual(['One', 'Two', 'Three', 'Four'])
+  expect(items[2].total).toBe(34)
+})
+
+test('titles the list already has are counted and skipped, never a blocker', async () => {
+  const user = userEvent.setup()
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  actions.addLibraryItemShaped(listId, { title: 'One' })
+  render(<LibraryView />)
+
+  await user.click(screen.getByRole('button', { name: 'Add many' }))
+  await user.click(screen.getByLabelText('Paste a list into Shelf, one a line'))
+  await user.paste('One\nTwo')
+
+  expect(screen.getByText('1 item will be added')).toBeInTheDocument()
+  expect(screen.getByText(/1 already in this list/)).toBeInTheDocument()
+
+  // The press is still there: a duplicate never stops the rest.
+  await user.click(screen.getByRole('button', { name: 'Add 1' }))
+  expect(getData().library[0].items.map(i => i.title)).toEqual(['One', 'Two'])
+})

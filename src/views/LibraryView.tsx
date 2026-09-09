@@ -21,6 +21,7 @@ import { PALETTE_COLORS } from '../lib/colors'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
 import { useListReorder } from './useListReorder'
 import { LibraryAddLine } from './LibraryAddLine'
+import { LibraryAddMany } from './LibraryAddMany'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { suggestShortForm, UNIT_SUGGESTIONS } from '../lib/library'
@@ -435,6 +436,10 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
               LibraryAddLine.tsx. "Daring Greatly, 12 chapters" still works,
               and the controls redraw to show what was read. */}
           <LibraryAddLine list={list} />
+          {/* Beside the line rather than instead of it: one book is still one
+              line typed above, and this is for the afternoon somebody sits
+              down with a shelf - see LibraryAddMany. */}
+          <LibraryAddMany list={list} />
 
           {finished.length > 0 && (
             <div className="library-finished">

@@ -5959,11 +5959,29 @@ button.danger {
   border-color: var(--text);
 }
 
+/* Where an eighteen pixel tick actually sits.
+
+   The mark is two borders of a box rotated forty-five degrees about its own
+   *top left corner*, so the ink does not sit where left and top put it: the
+   long arm sweeps down and to the left by the box's own height over root two.
+   Which means `left` has to be bigger than that, not smaller - and the
+   numbers this inherited had it at five, which pushed the arm out through the
+   left border.
+
+   Measured rather than reasoned: candidates drawn side by side in one box at
+   six times, twice - the first strip was wrong because its boxes were
+   content-box and a .check is border-box, so its eighteen pixels are fourteen
+   of room and four of border.
+
+   The size moved with the position. The app's twenty-four pixel tick fills
+   about two thirds of its box; three and a half by seven filled nearly three
+   quarters of this one, which reads as a tick crammed into a box rather than
+   as the same mark, smaller. Three by six is the same two thirds. */
 .clock-sound-start input:checked + .check::after {
-  left: 5px;
-  top: 2px;
-  width: 4px;
-  height: 8px;
+  left: 8px;
+  top: 2.5px;
+  width: 3px;
+  height: 6px;
   border-width: 0 2px 2px 0;
   border-color: var(--text);
   opacity: 1;
@@ -7609,6 +7627,49 @@ button.danger:focus-visible {
 .field { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
 .field-label { color: var(--muted); font-size: var(--t-sm); }
 .field input { width: 100%; }
+
+/* A whole list pasted at once - see LibraryAddMany. Folded to one quiet
+   button until it is asked for, because one book is still one line typed into
+   the field above it and this is the afternoon somebody sits down with a
+   shelf. */
+.library-add-many-open { align-self: flex-start; margin-top: var(--s2); }
+
+.library-add-many {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s2);
+  padding: var(--s3);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--border) 22%, transparent);
+}
+
+.library-add-many-text {
+  width: 100%;
+  min-height: calc(6 * 1.5em + 2 * var(--s2));
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-input);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  resize: none;
+}
+
+.library-add-many-rule { margin: 0; color: var(--muted); font-size: var(--t-xs); }
+
+/* What the press will do, before it is pressed. A count that only appears
+   afterwards is a count nobody can act on. */
+.library-add-many-count { margin: 0; color: var(--text); font-size: var(--t-sm); }
+.library-add-many-dupes { color: var(--muted); }
+
+.library-add-many-actions { display: flex; gap: var(--s2); }
+.library-add-many-actions button { flex: 0 0 auto; }
 
 .library-lists { display: flex; flex-direction: column; gap: var(--s4); }
 
@@ -13617,11 +13678,14 @@ main:has(.week) > .calendar {
   border-color: var(--accent);
 }
 
+/* The same eighteen pixel box and the same correction - see the note on
+   .clock-sound-start's tick. These numbers put the long arm through the left
+   border here too, and had done since the day card arrived in v2.8. */
 .day-card-check input:checked + .check::after {
-  left: 5px;
-  top: 2px;
-  width: 3.5px;
-  height: 7px;
+  left: 8px;
+  top: 2.5px;
+  width: 3px;
+  height: 6px;
   border-width: 0 2px 2px 0;
   opacity: 1;
 }

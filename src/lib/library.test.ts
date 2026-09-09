@@ -17,6 +17,7 @@ import {
   suggestShortForm,
   unitPlural,
   unitShort,
+  parsePastedItems,
   upNext,
 } from './library'
 import type { LibraryItem, LibraryList } from './types'
@@ -387,4 +388,52 @@ test('a series is measured in seasons where it has them, in episodes where it do
 test('a film and a thing of unknown length say nothing about their size', () => {
   expect(itemSizeLabel(BOOKS, item({ track: 'movie' }))).toBeUndefined()
   expect(itemSizeLabel(BOOKS, item({}))).toBeUndefined()
+})
+
+// Pasting a list in, from v2.16. One line is one item; the only thing a line
+// carries besides its title is a total after a bar.
+
+test('one line is one item, in the order they were pasted', () => {
+  const { items } = parsePastedItems('First\nSecond\nThird')
+  expect(items.map(i => i.title)).toEqual(['First', 'Second', 'Third'])
+  expect(items.every(i => i.total === undefined)).toBe(true)
+})
+
+test('blank lines and stray spaces are not items', () => {
+  const { items } = parsePastedItems('\n  First  \n\n\n   \nSecond\n')
+  expect(items.map(i => i.title)).toEqual(['First', 'Second'])
+})
+
+test('a whole number after a bar is a total', () => {
+  const { items } = parsePastedItems('First | 34\nSecond|12\nThird')
+  expect(items).toEqual([{ title: 'First', total: 34 }, { title: 'Second', total: 12 }, { title: 'Third' }])
+})
+
+test('a bar with anything else after it is part of the title, not a lost total', () => {
+  // Nothing typed is ever thrown away: half of these are how a real title is
+  // punctuated, and a person who pasted one meant to keep it.
+  const { items } = parsePastedItems('A | B\nSecond | 0\nThird | -4\nFourth | 2.5\nFifth | twelve')
+  expect(items.map(i => i.title)).toEqual(['A | B', 'Second | 0', 'Third | -4', 'Fourth | 2.5', 'Fifth | twelve'])
+  expect(items.every(i => i.total === undefined)).toBe(true)
+})
+
+test('a title the list already has is skipped and counted, never a blocker', () => {
+  const { items, duplicates } = parsePastedItems('First\nSecond\nThird', [{ title: 'first' }, { title: 'THIRD' }])
+  expect(items.map(i => i.title)).toEqual(['Second'])
+  expect(duplicates).toBe(2)
+})
+
+test('the same title twice in one paste is one item', () => {
+  const { items, duplicates } = parsePastedItems('First\nfirst\nSecond')
+  expect(items.map(i => i.title)).toEqual(['First', 'Second'])
+  expect(duplicates).toBe(1)
+})
+
+test('ten lines with two blank and one sized comes out as the brief says', () => {
+  const pasted = ['One', '', 'Two', 'Three | 34', 'Four', '', 'Five', 'Six', 'Seven', 'Eight'].join('\n')
+  const { items, duplicates } = parsePastedItems(pasted)
+  expect(items).toHaveLength(8)
+  expect(duplicates).toBe(0)
+  expect(items[2]).toEqual({ title: 'Three', total: 34 })
+  expect(items.map(i => i.title)).toEqual(['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'])
 })

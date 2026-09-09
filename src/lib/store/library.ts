@@ -1,5 +1,6 @@
 import { commit, dayOf, getData, withDay } from './core'
 import { seedLibrary as librarySeed } from '../librarySeed'
+import type { PastedItem } from '../library'
 import type { AppData, LibraryItem, LibraryList, LibraryTrack, Task, TemplateBlock } from '../types'
 import { hasAnotherSeason, isItemFinished, itemProgress, nextSeason, parseLibraryItemInput } from '../library'
 
@@ -163,6 +164,32 @@ export const libraryActions = {
     }
     commit(mapList(listId, list => ({ ...list, items: [...list.items, item] })))
     return item
+  },
+
+  /**
+   * A pasted list, added to the end in the order it was pasted.
+   *
+   * The end, and never sorted: the order of a list is the order somebody
+   * means to read it in - `currentItem` takes the first unfinished one - so
+   * arriving in the order they were typed is the whole of what "queue" means
+   * here. Anything already in the list has been dropped before this by
+   * `parsePastedItems`, which is where the counting is done as well.
+   *
+   * One commit for all of them rather than one each: twenty-eight commits
+   * would be twenty-eight sync entities and twenty-eight renders for one
+   * press.
+   */
+  addLibraryItemsMany(listId: string, pasted: PastedItem[]): number {
+    const items: LibraryItem[] = pasted
+      .filter(p => p.title.trim() !== '')
+      .map(p => {
+        const item: LibraryItem = { id: crypto.randomUUID(), title: p.title.trim() }
+        if (p.total !== undefined && p.total > 0) item.total = p.total
+        return item
+      })
+    if (items.length === 0) return 0
+    commit(mapList(listId, list => ({ ...list, items: [...list.items, ...items] })))
+    return items.length
   },
 
   addLibraryItem(listId: string, input: string): LibraryItem | undefined {

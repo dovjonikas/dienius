@@ -362,3 +362,81 @@ export function upNext(list: LibraryList, today: string): { finished: LibraryIte
   if (!next) return undefined
   return { finished, next }
 }
+
+/**
+ * A list pasted in, one item per line.
+ *
+ * The wall this exists for: twenty-eight books, one at a time, through a
+ * field that clears itself. Nothing about that is hard and all of it is
+ * tedious, which is the exact shape of thing that stops a list from ever
+ * being filled in.
+ *
+ * **One line is one item, and nothing else is read.** No commas, no counts
+ * trailing the words the way `parseLibraryItemInput` reads them on the add
+ * line - a pasted list comes from somewhere else and its titles have commas
+ * and numbers in them for their own reasons.
+ *
+ * The one thing a line may carry is a total, after a vertical bar:
+ *
+ *     The Long Way Round | 34
+ *
+ * A bar because it is the one character that almost never appears in a
+ * title. "x 34" and "- 34" both do: half the books on a shelf have a dash in
+ * them, and a hyphen is how subtitles are written.
+ *
+ * Nothing is ever silently thrown away. A bar with something other than a
+ * whole positive number after it is not a total, so the whole line - bar and
+ * all - is the title, which is what somebody pasting a title with a bar in
+ * it meant.
+ */
+export interface PastedItem {
+  title: string
+  total?: number
+}
+
+export interface PastedList {
+  /** In the order they were pasted, which is the order they will be added. */
+  items: PastedItem[]
+  /**
+   * How many lines were dropped for naming something the list already has,
+   * counting a title repeated inside the paste itself - by the time the
+   * second one is read, the list is going to have the first.
+   */
+  duplicates: number
+}
+
+export function parsePastedItems(text: string, existing: Pick<LibraryItem, 'title'>[] = []): PastedList {
+  const seen = new Set(existing.map(item => item.title.trim().toLowerCase()))
+  const items: PastedItem[] = []
+  let duplicates = 0
+
+  for (const raw of text.split(/\r\n|\r|\n/)) {
+    const line = raw.trim()
+    if (line === '') continue
+
+    // The first bar, not the last: a title with two of them keeps everything
+    // after the first as part of itself unless the tail is a number.
+    const bar = line.indexOf('|')
+    let title = line
+    let total: number | undefined
+    if (bar >= 0) {
+      const left = line.slice(0, bar).trim()
+      const right = line.slice(bar + 1).trim()
+      const parsed = Number(right)
+      if (left !== '' && /^\d+$/.test(right) && Number.isInteger(parsed) && parsed > 0) {
+        title = left
+        total = parsed
+      }
+    }
+
+    const key = title.toLowerCase()
+    if (seen.has(key)) {
+      duplicates += 1
+      continue
+    }
+    seen.add(key)
+    items.push(total === undefined ? { title } : { title, total })
+  }
+
+  return { items, duplicates }
+}
