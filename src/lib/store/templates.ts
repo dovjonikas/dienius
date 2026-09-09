@@ -31,6 +31,7 @@ export const templateActions = {
       weekday?: number
       groupId?: string
       note?: string
+      noteExpanded?: boolean
       steps?: TemplateStep[]
       highlight?: boolean
     }[]
@@ -56,6 +57,7 @@ export const templateActions = {
         weekday: b.weekday,
         groupId: b.groupId,
         note: b.note,
+        noteExpanded: b.noteExpanded,
         steps: b.steps,
         highlight: b.highlight,
       })),

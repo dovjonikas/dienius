@@ -208,6 +208,9 @@ export function applyStamps(
         // replace and anything else is the day's to keep.
         note: ownNote(match) ?? b.note,
         templateNote: b.note,
+        // Travels with the note it is about: a block whose recipe is the
+        // reason you look at the card says so on every day it stamps.
+        noteExpanded: b.noteExpanded,
         // Steps take the simpler rule, and deliberately: a list is state a
         // day works through rather than words it re-reads, so once a day has
         // one - ticked, added to, or emptied on purpose - the template has

@@ -8057,6 +8057,97 @@ button.task-note-mark.is-open {
 .note-line { margin: 0; line-height: 1.55; white-space: pre-wrap; }
 
 /* A line typed with an indent keeps its columns - see NoteLines.tsx. */
+/* ------------------------------------------------------------------------
+   A note read as choices - NoteSections.tsx. */
+
+.note-sections { display: flex; flex-direction: column; gap: var(--s1); }
+
+/* The headings, on the card. A row that wraps: three recipes is three
+   words, and a fourth line of them is still cheaper than one long note
+   nobody scrolls. */
+.note-section-row { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s1) 0 var(--s1) var(--s5); }
+
+/* No indent on the rail's card - it is not a task row, it is the card. */
+.up-next-note { margin-top: var(--s1); }
+.up-next-note .note-section-row { margin-left: 0; }
+
+.note-section-button {
+  min-height: 0;
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-section-button:hover { border-color: var(--accent); }
+.note-section-button.is-more { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* The one that is open, over the day rather than inside the card: a recipe
+   is longer than a task row and reading it should not push the day about. */
+.note-reader-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet, 60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s5);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+}
+
+.note-reader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: min(560px, 100%);
+  max-height: 80vh;
+  padding: var(--s5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
+}
+
+.note-reader-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); }
+.note-reader-title { margin: 0; font-size: var(--t-lg); }
+
+.note-reader-tabs { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+.note-reader-tab {
+  min-height: 0;
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-reader-tab.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); }
+
+/* The text scrolls, not the page behind it. */
+.note-reader-body { overflow-y: auto; min-height: 0; }
+.note-reader-body .note-lines { margin: 0; padding: 0; border: none; color: var(--text); font-size: var(--t-md); }
+
+/* One line in the block editor - see BlockNote.tsx. */
+.block-note-expand { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
+
+@media (max-width: 599px) {
+  /* A sheet from the bottom, the shape every other overlay takes here. */
+  .note-reader-scrim { align-items: flex-end; padding: 0; }
+  .note-reader { width: 100%; max-height: 88vh; border-radius: var(--r-card) var(--r-card) 0 0; }
+}
+
 .note-line.is-fixed { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--t-xs); }
 
 .task-library { background: color-mix(in srgb, var(--accent) 16%, transparent); }

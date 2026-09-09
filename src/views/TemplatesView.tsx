@@ -105,6 +105,8 @@ interface DraftBlock {
   libraryListId?: string
   /** What the block says when it lands on a day - see TemplateBlock.note. */
   note?: string
+  /** Whether its note shows without a press - see TemplateBlock.noteExpanded. */
+  noteExpanded?: boolean
   /** The steps it lands carrying - see TemplateBlock.steps. */
   steps?: TemplateStep[]
   /** One of the day's three that matter - see TemplateBlock.highlight. */
@@ -246,6 +248,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
 
   function setBlockNote(index: number, note: string) {
     setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, note } : b)) }))
+  }
+
+  function setBlockExpanded(index: number, noteExpanded: boolean) {
+    setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, noteExpanded } : b)) }))
   }
 
   function setBlockSteps(index: number, steps: TemplateStep[]) {
@@ -520,8 +526,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 note={b.note}
                 steps={b.steps}
                 label={b.title}
+                expanded={b.noteExpanded}
                 onNote={next => setBlockNote(i, next)}
                 onSteps={next => setBlockSteps(i, next)}
+                onExpanded={next => setBlockExpanded(i, next)}
               />
             )}
           </li>
@@ -678,6 +686,7 @@ export function TemplatesView() {
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
         libraryListId: b.libraryListId,
         note: b.note,
+        noteExpanded: b.noteExpanded,
         steps: b.steps,
         highlight: b.highlight,
       })),
@@ -767,6 +776,7 @@ export function TemplatesView() {
       // Blank is absent, so a note opened and left empty does not become a
       // field on every block it was opened on.
       note: b.note?.trim() || undefined,
+      noteExpanded: b.noteExpanded || undefined,
       steps: b.steps?.length ? b.steps : undefined,
       highlight: b.highlight || undefined,
     }))

@@ -232,6 +232,7 @@ const TASK = record({
   libraryRef: optional(LIBRARY_REF),
   note: optional(string),
   templateNote: optional(string),
+  noteExpanded: optional(boolean),
   link: optional(string),
   highlight: optional(boolean),
   subtasks: optional(listOf(SUBTASK)),
@@ -266,6 +267,7 @@ const TEMPLATE_BLOCK = record({
   category: categoryRef,
   libraryListId: optional(string),
   note: optional(string),
+  noteExpanded: optional(boolean),
   steps: optional(listOf(TEMPLATE_STEP)),
   // Deliberately not derived from `core` on import: core counts on a
   // non-full day type, KEY is the day's three that matter, and merging

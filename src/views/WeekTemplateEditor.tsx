@@ -588,8 +588,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             note={noteBlock.note}
             steps={noteBlock.steps}
             label={noteBlock.title}
+            expanded={noteBlock.noteExpanded}
             onNote={next => editBlock(noteBlock, { note: next })}
             onSteps={next => editBlock(noteBlock, { steps: next })}
+            onExpanded={next => editBlock(noteBlock, { noteExpanded: next })}
           />
         </div>
       )}

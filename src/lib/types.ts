@@ -109,6 +109,16 @@ export interface TemplateBlock {
    */
   note?: string
   /**
+   * Whether the note shows without being asked for.
+   *
+   * Off by default, which is every block ever written: a mark on the card,
+   * and the words behind it. On, the intro is simply there - for the block
+   * whose note is the reason you look at the card at all.
+   *
+   * Copied onto the day with the note it is about - see applyStamps.
+   */
+  noteExpanded?: boolean
+  /**
    * The steps this block arrives carrying, stamped onto `Task.subtasks` by
    * the same rule as `note`: the day's own list wins where it has one.
    *
@@ -333,6 +343,17 @@ export interface Task extends Timestamped {
    * comes out as 'the day's own', which is the safe answer.
    */
   templateNote?: string
+  /**
+   * Whether the note shows without being asked for.
+   *
+   * Off by default, which is every note ever written: a mark on the card,
+   * and the words behind it. On, the intro is simply there - for the block
+   * whose note is the reason you look at the card at all.
+   *
+   * It governs the intro only. A note's sections are choices, and their
+   * headings are on the card whatever this says - see views/NoteSections.tsx.
+   */
+  noteExpanded?: boolean
   /**
    * One address this task is a door to - see `lib/link.ts`.
    *

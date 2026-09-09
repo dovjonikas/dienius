@@ -65,14 +65,18 @@ export function BlockNotePanel({
   note,
   steps,
   label,
+  expanded = false,
   onNote,
   onSteps,
+  onExpanded,
 }: {
   note?: string
   steps?: TemplateStep[]
   label: string
+  expanded?: boolean
   onNote: (next: string) => void
   onSteps: (next: TemplateStep[]) => void
+  onExpanded?: (next: boolean) => void
 }) {
   const [draft, setDraft] = useState('')
   const list = steps ?? []
@@ -99,6 +103,17 @@ export function BlockNotePanel({
           onChange={e => onNote(e.target.value)}
         />
       </label>
+      {/* One line, here rather than in Settings: it is a fact about this
+          block and not a preference about all of them. A meal block whose
+          recipe is the reason you look at the card says so; the rest stay
+          behind their mark. */}
+      {onExpanded && (
+        <label className="block-note-expand">
+          <input type="checkbox" checked={expanded} onChange={e => onExpanded(e.target.checked)} />
+          <span className="check" aria-hidden="true" />
+          <span>Show this note without opening it</span>
+        </label>
+      )}
       <div className="field">
         <span className="field-label">Steps</span>
         <div className="block-note-steps">

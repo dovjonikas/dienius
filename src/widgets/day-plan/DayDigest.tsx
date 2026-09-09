@@ -5,6 +5,7 @@ import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
 import type { DayScore } from './score'
 import { linkFor } from '../../lib/link'
+import { NoteSections } from '../../views/NoteSections'
 import { LinkOut } from '../../views/LinkOut'
 
 export interface DayDigestProps {
@@ -116,6 +117,10 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
             <span className="up-next-title">{upNext.title}</span>
             {upNextLink && <LinkOut link={upNextLink} title={upNext.title} className="up-next-link" />}
           </span>
+          {/* The block's choices, on the card the owner says they use most.
+              A meal at noon is three recipes and a press, here rather than
+              two screens away. */}
+          <NoteSections note={upNext.note} expanded={upNext.noteExpanded} label={upNext.title} className="up-next-note" />
           <span className="up-next-meta">
             {categoryLabel(upNext.category, categories) ?? 'Scheduled'}
             {minutesAway !== undefined && minutesAway > 0 && ` · in ${formatDuration(minutesAway)}`}

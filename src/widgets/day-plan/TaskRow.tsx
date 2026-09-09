@@ -7,7 +7,8 @@ import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useLongPress } from './useLongPress'
 import { Explain } from '../../views/Explain'
 import { LinkOut } from '../../views/LinkOut'
-import { NoteLines } from '../../views/NoteLines'
+import { NoteSections } from '../../views/NoteSections'
+import { parseNote } from '../../lib/note'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -140,6 +141,12 @@ export function TaskRow({
   // one is there, and a day that opened all of them would be a day of
   // paragraphs where the point is a list of times.
   const [noteOpen, setNoteOpen] = useState(false)
+  // The mark reveals the intro, so it is only worth a place when there is an
+  // intro and it is not already showing. A note that is nothing but headings
+  // has its choices on the card already, and a mark beside them would open
+  // nothing - CONVENTIONS section 25.
+  const noteIntro = parseNote(task.note).intro
+  const showNoteMark = noteIntro !== '' && !task.noteExpanded
   const pushCount = task.pushCount ?? 0
   const isUnbounded = !!task.unbounded
   // isPushable already returns true for an unbounded task regardless of
@@ -347,7 +354,7 @@ export function TaskRow({
               a template can now put a recipe on a block and every day it
               stamps arrives carrying it, which is only useful if reading it
               is one press. Editing is still the detail sheet's. */}
-          {task.note && (
+          {showNoteMark && (
             <button
               type="button"
               className={noteOpen ? 'task-note-mark is-open' : 'task-note-mark'}
@@ -446,7 +453,10 @@ export function TaskRow({
           &#8942;
         </button>
       </div>
-      {task.note && noteOpen && <NoteLines text={task.note} />}
+      {/* The note's choices, and whichever of them is open - see
+          views/NoteSections.tsx. A note with no "## " line in it is the
+          intro alone, which is what every note was before this. */}
+      <NoteSections note={task.note} expanded={task.noteExpanded} open={noteOpen} label={task.title} />
     </li>
   )
 }
