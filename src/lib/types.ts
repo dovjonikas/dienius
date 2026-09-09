@@ -9,6 +9,7 @@
  * scores any differently from the other two.
  */
 import type { CategoryId } from './categories'
+import type { ChimeProfile } from './chime'
 
 export type DayType = 'full' | 'shift' | 'night' | 'rest'
 
@@ -805,6 +806,21 @@ export interface Settings {
    */
   northDismissedOn?: string
   /**
+   * What the timer sounds like, how loud, and whether it rings at the start
+   * too - see `lib/chime.ts` for the four shapes and why there are four.
+   *
+   * A setting rather than part of the running timer, and the line between
+   * them is what a backup should carry: a timer with ninety seconds left is
+   * not a plan and lives under its own key, while "I always want the quiet
+   * bell" is a fact about the person and belongs in the file they would
+   * restore from.
+   *
+   * Absent in every payload written before it existed, backfilled by
+   * `normalizeLoaded` - and, unlike most settings, sanitised there rather
+   * than refused by `validate`. See the note beside `SETTINGS`.
+   */
+  chime?: ChimeSettings
+  /**
    * Calendars somebody else owns - see `CalendarSubscription`.
    *
    * The subscriptions sync, because a calendar added on the PC should appear
@@ -814,6 +830,21 @@ export interface Settings {
    * moment it is written.
    */
   calendars?: CalendarSubscription[]
+}
+
+/**
+ * The three answers about the timer's sound.
+ *
+ * `volume` is 0 to 1 and multiplies whatever the profile already asks for,
+ * so it is a trim on a chosen sound rather than the thing that picks it -
+ * see `playChime`. `atStart` rings once when the timer is started as well
+ * as when it finishes, which exists for the one case that cannot check the
+ * screen: ten minutes of meditation with the eyes shut.
+ */
+export interface ChimeSettings {
+  profile: ChimeProfile
+  volume: number
+  atStart: boolean
 }
 
 /**

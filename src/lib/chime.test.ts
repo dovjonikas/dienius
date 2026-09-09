@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { CHIME_PROFILES, isChimeProfile, MAX_RINGING_S, playChime } from './chime'
+import { CHIME_PROFILES, isChimeProfile, MAX_RINGING_S, playChime, readChimeSettings } from './chime'
 
 /**
  * The sound cannot be listened to from here, so what is checked is the shape
@@ -238,4 +238,38 @@ test('a browser with no AudioContext is silent rather than broken', () => {
 test('a profile is only one of the four names', () => {
   for (const name of CHIME_PROFILES) expect(isChimeProfile(name)).toBe(true)
   for (const junk of ['banana', '', 'Soft', 0, null, undefined, {}]) expect(isChimeProfile(junk)).toBe(false)
+})
+
+// The three stored answers, read back. A payload written before any of this
+// existed has none of them, and one written by hand can have anything at all.
+
+test('a payload with nothing stored gets the quiet default', () => {
+  expect(readChimeSettings(undefined)).toEqual({ profile: 'soft', volume: 0.5, atStart: false })
+  expect(readChimeSettings({})).toEqual({ profile: 'soft', volume: 0.5, atStart: false })
+  expect(readChimeSettings(null)).toEqual(readChimeSettings(undefined))
+})
+
+test('a payload that says something is taken at its word', () => {
+  expect(readChimeSettings({ profile: 'alarm', volume: 0.8, atStart: true })).toEqual({
+    profile: 'alarm',
+    volume: 0.8,
+    atStart: true,
+  })
+  expect(readChimeSettings({ profile: 'off', volume: 0, atStart: false }).volume).toBe(0)
+})
+
+test('rubbish is replaced rather than refused - a whole plan is not lost to a volume', () => {
+  expect(readChimeSettings({ profile: 'banana', volume: 0.3, atStart: true })).toEqual({
+    profile: 'soft',
+    volume: 0.3,
+    atStart: true,
+  })
+  // Out of range in both directions is clamped, not defaulted: somebody who
+  // wrote 5 meant loud, and somebody who wrote -1 meant silent.
+  expect(readChimeSettings({ volume: 5 }).volume).toBe(1)
+  expect(readChimeSettings({ volume: -1 }).volume).toBe(0)
+  // And what is not a number at all has no meaning to keep.
+  expect(readChimeSettings({ volume: 'loud' }).volume).toBe(0.5)
+  expect(readChimeSettings({ volume: NaN }).volume).toBe(0.5)
+  expect(readChimeSettings({ atStart: 'yes' }).atStart).toBe(false)
 })

@@ -1,3 +1,4 @@
+import { DEFAULT_CHIME, readChimeSettings } from './chime'
 import { DEMO_STORAGE_KEY, isDemoMode } from './demoMode'
 import { TOUR_STORAGE_KEY, isTourSandbox } from './tourMode'
 import { buildDemoData } from './demo'
@@ -138,6 +139,7 @@ export function defaultData(): AppData {
       weekdayTemplates: {},
       north: { ...DEFAULT_NORTH },
       eveningClose: { ...DEFAULT_EVENING_CLOSE },
+      chime: { ...DEFAULT_CHIME },
     },
     ifThens: [],
     inbox: [],
@@ -259,6 +261,10 @@ function normalizeLoaded(data: StoredAppData): AppData {
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
       north: data.settings.north ? { afterASlowDay: data.settings.north.afterASlowDay } : { ...DEFAULT_NORTH },
       eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
+      // Read rather than trusted: this one is sanitised on the way in instead
+      // of being refused at the door - see readChimeSettings for why a
+      // preference about a sound is not held to the plan's own standard.
+      chime: readChimeSettings(data.settings.chime),
     },
   }, new Date().toISOString())
 }

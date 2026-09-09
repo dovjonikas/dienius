@@ -508,6 +508,14 @@ const SETTINGS = record({
   weekdayTemplates: optional(WEEKDAY_MAP),
   north: optional(NORTH),
   eveningClose: optional(EVENING_CLOSE),
+  // `chime` and `calendars` are deliberately not listed, and for the same
+  // reason from two directions: neither is the plan. A malformed `density`
+  // means a file somebody edited by hand and opening the rest of it on trust
+  // is how a planner quietly loses a day - but refusing to open a year of
+  // days because a timer's volume says "banana" is the wrong trade, so that
+  // one is clamped on the way in by `readChimeSettings` instead. What is not
+  // listed here rides through and `normalizeLoaded` decides what to do with
+  // it, which is what has always happened to `calendars`.
 })
 
 /**

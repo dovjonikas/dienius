@@ -43,6 +43,8 @@
  * part that is allowed not to.
  */
 
+import type { ChimeSettings } from './types'
+
 /** What a timer sounds like when it finishes. */
 export type ChimeProfile = 'off' | 'soft' | 'bell' | 'alarm'
 
@@ -289,4 +291,36 @@ export function playChime(profile: ChimeProfile, volume: number): ChimeHandle {
     // anything about.
     return SILENT
   }
+}
+
+/**
+ * The stored answers, read back with every wrong value replaced rather than
+ * refused.
+ *
+ * Deliberately different from how `validate` treats `density` or
+ * `textScale`, which refuse a whole payload when they are malformed. That
+ * rule is right for the plan: a file with a nonsense field in it is a file
+ * somebody edited by hand, and opening the rest of it on trust is how a
+ * planner quietly loses a day. This is not the plan. It is how loud a timer
+ * is, and refusing to open a year of somebody's days because their volume
+ * says "banana" is the wrong trade in both directions.
+ *
+ * So every field is clamped or defaulted here, and a payload carrying
+ * rubbish loads and simply rings the way it always did.
+ */
+export function readChimeSettings(x: unknown): ChimeSettings {
+  const s = typeof x === 'object' && x !== null ? (x as Record<string, unknown>) : {}
+  const volume = typeof s.volume === 'number' && Number.isFinite(s.volume) ? Math.min(1, Math.max(0, s.volume)) : DEFAULT_CHIME_VOLUME
+  return {
+    profile: isChimeProfile(s.profile) ? s.profile : DEFAULT_CHIME_PROFILE,
+    volume,
+    atStart: s.atStart === true,
+  }
+}
+
+/** What a payload with nothing stored gets, and what `defaultData` starts on. */
+export const DEFAULT_CHIME: ChimeSettings = {
+  profile: DEFAULT_CHIME_PROFILE,
+  volume: DEFAULT_CHIME_VOLUME,
+  atStart: false,
 }

@@ -1537,3 +1537,39 @@ test('a template block carries KEY through a backup, and core is never read as K
   expect(back.templates[0].blocks[1].core).toBe(true)
   expect(back.templates[0].blocks[1].highlight).toBeUndefined()
 })
+
+// The timer's sound, added in v2.15. Three answers in settings, and the one
+// rule about them: a backup written before they existed opens, and a backup
+// written by hand with rubbish in them opens too - see readChimeSettings.
+
+test('a backup written before the timer had a sound opens on the quiet default', () => {
+  const old = defaultData()
+  const settings = { ...old.settings }
+  delete (settings as { chime?: unknown }).chime
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...old, settings }))
+
+  expect(loadData().settings.chime).toEqual({ profile: 'soft', volume: 0.5, atStart: false })
+})
+
+test('a backup that says which sound it wants keeps it, both ways round', () => {
+  const data = defaultData()
+  data.settings.chime = { profile: 'alarm', volume: 0.9, atStart: true }
+
+  const back = importJson(exportJson(data))
+  expect(back?.settings.chime).toEqual({ profile: 'alarm', volume: 0.9, atStart: true })
+})
+
+test('rubbish in the sound settings does not cost somebody their days', () => {
+  const data = defaultData()
+  data.templates = [{ id: 't1', name: 'Weekday', color: '#8ab6f9', blocks: [] } as Template]
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ ...data, settings: { ...data.settings, chime: { profile: 'banana', volume: 5, atStart: 'yes' } } }),
+  )
+
+  const loaded = loadData()
+  // The plan is still there, which is the whole point of clamping this one
+  // rather than refusing the payload the way a bad density is refused.
+  expect(loaded.templates).toHaveLength(1)
+  expect(loaded.settings.chime).toEqual({ profile: 'soft', volume: 1, atStart: false })
+})

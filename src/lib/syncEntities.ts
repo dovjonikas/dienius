@@ -107,6 +107,11 @@ export const SYNCED_SETTINGS = [
   // somebody's work meetings is not a plan worth carrying between devices and
   // is stale the moment it is written.
   'calendars',
+  // The one field with a device-shaped argument against it: how loud a timer
+  // should be is arguably about which speakers are in front of you. It travels
+  // anyway, because "I want the quiet bell" is about the person and a per-device
+  // tier of settings for one number would be a whole mechanism for a doubt.
+  'chime',
 ] as const
 
 /**
