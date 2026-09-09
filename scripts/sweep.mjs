@@ -105,7 +105,7 @@ async function press(page, name) {
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** What scripts/audit.js puts on the page's own window. */
-/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[] }} Audit */
+/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], mismatched: { sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown> }} Screen */
 

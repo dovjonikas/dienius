@@ -193,6 +193,15 @@
   --rail-open-w: 176px;
   --timeline-gutter: 44px;
   --touch: 44px;
+  /* And the rail's third size: how tall it is below 1024px, where it is a
+     bar along the bottom instead of a column down the side. An item's touch
+     height, the bar's padding above and below it, and the hairline on top.
+     Named because anything else fixed to the bottom of the window has to
+     clear it, and until v2.17 nothing did: the update notice covered all
+     seven tabs on a phone, and the undo toast covered four of them. Derived
+     rather than typed, so a density that redefines --s1 moves the bar and
+     everything that dodges it together. */
+  --rail-bar-h: calc(var(--touch) + var(--s1) * 2 + 1px);
   /* How far back a thing is pushed when it is still there but not the point:
      a day from the month either side, a control that cannot be pressed yet,
      a time under a title. One value, because "faded" is one idea and nine
@@ -683,6 +692,10 @@ main { flex: 1 1 auto; min-height: 0; }
     justify-content: center;
     gap: 0;
     width: auto;
+    /* Stated rather than left to the content, so --rail-bar-h is the truth
+       about this bar and not a guess at it. Exactly what the padding, the
+       item's touch height and the hairline already added up to. */
+    height: calc(var(--rail-bar-h) + env(safe-area-inset-bottom));
     padding: var(--s1) max(var(--s2), env(safe-area-inset-right)) calc(var(--s1) + env(safe-area-inset-bottom))
       max(var(--s2), env(safe-area-inset-left));
     border-right: none;
@@ -5487,6 +5500,14 @@ button.danger {
   max-width: min(92vw, 480px);
 }
 
+/* And clear of the tab bar, for the same reason the update notice is: at
+   390x844 it covered Templates, Library, Review and North for the five
+   seconds it was up, which is exactly the five seconds somebody deciding
+   against an undo wants to leave the screen. */
+@media (max-width: 1023px) {
+  .undo-toast { bottom: calc(var(--rail-bar-h) + env(safe-area-inset-bottom) + var(--s2)); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .undo-toast { animation: undo-in var(--dur) var(--ease) both; }
 }
@@ -6563,6 +6584,24 @@ button.danger:focus-visible {
     right: auto;
     bottom: 16px;
     border-radius: var(--r-card);
+  }
+}
+
+/* Above the tab bar, wherever the rail is one.
+ *
+ * The comment above this rule says the notice never blocks the day view
+ * underneath it, and that was true; what it blocked was the navigation. At
+ * 390x844 it covered the bar edge to edge and every one of the seven tabs
+ * failed a hit test - and the notice is deliberately ignorable, so a person
+ * who ignores it cannot change tabs at all until they reload. Found by the
+ * v2.17 hunt, on a sweep that happened to catch a real deploy landing.
+ *
+ * After the two rules above, so it wins at both widths: the phone's full
+ * width bar and the 560px corner card are both below 1024. */
+@media (max-width: 1023px) {
+  .update-notice {
+    bottom: calc(var(--rail-bar-h) + env(safe-area-inset-bottom));
+    padding-bottom: var(--s3);
   }
 }
 
