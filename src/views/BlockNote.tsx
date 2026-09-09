@@ -104,7 +104,7 @@ export function BlockNotePanel({
           recipe is the reason you look at the card says so; the rest stay
           behind their mark. */}
       {onExpanded && (
-        <label className="block-note-expand">
+        <label className="check-line block-note-expand">
           <input type="checkbox" checked={expanded} onChange={e => onExpanded(e.target.checked)} />
           <span className="check" aria-hidden="true" />
           <span>Show this note without opening it</span>

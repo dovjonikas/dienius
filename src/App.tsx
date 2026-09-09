@@ -32,6 +32,7 @@ import { CalendarView } from './views/CalendarView'
 import { ShortcutsOverlay } from './views/ShortcutsOverlay'
 import { CommandPalette, type PaletteAction } from './views/CommandPalette'
 import { shortcutKeyFor, SHORTCUTS } from './lib/shortcuts'
+import { DEFAULT_CHIME, ringAtStart } from './lib/chime'
 import { addDays } from './lib/dates'
 import { LibraryView } from './views/LibraryView'
 import { ReviewView } from './views/ReviewView'
@@ -46,6 +47,18 @@ import { WIDGETS } from './widgets/registry'
 // page and one quiet line under the day, and neither half was somewhere a
 // person could go.
 type View = NavView
+
+/**
+ * A timer from the palette, ringing its start bell like one from the panel.
+ *
+ * The palette is a faster route and never a different one - see the note on
+ * `paletteActions` - so a timer started here has to behave exactly like a
+ * timer started by pressing "25 min", start bell included.
+ */
+function startTimerWithSound(minutes: number): void {
+  clockTools.startTimer(minutes * 60_000)
+  ringAtStart(getData().settings.chime ?? DEFAULT_CHIME)
+}
 
 /**
  * The bubble a header tool carries: its own name, then the key that does the
@@ -403,8 +416,11 @@ export function App() {
       },
     },
     { id: 'scratch', label: 'Notes', detail: 'Write something down now, sort it out later', run: () => setScratchOpen({}) },
-    { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(25 * 60_000) },
-    { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => clockTools.startTimer(5 * 60_000) },
+    // The start bell rings from here too, and for the same reason it rings
+    // from the timer panel: a timer started is a timer started, whichever
+    // door it came through - see ringAtStart.
+    { id: 'timer-25', label: 'Start a 25 minute timer', detail: 'Runs on every tab', run: () => startTimerWithSound(25) },
+    { id: 'timer-5', label: 'Start a 5 minute timer', detail: 'Runs on every tab', run: () => startTimerWithSound(5) },
     { id: 'stopwatch', label: 'Start the stopwatch', detail: 'No deadline, just counting', run: () => clockTools.startStopwatch() },
     { id: 'shortcuts', label: 'Keyboard shortcuts', detail: 'The single-key list', run: () => setShortcutsOpen(true) },
     // The reading plan used to load itself on first open, which put the

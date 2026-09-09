@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { clockTools, elapsedMs, formatClockMs, useClockTools } from '../../lib/clockTools'
-import { CHIME_PROFILES, DEFAULT_CHIME, playChime, type ChimeHandle, type ChimeProfile } from '../../lib/chime'
+import { CHIME_PROFILES, DEFAULT_CHIME, playChime, ringAtStart, type ChimeHandle, type ChimeProfile } from '../../lib/chime'
 import { actions, useAppData } from '../../lib/store'
 import { parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
@@ -65,6 +65,10 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
 
   function start(minutes: number) {
     clockTools.startTimer(minutes * 60_000)
+    // Rung from the press rather than from anything watching the timer,
+    // because the press is the user gesture a browser needs before it will
+    // open an AudioContext at all - see ringAtStart.
+    ringAtStart(data.settings.chime ?? DEFAULT_CHIME)
     // Asked for at the moment somebody first starts a timer, which is the one
     // moment the request explains itself - a permission prompt on page load
     // is a prompt about nothing, and gets denied on reflex.
@@ -79,6 +83,7 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
   }
 
   const stopwatch = tools.stopwatch
+  const data = useAppData()
 
   return (
     <HeaderPopover label="Timer and stopwatch" onClose={onClose}>
@@ -234,6 +239,21 @@ function SoundPicker() {
           </button>
         )}
       </div>
+      {/* The one case that cannot check the screen: ten minutes of meditation
+          with the eyes shut, where nothing says whether the timer took the
+          press. No halfway bell to go with it - for a ten minute sitting that
+          would answer a question nobody asked, and it is one more state. */}
+      {chime.profile !== 'off' && (
+        <label className="check-line clock-sound-start">
+          <input
+            type="checkbox"
+            checked={chime.atStart}
+            onChange={e => actions.setChime({ ...chime, atStart: e.target.checked })}
+          />
+          <span className="check" aria-hidden="true" />
+          <span>Ring at the start too</span>
+        </label>
+      )}
       {chime.profile !== 'off' && (
         <label className="clock-volume">
           <span className="clock-volume-label">Volume</span>

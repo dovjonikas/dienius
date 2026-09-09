@@ -324,3 +324,35 @@ export const DEFAULT_CHIME: ChimeSettings = {
   volume: DEFAULT_CHIME_VOLUME,
   atStart: false,
 }
+
+/**
+ * What the start bell rings with, given what the end will ring with.
+ *
+ * An alarm at the start is nonsense. The alarm exists to be heard from
+ * another room and to keep going until somebody comes back; at the moment
+ * somebody has just pressed Start it is being played to the person who
+ * pressed it, who is looking at the screen. So the alarm's start is the bell,
+ * and every other profile starts as itself - including off, which starts as
+ * nothing.
+ */
+export function startChimeProfile(profile: ChimeProfile): ChimeProfile {
+  return profile === 'alarm' ? 'bell' : profile
+}
+
+/**
+ * Rings once for a timer that has just been started, when that is switched on.
+ *
+ * Called from the press rather than from a watcher, and that is not only
+ * tidiness: a browser will refuse an `AudioContext` that was not opened
+ * under a user gesture, and the press is the gesture. A watcher noticing a
+ * new timer after a reload would be exactly the case that gets refused, and
+ * would ring again for a timer started five minutes ago.
+ *
+ * It exists for the case that cannot look at the screen: ten minutes of
+ * meditation with the eyes shut, where there is no way to tell whether the
+ * timer took the press.
+ */
+export function ringAtStart(settings: ChimeSettings): void {
+  if (!settings.atStart) return
+  playChime(startChimeProfile(settings.profile), settings.volume)
+}

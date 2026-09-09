@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { CHIME_PROFILES, isChimeProfile, MAX_RINGING_S, playChime, readChimeSettings } from './chime'
+import { CHIME_PROFILES, isChimeProfile, MAX_RINGING_S, playChime, readChimeSettings, ringAtStart, startChimeProfile } from './chime'
 
 /**
  * The sound cannot be listened to from here, so what is checked is the shape
@@ -272,4 +272,31 @@ test('rubbish is replaced rather than refused - a whole plan is not lost to a vo
   expect(readChimeSettings({ volume: 'loud' }).volume).toBe(0.5)
   expect(readChimeSettings({ volume: NaN }).volume).toBe(0.5)
   expect(readChimeSettings({ atStart: 'yes' }).atStart).toBe(false)
+})
+
+// The start bell. It exists for the ten minutes of meditation with the eyes
+// shut, where there is no way to tell whether the timer took the press.
+
+test('the alarm starts as a bell, and everything else starts as itself', () => {
+  expect(startChimeProfile('alarm')).toBe('bell')
+  expect(startChimeProfile('bell')).toBe('bell')
+  expect(startChimeProfile('soft')).toBe('soft')
+  expect(startChimeProfile('off')).toBe('off')
+})
+
+test('nothing rings at the start unless it has been asked for', () => {
+  ringAtStart({ profile: 'bell', volume: 1, atStart: false })
+  expect(made).toHaveLength(0)
+
+  ringAtStart({ profile: 'bell', volume: 1, atStart: true })
+  expect(made).toHaveLength(1)
+})
+
+test('an alarm asked to ring at the start rings the bell instead', () => {
+  ringAtStart({ profile: 'alarm', volume: 1, atStart: true })
+  const ctx = latest()
+  // Two tones dying away, not three rising ones twenty times over.
+  expect(ctx.oscillators).toHaveLength(2)
+  expect(ctx.oscillators.map(o => o.frequency.value)).toEqual([440, 880])
+  expect(ctx.oscillators.every(o => o.type === 'sine')).toBe(true)
 })

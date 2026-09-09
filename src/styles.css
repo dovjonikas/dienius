@@ -3703,13 +3703,17 @@ select:focus {
 .task-meta .task-size,
 .task-meta .task-size-input { margin-left: auto; }
 
-/* The real control, out of the way of the box the app paints for it. The
-   list of places is a list because the rule was written for the day's tasks
-   and every later .check had to remember to join it: the block note's
+/* The real control, out of the way of the box the app paints for it.
+
+   The list of places was a list because the rule was written for the day's
+   tasks and every later .check had to remember to join it: the block note's
    "Show this note without opening it" did not, and shipped from v2.11 to
-   v2.14 as a 13px system checkbox sitting beside its own drawn twin. */
+   v2.14 as a 13px system checkbox sitting beside its own drawn twin. A third
+   one arrived in v2.15 and the answer to "how do I not forget again" is not
+   a longer list - it is .check-line, one class carrying the whole set, which
+   anything with a drawn box wears. See it below the tick. */
 .task input[type='checkbox'],
-.block-note-expand input[type='checkbox'] {
+.check-line input[type='checkbox'] {
   position: absolute;
   opacity: 0;
   width: 0;
@@ -3800,6 +3804,39 @@ select:focus {
 
 
 .task input:focus-visible + .check {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A checkbox with a drawn box, on a line of text: the block note's "show this
+   without opening it", the timer panel's "ring at the start too", and
+   whatever is next. Everything a .check needs to work, in one place, so the
+   next one is correct by wearing the class rather than by somebody
+   remembering three selector lists.
+
+   The states are restated rather than folded into .task's own list because
+   the animation there is a task being ticked off - a mark being drawn, in the
+   order a hand draws it. These are switches. A switch is simply on. */
+.check-line {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+
+.check-line input:checked + .check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.check-line input:checked + .check::after {
+  width: 5px;
+  height: 10px;
+  opacity: 1;
+}
+
+.check-line input:focus-visible + .check {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -5782,6 +5819,11 @@ button.danger {
 }
 
 .clock-sound-try:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+
+/* The one line that is about the start rather than the end. It reads a
+   little quieter than the chips above it, which is what .check-line gives
+   every switch on a line of text. */
+.clock-sound-start { align-self: flex-start; }
 
 .clock-volume { display: flex; align-items: center; gap: var(--s3); }
 .clock-volume-label { color: var(--muted); font-size: var(--t-xs); flex: 0 0 auto; }
@@ -8291,32 +8333,8 @@ button.task-note-mark.is-open {
 .note-reader-body { overflow-y: auto; min-height: 0; }
 .note-reader-body .note-lines { color: var(--text); font-size: var(--t-md); }
 
-/* One line in the block editor - see BlockNote.tsx.
-
-   Its box is drawn the way a task's tick is, and until v2.14 only half of
-   that was true: the .check span had no rule anywhere that filled it, so the
-   native checkbox beside it was the only thing saying whether the setting was
-   on. Two boxes, one answer, and the answer was in the smaller of them. The
-   states are restated here rather than folded into .task's selector list
-   because the animation there is a task being ticked off, which this is not -
-   it is a switch, and it is simply on. .day-card-check does the same. */
-.block-note-expand { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
-
-.block-note-expand input:checked + .check {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.block-note-expand input:checked + .check::after {
-  width: 5px;
-  height: 10px;
-  opacity: 1;
-}
-
-.block-note-expand input:focus-visible + .check {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* One line in the block editor - see BlockNote.tsx. Everything it needs to
+   look like a checkbox comes from .check-line, which it wears. */
 
 @media (max-width: 599px) {
   /* A sheet from the bottom, the shape every other overlay takes here. */
