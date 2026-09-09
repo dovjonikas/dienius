@@ -188,9 +188,10 @@ reading them.
 | Later | Something to do, on no day, in the order you would pull it: one list since v2.7, where an Inbox and a Backlog were. Collapsed behind a plain count, nothing ever says how old anything is; one press puts an item on the day at the next free slot |
 | Links | One optional address on a library item and on a task, typed in either editor. A small door on the library row, on the task title's own line, on Up next and on the focus screen, always opening a new tab, always its own target so the card's own press is unchanged. Typed without a scheme it is normalised on save - `http://` for a machine of your own, `https://` for everything else - and an address that will not parse says so under the field. One icon for a machine of your own and another for the internet, with the address in a bubble under it. Nothing about it goes to the network |
 | What a block carries | A template block holds a note, a KEY mark and a category as well as a title, a time and a size, and every one of them lands on each day it stamps. The note and the mark defer to the day: what somebody wrote or unmarked on a Tuesday survives a re-stamp, and a block edited later reaches only the days nobody touched. Three key tasks per day is enforced in both editors, per day rather than per template, and at stamp time |
-| A note as choices | A line beginning with `## ` starts a section, and its heading becomes a choice. The headings show on the task card and on Up next; pressing one opens it over the day with the others beside it, read-only, closed by Escape, the cross or the ground. No other markdown, ever - a stray asterisk in a shopping list is an asterisk. One checkbox per block shows the intro without a press. Steps were folded into notes in v2.13 and every one of them survived as a line |
+| A note as choices | A line beginning with `## ` starts a section, and its heading becomes a choice. The headings show on the task card and on Up next; pressing one opens it over the day with the others beside it, read-only, closed by Escape, the cross or the ground. No other markdown, ever - a stray asterisk in a shopping list is an asterisk. One checkbox per block shows the intro without a press, cut to four lines with a Read under it when there is more. Steps were folded into notes in v2.13 and every one of them survived as a line. The editor says the rule three ways since v2.14 - an example in the placeholder, one line under the box, and the card's own choices drawn live from what is typed - with a **+ Choice** button that writes the heading |
 | Making a category | The `+` at the end of any row of category dots, in both template editors and in quick-add, with a pencil on whichever dot is chosen. The curated palette and no colour wheel - every colour offered already passes the readability gate. A colour another category holds is still offered, named for the one holding it. Deleting stays in Settings, where the question about the orphaned tasks lives |
-| Keyboard layer | Single keys for common actions; a card behind `?`. Never fires while typing in a box, except Escape |
+| Return adds it | Four rows add a thing when Return is pressed in the title - quick-add, both template editors, the library's add line - and each says so at the field's own right edge, in the quietest ink there is, with nothing pressed and nothing hovered. The Add button beside it stays: the mark is for the hand on the keys, the button is for the hand that has never tried Return |
+| Keyboard layer | Single keys for common actions; a card behind `?`. Never fires while typing in a box, except Escape. The control a key reaches names it in its own bubble - the rail's icons, and the header's two tools since v2.14 - and a stepper's arrows name what Shift does to them |
 | Command palette | Ctrl-K / Cmd-K: run a command or find a thing. Linear scan, no index |
 | Undo | One app-wide offer, five seconds, on the expensive mistakes |
 | Snapshots | A full copy once a day in IndexedDB, seven kept, restorable from Settings |
@@ -221,6 +222,7 @@ reading them.
 | **v1.9** | Quick-add as three controls that already hold an answer; the backlog; Library v2 (folding lists, one loud item each, pages/film/series tracks, pace notes, add-to-template, the reading plan seeded); the tour hardened with three ways in and three ways out of a stuck step; the evening close; every millisecond budget turned into a ratio |
 | **v1.10** | The reading plan seeds only from the palette (the privacy fix); the tour engine's standing rules - the target is visible, never behind a sheet, the card says what to do now, every step names its outcome, nothing skips on its own - after the owner's walk found seven problems, plus the scroll-position feedback loop and the Escape-under-a-sheet bug the walks exposed; quick-add fitting its column and the column fitting a 1024px window; `store.ts` split into ten action areas plus `core.ts` with no import changed; Playwright end-to-end tests for a first day, the naive tour on two viewports, and two-device sync |
 | **v2.11** | A template block carries a note and a list of steps onto every day it stamps. The note takes the day's own words where there are any and the block's where there are none, which needs `Task.templateNote` to tell those two apart; the steps arrive unticked with their timers and never travel between days. Written in one panel per block, closed unless asked, in both editors. And the card's "note" mark stopped being a label - one press opens the text under the row, plain lines with an indent drawn fixed-width |
+| **v2.14** | What the app knew and did not say. The note editor demonstrates the `## ` rule in its placeholder, says it in one line under the box, draws the card's own choices live as they are typed, and carries a button that writes the heading; a long note is cut to four lines on the card with a Read into the reader. Return adds a block, and the field's right edge says so in all four rows that do it. The door beside a title is three quarters of the title, in the meta ink, off its last word. A length reads as a number and a unit. And one pass over the whole interface asking what else it can do and never mentions, with a verdict written down against each answer |
 | **v2.13** | One place text goes. Steps are gone and every one of them is a line in the note it sat beside, migrated at the single gate both loading and importing pass through and safe to run twice. A note with `## ` lines shows its headings as choices on the card and on Up next, and opens one at a time over the day. The week template is drawn by the calendar's own week layout instead of seven lists of chips. The link icon moved onto the title line, the day switches became seven identical squares, a category is made from the swatch row, and the current-time line stopped striking out the time of the block that is running |
 | **v2.12** | The wave that came out of the owner building a real 74-block week. "Add to" became seven day switches with the named scopes as presets over them, because a rotation of Mon/Thu, Tue/Fri, Wed/Sat has no name and every block was going on twice. A block carries KEY the way it now carries a note and steps, with the three-per-day cap enforced in both editors per day and at stamp time. A category is made from the swatch row rather than four screens away. A privacy guard reads every tracked file and refuses the owner's own words, hashed so the guard is not itself the leak. A Playwright walk builds the whole week - ninety-seven presses - and a second one lives seven days on top of it. And `docs/MORNING.md`, the one page to open at 07:00 |
 | **v1.11** | `npm run shots`: the README's screenshots generated from the demo under a pinned clock; the demo's first screen fitting 1366x768 with one notice at a time, a thin demo line, pointer-aware grid floors and a column that scrolls instead of the page; seven more Playwright files (replan's three doors, a bound book, the backlog and scratch, a night passing, a week drag, export-erase-import, a snapshot, an .ics file) and the three bugs they found; ICS time zones through Intl and the plain monthly and yearly rules; `validate()` as tables in `validate.ts`, a map at the top of `timelineLayout.ts`, the tour's scrim rebuilt so it stops repainting the window; a pen for Scratch in the header; the third copy of the plan in a private GitHub repo; every control opening on an answer - the library's add line, duration chips, a repeat as four buttons; the README rewritten to what a stranger needs in thirty seconds, and every doc read against the code |
@@ -248,8 +250,8 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2478
-tests in 150 files, plus 39 Playwright tests across two viewports** - the
+Still true, and checked rather than assumed. The suite is green - **2572
+tests in 158 files, plus 59 Playwright tests across two viewports** - the
 typecheck and the build are clean, and `npm run sweep` reports nothing on
 the desktop at 15:00, 22:00 and 09:00 and nothing on the phone, with
 `--self-check` at 8/8. The working tree is empty and pushed.
@@ -262,11 +264,25 @@ ten minutes, which is longer than one foreground call gets - it was run in
 groups with `--only` instead. Nothing about the app; something about how
 the process is started.
 
+v2.14 sharpened that by accident. A run *started* in the foreground and then
+moved to the background when it passed the ten minute mark hangs exactly the
+same way - twenty minutes with nothing more written - so it is not only
+about how the process is launched but about the shell it ends up attached
+to. The same command in the foreground came back in 8m48. One `--hour`
+per foreground call is the shape that works.
+
 The count is five lower than v2.6's and the app is larger, which is the
-shape of this wave: the Year strip took forty-two tests with it and Review's
+shape of that wave: the Year strip took forty-two tests with it and Review's
 streak seven, and the twenty-six that came in - the fold into Later, the
 next free slot, the week's disagreements, the keys, the chip that asks -
 are about things that exist.
+
+v2.14 added twenty-two unit tests and three browser walks and removed none.
+Most of them hold things that were already true and had nothing holding
+them: that an open note has no mark beside it, that the door beside a title
+is three quarters of the title in the meta ink, that pressing that door does
+not tick the task off, and that the header's two tools name the keys that
+also reach them.
 
 Read that sweep line as stronger than the same sentence in v2.4. The pass
 now sees through a fade, reads what a field says, walks a pinned clock
@@ -276,7 +292,7 @@ it. Every one of those five was a hole it had been reporting clean through,
 and the last one is the shape the owner had reported twice by hand. See
 DECISIONS "A tool that cannot see a thing will say it is fine".
 
-**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.13 wave below, then the v2.12 wave, then the v2.11 wave - a template block can carry a
+**Where to start:** [`MORNING.md`](MORNING.md) if you are the owner and it is 07:00. Otherwise the v2.14 wave below - which adds nothing and puts six things the app already did where a hand can find them - and the sweep under it, which is everything else it can do and does not say, with a verdict on each. Then the v2.13 wave, then the v2.12 wave, then the v2.11 wave - a template block can carry a
 note and a list of steps, so a meal block arrives with the recipe on it and
 a morning routine arrives with its four steps. Under it, the v2.10 wave, which added nothing and fixed two
 things - both about where focus lands when a panel closes, both found by
@@ -286,6 +302,81 @@ without inventing them again. The v2.9 table under it is closed, and so are
 v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
+
+### The v2.14 wave: what the app knew and did not say
+
+The owner used the app for a week and did not know about two features that
+had been written for a version. A line beginning with `## ` had been a
+choice on the card since v2.13, and Return had added a block for longer than
+that. Neither was wrong; neither was on the screen.
+
+So this wave adds nothing. Every stage takes something the app already does
+and puts it where a hand meets it - which is the older rule, CONVENTIONS 17,
+asked as a question instead of checked as a box: not "is there a control"
+but "would somebody find this without being told".
+
+| # | Stage | Commit | What it is |
+|---|---|---|---|
+| 1 | The note editor says the rule | `2686d7b` | One box wherever a note is typed, saying `## ` three ways - an example in the placeholder, one quiet line under the box, and the card's own choices drawn live from what is in it - plus **+ Choice**, which writes the heading. `insertSectionHeading` is the half worth a test |
+| 2 | Return adds it, and the field says so | `f65c842` | A mark inside the right edge of every title field that Return adds from, visible with nothing pressed. The tooltip it replaces is gone: a hint that needs a pointer resting on it is a hint for somebody who already went looking |
+| 3 | A long note costs four lines | `5fff03a` | An open intro is cut to four lines with **Read** under it, and the reader learned a page for the note's own opening, beside the `## ` sections |
+| 4 | The door beside a title | `8d54084` | Three quarters of the title, in the meta ink, 0.4em off its last word, centred on its x-height, at a stroke that reads at the weight of the ink it shares. Every number against the title's own type, so all of it moves with the text scale |
+| 5 | A length is a number and a unit | `fe9ae2c` | "45min" is a word. A fifth of the unit's size between the two, in all four places a length is asked for, without touching the written form `parseQuickAdd` reads back |
+| 6 | One pass over the whole app | `b2175d4` | Twelve things it can do and does not say, each with a verdict - the table is above. Two came out as work: the header's two tools name their keys the way the rail's icons do, and a stepper's arrows say what Shift does |
+
+#### The five defects it walked into
+
+None of them is what the wave was for, and every one had shipped:
+
+- **The note reader had never been over the day.** Opened from a task card
+  it was drawn inside the card - 318px wide, in the scrolling column, under
+  the timeline - while the comment above its own scrim said it was over the
+  day. Two ancestors and two separate mechanisms: the task list is faded
+  with a `mask-image`, which makes it a stacking context, and a card's
+  arrival animation used `animation-fill-mode: both`, whose forwards fill
+  holds `transform: none` as the identity matrix rather than releasing the
+  property - and a computed transform that is not `none` is a containing
+  block for anything fixed inside it. `backwards` is what that animation
+  wanted; the reader goes through a portal regardless, the way `TipLayer`
+  does. **`toBeVisible()` was true of it the whole time**, and jsdom has no
+  paint order to be wrong about: it was found by measuring the scrim's own
+  box in a browser.
+- **The block panel's checkbox was drawn twice.** "Show this note without
+  opening it" had a painted box with no rule anywhere that filled it, and a
+  13px system checkbox beside it doing the work. The hiding rule was
+  written for the day's tasks and every later `.check` had to remember to
+  join it. From v2.11 to now.
+- **Return in the week editor ate the title.** With no day switch on there
+  is nowhere to put a block, Add block is disabled and says so in words -
+  and Return was not: it built nothing and cleared the field anyway.
+- **The task sheet's note was 13px**, under the iOS zoom floor, so a tap
+  into it zoomed the sheet on the phone this app was written for.
+- **`.block-list button` strips every button inside it back to plain
+  words**, which is right for a block's row and wrong for the panel under
+  it: the new button and the preview's choices came out unstyled in the day
+  editor and correct everywhere else.
+
+#### What this wave is worth remembering for
+
+- **A control that is only reachable by hovering something is not visible.**
+  v2.13 answered "nothing says Return adds a block" with a tooltip on the
+  Add button, which is an answer for somebody who already knew. The person
+  who does not know is the one person who will never rest a pointer there.
+- **The gap and the binding are two jobs.** The link icon was bound to the
+  title by a non-breaking space, and that space was also the gap - so the
+  spacing of a mark was whatever a space happened to be at the size in
+  force. A word joiner binds and has no width; the gap is 0.4em in the
+  stylesheet.
+- **An `em` is only useful if it is the right one.** The icon asked for
+  1.15em and got 1.15 of the card's 13px, because that is what the line it
+  sits on inherited. The line carries the title's own size and leading now,
+  which also makes `vertical-align: middle` centre on the title's x-height
+  rather than on the x-height of a size that line does not contain.
+- **A written form and a drawn form are different things.** `durationToText`
+  is what gets typed into a quick-add line and read back out of it, so the
+  gap in "45 min" had to be drawn rather than typed. The round trip is a
+  test, and it would have caught a space in the string - which is the only
+  reason it was not put there.
 
 ### What the app can do and does not say - the v2.14 sweep
 
@@ -1557,6 +1648,26 @@ paint-across-dates gesture, all of which were built and verified with
 synthesised pointer events; OPEN-QUESTIONS carried that note from v2.0 and
 this is where it ends.
 
+**The v2.14 wave is the last one before that week**, and the brief it came
+from said so: the owner lives in the app from tomorrow, and the next brief
+comes out of that week rather than out of a session with time left. What
+the four gestures above still have in common is that none of them has been
+touched by a finger; what changed in v2.14 is that each of them now has a
+verdict written down beside it in the sweep table further up, so the week
+can report on whether the verdict was right rather than on whether the
+gesture exists.
+
+- **The two Shift accelerators the "?" card cannot hold.** A stepper's
+  arrows say what Shift does to them since v2.14, and the time field's do
+  not, because it has no arrow buttons to hang a bubble on - its road is
+  the column of times behind the caret. If the week finds somebody wanting
+  an hour at a time in a time field, the answer is a control, not a line of
+  help.
+- **The command palette has no control anywhere**, and no chord on a phone.
+  It holds because everything in it is reachable by hand, which was checked
+  command by command in v2.14 and is true with one exception written down
+  in the sweep table. If the week wants it on the phone, that is a door to
+  design rather than a bug to fix.
 - **The return half of the Away door is not driven by the soak.** It is the
   one place `Task.setAside` is written, and only for a task that no longer
   fits in what is left of the day - which needs a day shaped for it rather

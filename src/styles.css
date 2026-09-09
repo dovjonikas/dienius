@@ -2792,9 +2792,11 @@ textarea::placeholder {
    :not()s deep, and a class on its own cannot reach past it - the other
    three overrides of it in this file repeat the chain the same way.
 
-   Measured in the mark's own size rather than in pixels: "Return" is about
-   3.4 times --t-xs wide in this face, so the reservation grows with the text
-   scale instead of the word growing out of a fixed gap at scale l. */
+   Measured in the mark's own size rather than in pixels. The word is about
+   2.9 times --t-xs wide in this face; 3.4 is that plus half an em of
+   clearance, so the reservation grows with the text scale rather than the
+   word growing out of a fixed gap at scale l. Measured at s, m and l: 50,
+   53.4 and 56.8 pixels, with the same 13px of clear space at each. */
 input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input).has-return {
   padding-right: calc(var(--s2) * 2 + var(--t-xs) * 3.4);
 }
@@ -3248,8 +3250,9 @@ select:focus {
    The thin gap is the whole reason this is a separate element rather than
    part of the value: the field is right-aligned with no padding of its own,
    so "120" and "min" met with nothing between them and the box read "120min",
-   which is a word. A fifth of the unit's own size is enough to make it two
-   things and small enough that it is still one value. */
+   which is a word. 0.15 of the unit's own size is enough to make it two
+   things and small enough that it is still one value - about two pixels at
+   the size this sits at, which is what a thin space is for. */
 .time-stepper-unit {
   align-self: center;
   margin-left: 0.15em;
