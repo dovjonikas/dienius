@@ -587,3 +587,91 @@ test('Return refuses what Add block refuses, rather than eating the title', asyn
   expect(title).toHaveValue('Gym')
   expect(screen.queryByRole('button', { name: /^Gym[ ,]/ })).not.toBeInTheDocument()
 })
+
+// The library binding, on a block that already exists.
+//
+// It lived only on the add row - "What the new block draws from" - so binding
+// a list to a block that was already on the week meant removing it and making
+// it again. The owner looked for it on the open block, did not find it, and
+// took the feature for missing. A field a week template is precisely the place
+// for: "Reading on six days from MIND and on the Wednesday from CRAFT" is a
+// sentence about a week and cannot be said with a day template at all.
+
+async function withList(name: string) {
+  const list = actions.addLibraryList({ name, unit: 'chapter' })
+  actions.addLibraryItem(list.id, 'Deep Work')
+  return list
+}
+
+test('an existing block is bound to a list from its own panel, and the binding survives a reopen', async () => {
+  const user = userEvent.setup()
+  await withList('MIND')
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+
+  await openBlock(user, 'Wednesday', 'Reading')
+  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  // The line under it says what would actually land on a day, which is a book
+  // and not a list - see bindingLine.
+  expect(screen.getByText('Next: Deep Work')).toBeInTheDocument()
+
+  // Closed and opened again: the answer is still there, read off the block
+  // rather than off a field that happened to still be filled in.
+  await user.click(screen.getByRole('button', { name: /^Close Reading/ }))
+  await openBlock(user, 'Wednesday', 'Reading')
+  expect(screen.getByLabelText('Library list')).toHaveValue(getData().library[0]?.id ?? '')
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const blocks = getData().templates[0].blocks
+  expect(blocks).toHaveLength(1)
+  expect(blocks[0].libraryListId).toBe(getData().library[0].id)
+})
+
+test('binding a block that is on every day binds all seven, the way its note does', async () => {
+  const user = userEvent.setup()
+  await withList('MIND')
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await user.click(screen.getByRole('button', { name: 'All days' }))
+  await addBlock(user, 'Reading')
+
+  await openBlock(user, 'Monday', 'Reading')
+  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  const listId = getData().library[0].id
+  const blocks = getData().templates[0].blocks
+  expect(blocks).toHaveLength(7)
+  expect(blocks.every(b => b.libraryListId === listId)).toBe(true)
+})
+
+test('a bound block can be unbound again, without being removed and rebuilt', async () => {
+  const user = userEvent.setup()
+  await withList('MIND')
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+
+  await openBlock(user, 'Wednesday', 'Reading')
+  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  await user.selectOptions(screen.getByLabelText('Library list'), 'Nothing')
+
+  expect(screen.queryByText('Next: Deep Work')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0].libraryListId).toBeUndefined()
+})
+
+test('the panel offers no binding at all while there is no library to bind to', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+
+  await openBlock(user, 'Wednesday', 'Reading')
+  expect(screen.queryByLabelText('Library list')).not.toBeInTheDocument()
+})

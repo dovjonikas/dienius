@@ -598,6 +598,51 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               </button>
             </div>
           </div>
+          {/* What this block draws from, on the block itself.
+           *
+           * The same control as the add row's, and until v2.17 that was the
+           * only place it existed: a list could be bound to a block being
+           * made and never to one already on the week, so changing your mind
+           * meant removing the block and building it again. The owner went
+           * looking for it on an open block, did not find it, and reasonably
+           * took the whole feature for missing.
+           *
+           * With a visible label rather than the add row's aria-label alone,
+           * because there it is one of a line of chips and reads as part of
+           * the sentence being written, and here it is a field on a form -
+           * an unlabelled dropdown between a note and two buttons is a
+           * control nobody can name. Hidden while the library is empty, the
+           * same rule the add row follows: a template editor stays a
+           * template editor for the many people who never build a list. */}
+          {data.library.length > 0 && (
+            <>
+              <div className="wt-note-field">
+                <label className="wt-note-label" htmlFor={`wt-note-library-${noteBlock.id}`}>
+                  Library list
+                </label>
+                <select
+                  id={`wt-note-library-${noteBlock.id}`}
+                  className="block-library"
+                  value={noteBlock.libraryListId ?? ''}
+                  onChange={e => editBlock(noteBlock, { libraryListId: e.target.value || undefined })}
+                >
+                  <option value="">Nothing</option>
+                  {data.library.map(list => (
+                    <option key={list.id} value={list.id}>
+                      From {list.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* What this block would actually put on a day. See bindingLine:
+                  a list is not a book, and the control above names a list. */}
+              {noteBlock.libraryListId && (
+                <p className="wt-note-binding">
+                  {bindingLine(data.library.find(l => l.id === noteBlock.libraryListId))}
+                </p>
+              )}
+            </>
+          )}
           <BlockNotePanel
             note={noteBlock.note}
             label={noteBlock.title}

@@ -110,3 +110,55 @@ test('the day switches put a rotation on two days at once, and hold for the next
   }
   await expect(page.getByRole('region', { name: 'Wednesday' }).getByText('Training A')).toHaveCount(0)
 })
+
+/**
+ * A list bound to a block that already exists, and the book that lands.
+ *
+ * Until v2.17 the binding control was only on the add row, so this whole
+ * path - build the block, then decide what it draws from - did not exist:
+ * the block had to be removed and made again. The owner looked for it on an
+ * open block and took the feature for missing.
+ *
+ * The half a unit test cannot see is the last line: a block bound to a list
+ * stamps a day with the *book's* title, not the block's, and that goes
+ * through the real stamp on a real date.
+ */
+test('a list bound to a block already on the week puts the book on the stamped day', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+
+  // A list with one thing in it, made the way library.e2e.ts makes one: the
+  // preset an empty Library offers, which is the door most people take.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Library' }).click()
+  await page.getByRole('button', { name: 'Start a Books list' }).click()
+  const add = page.getByLabel('Add to Books')
+  await add.fill('Deep Work, 12 chapters')
+  await add.press('Enter')
+  await expect(page.getByRole('button', { name: 'Deep Work, ch 0/12' })).toBeVisible()
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Templates' }).click()
+  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByRole('button', { name: /^A week/ }).click()
+  await page.getByPlaceholder('Week name').fill('Reading week')
+  await page.getByPlaceholder('09:00').fill('20:00')
+  await page.getByPlaceholder('What happens').fill('Reading')
+  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'All days' }).click()
+  await page.getByRole('button', { name: 'Add a block' }).click()
+
+  // The block exists. Now bind it, from its own panel - the thing that could
+  // not be done at all before.
+  await page.getByRole('region', { name: 'Wednesday' }).getByRole('button', { name: /^Reading[ ,]/ }).click()
+  await page.getByLabel('Library list').selectOption({ label: 'From Books' })
+  await expect(page.getByText('Next: Deep Work')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Calendar' }).click()
+  await page.getByRole('button', { name: 'Reading week', exact: true }).click()
+  await page.getByRole('gridcell', { name: /September 16/ }).click()
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today' }).click()
+  // The book, not the block: a bound block stamps what is next in the list.
+  await expect(page.getByRole('checkbox', { name: 'Deep Work' })).toBeAttached()
+  await expect(page.getByRole('checkbox', { name: 'Reading' })).toHaveCount(0)
+})
