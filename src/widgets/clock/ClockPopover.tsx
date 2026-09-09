@@ -6,13 +6,27 @@ import { actions, useAppData } from '../../lib/store'
 import { formatDuration, parseMinutesInput } from '../day-plan/capacity'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { HeaderPopover } from './HeaderPopover'
+import { DEFAULT_TIMER_MINUTES, TIMER_PRESETS, readSoundOpen, readTimerLength, rememberSoundOpen, rememberTimerLength } from './timerPrefs'
 
 /**
- * The four lengths worth one tap. Short enough to be a nudge, long enough to
- * be a block: five to get started, ten for a thing being avoided, fifteen for
- * a break, thirty for a stretch of real work. Anything else is typed.
+ * How loud, in words.
+ *
+ * A percentage tells nobody anything about a sound. What the folded line has
+ * to answer is "will this be heard in the kitchen", and three words answer it
+ * where "45%" does not.
  */
-const PRESETS = [5, 10, 15, 30]
+function loudness(volume: number): string {
+  if (volume <= 0.34) return 'quiet'
+  if (volume <= 0.67) return 'medium'
+  return 'loud'
+}
+
+/** The folded line's whole sentence: what will ring, and how loudly. */
+export function soundSummary(chime: { profile: ChimeProfile; volume: number }): string {
+  // Off has no volume worth saying, because there is nothing for it to be
+  // the volume of - CONVENTIONS 25.
+  return chime.profile === 'off' ? 'Off' : `${SOUND_LABELS[chime.profile]}, ${loudness(chime.volume)}`
+}
 
 /** What each sound is called on its chip. Off first, because it is an answer. */
 const SOUND_LABELS: Record<ChimeProfile, string> = {
@@ -52,7 +66,9 @@ export type ClockTab = 'timer' | 'stopwatch'
 export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
   const tools = useClockTools()
   const [tab, setTab] = useState<ClockTab>(openOn ?? (tools.stopwatch && !tools.timer ? 'stopwatch' : 'timer'))
-  const [custom, setCustom] = useState('')
+  // The field opens holding an answer - CONVENTIONS 16 - so Start is never
+  // a button that looks broken. The last length used on this device, or ten.
+  const [custom, setCustom] = useState(() => String(readTimerLength()))
   const [now, setNow] = useState(() => Date.now())
 
   // Only ticks while the stopwatch tab is showing something running - the
@@ -67,6 +83,7 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
   function start(minutes: number) {
     // A new timer supersedes whatever the last one was still saying.
     stopRinging()
+    rememberTimerLength(minutes)
     clockTools.startTimer(minutes * 60_000)
     // Rung from the press rather than from anything watching the timer,
     // because the press is the user gesture a browser needs before it will
@@ -79,10 +96,11 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
     onClose()
   }
 
+  /** What Start would use: the field, or the default if it has been emptied. */
+  const chosen = parseMinutesInput(custom) ?? DEFAULT_TIMER_MINUTES
+
   function startCustom() {
-    const minutes = parseMinutesInput(custom)
-    if (minutes === undefined || minutes <= 0) return
-    start(minutes)
+    start(chosen > 0 ? chosen : DEFAULT_TIMER_MINUTES)
   }
 
   const stopwatch = tools.stopwatch
@@ -111,9 +129,27 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
 
         {tab === 'timer' ? (
           <div className="clock-panel">
-            <div className="clock-presets">
-              {PRESETS.map(m => (
-                <button key={m} type="button" className="clock-preset" onClick={() => start(m)}>
+            {/* Four lengths and the field under them are one answer, not two.
+                They could say different things before: the field started
+                empty and a press here went straight past it to a running
+                timer, so nothing on the panel ever showed what had been
+                chosen. A chip sets the field and marks itself; Start is the
+                one thing that starts.
+
+                The cost is real and worth naming: a length that is not the
+                one already showing is two presses now where it was one. The
+                panel opens on the last length used on this device, so the
+                ordinary case - the same ten minutes as yesterday - is still
+                a single press of Start. */}
+            <div className="clock-presets" role="group" aria-label="How long">
+              {TIMER_PRESETS.map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  className={chosen === m ? 'clock-preset is-on' : 'clock-preset'}
+                  aria-pressed={chosen === m}
+                  onClick={() => setCustom(String(m))}
+                >
                   {m} min
                 </button>
               ))}
@@ -124,12 +160,11 @@ export function ClockPopover({ onClose, tab: openOn }: ClockPopoverProps) {
                 onChange={setCustom}
                 ariaLabel="Custom timer length in minutes"
               />
-              <button
-                type="button"
-                className="primary"
-                disabled={parseMinutesInput(custom) === undefined}
-                onClick={startCustom}
-              >
+              {/* Never disabled. The field always holds an answer, so there is
+                  no state in which this cannot start something - and a
+                  disabled primary button is the app's own worst pattern:
+                  the owner read a faded one as broken. */}
+              <button type="button" className="primary" onClick={startCustom}>
                 Start
               </button>
             </div>
@@ -249,6 +284,8 @@ function SoundPicker() {
   // is drawn does not depend on it, only what the next press does.
   const trying = useRef<ChimeHandle | null>(null)
   const [playing, setPlaying] = useState(false)
+  // Remembered between openings, on this device only - see timerPrefs.
+  const [open, setOpen] = useState(readSoundOpen)
 
   useEffect(() => () => trying.current?.stop(), [])
 
@@ -270,61 +307,93 @@ function SoundPicker() {
 
   return (
     <div className="clock-sound">
-      <span className="field-label">Sound</span>
-      <div className="clock-sound-row">
-        <div className="duration-chips clock-sound-chips" role="group" aria-label="Sound">
-          {CHIME_PROFILES.map(profile => (
-            <button
-              key={profile}
-              type="button"
-              className={chime.profile === profile ? 'is-on' : ''}
-              aria-pressed={chime.profile === profile}
-              onClick={() => {
-                stopTrying()
-                actions.setChime({ ...chime, profile })
-              }}
-            >
-              {SOUND_LABELS[profile]}
-            </button>
-          ))}
+      {/* Folded, and folded by default. The panel exists to pick a number and
+          press Start; the sound is answered once and then left alone for
+          months, and a rare thing may not take more room than a frequent one
+          - CONVENTIONS 25. The line says what is actually set, so folding it
+          hides the controls and never the answer. */}
+      <button
+        type="button"
+        className="clock-sound-head"
+        aria-expanded={open}
+        onClick={() => {
+          const next = !open
+          setOpen(next)
+          rememberSoundOpen(next)
+          if (!next) stopTrying()
+        }}
+      >
+        <span className="clock-label">Sound</span>
+        <span className="clock-sound-summary">{soundSummary(chime)}</span>
+        <span className="clock-sound-caret" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="clock-sound-body">
+          {/* One segmented control, drawn exactly like the Timer and
+              Stopwatch tabs above it. The app already has this pattern for
+              "one of these, and only one" and a second kind of button for the
+              same job was two answers to one question. */}
+          <div className="segmented clock-sound-choice" role="group" aria-label="Sound">
+            {CHIME_PROFILES.map(profile => (
+              <button
+                key={profile}
+                type="button"
+                className={chime.profile === profile ? 'active' : ''}
+                aria-pressed={chime.profile === profile}
+                onClick={() => {
+                  stopTrying()
+                  actions.setChime({ ...chime, profile })
+                }}
+              >
+                {SOUND_LABELS[profile]}
+              </button>
+            ))}
+          </div>
+
+          {chime.profile !== 'off' && (
+            <div className="clock-volume">
+              <span className="clock-label">Volume</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={chime.volume}
+                aria-label="How loud"
+                onChange={e => actions.setChime({ ...chime, volume: Number(e.target.value) })}
+              />
+              {/* Out of the row of choices and onto this one, because it is a
+                  thing you do rather than a thing you pick - and drawn hollow
+                  for the same reason. Without it the choice is made deaf: a
+                  name is not a sound, and the difference between Bell and
+                  Alarm is the whole reason there are four.
+
+                  One width for both words, so the row does not jump when the
+                  label changes under the pointer - CONVENTIONS 24. */}
+              <button type="button" className="clock-sound-try" onClick={tryIt}>
+                {playing ? 'Stop' : 'Try'}
+              </button>
+            </div>
+          )}
+
+          {/* The one case that cannot check the screen: ten minutes of
+              meditation with the eyes shut, where nothing says whether the
+              timer took the press. No halfway bell to go with it - for a ten
+              minute sitting that would answer a question nobody asked, and it
+              is one more state. */}
+          {chime.profile !== 'off' && (
+            <label className="check-line clock-sound-start">
+              <input
+                type="checkbox"
+                checked={chime.atStart}
+                onChange={e => actions.setChime({ ...chime, atStart: e.target.checked })}
+              />
+              <span className="check" aria-hidden="true" />
+              <span>Ring at the start too</span>
+            </label>
+          )}
         </div>
-        {/* Without this the choice is made deaf. A name is not a sound, and
-            the difference between Bell and Alarm is the whole reason there
-            are four of them. */}
-        {chime.profile !== 'off' && (
-          <button type="button" className="clock-sound-try" onClick={tryIt}>
-            {playing ? 'Stop' : 'Try'}
-          </button>
-        )}
-      </div>
-      {/* The one case that cannot check the screen: ten minutes of meditation
-          with the eyes shut, where nothing says whether the timer took the
-          press. No halfway bell to go with it - for a ten minute sitting that
-          would answer a question nobody asked, and it is one more state. */}
-      {chime.profile !== 'off' && (
-        <label className="check-line clock-sound-start">
-          <input
-            type="checkbox"
-            checked={chime.atStart}
-            onChange={e => actions.setChime({ ...chime, atStart: e.target.checked })}
-          />
-          <span className="check" aria-hidden="true" />
-          <span>Ring at the start too</span>
-        </label>
-      )}
-      {chime.profile !== 'off' && (
-        <label className="clock-volume">
-          <span className="clock-volume-label">Volume</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={chime.volume}
-            aria-label="How loud"
-            onChange={e => actions.setChime({ ...chime, volume: Number(e.target.value) })}
-          />
-        </label>
       )}
     </div>
   )

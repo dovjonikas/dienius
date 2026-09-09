@@ -5745,6 +5745,10 @@ button.danger {
    Journal on a line of its own. */
 .clock-tabs button { flex: 1 1 40%; }
 
+/* One rhythm for both tabs. A group's own rows sit --s2 apart and the groups
+   sit --s3 apart, which is the whole of the vertical spacing in this panel -
+   two steps of the scale rather than whatever looked right at the time. Two
+   tabs in one panel may not read as two screens. */
 .clock-panel {
   display: flex;
   flex-direction: column;
@@ -5771,6 +5775,14 @@ button.danger {
 
 .clock-preset:hover { border-color: var(--accent); }
 
+/* The one the field is holding. Marked the way every chosen chip in this app
+   is marked - a coloured edge and a wash, never a fill - so the accent still
+   belongs to Start and to the chosen tab. */
+.clock-preset.is-on {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
 .clock-preset:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -5784,41 +5796,94 @@ button.danger {
 
 .clock-custom .primary { flex: 1; min-height: 38px; }
 
-/* What the timer will sound like, under the presets that start one - see
+/* What the timer will sound like, under the controls that start one - see
    ClockPopover. Here rather than in Settings because this is where a timer is
    started, and the moment somebody wants a different sound is the moment they
-   are already here. */
+   are already here.
+
+   The one rule in the panel: a divider only where the kind of thing changes,
+   which is once - between the timer and its sound. */
 .clock-sound {
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
-  margin-top: var(--s2);
+  gap: var(--s3);
   padding-top: var(--s3);
   border-top: 1px solid var(--border);
 }
 
-/* The chips and the way to hear one, on one line. The button holds the right
-   end so it stays with the row when the chips wrap on a narrow panel. */
-.clock-sound-row {
+/* Folded, and the fold says what is set. A row, not a heading with a control
+   beside it: the whole line is the way in, which is what makes it findable
+   with a finger. */
+.clock-sound-head {
   display: flex;
   align-items: center;
   gap: var(--s2);
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
 }
 
-.clock-sound-chips { flex: 1 1 auto; margin: 0; }
-
-.clock-sound-try {
-  flex: 0 0 auto;
-  min-height: 34px;
-  padding: 0 var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-chip);
-  background: none;
+.clock-sound-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text);
   font-size: var(--t-sm);
 }
 
-.clock-sound-try:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+/* The same chevron the app draws everywhere else, turned by the state. It
+   rotates, which is a transform - and a transform on a *state* rather than on
+   a hover is what CONVENTIONS 24 allows: nothing moves under a pointer that
+   is only resting. */
+.clock-sound-caret {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+}
+
+.clock-sound-head[aria-expanded='true'] .clock-sound-caret {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.clock-sound-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* The four sounds are one control of the same kind as the tabs at the top of
+   this panel, because they are the same question: one of these, and only one.
+   A second kind of button for the same job was two answers to one question. */
+.clock-sound-choice { width: 100%; }
+.clock-sound-choice button { flex: 1 1 0; min-width: 0; padding: var(--s2) var(--s1); }
+
+/* A thing you do, beside two things you set, so it is drawn hollow rather
+   than filled and sits on the volume row rather than in the row of choices.
+
+   One width for both of its words: the label changes to Stop while a sound
+   is playing, and a row that resizes under the pointer is the defect
+   CONVENTIONS 24 exists about. */
+.clock-sound-try {
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 32px;
+  padding: 0 var(--s2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+.clock-sound-try:hover { color: var(--text); border-color: var(--muted); }
 
 /* The one line that is about the start rather than the end. It reads a
    little quieter than the chips above it, which is what .check-line gives
@@ -5864,9 +5929,45 @@ button.danger {
 
 .clock-sound-start { align-self: flex-start; }
 
-.clock-volume { display: flex; align-items: center; gap: var(--s3); }
-.clock-volume-label { color: var(--muted); font-size: var(--t-xs); flex: 0 0 auto; }
+/* One label variant for the whole panel: same face, same size, same left
+   edge, whether it is naming the sound or the volume. There were two before -
+   a heading above one group and a word beside another - which is two patterns
+   in a panel three hundred pixels wide. */
+.clock-label {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.clock-volume { display: flex; align-items: center; gap: var(--s2); }
 .clock-volume input[type='range'] { flex: 1 1 auto; min-width: 0; accent-color: var(--accent); }
+
+/* Smaller than the day's own tick, and not in the accent.
+
+   This box controls the least important thing in the panel and was the
+   largest element in it. And the accent has two jobs here already - the
+   chosen tab and Start - so a third blue thing means none of them is saying
+   "this is the one that matters". A hollow box with a mark in it says
+   switched on perfectly well. */
+.clock-sound-start { align-self: flex-start; font-size: var(--t-xs); }
+.clock-sound-start .check { width: 18px; height: 18px; }
+
+.clock-sound-start input:checked + .check {
+  background: none;
+  border-color: var(--text);
+}
+
+.clock-sound-start input:checked + .check::after {
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border-width: 0 2px 2px 0;
+  border-color: var(--text);
+  opacity: 1;
+}
 
 .clock-note {
   margin: 0;
@@ -5886,6 +5987,8 @@ button.danger {
   color: var(--text);
 }
 
+/* The same row of equal buttons at the same height as the timer tab's own
+   Start, so the two tabs are one panel rather than two screens. */
 .clock-actions {
   display: flex;
   gap: var(--s2);

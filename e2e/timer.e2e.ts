@@ -43,14 +43,22 @@ async function audio(page: import('@playwright/test').Page) {
   return page.evaluate(() => (window as unknown as { __audio: { oscillators: number; stops: number; contexts: number } }).__audio)
 }
 
-/** Opens the timer panel and chooses one of the four sounds. */
+/** Opens the timer panel, unfolds the sound block, and chooses one of the four. */
 async function chooseSound(page: import('@playwright/test').Page, name: string) {
   await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  const head = page.getByRole('button', { name: /^Sound/ })
+  if ((await head.getAttribute('aria-expanded')) === 'false') await head.click()
   await page.getByRole('group', { name: 'Sound' }).getByRole('button', { name, exact: true }).click()
   await expect(page.getByRole('group', { name: 'Sound' }).getByRole('button', { name, exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
+}
+
+/** Picks a length and starts it - two presses since v2.15, one control each. */
+async function startTimer(page: import('@playwright/test').Page, minutes: number) {
+  await page.getByRole('button', { name: `${minutes} min`, exact: true }).click()
+  await page.getByRole('button', { name: 'Start', exact: true }).click()
 }
 
 test('the alarm keeps going, and Escape ends it', async ({ page }) => {
@@ -61,7 +69,7 @@ test('the alarm keeps going, and Escape ends it', async ({ page }) => {
   await chooseSound(page, 'Alarm')
   // Every press so far is a user gesture, which is what a browser wants
   // before it will open an AudioContext at all - see hasSeenAGesture.
-  await page.getByRole('button', { name: '5 min', exact: true }).click()
+  await startTimer(page, 5)
 
   const before = await audio(page)
   await page.clock.runFor('05:01')
@@ -90,7 +98,7 @@ test('the quiet chime needs no way out, and does not draw one', async ({ page })
   await openFresh(page)
 
   await chooseSound(page, 'Soft')
-  await page.getByRole('button', { name: '5 min', exact: true }).click()
+  await startTimer(page, 5)
   await page.clock.runFor('05:01')
 
   await expect(page.getByText('Timer finished')).toBeVisible()
@@ -113,7 +121,7 @@ test('the start bell rings on the press, and an alarm starts as a bell', async (
   await expect(page.getByRole('checkbox', { name: 'Ring at the start too' })).toBeChecked()
 
   const before = await audio(page)
-  await page.getByRole('button', { name: '5 min', exact: true }).click()
+  await startTimer(page, 5)
 
   // Two tones, not three rising ones twenty times over: an alarm at the
   // moment somebody presses Start is being played to the person pressing it.
@@ -130,7 +138,7 @@ test('Off makes no sound at all, and hides what it does not control', async ({ p
   await expect(page.getByRole('button', { name: 'Try', exact: true })).toHaveCount(0)
   await expect(page.getByLabel('How loud')).toHaveCount(0)
 
-  await page.getByRole('button', { name: '5 min', exact: true }).click()
+  await startTimer(page, 5)
   await page.clock.runFor('05:01')
 
   await expect(page.getByText('Timer finished')).toBeVisible()
@@ -222,4 +230,61 @@ test('walking away from the offer leaves the day as it was', async ({ page }) =>
   await page.keyboard.press('Escape')
 
   await expect(page.getByText(/actual/)).toHaveCount(0)
+})
+
+/**
+ * The panel, as a panel: what it says folded, and that it always has an
+ * answer in it.
+ *
+ * The layout rules are CONVENTIONS 16 (a control opens holding an answer),
+ * 23 (a thing is said once) and 25 (a state earns its place). What they come
+ * to here is that the sound is one line until somebody wants it, that the
+ * line says what is set rather than that a setting exists, and that Start is
+ * never a button that looks broken.
+ */
+test('the panel folds its sound down to one line that says what is set', async ({ page }) => {
+  await openFresh(page)
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+
+  // Folded, and the fold is not hiding the answer.
+  const head = page.getByRole('button', { name: /^Sound/ })
+  await expect(head).toHaveAttribute('aria-expanded', 'false')
+  await expect(head).toContainText('Soft, medium')
+  await expect(page.getByRole('group', { name: 'Sound' })).toHaveCount(0)
+
+  await head.click()
+  await page.getByRole('group', { name: 'Sound' }).getByRole('button', { name: 'Alarm', exact: true }).click()
+  await page.getByLabel('How loud').fill('1')
+  await expect(head).toContainText('Alarm, loud')
+
+  // Off has no volume worth saying, and nothing left to control.
+  await page.getByRole('group', { name: 'Sound' }).getByRole('button', { name: 'Off', exact: true }).click()
+  await expect(head).toContainText('Off')
+  await expect(head).not.toContainText(',')
+  await expect(page.getByLabel('How loud')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Try', exact: true })).toHaveCount(0)
+})
+
+test('the length field opens holding an answer, and a chip changes it', async ({ page }) => {
+  await openFresh(page)
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+
+  const field = page.getByRole('textbox', { name: 'Custom timer length in minutes' })
+  await expect(field).toHaveValue('10')
+  await expect(page.getByRole('button', { name: '10 min', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  // Never disabled: the field always holds something, so there is no state
+  // in which this cannot start a timer.
+  await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeEnabled()
+
+  await page.getByRole('button', { name: '15 min', exact: true }).click()
+  await expect(field).toHaveValue('15')
+  await expect(page.getByRole('button', { name: '15 min', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: '10 min', exact: true })).toHaveAttribute('aria-pressed', 'false')
+
+  await page.getByRole('button', { name: 'Start', exact: true }).click()
+  await expect(page.getByRole('status', { name: 'Timer' })).toBeVisible()
+
+  // And the panel opens on it next time, so the ordinary case stays one press.
+  await page.getByRole('button', { name: 'Timer and stopwatch' }).click()
+  await expect(page.getByRole('textbox', { name: 'Custom timer length in minutes' })).toHaveValue('15')
 })
