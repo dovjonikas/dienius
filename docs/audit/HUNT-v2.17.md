@@ -155,6 +155,32 @@ box would grow its row".
 
 ---
 
+### B-06 · The task list, any size · CONFIRMED · fixed `e14e893`
+
+**What a person sees.** A task whose title has no space in it - a URL pasted
+into quick-add is the ordinary way to get one - paints over everything to its
+right, is cut mid-character with no ellipsis, and gives the task list a
+horizontal scrollbar. Measured: a 200-character title is **2014px wide in a
+310px column**, and the list scrolls **1753px** sideways.
+
+**How to repeat.** A day with a 200-character unbroken title on it. Read
+`.task-list`'s `scrollWidth` against its `clientWidth`.
+
+**Why nothing saw it.** CONVENTIONS 4 says nothing scrolls horizontally ever,
+and the check written beside that sentence is `documentElement.scrollWidth >
+clientWidth`. A scroller *inside* the page absorbs the overflow, so the
+document stays exactly as wide as the window and `hScroll` read zero
+throughout. The rule was unenforced everywhere it is most likely to break.
+The first sweep of the wave measured every screen on a realistic day and said
+nothing, because a realistic day has spaces in its titles.
+
+**Fix.** `overflow-wrap: anywhere` on `.task-title`, which is already this
+app's answer in the North picture and a scratch note and changes nothing for a
+title that has somewhere else to break. Plus a third measuring pass - a
+scroller whose content is wider than it is - so the next one is caught.
+
+---
+
 ## C - cosmetic
 
 ### C-01 · Week template editor, block open · CONFIRMED · fixed `0ec6354`
@@ -183,6 +209,13 @@ carried the view's own 8/16 margins, and a margin box centred in a row is a
 heading above the thing beside it. Library, Review, North, the journal's head
 and the calendar's bar all zero their `h2`; Templates was the one that never
 did.
+
+### C-06 · The calendar's day card · CONFIRMED · fixed `2962ea3`
+
+"Nothing on this day **yet**." where the week's agenda says "Nothing on this
+day." - one fact, two wordings, for no reason either of them could give. The
+"yet" was wrong on top of that: the card opens on any date the calendar can
+reach, and a Tuesday three weeks gone is not waiting for anything.
 
 ### C-04 · Build warning · CONFIRMED · left on purpose
 
@@ -269,19 +302,90 @@ Recorded so a later pass does not spend the time again.
 
 ---
 
+## Stage 7 - the second pass, and what it found
+
+Stage 1 to 4 run again from the top after the first round of fixes, which is
+where the rest of these came from. Two more B-level findings, both from the
+data shapes rather than from a screen:
+
+- **B-06**, the hundred-task day with a two-hundred-character title. Worth
+  saying plainly: the first pass measured every screen on a realistic day and
+  reported nothing about it, because a realistic day has spaces in its titles.
+- **B-05**, the scratch row's three heights, which the *new* two-heights pass
+  reported on the second sweep and nothing had reported on the first.
+
+And one shape that the new sideways pass got wrong on its first outing, which
+is worth writing down because a check that cries wolf is worse than no check:
+it reported the week editor's seven columns and Settings' section nav, both of
+which scroll sideways on purpose. A strip is a row of things that each fit; a
+defect is one child wider than the box it is in. With that clause the pass
+reports nothing on a clean run and still catches the real one - proved from
+the other side, by turning `overflow-wrap` off with a single override on a day
+carrying the long title and watching the finding come straight back.
+
+**A third pass over stages 1 to 4 found no new A or B.** The closing sweep -
+every screen, four widths, both themes, all three new passes armed - reports
+**0 findings**, and `--self-check` still reports 8/8.
+
+---
+
+## The closing gates
+
+| Gate | Result |
+|---|---|
+| `npm run build` (`tsc --noEmit` then Vite) | clean |
+| `npx vitest run` | **2647 passed**, 162 files, 0 failed |
+| `npx playwright test` | **74 passed**, 7 skipped by project, 0 failed |
+| `npm run privacy` | clean |
+| `npm run sweep -- --phone` | **0 findings** |
+| `npm run sweep -- --self-check` | 8/8 shapes still detected |
+| CI | `build` and `deploy` green; `e2e` red for a reason that is not this repo's - see below |
+
+### The one gate that is not green, and why it is not the app
+
+CI's `e2e` job failed three runs in a row at `npx playwright install
+--with-deps chromium`, before a single test ran:
+
+```
+E: Failed to fetch https://dl.google.com/linux/chrome-stable/deb/dists/stable/main/binary-amd64/Packages.gz  Hash Sum mismatch
+```
+
+Checked from outside CI rather than assumed: Google's `Packages.gz` is 1405
+bytes and their own `Release` file declares a different hash for a file of
+that size. Their repository metadata disagrees with itself. `--with-deps` runs
+`apt-get update` across every repo on the runner, so an outage in a repository
+this project never uses - Playwright ships its own chromium - failed a job
+that did not need it.
+
+The workflow now installs the browser first, from Playwright's own CDN and
+touching no package manager, and asks for the OS libraries in a second step
+marked `continue-on-error`. The runner image already ships those libraries, so
+that step is a belt whose braces are the image itself; if it is ever genuinely
+needed and genuinely fails, the test run below it says so in words somebody
+can read rather than an apt error about a mirror.
+
+The same 74 browser tests pass locally, on the same commit, against the same
+production build.
+
+---
+
 ## Counts
 
 | | |
 |---|---|
-| Findings | 12 |
+| Findings | 14 |
 | **A** | **2** |
-| **B** | **5** |
-| **C** | **5** |
-| Fixed | 10 |
+| **B** | **6** |
+| **C** | **6** |
+| Fixed | 12 |
 | Left on purpose | 2 |
 | Suspected, not reproduced | 1 |
 | Raised by the owner | 2 (C-01, B-04) |
+| Passes over stages 1-4 | 3 |
+| New measuring passes the sweep gained | 3 |
 
-Two of the twelve were the owner's, from looking at one screen - which is the
-argument for the two measuring passes this wave added rather than for anything
-else it did.
+Two of the fourteen were the owner's, from looking at one screen. That is the
+finding about the findings, and the argument for the three measuring passes
+this wave added rather than for anything else it did: the note header's Close
+had been eleven pixels out at every size for six versions, and the only thing
+in this project capable of noticing was a person's eye.

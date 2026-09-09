@@ -47,7 +47,24 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # The browser first, on its own. Playwright downloads its own chromium
+      # build from its own CDN and this step touches no package manager at
+      # all - so nothing about it can be broken by a repository this project
+      # does not use.
+      - run: npx playwright install chromium
+      # Then the OS libraries that browser needs, which is what --with-deps
+      # is for. It runs `apt-get update` across *every* repo on the runner,
+      # and on 2026-09-09 Google's Chrome repo served a Packages.gz whose
+      # hash did not match its own Release file - so apt exited 100, this job
+      # went red three runs in a row, and none of it had anything to do with
+      # the app or with a browser we get from Google in the first place.
+      #
+      # continue-on-error, not removed: the runner image already ships these
+      # libraries, so this is a belt whose braces are the image itself. If it
+      # is genuinely needed one day and genuinely fails, the run below says so
+      # in a way somebody can read, rather than an apt error about a mirror.
+      - run: npx playwright install-deps chromium
+        continue-on-error: true
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()

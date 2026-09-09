@@ -8,22 +8,33 @@ should leave you able to start without re-reading the repo.
 
 **Last updated:** v2.17, the hunt before the week.
 
-**Is it ready for the week? Yes, with one thing to watch.** Two defects that
-would have spoilt a real morning were found and fixed - an app left open
+**Is it ready for the week? Yes, with one thing to watch.** Fourteen
+findings, two of which would have spoilt a real morning - an app left open
 overnight kept yesterday and wrote the morning's first task onto it, and the
 update notice covered the whole tab bar on a phone so no tab could be pressed.
 Both are held by tests that were red before the fix. Nothing A-level is
-outstanding. The one thing to watch is written down as S-01 in
-[`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md): if the app ever comes back
-*blank* after a deploy, that is the suspected one, it was never reproduced on a
-clean run, and the file says which line to look at first.
+outstanding, three passes over the app found no new A or B on the last two, and
+the closing sweep - every screen, four widths, both themes - reports zero.
+
+The one thing to watch is S-01 in [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md):
+if the app ever comes back *blank* after a deploy, that is the suspected one, it
+was never reproduced on a clean run, and the file says which line to look at
+first.
+
+One gate is not green and it is not this repo: CI's browser job fails at
+`playwright install --with-deps` because Google's Chrome apt repository is
+serving a `Packages.gz` whose hash does not match its own `Release` file. The
+build and the deploy are green, the same 74 browser tests pass locally on the
+same commit, and the workflow no longer lets a repository this project does not
+use fail a job that does not need it.
 
 The wave added nothing to the app on purpose, with one exception the owner
 asked for mid-wave: a list can now be bound to a template block that already
-exists, instead of only to one being made. Everything else is a fix. Twelve
-findings, two of them the owner's own from looking at one screen - which is
-the argument for the two measuring passes this wave added to the sweep. The
-full account is in [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md).
+exists, instead of only to one being made. Everything else is a fix. Two of the
+fourteen findings were the owner's own, from looking at one screen - which is
+the argument for the three measuring passes this wave added to the sweep rather
+than for anything else it did. The full account, finding by finding with how to
+repeat each one, is in [`audit/HUNT-v2.17.md`](audit/HUNT-v2.17.md).
 
 **Before that: v2.13.** Four passes over a real day: every screen at three sizes in both themes, every
 screen on a keyboard alone, ten data shapes nobody checks, and every action
@@ -270,10 +281,10 @@ on a Friday and this is the rest of the same release.
 
 ### Nothing is half-built
 
-Still true, and checked rather than assumed. The suite is green - **2629
-tests in 160 files, plus 69 Playwright tests across two viewports** - the
-typecheck and the build are clean, and `npm run sweep` reports nothing on
-the desktop at 15:00, 22:00 and 09:00 and nothing on the phone, with
+Still true, and checked rather than assumed. The suite is green - **2647
+tests in 162 files, plus 74 Playwright tests across two viewports** - the
+typecheck and the build are clean, and `npm run sweep -- --phone` reports
+**zero findings** with all three of v2.17's new passes armed, with
 `--self-check` at 8/8. The working tree is empty and pushed.
 
 One thing about running that sweep, found in v2.9 and worth the next
@@ -390,11 +401,12 @@ name, which is the other half of why it was not found.
 
 ### What the sweep can see now, and could not before
 
-Two of the twelve findings were the owner's, from looking at one screen. That
-is the finding about the findings, and it is what most of this wave's tooling
-work is for. Both were shapes nothing in the repo could report - jsdom has no
-layout, and neither is text cut off, a control covered, or anything else
-`scripts/audit.js` looked for.
+Two of the fourteen findings were the owner's, from looking at one screen.
+That is the finding about the findings, and it is what most of this wave's
+tooling work is for. Both were shapes nothing in the repo could report - jsdom
+has no layout, and neither is text cut off, a control covered, or anything else
+`scripts/audit.js` looked for. Three passes went in, and each one found
+something on its first run that nothing had reported before.
 
 - **Not centred in a row that centres.** A child more than a pixel and a half
   off the middle of a row whose `align-items` is `center`. `.setting-quiet`
@@ -413,6 +425,18 @@ layout, and neither is text cut off, a control covered, or anything else
   one row" - and the fix was written for that one row rather than looked for
   anywhere else. Only boxed controls are compared: a quiet word with no
   background and no border is deliberately the height of its own text.
+- **A scroller that goes sideways.** "Nothing scrolls horizontally, ever" -
+  CONVENTIONS 4 - and the check written beside that sentence reads the
+  *document's* width. A scroller inside the page absorbs the overflow instead,
+  so the document stays exactly as wide as the window and the rule was
+  unenforced everywhere it is most likely to break: a two-hundred-character
+  title with nothing to break at measured 2014px in a 310px column and gave
+  the task list 1753px of sideways scroll while `hScroll` read zero. Reported
+  only when **one child is wider than the box it is in**, which is what tells a
+  defect from a design - a strip that scrolls on purpose, like the week
+  editor's seven columns on a phone, is a row of things that each fit. Without
+  that clause it reported six of those a run, and the one real defect would
+  have sat among them.
 
 And one screen: **the week template editor with a block open**. The sweep
 built the seven-column grid and never pressed anything on it, so the panel
