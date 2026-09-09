@@ -84,8 +84,6 @@ export function stateWeight(task: Task): number {
   if (task.done) weight += 8
   if (task.highlight) weight += 4
   if (task.note) weight += 2
-  if (task.subtasks?.some(s => s.done)) weight += 2
-  if (task.subtasks?.length) weight += 1
   if ((task.pushCount ?? 0) > 0) weight += 1
   return weight
 }

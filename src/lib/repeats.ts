@@ -115,7 +115,6 @@ export function instanceOf(source: Task, sourceId: string): Task {
     category: source.category,
     unbounded: source.unbounded,
     note: source.note,
-    subtasks: source.subtasks?.map(step => ({ id: crypto.randomUUID(), title: step.title, done: false })),
     repeat: source.repeat,
     repeatOf: sourceId,
     origin: { type: 'repeat', sourceId },

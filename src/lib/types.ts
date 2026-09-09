@@ -119,15 +119,6 @@ export interface TemplateBlock {
    */
   noteExpanded?: boolean
   /**
-   * The steps this block arrives carrying, stamped onto `Task.subtasks` by
-   * the same rule as `note`: the day's own list wins where it has one.
-   *
-   * A `Subtask` without `done`, because a template holds a shape and not a
-   * state - the ticks belong to the day, and a template that remembered
-   * them would hand yesterday's progress to tomorrow.
-   */
-  steps?: TemplateStep[]
-  /**
    * Marks this block as one of the day's key tasks - see `Task.highlight`.
    *
    * The same gap `note` and `steps` had, and the same fix. `applyStamps` read
@@ -147,13 +138,6 @@ export interface TemplateBlock {
    * arrive unmarked rather than dropping them.
    */
   highlight?: boolean
-}
-
-export interface TemplateStep {
-  id: string
-  title: string
-  /** Minutes, where the step is a timer - see `Subtask.minutes`. */
-  minutes?: number
 }
 
 /**
@@ -371,14 +355,6 @@ export interface Task extends Timestamped {
    */
   highlight?: boolean
   /**
-   * The steps this task breaks into. Absent means it does not break into
-   * any, which is most tasks. Sub-steps are deliberately not tasks: they
-   * have no time, no size, no category and never appear on the timeline,
-   * because the moment they can be scheduled independently they stop being
-   * a way of starting one thing and become three more things to plan.
-   */
-  subtasks?: Subtask[]
-  /**
    * How this task repeats itself onto later days - see `Repeat`. Absent
    * means it happens once, which is what every task written before this
    * field existed does.
@@ -439,20 +415,6 @@ export interface TaskOrigin {
   sourceId?: string
   /** The block within that template. Absent for a repeat and for manual. */
   blockId?: string
-}
-
-/** One step inside a task. Nothing more than a line of text and a tick. */
-export interface Subtask {
-  id: string
-  title: string
-  done: boolean
-  /**
-   * How long the step takes, when the person said - "Meditation 10 min". A
-   * tap on the step starts the timer for this long, and the step is ticked
-   * when it rings out. Absent for a step that is only a thing to do, which
-   * is most of them.
-   */
-  minutes?: number
 }
 
 /**

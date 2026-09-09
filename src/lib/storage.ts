@@ -7,6 +7,7 @@ import { isLegacyTheme, isStoredTheme, validate, type StoredAppData, type Stored
 import { DEFAULT_CATEGORIES } from './categories'
 import { mergeOldJournal } from './journal'
 import { foldInbox } from './later'
+import { foldLegacySteps } from './stepsToNote'
 
 
 // Duplicated from themes.ts on purpose rather than imported - storage.ts
@@ -220,9 +221,13 @@ function normalizeLoaded(data: StoredAppData): AppData {
   // so nothing past this function ever sees a line in it - see later.ts.
   // Stamped now rather than with anything from the file: the tombstone has
   // to outrank the line on whichever device still holds it.
+  // Steps folded into the note they sat beside, before anything else reads
+  // the payload - see stepsToNote.ts. Here rather than at either caller,
+  // because loadData and importJson both pass through this one gate.
+  const folded = foldLegacySteps(data)
   return foldInbox({
-    ...data,
-    days: repairDuplicates(data.days),
+    ...folded,
+    days: repairDuplicates(folded.days),
     ifThens: data.ifThens ?? [],
     inbox: data.inbox ?? [],
     backlog: data.backlog ?? [],

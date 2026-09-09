@@ -473,23 +473,6 @@ test('a note on a block added to every day is written onto all seven at once', a
   expect(blocks.every(b => b.note === 'Water, light, out of the room')).toBe(true)
 })
 
-test('a step added to a block on a week template reaches every day it is on', async () => {
-  const user = userEvent.setup()
-  render(<TemplatesView />)
-  await newWeek(user)
-  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
-  await user.click(screen.getByRole('button', { name: 'All days' }))
-  await addBlock(user, 'Morning routine')
-
-  await openBlock(user, 'Monday', 'Morning routine')
-  await user.type(screen.getByLabelText('Add a step to Morning routine'), 'Meditation 10 min{Enter}')
-  await user.click(screen.getByRole('button', { name: 'Save template' }))
-
-  const blocks = getData().templates[0].blocks
-  expect(blocks).toHaveLength(7)
-  expect(blocks.every(b => b.steps?.[0].title === 'Meditation' && b.steps?.[0].minutes === 10)).toBe(true)
-})
-
 test('one press goes back to a single day, from whatever a preset left on', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)

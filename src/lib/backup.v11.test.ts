@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { defaultData, exportJson, importJson, validate } from './storage'
+import { foldLegacySteps } from './stepsToNote'
 import type { AppData } from './types'
 
 /**
@@ -75,10 +76,14 @@ function full(): AppData {
         highlight: true,
         repeat: 'weekdays',
         libraryRef: { listId: 'books', itemId: 'b1' },
-        subtasks: [
-          { id: 's1', title: 'Find where I left off', done: true },
-          { id: 's2', title: 'Read one chapter', done: false },
-        ],
+        // A v1.1 list, written loosely because the type no longer has the
+        // field - which is exactly what this file is here to prove about it.
+        ...({
+          subtasks: [
+            { id: 's1', title: 'Find where I left off', done: true },
+            { id: 's2', title: 'Read one chapter', done: false },
+          ],
+        } as object),
       },
     ],
   }
@@ -97,9 +102,13 @@ test('a payload carrying every v1.1 field validates', () => {
   expect(validate(JSON.parse(exportJson(withInbox())))).toBe(true)
 })
 
-test('every v1.1 field survives export and re-import byte for byte', () => {
+test('every v1.1 field survives export and re-import', () => {
   const before = full()
-  expect(importJson(exportJson(before))).toEqual(before)
+  // Field for field the same, with one migration applied on the way in:
+  // a task's steps fold into its note - see lib/stepsToNote.ts, and the
+  // detail test below for what that looks like. Everything else, including
+  // every field this test was written for, comes back as itself.
+  expect(importJson(exportJson(before))).toEqual(foldLegacySteps(before))
 })
 
 // The inbox is the one v1.1 field that does not come back as itself: since
@@ -115,12 +124,16 @@ test('a v1.1 inbox line comes back as the first thing in Later, not as an inbox 
 
 test('the task detail fields in particular come back whole', () => {
   const task = importJson(exportJson(full())).days['2026-09-01'].tasks[0]
-  expect(task.note).toBe('chapter on shame')
+  expect(task.note).toContain('chapter on shame')
   expect(task.highlight).toBe(true)
   expect(task.repeat).toBe('weekdays')
   expect(task.libraryRef).toEqual({ listId: 'books', itemId: 'b1' })
-  expect(task.subtasks).toHaveLength(2)
-  expect(task.subtasks![0].done).toBe(true)
+  // A v1.1 backup still carries its steps, and importing one folds them into
+  // the note rather than dropping them - see lib/stepsToNote.ts. The words
+  // are what had to survive; the list they sat in did not.
+  expect(task.note).toContain('- Find where I left off')
+  expect(task.note).toContain('- Read one chapter')
+  expect('subtasks' in task).toBe(false)
 })
 
 test('the template block keeps its category and its library binding', () => {
@@ -162,6 +175,9 @@ test('an absurd count is refused - it would break every label that renders it', 
   expect(validate(withLibrary(list))).toBe(false)
 })
 
+// Still refused at the gate. A v1.1 backup may carry one, and a
+// half-written list is a file this app cannot vouch for - the migration runs
+// after validation, never instead of it.
 test('a subtask missing its done flag is refused', () => {
   const payload = JSON.parse(exportJson(defaultData()))
   payload.days['2026-09-01'] = {

@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { actions, useAppData } from '../../lib/store'
 import { useTimerTick, useTitleCountdown } from './useTimerTick'
 import {
   clockTools,
@@ -93,9 +92,7 @@ const CORNERS: ClockTools['corner'][] = ['bottom-right', 'bottom-left', 'top-lef
  * ever information you might be late against.
  */
 export function FloatingClock() {
-  const tools = useClockTools()
-  const data = useAppData()
-  // Which run has already chimed. Held per mount rather than in storage: the
+  const tools = useClockTools()  // Which run has already chimed. Held per mount rather than in storage: the
   // stored `rungOut` flag is what stops a reload from re-alarming, and this
   // only stops the same tab from alarming twice on consecutive ticks.
   const chimedRef = useRef<number | null>(null)
@@ -139,19 +136,15 @@ export function FloatingClock() {
     if (!timer.rungOut) {
       playChime()
       notify('Timer finished')
-      // The step this ran for, ticked by the same tab that rang - see
-      // TimerStep. Only ever set done, so a step ticked by hand meanwhile
-      // stays ticked; a step or task gone by now is nothing to tick.
-      if (timer.step) actions.completeSubtask(timer.step.date, timer.step.taskId, timer.step.subtaskId)
     }
     clockTools.markRungOut()
   }, [timer, isUp])
 
-  // What the timer is for, when it was started from a step: the step's own
-  // title, read live off the day so a renamed step reads right.
-  const stepTitle = timer?.step
-    ? data.days[timer.step.date]?.tasks.find(t => t.id === timer.step!.taskId)?.subtasks?.find(s => s.id === timer.step!.subtaskId)?.title
-    : undefined
+  // Nothing starts a timer from a step any more - steps were folded into
+  // the note in v2.13 - so a timer is a timer and says only how long is
+  // left. TimerStep stays on the type for a session started before the
+  // update, which simply resolves to no title.
+  const stepTitle = undefined
 
   if (!timer && !stopwatch) return null
 

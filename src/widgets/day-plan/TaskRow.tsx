@@ -167,9 +167,6 @@ export function TaskRow({
   // has - see the module comment below for why the title is the gesture at
   // all rather than a new control.
   const selectable = !task.done && !isAnchor(task)
-  const subtasks = task.subtasks ?? []
-  const subtaskCount = subtasks.length
-  const doneSubtaskCount = subtasks.filter(s => s.done).length
   // A ref that resolves to nothing - the list or the item was deleted -
   // draws nothing at all, the same contract every other dangling id in this
   // app keeps. See Task.libraryRef.
@@ -324,16 +321,10 @@ export function TaskRow({
           {showCoreBadge && (
             <span id={coreId} className="task-core">core</span>
           )}
-          {/* Three marks, each earned by something the task actually is.
+          {/* Two marks, each earned by something the task actually is.
               None of them is a control - they are read, and the detail sheet
               is where they are changed - so none of them spends a tap
               target on a row that already has four. */}
-          {subtaskCount > 0 && (
-            <span className="task-steps" data-tip="Steps done">
-              {doneSubtaskCount}/{subtaskCount}
-              <span className="visually-hidden"> steps done</span>
-            </span>
-          )}
           {/* No tooltip on this one: it used to carry boundLabel, which is the
               text printed inside it, so the pointer was told the same words it
               was already reading. */}

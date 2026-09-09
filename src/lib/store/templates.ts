@@ -1,5 +1,5 @@
 import { commit, getData } from './core'
-import type { DayType, Template, TemplateKind, TemplateStep, WeekDayOverride } from '../types'
+import type { DayType, Template, TemplateKind, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
 
@@ -32,7 +32,6 @@ export const templateActions = {
       groupId?: string
       note?: string
       noteExpanded?: boolean
-      steps?: TemplateStep[]
       highlight?: boolean
     }[]
   }): Template {
@@ -58,7 +57,6 @@ export const templateActions = {
         groupId: b.groupId,
         note: b.note,
         noteExpanded: b.noteExpanded,
-        steps: b.steps,
         highlight: b.highlight,
       })),
     }

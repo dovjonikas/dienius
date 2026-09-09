@@ -12,8 +12,7 @@ import { takenBlocks } from '../../views/takenHours'
 import { MinuteStepInput } from '../../views/MinuteStepInput'
 import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
-import { clockTools, useClockTools } from '../../lib/clockTools'
-import { formatDuration, stepTime, windowFor } from './capacity'
+import { stepTime, windowFor } from './capacity'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -50,7 +49,7 @@ export interface TaskDetailProps {
  * Everything about one task, in one place.
  *
  * The row deliberately shows four things (see `TaskRow.tsx`). Everything a
- * task can also be - a note, three sub-steps, a repeat, an exact minute, a
+ * task can also be - a note, a repeat, an exact minute, a
  * book it belongs to - has to live somewhere that is one deliberate action
  * away and nowhere near the daily scan. This is that somewhere.
  *
@@ -69,15 +68,11 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
   const [title, setTitle] = useState(task.title)
   const [note, setNote] = useState(task.note ?? '')
   const [link, setLink] = useState(task.link ?? '')
-  const [subtaskDraft, setSubtaskDraft] = useState('')
   // Which of the two a change means, held while the sheet is open. Defaults
   // to the series, because that is what somebody who set up a repeat almost
   // always means - the exception is the exception.
   const [scope, setScope] = useState<'day' | 'series'>('series')
   const titleId = useId()
-  // Which step the timer is running for, if it is this task's - so the
-  // step's own button can say so rather than offering to start it again.
-  const runningStep = useClockTools().timer?.step
 
   useEffect(() => {
     panelRef.current?.focus()
@@ -85,8 +80,6 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
 
   const highlights = tasks.filter(t => t.highlight).length
   const highlightFull = !task.highlight && highlights >= MAX_HIGHLIGHTS
-  const subtasks = task.subtasks ?? []
-  const doneSubtasks = subtasks.filter(s => s.done).length
   // A source with a repeat, or an instance generated from one. A task that
   // repeats and has never generated anything yet is still a series - it is
   // about to be.
@@ -423,72 +416,6 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               </div>
             </div>
           )}
-
-          {/* Sub-steps, not tasks: no time, no size, never on the timeline.
-              The moment they can be scheduled apart they stop being a way of
-              starting one thing and become three more things to plan. */}
-          <div className="task-detail-field">
-            <span className="task-detail-label">
-              Steps{subtasks.length > 0 ? ` ${doneSubtasks}/${subtasks.length}` : ''}
-            </span>
-            <div className="task-detail-subtasks">
-              {subtasks.map(sub => (
-                <label key={sub.id} className={sub.done ? 'subtask done' : 'subtask'}>
-                  <input
-                    type="checkbox"
-                    checked={sub.done}
-                    aria-label={sub.title}
-                    onChange={() => actions.toggleSubtask(date, task.id, sub.id)}
-                  />
-                  <span className="check" aria-hidden="true" />
-                  <span className="subtask-title">{sub.title}</span>
-                  {/* A step with a length carries the timer for it: one tap
-                      and the app's own timer runs for that long, ticking the
-                      step when it rings. Inside the label, but a button is
-                      interactive content and a press on it is not a press on
-                      the box; stopped besides, so nothing above hears it. */}
-                  {sub.minutes !== undefined && (
-                    <button
-                      type="button"
-                      className={
-                        runningStep?.subtaskId === sub.id && runningStep.taskId === task.id ? 'subtask-timer is-running' : 'subtask-timer'
-                      }
-                      aria-label={`Start a ${formatDuration(sub.minutes)} timer for ${sub.title}`}
-                      data-tip="Starts the timer for this step"
-                      onClick={e => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        clockTools.startTimer(sub.minutes! * 60_000, { date, taskId: task.id, subtaskId: sub.id })
-                      }}
-                    >
-                      {formatDuration(sub.minutes)}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="subtask-remove"
-                    aria-label={`Remove step ${sub.title}`}
-                    onClick={() => actions.deleteSubtask(date, task.id, sub.id)}
-                  >
-                    &times;
-                  </button>
-                </label>
-              ))}
-              <input
-                className="subtask-add"
-                placeholder="Add a step, or one with a length: Meditation 10 min"
-                aria-label="Add a step"
-                value={subtaskDraft}
-                onChange={e => setSubtaskDraft(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key !== 'Enter') return
-                  e.preventDefault()
-                  actions.addSubtask(date, task.id, subtaskDraft)
-                  setSubtaskDraft('')
-                }}
-              />
-            </div>
-          </div>
 
           {/* A task made from a note keeps the way back to it, because the
               note is where its pictures are - a meal plan screenshot is

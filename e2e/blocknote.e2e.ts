@@ -30,10 +30,8 @@ test('a note written into a block arrives on the day, and one press reads it', a
   await page.getByPlaceholder('09:00').fill('12:00')
   await page.getByPlaceholder('What happens').fill('Meal')
   await page.getByRole('button', { name: 'Add a block' }).click()
-  await page.getByRole('button', { name: 'Add a note or steps to Meal' }).click()
+  await page.getByRole('button', { name: 'Add a note to Meal' }).click()
   await page.getByLabel('Note on Meal').fill('Rice and chicken\n  200 g rice')
-  await page.getByLabel('Add a step to Meal').fill('Sit down and eat 20 min')
-  await page.getByLabel('Add a step to Meal').press('Enter')
   await page.getByRole('button', { name: 'Save template' }).click()
 
   await page.getByRole('button', { name: 'Today', exact: true }).first().click()
@@ -49,13 +47,6 @@ test('a note written into a block arrives on the day, and one press reads it', a
   await meal.getByRole('button', { name: 'Read the note on Meal' }).click()
   await expect(meal.getByText('200 g rice')).toBeVisible()
   await expect(page.getByPlaceholder('Add a task')).toBeVisible()
-
-  // And the steps came too, unticked and carrying the timer they were
-  // written with.
-  await meal.getByRole('button', { name: /^More actions for Meal/ }).click()
-  await page.getByRole('button', { name: /Details/ }).click()
-  await expect(page.getByRole('checkbox', { name: 'Sit down and eat' })).not.toBeChecked()
-  await expect(page.getByRole('button', { name: /Start a 20 min timer/ })).toBeVisible()
 })
 
 test('the note mark is a real target, and opens under the card it belongs to', async ({ page }) => {

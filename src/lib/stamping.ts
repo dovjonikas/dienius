@@ -2,7 +2,7 @@ import { currentItem } from './library'
 import { originFor } from './taskIdentity'
 import { weekdayOf } from './repeats'
 import { MAX_HIGHLIGHTS } from './types'
-import type { DayPlan, LibraryList, Subtask, Task, Template, TemplateBlock } from './types'
+import type { DayPlan, LibraryList, Task, Template, TemplateBlock } from './types'
 
 /**
  * The blocks a given date takes from a template, and the day type and sleep
@@ -54,26 +54,6 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
   const item = currentItem(list)
   if (!item) return undefined
   return { title: item.title, ref: { listId: list.id, itemId: item.id } }
-}
-
-/**
- * A block's steps, as a day's own list of them.
- *
- * Fresh ids and every one unticked, because what a template holds is the
- * shape of the routine and not how far through it anybody got - two days
- * stamped from the same block have two independent lists, and neither can
- * hand its progress to the other. A block with no steps resolves to nothing
- * rather than an empty list, so `?? ` below reads "the template has an
- * answer" rather than "the template has a field".
- */
-function stepsFrom(block: TemplateBlock): Subtask[] | undefined {
-  if (!block.steps?.length) return undefined
-  return block.steps.map(step => ({
-    id: crypto.randomUUID(),
-    title: step.title,
-    done: false,
-    minutes: step.minutes,
-  }))
 }
 
 /**
@@ -211,12 +191,6 @@ export function applyStamps(
         // Travels with the note it is about: a block whose recipe is the
         // reason you look at the card says so on every day it stamps.
         noteExpanded: b.noteExpanded,
-        // Steps take the simpler rule, and deliberately: a list is state a
-        // day works through rather than words it re-reads, so once a day has
-        // one - ticked, added to, or emptied on purpose - the template has
-        // nothing to say about it. A day with no list of its own takes the
-        // block's.
-        subtasks: match?.subtasks ?? stepsFrom(b),
         // The same reading as the note, and the day wins in both directions:
         // `toggleTaskHighlight` writes `false` rather than removing the
         // field, so KEY taken off this morning's task is not handed back by

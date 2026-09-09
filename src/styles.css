@@ -3692,8 +3692,7 @@ select:focus {
   100% { --tick-short: 5px; --tick-long: 10px; opacity: 1; }
 }
 
-.task input:checked + .check::after,
-.subtask input:checked + .check::after {
+.task input:checked + .check::after {
   animation: tick-draw 260ms var(--ease) forwards;
 }
 
@@ -3702,8 +3701,7 @@ select:focus {
    would never appear at all - which is a worse failure than not animating.
    This fallback gives those browsers the finished mark, statically. */
 @supports not (background: paint(x)) {
-  .task input:checked + .check::after,
-.subtask input:checked + .check::after {
+  .task input:checked + .check::after {
     width: 5px;
     height: 10px;
     opacity: 1;
@@ -3711,8 +3709,7 @@ select:focus {
   }
 }
 
-.task input:checked + .check,
-.subtask input:checked + .check {
+.task input:checked + .check {
   background: var(--accent);
   border-color: var(--accent);
   animation: pop 0.25s ease;
@@ -3765,9 +3762,7 @@ select:focus {
 @media (prefers-reduced-motion: reduce) {
   .task-leaving { animation: none; opacity: 0.5; }
   .task input:checked + .check,
-  .subtask input:checked + .check { animation: none; }
-  .task input:checked + .check::after,
-.subtask input:checked + .check::after {
+  .task input:checked + .check::after {
     width: 5px;
     height: 10px;
     opacity: 1;
@@ -4547,30 +4542,6 @@ button.core-toggle.active {
   line-height: 1.5;
   white-space: pre-wrap;
   resize: vertical;
-}
-
-.block-note-steps { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
-
-.block-note-step {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-  padding: var(--s1) var(--s2) var(--s1) var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  font-size: var(--t-sm);
-}
-
-.block-note-step-size { color: var(--faint); font-size: var(--t-xs); }
-
-.block-note-steps .subtask-add {
-  flex: 1 1 220px;
-  min-width: 0;
-  padding: var(--s1) var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  background: var(--bg);
-  color: var(--text);
 }
 
 .template-list { list-style: none; margin: 0; padding: 0; }
@@ -7881,62 +7852,6 @@ button.danger:focus-visible {
 
 .task-detail-hint { color: var(--muted); font-size: var(--t-sm); }
 
-.task-detail-subtasks { display: flex; flex-direction: column; gap: var(--s1); }
-
-.subtask {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  padding: var(--s1) var(--s2);
-  border-radius: var(--r-control);
-}
-
-.subtask:hover { background: color-mix(in srgb, var(--border) 30%, transparent); }
-.subtask input[type='checkbox'] { position: absolute; opacity: 0; width: 0; height: 0; }
-.subtask-title { flex: 1; min-width: 0; font-size: var(--t-sm); }
-.subtask.done .subtask-title { color: var(--muted); text-decoration: line-through; }
-
-.subtask-remove {
-  font-size: var(--t-md);
-  width: 24px;
-  height: 24px;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--r-round);
-  background: none;
-  color: var(--faint);
-  line-height: 1;
-}
-
-.subtask-remove:hover { color: var(--danger); }
-
-/* The timer on a step that has a length - see TaskDetail. A pill in the
-   meta register; lit while the timer is running for this step. */
-.subtask-timer {
-  flex: 0 0 auto;
-  min-height: 0;
-  padding: 0 var(--s2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.6;
-  white-space: nowrap;
-}
-
-.subtask-timer:hover { color: var(--text); border-color: var(--muted); }
-
-.subtask-timer.is-running {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--text);
-}
-
-.subtask-add { font-size: var(--t-sm); }
-
 .task-detail-note { resize: vertical; font-size: var(--t-sm); line-height: 1.5; }
 
 /* On a phone the panel is the bottom sheet the brief asks for: full width,
@@ -8011,7 +7926,6 @@ button.danger:focus-visible {
 /* ------------------------------------------------------------------------
    The three marks a card can carry, and the key-task edge.
    ------------------------------------------------------------------------ */
-.task-steps,
 .task-library,
 .task-note-mark {
   flex-shrink: 0;
@@ -8242,8 +8156,6 @@ button.task-note-mark.is-open {
 
 /* A sub-step is a line of text, not a card, so its box is smaller - a 24px
    control beside 13px type reads as the main event rather than a tick. */
-.subtask .check { width: 18px; height: 18px; border-width: 1.5px; }
-.subtask .check::after { left: 5px; top: 2px; }
 
 /* The template chips in the rail. They used to be their own colour, filled
    edge to edge - which made two decorative pills the brightest surfaces on a
@@ -8494,8 +8406,6 @@ button.task-note-mark.is-open {
   .block-remove,
   .library-step,
   .library-item-remove,
-  .subtask-remove,
-  .subtask-timer,
   .library-list-edit,
   .library-item-schedule,
   .library-item-reopen,
@@ -8532,8 +8442,6 @@ button.task-note-mark.is-open {
   .block-remove::after,
   .library-step::after,
   .library-item-remove::after,
-  .subtask-remove::after,
-  .subtask-timer::after,
   .library-list-edit::after,
   .library-item-schedule::after,
   .library-item-reopen::after,

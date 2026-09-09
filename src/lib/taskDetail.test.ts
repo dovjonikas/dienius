@@ -109,35 +109,6 @@ test('highlighting a task that is not there does nothing rather than throwing', 
 
 // --- sub-steps -----------------------------------------------------------
 
-test('steps are added in order, tick independently, and delete one at a time', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, 'Outline')
-  actions.addSubtask(DATE, id, 'Draft')
-  expect(task(id).subtasks!.map(s => s.title)).toEqual(['Outline', 'Draft'])
-
-  const first = task(id).subtasks![0].id
-  actions.toggleSubtask(DATE, id, first)
-  expect(task(id).subtasks!.map(s => s.done)).toEqual([true, false])
-
-  actions.deleteSubtask(DATE, id, first)
-  expect(task(id).subtasks!.map(s => s.title)).toEqual(['Draft'])
-})
-
-test('a blank step is refused - an empty line is not a step', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, '   ')
-  expect(task(id).subtasks ?? []).toHaveLength(0)
-})
-
-// Steps are not tasks: ticking every one of them off says nothing about the
-// task itself, which is still something a person has to decide is done.
-test('finishing every step does not finish the task', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, 'Outline')
-  actions.toggleSubtask(DATE, id, task(id).subtasks![0].id)
-  expect(task(id).done).toBe(false)
-})
-
 // --- repeat --------------------------------------------------------------
 
 test('a repeat is set and cleared', () => {
@@ -175,24 +146,3 @@ test('a task can be bound to a library item by hand and unbound again', () => {
 // which only ever sets done, so a step somebody ticked by hand while the
 // timer ran is not unticked by the bell.
 
-test('a step typed with a trailing length keeps the words and takes the minutes', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, 'Meditation - 10 min')
-  expect(task(id).subtasks).toEqual([expect.objectContaining({ title: 'Meditation', minutes: 10, done: false })])
-})
-
-test('a step typed without a length has none', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, 'Water')
-  expect(task(id).subtasks![0].minutes).toBeUndefined()
-})
-
-test('completing a step sets it done and leaves a done step done', () => {
-  const [id] = seed()
-  actions.addSubtask(DATE, id, 'Meditation 10 min')
-  const sub = task(id).subtasks![0]
-  actions.completeSubtask(DATE, id, sub.id)
-  expect(task(id).subtasks![0].done).toBe(true)
-  actions.completeSubtask(DATE, id, sub.id)
-  expect(task(id).subtasks![0].done).toBe(true)
-})

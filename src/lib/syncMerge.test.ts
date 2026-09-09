@@ -404,7 +404,8 @@ test('a state whose picture is not an object is not one this app will merge with
   expect(isSyncableState({ ...base, picture: { text: 'I wake early.' } })).toBe(true)
 })
 
-test("a block's note and steps travel between devices like any other field", () => {
+
+test("a block's note travels between devices like any other field", () => {
   const shared = device(
     d => ({
       ...d,
@@ -413,28 +414,11 @@ test("a block's note and steps travel between devices like any other field", () 
     MORNING,
   )
   const pc = device(
-    d => ({
-      ...d,
-      templates: [
-        {
-          ...d.templates[0],
-          blocks: [
-            {
-              id: 'b',
-              title: 'Meal',
-              note: 'Rice and chicken',
-              steps: [{ id: 's1', title: 'Rice on' }],
-            },
-          ],
-        },
-      ],
-    }),
+    d => ({ ...d, templates: [{ ...d.templates[0], blocks: [{ id: 'b', title: 'Meal', note: 'Rice and chicken' }] }] }),
     EVENING,
     shared,
   )
-  const block = mergeStates(shared, pc, NOW).data.templates[0].blocks[0]
-  expect(block.note).toBe('Rice and chicken')
-  expect(block.steps).toEqual([{ id: 's1', title: 'Rice on' }])
+  expect(mergeStates(shared, pc, NOW).data.templates[0].blocks[0].note).toBe('Rice and chicken')
 })
 
 test("a day's own note beats the one its template brought, on either device", () => {

@@ -723,25 +723,23 @@ test('a block carries no note field until one is asked for', async () => {
   await user.click(screen.getByRole('button', { name: 'Add a block' }))
 
   expect(screen.queryByLabelText('Note on Meal')).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  await user.click(screen.getByRole('button', { name: 'Add a note to Meal' }))
   expect(screen.getByLabelText('Note on Meal')).toBeInTheDocument()
 })
 
-test('a note and a step typed into a block are saved with the template', async () => {
+test('a note typed into a block is saved with the template', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newDayTemplate(user)
   await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
   await user.type(screen.getByPlaceholderText('What happens'), 'Meal')
   await user.click(screen.getByRole('button', { name: 'Add a block' }))
-  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  await user.click(screen.getByRole('button', { name: 'Add a note to Meal' }))
   await user.type(screen.getByLabelText('Note on Meal'), 'Rice and whatever green is in the fridge')
-  await user.type(screen.getByLabelText('Add a step to Meal'), 'Sit down and eat 20 min{Enter}')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
   const block = getData().templates[0].blocks[0]
   expect(block.note).toBe('Rice and whatever green is in the fridge')
-  expect(block.steps).toEqual([{ id: expect.any(String), title: 'Sit down and eat', minutes: 20 }])
 })
 
 test('a note opened and left empty does not become a field on the block', async () => {
@@ -751,7 +749,7 @@ test('a note opened and left empty does not become a field on the block', async 
   await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
   await user.type(screen.getByPlaceholderText('What happens'), 'Meal')
   await user.click(screen.getByRole('button', { name: 'Add a block' }))
-  await user.click(screen.getByRole('button', { name: 'Add a note or steps to Meal' }))
+  await user.click(screen.getByRole('button', { name: 'Add a note to Meal' }))
   await user.type(screen.getByLabelText('Note on Meal'), '   ')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
@@ -767,7 +765,7 @@ test('a block that carries a note says so before it is opened, and reopening the
   })
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: /^Edit Meals/ }))
-  const mark = screen.getByRole('button', { name: 'Note and steps on Meal' })
+  const mark = screen.getByRole('button', { name: 'Open the note on Meal' })
   expect(mark.className).toContain('has-note')
   await user.click(mark)
   expect(screen.getByLabelText('Note on Meal')).toHaveValue('Rice and chicken')

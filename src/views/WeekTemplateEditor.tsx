@@ -277,7 +277,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   }
 
   /**
-   * Writes a note or a list of steps onto a block, and onto its group where
+   * Writes a note onto a block, and onto its group where
    * the scope above says so - the same reading `removeBlock` takes of the
    * same choice, and for the same reason: a block put on five days by one
    * press is one thing to the person who made it.
@@ -586,11 +586,9 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           </div>
           <BlockNotePanel
             note={noteBlock.note}
-            steps={noteBlock.steps}
             label={noteBlock.title}
             expanded={noteBlock.noteExpanded}
             onNote={next => editBlock(noteBlock, { note: next })}
-            onSteps={next => editBlock(noteBlock, { steps: next })}
             onExpanded={next => editBlock(noteBlock, { noteExpanded: next })}
           />
         </div>

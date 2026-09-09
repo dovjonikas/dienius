@@ -84,7 +84,9 @@ test('an instance carries what the task is, and not what one day made of it', ()
     done: true,
     pushCount: 4,
     highlight: true,
-    subtasks: [{ id: 's1', title: 'Fill the glass', done: true }],
+    // A v1.1 shape, kept to prove an instance does not carry one. The type
+    // has no such field any more, so it goes in loosely on purpose.
+    ...({ subtasks: [{ id: 's1', title: 'Fill the glass', done: true }] } as object),
   })
   const made = instanceOf(source, 'src')
 
@@ -106,7 +108,9 @@ test('an instance carries what the task is, and not what one day made of it', ()
   expect(made.pushCount).toBeUndefined()
   expect(made.id).not.toBe('src')
   // Steps travel as steps, not as finished ones.
-  expect(made.subtasks).toEqual([{ id: expect.any(String), title: 'Fill the glass', done: false }])
+  // An instance carries no list, because there are no lists any more. What
+  // the source is - its note among it - still comes across.
+  expect('subtasks' in made).toBe(false)
 })
 
 // --- generation ----------------------------------------------------------

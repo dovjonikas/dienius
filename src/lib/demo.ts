@@ -171,16 +171,20 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
       origin: { type: 'manual' },
     },
   )
-  // One task with something behind the card: a note and sub-steps, so the
-  // detail sheet has a reason to be opened on the sample.
+  // One task with something behind the card - a note with choices in it, so
+  // the sample shows what a note can be as well as that it exists.
   const email = days[today].tasks.find(t => t.title === 'Draft the launch email')
   if (email) {
-    email.note = 'Lead with the price change. Keep it under two hundred words.'
-    email.subtasks = [
-      { id: 'demo-sub-1', title: 'Outline', done: true },
-      { id: 'demo-sub-2', title: 'First draft', done: false },
-      { id: 'demo-sub-3', title: 'Read it out loud once', done: false },
-    ]
+    email.note = [
+      'Lead with the price change. Keep it under two hundred words.',
+      '',
+      '## Short version',
+      'One line on the change, one on what it means, and the link.',
+      '',
+      '## Long version',
+      'Open with the why. Then the change, then what nobody has to do.',
+      'Close on the date it takes effect.',
+    ].join('\n')
   }
 
   return {

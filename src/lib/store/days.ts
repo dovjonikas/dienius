@@ -1,6 +1,6 @@
 import { commit, dayOf, getData, withDay } from './core'
 import { advanceForTask } from './library'
-import type { DayPlan, LibraryRef, Repeat, Subtask, Task } from '../types'
+import type { DayPlan, LibraryRef, Repeat, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
 import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
@@ -12,7 +12,6 @@ import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
 import type { ReturnOffer } from '../../widgets/day-plan/setAside'
 import { applyLowDayPlan, type LowDayPlan } from '../../widgets/day-plan/lowDay'
-import { parseStepLine } from '../../widgets/day-plan/parse'
 
 export interface RolloverResult {
   /** Tasks moved to the next day, with pushCount incremented. */
@@ -326,65 +325,6 @@ export const dayActions = {
       ]),
     )
     commit({ ...data, days })
-  },
-
-  /**
-   * A step, from one typed line. A trailing length - "Meditation 10 min" -
-   * becomes the step's minutes, the way quick-add reads a task's; see
-   * parseStepLine. The words are the step.
-   */
-  addSubtask(date: string, taskId: string, title: string): void {
-    const parsed = parseStepLine(title)
-    if (!parsed) return
-    const day = dayOf(date)
-    const subtask: Subtask = { id: crypto.randomUUID(), title: parsed.title, done: false }
-    if (parsed.minutes !== undefined) subtask.minutes = parsed.minutes
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t => (t.id === taskId ? { ...t, subtasks: [...(t.subtasks ?? []), subtask] } : t)),
-    }))
-  },
-
-  /**
-   * Sets a step done, and only ever done: the timer that rang out for it
-   * calls this, and a step somebody ticked by hand while the timer ran must
-   * not be unticked by the bell. A step or a task that is gone by then is
-   * nothing to tick, and nothing happens.
-   */
-  completeSubtask(date: string, taskId: string, subtaskId: string): void {
-    const day = getData().days[date]
-    if (!day) return
-    const task = day.tasks.find(t => t.id === taskId)
-    const step = task?.subtasks?.find(s => s.id === subtaskId)
-    if (!task || !step || step.done) return
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t =>
-        t.id === taskId ? { ...t, subtasks: (t.subtasks ?? []).map(s => (s.id === subtaskId ? { ...s, done: true } : s)) } : t,
-      ),
-    }))
-  },
-
-  toggleSubtask(date: string, taskId: string, subtaskId: string): void {
-    const day = dayOf(date)
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t =>
-        t.id === taskId
-          ? { ...t, subtasks: (t.subtasks ?? []).map(sub => (sub.id === subtaskId ? { ...sub, done: !sub.done } : sub)) }
-          : t,
-      ),
-    }))
-  },
-
-  deleteSubtask(date: string, taskId: string, subtaskId: string): void {
-    const day = dayOf(date)
-    commit(withDay(date, {
-      ...day,
-      tasks: day.tasks.map(t =>
-        t.id === taskId ? { ...t, subtasks: (t.subtasks ?? []).filter(sub => sub.id !== subtaskId) } : t,
-      ),
-    }))
   },
 
   setTaskLibraryRef(date: string, taskId: string, ref: LibraryRef | undefined): void {

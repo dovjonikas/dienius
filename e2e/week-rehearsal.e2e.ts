@@ -14,8 +14,8 @@ import { openFreshAt, wednesdayAt } from './app'
  *
  * **The content is generic on purpose.** This repo is public. The structure
  * is the owner's - a rotation across three pairs of days, meals carrying
- * notes, a morning routine with steps, a rest day at the weekend - and none
- * of the words are. See `scripts/no-personal-data.mjs`.
+ * notes, a morning routine written out as one, a rest day at the weekend -
+ * and none of the words are. See `scripts/no-personal-data.mjs`.
  *
  * It also counts presses, which is the number this design is judged on: a
  * week that costs more than a hundred and twenty is a week nobody rebuilds.
@@ -118,13 +118,10 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   await block(page, '21:00', 'Reading')
   await block(page, '22:30', 'Evening close')
 
-  // The morning gets its four steps once, and every day it is on takes them.
+  // The morning gets its four lines once, and every day it is on takes them.
   await openBlock(page, 'Morning routine')
-  for (const step of ['Water', 'Light', 'Meditation 10 min', 'Out of the room']) {
-    await page.getByLabel('Add a step to Morning routine').fill(step)
-    await page.getByLabel('Add a step to Morning routine').press('Enter')
-    presses += 1
-  }
+  await page.getByLabel('Note on Morning routine').fill(['- Water', '- Light', '- Meditation (10 min)', '- Out of the room'].join(String.fromCharCode(10)))
+  presses += 1
 
   // A meal arrives carrying what to make. Three of them, a note each.
   const mealNotes = ['Eggs, oats, fruit.', 'Rice, protein, something green.', 'Soup and bread.']
@@ -138,8 +135,8 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
     presses += 1
   }
 
-  // Seven on the weekdays. Two are the day's key tasks, one carries steps of
-  // its own, one carries a note.
+  // Seven on the weekdays. Two are the day's key tasks, and one carries a
+  // note of its own.
   await block(page, '09:00', 'Deep work', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
   await block(page, '11:00', 'Admin')
   await block(page, '14:00', 'Second block')
@@ -152,10 +149,7 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   await press(page, 'Mark Deep work on Monday as a key task')
   await openBlock(page, 'Practice')
   await press(page, 'Mark Practice on Monday as a key task')
-  await page.getByLabel('Add a step to Practice').fill('Warm up 5 min')
-  await page.getByLabel('Add a step to Practice').press('Enter')
-  presses += 1
-  await page.getByLabel('Note on Practice').fill('Slow first, then up to tempo.')
+  await page.getByLabel('Note on Practice').fill(['Slow first, then up to tempo.', '', '- Warm up (5 min)'].join(String.fromCharCode(10)))
   presses += 1
 
   // One on the weekend only.
@@ -193,7 +187,6 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
       kind: t.kind,
       blocks: t.blocks.length,
       notes: t.blocks.filter((b: { note?: string }) => b.note).length,
-      steps: t.blocks.filter((b: { steps?: unknown[] }) => b.steps?.length).length,
       keys: t.blocks.filter((b: { highlight?: boolean }) => b.highlight).length,
       sundayType: t.weekDays?.['0']?.type,
       trainingA: on('Training A'),
@@ -218,10 +211,9 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   expect(saved.shopping).toEqual([6])
   expect(saved.planTheWeek).toEqual([0])
   expect(saved.sundayType).toBe('rest')
-  // The morning's steps on seven days, the practice's on five.
-  expect(saved.steps).toBe(7 + 5)
-  // Three meals on seven days each, and the practice on five.
-  expect(saved.notes).toBe(21 + 5)
+  // Three meals and the morning on seven days each, and the practice on
+  // five - every one of them a note now that steps are lines in one.
+  expect(saved.notes).toBe(28 + 5)
   // Two key blocks on five weekdays each, and no day over three.
   expect(saved.keys).toBe(10)
 

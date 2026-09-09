@@ -4,7 +4,7 @@ import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { Category, DayType, LibraryList, SleepProfile, Template, TemplateStep } from '../lib/types'
+import type { Category, DayType, LibraryList, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -107,8 +107,6 @@ interface DraftBlock {
   note?: string
   /** Whether its note shows without a press - see TemplateBlock.noteExpanded. */
   noteExpanded?: boolean
-  /** The steps it lands carrying - see TemplateBlock.steps. */
-  steps?: TemplateStep[]
   /** One of the day's three that matter - see TemplateBlock.highlight. */
   highlight?: boolean
 }
@@ -252,10 +250,6 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
 
   function setBlockExpanded(index: number, noteExpanded: boolean) {
     setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, noteExpanded } : b)) }))
-  }
-
-  function setBlockSteps(index: number, steps: TemplateStep[]) {
-    setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, steps } : b)) }))
   }
 
   function setBlockLibrary(index: number, libraryListId: string | undefined) {
@@ -513,7 +507,6 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             )}
             <BlockNoteButton
               note={b.note}
-              steps={b.steps}
               open={noteOpen === i}
               label={b.title}
               onToggle={() => setNoteOpen(open => (open === i ? null : i))}
@@ -524,11 +517,9 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             {noteOpen === i && (
               <BlockNotePanel
                 note={b.note}
-                steps={b.steps}
-                label={b.title}
+                  label={b.title}
                 expanded={b.noteExpanded}
                 onNote={next => setBlockNote(i, next)}
-                onSteps={next => setBlockSteps(i, next)}
                 onExpanded={next => setBlockExpanded(i, next)}
               />
             )}
@@ -687,7 +678,6 @@ export function TemplatesView() {
         libraryListId: b.libraryListId,
         note: b.note,
         noteExpanded: b.noteExpanded,
-        steps: b.steps,
         highlight: b.highlight,
       })),
     })
@@ -777,7 +767,6 @@ export function TemplatesView() {
       // field on every block it was opened on.
       note: b.note?.trim() || undefined,
       noteExpanded: b.noteExpanded || undefined,
-      steps: b.steps?.length ? b.steps : undefined,
       highlight: b.highlight || undefined,
     }))
     if (next.id) {

@@ -1444,7 +1444,7 @@ test('the sentence is not state: importing a file that has it gives an ordinary 
   expect(back.scratch[0].photos).toEqual([{ id: 'p1', width: 10, height: 10 }])
 })
 
-test('a template block carries its note and its steps through a backup', () => {
+test('a template block keeps its note, and its old steps fold into it', () => {
   const data = defaultData()
   data.templates = [
     {
@@ -1457,20 +1457,21 @@ test('a template block carries its note and its steps through a backup', () => {
           time: '12:00',
           title: 'Meal',
           note: 'Rice and whatever green is in the fridge.\n  200 g rice',
-          steps: [
-            { id: 's1', title: 'Rice on' },
-            { id: 's2', title: 'Sit down and eat', minutes: 20 },
-          ],
+          // A v1.1 block, written loosely because the type no longer has
+          // the field - which is the whole thing this test is about.
+          ...({ steps: [{ id: 's1', title: 'Rice on' }, { id: 's2', title: 'Sit down and eat', minutes: 20 }] } as object),
         },
       ],
     },
   ]
   const back = importJson(exportJson(data))
-  expect(back.templates[0].blocks[0].note).toBe('Rice and whatever green is in the fridge.\n  200 g rice')
-  expect(back.templates[0].blocks[0].steps).toEqual([
-    { id: 's1', title: 'Rice on' },
-    { id: 's2', title: 'Sit down and eat', minutes: 20 },
-  ])
+  const block = back.templates[0].blocks[0]
+  // The indent on the second line survives - it is what makes that line
+  // render fixed-width - and the two steps arrive as lines at the end.
+  expect(block.note).toBe(
+    'Rice and whatever green is in the fridge.\n  200 g rice\n\n- Rice on\n- Sit down and eat (20 min)',
+  )
+  expect('steps' in block).toBe(false)
 })
 
 test('a stamped task carries the note it arrived with through a backup', () => {
@@ -1488,7 +1489,7 @@ test('a stamped task carries the note it arrived with through a backup', () => {
           // day's own - see Task.templateNote. A backup that dropped it
           // would make every restored day look written-on.
           templateNote: 'Rice and chicken',
-          subtasks: [{ id: 's1', title: 'Rice on', done: true }],
+          ...({ subtasks: [{ id: 's1', title: 'Rice on', done: true }] } as object),
         },
       ],
     },
@@ -1496,7 +1497,10 @@ test('a stamped task carries the note it arrived with through a backup', () => {
   const back = importJson(exportJson(data))
   const task = back.days['2026-09-01'].tasks[0]
   expect(task.templateNote).toBe('Rice and chicken')
-  expect(task.subtasks).toEqual([{ id: 's1', title: 'Rice on', done: true }])
+  // The list folds into the note on the way in - see lib/stepsToNote.ts -
+  // so the words come back and the list does not.
+  expect(task.note).toBe('Rice and chicken\n\n- Rice on')
+  expect('subtasks' in task).toBe(false)
 })
 
 test('a template block with a malformed step is refused whole, not partly trusted', () => {

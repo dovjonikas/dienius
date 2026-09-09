@@ -5,8 +5,6 @@ import { TaskDetail } from './TaskDetail'
 import { actions, getData, useAppData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { MAX_HIGHLIGHTS } from '../../lib/types'
-import { clockTools, getClockTools } from '../../lib/clockTools'
-
 const DATE = '2026-09-01'
 
 beforeEach(() => {
@@ -133,28 +131,6 @@ test('with the cap already spent, the control says so and cannot be pressed', ()
 })
 
 // --- steps ---------------------------------------------------------------
-
-test('steps are added, counted in the heading, and ticked off', async () => {
-  const user = userEvent.setup()
-  seed()
-  openFirst()
-
-  await user.type(screen.getByLabelText('Add a step'), 'Outline{Enter}')
-  await user.type(screen.getByLabelText('Add a step'), 'Draft{Enter}')
-  expect(screen.getByText('Steps 0/2')).toBeInTheDocument()
-
-  await user.click(screen.getByRole('checkbox', { name: 'Outline' }))
-  expect(tasks()[0].subtasks!.filter(s => s.done)).toHaveLength(1)
-})
-
-test('a step can be removed again', async () => {
-  const user = userEvent.setup()
-  const id = seed()
-  actions.addSubtask(DATE, id, 'Outline')
-  openFirst()
-  await user.click(screen.getByRole('button', { name: 'Remove step Outline' }))
-  expect(tasks()[0].subtasks).toHaveLength(0)
-})
 
 // --- repeat --------------------------------------------------------------
 
@@ -293,23 +269,6 @@ test('the size is stated once: a number with its unit, and the chips', () => {
 // Pressfield - is one block with steps, and a step that takes a while has a
 // timer on it: one tap starts the existing timer for that long, and the
 // step is ticked when it rings out.
-
-test('a step with a length carries a timer, and a tap starts it for that long, for that step', async () => {
-  const user = userEvent.setup()
-  clockTools.resetForTests()
-  const id = seed('Morning ritual')
-  actions.addSubtask(DATE, id, 'Water')
-  actions.addSubtask(DATE, id, 'Meditation 10 min')
-  openFirst()
-
-  expect(screen.queryByRole('button', { name: /timer for Water/ })).toBeNull()
-  await user.click(screen.getByRole('button', { name: 'Start a 10 min timer for Meditation' }))
-
-  const timer = getClockTools().timer
-  expect(timer?.durationMs).toBe(10 * 60_000)
-  const sub = getData().days[DATE].tasks[0].subtasks!.find(s => s.title === 'Meditation')!
-  expect(timer?.step).toEqual({ date: DATE, taskId: id, subtaskId: sub.id })
-})
 
 // --- the link -------------------------------------------------------------
 
