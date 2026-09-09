@@ -568,3 +568,22 @@ test('a block on five days is refused if any one of those days is full', async (
   await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates[0].blocks.filter(b => b.title === 'Everywhere' && b.highlight)).toHaveLength(0)
 }, 30000)
+
+test('Return refuses what Add block refuses, rather than eating the title', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+
+  // The one column that is on by default is the day this runs on.
+  await user.click(screen.getByRole('button', { name: 'Wednesday' }))
+  expect(screen.getByText('No days chosen - nothing to add to.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Add a block' })).toBeDisabled()
+
+  const title = screen.getByPlaceholderText('What happens')
+  await user.type(title, 'Gym{Enter}')
+
+  // It made nothing, which was always true - and it used to clear the field
+  // on its way past, so the press read as having worked.
+  expect(title).toHaveValue('Gym')
+  expect(screen.queryByRole('button', { name: /^Gym[ ,]/ })).not.toBeInTheDocument()
+})

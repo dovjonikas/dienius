@@ -2771,6 +2771,48 @@ textarea::placeholder {
   color: var(--faint);
 }
 
+/* ------------------------------------------------------------------------
+   The field that says Return adds what is in it - views/ReturnField.tsx.
+
+   The wrapper stands where the input stood, so a row that gave the field a
+   flex share still gives it one; everything about how wide it is stays in
+   the row's own rules. */
+.return-field {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.return-field > input { flex: 1 1 auto; width: 100%; }
+
+/* The room the word needs, taken out of the field rather than out of the
+   row. Written against the base rule's own chain because that rule is six
+   :not()s deep, and a class on its own cannot reach past it - the other
+   three overrides of it in this file repeat the chain the same way.
+
+   Measured in the mark's own size rather than in pixels: "Return" is about
+   3.4 times --t-xs wide in this face, so the reservation grows with the text
+   scale instead of the word growing out of a fixed gap at scale l. */
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input).has-return {
+  padding-right: calc(var(--s2) * 2 + var(--t-xs) * 3.4);
+}
+
+.return-mark {
+  position: absolute;
+  right: var(--s2);
+  top: 50%;
+  transform: translateY(-50%);
+  /* The field is what a press here lands on. A word floating over an input
+     that swallows clicks is a control that does nothing. */
+  pointer-events: none;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 /* The two classes excluded above, given back everything that is about the
    text rather than about the box: the colour, the family, the figures. Each
    control still draws its own frame - see `.time-stepper` and

@@ -15,6 +15,7 @@ import { formatDuration, windowFor } from './capacity'
 import { stepToQuarter, suggestSlot } from './autoSlot'
 import { DURATION_CHOICES, readLastDuration, rememberDuration } from './quickAddPrefs'
 import { CategoryEdit, CategoryQuickAdd } from '../../views/CategoryQuickAdd'
+import { ReturnField } from '../../views/ReturnField'
 
 /**
  * Quick-add: a time control, a line of text, and a duration control.
@@ -348,17 +349,22 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
           </div>
         )}
 
-        <input
-          className="quick-add"
-          /* Marked rather than reached by a ref chain from the shell: the N
-             shortcut lives at the app root and has no business knowing this
-             view's internals - see App.tsx. */
-          data-quick-add=""
-          placeholder={PLACEHOLDERS[captureMode]}
-          value={input}
-          onChange={e => handleInputChange(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAdd()}
-        />
+        {/* The field says Return sends it - see views/ReturnField.tsx. Where
+            Return sends it is what the mode toggle above already answers. */}
+        <ReturnField>
+          <input
+            className="quick-add has-return"
+            /* Marked rather than reached by a ref chain from the shell: the N
+               shortcut lives at the app root and has no business knowing this
+               view's internals - see App.tsx. */
+            data-quick-add=""
+            placeholder={PLACEHOLDERS[captureMode]}
+            aria-keyshortcuts="Enter"
+            value={input}
+            onChange={e => handleInputChange(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+        </ReturnField>
 
         {/* The one duration control - DurationControl.tsx - opening on the
             length remembered from last time. Four chips here rather than

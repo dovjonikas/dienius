@@ -6,6 +6,7 @@ import { readLastTrack, rememberLastTrack } from '../lib/libraryPrefs'
 import { useClickAway } from '../lib/useClickAway'
 import { Explain } from './Explain'
 import { CountStepInput } from './CountStepInput'
+import { ReturnField } from './ReturnField'
 
 /**
  * The library's add line, built the way quick-add is: the words, and two
@@ -95,19 +96,23 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
           narrow screen broke the line between the unit and the count - two
           halves of one answer, on two lines, with the field's tail between
           them. As one group they wrap together or not at all. */}
-      <input
-        value={draft}
-        data-tour="library-add"
-        placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
-        aria-label={`Add to ${list.name}`}
-        onChange={e => setDraft(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            add()
-          }
-        }}
-      />
+      <ReturnField>
+        <input
+          className="has-return"
+          value={draft}
+          data-tour="library-add"
+          placeholder={`Add - try "Something good, 12 ${unitPlural(list)}"`}
+          aria-label={`Add to ${list.name}`}
+          aria-keyshortcuts="Enter"
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              add()
+            }
+          }}
+        />
+      </ReturnField>
       <div className="library-add-controls">
       {/* The unit and the number are one answer - "12 chapters" - so they
           are one control with a hairline between them rather than two boxes

@@ -11,6 +11,7 @@ import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
+import { ReturnField } from './ReturnField'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 import { blocksAsTasks, type DrawableBlock } from './templateDay'
@@ -552,12 +553,16 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                block that would actually be added rather than a marker. */
             ghost={{ key: GHOST_KEY, minutes: parseMinutesInput(blockMinutes), color: categoryColor(blockCategory, categories) }}
           />
-          <input
-            placeholder="What happens"
-            value={blockTitle}
-            onChange={e => setBlockTitle(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addBlock()}
-          />
+          <ReturnField>
+            <input
+              className="has-return"
+              placeholder="What happens"
+              aria-keyshortcuts="Enter"
+              value={blockTitle}
+              onChange={e => setBlockTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addBlock()}
+            />
+          </ReturnField>
           <DurationControl
             minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
             allowEmpty
@@ -619,11 +624,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             Ongoing
           </button>
         </Explain>
-        {/* The gesture that halves the cost of building a week, and nothing
-            said so: Return in the title adds the block, the same way Enter
-            adds a task on the day. Measured at twenty-two presses across one
-            week - see the rehearsal walk. */}
-        <button className="btn-secondary" data-tip="Return in the title does this too" onClick={addBlock}>
+        {/* The button stays, and it is not a double of the mark in the title
+            field: the mark is for the hand already on the keys, this is the
+            answer for anybody who has never tried Return. What went with the
+            mark is the tooltip that used to say the same sentence here, which
+            needed a pointer resting on it to say anything at all -
+            CONVENTIONS 23. */}
+        <button className="btn-secondary" onClick={addBlock}>
           Add a block
         </button>
         </div>

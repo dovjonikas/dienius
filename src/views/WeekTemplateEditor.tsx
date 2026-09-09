@@ -15,6 +15,7 @@ import { TimePicker } from './TimePicker'
 import { BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
+import { ReturnField } from './ReturnField'
 import { WeekTemplateGrid } from './WeekTemplateGrid'
 
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
@@ -260,8 +261,13 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
 
   function addBlocks() {
     const title = blockTitle.trim()
-    if (!title) return
     const targets = addDays
+    // The day switches can all be off, and then there is nowhere to put it.
+    // Add block is disabled in that state and Return was not: it added
+    // nothing and cleared the title anyway, so a press that looked like it
+    // had worked lost what had just been typed. Return does exactly what the
+    // button does, including refusing.
+    if (!title || targets.length === 0) return
     // A group only exists where there is something to group. One block on one
     // day is a block, and giving it a group of one would mean the edit scope
     // question appears for something that has nowhere else to apply.
@@ -624,13 +630,17 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                the week's other six say nothing about it. */
             ghost={{ key: ghostKeyFor(activeDay), minutes: parseMinutesInput(blockMinutes), color: categoryColor(blockCategory, data.categories) }}
           />
-          <input
-            ref={titleRef}
-            placeholder="What happens"
-            value={blockTitle}
-            onChange={e => setBlockTitle(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addBlocks()}
-          />
+          <ReturnField>
+            <input
+              ref={titleRef}
+              className="has-return"
+              placeholder="What happens"
+              aria-keyshortcuts="Enter"
+              value={blockTitle}
+              onChange={e => setBlockTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addBlocks()}
+            />
+          </ReturnField>
           <DurationControl
             minutes={blockMinutes.trim() === '' ? undefined : Number(blockMinutes)}
             allowEmpty
@@ -765,10 +775,13 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           </p>
           </div>
 
+          {/* The tooltip that said Return does this too has gone to the title
+              field's own edge, where it is readable without a pointer resting
+              on anything - CONVENTIONS 23. The button is not its double: it is
+              the answer for somebody who has never tried Return. */}
           <button
             className="btn-secondary"
             disabled={!blockTitle.trim() || addDays.length === 0}
-            data-tip="Return in the title does this too"
             onClick={addBlocks}
           >
             Add a block
