@@ -7634,6 +7634,17 @@ button.danger:focus-visible {
    shelf. */
 /* Where a list is used, under its own name. One quiet line, and only when
    something points at it - see listUsedBy. */
+/* What a bound block will actually put on a day, under the control that
+   names the list. Its own line across the row, the way a block's note panel
+   takes one, because it is a sentence rather than a control and squeezing it
+   between two would make it neither. */
+.block-binding {
+  flex: 1 0 100%;
+  margin: var(--s1) 0 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
 .library-list-used {
   margin: 0;
   padding: 0 var(--s3) var(--s2) calc(var(--s6) + var(--s2));

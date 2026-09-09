@@ -17,6 +17,7 @@ import {
   suggestShortForm,
   unitPlural,
   unitShort,
+  bindingLine,
   parsePastedItems,
   upNext,
 } from './library'
@@ -436,4 +437,30 @@ test('ten lines with two blank and one sized comes out as the brief says', () =>
   expect(duplicates).toBe(0)
   expect(items[2]).toEqual({ title: 'Three', total: 34 })
   expect(items.map(i => i.title)).toEqual(['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'])
+})
+
+// What a bound block will actually carry, said before the editor is closed.
+
+test('a bound list says which item will land, with its pace when it has one', () => {
+  const list: LibraryList = {
+    id: 'l1',
+    name: 'Shelf',
+    unit: 'chapter',
+    items: [
+      { id: 'a', title: 'First', total: 10, progress: 10, finished: '2026-09-01' },
+      { id: 'b', title: 'Second', pace: 'one a night' },
+      { id: 'c', title: 'Third' },
+    ],
+  }
+  expect(bindingLine(list)).toBe('Next: Second - one a night')
+  expect(bindingLine({ ...list, items: [{ id: 'c', title: 'Third' }] })).toBe('Next: Third')
+})
+
+test('an empty list says what will happen rather than leaving it to be discovered', () => {
+  // Not an error: the block stamps its own title, which is what it has always
+  // done. What was missing is anybody being told.
+  expect(bindingLine({ id: 'l1', name: 'Shelf', unit: 'chapter', items: [] })).toBe(
+    'Nothing going in Shelf, so the block keeps its own name',
+  )
+  expect(bindingLine(undefined)).toBeUndefined()
 })

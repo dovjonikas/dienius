@@ -842,3 +842,33 @@ test('taking one off makes room for another', async () => {
   const marked = getData().templates[0].blocks.filter(b => b.highlight).map(b => b.title)
   expect(marked).toEqual(['Morning', 'Deep work', 'Reading'])
 }, 20000)
+
+// Binding a block to a list says what will land on the day - from v2.16.
+
+test('a bound block says which item will arrive, before the editor is closed', async () => {
+  const user = userEvent.setup()
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  actions.addLibraryItemShaped(listId, { title: 'First one' })
+  actions.addTemplate({ name: 'Working day', color: '#8ab6f9', blocks: [{ time: '21:00', title: 'Reading' }] })
+
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Working day' }))
+  await user.selectOptions(screen.getByRole('combobox', { name: 'What Reading draws from' }), listId)
+
+  expect(screen.getByText('Next: First one')).toBeInTheDocument()
+})
+
+test('an empty list says the block will keep its own name rather than leaving it to be found', async () => {
+  const user = userEvent.setup()
+  actions.addLibraryList({ name: 'Shelf', unit: 'chapter' })
+  const listId = getData().library[0].id
+  actions.addTemplate({ name: 'Working day', color: '#8ab6f9', blocks: [{ time: '21:00', title: 'Reading' }] })
+
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Working day' }))
+  await user.selectOptions(screen.getByRole('combobox', { name: 'What Reading draws from' }), listId)
+
+  // Deliberate behaviour, said out loud rather than discovered by stamping.
+  expect(screen.getByText('Nothing going in Shelf, so the block keeps its own name')).toBeInTheDocument()
+})

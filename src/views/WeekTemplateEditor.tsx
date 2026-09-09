@@ -15,6 +15,7 @@ import { TimePicker } from './TimePicker'
 import { BlockNotePanel } from './BlockNote'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
+import { bindingLine } from '../lib/library'
 import { ReturnField } from './ReturnField'
 import { WeekTemplateGrid } from './WeekTemplateGrid'
 
@@ -691,6 +692,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 </option>
               ))}
             </select>
+          )}
+          {/* What the block being added would actually carry onto a day. See
+              bindingLine: a list is not a book, and the control above names a
+              list. */}
+          {blockLibraryListId && (
+            <p className="block-binding">{bindingLine(data.library.find(l => l.id === blockLibraryListId))}</p>
           )}
           <Explain id="ongoing">
             <button

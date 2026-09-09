@@ -470,3 +470,24 @@ export function listUsedBy(templates: Pick<Template, 'id' | 'name' | 'blocks'>[]
   }
   return uses
 }
+
+/**
+ * What a bound block will actually put on the next day it stamps.
+ *
+ * The binding has worked since v1.9 and said nothing about itself: the
+ * editor's control names a list, and a list is not a book. What somebody
+ * wants to know before closing the editor is which book, and the answer is
+ * one line away - `currentItem`, the same function `applyStamps` calls.
+ *
+ * **The empty case is an answer, not an error.** A list with nothing going in
+ * it resolves to nothing and the block stamps its own title, which is
+ * deliberate and has been true since the binding existed. It has simply never
+ * been said, so somebody who bound an empty list saw a block that ignored
+ * them. Saying it is the whole of the fix.
+ */
+export function bindingLine(list: LibraryList | undefined): string | undefined {
+  if (!list) return undefined
+  const item = currentItem(list)
+  if (!item) return `Nothing going in ${list.name}, so the block keeps its own name`
+  return item.pace ? `Next: ${item.title} - ${item.pace}` : `Next: ${item.title}`
+}

@@ -11,6 +11,7 @@ import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
+import { bindingLine } from '../lib/library'
 import { ReturnField } from './ReturnField'
 import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
@@ -515,6 +516,14 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             <button className="block-remove" aria-label={`Remove ${b.title}`} onClick={() => removeBlock(i)}>
               &times;
             </button>
+            {/* What the control above it will actually put on a day. A list is
+                not a book, and the control names a list - so somebody binding
+                one had to stamp a day to find out what they had done. The
+                empty case is an answer rather than an error and says so; see
+                bindingLine. */}
+            {b.libraryListId && (
+              <p className="block-binding">{bindingLine(libraryLists.find(l => l.id === b.libraryListId))}</p>
+            )}
             {noteOpen === i && (
               <BlockNotePanel
                 note={b.note}
