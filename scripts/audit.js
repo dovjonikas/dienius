@@ -392,6 +392,47 @@
     return out
   }
 
+  /**
+   * A scroller whose content is wider than it is.
+   *
+   * "Nothing scrolls horizontally, ever" - CONVENTIONS 4 - and the check
+   * written beside that sentence is `documentElement.scrollWidth >
+   * clientWidth`, which only sees it when the *page* is the thing that
+   * scrolls. A scroller inside the page absorbs the overflow instead and the
+   * document stays exactly as wide as the window, so the rule was unenforced
+   * everywhere it is most likely to break.
+   *
+   * Found by the v2.17 hunt's hundred-task day: one two-hundred-character
+   * title with no spaces in it measured 2014px in a 310px column and gave the
+   * task list 1753px of sideways scroll, painting over everything to its
+   * right. `hScroll` read zero throughout.
+   *
+   * Reports what is forcing it wide as well as which scroller, because the
+   * scroller is never the thing to fix.
+   */
+  const sidewaysDefects = () => {
+    const out = []
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el)
+      if (!/auto|scroll/.test(cs.overflowX)) continue
+      const over = el.scrollWidth - el.clientWidth
+      if (over <= 1) continue
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 || r.height === 0) continue
+      const widest = [...el.querySelectorAll('*')]
+        .map(c => ({ el: c, w: c.getBoundingClientRect().width }))
+        .sort((a, b) => b.w - a.w)[0]
+      out.push({
+        sel: sig(el),
+        over,
+        detail: widest
+          ? `${sig(widest.el)} is ${Math.round(widest.w)}px in ${el.clientWidth}px "${(widest.el.textContent || '').trim().slice(0, 24)}"`
+          : `${over}px of it`,
+      })
+    }
+    return out
+  }
+
   /** @param {string} label */
   window.__audit = function audit(label) {
     clipCache = new Map()
@@ -544,6 +585,7 @@
     out.rings = ringDefects()
     out.chosen = chosenDefects()
     out.offCentre = offCentreDefects()
+    out.sideways = sidewaysDefects()
     out.mismatched = mismatchedDefects()
     return out
   }
@@ -551,7 +593,7 @@
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length, sideways: a.sideways.length }
   }
 
   /** @param {string} tab */

@@ -105,7 +105,7 @@ async function press(page, name) {
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** What scripts/audit.js puts on the page's own window. */
-/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], mismatched: { sel: string, detail: string }[] }} Audit */
+/** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], sideways: { sel: string, over: number, detail: string }[], mismatched: { sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown> }} Screen */
 
@@ -430,6 +430,7 @@ for (const run of runs) {
     for (const c of a.chosen) found(where, 'the chosen one looks unchosen', `${c.sel} "${c.text}" is drawn exactly like "${c.like}" beside it, though ${c.attr} says otherwise`)
     for (const o of a.offCentre) found(where, 'not centred in a row that centres', `${o.sel} > ${o.child} "${o.text}" sits ${o.off > 0 ? o.off + 'px low' : -o.off + 'px high'}`)
     for (const m of a.mismatched) found(where, 'two heights in one row', `${m.sel}: ${m.detail}`)
+    for (const s of a.sideways) found(where, 'a scroller that goes sideways', `${s.sel} +${s.over}px: ${s.detail}`)
 
     // The screens that must fit - CONVENTIONS section 4. The day view's own
     // rule is for the wide breakpoint only: on a phone it scrolls

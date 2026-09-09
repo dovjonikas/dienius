@@ -3929,6 +3929,16 @@ select:focus {
   line-height: 1.35;
   color: var(--text);
   min-width: 0;
+  /* A title with spaces in it already wraps and the row grows, which is the
+     answer this list gives to a long name. A title with no spaces in it -
+     a URL pasted into quick-add, which is the ordinary way to get one - had
+     no break to wrap at, so a two hundred character one measured 2014px in
+     a 310px column: painted over everything to its right, cut mid-character
+     with no ellipsis, and giving the task list 1753px of sideways scroll.
+     The document did not scroll, so `hScroll` never saw it. Same rule as
+     the North picture and a scratch note, and it changes nothing for a
+     title that has somewhere else to break. */
+  overflow-wrap: anywhere;
   transition: opacity var(--dur) var(--ease);
 }
 

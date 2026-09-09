@@ -635,8 +635,16 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                 </select>
               </div>
               {/* What this block would actually put on a day. See bindingLine:
-                  a list is not a book, and the control above names a list. */}
-              {noteBlock.libraryListId && (
+                  a list is not a book, and the control above names a list.
+                  Keyed on the list being found rather than on the id being
+                  set, because the add row's id is always one the person just
+                  chose and this one is read off a saved block. Deleting a
+                  list clears it from every block that pointed at it, so a
+                  dangling id only arrives on an imported file - and there it
+                  would render an empty paragraph, which reads as something
+                  failing rather than as nothing to say. The block stamps its
+                  own title in that case, which is already the promise. */}
+              {data.library.find(l => l.id === noteBlock.libraryListId) && (
                 <p className="wt-note-binding">
                   {bindingLine(data.library.find(l => l.id === noteBlock.libraryListId))}
                 </p>

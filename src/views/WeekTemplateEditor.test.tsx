@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
 import { daysFor, WeekPreview } from './WeekTemplateEditor'
@@ -674,4 +674,26 @@ test('the panel offers no binding at all while there is no library to bind to', 
 
   await openBlock(user, 'Wednesday', 'Reading')
   expect(screen.queryByLabelText('Library list')).not.toBeInTheDocument()
+})
+
+test('a block pointing at a list that is not there says nothing, rather than an empty line', async () => {
+  const user = userEvent.setup()
+  const list = await withList('MIND')
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+  await user.selectOptions(screen.getByLabelText('Library list'), 'From MIND')
+  expect(screen.getByText('Next: Deep Work')).toBeInTheDocument()
+
+  // Deleting a list clears it off every block that pointed at it, so this is
+  // the imported-file case rather than one anybody can reach by pressing
+  // things: the id survives and the list does not.
+  await act(async () => {
+    actions.deleteLibraryList(list.id)
+  })
+  expect(screen.queryByLabelText('Library list')).not.toBeInTheDocument()
+  expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
+  expect(document.querySelector('.wt-note-binding')).toBeNull()
 })
