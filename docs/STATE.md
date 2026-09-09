@@ -303,6 +303,28 @@ v2.8, v2.7, v2.6, v2.5, v2.4, v2.3 and v2.2, commit by commit. The debts
 table further down has gained one line and lost none: `docs/AUDIT-v2.9.md`
 names what the two old ones would cost.
 
+### The v2.16 wave: what was already there, before a line was written
+
+The wave is mostly about joining up things that already exist, so the first
+thing it did was find out which of them do. Written down before any code
+changed, because "add a way to reorder a list" and "the list already reorders
+three ways and none of them is a button" are different pieces of work, and
+only one of them is honest.
+
+| Asked | What was actually there |
+|---|---|
+| `TemplateBlock.libraryListId`, and how a stamp resolves the item | **Whole and working.** `boundTo` in `stamping.ts` calls `currentItem`, which is the first item in the list that is not finished, *in array order*. The stamped task takes that item's title and a `libraryRef` pointing at it. An empty list, or one where everything is finished, resolves to nothing and the task keeps the block's own title - deliberate, and never said anywhere |
+| Whether a block editor can pick a list at all | **Yes, in both editors**, as a bare select reading "Nothing" or "From Books", hidden entirely while the library is empty. Reachable, and mute: it says which list, and nothing about what will land on the day |
+| Whether a list can be reordered | **Three ways, and none of them a button.** A grip that drags with a pointer or a finger (`useListReorder`), and the same grip taking ArrowUp and ArrowDown from a keyboard. No up and down controls, which is the one way that is neither a gesture nor a key |
+| Whether more than one item can be added at once | **No.** `LibraryAddLine` is one title, one press, and that is the whole of it |
+| What `upNext` does, and where it shows | Returns the item finished *today* and the one the list moved on to, or nothing. Drawn as an offer line above the loud card in the list, and as "finished - next is X" on the bound task's card. Bounded to today on purpose: it is a moment, not a state |
+| Whether the item a block will use is marked | **It is the loud card**, first among the unfinished, and the list's own doc comment says so. What is not said is *why* it is loud - that it is the one tomorrow's block will take |
+
+So of the four stages that followed, one built something genuinely absent
+(pasting many at once), one added the missing third way to a feature that
+already had two, and two said out loud what the app had been doing silently
+since v1.9.
+
 ### The v2.15 wave: what the timer sounds like
 
 The owner runs one timer for two jobs that want opposite sounds. Ten minutes
