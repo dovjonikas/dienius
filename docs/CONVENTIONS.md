@@ -532,9 +532,10 @@ npx vitest run
 npm run build
 npm run e2e
 npm run sweep          # against `npm run preview` of that build
+npm run privacy        # nothing of the owner's own in a tracked file
 ```
 
-All five clean. Then the phone checklist in [`STATE.md`](STATE.md), then
+All six clean. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass; the browser tests run in
 their own job beside that and never hold a release. The same workflow runs

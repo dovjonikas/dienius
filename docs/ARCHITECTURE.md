@@ -214,7 +214,7 @@ src/
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, load/save, migrations, export/import
     validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
-    store.ts           the facade: `actions` spread from the ten areas below core.ts
+    store.ts           the facade: `actions` spread from the eleven areas below core.ts
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
@@ -293,6 +293,10 @@ src/
     north/             the North window: the picture, the goals, what deserves them, the rules - and Compose, which edits all four
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
+    BlockNote.tsx      a template block's note and steps, in either editor
+    NoteLines.tsx      a note as the lines somebody typed - no markdown engine
+    blockHighlights.ts whether a block may be KEY, and what to say when it may not
+    CategoryQuickAdd   a category made from the swatch row rather than in Settings
     Explain            the sentence behind a term, on a rest, a hold or a focus
     TipLayer           the one tooltip, drawn in the window under whatever control carries data-tip
     DayCard            the whole of a day, without leaving the month: opened by a press, and where a day is ticked, opened, read or cleared
@@ -342,6 +346,9 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   week.e2e.ts          a block dragged onto another day, with a real mouse
   week-template.e2e.ts a week built, dragged between columns, saved and stamped
   data.e2e.ts          export, erase, import; two snapshot restores; an .ics file over the day
+  blocknote.e2e.ts     a note written into a block, read on the day it lands - and on a phone
+  week-rehearsal.e2e.ts a whole week built through the screen, in presses
+  soak.e2e.ts          seven days of use on that week, checked after each one
 playwright.config.ts   the two projects, and the preview server they run against
 scripts/
   generate-sw.mjs      after the build: the service worker's cache name and precache list
@@ -349,6 +356,8 @@ scripts/
   sweep.mjs            `npm run sweep`: every screen at three sizes in both themes, measured
   audit.js             the measuring pass sweep.mjs injects into the page - see tsconfig for why it is not typechecked
   sample-day.js        one realistic day in localStorage, for the sweep and for looking at the app with something in it
+  no-personal-data.mjs `npm run privacy`: refuses the owner's own words in a tracked file, from a hashed list
+  personal-terms.json  that list, as hashes - a readable one in a public repo would be the leak
 ```
 
 ### The day view
