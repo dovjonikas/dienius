@@ -72,3 +72,51 @@ test('the door keeps its target on a phone', async ({ page }) => {
   expect(box.width).toBeGreaterThanOrEqual(44)
   expect(box.height).toBeGreaterThanOrEqual(44)
 })
+
+test('the door is on the title line, and pressing it does not open the editor', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await quickAdd(page, 'Spanish')
+
+  await card(page, 'Spanish').getByRole('button', { name: /^More actions for Spanish/ }).click()
+  await page.getByRole('button', { name: /Details/ }).click()
+  const sheet = page.getByRole('dialog')
+  // Without a scheme, which is what somebody actually types.
+  await sheet.getByLabel('Link (optional)').fill('localhost:8080/spanish')
+  await sheet.getByLabel('Link (optional)').blur()
+  await sheet.getByRole('button', { name: 'Done' }).click()
+
+  const stored = await page.evaluate(() => {
+    const data = JSON.parse(localStorage.getItem('dienius:data') || '{}')
+    return Object.values(data.days as Record<string, { tasks: { link?: string }[] }>)[0]?.tasks[0]?.link
+  })
+  expect(stored).toBe('http://localhost:8080/spanish')
+
+  // On the title's line, not among the marks under it.
+  const door = card(page, 'Spanish').getByRole('link', { name: /Open Spanish at localhost/ })
+  const inTitle = await door.evaluate(el => Boolean(el.closest('.task-title-line')))
+  expect(inTitle).toBe(true)
+  expect(await card(page, 'Spanish').locator('.task-meta .task-link').count()).toBe(0)
+
+  // And pressing it opens the address, not the task.
+  const opened = page.waitForEvent('popup')
+  await door.click()
+  await (await opened).close()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('an address this cannot open says so instead of saving nothing', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await quickAdd(page, 'Spanish')
+
+  await card(page, 'Spanish').getByRole('button', { name: /^More actions for Spanish/ }).click()
+  await page.getByRole('button', { name: /Details/ }).click()
+  const sheet = page.getByRole('dialog')
+  await sheet.getByLabel('Link (optional)').fill('not an address')
+  await sheet.getByLabel('Link (optional)').blur()
+
+  await expect(sheet.getByText(/not an address this can open/i)).toBeVisible()
+  // Typing again takes the message away rather than leaving it under a field
+  // somebody is already fixing.
+  await sheet.getByLabel('Link (optional)').fill('localhost:8080')
+  await expect(sheet.getByText(/not an address this can open/i)).toHaveCount(0)
+})

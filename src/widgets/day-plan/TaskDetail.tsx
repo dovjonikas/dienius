@@ -68,6 +68,10 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
   const [title, setTitle] = useState(task.title)
   const [note, setNote] = useState(task.note ?? '')
   const [link, setLink] = useState(task.link ?? '')
+  // Said under the field when a typed address will not save, and cleared by
+  // the next keystroke. Silence was the old answer, and the owner read it as
+  // the field being broken rather than the address being wrong.
+  const [linkError, setLinkError] = useState(false)
   // Which of the two a change means, held while the sheet is open. Defaults
   // to the series, because that is what somebody who set up a repeat almost
   // always means - the exception is the exception.
@@ -447,13 +451,27 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               inputMode="url"
               placeholder="localhost:8080/spanish"
               value={link}
-              onChange={e => setLink(e.target.value)}
+              aria-describedby={linkError ? `${titleId}-link-error` : undefined}
+              aria-invalid={linkError || undefined}
+              onChange={e => {
+                setLink(e.target.value)
+                setLinkError(false)
+              }}
               onBlur={() => {
                 const parsed = link.trim() === '' ? undefined : parseLink(link)
-                if (link.trim() !== '' && parsed === undefined) return
+                if (link.trim() !== '' && parsed === undefined) {
+                  setLinkError(true)
+                  return
+                }
+                setLinkError(false)
                 actions.setTaskLink(date, task.id, parsed)
               }}
             />
+            {linkError && (
+              <span id={`${titleId}-link-error`} className="setting-state is-warning">
+                That is not an address this can open. A host, or a whole address, both work.
+              </span>
+            )}
           </div>
 
           <div className="task-detail-field">

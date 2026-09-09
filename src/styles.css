@@ -3369,7 +3369,15 @@ select:focus {
     "meta  focus menu";
 }
 
-.task-active .task-focus-button { grid-area: focus; }
+/* The wrapper, not the button. Focus is wrapped in <Explain>, so the
+   wrapper is the grid item and the area named on the button inside it did
+   nothing at all - the wrapper landed in an implicit third row, and the
+   button was centred ten pixels above the row it looked like it was in. */
+.task-active .task-row > .explain {
+  grid-area: focus;
+  align-self: center;
+  justify-self: end;
+}
 
 /* The planned size is hidden on the running card only - "1h30" and
    "48 min left" are the same fact told twice, and only one of them is worth
@@ -14596,7 +14604,25 @@ main:has(.week) > .calendar {
 
 /* In the task card's meta line, which is a row of small marks: the icon sits
    with them at their own size rather than towering over them. */
-.task-link { margin-left: 0; }
+/* The title and its door as one thing. .task-check is a flex row, so two
+   separate items could never sit on one line together - the icon was
+   centred against the whole wrapped title instead of following its last
+   word. One inline item, and the non-breaking space inside it does the
+   binding. */
+.task-title-line { flex: 1; min-width: 0; }
+
+/* On the title line, sized against the title rather than in pixels, so it
+   grows with the text scale. The negative margin keeps the 44px target
+   without the icon pushing the line taller than the words - see .link-out,
+   which this only adjusts. */
+.task-link {
+  margin: calc((var(--touch) - 1.15em) / -2);
+  width: var(--touch);
+  height: var(--touch);
+  vertical-align: middle;
+}
+
+.task-link svg { width: 1.15em; height: 1.15em; }
 
 /* At the end of a library row, after the count, where the hover actions
    appear. Never hidden with them: a link is a property of the item and reads

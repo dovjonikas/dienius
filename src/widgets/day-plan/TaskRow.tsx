@@ -294,6 +294,7 @@ export function TaskRow({
               was a spotlight around nothing. Clicking the box toggles it
               through the label exactly as a finger would. */}
           <span className="check" aria-hidden="true" data-tour="task-check" />
+          <span className="task-title-line">
           {selectable ? (
             <button
               type="button"
@@ -307,6 +308,18 @@ export function TaskRow({
           ) : (
             <span className="task-title">{task.title}</span>
           )}
+          {/* The door, on the title's own line rather than among the marks
+              below it. The meta row is facts about the task - when, how long,
+              what kind - and this is a thing you do. Bound to the last word
+              with a non-breaking space so a title that wraps never leaves the
+              icon alone on a line of its own. */}
+          {link && (
+            <>
+              {' '}
+              <LinkOut link={link} title={task.title} className="task-link" />
+            </>
+          )}
+          </span>
         </label>
         <div className="task-meta">
           {task.time && <span className="task-time">{task.time}</span>}
@@ -337,7 +350,6 @@ export function TaskRow({
           {/* A control among marks, which is why it is an anchor with its own
               target rather than another chip: pressing the card still means
               what it meant, and this means the other thing. */}
-          {link && <LinkOut link={link} title={task.title} className="task-link" />}
           {/* A press, not a label. It said "note" and could not be pressed,
               so the only way to what it named was the actions menu and then
               Details - three presses to read one line, on the card already
