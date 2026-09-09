@@ -1931,10 +1931,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
      component, which knows the lane count and nothing else. Inline-size
      containment makes the box its own stacking context, so the z-index is
      said here as CONVENTIONS section 4 asks of every containment boundary:
-     zero, which keeps the anchors in document order under the now line
-     that is painted after them. */
+     one, which lifts the anchors over the now line rather than under it -
+     see .timeline-now-line for why that swapped. */
   container-type: inline-size;
-  z-index: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   /* Top-aligned, not centered: a tall anchor's own title otherwise sits
@@ -2341,6 +2341,19 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    tap. Position updates once a minute from TimelineGrid.tsx's own interval,
    never continuously, so there is no transform or transition on "top" for
    prefers-reduced-motion to disable. */
+/* Behind the blocks, not over them.
+
+   It was painted after them so it would read as one continuous line across
+   the day, and on a tall block that is fine - the anchor pins its own text
+   to the top precisely so the line crosses empty space rather than words.
+   A short block has no empty space: its title and its time are the top line,
+   and the line went straight through both. That block is the one that is
+   happening now, so its time is the one time on the day worth reading, and
+   it was the only one struck out.
+
+   Nothing is lost by putting the line under it. The running block already
+   wears a ring in this same ink, which says the same thing in the same
+   colour, and the dot in the gutter still marks the hour. */
 .timeline-now-line {
   position: absolute;
   left: var(--timeline-gutter);
@@ -2348,7 +2361,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   height: 1.5px;
   background: var(--mark);
   pointer-events: none;
-  z-index: 3;
+  z-index: 0;
 }
 
 .timeline-now-dot {
