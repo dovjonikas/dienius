@@ -292,6 +292,98 @@
     return out
   }
 
+  /**
+   * A child of a row that centres its children, which is nevertheless not
+   * centred in it.
+   *
+   * The owner's screenshot of the week editor's note header found this: a
+   * Close eleven pixels above the two buttons beside it, because
+   * `.setting-quiet` carries `align-self: flex-start` for the column it was
+   * written for, and `align-self` on a child beats `align-items` on its row.
+   * Nothing in this repo could see it - jsdom has no layout, and the shape
+   * is not text cut off or a control covered, so the sweep walked past it at
+   * every size for six versions.
+   *
+   * Measured against the row's *content* box: a header with sixteen pixels
+   * of padding above and eight below centres its children in what is left,
+   * and comparing with the border box calls every one of them off centre.
+   *
+   * A wrapping row is skipped: on a second line a child is centred in its
+   * own line, not in the row, and every one of them reads as a finding.
+   */
+  const offCentreDefects = () => {
+    const out = []
+    for (const row of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(row)
+      if (!/flex/.test(cs.display) || cs.flexDirection.startsWith('column')) continue
+      if (cs.alignItems !== 'center' || cs.flexWrap === 'wrap') continue
+      const rr = row.getBoundingClientRect()
+      if (rr.height === 0 || rr.height > 120) continue
+      const top = rr.top + parseFloat(cs.paddingTop) + parseFloat(cs.borderTopWidth)
+      const bottom = rr.bottom - parseFloat(cs.paddingBottom) - parseFloat(cs.borderBottomWidth)
+      const centre = (top + bottom) / 2
+      const kids = [...row.children].filter(c => {
+        const r = c.getBoundingClientRect()
+        return r.height > 0 && r.width > 0 && getComputedStyle(c).position !== 'absolute'
+      })
+      if (kids.length < 2) continue
+      for (const c of kids) {
+        const r = c.getBoundingClientRect()
+        const off = r.top + r.height / 2 - centre
+        if (Math.abs(off) <= 1.5) continue
+        out.push({
+          sel: sig(row),
+          child: sig(c),
+          text: (c.textContent || '').trim().slice(0, 24),
+          off: Math.round(off),
+        })
+      }
+    }
+    return out
+  }
+
+  /**
+   * Two controls in one row, drawn as boxes, at different heights.
+   *
+   * `.block-add-marks` was fixed for exactly this in v2.9 - "everything here
+   * was between 28px and 44px, which put three baselines in one row" - and
+   * the fix was written for that one row rather than found everywhere. The
+   * week editor's note header still had a 44px toggle beside a 38px button.
+   *
+   * Only boxed controls are compared. A quiet word - a text button with no
+   * background and no border - is deliberately the height of its own text,
+   * and holding it to the pill beside it would report a shape the app means.
+   */
+  const mismatchedDefects = () => {
+    const boxed = el => {
+      if (el.tagName !== 'BUTTON' && el.getAttribute('role') !== 'button') return false
+      if (!(el.textContent || '').trim()) return false
+      const cs = getComputedStyle(el)
+      const bg = cs.backgroundColor
+      const painted = bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent'
+      return painted || parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderBottomWidth) > 0
+    }
+    const out = []
+    for (const row of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(row)
+      if (!/flex/.test(cs.display) || cs.flexDirection.startsWith('column')) continue
+      const kids = [...row.children].filter(c => {
+        const r = c.getBoundingClientRect()
+        return r.height > 0 && r.width > 0 && boxed(c)
+      })
+      if (kids.length < 2) continue
+      const heights = kids.map(c => Math.round(c.getBoundingClientRect().height))
+      const low = Math.min(...heights)
+      const high = Math.max(...heights)
+      if (high - low <= 2) continue
+      out.push({
+        sel: sig(row),
+        detail: kids.map((c, i) => '"' + (c.textContent || '').trim().slice(0, 14) + '" ' + heights[i] + 'px').join(', '),
+      })
+    }
+    return out
+  }
+
   /** @param {string} label */
   window.__audit = function audit(label) {
     clipCache = new Map()
@@ -443,13 +535,15 @@
 
     out.rings = ringDefects()
     out.chosen = chosenDefects()
+    out.offCentre = offCentreDefects()
+    out.mismatched = mismatchedDefects()
     return out
   }
 
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length }
   }
 
   /** @param {string} tab */

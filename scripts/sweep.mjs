@@ -164,6 +164,29 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   },
+  {
+    // And the panel that opens on one of those blocks - a header carrying
+    // three controls of three shapes, a note editor and a where-to row.
+    // The sweep opened the grid and never a block on it, which is how the
+    // owner's own screenshot found a Close eleven pixels above the buttons
+    // beside it before any measuring pass did.
+    name: 'Week template editor (block open)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await press(p, 'New template')
+      await press(p, /^A week/)
+      const field = p.getByPlaceholder('What happens')
+      if (await field.count()) {
+        await field.fill('Breakfast')
+        await press(p, 'All days')
+        await press(p, 'Add a block')
+      }
+      // A block added with no time is drawn on the untimed strip and named
+      // "Breakfast, no time, on Mon. Open it." rather than "Breakfast at ..."
+      await press(p, /^Breakfast[,.]/)
+      await p.waitForTimeout(300)
+    },
+  },
   { name: 'Library', go: /** @param {Page} p */ p => tab(p, 'Library') },
   {
     name: 'Library (item panel)',
@@ -405,6 +428,8 @@ for (const run of runs) {
     for (const f of a.faint) found(where, 'text under AA', `${f.sel} ${f.ratio}:1 (needs ${f.need}) "${f.text}"`)
     for (const r of a.rings) found(where, r.kind === 'cut' ? 'ring cut off' : 'ring gap off its ground', r.detail)
     for (const c of a.chosen) found(where, 'the chosen one looks unchosen', `${c.sel} "${c.text}" is drawn exactly like "${c.like}" beside it, though ${c.attr} says otherwise`)
+    for (const o of a.offCentre) found(where, 'not centred in a row that centres', `${o.sel} > ${o.child} "${o.text}" sits ${o.off > 0 ? o.off + 'px low' : -o.off + 'px high'}`)
+    for (const m of a.mismatched) found(where, 'two heights in one row', `${m.sel}: ${m.detail}`)
 
     // The screens that must fit - CONVENTIONS section 4. The day view's own
     // rule is for the wide breakpoint only: on a phone it scrolls
