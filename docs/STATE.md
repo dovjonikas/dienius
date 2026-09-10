@@ -6,10 +6,96 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.18, North as a page, and three screens the owner reported
-from while it was being built.
+**Last updated:** v2.19, North stops being a form.
 
-## v2.18 - the layout wave
+## v2.19 - the reading page stops naming its own fields
+
+v2.18 fixed the layout and the owner read the result as *"very much like
+Notion, where I would just get a notepad and write it down instead"*. That is
+a diagnosis rather than a complaint: the window looked like a **record
+somebody filled in**, because it was full of field names with values under
+them - "What I do", "What I don't do", "What pulls me off this", "61 days
+lived toward this" - each in a box with a rule down its left.
+
+One rule for the wave: **North is a page somebody wrote. Editing is a form;
+reading is not.** Everything that names a field, counts anything, or can be
+pressed moved into Compose. What is left on the page is a picture, four
+goals, and under each one a title, a sentence, a sentence in another voice,
+and the lines that cost.
+
+### The count, which is the wave's own answer
+
+The brief's test: photograph the page at 1920 and count the words on it the
+owner did not write, not counting "North" and "Compose". The target was zero.
+The result is **three words, ten times** - and here is why each one is still
+there.
+
+- **"never"**, six times, once at the front of each away line. It is the
+  opposite of a label: a label sits above content and names it, and this sits
+  inside the sentence and finishes it. Somebody typed "go quiet for a day"
+  into a field called *what I don't do*; on a page where that field has no
+  name, "never go quiet for a day" is the same sentence, whole, in the same
+  voice. Take it away and the away lines read as more things to do, which is
+  the one misreading [`RESEARCH-NORTH.md`](RESEARCH-NORTH.md) says must not be
+  possible - an unanswered "don't" is threat without efficacy, the condition
+  Witte's model predicts backfires.
+- **"If"** and **"then"**, twice each, one pair per rule on the page. A rule
+  is one sentence the owner wrote in two halves, in two boxes; these are the
+  joint between them and nothing else. They used to be small caps and an
+  arrow, which is a diagram of a sentence rather than a sentence, and that is
+  the part that went.
+
+Nothing else on the page comes from the app. No head over any list, no
+invitation where a list is empty, no count of anything, and no control of any
+kind - **the reading page has no buttons on it at all** beyond Compose in the
+corner.
+
+### The count of days is gone, one version after being kept
+
+v2.18 asked whether "61 days lived toward this" could fall, found it could not
+- `goalAge` is arithmetic on two dates and `createdAt` is stamped once - and
+kept it. That reasoning was right and it answered the wrong question. The test
+it passed was "is this a streak". The test it fails is a different one: a
+figure that counts something is a spreadsheet's idea of a page whatever the
+figure can and cannot do to you, and North is where somebody comes to remember
+why rather than to check a number.
+
+It is gone from the reading page, and `north.test.ts` holds that nothing on
+that page is a number at all - not a count, not a digit. `goalAge` stays,
+because the archived fold inside Compose still says how long a goal was
+carried before it was put away and the review's North line still says an age;
+both are records being read rather than a page being lived on. DECISIONS
+carries the argument.
+
+### What moved into Compose
+
+Everything that acts. What pulls you off a goal is a field under that goal
+now, with the instruction beside it rather than printed on four cards; the
+rules keep their five-per-goal cap, their edit and their two-press delete, and
+they write at once rather than on Save - the same exception the archived fold
+already makes, because a rule is its own entity and deferring it would mean a
+Cancel that had to un-write sentences somebody watched appear. Rules with no
+goal went with them, which is also where the fold that orphans them lives.
+
+Two things fell out of that move. `unfiledRules` has to be asked about *every*
+goal and offered only the active ones - asked about the active ones alone it
+spills an archived goal's rules into the waiting group the moment anybody
+archives anything, which is what a test that had passed for four versions
+started saying out loud. And the window now counts an unfiled rule as
+something to compose, because deleting the last goal leaves its rules behind
+on purpose and a window that hid the only way in would have hidden them with
+it.
+
+### And nothing is drawn around a goal
+
+Four cards with a two-pixel rule down the left of each is four cells of a
+table whatever is written in them. The gaps do all of the separating now: 56
+pixels between rows and 64 between columns, against about twelve inside a
+goal. No edge, no background, no padding pushing the text off its own column.
+Four goals came to 971px of page before the wave and 814 after it, with more
+air in them, which is what comes of not printing a label over every list.
+
+## Before that: v2.18 - the layout wave
 
 The brief added nothing to the app. It rearranged what was there, on the
 argument that a screen where five kinds of content sit at one weight is a
