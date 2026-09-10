@@ -10389,39 +10389,67 @@ button.task-note-mark.is-open {
   border-left: 2px solid var(--border);
 }
 
+/* One order of importance, down the whole page, out of the four sizes
+   CONVENTIONS 5 allows and nothing else.
+
+   The trouble was never that any one thing was wrong; it was that a card
+   carried five kinds of content at almost one weight, so the eye had nowhere
+   to start. There are six levels to say and four sizes to say them in, so
+   the last two steps are weight and ink:
+
+     the picture   t-lg                 - and it is the only t-lg here
+     goal title    t-md  700  --text
+     why           t-md  400  --text    - a statement, not a caption
+     identity      t-md  400  --text    italic, with air on both sides
+     what I do     t-sm  400  --text
+     what I don't  t-sm  400  --muted
+     the rules     t-sm  400  --muted
+     every head    t-xs  600  --faint
+
+   t-xs is for labels and never for a sentence: the smallest thing on the
+   page should be the word naming a list, not the list. And the page's own
+   h2 stays at t-lg with every other view's - it is the window's name in a
+   row with Compose, not something anybody reads. */
 .north-goal-title {
   margin: 0;
   max-width: 40ch;
   color: var(--text);
-  font-size: var(--t-lg);
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: var(--t-md);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
 }
 
+/* The line that has to cut through a bad day, so it is set as a thing said
+   rather than as a note under a heading. It was muted, which is how a caption
+   is set; full ink is the whole promotion, and the weight stays where body
+   copy has it so the title above keeps its own edge. */
 .north-goal-why {
-  margin: var(--s2) 0 0;
+  margin: var(--s3) 0 0;
   max-width: 56ch;
-  color: var(--muted);
+  color: var(--text);
   font-size: var(--t-md);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 /* The only italic in the app besides the day view's own identity line, and
    earned the same way: a sentence in the first person, set the way a
    first-person aside has been set for four hundred years.
 
-   The loudest thing on the card since v2.18, and it was the quietest - muted,
-   at body size, under a why that outweighed it. It is what the two halves
-   below are a contrast about, so it reads at the title's size in the text
-   colour and everything else on the card gives way to it. See
-   docs/RESEARCH-NORTH.md section 8. */
+   It is a different kind of sentence from everything around it - not what
+   this goal is or why, but who having it makes you - and what says so is the
+   italic and the air on either side of it, not size. It spent one version at
+   t-lg, louder than the goal's own title, which put the quietest-read line
+   on the card at the top of its order; the owner's reading is that the why
+   is the line that cuts through a bad day and this one sits just under it.
+   See docs/RESEARCH-NORTH.md section 8. */
 .north-goal-identity {
-  margin: var(--s3) 0 0;
-  max-width: 46ch;
+  margin: var(--s4) 0 0;
+  max-width: 52ch;
   color: var(--text);
-  font-size: var(--t-lg);
+  font-size: var(--t-md);
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* A fact, not a measurement - goalAge. Set in --faint at the smallest size
@@ -10439,8 +10467,8 @@ button.task-note-mark.is-open {
    had filled in rather than as a page somebody had written. */
 .north-pair-head {
   margin: 0 0 var(--s2);
-  color: var(--muted);
-  font-size: var(--t-sm);
+  color: var(--faint);
+  font-size: var(--t-xs);
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
@@ -10483,9 +10511,9 @@ button.task-note-mark.is-open {
 .north-avoid li { color: var(--muted); }
 
 /* What you do to deserve it: a plain list. No marker and nothing to tick.
-   Set at body size in the text colour, because it is the bridge between the
-   goal above and the day this window is not - the one part of a goal that
-   is about a Tuesday. */
+   A size below the prose above it, because these are actions rather than
+   anything anybody reads for its own sake - the part of a goal that is
+   about a Tuesday, kept legible and kept quiet. */
 .north-deserve {
   display: flex;
   flex-direction: column;
@@ -10498,8 +10526,8 @@ button.task-note-mark.is-open {
 .north-deserve li {
   max-width: 52ch;
   color: var(--text);
-  font-size: var(--t-md);
-  line-height: 1.6;
+  font-size: var(--t-sm);
+  line-height: 1.55;
 }
 
 .north-goal-deserve-empty {
@@ -10554,7 +10582,7 @@ button.task-note-mark.is-open {
   padding-left: var(--s3);
   border-left: 2px solid transparent;
   max-width: 60ch;
-  color: var(--text);
+  color: var(--muted);
   font-size: var(--t-sm);
   line-height: 1.6;
 }
