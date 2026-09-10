@@ -79,7 +79,7 @@ test('a block moved later on three days says how many times and the average, and
   )
   const readings = planReading(data, WEEK, AFTER)
   expect(lineFor(readings, 'Deep work')).toBe(
-    'Deep work 09:00 - happened at its time 2 of 5 days, moved later 3 times (avg +1h10)',
+    'Deep work 09:00 - happened at its time 2 of 5 days, moved later 3 times (avg +1h 10 min)',
   )
   expect(readings.find(r => r.title === 'Deep work')).toMatchObject({ atTime: 2, movedLater: 3, avgLater: 70 })
 })
@@ -299,7 +299,7 @@ test('a measured block says what it took, against what it was planned at', () =>
   expect(reading.timed).toBe(2)
   expect(reading.avgActual).toBe(95)
   const line = readingLine(reading)
-  expect(line).toContain('took on average 1h35')
+  expect(line).toContain('took on average 1h 35 min')
   expect(line).toContain('against 2h planned')
   expect(line).toContain('twice measured')
 })
@@ -307,7 +307,7 @@ test('a measured block says what it took, against what it was planned at', () =>
 test('one measurement says took rather than took on average', () => {
   const data = weekOf(WORKDAYS.map((date, i) => dayOf(date, [taskFor('b1', { done: true, ...(i === 0 ? { actualMinutes: 90 } : {}) })])))
   const line = readingLine(planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!)
-  expect(line).toContain('took 1h30')
+  expect(line).toContain('took 1h 30 min')
   expect(line).not.toContain('on average')
 })
 
@@ -327,5 +327,5 @@ test('a measurement is counted even on a day the block moved', () => {
   const reading = planReading(data, WEEK, AFTER).find(r => r.title === 'Deep work')!
   expect(reading.movedLater).toBe(5)
   expect(reading.timed).toBe(5)
-  expect(readingLine(reading)).toContain('took on average 1h20')
+  expect(readingLine(reading)).toContain('took on average 1h 20 min')
 })

@@ -488,7 +488,7 @@ test('a day with only floats shows their total with no anchors or gaps claim', (
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  expect(screen.getByText('Untimed tasks: about 3h40.')).toBeInTheDocument()
+  expect(screen.getByText('Untimed tasks: about 3h 40 min.')).toBeInTheDocument()
 })
 
 test('a fully sized day renders the exact capacity sentence from the anchors and floats it contains', () => {
@@ -511,7 +511,7 @@ test('a fully sized day renders the exact capacity sentence from the anchors and
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(
-    screen.getByText('Timed tasks: 6h10. Free: 9h50 across 4 gaps. Untimed tasks: about 5h50.'),
+    screen.getByText('Timed tasks: 6h 10 min. Free: 9h 50 min across 4 gaps. Untimed tasks: about 5h 50 min.'),
   ).toBeInTheDocument()
 })
 
@@ -555,8 +555,8 @@ test('a day on a second sleep schedule reads its capacity against that schedule'
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   // The Shift schedule bedtime 09:00, wake 17:00 gives a waking window of
   // 17:00-24:00 (7h, clamped at midnight); the 30-minute prep task leaves
-  // 6h30 free, split between the 30 minutes before it and the six hours after.
-  expect(screen.getByText('Timed tasks: 30 min. Free: 6h30 across 2 gaps.')).toBeInTheDocument()
+  // 6h 30 min free, split between the 30 minutes before it and the six hours after.
+  expect(screen.getByText('Timed tasks: 30 min. Free: 6h 30 min across 2 gaps.')).toBeInTheDocument()
 })
 
 test('a mid-day shift leaves real free time within the window, not a false "no free time" claim', () => {
@@ -614,7 +614,7 @@ test('the capacity line never uses an alarming word for the over case', () => {
     },
   })
   const { container } = render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  expect(container.querySelector('.capacity-line')).toHaveTextContent('3h20 over.')
+  expect(container.querySelector('.capacity-line')).toHaveTextContent('3h 20 min over.')
   expect(container.querySelector('.capacity-line')).not.toHaveTextContent(/warning|danger|alert|!/i)
 })
 
@@ -1188,7 +1188,7 @@ test('a task that fits nowhere today says so plainly, without suggesting the day
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
   await user.click(screen.getByRole('button', { name: 'Big errand' }))
-  expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
+  expect(screen.getByText(/no gap today is 1h 30 min or longer/i)).toBeInTheDocument()
 })
 
 // --- a time and a length without typing either -----------------------------

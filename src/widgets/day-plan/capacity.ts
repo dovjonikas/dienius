@@ -528,12 +528,30 @@ export function minutesUntilSleep(nowMinutes: number, waking: Interval): number 
 
 const DAY_IN_MINUTES = 24 * 60
 
+/**
+ * A length, as it is read.
+ *
+ * "1h 45 min", not "1h45". The clock-shaped form was compact and it was
+ * also ambiguous: a figure reading "12h45" beside a row of clock times is a
+ * time of day at a glance, and "3h15" is a number somebody has to stop and
+ * parse. The owner asked for the unit to be said and for the hour to stand
+ * apart from the minutes, and both halves of that are the same fix - a unit
+ * after every number, and a space wherever two numbers meet.
+ *
+ * The minutes are not padded any more either: the pad existed to make a
+ * clock reading ("1h05"), and with a space and a unit around it "1h 5 min"
+ * is the honest way to write five minutes.
+ *
+ * This is the *read* form. The chips a length is chosen from keep their own
+ * - see durationToText, which round-trips through parseQuickAdd and cannot
+ * carry spaces.
+ */
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60
   if (hours === 0) return `${minutes} min`
   if (remainder === 0) return `${hours}h`
-  return `${hours}h${String(remainder).padStart(2, '0')}`
+  return `${hours}h ${remainder} min`
 }
 
 /**

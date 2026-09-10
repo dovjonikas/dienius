@@ -53,7 +53,7 @@ test('four rows, and they are the shape of the day: timed, deep work, free and s
   digest([task({ time: '09:00', minutes: 60, category: 'core' }), task({ time: '14:00', minutes: 30 })])
   const labels = screen.getAllByRole('term').map(dt => dt.textContent)
   expect(labels).toEqual(['Timed', 'Deep work', 'Free', 'Sleep'])
-  expect(screen.getByText('1h30')).toBeInTheDocument()
+  expect(screen.getByText('1h 30 min')).toBeInTheDocument()
   expect(screen.getByText('1h')).toBeInTheDocument()
 })
 

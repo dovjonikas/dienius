@@ -35,9 +35,9 @@ function float(title: string, minutes?: number, extra: Partial<Task> = {}): Task
 
 // --- formatDuration -------------------------------------------------------
 
-test('formatDuration renders whole hours and minutes together, matching the spec example', () => {
-  expect(formatDuration(370)).toBe('6h10')
-  expect(formatDuration(320)).toBe('5h20')
+test('formatDuration says the unit and keeps the hour apart from the minutes', () => {
+  expect(formatDuration(370)).toBe('6h 10 min')
+  expect(formatDuration(320)).toBe('5h 20 min')
 })
 
 test('formatDuration renders an exact number of hours with no trailing zero minutes', () => {
@@ -50,8 +50,10 @@ test('formatDuration renders under an hour as a plain minute count', () => {
   expect(formatDuration(1)).toBe('1 min')
 })
 
-test('formatDuration pads a single-digit minute remainder', () => {
-  expect(formatDuration(65)).toBe('1h05')
+test('formatDuration does not pad a single-digit minute remainder', () => {
+  // The pad existed to make a clock reading - '1h05'. With a space and a unit
+  // around it, '1h 5 min' is the honest way to write five minutes.
+  expect(formatDuration(65)).toBe('1h 5 min')
 })
 
 // --- computeCapacity: anchors and floats classification --------------------
@@ -260,7 +262,7 @@ test('a shift and rest day type use the same window as an ordinary day', () => {
 test('an anchor entirely inside the window is not flagged as clipped', () => {
   const capacity = computeCapacity([anchor('Gym', '09:00', 90)])
   expect(capacity.anchorsClippedByWindow).toBe(false)
-  expect(formatCapacityLine(capacity)).toBe('Timed tasks: 1h30. Free: 14h30 across 2 gaps.')
+  expect(formatCapacityLine(capacity)).toBe('Timed tasks: 1h 30 min. Free: 14h 30 min across 2 gaps.')
 })
 
 test('an anchor that runs past the window close is flagged as clipped, and the sentence says so', () => {
@@ -360,12 +362,12 @@ test('a window entirely filled by anchors says so in plain words, not "0 gaps"',
 
 test('floats only, with no anchors, reports the float total with no free-time claim', () => {
   const capacity = computeCapacity([float('Publish video', 200), float('Guitar', 20)])
-  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h40.')
+  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h 40 min.')
 })
 
 test('unsized floats are named in the sentence, not silently dropped', () => {
   const capacity = computeCapacity([float('Publish video', 200), float('No size yet')])
-  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h20, plus 1 unsized.')
+  expect(formatCapacityLine(capacity)).toBe('Untimed tasks: about 3h 20 min, plus 1 unsized.')
 })
 
 test('floats that are entirely unsized cannot claim a total, so the sentence says so honestly', () => {
@@ -400,7 +402,7 @@ test('never uses a warning word for the over case', () => {
 test('being over is stated plainly, with the word about only on the floats estimate', () => {
   const tasks = [anchor('Shift', '09:00', 240), anchor('Evening', '19:00', 60), float('Errand', 700)]
   const line = formatCapacityLine(computeCapacity(tasks))
-  expect(line).toBe('Timed tasks: 5h. Free: 11h across 3 gaps. Untimed tasks: about 11h40. 40 min over.')
+  expect(line).toBe('Timed tasks: 5h. Free: 11h across 3 gaps. Untimed tasks: about 11h 40 min. 40 min over.')
 })
 
 // --- parseMinutesInput ---------------------------------------------------------

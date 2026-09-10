@@ -70,7 +70,7 @@ test('an unsized anchor elsewhere in the day says gaps are not known, matching t
 test('a task too big for anything today says so without listing anything', () => {
   const tasks = [anchor('Work', '07:00', 950), float('Big errand', 90)]
   render(<TaskGapOffers task={float('Big errand', 90)} tasks={tasks} sleepProfileId={undefined} onPlace={() => {}} onClose={() => {}} />)
-  expect(screen.getByText(/no gap today is 1h30 or longer/i)).toBeInTheDocument()
+  expect(screen.getByText(/no gap today is 1h 30 min or longer/i)).toBeInTheDocument()
   expect(screen.queryByRole('list')).not.toBeInTheDocument()
 })
 
