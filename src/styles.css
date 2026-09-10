@@ -15997,3 +15997,14 @@ main:has(.week) > .calendar {
   color: var(--faint);
   font-size: var(--t-xs);
 }
+
+/* What pulls me off this, inside Compose - see GoalRules.tsx. It moved off
+   the goal's own card in v2.19, and it needs the spacing of a field group
+   rather than of a paragraph: the list, the form and the invitation are
+   three different heights and they follow four ordinary fields. */
+.north-compose-rules {
+  gap: var(--s2);
+  margin-top: var(--s2);
+}
+
+.north-compose-rules .north-rules { margin: 0; }

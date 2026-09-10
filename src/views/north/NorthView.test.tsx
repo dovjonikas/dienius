@@ -34,6 +34,14 @@ function picture(text = 'I wake before the house does.') {
  * hold that: no checkbox, no percentage, no count that goes up.
  */
 
+/**
+ * Compose, opened. Since v2.19 everything that writes anything is behind it -
+ * the reading page is what somebody wrote and nothing that acts.
+ */
+async function compose(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Compose' }))
+}
+
 // --- the empty window --------------------------------------------------------
 
 test('with nothing written, the window is one invitation to write the picture and nothing else', () => {
@@ -321,26 +329,6 @@ test('a goal with no rules spends one line on saying so, and the instruction liv
 })
 
 
-test('a rule written under a goal appears under that goal and not under another', async () => {
-  const user = userEvent.setup()
-  const ship = goal('Ship something people keep using')
-  goal('Be strong at forty')
-  render(<NorthView />)
-
-  const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
-  await user.click(within(card).getByRole('button', { name: /What pulls me off this/ }))
-  await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
-  await user.type(screen.getByLabelText('Then'), 'I open today and do the first unticked thing')
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0].goalId).toBe(ship.id)
-
-  const other = screen.getByRole('heading', { name: 'Be strong at forty' }).closest('article')!
-  expect(within(other).queryByText(/I open the laptop and stall/)).toBeNull()
-  expect(within(card).getByText(/I open the laptop and stall/)).toBeTruthy()
-})
-
 /**
  * The cap refuses rather than evicting, which means it has to be visible.
  * Quietly dropping the sixth rule would be a limit nobody can see and a
@@ -362,6 +350,7 @@ test('a rule written before rules had goals waits in its own group, and one pres
   const g = goal('Ship something')
   const orphan = actions.addIfThen({ trigger: 'I get home and the kitchen is a mess', action: 'I do only the sink' })!
   render(<NorthView />)
+  await compose(user)
 
   const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
   expect(within(unfiled).getByText(/I get home and the kitchen is a mess/)).toBeTruthy()
@@ -373,29 +362,36 @@ test('a rule written before rules had goals waits in its own group, and one pres
 
 // A dangling id degrades everywhere in this app, and degrading here means the
 // rule comes back to the waiting group rather than disappearing with the goal.
-test('a rule whose goal was deleted comes back as unfiled rather than vanishing', () => {
+test('a rule whose goal was deleted comes back as unfiled rather than vanishing', async () => {
+  const user = userEvent.setup()
   const g = goal('Ship something')
   actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
   actions.archiveGoal(g.id, TODAY)
   actions.deleteGoal(g.id)
 
   render(<NorthView />)
+  await compose(user)
   const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
   expect(within(unfiled).getByText(/I stall/)).toBeTruthy()
 })
 
 // Archiving a direction is not deciding the things that pull you off it never
 // happened, so its rules stay with it instead of coming loose.
-test('an archived goal keeps its rules rather than spilling them into the waiting group', () => {
+test('an archived goal keeps its rules rather than spilling them into the waiting group', async () => {
+  const user = userEvent.setup()
   const g = goal('Ship something')
   actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
   actions.archiveGoal(g.id, TODAY)
 
   render(<NorthView />)
+  // Asked where the waiting group lives, so the null means "it is not
+  // waiting" rather than "this page never had one".
+  await compose(user)
   expect(screen.queryByRole('region', { name: 'Rules with no goal' })).toBeNull()
 })
 
-test('a full goal is offered but refused for an unfiled rule, so nothing looks broken when pressed', () => {
+test('a full goal is offered but refused for an unfiled rule, so nothing looks broken when pressed', async () => {
+  const user = userEvent.setup()
   const g = goal('Ship something')
   for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
     actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
@@ -403,6 +399,7 @@ test('a full goal is offered but refused for an unfiled rule, so nothing looks b
   actions.addIfThen({ trigger: 'Waiting', action: 'For room' })
 
   render(<NorthView />)
+  await compose(user)
   const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
   expect(within(unfiled).getByRole('button', { name: 'Ship something' })).toBeDisabled()
 })
@@ -547,4 +544,63 @@ test('nothing the day carries reads the away half', () => {
   expect(written.avoid).toEqual(['goes quiet for a day'])
   // deserveForWeek is what the Monday card takes, and it takes from deserve.
   expect(deserveForWeek(written, '2026-08-31')).toBe('listens without making a face')
+})
+
+/**
+ * What pulls you off a goal is written where everything else about that goal
+ * is written - see GoalRules.tsx. It lived on the card until v2.19, with a
+ * heading, an invitation and two controls per rule, which is a form on a
+ * page that is meant to be somebody's own writing.
+ */
+test('a rule is written in Compose, and reads back under the goal it belongs to', async () => {
+  const user = userEvent.setup()
+  const ship = goal('Ship something people keep using')
+  goal('Be strong at forty')
+  render(<NorthView />)
+
+  await compose(user)
+  // One per goal, beside the field it is about - and nowhere on the page
+  // somebody reads.
+  expect(screen.getAllByText('Name one moment that takes you off this, and the one thing you do instead.')).toHaveLength(2)
+
+  await user.click(screen.getByRole('button', { name: 'What pulls me off "Ship something people keep using"' }))
+  await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
+  // Enter from either field is the rule form's own way out, and the
+  // unambiguous one now that it sits inside a form with a Save of its own.
+  await user.type(screen.getByLabelText('Then'), 'I open today and do the first unticked thing{Enter}')
+
+  expect(getData().ifThens).toHaveLength(1)
+  expect(getData().ifThens[0].goalId).toBe(ship.id)
+
+  // And back on the page, it is under the goal it protects and no other.
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
+  const other = screen.getByRole('heading', { name: 'Be strong at forty' }).closest('article')!
+  expect(within(card).getByText(/I open the laptop and stall/)).toBeTruthy()
+  expect(within(other).queryByText(/I open the laptop and stall/)).toBeNull()
+})
+
+/**
+ * Deleting a goal leaves its rules behind on purpose - a sentence somebody
+ * wrote about themselves should not go quietly with the goal it was filed
+ * under. They wait in Compose, beside the fold that orphaned them, because
+ * filing one is a form and nothing on the reading page acts.
+ */
+test('a rule whose goal was deleted waits in Compose, and one press files it', async () => {
+  const user = userEvent.setup()
+  const gone = goal('A goal on its way out')
+  const kept = goal('Ship something people keep using')
+  actions.addIfThen({ trigger: 'I get home and the kitchen is a mess', action: 'I do only the sink', goalId: gone.id })
+  actions.deleteGoal(gone.id)
+  render(<NorthView />)
+
+  // Nothing about it on the page somebody reads.
+  expect(screen.queryByText(/the kitchen is a mess/)).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  const orphans = screen.getByRole('region', { name: 'Rules with no goal' })
+  expect(within(orphans).getByText(/the kitchen is a mess/)).toBeInTheDocument()
+
+  await user.click(within(orphans).getByRole('button', { name: 'Ship something people keep using' }))
+  expect(getData().ifThens[0].goalId).toBe(kept.id)
 })

@@ -103,6 +103,8 @@ const PLACED: Record<ExplainId, () => ReactElement> = {
   // The invitation carries the picture's own explanation, so an empty window
   // has it; the deserve heading only exists under a goal.
   picture: () => <NorthView />,
+  // The word lives on the field it names, in Compose, since v2.19: the
+  // heading it used to hang off is gone from the reading page.
   deserve: () => {
     actions.addGoal({ title: 'Be strong at fifty', deserve: ['train four times a week'] }, DATE)
     return <NorthView />
@@ -182,6 +184,9 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     }
     // The kind question is behind New template, and the week editor's own two
     // terms are behind choosing the week.
+    if (id === 'deserve') {
+      await user.click(screen.getByRole('button', { name: 'Compose' }))
+    }
     if (id === 'template-day' || id === 'template-week' || id === 'add-to' || id === 'copy-to') {
       await user.click(screen.getByRole('button', { name: 'New template' }))
     }

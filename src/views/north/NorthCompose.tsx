@@ -3,6 +3,8 @@ import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { activeGoals, ageLabel, archivedGoals, type NorthDraft } from '../../lib/north'
 import { MAX_ACTIVE_GOALS, MAX_DESERVE_LINES, type Goal } from '../../lib/types'
+import { GoalRules, UnfiledRules } from './GoalRules'
+import { Explain } from '../Explain'
 
 /** Where the cursor lands when Compose opens: on the picture, or on a new goal. */
 export type ComposeFocus = 'picture' | 'goal'
@@ -256,9 +258,21 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
               />
             </label>
             <label className="field">
-              <span className="field-label">What I do to deserve this</span>
+              {/* The word is explained here since v2.19. It hung off the
+                  heading on the goal's own card, and that heading is gone -
+                  the reading page says what somebody wrote and nothing
+                  else. This is where the term is met now, which is where an
+                  explanation belongs. */}
+              <span className="field-label">
+                <Explain id="deserve">What I do to deserve this</Explain>
+              </span>
               <textarea
                 rows={3}
+                /* Said again here because the label now carries an Explain, and
+                   the bubble inside it is part of the label element even
+                   while it is hidden - so the box would otherwise be named
+                   the word plus the whole sentence about the word. */
+                aria-label="What I do to deserve this"
                 value={row.deserve}
                 maxLength={400}
                 placeholder={'train four times a week\napply to three places a day'}
@@ -285,6 +299,10 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
             <span className="north-compose-hint">
               The same few, from the other side. It is read beside what you do, never on its own.
             </span>
+            {/* Only on a goal that exists - see GoalRules. A row being written
+                now has no id for a rule to belong to. */}
+            {row.id && <GoalRules goalId={row.id} title={row.title} />}
+
             <div className="north-compose-goal-foot">
               {row.id ? (
                 <button
@@ -356,6 +374,8 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
           )}
         </div>
       )}
+
+      <UnfiledRules goals={data.goals} ifThens={data.ifThens} />
 
       <div className="north-compose-actions">
         <button type="button" className="btn-primary" data-tour="goal-save" onClick={save}>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
-import { activeGoals, ageLabel, archivedGoals, canAddRule, rulesForGoal, unfiledRules } from '../../lib/north'
+import { activeGoals, ageLabel, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
 import { paletteColorName } from '../../lib/colors'
 import { MAX_RULES_PER_GOAL, type Goal, type IfThenEntry } from '../../lib/types'
 import { RuleForm } from './RuleForm'
@@ -55,7 +55,6 @@ export function NorthView() {
   const today = todayKey()
   const goals = activeGoals(data.goals)
   const archived = archivedGoals(data.goals)
-  const unfiled = unfiledRules(data.ifThens, data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
   const composeRef = useRef<HTMLButtonElement>(null)
   const wasComposing = useRef(false)
@@ -70,7 +69,12 @@ export function NorthView() {
   // Compose only once there is something to compose. On an empty window the
   // one control is the picture's own line, and a second control beside it
   // would be a second question.
-  const hasAnything = !!picture || goals.length > 0 || archived.length > 0
+  //
+  // A rule with no goal counts, since v2.19: deleting the last goal leaves
+  // its rules behind on purpose, they wait inside Compose now, and a window
+  // that hid the only way in would have hidden them with it.
+  const hasAnything =
+    !!picture || goals.length > 0 || archived.length > 0 || unfiledRules(data.ifThens, data.goals).length > 0
 
   return (
     <section className="north-view" aria-label="North">
@@ -107,7 +111,6 @@ export function NorthView() {
             </div>
           )}
 
-          {unfiled.length > 0 && <UnfiledRules rules={unfiled} goals={goals} ifThens={data.ifThens} />}
         </>
       )}
     </section>
@@ -416,57 +419,5 @@ export function RuleText({ rule }: { rule: IfThenEntry }) {
       {rule.action}
       {rule.color && <span className="visually-hidden"> Tagged {paletteColorName(rule.color)}.</span>}
     </p>
-  )
-}
-
-/**
- * Rules that are not under any goal.
- *
- * This is the whole migration for every rule written before rules had goals,
- * and it is a question rather than a guess. Nothing on load tries to work out
- * which goal a sentence belongs under; the rules simply appear here, readable
- * and intact, each with the active goals offered beside it. A rule can also
- * stay here indefinitely, which is deliberate - noticing what pulls you off
- * course is worth writing down before you know what it pulls you off.
- *
- * The same group catches a rule whose goal was deleted. A dangling id
- * degrades, and degrading here means the rule comes back to this list rather
- * than disappearing with the goal.
- */
-function UnfiledRules({ rules, goals, ifThens }: { rules: IfThenEntry[]; goals: Goal[]; ifThens: IfThenEntry[] }) {
-  return (
-    <section className="north-unfiled" aria-label="Rules with no goal">
-      <h3>Not under a goal yet</h3>
-      <p className="muted">
-        These were written before rules belonged to anything - put each one under what it protects, or
-        leave it here.
-      </p>
-      <ul className="north-rules">
-        {rules.map(rule => (
-          <li key={rule.id} className="north-rule">
-            <RuleText rule={rule} />
-            <div className="north-rule-actions">
-              {goals.length === 0 ? (
-                <span className="muted">Write a goal first, then these can go under one.</span>
-              ) : (
-                goals.map(goal => (
-                  <button
-                    key={goal.id}
-                    type="button"
-                    className="btn-secondary"
-                    // A full goal refuses, so the button says so before it is
-                    // pressed rather than doing nothing when it is.
-                    disabled={!canAddRule(ifThens, goal.id)}
-                    onClick={() => actions.assignIfThenGoal(rule.id, goal.id)}
-                  >
-                    {goal.title}
-                  </button>
-                ))
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
   )
 }
