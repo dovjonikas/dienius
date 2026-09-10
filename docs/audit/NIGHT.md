@@ -107,6 +107,23 @@ focus ring has had since it was drawn.
 ink on the accent tint, which came out at 3.9:1 on Light against a floor of
 4.5. The sweep caught it before the commit. Ordinary ink on the tint.
 
+### Numbers in columns
+
+Six places drew a figure with another figure directly above or beside it and
+let the browser use proportional digits, so the column leaned: the calendar
+grid’s forty-two dates, the done-over-planned on each of those cells, the
+pushed count beside it, the mini calendar’s thirty-five, the figure at the
+foot of each week column, and the note column in the day’s digest. All
+tabular now, which brings the file to 67 uses of  and no
+number in a column without it.
+
+**Not done, and worth saying:** the brief also asked for optical centring in
+buttons and for the first and last line of a text block not to carry
+half-leading. The first needs a fixed box per control rather than padding,
+which is a change to every button in the app and not a night’s work done
+safely; the second wants , which Chromium has and Safari does
+not, and this app is iPhone-first. Both are left, and left written down.
+
 ## What was taken out
 
 One element per screen, per the brief. Listed with what happened after.

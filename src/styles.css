@@ -5052,7 +5052,9 @@ button.danger {
   outline-offset: 2px;
 }
 
-.cell-num { font-size: var(--t-sm); font-weight: 600; }
+/* Forty-two of these in a seven-column grid. Proportional digits put the 1s
+   half a character narrower than the 8s, so a column of dates leans. */
+.cell-num { font-size: var(--t-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* A stamped cell: a wash of the template's colour in the theme's own
    surface, and a strip of it along the top. It used to be the colour
@@ -7654,6 +7656,7 @@ button.danger:focus-visible {
    be read, once, and CONVENTIONS section 22 holds a whisper to three to
    one. */
 .digest-note {
+  font-variant-numeric: tabular-nums;
   margin: 0;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -7715,6 +7718,8 @@ button.danger:focus-visible {
      silently in CSS. This keeps the grid square and legible at the width
      actually available, flagged rather than hidden. */
   .mini-cell {
+    /* Thirty-five days in a seven-column grid, same reason as .cell-num. */
+    font-variant-numeric: tabular-nums;
     position: relative;
     aspect-ratio: 1;
     min-height: 0;
@@ -11326,8 +11331,10 @@ button.task-note-mark.is-open {
 /* A stamped day pins dark ink - see .cell-has-template. On an unstamped one
    the muted ink is right. Both are set here rather than inherited, because a
    ratio that disappears on half the calendar is worse than no ratio. */
-.cell-ratio { color: var(--muted); }
-.cell-pushed { color: var(--faint); }
+/* One per cell of the same grid, and read down a column rather than across a
+   row: 6/9 over 11/14 only compares if the digits are one width. */
+.cell-ratio { color: var(--muted); font-variant-numeric: tabular-nums; }
+.cell-pushed { color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* A 48px cell holds "3/10" and the kept dot, or "3/10 ->1" - not all three.
    The carried count is the detail that gives, per the month's own rule
@@ -11897,7 +11904,7 @@ main:has(.week) > .calendar {
 }
 
 .week-foot-empty { color: var(--faint); }
-.week-foot-focus { color: var(--faint); }
+.week-foot-focus { color: var(--faint); font-variant-numeric: tabular-nums; }
 .week-foot-untimed { color: var(--faint); }
 
 /* Three columns on a phone, not seven - see NARROW_DAYS in WeekView.tsx.
@@ -14668,6 +14675,7 @@ main:has(.week) > .calendar {
 .agenda-date { margin: 0; }
 
 .agenda-date-button {
+  font-variant-numeric: tabular-nums;
   min-height: 0;
   padding: var(--s0) 0;
   border: none;
