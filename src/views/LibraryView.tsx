@@ -418,14 +418,19 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
               ))}
             </div>
           </div>
-          <button
-            type="button"
-            className={confirmDelete ? 'btn-danger is-armed' : 'btn-danger'}
-            onClick={() => (confirmDelete ? actions.deleteLibraryList(list.id) : setConfirmDelete(true))}
-            onBlur={() => setConfirmDelete(false)}
-          >
-            {confirmDelete ? 'Delete?' : 'Delete list'}
-          </button>
+          {/* At the foot, behind a line, on its own. It shared a row with
+              nine colour dots, which put the one control on this panel that
+              cannot be undone a few pixels from nine that do nothing. */}
+          <div className="library-list-foot">
+            <button
+              type="button"
+              className={confirmDelete ? 'btn-danger is-armed' : 'btn-danger'}
+              onClick={() => (confirmDelete ? actions.deleteLibraryList(list.id) : setConfirmDelete(true))}
+              onBlur={() => setConfirmDelete(false)}
+            >
+              {confirmDelete ? 'Delete?' : 'Delete list'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -760,10 +765,30 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   const [pace, setPace] = useState(item.pace ?? '')
   const [link, setLink] = useState(item.link ?? '')
   const [page, setPage] = useState(String(itemProgress(item)))
+  const [total, setTotal] = useState(item.total === undefined ? '' : String(item.total))
+  const [seasons, setSeasons] = useState(item.seasons === undefined ? '' : String(item.seasons))
   const [scheduled, setScheduled] = useState<string | null>(null)
   const [templateOpen, setTemplateOpen] = useState(false)
 
   const track: LibraryTrack | 'units' = item.track ?? 'units'
+
+  /**
+   * A length, or none. Blank means open-ended rather than zero - see
+   * LibraryItem.total - so an emptied box says "this has no end I know of"
+   * and not "this is nought pages long". Anything that is not a whole
+   * positive number puts back what was there, the way the page box already
+   * does: there is no half-typed state worth an error message about.
+   */
+  function commitLength(field: 'total' | 'seasons', typed: string, put: (v: string) => void) {
+    const raw = typed.trim()
+    if (raw === '') {
+      actions.updateLibraryItem(list.id, item.id, { [field]: null })
+      return
+    }
+    const next = Number(raw)
+    if (Number.isInteger(next) && next > 0) actions.updateLibraryItem(list.id, item.id, { [field]: next })
+    else put(field === 'total' ? (item.total === undefined ? '' : String(item.total)) : item.seasons === undefined ? '' : String(item.seasons))
+  }
 
   function schedule(date: string, label: string) {
     if (!actions.scheduleLibraryItem(date, list.id, item.id)) {
@@ -789,7 +814,20 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
                 actions.updateLibraryItem(list.id, item.id, { track: option === 'units' ? null : option })
               }
             >
-              {option === 'units' ? unitPlural(list) : option === 'movie' ? 'a film' : option === 'series' ? 'seasons and episodes' : option}
+              {/* "page numbers" rather than "pages", and that is a fix
+                  rather than a wording preference. This option is the one
+                  where you type the page you are on; the option beside it is
+                  the list's own unit, which on a list of books is the word
+                  "pages" - so a shelf of books drew two buttons reading
+                  "pages" that did different things, and the owner reported
+                  exactly what that produces: pressing the wrong one. */}
+              {option === 'units'
+                ? unitPlural(list)
+                : option === 'movie'
+                  ? 'a film'
+                  : option === 'series'
+                    ? 'seasons and episodes'
+                    : 'page numbers'}
             </button>
           ))}
         </div>
@@ -825,7 +863,6 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
                   else setPage(String(itemProgress(item)))
                 }}
               />
-              <span className="muted">of {item.total ?? '?'}</span>
               {/* A sitting is ten or twenty-five pages more often than it is
                   one, and typing the new number means remembering the old. */}
               {[10, 25].map(step => (
@@ -865,6 +902,35 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         </div>
       )}
 
+      {/* How long the thing is.
+       *
+       * It was drawn and never editable: the page row said "of 139" or "of ?"
+       * and there was nowhere to put the 139. The store has had
+       * updateLibraryItem({ total }) the whole time, so this is a box wired to
+       * a door that was already there.
+       *
+       * Its own row rather than beside the count, because on three of the
+       * four tracks the count already says the total - "ch 4/12" - and a
+       * second 12 on the same line is the same fact twice. */}
+      {track !== 'movie' && (
+        <label className="library-detail-row">
+          <span className="field-label">Out of</span>
+          <input
+            className="library-page-input"
+            inputMode="numeric"
+            aria-label="Out of"
+            value={total}
+            placeholder="-"
+            onChange={e => setTotal(e.target.value)}
+            onBlur={() => commitLength('total', total, setTotal)}
+          />
+          <span className="muted library-detail-note">
+            {track === 'series' ? 'episodes this season' : track === 'pages' ? 'pages' : unitPlural(list)}
+            {item.total === undefined ? ', or leave it blank for open-ended' : ''}
+          </span>
+        </label>
+      )}
+
       {track === 'series' && (
         <div className="library-detail-row">
           <span className="field-label">Season</span>
@@ -881,7 +947,16 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
               })
             }}
           />
-          <span className="muted">of {item.seasons ?? '?'}</span>
+          <span className="muted">of</span>
+          <input
+            className="library-page-input"
+            inputMode="numeric"
+            aria-label={`Seasons in ${item.title}`}
+            value={seasons}
+            placeholder="-"
+            onChange={e => setSeasons(e.target.value)}
+            onBlur={() => commitLength('seasons', seasons, setSeasons)}
+          />
           {hasAnotherSeason(item) && itemProgress(item) > 0 && item.total !== undefined && itemProgress(item) >= item.total && (
             <button
               type="button"
@@ -894,7 +969,7 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         </div>
       )}
 
-      <label className="field library-detail-pace">
+      <label className="library-detail-row library-detail-pace">
         <span className="field-label">Pace or note</span>
         {/* One field, not two. "One chapter a day" is both the pace and the
             note anybody would write, and a second free-text box with nothing
@@ -912,8 +987,8 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
       {/* Where the thing itself is. It goes with the item when the item
           goes, which is the whole of what should happen to a finished book's
           address. Nothing here asks the network anything - see lib/link.ts. */}
-      <label className="field library-detail-link">
-        <span className="field-label">Link (optional)</span>
+      <label className="library-detail-row library-detail-link">
+        <span className="field-label">Link</span>
         <input
           inputMode="url"
           maxLength={300}

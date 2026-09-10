@@ -7932,11 +7932,21 @@ button.danger:focus-visible {
   --ground: color-mix(in srgb, var(--border) 22%, var(--surface));
 }
 
-.library-list-settings .field-dot { grid-column: 1 / span 2; }
+.library-list-settings .field-dot { grid-column: 1 / span 3; }
 
-/* Its own corner, on the line the dots sit on rather than up beside the
-   boxes somebody is typing in. */
-.library-list-settings .btn-danger { grid-column: 3; justify-self: end; align-self: end; }
+/* Its own line at the foot, with a rule over it - not sharing a row with
+   nine coloured circles.
+
+   It sat in the third column beside the dots, which put the one control here
+   that cannot be undone within a few pixels of nine that do nothing, on a
+   panel somebody opens to rename a list. The same shape the week template
+   editor's Remove already uses: the thing that ends something lives at the
+   bottom, behind a line, on its own. */
+.library-list-foot {
+  grid-column: 1 / -1;
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
 
 /* The words take the whole first line when the two controls and the button
    do not fit beside them - on a phone the field was 36px wide otherwise. */
@@ -8510,8 +8520,6 @@ button.danger:focus-visible {
   /* One column: three 1fr columns of a 320px screen are 96px each, which
      holds four characters of a unit. */
   .library-list-settings { grid-template-columns: minmax(0, 1fr); }
-  .library-list-settings .field-dot { grid-column: 1; }
-  .library-list-settings .btn-danger { grid-column: 1; justify-self: start; }
 }
 
 /* On the narrowest phones line two cannot hold the count and the actions
@@ -13611,6 +13619,13 @@ main:has(.week) > .calendar {
    one hung off the bottom of a phone. A panel that pushes the list down
    cannot do either. */
 .library-detail {
+  /* One label column for the whole panel.
+     Half of it laid its label inline at 78px and half stacked the label over
+     a full-width box, so a panel of six rows started its controls at two
+     different places and none of the labels lined up with each other. Every
+     row is the same shape now: the word on the left in one column, the
+     control on the right starting where every other control starts. */
+  --field-label-w: 84px;
   flex: 1 0 100%;
   display: flex;
   flex-direction: column;
@@ -13625,13 +13640,19 @@ main:has(.week) > .calendar {
 .library-detail-row {
   display: flex;
   align-items: center;
-  gap: var(--s2);
+  gap: var(--s2) var(--s3);
   flex-wrap: wrap;
+  margin: 0;
 }
 
-.library-detail-row .field-label { min-width: 78px; }
+.library-detail-row .field-label { flex: 0 0 var(--field-label-w); }
 
-.library-detail-pace { margin: 0; }
+/* The two rows whose control is a sentence rather than a number take the
+   width left over; the number boxes keep the width they are. */
+.library-detail-pace > input,
+.library-detail-link > input { flex: 1 1 16ch; min-width: 0; }
+
+.library-detail-row .library-page-input { flex: 0 0 auto; }
 
 .library-detail-actions {
   display: flex;

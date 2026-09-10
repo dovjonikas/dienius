@@ -97,6 +97,53 @@ async function openDetail(user: ReturnType<typeof userEvent.setup>, title: strin
   await user.click(screen.getByRole('button', { name: new RegExp(`^${title},`) }))
 }
 
+/**
+ * How long the thing is, typed.
+ *
+ * `LibraryItem.total` and `updateLibraryItem({ total })` have both existed
+ * since the feature did, and the panel drew the number - "of 139", "of ?" -
+ * with nowhere to put it. The owner asked for the box; this is the box.
+ */
+test('how long a book is can be typed, and emptying the box makes it open-ended again', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  render(<LibraryView />)
+
+  await openDetail(user, 'Daring Greatly')
+  const box = screen.getByLabelText('Out of')
+  await user.clear(box)
+  await user.type(box, '288')
+  await user.tab()
+  expect(getData().library[0].items[0].total).toBe(288)
+  expect(screen.getAllByText('ch 0/288').length).toBeGreaterThan(0)
+
+  // Blank is open-ended, not nought units long - see LibraryItem.total.
+  await user.clear(screen.getByLabelText('Out of'))
+  await user.tab()
+  expect(getData().library[0].items[0].total).toBeUndefined()
+  expect(screen.getAllByText('ch 0').length).toBeGreaterThan(0)
+  expect(list.id).toBe(getData().library[0].id)
+})
+
+/**
+ * The option that says "type the page you are on" used to be labelled with
+ * the same word as the option beside it, which is the list's own unit: a
+ * shelf of books drew two buttons reading "pages" that did different things,
+ * and the owner reported exactly what that produces.
+ */
+test('no two ways of counting are offered under the same word', async () => {
+  const user = userEvent.setup()
+  const list = actions.addLibraryList({ name: 'Books', unit: 'page', unitShort: 'p.' })
+  actions.addLibraryItem(list.id, 'The War of Art')
+  render(<LibraryView />)
+
+  await openDetail(user, 'The War of Art')
+  const group = screen.getByRole('group', { name: 'How The War of Art is counted' })
+  const words = within(group).getAllByRole('button').map(b => b.textContent)
+  expect(words).toEqual(['pages', 'page numbers', 'seasons and episodes', 'a film'])
+  expect(new Set(words).size).toBe(words.length)
+})
+
 test('progress reads in the list own unit and corrects by hand in both directions', async () => {
   const user = userEvent.setup()
   seed()
@@ -407,7 +454,7 @@ test('an address typed into an item is kept, and the row grows a door to it', as
   render(<LibraryView />)
 
   await openDetail(user, 'Daring Greatly')
-  await user.type(screen.getByLabelText('Link (optional)'), 'localhost:8080/spanish')
+  await user.type(screen.getByLabelText('Link'), 'localhost:8080/spanish')
   await user.tab()
 
   expect(getData().library[0].items[0].link).toBe('http://localhost:8080/spanish')
@@ -422,7 +469,7 @@ test('something that is not an address is not kept, and nothing is said about it
   render(<LibraryView />)
 
   await openDetail(user, 'Daring Greatly')
-  await user.type(screen.getByLabelText('Link (optional)'), 'the spanish one')
+  await user.type(screen.getByLabelText('Link'), 'the spanish one')
   await user.tab()
 
   expect(getData().library[0].items[0].link).toBeUndefined()
@@ -437,7 +484,7 @@ test('emptying the field takes the address off the item', async () => {
   render(<LibraryView />)
 
   await openDetail(user, 'Daring Greatly')
-  await user.clear(screen.getByLabelText('Link (optional)'))
+  await user.clear(screen.getByLabelText('Link'))
   await user.tab()
 
   expect(getData().library[0].items[0].link).toBeUndefined()
