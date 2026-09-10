@@ -411,6 +411,7 @@ const GOAL = record({
   // Lines of text, and nothing about whether any of them happened. Absent
   // in every goal written before North v2; the app reads absent as none.
   deserve: optional(listOf(string)),
+  avoid: optional(listOf(string)),
   archivedAt: optional(string),
   tourCreated: optional(boolean),
 })

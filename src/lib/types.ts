@@ -1082,6 +1082,16 @@ export interface Goal extends Timestamped {
   identity?: string
   /** Trimmed, no blank lines, at most `MAX_DESERVE_LINES`. Absent rather than empty - see `cleanDeserve`. */
   deserve?: string[]
+  /**
+   * The other half of the same goal: what the man it makes you does not do.
+   *
+   * Same shape and same cap as `deserve`, and paired with it on purpose -
+   * docs/RESEARCH-NORTH.md has the argument. It is a contrast held inside an
+   * approach goal, never a goal of its own, which is why nothing outside
+   * North reads it: the day view, the Monday card and the evening close all
+   * take `deserve` and none of them takes this.
+   */
+  avoid?: string[]
   /** The date key it was written on. Its age is read from this - see `goalAge`. */
   createdAt: string
   /**

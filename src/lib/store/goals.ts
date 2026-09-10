@@ -1,6 +1,6 @@
 import { commit, getData } from './core'
 import type { Goal, Settings } from '../types'
-import { applyNorthDraft, canAddGoal, cleanDeserve, withPicture, type NorthDraft } from '../north'
+import { applyNorthDraft, canAddGoal, cleanAvoid, cleanDeserve, withPicture, type NorthDraft } from '../north'
 
 /** North: goals and their settings. Nothing here measures anything - see lib/north.ts. */
 export const goalActions = {
@@ -10,26 +10,28 @@ export const goalActions = {
    * quietly evicting one would make the cap invisible.
    */
   addGoal(
-    input: { title: string; why?: string; identity?: string; deserve?: string[] },
+    input: { title: string; why?: string; identity?: string; deserve?: string[]; avoid?: string[] },
     today: string,
   ): Goal | undefined {
     const data = getData()
     if (!input.title.trim()) return undefined
     if (!canAddGoal(data.goals)) return undefined
     const deserve = cleanDeserve(input.deserve)
+    const avoid = cleanAvoid(input.avoid)
     const goal: Goal = {
       id: crypto.randomUUID(),
       title: input.title.trim(),
       why: input.why?.trim() || undefined,
       identity: input.identity?.trim() || undefined,
       ...(deserve ? { deserve } : {}),
+      ...(avoid ? { avoid } : {}),
       createdAt: today,
     }
     commit({ ...data, goals: [...data.goals, goal] })
     return goal
   },
 
-  updateGoal(id: string, patch: { title?: string; why?: string; identity?: string; deserve?: string[] }): void {
+  updateGoal(id: string, patch: { title?: string; why?: string; identity?: string; deserve?: string[]; avoid?: string[] }): void {
     const data = getData()
     commit({
       ...data,
@@ -42,6 +44,7 @@ export const goalActions = {
               why: patch.why !== undefined ? patch.why.trim() || undefined : g.why,
               identity: patch.identity !== undefined ? patch.identity.trim() || undefined : g.identity,
               deserve: patch.deserve !== undefined ? cleanDeserve(patch.deserve) : g.deserve,
+              avoid: patch.avoid !== undefined ? cleanAvoid(patch.avoid) : g.avoid,
             },
       ),
     })

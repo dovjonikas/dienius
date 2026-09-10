@@ -5,6 +5,8 @@ import {
   activeGoals,
   archivedGoals,
   canAddGoal,
+  cleanAvoid,
+  cleanDeserve,
   deserveForWeek,
   goalAge,
   goalForDay,
@@ -12,7 +14,7 @@ import {
   northPrompt,
   wasSlowDay,
 } from './north'
-import { MAX_ACTIVE_GOALS, type AppData, type Goal, type Task } from './types'
+import { MAX_ACTIVE_GOALS, MAX_DESERVE_LINES, type AppData, type Goal, type Task } from './types'
 
 // 2026-08-31 is a Monday.
 const MON = '2026-08-31'
@@ -405,4 +407,37 @@ test('compose with nothing changed writes nothing new', () => {
   actions.composeNorth({ picture: 'I wake early.', goals: [{ id: g.id, title: 'Ship something', why: 'Because' }] }, WED)
   expect(getData().goals).toEqual(before.goals)
   expect(getData().picture).toEqual(before.picture)
+})
+
+/**
+ * The other half of a goal: what the man it makes you does not do.
+ *
+ * Why it is here at all, and why in this exact shape, is
+ * docs/RESEARCH-NORTH.md. The short version: an expected self predicts
+ * behaviour far better when it is paired with a feared self **in the same
+ * domain** - unpaired is the case that predicts the worse outcome - and a
+ * feared self with no strategy beside it is not a motivator but a worry.
+ *
+ * So this is stored on the goal, beside `deserve`, cleaned by the same rules
+ * and capped at the same four. It is a contrast held inside an approach
+ * goal, never a goal of its own: avoidance goals are their own well
+ * replicated literature and they cost wellbeing.
+ */
+test('the lines a goal avoids are cleaned exactly as the ones it deserves are', () => {
+  expect(cleanAvoid(['  makes a face  ', '', '   ', 'goes quiet for a day'])).toEqual([
+    'makes a face',
+    'goes quiet for a day',
+  ])
+})
+
+test('nothing left means no list at all, the way absent means unwritten everywhere else here', () => {
+  expect(cleanAvoid([])).toBeUndefined()
+  expect(cleanAvoid(['   ', ''])).toBeUndefined()
+  expect(cleanAvoid(undefined)).toBeUndefined()
+})
+
+test('it holds the same four the doing half does, so neither side of the pair can outgrow the other', () => {
+  const many = ['one', 'two', 'three', 'four', 'five', 'six']
+  expect(cleanAvoid(many)).toHaveLength(MAX_DESERVE_LINES)
+  expect(cleanAvoid(many)).toEqual(cleanDeserve(many))
 })

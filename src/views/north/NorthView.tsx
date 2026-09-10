@@ -123,9 +123,12 @@ export function NorthView() {
 function ThePicture({ text }: { text: string }) {
   return (
     <div className="north-picture">
-      <p className="north-layer-label">
-        <Explain id="picture">The picture</Explain>
-      </p>
+      {/* No label over it since v2.18. A small-caps THE PICTURE above
+          somebody's own sentences is the thing that made this window read
+          as a template with the fields filled in - and the page is better
+          for opening on the person's own words. The explanation for the
+          word lives on the invitation, which is where somebody meets it
+          for the first time and where Explain.test.tsx looks for it. */}
       <p className="north-picture-text">{text}</p>
     </div>
   )
@@ -215,35 +218,74 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const room = rules.length < MAX_RULES_PER_GOAL
   const deserve = goal.deserve ?? []
+  const avoid = goal.avoid ?? []
 
   return (
     <article className="north-goal">
       <h3 className="north-goal-title">{goal.title}</h3>
       {goal.why && <p className="north-goal-why">{goal.why}</p>}
+      {/* The loudest thing on the card since v2.18, and it was the quietest.
+          It is what both halves below are a contrast about: the doing and
+          the not-doing only mean anything against a sentence saying who this
+          makes you. */}
       {goal.identity && <p className="north-goal-identity">{goal.identity}</p>}
       {/* A fact, not a measurement - see goalAge. It cannot be lost and it
           does not move faster on a good week. */}
       <p className="north-goal-age">{ageLabel(goal, today)}</p>
 
-      <h4 className="north-layer-label north-goal-deserve-head">
-        <Explain id="deserve">What I do to deserve this</Explain>
-      </h4>
+      {/* The pair, side by side - docs/RESEARCH-NORTH.md.
+       *
+       * Oyserman's *balance*: an expected self predicts behaviour far better
+       * when it is paired with a feared self in the same domain, and the
+       * unpaired case is the one that predicts the worse outcome. So the two
+       * halves are one block about one goal rather than two sections of a
+       * page, because the pairing is the finding and a layout that separates
+       * them loses it.
+       *
+       * And they are never drawn apart: a "does not" with no "does" beside
+       * it is the backfire condition in Witte's model - threat without
+       * efficacy, which produces defensive avoidance rather than action.
+       * The column only exists when there is something in it, and the whole
+       * block only exists when the doing half does.
+       *
+       * Third person and present tense on purpose. "He doesn't go quiet for
+       * a day" is a description of a man; "you went quiet again" is a
+       * scoreboard with one entry, and on a bad day it is read as a verdict -
+       * which is the difficulty-as-impossibility trap that section 6 of the
+       * research is about. */}
       {deserve.length > 0 ? (
-        // A plain list. No marker, no box, nothing to tick: the moment one
-        // of these could be checked off it would be a scoreboard, and the
-        // heading would stop being true.
-        <ul className="north-deserve">
-          {deserve.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul>
+        <div className="north-pair">
+          <div className="north-pair-half">
+            <h4 className="north-pair-head">
+              <Explain id="deserve">He does</Explain>
+            </h4>
+            {/* A plain list. No marker, no box, nothing to tick: the moment
+                one of these could be checked off it would be a scoreboard,
+                and the heading would stop being true. */}
+            <ul className="north-deserve">
+              {deserve.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          </div>
+          {avoid.length > 0 && (
+            <div className="north-pair-half">
+              <h4 className="north-pair-head">He doesn&apos;t</h4>
+              <ul className="north-deserve north-avoid">
+                {avoid.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       ) : (
         <p className="north-goal-deserve-empty">
           Two to four things you do most days for this, written in Compose.
         </p>
       )}
 
-      <h4 className="north-layer-label north-goal-rules-head">What pulls me off this</h4>
+      <h4 className="north-pair-head north-goal-rules-head">What pulls me off this</h4>
 
       {rules.length === 0 && !adding && (
         <p className="empty north-goal-rules-empty">

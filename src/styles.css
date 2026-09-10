@@ -10368,14 +10368,20 @@ button.task-note-mark.is-open {
 
 /* The only italic in the app besides the day view's own identity line, and
    earned the same way: a sentence in the first person, set the way a
-   first-person aside has been set for four hundred years. */
+   first-person aside has been set for four hundred years.
+
+   The loudest thing on the card since v2.18, and it was the quietest - muted,
+   at body size, under a why that outweighed it. It is what the two halves
+   below are a contrast about, so it reads at the title's size in the text
+   colour and everything else on the card gives way to it. See
+   docs/RESEARCH-NORTH.md section 8. */
 .north-goal-identity {
-  margin: var(--s1) 0 0;
-  max-width: 56ch;
-  color: var(--muted);
-  font-size: var(--t-md);
+  margin: var(--s3) 0 0;
+  max-width: 46ch;
+  color: var(--text);
+  font-size: var(--t-lg);
   font-style: italic;
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 /* A fact, not a measurement - goalAge. Set in --faint at the smallest size
@@ -10387,10 +10393,51 @@ button.task-note-mark.is-open {
   letter-spacing: 0.04em;
 }
 
-.north-goal-deserve-head,
-.north-goal-rules-head {
-  margin: var(--s5) 0 var(--s2);
+/* A head that says what a column is, not a label announcing a section. No
+   small caps and no letter-spacing: three of those on one screen, in one
+   grey, at one size, is what made this window read as a template somebody
+   had filled in rather than as a page somebody had written. */
+.north-pair-head {
+  margin: 0 0 var(--s2);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
+
+.north-goal-rules-head { margin: var(--s5) 0 var(--s2); }
+
+/* The two halves of one goal, beside each other.
+
+   Side by side because the pairing is the finding - an expected self
+   predicts behaviour far better when it is held against a feared self in the
+   same domain, and a layout that puts them in two sections of a page is a
+   layout that has lost it. docs/RESEARCH-NORTH.md sections 2 and 8.
+
+   Equal columns, so neither half reads as the main one and the other as a
+   footnote. They stack on a phone, which keeps them adjacent - the next
+   thing under "He does" is still "He doesn't". */
+.north-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s5) var(--s6);
+  margin: var(--s5) 0 0;
+  max-width: 64ch;
+}
+
+@media (max-width: 599px) {
+  .north-pair { grid-template-columns: 1fr; gap: var(--s4); }
+}
+
+.north-pair-half { min-width: 0; }
+
+/* The away half, one step quieter than the doing half. It is a contrast, not
+   an instruction: the same size and leading so the two read as one thought,
+   and the muted ink so the eye lands on what he does first. Making it louder
+   would be making the threat louder, which is the half of Witte's model that
+   produces avoidance rather than action - research section 4. */
+.north-avoid li { color: var(--muted); }
 
 /* What you do to deserve it: a plain list. No marker and nothing to tick.
    Set at body size in the text colour, because it is the bridge between the

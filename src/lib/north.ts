@@ -263,6 +263,30 @@ export function cleanDeserve(lines: readonly string[] | undefined): string[] | u
 }
 
 /**
+ * The other half: what the man this goal makes you does **not** do.
+ *
+ * Same cleaning, same cap, deliberately - see docs/RESEARCH-NORTH.md. The
+ * finding it is built on is Oyserman's *balance*: an expected self predicts
+ * behaviour far better when it is paired with a feared self in the same
+ * domain, and the unpaired case is the one that predicts the worse outcome.
+ * So this is not a list of rules kept somewhere on the page; it is the
+ * opposite half of one goal, and it is capped at the same four so that
+ * neither side of the pair can outgrow the other and turn a portrait back
+ * into a checklist.
+ *
+ * The same function twice rather than one with a parameter, because the two
+ * are the same rule for different reasons and the next change to either is
+ * unlikely to be a change to both.
+ */
+export function cleanAvoid(lines: readonly string[] | undefined): string[] | undefined {
+  const kept = (lines ?? [])
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(0, MAX_DESERVE_LINES)
+  return kept.length > 0 ? kept : undefined
+}
+
+/**
  * Which week a date is in, counting Monday-first weeks from the epoch. Only
  * its remainder is ever used, like `dayNumber`. The epoch itself was a
  * Thursday, hence the three.
@@ -316,6 +340,7 @@ export interface GoalDraft {
   why?: string
   identity?: string
   deserve?: string[]
+  avoid?: string[]
   archive?: boolean
 }
 
@@ -355,12 +380,14 @@ export function applyNorthDraft(data: AppData, draft: NorthDraft, today: string)
       why: d.why === undefined ? goal.why : d.why.trim() || undefined,
       identity: d.identity === undefined ? goal.identity : d.identity.trim() || undefined,
       deserve: d.deserve === undefined ? goal.deserve : cleanDeserve(d.deserve),
+      avoid: d.avoid === undefined ? goal.avoid : cleanAvoid(d.avoid),
     }
   })
   for (const d of draft.goals) {
     if (d.id || !d.title.trim()) continue
     if (!canAddGoal(goals)) continue
     const deserve = cleanDeserve(d.deserve)
+    const avoid = cleanAvoid(d.avoid)
     goals = [
       ...goals,
       {
@@ -369,6 +396,7 @@ export function applyNorthDraft(data: AppData, draft: NorthDraft, today: string)
         why: d.why?.trim() || undefined,
         identity: d.identity?.trim() || undefined,
         ...(deserve ? { deserve } : {}),
+        ...(avoid ? { avoid } : {}),
         createdAt: today,
       },
     ]

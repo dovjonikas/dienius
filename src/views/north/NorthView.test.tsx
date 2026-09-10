@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { NorthView } from './NorthView'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
-import { activeGoals } from '../../lib/north'
+import { activeGoals, deserveForWeek } from '../../lib/north'
 import { MAX_ACTIVE_GOALS, MAX_RULES_PER_GOAL } from '../../lib/types'
 
 const TODAY = '2026-09-05'
@@ -16,7 +16,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date(`${TODAY}T09:00:00`))
 })
 
-function goal(title: string, more: { why?: string; identity?: string; deserve?: string[] } = {}) {
+function goal(title: string, more: { why?: string; identity?: string; deserve?: string[]; avoid?: string[] } = {}) {
   return actions.addGoal({ title, ...more }, '2026-09-01')!
 }
 
@@ -268,16 +268,22 @@ test('what you do to deserve a goal reads as a plain list, with nothing to tick'
   goal('Be strong at fifty', { deserve: ['train four times a week', 'sleep by eleven'] })
   const { container } = render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  expect(within(card).getByText('What I do to deserve this')).toBeInTheDocument()
+  // "He does" since v2.18, and the reason is the half beside it - see
+  // docs/RESEARCH-NORTH.md. The card is a portrait of a man in the third
+  // person now, so the head names him rather than announcing a section.
+  expect(within(card).getByText('He does')).toBeInTheDocument()
   expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['train four times a week', 'sleep by eleven'])
   expect(container.querySelector('input[type="checkbox"], progress, meter')).toBeNull()
 })
 
-test('a goal with nothing written to deserve it says so once, quietly, under the same heading', () => {
+test('a goal with nothing written to deserve it says so once, quietly, and shows no pair at all', () => {
   goal('Be strong at fifty')
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  expect(within(card).getByText('What I do to deserve this')).toBeInTheDocument()
+  // No heads either: a column head over nothing is a label announcing an
+  // empty section, which is the shape this window was rebuilt away from.
+  expect(within(card).queryByText('He does')).toBeNull()
+  expect(within(card).queryByText(/He doesn/)).toBeNull()
   expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
 })
 
@@ -428,4 +434,72 @@ test('leaving Compose puts focus back on the Compose control', async () => {
   await user.click(screen.getByRole('button', { name: 'Compose' }))
   await user.keyboard('{Escape}')
   expect(screen.getByRole('button', { name: 'Compose' })).toHaveFocus()
+})
+
+/**
+ * The pair: what he does, and what he does not, on one goal.
+ *
+ * docs/RESEARCH-NORTH.md is the argument. Oyserman's *balance* - an expected
+ * self predicts behaviour far better when it is held against a feared self in
+ * the same domain, and the unpaired case is the one that predicts the worse
+ * outcome - is why they are one block about one goal rather than two sections
+ * of a page. Witte's model is why the away half is never drawn alone: threat
+ * without efficacy produces avoidance rather than action.
+ */
+test('a goal shows what he does and what he does not, together, on the same card', () => {
+  goal('A dad my kid can tell anything', {
+    deserve: ['10 min sitting before anyone is up', 'listens without making a face'],
+    avoid: ['makes a face at bad news', 'goes quiet for a day'],
+  })
+  render(<NorthView />)
+  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
+
+  expect(within(card).getByText('He does')).toBeInTheDocument()
+  expect(within(card).getByText("He doesn't")).toBeInTheDocument()
+  expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual([
+    '10 min sitting before anyone is up',
+    'listens without making a face',
+    'makes a face at bad news',
+    'goes quiet for a day',
+  ])
+})
+
+test('the away half is never drawn without the doing half beside it', () => {
+  // The shape Witte's model says backfires: a threat with no answer next to
+  // it. A goal carrying only the away lines shows neither head and falls
+  // back to the invitation to write the doing half.
+  goal('A dad my kid can tell anything', { avoid: ['goes quiet for a day'] })
+  render(<NorthView />)
+  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
+
+  expect(within(card).queryByText("He doesn't")).toBeNull()
+  expect(within(card).queryByText('goes quiet for a day')).toBeNull()
+  expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
+})
+
+test('a goal with only the doing half shows it alone, with no empty column beside it', () => {
+  goal('A dad my kid can tell anything', { deserve: ['listens without making a face'] })
+  render(<NorthView />)
+  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
+
+  expect(within(card).getByText('He does')).toBeInTheDocument()
+  expect(within(card).queryByText("He doesn't")).toBeNull()
+})
+
+/**
+ * And the rule the whole feature hangs on - research section 5. The goal
+ * stays an approach goal; the away half is a contrast inside it. Avoidance
+ * goals are their own well replicated literature and they cost wellbeing, so
+ * nothing outside this window reads these lines: not the day view, not the
+ * Monday card, not the evening close.
+ */
+test('nothing the day carries reads the away half', () => {
+  goal('A dad my kid can tell anything', {
+    deserve: ['listens without making a face'],
+    avoid: ['goes quiet for a day'],
+  })
+  const [written] = getData().goals
+  expect(written.avoid).toEqual(['goes quiet for a day'])
+  // deserveForWeek is what the Monday card takes, and it takes from deserve.
+  expect(deserveForWeek(written, '2026-08-31')).toBe('listens without making a face')
 })

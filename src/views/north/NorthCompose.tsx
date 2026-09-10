@@ -23,6 +23,7 @@ interface GoalRow {
   identity: string
   /** One line per thing you do - the textarea's own text, split on save. */
   deserve: string
+  avoid: string
   /** Goes on Save, not before, so Cancel still means Cancel. */
   archive: boolean
 }
@@ -35,12 +36,13 @@ function rowOf(goal: Goal): GoalRow {
     why: goal.why ?? '',
     identity: goal.identity ?? '',
     deserve: (goal.deserve ?? []).join('\n'),
+    avoid: (goal.avoid ?? []).join('\n'),
     archive: false,
   }
 }
 
 function blankRow(): GoalRow {
-  return { key: crypto.randomUUID(), title: '', why: '', identity: '', deserve: '', archive: false }
+  return { key: crypto.randomUUID(), title: '', why: '', identity: '', deserve: '', avoid: '', archive: false }
 }
 
 /**
@@ -138,6 +140,12 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
     update(key, { deserve: value })
   }
 
+  /** The same four, for the same reason - see cleanAvoid. */
+  function setAvoid(key: string, value: string) {
+    if (value.split('\n').length > MAX_DESERVE_LINES) return
+    update(key, { avoid: value })
+  }
+
   function addRow() {
     const row = blankRow()
     setRows(current => [...current, row])
@@ -163,6 +171,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
         why: r.why,
         identity: r.identity,
         deserve: r.deserve.split('\n'),
+        avoid: r.avoid.split('\n'),
         archive: r.archive,
       })),
     }
@@ -257,6 +266,25 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
               />
             </label>
             <span className="north-compose-hint">One line per thing you do, most days. Up to four.</span>
+            {/* The other half of the same goal - docs/RESEARCH-NORTH.md.
+                Asked second and never first: it is a contrast, and a contrast
+                needs something to be against. Written in the third person
+                because that is how it is read back, and because "he doesn't
+                go quiet for a day" is a description of a man where "you went
+                quiet again" is a scoreboard with one entry. */}
+            <label className="field">
+              <span className="field-label">What he doesn&apos;t do</span>
+              <textarea
+                rows={3}
+                value={row.avoid}
+                maxLength={400}
+                placeholder={'make a face at bad news\ngo quiet for a day'}
+                onChange={e => setAvoid(row.key, e.target.value)}
+              />
+            </label>
+            <span className="north-compose-hint">
+              The same few, from the other side. It is read beside what he does, never on its own.
+            </span>
             <div className="north-compose-goal-foot">
               {row.id ? (
                 <button
