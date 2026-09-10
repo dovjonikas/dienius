@@ -31,9 +31,9 @@ import type { LibraryList, Task } from './types'
  * are not links to anywhere - one of them is a way to run code inside this
  * app - and this is the one gate between a typed string and an `href`.
  *
- * A refusal is silent by design: see the field in the item editor. There is
- * nothing to correct and no error worth a sentence, so nothing is saved and
- * nothing is said.
+ * Most refusals are silent by design: a half-typed word is not an error, and
+ * there is nothing to correct. One is not, and `linkRefusal` below is that
+ * one - see the owner's report about a PDF.
  */
 export function parseLink(text: string): string | undefined {
   const trimmed = text.trim()
@@ -60,6 +60,33 @@ export function parseLink(text: string): string | undefined {
   // destination.
   if (!url.hostname.includes('.') && !isLocalName(url.hostname)) return undefined
   return url.toString()
+}
+
+/**
+ * The one refusal worth a sentence, and why exactly one.
+ *
+ * The owner put a `file://` path to a PDF into a link field. Nothing was
+ * saved and nothing was said, so the field looked broken. It was not: a
+ * browser will not open a file on the reader's own disk from a page, at all,
+ * and this was confirmed rather than remembered - Chromium answers a click
+ * on one with "Not allowed to load local resource" and does not move.
+ *
+ * So accepting it would have been worse than refusing it: a door that opens
+ * onto nothing is worse than no door. What was wrong was the silence.
+ *
+ * Only for a string that *is* an address in some scheme this cannot open.
+ * A bare word stays silent, because there really is nothing to correct
+ * there - somebody is halfway through typing.
+ */
+export function linkRefusal(text: string): string | undefined {
+  const trimmed = text.trim()
+  if (trimmed === '' || parseLink(trimmed) !== undefined) return undefined
+  const scheme = /^([a-z][a-z0-9+.-]*):(?:\/\/|[^0-9])/i.exec(trimmed)?.[1]?.toLowerCase()
+  if (!scheme || scheme === 'http' || scheme === 'https') return undefined
+  if (scheme === 'file') {
+    return 'A page cannot open a file on your own disk. Serve the folder at an address like 192.168.1.4/books and link that, and it works from the phone too.'
+  }
+  return 'Only http and https addresses can be opened from here.'
 }
 
 /**

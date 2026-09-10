@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { linkFor, linkKind, linkLabel, parseLink } from './link'
+import { linkFor, linkKind, linkLabel, linkRefusal, parseLink } from './link'
 import type { LibraryList, Task } from './types'
 
 /**
@@ -107,4 +107,38 @@ test('a binding that resolves to nothing contributes nothing', () => {
   expect(linkFor(task({ libraryRef: { listId: 'gone', itemId: 'i1' } }), BOOKS)).toBeUndefined()
   expect(linkFor(task({ libraryRef: { listId: 'l1', itemId: 'i2' } }), BOOKS)).toBeUndefined()
   expect(linkFor(task({}), BOOKS)).toBeUndefined()
+})
+
+// --- the one refusal that says why ----------------------------------------
+
+/**
+ * The owner put a file:// path to a PDF into a link field. Nothing saved and
+ * nothing said, so the field looked broken. It was not - a browser will not
+ * open a file on the reader's own disk from a page, which was confirmed in
+ * Chromium rather than remembered: a click answers "Not allowed to load
+ * local resource" and does not move. Accepting it would have been a door
+ * onto nothing. What was wrong was the silence.
+ */
+test('a file address is refused with the reason and the thing that does work', () => {
+  const said = linkRefusal('file:///C:/books/war-of-art.pdf')
+  expect(said).toContain('cannot open a file on your own disk')
+  expect(said).toContain('192.168.1.4/books')
+  expect(parseLink('file:///C:/books/war-of-art.pdf')).toBeUndefined()
+})
+
+test('any other scheme a page cannot open says so in one line', () => {
+  expect(linkRefusal('mailto:someone@example.com')).toBe('Only http and https addresses can be opened from here.')
+  expect(linkRefusal('javascript:alert(1)')).toBe('Only http and https addresses can be opened from here.')
+})
+
+/**
+ * And everything else stays silent. A half-typed word is not an error and
+ * there is nothing to correct in it.
+ */
+test('a half-typed word says nothing at all, and neither does an address that works', () => {
+  expect(linkRefusal('')).toBeUndefined()
+  expect(linkRefusal('note')).toBeUndefined()
+  expect(linkRefusal('example.com/x')).toBeUndefined()
+  expect(linkRefusal('192.168.1.4/books')).toBeUndefined()
+  expect(linkRefusal('https://example.com')).toBeUndefined()
 })

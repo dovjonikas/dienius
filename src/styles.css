@@ -13838,6 +13838,18 @@ main:has(.week) > .calendar {
 
 .library-detail-note { margin: 0; font-size: var(--t-sm); }
 
+/* The one thing this panel says back. Not red and not an alarm: nothing has
+   gone wrong, an address in a scheme a page cannot open simply has nowhere
+   to go, and the sentence says what does work instead. */
+.library-detail-refusal {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  line-height: 1.5;
+}
+
 .library-page-input {
   width: 72px;
   text-align: center;

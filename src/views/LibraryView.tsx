@@ -17,7 +17,7 @@ import {
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
-import { parseLink } from '../lib/link'
+import { linkRefusal, parseLink } from '../lib/link'
 import { LinkOut } from './LinkOut'
 import { PALETTE_COLORS } from '../lib/colors'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
@@ -764,6 +764,8 @@ interface ItemDetailProps {
 function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   const [pace, setPace] = useState(item.pace ?? '')
   const [link, setLink] = useState(item.link ?? '')
+  /** The one refusal worth a sentence - see linkRefusal. Cleared on the next keystroke. */
+  const [linkSaid, setLinkSaid] = useState<string | undefined>(undefined)
   const [page, setPage] = useState(String(itemProgress(item)))
   const [total, setTotal] = useState(item.total === undefined ? '' : String(item.total))
   const [seasons, setSeasons] = useState(item.seasons === undefined ? '' : String(item.seasons))
@@ -995,16 +997,26 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
           /* The same example as the task sheet's - see the comment there. */
           placeholder="www.example.com/spanish"
           value={link}
-          onChange={e => setLink(e.target.value)}
+          onChange={e => {
+            setLink(e.target.value)
+            setLinkSaid(undefined)
+          }}
           onBlur={() => {
+            setLinkSaid(linkRefusal(link))
             if (link.trim() === '') return actions.updateLibraryItem(list.id, item.id, { link: null })
             const parsed = parseLink(link)
-            // Not an address: the item keeps what it had, and nothing is
-            // said about it. There is no half-typed state worth an error.
+            // Not an address: the item keeps what it had. A half-typed word is
+            // not an error and nothing is said about it - but an address in a
+            // scheme a page cannot open is, and linkRefusal says which.
             if (parsed !== undefined) actions.updateLibraryItem(list.id, item.id, { link: parsed })
           }}
         />
       </label>
+      {linkSaid && (
+        <p className="library-detail-refusal" role="status">
+          {linkSaid}
+        </p>
+      )}
 
       <div className="library-detail-actions">
         <button type="button" className="btn-secondary" data-tour="library-onto-today" onClick={() => schedule(todayKey(), 'today')}>
