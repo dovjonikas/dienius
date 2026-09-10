@@ -937,9 +937,10 @@ export function TemplatesView() {
 
       {!draft && !weekDraft && !asking && data.templates.length === 0 && (
         <div className="first-run">
-          <p className="empty">
-            No templates yet - start from one of these, or build your own with New template above.
-          </p>
+          {/* One sentence and the offers under it. It used to add "or build your
+              own with New template above", which is a line explaining a button
+              that is on the screen while the sentence is being read. */}
+          <p className="empty">No templates yet - start from one of these.</p>
           <StarterOffers onUse={useStarter} />
         </div>
       )}

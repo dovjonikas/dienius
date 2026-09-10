@@ -34,7 +34,10 @@ function statusLine(status: CloudBackupStatus): { text: string; tone: 'ok' | 'bu
     case 'offline':
       return { text: status.message ?? 'No connection. It will try again.', tone: 'busy' }
     case 'error':
-      return { text: status.message ?? 'Something went wrong. It will try again.', tone: 'bad' }
+      // Named rather than vague. This is the fallback for a failure the server
+      // gave no message for, and "something went wrong" on a settings page with
+      // four things on it does not say which of them.
+      return { text: status.message ?? 'The backup did not go through. It will try again.', tone: 'bad' }
     case 'idle':
       return { text: `Last backup: ${formatBackupTime(status.lastBackupAt)}.`, tone: 'ok' }
   }
