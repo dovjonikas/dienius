@@ -1107,9 +1107,17 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-size: var(--t-sm);
 }
 
+/* A selection is the accent in a weaker form, not a fill.
+   A solid accent segment is the same weight as the one primary action on the
+   screen, and a screen with two of those has neither. The tint plus accent
+   ink says "this one" and leaves the fill to the thing that acts. */
 .segmented button.active {
-  background: var(--accent);
-  color: var(--on-accent, #fff);
+  /* The tint marks it and the label stays ordinary ink. Accent-on-accent-tint
+     came out at 3.9:1 on Light, which is the exact trade CONVENTIONS 22
+     refuses: a selection nobody can read is not a selection. */
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /*
@@ -3819,14 +3827,13 @@ select:focus {
   top: 3px;
   width: var(--tick-short, 0px);
   height: var(--tick-long, 0px);
-  /* The one rule this mark is drawn by: a thing filled with --accent takes
-     its ink from --on-accent, which is derived at runtime against whatever
-     accent is in force. It was a hard white, which is the exact case
-     CONVENTIONS section 5 was written about - 2.42:1 on the default dark
-     accent, on the most-looked-at mark in the app. The same fix gives
-     8.67:1 there and changes nothing on Light, where the accent is dark
-     enough that white was already what --on-accent resolves to. */
-  border: solid var(--on-accent, #fff);
+  /* Drawn in the text colour, on the page's own ground.
+     It was white on an accent fill, and the fill is gone - a ticked box is
+     neutral now, so the ink that was derived against the accent would be
+     drawn on nothing. The text colour is the one ink guaranteed readable on
+     whatever surface a task sits on, which is what this mark needs and is
+     what the --on-accent derivation was reaching for by another route. */
+  border: solid var(--text);
   border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg);
   transform-origin: left top;
@@ -3856,9 +3863,15 @@ select:focus {
   }
 }
 
+/* A ticked box is neutral.
+   It was filled with the accent, which put the loudest colour in the app on
+   every finished task - seventeen of them down a full day, against one
+   primary action and one now line that are supposed to be the things the eye
+   finds. The box keeps its outline and the tick is drawn in the text colour:
+   done is still unmistakable and it is no longer the brightest thing on the
+   screen. */
 .task input:checked + .check {
-  background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--muted);
   animation: pop var(--dur) ease;
 }
 
@@ -3886,8 +3899,7 @@ select:focus {
 }
 
 .check-line input:checked + .check {
-  background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--muted);
 }
 
 .check-line input:checked + .check::after {
@@ -4047,10 +4059,12 @@ select:focus {
    the same tinted treatment .timeline-gap[aria-expanded='true'] uses for
    "this small control opened something," applied here without the layout
    cost since this control sits in normal flow next to other row content. */
+/* The tint alone. There was an outline under it as well, which is the mark
+   this app uses for keyboard focus and nothing else - so a focused pressed
+   control drew two identical rings and the ring stopped meaning focus. The
+   tint already says pressed. */
 .task-title-select[aria-pressed='true'] {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  outline: 1.5px solid var(--accent);
-  outline-offset: -1px;
 }
 
 /* The one quiet mark for whichever push state applies - pushed N times,
@@ -7614,6 +7628,11 @@ button.danger:focus-visible {
 .digest-figures > div { display: contents; }
 
 .digest-figures dt {
+  /* Never wrapped. The rail is 240px and the read form of a length grew when
+     "12h45" became "12h 45 min", which pushed the figure column wide enough
+     to break DEEP WORK over two lines. The word is the shortest thing in the
+     row and the note beside it is the part with slack, so the note gives. */
+  white-space: nowrap;
   font-size: var(--t-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -11764,6 +11783,10 @@ main:has(.week) > .calendar {
   pointer-events: none;
 }
 
+/* The same amber the day's own now line is drawn in. It was the accent here
+   and --mark there, which is one fact told in two colours on two screens
+   that show the same day. --mark is what this app paints "this is happening
+   now" and "this is the key one" with; --accent is what you can act on. */
 .week-now {
   position: absolute;
   left: 0;
@@ -14527,8 +14550,7 @@ main:has(.week) > .calendar {
 }
 
 .day-card-check input:checked + .check {
-  background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--muted);
 }
 
 /* The same eighteen pixel box and the same correction - see the note on

@@ -29,9 +29,11 @@ const OUT = resolve('docs/screenshots/night', SIDE)
 const FIXED = new Date('2026-09-16T12:00:00Z')
 const SIZE = { width: 1366, height: 768 }
 
-/** @param {import('@playwright/test').Page} p */
+/** @param {import('@playwright/test').Page} p @param {string} name */
 const tab = (p, name) => p.getByRole('navigation', { name: 'Views' }).getByRole('button', { name, exact: true }).click()
 
+/** @typedef {import('@playwright/test').Page} Page */
+/** @type {{ name: string, go: (p: Page) => Promise<unknown> }[]} */
 const SCREENS = [
   { name: 'today', go: p => tab(p, 'Today') },
   { name: 'calendar-month', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Month', exact: true }).click() } },
@@ -49,7 +51,7 @@ async function main() {
   await server.listen()
   const browser = await chromium.launch()
   try {
-    for (const theme of ['dark', 'light']) {
+    for (const theme of /** @type {const} */ (['dark', 'light'])) {
       const ctx = await browser.newContext({ viewport: SIZE, colorScheme: theme, timezoneId: 'Europe/Vilnius', locale: 'en-GB' })
       await ctx.clock.setFixedTime(FIXED)
       const page = await ctx.newPage()

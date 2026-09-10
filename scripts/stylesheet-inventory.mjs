@@ -29,8 +29,13 @@ const css = readFileSync(FILE, 'utf8')
 
 const lines = css.split('\n')
 
-/** Every `prop: value` declaration with its line, for the props asked for. */
+/**
+ * Every `prop: value` declaration with its line, for the props asked for.
+ * @param {string[]} props
+ * @returns {{ line: number, prop: string, value: string }[]}
+ */
 function declarations(props) {
+  /** @type {{ line: number, prop: string, value: string }[]} */
   const out = []
   const wanted = new RegExp(`(?:^|[{;])\\s*(${props.join('|')})\\s*:\\s*([^;}]+)`, 'g')
   lines.forEach((text, i) => {
@@ -39,14 +44,22 @@ function declarations(props) {
   return out
 }
 
-/** Counts of a value, most used first. */
+/**
+ * Counts of a value, most used first.
+ * @param {string[]} values
+ * @returns {[string, number][]}
+ */
 function tally(values) {
+  /** @type {Map<string, number>} */
   const counts = new Map()
   for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
   return [...counts].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
 }
 
-/** The declarations that set a custom property, which is where a scale is written. */
+/**
+ * The declarations that set a custom property, which is where a scale is written.
+ * @param {string} re
+ */
 function tokenDefinitions(re) {
   return declarations([re]).map(d => d.prop)
 }
@@ -69,8 +82,13 @@ const SPACE_PROPS = [
   'margin-(?:top|right|bottom|left|inline|block)',
 ]
 const spacing = declarations(SPACE_PROPS)
-/** Each token or literal used as a length, one entry per occurrence. */
+/**
+ * Each token or literal used as a length, one entry per occurrence.
+ * @param {string} value
+ * @returns {string[]}
+ */
 function spacingAtoms(value) {
+  /** @type {string[]} */
   const atoms = []
   for (const m of value.matchAll(/var\((--s\d)\)/g)) atoms.push(m[1])
   for (const m of value.matchAll(/(?<![\w-])(-?\d+(?:\.\d+)?)px/g)) atoms.push(`${Math.abs(Number(m[1]))}px`)
@@ -92,6 +110,7 @@ const borderUses = tally(borders.map(d => d.value))
 // --- 5. colours that are not tokens ---------------------------------------
 
 const COLOUR_PROPS = ['color', 'background', 'background-color', 'border-color', 'fill', 'stroke', 'box-shadow']
+/** @type {{ line: number, prop: string, colour: string }[]} */
 const rawColours = []
 for (const d of declarations(COLOUR_PROPS)) {
   // Inside a :root or a theme block a literal is the token's own definition,
@@ -106,6 +125,7 @@ const rawColourUses = tally(rawColours.map(c => c.colour))
 
 // --- 6. the accent ---------------------------------------------------------
 
+/** @type {{ line: number, text: string }[]} */
 const accentUses = []
 lines.forEach((text, i) => {
   if (/--accent\b/.test(text) && !/^\s*--accent/.test(text)) accentUses.push({ line: i + 1, text: text.trim() })
@@ -121,6 +141,11 @@ const keyframes = tally([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(m => m[1
 
 // --- the report ------------------------------------------------------------
 
+/**
+ * @param {string} title
+ * @param {[string, number][]} rows
+ * @param {string} [note]
+ */
 function section(title, rows, note) {
   const body = rows.map(([value, count]) => `| \`${value}\` | ${count} |`).join('\n')
   return `### ${title}\n\n${note ? note + '\n\n' : ''}| value | uses |\n| --- | --- |\n${body}\n`
@@ -132,10 +157,10 @@ const declaredSpace = tokenDefinitions('--s[0-9]')
 const report = [
   '# The stylesheet, counted',
   '',
-  '> `npm run inventory`. Written by `scripts/stylesheet-inventory.mjs`, which reads',
-  '> `src/styles.css` rather than the rendered page: a rendered page shows what won,',
-  '> and this shows what was written, which is what gets tidied. The sweep is the',
-  '> other half and measures the page.',
+  "> Generated. `npm run inventory -- --md` rewrites this file; the account beside it",
+  '> is in NIGHT.md. Read from `src/styles.css` rather than the rendered page:',
+  '> a rendered page shows what won, and this shows what was written, which is what',
+  '> gets tidied. The sweep is the other half and measures the page.',
   '',
   `**Declared type steps:** ${[...new Set(declaredType)].sort().join(', ')}`,
   '',
@@ -167,10 +192,10 @@ const report = [
 ].join('\n')
 
 if (process.argv.includes('--md')) {
-  const out = join(here, '..', 'docs', 'audit', 'NIGHT.md')
+  const out = join(here, '..', 'docs', 'audit', 'NIGHT-COUNTS.md')
   mkdirSync(dirname(out), { recursive: true })
   writeFileSync(out, report)
-  console.log(`written to docs/audit/NIGHT.md`)
+  console.log(`written to docs/audit/NIGHT-COUNTS.md`)
 }
 
 console.log(
