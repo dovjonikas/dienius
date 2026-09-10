@@ -20,7 +20,7 @@ export const ifThenActions = {
    * a caller that silently dropped the fifth rule would be a cap nobody can
    * see. `MAX_RULES_PER_GOAL` explains why five.
    */
-  addIfThen(input: { trigger: string; action: string; color?: string; goalId?: string }): IfThenEntry | null {
+  addIfThen(input: { trigger: string; action: string; goalId?: string }): IfThenEntry | null {
     const data = getData()
     if (input.goalId && rulesForGoal(data.ifThens, input.goalId).length >= MAX_RULES_PER_GOAL) {
       return null
@@ -29,7 +29,6 @@ export const ifThenActions = {
       id: crypto.randomUUID(),
       trigger: input.trigger,
       action: input.action,
-      color: input.color,
       goalId: input.goalId,
     }
     commit({ ...data, ifThens: [...data.ifThens, entry] })

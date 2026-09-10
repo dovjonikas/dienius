@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { PALETTE_COLORS } from '../../lib/colors'
 
 export interface RuleDraft {
   trigger: string
   action: string
-  color?: string
 }
 
 export interface RuleFormProps {
@@ -28,11 +26,20 @@ export interface RuleFormProps {
  * produces an empty box; an example of the shape of an answer produces an
  * answer, and the examples are written in the second person because that is
  * the voice the field wants back.
+ *
+ * ## No tag on it
+ *
+ * There were nine colour swatches under these two lines until the owner asked
+ * what they did. The answer was: painted a two-pixel edge down the left of
+ * this one sentence on one screen. Nothing else read the value - not the card
+ * that brings a rule forward on a bad morning, not the goal it belongs to,
+ * nothing sorted or grouped or filtered by it - so it was nine controls
+ * offering a choice with no consequence. CONVENTIONS section 25 asks a state
+ * to earn its place; this one had nothing to earn it with. See DECISIONS.
  */
 export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
   const [trigger, setTrigger] = useState(draft?.trigger ?? '')
   const [action, setAction] = useState(draft?.action ?? '')
-  const [color, setColor] = useState<string | undefined>(draft?.color)
   const triggerRef = useRef<HTMLInputElement>(null)
 
   // Focus lands in the form the moment it opens, for a new rule and for an
@@ -46,7 +53,7 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
 
   function save() {
     if (!ready) return
-    onSave({ trigger: trigger.trim(), action: action.trim(), color })
+    onSave({ trigger: trigger.trim(), action: action.trim() })
   }
 
   // Enter saves from either field. Both are single-line, so the key has
@@ -71,10 +78,6 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
           onKeyDown={onKeyDown}
         />
       </label>
-      <p className="muted rule-form-hint">
-        Name one moment that takes you off this - where you are, what just happened - and the one thing you do
-        instead.
-      </p>
       <label className="field">
         <span className="field-label">Then</span>
         <input
@@ -85,28 +88,14 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
           onKeyDown={onKeyDown}
         />
       </label>
-      <div className="color-palette" role="group" aria-label="Tag">
-        <button
-          type="button"
-          aria-label="No tag"
-          aria-pressed={color === undefined}
-          className={color === undefined ? 'swatch swatch-none selected' : 'swatch swatch-none'}
-          onClick={() => setColor(undefined)}
-        >
-          &times;
-        </button>
-        {PALETTE_COLORS.map(c => (
-          <button
-            key={c.value}
-            type="button"
-            aria-label={`Tag ${c.name}`}
-            aria-pressed={color === c.value}
-            className={color === c.value ? 'swatch selected' : 'swatch'}
-            style={{ background: c.value, ['--swatch' as string]: c.value }}
-            onClick={() => setColor(c.value)}
-          />
-        ))}
-      </div>
+      {/* Under both halves rather than between them. It explains the pair, and
+          it stood in the middle of the pair to do it - which put a paragraph
+          through the join of a sentence whose whole point is that the two
+          halves are one thing. */}
+      <p className="muted rule-form-hint">
+        Name one moment that takes you off this - where you are, what just happened - and the one thing you do
+        instead.
+      </p>
       <div className="rule-form-actions">
         <button type="button" className="btn-primary" disabled={!ready} onClick={save}>
           Save

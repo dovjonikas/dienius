@@ -470,9 +470,12 @@ test('validate accepts a well-formed if-then entry, tagged or not', () => {
   })
   localStorage.setItem(STORAGE_KEY, good)
   const loaded = loadData()
+  // The colour on the first one is a field the app stopped reading after
+  // v2.19. It rides along untouched rather than failing the payload, which is
+  // what the tables in validate.ts are for - see the note above IF_THEN_ENTRY
+  // and the three v2.0 fields it already says this about.
   expect(loaded.ifThens).toHaveLength(2)
-  expect(loaded.ifThens[0].color).toBe('#a7c4f5')
-  expect(loaded.ifThens[1].color).toBeUndefined()
+  expect(loaded.ifThens.map(e => e.trigger)).toEqual(['I get home and the kitchen is a mess', 'It is 22:30'])
 })
 
 /**
@@ -633,7 +636,19 @@ test('validate rejects a template whose color is a CSS url() value rather than a
   expect(loadData().templates).toEqual([])
 })
 
-test('validate rejects an if-then entry whose color is a CSS url() value', () => {
+/**
+ * A rule's colour was checked here because the value reached a stylesheet: it
+ * was painted as `borderLeftColor` on the sentence, so a `url()` in it was a
+ * beacon a stored file could fire. Nothing paints it since v2.19 - the tag
+ * went with the nine swatches that set it - so there is nothing to escape
+ * into, and the field is no longer named in the table.
+ *
+ * That means a payload carrying one is no longer refused, which is the right
+ * trade only because the value is now inert: it is a key nothing reads. This
+ * test holds both halves of that, so the day somebody paints with it again
+ * they find a test saying the check went with the painting.
+ */
+test('an if-then colour is no longer read, so a url() in one is carried rather than refused', () => {
   const beacon = JSON.stringify({
     templates: [],
     days: {},
@@ -641,25 +656,26 @@ test('validate rejects an if-then entry whose color is a CSS url() value', () =>
     ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', color: 'url(https://attacker.example/x)' }],
   })
   localStorage.setItem(STORAGE_KEY, beacon)
-  expect(loadData().ifThens).toEqual([])
+  const loaded = loadData()
+  expect(loaded.ifThens).toHaveLength(1)
+  expect(loaded.ifThens[0].trigger).toBe('Trigger')
+  // It is still on the object, unread - which is what riding along means.
+  expect(Object.keys(loaded.ifThens[0])).toContain('color')
 })
 
-test('validate accepts every hex color length CSS itself recognizes, on a template and an if-then tag', () => {
+test('validate accepts every hex color length CSS itself recognizes', () => {
   for (const hex of ['#abc', '#abcd', '#a7c4f5', '#a7c4f5ff']) {
     const good = JSON.stringify({
       templates: [{ id: 't1', name: 'Work', color: hex, blocks: [] }],
       days: {},
       settings: { theme: 'light', enabledWidgets: [] },
-      ifThens: [{ id: 'i1', trigger: 'Trigger', action: 'Action', color: hex }],
     })
     localStorage.setItem(STORAGE_KEY, good)
-    const loaded = loadData()
-    expect(loaded.templates[0]?.color).toBe(hex)
-    expect(loaded.ifThens[0]?.color).toBe(hex)
+    expect(loadData().templates[0]?.color).toBe(hex)
   }
 })
 
-test('validate rejects template and if-then colors that are not hex at all - a name, a semicolon breakout attempt, an empty string', () => {
+test('validate rejects template colors that are not hex at all - a name, a semicolon breakout attempt, an empty string', () => {
   for (const bad of ['red', 'rgb(1,2,3)', 'blue; outline: 999px solid red', '', '#gggggg', '#1234567']) {
     const badTemplate = JSON.stringify({
       templates: [{ id: 't1', name: 'Work', color: bad, blocks: [] }],

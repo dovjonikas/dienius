@@ -534,31 +534,28 @@ test('state persists to localStorage', () => {
   expect(raw).toContain('Persist me')
 })
 
-test('addIfThen adds an entry with an optional color tag', () => {
+test('addIfThen adds an entry, and a rule is a trigger and an answer and nothing else', () => {
   const entry = actions.addIfThen({
     trigger: 'I get home and the kitchen is a mess',
     action: 'I set a timer for ten minutes and do only the sink',
-    color: '#a7c4f5',
   })
   expect(getData().ifThens).toHaveLength(1)
   expect(getData().ifThens[0]).toMatchObject({
     trigger: 'I get home and the kitchen is a mess',
     action: 'I set a timer for ten minutes and do only the sink',
-    color: '#a7c4f5',
   })
   expect(entry?.id).toBeTruthy()
-})
-
-test('addIfThen without a color leaves it undefined', () => {
-  actions.addIfThen({ trigger: 'It is 22:30', action: 'Phone goes on the charger' })
-  expect(getData().ifThens[0].color).toBeUndefined()
+  // The colour tag went in the wave after v2.19: nine swatches whose whole
+  // effect was two pixels of edge on one line of one screen. DECISIONS has
+  // the reading.
+  expect(getData().ifThens[0]).not.toHaveProperty('color')
 })
 
 test('updateIfThen replaces the entry with the same id in place', () => {
   const entry = actions.addIfThen({ trigger: 'Old trigger', action: 'Old action' })!
-  actions.updateIfThen({ ...entry, trigger: 'New trigger', action: 'New action', color: '#f5b0a7' })
+  actions.updateIfThen({ ...entry, trigger: 'New trigger', action: 'New action' })
   expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0]).toMatchObject({ trigger: 'New trigger', action: 'New action', color: '#f5b0a7' })
+  expect(getData().ifThens[0]).toMatchObject({ trigger: 'New trigger', action: 'New action' })
 })
 
 test('deleteIfThen removes only the matching entry', () => {

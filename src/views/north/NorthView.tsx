@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { activeGoals, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
-import { paletteColorName } from '../../lib/colors'
 import { type Goal, type IfThenEntry } from '../../lib/types'
 import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
@@ -282,7 +281,7 @@ function GoalCard({ goal, rules }: GoalCardProps) {
 /** The sentence itself, shared by a filed rule and an unfiled one. */
 export function RuleText({ rule }: { rule: IfThenEntry }) {
   return (
-    <p className="north-rule-line" style={rule.color ? { borderLeftColor: rule.color } : undefined}>
+    <p className="north-rule-line">
       <span className="north-rule-prefix">If</span> {rule.trigger}
       {/* The word rather than the arrow it stood for. An arrow between two
           halves of a sentence is a diagram; "If X, then Y" is the sentence,
@@ -298,7 +297,6 @@ export function RuleText({ rule }: { rule: IfThenEntry }) {
           job: the geometry genuinely was overlapping, it just did not matter.
           One fewer wrapper and the rects are honest again. */}
       {rule.action}
-      {rule.color && <span className="visually-hidden"> Tagged {paletteColorName(rule.color)}.</span>}
     </p>
   )
 }

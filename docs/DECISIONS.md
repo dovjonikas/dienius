@@ -2788,3 +2788,38 @@ read rather than a page being lived on.
 The v2.18 entry above is not wrong and is left standing. What it establishes
 - that this figure is not a streak - is still true and is still the reason
 nothing about it needed to be feared. It simply was not the whole question.
+
+## A rule has no colour, because the colour did nothing
+
+The owner asked what the nine swatches under an if-then rule were for. The
+honest answer, found by following the value rather than by remembering what
+it was meant to do: `IfThenEntry.color` was read in exactly one place, and
+painted a two-pixel edge down the left of that one sentence on the North
+page. Nothing else touched it. The card that brings a rule forward on a bad
+morning never read it. Nothing sorted, grouped or filtered by it. It did not
+bind a rule to a category - it drew from the generic palette, so its values
+were "Blue" and "Green" rather than the names of anything the owner owns.
+
+So it was nine controls offering a choice with no consequence, on a form that
+asks for two sentences. CONVENTIONS section 25 asks a state to earn its
+place; this one had nothing to earn it with, and the test it fails is the one
+the owner applied: *if the colour changes nothing and is visible nowhere
+else, remove it.*
+
+**What went**: the swatch row, the field on the type, its line in the
+validator, the `borderLeftColor` on the sentence, the hidden "Tagged Blue."
+for screen readers, and the `.swatch-none` rule that drew the "no tag" cross.
+
+**What stays**: a stored rule that already carries a colour keeps it and
+loads fine. Unnamed fields ride along untouched rather than failing a payload
+- the same contract that carries `dayTypes`, `when` and `lastSurfaced` from
+before v2.0, and the reason the tables in `validate.ts` name what the app
+reads rather than everything a stored object may hold.
+
+**One thing worth knowing about that trade.** The colour was validated as a
+hex because the value reached a stylesheet, so a `url()` in a stored file was
+a beacon a payload could fire. It is not checked any more, and that is safe
+only for as long as nothing paints with it: it is a key nothing reads.
+`storage.test.ts` holds both halves of that in one test, so the day somebody
+paints with it again they find a test saying the check went out with the
+painting.

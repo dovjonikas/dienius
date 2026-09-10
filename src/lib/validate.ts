@@ -345,7 +345,6 @@ const IF_THEN_ENTRY = record({
   id: string,
   trigger: string,
   action: string,
-  color: optional(color),
   // A goal id, or absent for a rule nobody has filed yet. Not checked
   // against the goal list: a dangling id is not an error anywhere in this
   // app, and here it simply reads as unassigned.

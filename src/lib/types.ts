@@ -914,17 +914,17 @@ export type WeekdayMap = Partial<Record<number, string>>
  * written before v2.0 still carries them and they ride along untouched -
  * the tables in `validate.ts` name what the app reads, not everything a
  * stored object is allowed to hold.
+ *
+ * `color` went the same way after v2.19, and for the reason the owner asked
+ * about it: nine swatches under the form whose whole effect was two pixels
+ * of edge on one line of one screen. Nothing sorted, grouped or filtered by
+ * it and the card that brings a rule forward never read it. A stored rule
+ * that still carries one rides along like the rest. See DECISIONS.
  */
 export interface IfThenEntry extends Timestamped {
   id: string
   trigger: string
   action: string
-  /**
-   * A hex value from the shared palette in `src/lib/colors.ts`, same as
-   * `Template.color`. Optional - a tag is a way to group related entries,
-   * not a required field.
-   */
-  color?: string
   /**
    * The goal this rule protects - a `Goal.id`.
    *

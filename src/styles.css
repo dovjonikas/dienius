@@ -5108,21 +5108,6 @@ button.danger {
 
 .stamp-hint { text-align: center; margin-top: var(--s3); }
 
-.swatch-none {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed var(--border);
-  color: var(--muted);
-  font-size: var(--t-glyph);
-  background: var(--surface);
-}
-
-.swatch-none.selected {
-  border-style: solid;
-  border-color: var(--text);
-}
-
 /* The long-press menu step 7 adds - docs/TIMELINE.md section 5's touch-safe
    fallback, independent of whether drag itself works. Same bottom-sheet
    chrome as .gap-picker, deliberately: this is the second instance of the
@@ -10624,14 +10609,13 @@ button.task-note-mark.is-open {
 
 /* One rule, one sentence, wrapping like prose - and a size down from the
    deserve lines above it, because a rule is about a moment and a deserve
-   line is about a week. The tag colour, when there is one, is a two-pixel
-   rule down the left and nothing else - a filled chip would put the loudest
-   thing on the screen on the least important part of it. */
+   line is about a week. The indent is what sets it apart from them; it used
+   to be a two-pixel rule as well, painted with the entry's tag colour, and
+   that tag is gone - see DECISIONS. */
 .north-rule-line {
   flex: 1 1 36ch;
   margin: 0;
-  padding-left: var(--s3);
-  border-left: 2px solid transparent;
+  padding-left: var(--s4);
   max-width: 60ch;
   color: var(--muted);
   font-size: var(--t-sm);

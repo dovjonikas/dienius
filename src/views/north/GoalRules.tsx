@@ -44,7 +44,7 @@ export function GoalRules({ goalId, title }: { goalId: string; title: string }) 
             <li key={rule.id} className="north-rule">
               {editingId === rule.id ? (
                 <RuleForm
-                  draft={{ trigger: rule.trigger, action: rule.action, color: rule.color }}
+                  draft={{ trigger: rule.trigger, action: rule.action }}
                   onSave={draft => {
                     actions.updateIfThen({ ...rule, ...draft })
                     setEditingId(null)
