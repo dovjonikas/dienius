@@ -10242,8 +10242,20 @@ button.task-note-mark.is-open {
    Nothing here fills with the accent, and nothing measures anything -
    ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
+/* The window is as wide as the screen it is on, up to the width prose stops
+   being readable at.
+
+   It was 62ch - about 434px - which on a 1920 screen is a column down the
+   middle with a fifth of the window in it and four fifths of nothing beside
+   it. Four goals came to 1956px in that column, so three of them were below
+   the fold on the one screen somebody opens to see all of them at once, and
+   the picture's own sentences broke mid-phrase for want of a hundred pixels
+   nobody was using. The cap is on the *text* now, line by line, where it
+   belongs: the picture reads at 70ch and a goal's prose at its own measure,
+   and the width left over goes into standing the goals beside each other
+   rather than under each other. */
 .north-view {
-  max-width: 62ch;
+  max-width: 1360px;
   margin: 0 auto;
   padding-bottom: var(--s8);
 }
@@ -10295,12 +10307,18 @@ button.task-note-mark.is-open {
 }
 
 /* The picture, read. A preface: the largest text on the screen, a looser
-   line than anything under it, and the person's own line breaks kept. */
-.north-picture { margin-bottom: var(--s8); }
+   line than anything under it, and the person's own line breaks kept.
+
+   70ch rather than 52. Every line of it is one thought, written on its own
+   line by the person whose thought it is, and a measure that folds a
+   57-character sentence onto a second line has turned three thoughts into
+   five and a half. 70 is the top of the range prose is set at; there is
+   room for it here now, and nothing under it is wider. */
+.north-picture { margin-bottom: var(--s7); }
 
 .north-picture-text {
   margin: var(--s3) 0 0;
-  max-width: 52ch;
+  max-width: 70ch;
   color: var(--text);
   font-size: var(--t-lg);
   font-weight: 400;
@@ -10339,12 +10357,34 @@ button.task-note-mark.is-open {
   gap: var(--s3);
 }
 
-.north-goals { display: flex; flex-direction: column; gap: var(--s8); }
+/* Four goals, beside each other.
+
+   A column of four is a column three of them are below the fold of, and this
+   is the one screen whose whole point is seeing all of them at once. So: one
+   goal per row on a phone, two from the width where a card can hold its two
+   lists side by side, and no more than two ever - four across at 1920 fits
+   the height easily and costs the pairing, because a 330px card is a card
+   whose two halves stack, and the halves standing beside each other is the
+   whole finding they are built on. Two columns keeps them paired and still
+   puts all four on a 1080 screen.
+
+   The rows stretch, so two cards beside each other are the same height and
+   their left-hand rules line up top and bottom. */
+.north-goals {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s7) var(--s8);
+}
+
+@media (min-width: 900px) {
+  .north-goals { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* One goal. The rule down the left is the whole of its frame: it groups the
    why, the identity and the two lists under them without drawing a box,
    which is what keeps four of these on one screen from reading as a form. */
 .north-goal {
+  container-type: inline-size;
   padding-left: var(--s4);
   border-left: 2px solid var(--border);
 }
@@ -10426,7 +10466,10 @@ button.task-note-mark.is-open {
   max-width: 64ch;
 }
 
-@media (max-width: 599px) {
+/* The card decides, not the window. Two goals beside each other on a 1000px
+   screen are two 430px cards, which is narrower than the phone rule used to
+   catch and far too narrow for two lists - so the query is on the card. */
+@container (max-width: 32rem) {
   .north-pair { grid-template-columns: 1fr; gap: var(--s4); }
 }
 
