@@ -144,3 +144,20 @@ test('a next thing with no address carries no door', () => {
   digest([task({ time: '14:00', minutes: 45, title: 'Spanish' })])
   expect(screen.queryByRole('link')).toBeNull()
 })
+
+/**
+ * The figures read down three straight edges, and that is a structural
+ * promise rather than a look: the small grey note used to ride inside the
+ * figure's own cell, so its right edge moved with the width of the number
+ * beside it. jsdom cannot measure an edge, but it can hold the shape the
+ * edge comes from - one cell per column on every row, including the rows
+ * with nothing to note.
+ */
+test('every figure in the digest draws all three of its cells, noted or not', () => {
+  const { container } = digest([task({ time: '09:00', minutes: 120, title: 'Deep work: pricing page' })])
+  const rows = [...container.querySelectorAll('.digest-figures > div')]
+  expect(rows.length).toBeGreaterThan(2)
+  for (const row of rows) {
+    expect([...row.children].map(c => c.tagName)).toEqual(['DT', 'DD', 'DD'])
+  }
+})

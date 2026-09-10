@@ -144,46 +144,48 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
 
       {score.planned && (
         <div className="digest-stats">
+          {/* Three columns, not two: the word, the note, the figure.
+              The note used to ride inside the figure's own cell, ahead of it,
+              which meant its right edge moved with the width of the number
+              beside it - "10 gaps" ended fourteen pixels further right than
+              "not counted" did, on two rows of four. The note has a column of
+              its own now and every one of the three edges is straight. A row
+              with nothing to note still draws the cell, because a column that
+              some rows opt out of is not a column. */}
           <dl className="digest-figures">
-            <div>
-              <dt>Timed</dt>
-              <dd>
-                {timedNote && <span className="digest-note">{timedNote}</span>}
-                {timed}
-              </dd>
-            </div>
+            <DigestRow label="Timed" note={timedNote} figure={timed} />
             {capacity.externalMinutes > 0 && (
-              <div>
-                <dt>Calendar</dt>
-                <dd>
-                  <span className="digest-note">
-                    {capacity.externalCount} {capacity.externalCount === 1 ? 'event' : 'events'}
-                  </span>
-                  {formatDuration(capacity.externalMinutes)}
-                </dd>
-              </div>
+              <DigestRow
+                label="Calendar"
+                note={`${capacity.externalCount} ${capacity.externalCount === 1 ? 'event' : 'events'}`}
+                figure={formatDuration(capacity.externalMinutes)}
+              />
             )}
-            <div>
-              <dt>Deep work</dt>
-              <dd>{deepWorkMinutes > 0 ? formatDuration(deepWorkMinutes) : 'none'}</dd>
-            </div>
-            <div>
-              <dt>Free</dt>
-              <dd>
-                {freeNote && <span className="digest-note">{freeNote}</span>}
-                {free}
-              </dd>
-            </div>
-            <div>
-              <dt>Sleep</dt>
-              <dd>
-                <span className="digest-note">not counted</span>
-                {formatDuration(sleepMinutes)}
-              </dd>
-            </div>
+            <DigestRow label="Deep work" figure={deepWorkMinutes > 0 ? formatDuration(deepWorkMinutes) : 'none'} />
+            <DigestRow label="Free" note={freeNote} figure={free} />
+            <DigestRow label="Sleep" note="not counted" figure={formatDuration(sleepMinutes)} />
           </dl>
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * One line of the digest: the word, the note, the figure.
+ *
+ * A `dt` with two `dd`s, which is a term with two descriptions and reads back
+ * as one - "Free, 10 gaps, 3h15". The wrapper is `display: contents`, so the
+ * three land in the three columns of the grid above rather than being a row
+ * of their own; a row with nothing to note still draws the middle cell,
+ * because a column some rows opt out of stops being a column.
+ */
+function DigestRow({ label, note, figure }: { label: string; note?: string; figure: string }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd className="digest-note">{note}</dd>
+      <dd>{figure}</dd>
     </div>
   )
 }

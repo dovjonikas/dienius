@@ -7576,11 +7576,13 @@ button.danger:focus-visible {
   box-shadow: var(--e1);
 }
 
-/* Two columns rather than four flex rows: every label starts on one edge
-   and every figure ends on the other, whatever the widest of each is. */
+/* Three columns rather than four flex rows: the word on one edge, the figure
+   on the other, and the small grey note in a column of its own between them
+   - see DigestRow. Every one of the three edges is straight whatever the
+   widest of each is. */
 .digest-figures {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: baseline;
   column-gap: var(--s3);
   row-gap: var(--s1);
@@ -7608,14 +7610,16 @@ button.danger:focus-visible {
 }
 
 /* The small grey word beside a figure: across how many gaps, that sleep is
-   not counted. Before the figure rather than after it, so the figures keep
-   one right edge whatever the note beside them says. Muted, not faint: it
-   is meant to be read, once, and CONVENTIONS section 22 holds a whisper to
-   three to one. */
+   not counted. In its own column before the figure, so the notes keep one
+   right edge and the figures keep another. Muted, not faint: it is meant to
+   be read, once, and CONVENTIONS section 22 holds a whisper to three to
+   one. */
 .digest-note {
-  margin-right: var(--s2);
+  margin: 0;
   color: var(--muted);
   font-size: var(--t-xs);
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only
