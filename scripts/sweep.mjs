@@ -229,6 +229,19 @@ const SCREENS = [
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   {
+    // One goal with the pointer resting on it. Everything under a goal's
+    // identity line folds away where there is a pointer, so the screen above
+    // no longer measures any of it - the lines, the never lines and the
+    // rules are only ever painted here.
+    name: 'North (goal open)',
+    pointerOnly: true,
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'North')
+      await p.locator('.north-goal').first().hover()
+      await p.waitForTimeout(300)
+    },
+  },
+  {
     // Four goals editable at once. Never swept until v2.19, when it became
     // four cards on one page rather than a column to scroll - which is a
     // grid of raised surfaces full of small grey labels, and exactly the

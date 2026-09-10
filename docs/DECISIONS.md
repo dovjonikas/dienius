@@ -2823,3 +2823,37 @@ only for as long as nothing paints with it: it is a key nothing reads.
 `storage.test.ts` holds both halves of that in one test, so the day somebody
 paints with it again they find a test saying the check went out with the
 painting.
+
+## A goal is three sentences until somebody looks at it
+
+Four goals with everything on them is about forty lines of text, and the
+owner's word for the result was a pile. Their ask was to see everything from
+a card on hover, without having to read a heap.
+
+What a person opens this window for is the top of each goal: what it is, why
+it matters, who having it makes them. What is under that is the operational
+half - the things done most days, the things never done, and the moments that
+pull them off it. So the operational half folds away, and comes back when the
+pointer rests on that goal or a keyboard reaches it.
+
+**It unfolds downward over the page rather than pushing anything.** The
+folded half is placed absolutely against the card's own bottom edge, on the
+card's own surface, with the card's bottom corners squared while it is open -
+so the card appears to grow and nothing beneath it moves by a pixel.
+Measured: hovering any of the four moves zero cards and changes the
+document's height by nothing. CONVENTIONS 24 is about layout shifting under a
+pointer, and a layer arriving over the top is not that; the card below is
+covered while the pointer is on this one, which is what a card growing does.
+
+**Where there is no pointer, it does not fold.** A phone has no hover and the
+whole goal is on the page there, which is the right answer on a screen that
+shows one goal at a time anyway. The card takes a tab stop so a keyboard can
+open what a pointer opens - it is a reading surface with nothing on it to
+press, so it claims no role and makes no promise, and the alternative was
+half of this page being unreachable without a mouse.
+
+**And the measuring pass follows it.** Everything that folds is now painted
+only in the open state, so `North` no longer sees the lines, the never lines
+or the rules at all. `North (goal open)` is a screen of its own, marked
+pointer-only because on a phone the same content is measured by `North`
+itself.

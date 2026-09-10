@@ -95,6 +95,48 @@ goal. No edge, no background, no padding pushing the text off its own column.
 Four goals came to 971px of page before the wave and 814 after it, with more
 air in them, which is what comes of not printing a label over every list.
 
+## Where a rule shows up after it is written
+
+Read first, because the answer was not what the question assumed.
+
+**There is one list.** `data.ifThens`, and nothing else. The separate if-then
+board with its own day-view surfacing went in v2.0, along with the `dayTypes`,
+`when` and `lastSurfaced` fields it needed; `storage.ts` still names the dead
+`if-then` widget id for payloads written before then. There is no second list
+and no strip under the day cards - that was the old board, and it is gone.
+
+**A rule appears in two places, which is what was wanted.** Under the goal it
+protects, on the North page and in Compose; and on the day, inside the card
+that brings a goal forward. Nothing else reads one.
+
+**But the second place almost never happened.** `northPrompt` shows that card
+on a Monday, or on a morning after a day that got away, and until this wave
+the rule was on the slow-day version alone - a Monday deliberately carried
+none, on the argument that a Monday is a morning with nothing behind it yet.
+Which means a person whose days do not get away saw the card only on Mondays,
+and their rules exactly nowhere outside the North window.
+
+That argument is right about repair and wrong about what an implementation
+intention is. Gollwitzer and Sheeran's finding is that the if-then link works
+by being loaded *before* the moment, and that a plan rehearsed at least once
+does more than a plan written once. A Monday is the better of the two
+mornings for that, not the worse one. So the Monday card carries the rule
+too, without the slow-day card's lead over it: "here is what you wrote
+yourself" exists to say the sentence is the person's own rather than the
+app's advice, and a Monday has nothing to defend against.
+
+**And the sentence was being drawn twice.** `RuleText` on the North page, and
+a hand-written copy of the same markup inside `NorthCard` - two
+implementations of one sentence, CONVENTIONS 23, and they had already
+drifted: v2.19 turned the arrow between the halves into the word it stood
+for, and the card was still drawing an arrow. One component draws it
+everywhere now, and a test holds that the card reads exactly what the page
+reads.
+
+**The colour a rule could carry is gone**, and DECISIONS has the reading: it
+was nine swatches whose whole effect was two pixels of edge on one line of
+one screen.
+
 ## Before that: v2.18 - the layout wave
 
 The brief added nothing to the app. It rearranged what was there, on the

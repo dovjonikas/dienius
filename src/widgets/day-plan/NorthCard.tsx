@@ -4,6 +4,7 @@ import { actions, useAppData } from '../../lib/store'
 import { deserveForWeek, northPrompt, ruleForDay } from '../../lib/north'
 import { todayKey } from '../../lib/dates'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
+import { RuleText } from '../../views/north/NorthView'
 
 /**
  * The one time a goal comes forward on its own.
@@ -71,9 +72,21 @@ function NorthSheet({ goal, kind, ifThens, today }: { goal: Goal; kind: 'slack' 
     cardRef.current?.focus()
   }, [])
 
-  // Only on the slack card. A Monday is not a morning that needs telling what
-  // pulls you off course; it is a morning with nothing behind it yet.
-  const rule = kind === 'slack' ? ruleForDay(ifThens, goal.id, today) : undefined
+  // On both cards.
+  //
+  // It was the slack card's alone until this wave, on the argument that a
+  // Monday is a morning with nothing behind it yet. That is right about
+  // repair and wrong about the thing a rule actually is: an implementation
+  // intention works by loading the if-then link *before* the moment, and
+  // Gollwitzer and Sheeran's whole finding is that a plan rehearsed at least
+  // once does more than a plan written once. A Monday is the better of the
+  // two mornings for that, not the worse one.
+  //
+  // And without it the rehearsal never happened for anybody having a decent
+  // month: the card only appears on a Monday or after a day that got away,
+  // so a person whose days do not get away saw their rules exactly nowhere
+  // outside the North window. See docs/STATE.md.
+  const rule = ruleForDay(ifThens, goal.id, today)
   // Only on the Monday card, and one line: what this week is for, in the
   // person's own words. The slack card carries a rule instead - a morning
   // after a day that got away wants what to do about the moment; a Monday
@@ -114,17 +127,23 @@ function NorthSheet({ goal, kind, ifThens, today }: { goal: Goal; kind: 'slack' 
             {line}
           </p>
         )}
+        {/* The sentence itself comes from RuleText, which is the one place
+              this app draws a rule. It was hand-rolled here as well until
+              this wave, and the two copies had already drifted: v2.19 turned
+              the arrow between the halves into the word it stood for on the
+              North page, and this one still drew an arrow. CONVENTIONS 23,
+              found by asking where a rule shows up after it is written. */}
         {rule && (
-          <p className="north-card-rule">
-            <span className="north-card-rule-lead">Here is what you wrote yourself.</span>
-            <span className="north-rule-prefix">If</span>{' '}
-            {rule.trigger}
-            <span className="north-rule-arrow" aria-hidden="true">
-              {'→'}
-            </span>
-            <span className="visually-hidden">, then </span>
-            {rule.action}
-          </p>
+          <div className={kind === 'monday' ? 'north-card-rule is-monday' : 'north-card-rule'}>
+            {/* The lead is the slack card's. It exists because on the morning
+                after a day that got away, the difference between "here is
+                what you wrote yourself" and an app suggesting what to do is
+                the difference between this card working and this card being
+                closed. A Monday has nothing to defend against, so the
+                sentence stands on its own there. */}
+            {kind === 'slack' && <span className="north-card-rule-lead">Here is what you wrote yourself.</span>}
+            <RuleText rule={rule} />
+          </div>
         )}
         <button type="button" className="north-card-ok" onClick={dismiss}>
           Close

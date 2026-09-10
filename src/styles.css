@@ -10234,16 +10234,21 @@ button.task-note-mark.is-open {
   background: color-mix(in srgb, var(--mark) 5%, var(--surface));
 }
 
-/* The one rule under the why. Same sentence shape as the North window's,
-   because it is the same sentence - see NorthCard. The lead line above it
-   is what makes it the person's own rather than the app's advice. */
+/* The one rule under the why. It is the same sentence the North window
+   draws and it is drawn by the same component now - see NorthCard, which
+   wrote its own copy of it until the two drifted. The lead line above it
+   is what makes it the person's own rather than the app's advice, and the
+   Monday card has no lead because it has nothing to defend against. */
 .north-card-rule {
-  display: block;
-  margin: 0;
   max-width: 56ch;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: 1.6;
+}
+
+/* Inside this card the sentence has no indent of its own: on the North page
+   the indent is what sets a rule apart from the lines above it, and here
+   there are no lines above it. */
+.north-card-rule .north-rule-line {
+  flex: 0 1 auto;
+  padding-left: 0;
 }
 
 .north-card-rule-lead {
@@ -10449,7 +10454,71 @@ button.task-note-mark.is-open {
 /* One goal. What holds it together is that its lines are close and that they
    share a surface; what separates it from the next one is the room between
    the two surfaces. No line is drawn anywhere on it. */
-.north-goal { min-width: 0; }
+.north-goal {
+  position: relative;
+  min-width: 0;
+}
+
+.north-goal:focus { outline: none; }
+
+.north-goal:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Everything under the identity line - what is done, what is never done, and
+   what pulls you off it. On a page it is the operational half of a goal and
+   the reason four goals read as a pile; on a card it is what unfolds when
+   somebody looks at that goal in particular. */
+.north-goal-more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+/* Only where there is a pointer that can rest on something. A phone has none,
+   and there the whole goal is simply on the page - which is the right answer
+   on a screen showing one goal at a time. */
+@media (hover: hover) and (pointer: fine) {
+  /* Against the card's own bottom edge, on the card's own surface, so the
+     card appears to grow rather than a panel appearing beside it. Absolute,
+     so nothing under it moves by a pixel when it opens - CONVENTIONS 24 is
+     about layout shifting under a pointer, and a layer over the top is not
+     that. */
+  .north-goal-more {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 1;
+    padding: 0 var(--s6) var(--s5);
+    border-radius: 0 0 var(--r-card) var(--r-card);
+    background: var(--surface);
+    box-shadow: var(--e2);
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  /* Over its neighbours while it is open, and squared off at the bottom so
+     the card and the half below it read as one surface rather than two. */
+  .north-goal:hover,
+  .north-goal:focus-visible,
+  .north-goal:focus-within {
+    z-index: 2;
+    border-radius: var(--r-card) var(--r-card) 0 0;
+  }
+
+  .north-goal:hover .north-goal-more,
+  .north-goal:focus-visible .north-goal-more,
+  .north-goal:focus-within .north-goal-more {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .north-goal-more { transition: opacity var(--dur-fast) var(--ease); }
+  }
+}
 
 /* One order of importance, down the whole page, out of the four sizes
    CONVENTIONS 5 allows and nothing else.

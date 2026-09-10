@@ -121,9 +121,49 @@ test('on a Monday the card says one thing you do for this, and nothing about las
   expect(card.textContent).toMatch(/train four times|sleep by eleven/)
   expect(card.querySelectorAll('.north-card-deserve')).toHaveLength(1)
   expect(card.textContent).not.toMatch(/missed|last week|did not|%/i)
-  // And the rule stays on the slack card: a Monday is a morning with nothing
-  // behind it yet.
+  // The lead over a rule stays on the slack card. It is there to say the
+  // sentence is the person's own rather than the app's advice, and a Monday
+  // has nothing to defend against - so on a Monday the sentence stands on
+  // its own, which the test below is about.
   expect(card).not.toHaveTextContent('Here is what you wrote yourself')
+})
+
+/**
+ * A rule is rehearsed on a Monday, not only repaired after a bad day.
+ *
+ * It was the slack card's alone until the wave after v2.19. That is right
+ * about repair and wrong about what a rule is: an implementation intention
+ * works by loading the if-then link before the moment, and Gollwitzer and
+ * Sheeran's finding is that a plan rehearsed at least once does more than one
+ * written once. Without this, a person whose days do not get away saw the
+ * card only on Mondays and their rules exactly nowhere outside North.
+ */
+test('the Monday card carries the rule too, without the slack card lead over it', () => {
+  vi.setSystemTime(new Date('2026-09-07T09:00:00'))
+  const [g] = getData().goals
+  actions.addIfThen({ trigger: 'I open the laptop and stall', action: 'I open today and do the first thing', goalId: g.id })
+  render(<NorthCard />)
+  const card = screen.getByRole('dialog', { name: 'Why this matters' })
+
+  expect(card).toHaveTextContent('I open the laptop and stall')
+  expect(card).toHaveTextContent('I open today and do the first thing')
+  expect(card).not.toHaveTextContent('Here is what you wrote yourself')
+})
+
+/**
+ * One sentence, drawn by one hand. It was written out here as well as in
+ * RuleText until that wave, and the two had already drifted - v2.19 turned
+ * the arrow between the halves into the word it stood for on the North page
+ * and this card still drew an arrow. CONVENTIONS 23.
+ */
+test('a rule reads the same on the card as it does on the North page', () => {
+  const [g] = getData().goals
+  actions.addIfThen({ trigger: 'I open the laptop and stall', action: 'I open today', goalId: g.id })
+  render(<NorthCard />)
+  const line = screen.getByRole('dialog', { name: 'Why this matters' }).querySelector('.north-rule-line')!
+
+  expect(line).toBeTruthy()
+  expect(line.textContent).toBe('If I open the laptop and stall then I open today')
 })
 
 test('a Monday card for a goal with nothing written to deserve it shows the why and stops there', () => {

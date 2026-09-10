@@ -230,6 +230,26 @@ interface GoalCardProps {
  * control is the whole of what keeps this a page to read. An empty part of a
  * goal draws nothing at all: a goal with no lines under it is a goal with no
  * lines under it, not a goal with an invitation where its lines should be.
+ *
+ * ## Three sentences at rest, the whole goal on a pointer
+ *
+ * Four goals with everything on them is about forty lines of text, and the
+ * owner's word for the result was a pile. What a person opens this window
+ * for is the top of each goal - what it is, why it matters, who having it
+ * makes them - and what is under that is the operational half: the things
+ * done most days, the things never done, and the moments that pull them off
+ * it. So the operational half folds away and comes back when the pointer
+ * rests on the goal, or when a keyboard reaches it.
+ *
+ * It unfolds *downward over the page* rather than pushing anything: the
+ * folded half is absolutely placed against the card's own bottom edge, on
+ * the card's own surface, so the card appears to grow and nothing beneath it
+ * moves by a pixel. CONVENTIONS 24 is about layout shifting under a pointer,
+ * and a layer arriving over the top is not that.
+ *
+ * Where there is no pointer to rest - a phone - it does not fold at all and
+ * the whole goal is on the page, which is the right answer on a screen that
+ * shows one goal at a time anyway.
  */
 function GoalCard({ goal, rules }: GoalCardProps) {
   const deserve = goal.deserve ?? []
@@ -240,7 +260,11 @@ function GoalCard({ goal, rules }: GoalCardProps) {
   const avoid = deserve.length > 0 ? goal.avoid ?? [] : []
 
   return (
-    <article className="north-goal">
+    // Focusable so a keyboard can open what a pointer opens. It is a reading
+    // surface and not a control - nothing on it can be pressed - so it takes
+    // no role and makes no promise; the tab stop exists only because the
+    // alternative is half of this page being unreachable without a mouse.
+    <article className="north-goal" tabIndex={0}>
       <h3 className="north-goal-title">{goal.title}</h3>
       {goal.why && <p className="north-goal-why">{goal.why}</p>}
       {/* A different kind of sentence from the two around it - not what this
@@ -248,6 +272,7 @@ function GoalCard({ goal, rules }: GoalCardProps) {
           the italic and the air on either side of it. */}
       {goal.identity && <p className="north-goal-identity">{goal.identity}</p>}
 
+      <div className="north-goal-more">
       {deserve.length > 0 && (
         // A plain list. No marker, no box, nothing to tick: the moment one of
         // these could be checked off, this page would be a scoreboard.
@@ -274,6 +299,7 @@ function GoalCard({ goal, rules }: GoalCardProps) {
           ))}
         </ul>
       )}
+      </div>
     </article>
   )
 }
