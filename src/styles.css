@@ -10422,37 +10422,40 @@ button.task-note-mark.is-open {
   gap: var(--s3);
 }
 
-/* Four goals, beside each other.
+/* Four goals, beside each other, with nothing between them but room.
 
    A column of four is a column three of them are below the fold of, and this
    is the one screen whose whole point is seeing all of them at once. So: one
-   goal per row on a phone, two from the width where a card can hold its two
-   lists side by side, and no more than two ever - four across at 1920 fits
-   the height easily and costs the pairing, because a 330px card is a card
-   whose two halves stack, and the halves standing beside each other is the
-   whole finding they are built on. Two columns keeps them paired and still
-   puts all four on a 1080 screen.
+   goal per row on a phone, two from 900px up, and no more than two ever -
+   four across at 1920 fits the height easily and costs the pairing, and the
+   two halves standing next to each other is the finding they are built on.
 
-   The rows stretch, so two cards beside each other are the same height and
-   their left-hand rules line up top and bottom. */
+   The gaps do the whole job of telling one goal from the next since v2.19.
+   They were doing half of it before, and a 2px rule down the left of each
+   card was doing the other half - which is what made four goals read as four
+   cells of a table rather than four things somebody had written down. The
+   rule is gone and the room is what replaced it: 56px between rows and 64
+   between columns, against about 12 inside a goal. Nothing here has an edge,
+   a background of its own, or anything else that draws a box.
+
+   If four of them ever start to run together, the answer is more room and
+   never the rule back. */
 .north-goals {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--s7) var(--s8);
+  gap: calc(var(--s8) + var(--s6)) calc(var(--s8) + var(--s8));
+  align-items: start;
 }
 
 @media (min-width: 900px) {
   .north-goals { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* One goal. The rule down the left is the whole of its frame: it groups the
-   why, the identity and the two lists under them without drawing a box,
-   which is what keeps four of these on one screen from reading as a form. */
-.north-goal {
-  container-type: inline-size;
-  padding-left: var(--s4);
-  border-left: 2px solid var(--border);
-}
+/* One goal, and nothing drawn around it. Its own text is its whole frame:
+   a title, a sentence, a sentence in another voice, and the lines under
+   them. What holds it together is that they are close; what separates it
+   from the next one is that the next one is far. */
+.north-goal { min-width: 0; }
 
 /* One order of importance, down the whole page, out of the four sizes
    CONVENTIONS 5 allows and nothing else.
