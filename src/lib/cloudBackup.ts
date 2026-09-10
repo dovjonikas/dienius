@@ -73,9 +73,29 @@ export interface CloudBackupStatus {
 export type BackupReason = 'evening-close' | 'new-day' | 'manual'
 
 /** What a copy holds, said the way a person compares two of them. */
+/**
+ * What one copy of the plan holds, part by part.
+ *
+ * Tasks and days were the whole of it until v2.17, and a restore replaces
+ * *everything* - so a cloud copy carrying fourteen books and four goals over
+ * an empty week read as "empty", and a restore about to wipe a library looked
+ * exactly like one that would not. The file always had all of it; the screen
+ * that asks somebody to confirm was the part that could not see it.
+ *
+ * Counts rather than contents, because this is a thing to glance at before
+ * pressing a button that cannot be undone. What it is for is spotting a
+ * number that is about to go down.
+ */
 export interface StateSummary {
   tasks: number
   days: number
+  templates: number
+  /** Items across every library list, which is what a person calls "books". */
+  books: number
+  goals: number
+  categories: number
+  /** Later, still called `backlog` in the file - see LaterItem in types.ts. */
+  later: number
   /** The latest date key with anything on it, or null on an empty plan. */
   newest: string | null
 }
@@ -354,7 +374,51 @@ export function summarise(data: AppData): StateSummary {
   const days = Object.values(data.days).filter(d => d.tasks.length > 0 || d.templateId)
   const tasks = days.reduce((n, d) => n + d.tasks.length, 0)
   const dates = days.map(d => d.date).sort()
-  return { tasks, days: days.length, newest: dates.at(-1) ?? null }
+  return {
+    tasks,
+    days: days.length,
+    templates: data.templates.length,
+    books: data.library.reduce((n, l) => n + l.items.length, 0),
+    goals: data.goals.length,
+    categories: data.categories.length,
+    later: data.backlog.length,
+    newest: dates.at(-1) ?? null,
+  }
+}
+
+/**
+ * The two copies side by side, one row per part, and which rows would lose
+ * something.
+ *
+ * Only "fewer" is marked. A restore that brings more of something needs no
+ * warning; a restore that brings less is the one nobody meant to press.
+ * Categories are counted but never marked, because every plan ships with the
+ * six defaults and a copy with fewer of them is a copy somebody deliberately
+ * tidied - not a loss anybody needs stopping for.
+ */
+export interface SummaryRow {
+  label: string
+  here: number
+  cloud: number
+  /** True when restoring would replace a larger number with a smaller one. */
+  loses: boolean
+}
+
+export function compareSummaries(here: StateSummary, cloud: StateSummary): SummaryRow[] {
+  const row = (label: string, key: keyof StateSummary, warn = true): SummaryRow => {
+    const a = here[key] as number
+    const b = cloud[key] as number
+    return { label, here: a, cloud: b, loses: warn && b < a }
+  }
+  return [
+    row('Days', 'days'),
+    row('Tasks', 'tasks'),
+    row('Templates', 'templates'),
+    row('Library books', 'books'),
+    row('Goals', 'goals'),
+    row('Categories', 'categories', false),
+    row('Later', 'later'),
+  ]
 }
 
 /** "340 tasks across 41 days, newest 4 Sep" - or "empty". */

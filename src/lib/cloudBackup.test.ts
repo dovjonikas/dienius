@@ -15,6 +15,7 @@ import {
   setCloudBackupConfig,
   startCloudBackup,
   STATE_PATH,
+  compareSummaries,
   summarise,
   toBase64,
   GitHubError,
@@ -263,8 +264,10 @@ test('a restore is described before anything is replaced, and replaces nothing o
   actions.addTask(todayKey(), 'Mine')
 
   const preview = await previewRestore()
-  expect(preview.cloud).toEqual({ tasks: 3, days: 2, newest: '2026-09-04' })
-  expect(preview.here).toEqual({ tasks: 1, days: 1, newest: todayKey() })
+  // toMatchObject rather than toEqual since v2.17: a summary counts every
+  // part of the plan now, and this test is about the two days it names.
+  expect(preview.cloud).toMatchObject({ tasks: 3, days: 2, newest: '2026-09-04' })
+  expect(preview.here).toMatchObject({ tasks: 1, days: 1, newest: todayKey() })
   expect(getData().days[todayKey()].tasks[0].title).toBe('Mine')
   expect(preview.data.days['2026-09-04'].tasks[0].title).toBe('C')
 })
@@ -290,4 +293,65 @@ test('the last backup is said in a person\'s words', () => {
   expect(formatBackupTime(new Date(2026, 8, 4, 21, 40).toISOString(), now)).toBe('today 21:40')
   expect(formatBackupTime(new Date(2026, 8, 3, 8, 12).toISOString(), now)).toBe('yesterday 08:12')
   expect(formatBackupTime(new Date(2026, 8, 1, 21, 40).toISOString(), now)).toBe('Tue 1 Sept 21:40')
+})
+
+/**
+ * A restore replaces everything, so the confirmation has to say everything.
+ *
+ * It counted tasks and days and nothing else, which meant a cloud copy
+ * holding fourteen books and four goals over an empty week read as "empty" -
+ * and a restore about to wipe a library looked exactly like one that would
+ * not. The whole plan is in the file; the screen that asks was the part that
+ * could not see it.
+ */
+test('a summary counts every part of the plan, not only the days', () => {
+  const data = defaultData()
+  data.days['2026-09-04'] = { date: '2026-09-04', tasks: [{ id: 'c', title: 'C', done: false }] }
+  data.templates = [{ id: 't', name: 'Working day', color: '#8aa4f2', blocks: [] }]
+  data.library = [
+    { id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'i', title: 'Sapiens' }, { id: 'j', title: 'Musashi' }] },
+  ]
+  data.goals = [{ id: 'g', title: 'Be the dad worth looking up to', createdAt: '2026-09-01T08:00:00.000Z' }]
+  data.backlog = [{ id: 'b', title: 'Physio' }]
+
+  const s = summarise(data)
+  expect(s).toMatchObject({ tasks: 1, days: 1, templates: 1, books: 2, goals: 1, later: 1 })
+  expect(s.categories).toBeGreaterThan(0)
+})
+
+test('an empty plan is empty in every count, and says so in one word', () => {
+  const s = summarise(defaultData())
+  expect(describeSummary(s)).toBe('empty')
+  expect(s.tasks).toBe(0)
+  expect(s.templates).toBe(0)
+  expect(s.books).toBe(0)
+  expect(s.goals).toBe(0)
+})
+
+/**
+ * The rows the confirmation draws, and which of them would lose something.
+ * "Fewer" is the only direction that matters: a restore that brings more is
+ * a restore nobody needs warning about.
+ */
+test('the rows say which side is larger, and mark only the ones that would lose', () => {
+  const here = defaultData()
+  here.library = [{ id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'i', title: 'Sapiens' }] }]
+  here.goals = [{ id: 'g', title: 'A goal', createdAt: '2026-09-01T08:00:00.000Z' }]
+  const cloud = defaultData()
+  cloud.days['2026-09-04'] = { date: '2026-09-04', tasks: [{ id: 'c', title: 'C', done: false }] }
+
+  const rows = compareSummaries(summarise(here), summarise(cloud))
+  const byLabel = Object.fromEntries(rows.map(r => [r.label, r]))
+  expect(byLabel['Library books']).toMatchObject({ here: 1, cloud: 0, loses: true })
+  expect(byLabel['Goals']).toMatchObject({ here: 1, cloud: 0, loses: true })
+  // The cloud has a task and this device does not, which loses nothing.
+  expect(byLabel['Tasks']).toMatchObject({ here: 0, cloud: 1, loses: false })
+  expect(rows.every(r => typeof r.label === 'string')).toBe(true)
+})
+
+test('nothing is marked as losing when the two copies agree', () => {
+  const data = defaultData()
+  data.templates = [{ id: 't', name: 'Working day', color: '#8aa4f2', blocks: [] }]
+  const rows = compareSummaries(summarise(data), summarise(data))
+  expect(rows.some(r => r.loses)).toBe(false)
 })

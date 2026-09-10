@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Explain } from './Explain'
 import { actions } from '../lib/store'
 import {
+  compareSummaries,
   describeSummary,
   formatBackupTime,
   getCloudBackupConfig,
@@ -167,6 +168,41 @@ export function BackupSettings() {
 
         {preview && (
           <div className="backup-preview" role="group" aria-label="Restore from cloud">
+            {/* Every part of the plan, both sides, because the press below
+                replaces all of it. Two sentences counting tasks and days
+                stood here until v2.17 - which meant a cloud copy holding a
+                library and four goals over an empty week read as "empty",
+                and a restore about to wipe them looked exactly like one that
+                would not. See compareSummaries. */}
+            <table className="backup-compare">
+              <caption className="visually-hidden">
+                What each copy holds. Restoring replaces everything on this device.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">&nbsp;</th>
+                  <th scope="col">Here</th>
+                  <th scope="col">Cloud</th>
+                </tr>
+              </thead>
+              <tbody>
+                {compareSummaries(preview.here, preview.cloud).map(row => (
+                  <tr key={row.label} className={row.loses ? 'is-fewer' : undefined}>
+                    <th scope="row">{row.label}</th>
+                    <td>{row.here}</td>
+                    <td>
+                      {row.cloud}
+                      {/* Said in words as well as in colour, so it reaches
+                          somebody reading the row rather than looking at it. */}
+                      {row.loses && <span className="backup-fewer"> fewer</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* The two sentences the table cannot say: how stale each copy
+                is. A count says what is in a copy and a date says when it
+                was last touched, and the second is half of deciding. */}
             <p className="backup-preview-line">
               <strong>Cloud:</strong> {describeSummary(preview.cloud)}.
             </p>
