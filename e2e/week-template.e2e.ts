@@ -60,7 +60,10 @@ test('a week template is built once and stamps each day its own column', async (
   await expect(page.getByRole('region', { name: 'Thursday' }).getByText('Physio')).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Save template' }).click()
-  await expect(page.getByText('A week ·')).toBeVisible()
+  // "A week" and nothing after it: the card's meta line ended in a block
+  // count until v2.20, and the preview line above it already ends in
+  // "+N more", which is the same number read rather than told.
+  await expect(page.getByText('A week', { exact: true })).toBeVisible()
 
   // Stamped onto the week. Wednesday takes the weekday column; Friday takes
   // the weekday column and the one block that is only its own.

@@ -57,8 +57,10 @@ test('the reading plan arrives from the palette, and never on its own', async ({
   await expect(page.getByRole('heading', { name: 'CRAFT' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'LIGHT' })).toBeVisible()
   // Each lane carries its own count, which is the whole reason for the split:
-  // three queues that move independently rather than one that stalls.
-  await expect(page.getByRole('button', { name: 'MIND 10 going', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'CRAFT 5 going', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'LIGHT 6 going', exact: true })).toBeVisible()
+  // three queues that move independently rather than one that stalls. On the
+  // list's own header since v2.20 - the jump chip above carried the same
+  // number, thirty pixels from this one, and lost it.
+  await expect(page.getByRole('button', { name: /MIND 10 going, counted in/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /CRAFT 5 going, counted in/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: /LIGHT 6 going, counted in/ })).toBeVisible()
 })
