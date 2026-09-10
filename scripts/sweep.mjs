@@ -228,6 +228,19 @@ const SCREENS = [
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
+  {
+    // Four goals editable at once. Never swept until v2.19, when it became
+    // four cards on one page rather than a column to scroll - which is a
+    // grid of raised surfaces full of small grey labels, and exactly the
+    // shape a contrast and a geometry pass are for.
+    name: 'North (Compose)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'North')
+      await press(p, 'Compose')
+      await p.waitForSelector('.north-compose')
+      await p.waitForTimeout(300)
+    },
+  },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
   {
     name: 'Task detail',

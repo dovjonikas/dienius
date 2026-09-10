@@ -6,6 +6,49 @@ import { MAX_ACTIVE_GOALS, MAX_DESERVE_LINES, type Goal } from '../../lib/types'
 import { GoalRules, UnfiledRules } from './GoalRules'
 import { Explain } from '../Explain'
 
+/**
+ * A box that is the height of what is in it.
+ *
+ * The why and the identity are one sentence each nine times out of ten, and
+ * a fixed two-row box spends a line of every card on the tenth. Growing from
+ * one line costs nothing when the sentence is short and hides nothing when
+ * it is long - which is the same argument the picture's own box has made
+ * since v2.1, and this is that effect with a component around it so it can
+ * be used inside a list where a hook cannot.
+ *
+ * jsdom has no layout and reports no scroll height, which is why nothing is
+ * written when it says zero.
+ */
+function GrowingText({
+  value,
+  ref: outer,
+  ...rest
+}: { value: string; ref?: React.Ref<HTMLTextAreaElement> } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !el.scrollHeight) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return (
+    <textarea
+      ref={el => {
+        ref.current = el
+        // React 19 hands a ref straight through as a prop, and this one has
+        // to reach two places: the height effect above and whoever asked for
+        // the node - the form keeps a map of title boxes to put the cursor
+        // in one.
+        if (typeof outer === 'function') outer(el)
+        else if (outer) outer.current = el
+      }}
+      rows={1}
+      value={value}
+      {...rest}
+    />
+  )
+}
+
 /** Where the cursor lands when Compose opens: on the picture, or on a new goal. */
 export type ComposeFocus = 'picture' | 'goal'
 
@@ -92,7 +135,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
   const [focusKey, setFocusKey] = useState<string | null>(null)
 
   const pictureRef = useRef<HTMLTextAreaElement>(null)
-  const titleRefs = useRef(new Map<string, HTMLInputElement>())
+  const titleRefs = useRef(new Map<string, HTMLTextAreaElement>())
 
   // Focus lands in the form the moment it opens - on the picture from
   // Compose, on the new goal's name from Write one down - and on each row
@@ -205,8 +248,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
           />
         </label>
         <span className="north-compose-hint">
-          First person, present tense, up to about six lines: how you look, how you live, what you do in the
-          morning.
+          First person, present tense: how you look, how you live, what you do in the morning.
         </span>
       </div>
 
@@ -221,9 +263,35 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
         ) : (
           <fieldset key={row.key} className="north-compose-goal">
             <legend className="visually-hidden">Goal {index + 1}</legend>
+            {/* Two halves, side by side on anything wider than a phone: what
+                the goal is on the left, what it costs on the right. Four
+                goals of six stacked fields is two and a half screens of
+                form; four goals of two columns of three is one, and the
+                thing being edited fits a screen when it is read. */}
+            <div className="north-compose-half">
             <label className="field">
               <span className="field-label">What</span>
-              <input
+              {/* A box that wraps rather than a line that scrolls.
+                  A title takes eighty characters and eighty characters of
+                  this type is 640 pixels; no card on this form is that wide
+                  and an input does not wrap, so a long title used to sit
+                  inside its own box with its end cut off. The measuring pass
+                  found it the first time it was ever pointed at this screen -
+                  "Leave the house before nine on a Saturday", 31px past its
+                  own edge - and it had been true at every width since the
+                  form existed. It is still one line of writing: Enter does
+                  nothing here, the way it does nothing in an input. */}
+              <GrowingText
+                /* Named here as well as by the label wrapping it. React puts a
+                   controlled textarea's value in the element as text, so the
+                   label around one reads "What" plus whatever has been typed
+                   into it - which is invisible on screen and is the name
+                   anything walking the page by label sees. The three other
+                   boxes on this card have always had it and it never showed,
+                   because nothing asked them for an exact name; this one is
+                   asked for one by the week rehearsal, which is how it came
+                   out. */
+                aria-label="What"
                 ref={el => {
                   if (el) titleRefs.current.set(row.key, el)
                   else titleRefs.current.delete(row.key)
@@ -231,13 +299,15 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                 value={row.title}
                 maxLength={80}
                 placeholder="Become the dad worth looking up to"
-                onChange={e => update(row.key, { title: e.target.value })}
+                onChange={e => update(row.key, { title: e.target.value.replace(/\n/g, ' ') })}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') e.preventDefault()
+                }}
               />
             </label>
             <label className="field">
               <span className="field-label">Why it matters</span>
-              <textarea
-                rows={2}
+              <GrowingText
                 value={row.why}
                 maxLength={280}
                 placeholder="Because they will remember who I was, not what I got done."
@@ -246,17 +316,22 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
             </label>
             <label className="field">
               <span className="field-label">Who it makes you</span>
-              {/* Two rows rather than one line: an identity sentence is
-                  the longest of the four, and on a phone a single-line box
-                  showed forty of its hundred and twenty characters. */}
-              <textarea
-                rows={2}
+              {/* It grows rather than standing at two rows. An identity
+                  sentence is the longest of the four and a phone showed forty
+                  of its hundred and twenty characters in a single line - so
+                  the box takes the room the sentence needs and none of the
+                  room it does not, which is what puts four of these cards on
+                  one screen. */}
+              <GrowingText
                 value={row.identity}
                 maxLength={120}
                 placeholder="I am someone who shows up early."
                 onChange={e => update(row.key, { identity: e.target.value })}
               />
             </label>
+            </div>
+
+            <div className="north-compose-half">
             <label className="field">
               {/* The word is explained here since v2.19. It hung off the
                   heading on the goal's own card, and that heading is gone -
@@ -265,21 +340,25 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                   explanation belongs. */}
               <span className="field-label">
                 <Explain id="deserve">What I do to deserve this</Explain>
+                {/* The cap, in the label's own column rather than on a line
+                    of its own under the box. A limit that refuses has to be
+                    visible - MAX_DESERVE_LINES - and this is visible without
+                    costing a row on every card. */}
+                <span className="field-note">up to four</span>
               </span>
-              <textarea
-                rows={3}
+              <GrowingText
                 /* Said again here because the label now carries an Explain, and
                    the bubble inside it is part of the label element even
                    while it is hidden - so the box would otherwise be named
                    the word plus the whole sentence about the word. */
                 aria-label="What I do to deserve this"
+                className="north-compose-lines"
                 value={row.deserve}
                 maxLength={400}
                 placeholder={'train four times a week\napply to three places a day'}
                 onChange={e => setDeserve(row.key, e.target.value)}
               />
             </label>
-            <span className="north-compose-hint">One line per thing you do, most days. Up to four.</span>
             {/* The other half of the same goal - docs/RESEARCH-NORTH.md.
                 Asked second and never first: it is a contrast, and a contrast
                 needs something to be against. First person like everything
@@ -288,20 +367,18 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                 entry, and "I don't go quiet for a day" is not that. */}
             <label className="field">
               <span className="field-label">What I don&apos;t do</span>
-              <textarea
-                rows={3}
+              <GrowingText
+                className="north-compose-lines"
                 value={row.avoid}
                 maxLength={400}
                 placeholder={'make a face at bad news\ngo quiet for a day'}
                 onChange={e => setAvoid(row.key, e.target.value)}
               />
             </label>
-            <span className="north-compose-hint">
-              The same few, from the other side. It is read beside what you do, never on its own.
-            </span>
             {/* Only on a goal that exists - see GoalRules. A row being written
                 now has no id for a rule to belong to. */}
             {row.id && <GoalRules goalId={row.id} title={row.title} />}
+            </div>
 
             <div className="north-compose-goal-foot">
               {row.id ? (
@@ -329,14 +406,6 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
             </div>
           </fieldset>
         ),
-      )}
-
-      {full ? (
-        <p className="setting-state north-compose-full">{MAX_ACTIVE_GOALS} is the limit - archive one to make room.</p>
-      ) : (
-        <button type="button" className="setting-quiet north-compose-add" onClick={addRow}>
-          {activeRows === 0 ? 'Write one down' : 'Add another'}
-        </button>
       )}
 
       {archived.length > 0 && (
@@ -377,6 +446,10 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
 
       <UnfiledRules goals={data.goals} ifThens={data.ifThens} />
 
+      {/* One row at the foot rather than three. The way to a fifth goal - or
+          the sentence saying there is not one - used to have a line of its
+          own above the buttons, and on a form built to fit a screen a line
+          that holds one control is a line spent on nothing. */}
       <div className="north-compose-actions">
         <button type="button" className="btn-primary" data-tour="goal-save" onClick={save}>
           Save
@@ -384,6 +457,15 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
         <button type="button" className="btn-secondary" onClick={onDone}>
           Cancel
         </button>
+        {full ? (
+          <p className="setting-state north-compose-full">
+            {MAX_ACTIVE_GOALS} is the limit - archive one to make room.
+          </p>
+        ) : (
+          <button type="button" className="setting-quiet north-compose-add" onClick={addRow}>
+            {activeRows === 0 ? 'Write one down' : 'Add another'}
+          </button>
+        )}
       </div>
     </div>
   )

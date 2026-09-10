@@ -566,11 +566,12 @@ test('a rule is written in Compose, and reads back under the goal it belongs to'
   render(<NorthView />)
 
   await compose(user)
-  // One per goal, beside the field it is about - and nowhere on the page
-  // somebody reads.
-  expect(screen.getAllByText('Name one moment that takes you off this, and the one thing you do instead.')).toHaveLength(2)
-
   await user.click(screen.getByRole('button', { name: 'What pulls me off "Ship something people keep using"' }))
+  // The instruction is beside the box being typed into, and only while
+  // somebody is typing into it. It is nowhere on the page they read.
+  expect(
+    screen.getByText(/Name one moment that takes you off this .* and the one thing you do instead./),
+  ).toBeInTheDocument()
   await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
   // Enter from either field is the rule form's own way out, and the
   // unambiguous one now that it sits inside a form with a Save of its own.
@@ -610,4 +611,29 @@ test('a rule whose goal was deleted waits in Compose, and one press files it', a
 
   await user.click(within(orphans).getByRole('button', { name: 'Ship something people keep using' }))
   expect(getData().ifThens[0].goalId).toBe(kept.id)
+})
+
+/**
+ * A goal's name takes eighty characters and eighty characters of this type is
+ * 640 pixels. No card on the Compose form is that wide, and an input does not
+ * wrap - so a long name sat in its own box with the end of it cut off, at
+ * every width, since the form existed. The measuring pass found it the first
+ * time it was ever pointed at this screen.
+ *
+ * It is a box that wraps now, and still one line of writing: Enter does
+ * nothing in it, the way Enter does nothing in an input.
+ */
+test('a goal name too long for its box wraps rather than running out of sight', async () => {
+  const user = userEvent.setup()
+  goal('Ship something')
+  render(<NorthView />)
+  await compose(user)
+
+  const box = screen.getAllByLabelText('What', { exact: true })[0]
+  expect(box.tagName).toBe('TEXTAREA')
+
+  await user.clear(box)
+  await user.type(box, 'Leave the house before nine{Enter} on a Saturday')
+  expect(getData().goals[0].title).toBe('Ship something')
+  expect((box as HTMLTextAreaElement).value).toBe('Leave the house before nine on a Saturday')
 })

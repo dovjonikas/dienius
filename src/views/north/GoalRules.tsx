@@ -83,14 +83,11 @@ export function GoalRules({ goalId, title }: { goalId: string; title: string }) 
         <p className="setting-state north-rule-full">{MAX_RULES_PER_GOAL} is the limit - delete one to make room.</p>
       )}
 
-      {/* The instruction, beside the field it is about. It spent two versions
-          on the goal's card, where it was two sentences of guidance printed
-          four times on a window that is supposed to be somebody's own
-          writing - and where the form it describes was one press away and
-          says the same thing in its own placeholders. CONVENTIONS 23. */}
-      <span className="north-compose-hint">
-        Name one moment that takes you off this, and the one thing you do instead.
-      </span>
+      {/* The instruction is inside RuleForm, on the field it is about, and
+          only while somebody is writing one. It was printed here as well for
+          one version, which put two copies of the same sentence four rows
+          apart on a form that has to fit a screen - and the copy that
+          matters is the one beside the box being typed into. */}
     </div>
   )
 }

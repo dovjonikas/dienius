@@ -10430,31 +10430,40 @@ button.task-note-mark.is-open {
    four across at 1920 fits the height easily and costs the pairing, and the
    two halves standing next to each other is the finding they are built on.
 
-   The gaps do the whole job of telling one goal from the next since v2.19.
-   They were doing half of it before, and a 2px rule down the left of each
-   card was doing the other half - which is what made four goals read as four
-   cells of a table rather than four things somebody had written down. The
-   rule is gone and the room is what replaced it: 56px between rows and 64
-   between columns, against about 12 inside a goal. Nothing here has an edge,
-   a background of its own, or anything else that draws a box.
+   Each one sits on its own surface, lifted off the page by a shadow rather
+   than fenced in by a line.
 
-   If four of them ever start to run together, the answer is more room and
-   never the rule back. */
+   It was a 2px rule down the left until v2.19, which made four goals read as
+   four cells of a table; the wave took the rule off and left the goals
+   standing on the page with nothing but room between them. The owner read
+   that and asked for depth - and depth is the opposite of a fence: a border
+   says where a thing stops, and a shadow says a thing is nearer than the
+   page. Same amount of air, no line anywhere, and the corner is the app's
+   own card radius.
+
+   The rows stretch, so two surfaces beside each other are one height. Once
+   an edge is visible, two of them ending at different places is the ragged
+   thing a border was going to be blamed for. */
 .north-goals {
   display: grid;
   grid-template-columns: 1fr;
-  gap: calc(var(--s8) + var(--s6)) calc(var(--s8) + var(--s8));
-  align-items: start;
+  gap: var(--s6);
+}
+
+.north-goals > * {
+  padding: var(--s5) var(--s6);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
 }
 
 @media (min-width: 900px) {
   .north-goals { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* One goal, and nothing drawn around it. Its own text is its whole frame:
-   a title, a sentence, a sentence in another voice, and the lines under
-   them. What holds it together is that they are close; what separates it
-   from the next one is that the next one is far. */
+/* One goal. What holds it together is that its lines are close and that they
+   share a surface; what separates it from the next one is the room between
+   the two surfaces. No line is drawn anywhere on it. */
 .north-goal { min-width: 0; }
 
 /* One order of importance, down the whole page, out of the four sizes
@@ -10726,41 +10735,123 @@ button.task-note-mark.is-open {
    same hairline the read card has, and one Save at the bottom. The fields
    are the app's own .field rows, so this looks like every other place
    something is written down rather than like a form of its own. */
+/* Four goals to fill in, on one page.
+
+   This was one column down the middle: the picture, then four goals of six
+   stacked fields each, then the archive and the buttons - about two and a
+   half screens of form for a window whose whole subject is four things. The
+   owner opened it after v2.19 and said so. A form somebody scrolls is a form
+   they lose their place in, and the thing being edited here fits a screen
+   when it is read.
+
+   So it is the reading page's own shape: the picture across the top, the
+   goals two abreast under it, each on the same surface with the same shadow
+   the read card has. What made room for it: every label sits beside its box
+   rather than over it - one column of words down the left of each card, the
+   same shape the library panel uses - and the two hints that were saying
+   what the field name and the Explain already say are gone. */
 .north-compose {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s6);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s4);
 }
 
-.north-compose .field { max-width: 52ch; }
+/* Everything that is not a goal takes the whole width: the picture over
+   them, and the three feet under. */
+.north-compose > :not(.north-compose-goal) { grid-column: 1 / -1; }
+
+@media (min-width: 900px) {
+  .north-compose { grid-template-columns: 1fr 1fr; }
+}
+
+/* Four abreast where there is room for four, which is the shape the owner
+   asked for in their own words: four cards ready to fill in on one page
+   rather than a form to scroll. A card is about 320px wide there and one
+   column of fields is what fits it - so the halves below are for the middle
+   width alone, where a card is 660 and standing six fields in one column of
+   that is what made this form two screens long. */
+@media (min-width: 1400px) {
+  .north-compose { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
 .north-compose textarea {
   resize: vertical;
-  line-height: 1.5;
+  line-height: 1.45;
 }
+
+/* The two boxes that take a list rather than a sentence. They grow like the
+   others and stand at two lines when they are empty, because a one-line box
+   with a two-line example in it shows half its own example. */
+.north-compose-lines { min-height: calc(var(--s8) + var(--s6)); }
 
 .north-compose-picture {
   display: flex;
   flex-direction: column;
-  gap: var(--s2);
+  gap: var(--s1);
 }
 
+/* The picture's own runs the width of the box it is under; the ones inside
+   a card keep a measure, because a card is narrow and a hint that reaches
+   its far edge reads as another field. */
+.north-compose-picture .north-compose-hint { max-width: none; }
+
 .north-compose-hint {
-  max-width: 52ch;
+  max-width: 60ch;
   color: var(--faint);
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
   line-height: 1.5;
 }
 
+/* One goal to fill in: the same surface and shadow the read card has, so
+   opening Compose is the same four things becoming editable rather than a
+   different screen about them.
+
+   Two halves inside it on anything wider than a phone - what the goal is on
+   the left, what it costs on the right - which is what puts four of these on
+   one screen. Six fields stacked is about 420 pixels of card and two rows of
+   that is more than a window; three beside three is about 300 and two rows
+   of that is not.
+
+   The labels stay over their boxes rather than beside them. Beside is what
+   the library panel does and it is right there, where a row is the width of
+   the panel; here a half is about 300px, and a 92px column of words in front
+   of that leaves a box too narrow for the sentences that go in it. */
 .north-compose-goal {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: var(--s2);
   min-width: 0;
   margin: 0;
-  padding: 0 0 0 var(--s4);
+  padding: var(--s3) var(--s4);
   border: none;
-  border-left: 2px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
+}
+
+.north-compose-half {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .north-compose-goal { grid-template-columns: 1fr 1fr; column-gap: var(--s5); }
+  .north-compose-goal > .north-compose-goal-foot { grid-column: 1 / -1; }
+}
+
+@media (min-width: 1400px) {
+  .north-compose-goal { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* A word beside a label rather than a line under the box: the cap on the
+   field below it, said without spending a row of the card on saying it. */
+.field-note {
+  margin-left: var(--s2);
+  color: var(--faint);
+  font-size: var(--t-xs);
 }
 
 .north-compose-goal-foot {
@@ -10771,20 +10862,23 @@ button.task-note-mark.is-open {
 /* A goal marked for archiving, until Save: the row folds to one line and
    keeps its place, so Undo puts it back where it was. */
 .north-compose-archived {
+  grid-column: auto;
   margin: 0;
-  padding-left: var(--s4);
-  border-left: 2px solid var(--border);
+  padding: var(--s4) var(--s5);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e2);
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: 1.6;
 }
 
-.north-compose-add { align-self: flex-start; }
+/* Both of these stand in the buttons' own row, at its far end: the way to a
+   fifth goal, or the sentence saying there is not one. */
+.north-compose-add,
+.north-compose-full { margin: 0 0 0 auto; }
 
-.north-compose-full {
-  margin: 0;
-  font-size: var(--t-sm);
-}
+.north-compose-full { font-size: var(--t-sm); }
 
 .north-compose-archive {
   padding-top: var(--s4);
@@ -10818,6 +10912,7 @@ button.task-note-mark.is-open {
 .north-compose-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s2);
   padding-top: var(--s2);
 }
@@ -15969,12 +16064,9 @@ main:has(.week) > .calendar {
 }
 
 /* What pulls me off this, inside Compose - see GoalRules.tsx. It moved off
-   the goal's own card in v2.19, and it needs the spacing of a field group
-   rather than of a paragraph: the list, the form and the invitation are
-   three different heights and they follow four ordinary fields. */
-.north-compose-rules {
-  gap: var(--s2);
-  margin-top: var(--s2);
-}
+   the goal card in v2.19 and it is the one field here whose control is a
+   list rather than a box, so it stacks its own contents under its label
+   like the rest of them and simply needs less room between them. */
+.north-compose-rules { gap: var(--s1); }
 
 .north-compose-rules .north-rules { margin: 0; }

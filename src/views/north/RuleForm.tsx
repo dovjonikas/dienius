@@ -71,7 +71,10 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
           onKeyDown={onKeyDown}
         />
       </label>
-      <p className="muted rule-form-hint">A moment you can catch: where you are, what just happened.</p>
+      <p className="muted rule-form-hint">
+        Name one moment that takes you off this - where you are, what just happened - and the one thing you do
+        instead.
+      </p>
       <label className="field">
         <span className="field-label">Then</span>
         <input
