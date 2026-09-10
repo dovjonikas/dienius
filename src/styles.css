@@ -142,7 +142,27 @@
      card in the app is guaranteed to round by the same amount as every other
      card. Which one a rule reaches for is now a question about what kind of
      thing it is, not a coin toss. */
-  --r-chip: 6px;
+  /* Three steps and two shapes, and every corner in the app is one of them.
+
+     The steps go by the size of the thing, not by its role, and that is the
+     answer the night pass arrived at rather than the one it set out with:
+     the brief asked for two, one for controls and one for areas, and an
+     18px checkbox and a 38px button cannot share a corner - at the button's
+     radius the checkbox is a circle. So the smallest step exists, and what
+     it is for is written here rather than guessed from its name. See
+     DECISIONS.
+
+     --r-mark    the smallest corner drawn: a bar, a week block, a cell, a
+                 checkbox, anything under about 20px. It was called --r-chip
+                 and was used by twelve things that are not chips.
+     --r-control a button, a field, a chip: something pressed or typed in.
+     --r-card    a surface something sits on: a card, a sheet, a panel.
+
+     --r-control and --r-card are the theme's own --radius and --edge, so a
+     preset sets both - including the hand-drawn corner in THEMES section 5.
+     The two shapes are not sizes: a pill is a capsule whatever it holds,
+     and round is a circle. */
+  --r-mark: 6px;
   --r-control: var(--radius);
   --r-card: var(--edge);
   --r-pill: 999px;
@@ -1234,7 +1254,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    exactly what a person is judging the theme on. */
 .theme-card-block {
   height: 12px;
-  border-radius: 3px;
+  border-radius: var(--r-mark);
   border-left: 3px solid var(--cat);
   background: color-mix(in srgb, var(--cat) 34%, var(--pv-surface));
 }
@@ -1302,7 +1322,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   font-weight: 600;
   color: var(--pv-mark-ink);
   background: var(--pv-mark);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   padding: 3px var(--s2);
   white-space: nowrap;
 }
@@ -2437,7 +2457,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   transform: translateY(-50%);
   padding: 1px var(--s1);
   border: 1px solid var(--accent);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: var(--surface);
   color: var(--accent);
   font-size: var(--t-xs);
@@ -3032,7 +3052,7 @@ textarea:focus {
   min-height: 30px;
   padding: 0 var(--s2);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
@@ -3751,7 +3771,7 @@ select:focus {
   height: 24px;
   flex-shrink: 0;
   border: 2px solid color-mix(in srgb, var(--muted) 55%, var(--border));
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 
@@ -5444,7 +5464,7 @@ button.danger {
    be a guess. */
 .focus-close-hint {
   padding: 1px 6px;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--border) 60%, transparent);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
@@ -6175,7 +6195,7 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 .floating-clock-move:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
 }
 
 /* Six dots, the universal pick-this-up mark, drawn with a repeating gradient
@@ -7666,7 +7686,7 @@ button.danger:focus-visible {
     justify-content: center;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-chip);
+    border-radius: var(--r-mark);
     color: var(--text);
     font-size: var(--t-xs);
     font-variant-numeric: tabular-nums;
@@ -7826,7 +7846,7 @@ button.danger:focus-visible {
   height: 24px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
@@ -7937,7 +7957,7 @@ button.danger:focus-visible {
   min-height: 0;
   padding: var(--s0) var(--s2);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
@@ -8159,7 +8179,7 @@ button.danger:focus-visible {
      whole width of a wide screen. */
   max-width: 280px;
   height: 3px;
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--border) 80%, transparent);
   overflow: hidden;
 }
@@ -8167,7 +8187,7 @@ button.danger:focus-visible {
 .library-item-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   background: var(--accent);
   transition: width var(--dur) var(--ease);
 }
@@ -8937,7 +8957,7 @@ button.task-note-mark.is-open {
   min-height: 0;
   padding: var(--s1) var(--s3);
   border: 1px solid transparent;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--border) 50%, transparent);
   color: var(--text);
   font-size: var(--t-sm);
@@ -9074,7 +9094,7 @@ button.task-note-mark.is-open {
   min-height: 0;
   padding: 0 var(--s1);
   border: 1px solid transparent;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--faint);
   font-size: var(--t-2xs);
@@ -9319,7 +9339,7 @@ button.task-note-mark.is-open {
   padding: var(--s0) 6px;
   border: 1px solid var(--border);
   border-bottom-width: 2px;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: var(--bg);
   color: var(--text);
   font-family: inherit;
@@ -9690,7 +9710,7 @@ button.task-note-mark.is-open {
   min-height: 0;
   padding: 0;
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
 }
 
@@ -9702,7 +9722,7 @@ button.task-note-mark.is-open {
   position: relative;
   flex: 1;
   min-height: 0;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
 }
 
 .review-bar-planned,
@@ -9711,7 +9731,7 @@ button.task-note-mark.is-open {
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   transition: height var(--dur) var(--ease);
 }
 
@@ -9921,7 +9941,7 @@ button.task-note-mark.is-open {
   right: 0;
   bottom: 0;
   height: 2px;
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--border) 85%, transparent);
 }
 
@@ -9995,7 +10015,7 @@ button.task-note-mark.is-open {
 .north-line-title:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
 }
 
 /* What opens. Sentence case and the ordinary reading size, because this is
@@ -11341,12 +11361,12 @@ button.task-note-mark.is-open {
   right: 4px;
   bottom: 3px;
   height: 2px;
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--muted) 22%, transparent);
   overflow: hidden;
 }
 
-.cell-bar-fill { display: block; height: 100%; border-radius: 1px; background: var(--muted); }
+.cell-bar-fill { display: block; height: 100%; border-radius: var(--r-mark); background: var(--muted); }
 
 /* The three registers. No red at any threshold: a past day is not on trial,
    and a calendar of red squares is a calendar people stop opening. Low is
@@ -11587,7 +11607,7 @@ main:has(.week) > .calendar {
   gap: var(--s1);
   min-width: 0;
   padding: 1px var(--s1);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   border: 1px solid transparent;
   background: color-mix(in srgb, var(--chip, var(--border)) 22%, transparent);
   color: var(--text);
@@ -11642,7 +11662,7 @@ main:has(.week) > .calendar {
   gap: var(--s2);
   padding: var(--s1) var(--s2);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
@@ -11703,7 +11723,7 @@ main:has(.week) > .calendar {
   grid-column: var(--week-col);
   position: relative;
   min-height: 0;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--surface) 60%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
   overflow: hidden;
@@ -11747,7 +11767,7 @@ main:has(.week) > .calendar {
   min-height: 15px;
   padding: 1px 3px;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--r-mark);
   overflow: hidden;
   /* Title at the top, not centred. A button centres its content, and a
      twenty-minute block held to its floor overlaps the next one by a few
@@ -11909,7 +11929,7 @@ main:has(.week) > .calendar {
   padding: var(--s0) 6px;
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 3px solid var(--cal, var(--muted));
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   /* Mixed into the surface, not into transparency: the strip sits over the
      block it clashes with, and a see-through strip laid its title across the
      block's own until neither could be read. Opaque, the block's name ends
@@ -11951,7 +11971,7 @@ main:has(.week) > .calendar {
   padding: 0 var(--s0);
   border: 1px dashed color-mix(in srgb, var(--cal, var(--muted)) 70%, transparent);
   border-left: 2px solid var(--cal, var(--muted));
-  border-radius: 3px;
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--cal, var(--muted)) 14%, var(--surface));
   color: var(--muted);
   font-size: var(--t-xs);
@@ -12457,7 +12477,7 @@ main:has(.week) > .calendar {
   min-height: 0;
   padding: var(--s1) var(--s2);
   border: 1px solid var(--border);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
@@ -12730,7 +12750,7 @@ main:has(.week) > .calendar {
   min-height: 0;
   padding: 3px var(--s2);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -13229,7 +13249,7 @@ main:has(.week) > .calendar {
   min-height: 34px;
   padding: 0 var(--s2);
   border: 1px solid transparent;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
@@ -13279,7 +13299,7 @@ main:has(.week) > .calendar {
   min-height: 34px;
   padding: 0 var(--s3);
   border: 1px solid var(--border);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
@@ -14456,7 +14476,7 @@ main:has(.week) > .calendar {
    different width from the one above it. */
 .day-card-list li {
   border-left: 3px solid var(--block, transparent);
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   padding-left: var(--s2);
 }
 
@@ -14625,7 +14645,7 @@ main:has(.week) > .calendar {
 .agenda-date-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
 }
 
 /* Today, marked once and by weight. A list where four things are emphasised
@@ -14896,7 +14916,7 @@ main:has(.week) > .calendar {
   min-height: 28px;
   padding: var(--s0) var(--s1);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -14958,7 +14978,7 @@ main:has(.week) > .calendar {
   padding: 3px var(--s1) 3px var(--s2);
   border: none;
   border-left: 2px solid var(--cat, var(--border));
-  border-radius: 0 var(--r-chip) var(--r-chip) 0;
+  border-radius: 0 var(--r-mark) var(--r-mark) 0;
   background: var(--surface);
   color: var(--text);
   font-size: var(--t-xs);
@@ -15088,7 +15108,7 @@ main:has(.week) > .calendar {
   min-height: 0;
   padding: 1px var(--s1);
   border: 1px dashed var(--border);
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
   font-size: var(--t-2xs);
@@ -15281,7 +15301,7 @@ main:has(.week) > .calendar {
 .week-preview-bar {
   width: 100%;
   min-height: 2px;
-  border-radius: 1px;
+  border-radius: var(--r-mark);
   background: color-mix(in srgb, var(--accent) 55%, var(--border));
 }
 

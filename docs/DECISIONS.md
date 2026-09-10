@@ -2857,3 +2857,33 @@ only in the open state, so `North` no longer sees the lines, the never lines
 or the rules at all. `North (goal open)` is a screen of its own, marked
 pointer-only because on a phone the same content is measured by `North`
 itself.
+
+## Three corner steps, not two, and the reason is an 18px checkbox
+
+The night brief asked for two border radii in the whole app: one small for
+buttons and fields, one larger for cards and modals, on the rule that a
+corner says whether a thing is a control or an area rather than decorating
+it. That rule is right and the count of two is not reachable, which is worth
+writing down rather than quietly ignoring.
+
+A checkbox is 18px and a button is 38px. At the button's 10px corner the
+checkbox is very nearly a circle, and a circle is what this app draws for a
+radio. So the corner cannot go by role alone: **it goes by the size of the
+thing**, and there are three sizes of thing.
+
+  --r-mark     6px  the smallest corner drawn - a bar, a week block, a
+                    calendar cell, a checkbox, anything under about 20px
+  --r-control  the theme's --radius  a button, a field, a chip
+  --r-card     the theme's --edge    a card, a sheet, a panel
+
+Plus two shapes that are not sizes at all: `--r-pill` is a capsule whatever
+it holds, `--r-round` is a circle.
+
+What did get fixed is the drift the brief was actually pointing at. The
+smallest step was called `--r-chip` and twelve of its users are not chips, so
+it is `--r-mark` now and the stylesheet says what each step is for. And ten
+corners were bare literals - `1px` on five bars, `3px` on four blocks - which
+is a corner a theme cannot reach: `--r-control` and `--r-card` are the
+preset's own tokens, so a preset shipping the hand-drawn edge from THEMES
+section 5 would have changed every card and left those nine square. There is
+not one literal corner left, and `scale.test.ts` fails on the next one.
