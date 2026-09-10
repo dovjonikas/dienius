@@ -12,6 +12,7 @@ import {
   formatClock,
   halfHourMarks,
   hourMarks,
+  legibleHourLabels,
   scrollToShow,
   widenToHold,
 } from './timelineLayout'
@@ -789,6 +790,76 @@ test('a stretch below the fold scrolls down until its margin is in view', () => 
 
 test('nothing scrolls past the top of the column', () => {
   expect(scrollToShow(10, 30, 200, VIEWPORT, SCROLL_MARGIN)).toBe(0)
+})
+
+/**
+ * The hour axis counts in a step, and the step is the same all the way down.
+ *
+ * It used to keep whichever hour happened to be far enough from the last one
+ * kept, which on this grid - where free time is compressed and a block is
+ * drawn at its real length - printed 06, 08, 09, 11, 12, 13, 14, 16, 18, 19,
+ * 21 on a real afternoon. Every one of those numbers is correct and the
+ * sequence cannot be read, because there is nothing to predict the next one
+ * from.
+ */
+const EVERY_HOUR = [360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020]
+
+/** A linear grid: pixels per minute, so a gap is a fixed number of pixels. */
+const linear = (pxPerMinute: number) => (minutes: number) => (minutes - 360) * pxPerMinute
+
+test('an axis with room for every hour labels every hour', () => {
+  expect([...legibleHourLabels(EVERY_HOUR, linear(1), 28)]).toEqual(EVERY_HOUR)
+})
+
+test('an axis with half the room counts in twos, on the even hours', () => {
+  // 30px an hour: every hour would sit 30 apart and clear 28, so squeeze it.
+  const kept = [...legibleHourLabels(EVERY_HOUR, linear(0.4), 28)]
+  expect(kept.map(m => m / 60)).toEqual([6, 8, 10, 12, 14, 16])
+})
+
+test('an axis with almost no room counts in sixes rather than in whatever fits', () => {
+  const kept = [...legibleHourLabels(EVERY_HOUR, linear(0.09), 28)]
+  expect(kept.map(m => m / 60)).toEqual([6, 12])
+})
+
+/**
+ * The step is read off the clock, not off the first mark: a day starting at
+ * 07:00 prints 08, 10, 12 rather than 07, 09, 11, because the numbers people
+ * expect on a two-hour axis are the even ones.
+ */
+test('the step is anchored on the clock, so the numbers are the ones anybody expects', () => {
+  const from7 = [420, 480, 540, 600, 660, 720]
+  const kept = [...legibleHourLabels(from7, linear(0.4), 28)]
+  expect(kept.map(m => m / 60)).toEqual([8, 10, 12])
+})
+
+/**
+ * The one rule that cannot bend is that text is never drawn on top of text.
+ * A day compressed past what even a six-hour step can clear falls back to
+ * keeping whatever fits, which is worse to read than a regular step and
+ * better than two numbers in one place.
+ */
+test('a day too compressed for any regular step still never prints two labels in one place', () => {
+  const kept = [...legibleHourLabels(EVERY_HOUR, linear(0.02), 28)]
+  const gaps = kept.map(linear(0.02))
+  for (let i = 1; i < gaps.length; i++) expect(gaps[i] - gaps[i - 1]).toBeGreaterThanOrEqual(28)
+})
+
+/**
+ * The grid is not linear, and that is the whole reason the greedy walk read
+ * badly: the same hour step is a different number of pixels in different
+ * parts of the day. A step that clears the tightest of them clears all of
+ * them, which is what makes the axis regular in time even here.
+ */
+test('a compressed stretch decides the step for the whole axis', () => {
+  // Six hours drawn at 40px each, then six squeezed into 10px each.
+  const squeezed = (minutes: number) => {
+    const hours = (minutes - 360) / 60
+    return hours <= 6 ? hours * 40 : 240 + (hours - 6) * 10
+  }
+  const kept = [...legibleHourLabels(EVERY_HOUR, squeezed, 28)]
+  const steps = kept.slice(1).map((m, i) => (m - kept[i]) / 60)
+  expect(new Set(steps).size).toBe(1)
 })
 
 /** The window grows only when it has to, and says so by handing back the same object. */

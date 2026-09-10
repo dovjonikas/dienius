@@ -793,12 +793,57 @@ export function fitPxPerMinute(
  * every hour: position within the day is what the eye actually reads off the
  * grid, and a rule with no number beside it still says "an hour passed here."
  * Only the number is dropped, and only where there was never room to print it.
+ *
+ * ## It counts in a step, and the step is the same all the way down
+ *
+ * Until v2.18 this walked the hours and kept whichever one happened to be far
+ * enough from the last one kept. That is correct about legibility and wrong
+ * about reading: because this grid is not linear - free time is compressed
+ * and a block is drawn at its real length - "far enough" lands in different
+ * places in different parts of the day, and a real afternoon printed
+ * 06, 08, 09, 11, 12, 13, 14, 16, 18, 19, 21. Nothing is wrong with any one
+ * of those numbers and the sequence is unreadable: an axis whose step keeps
+ * changing has to be read a number at a time, because there is nothing to
+ * predict the next one from. The owner's words for it were that the hours
+ * "are laid out badly", which is exactly what an irregular axis looks like
+ * from the outside.
+ *
+ * So it counts in a step - every hour, or every second, third, fourth or
+ * sixth - and takes the smallest step that fits everywhere. The step is
+ * anchored on the clock rather than on the first mark, so the numbers are the
+ * ones anybody expects to see: 06, 08, 10 and not 07, 09, 11.
+ *
+ * The greedy walk survives as the last resort, for a day compressed so hard
+ * that even every sixth hour collides. It is worse to read than a regular
+ * step and better than two numbers printed on top of each other, and the
+ * rule that text is always readable is the one that cannot bend.
  */
+const HOUR_LABEL_STEPS = [1, 2, 3, 4, 6]
+
 export function legibleHourLabels(
   marks: number[],
   topPx: (minutes: number) => number,
   minGapPx: number,
 ): Set<number> {
+  for (const step of HOUR_LABEL_STEPS) {
+    const every = marks.filter(mark => mark % (step * 60) === 0)
+    if (every.length > 0 && allGapsClear(every, topPx, minGapPx)) return new Set(every)
+  }
+  return greedyHourLabels(marks, topPx, minGapPx)
+}
+
+function allGapsClear(marks: number[], topPx: (minutes: number) => number, minGapPx: number): boolean {
+  let last = -Infinity
+  for (const mark of marks) {
+    const px = topPx(mark)
+    if (px - last < minGapPx) return false
+    last = px
+  }
+  return true
+}
+
+/** Whichever hours happen to fit, for a day no regular step can label. */
+function greedyHourLabels(marks: number[], topPx: (minutes: number) => number, minGapPx: number): Set<number> {
   const kept = new Set<number>()
   let lastLabelledPx = -Infinity
   for (const mark of marks) {

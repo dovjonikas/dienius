@@ -2366,10 +2366,23 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
    Nothing is lost by putting the line under it. The running block already
    wears a ring in this same ink, which says the same thing in the same
-   colour, and the dot in the gutter still marks the hour. */
+   colour, and the dot in the gutter still marks the hour.
+
+   Except that "the dot still marks the hour" was only true of a dot with a
+   line attached to it. Now is almost always inside a block - that is what a
+   planned day is - so the run of line was almost always hidden, and what was
+   left on screen was one 7px orange circle floating at a block's top-left
+   corner with nothing joining it to anything. The owner read it as something
+   poking out of a corner, which is exactly what it looks like.
+
+   So the line starts twelve pixels earlier, in the gutter, where no block is
+   ever drawn. The dot now ends a visible line whatever is painted over the
+   rest of it, and the hour label nearest the line was already dropped for it
+   - see NOW_CLEARS_LABEL_PX - so there is nothing in that twelve pixels to
+   cross. */
 .timeline-now-line {
   position: absolute;
-  left: var(--timeline-gutter);
+  left: calc(var(--timeline-gutter) - var(--s3));
   right: 0;
   height: 1.5px;
   background: var(--mark);
@@ -2379,7 +2392,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .timeline-now-dot {
   position: absolute;
-  left: calc(var(--timeline-gutter) - 4px);
+  left: calc(var(--timeline-gutter) - var(--s3));
   width: 7px;
   height: 7px;
   border-radius: var(--r-round);
@@ -7027,15 +7040,25 @@ button.danger:focus-visible {
      Nothing is measured by a hidden copy any more. The block is one width
      because the column is one width, so the chip cannot move whatever the
      day is called - which is what the ghost was for. */
+  /* The day's name at the block's left edge and the arrows at its right.
+     They led the row until v2.18 - two bordered 44px squares, then the word -
+     which put the loudest boxes in the masthead in front of the most
+     important text on the screen and left "Today" as the one thing in this
+     column not standing on the column's own left edge. The date under it,
+     the identity line under that, the month, Templates and Up next all start
+     at that edge; the word started 96 pixels in.
+
+     And row-gap was zero, so the date sat against the underside of a row of
+     44px buttons. The owner reported both, in those words. */
   .day-header .day-nav {
     display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-areas:
-      "prev next word"
+      "word prev next"
       "date date date";
     align-items: center;
-    column-gap: var(--s2);
-    row-gap: 0;
+    column-gap: var(--s1);
+    row-gap: var(--s1);
     width: 240px;
     flex: 0 0 auto;
     margin-bottom: 0;
@@ -7043,6 +7066,21 @@ button.danger:focus-visible {
 
   .day-header .day-nav > button:first-of-type { grid-area: prev; }
   .day-header .day-nav > button:last-of-type { grid-area: next; }
+
+  /* The same arrows as the month's, sixty pixels below them.
+
+     They were a bordered box on the app surface and the month's are a bare
+     glyph, which is one job drawn two ways within one column - CONVENTIONS
+     23. The month's is the right one of the two: this is navigation beside a
+     title, not an action. */
+  .day-header .day-nav > button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: var(--t-glyph);
+  }
+
+  .day-header .day-nav > button:hover { color: var(--text); }
 
   /* The title's two elements are the grid's own items: the heading in the
      cell beside the arrows, the date across the row under them. Both
@@ -7075,6 +7113,16 @@ button.danger:focus-visible {
      never wraps - it is one word - and the date is allowed to, which is
      what keeps it inside the block at a larger text size. */
   .day-header .day-title h2 { white-space: nowrap; }
+
+  /* A mouse does not need the finger's 44, and two 44px boxes either side of
+     a 20px word is what made this row read as a toolbar. A finger keeps
+     them: the box is only allowed to shrink where there is a pointer. */
+  @media (pointer: fine) {
+    .day-header .day-nav > button {
+      width: var(--s8);
+      height: var(--s8);
+    }
+  }
 
   .day-header .day-tools {
     flex: 0 0 auto;
