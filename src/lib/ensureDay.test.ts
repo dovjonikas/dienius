@@ -120,3 +120,111 @@ test('a day with nothing owed to it is still marked as seen, and is empty rather
   expect(ensured?.changed).toBe(false)
   expect(ensured?.days[THURSDAY]).toEqual({ date: THURSDAY, tasks: [], autoApplied: true })
 })
+
+// --- a library binding is asked again every time the day is opened ---------
+//
+// The one thing on this function that does not happen once. Everything else
+// is gated on `autoApplied`, which is what stops a day being re-stamped every
+// time somebody looks at it; a binding cannot work that way, because it
+// resolves to whatever is next in a list and a list changes after the stamp
+// far more often than before it. See rebindLibrary.
+
+const READING: Template = {
+  id: 'read',
+  name: 'Evening',
+  color: '#a7c4f5',
+  blocks: [{ id: 'r1', title: 'Read: MIND', time: '20:00', minutes: 30, libraryListId: 'mind' }],
+}
+
+function stampedWithReading(items: { id: string; title: string; finished?: string }[]): AppData {
+  const data = defaultData()
+  data.templates = [READING]
+  data.library = [{ id: 'mind', name: 'Books: MIND', unit: 'page', items }]
+  data.days = {
+    [THE_DAY_AFTER]: {
+      date: THE_DAY_AFTER,
+      templateId: 'read',
+      autoApplied: true,
+      tasks: [
+        {
+          id: 't1',
+          title: 'Read: MIND',
+          done: false,
+          time: '20:00',
+          minutes: 30,
+          fromTemplate: true,
+          origin: { type: 'template', sourceId: 'read', blockId: 'r1' },
+        },
+      ],
+    },
+  }
+  return data
+}
+
+/**
+ * The owner's report, in their words: the template was already on the
+ * calendar, the books went into the list afterwards, and the days did not
+ * change. The list was empty when the stamp happened, so the block's own
+ * title stood and nothing ever asked again.
+ */
+test('a day stamped before the list had anything in it picks the book up when it is opened', () => {
+  const data = stampedWithReading([{ id: 'i1', title: 'The War of Art' }])
+  const ensured = ensuredDay(data, THE_DAY_AFTER, THURSDAY)
+
+  expect(ensured?.changed).toBe(true)
+  const task = ensured!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.title).toBe('The War of Art')
+  expect(task.libraryRef).toEqual({ listId: 'mind', itemId: 'i1' })
+})
+
+test('a day pointing at a book that has been finished since moves on to the next one', () => {
+  const data = stampedWithReading([
+    { id: 'i1', title: 'The War of Art', finished: THURSDAY },
+    { id: 'i2', title: 'Four Thousand Weeks' },
+  ])
+  data.days[THE_DAY_AFTER].tasks[0].title = 'The War of Art'
+  data.days[THE_DAY_AFTER].tasks[0].libraryRef = { listId: 'mind', itemId: 'i1' }
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.title).toBe('Four Thousand Weeks')
+  expect(task.libraryRef).toEqual({ listId: 'mind', itemId: 'i2' })
+})
+
+test('a sitting that already happened keeps the book it happened with', () => {
+  const data = stampedWithReading([
+    { id: 'i1', title: 'The War of Art', finished: THURSDAY },
+    { id: 'i2', title: 'Four Thousand Weeks' },
+  ])
+  data.days[THE_DAY_AFTER].tasks[0].done = true
+  data.days[THE_DAY_AFTER].tasks[0].title = 'The War of Art'
+  data.days[THE_DAY_AFTER].tasks[0].libraryRef = { listId: 'mind', itemId: 'i1' }
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+/**
+ * A day that has been lived says what was on it. Re-pointing one would be the
+ * app editing history to match a list.
+ */
+test('a day that has already been is left exactly as it was', () => {
+  const data = stampedWithReading([{ id: 'i1', title: 'The War of Art' }])
+  data.days[THE_DAY_BEFORE] = { ...data.days[THE_DAY_AFTER], date: THE_DAY_BEFORE }
+  delete data.days[THE_DAY_AFTER]
+
+  expect(ensuredDay(data, THE_DAY_BEFORE, THURSDAY)).toBeNull()
+})
+
+/**
+ * A list emptied of everything unfinished has nothing to point at, and the
+ * block's own title is what stands - which is what it does at stamp time in
+ * the same case.
+ */
+test('a list with nothing left unfinished gives the block its own title back', () => {
+  const data = stampedWithReading([{ id: 'i1', title: 'The War of Art', finished: THURSDAY }])
+  data.days[THE_DAY_AFTER].tasks[0].title = 'The War of Art'
+  data.days[THE_DAY_AFTER].tasks[0].libraryRef = { listId: 'mind', itemId: 'i1' }
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.title).toBe('Read: MIND')
+  expect(task.libraryRef).toBeUndefined()
+})

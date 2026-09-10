@@ -2,7 +2,7 @@ import type { AppData, DayPlan } from './types'
 import { todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
-import { applyStamps } from './stamping'
+import { applyStamps, rebindLibrary } from './stamping'
 
 /**
  * Everything a day gets on its own, as a pure function of the state.
@@ -45,7 +45,24 @@ export interface EnsuredDay {
  */
 export function ensuredDay(data: AppData, date: string, today: string = todayKey()): EnsuredDay | null {
   const existing = data.days[date]
-  if (existing?.autoApplied) return null
+
+  /**
+   * The one repair that runs on every open, including a day that has been
+   * through here before.
+   *
+   * Everything else on this function happens once - `autoApplied` is the
+   * flag that says so, and it is what stops a day being re-stamped every
+   * time somebody looks at it. A library binding cannot work that way: it
+   * resolves to whatever is next in a list, and a list changes after the
+   * stamp far more often than before it. See rebindLibrary.
+   *
+   * Today and the days ahead only. A day that has been lived says what was
+   * on it.
+   */
+  const rebound = existing && date >= today ? rebindLibrary(existing, data.templates, data.library) : null
+  const withRebind = rebound ? { ...data.days, [date]: rebound } : data.days
+
+  if (existing?.autoApplied) return rebound ? { days: withRebind, changed: true } : null
 
   const mapped = data.settings.weekdayTemplates[weekdayOf(date)]
   const template = mapped ? data.templates.find(t => t.id === mapped) : undefined
@@ -62,7 +79,7 @@ export function ensuredDay(data: AppData, date: string, today: string = todayKey
   // that is a fact about the day rather than an invention.
   const shouldStamp = !!template && !existing?.templateId && date >= today
 
-  let days = data.days
+  let days = withRebind
   if (shouldStamp) {
     days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
   }

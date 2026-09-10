@@ -57,6 +57,61 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
 }
 
 /**
+ * A day's library-bound tasks, re-pointed at whatever the list says now.
+ *
+ * The binding was resolved once, at the moment the day was stamped, and then
+ * never again - which is exactly wrong for the one thing a binding is for. A
+ * block bound to a list does not say a book; it says "whatever is next in
+ * that list", and what is next changes. The owner stamped a week, added the
+ * books afterwards, and the days went on saying "Read: MIND" with no book
+ * behind them: the list was empty when the stamp happened, `boundTo` found
+ * nothing, and nothing ever asked again.
+ *
+ * Two ways a day goes stale and this answers both. A list that had nothing
+ * has something now, so a task with no binding takes one. And the book that
+ * was current has been finished since, so a task still pointing at it moves
+ * on to the next one - which is the promise the library's own doc already
+ * makes, that finishing a book moves the block on rather than leaving a dead
+ * block behind.
+ *
+ * **Only what has not happened yet.** A done task is a record of a sitting
+ * with a particular book and is never touched. Nor is a past day: a Tuesday
+ * that has been lived says what was on it, and re-pointing it would be the
+ * app editing history to match a list.
+ *
+ * **And only what the block gave.** A task the owner renamed by hand is
+ * still re-pointed - the title comes from the block on a re-stamp too, and a
+ * bound task's title is the book's name rather than anything anybody typed.
+ */
+export function rebindLibrary(
+  day: DayPlan,
+  templates: Template[],
+  library: LibraryList[],
+): DayPlan | null {
+  let changed = false
+  const tasks = day.tasks.map(task => {
+    if (task.done) return task
+    const origin = originFor(task)
+    if (origin.type !== 'template' || !origin.blockId) return task
+    const block = templates
+      .find(t => t.id === origin.sourceId)
+      ?.blocks.find(b => b.id === origin.blockId)
+    if (!block?.libraryListId) return task
+
+    const bound = boundTo(library.find(l => l.id === block.libraryListId))
+    // Nothing to point at: the list is gone, or everything in it is
+    // finished. The block's own title stands, which is what it does at stamp
+    // time in the same case.
+    const title = bound?.title ?? block.title
+    const ref = bound?.ref
+    if (task.title === title && task.libraryRef?.itemId === ref?.itemId) return task
+    changed = true
+    return { ...task, title, libraryRef: ref }
+  })
+  return changed ? { ...day, tasks } : null
+}
+
+/**
  * The note a day wrote for itself, as opposed to the one its template handed
  * it.
  *
