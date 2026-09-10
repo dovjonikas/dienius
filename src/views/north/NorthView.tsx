@@ -248,16 +248,18 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
        * The column only exists when there is something in it, and the whole
        * block only exists when the doing half does.
        *
-       * Third person and present tense on purpose. "He doesn't go quiet for
-       * a day" is a description of a man; "you went quiet again" is a
-       * scoreboard with one entry, and on a bad day it is read as a verdict -
-       * which is the difficulty-as-impossibility trap that section 6 of the
-       * research is about. */}
+       * First person, both halves. v2.18 shipped these as "He does" and "He
+       * doesn't" over lines somebody had written as "hate the waiting, not
+       * me", which is the app talking about its owner in the third person on
+       * the one screen that is meant to be their own writing. The research
+       * argued the away half against the *second* person - "you went quiet
+       * again" is a scoreboard with one entry - and the first person answers
+       * that just as well while keeping the page in one voice. */}
       {deserve.length > 0 ? (
         <div className="north-pair">
           <div className="north-pair-half">
             <h4 className="north-pair-head">
-              <Explain id="deserve">He does</Explain>
+              <Explain id="deserve">What I do</Explain>
             </h4>
             {/* A plain list. No marker, no box, nothing to tick: the moment
                 one of these could be checked off it would be a scoreboard,
@@ -270,7 +272,7 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
           </div>
           {avoid.length > 0 && (
             <div className="north-pair-half">
-              <h4 className="north-pair-head">He doesn&apos;t</h4>
+              <h4 className="north-pair-head">What I don&apos;t do</h4>
               <ul className="north-deserve north-avoid">
                 {avoid.map((line, i) => (
                   <li key={i}>{line}</li>

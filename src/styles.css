@@ -10417,7 +10417,7 @@ button.task-note-mark.is-open {
 
    Equal columns, so neither half reads as the main one and the other as a
    footnote. They stack on a phone, which keeps them adjacent - the next
-   thing under "He does" is still "He doesn't". */
+   thing under "What I do" is still "What I don't do". */
 .north-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -10434,7 +10434,7 @@ button.task-note-mark.is-open {
 
 /* The away half, one step quieter than the doing half. It is a contrast, not
    an instruction: the same size and leading so the two read as one thought,
-   and the muted ink so the eye lands on what he does first. Making it louder
+   and the muted ink so the eye lands on the doing half first. Making it louder
    would be making the threat louder, which is the half of Witte's model that
    produces avoidance rather than action - research section 4. */
 .north-avoid li { color: var(--muted); }

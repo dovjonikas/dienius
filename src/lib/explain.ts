@@ -82,8 +82,8 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
     text: 'Who you are becoming, in your own words and in the first person: how you look, how you live, what you do in the morning. It is written once, read every day, and nothing here measures it.',
   },
   deserve: {
-    term: 'He does',
-    text: 'Two to four things you actually do, most days, that earn this goal, and the same few from the other side - what he does not do. Nothing counts either, and only the doing half reaches a Monday.',
+    term: 'What I do',
+    text: 'Two to four things you actually do, most days, that earn this goal, and the same few from the other side - what you do not do. Nothing counts either, and only the doing half reaches a Monday.',
   },
   'key-task': {
     term: 'Key task',

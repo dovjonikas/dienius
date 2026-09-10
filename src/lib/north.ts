@@ -263,7 +263,7 @@ export function cleanDeserve(lines: readonly string[] | undefined): string[] | u
 }
 
 /**
- * The other half: what the man this goal makes you does **not** do.
+ * The other half: what the person this goal makes you does **not** do.
  *
  * Same cleaning, same cap, deliberately - see docs/RESEARCH-NORTH.md. The
  * finding it is built on is Oyserman's *balance*: an expected self predicts

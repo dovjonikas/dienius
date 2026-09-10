@@ -268,10 +268,9 @@ test('what you do to deserve a goal reads as a plain list, with nothing to tick'
   goal('Be strong at fifty', { deserve: ['train four times a week', 'sleep by eleven'] })
   const { container } = render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  // "He does" since v2.18, and the reason is the half beside it - see
-  // docs/RESEARCH-NORTH.md. The card is a portrait of a man in the third
-  // person now, so the head names him rather than announcing a section.
-  expect(within(card).getByText('He does')).toBeInTheDocument()
+  // A head that says what the list is, in the voice everything under it is
+  // written in - see the whole-page voice test at the foot of this file.
+  expect(within(card).getByText('What I do')).toBeInTheDocument()
   expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['train four times a week', 'sleep by eleven'])
   expect(container.querySelector('input[type="checkbox"], progress, meter')).toBeNull()
 })
@@ -282,8 +281,8 @@ test('a goal with nothing written to deserve it says so once, quietly, and shows
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
   // No heads either: a column head over nothing is a label announcing an
   // empty section, which is the shape this window was rebuilt away from.
-  expect(within(card).queryByText('He does')).toBeNull()
-  expect(within(card).queryByText(/He doesn/)).toBeNull()
+  expect(within(card).queryByText('What I do')).toBeNull()
+  expect(within(card).queryByText(/don't do/)).toBeNull()
   expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
 })
 
@@ -446,21 +445,21 @@ test('leaving Compose puts focus back on the Compose control', async () => {
  * of a page. Witte's model is why the away half is never drawn alone: threat
  * without efficacy produces avoidance rather than action.
  */
-test('a goal shows what he does and what he does not, together, on the same card', () => {
+test('a goal shows what I do and what I do not, together, on the same card', () => {
   goal('A dad my kid can tell anything', {
-    deserve: ['10 min sitting before anyone is up', 'listens without making a face'],
-    avoid: ['makes a face at bad news', 'goes quiet for a day'],
+    deserve: ['10 min sitting before anyone is up', 'listen without making a face'],
+    avoid: ['make a face at bad news', 'go quiet for a day'],
   })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).getByText('He does')).toBeInTheDocument()
-  expect(within(card).getByText("He doesn't")).toBeInTheDocument()
+  expect(within(card).getByText('What I do')).toBeInTheDocument()
+  expect(within(card).getByText("What I don't do")).toBeInTheDocument()
   expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual([
     '10 min sitting before anyone is up',
-    'listens without making a face',
-    'makes a face at bad news',
-    'goes quiet for a day',
+    'listen without making a face',
+    'make a face at bad news',
+    'go quiet for a day',
   ])
 })
 
@@ -468,22 +467,44 @@ test('the away half is never drawn without the doing half beside it', () => {
   // The shape Witte's model says backfires: a threat with no answer next to
   // it. A goal carrying only the away lines shows neither head and falls
   // back to the invitation to write the doing half.
-  goal('A dad my kid can tell anything', { avoid: ['goes quiet for a day'] })
+  goal('A dad my kid can tell anything', { avoid: ['go quiet for a day'] })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).queryByText("He doesn't")).toBeNull()
-  expect(within(card).queryByText('goes quiet for a day')).toBeNull()
+  expect(within(card).queryByText("What I don't do")).toBeNull()
+  expect(within(card).queryByText('go quiet for a day')).toBeNull()
   expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
 })
 
 test('a goal with only the doing half shows it alone, with no empty column beside it', () => {
-  goal('A dad my kid can tell anything', { deserve: ['listens without making a face'] })
+  goal('A dad my kid can tell anything', { deserve: ['listen without making a face'] })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).getByText('He does')).toBeInTheDocument()
-  expect(within(card).queryByText("He doesn't")).toBeNull()
+  expect(within(card).getByText('What I do')).toBeInTheDocument()
+  expect(within(card).queryByText("What I don't do")).toBeNull()
+})
+
+/**
+ * The page is one person's own writing, so it is written in one voice.
+ *
+ * v2.18 shipped the pair as "He does" and "He doesn't" over lines somebody
+ * had written as "hate the waiting, not me", and the owner read the seam
+ * straight away: the app had started narrating them. This holds the whole
+ * rendered window against that, with every layer on screen at once, because
+ * the failure was one heading and the next one will be a different heading.
+ */
+test('nothing on the page talks about its owner in the third person', () => {
+  picture()
+  goal('A dad my kid can tell anything', {
+    why: 'Because I want to be told things while they are still small.',
+    identity: 'I hear things without making them worse.',
+    deserve: ['10 min sitting before anyone is up'],
+    avoid: ['go quiet for a day'],
+  })
+  const { container } = render(<NorthView />)
+
+  expect(container.textContent).not.toMatch(/\b(he|his|him|she|hers)\b/i)
 })
 
 /**

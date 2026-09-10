@@ -1083,7 +1083,7 @@ export interface Goal extends Timestamped {
   /** Trimmed, no blank lines, at most `MAX_DESERVE_LINES`. Absent rather than empty - see `cleanDeserve`. */
   deserve?: string[]
   /**
-   * The other half of the same goal: what the man it makes you does not do.
+   * The other half of the same goal: what the person it makes you does not do.
    *
    * Same shape and same cap as `deserve`, and paired with it on purpose -
    * docs/RESEARCH-NORTH.md has the argument. It is a contrast held inside an

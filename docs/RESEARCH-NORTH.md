@@ -143,9 +143,17 @@ exactly when it does the most damage. The existing doctrine already knows this -
 40% rule, the evening close that never appraises, "the day gave what it gave" - and the away half
 has to be built to the same standard or it undoes them.
 
-This is why the away half is written as **behaviour in the third person and the present tense** -
-"he doesn't go quiet for a day" - rather than as an accusation in the second - "you went quiet
-again". The first is a description of a man. The second is a scoreboard with one entry.
+This is why the away half is written as **behaviour in the present tense** - "I don't go quiet for
+a day" - rather than as an accusation in the second person - "you went quiet again". The first is a
+description of a person. The second is a scoreboard with one entry.
+
+**Corrected 2026-09-10.** The first build of this read that paragraph as an argument for the *third*
+person and shipped "He does" / "He doesn't" as the two headings. It is not. What the paragraph rules
+out is the second person, and the first person answers it exactly as well - "I don't go quiet for a
+day" is no more a verdict than "he doesn't" is. What the third person cost was the thing this whole
+window is: the owner opened it, read a heading about a man over sentences they had written as
+"hate the waiting, not me", and said the app had started narrating them. A page somebody recognises
+themselves in has to be in their own voice, and there is only one voice available for that.
 
 ---
 
@@ -172,9 +180,9 @@ Per goal, three things in one eyeful, in this order:
 
 1. **Who this makes me** - the identity line, which is currently the quietest thing on the card and
    should be the loudest. It is the thing both halves are a contrast about.
-2. **What he does** - the deserve lines, unchanged.
-3. **What he doesn't do** - new. Same goal, beside the doing, in the same register: short, present
-   tense, third person, behaviour rather than character.
+2. **What I do** - the deserve lines, unchanged.
+3. **What I don't do** - new. Same goal, beside the doing, in the same register: short, present
+   tense, first person like every other line on the page, behaviour rather than character.
 
 Side by side rather than stacked, because the pairing is the finding and a layout that separates
 them is a layout that loses it.
