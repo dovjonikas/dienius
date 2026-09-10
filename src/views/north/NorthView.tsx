@@ -257,9 +257,7 @@ function GoalCard({ goal, rules }: GoalCardProps) {
             <li key={i}>{line}</li>
           ))}
           {avoid.map((line, i) => (
-            <li key={`avoid-${i}`} className="north-avoid">
-              <span className="north-never">never</span> {line}
-            </li>
+            <li key={`avoid-${i}`} className="north-avoid">never {line}</li>
           ))}
         </ul>
       )}
@@ -285,8 +283,7 @@ function GoalCard({ goal, rules }: GoalCardProps) {
 export function RuleText({ rule }: { rule: IfThenEntry }) {
   return (
     <p className="north-rule-line" style={rule.color ? { borderLeftColor: rule.color } : undefined}>
-      <span className="north-rule-prefix">If</span>{' '}
-      {rule.trigger}
+      <span className="north-rule-prefix">If</span> {rule.trigger}
       {/* The word rather than the arrow it stood for. An arrow between two
           halves of a sentence is a diagram; "If X, then Y" is the sentence,
           and this page is made of sentences now. The hidden copy that used to

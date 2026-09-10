@@ -10512,7 +10512,11 @@ button.task-note-mark.is-open {
    is the line that cuts through a bad day and this one sits just under it.
    See docs/RESEARCH-NORTH.md section 8. */
 .north-goal-identity {
-  margin: var(--s4) 0 0;
+  /* More room above and below it than anything else on the card has. With no
+     labels left, the air is what says this is a different kind of sentence
+     from the one over it and from the lines under it - not what the goal is
+     or why, but who having it makes you. */
+  margin: var(--s5) 0 var(--s5);
   max-width: 52ch;
   color: var(--text);
   font-size: var(--t-md);
@@ -10540,21 +10544,13 @@ button.task-note-mark.is-open {
    puts them in two sections of a page. docs/RESEARCH-NORTH.md sections 2
    and 8.
 
-   One step quieter than the doing lines, and no louder: it is a contrast,
-   not an instruction, and making the away half loud is making the threat
-   loud, which is the half of Witte's model that produces avoidance rather
-   than action - research section 4. */
-.north-avoid { color: var(--muted); }
+   The one word on this page the owner did not type is "never", at the front
+   of each away line, and it is inside their sentence rather than above it:
+   somebody wrote "go quiet for a day" into a field called what I don't do,
+   and on a page where that field has no name the line has to carry its own
+   sense. "never go quiet for a day" is the same sentence, whole, in the same
+   voice. The ink is set below, with the lines. */
 
-/* The one word on this page the owner did not type, and it is inside their
-   sentence rather than above it.
-
-   Somebody wrote "go quiet for a day" into a field called what I don't do.
-   On the page that field has no name any more, so the line has to carry its
-   own sense: "never go quiet for a day" is the same sentence, whole, in the
-   same voice. Set at the away lines' own size and one ink quieter, because
-   it is the grammar of the line and not its point. */
-.north-never { color: var(--faint); }
 
 /* What you do to deserve it: a plain list. No marker and nothing to tick.
    A size below the prose above it, because these are actions rather than
@@ -10569,18 +10565,34 @@ button.task-note-mark.is-open {
   list-style: none;
 }
 
+/* No measure on these. 52ch capped them at about 340px inside a 650px card,
+   so "bad day, get up small, no big deal about it" broke across two lines
+   with three hundred pixels of empty column beside it - and a line that
+   wraps stops looking like one thing somebody does and starts looking like a
+   paragraph. They are short by nature; the card's own width is the only cap
+   they need, and on a phone they wrap because there genuinely is no room. */
 .north-deserve li {
-  max-width: 52ch;
-  color: var(--text);
+  color: var(--muted);
   font-size: var(--t-sm);
   line-height: 1.55;
 }
 
+/* One step quieter again. The eye should land on what he does first: making
+   the away half loud is making the threat loud, which is the half of Witte's
+   model that produces avoidance rather than action - RESEARCH-NORTH section
+   4. The word "never" is inside the line and takes its ink, because it is
+   part of the sentence rather than a label over it. */
+.north-avoid { color: var(--faint); }
+
+/* What pulls me off this, with no head over it since v2.19. What says it is
+   a different kind of line from the ones above - a moment and an answer
+   rather than a habit - is the room over it and the indent, which is where
+   the tag colour draws when there is one. */
 .north-rules {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
-  margin: 0 0 var(--s2);
+  margin: var(--s4) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -10617,14 +10629,11 @@ button.task-note-mark.is-open {
   line-height: 1.6;
 }
 
-.north-rule-prefix {
-  margin-right: var(--s1);
-  color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
+/* "If" is a word in the sentence, not a tag on a field. It was small caps in
+   --faint at a size of its own, which is how a form labels a box - and this
+   page stopped labelling boxes. Same size and leading as the rest of the
+   line, one ink quieter, exactly like the "then" halfway along it. */
+.north-rule-prefix { color: var(--faint); }
 
 /* The word the arrow stood for, in the ink of punctuation: it is the joint
    of the sentence, not a third thing in it. */
