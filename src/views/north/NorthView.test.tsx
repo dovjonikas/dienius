@@ -297,6 +297,30 @@ test('the picture reads in full above the goals', () => {
 
 // --- the rules under each goal, unchanged from v2.0 -------------------------
 
+/**
+ * A goal with no rules yet spent four lines saying so: a head, two sentences
+ * of instruction, and a button. Four goals is that four times, which is most
+ * of a window given over to nothing. The head is the control now, and the
+ * instruction lives in the form it was describing.
+ */
+test('a goal with no rules spends one line on saying so, and the instruction lives in the form', async () => {
+  const user = userEvent.setup()
+  goal('Ship something people keep using')
+  render(<NorthView />)
+  const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
+
+  // No head over nothing, and no instruction on the card.
+  expect(within(card).queryByRole('heading', { name: 'What pulls me off this' })).toBeNull()
+  expect(within(card).queryByText(/Name one moment that takes you off this/)).toBeNull()
+  const invite = within(card).getByRole('button', { name: /What pulls me off this/ })
+
+  // And it opens the form, which is where the instruction is.
+  await user.click(invite)
+  expect(screen.getByText('A moment you can catch: where you are, what just happened.')).toBeInTheDocument()
+  expect(within(card).getByRole('heading', { name: 'What pulls me off this' })).toBeInTheDocument()
+})
+
+
 test('a rule written under a goal appears under that goal and not under another', async () => {
   const user = userEvent.setup()
   const ship = goal('Ship something people keep using')
@@ -304,7 +328,7 @@ test('a rule written under a goal appears under that goal and not under another'
   render(<NorthView />)
 
   const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
-  await user.click(within(card).getByRole('button', { name: 'Write one down' }))
+  await user.click(within(card).getByRole('button', { name: /What pulls me off this/ }))
   await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
   await user.type(screen.getByLabelText('Then'), 'I open today and do the first unticked thing')
   await user.click(screen.getByRole('button', { name: 'Save' }))

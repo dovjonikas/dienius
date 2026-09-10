@@ -162,9 +162,11 @@ about it:
 
 > If I catch myself scrolling at 23:00 -> phone in the kitchen, book in hand.
 
-**Write one down** under the goal writes one, on the spot rather than in
-Compose, because noticing what pulls you off course happens the moment it
-does. Five per goal, and the cap refuses rather than dropping the oldest.
+On a goal with none yet the heading is the invitation: press **What pulls me
+off this** and the form opens there, on the spot rather than in Compose,
+because noticing what pulls you off course happens the moment it does. Once
+one is written the heading goes back to being a heading and **Add another**
+sits under the list. Five per goal, and the cap refuses rather than dropping the oldest.
 Write them the way you would say them, about a moment specific enough to
 notice: "when I get home and the kitchen is a mess" is a moment; "when I feel
 unmotivated" is not.

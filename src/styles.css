@@ -10538,12 +10538,15 @@ button.task-note-mark.is-open {
   line-height: 1.5;
 }
 
-.north-goal-rules-empty {
-  margin: 0 0 var(--s2);
-  padding: 0;
-  max-width: 52ch;
-  text-align: left;
-  font-size: var(--t-sm);
+/* The invitation standing in for the head it replaces, so a goal with no
+   rules yet spends one line on saying so instead of four. Set in the head's
+   own register - it is the same words in the same place - and underlined,
+   because unlike the head it can be pressed. */
+.north-rule-add.is-first {
+  margin-top: var(--s5);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
 }
 
 .north-rules {

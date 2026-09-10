@@ -287,12 +287,22 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
         </p>
       )}
 
-      <h4 className="north-pair-head north-goal-rules-head">What pulls me off this</h4>
-
-      {rules.length === 0 && !adding && (
-        <p className="empty north-goal-rules-empty">
-          Name one moment that takes you off this, and the one thing you do instead.
-        </p>
+      {/* An empty section does not get a section.
+       *
+       * This was a head, then two sentences telling you what to write, then a
+       * button - four lines on every goal that had no rule yet, which on a
+       * window with four goals is most of the window spent saying the same
+       * thing four times about nothing. And the two sentences were already
+       * in the form they were describing: RuleForm's own hint and its two
+       * placeholders say it better and say it where somebody is typing.
+       * CONVENTIONS 23.
+       *
+       * So when there is nothing here, the head *is* the control: one quiet
+       * line that names the thing and opens the form. The head comes back the
+       * moment there is something under it to head. CONVENTIONS 25 - the
+       * answer stays and the asking folds away. */}
+      {(rules.length > 0 || adding) && (
+        <h4 className="north-pair-head north-goal-rules-head">What pulls me off this</h4>
       )}
 
       {rules.length > 0 && (
@@ -325,8 +335,18 @@ function GoalCard({ goal, rules, today }: GoalCardProps) {
           onCancel={() => setAdding(false)}
         />
       ) : room ? (
-        <button type="button" className="setting-quiet north-rule-add" onClick={() => setAdding(true)}>
-          {rules.length === 0 ? 'Write one down' : 'Add another'}
+        <button
+          type="button"
+          className={rules.length === 0 ? 'setting-quiet north-rule-add is-first' : 'setting-quiet north-rule-add'}
+          // Four goals with nothing written give four identically named
+          // controls, so each says which goal it belongs to. The visible words
+          // are inside the name, which is what a voice control needs.
+          aria-label={
+            rules.length === 0 ? `What pulls me off this: ${goal.title}` : `Add another to "${goal.title}"`
+          }
+          onClick={() => setAdding(true)}
+        >
+          {rules.length === 0 ? 'What pulls me off this' : 'Add another'}
         </button>
       ) : (
         // The cap refuses rather than evicting, so it has to be visible -
