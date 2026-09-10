@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
-import { todayKey } from '../../lib/dates'
-import { activeGoals, ageLabel, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
+import { activeGoals, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
 import { paletteColorName } from '../../lib/colors'
-import { MAX_RULES_PER_GOAL, type Goal, type IfThenEntry } from '../../lib/types'
-import { RuleForm } from './RuleForm'
+import { type Goal, type IfThenEntry } from '../../lib/types'
 import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
 
@@ -52,7 +50,6 @@ import { Explain } from '../Explain'
  */
 export function NorthView() {
   const data = useAppData()
-  const today = todayKey()
   const goals = activeGoals(data.goals)
   const archived = archivedGoals(data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
@@ -106,7 +103,7 @@ export function NorthView() {
           {goals.length > 0 && (
             <div className="north-goals">
               {goals.map(goal => (
-                <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} today={today} />
+                <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
               ))}
             </div>
           )}
@@ -203,198 +200,84 @@ function GoalOffer({ onWrite }: { onWrite: () => void }) {
 interface GoalCardProps {
   goal: Goal
   rules: IfThenEntry[]
-  today: string
 }
 
 /**
- * One goal, calm, with its two lists under it.
+ * One goal, as somebody wrote it.
  *
- * No edit control on the card: editing is Compose, at the top, and the
- * distance from a card to that one control is the whole of what keeps this
- * a page to read rather than a form to fill. The two headings are written in
- * the first person - "What I do to deserve this", "What pulls me off this" -
- * because everything under them is in the person's own voice, and a card
- * that switches to the app's voice halfway down reads like a form.
+ * ## No labels, since v2.19
+ *
+ * This card carried four of them - "What I do", "What I don't do", "What
+ * pulls me off this", and a count of days - and every one was a word naming
+ * a box rather than a word anybody had written. The owner's reading of the
+ * result was the brief for this wave: *"this feels very much like Notion,
+ * where I would just get a notepad and write it down instead"*. A page that
+ * announces its own fields is a record somebody filled in; the four things
+ * here are a title, a sentence, a sentence in a different voice, and a few
+ * lines of what that costs, and typography can say which is which.
+ *
+ * The one word the app still supplies is **never**, in front of each away
+ * line, and it is doing the opposite job from a label. A label sits above
+ * content and names it; this sits inside the sentence and completes it -
+ * somebody typed "go quiet for a day" into a field called what I don't do,
+ * and "never go quiet for a day" is that sentence, whole, in their own
+ * voice. Without it the away lines read as more things to do, which is the
+ * one misreading docs/RESEARCH-NORTH.md says must not be possible.
+ *
+ * ## Nothing here acts
+ *
+ * No edit control, no add, no tick, no confirm. Every one of those is in
+ * Compose - see GoalRules - and the distance from this page to that one
+ * control is the whole of what keeps this a page to read. An empty part of a
+ * goal draws nothing at all: a goal with no lines under it is a goal with no
+ * lines under it, not a goal with an invitation where its lines should be.
  */
-function GoalCard({ goal, rules, today }: GoalCardProps) {
-  const [adding, setAdding] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const room = rules.length < MAX_RULES_PER_GOAL
+function GoalCard({ goal, rules }: GoalCardProps) {
   const deserve = goal.deserve ?? []
-  const avoid = goal.avoid ?? []
+  // Never alone. A "does not" with no "does" beside it is the backfire
+  // condition in Witte's model - threat with no efficacy - and unpaired is
+  // also the case Oyserman's balance predicts the worse outcome for. See
+  // docs/RESEARCH-NORTH.md sections 2 and 4.
+  const avoid = deserve.length > 0 ? goal.avoid ?? [] : []
 
   return (
     <article className="north-goal">
       <h3 className="north-goal-title">{goal.title}</h3>
       {goal.why && <p className="north-goal-why">{goal.why}</p>}
-      {/* The loudest thing on the card since v2.18, and it was the quietest.
-          It is what both halves below are a contrast about: the doing and
-          the not-doing only mean anything against a sentence saying who this
-          makes you. */}
+      {/* A different kind of sentence from the two around it - not what this
+          goal is or why, but who having it makes you - and what says so is
+          the italic and the air on either side of it. */}
       {goal.identity && <p className="north-goal-identity">{goal.identity}</p>}
-      {/* A fact, not a measurement - see goalAge. It cannot be lost and it
-          does not move faster on a good week. */}
-      <p className="north-goal-age">{ageLabel(goal, today)}</p>
 
-      {/* The pair, side by side - docs/RESEARCH-NORTH.md.
-       *
-       * Oyserman's *balance*: an expected self predicts behaviour far better
-       * when it is paired with a feared self in the same domain, and the
-       * unpaired case is the one that predicts the worse outcome. So the two
-       * halves are one block about one goal rather than two sections of a
-       * page, because the pairing is the finding and a layout that separates
-       * them loses it.
-       *
-       * And they are never drawn apart: a "does not" with no "does" beside
-       * it is the backfire condition in Witte's model - threat without
-       * efficacy, which produces defensive avoidance rather than action.
-       * The column only exists when there is something in it, and the whole
-       * block only exists when the doing half does.
-       *
-       * First person, both halves. v2.18 shipped these as "He does" and "He
-       * doesn't" over lines somebody had written as "hate the waiting, not
-       * me", which is the app talking about its owner in the third person on
-       * the one screen that is meant to be their own writing. The research
-       * argued the away half against the *second* person - "you went quiet
-       * again" is a scoreboard with one entry - and the first person answers
-       * that just as well while keeping the page in one voice. */}
-      {deserve.length > 0 ? (
-        <div className="north-pair">
-          <div className="north-pair-half">
-            <h4 className="north-pair-head">
-              <Explain id="deserve">What I do</Explain>
-            </h4>
-            {/* A plain list. No marker, no box, nothing to tick: the moment
-                one of these could be checked off it would be a scoreboard,
-                and the heading would stop being true. */}
-            <ul className="north-deserve">
-              {deserve.map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-          </div>
-          {avoid.length > 0 && (
-            <div className="north-pair-half">
-              <h4 className="north-pair-head">What I don&apos;t do</h4>
-              <ul className="north-deserve north-avoid">
-                {avoid.map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      ) : (
-        <p className="north-goal-deserve-empty">
-          Two to four things you do most days for this, written in Compose.
-        </p>
-      )}
-
-      {/* An empty section does not get a section.
-       *
-       * This was a head, then two sentences telling you what to write, then a
-       * button - four lines on every goal that had no rule yet, which on a
-       * window with four goals is most of the window spent saying the same
-       * thing four times about nothing. And the two sentences were already
-       * in the form they were describing: RuleForm's own hint and its two
-       * placeholders say it better and say it where somebody is typing.
-       * CONVENTIONS 23.
-       *
-       * So when there is nothing here, the head *is* the control: one quiet
-       * line that names the thing and opens the form. The head comes back the
-       * moment there is something under it to head. CONVENTIONS 25 - the
-       * answer stays and the asking folds away. */}
-      {(rules.length > 0 || adding) && (
-        <h4 className="north-pair-head north-goal-rules-head">What pulls me off this</h4>
-      )}
-
-      {rules.length > 0 && (
-        <ul className="north-rules">
-          {rules.map(rule => (
-            <li key={rule.id} className="north-rule">
-              {editingId === rule.id ? (
-                <RuleForm
-                  draft={{ trigger: rule.trigger, action: rule.action, color: rule.color }}
-                  onSave={draft => {
-                    actions.updateIfThen({ ...rule, ...draft })
-                    setEditingId(null)
-                  }}
-                  onCancel={() => setEditingId(null)}
-                />
-              ) : (
-                <RuleLine rule={rule} onEdit={() => setEditingId(rule.id)} />
-              )}
+      {deserve.length > 0 && (
+        // A plain list. No marker, no box, nothing to tick: the moment one of
+        // these could be checked off, this page would be a scoreboard.
+        <ul className="north-deserve">
+          {deserve.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+          {avoid.map((line, i) => (
+            <li key={`avoid-${i}`} className="north-avoid">
+              <span className="north-never">never</span> {line}
             </li>
           ))}
         </ul>
       )}
 
-      {adding ? (
-        <RuleForm
-          onSave={draft => {
-            actions.addIfThen({ ...draft, goalId: goal.id })
-            setAdding(false)
-          }}
-          onCancel={() => setAdding(false)}
-        />
-      ) : room ? (
-        <button
-          type="button"
-          className={rules.length === 0 ? 'setting-quiet north-rule-add is-first' : 'setting-quiet north-rule-add'}
-          // Four goals with nothing written give four identically named
-          // controls, so each says which goal it belongs to. The visible words
-          // are inside the name, which is what a voice control needs.
-          aria-label={
-            rules.length === 0 ? `What pulls me off this: ${goal.title}` : `Add another to "${goal.title}"`
-          }
-          onClick={() => setAdding(true)}
-        >
-          {rules.length === 0 ? 'What pulls me off this' : 'Add another'}
-        </button>
-      ) : (
-        // The cap refuses rather than evicting, so it has to be visible -
-        // MAX_RULES_PER_GOAL. A limit that quietly drops the newest entry is
-        // a limit nobody can see and a rule somebody thinks they wrote.
-        <p className="setting-state north-rule-full">
-          {MAX_RULES_PER_GOAL} is the limit - delete one to make room.
-        </p>
+      {/* What pulls me off this, with no heading over it. It is a different
+          kind of line from the ones above - a moment and an answer rather
+          than a habit - and the space and the quieter ink are what say so.
+          Written in Compose; nothing here opens anything. */}
+      {rules.length > 0 && (
+        <ul className="north-rules">
+          {rules.map(rule => (
+            <li key={rule.id} className="north-rule">
+              <RuleText rule={rule} />
+            </li>
+          ))}
+        </ul>
       )}
     </article>
-  )
-}
-
-/**
- * One rule, as one sentence.
- *
- * "If X, then Y" on one line rather than two stacked halves. Under a goal
- * there are at most five of these and they are read the way somebody reads
- * their own handwriting: whole. The arrow is decoration and carries a real
- * "then" beside it for anything reading the text rather than looking at it.
- */
-function RuleLine({ rule, onEdit }: { rule: IfThenEntry; onEdit: () => void }) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
-
-  return (
-    <>
-      <RuleText rule={rule} />
-      <div className="north-rule-actions">
-        <button type="button" className="setting-quiet" aria-label={`Edit "${rule.trigger}"`} onClick={onEdit}>
-          Edit
-        </button>
-        <button
-          type="button"
-          className={confirmDelete ? 'btn-danger is-armed' : 'btn-danger'}
-          aria-label={confirmDelete ? `Confirm delete "${rule.trigger}"` : `Delete "${rule.trigger}"`}
-          onClick={() => {
-            if (confirmDelete) actions.deleteIfThen(rule.id)
-            else setConfirmDelete(true)
-          }}
-          onBlur={() => setConfirmDelete(false)}
-        >
-          {confirmDelete ? 'Delete?' : 'Delete'}
-        </button>
-      </div>
-    </>
   )
 }
 
@@ -404,9 +287,11 @@ export function RuleText({ rule }: { rule: IfThenEntry }) {
     <p className="north-rule-line" style={rule.color ? { borderLeftColor: rule.color } : undefined}>
       <span className="north-rule-prefix">If</span>{' '}
       {rule.trigger}
-      <span className="north-rule-arrow" aria-hidden="true">
-        {'→'}
-      </span>
+      {/* The word rather than the arrow it stood for. An arrow between two
+          halves of a sentence is a diagram; "If X, then Y" is the sentence,
+          and this page is made of sentences now. The hidden copy that used to
+          say it for a screen reader goes with it - once and only once. */}
+      <span className="north-rule-then"> then </span>
       {/* The action is bare text rather than a span of its own. An inline
           span whose text wraps reports one bounding box spanning both lines,
           which encloses everything before it on the first - and the measuring
@@ -415,7 +300,6 @@ export function RuleText({ rule }: { rule: IfThenEntry }) {
           and none of them real, which is a measuring tool doing exactly its
           job: the geometry genuinely was overlapping, it just did not matter.
           One fewer wrapper and the rects are honest again. */}
-      <span className="visually-hidden">, then </span>
       {rule.action}
       {rule.color && <span className="visually-hidden"> Tagged {paletteColorName(rule.color)}.</span>}
     </p>

@@ -10526,54 +10526,32 @@ button.task-note-mark.is-open {
   letter-spacing: 0.04em;
 }
 
-/* A head that says what a column is, not a label announcing a section. No
-   small caps and no letter-spacing: three of those on one screen, in one
-   grey, at one size, is what made this window read as a template somebody
-   had filled in rather than as a page somebody had written. */
-.north-pair-head {
-  margin: 0 0 var(--s2);
-  color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-}
+/* The two halves of one goal, in one list.
 
-.north-goal-rules-head { margin: var(--s5) 0 var(--s2); }
+   They were two columns under two heads until v2.19. The heads went with
+   every other label on this page, and two unlabelled columns is two columns
+   nobody can tell apart - so they are one run of lines now, the away ones
+   after the doing ones, adjacent, which is what the pairing needs. An
+   expected self predicts behaviour far better when it is held against a
+   feared self in the same domain, and the layout that loses that is one that
+   puts them in two sections of a page. docs/RESEARCH-NORTH.md sections 2
+   and 8.
 
-/* The two halves of one goal, beside each other.
+   One step quieter than the doing lines, and no louder: it is a contrast,
+   not an instruction, and making the away half loud is making the threat
+   loud, which is the half of Witte's model that produces avoidance rather
+   than action - research section 4. */
+.north-avoid { color: var(--muted); }
 
-   Side by side because the pairing is the finding - an expected self
-   predicts behaviour far better when it is held against a feared self in the
-   same domain, and a layout that puts them in two sections of a page is a
-   layout that has lost it. docs/RESEARCH-NORTH.md sections 2 and 8.
+/* The one word on this page the owner did not type, and it is inside their
+   sentence rather than above it.
 
-   Equal columns, so neither half reads as the main one and the other as a
-   footnote. They stack on a phone, which keeps them adjacent - the next
-   thing under "What I do" is still "What I don't do". */
-.north-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--s5) var(--s6);
-  margin: var(--s5) 0 0;
-  max-width: 64ch;
-}
-
-/* The card decides, not the window. Two goals beside each other on a 1000px
-   screen are two 430px cards, which is narrower than the phone rule used to
-   catch and far too narrow for two lists - so the query is on the card. */
-@container (max-width: 32rem) {
-  .north-pair { grid-template-columns: 1fr; gap: var(--s4); }
-}
-
-.north-pair-half { min-width: 0; }
-
-/* The away half, one step quieter than the doing half. It is a contrast, not
-   an instruction: the same size and leading so the two read as one thought,
-   and the muted ink so the eye lands on the doing half first. Making it louder
-   would be making the threat louder, which is the half of Witte's model that
-   produces avoidance rather than action - research section 4. */
-.north-avoid li { color: var(--muted); }
+   Somebody wrote "go quiet for a day" into a field called what I don't do.
+   On the page that field has no name any more, so the line has to carry its
+   own sense: "never go quiet for a day" is the same sentence, whole, in the
+   same voice. Set at the away lines' own size and one ink quieter, because
+   it is the grammar of the line and not its point. */
+.north-never { color: var(--faint); }
 
 /* What you do to deserve it: a plain list. No marker and nothing to tick.
    A size below the prose above it, because these are actions rather than
@@ -10593,25 +10571,6 @@ button.task-note-mark.is-open {
   color: var(--text);
   font-size: var(--t-sm);
   line-height: 1.55;
-}
-
-.north-goal-deserve-empty {
-  margin: 0;
-  max-width: 52ch;
-  color: var(--faint);
-  font-size: var(--t-sm);
-  line-height: 1.5;
-}
-
-/* The invitation standing in for the head it replaces, so a goal with no
-   rules yet spends one line on saying so instead of four. Set in the head's
-   own register - it is the same words in the same place - and underlined,
-   because unlike the head it can be pressed. */
-.north-rule-add.is-first {
-  margin-top: var(--s5);
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: 600;
 }
 
 .north-rules {
@@ -10664,10 +10623,9 @@ button.task-note-mark.is-open {
   text-transform: uppercase;
 }
 
-.north-rule-arrow {
-  margin: 0 var(--s2);
-  color: var(--faint);
-}
+/* The word the arrow stood for, in the ink of punctuation: it is the joint
+   of the sentence, not a third thing in it. */
+.north-rule-then { color: var(--faint); }
 
 /* Edit and Delete on every rule, at rest, would put the loudest control in
    the app - an outlined danger button - five times on the calmest screen in

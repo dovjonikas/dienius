@@ -272,26 +272,28 @@ test('bringing one back is refused while the window is full', async () => {
 
 // --- the four layers, read --------------------------------------------------
 
-test('what you do to deserve a goal reads as a plain list, with nothing to tick', () => {
+test('what you do to deserve a goal reads as a plain list, with nothing over it and nothing to tick', () => {
   goal('Be strong at fifty', { deserve: ['train four times a week', 'sleep by eleven'] })
   const { container } = render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  // A head that says what the list is, in the voice everything under it is
-  // written in - see the whole-page voice test at the foot of this file.
-  expect(within(card).getByText('What I do')).toBeInTheDocument()
+  // No head. The lines follow the sentence about who this makes you and read
+  // as what that costs; a word naming them is a field label, and this page
+  // stopped having those in v2.19.
+  expect(within(card).queryByText('What I do')).toBeNull()
   expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['train four times a week', 'sleep by eleven'])
   expect(container.querySelector('input[type="checkbox"], progress, meter')).toBeNull()
 })
 
-test('a goal with nothing written to deserve it says so once, quietly, and shows no pair at all', () => {
-  goal('Be strong at fifty')
+test('a goal with nothing written under it draws nothing under it', () => {
+  goal('Be strong at fifty', { why: 'My father stopped at fifty.' })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  // No heads either: a column head over nothing is a label announcing an
-  // empty section, which is the shape this window was rebuilt away from.
-  expect(within(card).queryByText('What I do')).toBeNull()
-  expect(within(card).queryByText(/don't do/)).toBeNull()
-  expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
+
+  // Not a head over nothing, and not an invitation where the lines should be
+  // either. An empty part of a goal is empty; Compose is where it is filled.
+  expect(within(card).queryByRole('listitem')).toBeNull()
+  expect(within(card).queryByRole('button')).toBeNull()
+  expect(card.textContent).toBe('Be strong at fiftyMy father stopped at fifty.')
 })
 
 test('the picture reads in full above the goals', () => {
@@ -306,26 +308,20 @@ test('the picture reads in full above the goals', () => {
 // --- the rules under each goal, unchanged from v2.0 -------------------------
 
 /**
- * A goal with no rules yet spent four lines saying so: a head, two sentences
- * of instruction, and a button. Four goals is that four times, which is most
- * of a window given over to nothing. The head is the control now, and the
- * instruction lives in the form it was describing.
+ * The rules read as sentences and nothing more. They had a head over them, an
+ * invitation under them when there were none, and Edit and Delete on each -
+ * all of which is in Compose now, and the head with it: this page says what
+ * somebody wrote and never what the app calls it.
  */
-test('a goal with no rules spends one line on saying so, and the instruction lives in the form', async () => {
-  const user = userEvent.setup()
-  goal('Ship something people keep using')
+test('rules read as sentences with no head over them and nothing to press', () => {
+  const g = goal('Ship something people keep using')
+  actions.addIfThen({ trigger: 'I open the laptop and stall', action: 'I open today', goalId: g.id })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
 
-  // No head over nothing, and no instruction on the card.
-  expect(within(card).queryByRole('heading', { name: 'What pulls me off this' })).toBeNull()
-  expect(within(card).queryByText(/Name one moment that takes you off this/)).toBeNull()
-  const invite = within(card).getByRole('button', { name: /What pulls me off this/ })
-
-  // And it opens the form, which is where the instruction is.
-  await user.click(invite)
-  expect(screen.getByText('A moment you can catch: where you are, what just happened.')).toBeInTheDocument()
-  expect(within(card).getByRole('heading', { name: 'What pulls me off this' })).toBeInTheDocument()
+  expect(within(card).getByText(/I open the laptop and stall/)).toBeInTheDocument()
+  expect(within(card).queryByText('What pulls me off this')).toBeNull()
+  expect(within(card).queryByRole('button')).toBeNull()
 })
 
 
@@ -334,14 +330,16 @@ test('a goal with no rules spends one line on saying so, and the instruction liv
  * Quietly dropping the sixth rule would be a limit nobody can see and a
  * sentence somebody thinks they wrote down.
  */
-test('a goal with five rules offers no way to write a sixth, and says why', () => {
+test('a goal with five rules offers no way to write a sixth, and says why', async () => {
+  const user = userEvent.setup()
   const g = goal('Ship something')
   for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
     actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
   }
   render(<NorthView />)
+  await compose(user)
 
-  expect(screen.queryByRole('button', { name: 'Add another' })).toBeNull()
+  expect(screen.queryByRole('button', { name: /^Add another to/ })).toBeNull()
   expect(screen.getByText(`${MAX_RULES_PER_GOAL} is the limit - delete one to make room.`)).toBeTruthy()
 })
 
@@ -409,6 +407,7 @@ test('deleting a rule takes two presses, and the first one says so', async () =>
   const g = goal('Ship something')
   actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
   render(<NorthView />)
+  await compose(user)
 
   await user.click(screen.getByRole('button', { name: 'Delete "I stall"' }))
   expect(getData().ifThens).toHaveLength(1)
@@ -422,11 +421,13 @@ test('editing a rule rewrites it in place rather than adding a second one', asyn
   const g = goal('Ship something')
   actions.addIfThen({ trigger: 'Old trigger', action: 'Old action', goalId: g.id })
   render(<NorthView />)
+  await compose(user)
 
   await user.click(screen.getByRole('button', { name: 'Edit "Old trigger"' }))
   await user.clear(screen.getByLabelText('If'))
-  await user.type(screen.getByLabelText('If'), 'New trigger')
-  await user.click(screen.getByRole('button', { name: 'Save' }))
+  // Enter rather than Save, which is the rule form's own way out and the
+  // unambiguous one inside a form that has a Save of its own.
+  await user.type(screen.getByLabelText('If'), 'New trigger{Enter}')
 
   expect(getData().ifThens).toHaveLength(1)
   expect(getData().ifThens[0].trigger).toBe('New trigger')
@@ -434,18 +435,25 @@ test('editing a rule rewrites it in place rather than adding a second one', asyn
 })
 
 /**
- * Nothing on this screen measures anything - ARCHITECTURE section 6. The one
- * number allowed near a goal is its age, which cannot be earned or lost.
+ * Nothing on this screen measures anything - ARCHITECTURE section 6 - and
+ * since v2.19 there is no number on it at all.
+ *
+ * The age went with the labels. It could not be earned or lost, which is why
+ * v2.18 kept it after reading it against the streak rule; the owner's reading
+ * a version later was that a figure counting days is a spreadsheet's idea of
+ * a page whatever the figure can and cannot do, and that this is somewhere
+ * you come to remember why rather than to check a number. See DECISIONS.
  */
-test('a goal shows its age and nothing else that counts', () => {
+test('nothing on the page is a number', () => {
   const g = actions.addGoal({ title: 'Ship something', why: 'Because renting is not owning.', deserve: ['open the editor first'] }, '2026-09-01')!
   actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
   picture()
   const { container } = render(<NorthView />)
 
-  expect(screen.getByText('5 days lived toward this')).toBeTruthy()
+  expect(screen.queryByText(/lived toward this/)).toBeNull()
   expect(container.querySelector('progress, meter, input[type="checkbox"]')).toBeNull()
   expect(container.textContent).not.toMatch(/%|\b1 of \b|complete|streak/i)
+  expect(container.textContent).not.toMatch(/\d/)
 })
 test('leaving Compose puts focus back on the Compose control', async () => {
   const user = userEvent.setup()
@@ -474,36 +482,35 @@ test('a goal shows what I do and what I do not, together, on the same card', () 
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).getByText('What I do')).toBeInTheDocument()
-  expect(within(card).getByText("What I don't do")).toBeInTheDocument()
+  // One list, no heads, and the away lines carrying the word that makes each
+  // of them a whole sentence rather than another thing to do.
+  expect(within(card).queryByText('What I do')).toBeNull()
   expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual([
     '10 min sitting before anyone is up',
     'listen without making a face',
-    'make a face at bad news',
-    'go quiet for a day',
+    'never make a face at bad news',
+    'never go quiet for a day',
   ])
 })
 
 test('the away half is never drawn without the doing half beside it', () => {
   // The shape Witte's model says backfires: a threat with no answer next to
-  // it. A goal carrying only the away lines shows neither head and falls
-  // back to the invitation to write the doing half.
+  // it. A goal carrying only the away lines draws neither of them.
   goal('A dad my kid can tell anything', { avoid: ['go quiet for a day'] })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).queryByText("What I don't do")).toBeNull()
-  expect(within(card).queryByText('go quiet for a day')).toBeNull()
-  expect(within(card).getByText(/Two to four things you do most days/)).toBeInTheDocument()
+  expect(within(card).queryByRole('listitem')).toBeNull()
+  expect(within(card).queryByText(/go quiet for a day/)).toBeNull()
 })
 
-test('a goal with only the doing half shows it alone, with no empty column beside it', () => {
+test('a goal with only the doing half shows it alone', () => {
   goal('A dad my kid can tell anything', { deserve: ['listen without making a face'] })
   render(<NorthView />)
   const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
 
-  expect(within(card).getByText('What I do')).toBeInTheDocument()
-  expect(within(card).queryByText("What I don't do")).toBeNull()
+  expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['listen without making a face'])
+  expect(within(card).queryByText(/never/)).toBeNull()
 })
 
 /**

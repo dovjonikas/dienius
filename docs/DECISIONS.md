@@ -2761,3 +2761,30 @@ always passes too. It counts how many times the layer is *added to the page*
 instead - and that is what caught the first version keyed on the date, which
 unmounted and remounted on every step across the month, producing exactly the
 flicker the whole design is against.
+
+## The count of days is gone, one version after it was kept
+
+v2.18 asked whether "61 days lived toward this" could fall, found that it
+could not, and kept it: `goalAge` is arithmetic on two dates, `createdAt` is
+stamped once and never restamped, and there is no missed-day arm to break.
+That reasoning was correct and it answered the wrong question.
+
+The owner read the window a version later and said it felt like Notion -
+*"where I would just get a notepad and write it down instead"* - and named
+that line as the most Notion-like thing on the screen. Which it is. The test
+it passed was "is this a streak", and the test it fails is a different one:
+**a figure that counts something is a spreadsheet's idea of a page, whatever
+the figure can and cannot do to you.** North is where somebody comes to
+remember why, not to check a number, and a number on it invites the check
+whether or not anything hangs on the answer.
+
+So it is gone from the reading page, and `north.test.ts` now holds that
+nothing on that page is a number at all - not the age, not a count, not a
+digit. `goalAge` and `ageLabel` stay, because the archived fold inside
+Compose still says how long a goal was carried before it was put away, and
+the review's North line still says an age; both of those are records being
+read rather than a page being lived on.
+
+The v2.18 entry above is not wrong and is left standing. What it establishes
+- that this figure is not a streak - is still true and is still the reason
+nothing about it needed to be feared. It simply was not the whole question.
