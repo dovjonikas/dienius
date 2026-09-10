@@ -126,9 +126,29 @@ not, on an app that is iPhone-first. Both are left, and left written down.
 
 ## What was taken out
 
-One element per screen, per the brief. Listed with what happened after.
+One element per screen, per the brief.
 
-_(Stage 8 - filled in as it runs.)_
+| screen | what went | what happened |
+| --- | --- | --- |
+| Today | the word **Sleep** on the sleep band | The band is the quietest ground on the grid, it is always the first and last thing on a day, and the hour axis beside it says which hours those are. A screen reader never had the word - the whole decorative layer is `aria-hidden` and the boundary has its own sentence. |
+| Calendar month | the month's **summary line** | It counted the days with a plan on them, which is the one fact the grid under it draws forty-two times. |
+| Calendar month, week and Review | the **box around every period arrow** | The app drew period arrows three ways: a bordered 44px square on the calendar and a bordered 38px one on Review, against a bare glyph in both places on Today. One job, one look. Review's were also the only period arrows in the app under 44px, and they are 44 now. |
+| Templates | the **block count** on a card | The preview line above it names the first four blocks and ends in "+5 more", which is the same number arrived at by reading rather than by being told. What stays is what the preview cannot say: that it is a week, what kind of day it makes, which sleep schedule it carries. |
+| Library | the **"N going" count** on a jump chip | The chip's job is to jump to a list, and the header it jumps to says "3 going, counted in chapters" thirty pixels below it. |
+| Settings | the **section heading inside the panel** | The list beside it names the same section and highlights it: one word, twice, forty pixels apart. A heading is what a screen reader navigates a settings page by, so it stays in the document and only the second copy on the screen went. |
+| North | **nothing** | v2.19 already took this page to three sentences per goal with everything else folded away, and counted the words on it the owner did not write: three, all of them inside a sentence. There is no element left whose removal would not remove content. |
+
+**Decision made for the owner, and the easiest one to undo:** the *Sleep*
+label had a test whose name argued for it - "so it reads as sleep rather than
+padding" - but no report behind it, and the brief asks for that band to carry
+no text it does not need. It is one line in `TimelineGrid.tsx` if the morning
+disagrees.
+
+**Caught by the sweep during this stage:** taking the box off Review's arrows
+turned their glyph from `--text` to `--muted`, and `--muted` under the global
+disabled fade is 2.08:1 against a floor of 3. Fixed with the pattern the
+repo had already written for exactly this, forty lines away in the library:
+the ink goes to `--faint` and the opacity back to 1.
 
 ## What was left alone, and why
 

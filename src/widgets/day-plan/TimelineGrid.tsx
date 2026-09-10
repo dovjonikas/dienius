@@ -768,7 +768,11 @@ export function TimelineGrid({
                       calendar day can clamp a band down to a sliver with
                       no room to letter, and the label should disappear
                       before it starts spilling out of its own shape. */}
-                  {bandHeightPx >= COMPACT_HEIGHT_PX && <span className="timeline-sleep-band-label">Sleep</span>}
+                  {/* No label on it since v2.20. The band is the quietest ground on
+                      the grid, it is always the first thing and the last thing on a
+                      day, and the hour axis beside it says which hours those are.
+                      The word was printed twice on every day to say what the shape
+                      already said. */}
                 </div>
               )
             })}

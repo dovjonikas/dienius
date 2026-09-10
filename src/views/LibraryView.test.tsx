@@ -316,7 +316,10 @@ test('the chip row appears once there are enough lists to get lost among, and op
   actions.addLibraryList({ name: 'Watching', unit: 'episode' })
   render(<LibraryView />)
   const chips = screen.getByRole('navigation', { name: 'Jump to a list' })
-  expect(within(chips).getByRole('button', { name: /Books/ })).toHaveTextContent('1 going')
+  // The chip carries the name and nothing else. It counted what is going in
+  // each list until v2.20, which is the number the header it jumps to says
+  // thirty pixels below it.
+  expect(within(chips).getByRole('button', { name: /Books/ })).not.toHaveTextContent('going')
 
   // Folded, then opened by its chip.
   await user.click(screen.getAllByRole('button', { name: /Books 1 going, counted in chapters/ })[0])

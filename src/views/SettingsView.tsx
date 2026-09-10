@@ -235,9 +235,15 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           ))}
         </nav>
 
+        {/* Every section heading is on the page for a screen reader and off it
+            for an eye. The panel printed the section's name at the top of
+            itself while the list beside it named the same section and
+            highlighted it: one word, twice, forty pixels apart. A heading is
+            what a screen reader navigates a settings page by, so it stays in
+            the document; what went is the second copy of it on the screen. */}
         <div className="settings-content">
           <div className="settings-group" id="settings-general">
-            <h3>General</h3>
+            <h3 className="visually-hidden">General</h3>
 
             <div className="setting-row">
               <div className="setting-label">
@@ -395,7 +401,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           </div>
 
           <div className="settings-group" id="settings-sleep">
-            <h3>Sleep</h3>
+            <h3 className="visually-hidden">Sleep</h3>
             {/* A named list rather than the pair of fixed windows this used
                 to be - an ordinary one and a hardcoded second one for a shift
                 the app had decided everybody worked. Each schedule is drawn as
@@ -481,7 +487,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               because it is the other thing about a day that is decided once
               and then stops being a question. */}
           <div className="settings-group" id="settings-week">
-            <h3>Week</h3>
+            <h3 className="visually-hidden">Week</h3>
             <div className="setting-block">
               <div className="setting-label">
                 <span className="setting-name">A template per weekday</span>
@@ -518,7 +524,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           <CategorySettings />
 
           <div className="settings-group" id="settings-nudges">
-            <h3>Nudges</h3>
+            <h3 className="visually-hidden">Nudges</h3>
             {/* The end of the day. Filed under Nudges because it is the only
                 other thing in this app that appears without being asked for -
                 though unlike the two above it, it never interrupts anything:
@@ -610,7 +616,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           <SyncSettings />
 
           <div className="settings-group" id="settings-appearance">
-            <h3>Appearance</h3>
+            <h3 className="visually-hidden">Appearance</h3>
             {/* Preset picks the room, mode says whether the light is on - see
                 docs/THEMES.md section 4. "Adjust this theme" below lets a
                 person hand-tune the active room's own tokens - see section 3. */}

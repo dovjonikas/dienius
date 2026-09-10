@@ -612,28 +612,21 @@ test('the band is drawn a full, legible depth, not a hairline sliver at the boun
   expect(parseFloat(band.style.height)).toBeCloseTo(90 * 1.15, 5)
 })
 
-test('the band names itself with a visible "Sleep" label, so it reads as sleep rather than padding', () => {
-  const { container } = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
-  const label = container.querySelector('.timeline-sleep-band-label')
-  expect(label).not.toBeNull()
-  expect(label).toHaveTextContent('Sleep')
-  // Aria-hidden by inheritance from the band itself - it is not a second,
-  // separate thing a screen reader could encounter after the band.
-  expect(label!.closest('[aria-hidden="true"]')).not.toBeNull()
-})
-
-test('the band label is omitted once the band is clamped shorter than the compact cutoff', () => {
-  // A bedtime pinned at 23:59 with a wake time close enough to bridge to it
-  // clamps the resulting band to one minute at the end of the calendar day
-  // - nowhere near enough room to letter "Sleep" without spilling out of
-  // the shape it is supposed to label.
-  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '23:59', end: '07:00' } }, { id: 'shift', name: 'Shift', window: { start: '00:00', end: '13:00' } }] }
-  const { container } = render(
-    <TimelineGrid tasks={[anchor('Late task', '23:30', 20)]} sleep={sleep} />,
-  )
-  const band = container.querySelector('.timeline-sleep-band') as HTMLElement
+/**
+ * The band carries no text at all since v2.20.
+ *
+ * It said "Sleep" on it, at both ends of every day, and the night brief's
+ * rule for this grid is that the sleep window takes no text it does not
+ * need. It is the quietest ground on the screen, it is always the first
+ * thing and the last thing on a day, and the hour axis beside it says which
+ * hours those are. A screen reader never had the word anyway - the whole
+ * decorative layer is aria-hidden and the boundary has its own sentence.
+ */
+test('the band draws no text on it, at any depth', () => {
+  const tall = render(<TimelineGrid tasks={[anchor('Shift', '09:00', 120)]} />)
+  const band = tall.container.querySelector('.timeline-sleep-band') as HTMLElement
   expect(band).not.toBeNull()
-  expect(parseFloat(band.style.height)).toBeLessThan(40)
+  expect(band.textContent).toBe('')
   expect(band.querySelector('.timeline-sleep-band-label')).toBeNull()
 })
 

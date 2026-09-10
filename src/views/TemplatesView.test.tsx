@@ -608,7 +608,11 @@ test('a template with 30 blocks lists as one card, costs what a small one costs,
   actions.resetForTests(defaultData())
   const template = actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(30) })
   render(<TemplatesView />)
-  expect(screen.getByText('30 blocks')).toBeInTheDocument()
+  // The card no longer prints a block count. The preview line above it names
+  // the first four and ends in "+26 more", which is the same number arrived
+  // at by reading rather than by being told - see v2.20.
+  expect(screen.getByText(/\+26 more/)).toBeInTheDocument()
+  expect(screen.queryByText('30 blocks')).toBeNull()
 
   actions.stamp({ '2026-09-01': template.id })
   expect(getData().days['2026-09-01'].tasks).toHaveLength(30)

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
-import { dayStat, keptEveryKeyTask, monthSummary, summaryLine } from '../lib/dayStats'
+import { dayStat, keptEveryKeyTask } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
 import { DayCard } from './DayCard'
 import { DayPeek } from './DayPeek'
@@ -132,12 +132,6 @@ export function CalendarView({
   const gridRef = useRef<HTMLDivElement>(null)
 
   const cells = useMemo(() => monthGrid(year, month), [year, month])
-  // Over the month's real days only, not the six-week grid - a February
-  // summary should not be diluted by the March days shown around it.
-  const summary = useMemo(
-    () => summaryLine(monthSummary(data.days, cells.filter(c => c.inMonth).map(c => c.key))),
-    [data.days, cells],
-  )
   const weeks = useMemo(() => weeksOf(cells), [cells])
   const today = todayKey()
   const tabStop = tabStopFor(cells, [roving, date, today])
@@ -399,7 +393,10 @@ export function CalendarView({
 
         {/* One quiet line about the month, where a heading's subtitle would
             be. Never on a month nobody used - see summaryLine. */}
-        {mode === 'month' && summary && <span className="calendar-summary">{summary}</span>}
+        {/* The month's own summary line went in v2.20. It counted the days with
+            a plan on them, which is the one fact the grid under it draws
+            forty-two times: a stamped day carries its template's colour and
+            its own lines, and an empty one is empty. */}
 
         <div className="segmented" role="group" aria-label="Calendar view">
           <button

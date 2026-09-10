@@ -4941,15 +4941,21 @@ button.danger {
   user-select: none;
 }
 
+/* A bare glyph, like the day header's own arrows and the month's inside the
+   day rail. The box went in the night pass: the app had period arrows drawn
+   three ways - a bordered 44px square here and on Review, and a bare glyph in
+   the two places on Today - which is one job with three looks. The target is
+   unchanged at 44px, because a fit is never worth a target. */
 .calendar-nav button {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
+  background: none;
+  border: none;
+  color: var(--muted);
   width: var(--touch);
   height: var(--touch);
   font-size: var(--t-glyph);
 }
+
+.calendar-nav button:hover:not(:disabled) { color: var(--text); }
 
 .calendar-nav button:focus-visible {
   outline: 2px solid var(--accent);
@@ -9681,20 +9687,25 @@ button.task-note-mark.is-open {
   gap: var(--s3);
 }
 
+/* The same bare glyph the calendar and the day header use. It was a bordered
+   38px box, which was also the one period arrow in the app that was not 44. */
 .review-nav button {
-  width: 38px;
-  height: 38px;
+  width: var(--touch);
+  height: var(--touch);
   min-height: 0;
   padding: 0;
   font-size: var(--t-glyph);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
+  border: none;
   background: none;
-  color: var(--text);
+  color: var(--muted);
 }
 
-.review-nav button:hover:not(:disabled) { border-color: var(--muted); }
-.review-nav button:disabled { opacity: var(--faded); }
+.review-nav button:hover:not(:disabled) { color: var(--text); }
+/* Quiet, not faded. The glyph went from --text to --muted when the box came
+   off it, and --muted at the faded opacity is 2.09:1 - the sweep caught it
+   the same run. --faint is the app own ink for "there but not for you" and
+   clears the floor on both themes. */
+.review-nav button:disabled { color: var(--faint); opacity: 1; }
 
 .review-range { color: var(--text); font-size: var(--t-md); font-weight: 600; }
 

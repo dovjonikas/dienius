@@ -973,10 +973,15 @@ export function TemplatesView() {
                         .join(' · ') + (t.blocks.length > PREVIEW_BLOCKS ? ` +${t.blocks.length - PREVIEW_BLOCKS} more` : '')}
                 </span>
               )}
+              {/* No block count. The line above names the first four blocks and
+                  ends in "+5 more", which is the same number arrived at by
+                  reading rather than by being told. What stays here is what the
+                  preview cannot say: that it is a week, what kind of day it
+                  makes, and which sleep schedule it carries. */}
               <span className="template-meta">
-                {t.kind === 'week' && 'A week · '}
-                {t.blocks.length} {t.blocks.length === 1 ? 'block' : 'blocks'}
-                {t.type && t.type !== 'full' && ` · ${DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type}`}
+                {t.kind === 'week' && 'A week'}
+                {t.type && t.type !== 'full' &&
+                  `${t.kind === 'week' ? ' · ' : ''}${DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type}`}
                 {t.sleepProfileId && data.settings.sleepProfiles.length > 1 &&
                   ` · ${data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? ''}`}
               </span>

@@ -134,7 +134,6 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
       {lists.length > 1 && (
         <nav className="library-chips" aria-label="Jump to a list">
           {lists.map(list => {
-            const going = list.items.filter(i => !isItemFinished(i)).length
             return (
               <button
                 key={list.id}
@@ -148,7 +147,10 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
               >
                 {list.color && <span className="library-chip-dot" aria-hidden="true" />}
                 {list.name}
-                <span className="library-chip-count">{going} going</span>
+                {/* No count on the chip. Its job is to jump to a list, and the
+                    header it jumps to says "3 going, counted in chapters" - so
+                    the number was printed twice, thirty pixels apart, on a row
+                    that only exists because the page is long. */}
               </button>
             )
           })}
