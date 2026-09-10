@@ -751,3 +751,12 @@ also be good if" goes here rather than into the wave. Three did.
   so the effect is only that a real failure is unreadable. Written down
   because if S-01 in the hunt ever reproduces, this is the line that will be
   hiding why.
+
+- **The base field rule's five `:not()`s.** `input:not([type='checkbox'])...`
+  scores 0,5,1, and things in the stylesheet now rely on it being that high -
+  a field made boxless by a class stays boxed, because one class cannot reach
+  it. Rewriting the exclusions as one `:where()` would drop it to 0,0,1 and
+  hand the win to every single-class rule in the file at once. Worth doing,
+  and worth doing as its own change with the sweep run either side, rather
+  than folded into a wave about something else. It is the one selector
+  `notSpecificity.test.ts` allows past its line, named there with this reason.

@@ -4559,7 +4559,7 @@ button.primary {
    control is a pill and is deliberately not excluded: it belongs to this row
    the way Ongoing does. */
 @media (hover: hover) and (pointer: fine) {
-  .block-add-marks button:not(.category-swatch):not(.library-quick-round),
+  .block-add-marks button:not(:where(.category-swatch, .library-quick-round)),
   .block-add-marks .category-picker { min-height: 32px; }
 }
 
@@ -4592,7 +4592,7 @@ button.primary {
   /* Not the day squares: they are sized in em and have to stay square,
      and this rule is more specific than theirs, so it was making seven
      rectangles out of them. */
-  .block-add-where button:not(.wt-day-toggle) { min-height: 32px; }
+  .block-add-where button:not(:where(.wt-day-toggle)) { min-height: 32px; }
 }
 
 .block-add input { flex: 1 1 120px; }
@@ -4602,8 +4602,24 @@ button.primary {
    every one of the thirty-six options came out a bordered chip on the page's
    ground - and the one that was chosen came out looking exactly like the
    thirty-five that were not, which is the thing CONVENTIONS section 22 is
-   about. The picker is the same control here as everywhere else. */
-.block-add button:not(.category-swatch):not(.time-picker-option):not(.library-quick-round) {
+   about. The picker is the same control here as everywhere else.
+
+   **The exclusions are inside one :where(), and that is the whole point.**
+   `:not(.x)` contributes its argument's specificity; `:not(:where(.x))`
+   contributes none. Written as three separate :not()s this selector scored
+   0,4,1 - which beat the aria-pressed rule below it at 0,3,1, so every
+   chosen control in this row was painted the page's ground and looked
+   exactly like the ones beside it. The seven day switches were the visible
+   half: on a phone you could not tell which days a block was about to land
+   on, which is word for word the defect the comment under this one says was
+   fixed in v2.12.
+
+   It happened because a fourth exclusion was added in v2.17 and pushed the
+   score past the tie the rule had been sitting on. With :where() the score is
+   0,1,1 and stays there however many things get excluded next, which is what
+   the comment below has assumed all along - it says .core-toggle wins by
+   being placed after this, and being placed after only wins a tie. */
+.block-add button:not(:where(.category-swatch, .time-picker-option, .library-quick-round)) {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--r-control);
@@ -6631,6 +6647,28 @@ button.danger:focus-visible {
   }
 }
 
+/* And clear of the rail where the rail is a column down the left.
+ *
+ * v2.17 moved this above the tab bar below 1024px and stopped there, which
+ * left the same defect on the other side of the breakpoint: at 1366x768 the
+ * rail is a 56px column and the notice sat at left: 16, over the bottom of
+ * it - Settings and the pin, both unpressable, on the widths the owner
+ * actually works at. Found by the sweep the same afternoon the phone half
+ * was fixed.
+ *
+ * --rail-w, not --rail-open-w: the open rail is a flyout drawn over the page
+ * for as long as a pointer rests in it, and dodging a width that only exists
+ * under the mouse would move the notice every time the cursor crossed the
+ * left edge - CONVENTIONS 24. Pinned open is the one case where the width is
+ * standing, and the root says so, so the rule below follows it. */
+@media (min-width: 1024px) {
+  .update-notice { left: calc(var(--rail-w) + 16px); }
+
+  :root[data-rail-pinned='true'] .update-notice {
+    left: calc(var(--rail-open-w) + 16px);
+  }
+}
+
 /* Above the tab bar, wherever the rail is one.
  *
  * The comment above this rule says the notice never blocks the day view
@@ -8285,10 +8323,14 @@ button.danger:focus-visible {
 /* The way out of an open block, the same cross thirteen other surfaces use.
    It was an underlined word at seventeen pixels, which is the one shape in
    that header nobody could find. */
+/* 38 to match the Key beside it - the two are the whole header, and the
+   sweep's two-heights pass caught them six pixels apart the first time it
+   ran over this panel. A finger gets the touch height from the block below,
+   the same as every other control in this row. */
 .wt-note-close {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   min-height: 0;
   padding: 0;
   border: 1px solid transparent;
@@ -14819,8 +14861,18 @@ main:has(.week) > .calendar {
   flex: 1 0 100%;
   display: flex;
   align-items: center;
+  /* Wraps, because four of them and a 76px indent is 419px and a phone is
+     390 - which put 63px of sideways scroll on the whole document, the one
+     thing CONVENTIONS 4 says never happens. The indent goes with it at that
+     width: there is nothing to line up against once the switches above have
+     wrapped to a line of their own. */
+  flex-wrap: wrap;
   gap: var(--s1);
   margin-left: calc(var(--field-label-w) + var(--s3));
+}
+
+@media (max-width: 599px) {
+  .wt-presets { margin-left: 0; }
 }
 
 .wt-presets .chip {

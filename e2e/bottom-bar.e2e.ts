@@ -93,3 +93,60 @@ test('the tab bar is exactly the height the token says it is', async ({ page }) 
 
   expect(Math.round(railHeight)).toBe(Math.round(token))
 })
+
+/**
+ * And the other side of the breakpoint.
+ *
+ * v2.17 moved the notice above the tab bar below 1024px and stopped there,
+ * which left the same defect where the rail is a column: at 1366x768 it sat
+ * at left: 16 over the bottom of a 56px rail, and Settings and the pin were
+ * both unpressable. The tests above only ever looked at the narrow widths, so
+ * nothing said so - the sweep found it.
+ */
+const WIDE = [
+  { w: 1024, h: 800 },
+  { w: 1366, h: 768 },
+  { w: 1920, h: 1080 },
+]
+
+for (const size of WIDE) {
+  test(`the update notice leaves every rail control pressable at ${size.w}x${size.h}`, async ({ page }) => {
+    await page.setViewportSize({ width: size.w, height: size.h })
+    await openFreshAt(page, wednesdayAt(15))
+    await stampWorkingDay(page)
+    // The pointer away from the rail: it opens under a mouse resting in it
+    // and draws its labels over the page, which is a flyout doing its job and
+    // not a state any screen is found in.
+    await page.mouse.move(size.w / 2, size.h / 2)
+
+    const covered = await page.evaluate(() => {
+      const el = document.createElement('div')
+      el.className = 'update-notice'
+      el.innerHTML = '<p>An update is ready.</p><button type="button">Reload</button>'
+      document.body.appendChild(el)
+      el.getAnimations().forEach(a => a.finish())
+      const rail = document.querySelector('nav')
+      if (!rail) return ['no rail']
+      // Clipped by the rail before it is aimed at. A rail item is laid out
+      // at the open width so its label has somewhere to appear, and the
+      // closed rail hides the overflow - so the box is 160px wide while
+      // only its left 56 is on screen, and its geometric centre is a point
+      // nobody can press. Aiming there reported both bottom controls as
+      // covered by a notice that does not reach them.
+      const railBox = rail.getBoundingClientRect()
+      const out = [...rail.querySelectorAll('button')]
+        .filter(b => {
+          const r = b.getBoundingClientRect()
+          const left = Math.max(r.left, railBox.left)
+          const right = Math.min(r.right, railBox.right)
+          const hit = document.elementFromPoint((left + right) / 2, r.top + r.height / 2)
+          return el.contains(hit as Node)
+        })
+        .map(b => (b.textContent || '').trim() || b.ariaLabel || '?')
+      el.remove()
+      return out
+    })
+
+    expect(covered).toEqual([])
+  })
+}
