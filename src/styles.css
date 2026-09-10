@@ -7678,7 +7678,15 @@ button.danger:focus-visible {
   color: var(--muted);
   font-size: var(--t-xs);
   text-align: right;
-  white-space: nowrap;
+  /* Wraps, and is the only one of the three that does - the paragraph above
+     says the note is the part with slack, and until v2.20 it was nowrap like
+     the other two, so it had none. At the largest text size the three
+     columns came to 21px more than the 240px rail and the last word of
+     "7h 45 min" went under the rail's own edge, reachable by scrolling a
+     sidebar sideways. `min-width: 0` is what lets the middle column shrink
+     at all: a grid item's floor is its min-content, and nowrap makes that
+     the whole string. Found by scripts/text-scale-check.mjs. */
+  min-width: 0;
 }
 
 /* Step 5: the rail - MiniCalendar.tsx first, TemplateRail.tsx second. Only

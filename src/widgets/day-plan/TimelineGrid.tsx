@@ -107,8 +107,43 @@ const TIMES_FROM_MINUTES = 60
  * two-line block looked as if it needed and eight pixels less than it
  * does, and "Deep work block" at 41px carried half a time line under its
  * title for a version.
+ *
+ * It is the height at the middle text size. See `twoLinesPx` below for what
+ * happens at the other two.
  */
 const TWO_LINES_PX = 48
+
+/** The `--t-sm` the 48 above was measured against. */
+const TWO_LINES_TITLE_PX = 13
+
+/**
+ * The same figure at whatever text size is set.
+ *
+ * 48 is a sum of measured lines, and a person who turns text up to Large gets
+ * lines the sum was not taken over: a 14.5px title and a 12px time need about
+ * 53. The block was floored at 48 anyway and drew both lines into it, two
+ * pixels of each off the bottom - which is a title with its descenders shaved
+ * and a time with the bottom of its digits gone, on every hour-long block on
+ * the day. Found by `scripts/text-scale-check.mjs`, which is the pass that
+ * exists because the sweep runs at one text size.
+ *
+ * The budget moves with the text it has to hold. The block's 6px of padding
+ * and its border do not grow with the setting, so scaling the whole figure by
+ * the title's own step is a little generous; generous here buys a block a few
+ * pixels it does not strictly need, and the alternative - being a pixel short
+ * - is the bug above. Both places that spend this figure read it, so the
+ * floor that reserves the room and the switch that decides to use it cannot
+ * drift apart.
+ *
+ * Falls back to the measured 48 where there is no stylesheet to read, which
+ * is jsdom: the tests set block heights themselves and are asking about the
+ * arithmetic, not about the setting.
+ */
+function twoLinesPx(): number {
+  if (typeof document === 'undefined') return TWO_LINES_PX
+  const title = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-sm'))
+  return title ? Math.round(TWO_LINES_PX * (title / TWO_LINES_TITLE_PX)) : TWO_LINES_PX
+}
 
 /**
  * Below this a block gives up its 6px of vertical padding for 3px - see
@@ -611,6 +646,9 @@ export function TimelineGrid({
   // all (see computeTimelineLayout), so no floor is reserved for a button
   // that will never exist there.
   const coarse = usePointerCoarse()
+  // Read once for the whole grid rather than per block: it is the same figure
+  // for every block on the day, and it only moves when the setting does.
+  const twoLines = twoLinesPx()
   const unsizedAnchorFloorPx = coarse ? MIN_ANCHOR_HEIGHT : SIZED_MIN_HEIGHT_PX
   const gapMinHeightPx = coarse ? GAP_MIN_HEIGHT_PX : GAP_MIN_HEIGHT_FINE_PX
   const floors = {
@@ -622,7 +660,7 @@ export function TimelineGrid({
     // A shorter block says its times beside the title on its one line and
     // keeps the one-line floor - see TIMES_FROM_MINUTES for why the floor
     // stayed put when every block started saying its times.
-    longAnchorFloorPx: TWO_LINES_PX,
+    longAnchorFloorPx: twoLines,
     longAnchorMinutes: TIMES_FROM_MINUTES,
   }
 
@@ -832,7 +870,7 @@ export function TimelineGrid({
                 .find(other => other.column === anchor.column)
               const room = nextInColumn ? vertical.topPx(nextInColumn.startMinutes) - top : Infinity
               const long = anchor.sized && anchor.minutes! >= TIMES_FROM_MINUTES
-              const ownFloorPx = anchor.sized ? (long ? TWO_LINES_PX : SIZED_MIN_HEIGHT_PX) : unsizedAnchorFloorPx
+              const ownFloorPx = anchor.sized ? (long ? twoLines : SIZED_MIN_HEIGHT_PX) : unsizedAnchorFloorPx
               const minHeightPx = Math.min(ownFloorPx, room)
               // The vertical map reserves at least minHeightPx for every
               // block across the stretch it occupies (clusterSegments in
@@ -853,7 +891,7 @@ export function TimelineGrid({
               // the floor above is a guarantee rather than the rule: the
               // room is what decides, and the floor makes sure a long
               // block always has it.
-              const inline = blockHeightPx < TWO_LINES_PX
+              const inline = blockHeightPx < twoLines
               const fraction = 1 / anchor.columns
               const sourceTask = tasks.find(t => t.id === anchor.id)
               // A category paints the block itself - a soft wash of its own
