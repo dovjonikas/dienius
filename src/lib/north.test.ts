@@ -120,6 +120,42 @@ test('a goal written in the future has no age yet rather than a negative one', (
   expect(goalAge(goal({ createdAt: WED }), MON)).toBe(0)
 })
 
+/**
+ * The one question the v2.18 brief asked about this number: can it fall?
+ *
+ * A number that falls is a streak under another name, and the app is built on
+ * a missed day not being damage - DECISIONS, "Review says facts, and no
+ * longer a streak". So this walks a goal through everything a person can do
+ * to one and holds the age against it. `createdAt` is written once, at
+ * creation, and nothing else in the store touches it; this is what says so
+ * out loud, so that a later edit to `updateGoal` or `restoreGoal` that starts
+ * stamping the date has somewhere to fail.
+ */
+test('nothing a person does to a goal can make its age smaller', () => {
+  actions.addGoal({ title: 'A direction', why: 'A reason' }, MON)
+  const id = getData().goals[0].id
+  const at = (date: string) => goalAge(getData().goals[0], date)
+
+  expect(at(WED)).toBe(3)
+
+  actions.updateGoal(id, { why: 'A better reason', deserve: ['walk after lunch'] })
+  expect(at(WED)).toBe(3)
+
+  actions.archiveGoal(id, TUE)
+  expect(at(WED)).toBe(3)
+
+  actions.restoreGoal(id)
+  expect(at(WED)).toBe(3)
+
+  // And no day between is a day it can be lost on: an empty Tuesday, a
+  // Tuesday with everything done, and a Tuesday nobody opened the app on all
+  // read the same, because the number is arithmetic on two dates and reads
+  // nothing else.
+  expect(at(MON)).toBe(1)
+  expect(at(TUE)).toBe(2)
+  expect(at('2026-12-25')).toBeGreaterThan(at(WED))
+})
+
 // --- the rotation --------------------------------------------------------
 
 test('no goals means no line at all', () => {

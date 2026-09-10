@@ -2684,3 +2684,28 @@ only when the element has left the page.
 
 Both are held by tests in `useRestoreFocus.test.tsx`, each of which fails
 against the old hook.
+
+## The age on a goal was read against the streak rule, and stays
+
+v2.18 asked one question about "61 days lived toward this": can it fall?
+
+It cannot, and the reason is worth writing down because the answer is not
+"we checked the screen". `goalAge` is arithmetic on two dates - the day the
+goal was written and the day being asked about - and `createdAt` is written
+once, by `addGoal` and by the Compose draft, and by nothing else in the
+store. Editing a goal does not restamp it. Archiving does not, deliberately,
+so an archived goal still knows how long it was carried. Restoring does not.
+There is no missed-day arm to break and no zero to reset to: a week nobody
+opened the app in reads exactly the same as a week they did.
+
+So it is not a streak with the word filed off. It stays, and it stays where
+"Review says facts, and no longer a streak" already put it - "North as ages,
+which cannot be earned or lost" - drawn at the smallest size the page has, in
+`--faint`, with no icon and no colour of its own, which is the whole of what
+it earns.
+
+What is new is `north.test.ts`, "nothing a person does to a goal can make its
+age smaller": it walks one goal through edit, archive and restore and holds
+the number against each. The property was true by construction and true by
+nobody's decision; a later change to `updateGoal` or `restoreGoal` that
+starts stamping a date now has somewhere to fail.
