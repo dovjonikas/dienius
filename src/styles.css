@@ -7114,15 +7114,12 @@ button.danger:focus-visible {
      what keeps it inside the block at a larger text size. */
   .day-header .day-title h2 { white-space: nowrap; }
 
-  /* A mouse does not need the finger's 44, and two 44px boxes either side of
-     a 20px word is what made this row read as a toolbar. A finger keeps
-     them: the box is only allowed to shrink where there is a pointer. */
-  @media (pointer: fine) {
-    .day-header .day-nav > button {
-      width: var(--s8);
-      height: var(--s8);
-    }
-  }
+  /* The box stays 44 on every pointer. It was tempting to shrink it on a
+     mouse - two 44px squares either side of a 20px word is what made this
+     row read as a toolbar - but the boxes were the weight, not the width:
+     with the border and the surface gone the glyph reads as a glyph and the
+     target is still the one CONVENTIONS 6 asks for. e2e/header.e2e.ts
+     measures it, on the argument that a fit is never worth a target. */
 
   .day-header .day-tools {
     flex: 0 0 auto;
@@ -15899,4 +15896,96 @@ main:has(.week) > .calendar {
 .focus-link {
   margin: 0 auto var(--s2);
   color: var(--muted);
+}
+
+/* What is on a day, without pressing anything - see DayPeek.tsx.
+   ------------------------------------------------------------------------
+   Fixed rather than absolute, and laid out from the window's own
+   coordinates, because it is placed by `placeDayCard` against a rect read
+   from `getBoundingClientRect` and there is no offset parent to subtract.
+   Out of the flow entirely: the whole point is that nothing under it moves
+   when it appears, which is CONVENTIONS 24's real subject - a layer arriving
+   over the top is not movement, a layout shift is.
+
+   `pointer-events: none` is not a nicety here. This is the surface that
+   replaced the v2.8 hover card, and the reason that one failed is that the
+   pointer had to reach it; the reason this one is allowed to exist is that
+   the pointer never does. Nothing on it can be pressed, so nothing on it can
+   swallow a press meant for the day underneath.
+
+   Under the day card's own z-index, though the two are never drawn at once. */
+.day-peek {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 65;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  width: max-content;
+  max-width: min(260px, 80vw);
+  padding: var(--s2) var(--s3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--e3);
+  color: var(--text);
+  text-align: left;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .day-peek { animation: explain-in var(--dur-fast) var(--ease) both; }
+}
+
+.day-peek-date { font-size: var(--t-sm); font-weight: 600; }
+
+.day-peek-template {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The template's own colour, as the same six-pixel dot the chips carry. */
+.day-peek-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-round);
+  background: var(--chip, var(--muted));
+}
+
+.day-peek-count { color: var(--muted); font-size: var(--t-xs); }
+
+/* The key ones by name. A plain list with nothing to tick, for the same
+   reason the North window's is: a box on a surface nobody can press is a box
+   that lies about what it does. */
+.day-peek-keys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: var(--s1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-peek-keys li {
+  color: var(--text);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.day-peek-more { color: var(--faint); }
+
+.day-peek-written {
+  margin-top: var(--s1);
+  color: var(--faint);
+  font-size: var(--t-xs);
 }

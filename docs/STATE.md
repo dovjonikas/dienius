@@ -6,9 +6,105 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.17, the hunt before the week.
+**Last updated:** v2.18, North as a page, and three screens the owner reported
+from while it was being built.
 
-**Is it ready for the week? Yes, with one thing to watch.** Fourteen
+## v2.18 - the layout wave
+
+The brief added nothing to the app. It rearranged what was there, on the
+argument that a screen where five kinds of content sit at one weight is a
+screen the eye has nowhere to start on.
+
+**North.** The window was 62ch wide, so on a 1920 screen four goals came to
+1956px in a 434px column and three of them were below the fold - on the one
+screen whose whole point is seeing all of them at once. It is 1360px now with
+the cap on the text rather than the window, the goals stand two abreast in a
+grid, and four of them fit a 1080 screen without scrolling. Under that: one
+order of importance out of the four sizes CONVENTIONS 5 allows, with weight
+and ink doing the last two steps; the picture is the only t-lg on the page; a
+goal with no rules yet spends one line saying so instead of four. And the
+pair shipped in v2.17 as "He does" and "He doesn't" is first person now - the
+app had started narrating its owner on the one screen meant to be their own
+writing, and [`RESEARCH-NORTH.md`](RESEARCH-NORTH.md) carries the correction
+rather than quietly reading differently than it did.
+
+**The age on a goal was read against the streak rule and stays.** The
+question the brief asked was whether "61 days lived toward this" can fall. It
+cannot: `goalAge` is arithmetic on two dates, and `createdAt` is stamped once
+by `addGoal` and the Compose draft and by nothing else in the store - edit
+does not restamp it, archive deliberately does not so an archived goal still
+knows how long it was carried, and restore does not. No missed-day arm to
+break and no zero to reset to, so it is not a streak with the word filed off.
+It stays where "Review says facts, and no longer a streak" already put it,
+drawn at the smallest size in `--faint`, and `north.test.ts` now walks a goal
+through edit, archive and restore and holds the number against each.
+
+**What the month showed on hover, before this wave: nothing.** Written down
+because the brief asked for the inventory first and because the answer is not
+what anybody assumes. `onPointerEnter` on a cell only ever painted, and only
+while a template was in hand; there was no preview, no tooltip and no title
+attribute. What a cell said, it said at rest: the day number, two or three of
+the day's own lines with the key ones marked, "+N" for the rest, a done/total
+and a bar on a day that is over, the template's colour as a wash and a strip,
+and two small marks for a journal and a note. The whole day was one press
+away, in the day card. There *had* been a hover preview - it opened the real
+day card after 400ms and closed the moment the pointer left the cell, so the
+pointer could never reach it - and v2.8 removed it, with the owner's words on
+the record: *"we cannot move the mouse down onto that list"*.
+
+**And what it shows now.** A read-only layer, and read-only is the whole
+design: the v2.8 failure was a surface the pointer had to arrive at, and
+there is nothing on this one to arrive at. Which day, what shape of day it
+came from, how many tasks and how many of those are key, the key ones by
+name, and whether anything was written that day. It waits a quarter second
+before opening, so crossing the month on the way somewhere shows nothing;
+once open it swaps in place with no close and no second wait; it hides at
+once when the pointer leaves the month; focus shows the same thing without
+the wait; and it refuses to appear at all rather than cover the day it is
+about. On a phone it does not exist, because a press already opens the day
+there and that is the right answer.
+[`e2e/calendar-peek.e2e.ts`](../e2e/calendar-peek.e2e.ts) holds all of it by
+counting how many times the layer is *added to the page*, which is the only
+honest way to ask about flicker - and that count is what caught the first
+version of it remounting on every step across the month.
+
+## Three screens the owner reported from, mid-wave
+
+Outside the brief, and each one a real defect rather than a preference.
+
+**The library panel had two buttons under one word.** "Counted in" offered
+the list's own unit beside a built-in pages track, so a list of books whose
+unit is "page" drew two buttons both reading "pages" that did different
+things. The report was "sometimes you press the wrong one", and it was the
+app's fault. It is called page numbers now. In the same panel: how long a
+book is can be typed - `LibraryItem.total` and `updateLibraryItem({ total })`
+had both existed since the feature did, and the panel drew "of 139" with
+nowhere to put the 139 - and the six rows share one label column, where half
+of them used to lay the label inline at 78px and half stacked it over a
+full-width box. Delete list came out of the row of nine colour dots and onto
+its own line at the foot.
+
+**The masthead read after its arrows.** Two bordered 44px squares, then the
+word, which left "Today" as the one thing in that column not standing on the
+column's own left edge; and the date under it had a row-gap of zero against
+the underside of those buttons. The word leads now, the arrows are the same
+bare glyph the month's own arrows are sixty pixels below them, and the date
+has a step of air.
+
+**The hour axis counted in whatever fitted.** It kept each hour that happened
+to clear the last one kept, and because the grid is not linear a real
+afternoon printed 06, 08, 09, 11, 12, 13, 14, 16, 18, 19, 21 - every number
+correct and the sequence unreadable. It takes the smallest regular step that
+clears everywhere now, anchored on the clock, and 1366x768 reads 06, 08, 10,
+12, 14, 16, 18, 20. The greedy walk stays as the last resort, because text
+over text is the one rule that cannot bend. The now line also starts twelve
+pixels earlier so its dot always ends something: now is almost always inside
+a block, the line is drawn under the blocks on purpose, and what was left on
+screen was one orange circle at a block's corner.
+
+## Before that: v2.17, the hunt before the week
+
+**Was it ready for the week? Yes, with one thing to watch.** Fourteen
 findings, two of which would have spoilt a real morning - an app left open
 overnight kept yesterday and wrote the morning's first task onto it, and the
 update notice covered the whole tab bar on a phone so no tab could be pressed.

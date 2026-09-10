@@ -2709,3 +2709,55 @@ age smaller": it walks one goal through edit, archive and restore and holds
 the number against each. The property was true by construction and true by
 nobody's decision; a later change to `updateGoal` or `restoreGoal` that
 starts stamping a date now has somewhere to fail.
+
+## The month says what is on a day again, and this time nothing on it can be pressed
+
+v2.8 removed a hover preview from the month and was right to. It opened the
+real day card after 400ms and closed the moment the pointer left the cell, so
+the pointer could never get to it: everything on it was readable and nothing
+on it was reachable, and the owner's words are on the record - *"we cannot
+move the mouse down onto that list"*. CONVENTIONS section 25 does not keep a
+state nobody can act on.
+
+The v2.18 brief asked for hovering to say what is on a day again, and the
+reason that is not a reversal is the one difference that matters: **there is
+nothing here to reach.** No button, no box to tick, no link, `pointer-events:
+none` on the whole layer. A surface that asks nothing of the pointer cannot
+be a surface the pointer fails to arrive at. The card still opens on a press
+and is still the only thing that acts, and the two are never drawn at once.
+
+What it carries is what the brief named: which day, which template, how many
+tasks and how many of those are key, the key ones by name, and whether
+anything was written that day. It is `aria-hidden`, because the cell's own
+`aria-label` already says the same facts and a second copy would be the day
+announced twice.
+
+Four rules it keeps, each of which is a way it could have gone wrong:
+
+- **It never moves anything.** Fixed, out of the flow. CONVENTIONS 24 is
+  about layout shifting under a pointer; a layer arriving over the top is not
+  that, and it arrives on a fade.
+- **It never covers the day it is about.** `placeDayCard` places it, and that
+  function's last resort - covering the cell - is refused here rather than
+  taken. If the only place it fits is over its own subject it does not appear.
+- **Crossing the month shows nothing.** A quarter second of rest opens it, and
+  every cell entered restarts that wait, so what decides it is the dwell on
+  one day rather than how long the sweep takes.
+- **Moving between two days swaps it in place.** No close, no second wait. The
+  hide is instant and it is the only thing that is, which is why the leave
+  handler is on the grid and not on a cell.
+
+The keyboard gets it on focus, without the wait, because focus is deliberate.
+A phone does not get it at all - a press already opens the day there - and
+that is gated on the device having a fine pointer as well as on the event
+saying a mouse moved, because a touch screen driven by mouse-shaped events
+has the second without the first.
+
+`e2e/calendar-peek.e2e.ts` holds all of it, and the way it does is worth
+copying. Asserting a locator's count after a pointer move proves nothing here:
+the layer is absent for a quarter second by design, so "not there yet" always
+passes, and `toHaveCount` retries until it is there, so "there eventually"
+always passes too. It counts how many times the layer is *added to the page*
+instead - and that is what caught the first version keyed on the date, which
+unmounted and remounted on every step across the month, producing exactly the
+flicker the whole design is against.

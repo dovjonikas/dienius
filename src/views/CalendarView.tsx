@@ -5,6 +5,7 @@ import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask, monthSummary, summaryLine } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
 import { DayCard } from './DayCard'
+import { DayPeek } from './DayPeek'
 import { useCellLines, useIsWide } from '../lib/viewport'
 import { NARROW_DAYS, WeekView, visibleWeekDays, type WeekReading } from './week/WeekView'
 import { planWeekStamp, weekStampMessage } from './week/weekStamp'
@@ -13,6 +14,17 @@ import { requestReplan } from '../lib/replanState'
 import { hasJournal } from '../lib/journal'
 import { datesWithNotes } from '../lib/scratch'
 
+
+/**
+ * How long a pointer has to rest on a day before it is told what is on it.
+ *
+ * Long enough that crossing the week on the way somewhere shows nothing, and
+ * short enough that stopping on a day does not feel like waiting. The old
+ * hover card used 400 and read as slow; this one carries less and can afford
+ * to be quicker, and the flicker it is guarding against is a sweep rather
+ * than a pause.
+ */
+const PEEK_DELAY_MS = 250
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -102,6 +114,15 @@ export function CalendarView({
   // stays open until it is closed - see DayCard.tsx for why the 400ms hover
   // that used to do this could not work.
   const [openDate, setOpenDate] = useState<string | null>(null)
+  /**
+   * The day the pointer or the focus ring is resting on - see DayPeek.
+   *
+   * Null every other moment, and null the whole time a template is in hand,
+   * because then a cell is a brush and a layer explaining the day under the
+   * brush is in the way of painting it.
+   */
+  const [peekDate, setPeekDate] = useState<string | null>(null)
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const painting = useRef<'apply' | 'erase' | null>(null)
   // One tab stop for the whole grid and the arrows to walk it - the same
   // roving pattern as the day view's mini calendar, for the same reason:
@@ -126,6 +147,8 @@ export function CalendarView({
   // Read during render rather than held in state: the card is drawn in the
   // same pass as the grid it is anchored to, so the cell is already there.
   const anchorEl = openDate ? gridRef.current?.querySelector<HTMLElement>(`[data-date="${openDate}"]`) ?? null : null
+
+  useEffect(() => () => { if (peekTimer.current) clearTimeout(peekTimer.current) }, [])
 
   useEffect(() => {
     if (!pendingFocus) return
@@ -188,6 +211,55 @@ export function CalendarView({
 
   function handlePointerEnter(date: string) {
     if (painting.current) stampCell(date, painting.current)
+  }
+
+  /**
+   * Resting on a day shows what is on it; crossing seven of them shows
+   * nothing at all.
+   *
+   * The delay is only ever paid once. Nothing is showing, so a pointer that
+   * sweeps Monday to Sunday in less than that never opens anything - which is
+   * the whole of the no-flicker rule. Once something *is* showing, moving to
+   * the next cell swaps its contents where it stands, with no close and no
+   * second wait, because a layer that blinks out and back between two
+   * neighbours is the same flicker arriving from the other side.
+   *
+   * The leave handler is on the grid rather than on a cell, so it fires when
+   * the pointer leaves the month and not when it crosses a gap between two
+   * days - the hide is instant, and it is the only thing that is.
+   */
+  function armPeek(date: string, pointerType: string) {
+    // A finger has no hover, and on a phone the press already opens the day,
+    // which is the right answer there and is left alone. Both halves of that
+    // are needed: the event says a mouse moved, and the device says it has a
+    // pointer that can rest on something. A touch screen driven by a mouse-
+    // shaped event - an emulator, a hybrid laptop held by its screen - has
+    // the first and not the second, and there a layer beside a cell lands on
+    // the cell next to it, which the measuring pass reads as text over text
+    // and a person reads the same way.
+    if (pointerType !== 'mouse' || stampTemplateId || openDate) return
+    // Optional-chained the way lib/install.ts already chains it: matchMedia
+    // is missing in jsdom and can throw in older webviews, and 'no answer'
+    // has to mean 'do not open' rather than a crash on a pointer move.
+    if (!window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches) return
+    if (peekDate) {
+      setPeekDate(date)
+      return
+    }
+    if (peekTimer.current) clearTimeout(peekTimer.current)
+    peekTimer.current = setTimeout(() => setPeekDate(date), PEEK_DELAY_MS)
+  }
+
+  /** The keyboard's own way in: focus is deliberate, so it waits for nothing. */
+  function showPeekNow(date: string) {
+    if (stampTemplateId || openDate) return
+    if (peekTimer.current) clearTimeout(peekTimer.current)
+    setPeekDate(date)
+  }
+
+  function dropPeek() {
+    if (peekTimer.current) clearTimeout(peekTimer.current)
+    setPeekDate(null)
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
@@ -417,8 +489,12 @@ export function CalendarView({
             onKeyDown={onGridKeyDown}
             onFocus={e => {
               const focused = (e.target as HTMLElement).dataset.date
-              if (focused) setRoving(focused)
+              if (!focused) return
+              setRoving(focused)
+              showPeekNow(focused)
             }}
+            onBlur={dropPeek}
+            onPointerLeave={dropPeek}
           >
             {/* display: contents keeps this row invisible to the CSS grid
                 that lays cells out in seven columns across the whole
@@ -485,12 +561,19 @@ export function CalendarView({
                       aria-current={cell.key === today ? 'date' : undefined}
                       aria-expanded={stampTemplateId ? undefined : openDate === cell.key}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
-                      onPointerEnter={() => handlePointerEnter(cell.key)}
+                      onPointerEnter={e => {
+                        handlePointerEnter(cell.key)
+                        armPeek(cell.key, e.pointerType)
+                      }}
                       // A press opens the day's card, here, against this
                       // cell. Opening the day itself is one of the things on
                       // it, because the month is what somebody came to the
                       // month for and leaving it should be asked for.
-                      onClick={() => !stampTemplateId && setOpenDate(cell.key)}
+                      onClick={() => {
+                        if (stampTemplateId) return
+                        dropPeek()
+                        setOpenDate(cell.key)
+                      }}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
                       {showStats && (
@@ -551,6 +634,26 @@ export function CalendarView({
               it walks straight into it, and outside the grid so that its own
               buttons are not buttons inside a button. Placed against its cell
               by measurement - see dayCardPlacement.ts. */}
+          {/* Beside the card in the document and never at the same time as
+              it: a press closes this and opens that, which is the same day
+              said twice if both are drawn. */}
+          {peekDate && !openDate && (
+            <DayPeek
+              /* No key on the day, unlike the card below it. A key here would
+                 unmount and remount the layer on every step across the
+                 month - a new node in the page for each - which is the
+                 blink this is built to avoid, arriving from inside the
+                 component tree rather than from the handlers. Nothing on it
+                 holds state worth resetting; the placement effect already
+                 watches the date. e2e/calendar-peek.e2e.ts counts the
+                 additions, and caught exactly this. */
+              date={peekDate}
+              anchor={gridRef.current?.querySelector<HTMLElement>(`[data-date="${peekDate}"]`) ?? null}
+              bounds={gridRef.current}
+              noted={noteDays.has(peekDate)}
+            />
+          )}
+
           {openDate && (
             <DayCard
               // Keyed on the day, so walking the grid with the arrows and

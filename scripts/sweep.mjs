@@ -107,7 +107,8 @@ async function press(page, name) {
 /** What scripts/audit.js puts on the page's own window. */
 /** @typedef {{ hScroll: number, vScroll: number, clipped: any[], covered: any[], overlap: any[], offscreen: any[], faint: any[], chosen: { sel: string, text: string, like: string, attr: string }[], rings: { kind: 'cut' | 'gap', sel: string, detail: string }[], offCentre: { sel: string, child: string, text: string, off: number }[], sideways: { sel: string, over: number, detail: string }[], mismatched: { sel: string, detail: string }[] }} Audit */
 /** @typedef {Window & { __audit: (label: string) => Audit, __brief: (label: string) => Record<string, number> }} AuditWindow */
-/** @typedef {{ name: string, go: (page: Page) => Promise<unknown> }} Screen */
+/** `pointerOnly`: the surface only exists where there is a pointer to rest on it, so the phone run skips it. */
+/** @typedef {{ name: string, go: (page: Page) => Promise<unknown>, pointerOnly?: boolean }} Screen */
 
 /** One screen: how to get to it, and what it is called in the report. */
 /** @type {Screen[]} */
@@ -128,6 +129,24 @@ const SCREENS = [
     },
   },
   { name: 'Calendar month', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Month') } },
+  {
+    // What a day says when a pointer rests on it. Only ever drawn on a
+    // hover, so nothing else in this sweep would have seen it - and it is a
+    // raised surface with four sizes of grey on it, which is exactly the
+    // shape a contrast pass is for.
+    name: 'Calendar month (day peek)',
+    pointerOnly: true,
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Calendar')
+      await press(p, 'Month')
+      await p.locator('[aria-current="date"]').hover()
+      await p.waitForSelector('.day-peek')
+      // Past its own fade, like every other surface here: measured mid-
+      // animation the layer is still part-transparent, and what the pass
+      // then reads is the month showing through its own text.
+      await p.waitForTimeout(300)
+    },
+  },
   { name: 'Calendar week', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Week') } },
   { name: 'Templates', go: /** @param {Page} p */ p => tab(p, 'Templates') },
   {
@@ -406,6 +425,11 @@ for (const run of runs) {
 
   for (const screen of SCREENS) {
     if (ONLY && !screen.name.toLowerCase().includes(ONLY.toLowerCase())) continue
+    // A screen that only exists where there is a pointer to rest on it. Not
+    // a way of excusing a phone from a check - the surface genuinely is not
+    // drawn there, and reaching for it would time out rather than find
+    // anything to measure.
+    if (run.phone && screen.pointerOnly) continue
     const where = { size: `${run.size.w}x${run.size.h}`, theme: run.theme, screen: screen.name }
     try {
       // A fresh page per screen: a sheet left open by the screen before this
