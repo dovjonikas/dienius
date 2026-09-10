@@ -6,7 +6,30 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.19, North stops being a form.
+**Last updated:** v2.20, the night pass.
+
+## v2.20 - the night pass
+
+**What is different this morning:** the app is quieter and the loud things
+mean something. Blue used to be on every ticked checkbox, every chosen
+segment and both kinds of now line - seventeen blue things down a full day -
+so it marked nothing; it is back to being the one thing on a screen you can
+act on, and gold is the one thing happening now. Every period arrow is a bare
+glyph instead of a bordered box on two screens and a bare glyph on a third.
+Corners come in three sizes with nothing left hard-coded, so a theme can
+reach all of them. Everything that moves takes one of two durations, nothing
+moves under the cursor, and reduced motion turns things off rather than down.
+Every screen lost exactly one element - a word on the sleep band, a summary
+line that counted what the grid below it draws, a count that the line above
+it already spelled out - and one screen, North, was left alone because there
+was nothing on it left to take. Numbers in columns line up. And two things
+that only broke at the largest text size, which nothing in the repo had ever
+looked at, are fixed.
+
+The wave's own account, with before and after numbers and every decision
+made without the owner, is in [`audit/NIGHT.md`](audit/NIGHT.md). Screens
+before and after, both themes, are in
+[`screenshots/night/`](screenshots/night).
 
 ## v2.19 - the reading page stops naming its own fields
 

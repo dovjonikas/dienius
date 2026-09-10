@@ -86,9 +86,19 @@ const measure = page => page.evaluate(() => {
     let openY = false
     for (let a = /** @type {HTMLElement | null} */ (el); a && a !== document.body && !(openX && openY); a = a.parentElement) {
       const acs = getComputedStyle(a)
-      // A 1px box holding a sentence is the visually-hidden technique, by its
-      // shape rather than by its class name.
-      if (a.clientWidth <= 1 && a.clientHeight <= 1) { cutX = 0; cutY = 0; break }
+      // `display: contents` draws no box, so it neither clips nor scrolls -
+      // and it reports a clientWidth of 0, which is why the 1px test below
+      // has to ask whether the box clips before it asks how big it is. The
+      // digest wraps each of its rows in one, and reading the zero as
+      // "visually hidden" stopped the walk one step above the text and left
+      // this whole pass measuring nothing. Found by planting a defect the
+      // pass then failed to report.
+      if (acs.display === 'contents') continue
+      const hidesX = acs.overflowX === 'hidden'
+      const hidesY = acs.overflowY === 'hidden'
+      // A 1px box that clips is the visually-hidden technique, by its shape
+      // rather than by its class name.
+      if ((hidesX || hidesY) && a.clientWidth <= 1 && a.clientHeight <= 1) { cutX = 0; cutY = 0; break }
       const ar = a.getBoundingClientRect()
       /** @param {string} side */
       const edge = side => parseFloat(acs.getPropertyValue(`border-${side}-width`)) || 0
@@ -97,11 +107,11 @@ const measure = page => page.evaluate(() => {
       const trims = acs.textOverflow === 'ellipsis' && acs.whiteSpace === 'nowrap'
       if (!openX) {
         if (['auto', 'scroll'].includes(acs.overflowX)) openX = true
-        else if (acs.overflowX === 'hidden' && !trims) cutX = Math.max(cutX, Math.round(r.right - (ar.right - edge('right'))), Math.round(ar.left + edge('left') - r.left))
+        else if (hidesX && !trims) cutX = Math.max(cutX, Math.round(r.right - (ar.right - edge('right'))), Math.round(ar.left + edge('left') - r.left))
       }
       if (!openY) {
         if (['auto', 'scroll'].includes(acs.overflowY)) openY = true
-        else if (acs.overflowY === 'hidden') cutY = Math.max(cutY, Math.round(r.bottom - (ar.bottom - edge('bottom'))), Math.round(ar.top + edge('top') - r.top))
+        else if (hidesY) cutY = Math.max(cutY, Math.round(r.bottom - (ar.bottom - edge('bottom'))), Math.round(ar.top + edge('top') - r.top))
       }
     }
     boxes[path(el)] = { cutX: Math.max(0, cutX), cutY: Math.max(0, cutY), what: `${el.className || el.tagName} "${text.slice(0, 40)}"` }

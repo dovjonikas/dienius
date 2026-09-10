@@ -160,3 +160,82 @@ the ink goes to `--faint` and the opacity back to 1.
   the morning with nobody to ask.
 - **Negative `outline-offset`s stay.** They are geometry, not style: a ring
   on a control clipped by its parent has to be drawn inside it.
+
+## The floors
+
+The last stage of the brief is the one with no design in it: nothing broken
+at any text size, every focus ring the same ring, every target big enough to
+hit, every colour over its floor, and nothing scrolling sideways.
+
+Three of those five the sweep already measures, on eight screens at three
+widths in two themes, and it finished this wave at **0 findings**. The
+fourth, sideways scroll, it measures too - both on the page and inside every
+scroller on it.
+
+The fifth had nobody watching it. The sweep runs at one text size, and
+`textScale` is the setting a person turns up *because they need it*: the one
+change to the app that is guaranteed to push a label past its container.
+`npm run textscale` is new, and walks all eight screens at Small, Medium and
+Large, at 1366 and at 390.
+
+**It reports differences rather than absolutes**, which is the whole of why
+it can be believed. Its first run found 79 things, and the first three were
+a heading that is meant to be a 1px box, a timeline block trimming its own
+title, and a settings heading taken out of the layout four hours earlier on
+purpose. A box that clips at every text size is doing it by design; a box
+that held its text at Small and stopped holding it at Large is the setting
+breaking something. Only the second is a finding, and the difference between
+them cannot be seen at one size. The same discipline sorts the sideways
+scrolls: the settings strip on a phone scrolls sideways at every size
+because that is what it is for, and is never reported, without the pass
+having to know its name.
+
+Two real things came out of it, both invisible at the default size:
+
+- **Every hour-long block on Today had its bottom two pixels shaved off** at
+  Large - the title's descenders and the underside of the digits in
+  "13:30 - 14:30". The block is floored at 48px so its times get a line of
+  their own, and 48 is a sum of measured lines: 6px of padding twice, a 13px
+  title, a 2px gap, an 11px time. At Large those lines are a 14.5px title
+  and a 12px time and they need about 53. The figure now moves with the text
+  it has to hold, and the floor that reserves the room and the switch that
+  decides to use it read the same one, so they cannot drift apart. Small
+  gets a 44px block, and its four reclaimed pixels, for free.
+- **The day's digest pushed the sidebar 8px wider than itself** at Large, so
+  the last word of "7h 45 min" sat under the rail's edge, reachable only by
+  scrolling a sidebar sideways. Three columns, all three set never to wrap.
+  The comment above them already said which one was supposed to give - "the
+  note beside it is the part with slack" - and the note was nowrap like the
+  other two, so it had none.
+
+The second one is the more useful finding, because of how it hid. The text
+was not cut by its own box or by its parent's: it overflowed a grid whose
+overflow is visible, was handed up four levels, and was finally cut by a
+panel that scrolls. Anything comparing an element against itself sees
+nothing there. The pass follows the text up to whatever actually cuts it,
+and stops at the first ancestor that can scroll the axis - because past that
+point the text is reachable rather than lost.
+
+**Both were found by looking at a screenshot**, not by the pass. The pass
+was reporting zero when the digest was already broken, and the photograph is
+what said otherwise. A clean pass means nothing was found.
+
+And a pass that reports zero has to be made to report something before the
+zero means anything. Two defects were planted at the largest text size and
+the pass was asked to find them: a panel squeezed until it scrolled sideways,
+and a panel squeezed with its overflow hidden until it cut its own text. It
+caught the first and **said nothing about the second**.
+
+The reason is worth writing down. The digest wraps each of its rows in a
+`display: contents` element, which draws no box at all - and an element with
+no box reports a width of zero. The walk up from the text was testing "is
+this a 1px box holding a sentence", which is how a visually-hidden heading is
+recognised without naming it, and a zero-width box passes that test. So the
+walk stopped one step above the text, on every screen, and the entire clipped
+-text half of the pass had been measuring nothing. It now asks whether a box
+clips before it asks how big it is, and skips a box that is not there.
+
+The first plant had to be thrown away too: it made the digest narrower inside
+a wider sidebar, where the spill is still perfectly visible. A plant that
+does not actually break anything proves nothing about the pass that fails to
+report it.
