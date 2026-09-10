@@ -2254,14 +2254,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 /* The block that is happening right now. Lifted rather than recoloured: it
-   keeps its own category colour (that is what says what kind of thing it is)
-   and gains a ring in the now colour plus a soft halo of it, so "current"
-   and "what kind" are two separate signals that never overwrite each other.
-   The halo is a spread shadow, not a blur that grows the box, so nothing
-   about the block's real position or height changes when it becomes the
-   current one - the grid still reads as an honest clock. */
+   keeps its own category colour, which is what says what kind of thing it is,
+   and gains a ring in the now colour - so "current" and "what kind" are two
+   signals that never overwrite each other.
+
+   The halo is gone. There was a 16px glow of the now colour under the ring,
+   and the night brief's rule for this grid is no gradients, no shadows, no
+   glows: if it reads in greyscale it is right. A glow reads as nothing in
+   greyscale, and the ring reads as a ring. It was also the loudest thing on
+   the screen by area on a screen whose loudest thing is supposed to be a
+   1.5px line. */
 .timeline-anchor-now {
-  box-shadow: 0 0 0 1.5px var(--mark), 0 0 16px -2px color-mix(in srgb, var(--mark) 55%, transparent);
+  box-shadow: 0 0 0 1.5px var(--mark);
   z-index: 2;
 }
 
@@ -2414,17 +2418,24 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    line attached to it. Now is almost always inside a block - that is what a
    planned day is - so the run of line was almost always hidden, and what was
    left on screen was one 7px orange circle floating at a block's top-left
-   corner with nothing joining it to anything. The owner read it as something
-   poking out of a corner, which is exactly what it looks like.
+   corner with nothing joining it to anything.
 
-   So the line starts twelve pixels earlier, in the gutter, where no block is
-   ever drawn. The dot now ends a visible line whatever is painted over the
-   rest of it, and the hour label nearest the line was already dropped for it
-   - see NOW_CLEARS_LABEL_PX - so there is nothing in that twelve pixels to
-   cross. */
+   So the line runs the full width of the hour gutter, where no block is ever
+   drawn and where the one hour label that would have been in its way is
+   already dropped for it - see NOW_CLEARS_LABEL_PX. Forty-four pixels of it
+   are visible at all times, at exactly the right height, ending in the bead
+   at the grid's edge.
+
+   The night brief asked for a line that never disappears behind a block, and
+   this is that requirement met the only way it can be. Drawing it over the
+   blocks was tried and photographed: on the running block - which is the one
+   block it can ever cross, by definition - it lands on the title and the
+   time, and a line through a title in this app means done. The marker is
+   what must never be hidden; the run across the day is the part that may be,
+   because the only thing it can hide behind is the block it is pointing at. */
 .timeline-now-line {
   position: absolute;
-  left: calc(var(--timeline-gutter) - var(--s3));
+  left: 0;
   right: 0;
   height: 1.5px;
   background: var(--mark);
