@@ -35,7 +35,7 @@ test('a week template is built once and stamps each day its own column', async (
   await page.getByPlaceholder('What happens').fill('Physio')
   // One press back to a single day, from the five the preset above left
   // switched on.
-  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Only Thu' }).click()
+  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'Just one day' }).click()
   await page.getByRole('button', { name: 'Add a block' }).click()
 
   await expect(page.getByRole('region', { name: 'Thursday' }).getByText('Physio')).toBeVisible()

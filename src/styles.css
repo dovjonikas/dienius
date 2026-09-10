@@ -8206,6 +8206,121 @@ button.danger:focus-visible {
 .library-item.done .library-item-title { color: var(--muted); text-decoration: line-through; }
 
 /* ------------------------------------------------------------------------
+   The add row as named lines - v2.17, after the owner said the screen made
+   them feel overwhelmed and that some buttons had to be hunted for.
+
+   It was two rows of eleven controls: six swatches, a pencil, a plus, a
+   labelled select, a second identical plus and Ongoing on one; seven day
+   switches and four presets on the next, with Add a block floating at the
+   right of them. Thirty-six controls stood below the grid, because the panel
+   for the block being read and the form for the block being written were both
+   open at once.
+
+   One question a line, each with the label it always deserved, in the order
+   they are answered. Nothing was removed.
+   ------------------------------------------------------------------------ */
+/* One indent for every question in this form, named once, so Category,
+   Library list and Add to hang their answers off the same left edge. Two
+   steps of the spacing scale rather than a measured 64: the labels are
+   --t-xs and the longest of the three is "Library list". */
+.block-add { --field-label-w: calc(var(--s8) * 2); }
+
+.block-add-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+}
+
+/* The same register every other field label in this app uses, so the two
+   lines read as questions rather than as loose rows of chips. Fixed width so
+   the answers line up under each other down the left. */
+.block-add-label {
+  flex: 0 0 auto;
+  min-width: var(--field-label-w);
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+
+/* Ongoing sits at the end of the library line rather than in the middle of
+   the chips it used to be lost among. The rule names the Explain wrapper,
+   not the button: every term this app explains is wrapped, so a rule aimed
+   at the control itself lands on a child and an auto margin on a child
+   does nothing. */
+.block-add-field > .explain,
+.block-add-field > .core-toggle { margin-left: auto; }
+
+/* The form's own button, on a line with nothing else on it. At the right,
+   where this app puts the one action a surface is for. */
+.block-add-do {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--s2);
+}
+
+/* Folded. One line that says what pressing it does, quiet enough not to
+   compete with the block being read above it. */
+.block-add-open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  width: 100%;
+  margin-top: var(--s3);
+  padding: var(--s2) var(--s3);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.block-add-open:hover { border-color: var(--accent); color: var(--text); }
+
+.block-add-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The way out of an open block, the same cross thirteen other surfaces use.
+   It was an underlined word at seventeen pixels, which is the one shape in
+   that header nobody could find. */
+.wt-note-close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-glyph);
+  line-height: 1;
+}
+
+.wt-note-close:hover { color: var(--text); border-color: var(--border); }
+
+.wt-note-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Removing a block, at the foot of the panel rather than a pixel from the
+   toggle that marks it key. */
+.wt-note-foot {
+  display: flex;
+  margin-top: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+@media (pointer: coarse) {
+  .wt-note-close { min-height: var(--touch); width: var(--touch); }
+  .block-add-open { min-height: var(--touch); }
+}
+
+/* ------------------------------------------------------------------------
    The library binding, wherever a block is being composed - see
    views/LibraryQuickAdd.tsx.
 
@@ -10680,6 +10795,40 @@ button.task-note-mark.is-open {
 
 /* The two summaries a restore is decided on, and the armed button under
    them - inside the block, in the same quiet register as the status line. */
+/* Both copies, part by part, before a press that replaces all of it.
+   Numbers right-aligned so a column can be read down rather than across,
+   which is the whole reason this is a table and not more sentences. */
+.backup-compare {
+  width: 100%;
+  margin: 0 0 var(--s3);
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.backup-compare th,
+.backup-compare td {
+  padding: var(--s1) var(--s2);
+  text-align: right;
+}
+
+.backup-compare thead th { color: var(--muted); font-weight: 600; }
+
+.backup-compare tbody th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.backup-compare tbody tr + tr th,
+.backup-compare tbody tr + tr td { border-top: 1px solid var(--border); }
+
+/* The rows where restoring would replace a larger number with a smaller
+   one. The danger ink, because that is what this app paints a thing it is
+   about to lose - and the word beside it, because colour alone is not a
+   way of saying something. */
+.backup-compare tr.is-fewer td { color: var(--danger); }
+
+.backup-fewer { color: var(--danger); font-size: var(--t-xs); }
 .backup-preview {
   margin: var(--s3) 0;
   padding: var(--s3);
@@ -14613,7 +14762,11 @@ main:has(.week) > .calendar {
   margin-top: 0;
 }
 
-.wt-add-to { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1); }
+.wt-add-to { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1) var(--s3); }
+
+/* The label sets the indent the switches and the presets both hang off,
+   so the two lines read as one question with two ways to answer it. */
+.wt-add-to > .explain { flex: 0 0 auto; min-width: var(--field-label-w); }
 
 /* Seven switches, one per day. A square each so the row reads as a week
    rather than as seven words, and 44px on a finger like everything else. */
@@ -14657,7 +14810,18 @@ main:has(.week) > .calendar {
 /* The shortcuts are a different kind of thing from the days, and the row
    read as one long list of nine. Pills rather than squares, quieter, and
    set off by a gap wider than the one between the days. */
-.wt-presets { display: flex; align-items: center; gap: var(--s1); margin-left: var(--s4); }
+/* Their own line, under the switches they set rather than beside them.
+   Eleven controls stood on one row - seven squares and four words - and
+   the four read as more switches. A break, and the same indent as the
+   switches, says they are a shortcut to the row above and not part of
+   it. */
+.wt-presets {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-left: calc(var(--field-label-w) + var(--s3));
+}
 
 .wt-presets .chip {
   border-radius: var(--r-pill);

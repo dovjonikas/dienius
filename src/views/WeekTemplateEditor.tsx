@@ -181,6 +181,23 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
   // under all seven columns rather than inside one of them: a column is a
   // seventh of the width and a recipe is not.
   const [noteBlockId, setNoteBlockId] = useState<string | null>(null)
+  /**
+   * Whether the add row is open while a block is.
+   *
+   * Both were always open together, and that put two things being
+   * composed on one screen: thirty-six controls below the grid, with
+   * "Library list" printed twice four hundred pixels apart and two
+   * identical dashed pluses under it. The owner's word for it was
+   * overwhelmed.
+   *
+   * So opening a block folds the add row down to the one line that opens
+   * it again - CONVENTIONS 25, the answer stays and the asking folds
+   * away. Asked for explicitly it comes back and both stand together,
+   * because somebody who pressed for it wants both; it folds again on the
+   * next block opened, which is where the question starts over.
+   */
+  const [addAsked, setAddAsked] = useState(false)
+  const addOpen = noteBlockId === null || addAsked
   // Why a KEY press did nothing. One line, cleared by the next press.
   const [keyNote, setKeyNote] = useState<string | null>(null)
 
@@ -439,7 +456,10 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         draggingId={draggingId}
         openBlockId={noteBlockId}
         onPickDay={setActiveDay}
-        onOpenBlock={block => setNoteBlockId(id => (id === block.id ? null : block.id))}
+        onOpenBlock={block => {
+          setAddAsked(false)
+          setNoteBlockId(id => (id === block.id ? null : block.id))
+        }}
         onBlockPointerDown={(block, e) => {
           if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
             e.currentTarget.releasePointerCapture(e.pointerId)
@@ -560,9 +580,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                   : ` - ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? ''}`}
               </span>
             </span>
-            {/* Everything a block can be told, in the one place a block is
-                open. These were four controls on a chip in a 110px column
-                before the grid replaced it. */}
+            {/* What the block is, and the way out. Removing it used to sit
+                here too, a red outline one pixel from the toggle that marks
+                a block as key - the loudest thing in a header somebody
+                opens to read a note. It is at the foot of the panel now,
+                where a destructive action goes, and the way out is the same
+                cross thirteen other surfaces in this app use. */}
             <div className="wt-note-actions">
               <button
                 type="button"
@@ -579,23 +602,11 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               </button>
               <button
                 type="button"
-                className="btn-danger"
-                aria-label={
-                  editScope === 'group' && noteBlock.groupId
-                    ? `Remove ${noteBlock.title} from every day it is on`
-                    : `Remove ${noteBlock.title} from ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'}`
-                }
-                onClick={() => removeBlock(noteBlock)}
-              >
-                Remove
-              </button>
-              <button
-                type="button"
-                className="setting-quiet"
+                className="wt-note-close"
                 aria-label={`Close ${noteBlock.title}`}
                 onClick={() => setNoteBlockId(null)}
               >
-                Close
+                &times;
               </button>
             </div>
           </div>
@@ -644,7 +655,35 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             onNote={next => editBlock(noteBlock, { note: next })}
             onExpanded={next => editBlock(noteBlock, { noteExpanded: next })}
           />
+          {/* At the foot, and saying what it will take rather than just
+              "Remove" - there is room for the sentence here, and the scope
+              is the whole question with a block that is on seven days. The
+              label a test and a screen reader see has said this all along;
+              now the eye sees it too. */}
+          <div className="wt-note-foot">
+            <button
+              type="button"
+              className="btn-danger"
+              aria-label={
+                editScope === 'group' && noteBlock.groupId
+                  ? `Remove ${noteBlock.title} from every day it is on`
+                  : `Remove ${noteBlock.title} from ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'}`
+              }
+              onClick={() => removeBlock(noteBlock)}
+            >
+              {editScope === 'group' && noteBlock.groupId
+                ? 'Remove from every day it is on'
+                : `Remove from ${WEEK.find(w => w.day === noteBlock.weekday)?.label ?? 'this day'}`}
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* Folded to one line while a block is open - see addOpen. */}
+      {!addOpen && (
+        <button type="button" className="block-add-open" onClick={() => setAddAsked(true)}>
+          Add a block
+        </button>
       )}
 
       {/* Two groups under two headings: what the block is, and where it
@@ -654,6 +693,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           right of the line under it - eleven things in a row and the button
           that acted on them nowhere near them. The heading is the smallest
           register the app has, the one a field label uses. */}
+      {addOpen && (
       <div className="block-add">
         <div className="block-add-group">
         <span className="block-add-heading">What</span>
@@ -688,7 +728,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             onChange={minutes => setBlockMinutes(minutes === undefined ? '' : String(minutes))}
           />
         </div>
-        <div className="block-add-marks">
+        <div className="block-add-field">
+          <span className="block-add-label">Category</span>
           <div className="category-picker" role="group" aria-label="Category for the new block">
             {categories.map(c => (
               <button
@@ -710,24 +751,26 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             )}
             <CategoryQuickAdd categories={categories} onMade={setBlockCategory} />
           </div>
-          {/* The binding, per block, exactly as the day editor has it - a
-              week is where it earns its keep, because "Reading on six days
-              from MIND and on the Wednesday from CRAFT" is a sentence about a
-              week and cannot be said with a day template at all. Hidden while
-              the library is empty, so a template editor stays a template
-              editor for the many people who never build a list. */}
+        </div>
+        {/* The binding, per block, exactly as the day editor has it - a
+            week is where it earns its keep, because "Reading on six days
+            from MIND and on the Wednesday from CRAFT" is a sentence about a
+            week and cannot be said with a day template at all. Hidden while
+            the library is empty, so a template editor stays a template
+            editor for the many people who never build a list.
+
+            On a line of its own since v2.17. It was in the row of category
+            dots, which put a labelled form field in the middle of a row of
+            chips and left two identical dashed pluses four inches apart -
+            one for a category, one for a list, nothing to tell them apart.
+            A line each, and the label says which. */}
+        <div className="block-add-field">
           <LibraryBindingField
             id="wt-add-library"
             lists={data.library}
             value={blockLibraryListId}
             onChange={setBlockLibraryListId}
           />
-          {/* What the block being added would actually carry onto a day. See
-              bindingLine: a list is not a book, and the control above names a
-              list. */}
-          {blockLibraryListId && (
-            <p className="block-binding">{bindingLine(data.library.find(l => l.id === blockLibraryListId))}</p>
-          )}
           <Explain id="ongoing">
             <button
               type="button"
@@ -740,6 +783,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             </button>
           </Explain>
         </div>
+        {/* What the block being added would actually carry onto a day. See
+            bindingLine: a list is not a book, and the control above names a
+            list. */}
+        {blockLibraryListId && (
+          <p className="block-binding">{bindingLine(data.library.find(l => l.id === blockLibraryListId))}</p>
+        )}
         </div>
 
         <div className="block-add-group">
@@ -786,7 +835,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
               className="chip"
               onClick={() => setAddDays([activeDay])}
             >
-              Only {WEEK.find(w => w.day === activeDay)!.short}
+              Just one day
             </button>
             {PRESETS.map(({ key, label, days }) => (
               <button
@@ -812,10 +861,20 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           </p>
           </div>
 
-          {/* The tooltip that said Return does this too has gone to the title
-              field's own edge, where it is readable without a pointer resting
-              on anything - CONVENTIONS 23. The button is not its double: it is
-              the answer for somebody who has never tried Return. */}
+        </div>
+        </div>
+
+        {/* At the end of the form, which is where a form's own button goes.
+            It used to sit at the right of the Where line, level with the day
+            switches and a preset away from them, and the owner reported
+            having to hunt for it. Nothing else is on this line, so there is
+            nothing for it to be lost among.
+
+            The tooltip that said Return does this too has gone to the title
+            field's own edge, where it is readable without a pointer resting
+            on anything - CONVENTIONS 23. The button is not its double: it is
+            the answer for somebody who has never tried Return. */}
+        <div className="block-add-do">
           <button
             className="btn-secondary"
             disabled={!blockTitle.trim() || addDays.length === 0}
@@ -824,8 +883,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
             Add a block
           </button>
         </div>
-        </div>
       </div>
+      )}
 
       <div className="row">
         <button className="primary" disabled={!draft.name.trim()} onClick={onSave}>

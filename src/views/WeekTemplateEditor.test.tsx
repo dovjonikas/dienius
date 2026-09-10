@@ -33,7 +33,20 @@ async function newWeek(user: ReturnType<typeof userEvent.setup>) {
  */
 let addedAt = 6
 
+/**
+ * Opens the add row if an open block has folded it away - see addOpen in
+ * WeekTemplateEditor. A test that adds a second block while reading the
+ * first does what a person does: presses the one line that brings the form
+ * back. Both the folded line and the form button answer to the same words,
+ * because they are the same job, and they are never on screen together.
+ */
+async function openAddRow(user: ReturnType<typeof userEvent.setup>) {
+  if (document.querySelector('.block-add')) return
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+}
+
 async function addBlockAt(user: ReturnType<typeof userEvent.setup>, time: string, title: string) {
+  await openAddRow(user)
   await user.clear(screen.getByPlaceholderText('09:00'))
   await user.type(screen.getByPlaceholderText('09:00'), time)
   await user.type(screen.getByPlaceholderText('What happens'), title)
@@ -41,6 +54,7 @@ async function addBlockAt(user: ReturnType<typeof userEvent.setup>, time: string
 }
 
 async function addBlock(user: ReturnType<typeof userEvent.setup>, title: string) {
+  await openAddRow(user)
   await user.clear(screen.getByPlaceholderText('09:00'))
   await user.type(screen.getByPlaceholderText('09:00'), `${String(addedAt).padStart(2, '0')}:00`)
   addedAt = addedAt >= 22 ? 6 : addedAt + 1
@@ -57,7 +71,6 @@ async function openBlock(user: ReturnType<typeof userEvent.setup>, day: string, 
   await user.click(within(column(day)).getByRole('button', { name: new RegExp(`^${title}[ ,]`) }))
 }
 
-/**
 /**
  * The two places the binding control now lives, told apart.
  *
@@ -76,6 +89,19 @@ function addRow() {
   const row = document.querySelector('.block-add')
   if (!row) throw new Error('no add row')
   return within(row as HTMLElement)
+}
+
+/**
+ * The day switches and their presets, queried fresh every time.
+ *
+ * Captured once into a const, this went stale: the add row unmounts when a
+ * block is opened and mounts again when it is asked for, so a held node
+ * points at a detached tree and every press on it silently does nothing.
+ * A test then failed three assertions later, on a block that had landed on
+ * the wrong day for a reason nothing near the failure mentioned.
+ */
+function whereRow() {
+  return within(screen.getByRole('group', { name: 'Add to' }))
 }
 
 function column(label: string) {
@@ -353,7 +379,6 @@ test('the switches open on the column being worked in, and each one is its own a
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
   // The editor opens on today, which the fake clock pins to a Wednesday.
   expect(switchedOn()).toEqual(['Wednesday'])
@@ -361,11 +386,11 @@ test('the switches open on the column being worked in, and each one is its own a
 
   // A day is a switch, not a choice among four: turning Saturday on leaves
   // Wednesday on. This is the whole point - a rotation has no name.
-  await user.click(where.getByRole('button', { name: 'Saturday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Saturday' }))
   expect(switchedOn()).toEqual(['Wednesday', 'Saturday'])
   expect(screen.getByText('Adds to Wed, Sat')).toBeInTheDocument()
 
-  await user.click(where.getByRole('button', { name: 'Wednesday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Wednesday' }))
   expect(switchedOn()).toEqual(['Saturday'])
 })
 
@@ -373,19 +398,18 @@ test('a preset sets the switches, and shows what it set', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
-  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  await user.click(whereRow().getByRole('button', { name: 'Weekdays' }))
   expect(switchedOn()).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'])
   expect(screen.getByText('Adds to 5 days')).toBeInTheDocument()
 
   // It sets rather than adds: the weekend is the weekend, not the weekend
   // plus whatever was on before it.
-  await user.click(where.getByRole('button', { name: 'Weekend' }))
+  await user.click(whereRow().getByRole('button', { name: 'Weekend' }))
   expect(switchedOn()).toEqual(['Saturday', 'Sunday'])
   expect(screen.getByText('Adds to Sat, Sun')).toBeInTheDocument()
 
-  await user.click(where.getByRole('button', { name: 'All days' }))
+  await user.click(whereRow().getByRole('button', { name: 'All days' }))
   expect(switchedOn()).toHaveLength(7)
   expect(screen.getByText('Adds to every day')).toBeInTheDocument()
 })
@@ -395,12 +419,11 @@ test('a rotation is set once and holds for the next block', async () => {
   render(<TemplatesView />)
   await newWeek(user)
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
   // Mon and Thu - the shape that took two passes per block before this.
-  await user.click(where.getByRole('button', { name: 'Monday' }))
-  await user.click(where.getByRole('button', { name: 'Wednesday' }))
-  await user.click(where.getByRole('button', { name: 'Thursday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Monday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Wednesday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Thursday' }))
   expect(switchedOn()).toEqual(['Monday', 'Thursday'])
 
   await addBlock(user, 'Training A')
@@ -424,8 +447,7 @@ test('with no day switched on there is nothing to add to, and the button says so
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
-  await user.click(where.getByRole('button', { name: 'Wednesday' }))
+  await user.click(whereRow().getByRole('button', { name: 'Wednesday' }))
 
   expect(switchedOn()).toEqual([])
   expect(screen.getByText('No days chosen - nothing to add to.')).toBeInTheDocument()
@@ -503,16 +525,15 @@ test('one press goes back to a single day, from whatever a preset left on', asyn
   const user = userEvent.setup()
   render(<TemplatesView />)
   await newWeek(user)
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
-  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  await user.click(whereRow().getByRole('button', { name: 'Weekdays' }))
   expect(switchedOn()).toHaveLength(5)
 
   // Without this, one Thursday-only block after a run of weekday blocks is
   // four switches off. It is the old "this day" scope, converted to a preset
   // the same way the other three were, and named for the day so it cannot be
   // read as the switch beside it.
-  await user.click(where.getByRole('button', { name: 'Only Wed' }))
+  await user.click(whereRow().getByRole('button', { name: 'Just one day' }))
   expect(switchedOn()).toEqual(['Wednesday'])
 })
 
@@ -524,11 +545,10 @@ test('the key limit is counted per day, not per template', async () => {
   render(<TemplatesView />)
   await newWeek(user)
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
   // Three key blocks on every day at once - twenty-one marked blocks, and
   // not one day over its three.
-  await user.click(where.getByRole('button', { name: 'All days' }))
+  await user.click(whereRow().getByRole('button', { name: 'All days' }))
   for (const title of ['Morning', 'Deep work', 'Training']) {
     await addBlock(user, title)
     await openBlock(user, 'Monday', title)
@@ -571,10 +591,9 @@ test('a block on five days is refused if any one of those days is full', async (
   render(<TemplatesView />)
   await newWeek(user)
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
-  const where = within(screen.getByRole('group', { name: 'Add to' }))
 
   // Wednesday alone gets three key blocks.
-  await user.click(where.getByRole('button', { name: 'Only Wed' }))
+  await user.click(whereRow().getByRole('button', { name: 'Just one day' }))
   for (const title of ['One', 'Two', 'Three']) {
     await addBlock(user, title)
     await openBlock(user, 'Wednesday', title)
@@ -585,7 +604,12 @@ test('a block on five days is refused if any one of those days is full', async (
   // one, except Wednesday - and a template that marked four things on
   // Wednesday and three everywhere else would be doing something different
   // on Wednesday without saying so.
-  await user.click(where.getByRole('button', { name: 'Weekdays' }))
+  //
+  // The last block of the loop above is still open, which folds the add
+  // row - so the switches have to be brought back before they can be set,
+  // which is what a person does too.
+  await openAddRow(user)
+  await user.click(whereRow().getByRole('button', { name: 'Weekdays' }))
   await addBlock(user, 'Everywhere')
   await openBlock(user, 'Monday', 'Everywhere')
   await user.click(screen.getByRole('button', { name: 'Mark Everywhere on Monday as a key task' }))
@@ -794,4 +818,94 @@ test('the add row asks what the next block draws from, under a label somebody ca
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
   expect(getData().templates[0].blocks[0].libraryListId).toBe(getData().library[0].id)
+})
+
+/**
+ * One thing being composed at a time.
+ *
+ * The block panel and the add row were both open always, which put the block
+ * being read and the block being written on one screen: thirty-six controls
+ * under the grid, "Library list" printed twice four hundred pixels apart, and
+ * two identical dashed pluses under it. The owner's word for it was
+ * overwhelmed.
+ *
+ * So opening a block folds the add row to the one line that opens it again,
+ * and asking for it explicitly brings it back - somebody who pressed for it
+ * wants both. It folds again on the next block opened.
+ */
+test('opening a block folds the add row away', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  expect(screen.getByPlaceholderText('What happens')).toBeInTheDocument()
+
+  await openBlock(user, 'Wednesday', 'Reading')
+  expect(screen.queryByPlaceholderText('What happens')).toBeNull()
+  expect(document.querySelector('.block-add')).toBeNull()
+})
+
+test('and asking for it brings it back, with the block still open', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  expect(screen.getByPlaceholderText('What happens')).toBeInTheDocument()
+  // Both, because that is what was asked for.
+  expect(document.querySelector('.wt-note')).not.toBeNull()
+})
+
+test('the next block opened folds it again, which is where the question starts over', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await addBlock(user, 'Gym')
+
+  await openBlock(user, 'Wednesday', 'Reading')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  expect(screen.getByPlaceholderText('What happens')).toBeInTheDocument()
+
+  await openBlock(user, 'Wednesday', 'Gym')
+  expect(screen.queryByPlaceholderText('What happens')).toBeNull()
+})
+
+test('closing the block brings the add row back on its own', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await addBlock(user, 'Reading')
+  await openBlock(user, 'Wednesday', 'Reading')
+
+  await user.click(screen.getByRole('button', { name: /^Close Reading/ }))
+  expect(screen.getByPlaceholderText('What happens')).toBeInTheDocument()
+})
+
+/**
+ * Removing a block moved to the foot of its panel and now says what it will
+ * take. The label a test and a screen reader see has said this all along; the
+ * eye sees it too, and it is no longer a red outline one pixel from the
+ * toggle that marks a block as key.
+ */
+test('remove says which days it will take the block from, in words', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+  await user.type(screen.getByPlaceholderText('Week name'), 'My week')
+  await user.click(screen.getByRole('button', { name: 'All days' }))
+  await addBlock(user, 'Commute')
+  await openBlock(user, 'Wednesday', 'Commute')
+
+  expect(openBlockPanel().getByText('Remove from every day it is on')).toBeInTheDocument()
+  await user.click(
+    screen.getByRole('button', { name: 'Remove Commute from every day it is on' }),
+  )
+  expect(screen.queryByText('Commute')).toBeNull()
 })

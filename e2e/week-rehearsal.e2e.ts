@@ -50,8 +50,22 @@ const same = (a: string[], b: string[]) => a.length === b.length && a.every(d =>
  * the switches surviving an add: a run of blocks on the same days costs
  * nothing after the first.
  */
+/**
+ * Opens the add row if a block being read has folded it away - see addOpen
+ * in WeekTemplateEditor. Since v2.17 the two are not both open by default:
+ * a walk that edits a block and then adds another does what a person does,
+ * which is press the one line that brings the form back.
+ */
+async function openAddRow(page: Page) {
+  const folded = page.locator('.block-add-open')
+  if ((await folded.count()) === 0) return
+  await folded.click()
+  presses += 1
+}
+
 async function addTo(page: Page, days: string[]) {
   if (days.length === 0) return
+  await openAddRow(page)
   const where = page.getByRole('group', { name: 'Add to' })
   const preset = same(days, DAYS) ? 'All days' : same(days, WEEKDAYS) ? 'Weekdays' : same(days, WEEKEND) ? 'Weekend' : null
   if (preset) {
@@ -78,6 +92,7 @@ async function addTo(page: Page, days: string[]) {
  */
 async function block(page: Page, time: string, title: string, days: string[] = []) {
   await addTo(page, days)
+  await openAddRow(page)
   await fill(page, '09:00', time)
   await page.getByPlaceholder('What happens').first().fill(title)
   await page.getByPlaceholder('What happens').first().press('Enter')
