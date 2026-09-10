@@ -273,8 +273,22 @@
      second it is moving and nobody reads it there. */
   --faded: 0.55;
 
+  /* Two durations for everything that moves, and one that is not movement.
+     The night pass counted eleven: two tokens and nine numbers written at
+     the point of use, from 220ms to 1.6s, no two of them alike and none of
+     them a decision anybody had made twice.
+
+     --dur-fast a control answering a press
+     --dur      a layer arriving or leaving, a thing changing shape
+
+     --dur-sweep is the odd one and is not UI motion at all: it is how long a
+     ring takes to reach the number under it, and the number changes once a
+     second. Without it a countdown ring steps rather than sweeps. It is a
+     property of the clock, not of the interface, which is why it is allowed
+     to be a third value and why it is named apart from the other two. */
   --dur-fast: 150ms;
   --dur: 200ms;
+  --dur-sweep: 1s;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -1489,7 +1503,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
      stylesheet: this bar moves when a task is ticked, which is a thing that
      happened rather than a thing being hovered, and at 200ms it reads as a
      jump rather than as the day filling up. The easing is the app's. */
-  transition: width 0.35s var(--ease);
+  transition: width var(--dur) var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3826,7 +3840,7 @@ select:focus {
 }
 
 .task input:checked + .check::after {
-  animation: tick-draw 260ms var(--ease) forwards;
+  animation: tick-draw var(--dur) var(--ease) forwards;
 }
 
 /* @property is not universal. Where it is missing the two custom properties
@@ -3845,7 +3859,7 @@ select:focus {
 .task input:checked + .check {
   background: var(--accent);
   border-color: var(--accent);
-  animation: pop 0.25s ease;
+  animation: pop var(--dur) ease;
 }
 
 
@@ -3907,7 +3921,7 @@ select:focus {
 }
 
 .task-leaving {
-  animation: task-leave 0.42s var(--ease) forwards;
+  animation: task-leave var(--dur) var(--ease) forwards;
   transform-origin: center left;
   pointer-events: none;
 }
@@ -5503,7 +5517,7 @@ button.danger {
   stroke: var(--cat, var(--accent));
   stroke-width: 8;
   stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
+  transition: stroke-dashoffset var(--dur-sweep) linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6159,9 +6173,11 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
   border-color: color-mix(in srgb, var(--mark) 60%, var(--border));
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .floating-clock.is-up { animation: clock-pulse 1.6s var(--ease) infinite; }
-}
+/* The pulse is gone. It ran for ever, which means it was not saying that
+   something had happened - it was asking to be looked at, once a second and
+   a half, for as long as the clock sat there. The border already goes to
+   --mark on the same state and says the same thing without moving. It was
+   also the only infinite animation in the app. */
 
 /* Its own entrance, not the undo bar's. That one is centred and carries a
    permanent translateX(-50%) in its keyframes, which with fill-mode both left
@@ -6172,11 +6188,6 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 @keyframes float-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
-}
-
-@keyframes clock-pulse {
-  0%, 100% { box-shadow: var(--e2), 0 0 0 0 color-mix(in srgb, var(--mark) 40%, transparent); }
-  50% { box-shadow: var(--e2), 0 0 0 8px color-mix(in srgb, var(--mark) 0%, transparent); }
 }
 
 .floating-clock-move {
@@ -6223,7 +6234,14 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
   stroke: var(--accent);
   stroke-width: 5;
   stroke-linecap: round;
-  transition: stroke-dashoffset 500ms linear;
+  transition: stroke-dashoffset var(--dur-sweep) linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The focus ring's own guard has been here since it was drawn; this one
+     was missed, and a sweeping ring is exactly the thing the setting is
+     about. */
+  .floating-clock-fill { transition: none; }
 }
 
 .floating-clock.is-up .floating-clock-fill { stroke: var(--mark); }
@@ -6728,7 +6746,7 @@ button.danger:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .update-notice {
-    animation: update-notice-in 220ms ease;
+    animation: update-notice-in var(--dur) ease;
   }
 }
 
@@ -12405,7 +12423,7 @@ main:has(.week) > .calendar {
   flex-shrink: 0;
 }
 
-.tour-tick.is-on { animation: tour-tick-burst 240ms var(--ease) forwards; }
+.tour-tick.is-on { animation: tour-tick-burst var(--dur) var(--ease) forwards; }
 
 @keyframes tour-tick-burst {
   0% { opacity: 0; transform: scale(0.4); }

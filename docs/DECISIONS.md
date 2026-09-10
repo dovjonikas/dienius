@@ -2887,3 +2887,30 @@ is a corner a theme cannot reach: `--r-control` and `--r-card` are the
 preset's own tokens, so a preset shipping the hand-drawn edge from THEMES
 section 5 would have changed every card and left those nine square. There is
 not one literal corner left, and `scale.test.ts` fails on the next one.
+
+## Two durations for movement, and one that is not movement
+
+The night pass counted eleven durations in the stylesheet: two tokens, and
+nine numbers written at the point of use - 220ms, 240ms, 260ms, 0.25s, 0.35s,
+0.42s, 500ms, 1s, 1.6s. No two alike, and not one of them a decision anybody
+had made twice.
+
+Seven of the nine are movement and are now `--dur`, which is the value they
+were all approximating. One comment argued for its own 350ms on the day's
+progress bar; it moves when a task is ticked, and 200ms reads as the day
+filling up just as well as 350 does, which is the sort of claim that is only
+worth a bespoke number if somebody has compared them.
+
+`--dur-sweep` is the third value and is deliberately not one of the two. It
+is how long a ring takes to reach the number under it, and that number
+changes once a second: without it a countdown ring steps instead of
+sweeping. It is a property of the clock rather than of the interface. The two
+rings that use it were on 1s and 500ms, which is the same fact told twice at
+different speeds, and the floating clock's was also missing the
+reduced-motion guard the focus ring has had since it was drawn.
+
+**And the pulse is gone.** `.floating-clock.is-up` ran an infinite pulse -
+the only infinite animation in the app. An animation that never ends is not
+saying something happened; it is asking to be looked at, once every second
+and a half, for as long as the clock sits there. The same state already turns
+the border to `--mark`, which says it without moving.
