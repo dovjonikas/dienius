@@ -8569,6 +8569,14 @@ button.danger:focus-visible {
   /* One column: three 1fr columns of a 320px screen are 96px each, which
      holds four characters of a unit. */
   .library-list-settings { grid-template-columns: minmax(0, 1fr); }
+  /* One column here, so the dot row has to say so. `span 3` against a grid
+     with one explicit column does not collapse to it - it invents the two
+     missing columns, and the three text fields are then laid out in a third
+     of the width they had. Caught on the phone sweep at 390: the name box
+     was 43px short of the word inside it. `1 / -1` on the foot below is
+     safe for the opposite reason - -1 is the last explicit line, which here
+     is the second one. */
+  .library-list-settings .field-dot { grid-column: 1; }
 }
 
 /* On the narrowest phones line two cannot hold the count and the actions
