@@ -31,13 +31,13 @@ function statusLine(status: SyncStatus): { text: string; tone: 'ok' | 'busy' | '
     case 'off':
       return { text: 'Off - this device keeps its own plan.', tone: 'busy' }
     case 'syncing':
-      return { text: 'Syncing...', tone: 'busy' }
+      return { text: 'Syncing…', tone: 'busy' }
     case 'offline':
       return { text: 'No connection. It will catch up on its own.', tone: 'busy' }
     case 'error':
       return { text: status.message ?? 'Sync did not go through. Nothing on this device was changed.', tone: 'bad' }
     case 'idle':
-      if (status.pending) return { text: 'Changes to send...', tone: 'busy' }
+      if (status.pending) return { text: 'Changes to send…', tone: 'busy' }
       return { text: `Last synced ${formatSyncedAt(status.lastSyncedAt)}.`, tone: 'ok' }
   }
 }

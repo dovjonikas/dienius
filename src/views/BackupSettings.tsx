@@ -30,7 +30,7 @@ function statusLine(status: CloudBackupStatus): { text: string; tone: 'ok' | 'bu
     case 'off':
       return { text: 'Off - add a repo and a token to keep a copy on GitHub.', tone: 'busy' }
     case 'working':
-      return { text: 'Backing up...', tone: 'busy' }
+      return { text: 'Backing up…', tone: 'busy' }
     case 'offline':
       return { text: status.message ?? 'No connection. It will try again.', tone: 'busy' }
     case 'error':
@@ -125,7 +125,7 @@ export function BackupSettings() {
             <input
               type="password"
               autoComplete="off"
-              placeholder="github_pat_..."
+              placeholder="github_pat_…"
               value={token}
               onChange={e => setToken(e.target.value)}
             />
@@ -149,7 +149,7 @@ export function BackupSettings() {
           )}
           {!dirty && isCloudBackupOn() && (
             <button className="btn-secondary" onClick={() => void readCloud()} disabled={reading}>
-              {reading ? 'Reading...' : 'Restore from cloud'}
+              {reading ? 'Reading…' : 'Restore from cloud'}
             </button>
           )}
           {!dirty && isCloudBackupOn() && (

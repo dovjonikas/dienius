@@ -148,7 +148,7 @@ export function CalendarSettings() {
                         disabled={busyId === calendar.id}
                         onClick={() => void handleRefresh(calendar)}
                       >
-                        {busyId === calendar.id ? 'Refreshing...' : 'Refresh'}
+                        {busyId === calendar.id ? 'Refreshing…' : 'Refresh'}
                       </button>
                     )}
                     <button

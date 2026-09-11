@@ -352,6 +352,13 @@
         root.style.setProperty('--on-accent', bestInk(root.style.getPropertyValue('--accent')))
         root.style.setProperty('--on-danger', bestInk(root.style.getPropertyValue('--danger')))
         root.dataset.theme = mode
+        // Before paint, for the same reason the tokens are: the browser draws
+        // the scrollbars from this, and a frame of light ones down a dark
+        // screen is exactly the kind of flash this script exists to stop.
+        // theme.ts sets both again once the store has loaded.
+        root.style.colorScheme = mode
+        var bar = document.querySelector('meta[name="theme-color"]')
+        if (bar) bar.content = root.style.getPropertyValue('--surface') || bar.content
       } catch (e) {}
     </script>
     <script id="catch-install-offer">

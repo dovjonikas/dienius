@@ -208,4 +208,22 @@ export function applyResolvedTheme(root: HTMLElement, resolved: ResolvedTheme): 
   // it reads no better than white on the accent did.
   root.style.setProperty('--on-danger', bestInk(resolved.tokens.danger))
   root.dataset.theme = resolved.mode
+  // The two things the browser paints that this stylesheet cannot reach.
+  //
+  // `color-scheme` is how a page tells the browser which way round it is, and
+  // without it the answer is "light" whatever the page looks like. Everything
+  // the browser draws itself then comes out of the wrong set: scrollbars, the
+  // dropdown a native select opens, the date and time pickers, the yellow
+  // autofill wash, the caret. On this app's dark presets that is two light
+  // scrollbars down a dark screen, which reads as something being broken
+  // rather than as a choice.
+  //
+  // `theme-color` is the browser's own chrome around the page - the address
+  // bar on Android, the status bar on an installed iPhone app. It was a fixed
+  // #121417 in the HTML, which is right for the dark presets and wrong for
+  // every light one, so a light theme wore a dark bar. It follows the paper
+  // now, as the guideline for it says it should.
+  root.style.colorScheme = resolved.mode
+  const bar = document.querySelector('meta[name="theme-color"]')
+  if (bar instanceof HTMLMetaElement) bar.content = resolved.tokens.surface
 }

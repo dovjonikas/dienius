@@ -2519,6 +2519,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 .gap-picker {
+  overscroll-behavior: contain;
   position: fixed;
   left: 0;
   right: 0;
@@ -5207,6 +5208,7 @@ button.danger {
 }
 
 .task-actions-sheet {
+  overscroll-behavior: contain;
   position: fixed;
   left: 0;
   right: 0;
@@ -5332,6 +5334,7 @@ button.danger {
 }
 
 .task-gap-offers {
+  overscroll-behavior: contain;
   position: fixed;
   left: 0;
   right: 0;
@@ -8811,6 +8814,7 @@ button.danger:focus-visible {
 .task-detail-close:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
 
 .task-detail-body {
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
@@ -9138,7 +9142,7 @@ button.task-note-mark.is-open {
 .note-reader-tab.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); }
 
 /* The text scrolls, not the page behind it. */
-.note-reader-body { overflow-y: auto; min-height: 0; }
+.note-reader-body { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
 .note-reader-body .note-lines { color: var(--text); font-size: var(--t-md); }
 
 /* One line in the block editor - see BlockNote.tsx. Everything it needs to
@@ -9402,7 +9406,8 @@ button.task-note-mark.is-open {
 
 @media (prefers-reduced-motion: no-preference) {
   .shortcuts-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
-  .shortcuts { animation: detail-in var(--dur) var(--ease) both; }
+  .shortcuts {
+  overscroll-behavior: contain; animation: detail-in var(--dur) var(--ease) both; }
 }
 
 .shortcuts {
@@ -9950,6 +9955,7 @@ button.task-note-mark.is-open {
 .palette-input:focus { outline: none; background: none; border-color: color-mix(in srgb, var(--border) 70%, transparent); }
 
 .palette-results {
+  overscroll-behavior: contain;
   margin: 0;
   padding: var(--s2);
   list-style: none;
