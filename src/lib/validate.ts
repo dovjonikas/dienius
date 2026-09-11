@@ -218,6 +218,16 @@ const SUBTASK = record({ id: string, title: string, done: boolean, minutes: opti
 
 const ORIGIN = record({ type: oneOf(ORIGIN_TYPES), sourceId: optional(string), blockId: optional(string) })
 
+// What a template block last handed a task - see Task.fromBlock. Every field
+// is optional because a block need not have one, and the whole object is
+// absent on anything written by hand.
+const FROM_BLOCK = record({
+  title: optional(string),
+  time: optional(string),
+  minutes: optional(minutes),
+  category: categoryRef,
+})
+
 const TASK = record({
   id: string,
   title: string,
@@ -236,6 +246,7 @@ const TASK = record({
   libraryRef: optional(LIBRARY_REF),
   note: optional(string),
   templateNote: optional(string),
+  fromBlock: optional(FROM_BLOCK),
   noteExpanded: optional(boolean),
   link: optional(string),
   highlight: optional(boolean),

@@ -135,6 +135,31 @@ export function refreshFromTemplate(
     // was stamped before the block had a note at all. `noteExpanded` travels
     // with the note and is never the day's, so it comes along either way.
     //
+    // The other fields the block owns, on the same principle and with the
+    // same care: adopt where the task still carries exactly what the block
+    // gave it last time, and leave anything somebody has since changed. The
+    // echo is what makes that answerable at all - after a stamp the day's
+    // title *is* the block's title, so the two being equal says nothing.
+    //
+    // A task with no echo was stamped before this was recorded, or written
+    // by hand. There is nothing to compare, so nothing is touched, and a
+    // re-stamp puts that right in the one place a person has asked for it.
+    const echo = task.fromBlock
+    if (echo) {
+      const gave = { title: block.title, time: block.time, minutes: block.minutes, category: block.category }
+      /** @returns the block's value where the day is still carrying the old one. */
+      const follow = <K extends keyof typeof gave>(key: K): boolean =>
+        next[key] === echo[key] && gave[key] !== echo[key]
+      const moved: Partial<Task> = {}
+      // A bound title belongs to the list rather than to the block, and the
+      // branch above has already settled it.
+      if (!block.libraryListId && follow('title')) moved.title = block.title
+      if (follow('time')) moved.time = block.time
+      if (follow('minutes')) moved.minutes = block.minutes
+      if (follow('category')) moved.category = block.category
+      if (Object.keys(moved).length > 0) next = { ...next, ...moved, fromBlock: { ...echo, ...gave } }
+    }
+
     // Not `ownNote`, which the stamp uses, and the difference is a real one.
     // `ownNote` reads a note the owner deleted as "has none", so a stamp
     // hands it back - defensible there, because stamping is a person saying
@@ -268,6 +293,11 @@ export function applyStamps(
         minutes: b.minutes,
         unbounded: b.unbounded,
         category: b.category,
+        // What was handed over, kept beside it - see Task.fromBlock. It is
+        // what lets a day opened later tell "the block changed its mind"
+        // from "somebody moved this", for the fields where the two look
+        // identical the moment after a stamp.
+        fromBlock: { title: bound?.title ?? b.title, time: b.time, minutes: b.minutes, category: b.category },
         // State a day earned, kept: whether it was one of the day's key
         // tasks, how far it has been carried. Editing a template is a
         // statement about its shape, not permission to erase what happened on

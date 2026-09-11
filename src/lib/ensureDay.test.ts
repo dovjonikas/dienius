@@ -349,3 +349,108 @@ test('a deleted note is not replaced by the block changing its mind either', () 
 
   expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
 })
+
+/**
+ * The rest of what a block hands over, on the same rule as the note.
+ *
+ * The owner hit this family twice in a morning - a list bound to a block,
+ * then a note written on one - and the next one along is a block renamed,
+ * moved, resized or recoloured. Telling "the block changed its mind" from
+ * "somebody moved this" needs what the block gave last time, because the
+ * moment after a stamp the day's title *is* the block's title. See
+ * `Task.fromBlock`.
+ */
+function stampedWithEcho(over: Partial<AppData['days'][string]['tasks'][number]> = {}): AppData {
+  const data = defaultData()
+  data.templates = [{
+    id: 'morning',
+    name: 'Morning',
+    color: '#a7c4f5',
+    blocks: [{ id: 'm1', title: 'Meditation', time: '07:00', minutes: 20, category: 'routine' }],
+  }]
+  data.days = {
+    [THE_DAY_AFTER]: {
+      date: THE_DAY_AFTER,
+      templateId: 'morning',
+      autoApplied: true,
+      tasks: [{
+        id: 't1',
+        title: 'Meditation',
+        done: false,
+        time: '07:00',
+        minutes: 20,
+        category: 'routine',
+        fromTemplate: true,
+        origin: { type: 'template', sourceId: 'morning', blockId: 'm1' },
+        fromBlock: { title: 'Meditation', time: '07:00', minutes: 20, category: 'routine' },
+        ...over,
+      }],
+    },
+  }
+  return data
+}
+
+test('a block renamed after the stamp renames the day that is waiting', () => {
+  const data = stampedWithEcho()
+  data.templates[0].blocks[0].title = 'Sit and breathe'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.title).toBe('Sit and breathe')
+  expect(task.fromBlock?.title).toBe('Sit and breathe')
+})
+
+test('a block moved, lengthened or recoloured moves the day with it', () => {
+  const data = stampedWithEcho()
+  data.templates[0].blocks[0].time = '06:30'
+  data.templates[0].blocks[0].minutes = 30
+  data.templates[0].blocks[0].category = 'health'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.time).toBe('06:30')
+  expect(task.minutes).toBe(30)
+  expect(task.category).toBe('health')
+})
+
+test('a task somebody moved by hand is not moved back by a template edit', () => {
+  // The whole reason the echo exists. The day says 08:15 because a person
+  // put it there; the block saying 06:30 now is not permission to undo that.
+  const data = stampedWithEcho({ time: '08:15' })
+  data.templates[0].blocks[0].time = '06:30'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)
+  expect(task).toBeNull()
+})
+
+test('one field edited by hand does not freeze the others', () => {
+  const data = stampedWithEcho({ time: '08:15' })
+  data.templates[0].blocks[0].time = '06:30'
+  data.templates[0].blocks[0].title = 'Sit and breathe'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.title).toBe('Sit and breathe')
+  expect(task.time).toBe('08:15')
+})
+
+test('a task stamped before any of this was recorded is left entirely alone', () => {
+  const data = stampedWithEcho({ fromBlock: undefined })
+  data.templates[0].blocks[0].title = 'Sit and breathe'
+  data.templates[0].blocks[0].time = '06:30'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+test('a day already lived is not re-shaped by a template edit', () => {
+  const data = stampedWithEcho()
+  data.templates[0].blocks[0].title = 'Sit and breathe'
+  data.days[THE_DAY_BEFORE] = { ...data.days[THE_DAY_AFTER], date: THE_DAY_BEFORE }
+  delete data.days[THE_DAY_AFTER]
+
+  expect(ensuredDay(data, THE_DAY_BEFORE, THURSDAY)).toBeNull()
+})
+
+test('a task already done keeps the shape it was done in', () => {
+  const data = stampedWithEcho({ done: true })
+  data.templates[0].blocks[0].title = 'Sit and breathe'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})

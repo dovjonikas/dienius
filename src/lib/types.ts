@@ -350,6 +350,38 @@ export interface Task extends Timestamped {
    */
   templateNote?: string
   /**
+   * What the block last gave this task, for the other fields the block owns.
+   *
+   * `templateNote` above answers one question for one field, and the same
+   * question is owed by every field a block hands over. The owner hit it
+   * twice in one morning: a list bound to a block, then a note written on a
+   * block, neither reaching days that were already on the calendar. The next
+   * one along is a block renamed or moved, which lands the same way.
+   *
+   * Why a stored echo rather than a comparison with the block: after a stamp
+   * the day's title *is* the block's title, so the two are equal whether the
+   * day was touched or not, and equality alone cannot say which. What the
+   * block gave last time can. A task still carrying it has not been edited,
+   * so the block is free to change its mind; a task carrying anything else
+   * was changed by somebody, and a template edit is not permission to undo
+   * that.
+   *
+   * Only the fields somebody actually edits on a day - what it is called,
+   * when it is, how long it takes, which category it belongs to. `core` and
+   * `unbounded` are template shape rather than day state and are not edited
+   * on a day at all.
+   *
+   * Absent on every task written by hand and on every task stamped before
+   * this existed, where the answer is "cannot tell" and nothing is touched -
+   * the same safe degradation `templateNote` has.
+   */
+  fromBlock?: {
+    title?: string
+    time?: string
+    minutes?: number
+    category?: string
+  }
+  /**
    * Whether the note shows without being asked for.
    *
    * Off by default, which is every note ever written: a mark on the card,
