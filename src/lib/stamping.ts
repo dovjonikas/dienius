@@ -57,7 +57,7 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
 }
 
 /**
- * A day's library-bound tasks, re-pointed at whatever the list says now.
+ * A day's tasks, asked again for what their blocks give them.
  *
  * The binding was resolved once, at the moment the day was stamped, and then
  * never again - which is exactly wrong for the one thing a binding is for. A
@@ -82,8 +82,28 @@ function boundTo(list: LibraryList | undefined): { title: string; ref: Task['lib
  * **And only what the block gave.** A task the owner renamed by hand is
  * still re-pointed - the title comes from the block on a re-stamp too, and a
  * bound task's title is the book's name rather than anything anybody typed.
+ *
+ * ---
+ *
+ * **The note is the second thing that goes stale, and for the same reason.**
+ * The owner stamped a template, then wrote the block's note, and the days
+ * already on the calendar went on showing nothing: "neatsiranda, kol
+ * neperdedu is naujo template i kalendoriu". A block's note is not a copy
+ * taken at stamp time either - it is what that block is, in the words you
+ * would say to yourself, and editing it is editing every day it has not yet
+ * been written on.
+ *
+ * Only two of the things a block hands a task can be refreshed, and it is
+ * worth being exact about why. Refreshing anything means being able to tell
+ * "the day still carries what the block gave it" from "somebody changed
+ * this", and the app records the block's own last answer for exactly two
+ * fields: `templateNote` beside `note`, and `libraryRef` beside `title`.
+ * For a time, a length or a category it keeps no such record, so a day that
+ * differs from its block might be a day somebody moved by hand, and handing
+ * those back would quietly undo real edits. Those still wait for a re-stamp,
+ * which is a person saying "make this day the template again".
  */
-export function rebindLibrary(
+export function refreshFromTemplate(
   day: DayPlan,
   templates: Template[],
   library: LibraryList[],
@@ -96,17 +116,40 @@ export function rebindLibrary(
     const block = templates
       .find(t => t.id === origin.sourceId)
       ?.blocks.find(b => b.id === origin.blockId)
-    if (!block?.libraryListId) return task
+    if (!block) return task
+    let next = task
 
-    const bound = boundTo(library.find(l => l.id === block.libraryListId))
-    // Nothing to point at: the list is gone, or everything in it is
-    // finished. The block's own title stands, which is what it does at stamp
-    // time in the same case.
-    const title = bound?.title ?? block.title
-    const ref = bound?.ref
-    if (task.title === title && task.libraryRef?.itemId === ref?.itemId) return task
+    if (block.libraryListId) {
+      const bound = boundTo(library.find(l => l.id === block.libraryListId))
+      // Nothing to point at: the list is gone, or everything in it is
+      // finished. The block's own title stands, which is what it does at
+      // stamp time in the same case.
+      const title = bound?.title ?? block.title
+      const ref = bound?.ref
+      if (next.title !== title || next.libraryRef?.itemId !== ref?.itemId) next = { ...next, title, libraryRef: ref }
+    }
+
+    // A task still carrying exactly what the block last gave it has not been
+    // written on, so the block is free to change its mind. Both absent is the
+    // same answer by the same test, and that is the reported case: the day
+    // was stamped before the block had a note at all. `noteExpanded` travels
+    // with the note and is never the day's, so it comes along either way.
+    //
+    // Not `ownNote`, which the stamp uses, and the difference is a real one.
+    // `ownNote` reads a note the owner deleted as "has none", so a stamp
+    // hands it back - defensible there, because stamping is a person saying
+    // "make this day the template again". Opening a day is not that, and a
+    // note that came back every time the day was looked at would be a note
+    // that cannot be deleted. `note` absent while `templateNote` is still
+    // there is exactly the shape of a deletion, and it is left alone.
+    const noteIsStillTheBlocks = task.note === task.templateNote
+    if (noteIsStillTheBlocks && (next.note !== block.note || next.templateNote !== block.note || next.noteExpanded !== block.noteExpanded)) {
+      next = { ...next, note: block.note, templateNote: block.note, noteExpanded: block.noteExpanded }
+    }
+
+    if (next === task) return task
     changed = true
-    return { ...task, title, libraryRef: ref }
+    return next
   })
   return changed ? { ...day, tasks } : null
 }

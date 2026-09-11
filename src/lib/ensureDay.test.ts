@@ -127,7 +127,7 @@ test('a day with nothing owed to it is still marked as seen, and is empty rather
 // is gated on `autoApplied`, which is what stops a day being re-stamped every
 // time somebody looks at it; a binding cannot work that way, because it
 // resolves to whatever is next in a list and a list changes after the stamp
-// far more often than before it. See rebindLibrary.
+// far more often than before it. See refreshFromTemplate.
 
 const READING: Template = {
   id: 'read',
@@ -227,4 +227,125 @@ test('a list with nothing left unfinished gives the block its own title back', (
   const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
   expect(task.title).toBe('Read: MIND')
   expect(task.libraryRef).toBeUndefined()
+})
+
+/**
+ * The second thing that went stale after a stamp, reported the same way:
+ * "sudedu i kalendoriu jau savo template, tada tam template idedu note, tai
+ * note neatsiranda, kol neperdedu is naujo template i kalendoriu".
+ *
+ * A block's note is not a copy taken at the moment of the stamp. It is what
+ * that block is, in the owner's own words, and writing it is writing every
+ * day it has not yet been written on.
+ */
+function stampedPlain(taskNote?: { note?: string; templateNote?: string }): AppData {
+  const data = defaultData()
+  data.templates = [{
+    id: 'morning',
+    name: 'Morning',
+    color: '#a7c4f5',
+    blocks: [{ id: 'm1', title: 'Meditation', time: '07:00', minutes: 20 }],
+  }]
+  data.days = {
+    [THE_DAY_AFTER]: {
+      date: THE_DAY_AFTER,
+      templateId: 'morning',
+      autoApplied: true,
+      tasks: [{
+        id: 't1',
+        title: 'Meditation',
+        done: false,
+        time: '07:00',
+        minutes: 20,
+        fromTemplate: true,
+        origin: { type: 'template', sourceId: 'morning', blockId: 'm1' },
+        ...taskNote,
+      }],
+    },
+  }
+  return data
+}
+
+test('a note written on the block after the stamp reaches the day already on the calendar', () => {
+  const data = stampedPlain()
+  data.templates[0].blocks[0].note = 'Ten minutes sitting, ten walking.'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.note).toBe('Ten minutes sitting, ten walking.')
+  // And the record of what the block gave, so the next edit can tell this
+  // apart from something the day wrote for itself.
+  expect(task.templateNote).toBe('Ten minutes sitting, ten walking.')
+})
+
+test('a note the block changes its mind about follows, on a day that kept it', () => {
+  const data = stampedPlain({ note: 'The first words', templateNote: 'The first words' })
+  data.templates[0].blocks[0].note = 'The words after thinking about it'
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.note).toBe('The words after thinking about it')
+})
+
+test('a note the day wrote for itself is never overwritten by the block', () => {
+  const data = stampedPlain({ note: 'What I actually did this morning', templateNote: 'The first words' })
+  data.templates[0].blocks[0].note = 'The words after thinking about it'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+test('showing the note on the card without opening it follows the block as well', () => {
+  const data = stampedPlain({ note: 'Ten minutes', templateNote: 'Ten minutes' })
+  data.templates[0].blocks[0].note = 'Ten minutes'
+  data.templates[0].blocks[0].noteExpanded = true
+
+  const task = ensuredDay(data, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.noteExpanded).toBe(true)
+})
+
+test('a day that is already the template is left exactly as it is', () => {
+  const data = stampedPlain({ note: 'Ten minutes', templateNote: 'Ten minutes' })
+  data.templates[0].blocks[0].note = 'Ten minutes'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+test('a day already lived keeps the note it had, whatever the block says now', () => {
+  const data = stampedPlain()
+  data.templates[0].blocks[0].note = 'Written this evening, about tomorrow'
+  data.days[THE_DAY_BEFORE] = { ...data.days[THE_DAY_AFTER], date: THE_DAY_BEFORE }
+  delete data.days[THE_DAY_AFTER]
+
+  expect(ensuredDay(data, THE_DAY_BEFORE, THURSDAY)).toBeNull()
+})
+
+test('a task already done keeps the note it was done with', () => {
+  const data = stampedPlain()
+  data.days[THE_DAY_AFTER].tasks[0].done = true
+  data.templates[0].blocks[0].note = 'Written after it was ticked'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+/**
+ * The one shape that must not be read as "this day has no note of its own".
+ *
+ * A note the owner deleted leaves `note` absent with `templateNote` still
+ * beside it, which is exactly the shape of a deletion. `ownNote` - the test
+ * the stamp uses - reads it as "has none" and hands the block's note back,
+ * which is defensible for a stamp, because stamping is a person saying "make
+ * this day the template again". Opening a day is not that, and a note that
+ * came back every time the day was looked at would be one that cannot be
+ * deleted.
+ */
+test('a note the day deleted is not handed back when the day is opened', () => {
+  const data = stampedPlain({ templateNote: 'Ten minutes sitting, ten walking.' })
+  data.templates[0].blocks[0].note = 'Ten minutes sitting, ten walking.'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})
+
+test('a deleted note is not replaced by the block changing its mind either', () => {
+  const data = stampedPlain({ templateNote: 'The first words' })
+  data.templates[0].blocks[0].note = 'The words after thinking about it'
+
+  expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
 })

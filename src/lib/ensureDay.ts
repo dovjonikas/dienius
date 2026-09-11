@@ -2,7 +2,7 @@ import type { AppData, DayPlan } from './types'
 import { todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
-import { applyStamps, rebindLibrary } from './stamping'
+import { applyStamps, refreshFromTemplate } from './stamping'
 
 /**
  * Everything a day gets on its own, as a pure function of the state.
@@ -54,12 +54,12 @@ export function ensuredDay(data: AppData, date: string, today: string = todayKey
    * flag that says so, and it is what stops a day being re-stamped every
    * time somebody looks at it. A library binding cannot work that way: it
    * resolves to whatever is next in a list, and a list changes after the
-   * stamp far more often than before it. See rebindLibrary.
+   * stamp far more often than before it. See refreshFromTemplate.
    *
    * Today and the days ahead only. A day that has been lived says what was
    * on it.
    */
-  const rebound = existing && date >= today ? rebindLibrary(existing, data.templates, data.library) : null
+  const rebound = existing && date >= today ? refreshFromTemplate(existing, data.templates, data.library) : null
   const withRebind = rebound ? { ...data.days, [date]: rebound } : data.days
 
   if (existing?.autoApplied) return rebound ? { days: withRebind, changed: true } : null
