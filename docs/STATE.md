@@ -6,7 +6,53 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.20, the night pass.
+**Last updated:** v2.21, the day the owner used it.
+
+## v2.21 - eight reports in one day, and what they had in common
+
+The owner used the app for a day and reported eight things. Six were real
+defects, every one of them older than the wave that found them, and none of
+them from v2.20. What makes them worth a section together is that they are
+four shapes, not eight problems.
+
+**A day resolves something once and never asks again.** A list bound to a
+block, then a note written on a block, neither reaching days already on the
+calendar - "speju is naujo turiu idet". Both were fixed one field at a time
+before the shape was obvious. It is general now: a task remembers what its
+block last gave it (`Task.fromBlock`, the idea `templateNote` already carried
+for one field), and a day opened later takes the block's new value for any
+field it is still carrying the old one in. A field somebody has since changed
+is left alone, and that distinction is the whole point: after a stamp the
+day's title *is* the block's title, so comparing them says nothing about who
+put it there.
+
+**A measuring pass that has never been made to fail.** The sweep ran at three
+widths and reported zero while the page scrolled sideways at 1024 - the one
+width where a layout meant for wide screens is at its tightest, and an iPad in
+landscape. Its three columns needed 968px and the window gives 926; the
+arithmetic in the comment had been done by hand twice and both times it forgot
+the 56px navigation rail. The sweep walks 1024 now.
+
+**Nothing measured how a thing is placed.** The tick was drawn against the
+left wall of its own checkbox, running from -0.1px to 10.5px across a twenty
+pixel box, because the mark is a box turned forty-five degrees about its own
+top left corner and the numbers placed it before the turn. The digest kept
+three straight edges and let the air between them change on every row.
+`npm run precision` is new and checks both, on every screen in both themes.
+It reported nothing for its first two planted defects, which is how the hole
+in it was found before it was believed.
+
+**A browser contract taken on trust.** The install offer arrives once, early,
+and the listener was armed inside the bundle - so on a fast load nobody was
+listening and Settings said "Not available here" for the session. It is caught
+in the head now. `color-scheme` was never set, so every browser-drawn thing -
+scrollbars, native dropdowns, date pickers, the autofill wash - came out of
+the light set on a dark screen. The backup's retry re-read a sha through a
+plain fetch, which GitHub caches for a minute, so the retry could carry the
+sha that had just been refused.
+
+And one sentence that claimed something it could not know: "another device
+wrote the backup at the same moment", read by an owner with one device.
 
 ## v2.20 - the night pass
 
