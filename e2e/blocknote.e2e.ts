@@ -140,3 +140,50 @@ test('the editor says what a heading does, and the card does it', async ({ page 
   await expect(page.getByRole('dialog', { name: 'Eggs, on Meal' })).toBeVisible()
   await expect(page.getByText('Four, and the bread.')).toBeVisible()
 })
+
+/**
+ * The note written after the day was already stamped.
+ *
+ * The owner's report: "sudedu i kalendoriu jau savo template, tada tam
+ * template idedu note, tai note neatsiranda, kol neperdedu is naujo template
+ * i kalendoriu". A block's note is not a copy taken at the moment of the
+ * stamp - it is what that block is, and writing it is writing every day it
+ * has not yet been written on.
+ *
+ * Walked in a browser rather than left to the unit tests because the same
+ * family of bug - a day resolving something once and never asking again -
+ * was found by walking the whole path and not by any test of a part of it.
+ */
+test('a note added to the block afterwards reaches the day already stamped', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'the template rail is the wide layout&apos;s')
+  await openFreshAt(page, wednesdayAt(10))
+
+  await page.getByRole('button', { name: 'Templates', exact: true }).first().click()
+  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByRole('button', { name: /^A day/ }).click()
+  await page.getByPlaceholder('Template name').fill('Mornings')
+  await page.getByPlaceholder('09:00').fill('07:00')
+  await page.getByPlaceholder('What happens').fill('Meditation')
+  await page.getByRole('button', { name: 'Add a block' }).click()
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  // Stamped first, with no note anywhere.
+  await page.getByRole('button', { name: 'Today', exact: true }).first().click()
+  await page.locator('.template-rail').getByRole('button', { name: 'Mornings' }).click()
+  await expect(card(page, 'Meditation')).toBeVisible()
+  await expect(page.getByRole('button', { name: /note on Meditation/ })).toHaveCount(0)
+
+  // The note is written now, on a day that is already on the calendar.
+  await page.getByRole('button', { name: 'Templates', exact: true }).first().click()
+  await page.getByRole('button', { name: 'Edit Mornings' }).click()
+  await page.getByRole('button', { name: 'Add a note to Meditation' }).click()
+  await page.getByRole('textbox', { name: 'Note on Meditation' }).fill('Ten minutes sitting, ten walking.')
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  // And the day that was already stamped is carrying it, with nothing pressed
+  // and no second stamp.
+  await page.getByRole('button', { name: 'Today', exact: true }).first().click()
+  const block = card(page, 'Meditation')
+  await block.getByRole('button', { name: 'Read the note on Meditation' }).click()
+  await expect(block.getByText('Ten minutes sitting, ten walking.')).toBeVisible()
+})
