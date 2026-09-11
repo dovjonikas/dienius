@@ -18,6 +18,7 @@ import {
   compareSummaries,
   summarise,
   toBase64,
+  writeFile,
   GitHubError,
 } from './cloudBackup'
 import { actions, getData } from './store'
@@ -38,6 +39,7 @@ interface Call {
   method: string
   headers: Record<string, string>
   body: Record<string, unknown> | null
+  cache: RequestCache | undefined
 }
 
 let calls: Call[]
@@ -51,7 +53,7 @@ function respond(url: string, init: RequestInit = {}): Promise<Response> {
   const headers = (init.headers ?? {}) as Record<string, string>
   const path = url.replace(/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+\/contents\//, '')
   const body = init.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : null
-  calls.push({ url, method, headers, body })
+  calls.push({ url, method, headers, body, cache: init.cache })
   if (method === 'GET') {
     const file = stored.get(path)
     if (!file) return Promise.resolve(new Response('{"message":"Not Found"}', { status: 404 }))
@@ -354,4 +356,39 @@ test('nothing is marked as losing when the two copies agree', () => {
   data.templates = [{ id: 't', name: 'Working day', color: '#8aa4f2', blocks: [] }]
   const rows = compareSummaries(summarise(data), summarise(data))
   expect(rows.some(r => r.loses)).toBe(false)
+})
+
+/**
+ * The retry has to actually read.
+ *
+ * A write sends the sha it last read, and a mismatch is answered by reading
+ * the sha again and writing once more. GitHub sends
+ * `Cache-Control: private, max-age=60` on a Contents response, so a plain
+ * re-read inside that minute can be answered out of the browser's own cache
+ * with the sha that was just refused - and the second write is then certain
+ * to be refused too, on one device, with nothing else touching the repo.
+ * That is what the owner saw, under a sentence blaming a second device they
+ * do not have.
+ */
+test('every read of the file goes to GitHub rather than to the browser cache', async () => {
+  stored.set('data/state.json', { sha: 'sha-old', content: '{}' })
+  putAnswers = [409]
+
+  await writeFile('data/state.json', '{"a":1}', 'write')
+
+  const gets = calls.filter(c => c.method === 'GET')
+  expect(gets.length).toBe(2)
+  for (const get of gets) expect(get.cache).toBe('no-store')
+  // And it did write again, with the sha the second read gave it.
+  expect(calls.filter(c => c.method === 'PUT').length).toBe(2)
+})
+
+test('a conflict that survives the retry says what happened, not who did it', () => {
+  const said = describeFailure(new GitHubError(409, ''))
+  // It claimed "another device wrote the backup at the same moment", which
+  // this code cannot know and which reads as nonsense to somebody with one
+  // device.
+  expect(said).not.toMatch(/another device/i)
+  expect(said).toMatch(/changed between reading it and writing it/)
+  expect(said).toMatch(/something else is writing to that repo/)
 })

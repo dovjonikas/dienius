@@ -286,9 +286,18 @@ function headers(): Record<string, string> {
   }
 }
 
-/** The file's current sha, or null when it does not exist yet. */
+/**
+ * The file's current sha, or null when it does not exist yet.
+ *
+ * `no-store`, and it is the difference between the retry below working and
+ * being theatre. GitHub sends `Cache-Control: private, max-age=60` on a
+ * Contents response, so a plain re-read inside that minute can be answered
+ * out of the browser's own cache with the sha that was just refused - and a
+ * second write carrying it is certain to be refused as well. Re-reading has
+ * to actually read.
+ */
 async function shaOf(path: string): Promise<string | null> {
-  const res = await fetch(apiUrl(path), { headers: headers() })
+  const res = await fetch(apiUrl(path), { headers: headers(), cache: 'no-store' })
   if (res.status === 404) return null
   if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} reading ${path}`)
   const body = (await res.json()) as { sha?: unknown }
@@ -321,7 +330,9 @@ export async function writeFile(path: string, content: string, message: string):
 
 /** Reads one file's text, or null when it is not there. */
 export async function readFile(path: string): Promise<string | null> {
-  const res = await fetch(apiUrl(path), { headers: { ...headers(), Accept: 'application/vnd.github.raw+json' } })
+  // Never from the cache - see shaOf. A restore reading a copy a minute out
+  // of date would be this feature doing the one thing it must not.
+  const res = await fetch(apiUrl(path), { headers: { ...headers(), Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' })
   if (res.status === 404) return null
   if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} reading ${path}`)
   return res.text()
@@ -355,7 +366,16 @@ export function describeFailure(err: unknown): string {
       return 'GitHub refused the token. It needs Contents read and write on that one repo, and it may have expired.'
     }
     if (err.status === 404) return 'That repo was not found. Check the name, and that the token can see it.'
-    if (err.status === 409 || err.status === 422) return 'Another device wrote the backup at the same moment. It will try again.'
+    // It used to say "another device wrote the backup at the same moment",
+    // which is a cause this code cannot know and which the owner read as
+    // nonsense, having only one device. What is actually true is what the
+    // API said: the file moved between the read and the write, twice over,
+    // because the write is tried again with a fresh sha before it gives up.
+    // The second sentence is the useful one for somebody with one device:
+    // two tabs, the GitHub web editor, or anything else writing that repo.
+    if (err.status === 409 || err.status === 422) {
+      return 'The file on GitHub changed between reading it and writing it, twice over. It will try again, and if it keeps saying this then something else is writing to that repo.'
+    }
     return `GitHub answered ${err.status}. It will try again.`
   }
   return 'Cannot reach GitHub. It will try again when there is a connection.'
