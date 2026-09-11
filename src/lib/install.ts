@@ -113,6 +113,40 @@ export function isInstalled(): boolean {
 }
 
 /**
+ * Whether this app is installed on this device, asked of the browser rather
+ * than inferred from the window it is being looked at in.
+ *
+ * `isInstalled` above answers a narrower question than its name suggests: it
+ * asks whether *this page* is running as the installed app. Open the same app
+ * in an ordinary tab while it sits installed in the launcher and the answer
+ * is no, so Settings offered to install something that already was - and
+ * because an installed app is exactly the case where a browser stops firing
+ * `beforeinstallprompt`, the row could not offer it either. The result was
+ * "Not available here" on a browser where it was available and done: the
+ * owner had installed it the day before and found it sitting in edge://apps.
+ *
+ * `getInstalledRelatedApps` is the question with the right shape, and it
+ * needs the manifest to name itself under `related_applications` - see
+ * public/manifest.webmanifest. Chromium only; everywhere else it is absent
+ * and the answer is "do not know", which is the same answer this had before.
+ */
+export async function isInstalledElsewhere(): Promise<boolean> {
+  const ask = (navigator as Navigator & {
+    getInstalledRelatedApps?: () => Promise<{ platform?: string }[]>
+  }).getInstalledRelatedApps
+  if (typeof ask !== 'function') return false
+  try {
+    const found = await ask.call(navigator)
+    return found.some(app => app.platform === 'webapp')
+  } catch {
+    // Refused in an insecure context, and in a few embedded ones. Not knowing
+    // is not the same as knowing it is not installed, but it is what can be
+    // said, and it leaves the row exactly where it was.
+    return false
+  }
+}
+
+/**
  * Shows the browser's own install dialog. Returns what the person chose, or
  * 'unavailable' when there was no held event to show - which is every call
  * on a browser that never fired one.

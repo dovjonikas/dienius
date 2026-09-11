@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getSaveOk, useAppData } from '../lib/store'
-import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall } from '../lib/install'
+import { canInstall, isInstalled,
+  isInstalledElsewhere, onInstallAvailabilityChange, promptInstall } from '../lib/install'
 import { clearSnapshots, listSnapshots, readSnapshot, SNAPSHOTS_KEPT, type SnapshotMeta } from '../lib/snapshots'
 import { STORAGE_KEY, exportJson } from '../lib/storage'
 import { addDays, todayKey } from '../lib/dates'
@@ -87,8 +88,24 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
 
   useEffect(() => onInstallAvailabilityChange(() => {
     setInstallable(canInstall())
-    setInstalled(isInstalled())
+    setInstalled(current => current || isInstalled())
   }), [])
+
+  // And the third way it can already be installed: sitting in the launcher
+  // while this page is an ordinary tab. isInstalled only sees the window it
+  // is in, so that case read as "not installable and not installed", which
+  // is the one wrong thing this row could say - see isInstalledElsewhere.
+  // Asked once, when Settings opens; installing something takes a press and
+  // that press comes back through the subscription above.
+  useEffect(() => {
+    let live = true
+    void isInstalledElsewhere().then(yes => {
+      if (live && yes) setInstalled(true)
+    })
+    return () => {
+      live = false
+    }
+  }, [])
 
   // Read once, when Settings opens. A list that refreshes itself would be
   // watching a store that changes once a day.

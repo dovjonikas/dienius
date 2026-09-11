@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { canInstall, isInstalled, onInstallAvailabilityChange, promptInstall, resetInstallForTests, watchInstallPrompt } from './install'
+import { canInstall, isInstalledElsewhere, isInstalled, onInstallAvailabilityChange, promptInstall, resetInstallForTests, watchInstallPrompt } from './install'
 
 beforeEach(() => {
   resetInstallForTests()
@@ -135,4 +135,44 @@ test('the offer the head is holding is shown, and only once', async () => {
   expect(canInstall()).toBe(false)
   expect((window as Window & { __dieniusInstallOffer?: unknown }).__dieniusInstallOffer).toBeNull()
   expect(await promptInstall()).toBe('unavailable')
+})
+
+/**
+ * The third way it can already be installed: sitting in the launcher while
+ * this page is an ordinary tab.
+ *
+ * `isInstalled` answers a narrower question than its name - whether *this
+ * page* is the installed app - so that case read as neither installed nor
+ * installable, and the row said "Not available here" on a browser where it
+ * was installed and done. The owner found it in edge://apps the same
+ * minute.
+ */
+test('the browser is asked whether this app is installed, not just this window', async () => {
+  vi.stubGlobal('navigator', Object.assign(Object.create(Object.getPrototypeOf(navigator)), navigator, {
+    getInstalledRelatedApps: async () => [{ platform: 'webapp', url: 'https://example.com/manifest.webmanifest' }],
+  }))
+  expect(await isInstalledElsewhere()).toBe(true)
+})
+
+test('a browser with no such question answers no, which is where the row already was', async () => {
+  vi.stubGlobal('navigator', Object.assign(Object.create(Object.getPrototypeOf(navigator)), navigator, {
+    getInstalledRelatedApps: undefined,
+  }))
+  expect(await isInstalledElsewhere()).toBe(false)
+})
+
+test('a related app that is not this app is not this app', async () => {
+  vi.stubGlobal('navigator', Object.assign(Object.create(Object.getPrototypeOf(navigator)), navigator, {
+    getInstalledRelatedApps: async () => [{ platform: 'play', id: 'com.example.other' }],
+  }))
+  expect(await isInstalledElsewhere()).toBe(false)
+})
+
+test('a browser that refuses the question is not read as an answer', async () => {
+  vi.stubGlobal('navigator', Object.assign(Object.create(Object.getPrototypeOf(navigator)), navigator, {
+    getInstalledRelatedApps: async () => {
+      throw new DOMException('Not allowed', 'NotAllowedError')
+    },
+  }))
+  expect(await isInstalledElsewhere()).toBe(false)
 })
