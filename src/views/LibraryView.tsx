@@ -18,6 +18,7 @@ import {
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
 import { linkRefusal, parseLink } from '../lib/link'
+import { ProgressControl } from '../widgets/ProgressControl'
 import { canPickFile, indexedDbHandleStore, onDeviceFile, onDeviceLink, pickFile } from '../lib/localFile'
 import { LinkOut } from './LinkOut'
 import { PALETTE_COLORS } from '../lib/colors'
@@ -781,7 +782,6 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
     setLinkSaid(undefined)
     actions.updateLibraryItem(list.id, item.id, { link: chosen })
   }
-  const [page, setPage] = useState(String(itemProgress(item)))
   const [total, setTotal] = useState(item.total === undefined ? '' : String(item.total))
   const [seasons, setSeasons] = useState(item.seasons === undefined ? '' : String(item.seasons))
   const [scheduled, setScheduled] = useState<string | null>(null)
@@ -863,59 +863,11 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
       ) : (
         <div className="library-detail-row">
           <span className="field-label">{track === 'pages' ? 'On page' : 'Done'}</span>
-          {/* Typed, not stepped, for pages: nobody presses + fifty-four
-              times, and a control that expects them to is a control that
-              quietly stops being used. */}
-          {track === 'pages' ? (
-            <>
-              <input
-                className="library-page-input"
-                inputMode="numeric"
-                aria-label={`Page you are on in ${item.title}`}
-                value={page}
-                onChange={e => setPage(e.target.value)}
-                onBlur={() => {
-                  const next = Number(page.trim())
-                  if (Number.isInteger(next) && next >= 0) actions.setLibraryItemProgress(list.id, item.id, next, todayKey())
-                  else setPage(String(itemProgress(item)))
-                }}
-              />
-              {/* A sitting is ten or twenty-five pages more often than it is
-                  one, and typing the new number means remembering the old. */}
-              {[10, 25].map(step => (
-                <button
-                  key={step}
-                  type="button"
-                  className="library-step library-step-wide"
-                  aria-label={`${step} pages more of ${item.title}`}
-                  onClick={() => actions.setLibraryItemProgress(list.id, item.id, itemProgress(item) + step, todayKey())}
-                >
-                  +{step}
-                </button>
-              ))}
-            </>
-          ) : (
-            <div className="library-item-progress">
-              <button
-                type="button"
-                className="library-step"
-                aria-label={`One fewer ${list.unit} of ${item.title}`}
-                disabled={itemProgress(item) === 0}
-                onClick={() => actions.stepLibraryItem(list.id, item.id, -1, todayKey())}
-              >
-                &minus;
-              </button>
-              <span className="library-item-count">{progressLabel(list, item)}</span>
-              <button
-                type="button"
-                className="library-step"
-                aria-label={`One more ${list.unit} of ${item.title}`}
-                onClick={() => actions.stepLibraryItem(list.id, item.id, 1, todayKey())}
-              >
-                +
-              </button>
-            </div>
-          )}
+          {/* One control, and the same one the day shows - see
+              ProgressControl. It was two branches here and a read-only
+              sentence there, so a page could only be recorded by coming to
+              this screen. */}
+          <ProgressControl list={list} item={item} />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Category, LibraryList, Task } from '../../lib/types'
 import { currentItem, isItemFinished, progressLabel } from '../../lib/library'
+import { ProgressChip } from '../ProgressControl'
 import { isPushable } from '../../lib/pushRules'
 import { formatDuration, isAnchor } from './capacity'
 import { categoryColor, categoryLabel } from '../../lib/categories'
@@ -350,11 +351,17 @@ export function TaskRow({
           {/* No tooltip on this one: it used to carry boundLabel, which is the
               text printed inside it, so the pointer was told the same words it
               was already reading. */}
-          {boundLabel && (
+          {/* A press when it is a number, a label when it is a sentence.
+              "finished - next is X" is not something anybody types over, and
+              a task already ticked is a record rather than a thing in
+              progress. See ProgressChip. */}
+          {boundLabel && boundList && boundItem && !boundNext && !task.done ? (
+            <ProgressChip list={boundList} item={boundItem} className="task-library" onOpenDetails={onOpenDetails} />
+          ) : boundLabel ? (
             <span className={boundNext ? 'task-library is-next' : 'task-library'}>
               {boundLabel}
             </span>
-          )}
+          ) : null}
           {boundPace && <span className="task-pace">{boundPace}</span>}
           {/* A control among marks, which is why it is an anchor with its own
               target rather than another chip: pressing the card still means

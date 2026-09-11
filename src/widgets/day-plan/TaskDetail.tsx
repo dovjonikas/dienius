@@ -4,7 +4,8 @@ import { actions, useAppData } from '../../lib/store'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { categoryColor, resolvedColor } from '../../lib/categories'
 import { parseLink } from '../../lib/link'
-import { progressLabel, progressPercent } from '../../lib/library'
+import { progressPercent } from '../../lib/library'
+import { ProgressControl } from '../ProgressControl'
 import { scratchTitle } from '../../lib/scratch'
 import { MAX_HIGHLIGHTS, type LibraryList, type Repeat, type Task } from '../../lib/types'
 import { TimePicker } from '../../views/TimePicker'
@@ -413,10 +414,20 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
                   ))}
                 </select>
                 {boundList && boundItem && (
-                  <span className="task-detail-hint">
-                    {progressLabel(boundList, boundItem)}
-                    {progressPercent(boundItem) !== undefined ? ` - ${progressPercent(boundItem)}%` : ''}
-                  </span>
+                  <>
+                    {/* Where you are up to, put in from the day rather than
+                        read off it. It was a sentence - "p. 0/264 - 0%" -
+                        and the only place to change the number was the
+                        library, which is a screen away from the task that
+                        made you want to. Same control as the library's, so
+                        there is one of it: see ProgressControl. */}
+                    <div className="task-detail-progress">
+                      <ProgressControl list={boundList} item={boundItem} title={boundItem.title} />
+                    </div>
+                    {progressPercent(boundItem) !== undefined && (
+                      <span className="task-detail-hint">{progressPercent(boundItem)}% of {boundItem.title}</span>
+                    )}
+                  </>
                 )}
               </div>
             </div>

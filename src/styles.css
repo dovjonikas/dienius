@@ -2834,7 +2834,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    surface, at 1.14:1. The rule below puts that back for the class itself,
    so a control that draws its own box only has to draw the box.
    ------------------------------------------------------------------------ */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input),
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input),
 textarea {
   min-width: 0;
   padding: var(--s2) var(--s3);
@@ -2846,7 +2846,7 @@ textarea {
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input)::placeholder,
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)::placeholder,
 textarea::placeholder {
   color: var(--faint);
 }
@@ -2877,7 +2877,7 @@ textarea::placeholder {
    clearance, so the reservation grows with the text scale rather than the
    word growing out of a fixed gap at scale l. Measured at s, m and l: 50,
    53.4 and 56.8 pixels, with the same 13px of clear space at each. */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input).has-return {
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input).has-return {
   padding-right: calc(var(--s2) * 2 + var(--t-xs) * 3.4);
 }
 
@@ -2913,7 +2913,7 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='r
 }
 
 @media (hover: hover) and (pointer: fine) {
-  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):hover,
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input):hover,
   textarea:hover {
     border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
   }
@@ -2921,7 +2921,7 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='r
 
 /* One focus ring for every field. Inset, so it never changes the size of the
    control and never nudges what is beside it. */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):focus,
+input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input):focus,
 textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
@@ -9172,6 +9172,50 @@ button.task-note-mark.is-open {
 
 .task-library { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 
+/* The mark is a button when it holds a number - see ProgressChip - and a
+   button brings a border, a font and a minimum height with it. Stripped back
+   to the pill it replaces, so the row does not change shape on a day where
+   one task happens to be bound to a book. What it keeps is the pointer and
+   the 44px overlay every other small control here gets. */
+button.task-library {
+  min-height: 0;
+  border: none;
+  font: inherit;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+button.task-library:hover { color: var(--text); }
+
+/* The box it becomes. The same width as the mark it replaces, near enough,
+   so nothing on the row jumps when it opens. */
+.task-library-input {
+  flex-shrink: 0;
+  /* The padding is added to the width rather than taken out of it:
+     everything here is border-box, so a plain 6ch left about two characters
+     of room once the padding and the border had their share, and a page
+     number of three digits opened already scrolled sideways with its first
+     digit out of sight. */
+  width: calc(6ch + var(--s2) * 2 + 2px);
+  min-height: 0;
+  /* An input carries a line-height of its own, and at this size that made it
+     sixteen pixels taller than the mark it replaces - enough to wrap the meta
+     line and push the card's own height up as the box opened. It takes the
+     line it is sitting on. */
+  line-height: inherit;
+  /* No padding above or below, where the mark it replaces has a pixel: the
+     border takes that pixel back, and the two then stand the same height, so
+     the row does not step when the box opens. */
+  padding: 0 var(--s2);
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
 /* The one case where this pill carries a sentence rather than a count:
    "finished - next is Deep Work". A book title has no length limit, so it
    is the one mark on the row allowed to give way - flex-shrink: 0 and
@@ -14043,6 +14087,26 @@ main:has(.week) > .calendar {
 .library-detail-pick {
   align-self: flex-start;
   margin-left: calc(var(--field-label-w) + var(--s3));
+}
+
+/* "of 264 pages" beside the box you overtype. Muted, because it is the
+   fixed half of the pair - the number is the part that changes and the part
+   the eye is looking for. */
+.progress-of {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The same control on the day, where it sits under the list it is bound to
+   rather than in a row of its own. */
+.task-detail-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin-top: var(--s2);
 }
 
 .library-detail-actions {

@@ -159,7 +159,7 @@ test('the library field is not offered at all while there is no library', () => 
   expect(screen.queryByLabelText('Library item')).not.toBeInTheDocument()
 })
 
-test('a task can be bound to an unfinished item, and shows how far through it is', async () => {
+test('a task can be bound to an unfinished item, and how far through it is can be typed there', async () => {
   const user = userEvent.setup()
   seed()
   const list = actions.addLibraryList({ name: 'Books', unit: 'chapter', unitShort: 'ch' })
@@ -170,7 +170,17 @@ test('a task can be bound to an unfinished item, and shows how far through it is
   openFirst()
   await user.selectOptions(screen.getByLabelText('Library item'), `${list.id}:${itemId}`)
   expect(tasks()[0].libraryRef).toEqual({ listId: list.id, itemId })
-  expect(screen.getByText(/ch 4\/12/)).toBeInTheDocument()
+  // It read the figure out as a sentence until v2.21 and gave no way to
+  // change it, so recording a chapter meant leaving the day for the library.
+  // The one control both places use is here now - see ProgressControl.
+  const field = screen.getByLabelText('How far through Daring Greatly')
+  expect(field).toHaveValue('4')
+  expect(screen.getByText(/of 12 chapters/)).toBeInTheDocument()
+
+  await user.clear(field)
+  await user.type(field, '7')
+  await user.tab()
+  expect(getData().library[0].items[0].progress).toBe(7)
 })
 
 // --- closing -------------------------------------------------------------
