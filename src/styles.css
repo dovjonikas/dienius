@@ -6881,14 +6881,27 @@ button.danger:focus-visible {
      truncating the title (320px minimum), capped at 380px so it never
      visually dominates the timeline it sits next to.
 
-     The day pane's floor was 420px, and the three floors plus two 24px gaps
-     came to 988px - eleven more than the 977px a 1024px window actually has
-     once the shell's padding and the reserved scrollbar gutter are taken
-     off. The grid quietly overflowed its section at exactly the breakpoint
-     that turns it on, and the header and the task column both poked past
-     the right edge. Measured, not eyeballed: the overflow was 11px on the
-     nose. Twenty pixels off the widest column's floor is the smallest
-     change that makes the arithmetic true. */
+     The day pane's floor was 420px, then 400px, and the arithmetic was
+     wrong both times. It counted the shell's padding and the scrollbar
+     gutter and called the answer 977px; it never counted the 56px
+     navigation rail down the left, which is on the screen at this width and
+     at every width above it. What a 1024px window actually leaves this grid
+     is 926px, measured in the running app rather than added up.
+
+     So the grid went on overflowing at exactly the breakpoint that turns it
+     on. Three floors of 200 + 400 + 320 and two 24px gaps come to 968, and
+     the page scrolled 16px sideways at 1024 - which is an iPad in landscape,
+     and a window half a wide screen across. Nothing found it because the
+     sweep measures 1366 and up, and 1024 is the one width where a layout
+     meant for wide screens is at its tightest. It measures 1024 now.
+
+     The 48px comes off the day's floor rather than off the other two,
+     because the other two hold things of a fixed size - seven calendar
+     columns, and a task row's checkbox, time, title, chip and button -
+     while the day's column holds a timeline that already scales itself to
+     whatever room it is given. 200 + 352 + 320 + 48 is 920, which leaves
+     six pixels spare rather than fitting to the pixel: fitting exactly is
+     what was wrong with the last two answers. */
   .day-view {
     display: grid;
     /* The day's column stops at 760px and the tasks take what is left. It
@@ -6896,7 +6909,7 @@ button.danger:focus-visible {
        900px wide with 13px of title in its corner - a slab, not a plan.
        Below about 1500px of window nothing changes: the day still gets
        everything after the tasks' 320px. */
-    grid-template-columns: minmax(200px, 240px) minmax(400px, 760px) minmax(320px, 1fr);
+    grid-template-columns: minmax(200px, 240px) minmax(352px, 760px) minmax(320px, 1fr);
     grid-template-areas:
       "rail header header"
       "rail day    tasks";

@@ -64,11 +64,23 @@ const FIXED_TIME = new Date(Date.UTC(2026, 8, 16, HOUR - 3, 0))
 const SEED = readFileSync(join(here, 'sample-day.js'), 'utf8')
 const AUDIT = readFileSync(join(here, 'audit.js'), 'utf8')
 
-/** The sizes the project promises, plus the phone when asked for. */
+/**
+ * The sizes the project promises, plus the phone when asked for.
+ *
+ * 1024 is the newest and the one that had never been looked at. It is where
+ * the wide layout turns on, which makes it the width at which a layout built
+ * for wide screens is at its tightest - and it is an iPad in landscape, and a
+ * window half a large screen across. Its three columns plus their gaps came
+ * to more than the window had, twice over; both times the sum was done by
+ * hand and both times it was wrong. The page scrolled sideways at exactly
+ * that width and nowhere else, so nothing measuring 1366 and up could see it.
+ * A breakpoint is worth measuring at the point it turns on.
+ */
 const DESKTOP = [
   { w: 1920, h: 1080 },
   { w: 1600, h: 900 },
   { w: 1366, h: 768 },
+  { w: 1024, h: 768 },
 ]
 
 /**
