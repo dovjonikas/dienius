@@ -168,3 +168,57 @@ test('a list bound to a block already on the week puts the book on the stamped d
   await expect(page.getByRole('checkbox', { name: 'Deep Work' })).toBeAttached()
   await expect(page.getByRole('checkbox', { name: 'Reading' })).toHaveCount(0)
 })
+
+/**
+ * The other order, which is the one that was broken.
+ *
+ * The test above binds a list that already has a book in it and then stamps.
+ * The owner did it the way a person actually does: stamped the week first,
+ * and put the books in afterwards. The days went on saying "Reading" with
+ * nothing behind them, because the binding was resolved once at stamp time
+ * and never asked again - "speju is naujo turiu idet".
+ *
+ * A block bound to a list does not say a book. It says "whatever is next in
+ * that list", and what is next changes while the day sits there waiting.
+ */
+test('books put in the list after the week was stamped reach the day that is waiting', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+
+  // An empty list. Nothing to point at yet, which is the whole setup.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Library' }).click()
+  await page.getByRole('button', { name: 'Start a Books list' }).click()
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Templates' }).click()
+  await page.getByRole('button', { name: 'New template' }).click()
+  await page.getByRole('button', { name: /^A week/ }).click()
+  await page.getByPlaceholder('Week name').fill('Reading week')
+  await page.getByPlaceholder('09:00').fill('20:00')
+  await page.getByPlaceholder('What happens').fill('Reading')
+  await page.getByRole('group', { name: 'Add to' }).getByRole('button', { name: 'All days' }).click()
+  await page.getByRole('button', { name: 'Add a block' }).click()
+  await page.getByRole('region', { name: 'Wednesday' }).getByRole('button', { name: /^Reading[ ,]/ }).click()
+  await page.locator('.wt-note').getByLabel('Library list').selectOption({ label: 'From Books' })
+  await page.getByRole('button', { name: 'Save template' }).click()
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Calendar' }).click()
+  await page.getByRole('button', { name: 'Reading week', exact: true }).click()
+  await page.getByRole('gridcell', { name: /September 16/ }).click()
+  await page.getByRole('button', { name: 'Save' }).click()
+
+  // Stamped with the block's own title, because there was nothing else to
+  // say. This much always worked.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Reading' })).toBeAttached()
+
+  // The book arrives now, after the day is already on the calendar.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Library' }).click()
+  const add = page.getByLabel('Add to Books')
+  await add.fill('Deep Work, 12 chapters')
+  await add.press('Enter')
+
+  // And the day that was already stamped is holding the book, with no
+  // re-stamp and nothing to press.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Deep Work' })).toBeAttached()
+  await expect(page.getByRole('checkbox', { name: 'Reading' })).toHaveCount(0)
+})
