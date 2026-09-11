@@ -3834,8 +3834,24 @@ select:focus {
 .check::after {
   content: '';
   position: absolute;
-  left: 7px;
-  top: 3px;
+  /* Centred, which it was not: it sat at left 7px, top 3px, and those two
+     numbers place the *unrotated* box - the mark is that box turned 45
+     degrees about its own top left corner, so it swings left and down out of
+     where the numbers say it is. Measured in the running app, the finished
+     mark ran from -0.1px to 10.5px across a 20px box: hard against the left
+     wall, poking over it, with half the box empty on the right. The owner
+     reported it twice.
+
+     The arithmetic, so the next size does not need a third number. A 5 by 10
+     box turned 45 degrees about its top left corner has its leftmost point
+     at left - 10/root2 and its rightmost at left + 5/root2, so it is
+     (5+10)/root2 = 10.6px across and the same down, and its centre sits at
+     left + (5-10)/(2*root2) across and top + (5+10)/(2*root2) down. Putting
+     that centre on the box's own centre gives left = 50% + 1.8px and
+     top = 50% - 5.3px. Per cent of the padding box, so the 18px checkbox in
+     the timer panel centres on the same two lines as the 24px one. */
+  left: calc(50% + 1.8px);
+  top: calc(50% - 5.3px);
   width: var(--tick-short, 0px);
   height: var(--tick-long, 0px);
   /* Drawn in the text colour, on the page's own ground.
@@ -6122,10 +6138,17 @@ button.danger {
    The size moved with the position. The app's twenty-four pixel tick fills
    about two thirds of its box; three and a half by seven filled nearly three
    quarters of this one, which reads as a tick crammed into a box rather than
-   as the same mark, smaller. Three by six is the same two thirds. */
+   as the same mark, smaller. Three by six is the same two thirds.
+
+   Written as the arithmetic now, the same two lines as .check::after above,
+   which is where the reasoning lives. It is worth saying that the sum agrees
+   with the eye: the measured answer for `left` here was 8px, and the formula
+   gives 8.06. `top` was 2.5px and the formula gives 3.8, so this mark had
+   been sitting a pixel and a bit high - not enough to see on its own, enough
+   to be the only tick in the app not centred in its box. */
 .clock-sound-start input:checked + .check::after {
-  left: 8px;
-  top: 2.5px;
+  left: calc(50% + 1.1px);
+  top: calc(50% - 3.2px);
   width: 3px;
   height: 6px;
   border-width: 0 2px 2px 0;
