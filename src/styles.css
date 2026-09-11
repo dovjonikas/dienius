@@ -6935,7 +6935,11 @@ button.danger:focus-visible {
        900px wide with 13px of title in its corner - a slab, not a plan.
        Below about 1500px of window nothing changes: the day still gets
        everything after the tasks' 320px. */
-    grid-template-columns: minmax(200px, 240px) minmax(352px, 760px) minmax(320px, 1fr);
+    /* Named, because the masthead below has to indent by exactly this plus
+       the column gap, and two hand-copied numbers are how the arithmetic
+       above went wrong twice. */
+    --rail-max: 240px;
+    grid-template-columns: minmax(200px, var(--rail-max)) minmax(352px, 760px) minmax(320px, 1fr);
     grid-template-areas:
       "rail header header"
       "rail day    tasks";
@@ -7457,6 +7461,16 @@ button.danger:focus-visible {
         "header header header"
         "rail   day    tasks";
     }
+
+    /* The goal's line stays above the day, the way it does at every narrower
+       width. From here the masthead spans the rail's column too, and this
+       line is a full-width item inside it - so it began above the mini
+       calendar and ran across into the timeline, a quiet grey sentence
+       crossing two columns it has nothing to do with. The owner: "matos kad
+       north pranesimas iseina is ribu, neturetu iseit".
+       Indented by the rail column and the gap beside it, read from the two
+       values the column itself is built from rather than copied. */
+    .north-line { margin-left: calc(var(--rail-max) + var(--s6)); }
 
     .day-view:has(.day-notices:not(:empty)) {
       grid-template-areas:
