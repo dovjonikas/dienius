@@ -440,3 +440,42 @@ test('the repo route says so when Backup has no repo in it yet', async () => {
   expect(getSyncStatus().phase).toBe('error')
   expect(getSyncStatus().message).toMatch(/repo or token in Backup/)
 })
+
+/**
+ * A day cleared on one device stays cleared on the other.
+ *
+ * The owner's report: today was cleared on the computer, the phone was opened
+ * and today was still there. A deletion is the one change a merge cannot read
+ * off the state, because "gone here" and "not arrived here yet" look
+ * identical - which is what tombstones are for, and what this walks end to
+ * end rather than at the merge alone.
+ */
+test('a day cleared here does not come back from a remote that still holds it', async () => {
+  // Yesterday on both devices, today stamped and cleared on this one.
+  actions.addTask(DATE, 'Gym')
+  actions.addTask(DATE, 'Call the bank')
+  const before = getData().days[DATE].tasks.map(t => ({ ...t }))
+  expect(before).toHaveLength(2)
+
+  // The other device still has the day as it was, and says so with an older
+  // stamp than the clearing.
+  const remote = defaultData()
+  remote.days[DATE] = {
+    date: DATE,
+    templateId: 'working',
+    tasks: before.map(t => ({ ...t, updatedAt: '2026-09-01T06:00:00.000Z' })),
+    updatedAt: '2026-09-01T06:00:00.000Z',
+  } as AppData['days'][string]
+
+  actions.clearDay(DATE)
+  expect(getData().days[DATE].tasks).toHaveLength(0)
+
+  const posted = serverHolding(remote)
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  // Still cleared here...
+  expect(getData().days[DATE].tasks).toHaveLength(0)
+  // ...and what goes back says so, so the other device clears too.
+  expect(posted.at(-1)!.days[DATE].tasks).toHaveLength(0)
+})
