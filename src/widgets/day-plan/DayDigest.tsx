@@ -144,14 +144,19 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
 
       {score.planned && (
         <div className="digest-stats">
-          {/* Three columns, not two: the word, the note, the figure.
-              The note used to ride inside the figure's own cell, ahead of it,
-              which meant its right edge moved with the width of the number
-              beside it - "10 gaps" ended fourteen pixels further right than
-              "not counted" did, on two rows of four. The note has a column of
-              its own now and every one of the three edges is straight. A row
-              with nothing to note still draws the cell, because a column that
-              some rows opt out of is not a column. */}
+          {/* Two columns: the word with its note, and the figure.
+              It was three, with the note in a column of its own, which made
+              three straight edges and bought them with a gap that changed on
+              every row - "not counted" sat a long way from "8h" and "6 gaps"
+              sat close to "3h 15 min", because the figures are different
+              widths and each one is right-aligned in its own column. The
+              owner read the result as random spacing, which is what it is:
+              the edges were straight and the air between them was not.
+              The note belongs to the word rather than to the number - free
+              time *across six gaps*, sleep *not counted* - so it sits
+              against the word, one space away, always the same space. What
+              is left is two edges, both straight: the words down the left
+              and the figures down the right. */}
           <dl className="digest-figures">
             <DigestRow label="Timed" note={timedNote} figure={timed} />
             {capacity.externalMinutes > 0 && (
@@ -174,17 +179,18 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
 /**
  * One line of the digest: the word, the note, the figure.
  *
- * A `dt` with two `dd`s, which is a term with two descriptions and reads back
- * as one - "Free, 10 gaps, 3h15". The wrapper is `display: contents`, so the
- * three land in the three columns of the grid above rather than being a row
- * of their own; a row with nothing to note still draws the middle cell,
- * because a column some rows opt out of stops being a column.
+ * A `dt` carrying the word and its note, and a `dd` carrying the figure,
+ * which reads back as "Free 6 gaps, 3h 15 min". The wrapper is
+ * `display: contents`, so the two land in the two columns of the grid above
+ * rather than being a row of their own.
  */
 function DigestRow({ label, note, figure }: { label: string; note?: string; figure: string }) {
   return (
     <div>
-      <dt>{label}</dt>
-      <dd className="digest-note">{note}</dd>
+      <dt>
+        {label}
+        {note && <span className="digest-note">{note}</span>}
+      </dt>
       <dd>{figure}</dd>
     </div>
   )

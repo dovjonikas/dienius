@@ -51,7 +51,10 @@ test('the card says nothing the header already does: no ring, no done count', ()
 // named after the category - Focus is the countdown, and one word does one job.
 test('four rows, and they are the shape of the day: timed, deep work, free and sleep', () => {
   digest([task({ time: '09:00', minutes: 60, category: 'core' }), task({ time: '14:00', minutes: 30 })])
-  const labels = screen.getAllByRole('term').map(dt => dt.textContent)
+  // The term carries the word and, where there is one, its note - "Free"
+  // and "3 gaps" are one cell since v2.20, so the word is what it starts
+  // with rather than the whole of it.
+  const labels = screen.getAllByRole('term').map(dt => dt.firstChild?.textContent)
   expect(labels).toEqual(['Timed', 'Deep work', 'Free', 'Sleep'])
   expect(screen.getByText('1h 30 min')).toBeInTheDocument()
   expect(screen.getByText('1h')).toBeInTheDocument()
@@ -146,18 +149,26 @@ test('a next thing with no address carries no door', () => {
 })
 
 /**
- * The figures read down three straight edges, and that is a structural
- * promise rather than a look: the small grey note used to ride inside the
- * figure's own cell, so its right edge moved with the width of the number
- * beside it. jsdom cannot measure an edge, but it can hold the shape the
- * edge comes from - one cell per column on every row, including the rows
- * with nothing to note.
+ * Two cells a row, and that is a structural promise rather than a look.
+ *
+ * There were three. The note had a column of its own between the word and
+ * the figure, which gave three straight edges and a gap between the note and
+ * the figure that changed on every row, because the figures are different
+ * widths and each was right-aligned in its own column. The owner read the
+ * result as random spacing. The note is part of the term now - it says
+ * something about the word, not about the number - which leaves two edges,
+ * both straight. jsdom cannot measure an edge, but it can hold the shape the
+ * edge comes from.
  */
-test('every figure in the digest draws all three of its cells, noted or not', () => {
+test('every row of the digest is a term and one figure', () => {
   const { container } = digest([task({ time: '09:00', minutes: 120, title: 'Deep work: pricing page' })])
   const rows = [...container.querySelectorAll('.digest-figures > div')]
   expect(rows.length).toBeGreaterThan(2)
   for (const row of rows) {
-    expect([...row.children].map(c => c.tagName)).toEqual(['DT', 'DD', 'DD'])
+    expect([...row.children].map(c => c.tagName)).toEqual(['DT', 'DD'])
   }
+  // And the note is inside the term it belongs to, on the rows that have one.
+  const noted = rows.filter(r => r.querySelector('.digest-note'))
+  expect(noted.length).toBeGreaterThan(0)
+  for (const row of noted) expect(row.querySelector('dt')?.querySelector('.digest-note')).not.toBeNull()
 })
