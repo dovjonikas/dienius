@@ -2972,3 +2972,57 @@ on the strength of a press and that does not survive every await - and it is
 opened **without** `noopener`, because `window.open` returns null when that
 is passed, and the reference is the entire point. There is nothing to protect
 against: the tab holds a blob this app made, on this app's own origin.
+
+## Two devices meet in the repo, because it is already there
+
+The owner: how do the computer and the phone see the same plan, without
+pressing much, and knowing when you move from one to the other.
+
+Most of that was already built and nobody had said so. Sync pulls when a tab
+comes back and when the network returns, and pushes a few seconds after every
+change - so "it knows when you pick up the phone" needed nothing. What it
+wanted was a **server**: a box to own, keep awake, and reach over Tailscale.
+That is the part worth removing, not the syncing.
+
+And there was already a second thing in the app writing the whole state
+somewhere both devices can see: the GitHub backup, into a private repo, with
+a token that lives on the device and is kept out of exports and out of sync.
+
+So the repo is a transport for the sync that already exists. Not a second
+sync: everything that decides *what to keep* is `syncMerge.ts` and did not
+move. `githubSync.ts` is a read and a write, and the client picks between it
+and the server by one setting.
+
+**One repo, one token, two files.** The backup owns `data/state.json` and a
+file per day under `data/history/`, written a few times a day and meant to be
+opened and read by a person. Sync writes far more often and is machinery, so
+it gets `data/sync.json`. They share the repo and the token; a device joins by
+having those two, which it needs for the backup anyway.
+
+**It will not write over what it did not read, and this is the one thing the
+repo does better than a server.** A read comes back with the file's `sha` and
+the write carries it. If the other device wrote in between, GitHub refuses,
+and the round trip starts again - pull, merge, write - rather than writing a
+state that was merged against a plan the other device has already moved past.
+Deliberately not `writeFile`'s retry from cloudBackup.ts, which reads the new
+sha and writes anyway: that is right for a backup, where what is in hand is
+the whole truth of this device, and it is data loss for a sync. Twice, then it
+waits for the next round trip, because a conflict is not an error - it is both
+devices being used - and a loop that will not give up is a device writing to
+somebody's repo as fast as it can.
+
+**Thirty seconds, not two and a half.** Every push through the repo is a
+commit. A server can be written to whenever there is something to say; a repo
+keeps what it is told forever and shows it to a person as a list, so the
+server's debounce would turn a morning's planning into four hundred lines of
+history. The wait is never felt where it matters, because of the next part.
+
+**It pushes as the device is put down.** `visibilitychange` to hidden, and
+`pagehide` for the phones that discard a tab rather than hide it - both only
+when something is actually owed. That is the other half of the owner's
+question: the computer says what it did as it is set aside, so the phone's own
+pull on opening already has it.
+
+**What the owner still does once per device:** paste the repo and a
+fine-grained token with Contents read and write on that one repo. There is no
+way around that one and it is not worth pretending otherwise.

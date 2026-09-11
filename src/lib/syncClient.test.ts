@@ -9,6 +9,7 @@ import {
 } from './syncClient'
 import { actions, getData } from './store'
 import { defaultData } from './storage'
+import { setCloudBackupConfig } from './cloudBackup'
 import type { AppData } from './types'
 
 const DATE = '2026-09-01'
@@ -250,7 +251,9 @@ test('a broken localStorage config reads as no config rather than throwing on bo
   // Re-reading is what a fresh page load does; the module does it once at
   // import, and resetSyncForTests puts it back to the same empty shape.
   resetSyncForTests()
-  expect(getSyncConfig()).toEqual({ url: '', token: '', enabled: false })
+  // `via` joined the shape in v2.21, when the repo became somewhere two
+  // devices can meet without a server between them. Empty still means off.
+  expect(getSyncConfig()).toEqual({ url: '', token: '', enabled: false, via: 'server' })
 })
 
 test('the last-synced line reads as a person would say it', () => {
@@ -351,4 +354,89 @@ test('localhost over http is fine from an http page', async () => {
   setSyncConfig({ url: 'http://localhost:8787', token: 'abc', enabled: true })
   await syncNow()
   expect(getSyncStatus().phase).toBe('idle')
+})
+
+// --- meeting in the repo instead of on a server --------------------------
+
+/**
+ * The same client, through GitHub, which is the answer to "how do the two
+ * devices see each other without me running anything".
+ *
+ * What is tested here is the one thing this route can do that a plain server
+ * cannot: refuse to write over a version it did not read, and start the round
+ * trip again instead. Last write wins is the wrong answer when both writers
+ * are the same person on two machines.
+ */
+function repoHolding(state: AppData | null, putAnswers: number[] = []) {
+  const written: AppData[] = []
+  let sha = state === null ? null : 'sha-1'
+  let held = state
+  fetchMock.mockImplementation((_url: string, init: RequestInit = {}) => {
+    if (init.method === 'PUT') {
+      const answer = putAnswers.shift() ?? 200
+      if (answer !== 200) return Promise.resolve(new Response('{"message":"conflict"}', { status: answer }))
+      const body = JSON.parse(String(init.body)) as { content: string }
+      held = JSON.parse(atob(body.content)) as AppData
+      written.push(held)
+      sha = `sha-${written.length + 1}`
+      return Promise.resolve(new Response('{}', { status: 200 }))
+    }
+    if (held === null) return Promise.resolve(new Response('{"message":"Not Found"}', { status: 404 }))
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(held))))
+    return Promise.resolve(new Response(JSON.stringify({ sha, content }), { status: 200 }))
+  })
+  return { written, reads: () => fetchMock.mock.calls.filter(c => (c[1]?.method ?? 'GET') === 'GET').length }
+}
+
+function turnOnThroughGitHub() {
+  localStorage.setItem('dienius:cloud-backup', JSON.stringify({ repo: 'someone/dienius-data', token: 'github_pat_secret', lastBackupAt: null }))
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'github_pat_secret' })
+  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+}
+
+test('through the repo, what this device holds ends up in the file', async () => {
+  actions.addTask(DATE, 'Call the bank')
+  const repo = repoHolding(null)
+  turnOnThroughGitHub()
+  await syncNow()
+
+  expect(repo.written).toHaveLength(1)
+  expect(JSON.stringify(repo.written[0])).toContain('Call the bank')
+  expect(getSyncStatus().phase).toBe('idle')
+})
+
+test('a write refused because the other device got there first is merged again, not forced', async () => {
+  actions.addTask(DATE, 'Call the bank')
+  // The first PUT is refused; the round trip starts over, reads what is
+  // there now, merges, and writes that.
+  const repo = repoHolding(null, [409])
+  turnOnThroughGitHub()
+  await syncNow()
+
+  expect(getSyncStatus().phase).toBe('idle')
+  expect(repo.written).toHaveLength(1)
+  // Two reads: the first round trip's and the one the conflict sent it back
+  // for. A single read with two writes would be the bug this guards.
+  expect(repo.reads()).toBe(2)
+})
+
+test('a repo that keeps refusing is reported rather than hammered', async () => {
+  actions.addTask(DATE, 'Call the bank')
+  repoHolding(null, [409, 409, 409, 409])
+  turnOnThroughGitHub()
+  await syncNow()
+
+  expect(getSyncStatus().phase).toBe('error')
+  // Nothing local was touched, which is the rule that matters when a remote
+  // misbehaves.
+  expect(getData().days[DATE].tasks[0].title).toBe('Call the bank')
+})
+
+test('the repo route says so when Backup has no repo in it yet', async () => {
+  setCloudBackupConfig({ repo: '', token: '' })
+  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  await syncNow()
+
+  expect(getSyncStatus().phase).toBe('error')
+  expect(getSyncStatus().message).toMatch(/repo or token in Backup/)
 })

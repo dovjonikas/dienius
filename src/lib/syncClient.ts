@@ -3,6 +3,8 @@ import { getData, onStateCommitted, replaceState } from './store'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
+import { canSyncThroughGitHub, readSyncState, SyncConflictError, writeSyncState } from './githubSync'
+import { GitHubError } from './cloudBackup'
 import { dropDeletedFolds, foldInbox } from './later'
 
 /**
@@ -30,6 +32,23 @@ const CONFIG_KEY = 'dienius:sync'
 /** How long after a change to push. Long enough to coalesce a burst of edits. */
 export const PUSH_DEBOUNCE_MS = 2500
 
+/**
+ * The same, through GitHub, where every push is a commit.
+ *
+ * A server can be written to as often as there is something to say. A repo
+ * keeps what it is told forever and shows it to a person as a list, so a
+ * commit every two and a half seconds would turn a morning's planning into
+ * four hundred lines of history nobody wants to read. Half a minute coalesces
+ * an ordinary stretch of editing into one, and the push below on leaving the
+ * device means the wait is never felt where it matters.
+ */
+export const GITHUB_PUSH_DEBOUNCE_MS = 30_000
+
+/** Whichever of the two this device is on. */
+function pushDelay(): number {
+  return syncVia() === 'github' ? GITHUB_PUSH_DEBOUNCE_MS : PUSH_DEBOUNCE_MS
+}
+
 /** How long to wait before retrying after a failure, and the ceiling. */
 const RETRY_BASE_MS = 5000
 const RETRY_MAX_MS = 60_000
@@ -38,6 +57,19 @@ export interface SyncConfig {
   url: string
   token: string
   enabled: boolean
+  /**
+   * Where the two devices meet.
+   *
+   * `server` is a box of the owner's own, reached over Tailscale - the
+   * original and still the quickest. `github` is the private repo the backup
+   * already writes to, which is nothing to own, keep awake or reach, and
+   * needs only the token that repo already has on this device. See
+   * githubSync.ts.
+   *
+   * Absent on every device set up before this existed, where it means
+   * `server`, which is what those devices are already doing.
+   */
+  via?: 'server' | 'github'
 }
 
 export type SyncPhase = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
@@ -52,7 +84,12 @@ export interface SyncStatus {
   pending: boolean
 }
 
-const EMPTY_CONFIG: SyncConfig = { url: '', token: '', enabled: false }
+const EMPTY_CONFIG: SyncConfig = { url: '', token: '', enabled: false, via: 'server' }
+
+/** Where this device is meeting the other one. */
+export function syncVia(): 'server' | 'github' {
+  return config.via ?? 'server'
+}
 
 let config: SyncConfig = loadConfig()
 let status: SyncStatus = {
@@ -148,7 +185,22 @@ export function startSync(): void {
     // find out what the other device did while this one was away.
     window.addEventListener('online', () => void syncNow())
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) void syncNow()
+      // Coming back is the moment to find out what the other device did.
+      if (!document.hidden) {
+        void syncNow()
+        return
+      }
+      // And going away is the moment to say what this one did, which is the
+      // whole of "it knows when you move to the phone": the computer pushes
+      // as it is put down, so the phone's own pull on opening already has it.
+      // Nothing is owed if nothing changed - syncNow returns at once.
+      if (status.pending || pushTimer) void syncNow()
+    })
+    // The reliable one on a phone, where a tab is often discarded rather than
+    // hidden. Both fire on some browsers and neither costs anything twice:
+    // a second caller joins the round trip already in the air.
+    window.addEventListener('pagehide', () => {
+      if (status.pending || pushTimer) void syncNow()
     })
   }
 
@@ -160,7 +212,7 @@ function schedulePush(): void {
   pushTimer = setTimeout(() => {
     pushTimer = null
     void syncNow()
-  }, PUSH_DEBOUNCE_MS)
+  }, pushDelay())
 }
 
 function scheduleRetry(): void {
@@ -200,7 +252,12 @@ function blockedByMixedContent(url: string): boolean {
 }
 
 export function syncNow(): Promise<void> {
-  if (!config.enabled || !config.url) return Promise.resolve()
+  // "Nothing to reach" is a different question for each route: a server needs
+  // an address typed in, and the repo needs the one Backup already holds.
+  // This read "no address, nothing to do" for both, so turning sync on
+  // through the repo did exactly nothing and said it was idle.
+  if (!config.enabled) return Promise.resolve()
+  if (syncVia() === 'server' && !config.url) return Promise.resolve()
   // The sample week is not anybody's plan and must never reach a server where
   // a real device would merge it in. Demo mode is a separate storage key, so
   // this is belt as well as braces - but the braces are worth having.
@@ -208,7 +265,8 @@ export function syncNow(): Promise<void> {
   // The tour's sandbox, for the same reason: a starter template stamped onto
   // today by somebody replaying the tour must never reach their real devices.
   if (isTourSandbox()) return Promise.resolve()
-  if (blockedByMixedContent(config.url)) {
+  // Only the server route can be misconfigured this way; GitHub is https.
+  if (syncVia() === 'server' && blockedByMixedContent(config.url)) {
     setStatus({
       phase: 'error',
       message: 'This page is on https, so the server address has to be too. Run "tailscale serve --bg 8787" and use the https address it prints.',
@@ -238,7 +296,18 @@ export function syncNow(): Promise<void> {
   return inFlight
 }
 
-async function runSync(): Promise<void> {
+/**
+ * How many times a round trip will start over because the other device wrote
+ * while this one was merging.
+ *
+ * Two, and then it waits for the next one. A conflict is not an error - it is
+ * both devices being used - and the cost of giving up for a few seconds is
+ * nothing, while a loop that will not give up is a device writing to somebody
+ * else's repo as fast as it can.
+ */
+const CONFLICT_RETRIES = 2
+
+async function runSync(attempt = 0): Promise<void> {
   try {
     const remote = await request('GET')
     if (remote !== null && !isSyncableState(remote)) {
@@ -265,7 +334,19 @@ async function runSync(): Promise<void> {
     )
     if (merged.applied > 0 || merged.deleted > 0 || folded !== merged.data) replaceState(folded)
 
-    await request('POST', folded)
+    try {
+      await request('POST', folded)
+    } catch (error) {
+      // The shared copy moved between the read and the write, so what is in
+      // hand was merged against a plan that is no longer the latest. Pull and
+      // merge again rather than writing over what the other device just did -
+      // see githubSync.ts, which is the only transport that can tell.
+      if (error instanceof SyncConflictError && attempt < CONFLICT_RETRIES) {
+        remoteSha = null
+        return await runSync(attempt + 1)
+      }
+      throw error
+    }
 
     retryDelay = RETRY_BASE_MS
     setStatus({ phase: 'idle', lastSyncedAt: new Date().toISOString(), message: null, pending: false })
@@ -279,7 +360,26 @@ function fail(message: string): void {
   scheduleRetry()
 }
 
+/**
+ * The version the last GET came back at, held between the read and the write
+ * of one round trip. Only the GitHub transport has one; a plain server has no
+ * way to say "only if it is still the one you read".
+ */
+let remoteSha: string | null = null
+
 async function request(method: 'GET' | 'POST', body?: unknown): Promise<unknown> {
+  if (syncVia() === 'github') {
+    if (!canSyncThroughGitHub()) {
+      throw new SyncError('Sync is set to use the GitHub repo, and there is no repo or token in Backup yet.')
+    }
+    if (method === 'GET') {
+      const read = await readSyncState()
+      remoteSha = read.sha
+      return read.state
+    }
+    await writeSyncState(body, remoteSha)
+    return null
+  }
   const response = await fetch(`${config.url}/state`, {
     method,
     headers: {
@@ -306,7 +406,19 @@ class SyncError extends Error {}
  */
 function describe(error: unknown): string {
   if (error instanceof SyncError) return error.message
-  return 'Cannot reach the server. Is the PC awake, and Tailscale connected?'
+  if (error instanceof GitHubError) {
+    if (error.status === 401 || error.status === 403) {
+      return 'GitHub refused the token. It needs Contents read and write on that one repo, and it may have expired.'
+    }
+    if (error.status === 404) return 'That repo was not found. Check the name in Backup, and that the token can see it.'
+    return `GitHub answered ${error.status}. It will try again.`
+  }
+  // The sentence has to fit whichever of the two this device is on. The
+  // common failure is different in each: a box asleep or a tunnel down on one,
+  // no connection at all on the other.
+  return syncVia() === 'github'
+    ? 'Cannot reach GitHub. It will catch up when there is a connection.'
+    : 'Cannot reach the server. Is the PC awake, and Tailscale connected?'
 }
 
 /** Test seam: forgets config, status, and every pending timer. */

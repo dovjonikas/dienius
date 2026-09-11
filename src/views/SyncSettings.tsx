@@ -8,6 +8,8 @@ import {
   useSyncStatus,
   type SyncStatus,
 } from '../lib/syncClient'
+import { canSyncThroughGitHub } from '../lib/githubSync'
+import { getCloudBackupConfig } from '../lib/cloudBackup'
 
 /**
  * Where sync is turned on, and the only place its state is visible.
@@ -47,6 +49,13 @@ export function SyncSettings() {
   const saved = getSyncConfig()
   const [url, setUrl] = useState(saved.url)
   const [token, setToken] = useState(saved.token)
+  // A device already syncing shows what it is actually doing. One that is
+  // not yet opens on the route that needs nothing set up, where there is a
+  // repo to use - which is the answer to "without pressing much".
+  const [via, setVia] = useState<'server' | 'github'>(
+    saved.enabled ? (saved.via ?? 'server') : canSyncThroughGitHub() ? 'github' : 'server',
+  )
+  const repo = getCloudBackupConfig().repo
   // The status text is a relative time, so it goes stale sitting on screen.
   // A minute is as often as it can change.
   const [, setTick] = useState(0)
@@ -55,11 +64,14 @@ export function SyncSettings() {
     return () => clearInterval(id)
   }, [])
 
-  const dirty = url.trim() !== saved.url || token.trim() !== saved.token
+  const dirty = url.trim() !== saved.url || token.trim() !== saved.token || via !== (saved.via ?? 'server')
+  // The repo route has nothing of its own to fill in: it uses the repo and
+  // the token Backup already holds on this device.
+  const ready = via === 'github' ? canSyncThroughGitHub() : !!url.trim() && !!token.trim()
   const line = statusLine(status)
 
   function save(enabled: boolean) {
-    setSyncConfig({ url: url.trim(), token: token.trim(), enabled })
+    setSyncConfig({ url: url.trim(), token: token.trim(), enabled, via })
   }
 
   return (
@@ -76,13 +88,41 @@ export function SyncSettings() {
         <div className="setting-label">
           <span className="setting-name">Between your devices</span>
           <span className="setting-desc">
-            Off by default, and the app works fully without it. Run{' '}
-            <code>node server/sync-server.mjs</code> on a machine you own, paste its address and the
-            token it prints here, and this device will copy changes through it. Nothing is sent to
-            anyone else, and there is no account.
+            Off by default, and the app works fully without it. Each device pulls when you come back
+            to it and pushes as you put it down, so picking up the phone shows what the computer just
+            did. Nothing is sent to anyone else, and there is no account.
           </span>
         </div>
 
+        {/* Two ways for two devices to meet. The repo needs nothing to be
+            running anywhere, which is the only reason it is the first one
+            offered - the server is quicker and stays for whoever has one. */}
+        <div className="segmented sync-via" role="group" aria-label="Where your devices meet">
+          <button
+            type="button"
+            className={via === 'github' ? 'active' : ''}
+            aria-pressed={via === 'github'}
+            onClick={() => setVia('github')}
+          >
+            Your GitHub repo
+          </button>
+          <button
+            type="button"
+            className={via === 'server' ? 'active' : ''}
+            aria-pressed={via === 'server'}
+            onClick={() => setVia('server')}
+          >
+            A server of your own
+          </button>
+        </div>
+
+        {via === 'github' ? (
+          <p className="setting-desc sync-via-note">
+            {repo
+              ? `Through ${repo}, in a file of its own beside the backup - the same repo and the same token, so there is nothing else to set up. Put the same repo and token into Backup on your other device and it joins.`
+              : 'Set the repo and token in Backup first, just above. Sync uses the same two and adds nothing of its own.'}
+          </p>
+        ) : (
         <div className="sync-fields">
           <label className="sync-field">
             <span>Server address</span>
@@ -106,6 +146,7 @@ export function SyncSettings() {
             />
           </label>
         </div>
+        )}
 
         <div className="sync-actions">
           {saved.enabled ? (
@@ -113,7 +154,7 @@ export function SyncSettings() {
               Turn off
             </button>
           ) : (
-            <button className="primary" onClick={() => save(true)} disabled={!url.trim() || !token.trim()}>
+            <button className="primary" onClick={() => save(true)} disabled={!ready}>
               Turn on
             </button>
           )}
