@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { linkKind, linkLabel } from '../lib/link'
+import { indexedDbHandleStore, onDeviceFile, openOnDevice, type OpenResult } from '../lib/localFile'
 
 /**
  * The door to the thing a task or a library item is about.
@@ -38,6 +40,7 @@ export interface LinkOutProps {
 export function LinkOut({ link, title, className }: LinkOutProps) {
   const kind = linkKind(link)
   const label = linkLabel(link)
+  if (kind === 'device') return <FileOut link={link} title={title} label={label} className={className} />
   return (
     <a
       className={className ? `link-out ${className}` : 'link-out'}
@@ -54,6 +57,71 @@ export function LinkOut({ link, title, className }: LinkOutProps) {
     >
       {kind === 'own' ? <OwnIcon /> : <ExternalIcon />}
     </a>
+  )
+}
+
+/**
+ * The same door, for a file on this computer.
+ *
+ * A button rather than an anchor, because there is no href: the file is read
+ * through a handle and handed to a tab as a blob, which takes a moment and
+ * can fail in three different ways - see `openOnDevice`. Everything else is
+ * the anchor's: the same box, the same 44px, the same bubble under it, and
+ * the same refusal to let the press reach the card underneath.
+ *
+ * What it says when it cannot open is the whole point of it being here. A
+ * planner that shrugs is the thing that sent the owner looking for a link
+ * field in the first place.
+ */
+function FileOut({ link, title, label, className }: LinkOutProps & { label: string }) {
+  const [said, setSaid] = useState<OpenResult | null>(null)
+  const file = onDeviceFile(link)
+  return (
+    <>
+      <button
+        type="button"
+        className={className ? `link-out ${className}` : 'link-out'}
+        data-tip={said ? SAID[said] : label}
+        data-link-kind="device"
+        aria-label={`Open ${title}, the file ${label}, on this computer`}
+        onClick={async e => {
+          e.stopPropagation()
+          if (!file) return
+          setSaid(null)
+          const how = await openOnDevice(indexedDbHandleStore(), file.id)
+          setSaid(how === 'opened' ? null : how)
+        }}
+        onPointerDown={e => e.stopPropagation()}
+      >
+        <FileIcon />
+      </button>
+      {said && (
+        <span className="visually-hidden" role="status">
+          {SAID[said]}
+        </span>
+      )}
+    </>
+  )
+}
+
+/**
+ * One sentence per way it can fail, because they are different problems and
+ * only one of them is the owner's to fix.
+ */
+const SAID: Record<OpenResult, string> = {
+  opened: '',
+  elsewhere: 'This file was picked on another computer. Pick it again here to open it from this one.',
+  denied: 'The browser did not give access to the file.',
+  gone: 'The file has moved or been renamed since it was picked. Pick it again.',
+}
+
+/** A page with a corner turned: the one icon in this set that is a document rather than a place. */
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <path d="M11 3H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8z" />
+      <path d="M11 3v5h5" />
+    </svg>
   )
 }
 

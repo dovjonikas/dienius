@@ -18,6 +18,7 @@ import {
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
 import { linkRefusal, parseLink } from '../lib/link'
+import { canPickFile, indexedDbHandleStore, onDeviceFile, onDeviceLink, pickFile } from '../lib/localFile'
 import { LinkOut } from './LinkOut'
 import { PALETTE_COLORS } from '../lib/colors'
 import type { LibraryItem, LibraryList, LibraryTrack, Template } from '../lib/types'
@@ -768,6 +769,18 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   const [link, setLink] = useState(item.link ?? '')
   /** The one refusal worth a sentence - see linkRefusal. Cleared on the next keystroke. */
   const [linkSaid, setLinkSaid] = useState<string | undefined>(undefined)
+  // A file on this computer, if that is what this item's link is. See
+  // localFile.ts: the handle is in IndexedDB here, and what the item stores
+  // is the id and the name.
+  const onDevice = onDeviceFile(item.link ?? '')
+  const pick = async () => {
+    const picked = await pickFile(indexedDbHandleStore(), onDevice?.id ?? crypto.randomUUID())
+    if (!picked) return
+    const chosen = onDeviceLink(picked)
+    setLink(chosen)
+    setLinkSaid(undefined)
+    actions.updateLibraryItem(list.id, item.id, { link: chosen })
+  }
   const [page, setPage] = useState(String(itemProgress(item)))
   const [total, setTotal] = useState(item.total === undefined ? '' : String(item.total))
   const [seasons, setSeasons] = useState(item.seasons === undefined ? '' : String(item.seasons))
@@ -991,6 +1004,31 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
       {/* Where the thing itself is. It goes with the item when the item
           goes, which is the whole of what should happen to a finished book's
           address. Nothing here asks the network anything - see lib/link.ts. */}
+      {onDevice ? (
+        <div className="library-detail-row library-detail-link">
+          <span className="field-label">Link</span>
+          {/* The name, not the path. A handle has no path to show, which is
+              the point of it - the file can be anywhere and can move within
+              reason - and the name is what the owner recognises anyway. */}
+          <p className="library-detail-file">
+            <span className="library-detail-file-name">{onDevice.name}</span>
+            <button type="button" className="library-detail-file-change" onClick={pick}>
+              Change
+            </button>
+            <button
+              type="button"
+              className="library-detail-file-change"
+              onClick={() => {
+                indexedDbHandleStore().delete(onDevice.id)
+                setLink('')
+                actions.updateLibraryItem(list.id, item.id, { link: null })
+              }}
+            >
+              Remove
+            </button>
+          </p>
+        </div>
+      ) : (
       <label className="library-detail-row library-detail-link">
         <span className="field-label">Link</span>
         <input
@@ -1014,6 +1052,15 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
           }}
         />
       </label>
+      )}
+      {/* Only where the browser has a picker, which is Chrome and Edge on a
+          desktop. On an iPhone there is no button rather than a broken one,
+          and linkRefusal's other sentence is the answer there. */}
+      {!onDevice && canPickFile() && (
+        <button type="button" className="library-detail-pick" onClick={pick}>
+          Pick a file on this computer
+        </button>
+      )}
       {linkSaid && (
         <p className="library-detail-refusal" role="status">
           {linkSaid}

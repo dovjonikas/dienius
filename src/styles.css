@@ -13927,6 +13927,56 @@ main:has(.week) > .calendar {
 
 .library-detail-row .library-page-input { flex: 0 0 auto; }
 
+/* A file picked on this computer, in the row the Link field would be in -
+   see localFile.ts. The name takes the room and gives way first: it is the
+   part that can be sixty characters of somebody's filename, and the two
+   words beside it are the two things that can be done about it. */
+.library-detail-file {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  flex: 1 1 16ch;
+  min-width: 0;
+  margin: 0;
+}
+
+.library-detail-file-name {
+  /* Shrinks, never grows: growing pushed Change and Remove to the far edge
+     of the panel, where they read as belonging to the row rather than to the
+     file. They sit against the name now, and the name is still the part that
+     gives way when it is sixty characters long. */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.library-detail-file-change,
+.library-detail-pick {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.library-detail-file-change:hover,
+.library-detail-pick:hover { color: var(--text); }
+
+/* Under the field rather than under the label, so the two ways of
+   answering the same question sit in one column. The label's own width plus
+   the row's gap, which is what the field starts after. */
+.library-detail-pick {
+  align-self: flex-start;
+  margin-left: calc(var(--field-label-w) + var(--s3));
+}
+
 .library-detail-actions {
   display: flex;
   align-items: center;
@@ -16044,6 +16094,17 @@ main:has(.week) > .calendar {
   margin: calc((var(--touch) - 20px) / -2);
   color: var(--muted);
   border-radius: var(--r-control);
+}
+
+/* The file door is a button rather than an anchor - there is no href for a
+   handle - and a button brings a background, a border, a padding and a font
+   with it. Stripped back to the anchor beside it, so the two read as one
+   control in two situations rather than as two controls. */
+button.link-out {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
 }
 
 .link-out svg {

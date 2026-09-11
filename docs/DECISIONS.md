@@ -2914,3 +2914,61 @@ the only infinite animation in the app. An animation that never ends is not
 saying something happened; it is asking to be looked at, once every second
 and a half, for as long as the clock sits there. The same state already turns
 the border to `--mark`, which says it without moving.
+
+## A file on this computer is pointed at once, not copied and not served
+
+The owner put `file://` and a path to a PDF into a link field and nothing
+happened. `linkRefusal` had already been added to say why - a page cannot
+open a file on the reader's own disk, at any price, in any browser, and
+Chromium answers a click on one with "Not allowed to load local resource" -
+and the sentence it said was "serve the folder at an address".
+
+That was an answer to a question they had not asked. The reply was that the
+PDF is on this machine, it is read on this machine, and no other device needs
+it. Running a web server to open a file that is forty pixels away in
+Explorer is not a plan; it is a workaround for a limitation that has had a
+proper answer since the File System Access API.
+
+**So: pick the file once, keep the handle, press the link afterwards.**
+`showOpenFilePicker` returns a `FileSystemFileHandle`, a handle survives in
+IndexedDB across reloads and restarts, and the file is read through it on
+each press. Checked rather than remembered, twice: a handle stored, a reload,
+and the contents read back; then the whole path through the real UI, where
+the door opened a tab at a `blob:` URL showing the file from disk.
+
+Three alternatives, and why not:
+
+- **Store the bytes**, the way `photos.ts` stores a photograph. It would work
+  on an iPhone too. But it puts a book-sized binary in the backup and the
+  sync path, and the owner's case is a file that is already on the disk and
+  is going to stay there. A copy that goes stale is worse than a reference.
+- **Serve the folder at an address.** Still the right answer for two devices,
+  and still what the refusal says where there is no picker. It is the wrong
+  answer for one.
+- **A second field on the item.** The `link` field is already carried to all
+  four places a door is drawn - the library row, the task card, Up next and
+  the focus screen - plus the validator, the backup and sync. A file is a
+  door. It goes in the field that is already a door, under a scheme this app
+  owns, `ondevice:<id>/<name>`.
+
+**It stays on the device it was picked on**, which is the same rule as "A
+photograph stays on the device it was taken on" above and for a harder
+reason: a handle is a reference to one disk, and carrying it elsewhere would
+carry a promise the other machine cannot keep. The id and the name travel, so
+another device says which file is meant instead of showing a broken door.
+
+**And it is absent rather than broken where the browser has no picker**,
+which is Safari, Firefox, and therefore every iPhone. The button is not
+drawn there at all, and the refusal keeps its other sentence.
+
+**Three sentences for three failures**, because they are different problems
+and only one is the owner's to fix: the file was picked on another computer,
+the browser did not give access, or the file has moved since. A door onto
+nothing is the thing this whole feature exists to stop being.
+
+One thing found by the browser that a test had said was fine: the tab is
+opened *before* anything is awaited, because a browser lets a page open one
+on the strength of a press and that does not survive every await - and it is
+opened **without** `noopener`, because `window.open` returns null when that
+is passed, and the reference is the entire point. There is nothing to protect
+against: the tab holds a blob this app made, on this app's own origin.

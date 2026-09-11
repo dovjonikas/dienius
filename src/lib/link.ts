@@ -1,3 +1,4 @@
+import { canPickFile, onDeviceFile } from './localFile'
 import type { LibraryList, Task } from './types'
 
 /**
@@ -81,10 +82,20 @@ export function parseLink(text: string): string | undefined {
 export function linkRefusal(text: string): string | undefined {
   const trimmed = text.trim()
   if (trimmed === '' || parseLink(trimmed) !== undefined) return undefined
+  // The app's own scheme for a file picked on this computer. It is never
+  // typed - a button writes it - so it is never something to correct.
+  if (onDeviceFile(trimmed)) return undefined
   const scheme = /^([a-z][a-z0-9+.-]*):(?:\/\/|[^0-9])/i.exec(trimmed)?.[1]?.toLowerCase()
   if (!scheme || scheme === 'http' || scheme === 'https') return undefined
   if (scheme === 'file') {
-    return 'A page cannot open a file on your own disk. Serve the folder at an address like 192.168.1.4/books and link that, and it works from the phone too.'
+    // Two answers, because there are two situations. Where the browser has
+    // a file picker the owner wants the file, not an address, and saying
+    // "run a server" to somebody who has a PDF on the same machine is an
+    // answer to a question they did not ask - see localFile.ts. Where there
+    // is no picker, which is every iPhone, an address really is the answer.
+    return canPickFile()
+      ? 'A page cannot open a file on your disk by its path. Press Pick a file below and it opens from here, on this computer.'
+      : 'A page cannot open a file on your own disk. Serve the folder at an address like 192.168.1.4/books and link that, and it works from the phone too.'
   }
   return 'Only http and https addresses can be opened from here.'
 }
@@ -103,7 +114,10 @@ export function linkRefusal(text: string): string | undefined {
  * Anything unrecognised is external. A guess that says "this is yours" about
  * something on the internet is the wrong way round to be wrong.
  */
-export function linkKind(link: string): 'own' | 'external' {
+export function linkKind(link: string): 'own' | 'external' | 'device' {
+  // Not a hostname question at all: it is a file on this disk, and it is the
+  // most "own" a thing can be.
+  if (onDeviceFile(link)) return 'device'
   try {
     return isLocalName(new URL(link).hostname) ? 'own' : 'external'
   } catch {
@@ -120,6 +134,9 @@ export function linkKind(link: string): 'own' | 'external' {
  * "192.168.1.4/spanish/easy" are different answers.
  */
 export function linkLabel(link: string): string {
+  // A file says its own name. An id is not something to show anybody.
+  const file = onDeviceFile(link)
+  if (file) return file.name
   const withoutScheme = link.replace(/^https?:\/\//, '')
   return withoutScheme.endsWith('/') ? withoutScheme.slice(0, -1) : withoutScheme
 }
