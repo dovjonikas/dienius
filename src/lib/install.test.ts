@@ -92,3 +92,47 @@ test('watching twice does not arm two listeners for one event', () => {
 test('being installed is answered, not guessed, and never throws', () => {
   expect(typeof isInstalled()).toBe('boolean')
 })
+
+/**
+ * The offer that arrived before this module did.
+ *
+ * A browser fires `beforeinstallprompt` once and early - early enough to come
+ * and go while the bundle is still being fetched, since the manifest link in
+ * the head is all it needs to decide. index.html keeps it on the window under
+ * `#catch-install-offer`, and arming takes it from there. Without this the
+ * offer is simply lost for the session, which is what the owner reported
+ * after resetting a browser profile: "nebegaliu install on device desktope,
+ * dingo tiesiog".
+ */
+function holdEarlyOffer() {
+  const event = new Event('beforeinstallprompt', { cancelable: true }) as Event & {
+    prompt: () => Promise<void>
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+  }
+  event.prompt = vi.fn().mockResolvedValue(undefined)
+  event.userChoice = Promise.resolve({ outcome: 'accepted' as const })
+  ;(window as Window & { __dieniusInstallOffer?: unknown }).__dieniusInstallOffer = event
+  return event
+}
+
+test('an offer caught in the head before this module armed is taken up', () => {
+  holdEarlyOffer()
+  expect(canInstall()).toBe(false)
+  watchInstallPrompt()
+  expect(canInstall()).toBe(true)
+})
+
+test('the offer the head is holding is shown, and only once', async () => {
+  const event = holdEarlyOffer()
+  watchInstallPrompt()
+
+  expect(await promptInstall()).toBe('accepted')
+  expect(event.prompt).toHaveBeenCalledTimes(1)
+  // Spent. A browser refuses a second prompt on the same event, so the copy
+  // the head is holding has to go with it - otherwise arming again in another
+  // tab of the same page would pick a dead event back up and offer a button
+  // that does nothing.
+  expect(canInstall()).toBe(false)
+  expect((window as Window & { __dieniusInstallOffer?: unknown }).__dieniusInstallOffer).toBeNull()
+  expect(await promptInstall()).toBe('unavailable')
+})

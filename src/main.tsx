@@ -8,6 +8,13 @@ import { startSync } from './lib/syncClient'
 import { startCloudBackup } from './lib/cloudBackup'
 import './styles.css'
 
+// Before React is handed the page. The browser fires beforeinstallprompt
+// early and exactly once, and an event nobody was listening for is an install
+// offer that never appears - so this used to sit below the render, where it
+// had already lost the race on a fast load. It takes whatever the head caught
+// first either way; see lib/install.ts and #catch-install-offer in index.html.
+watchInstallPrompt()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
@@ -17,10 +24,6 @@ createRoot(document.getElementById('root')!).render(
 )
 
 registerServiceWorker()
-// Armed before React mounts: the browser fires beforeinstallprompt early and
-// exactly once, and an event nobody was listening for is an install offer
-// that never appears. See lib/install.ts.
-watchInstallPrompt()
 // A no-op on a device where sync was never set up, which is the default. See
 // lib/syncClient.ts - it pulls once here and then lives off store commits.
 startSync()

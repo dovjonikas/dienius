@@ -31,12 +31,33 @@ function notify(): void {
   listeners.forEach(fn => fn())
 }
 
+/**
+ * The event index.html caught before this file existed on the page.
+ *
+ * A browser fires `beforeinstallprompt` once and early - early enough to
+ * arrive while this bundle is still being fetched, because the manifest link
+ * in the head is all it needs to decide the site is installable. This module
+ * used to arm its listener and hope. On a profile where the service worker is
+ * already warm the event had come and gone, nobody had it, and Settings said
+ * "Not available here" for the rest of the session with no way to get the
+ * offer back except another load that happened to be slower.
+ *
+ * So the head holds a nine-line listener that keeps the event, and this takes
+ * it. See `#catch-install-offer` in index.html.
+ */
+function adoptEarlyInstallOffer(): void {
+  const held = (window as Window & { __dieniusInstallOffer?: BeforeInstallPromptEvent | null }).__dieniusInstallOffer
+  if (!held) return
+  deferred = held
+}
+
 /** Starts listening. Safe to call more than once; only the first arms it. */
 export function watchInstallPrompt(): void {
   if (typeof window === 'undefined') return
   if (watching) return
   watching = new AbortController()
   const { signal } = watching
+  adoptEarlyInstallOffer()
 
   window.addEventListener(
     'beforeinstallprompt',
@@ -54,6 +75,7 @@ export function watchInstallPrompt(): void {
     'appinstalled',
     () => {
       deferred = null
+      forgetEarlyInstallOffer()
       notify()
     },
     { signal },
@@ -100,8 +122,10 @@ export async function promptInstall(): Promise<'accepted' | 'dismissed' | 'unava
   if (!event) return 'unavailable'
   // Cleared before awaiting, not after: the browser refuses a second prompt
   // on the same event, so holding it past this point would leave a button
-  // that looks live and does nothing.
+  // that looks live and does nothing. The copy the head is holding goes with
+  // it, or the next arm would pick the spent event back up.
   deferred = null
+  forgetEarlyInstallOffer()
   notify()
   try {
     await event.prompt()
@@ -119,8 +143,14 @@ export function onInstallAvailabilityChange(listener: () => void): () => void {
 }
 
 /** Test seam: forgets the held event, both window listeners, and every subscriber. */
+function forgetEarlyInstallOffer(): void {
+  if (typeof window === 'undefined') return
+  ;(window as Window & { __dieniusInstallOffer?: BeforeInstallPromptEvent | null }).__dieniusInstallOffer = null
+}
+
 export function resetInstallForTests(): void {
   deferred = null
+  forgetEarlyInstallOffer()
   watching?.abort()
   watching = null
   listeners.clear()

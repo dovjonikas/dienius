@@ -354,6 +354,27 @@
         root.dataset.theme = mode
       } catch (e) {}
     </script>
+    <script id="catch-install-offer">
+      // The install offer, caught where it can actually be caught.
+      //
+      // A browser fires `beforeinstallprompt` once, early, and never again on
+      // that page - and it can fire it while the module below is still coming
+      // over the network, because the manifest is linked four lines up and
+      // that is all it needs to decide. lib/install.ts armed its listener
+      // inside the bundle, after React had been handed the page, so on a
+      // profile with the service worker already warm the event arrived before
+      // anything was listening and Settings said "Not available here" for the
+      // rest of the session. Reported after a browser profile was reset,
+      // which is exactly the load where this is fastest.
+      //
+      // Nine lines in the head cannot lose that race. The event is kept here
+      // and lib/install.ts takes it when it arms - see adoptEarlyInstallOffer.
+      window.__dieniusInstallOffer = null
+      addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault()
+        window.__dieniusInstallOffer = event
+      })
+    </script>
   </head>
   <body>
     <div id="root"></div>
