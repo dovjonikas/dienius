@@ -16,7 +16,8 @@
     "sweep": "node scripts/sweep.mjs",
     "privacy": "node scripts/no-personal-data.mjs",
     "inventory": "node scripts/stylesheet-inventory.mjs",
-    "textscale": "node scripts/text-scale-check.mjs"
+    "textscale": "node scripts/text-scale-check.mjs",
+    "precision": "node scripts/precision.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
