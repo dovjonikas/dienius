@@ -8,6 +8,9 @@ import {
   pickFile,
 } from './localFile'
 import { linkKind, linkLabel, linkRefusal } from './link'
+import { defaultData, exportJson, importJson } from './storage'
+import { collectEntities } from './syncEntities'
+import { todayKey } from './dates'
 
 /**
  * A file on this computer, pointed at once and pressed afterwards.
@@ -157,4 +160,72 @@ test('the tab it took is closed again when the file cannot be had', async () => 
   vi.stubGlobal('open', vi.fn(() => tab))
   expect(await openOnDevice(memoryHandleStore(), 'never-picked-here')).toBe('elsewhere')
   expect(tab.close).toHaveBeenCalled()
+})
+
+/**
+ * The file survives everything that moves the plan about.
+ *
+ * What the item stores is a string - `ondevice:<id>/<name>` - and what makes
+ * it open is a handle in IndexedDB on this device. The two have to stay
+ * together across an export and an import, a cloud backup and a restore, and
+ * a sync payload, or the owner re-picks the file every time they restore
+ * anything: "jei pridedi pdf is kompo ir jei ant to pacio kompo ir jie ten
+ * yra, kad nereiktu is naujo deliot".
+ *
+ * The string is the part that travels. Nothing on those paths re-reads a link
+ * through `parseLink` - which would refuse this scheme, since it refuses
+ * everything that is not http or https - and the validator holds a link as a
+ * string rather than as an address. Both of those are load-bearing and
+ * neither was written with this in mind, so they are held here.
+ */
+test('a picked file survives an export and an import, and is still openable', async () => {
+  const link = onDeviceLink({ id: 'abc123', name: 'Deep Work.pdf' })
+  const data = defaultData()
+  data.library = [{
+    id: 'books', name: 'Books', unit: 'chapter',
+    items: [{ id: 'i1', title: 'Deep Work', progress: 3, total: 12, link, pace: 'a chapter most evenings' }],
+  }]
+  const day = todayKey()
+  data.days[day] = { date: day, tasks: [{ id: 't1', title: 'Read', done: false, link }] }
+
+  const back = importJson(exportJson(data))
+  // And the shape the cloud backup actually writes, which is the plan
+  // stringified rather than the export's own wrapper - cloudBackup.ts writes
+  // one and reads it back through the same importJson.
+  const fromCloud = importJson(JSON.stringify(data))
+  expect(fromCloud.library[0].items[0].link).toBe(link)
+
+  expect(back.library[0].items[0].link).toBe(link)
+  expect(back.days[day].tasks[0].link).toBe(link)
+  // And it still says which file it means, on the far side.
+  expect(onDeviceFile(back.library[0].items[0].link!)).toEqual({ id: 'abc123', name: 'Deep Work.pdf' })
+  // The rest of the book came with it, which is the other half of the ask.
+  expect(back.library[0].items[0]).toMatchObject({ title: 'Deep Work', progress: 3, total: 12, pace: 'a chapter most evenings' })
+
+  // The handle was never part of any of that: it sits in IndexedDB on this
+  // device, and an import replaces the plan rather than the store.
+  const store = memoryHandleStore()
+  await store.put('abc123', fakeHandle('Deep Work.pdf'))
+  expect(await store.get('abc123')).not.toBeNull()
+})
+
+test('a picked file survives a sync payload', () => {
+  const link = onDeviceLink({ id: 'abc123', name: 'Deep Work.pdf' })
+  const data = defaultData()
+  data.library = [{ id: 'books', name: 'Books', unit: 'chapter', items: [{ id: 'i1', title: 'Deep Work', link }] }]
+
+  const entities = [...collectEntities(data).values()]
+  const item = entities.find(e => e.kind === 'item')
+  expect(item).toBeDefined()
+  // The body is what actually goes over the wire, so it is the body that has
+  // to carry it - not just the entity it was read from.
+  expect(JSON.stringify(item!.bodyOf())).toContain('ondevice:abc123')
+})
+
+test('an address that is not a file is left exactly as it was', () => {
+  // The same paths, for the ordinary case, so a change to either cannot
+  // quietly start rewriting links.
+  const data = defaultData()
+  data.library = [{ id: 'books', name: 'Books', unit: 'chapter', items: [{ id: 'i1', title: 'Spanish', link: 'http://192.168.1.4/lessons' }] }]
+  expect(importJson(exportJson(data)).library[0].items[0].link).toBe('http://192.168.1.4/lessons')
 })
