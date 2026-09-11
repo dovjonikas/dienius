@@ -337,7 +337,7 @@ test('the week map, North, a full list and the backup form all take what is type
   // arms its own button, and it never reaches the network.
   await page.getByRole('button', { name: 'Settings', exact: true }).first().click()
   await page.getByPlaceholder('you/dienius-data').fill('someone/dienius-data')
-  await page.getByPlaceholder('github_pat_...').fill('github_pat_0000000000000000000000_0000000000000000000000000000000000000000000000000000000000')
+  await page.getByPlaceholder('github_pat_…').fill('github_pat_0000000000000000000000_0000000000000000000000000000000000000000000000000000000000')
   // Save appears only once both fields hold something, and it is the only
   // button on this form that would ever reach the network. It is not
   // pressed: the token is invented, and the point is that the form takes
