@@ -7,6 +7,7 @@ import {
   formatBackupTime,
   getCloudBackupConfig,
   isCloudBackupOn,
+  describeFailure,
   previewRestore,
   requestCloudBackup,
   setCloudBackupConfig,
@@ -76,7 +77,20 @@ export function BackupSettings() {
     try {
       setPreview(await previewRestore())
     } catch (err) {
-      setPreviewError(err instanceof Error ? err.message : 'Could not read the backup.')
+      // Two kinds of failure reach here and they want different sentences.
+      //
+      // previewRestore throws its own, written for a person - "There is no
+      // backup in that repo yet." - and those pass through. Everything else
+      // comes from the API or the wire and carries a message written for
+      // whoever is reading the code: "GitHub answered 401 reading
+      // data/state.json", which is what the owner read on a phone while
+      // setting it up. A status code says something is wrong and nothing
+      // about what to do; describeFailure names the thing to check.
+      //
+      // Told apart by the constructor rather than by the text: a deliberate
+      // sentence is a plain Error, while GitHubError and the TypeError a
+      // dead connection throws are both subclasses.
+      setPreviewError(err instanceof Error && err.constructor === Error ? err.message : describeFailure(err))
     } finally {
       setReading(false)
     }

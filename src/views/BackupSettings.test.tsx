@@ -133,3 +133,36 @@ test('the restore screen counts the library and the goals, and marks what would 
   // And a row that would not lose anything is not marked.
   expect(screen.getByRole('row', { name: /Tasks/ })).not.toHaveTextContent('fewer')
 })
+
+/**
+ * A refused token says it was refused.
+ *
+ * The owner set the phone up and pressed Restore from cloud, and read
+ * "GitHub answered 401 reading data/state.json" - which is the sentence the
+ * throw carries for whoever is reading the code, shown straight to a person
+ * standing there with a phone. describeFailure exists for exactly this and
+ * was not being used here: a status code says something is wrong and nothing
+ * about what to do.
+ */
+test('a token GitHub refuses is reported as a refused token, not as a number', async () => {
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'expired' })
+  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('{"message":"Bad credentials"}', { status: 401 }))))
+  render(<BackupSettings />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+
+  expect(await screen.findByText(/refused the token/)).toBeInTheDocument()
+  expect(screen.queryByText(/401/)).toBeNull()
+})
+
+test('a sentence written for a person is not replaced by a general one', async () => {
+  // previewRestore says "there is no backup in that repo yet" for a 404 on
+  // the read, which is more useful than anything a status code could produce.
+  // The fix above must not flatten that into "GitHub refused something".
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'fine' })
+  render(<BackupSettings />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+
+  expect(await screen.findByText('There is no backup in that repo yet.')).toBeInTheDocument()
+})
