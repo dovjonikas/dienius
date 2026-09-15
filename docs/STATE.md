@@ -2301,6 +2301,48 @@ verdict written down beside it in the sweep table further up, so the week
 can report on whether the verdict was right rather than on whether the
 gesture exists.
 
+**Chosen on 2026-09-15, after the first real week.** The owner read the
+plan that came out of that week and said "darom visus" - all of it - with
+one correction that changes the weights: **the computer is the main device
+and the phone is for being out.** The repo's doctrine had the phone first;
+from here a choice that trades desktop quality for phone quality goes the
+other way. Both still have to work.
+
+The order below is the order it is being done in. A-tier is sync trust,
+because the owner started depending on it this week and it has not yet run
+against the real GitHub. C-tier is the nets - almost every defect this week
+was seen by the owner before any pass - and it comes before the features so
+the features land on something that catches them. B and D after that.
+
+- **A1** - sync proven against the real GitHub, both directions, on the
+  owner's two devices. This one is the owner's to run: it needs their token,
+  which is not for anybody else to hold. A checklist is theirs.
+- **A2** - Backup and sync no longer confusable: with sync on, Restore from
+  cloud says it replaces the plan with a copy and how much older that copy
+  is than the last sync.
+- **A3** - an open screen catches up on its own: while visible, read the
+  repo once a minute, read only.
+- **A4** - a sync line that says when the last change from the other device
+  arrived, so "does the phone have it" is answered without looking for it.
+- **B1** - the four gestures on real iOS Safari, in the owner's hand. Not
+  doable from here; the checklist is in the plan.
+- **B2** - the book's file on the phone too: a link to the same file in a
+  cloud drive beside the local handle, and the door picks whichever this
+  device can open.
+- **C1** - the precision pass learns alignment: things stacked in one
+  column share a left edge.
+- **C2** - the keyboard walk as `npm run keys`.
+- **C3** - the sweep starts and stops its own preview, like the other two.
+- **C4** - the 45 React act() warnings cleared, so a real one is visible.
+- **C5** - the base field rule's five :not()s rewritten through :where(),
+  with the sweep run either side.
+- **D1** - dragging a block inside the template editor's timeline.
+- **D2** - a way into the command palette on a phone.
+- **D3** - a reminder that can arrive while the app is closed. The only
+  design that needs no server of the owner's is a scheduled GitHub Action
+  reading the shared plan and sending web push; it is last because it is
+  the largest and the one most likely to be cut.
+
 - **The two Shift accelerators the "?" card cannot hold.** A stepper's
   arrows say what Shift does to them since v2.14, and the time field's do
   not, because it has no arrow buttons to hang a bubble on - its road is
