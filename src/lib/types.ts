@@ -1155,17 +1155,25 @@ export const MAX_ACTIVE_GOALS = 4
 export const MAX_DESERVE_LINES = 4
 
 /**
- * The picture: who you are becoming, in your own words, in the first person.
+ * North: one text, in the person's own words, read every morning.
  *
- * The heading over everything in North - read every day, written once,
- * edited rarely. One text rather than fields, because a person is not a
- * form. One entity of its own rather than a settings field, because it is
+ * Since v2.22 it is the whole of the North page - see DECISIONS "North is a
+ * text". A dozen or so short lines in blocks, a blank line between blocks;
+ * no headings, no fields, no structure the app adds, because a person is
+ * not a form. The blank lines are the person's own and are kept exactly;
+ * only the ends of the whole text are trimmed. The app never suggests a
+ * word of it: it starts empty, and the placeholder only says where to
+ * write.
+ *
+ * One entity of its own rather than a settings field, because it is
  * content the person authored - CONVENTIONS section 7, in its singleton
  * case: there is exactly one, so one entity is exactly its grain. It syncs
  * under `PICTURE_KEY`, and erasing it is a deletion with a tombstone, so an
  * erase sticks rather than being handed back by a device that still has the
  * old text. A blank string in a settings field would have been a body, not
- * a deletion, and would have come back.
+ * a deletion, and would have come back. The name `picture` is from v2.18,
+ * when it was a few lines over the goals; it stays for the sake of every
+ * backup and every repo already holding it.
  */
 export interface Picture extends Timestamped {
   text: string

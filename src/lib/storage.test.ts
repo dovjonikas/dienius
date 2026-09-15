@@ -1395,6 +1395,16 @@ test('the picture loads when it is there, and a payload without one has none', (
   expect(loadData().picture).toBeUndefined()
 })
 
+test('the North text survives export and import with its blank lines exactly', () => {
+  const data = defaultData()
+  data.picture = { text: 'First line here\nSecond line here\n\nThird line here', updatedAt: '2026-09-01T08:00:00.000Z' }
+  const back = importJson(exportJson(data))
+  expect(back.picture).toEqual(data.picture)
+  // And through the file on disk, the same way the app reads it on load.
+  localStorage.setItem(STORAGE_KEY, exportJson(data))
+  expect(loadData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here')
+})
+
 test('validate rejects a picture that is not text, and the whole payload with it', () => {
   localStorage.setItem(
     STORAGE_KEY,

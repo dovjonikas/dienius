@@ -364,6 +364,33 @@ test('the picture is kept trimmed, and emptying it removes it rather than leavin
   expect(getData().picture).toBeUndefined()
 })
 
+// --- North as a text, v2.22 ------------------------------------------------
+
+/**
+ * The text starts empty - the app suggests none of it - and what is typed
+ * is kept as typed: the blank lines between blocks are the person's own
+ * structure and the one thing the store must never tidy. Only the ends of
+ * the whole text are trimmed, so a blank line left after the last block is
+ * not a block.
+ */
+test('North starts with no text at all', () => {
+  expect(defaultData().picture).toBeUndefined()
+  expect(getData().picture).toBeUndefined()
+})
+
+test('blank lines between blocks are kept exactly, and only the ends are trimmed', () => {
+  const typed = '\nFirst line here\nSecond line here\n\nThird line here\n\n\nFourth line here\n\n'
+  actions.setPicture(typed)
+  expect(getData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here\n\n\nFourth line here')
+})
+
+test('writing the same text again changes nothing, so nothing is stamped for it', () => {
+  actions.setPicture('First line here\n\nSecond line here')
+  const before = getData().picture
+  actions.setPicture('First line here\n\nSecond line here')
+  expect(getData().picture).toBe(before)
+})
+
 // --- compose: the whole window in one press --------------------------------
 
 /**
