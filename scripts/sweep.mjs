@@ -21,10 +21,11 @@
  *   npm run sweep -- --only=Today  one screen, while working on it
  *   npm run sweep -- --self-check  plant defects and prove the audit sees them
  *
- * Needs the production build served: `npm run build && npm run preview`, or
+ * Needs the production build: `npm run build`. It serves `dist` itself, or
  * pass PORT for a server already up.
  */
 import { chromium, devices } from '@playwright/test'
+import { preview } from 'vite'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -368,6 +369,26 @@ function found(where, kind, detail) {
   findings.push({ ...where, kind, detail })
 }
 
+/**
+ * The built app has to be served, and this serves it if nothing else is.
+ *
+ * It used to need `npm run preview` left running in another window, and
+ * that window died twice in one day without saying so - the sweep then fell
+ * over with a connection error rather than a finding, which is the right
+ * failure and still a failure. precision and textscale start their own
+ * server; this does now too, on the same port it always used, and leaves a
+ * server alone if one is already answering there.
+ */
+const served = await (async () => {
+  try {
+    const res = await fetch(BASE, { method: 'HEAD' })
+    if (res.ok) return null
+  } catch {
+    // Nothing on the port: start one.
+  }
+  return preview({ preview: { port: Number(PORT), strictPort: true }, logLevel: 'error' })
+})()
+
 const browser = await chromium.launch()
 
 if (SELF_CHECK) {
@@ -534,6 +555,7 @@ for (const run of runs) {
 }
 
 await browser.close()
+await served?.close()
 
 /** @type {Record<string, typeof findings>} */
 const byKind = {}
