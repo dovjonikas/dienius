@@ -185,7 +185,10 @@ test("a week of the owner's own shape is built through the screen", async ({ pag
   await block(page, '11:00', 'Plan the week', ['Sunday'])
   await block(page, '15:00', 'Call home')
 
-  // Sunday is a rest day.
+  // Sunday is a rest day. Its type shows under the column in hand since
+  // v2.22 - seven feet all saying "Week default" were the loudest thing
+  // under the grid - so Sunday is taken in hand first, which is one press.
+  await press(page, /^Sunday/, '[data-wt-day="0"]')
   await press(page, /^Day type for Sunday/, '[data-wt-day="0"]')
   await page.locator('[data-wt-day="0"]').getByLabel('Day type for Sunday').selectOption('rest')
   presses += 1

@@ -3157,3 +3157,74 @@ typed as the address gets its own refusal, because the one sentence about
 `file:` would be wrong on both counts there - the file is already picked,
 and the address is for the device that cannot open a path on this disk at
 all.
+
+## The pictures, looked at
+
+The owner's brief for the next wave was one sentence: nothing that looks
+unprofessional, nothing that makes you think, and the app is going to be one
+of the main things in the day. That is not a feature brief, and the feature
+list already covers what a calendar does for one person - feeds from a work
+calendar, repeats, a week that drags between days, a line that parses "14:00
+Meal 45min", a palette, keys, offline, sync - so the wave is a quality one.
+It starts with the thing every hole in the measuring passes had in common:
+every one of them was found by a person looking at a picture, and nobody had
+looked at the pictures since the passes were written.
+
+**The sweep leaves pictures now.** `npm run sweep -- --shots=DIR` writes a
+PNG of every screen it reaches, on the same seed, at the same minute, by the
+same route as the measuring, and `--width=1366` walks one desktop size while
+working. Sixty-four pictures at 1366 and fifty-eight on the phone were read
+one at a time. What they showed, in the order it mattered:
+
+**Every picture had an empty navigation rail, and the pass had said
+nothing.** A test driver's click scrolls an `overflow: hidden` box sideways
+to bring a 160px item into a 56px rail, and every icon was sitting at
+x = -95 with no way back. A real click and the keyboard never did that, but a
+find-in-page or a `scrollIntoView` from anywhere could, and the fix is not
+in the driver: the rail's items are the rail's width now, the label sits out
+of flow beside the icon, and the rail clips rather than hides, so nothing in
+it is wider than it and nothing can scroll it. The pass looks past the left
+edge as well as the right, and its first version of that check was blind to
+its own plant - the walk it used is filtered by what can be seen, and a thing
+wholly past the edge cannot be - so it walks the document for that one.
+
+**Two of the sweep's screens were pictures of the wrong thing.** "Clock:
+notes" and "Clock: journal" opened the clock and pressed a name inside it,
+which since v2.7 is nowhere; for fourteen versions the two most-used
+popovers in the app were measured as the timer. They are opened from the
+header now, and the timer is a screen of its own.
+
+**The phone had lost its field floor to C5, and the check either side of C5
+was desktop-only.** The 44px floor for a field on a finger was written on the
+base rule's own chain and went weightless with it; `.time-picker
+.time-input`'s desktop 38px then beat it, and every time field on the phone
+shrank to 38. The floor names the field types it means and hangs each off
+`:root` - two classes' worth of weight and no `:not()` chain for
+`notSpecificity.test.ts` to count - and it says in its own comment why it is
+weighted when the rule above it is not: that one is a look, this one is a
+size. The progress chip on a card had been promised the 44px overlay by its
+own comment and never had it; it does now, as does the file picker's link.
+
+**Then the ordinary findings**, each of which a person sees in a second and
+no pass measures. Settings had two things called Backup, one a file and one
+a repo, and the file's line said everything lived in the browser and nowhere
+else, which stopped being true the day sync was switched on; it is "Export
+and import" now, and says where the other copy is. The week template
+editor's seven column feet each said "Week default", for a question most
+weeks never answer; the type shows under the column in hand and under any
+column whose type is its own, and Copy to sits first so the seven feet line
+up on it. The library's loud card said "Next on Reading, Reading" for two
+templates with a block of the same name. The low day's one sentence was four
+lines of bold at heading size and read as a warning; it is regular weight. An
+open goal on North lay over the neighbour below it with nothing to say which
+was which in a dark theme, and the neighbour's identity line, showing under
+the open half, read as a card with nothing else on it; the open goal carries
+an inset edge on three sides. The rollover's aside said "tomorrow has it
+anyway"; it says "tomorrow already has it". And the Return hint, a desktop
+keyboard's word, is not shown on a finger, where at 390px it had cost the
+block editor's title field a third of its width.
+
+**What the rule is from here.** The sweep runs with `--phone` before and
+after any change to a base rule, and the pictures are read after every
+wave, on the two devices the owner uses. A clean report from a pass is
+still what it always was: nothing was found, not nothing is there.

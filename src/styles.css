@@ -592,6 +592,11 @@ main { flex: 1 1 auto; min-height: 0; }
   border-right: 1px solid var(--border);
   background: var(--bg);
   overflow: hidden;
+  /* clip, not hidden: hidden is still a scroll container, and anything that
+     scrolls a focused 160px item into a 56px rail - a test driver did, a
+     scrollIntoView from somewhere could - pushes every icon out of sight to
+     the left with no way back. clip cannot be scrolled by anything. */
+  overflow: clip;
   transition: width var(--dur) var(--ease);
 }
 
@@ -614,17 +619,24 @@ main { flex: 1 1 auto; min-height: 0; }
   list-style: none;
 }
 
-/* The item is a fixed-width row whether or not the rail is showing its
-   labels, so nothing inside it moves as the rail opens: the label is simply
-   clipped by the rail's own overflow. Animating the text's own width would
-   reflow eight rows on every frame of the transition. */
+/* The item is as wide as the rail it is in - the closed rail's 56 less its
+   padding, the open rail's 176 less the same - and its label is out of flow
+   beside the icon, so opening the rail reflows nothing: the width of the
+   item follows the rail's own transition and the label is simply revealed.
+   It was a fixed 160px row at rest, three times wider than the closed rail
+   and clipped by it, which made the rail a box with something to scroll: a
+   find-in-page, a scrollIntoView, a test driver's click could all slide the
+   whole column sideways until every icon sat past the left edge of the
+   screen, with no way back. Nothing in the rail is wider than the rail now,
+   and the rail itself clips rather than hides, so it cannot be scrolled by
+   anything. */
 .nav-rail-item,
 .nav-rail-pin {
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--s2);
-  width: 160px;
+  width: calc(var(--rail-w) - 2 * var(--s2));
   min-height: 40px;
   padding: 0 var(--s2);
   border: none;
@@ -653,8 +665,26 @@ main { flex: 1 1 auto; min-height: 0; }
    open. */
 .nav-rail-pin { color: var(--faint); }
 
+.nav-rail.is-open .nav-rail-item,
+.nav-rail.is-open .nav-rail-pin {
+  width: calc(var(--rail-open-w) - 2 * var(--s2));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav-rail-item,
+  .nav-rail-pin { transition: width var(--dur) var(--ease); }
+}
+
 .nav-rail-label {
-  min-width: 0;
+  /* Out of flow, at the icon's right edge: 8px of padding, the 24px icon
+     box and the 8px gap. Its width is the open rail's, less the closed
+     rail's, less one padding - the room the label has once the rail is
+     open, and where it ends with an ellipsis if it must. */
+  position: absolute;
+  left: calc(var(--s2) + 24px + var(--s2));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(var(--rail-open-w) - var(--rail-w) - var(--s2));
   overflow: hidden;
   text-overflow: ellipsis;
   /* Faded rather than hidden, so opening the rail is one movement rather
@@ -749,7 +779,9 @@ main { flex: 1 1 auto; min-height: 0; }
   .nav-rail-foot { flex: 0 0 auto; }
 
   .nav-rail-item,
-  .nav-rail-pin {
+  .nav-rail-pin,
+  .nav-rail.is-open .nav-rail-item,
+  .nav-rail.is-open .nav-rail-pin {
     width: auto;
     min-width: var(--touch);
     min-height: var(--touch);
@@ -2904,6 +2936,15 @@ input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([
   white-space: nowrap;
 }
 
+/* Not on a finger. The hint names a key a phone's keyboard already labels
+   itself - "return", "go", "done" - and at 390px the word and the room
+   reserved for it cost the block editor's title field a third of its width,
+   so "What happens" showed as "What ha". */
+@media (pointer: coarse) {
+  .return-mark { display: none; }
+  input.has-return { padding-right: var(--s3); }
+}
+
 /* The two classes excluded above, given back everything that is about the
    text rather than about the box: the colour, the family, the figures. Each
    control still draws its own frame - see `.time-stepper` and
@@ -2947,11 +2988,32 @@ textarea:focus {
    remembered.
 
    min-height rather than height: a textarea keeps whatever its rows give it,
-   and the two inputs inside .time-stepper keep filling their own box. */
+   and the two inputs inside .time-stepper keep filling their own box.
+
+   Weighted on purpose, unlike the base rule above it. That rule is a look,
+   and v2.21 made it weightless so that a class can change a field's look;
+   this one is a size, and a class must not be able to undercut it - which
+   is exactly what happened the day the base rule lost its weight: this
+   floor went to 0,0,1 with it, .time-picker .time-input's desktop 38px
+   beat it, and every time field on the phone shrank to 38. The desktop
+   sweep on either side of that change could not see a finger. So the floor
+   names the field types it means and hangs each off :root, which is two
+   classes' worth of weight and no :not() chain for notSpecificity.test.ts
+   to count. Not `html input`, which would be one class' worth and lose the
+   tie to .time-picker .time-input on order. */
 @media (pointer: coarse) {
-  input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color'])),
-  select,
-  textarea {
+  :root input[type='text'],
+  :root input[type='search'],
+  :root input[type='number'],
+  :root input[type='url'],
+  :root input[type='email'],
+  :root input[type='tel'],
+  :root input[type='password'],
+  :root input[type='date'],
+  :root input[type='time'],
+  :root input:not([type]),
+  :root select,
+  :root textarea {
     min-height: var(--touch);
   }
 }
@@ -9576,6 +9638,8 @@ button.task-library:hover { color: var(--text); }
   .wt-block-key,
   .wt-untimed-block,
   .task-note-mark,
+  .task-library,
+  .library-detail-pick,
   .task-title-select {
     position: relative;
   }
@@ -9585,6 +9649,12 @@ button.task-library:hover { color: var(--text); }
   .wt-block-key::after,
   .wt-untimed-block::after,
   .task-note-mark::after,
+  /* The progress chip on a card - 17px of number, and the one control on a
+     card a finger presses most on a reading day. Its own rule promised the
+     overlay from the day it became a button and the list never had it. */
+  .task-library::after,
+  /* The picker's link under the address field, where it is a link. */
+  .library-detail-pick::after,
   .library-color::after,
   .category-wheel::after,
   .task-size::after,
@@ -10719,6 +10789,12 @@ button.task-library:hover { color: var(--text); }
   .north-goal:focus-within {
     z-index: 2;
     border-radius: var(--r-card) var(--r-card) 0 0;
+    /* An edge on three sides, drawn inside the box so nothing moves, and
+       none along the bottom, where the half below joins on. The elevation
+       alone did not separate an open goal from the neighbour it lies over
+       in a dark theme - the neighbour's identity line, showing under the
+       open half, read as a card of its own with nothing else on it. */
+    box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border), inset 0 1px 0 var(--border), var(--e2);
   }
 
   .north-goal:hover .north-goal-more,
@@ -10726,6 +10802,7 @@ button.task-library:hover { color: var(--text); }
   .north-goal:focus-within .north-goal-more {
     visibility: visible;
     opacity: 1;
+    box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border), inset 0 -1px 0 var(--border), var(--e2);
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -13175,7 +13252,10 @@ main:has(.week) > .calendar {
   font-size: var(--t-md);
   line-height: 1.45;
 }
-.replan-summary-lead { font-size: var(--t-lg); font-weight: 600; }
+/* The one sentence read before Accept, at the size a heading has and the
+   weight a sentence has: four lines of bold at t-lg read as a warning, and
+   what it says is the plan. */
+.replan-summary-lead { font-size: var(--t-lg); font-weight: 400; }
 .replan-text { margin: 0; color: var(--muted); line-height: 1.5; }
 
 .replan-foot {
@@ -15374,12 +15454,25 @@ main:has(.week) > .calendar {
   pointer-events: none;
 }
 
-.wt-col-foot { display: flex; flex-direction: column; align-items: center; gap: var(--s0); }
+/* Top-aligned inside the foot it sits in, which centres its one child: a
+   column with one more line under it - the day type shows under the column
+   in hand - was centred as a taller stack, and its untimed chip sat a line
+   above the six beside it. */
+.wt-col-foot { display: flex; flex-direction: column; align-items: center; align-self: flex-start; gap: var(--s0); }
 
 /* Blocks with no time, which the clock has nowhere to put. */
 .week-block-from { display: block; font-size: var(--t-2xs); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .wt-untimed { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+
+/* Room under the strip on a finger. Copy to sits straight under it since
+   v2.21 and carries the 44px overlay every quiet control gets, which
+   reached up over the 17px chip above it: on a phone the chip could not
+   be pressed at all, and the measuring pass said so as "control covered".
+   Twelve pixels put the overlay's top edge under the chip's bottom edge. */
+@media (pointer: coarse) {
+  .wt-untimed { margin-bottom: var(--s3); }
+}
 
 .wt-untimed-block {
   width: 100%;

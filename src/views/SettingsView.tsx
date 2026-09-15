@@ -264,10 +264,16 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
 
             <div className="setting-row">
               <div className="setting-label">
-                <span className="setting-name">Backup</span>
+                {/* Not "Backup": the section of that name, further down the
+                    list, is the copy kept in the owner's repo, and two things
+                    called Backup on one screen - one a file, one a repo - was
+                    the kind of thing this screen must not do. And the old line
+                    said everything lived here and nowhere else, which stopped
+                    being true the day sync was switched on. */}
+                <span className="setting-name">Export and import</span>
                 <span className="setting-desc">
-                  Everything lives in this browser and nowhere else. Export writes one JSON file with
-                  every template, day and setting in it; importing one replaces what is here.
+                  One JSON file with every template, day and setting in it. Export writes it;
+                  importing one replaces what is here. The copy kept in your GitHub repo is under Backup.
                 </span>
               </div>
               <div className="setting-control">

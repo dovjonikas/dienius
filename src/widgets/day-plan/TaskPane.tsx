@@ -306,8 +306,8 @@ export function TaskPane({
               hand from its own detail sheet. */}
           {covered > 0 && (
             <p className="rollover-note">
-              {covered} routine {covered === 1 ? 'task stays' : 'tasks stay'} - tomorrow has{' '}
-              {covered === 1 ? 'it' : 'them'} anyway.
+              {covered} routine {covered === 1 ? 'task stays' : 'tasks stay'} here - tomorrow already has{' '}
+              {covered === 1 ? 'it' : 'them'}.
             </p>
           )}
           {pushable === 0 && held > 0 && (

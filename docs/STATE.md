@@ -6,7 +6,35 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.21, the day the owner used it.
+**Last updated:** v2.22, the pictures looked at.
+
+## v2.22 - the quality wave, part one: the pictures
+
+The owner's brief after the first real week was one sentence: nothing that
+looks unprofessional, nothing that makes you think, and this is going to be
+one of the main things in the day. The feature list already covers what a
+calendar does for one person, so the wave is a quality wave, in this order:
+
+1. **The pictures, looked at** - every screen at 1366 and on the phone, in
+   both themes, read one at a time and fixed until nothing was left. Done;
+   see DECISIONS "The pictures, looked at". The sweep leaves the pictures
+   behind now (`--shots=DIR`), so the next look costs one command.
+2. **One voice** - every label, verb and sentence consistent across screens.
+3. **One clear action per screen** - the rarely-pressed demoted, the empty
+   states saying the one thing to do.
+4. **An answer to every press** - hover, press, tick and undo consistent,
+   transitions one length, nothing jumping.
+5. **The first minute** - a fresh open with a clear path and no thinking.
+6. **Settings in plain words**, grouped, fewer switches on the screen.
+7. **Trust** - A1 run by the owner; the morning digest push if wanted.
+
+What part one found is the reason the rest is worth doing: the navigation
+rail could be scrolled empty by anything that scrolls; the sweep had been
+photographing the timer for fourteen versions where it thought it had the
+Notes and Journal popovers; and every time field on the phone had shrunk to
+38px the day the base rule went weightless, because the check either side of
+that change ran on a desktop. None of these was visible from the passes.
+They were visible in a picture.
 
 ## v2.21 - eight reports in one day, and what they had in common
 

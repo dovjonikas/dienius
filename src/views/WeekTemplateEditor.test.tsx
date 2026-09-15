@@ -258,7 +258,10 @@ test('a column can name its own day type, and absent means the week\'s own', asy
   render(<TemplatesView />)
   await newWeek(user)
   // The column shows its type and hides the choosing, the same as the day
-  // editor above it - see the day type note in WeekTemplateEditor.
+  // editor above it - see the day type note in WeekTemplateEditor. Since
+  // v2.21 the type shows under the column in hand, so Saturday is taken in
+  // hand first.
+  await user.click(within(column('Saturday')).getByRole('button', { name: /^Saturday/ }))
   await user.click(screen.getByRole('button', { name: 'Day type for Saturday: Week default. Change' }))
   await user.selectOptions(screen.getByLabelText('Day type for Saturday'), 'rest')
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')

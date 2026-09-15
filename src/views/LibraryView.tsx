@@ -305,7 +305,9 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
   // one under the list's name saying where it is used, and the one on the
   // loud row saying that this is the item those blocks will take.
   const uses = listUsedBy(data.templates, list.id)
-  const usedBy = uses.map(u => u.blockTitle)
+  // One name per block name: two templates with a block called Reading are
+  // "Next on Reading", not "Next on Reading, Reading".
+  const usedBy = [...new Set(uses.map(u => u.blockTitle))]
 
   const going = list.items.filter(i => !isItemFinished(i))
   const finished = list.items.filter(isItemFinished)

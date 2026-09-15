@@ -480,53 +480,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
           const count = draft.blocks.filter(b => b.weekday === day).length
           return (
             <>
-              {typeOpenDay === day ? (
-                <select
-                  className="setting-select wt-day-type"
-                  aria-label={`Day type for ${label}`}
-                  autoFocus
-                  value={override?.type ?? ''}
-                  onChange={e => {
-                    setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })
-                    setTypeOpenDay(null)
-                  }}
-                  onBlur={() => setTypeOpenDay(null)}
-                >
-                  <option value="">Week default</option>
-                  {DAY_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <button
-                  type="button"
-                  className="wt-day-type-summary"
-                  aria-expanded={false}
-                  aria-label={`Day type for ${label}: ${typeLabel(override?.type)}. Change`}
-                  onClick={() => setTypeOpenDay(day)}
-                >
-                  {typeLabel(override?.type)}
-                </button>
-              )}
-
-              {sleepProfiles.length > 1 && (
-                <select
-                  className="setting-select wt-day-sleep"
-                  aria-label={`Sleep schedule for ${label}`}
-                  value={override?.sleepProfileId ?? ''}
-                  onChange={e => setOverride(day, { sleepProfileId: e.target.value || undefined })}
-                >
-                  <option value="">Week default</option>
-                  {sleepProfiles.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-
+              {/* Copy to first, so the seven feet line up on it; the day type
+                  under that, on the one column that shows it. */}
               {count > 0 && (
                 <Explain id="copy-to">
                   <button
@@ -553,6 +508,58 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
                   </button>
                 </div>
               )}
+              {typeOpenDay === day ? (
+                <select
+                  className="setting-select wt-day-type"
+                  aria-label={`Day type for ${label}`}
+                  autoFocus
+                  value={override?.type ?? ''}
+                  onChange={e => {
+                    setOverride(day, { type: (e.target.value || undefined) as DayType | undefined })
+                    setTypeOpenDay(null)
+                  }}
+                  onBlur={() => setTypeOpenDay(null)}
+                >
+                  <option value="">Week default</option>
+                  {DAY_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              ) : override?.type || day === activeDay ? (
+                // Under the column being worked in, and under any column
+                // whose type is its own. Seven feet all reading "Week default"
+                // was the loudest thing under the grid, for a question most
+                // weeks never answer; a column's type is still one press away
+                // once the column is the one in hand.
+                <button
+                  type="button"
+                  className="wt-day-type-summary"
+                  aria-expanded={false}
+                  aria-label={`Day type for ${label}: ${typeLabel(override?.type)}. Change`}
+                  onClick={() => setTypeOpenDay(day)}
+                >
+                  {typeLabel(override?.type)}
+                </button>
+              ) : null}
+
+              {sleepProfiles.length > 1 && (
+                <select
+                  className="setting-select wt-day-sleep"
+                  aria-label={`Sleep schedule for ${label}`}
+                  value={override?.sleepProfileId ?? ''}
+                  onChange={e => setOverride(day, { sleepProfileId: e.target.value || undefined })}
+                >
+                  <option value="">Week default</option>
+                  {sleepProfiles.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+
             </>
           )
         }}
