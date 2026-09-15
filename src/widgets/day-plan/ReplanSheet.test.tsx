@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ReplanSheet } from './ReplanSheet'
 import { actions, getData } from '../../lib/store'
@@ -315,7 +315,7 @@ test('the day header offers Replan on today, and "I\'m back" while away', () => 
   seed()
   const { rerender } = render(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Replan' })).toBeInTheDocument()
-  actions.setAway(TODAY, '11:00')
+  act(() => actions.setAway(TODAY, '11:00'))
   rerender(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Away since 11:00')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
@@ -386,7 +386,7 @@ test('the low day offers one undo, and undo brings both days back', async () => 
   await user.click(screen.getByRole('button', { name: 'Accept' }))
   const undo = getUndo()
   expect(undo?.label).toMatch(/low day/i)
-  undo!.restore()
+  act(() => undo!.restore())
   expect(getData().days[TODAY].lowDay).toBeUndefined()
   expect(getData().days[TODAY].tasks.find(t => t.id === 'deep')?.minutes).toBe(120)
   expect(getData().days[TOMORROW]).toBeUndefined()

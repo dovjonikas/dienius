@@ -242,8 +242,12 @@ test('two presses of an arrow inside one frame move two quarters, not one', asyn
   // current render's closure meant the second press of a double tap read the
   // same time the first one did and was swallowed.
   const up = screen.getByRole('button', { name: /quarter of an hour later/i })
-  up.click()
-  up.click()
+  // Both presses inside one act, which is one frame: the second has to read
+  // what the first one set, not what the render before both of them saw.
+  act(() => {
+    up.click()
+    up.click()
+  })
   await user.type(screen.getByPlaceholderText(/Add a task/), 'Call mom{Enter}')
 
   expect(tasksOn(DATE)[0].time).toBe('07:30')

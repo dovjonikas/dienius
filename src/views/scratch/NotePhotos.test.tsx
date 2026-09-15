@@ -35,9 +35,12 @@ async function twoKept() {
 
 test('a thumbnail is drawn at the shape the note stored, before the picture has loaded', async () => {
   const [a] = await twoKept()
-  render(<NotePhotos photos={[a]} onRemove={() => {}} />)
+  const { container } = render(<NotePhotos photos={[a]} onRemove={() => {}} />)
   const button = screen.getByRole('button', { name: 'Open the picture' })
   expect(button).toHaveStyle({ aspectRatio: '1600 / 1200' })
+  // The picture still arrives, after the assertion. A test that leaves
+  // before it does leaves that arrival outside act.
+  await waitFor(() => expect(container.querySelector('img')).toBeInTheDocument())
 })
 
 test('every picture on the note gets its own thumbnail', async () => {

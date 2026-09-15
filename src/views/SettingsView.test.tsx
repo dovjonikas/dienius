@@ -14,6 +14,19 @@ function getFileInput(container: HTMLElement): HTMLInputElement {
   return container.querySelector('input[type="file"]') as HTMLInputElement
 }
 
+/**
+ * Settings asks two things on mount that answer in a promise - whether the
+ * app is installed somewhere else, and which backups there are - and a test
+ * that reads the screen and leaves before they answer leaves those answers
+ * to land outside act. Every other test here waits on a press; the four
+ * that only look render through this, which waits for the answers.
+ */
+async function renderSettled() {
+  const result = render(<SettingsView />)
+  await act(async () => {})
+  return result
+}
+
 test('a theme can be picked directly in Settings', async () => {
   const user = userEvent.setup()
   render(<SettingsView />)
@@ -173,7 +186,7 @@ test('confirming the erase clears every part of storage, not just some of it, an
 })
 
 test('export is the primary, single-tap control - the escape route stays easier to reach than the reset', async () => {
-  render(<SettingsView />)
+  await renderSettled()
   expect(screen.getByRole('button', { name: 'Export backup' })).toHaveClass('primary')
   expect(screen.getByRole('button', { name: 'Erase all data' })).not.toHaveClass('primary')
   expect(screen.getByRole('button', { name: 'Erase all data' })).not.toHaveClass('danger')
@@ -240,8 +253,8 @@ test('a real forced localStorage failure shows the saving-failed warning, and it
 
 // --- sleep window ------------------------------------------------------
 
-test('the sleep window fields show the default bedtime and wake times on a fresh install', () => {
-  render(<SettingsView />)
+test('the sleep window fields show the default bedtime and wake times on a fresh install', async () => {
+  await renderSettled()
   expect(screen.getByLabelText('Bedtime')).toHaveValue('23:00')
   expect(screen.getByLabelText('Wake time')).toHaveValue('07:00')
 })
@@ -314,16 +327,16 @@ test('the sleep fields step by five minutes with the up and down arrows', async 
  * The count is the test. See CONVENTIONS section 21 and DECISIONS "A
  * setting has to earn its place".
  */
-test('Nudges is three rows: closing the day, when the evening starts, and bringing a goal forward', () => {
-  const { container } = render(<SettingsView />)
+test('Nudges is three rows: closing the day, when the evening starts, and bringing a goal forward', async () => {
+  const { container } = await renderSettled()
   const nudges = container.querySelector('#settings-nudges') as HTMLElement
 
   const names = Array.from(nudges.querySelectorAll('.setting-name')).map(el => el.textContent)
   expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward'])
 })
 
-test('the nudges that could only fire while you were already looking are gone from Settings', () => {
-  render(<SettingsView />)
+test('the nudges that could only fire while you were already looking are gone from Settings', async () => {
+  await renderSettled()
   for (const gone of ['Nudge during focus work', 'Before a timed task', 'And on a Monday', 'North']) {
     expect(screen.queryByText(gone)).not.toBeInTheDocument()
   }

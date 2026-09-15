@@ -310,7 +310,7 @@ test('the rail stays visible regardless of dayLayoutFocus - it is not part of wh
   const { container, rerender } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail')).toBeInTheDocument()
 
-  seedFocus('tasks')
+  act(() => seedFocus('tasks'))
   rerender(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(container.querySelector('.rail')).toBeInTheDocument()
 })

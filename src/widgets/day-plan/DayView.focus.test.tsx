@@ -39,7 +39,9 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  clearClockTools()
+  // The view is still mounted here - the library's own cleanup runs after
+  // this hook - and it is listening to the clock, so the reset is a render.
+  act(() => clearClockTools())
   vi.useRealTimers()
 })
 

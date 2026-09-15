@@ -573,7 +573,9 @@ test('the loud row says what will take it, and only when something will', async 
   expect(screen.queryByText(/Next on/)).not.toBeInTheDocument()
   expect(screen.queryByText(/Used by/)).not.toBeInTheDocument()
 
-  actions.addTemplate({ name: 'Working day', color: '#8ab6f9', blocks: [{ time: '21:00', title: 'Reading', libraryListId: listId }] })
+  act(() => {
+    actions.addTemplate({ name: 'Working day', color: '#8ab6f9', blocks: [{ time: '21:00', title: 'Reading', libraryListId: listId }] })
+  })
   rerender(<LibraryView />)
 
   expect(screen.getByText('Next on Reading')).toBeInTheDocument()

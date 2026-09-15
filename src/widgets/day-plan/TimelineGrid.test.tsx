@@ -712,7 +712,7 @@ test('a candidate twice as long is drawn twice as tall', () => {
   const { container: one } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
   const short = px((one.querySelector('.timeline-ghost') as HTMLElement).style.height)
 
-  showTimeGhost({ key: 'day', start: 600, minutes: 120 })
+  act(() => showTimeGhost({ key: 'day', start: 600, minutes: 120 }))
   const { container: two } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
   const long = px((two.querySelector('.timeline-ghost') as HTMLElement).style.height)
 
@@ -729,7 +729,7 @@ test('a candidate outside the drawn day widens the day rather than being pinned 
   const { container: before } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
   const earliest = [...before.querySelectorAll('.timeline-hour')][0].textContent
 
-  showTimeGhost({ key: 'day', start: 240, minutes: 30 })
+  act(() => showTimeGhost({ key: 'day', start: 240, minutes: 30 }))
   const { container: after } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
   const grown = [...after.querySelectorAll('.timeline-hour')][0].textContent
 

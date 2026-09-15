@@ -147,7 +147,7 @@ test('Enter on the focused cell opens that cell\'s card', async () => {
   const cell = screen.getAllByRole('gridcell')[10]
   const date = cell.getAttribute('data-date') as string
 
-  cell.focus()
+  act(() => cell.focus())
   await user.keyboard('{Enter}')
   expect(screen.getByRole('dialog', { name: formatDayTitle(date) })).toBeInTheDocument()
 })
@@ -644,7 +644,7 @@ test('the month grid is one tab stop, and the arrows walk it across a month boun
   const cells = screen.getAllByRole('gridcell')
   expect(cells.filter(c => c.getAttribute('tabindex') === '0')).toHaveLength(1)
   const stop = cells.find(c => c.getAttribute('tabindex') === '0')!
-  stop.focus()
+  act(() => stop.focus())
   const from = stop.getAttribute('data-date')!
   await user.keyboard('{ArrowRight}')
   const next = document.activeElement?.getAttribute('data-date')

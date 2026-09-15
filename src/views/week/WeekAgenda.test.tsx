@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WeekAgenda } from './WeekAgenda'
 import { LaterStrip } from './LaterStrip'
@@ -169,8 +169,8 @@ test('dragging one onto a day plans it there, at a time, and takes it off the sh
   // sweep; what is pinned here is what happens on a drop, not where it lands.
   document.elementFromPoint = () => column
 
-  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 }))
-  document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 200, clientY: 200 }))
+  act(() => chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 })))
+  act(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 200, clientY: 200 })))
 
   expect(getData().backlog.find(b => b.id === item.id)).toBeUndefined()
   const landed = getData().days[day]?.tasks.at(-1)
@@ -193,8 +193,8 @@ test('a press that goes nowhere plans nothing', async () => {
   await user.click(screen.getByRole('button', { name: /^Later/ }))
 
   const chip = screen.getByRole('button', { name: 'Move the ISA' })
-  chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }))
-  document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 12, clientY: 11 }))
+  act(() => chip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 })))
+  act(() => document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 12, clientY: 11 })))
 
   expect(getData().backlog.find(b => b.id === item.id)).toBeTruthy()
 })

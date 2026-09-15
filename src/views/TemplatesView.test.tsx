@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
 import { actions, getData } from '../lib/store'
@@ -610,6 +610,9 @@ test('a template with 30 blocks lists as one card, costs what a small one costs,
   const result = measureSlowdown(withBlocks(1), withBlocks(30), () => timed(() => render(<TemplatesView />)))
   expect(result.ratio).toBeLessThan(SLOWDOWN_LIMIT)
 
+  // The renders measured above are still mounted, each listening to the
+  // store; they are done with, so they go before the store changes.
+  cleanup()
   actions.resetForTests(defaultData())
   const template = actions.addTemplate({ name: 'Huge day', color: '#8ab6f9', blocks: blockInput(30) })
   render(<TemplatesView />)
@@ -619,7 +622,7 @@ test('a template with 30 blocks lists as one card, costs what a small one costs,
   expect(screen.getByText(/\+26 more/)).toBeInTheDocument()
   expect(screen.queryByText('30 blocks')).toBeNull()
 
-  actions.stamp({ '2026-09-01': template.id })
+  act(() => actions.stamp({ '2026-09-01': template.id }))
   expect(getData().days['2026-09-01'].tasks).toHaveLength(30)
   expect(getData().days['2026-09-01'].tasks.every(t => t.fromTemplate)).toBe(true)
 }, STRESS_TIMEOUT_MS)
@@ -802,7 +805,7 @@ test('a key block is saved as one, and arrives on the day already marked', async
   const template = getData().templates[0]
   expect(template.blocks[0].highlight).toBe(true)
 
-  actions.stamp({ '2026-09-01': template.id })
+  act(() => actions.stamp({ '2026-09-01': template.id }))
   expect(getData().days['2026-09-01'].tasks[0].highlight).toBe(true)
 }, 15000)
 

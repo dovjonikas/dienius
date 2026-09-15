@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MiniCalendar } from './MiniCalendar'
 import { actions, getData } from '../../lib/store'
@@ -119,7 +119,7 @@ test('the viewed day is the one tab stop, and the arrows walk the grid', async (
   expect(cells.filter(c => c.getAttribute('tabindex') === '0')).toHaveLength(1)
   const viewed = screen.getByRole('gridcell', { name: /September 12/ })
   expect(viewed).toHaveAttribute('tabindex', '0')
-  viewed.focus()
+  act(() => viewed.focus())
   await user.keyboard('{ArrowRight}')
   expect(screen.getByRole('gridcell', { name: /September 13/ })).toHaveFocus()
   await user.keyboard('{ArrowDown}')
@@ -132,7 +132,7 @@ test('the viewed day is the one tab stop, and the arrows walk the grid', async (
 test('an arrow off the edge of the grid turns the month and lands on the day', async () => {
   const user = userEvent.setup()
   render(<MiniCalendar date="2026-09-30" onDateChange={() => {}} />)
-  screen.getByRole('gridcell', { name: /September 30/ }).focus()
+  act(() => screen.getByRole('gridcell', { name: /September 30/ }).focus())
   // September's grid runs to October 4, so one week down is still on it and
   // the second is not.
   await user.keyboard('{ArrowDown}')

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayCard } from './DayCard'
 import { actions, getData } from '../lib/store'
@@ -181,7 +181,7 @@ test('the second press empties the day and offers the undo, which puts it back',
   expect(getData().days[DATE].tasks).toEqual([])
   expect(getUndo()?.label).toBe('Monday cleared')
 
-  runUndo()
+  act(() => runUndo())
   expect(getData().days[DATE].tasks).toHaveLength(3)
 })
 
