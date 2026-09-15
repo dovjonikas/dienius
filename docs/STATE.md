@@ -2343,6 +2343,47 @@ the features land on something that catches them. B and D after that.
   reading the shared plan and sending web push; it is last because it is
   the largest and the one most likely to be cut.
 
+**Where that list stands, the same evening.** Everything on it but D3 is
+built and in this history, one commit each, each with its reasoning in
+DECISIONS:
+
+- A1 and B1 are the owner's to run and are written as tables in
+  CHECKS-BY-HAND.md, the expected sentence beside every step. B2 has a
+  third table there, since the door's decision can only be watched on the
+  two real devices.
+- A2: Restore says, at the press, that sync already has the shared plan
+  here. A3 and A4: an open screen pulls once a minute, read only, and the
+  Sync line says when the other device's last change arrived, or that
+  nothing has come yet.
+- B2: a picked file carries the same file's address for the phone inside
+  its one link, and the door is the file's where the file is and the
+  address's where it is not.
+- C1: the precision pass sees stacked things a few pixels out of line.
+  C2: `npm run keys`. C3: the sweep serves the build itself. C4: the
+  forty-seven updates outside act are gone, and the test setup fails the
+  next one. C5: the base field rule is 0,0,1, and four fields look the way
+  their rules asked - measured either side.
+- D1: a block on the template's picture is dragged and pulled, through the
+  day's own drag hook made host-agnostic. D2: a Search button in the header
+  is the palette's door for a hand with no Ctrl.
+
+**D3 is not built, and this is the case for leaving it.** The only design
+with no server of the owner's is a scheduled GitHub Action in the data
+repo, reading the shared plan and sending web push. GitHub's schedule is
+a five-minute grid that runs ten to thirty minutes late under load and is
+sometimes skipped. A reminder "ten minutes before Deep work" would arrive
+after Deep work had started often enough to be worse than no reminder,
+and a planner that is wrong about the time is the one thing this app must
+not be. What that schedule can carry honestly is a **digest**: the day's
+timed tasks at seven in the morning, and the evening close at its hour,
+where twenty minutes late is fine. That is the shape to build if the
+owner still wants something to arrive while the app is closed: a VAPID
+key pair (the app can generate one), the private key as a secret in the
+data repo, the workflow file there, `web-push` in the Action, and the
+phone's install on the home screen, which is where iOS allows web push
+at all. About a day, and every part of it checkable only on the owner's
+devices. It waits here.
+
 - **The two Shift accelerators the "?" card cannot hold.** A stepper's
   arrows say what Shift does to them since v2.14, and the time field's do
   not, because it has no arrow buttons to hang a bubble on - its road is
