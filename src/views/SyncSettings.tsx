@@ -40,7 +40,19 @@ function statusLine(status: SyncStatus): { text: string; tone: 'ok' | 'busy' | '
       return { text: status.message ?? 'Sync did not go through. Nothing on this device was changed.', tone: 'bad' }
     case 'idle':
       if (status.pending) return { text: 'Changes to send…', tone: 'busy' }
-      return { text: `Last synced ${formatSyncedAt(status.lastSyncedAt)}.`, tone: 'ok' }
+      // Two facts, because they answer two different questions. "Last synced"
+      // says this device talked to the meeting place; the second says whether
+      // anything was there. The one a person actually asks - does the phone
+      // have what I just did - is the second, and until this it was answered
+      // by looking for the change with your eyes.
+      return {
+        text: `Last synced ${formatSyncedAt(status.lastSyncedAt)}. ${
+          status.lastReceivedAt
+            ? `The other device's last change arrived ${formatSyncedAt(status.lastReceivedAt)}.`
+            : 'Nothing from another device yet.'
+        }`,
+        tone: 'ok',
+      }
   }
 }
 

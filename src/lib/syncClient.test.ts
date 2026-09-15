@@ -3,6 +3,8 @@ import {
   formatSyncedAt,
   getSyncConfig,
   getSyncStatus,
+  POLL_WHILE_VISIBLE_MS,
+  pullOnly,
   resetSyncForTests,
   setSyncConfig,
   syncNow,
@@ -10,6 +12,7 @@ import {
 import { actions, getData } from './store'
 import { defaultData } from './storage'
 import { setCloudBackupConfig } from './cloudBackup'
+import { resetGitHubSyncForTests } from './githubSync'
 import type { AppData } from './types'
 
 const DATE = '2026-09-01'
@@ -39,6 +42,7 @@ function serverHolding(state: AppData | null) {
 beforeEach(() => {
   localStorage.clear()
   resetSyncForTests()
+  resetGitHubSyncForTests()
   actions.resetForTests(defaultData())
   fetchMock = vi.fn()
   vi.stubGlobal('fetch', fetchMock)
@@ -385,7 +389,15 @@ function repoHolding(state: AppData | null, putAnswers: number[] = []) {
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(held))))
     return Promise.resolve(new Response(JSON.stringify({ sha, content }), { status: 200 }))
   })
-  return { written, reads: () => fetchMock.mock.calls.filter(c => (c[1]?.method ?? 'GET') === 'GET').length }
+  return {
+    written,
+    reads: () => fetchMock.mock.calls.filter(c => (c[1]?.method ?? 'GET') === 'GET').length,
+    /** The other device writing, as far as this one can tell. */
+    replaceHeld: (next: AppData) => {
+      held = next
+      sha = `sha-other-${written.length + 1}`
+    },
+  }
 }
 
 function turnOnThroughGitHub() {
@@ -478,4 +490,72 @@ test('a day cleared here does not come back from a remote that still holds it', 
   expect(getData().days[DATE].tasks).toHaveLength(0)
   // ...and what goes back says so, so the other device clears too.
   expect(posted.at(-1)!.days[DATE].tasks).toHaveLength(0)
+})
+
+// --- an open screen catches up on its own ---------------------------------
+
+/**
+ * Pull on coming back to the tab left one case out: a phone lying open on
+ * the desk while the computer is used learned nothing until it was put down
+ * and picked up. A read a minute closes that, and it has to be a read only -
+ * on the repo route a poll that wrote would be a commit a minute.
+ */
+test('a pull reads and merges what the other device left, and writes nothing back', async () => {
+  const remote = defaultData()
+  remote.days[DATE] = {
+    date: DATE,
+    tasks: [{ id: 'phone-1', title: 'On the phone', done: false, updatedAt: '2026-09-01T08:00:00.000Z' }],
+    updatedAt: '2026-09-01T08:00:00.000Z',
+  } as AppData['days'][string]
+  const repo = repoHolding(remote)
+  turnOnThroughGitHub()
+  // The switch-on runs a full round trip; let it finish and count from here.
+  await syncNow()
+  const writesBefore = repo.written.length
+
+  await pullOnly()
+
+  expect(getData().days[DATE].tasks.map(t => t.title)).toContain('On the phone')
+  expect(repo.written.length).toBe(writesBefore)
+})
+
+test('the status says when something last arrived from the other device, and only then', async () => {
+  const repo = repoHolding(null)
+  turnOnThroughGitHub()
+  await syncNow()
+  // Nothing was there to arrive.
+  expect(getSyncStatus().lastReceivedAt).toBeNull()
+
+  // The other device writes a task; the next pull brings it in.
+  const theirs = defaultData()
+  theirs.days[DATE] = {
+    date: DATE,
+    tasks: [{ id: 'phone-1', title: 'On the phone', done: false, updatedAt: '2026-09-01T09:00:00.000Z' }],
+    updatedAt: '2026-09-01T09:00:00.000Z',
+  } as AppData['days'][string]
+  repo.replaceHeld(theirs)
+  await pullOnly()
+  expect(getSyncStatus().lastReceivedAt).toEqual(expect.any(String))
+})
+
+test('an open screen asks once a minute; a hidden one does not', async () => {
+  vi.useFakeTimers()
+  try {
+    repoHolding(null)
+    turnOnThroughGitHub()
+    await vi.runOnlyPendingTimersAsync()
+    const readsAfterSwitchOn = fetchMock.mock.calls.filter(c => (c[1]?.method ?? 'GET') === 'GET').length
+
+    await vi.advanceTimersByTimeAsync(POLL_WHILE_VISIBLE_MS + 10)
+    const reads = () => fetchMock.mock.calls.filter(c => (c[1]?.method ?? 'GET') === 'GET').length
+    expect(reads()).toBe(readsAfterSwitchOn + 1)
+
+    // Hidden: the interval keeps ticking and the tick does nothing.
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    await vi.advanceTimersByTimeAsync(POLL_WHILE_VISIBLE_MS + 10)
+    expect(reads()).toBe(readsAfterSwitchOn + 1)
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+  } finally {
+    vi.useRealTimers()
+  }
 })

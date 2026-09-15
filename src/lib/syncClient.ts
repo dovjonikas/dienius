@@ -49,6 +49,19 @@ function pushDelay(): number {
   return syncVia() === 'github' ? GITHUB_PUSH_DEBOUNCE_MS : PUSH_DEBOUNCE_MS
 }
 
+/**
+ * How often an open screen asks whether the other device did something.
+ *
+ * Pull on coming back to the tab was the whole of "it knows when you pick up
+ * the phone", and it leaves one case out: a phone lying open on the desk
+ * while the computer is being used. It learned nothing until it was put
+ * down and picked up again. A read a minute closes that, and it is a read
+ * only - a poll that also wrote would be a commit a minute on the repo route
+ * whether or not anything had changed. What this device owes is pushed by
+ * the debounce and by leaving, as before.
+ */
+export const POLL_WHILE_VISIBLE_MS = 60_000
+
 /** How long to wait before retrying after a failure, and the ceiling. */
 const RETRY_BASE_MS = 5000
 const RETRY_MAX_MS = 60_000
@@ -78,6 +91,14 @@ export interface SyncStatus {
   phase: SyncPhase
   /** ISO instant of the last completed sync, or null. */
   lastSyncedAt: string | null
+  /**
+   * ISO instant of the last time a sync brought something in from the other
+   * device - a change applied or a deletion carried out - or null if nothing
+   * has ever arrived. "Last synced" says this device talked to the meeting
+   * place; this says something was there. The question a person actually
+   * asks is the second one: does the phone have what I just did?
+   */
+  lastReceivedAt: string | null
   /** Something a person can read. Never a stack trace, never a status code alone. */
   message: string | null
   /** True while a push is owed - the reason "Saved" is not shown yet. */
@@ -95,6 +116,7 @@ let config: SyncConfig = loadConfig()
 let status: SyncStatus = {
   phase: config.enabled ? 'idle' : 'off',
   lastSyncedAt: null,
+  lastReceivedAt: null,
   message: null,
   pending: false,
 }
@@ -109,6 +131,20 @@ let inFlight: Promise<void> | null = null
 let changedDuringSync = false
 let started = false
 let stopCommitWatch: (() => void) | null = null
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+function startPolling(): void {
+  if (pollTimer || typeof document === 'undefined') return
+  pollTimer = setInterval(() => {
+    if (!config.enabled || document.hidden) return
+    void pullOnly()
+  }, POLL_WHILE_VISIBLE_MS)
+}
+
+function stopPolling(): void {
+  if (pollTimer) clearInterval(pollTimer)
+  pollTimer = null
+}
 
 function notify(): void {
   listeners.forEach(fn => fn())
@@ -148,7 +184,16 @@ export function setSyncConfig(next: SyncConfig): void {
     // A device that cannot store its own sync config simply does not sync.
   }
   setStatus({ phase: config.enabled ? 'idle' : 'off', message: null })
-  if (config.enabled) void syncNow()
+  // Switching on here, on a page that booted with sync off, is the one path
+  // startSync never sees - so the minute's poll started only on the next
+  // return to the tab, and a screen left open after turning sync on learned
+  // nothing until then. Started and stopped where the switch is.
+  if (config.enabled) {
+    void syncNow()
+    if (typeof document !== 'undefined' && !document.hidden) startPolling()
+  } else {
+    stopPolling()
+  }
 }
 
 export function getSyncStatus(): SyncStatus {
@@ -188,8 +233,10 @@ export function startSync(): void {
       // Coming back is the moment to find out what the other device did.
       if (!document.hidden) {
         void syncNow()
+        startPolling()
         return
       }
+      stopPolling()
       // And going away is the moment to say what this one did, which is the
       // whole of "it knows when you move to the phone": the computer pushes
       // as it is put down, so the phone's own pull on opening already has it.
@@ -204,7 +251,53 @@ export function startSync(): void {
     })
   }
 
-  if (config.enabled) void syncNow()
+  if (config.enabled) {
+    void syncNow()
+    if (typeof document !== 'undefined' && !document.hidden) startPolling()
+  }
+}
+
+/**
+ * Half a round trip: read what the other device left, merge it in, and write
+ * nothing back. What this device owes is somebody else's job - the debounce,
+ * or leaving the screen - so this can run every minute without a commit a
+ * minute. See POLL_WHILE_VISIBLE_MS.
+ *
+ * Joins a round trip already in the air rather than racing it, the same way
+ * syncNow does.
+ */
+export function pullOnly(): Promise<void> {
+  if (!config.enabled) return Promise.resolve()
+  if (syncVia() === 'server' && !config.url) return Promise.resolve()
+  if (isDemoMode() || isTourSandbox()) return Promise.resolve()
+  if (inFlight) return inFlight
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve()
+  inFlight = runPull().finally(() => {
+    inFlight = null
+  })
+  return inFlight
+}
+
+async function runPull(): Promise<void> {
+  try {
+    const remote = await request('GET')
+    if (remote === null) return
+    if (!isSyncableState(remote)) {
+      fail('The server answered with something that is not a plan. Nothing was changed here.')
+      return
+    }
+    const now = new Date().toISOString()
+    const merged = mergeStates(getData(), normaliseRemote(remote), now)
+    const folded = dropDeletedFolds(foldInbox(merged.data, now), normaliseRemote(remote).tombstones, now)
+    const arrived = merged.applied > 0 || merged.deleted > 0
+    if (arrived || folded !== merged.data) replaceState(folded)
+    setStatus({ lastSyncedAt: now, ...(arrived ? { lastReceivedAt: now } : {}) })
+  } catch (error) {
+    // A poll that fails says nothing: the next one is a minute away and the
+    // next real round trip will report properly. A status line flickering
+    // to red once a minute over a phone in a tunnel is worse than silence.
+    void error
+  }
 }
 
 function schedulePush(): void {
@@ -332,7 +425,9 @@ async function runSync(attempt = 0): Promise<void> {
       remote === null ? undefined : normaliseRemote(remote).tombstones,
       now,
     )
-    if (merged.applied > 0 || merged.deleted > 0 || folded !== merged.data) replaceState(folded)
+    const arrived = merged.applied > 0 || merged.deleted > 0
+    if (arrived || folded !== merged.data) replaceState(folded)
+    if (arrived) setStatus({ lastReceivedAt: now })
 
     try {
       await request('POST', folded)
@@ -423,6 +518,7 @@ function describe(error: unknown): string {
 
 /** Test seam: forgets config, status, and every pending timer. */
 export function resetSyncForTests(): void {
+  stopPolling()
   if (pushTimer) clearTimeout(pushTimer)
   if (retryTimer) clearTimeout(retryTimer)
   pushTimer = null
@@ -434,7 +530,7 @@ export function resetSyncForTests(): void {
   stopCommitWatch = null
   started = false
   config = { ...EMPTY_CONFIG }
-  status = { phase: 'off', lastSyncedAt: null, message: null, pending: false }
+  status = { phase: 'off', lastSyncedAt: null, lastReceivedAt: null, message: null, pending: false }
   listeners.clear()
 }
 
