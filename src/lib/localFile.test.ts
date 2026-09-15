@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import {
   canPickFile,
+  hasHandle,
   memoryHandleStore,
   onDeviceFile,
   onDeviceLink,
@@ -228,4 +229,43 @@ test('an address that is not a file is left exactly as it was', () => {
   const data = defaultData()
   data.library = [{ id: 'books', name: 'Books', unit: 'chapter', items: [{ id: 'i1', title: 'Spanish', link: 'http://192.168.1.4/lessons' }] }]
   expect(importJson(exportJson(data)).library[0].items[0].link).toBe('http://192.168.1.4/lessons')
+})
+
+// --- the same file at an address, for the phone ------------------------------
+
+/**
+ * A handle is this computer's, and the phone has no picker at all. What the
+ * phone can open is an address - the same PDF in a cloud drive, or a folder
+ * served at home - and since v2.21 the link carries that address beside the
+ * handle, so one item is one door on both devices. See DECISIONS "The
+ * book's file, on the phone too".
+ */
+test('the link can carry the same file at an address, and reads back both', () => {
+  const file = { id: 'abc123', name: 'Deep Work.pdf', also: 'https://drive.example.com/f/1?usp=sharing' }
+  const link = onDeviceLink(file)
+  expect(onDeviceFile(link)).toEqual(file)
+  // Still a file, still named after itself: the address is the other
+  // device's business, and the door decides which - see LinkOut.
+  expect(linkKind(link)).toBe('device')
+  expect(linkLabel(link)).toBe('Deep Work.pdf')
+  expect(linkRefusal(link)).toBeUndefined()
+})
+
+test('a link written before there were addresses reads as it always did, with none', () => {
+  const link = onDeviceLink({ id: 'abc123', name: 'Deep Work.pdf' })
+  expect(link).not.toContain('?')
+  expect(onDeviceFile(link)).toEqual({ id: 'abc123', name: 'Deep Work.pdf' })
+  expect(onDeviceFile(link)).not.toHaveProperty('also')
+})
+
+test('a question mark in the name is not mistaken for the address', () => {
+  const file = { id: 'x', name: 'What is this? vol 2.pdf', also: 'https://example.com/a?b=c&d=e' }
+  expect(onDeviceFile(onDeviceLink(file))).toEqual(file)
+})
+
+test('hasHandle says whether this is the computer the file was picked on', async () => {
+  const store = memoryHandleStore()
+  await store.put('here', fakeHandle('a.pdf'))
+  expect(await hasHandle(store, 'here')).toBe(true)
+  expect(await hasHandle(store, 'elsewhere')).toBe(false)
 })

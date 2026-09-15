@@ -1,6 +1,7 @@
 import { currentItem } from '../lib/library'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { onDeviceLink } from '../lib/localFile'
 import userEvent from '@testing-library/user-event'
 import { LibraryView } from './LibraryView'
 import { actions, getData } from '../lib/store'
@@ -606,4 +607,63 @@ test('pressing the preset twice is pressing it once', async () => {
   await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
 
   expect(getData().library.map(l => l.name)).toEqual(['MIND', 'CRAFT', 'LIGHT'])
+})
+
+// --- the book's file, on the phone too -----------------------------------------
+
+/**
+ * A file picked on the computer is the computer's; the phone has no picker.
+ * Since v2.21 the item can carry the same file at an address beside the
+ * handle, and the door on the phone opens that - see LinkOut.test.tsx for
+ * the door. jsdom has no picker either, which makes it the phone for the
+ * purposes of this test: the file's row offers no Change, and the address
+ * field is there to type into.
+ */
+test('a picked file can be given an address for the other device, which rides inside the link', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  const itemId = getData().library[0].items[0].id
+  actions.updateLibraryItem(list.id, itemId, { link: onDeviceLink({ id: 'f1', name: 'Deep Work.pdf' }) })
+  render(<LibraryView />)
+  await openDetail(user, 'Daring Greatly')
+
+  expect(screen.getByText('Deep Work.pdf')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Change' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument()
+
+  await user.type(screen.getByLabelText('Also at'), 'drive.example.com/f/1')
+  await user.tab()
+  expect(getData().library[0].items[0].link).toBe(
+    onDeviceLink({ id: 'f1', name: 'Deep Work.pdf', also: 'https://drive.example.com/f/1' }),
+  )
+})
+
+test('emptying the address takes it off the link and leaves the file', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  const itemId = getData().library[0].items[0].id
+  actions.updateLibraryItem(list.id, itemId, {
+    link: onDeviceLink({ id: 'f1', name: 'Deep Work.pdf', also: 'https://drive.example.com/f/1' }),
+  })
+  render(<LibraryView />)
+  await openDetail(user, 'Daring Greatly')
+  expect(screen.getByLabelText('Also at')).toHaveValue('https://drive.example.com/f/1')
+
+  await user.clear(screen.getByLabelText('Also at'))
+  await user.tab()
+  expect(getData().library[0].items[0].link).toBe(onDeviceLink({ id: 'f1', name: 'Deep Work.pdf' }))
+})
+
+test('a path on this disk typed as the address is refused in words that fit the other device', async () => {
+  const user = userEvent.setup()
+  const list = seed()
+  const itemId = getData().library[0].items[0].id
+  actions.updateLibraryItem(list.id, itemId, { link: onDeviceLink({ id: 'f1', name: 'Deep Work.pdf' }) })
+  render(<LibraryView />)
+  await openDetail(user, 'Daring Greatly')
+
+  await user.type(screen.getByLabelText('Also at'), 'file:///C:/Books/Deep%20Work.pdf')
+  await user.tab()
+  expect(screen.getByRole('status')).toHaveTextContent(/The other device cannot open a path on this disk/)
+  expect(getData().library[0].items[0].link).toBe(onDeviceLink({ id: 'f1', name: 'Deep Work.pdf' }))
 })

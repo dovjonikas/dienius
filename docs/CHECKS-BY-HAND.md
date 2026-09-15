@@ -51,3 +51,17 @@ mid-gesture.
 
 For each: which iPhone, which iOS version, and what happened. A gesture that
 works four times and fails once is a finding, not a pass.
+
+## B2 - the book's file, from the phone
+
+The address beside a picked file - see DECISIONS "The book's file, on the
+phone too" - is decided by each device on its own: the door asks whether
+this device holds the file. That question can only be asked on the two real
+devices.
+
+| # | On the computer | Then on the phone, expect |
+| --- | --- | --- |
+| 1 | In Library, open a book whose file was picked here. Paste the same file's share link from your cloud drive into **Also at** and leave the field. | After sync: the book's row has a door with the arrow-out icon; its bubble shows the drive address; pressing it opens the file in the drive. |
+| 2 | Press the book's door here, on the computer. | Still the file from this disk, in a new tab - not the drive. |
+| 3 | Clear **Also at** here. | After sync: the phone's door is the page icon again, and pressing it says "This file was picked on another computer." |
+| 4 | On the phone, open the same book's detail. | The file's name is there with **Remove** beside it and no **Change**; **Also at** is there to type into. |

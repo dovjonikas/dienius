@@ -101,6 +101,18 @@ export function linkRefusal(text: string): string | undefined {
 }
 
 /**
+ * The same refusal for the address that stands beside a picked file - see
+ * `OnDeviceFile.also` - where the one sentence about `file:` would be wrong
+ * on both counts: the file is already picked, and the address is for the
+ * device that cannot open a path on this disk at all.
+ */
+export function alsoRefusal(text: string): string | undefined {
+  const said = linkRefusal(text)
+  if (said === undefined || !/^file:/i.test(text.trim())) return said
+  return 'The other device cannot open a path on this disk. Put the file in a cloud drive and paste its share link, or serve its folder at an address like 192.168.1.4/books.'
+}
+
+/**
  * Which of the two icons an address gets: one for something on this person's
  * own machines, one for the open internet.
  *

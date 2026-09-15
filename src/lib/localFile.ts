@@ -60,6 +60,14 @@ const ON_DEVICE = 'ondevice:'
 export interface OnDeviceFile {
   id: string
   name: string
+  /**
+   * The same file at an address, for the device that does not hold the
+   * handle: a cloud drive's share link, or a folder served at home. Since
+   * v2.21, because the owner reads on both machines and the phone has no
+   * picker. The door on that device opens this; the door here opens the
+   * file. See DECISIONS "The book's file, on the phone too".
+   */
+  also?: string
 }
 
 /**
@@ -69,25 +77,49 @@ export interface OnDeviceFile {
  * four, plus the validator, the backup and sync; a link is what this is.
  *
  * The name rides along inside it so a device without the handle can say
- * which file is meant instead of showing an id.
+ * which file is meant instead of showing an id. The address, where there is
+ * one, rides after a `?` - which an encoded name never contains - so a link
+ * written before there were addresses reads exactly as it did.
  */
 export function onDeviceLink(file: OnDeviceFile): string {
-  return `${ON_DEVICE}${file.id}/${encodeURIComponent(file.name)}`
+  const own = `${ON_DEVICE}${file.id}/${encodeURIComponent(file.name)}`
+  return file.also ? `${own}?also=${encodeURIComponent(file.also)}` : own
 }
 
 /** The other direction. `undefined` for anything that is an ordinary address. */
 export function onDeviceFile(link: string): OnDeviceFile | undefined {
   if (!link.startsWith(ON_DEVICE)) return undefined
-  const rest = link.slice(ON_DEVICE.length)
+  let rest = link.slice(ON_DEVICE.length)
+  const mark = rest.indexOf('?also=')
+  const also = mark < 0 ? '' : decode(rest.slice(mark + '?also='.length))
+  if (mark >= 0) rest = rest.slice(0, mark)
   const cut = rest.indexOf('/')
   if (cut <= 0) return undefined
+  const file: OnDeviceFile = { id: rest.slice(0, cut), name: decode(rest.slice(cut + 1)) }
+  if (also) file.also = also
+  return file
+}
+
+/**
+ * `decodeURIComponent`, or the text as it stands when it is not valid
+ * percent-encoding: a name that does not decode is still a file somebody
+ * pointed at. The id is the part that has to be right.
+ */
+function decode(text: string): string {
   try {
-    return { id: rest.slice(0, cut), name: decodeURIComponent(rest.slice(cut + 1)) }
+    return decodeURIComponent(text)
   } catch {
-    // A name that is not valid percent-encoding is still a file somebody
-    // pointed at. The id is the part that has to be right.
-    return { id: rest.slice(0, cut), name: rest.slice(cut + 1) }
+    return text
   }
+}
+
+/**
+ * Whether this device holds the handle - which is to say, whether this is
+ * the computer the file was picked on. The door asks this once, to decide
+ * whether it is the file's door or the address's.
+ */
+export async function hasHandle(store: HandleStore, id: string): Promise<boolean> {
+  return (await store.get(id)) !== null
 }
 
 /** Whether this browser can pick a file at all. False on every iPhone. */

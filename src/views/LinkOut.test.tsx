@@ -1,7 +1,8 @@
-import { expect, test, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, expect, test, vi } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LinkOut } from './LinkOut'
+import { memoryHandleStore, onDeviceLink } from '../lib/localFile'
 
 /**
  * The door itself. Three things are held here, and all three are the kind
@@ -60,4 +61,56 @@ test('pressing it does not press the card it is sitting in', async () => {
   )
   await user.click(screen.getByRole('link'))
   expect(cardPressed).not.toHaveBeenCalled()
+})
+
+// --- a file picked on one computer, and the phone -----------------------------
+
+/**
+ * The same file at an address rides inside the link since v2.21 - see
+ * OnDeviceFile.also. The door asks the handle store whether this device
+ * holds the file, and is the file's door where it does and the address's
+ * where it does not, which is what "the book on the phone too" comes to.
+ * The store is a Map here; the render is settled before anything is read,
+ * because the answer is a promise.
+ */
+const IN_THE_CLOUD = onDeviceLink({ id: 'deep', name: 'Deep Work.pdf', also: 'https://drive.example.com/f/1' })
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+test('on a device that does not hold the file, the door goes to the address', async () => {
+  render(<LinkOut link={IN_THE_CLOUD} title="Deep work" store={memoryHandleStore()} />)
+  await act(async () => {})
+  const link = screen.getByRole('link', { name: 'Open Deep work at drive.example.com/f/1 in a new tab' })
+  expect(link).toHaveAttribute('href', 'https://drive.example.com/f/1')
+  expect(link).toHaveAttribute('data-link-kind', 'external')
+  expect(screen.queryByRole('button')).toBeNull()
+})
+
+test('on the computer that holds the file, the same link is the file', async () => {
+  const store = memoryHandleStore()
+  await store.put('deep', {
+    name: 'Deep Work.pdf',
+    kind: 'file',
+    getFile: async () => new File(['a pdf, more or less'], 'Deep Work.pdf'),
+  } as unknown as FileSystemFileHandle)
+  render(<LinkOut link={IN_THE_CLOUD} title="Deep work" store={store} />)
+  await act(async () => {})
+  expect(screen.getByRole('button', { name: 'Open Deep work, the file Deep Work.pdf, on this computer' })).toBeInTheDocument()
+  expect(screen.queryByRole('link')).toBeNull()
+})
+
+test('with no address, a file this device does not hold stays the file door, and says so when pressed', async () => {
+  const user = userEvent.setup()
+  // The door takes a tab before it knows whether it can fill it; jsdom has
+  // no tabs, so the taking is a stub that hands back none.
+  vi.stubGlobal('open', vi.fn(() => null))
+  render(<LinkOut link={onDeviceLink({ id: 'deep', name: 'Deep Work.pdf' })} title="Deep work" store={memoryHandleStore()} />)
+  await act(async () => {})
+  expect(screen.queryByRole('link')).toBeNull()
+  await user.click(screen.getByRole('button', { name: /on this computer$/ }))
+  expect(await screen.findByRole('status')).toHaveTextContent(
+    'This file was picked on another computer. Pick it again here to open it from this one.',
+  )
 })

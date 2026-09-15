@@ -3121,3 +3121,39 @@ the way they carry theirs, and the palette already gives focus back to
 whatever opened it, so Escape lands on the button again and the keyboard
 walk stays clean. Nothing about the palette itself changed: one more way
 in, not a second palette.
+
+## The book's file, on the phone too
+
+A file picked on the computer is a handle in that computer's IndexedDB, and
+the phone has no picker at all. "A file on this computer" said so and
+stopped there: the phone says which file is meant and where. The owner
+reads on both, so that was half an answer. What the phone can open is an
+address - the same PDF in a cloud drive, or a folder served at home - and
+since v2.21 the item can carry that address beside the handle.
+
+**Inside the one link, not a second field.** The link is `ondevice:<id>/
+<name>`, and the address rides after a `?`, which an encoded name never
+contains. So the validator, the backup, sync and every place a door is
+drawn see what they always saw - a string - and a link written before
+there were addresses reads exactly as it did. `OnDeviceFile` gained
+`also`; nothing else learned anything.
+
+**The door decides before the press.** `LinkOut` asks the handle store once
+whether this device holds the file. Where it does, the door is the file's.
+Where it does not and there is an address, the door is the ordinary anchor
+to it - the same icon and bubble any address gets, so the phone's bubble
+reads the drive address and the computer's reads the file's name. Where it
+does not and there is no address, the door is what it was: the file's, with
+the sentence that says to pick it again here. Decided on mount rather than
+at the press, so nothing is opened and closed again on the way to finding
+out, and only asked when there is an address to go to instead.
+
+**Typed in the detail, on either device.** An `Also at` field under the
+file's row, on the phone as well, since the phone is where the address is
+often to hand. On the phone the file's own `Change` is gone, because there
+is no picker to change with and a button that does nothing is worse than
+none; `Remove` stays, since it only takes the link off. A `file:` path
+typed as the address gets its own refusal, because the one sentence about
+`file:` would be wrong on both counts there - the file is already picked,
+and the address is for the device that cannot open a path on this disk at
+all.

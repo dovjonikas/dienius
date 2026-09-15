@@ -17,7 +17,7 @@ import {
   upNext,
 } from '../lib/library'
 import { isListOpen, rememberListOpen } from '../lib/libraryPrefs'
-import { linkRefusal, parseLink } from '../lib/link'
+import { alsoRefusal, linkRefusal, parseLink } from '../lib/link'
 import { ProgressControl } from '../widgets/ProgressControl'
 import { canPickFile, indexedDbHandleStore, onDeviceFile, onDeviceLink, pickFile } from '../lib/localFile'
 import { LinkOut } from './LinkOut'
@@ -774,6 +774,9 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
   // localFile.ts: the handle is in IndexedDB here, and what the item stores
   // is the id and the name.
   const onDevice = onDeviceFile(item.link ?? '')
+  // The same file at an address, for the device that does not hold the
+  // handle - see OnDeviceFile.also. Typed here on either device.
+  const [also, setAlso] = useState(onDevice?.also ?? '')
   const pick = async () => {
     const picked = await pickFile(indexedDbHandleStore(), onDevice?.id ?? crypto.randomUUID())
     if (!picked) return
@@ -957,29 +960,65 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
           goes, which is the whole of what should happen to a finished book's
           address. Nothing here asks the network anything - see lib/link.ts. */}
       {onDevice ? (
-        <div className="library-detail-row library-detail-link">
-          <span className="field-label">Link</span>
-          {/* The name, not the path. A handle has no path to show, which is
-              the point of it - the file can be anywhere and can move within
-              reason - and the name is what the owner recognises anyway. */}
-          <p className="library-detail-file">
-            <span className="library-detail-file-name">{onDevice.name}</span>
-            <button type="button" className="library-detail-file-change" onClick={pick}>
-              Change
-            </button>
-            <button
-              type="button"
-              className="library-detail-file-change"
-              onClick={() => {
-                indexedDbHandleStore().delete(onDevice.id)
-                setLink('')
-                actions.updateLibraryItem(list.id, item.id, { link: null })
+        <>
+          <div className="library-detail-row library-detail-link">
+            <span className="field-label">Link</span>
+            {/* The name, not the path. A handle has no path to show, which is
+                the point of it - the file can be anywhere and can move within
+                reason - and the name is what the owner recognises anyway. */}
+            <p className="library-detail-file">
+              <span className="library-detail-file-name">{onDevice.name}</span>
+              {/* No picker, no Change: on the phone the file cannot be pointed
+                  at again, and a button that does nothing is worse than none.
+                  Remove works anywhere, since it only takes the link off. */}
+              {canPickFile() && (
+                <button type="button" className="library-detail-file-change" onClick={pick}>
+                  Change
+                </button>
+              )}
+              <button
+                type="button"
+                className="library-detail-file-change"
+                onClick={() => {
+                  indexedDbHandleStore().delete(onDevice.id)
+                  setLink('')
+                  setAlso('')
+                  actions.updateLibraryItem(list.id, item.id, { link: null })
+                }}
+              >
+                Remove
+              </button>
+            </p>
+          </div>
+          {/* The same file at an address, for the device that does not hold
+              it: a cloud drive's share link, or a folder served at home. The
+              door on the phone opens this; the door here opens the file. It
+              rides inside the one link - see OnDeviceFile.also - so nothing
+              else had to learn a second field. */}
+          <label className="library-detail-row library-detail-link">
+            <span className="field-label">Also at</span>
+            <input
+              inputMode="url"
+              maxLength={300}
+              placeholder="drive.example.com/the-same-file"
+              value={also}
+              onChange={e => {
+                setAlso(e.target.value)
+                setLinkSaid(undefined)
               }}
-            >
-              Remove
-            </button>
-          </p>
-        </div>
+              onBlur={() => {
+                setLinkSaid(alsoRefusal(also))
+                const parsed = also.trim() === '' ? undefined : parseLink(also)
+                // Not an address: the link keeps what it had, the way the
+                // Link field does. An emptied field takes the address off
+                // and leaves the file.
+                if (also.trim() !== '' && parsed === undefined) return
+                const next = onDeviceLink({ id: onDevice.id, name: onDevice.name, ...(parsed ? { also: parsed } : {}) })
+                if (next !== item.link) actions.updateLibraryItem(list.id, item.id, { link: next })
+              }}
+            />
+          </label>
+        </>
       ) : (
       <label className="library-detail-row library-detail-link">
         <span className="field-label">Link</span>

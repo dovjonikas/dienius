@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { linkKind, linkLabel } from '../lib/link'
-import { indexedDbHandleStore, onDeviceFile, openOnDevice, type OpenResult } from '../lib/localFile'
+import { hasHandle, indexedDbHandleStore, onDeviceFile, openOnDevice, type HandleStore, type OpenResult } from '../lib/localFile'
 
 /**
  * The door to the thing a task or a library item is about.
@@ -35,12 +35,24 @@ export interface LinkOutProps {
   title: string
   /** An extra class for the place it is sitting in. */
   className?: string
+  /**
+   * Where a file's handle is kept. A test hands in a Map; the browser's own
+   * IndexedDB otherwise. Only a file's door reads it.
+   */
+  store?: HandleStore
 }
 
-export function LinkOut({ link, title, className }: LinkOutProps) {
+export function LinkOut({ link, title, className, store }: LinkOutProps) {
+  if (linkKind(link) === 'device') return <FileOut link={link} title={title} className={className} store={store} />
+  return <Anchor link={link} title={title} className={className} />
+}
+
+type AnchorProps = Pick<LinkOutProps, 'link' | 'title' | 'className'>
+
+/** The door to an address: the anchor, with everything the comment above promises. */
+function Anchor({ link, title, className }: AnchorProps) {
   const kind = linkKind(link)
   const label = linkLabel(link)
-  if (kind === 'device') return <FileOut link={link} title={title} label={label} className={className} />
   return (
     <a
       className={className ? `link-out ${className}` : 'link-out'}
@@ -72,10 +84,40 @@ export function LinkOut({ link, title, className }: LinkOutProps) {
  * What it says when it cannot open is the whole point of it being here. A
  * planner that shrugs is the thing that sent the owner looking for a link
  * field in the first place.
+ *
+ * Since v2.21 the file can carry the same thing at an address - see
+ * `OnDeviceFile.also` - and this door asks the store, once, whether this
+ * device holds the handle. Where it does not and there is an address, the
+ * door is the ordinary anchor to that address: on the phone the book is in
+ * the cloud drive, on the computer that picked it the book is the file.
+ * Decided before the press rather than at it, so the icon and the bubble
+ * say which, and no tab is opened and closed again on the way to finding
+ * out. Only asked when there is an address to go to instead: a door with
+ * nowhere else to go has nothing to decide.
  */
-function FileOut({ link, title, label, className }: LinkOutProps & { label: string }) {
+function FileOut({ link, title, className, store }: LinkOutProps) {
   const [said, setSaid] = useState<OpenResult | null>(null)
+  // Null until the store has answered. Until then the door is the file's,
+  // which is right on the device that holds it and says so on one that
+  // does not.
+  const [held, setHeld] = useState<boolean | null>(null)
   const file = onDeviceFile(link)
+  const label = linkLabel(link)
+  const handles = useMemo(() => store ?? indexedDbHandleStore(), [store])
+  const id = file?.id
+  const also = file?.also
+  useEffect(() => {
+    if (!id || !also) return
+    let current = true
+    void hasHandle(handles, id).then(yes => {
+      if (current) setHeld(yes)
+    })
+    return () => {
+      current = false
+    }
+  }, [handles, id, also])
+
+  if (also && held === false) return <Anchor link={also} title={title} className={className} />
   return (
     <>
       <button
@@ -88,7 +130,7 @@ function FileOut({ link, title, label, className }: LinkOutProps & { label: stri
           e.stopPropagation()
           if (!file) return
           setSaid(null)
-          const how = await openOnDevice(indexedDbHandleStore(), file.id)
+          const how = await openOnDevice(handles, file.id)
           setSaid(how === 'opened' ? null : how)
         }}
         onPointerDown={e => e.stopPropagation()}
