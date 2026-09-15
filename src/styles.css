@@ -11387,6 +11387,15 @@ button.task-library:hover { color: var(--text); }
   background: var(--surface);
 }
 
+/* The one warning in the restore preview, when sync is on: the copy above
+   is older than what this device already holds. The mark colour rather
+   than danger - it is a fact to weigh, not an alarm. */
+.backup-preview-warn {
+  color: var(--mark);
+  border-left: 2px solid var(--mark);
+  padding-left: var(--s3);
+}
+
 .backup-preview-line {
   margin: 0 0 var(--s2);
   font-size: var(--t-sm);

@@ -1,3 +1,4 @@
+import { getSyncConfig } from '../lib/syncClient'
 import { useEffect, useState } from 'react'
 import { Explain } from './Explain'
 import { actions } from '../lib/store'
@@ -226,6 +227,20 @@ export function BackupSettings() {
             <p className="backup-preview-line">
               <strong>Here:</strong> {describeSummary(preview.here)}.
             </p>
+            {/* The one confusion this section has caused in practice. Sync
+                and Backup share a repo, and with sync on the shared plan is
+                already on this device - so pressing Restore to "get the
+                other device's changes" puts back an older copy instead, and
+                a day cleared elsewhere walks back in. The owner did exactly
+                that in the first week. Said here, at the press, rather than
+                in the description above it. */}
+            {getSyncConfig().enabled && (
+              <p className="backup-preview-line backup-preview-warn" role="note">
+                Sync is on, so this device already has the shared plan. What is above is the backup, an older copy.
+                Restoring puts that older copy back and the next sync merges the shared plan into it. To bring another
+                device's changes here, Sync now in the section below does that without replacing anything.
+              </p>
+            )}
             <div className="sync-actions">
               <button
                 type="button"

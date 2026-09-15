@@ -6,6 +6,7 @@ import { actions, getData } from '../lib/store'
 import { defaultData } from '../lib/storage'
 import { resetCloudBackupForTests, setCloudBackupConfig, toBase64 } from '../lib/cloudBackup'
 import { todayKey } from '../lib/dates'
+import { resetSyncForTests, setSyncConfig } from '../lib/syncClient'
 
 /**
  * The Backup section: two fields, a status in a person's words, and a
@@ -19,6 +20,7 @@ beforeEach(() => {
   localStorage.clear()
   actions.resetForTests(defaultData())
   resetCloudBackupForTests()
+  resetSyncForTests()
   cloud = null
   vi.stubGlobal(
     'fetch',
@@ -165,4 +167,35 @@ test('a sentence written for a person is not replaced by a general one', async (
   await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
 
   expect(await screen.findByText('There is no backup in that repo yet.')).toBeInTheDocument()
+})
+
+/**
+ * Backup and sync share a repo, and with sync on the shared plan is already
+ * on this device - so pressing Restore to "get the other device's changes"
+ * puts an older copy back instead. The owner did exactly that in the first
+ * week and a cleared day walked back in. Said at the press, where it is
+ * decided.
+ */
+test('with sync on, the restore preview says the shared plan is already here', async () => {
+  cloud = JSON.stringify(defaultData())
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'fine' })
+  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  render(<BackupSettings />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+  await screen.findByRole('group', { name: 'Restore from cloud' })
+
+  expect(screen.getByRole('note')).toHaveTextContent(/Sync is on, so this device already has the shared plan/)
+  expect(screen.getByRole('note')).toHaveTextContent(/Sync now/)
+})
+
+test('with sync off, the restore preview says nothing about sync', async () => {
+  cloud = JSON.stringify(defaultData())
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'fine' })
+  render(<BackupSettings />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+  await screen.findByRole('group', { name: 'Restore from cloud' })
+
+  expect(screen.queryByRole('note')).toBeNull()
 })
