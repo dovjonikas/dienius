@@ -35,6 +35,28 @@ export const SYNC_PATH = 'data/sync.json'
 /** Thrown when the file moved between the read and the write. */
 export class SyncConflictError extends Error {}
 
+/**
+ * What the file held the last time this device read or wrote it, in a form
+ * that ignores key order. A write that would put back exactly what is there
+ * is skipped: every write is a commit, and a poll or a merge that changed
+ * nothing would otherwise leave a commit saying so, once a minute.
+ */
+let lastSeen: string | null = null
+
+/** JSON with keys sorted at every depth, so two equal plans stringify the same. */
+function stable(value: unknown): string {
+  return JSON.stringify(value, (_key, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(Object.keys(v as Record<string, unknown>).sort().map(k => [k, (v as Record<string, unknown>)[k]]))
+      : v,
+  )
+}
+
+/** Test seam. */
+export function resetGitHubSyncForTests(): void {
+  lastSeen = null
+}
+
 /** Whether the GitHub transport has what it needs. It shares the backup's repo and token. */
 export function canSyncThroughGitHub(): boolean {
   return isCloudBackupOn()
@@ -76,7 +98,9 @@ export async function readSyncState(): Promise<GitHubSyncRead> {
   const sha = typeof body.sha === 'string' ? body.sha : null
   if (typeof body.content !== 'string') return { state: null, sha }
   try {
-    return { state: JSON.parse(fromBase64(body.content)) as unknown, sha }
+    const state = JSON.parse(fromBase64(body.content)) as unknown
+    lastSeen = stable(state)
+    return { state, sha }
   } catch {
     // Something is in the file and it is not a plan. Answered as "nothing
     // there", which the caller reports without touching anything local - the
@@ -97,6 +121,8 @@ export async function readSyncState(): Promise<GitHubSyncRead> {
  * the caller, which pulls, merges, and tries again.
  */
 export async function writeSyncState(state: unknown, sha: string | null): Promise<void> {
+  const same = stable(state)
+  if (same === lastSeen) return
   const res = await fetch(apiUrl(SYNC_PATH), {
     method: 'PUT',
     headers: { ...headers(), 'Content-Type': 'application/json' },
@@ -106,7 +132,10 @@ export async function writeSyncState(state: unknown, sha: string | null): Promis
       ...(sha ? { sha } : {}),
     }),
   })
-  if (res.ok) return
+  if (res.ok) {
+    lastSeen = same
+    return
+  }
   // 409 is the lock; 422 is what the Contents API answers when a create is
   // sent for a path that has appeared since, which is the same race seen from
   // the other end.

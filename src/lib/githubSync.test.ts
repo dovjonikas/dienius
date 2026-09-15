@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { canSyncThroughGitHub, readSyncState, SYNC_PATH, SyncConflictError, writeSyncState } from './githubSync'
+import { canSyncThroughGitHub, readSyncState, resetGitHubSyncForTests, SYNC_PATH, SyncConflictError, writeSyncState } from './githubSync'
 import { setCloudBackupConfig, toBase64, GitHubError } from './cloudBackup'
 
 /**
@@ -37,6 +37,7 @@ function respond(url: string, init: RequestInit = {}): Promise<Response> {
 
 beforeEach(() => {
   localStorage.clear()
+  resetGitHubSyncForTests()
   calls = []
   file = null
   putAnswers = []
@@ -123,4 +124,24 @@ test('a file holding something that is not a plan is read as nothing at all', as
   const read = await readSyncState()
   expect(read.state).toBeNull()
   expect(read.sha).toBe('sha-old')
+})
+
+test('a write that would put back exactly what is there is not made', async () => {
+  // Every write is a commit. A poll a minute that also wrote, or a merge that
+  // changed nothing, would leave a commit a minute saying nothing changed.
+  file = { sha: 'sha-old', content: JSON.stringify({ b: 2, a: 1 }) }
+  const read = await readSyncState()
+  // Same plan, keys in a different order - which is what a merge hands back.
+  await writeSyncState({ a: 1, b: 2 }, read.sha)
+  expect(calls.filter(c => c.init.method === 'PUT')).toHaveLength(0)
+
+  // And a real change still goes.
+  await writeSyncState({ a: 1, b: 3 }, read.sha)
+  expect(calls.filter(c => c.init.method === 'PUT')).toHaveLength(1)
+})
+
+test('what was just written counts as seen, so writing it again is also skipped', async () => {
+  await writeSyncState({ a: 1 }, null)
+  await writeSyncState({ a: 1 }, 'sha-2')
+  expect(calls.filter(c => c.init.method === 'PUT')).toHaveLength(1)
 })
