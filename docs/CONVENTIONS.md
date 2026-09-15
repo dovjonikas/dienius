@@ -477,19 +477,27 @@ There is a browser pane. Use it - the test suite cannot see layout.
 ### `npm run sweep` first
 
 Before opening anything by hand, run the measuring pass. It opens every
-screen at 1920x1080, 1600x900 and 1366x768 in both themes on a realistic
-full day, and reports what a person would actually hit: text that does not
-fit its box, a control with something on top of it, two pieces of text
-painted over each other, anything past the right edge, a screen that must
+screen at 1920x1080, 1600x900, 1366x768 and 1024x768 in both themes on a
+realistic full day, and reports what a person would actually hit: text that
+does not fit its box, a control with something on top of it, two pieces of
+text painted over each other, anything past either edge, a screen that must
 fit and does not, and every visible string's contrast against whatever is
 actually painted under it. `--phone` adds 390x844 and the 44px audit;
-`--heavy` uses a twenty-task day; `--only=<name>` narrows it while working.
+`--heavy` uses a twenty-task day; `--only=<name>` and `--width=<px>`
+narrow it while working; `--shots=<dir>` leaves a PNG of every screen it
+reaches, which is what to read after a wave - every hole this pass has had
+was found by a person looking at a picture.
 
 ```bash
-npm run build && npm run preview   # in one shell
-npm run sweep                      # in another
+npm run build
+npm run sweep -- --phone           # serves the build itself; both devices
 npm run sweep -- --self-check      # prove it can still see a defect
 ```
+
+**Both devices, every time a base rule changes.** The 44px floor for a field
+on a finger was lost for a wave because the sweep either side of a change to
+the base field rule ran on a desktop alone - see DECISIONS "The pictures,
+looked at".
 
 **Zero findings is the expected state.** It found fourteen the first time it
 ran, including a task list squeezed to zero pixels with seven tasks in it and
@@ -531,11 +539,14 @@ npx tsc --noEmit
 npx vitest run
 npm run build
 npm run e2e
-npm run sweep          # against `npm run preview` of that build
-npm run privacy        # nothing of the owner's own in a tracked file
+npm run sweep -- --phone   # serves the build itself; desktop sizes and the phone
+npm run keys               # every screen on a keyboard alone
+npm run precision          # centring, rhythm, alignment
+npm run privacy            # nothing of the owner's own in a tracked file
 ```
 
-All six clean. Then the phone checklist in [`STATE.md`](STATE.md), then
+All eight clean, one after another - the sweep and the browser tests both
+build or serve `dist`, and two of them at once measure each other. Then the phone checklist in [`STATE.md`](STATE.md), then
 commit, push, and tag if it is a release. CI runs the suite and only publishes
 to Pages if the tests and the build both pass; the browser tests run in
 their own job beside that and never hold a release. The same workflow runs

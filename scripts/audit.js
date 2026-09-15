@@ -98,6 +98,14 @@
   }
 
   /** @param {Element} el */
+  /** Whether this element, or one of the three above it, is mid-animation or mid-transition. */
+  const animating = el => {
+    for (let a = el, up = 0; a && up < 4; a = a.parentElement, up++) {
+      if (typeof a.getAnimations === 'function' && a.getAnimations().some(x => x.playState === 'running')) return true
+    }
+    return false
+  }
+
   const visible = el => {
     const cs = getComputedStyle(el)
     if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') return false
@@ -548,13 +556,46 @@
         p = p.parentElement
       }
       if (scrolled) continue
-      out.offscreen.push({ sel: sig(el), right: Math.round(r.right), text: (el.textContent || '').trim().slice(0, 40) })
+      out.offscreen.push({ sel: sig(el), side: 'right', right: Math.round(r.right), text: (el.textContent || '').trim().slice(0, 40) })
+    }
+
+    // And the left edge. Not over `all`, which is filtered by what can be
+    // seen - a thing wholly past the edge cannot be, and the first version of
+    // this walked `all` and was blind to its own plant. Every picture the
+    // sweep left in v2.21 had an empty navigation rail and nothing said so: a
+    // driver had scrolled the overflow:hidden nav sideways and every icon sat
+    // at x = -95. Only something drawn - an icon, or a piece of text - and
+    // only when all of it is past the edge; a scroller's contents are its own
+    // business, the same as on the right.
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el)
+      if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0' || cs.position === 'fixed') continue
+      if (el.closest('.visually-hidden')) continue
+      const drawn = el.tagName.toLowerCase() === 'svg' || ownText(el) !== ''
+      if (!drawn) continue
+      const r = el.getBoundingClientRect()
+      if (r.width <= 0 || r.right > -1) continue
+      let p = el.parentElement
+      let scrolled = false
+      while (p && p !== document.body) {
+        const pc = getComputedStyle(p)
+        if (/auto|scroll|hidden/.test(pc.overflowX) || pc.display === 'none' || pc.visibility === 'hidden') { scrolled = true; break }
+        p = p.parentElement
+      }
+      if (scrolled) continue
+      out.offscreen.push({ sel: sig(el), side: 'left', right: Math.round(r.right), text: (el.textContent || '').trim().slice(0, 40) })
     }
 
     // Text nobody can read. AA: 4.5:1 body, 3:1 large.
     for (const el of all) {
       const t = ownText(el)
       if (!t) continue
+      // Not while it is still arriving. A tooltip caught forty per cent of
+      // the way through its own fade read as 1.47:1, on one screen, in one
+      // theme, on the phone - the sweep's waits let most surfaces settle and
+      // this lets the rest. An animation that never ends would hide a real
+      // defect, and nothing here runs one.
+      if (animating(el)) continue
       const cs = getComputedStyle(el)
       const fg = parse(cs.color)
       if (!fg) continue

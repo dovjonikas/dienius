@@ -19,6 +19,13 @@
  *   npm run sweep -- --phone       390x844 as well, with the 44px audit
  *   npm run sweep -- --heavy       twenty tasks, thirty-two in Later, fifteen books
  *   npm run sweep -- --only=Today  one screen, while working on it
+ *   npm run sweep -- --width=1366  one desktop size, while working on it
+ *   npm run sweep -- --shots=DIR   a PNG of every screen it reaches, into DIR
+ *
+ * The pictures are for looking at. Every hole this pass has had was found
+ * by a person looking at a screenshot rather than by the pass, so the walk
+ * that reaches every screen can leave one of each behind - the same seed,
+ * the same minute, the same route as the measuring.
  *   npm run sweep -- --self-check  plant defects and prove the audit sees them
  *
  * Needs the production build: `npm run build`. It serves `dist` itself, or
@@ -26,7 +33,7 @@
  */
 import { chromium, devices } from '@playwright/test'
 import { preview } from 'vite'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -37,6 +44,9 @@ const HEAVY = process.argv.includes('--heavy')
 const PHONE = process.argv.includes('--phone')
 const SELF_CHECK = process.argv.includes('--self-check')
 const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
+const WIDTH = Number(process.argv.find(a => a.startsWith('--width='))?.slice(8) ?? 0)
+const SHOTS = process.argv.find(a => a.startsWith('--shots='))?.slice(8)
+if (SHOTS) mkdirSync(SHOTS, { recursive: true })
 
 /**
  * The hour the sample day is walked at, pinned rather than taken from
@@ -297,16 +307,24 @@ const SCREENS = [
       await p.waitForTimeout(400)
     },
   },
-  // The clock's four panels. Reachable from every tab and therefore on
-  // screen more often than most of the list above, and until v2.5 not
-  // measured once: the journal's own line about what it is not is the
-  // smallest text the app draws, and it went in unswept.
-  .../** @type {Screen[]} */ (['Notes', 'Journal'].map(panel => ({
-    name: `Clock: ${panel.toLowerCase()}`,
+  // The three header popovers. Reachable from every tab and therefore on
+  // screen more often than most of the list above. Notes and Journal were
+  // tabs of the clock's panel until v2.7 and this list still opened the
+  // clock and pressed their names inside it - which found nothing to press,
+  // so for fourteen versions the two most-used popovers in the app were
+  // measured as a picture of the timer. Found by looking at the pictures.
+  {
+    name: 'Timer',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
       await press(p, 'Timer and stopwatch')
-      await press(p, panel)
+    },
+  },
+  .../** @type {Screen[]} */ (['Notes', 'Journal'].map(panel => ({
+    name: `Header: ${panel.toLowerCase()}`,
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await p.locator('.header-tools').getByRole('button', { name: panel, exact: true }).click()
       await p.waitForTimeout(300)
     },
   }))),
@@ -431,6 +449,12 @@ if (SELF_CHECK) {
     // The owner's own bug, planted: a row of chips where one is chosen and
     // all of them are drawn identically, so nothing but the attribute says
     // which. The style is inline and the same on both.
+    // Past the left edge: a word whose whole box is left of the window,
+    // in a fixed box, the way the rail's icons were.
+    const gone = document.createElement('div')
+    gone.style.cssText = 'position:fixed;left:-300px;top:520px;width:200px;height:30px'
+    gone.innerHTML = '<span>Planted past the left edge</span>'
+    document.body.appendChild(gone)
     const row = document.createElement('div')
     row.style.cssText = 'position:fixed;left:100px;top:460px;background:#333;padding:4px;display:flex;gap:4px'
     const chip = 'border:1px solid #555;background:#222;color:#ccc;padding:4px 8px;font-weight:400'
@@ -450,6 +474,7 @@ if (SELF_CHECK) {
     'the chosen one looks unchosen': planted.chosen > clean.chosen,
     'a ring cut off': planted.ringCut > clean.ringCut,
     'a ring gap off its ground': planted.ringGap > clean.ringGap,
+    'past an edge of the window': planted.offscreen > clean.offscreen,
   }
   for (const [what, ok] of Object.entries(sees)) console.log(`${ok ? 'sees  ' : 'BLIND '} ${what}`)
   const blind = Object.values(sees).filter(v => !v).length
@@ -462,7 +487,7 @@ if (SELF_CHECK) {
 }
 
 const runs = [
-  ...DESKTOP.flatMap(size => ['dark', 'light'].map(theme => ({ size, theme, phone: false }))),
+  ...DESKTOP.filter(size => !WIDTH || size.w === WIDTH).flatMap(size => ['dark', 'light'].map(theme => ({ size, theme, phone: false }))),
   ...(PHONE ? ['dark', 'light'].map(theme => ({ size: { w: 390, h: 844 }, theme, phone: true })) : []),
 ]
 
@@ -497,6 +522,10 @@ for (const run of runs) {
       await page.waitForSelector('nav')
       await page.addScriptTag({ content: AUDIT })
       await screen.go(page)
+      if (SHOTS) {
+        const slug = screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        await page.screenshot({ path: join(SHOTS, `${run.size.w}-${run.theme}-${slug}.png`) })
+      }
     } catch (err) {
       found(where, 'could not reach', String(err).split('\n')[0].slice(0, 120))
       continue
@@ -507,7 +536,7 @@ for (const run of runs) {
     for (const c of a.clipped) found(where, 'text cut off', `${c.sel} +${c.overX}x${c.overY} "${c.text}"`)
     for (const c of a.covered) found(where, 'control covered', `${c.sel} "${c.t}" under ${c.by}`)
     for (const o of a.overlap) found(where, 'text over text', `${o.a} "${o.ta}" over ${o.b} "${o.tb}"`)
-    for (const o of a.offscreen) found(where, 'past the right edge', `${o.sel} right ${o.right} "${o.text}"`)
+    for (const o of a.offscreen) found(where, o.side === 'left' ? 'past the left edge' : 'past the right edge', `${o.sel} right edge at ${o.right} "${o.text}"`)
     for (const f of a.faint) found(where, 'text under AA', `${f.sel} ${f.ratio}:1 (needs ${f.need}) "${f.text}"`)
     for (const r of a.rings) found(where, r.kind === 'cut' ? 'ring cut off' : 'ring gap off its ground', r.detail)
     for (const c of a.chosen) found(where, 'the chosen one looks unchosen', `${c.sel} "${c.text}" is drawn exactly like "${c.like}" beside it, though ${c.attr} says otherwise`)
