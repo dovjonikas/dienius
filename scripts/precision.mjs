@@ -43,6 +43,13 @@ const OFF_CENTRE_PX = 1.5
 /** How much the same gap may vary between two drawings of the same row. */
 const RHYTHM_PX = 3
 
+/**
+ * The band in which two stacked left edges read as a mistake. Exactly equal
+ * is aligned; a difference past the top of the band is an indent somebody
+ * meant. In between is the thing the eye catches and cannot name.
+ */
+const NEAR_MISS_PX = [2, 12]
+
 /** @typedef {import('@playwright/test').Page} Page */
 /** @type {{ name: string, go: (p: Page) => Promise<unknown> }[]} */
 const SCREENS = [
@@ -60,7 +67,7 @@ const SCREENS = [
 const tab = (p, name) => p.getByRole('navigation', { name: 'Views' }).getByRole('button', { name, exact: true }).click()
 
 /** @param {Page} page */
-const measure = page => page.evaluate(([offCentre, rhythm]) => {
+const measure = page => page.evaluate(([offCentre, rhythm, nearMiss]) => {
   /** @type {string[]} */
   const found = []
   const round = (/** @type {number} */ n) => Math.round(n * 10) / 10
@@ -179,8 +186,68 @@ const measure = page => page.evaluate(([offCentre, rhythm]) => {
     }
   }
 
+  // ---- things stacked in one column share a left edge -------------------
+  //
+  // The third check, written from the third defect: the goal's line began
+  // over the mini calendar and ran into the timeline, a sentence crossing two
+  // columns it had nothing to do with. That one was a long way off - a whole
+  // column - and is held by a browser test of its own, because "which two
+  // things should share an edge" is a design fact. What can be measured
+  // without one is the near miss: two blocks of text, one directly below the
+  // other, whose left edges differ by a few pixels. Nobody means a few
+  // pixels. They mean zero, or they mean an indent.
+  /** @type {{ el: HTMLElement, r: DOMRect }[]} */
+  const blocks = []
+  for (const el of document.querySelectorAll('main *')) {
+    if (!(el instanceof HTMLElement)) continue
+    const cs = getComputedStyle(el)
+    if (cs.display === 'inline' || cs.display === 'contents' || cs.display === 'none' || cs.visibility === 'hidden') continue
+    if (cs.position === 'absolute' || cs.position === 'fixed') continue
+    // Only a block that draws its own text: a wrapper's edge is its child's.
+    const own = [...el.childNodes].some(n => n.nodeType === 3 && (n.textContent ?? '').trim() !== '')
+    if (!own) continue
+    // A centred block has no left edge to keep: the month's name over the
+    // mini calendar sits in the middle of its row and the weekday letters
+    // under it sit in columns, and 2.4px between those two edges is nothing.
+    // Only text that starts at the left is measured from the left.
+    if (!['start', 'left'].includes(cs.textAlign)) continue
+    const r = el.getBoundingClientRect()
+    if (r.width < 24 || r.height < 8) continue
+    blocks.push({ el, r })
+  }
+  blocks.sort((a, b) => a.r.top - b.r.top)
+  for (let i = 0; i < blocks.length; i++) {
+    const a = blocks[i]
+    // The nearest block below that starts in the same column: it overlaps
+    // this one across most of its width, and the gap between them is a gap
+    // rather than a section break.
+    let below = null
+    for (let j = i + 1; j < blocks.length; j++) {
+      const b = blocks[j]
+      if (b.r.top < a.r.bottom - 1) continue
+      if (b.r.top - a.r.bottom > 40) break
+      const overlap = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left)
+      if (overlap < Math.min(a.r.width, b.r.width) * 0.6) continue
+      // Stacked inside the same box, not across two. The pace line at the
+      // foot of one card and the title at the head of the next are 8px
+      // apart because the title sits beside a checkbox, and that is two
+      // cards, not one misaligned column. A shared parent or grandparent is
+      // the plainest reading of "the same box".
+      const ap = a.el.parentElement, bp = b.el.parentElement
+      if (!(ap === bp || ap?.parentElement === bp || bp?.parentElement === ap || ap?.parentElement === bp?.parentElement)) continue
+      below = b
+      break
+    }
+    if (!below) continue
+    const gap = Math.abs(a.r.left - below.r.left)
+    if (gap >= nearMiss[0] && gap <= nearMiss[1]) {
+      const name = (/** @type {HTMLElement} */ e) => e.className || e.tagName
+      found.push(`${name(a.el)} and ${name(below.el)} below it are ${round(gap)}px out of line ("${(a.el.textContent ?? '').trim().slice(0, 24)}" / "${(below.el.textContent ?? '').trim().slice(0, 24)}")`)
+    }
+  }
+
   return [...new Set(found)]
-}, /** @type {[number, number]} */ ([OFF_CENTRE_PX, RHYTHM_PX]))
+}, /** @type {[number, number, number[]]} */ ([OFF_CENTRE_PX, RHYTHM_PX, NEAR_MISS_PX]))
 
 async function main() {
   const server = await createServer({ configFile: resolve('vite.config.ts'), server: { port: PORT, strictPort: true }, logLevel: 'error' })
@@ -215,7 +282,7 @@ async function main() {
     await browser.close()
     await server.close()
   }
-  console.log(findings.length ? `${findings.length} findings\n${findings.join('\n')}` : '0 findings: every mark is centred and every repeated row keeps its rhythm')
+  console.log(findings.length ? `${findings.length} findings\n${findings.join('\n')}` : '0 findings: every mark is centred, every repeated row keeps its rhythm, and nothing stacked is a few pixels out of line')
 }
 
 main()
