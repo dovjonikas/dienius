@@ -120,9 +120,15 @@ test('every padding, margin and gap is a spacing token, or a hairline or half-st
  *
  * So: every class named in a `:not(.x)` on the base input rule must have a
  * rule of its own that gives it a colour.
+ *
+ * The chain sits inside one `:where()` since v2.21, so that the exclusions
+ * weigh nothing - see notSpecificity.test.ts. The classes named in it are
+ * the same classes, and this reads them the same way.
  */
 test('every input class excluded from the base rule sets its own colour', () => {
-  const base = css.split(String.fromCharCode(10)).find(l => l.startsWith('input:not(') && l.includes("[type='checkbox']"))
+  const base = css
+    .split(String.fromCharCode(10))
+    .find(l => /^input:(?:where\(|not\()/.test(l) && l.includes("[type='checkbox']"))
   expect(base).toBeDefined()
 
   const excluded = [...(base as string).matchAll(/:not\(\.([a-z-]+)\)/g)].map(m => m[1])

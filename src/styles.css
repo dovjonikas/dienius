@@ -2834,7 +2834,16 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    surface, at 1.14:1. The rule below puts that back for the class itself,
    so a control that draws its own box only has to draw the box.
    ------------------------------------------------------------------------ */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input),
+/* Weightless exclusions, since v2.21. Each :not() used to add a step of
+   specificity, so this rule stood at 0,7,1 and no class alone could reach
+   past it: .palette-input asked for an underline and no box and drew a
+   box; .task-detail-title asked for no border and drew one; the page
+   field in a card came out sixteen pixels taller than the mark it stood
+   in for, and it took three measurements to find out why. Inside
+   :where() the same exclusions weigh nothing, the rule is 0,0,1, and a
+   class says what it means. notSpecificity.test.ts no longer needs to
+   allow this one past its line. */
+input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)),
 textarea {
   min-width: 0;
   padding: var(--s2) var(--s3);
@@ -2846,7 +2855,7 @@ textarea {
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)::placeholder,
+input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input))::placeholder,
 textarea::placeholder {
   color: var(--faint);
 }
@@ -2877,7 +2886,7 @@ textarea::placeholder {
    clearance, so the reservation grows with the text scale rather than the
    word growing out of a fixed gap at scale l. Measured at s, m and l: 50,
    53.4 and 56.8 pixels, with the same 13px of clear space at each. */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input).has-return {
+input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)).has-return {
   padding-right: calc(var(--s2) * 2 + var(--t-xs) * 3.4);
 }
 
@@ -2913,7 +2922,7 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='r
 }
 
 @media (hover: hover) and (pointer: fine) {
-  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input):hover,
+  input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)):hover,
   textarea:hover {
     border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
   }
@@ -2921,7 +2930,7 @@ input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='r
 
 /* One focus ring for every field. Inset, so it never changes the size of the
    control and never nudges what is beside it. */
-input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input):focus,
+input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)):focus,
 textarea:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
@@ -2940,7 +2949,7 @@ textarea:focus {
    min-height rather than height: a textarea keeps whatever its rows give it,
    and the two inputs inside .time-stepper keep filling their own box. */
 @media (pointer: coarse) {
-  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+  input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color'])),
   select,
   textarea {
     min-height: var(--touch);

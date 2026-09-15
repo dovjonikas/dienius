@@ -39,14 +39,55 @@ function selectors(): string[] {
   for (const m of css.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
     const head = m[1].trim().split('\n').at(-1)!.trim()
     if (!head || head.startsWith('@') || head.startsWith('from') || head.startsWith('to')) continue
-    for (const part of head.split(',')) out.push(part.trim())
+    // Split on the commas between selectors, not the ones inside a
+    // `:where(.a, .b)` or `:is(...)`. Splitting on every comma cut the add
+    // row's generic rule into three fragments, and the first fragment had no
+    // closing bracket at all - which is how the old counter found zero
+    // weighted :not()s in it by accident rather than by reading it.
+    let depth = 0
+    let part = ''
+    for (const ch of head) {
+      if (ch === '(') depth++
+      else if (ch === ')') depth--
+      if (ch === ',' && depth === 0) {
+        out.push(part.trim())
+        part = ''
+      } else part += ch
+    }
+    out.push(part.trim())
   }
   return out.filter(Boolean)
 }
 
-/** The `:not()`s that carry weight - the ones not wrapped in `:where()`. */
+/**
+ * The `:not()`s that carry weight - the ones outside any `:where()`.
+ *
+ * Either wrapping is weightless in CSS: `:not(:where(.x))` and
+ * `:where(:not(.x))` both score nothing. The base field rule uses the
+ * second, one `:where()` around the whole chain, so everything inside a
+ * `:where(...)` is cut out before counting - balanced, because the chain
+ * itself has brackets in it.
+ */
 function weightedNots(selector: string): number {
-  return [...selector.matchAll(/:not\(\s*([^)]*)\)/g)].filter(m => !m[1].trim().startsWith(':where(')).length
+  let out = ''
+  for (let i = 0; i < selector.length; ) {
+    const at = selector.indexOf(':where(', i)
+    if (at < 0) {
+      out += selector.slice(i)
+      break
+    }
+    out += selector.slice(i, at)
+    let depth = 0
+    let j = at + ':where'.length
+    for (; j < selector.length; j++) {
+      if (selector[j] === '(') depth++
+      else if (selector[j] === ')' && --depth === 0) break
+    }
+    i = j + 1
+  }
+  // What is left of `:not(:where(.x))` once its `:where(...)` is cut out is
+  // an empty `:not()`, and that shell weighs nothing either.
+  return [...out.replace(/:not\(\s*\)/g, '').matchAll(/:not\(/g)].length
 }
 
 /**
@@ -61,7 +102,15 @@ function weightedNots(selector: string): number {
  * deliberately and measure, not one to fold into a layout wave. In
  * BACKLOG.md.
  */
-const ALLOWED = [/^input:not\(\[type=.checkbox.\]\)/]
+/*
+ * Nothing is allowed past the line any more. The base field rule was the one
+ * exception - five input types and two classes excluded, 0,7,1, with the
+ * stylesheet leaning on it being that high - and was rewritten through
+ * :where() in v2.21, the same exclusions weighing nothing, after the third
+ * control in a week asked for a look in a class of its own and could not get
+ * it. What that changed on screen was measured field by field; see DECISIONS.
+ */
+const ALLOWED: RegExp[] = []
 
 test('no selector stacks more than two weighted :not()s, because each one is a specificity step', () => {
   const offenders = selectors()

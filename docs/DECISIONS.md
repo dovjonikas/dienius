@@ -3026,3 +3026,42 @@ pull on opening already has it.
 **What the owner still does once per device:** paste the repo and a
 fine-grained token with Contents read and write on that one repo. There is no
 way around that one and it is not worth pretending otherwise.
+
+## The base field rule weighs nothing, and four fields look the way their rules asked
+
+`input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)`
+scored 0,7,1, and every class in the stylesheet scores 0,1,0. So a class on
+a field could not change the field. `.palette-input` asked for an underline
+and no box and drew a box; `.task-detail-title` asked for no border and drew
+one; the page field on a card came out sixteen pixels taller than the mark
+it stood in for, and it took three measurements to find out why. The backlog
+had it as "worth doing, and worth doing as its own change with the sweep run
+either side". This is that change.
+
+The same seven exclusions sit inside one `:where()` now, where they weigh
+nothing, and the rule is 0,0,1. Every class that had been losing to it
+started winning, which is the point and also the risk - so what changed on
+screen was measured field by field, before and after, at the computed style
+and in a screenshot, rather than trusted to be what the rules said.
+
+| field | before | after | verdict |
+| --- | --- | --- | --- |
+| command palette's search line | boxed, 8/12 padding, 10px radius, accent border while focused | one line with an underline, 16px padding, no box, and its own quiet focus look | what `.palette-input` and `.palette-input:focus` had asked for since they were written |
+| a task's title in its detail sheet | boxed like any field | no border, no ground, larger type - reads as a heading that can be edited | what `.task-detail-title` asked for |
+| a sleep schedule's name in Settings | boxed, 38px tall | a tinted pill, 4/8 padding, 30px tall on a fine pointer; still 44 on a finger from the coarse-pointer rule | what `.setting-name-input` asked for |
+| the size field on a card | 8/12 padding | 8 all round, same height | a few pixels; fine |
+| the date field in Replan | not reached in the demo | its rule adds only a floor and a padding | unverified by eye, and low stakes |
+
+Four of five are the looks somebody wrote and never got. None was a
+surprise in the bad direction, and the sweep on the far side of the change
+is the check that contrast and targets survived them.
+
+`notSpecificity.test.ts` allowed this one rule past its line, with a comment
+saying why; it allows nothing now. Two things in the test itself turned out
+to be wrong while taking the allowance away, and are fixed: it split
+selector lists on every comma, so a `:where(.a, .b)` inside a selector was
+cut into fragments, and the fragment it then examined had no closing bracket
+at all - which is how the add row's generic rule had been passing the
+weighted-`:not()` count by accident rather than by reading. It splits on the
+commas between selectors only, and it understands a `:where()` wrapping a
+whole chain as well as one wrapping each exclusion.
