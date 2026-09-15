@@ -21,7 +21,13 @@ let server: ChildProcess
 let dataDir: string
 let token: string
 
-test.beforeAll(async () => {
+// One server per test, not per file. The three tests are three days in the
+// owner's life on one shared server, and the third pins its clock to a
+// Wednesday that the second - on the real clock - shares once a year: on that
+// day the second test's renamed task and the third's fresh one landed on the
+// same date key, and "Ring the bank" matched two checkboxes. Found on
+// 2026-09-16, which was the Wednesday.
+test.beforeEach(async () => {
   dataDir = mkdtempSync(join(tmpdir(), 'dienius-sync-'))
   server = spawn(process.execPath, ['server/sync-server.mjs', '--port', String(PORT), '--data', dataDir, '--origin', 'http://localhost:4190'], {
     stdio: ['ignore', 'pipe', 'inherit'],
@@ -39,7 +45,7 @@ test.beforeAll(async () => {
   token = readFileSync(join(dataDir, 'token.txt'), 'utf8').trim()
 })
 
-test.afterAll(() => {
+test.afterEach(() => {
   server?.kill()
   rmSync(dataDir, { recursive: true, force: true })
 })
