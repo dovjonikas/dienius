@@ -1,5 +1,5 @@
-import { beforeEach, expect, test } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { TemplateTimeline } from './TemplateTimeline'
 import { actions } from '../lib/store'
 import { defaultData } from '../lib/storage'
@@ -80,4 +80,79 @@ test('the sleep comes from the profile the template carries, and changing it cha
   rerender(<TemplateTimeline blocks={blocks} sleepProfileId="long" />)
   expect(screen.getByText(/^Timed/).textContent).not.toBe(before)
   expect(screen.getByText(/^Timed/).textContent).toContain('Sleep 10h')
+})
+
+/**
+ * The picture can be edited by hand since v2.21: a block dragged to another
+ * hour, its bottom edge pulled to another length, through the same hook the
+ * day view drags with. What is held here is the binding - nothing on the
+ * picture can be taken hold of until somebody offers to take the change, and
+ * a change comes back as a patch on the block's own id. jsdom has no layout,
+ * so the numbers are only as real as the grid's own mapping of pixels to
+ * minutes with every box at zero: later is later, longer is longer, and that
+ * is what is asserted. The gesture on a real grid is the e2e's.
+ */
+
+afterEach(() => {
+  // jsdom has no elementFromPoint at all - see DayView.dragDrop.test.tsx.
+  delete (document as unknown as { elementFromPoint?: unknown }).elementFromPoint
+})
+
+// A drop that finds nothing under the pointer is a drop on the grid, which
+// is the only kind of drop there is on a template: there is no tray.
+function dropOnNothing() {
+  document.elementFromPoint = (() => null) as typeof document.elementFromPoint
+}
+
+test('without a way to put a change in, the picture is only a picture', () => {
+  const { container } = render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 60 })]} />)
+  expect(container.querySelector('.timeline-anchor')).toBeInTheDocument()
+  expect(container.querySelector('.timeline-anchor-draggable')).toBeNull()
+  expect(container.querySelector('.timeline-anchor-resize')).toBeNull()
+})
+
+test('a block dragged down the picture comes back as a later time on its own id, and is said', () => {
+  dropOnNothing()
+  const onReshape = vi.fn()
+  const { container } = render(
+    <TemplateTimeline blocks={[block({ id: 'gym', title: 'Gym', time: '09:00', minutes: 60 })]} onReshape={onReshape} />,
+  )
+  const anchor = container.querySelector('.timeline-anchor-draggable')!
+  fireEvent.pointerDown(anchor, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 300 })
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 300 })
+
+  expect(onReshape).toHaveBeenCalledTimes(1)
+  const [id, patch] = onReshape.mock.calls[0] as [string, { time?: string; minutes?: number }]
+  expect(id).toBe('gym')
+  expect(patch.time).toMatch(/^\d\d:\d\d$/)
+  expect(patch.time! > '09:00').toBe(true)
+  expect(patch.minutes).toBeUndefined()
+  expect(screen.getByText(`Gym moved to ${patch.time}.`)).toBeInTheDocument()
+})
+
+test('the bottom edge pulled down comes back as a longer length, and nothing else', () => {
+  const onReshape = vi.fn()
+  const { container } = render(
+    <TemplateTimeline blocks={[block({ id: 'gym', title: 'Gym', time: '09:00', minutes: 60 })]} onReshape={onReshape} />,
+  )
+  const strip = container.querySelector('.timeline-anchor-resize')!
+  fireEvent.pointerDown(strip, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 900 })
+
+  expect(onReshape).toHaveBeenCalledTimes(1)
+  const [id, patch] = onReshape.mock.calls[0] as [string, { time?: string; minutes?: number }]
+  expect(id).toBe('gym')
+  expect(patch.time).toBeUndefined()
+  expect(patch.minutes).toBeGreaterThan(60)
+})
+
+test('a press that never moved changes nothing', () => {
+  dropOnNothing()
+  const onReshape = vi.fn()
+  const { container } = render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 60 })]} onReshape={onReshape} />)
+  const anchor = container.querySelector('.timeline-anchor-draggable')!
+  fireEvent.pointerDown(anchor, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 102, clientY: 103 })
+  expect(onReshape).not.toHaveBeenCalled()
 })

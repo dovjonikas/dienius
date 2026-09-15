@@ -3065,3 +3065,41 @@ at all - which is how the add row's generic rule had been passing the
 weighted-`:not()` count by accident rather than by reading. It splits on the
 commas between selectors only, and it understands a `:where()` wrapping a
 whole chain as well as one wrapping each exclusion.
+
+## The template's picture can be moved by hand, through the day's own drag
+
+The template editor has drawn the day its blocks make since v2.5, and it
+only drew it: to move a block you retyped its time in the list underneath,
+and to make it longer you opened its size. The day view has had the two
+gestures since v2.0 - a block dragged to another hour, its bottom edge
+pulled to another length - on the same grid the picture draws with. The
+plan's line was that the machinery already built should be reused rather
+than written a second time, and that is what happened.
+
+**The drag hook knows nothing about days now.** `useDayDrag` was the gesture
+and its meaning in one hook, bound to a date and to the store. The gesture
+is `useTimelineDrag` - pointer capture, the grid's geometry, the eight-pixel
+threshold, the snap, Escape, the announcement - and what a drag *means* is
+the host's: `reshape`, and where the host has them, `unanchor` for a tray
+and `offerUndo` for a way back. `useDayDrag` is the day's binding, one
+screen long, and every drag test the day had passes unchanged through it.
+The template's binding is in `TemplateTimeline` behind an `onReshape` prop:
+absent, the picture is exactly what it was.
+
+**No tray and no undo, on purpose.** A day's tray is where a dropped block
+loses its time; a template has no tray, so a drop anywhere off the grid is
+a drop on the grid. And the editor's own Cancel is the way back from
+anything done to a draft, so the drag offers no toast of its own - two ways
+back from one change would be one too many.
+
+**A block that has not been saved has a name for the picture.** A draft
+block carries an id only once saved, and `blocksAsTasks` invented an index
+of its own for the rest, counted after the weekday filter, which is not the
+number the draft counts by. `drawable` gives an unsaved block `draft-N` for
+its place in the draft, so the patch the picture sends back can find it
+again; `save()` still mints a fresh id for it, because the picture's name
+never reaches the draft.
+
+**The week editor was left alone.** It does not draw with `TemplateTimeline`
+- it draws seven columns of its own and already drags a block between days
+- so this is the day-template editor's change only.

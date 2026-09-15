@@ -1,6 +1,7 @@
 import { useAppData } from '../lib/store'
 
 import { TimelineGrid } from '../widgets/day-plan/TimelineGrid'
+import { useTimelineDrag } from '../widgets/day-plan/useTimelineDrag'
 import { formatDuration, windowFor } from '../widgets/day-plan/capacity'
 import { blocksAsTasks, overlapsIn, templateSummary, type DrawableBlock } from './templateDay'
 
@@ -50,12 +51,36 @@ export interface TemplateTimelineProps {
    * Wednesday and on no other column.
    */
   ghostKey?: string
+  /**
+   * Given, the picture can be edited by hand: a block dragged to another
+   * hour, or its bottom edge dragged to another length, and the change
+   * comes here as a patch on the block's id. Absent, the picture is what it
+   * was since v2.5 - a drawing of the day the blocks make.
+   *
+   * The id is the block's own where it has one, and `draft-N` for the Nth
+   * block of a draft that has not been saved yet - see `drawable` in
+   * TemplatesView, which hands the index in for exactly this.
+   */
+  onReshape?: (blockId: string, patch: { time?: string; minutes?: number }) => void
 }
 
-export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact, ghostKey }: TemplateTimelineProps) {
+export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact, ghostKey, onReshape }: TemplateTimelineProps) {
   const data = useAppData()
   const mine = weekday === undefined ? blocks : blocks.filter(b => b.weekday === weekday)
   const tasks = blocksAsTasks(blocks, weekday)
+  // The same two gestures the day view has, on the same grid, through the
+  // same hook - bound to the draft rather than to a date. No tray here, so
+  // no drop can take a time off; and no undo, because the editor's own
+  // Cancel is the way back from anything done to a draft.
+  const drag = useTimelineDrag({
+    tasks,
+    reshape: (id, patch) => {
+      if (!onReshape) return false
+      onReshape(id, patch)
+      return true
+    },
+  })
+  const live = onReshape !== undefined
   const window = windowFor(sleepProfileId, { profiles: data.settings.sleepProfiles })
   const summary = templateSummary(mine, window)
   const clashes = overlapsIn(mine)
@@ -84,7 +109,17 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
         hideHours={compact}
         isToday={false}
         isWide={!compact}
+        onAnchorPointerDown={live ? drag.startDrag : undefined}
+        onAnchorResizePointerDown={live ? drag.startResize : undefined}
+        onGeometry={live ? drag.onGeometry : undefined}
+        draggingTaskId={live ? drag.draggingTaskId : undefined}
+        dropMinutes={live ? drag.dropMinutes : undefined}
       />
+      {live && (
+        <p className="visually-hidden" aria-live="polite">
+          {drag.announcement}
+        </p>
+      )}
       <p className="template-timeline-summary" role="status">
         {line}
       </p>

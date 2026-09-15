@@ -57,10 +57,14 @@ const DAY_TYPES: { value: DayType; label: string }[] = [
  * same parse, per keystroke, and a block with nothing readable in its time
  * simply floats rather than jumping to midnight.
  */
-function drawable(block: DraftBlock): DrawableBlock {
+function drawable(block: DraftBlock, index: number): DrawableBlock {
   const minutes = parseMinutesInput(block.minutes)
   return {
-    ...(block.id === undefined ? {} : { id: block.id }),
+    // A block that has not been saved has no id of its own yet. It gets its
+    // place in the draft as one, so a drag on the picture can find it again
+    // - blocksAsTasks would otherwise invent an index of its own, counted
+    // after filtering, which is not the same number.
+    id: block.id ?? `draft-${index}`,
     title: block.title,
     ...(/^\d{1,2}:\d{2}$/.test(block.time.trim()) ? { time: block.time.trim() } : {}),
     ...(minutes === undefined ? {} : { minutes }),
@@ -417,6 +421,22 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
         sleepProfileId={draft.sleepProfileId}
         color={draft.color}
         ghostKey={GHOST_KEY}
+        onReshape={(blockId, patch) => {
+          // Back from the picture into the draft, by the id the picture was
+          // given: a saved block's own, or draft-N for the Nth unsaved one.
+          setDraft(d => ({
+            ...d,
+            blocks: d.blocks.map((b, i) =>
+              (b.id ?? `draft-${i}`) === blockId
+                ? {
+                    ...b,
+                    ...(patch.time !== undefined ? { time: patch.time } : {}),
+                    ...(patch.minutes !== undefined ? { minutes: String(patch.minutes) } : {}),
+                  }
+                : b,
+            ),
+          }))
+        }}
       />
 
       <ul className="block-list" ref={blockListRef}>

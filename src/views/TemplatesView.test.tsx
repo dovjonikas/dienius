@@ -1,5 +1,5 @@
-import { beforeEach, expect, test } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
 import { actions, getData } from '../lib/store'
@@ -9,6 +9,11 @@ import { SLOWDOWN_LIMIT, STRESS_TIMEOUT_MS, measureSlowdown, timed } from '../te
 beforeEach(() => {
   localStorage.clear()
   actions.resetForTests(defaultData())
+})
+
+afterEach(() => {
+  // jsdom has no elementFromPoint at all - see DayView.dragDrop.test.tsx.
+  delete (document as unknown as { elementFromPoint?: unknown }).elementFromPoint
 })
 
 /**
@@ -931,4 +936,63 @@ test('with no library at all, the day editor still offers a way to make a list',
   const row = within(document.querySelector('.block-add') as HTMLElement)
   expect(row.queryByLabelText('Library list')).toBeNull()
   expect(row.getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+})
+
+/**
+ * The picture can be edited by hand since v2.21 - TemplateTimeline.test.tsx
+ * holds the gesture. What the editor owes is the way back into the draft:
+ * the block the picture names is the block the list changes, whether it was
+ * saved before or added a minute ago, and a block added in this session is
+ * still a new block when the template is saved.
+ */
+
+// A drop that finds nothing under the pointer is a drop on the grid.
+function dropOnNothing() {
+  document.elementFromPoint = (() => null) as typeof document.elementFromPoint
+}
+
+function dragTheOnlyBlockDown() {
+  const anchor = document.querySelector('.template-timeline .timeline-anchor-draggable')!
+  fireEvent.pointerDown(anchor, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 300 })
+  return document.querySelector('.block-list .task-time')!.textContent!
+}
+
+test('a block dragged on the picture moves in the draft, and saves where it was put', async () => {
+  const user = userEvent.setup()
+  dropOnNothing()
+  const created = actions.addTemplate({
+    name: 'Workday',
+    color: '#8ab6f9',
+    blocks: [{ time: '10:00', title: 'Deep work', minutes: 60 }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Workday' }))
+
+  const moved = dragTheOnlyBlockDown()
+  expect(moved).toMatch(/^\d\d:\d\d$/)
+  expect(moved > '10:00').toBe(true)
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0]).toMatchObject({ id: created.blocks[0].id, title: 'Deep work', time: moved })
+})
+
+test('a block added in this session can be dragged too, and still gets a fresh id when saved', async () => {
+  const user = userEvent.setup()
+  dropOnNothing()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Workday')
+  await user.type(screen.getByPlaceholderText('09:00'), '09:00')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Gym')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+
+  const moved = dragTheOnlyBlockDown()
+  expect(moved > '09:00').toBe(true)
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const saved = getData().templates[0].blocks[0]
+  expect(saved.time).toBe(moved)
+  expect(saved.id).toBeTruthy()
+  expect(saved.id).not.toMatch(/^draft-/)
 })
