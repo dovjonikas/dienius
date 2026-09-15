@@ -3103,3 +3103,21 @@ never reaches the draft.
 **The week editor was left alone.** It does not draw with `TemplateTimeline`
 - it draws seven columns of its own and already drags a block between days
 - so this is the day-template editor's change only.
+
+## The palette has a door a finger can press
+
+Ctrl K opened the command palette from the day it was built, and nothing
+else did. On a desktop that is the chord every other app with a palette
+uses, and it stays. On a phone there is no Ctrl, so the palette - the one
+place that searches every task, list and note, jumps to any date, and runs
+Something came up - was a feature the phone did not have. CONVENTIONS 17
+already said so in general: a feature reached only by a key nobody has
+been told about is a feature they do not have.
+
+The door is a `Search` button in the header, beside Notes and Journal,
+which is where the other two things that had been key-only got their
+buttons in v2.7 and for the same reason. It carries the chord on its tip
+the way they carry theirs, and the palette already gives focus back to
+whatever opened it, so Escape lands on the button again and the keyboard
+walk stays clean. Nothing about the palette itself changed: one more way
+in, not a second palette.

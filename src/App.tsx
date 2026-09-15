@@ -529,6 +529,24 @@ export function App() {
             feature reached only by a key nobody has been told about is a
             feature they do not have - and it has one here now. */}
         <div className="header-tools">
+          {/* The palette's own door. Ctrl K was the only way in from the day
+              the palette was built, and CONVENTIONS 17 says what a way in
+              that nobody has been told about is: on a phone, which has no
+              Ctrl, it was no way in at all. The same button on a desktop
+              carries the key on its tip, like the two beside it. The palette
+              itself gives focus back to whatever opened it, so Escape lands
+              here again. */}
+          <button
+            type="button"
+            className={paletteOpen ? 'header-tool active' : 'header-tool'}
+            aria-haspopup="dialog"
+            aria-expanded={paletteOpen}
+            data-tip={tipFor('Search', 'ctrl+k')}
+            onClick={() => setPaletteOpen(open => !open)}
+          >
+            Search
+          </button>
+
           <div className="clock-launcher">
             {/* The key, on the control it belongs to - CONVENTIONS 17. The
                 rail has named its keys on its icons since v2.0 and these two

@@ -497,6 +497,32 @@ test('the notes button opens the one-line note, and the journal button the day',
   expect(screen.getByRole('textbox', { name: /^Journal for / })).toBeInTheDocument()
 })
 
+/**
+ * The palette's own door, from v2.21. Ctrl K was the only way in from the
+ * day the palette was built, and CONVENTIONS 17 says what that made it on a
+ * phone, which has no Ctrl: a feature they did not have. The button sits
+ * with the two that got theirs in v2.7 for the same reason, carries the
+ * chord on its tip the way they carry their keys, and gets focus back when
+ * the palette closes - so the keyboard walk finds the same door and the
+ * same way home.
+ */
+test('the header carries a way into the palette for a hand with no keyboard, and the way back lands on it', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  const door = screen.getByRole('button', { name: 'Search' })
+  expect(door).toHaveAttribute('data-tip', 'Search · Ctrl K')
+  expect(door).toHaveAttribute('aria-expanded', 'false')
+
+  await user.click(door)
+  expect(screen.getByRole('dialog', { name: 'Commands and search' })).toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: 'Search or run a command' })).toHaveFocus()
+  expect(door).toHaveAttribute('aria-expanded', 'true')
+
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'Commands and search' })).toBeNull()
+  expect(door).toHaveFocus()
+})
+
 test('the rail no longer carries a pen, because the header does', () => {
   render(<App />)
   const rail = screen.getByRole('navigation', { name: 'Views' })
