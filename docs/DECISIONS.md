@@ -3590,3 +3590,94 @@ the same size at the strong weight; the air between parts is one line, the
 blank line typed there; the signature follows a thin rule and is the
 quieter ink. The page's name, North, is smaller and quieter than the words
 under it. Going between reading and writing is a fade of about 150ms.
+
+## The day's masthead lies on its columns, and a layer's fills are its own
+
+The v2.25 design pass, stage 10, and four messages the owner sent while it
+ran. Two were about Today on a wide screen: the right-hand side was
+cramped, the day arrows in it were not needed with the month beside the
+day, the chip, the doors and the progress should start where the task
+column starts, the clock should not stand alone on a row of its own, and
+the quick add's three boxes should be one line. One was about a status and
+the buttons under it, and one about check boxes.
+
+**The arrows leave the wide header again.** They came off after v2.5
+because they overflowed and came back in v2.7 under the rule that an
+overflowing control is fixed by making overflow impossible, which still
+stands. They go now for a different reason: at every wide width the month
+in the rail is beside the masthead, with its own pair of arrows and a day
+to click, and in a masthead laid on the task column the day arrows were the
+one thing that doubled something already on the screen. The phone keeps
+them, having no month; the left and right keys and T work at every width.
+
+**The masthead is a subgrid of the day's column and the task column.** Its
+right half starts on the task column's left edge and ends on its right edge
+whatever the window, and the space between the halves is the space between
+the columns. First row: the day's name, its date and the time on one line
+over the day, and over the tasks what the day came from at the left edge
+and its doors at the right. Second row: the goal's line over the day, and
+over the tasks the progress starting on the column's edge and the view
+toggle ending on the other. It is 40px shorter than the three rows it
+replaced. Where the day's column is too narrow for the running task's name
+beside the time, the name goes - the running block on the timeline says it
+- and at the task column's floor the bar goes and the fraction says it.
+With one pane showing, the right half keeps the task column's floor, so the
+chip, the doors and the toggle stay about where they were.
+
+**The task column's floor grows with the window.** `clamp(320px, 30vw,
+440px)`: at 1366 the day had 660px and the tasks 320, where every longer
+title wrapped and the masthead's right half - 364px of progress, fraction
+and toggle - could not stand in the column it heads. It is 410 now and the
+day 570. 1024 keeps 320, and from about 1600 nothing changes, the day having
+reached its 760 first.
+
+**The quick add is one line of three.** The time, the words and the length
+touch: one ground, a hairline of the column's ground between them, only the
+outer corners rounded, and one halo round the whole line while any part of
+it has the focus. The words' field lost the surface and padding that made it
+a card beside two fills.
+
+**A layer mixes its fills over its own ground.** The dark themes' fills are
+5% and 10% of the text over the card's ground, and on the raised ground
+every sheet, popover and menu stands on, 5% came out the colour of the layer
+itself - 1.001:1. Every field, chip, row and secondary button in the task's
+sheet, Replan, the gap offers, the journal panel and quick notes had no
+shape in the dark, and the light theme's, mixed over the page, always did.
+Every element on the raised ground re-mixes the same two steps over it, and
+the chosen segment's ground with them; the contrast test holds them in both
+dark presets, and fails when something new is painted on the raised ground
+without being in the list.
+
+**A status and its actions share a row**, from a third message during the
+stage: the owner pointed at a pasted list's count over a separate row of
+Add and Cancel, with a gap to the right of the count. The count, a colour's
+name in a template's sheet and the calendar's staged days now stand at the
+left edge of the row their buttons are on, Cancel and the action at the
+right; too short, the buttons wrap under the line. A sentence longer than a
+line keeps its band - squeezed beside two buttons it only grows. Every
+Cancel that was filled or came after its action is quiet and first, and the
+last underlined links are buttons.
+
+**One tick for every check box**, from a fourth: the timer's box looked as
+if its tick left the box. The tick was two borders of a rotated rectangle,
+placed by numbers for the 24px box and corrected by hand twice for the 18px
+ones, and its stroke still sat on the smaller box's edge. It is one path
+through a mask now, centred by whatever box it is in.
+
+**Two phone defects the last look found.** The month in the whole journal
+had no styles below 1024px - its rules sat in the wide breakpoint from when
+the month was only in the rail - and the weighted 44px floor for fields on a
+finger undercut the four writing boxes that ask for more, so the journal's
+page, a pasted list, a note and quick notes were one finger tall.
+
+**And what was left of the old styles.** The three sheets that were bottom
+sheets on a desktop as well - a gap's offers, a task's actions, a gap's
+picker - are the centred card from 600px up. The last tracked capitals are
+sentence-case labels, every weight is one of the three, every line height
+but the smallest boxes' is one of the three, and the retired steps and
+tokens are no longer declared. Buttons that were outlined - the Focus
+screen's way out, the timer's Try, the floating clock's, Later's, the task
+sheet's link to its note - are the kinds; boxes that had an edge - the
+evening's card, a calendar's and a restore's rows in Settings, the colour
+and library sheets in a template's block row, the day peek, the reminder -
+do not. What is kept, and why, is at the end of docs/DESIGN-AUDIT.md.

@@ -241,6 +241,9 @@ export function BackupSettings() {
               </p>
             )}
             <div className="sync-actions">
+              <button type="button" className="btn-quiet" onClick={() => setPreview(null)}>
+                Cancel
+              </button>
               <button
                 type="button"
                 className={armed ? 'btn-danger is-armed' : 'btn-danger'}
@@ -248,9 +251,6 @@ export function BackupSettings() {
                 onBlur={() => setArmed(false)}
               >
                 {armed ? 'Replace?' : 'Replace what is here with the cloud copy'}
-              </button>
-              <button type="button" className="btn-secondary" onClick={() => setPreview(null)}>
-                Cancel
               </button>
             </div>
           </div>

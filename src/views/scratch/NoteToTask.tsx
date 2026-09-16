@@ -124,7 +124,7 @@ export function NoteToTask({ note, onSave, onCancel }: NoteToTaskProps) {
             {highlight ? 'A key task today' : 'Mark as key'}
           </button>
           <span className="note-task-actions">
-            <button type="button" className="btn-secondary" onClick={onCancel}>
+            <button type="button" className="btn-quiet" onClick={onCancel}>
               Cancel
             </button>
             <button type="button" className="primary" disabled={!title.trim()} onClick={save}>

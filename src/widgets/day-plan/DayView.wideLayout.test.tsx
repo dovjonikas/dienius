@@ -462,28 +462,33 @@ test('at a wide viewport with real vertical room, the grid draws taller than the
 // --- one place to change the day ----------------------------------------
 
 /**
- * The arrows either side of the date are on the header at every width.
- * They came off the wide header in v2.6 because they overflowed - a long
- * day pushed the right one out where it should not be - and the month in
- * the rail two inches away, with its own pair, looked like answer enough.
- * The owner's rule is the other way round: a control that overflows is
- * fixed by making overflow impossible, not by removing the control. So
- * the title sits in a box of one fixed width, measured by the longest day
- * the app can print, in a row that cannot wrap - and the arrows are back
- * beside the month, not instead of it. The left and right arrow keys move
- * a day at any width too, and T comes back to today.
+ * The wide header has no day arrows; the month beside it moves the day.
+ *
+ * They came off in v2.6 because they overflowed, came back in v2.7 under
+ * the rule that an overflowing control is fixed by making overflow
+ * impossible, and came off again in v2.25 for a different reason: laid on
+ * the task column, the masthead's right half had a chip, two doors and two
+ * arrows to hold, and the arrows were the one thing in it that the month a
+ * few inches to the left already does - with a day to click as well as its
+ * own pair. The left and right arrow keys still move a day at any width,
+ * and T comes back to today. The phone keeps its arrows (below), because it
+ * has no month.
  */
-test('the day arrows stay on the wide header, beside the month', () => {
+test('the wide header has no day arrows, and the month beside it moves the day', async () => {
   viewport = mockViewport(true)
   seed(anchoredTasks, true)
-  render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  const user = userEvent.setup()
+  let navigated = ''
+  const { container } = render(<DayView date={DATE} onDateChange={d => (navigated = d)} onOpenNorth={() => {}} />)
 
-  expect(screen.getByRole('button', { name: 'Previous day' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Next day' })).toBeInTheDocument()
-  // And the month, with its own pair and a day to click - both, not either.
+  expect(screen.queryByRole('button', { name: 'Previous day' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Next day' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Previous month' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Next month' })).toBeInTheDocument()
   expect(screen.getAllByRole('gridcell').length).toBeGreaterThan(27)
+
+  await user.click(container.querySelector(`.mini-calendar [data-date="${DATE.slice(0, 8)}20"]`)!)
+  expect(navigated).toBe(`${DATE.slice(0, 8)}20`)
 })
 
 // The ghost is what fixes the title's width: the longest day the format
@@ -495,9 +500,8 @@ test('a day that is not today is a weekday over its date, and no hidden copy of 
   seed(anchoredTasks, true)
   const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
 
-  // The heading is the word alone: the whole form is 250px in this type and
-  // the block is the month's own 240 with two arrows in front of it, so the
-  // date goes on the line under it. Together they print the same day.
+  // The heading is the word alone, and the rest of the date follows it.
+  // Together they print the same day.
   expect(screen.getByRole('heading', { name: 'Tuesday' })).toBeInTheDocument()
   expect(container.querySelector('.day-subtitle')).toHaveTextContent('September 1')
   // And nothing is measured by a hidden copy any more - the block is one

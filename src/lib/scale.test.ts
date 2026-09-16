@@ -8,8 +8,8 @@ import { expect, test } from 'vitest'
  * contained rule to a z-index and gridAreas.test.ts holds every area name
  * to a template.
  *
- * Type is the steps on `:root` (`--t-2xs` to `--t-xl`, and the two fluid
- * sizes the Focus screen uses) plus the input floor and the glyph size,
+ * Type is the steps on `:root` (`--t-xs` to `--t-xl`, and the two fluid
+ * sizes the Focus screen uses) plus the glyph size,
  * and a rule says which with a token. Spacing is `--s0` to `--s8`, and
  * every padding, margin and gap is a token, or one of the few pixel values
  * the scale has no step for: a hairline, and the 3px and 6px half-steps

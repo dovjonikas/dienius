@@ -153,15 +153,18 @@ function CategorySheet({
             )
           })}
         </div>
-        <span className="setting-state">{categoryColorName(color)}</span>
       </div>
-      <div className="category-quick-actions">
-        <button type="button" className="btn-primary" disabled={!label.trim()} onClick={save}>
-          Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={() => onDone()}>
-          Cancel
-        </button>
+      {/* The colour's name at the left edge, Cancel and Save at the right. */}
+      <div className="category-quick-foot">
+        <span className="setting-state">{categoryColorName(color)}</span>
+        <div className="category-quick-actions">
+          <button type="button" className="btn-quiet" onClick={() => onDone()}>
+            Cancel
+          </button>
+          <button type="button" className="btn-primary" disabled={!label.trim()} onClick={save}>
+            Save
+          </button>
+        </div>
       </div>
     </div>
   )

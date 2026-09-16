@@ -201,6 +201,9 @@ export function DayCard({
         <div className="day-card-ask">
           <p className="day-card-question">{clearDayQuestion(date, tasks.length)}</p>
           <div className="day-card-actions">
+            <button type="button" className="btn-quiet" onClick={() => setArmed(false)}>
+              Cancel
+            </button>
             <button
               type="button"
               className="btn-danger is-armed"
@@ -210,9 +213,6 @@ export function DayCard({
               }}
             >
               Clear
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => setArmed(false)}>
-              Cancel
             </button>
           </div>
         </div>

@@ -300,11 +300,19 @@ nothing floating between them; a period's arrows stand last at the right of
 its title row, so nothing moves when the name changes. `npm run precision`
 measures it - see DESIGN.md, "Where actions stand".
 
-**Retired, counted down, not to be used:** `--s5`, `--s7`, `--t-2xs`,
-`--t-input`, `--e1`, a font weight or line height written as a number,
-tracked capitals, a border that is not a divider or a scale, black written
-as `rgba()`, a press that scales, a height written in pixels. Each is a
-number in `design.test.ts` that only goes down.
+**Retired, not to be used:** `--s5`, `--s7`, `--t-2xs`, `--t-input`,
+`--e1` (none of them is declared any more, so a rule naming one is thrown
+away whole), a font weight written as a number, tracked capitals, a press
+that scales - all at nought - and a line height or a height written in
+pixels, a border that is not one of DESIGN.md's kinds, black written as
+`rgba()`, which are counted at what is kept on purpose. Each is a number in
+`design.test.ts` that only goes down, and DESIGN-AUDIT.md says why each
+kept one is kept.
+
+**A layer re-mixes its fills.** Anything that stands on `--surface-raised`
+is listed in the `:is()` rule that mixes `--fill` and `--fill-strong` over
+that ground in a dark theme, or its fields and buttons have no shape there;
+`design.test.ts` fails on a raised ground that is not in the list.
 
 ### The scales
 

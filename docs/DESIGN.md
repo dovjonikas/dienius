@@ -55,8 +55,8 @@ One family, the system sans (`--font-body`), and six sizes.
 
 The Focus screen's two fluid sizes are the one place type fills the window,
 and `--t-glyph` sizes a glyph drawn as text (a menu's dots); neither is text
-somebody reads at size. `--t-2xs` (10px) and `--t-input` (16px) are retired:
-10px is below a size worth reading, and a field is `--t-md` on a mouse and
+somebody reads at size. There is no 10px, which is below a size worth
+reading, and no field pinned to 16px: a field is `--t-md` on a mouse and
 `--t-read` on a finger, which is also the 16px floor iOS needs before it
 stops zooming a field.
 
@@ -69,7 +69,10 @@ control's single line; `--lh-ui` 1.4 for rows, labels and interface text
 that wraps; `--lh-read` 1.6 for anything read as prose. North's page and
 its field are the one place prose is set a tenth looser, at 1.7, which the
 owner's brief for writing there asked for - written as `--lh-read` plus 0.1
-where it is used, so the step stays tied to the scale.
+where it is used, so the step stays tied to the scale. The smallest boxes
+the app draws - a week's block, a month cell's lines, a squeezed block on
+the timeline - set their one line at 1.1 to 1.2, written as numbers beside
+the boxes they fit, the way `1px`, `3px` and `6px` are their half-steps.
 
 **Labels are sentence case.** A label is `--t-xs`, `--w-medium`, `--muted`,
 with no tracking - "How long", not "HOW LONG". Capitals appear only where a
@@ -95,9 +98,8 @@ One scale, in steps of four, named by multiples of four.
 
 `--s0` (2px) is a hairline's offset and not a gap, and `1px`, `3px` and `6px`
 stay the half-steps inside the smallest boxes the app draws (a week block, a
-timeline block). `--s5` (20px) and `--s7` (28px) are retired: nobody could
-choose between them and their neighbours, and each use becomes 16, 24 or 32
-as its screen is rebuilt.
+timeline block). There is no 20 and no 28: nobody could choose between them
+and their neighbours, and every place that used one is 16, 24 or 32.
 
 Density redefines the scale at the source; the steps keep their ratios.
 
@@ -148,6 +150,15 @@ mixes exactly those: text and secondary text read at 4.5:1 on both fills in
 every preset, the accent at 3:1. Light's secondary ink is `#60656a` since
 v2.25, a step darker, so that it does.
 
+**On a layer a dark mode mixes the fills over the layer's ground.** Over
+`--surface`, 5% of the text came out the colour of `--surface-raised`
+itself, so in the dark themes every field, chip, row and secondary button
+in a sheet, a popover or a menu had no shape - the light theme's, mixed over
+the page, always had. Every element that stands on the raised ground
+re-mixes the same two steps over it (`FILLS.darkLayer`); the contrast test
+holds those too, and fails if something new is painted on the raised ground
+without being one of the layers that does.
+
 **The accent is spent once per view.** One filled primary button at most; a
 chosen chip takes `--accent-dim` and keeps the text's ink, and a chosen
 segment takes the thumb.
@@ -163,14 +174,25 @@ nothing else in the app is red.
 
 A border is drawn only for:
 
-- a divider between the groups of a long list (Settings),
+- a divider between the groups of a long list (Settings), or between a
+  panel's part and the next (the timer's sound, a pane's foot),
 - a scale the eye reads positions against (the timeline's hours, the month's
   weeks),
-- the focus halo.
+- the focus halo,
+- a mark that says what a thing is: a category's or a calendar's edge down
+  a block's left side, the mark's edge beside the one fact a restore asks to
+  be weighed, the ring on a day that has writing, the quotation rule beside
+  a day's journal,
+- a small drawing made of edges - a tick, a chevron, a caret, a bubble's
+  point - and a check box's own outline,
+- a thing that has no place yet, dashed: a Later chip, a set-aside item, a
+  block with no length, a photo on another device,
+- something being moved or shown: the drop line and the ghost while a block
+  is dragged, the gap that is open, the tour's ring.
 
-Not around a card on the page, a control, a chip, a cell, or a list's rows:
-those are grounds and room. Where a control needs its size held while its
-edge changes, the edge is `1px solid transparent`.
+Not around a card on the page, a control, a chip, a cell, a layer, or a
+list's rows: those are grounds and room. Where a control needs its size held
+while its edge changes, the edge is `1px solid transparent`.
 
 ## Elevation and shadows
 
@@ -190,8 +212,7 @@ under it. The light theme's lifts are softer. Under every modal and sheet is
 the one `--scrim`; the photo viewer, which shows a picture rather than a
 layer, is the one darker ground.
 
-Nothing resting on the page casts a shadow. `--e1`, the resting card's
-shadow, is retired and goes when the last card leaves it.
+Nothing resting on the page casts a shadow.
 
 ## Motion
 
@@ -254,6 +275,11 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
   that is chosen, `--r-mark`.
 - **A stepper** is a field: the number and its two arrows inside one fill,
   with the field's halo when it has the caret.
+- **A check box** is a box with a 2px edge - 24px, or 18px where a list is
+  dense - and its tick is one path in the text's ink, centred by the box at
+  either size. Ticked, the edge takes the secondary ink; never an accent
+  fill. On a task the tick is drawn from left to right; elsewhere a box is a
+  switch and is simply on.
 - Disabled: the same shape, `--faint` ink, no ground change on hover.
 
 ### Where actions stand
@@ -268,11 +294,28 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
 - **Nothing moves when a word changes.** A period's arrows stand at the
   right end of its title row, last, so a longer day or week name moves
   nothing; the controls that come and go with the period grow to their left.
+- **The day's masthead lies on the columns under it.** On a wide screen its
+  right half starts on the task column's left edge and ends on its right
+  edge: what the day came from and its doors in the first row, the day's
+  progress and the view toggle in the second. Its left half is the day's
+  name, its date and the time on one line, and the goal's line under them.
+  It has no day arrows where the month is beside it.
+- **Controls that fill in one thing stand as one line.** The quick add's
+  time, words and length touch - one ground, a hairline of the column's
+  ground between them, the outer corners rounded - with one halo round all
+  three while any has the focus.
 - **A page's action** stands at the right end of the page's title row.
 - **A form, a sheet or a modal** ends in one row: a destructive action at
   the left, then the rest at the right with the primary last. Cancel is
   quiet, beside the primary, and comes first in the document too, so Tab
   reads the row in the order it is seen.
+- **A line that says what the press will do stands on the press's row.** A
+  count, a colour's name, the days staged: at the row's left edge, with
+  Cancel and the action at its right, rather than a line with a row of
+  buttons under it and a gap beside each. Where the row is too short for
+  both, the buttons wrap under the line and stay at the right. A sentence of
+  more than a line - Replan's plan, a restore's warning - keeps its own band
+  over the row, because squeezing it beside two buttons makes it longer.
 - **A header's panel** hangs from its button on a desktop, and on a phone
   from the right edge of the header's tools, where it cannot start past the
   left of the screen.
@@ -307,14 +350,23 @@ lead to the rest.
 
 ## Retired, and counted down
 
-Each of these exists today and each stage of the pass removes some;
-`design.test.ts` holds every count to at most what is left, so a number only
-goes down, and it is lowered in the commit that earns it.
+What the pass retired, and what is left of it at its end. `design.test.ts`
+holds every count to what is written there, so a number only goes down, and
+it is lowered in the commit that earns it; docs/DESIGN-AUDIT.md says, thing
+by thing, why the ones that are not nought are kept.
 
-- `--s5`, `--s7`, `--t-2xs`, `--t-input` and `--e1` in use
-- font weights and line heights written as numbers
-- tracked capitals
-- borders drawn around things that are not dividers or scales
-- scrims and layer shadows written as literals
-- a press that scales
-- control heights written as pixel literals
+- `--s5`, `--s7`, `--t-2xs`, `--t-input` and `--e1`: none, not even
+  declared
+- a font weight written as a number, a tracked capital, a press that scales:
+  none
+- a line height written as a number: the smallest boxes' lines, above
+- a border: the kinds under Lines, and nothing round a card, a control or a
+  layer
+- black written as a literal: the tokens that define the scrim and the
+  lifts, the photo viewer's ground, a photo's own button, and the dark ink
+  on a template's pastel block
+- a height written in pixels: the week grid's smallest boxes, the reserved
+  line under a task and under the quick add, a short laptop's denser task
+  column, the rail's square, the time picker's grid of quarter hours, and
+  the sizes of things that are not controls - a field's two lines, a theme's
+  preview card, the week editor's grid

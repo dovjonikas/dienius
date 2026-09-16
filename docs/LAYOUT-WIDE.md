@@ -394,6 +394,11 @@ its current width unchanged - this document does not touch Calendar, Templates, 
 - Task pane `minmax(320px, 380px)`: 320px is the narrowest a `TaskRow` (checkbox, time, title, size
   chip, actions-menu button) stays comfortable at without truncating the title aggressively; 380px caps
   it so the pane does not visually dominate over the timeline it sits next to.
+  *Since v2.25* the day takes up to 760px first and the task pane the rest, and the task pane's floor
+  grows with the window - `clamp(320px, 30vw, 440px)` - so a 1366px laptop gives the tasks 410px
+  rather than 320. The day's masthead lies on the two columns (a subgrid), its right half on the
+  task pane's two edges, and needs that room for the progress and the view toggle; see
+  `.day-header` in `src/styles.css`.
 
 **Optional, later, not part of the first build:** raise `.timeline-grid-scroll`'s existing
 `max-height: min(58vh, 520px)` cap at the same breakpoint, since the grid is a dedicated column at

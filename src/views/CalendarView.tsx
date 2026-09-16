@@ -475,7 +475,7 @@ export function CalendarView({
           {data.templates.length === 0 && (
             <div className="stamp-bar-empty">
               <p className="muted">No templates yet, so there is nothing here to stamp onto a day.</p>
-              <button type="button" className="btn-primary" onClick={onOpenTemplates}>New template</button>
+              <button type="button" className="btn-secondary" onClick={onOpenTemplates}>New template</button>
             </div>
           )}
 
@@ -676,8 +676,8 @@ export function CalendarView({
                 {stagedCount} {stagedCount === 1 ? 'day' : 'days'} staged
               </p>
               <div className="stamp-buttons">
+                <button className="btn-quiet" onClick={cancel}>Cancel</button>
                 <button className="primary" onClick={save}>Save</button>
-                <button className="btn-secondary" onClick={cancel}>Cancel</button>
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { card, openFreshAt, stampWorkingDay, tick, wednesdayAt } from './app'
+import { card, goToDay, openFreshAt, stampWorkingDay, tick, wednesdayAt } from './app'
 
 /**
  * A book, bound to a template, arriving on a day by name and moving on when
@@ -35,8 +35,7 @@ test('a list bound to a template puts the current book on the day, and a tick ad
   // That re-stamping adds only what a day is missing is held by
   // stamping.test.ts, which does not need three tabs to say it.
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
-  await page.getByRole('button', { name: 'Next day' }).click()
-  await page.getByRole('button', { name: 'Next day' }).click()
+  await goToDay(page, '2026-09-18')
   await page.getByRole('button', { name: 'Working day', pressed: false }).click()
   const dune = page.getByRole('checkbox', { name: 'Dune' })
   await expect(dune).toBeAttached()
@@ -53,8 +52,7 @@ test('a list bound to a template puts the current book on the day, and a tick ad
   await page.getByRole('button', { name: 'Dune, ch 1/12' }).click()
   await page.getByRole('button', { name: 'Onto tomorrow' }).click()
   // The wide header prints the day in two halves - the weekday as the
-  // heading, the date on the line under it - because the whole form does
-  // not fit the width of the month it stands over. See DayHeader.
+  // heading, and the rest of the date after it. See DayHeader.
   await expect(page.getByRole('heading', { name: 'Thursday' })).toBeVisible()
   await expect(page.locator('.day-subtitle')).toHaveText('September 17')
   await expect(page.getByRole('checkbox', { name: 'Dune' })).toBeAttached()

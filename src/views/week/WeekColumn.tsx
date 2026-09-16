@@ -235,6 +235,9 @@ export function WeekColumn({
           <div className="week-col-ask">
             <p className="week-col-question">{clearDayQuestion(day.date, taskCount)}</p>
             <div className="week-col-ask-actions">
+              <button type="button" className="btn-quiet" onClick={() => setClearing(false)}>
+                Cancel
+              </button>
               <button
                 type="button"
                 className="btn-danger is-armed"
@@ -244,9 +247,6 @@ export function WeekColumn({
                 }}
               >
                 Clear
-              </button>
-              <button type="button" className="btn-secondary" onClick={() => setClearing(false)}>
-                Cancel
               </button>
             </div>
           </div>

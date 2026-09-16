@@ -564,9 +564,9 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
             <div className="replan-conflicts-head">
               <span className="replan-label">In the way</span>
               <span className="replan-forall" role="group" aria-label="For all of them">
-                <button type="button" className="link-button" onClick={() => setAll('squeeze')}>Move</button>
-                <button type="button" className="link-button" onClick={() => setAll('tomorrow')}>{nextWord}</button>
-                <button type="button" className="link-button" onClick={() => setAll('drop')}>Skip</button>
+                <button type="button" onClick={() => setAll('squeeze')}>Move</button>
+                <button type="button" onClick={() => setAll('tomorrow')}>{nextWord}</button>
+                <button type="button" onClick={() => setAll('drop')}>Skip</button>
               </span>
             </div>
             <ul className="replan-list">

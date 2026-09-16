@@ -177,11 +177,11 @@ export function TemplateRail({ date }: TemplateRailProps) {
             Replace {ask.fromName} with {ask.toName}? Blocks you added by hand stay.
           </p>
           <div className="template-rail-ask-actions">
+            <button type="button" className="btn-quiet" onClick={closeAsk}>
+              Cancel
+            </button>
             <button type="button" className="btn-secondary" onClick={replace}>
               Replace
-            </button>
-            <button type="button" className="link-button" onClick={closeAsk}>
-              Cancel
             </button>
           </div>
         </div>

@@ -150,11 +150,11 @@ function LibrarySheet({ onDone }: { onDone: (id?: string) => void }) {
         />
       </div>
       <div className="library-quick-actions">
+        <button type="button" className="btn-quiet" onClick={() => onDone()}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={!name.trim() || !unit.trim()} onClick={save}>
           Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={() => onDone()}>
-          Cancel
         </button>
       </div>
     </div>

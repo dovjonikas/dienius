@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { quickAdd, stampWorkingDay } from './app'
+import { goToDay, quickAdd, stampWorkingDay } from './app'
 
 /**
  * The day the app is standing on, when the clock goes past midnight under it.
@@ -61,8 +61,8 @@ test('a task typed the morning after lands on the morning, not on the night befo
   // drawn box, the same reason `tick` in app.ts aims at its sibling.
   await expect(page.getByRole('checkbox', { name: 'Ring the dentist', exact: true })).toHaveCount(1)
 
-  // Wednesday is one press back, and it must not be holding it.
-  await page.getByRole('button', { name: 'Previous day' }).click()
+  // Wednesday is one day back, and it must not be holding it.
+  await goToDay(page, '2026-09-16')
   await expect(page.locator('.day-subtitle')).toContainText('September 16')
   await expect(page.getByRole('checkbox', { name: 'Ring the dentist', exact: true })).toHaveCount(0)
 })
@@ -70,9 +70,8 @@ test('a task typed the morning after lands on the morning, not on the night befo
 test('a day somebody walked forward to is not taken away from them at midnight', async ({ page }) => {
   await openInstalledAt(page, wednesdayNight())
   await stampWorkingDay(page)
-  // Friday, two presses ahead: a day being looked at on purpose.
-  await page.getByRole('button', { name: 'Next day' }).click()
-  await page.getByRole('button', { name: 'Next day' }).click()
+  // Friday, two days ahead: a day being looked at on purpose.
+  await goToDay(page, '2026-09-18')
   await expect(page.locator('.day-subtitle')).toContainText('September 18')
 
   await page.clock.fastForward('07:10:00')

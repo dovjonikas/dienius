@@ -180,10 +180,10 @@ export function TaskPane({
               demoMode.ts. */}
           {!isDemoMode() && (
             <p className="first-run-demo">
-              <button type="button" className="link-button" onClick={enterDemoMode}>
+              <button type="button" className="btn-secondary" onClick={enterDemoMode}>
                 Try a sample week
-              </button>{' '}
-              - a fortnight of somebody else's days, kept separate from yours.
+              </button>
+              <span className="muted">A fortnight of somebody else's days, kept separate from yours.</span>
             </p>
           )}
           {/* Directly over the cards it is about. It stood at the top, over

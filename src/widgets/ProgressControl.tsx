@@ -150,8 +150,8 @@ export function ProgressChip({ list, item, className, onOpenDetails }: ProgressC
   // On a finger, the same press opens the task instead.
   //
   // Not a preference: a field below 16px makes iOS Safari zoom the page when
-  // it takes focus, which is why every input here is held at --t-input - and
-  // a 16px box in a card's meta line is half the row. The sheet already
+  // it takes focus, which is why a field on a finger is --t-read - and a
+  // 16px box in a card's meta line is half the row. The sheet already
   // holds this control at a size a finger can use, so the press goes there
   // and the number is still two presses from the card rather than four.
   const coarse = usePointerCoarse()

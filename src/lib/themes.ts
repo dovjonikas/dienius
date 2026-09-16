@@ -208,10 +208,16 @@ const TYPE_AND_SHAPE = {
  *
  * Over the surface in a dark mode; over the page in the light one, where a
  * field has to read on a white card and on the off-white page alike.
+ *
+ * And on a layer - a sheet, a popover, a menu, anything standing on the
+ * raised ground - a dark mode mixes the same two steps over that ground:
+ * over the card's, they came out the colour of the layer itself. The light
+ * mode's are the page's everywhere.
  */
 export const FILLS = {
   dark: { over: 'surface', fill: 0.05, strong: 0.1 },
   light: { over: 'bg', fill: 0.04, strong: 0.08 },
+  darkLayer: { over: 'surfaceRaised', fill: 0.05, strong: 0.1 },
 } as const
 
 /**

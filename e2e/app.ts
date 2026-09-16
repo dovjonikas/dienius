@@ -15,6 +15,14 @@ export async function openFresh(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Take the tour' }).waitFor()
 }
 
+/**
+ * Another day, the way the wide layout moves to one: its cell in the month
+ * beside the day. The wide header has no day arrows since v2.25.
+ */
+export async function goToDay(page: Page, key: string): Promise<void> {
+  await page.locator(`.mini-calendar [data-date="${key}"]`).click()
+}
+
 /** The one starter template the tour and the smoke test both stamp. */
 export async function stampWorkingDay(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Use the Working day template' }).click()

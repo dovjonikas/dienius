@@ -6,7 +6,8 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.25, in progress - the design pass.
+**Last updated:** v2.25 - the design pass, done. North's two briefs and
+Kitchen are queued, in that order.
 
 ## v2.25 - the design pass
 
@@ -104,7 +105,31 @@ anything floating between two open gaps, at 1366 and 1920, and was made to
 fail on the old stylesheet first; `e2e/header.e2e.ts` holds the masthead's
 new geometry.
 
-**Queued after the North editor, from a message during stage 6: Kitchen.** A
+**Queued with the North editor, from a message during stage 10: North that
+holds the eye.** The day's top shows one whole line of North's text where
+the goal's name was - a line under a heading, never a heading, an empty line
+or the introduction - wrapping rather than cut, the same line all day on
+every device and another the next day. A heading ending in `[morning]` lends
+its lines only in the first three hours after waking (waking as the morning
+window already reads it, the first open after five hours away), one ending
+in `[evening]` only after 21:00, and untagged headings the rest of the time;
+the tags are read and never shown. Under the line, quieter and always, the
+signature; a press opens North; the goal's name shows there only when North
+is empty. The rail's headings are written as typed, not tracked capitals,
+each opening a small card of its lines beside it under the pointer without
+moving anything, and on a phone on a press, under a small "North" and over
+the signature. North's page is for reading, so everything is open: the
+introduction at the text's size and ink, headings a little larger and
+heavier with more room above than below, the signature last after more room
+and a little larger, Edit at the right of the title's row, about 640px wide.
+Tests: the day's line is never a heading, an empty line or the introduction;
+the tagged lines keep to their hours and the tags never show; one day, one
+line; North's page all visible without a press; generic text only. Five
+stages: the picking with the two tags; the day's top; the rail and its card;
+North's page; the phone and the last tests. The North editor's own stage for
+reading and the day is done inside these, and its last stage with theirs.
+
+**Queued after North, from a message during stage 6: Kitchen.** A
 recipe library that looks and feels like the Library but keeps its own data
 - a recipe has no progress units, so it is not a `LibraryList`. A recipe is a
 name and one free text, with optional meal types (breakfast, lunch, dinner,
@@ -433,10 +458,56 @@ The ratchet: borders drawn 88 to 70, weights 66 to 60, number line heights
 - **The palette** needed nothing more than stage 8 gave it.
 
 The ratchet: `--e1` 1 to 0, weights 60 to 55, borders drawn 70 to 68, number
-line heights 65 to 64, pixel heights 41 to 40. The ratchet:
-weights 71 to 66, number line heights 76 to 71, borders drawn 89 to 88,
-pixel heights 46 to 45, tracked capitals 10 to 9, `--s5` 10 to 9,
-`--t-input` 6 to 5.
+line heights 65 to 64, pixel heights 41 to 40.
+
+### Stage 10 - the last look: done
+
+The inventory again and the 45 screens again, and four messages from the
+owner while it ran. What it found and did, and what is kept, is section 14
+of `docs/DESIGN-AUDIT.md`; the after sheets are in
+`docs/screenshots/design/after/`.
+
+- **A layer's fills.** In the dark themes every field, chip, row and
+  secondary button on a sheet, a popover or a menu had no shape - the fills
+  were mixed over the card's ground and came out the raised ground's own
+  colour, and so did a chosen segment. Every layer re-mixes them over its
+  ground now, held to contrast in both dark presets, and a new raised ground
+  not in the list fails the test.
+- **Today's masthead** (the owner): no day arrows where the month is beside
+  the day; a subgrid of the day's column and the task column, so the chip,
+  the doors, the progress and the view toggle stand on the task column's
+  two edges; the time on the day's own line with the date. The task column's
+  floor grows with the window, 320px at 1024 to 440, so the half over it
+  fits at 1366. The quick add's time, words and length are one line of three
+  touching controls with one halo.
+- **A status and its actions on one row** (the owner): a pasted list's
+  count, a colour's name and the days staged stand at the left of their
+  buttons' row; every Cancel is quiet and first; the last underlined links
+  are buttons.
+- **Check boxes** (the owner): one tick path through a mask, centred at 24
+  and 18px, where the rotated-border tick sat on the small box's edge; a
+  reduced-motion bug that shrank a ticked task's box is gone.
+- **Phone defects found:** the whole journal's month had no styles below
+  1024px, and the 44px floor for fields made four writing boxes one finger
+  tall.
+- **The retired tokens are gone**, declared nowhere; every weight and every
+  line height but the five smallest boxes' is a token; no tracked capitals.
+  The Focus screen's way out, the timer's Try and buttons, the floating
+  clock, Later, the evening card, the day peek, the reminder, the Focus
+  strip, Settings' calendar and restore rows and the template sheets lost
+  their edges or became the kinds. Three bottom sheets are centred cards
+  from 600px.
+
+Changed tests: `e2e/header.e2e.ts` measures the new masthead - no day
+arrows, the doors and the toggle on the task column's edges, nothing moving
+when the day changes, which it now reaches through the month; `library` and
+`overnight` move between days through the month too, with a `goToDay`
+helper; `DayView.wideLayout.test.tsx`'s arrows test is now that the wide
+header has none and the month moves the day. `design.test.ts` folds the five
+retired tokens into one count, declared or named, at nought; adds the
+layers' fills and their contrast in the dark presets; and the ratchet goes to
+weights 0, tracked capitals 0, number line heights 5, borders drawn 51,
+pixel heights 20.
 
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 

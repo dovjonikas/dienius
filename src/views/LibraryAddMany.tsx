@@ -60,41 +60,46 @@ export function LibraryAddMany({ list }: { list: LibraryList }) {
         A number after a bar is how many {unitPlural(list)} it has.
       </p>
 
-      <p className="library-add-many-count" aria-live="polite">
-        {count === 0 ? 'Nothing to add yet' : `${count} ${count === 1 ? 'item' : 'items'} will be added`}
-        {/* Never a blocker, and never silent either. The app does not decide
-            for somebody, and it does not make doubles behind their back. */}
-        {parsed.duplicates > 0 && (
-          <span className="library-add-many-dupes">
-            {' '}
-            &middot; {parsed.duplicates} already in this list
-          </span>
-        )}
-      </p>
-
-      <div className="library-add-many-actions">
-        <button
-          type="button"
-          className="primary"
-          disabled={count === 0}
-          onClick={() => {
-            actions.addLibraryItemsMany(list.id, parsed.items)
-            setText('')
-            setOpen(false)
-          }}
-        >
-          Add {count > 0 ? count : ''}
-        </button>
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => {
-            setText('')
-            setOpen(false)
-          }}
-        >
-          Cancel
-        </button>
+      {/* What the press will do, and the press, on one row: the count at the
+          left edge and Cancel and Add at the right, Add last. Where the row
+          is too short for both, the buttons go under the count, still at
+          the right. */}
+      <div className="library-add-many-foot">
+        <p className="library-add-many-count" aria-live="polite">
+          {count === 0 ? 'Nothing to add yet' : `${count} ${count === 1 ? 'item' : 'items'} will be added`}
+          {/* Never a blocker, and never silent either. The app does not decide
+              for somebody, and it does not make doubles behind their back. */}
+          {parsed.duplicates > 0 && (
+            <span className="library-add-many-dupes">
+              {' '}
+              &middot; {parsed.duplicates} already in this list
+            </span>
+          )}
+        </p>
+        <div className="library-add-many-actions">
+          <button
+            type="button"
+            className="btn-quiet"
+            onClick={() => {
+              setText('')
+              setOpen(false)
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="primary"
+            disabled={count === 0}
+            onClick={() => {
+              actions.addLibraryItemsMany(list.id, parsed.items)
+              setText('')
+              setOpen(false)
+            }}
+          >
+            Add {count > 0 ? count : ''}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -191,10 +191,10 @@ export function CalendarSettings() {
             </label>
             {blocker && <p className="setting-desc calendar-blocker">{blocker}</p>}
             <div className="calendar-form-actions">
+              <button className="btn-quiet" onClick={() => setAdding(false)}>Cancel</button>
               <button className="primary" disabled={!name.trim() || !url.trim() || !!blocker} onClick={() => void handleAdd()}>
                 Add a calendar
               </button>
-              <button className="btn-secondary" onClick={() => setAdding(false)}>Cancel</button>
             </div>
           </div>
         ) : (

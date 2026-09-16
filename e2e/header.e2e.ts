@@ -1,19 +1,21 @@
 import { expect, test } from '@playwright/test'
 import type { Locator } from '@playwright/test'
-import { openFreshAt, stampWorkingDay, wednesdayAt } from './app'
+import { goToDay, openFreshAt, stampWorkingDay, wednesdayAt } from './app'
 
 /**
  * The day's masthead, measured where it can be: jsdom has no layout.
  *
- * Two rows over the day and the task column since v2.25, each row one
- * centre line and two groups standing on the column's two edges. What it
- * replaced was one wrapping row whose day block was the rail's 240px: over
- * the day column its arrows stood 150px after the word "Today", the
- * template chip sat nine pixels under the title it belongs to, and the
- * clock began wherever a right-anchored group happened to end. The owner
- * read all three as random. From 1500px that row spanned the rail as well,
- * which is why this test measures at 1500 - where it used to hold the
- * arrows over the month, before the month had a column of its own.
+ * Since v2.25 it is laid on the two columns under it. Over the day: the
+ * day's name, its date and the time, on one line. Over the tasks: what the
+ * day came from on the column's left edge and its doors on its right, and
+ * under them the day's progress starting on the left edge and the view
+ * toggle ending on the right. Every row is one centre line.
+ *
+ * What it replaced was a crowd in the page's right-hand corner - the chip,
+ * two doors and the two day arrows pressed together, over a task column
+ * whose edges none of them lined up with - and a clock standing alone at
+ * the start of a second row. There are no day arrows at this width: the
+ * month in the rail beside the masthead is the way to another day.
  */
 test.use({ viewport: { width: 1500, height: 900 }, timezoneId: 'Europe/Vilnius' })
 
@@ -28,46 +30,54 @@ async function box(locator: Locator): Promise<Box> {
 const centre = (b: Box) => b.y + b.height / 2
 const right = (b: Box) => b.x + b.width
 
-test("the day's name, its doors and its arrows share one line, and nothing on it moves when the day changes", async ({ page }) => {
+test("the masthead stands on the day's column and the task column, and nothing on it moves when the day changes", async ({ page }) => {
   await openFreshAt(page, wednesdayAt(10))
   await stampWorkingDay(page)
 
-  const row = async () => ({
-    title: await box(page.locator('.day-header h2')),
-    tools: await box(page.locator('.day-tools')),
-    prev: await box(page.getByRole('button', { name: 'Previous day' })),
-    next: await box(page.getByRole('button', { name: 'Next day' })),
-  })
-
-  const first = await row()
   const day = await box(page.locator('.timeline-grid-wrap'))
   const tasks = await box(page.locator('.task-pane'))
+  const title = await box(page.locator('.day-header h2'))
+  const time = await box(page.locator('.day-now-clock'))
+  const chip = await box(page.locator('.day-template'))
+  const doors = await box(page.locator('.day-doors'))
+  const track = await box(page.locator('.day-progress-track'))
+  const toggle = await box(page.getByRole('group', { name: 'Day layout focus' }))
 
-  // One centre line: the chip and the doors are not a few pixels under the
-  // title they belong to, and neither are the arrows.
-  expect(Math.abs(centre(first.tools) - centre(first.title))).toBeLessThanOrEqual(1)
-  expect(Math.abs(centre(first.prev) - centre(first.title))).toBeLessThanOrEqual(1)
-  expect(Math.abs(centre(first.next) - centre(first.title))).toBeLessThanOrEqual(1)
+  // No arrows at this width: the month beside the masthead moves the day.
+  await expect(page.getByRole('button', { name: 'Previous day' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Next day' })).toHaveCount(0)
 
-  // Two edges: the name on the day column's left edge, the last arrow on the
-  // task column's right edge.
-  expect(Math.abs(first.title.x - day.x)).toBeLessThanOrEqual(1)
-  expect(Math.abs(right(first.next) - right(tasks))).toBeLessThanOrEqual(1)
+  // The first row. The day's name on the day's left edge, and the time on
+  // the same line inside the day's column; the chip on the task column's
+  // left edge, the doors on its right; one centre line across all of it.
+  expect(Math.abs(title.x - day.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(centre(time) - centre(title))).toBeLessThanOrEqual(2)
+  expect(right(time)).toBeLessThanOrEqual(right(day) + 1)
+  expect(Math.abs(chip.x - tasks.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(right(doors) - right(tasks))).toBeLessThanOrEqual(1)
+  expect(Math.abs(centre(chip) - centre(title))).toBeLessThanOrEqual(1)
+  expect(Math.abs(centre(doors) - centre(title))).toBeLessThanOrEqual(1)
 
-  // The touch target is not traded away for the fit - CONVENTIONS section 9.
-  for (const arrow of [first.prev, first.next]) expect(arrow.width).toBeGreaterThanOrEqual(44)
+  // The second row, over the tasks: the bar starts where the column starts,
+  // and the toggle ends where it ends.
+  expect(Math.abs(track.x - tasks.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(right(toggle) - right(tasks))).toBeLessThanOrEqual(1)
+  expect(Math.abs(centre(track) - centre(toggle))).toBeLessThanOrEqual(1)
+  expect(toggle.y).toBeGreaterThan(chip.y + chip.height - 1)
 
-  // And nothing moves as the day's name and its doors change. Wednesday is
-  // the day above, stamped, with Replan and Low day; five presses forward
-  // reaches Monday, four characters shorter, unstamped, with a different
-  // door. The arrows stay where they were, and the doors keep their right
-  // edge against them.
-  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Next day' }).click()
+  // And nothing moves as the day's name and its doors change. Monday, five
+  // days on, is four characters shorter, unstamped, and has a different
+  // door; the name, the doors' right edge and the toggle stay where they
+  // were.
+  await goToDay(page, '2026-09-21')
   await expect(page.getByRole('heading', { name: 'Monday' })).toBeVisible()
 
-  const later = await row()
-  expect(Math.abs(later.prev.x - first.prev.x)).toBeLessThanOrEqual(1)
-  expect(Math.abs(later.next.x - first.next.x)).toBeLessThanOrEqual(1)
-  expect(Math.abs(right(later.tools) - right(first.tools))).toBeLessThanOrEqual(1)
-  expect(Math.abs(later.title.x - first.title.x)).toBeLessThanOrEqual(1)
+  const laterTitle = await box(page.locator('.day-header h2'))
+  const laterDoors = await box(page.locator('.day-doors'))
+  const laterToggle = await box(page.getByRole('group', { name: 'Day layout focus' }))
+  expect(Math.abs(laterTitle.x - title.x)).toBeLessThanOrEqual(1)
+  expect(Math.abs(centre(laterTitle) - centre(title))).toBeLessThanOrEqual(1)
+  expect(Math.abs(right(laterDoors) - right(doors))).toBeLessThanOrEqual(1)
+  expect(Math.abs(right(laterToggle) - right(toggle))).toBeLessThanOrEqual(1)
+  expect(Math.abs(laterToggle.y - toggle.y)).toBeLessThanOrEqual(1)
 })

@@ -1150,22 +1150,27 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
         // pointing at the same list is not something anybody meant.
         <div className="library-template-clash" role="status">
           <span>{clash.name} already has a {list.name} block.</span>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => {
-              actions.replaceLibraryBlockOnTemplate(clash.id, list.id, block)
-              onDone()
-            }}
-          >
-            Change that one
-          </button>
-          <button type="button" className="btn-secondary" onClick={() => setClash(null)}>
-            Cancel
-          </button>
+          <span className="library-template-clash-actions">
+            <button type="button" className="btn-quiet" onClick={() => setClash(null)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                actions.replaceLibraryBlockOnTemplate(clash.id, list.id, block)
+                onDone()
+              }}
+            >
+              Change that one
+            </button>
+          </span>
         </div>
       ) : (
         <div className="library-new-actions">
+          <button type="button" className="btn-quiet" onClick={onDone}>
+            Cancel
+          </button>
           <button
             type="button"
             className="btn-primary"
@@ -1175,9 +1180,6 @@ function AddToTemplate({ list, onDone }: { list: LibraryList; onDone: () => void
             }}
           >
             Add a block
-          </button>
-          <button type="button" className="btn-secondary" onClick={onDone}>
-            Cancel
           </button>
         </div>
       )}

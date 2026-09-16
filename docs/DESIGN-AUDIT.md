@@ -3,7 +3,7 @@
 Written 2026-09-16 at `03c2408`, the close of v2.24, as the first stage of
 the design pass. It says what makes Dienius look put together a screen at a
 time rather than as one thing, with the places in the code, and it changes
-nothing. The pass's last stage adds what is left undone at the end.
+nothing. The pass's last stage added what is left undone, in section 14.
 
 **How it was measured.** Two ways, and each checks the other.
 
@@ -423,3 +423,153 @@ plain `empty`.
   and the palette.
 - **Stage 10.** The inventory again, every screen again, and what is left
   written at the end of this file.
+
+---
+
+## 14. What is left, at the end of the pass
+
+Written 2026-09-17 at the pass's last stage, after `e758285`. The inventory
+again and the 45 screens again, at 1366x768 and on an iPhone 13, dark and
+light - one sheet per screen in
+[`docs/screenshots/design/after/`](screenshots/design/after/), beside the
+ones in `before/`. Every count below is held by `design.test.ts`, or named
+as not held.
+
+### The counts, then and now
+
+| | At `03c2408` | Now |
+|---|---|---|
+| Type sizes | ten, `--t-2xs` used 10 times and `--t-input` 9 | six steps, the glyph size and Focus's two fluid sizes; no literal |
+| Line heights | fifteen values | the three, `1` for a glyph's line, `--lh-read` plus 0.1 on North's page, and 5 numbers in the smallest boxes |
+| Weights | 400, 500, 600, 650 and 700 | the three tokens; no number |
+| Tracked capitals | 23 rules | none |
+| Spacing off the scale | 35 of 1,170 | 29 of 1,172 |
+| Corners | three rounded sizes and two shapes | 6px and 10px - a control and a card are both 10 in every preset - and the full round |
+| Borders drawn | 183 | 51 |
+| Shadows on something that is not a layer | 14 | 3 |
+| Colour literals outside the tokens | 33 | 9 |
+| Buttons with a class of their own | 180 | 166 |
+| Heights written in pixels | - | 20 |
+
+### Found at the end, and fixed in the stage
+
+1. **In the dark themes a layer's controls had no shape.** The fills were
+   5% and 10% of the text over the card's ground, and every sheet, popover
+   and menu stands on the raised ground, where 5% came out the layer's own
+   colour: 1.001:1. The task's sheet, Replan and Low day, a gap's offers,
+   the timer's minutes and presets, the journal panel's box and quick
+   notes' buttons were drawn in the light theme and blank in the dark one.
+   Every layer now re-mixes both fills over its own ground, and the chosen
+   segment's ground with them, and
+   `design.test.ts` holds their contrast in both dark presets and fails on
+   anything painted on the raised ground that is not in the list. The whole
+   journal went back onto the raised ground with it.
+2. **The month in the whole journal had no styles on a phone.** Every rule
+   for the month sat inside the wide breakpoint, because the month was once
+   only in the rail; the journal draws it at every width, and below 1024px
+   its days were bare buttons in a heap. Present in the audit's own sheet at
+   the start of the pass, and missed by every stage since.
+3. **A finger's floor took the height of every writing box.** The floor that
+   makes a field 44px on a phone is weighted so no class can undercut it,
+   and so it undercut the four boxes that ask for more: the whole journal's
+   page, a pasted list, a note being written and quick notes were one finger
+   tall on a phone.
+4. **Check boxes.** The tick was two borders of a rotated box, placed by
+   numbers worked out for 24px and corrected by hand for the 18px boxes, and
+   at 18px its stroke sat on the box's lower edge. It is one path through a
+   mask now, centred by the box at every size. Under reduced motion a ticked
+   task's box itself was set to 5 by 10 pixels; it is not any more. The
+   swell as a box was ticked is gone with the other overshoots.
+5. **A status and its actions stand on one row**, from the owner while the
+   stage ran: a pasted list's count, a colour's name in a template's sheet
+   and the calendar's staged days at the left edge, Cancel and the action at
+   the right, where they were a line and a separate row of buttons under it,
+   or a column centred under the month. Where the row is too short they go
+   under the line, still at the right. Every Cancel that was a filled button
+   or came after the action is quiet and first; the last underlined links -
+   the sample week's offer, Replan's Move, Tomorrow and Skip, the tour's
+   Skip, the rail's Cancel - are buttons.
+6. **Three sheets were bottom sheets on a desktop.** A gap's offers, a
+   task's actions and a gap's picker ran the width of a 1366px window with
+   the cross a screen from its title; from 600px they are the centred card
+   the task's own sheet is.
+7. **A row's rule reached a sheet opened inside it.** The template editor's
+   add row set its own button's left margin to auto through a descendant
+   selector, which stood the Cancel of a colour's or a list's sheet at the
+   far end of the row once the sheet lost its box.
+8. **Rules that outranked the kinds.** The empty calendar's New template
+   was a primary button drawn outlined, and the stamp bar's Cancel the same.
+   A goal's rules stood sixteen pixels in from the edge every field of the
+   goal stands on. A theme card rose on a shadow under the pointer.
+9. **Today's masthead**, from the owner while the stage ran: no day arrows
+   where the month is beside the day, the chip, the doors, the progress and
+   the view toggle on the task column's two edges, the time on the day's own
+   line, and the quick add's three controls as one line - DECISIONS.md,
+   "The day's masthead lies on its columns".
+
+### What is kept, and why
+
+- **Five line heights written as numbers**, 1.1 to 1.2, in the smallest
+  boxes the app draws: a squeezed block on the timeline, a month cell's
+  template name and its figures, a week's block and a calendar event in the
+  week. Each box is a line tall and the tokens' 1.25 does not fit it.
+- **Twenty-nine spacings off the scale.** The half-steps inside the same
+  boxes - `1px`, `3px` and `6px` in a week block, a month cell, a timeline
+  block, a task's size chip and a key in the shortcut list; the `0.15em`
+  thin space between a number and its unit; `-0.75px` in the clock button's
+  drawing; and one `calc()` that centres a link's 44px target on its word.
+- **Fifty-one borders**, every one of a kind DESIGN.md names under Lines:
+  fourteen dividers, ten marks (a category's or a calendar's edge, the
+  restore preview's one warning, the ring on a day with writing, the journal
+  quote's rule), twelve drawings made of edges (chevrons, carets, bubbles'
+  points, the empty day's tick, the clock's face), a check box's outline,
+  four dashed outlines for things with no place yet, five for something
+  being moved or shown (the drop line and its label, the ghost, the open
+  gap, the tour's ring), the theme gallery's frame and its preview's own
+  edge, a photo's edge and the photo viewer's buttons, and the page-number
+  box that opens in a task row with the accent round it, the size of the
+  mark it replaces.
+- **Three shadows off a layer:** the navigation rail open over the page,
+  which is a drawer; a theme's preview card, which draws that theme's own
+  shadow; and a Later chip while it is in the hand.
+- **Nine colour literals:** the dark ink on a template's pastel block, which
+  does not change with the theme because the pastels do not; the category
+  wheel's hues, which are what is being chosen; and the photo viewer's and a
+  photo's whites and blacks, drawn over photographs, which have no theme.
+  Black as `rgba()` is counted at seven in `design.test.ts` - these three and
+  the four tokens that define the scrim and the shadows.
+- **Twenty heights in pixels:** the week grid's smallest boxes (15, 20, 21,
+  22 and 10px, and a 2px bar); the line reserved under a task's title and
+  under the quick add, so neither jumps when the line fills; a short
+  laptop's denser task column (1024px wide and up, 900px tall and under),
+  which fits a nine-task day on 1366x768; the navigation rail's 40px square;
+  the time picker's grid of quarter hours at 30px a cell; and the sizes of
+  things that are not controls - quick notes' two-line field, Replan's two
+  doors, a theme card, the week editor's grid and the whole journal's page.
+- **Letter spacing in thirteen rules:** the large numerals tightened a
+  little (the brand, the clock, the timer, Focus's count), small tabular
+  times opened by 0.01em, and four North places - a heading on North's page,
+  a goal's age, a rule's lead, and North's headings on the day at 0.14em,
+  which the North brief queued after this pass redraws as written.
+- **166 buttons with a class of their own.** Almost all are drawn in the
+  kinds' terms now - the fill or no ground, `--r-control`, `--control-h` or a
+  row's small `--s6`/`--s8` - but by their own rules, so a change to a kind
+  does not reach them: the chips, segments, swatches, steppers' arrows, row
+  actions and icon buttons. Each would be a component rather than a class,
+  and that is a refactor, not an appearance.
+- **Bottom sheets' composed corners.** Rounded at the top only where a sheet
+  meets the bottom of a phone's screen - one shape, not another radius.
+- **Two stacked Cancel and Save rows in a goal's editor** while one of its
+  rules is being written: the rule's form is its own small form inside the
+  goal's, and its buttons belong to it.
+- **The starter templates on an empty Today and Templates** keep three cards
+  with an action each. The empty-state rule is one line and one action; a
+  first run is its one exception, and says what it has to say once.
+
+### Not measured
+
+The sweep measures four widths and the phone, the precision pass 1366 and
+1920 in the dark and 1366 in the light, and the text-size pass every screen
+at the three sizes. Compact density was not looked at screen by screen. A
+theme override - an accent somebody picks - is held to contrast by the
+preset tests, not by a screen.
