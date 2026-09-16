@@ -1,8 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { useAppData } from '../../lib/store'
-import { parseNorth, type NorthPart } from '../../lib/northSections'
-
-type NorthSection = Extract<NorthPart, { kind: 'section' }>
+import { parseNorth } from '../../lib/northSections'
 
 /**
  * North's headings under the day's title, so the text is read from the day.
@@ -20,9 +18,10 @@ type NorthSection = Extract<NorthPart, { kind: 'section' }>
  * that opened text over the task list would be opening it on the way to a
  * task.
  *
- * Only the headings, never the free lines: the row is an index of the text,
- * not the text, and the page keeps the whole of it. A text with no heading
- * has no index, and the row is not drawn. Switched off in Settings, the
+ * Only the headings, never the introduction: the row is an index of the
+ * text, not the text, and the page keeps the whole of it. A heading opens
+ * everything it owns, every paragraph to the next heading. A text with no
+ * heading has no index, and the row is not drawn. Switched off in Settings, the
  * same; on by default, since a text written to be read every morning should
  * be where the morning is.
  */
@@ -37,7 +36,7 @@ export function NorthStrip({ date }: { date: string }) {
   }, [date])
 
   if (data.settings.north.stripOnDay === false) return null
-  const sections = parseNorth(data.picture?.text ?? '').filter((p): p is NorthSection => p.kind === 'section')
+  const { sections } = parseNorth(data.picture?.text ?? '')
   if (sections.length === 0) return null
   const current = open === null ? undefined : sections[open]
 
@@ -54,7 +53,7 @@ export function NorthStrip({ date }: { date: string }) {
         {sections.map((section, i) =>
           // A heading with nothing under it is a word in the row and not a
           // control - there is nothing to open, so nothing offers to.
-          section.lines.length === 0 ? (
+          section.paragraphs.length === 0 ? (
             <span key={i} className="north-strip-bare">
               {section.heading}
             </span>
@@ -74,7 +73,11 @@ export function NorthStrip({ date }: { date: string }) {
       </div>
       {current && (
         <div id={id} className="north-strip-more">
-          <p className="north-strip-lines">{current.lines.join('\n')}</p>
+          {current.paragraphs.map((paragraph, i) => (
+            <p key={i} className="north-strip-lines">
+              {paragraph}
+            </p>
+          ))}
         </div>
       )}
     </div>

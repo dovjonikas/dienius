@@ -10448,6 +10448,10 @@ button.task-library:hover { color: var(--text); }
   overflow-wrap: anywhere;
 }
 
+/* A heading owns its paragraphs to the next heading, and a blank line
+   between two of them is a paragraph's worth of air. */
+.north-strip-lines + .north-strip-lines { margin-top: var(--s2); }
+
 /* The peek: a bubble hanging under the line's left end, with an arrow up
    at the words, never over them. The same surface, edge and shadow as the
    explanation bubble and the tooltip, because it is the same kind of thing

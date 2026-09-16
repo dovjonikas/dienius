@@ -1405,6 +1405,28 @@ test('the North text survives export and import with its blank lines exactly', (
   expect(loadData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here')
 })
 
+/**
+ * North's text is kept as it was typed and read for its headings only when
+ * it is drawn - lib/northSections.ts. A heading owns everything to the next
+ * heading and a blank line only parts it into paragraphs, so a backup that
+ * tidied the blank lines, or trimmed the lines inside, would hand back a
+ * different page. The file has to pass validation and come back as the same
+ * string, character for character.
+ */
+test('a North text with headings and paragraphs passes validate and comes back from export and import character for character', () => {
+  const text =
+    'a line before any heading\n\n\nFIRST HEADING\na line under it  \n\na second paragraph under it\n   \n\nSECOND HEADING\n\na line under it'
+  const data = defaultData()
+  data.picture = { text, updatedAt: '2026-09-01T08:00:00.000Z' }
+
+  const file = exportJson(data)
+  expect(validate(JSON.parse(file))).toBe(true)
+  expect(importJson(file).picture?.text).toBe(text)
+  // And through the file on disk, the same way the app reads it on load.
+  localStorage.setItem(STORAGE_KEY, file)
+  expect(loadData().picture?.text).toBe(text)
+})
+
 test('validate rejects a picture that is not text, and the whole payload with it', () => {
   localStorage.setItem(
     STORAGE_KEY,

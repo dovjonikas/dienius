@@ -384,6 +384,15 @@ test('blank lines between blocks are kept exactly, and only the ends are trimmed
   expect(getData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here\n\n\nFourth line here')
 })
 
+// Headings are read from the text and never written into it, so a text with
+// them is stored by the same rule as one without: a line of spaces between
+// paragraphs and the spaces at the end of a line are the person's, and only
+// the two ends of the whole text go.
+test('a text with headings is stored as typed, a line of spaces and the spaces inside a line kept, only the ends trimmed', () => {
+  actions.setPicture('\n\n  FIRST HEADING\na line under it  \n   \n\na second paragraph under it\n\n')
+  expect(getData().picture?.text).toBe('FIRST HEADING\na line under it  \n   \n\na second paragraph under it')
+})
+
 test('writing the same text again changes nothing, so nothing is stamped for it', () => {
   actions.setPicture('First line here\n\nSecond line here')
   const before = getData().picture

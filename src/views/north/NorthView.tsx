@@ -198,19 +198,18 @@ function NorthText({
   morning: boolean
   onStartDay?: () => void
 }) {
-  const parts = parseNorth(text)
+  const { intro, sections } = parseNorth(text)
   return (
     <div className="north-picture">
       <div className="north-text">
-        {parts.map((part, i) =>
-          part.kind === 'lines' ? (
-            <p key={i} className="north-block">
-              {part.lines.join('\n')}
-            </p>
-          ) : (
-            <NorthSection key={i} heading={part.heading} lines={part.lines} />
-          ),
-        )}
+        {intro.map((paragraph, i) => (
+          <p key={`intro-${i}`} className="north-block">
+            {paragraph}
+          </p>
+        ))}
+        {sections.map((section, i) => (
+          <NorthSection key={i} heading={section.heading} paragraphs={section.paragraphs} />
+        ))}
       </div>
       {morning && onStartDay && (
         <button type="button" className="btn-primary north-start" onClick={onStartDay}>
@@ -243,10 +242,10 @@ function NorthText({
  * A heading with nothing under it is a heading and not a control: there is
  * nothing to open, so nothing offers to.
  */
-function NorthSection({ heading, lines }: { heading: string; lines: string[] }) {
+function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: string[] }) {
   const [open, setOpen] = useState(false)
   const id = useId()
-  if (lines.length === 0) {
+  if (paragraphs.length === 0) {
     return (
       <section className="north-section is-bare">
         <h3 className="north-heading">{heading}</h3>
@@ -275,7 +274,11 @@ function NorthSection({ heading, lines }: { heading: string; lines: string[] }) 
         </button>
       </h3>
       <div id={id} className="north-section-body">
-        <p className="north-section-lines">{lines.join('\n')}</p>
+        {paragraphs.map((paragraph, i) => (
+          <p key={i} className="north-section-lines">
+            {paragraph}
+          </p>
+        ))}
       </div>
     </section>
   )

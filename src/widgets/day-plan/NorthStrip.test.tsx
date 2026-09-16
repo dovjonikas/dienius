@@ -52,6 +52,22 @@ test('the headings stand in a row; a press opens what is under one, and a second
   expect(screen.queryByText('second line under it')).toBeNull()
 })
 
+// A heading owns everything to the next heading - lib/northSections.ts - so
+// a paragraph after a blank line under it opens with it, and is never read
+// as a word in the row.
+test('a heading opens everything under it to the next heading, a second paragraph included', async () => {
+  const user = userEvent.setup()
+  actions.setPicture('FIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
+  render(<NorthStrip date={DATE} />)
+  const row = screen.getByRole('group', { name: 'North' })
+  expect(within(row).getAllByRole('button').map(b => b.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+
+  await user.click(screen.getByRole('button', { name: 'FIRST HEADING' }))
+  expect(screen.getByText('a line under it')).toBeInTheDocument()
+  expect(screen.getByText('a second paragraph under it')).toBeInTheDocument()
+  expect(screen.queryByText('a line under the second')).toBeNull()
+})
+
 test('Escape closes it, and a press elsewhere leaves it as it is', async () => {
   const user = userEvent.setup()
   actions.setPicture('FIRST SECTION\nline under it')

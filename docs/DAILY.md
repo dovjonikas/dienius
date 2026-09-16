@@ -128,13 +128,15 @@ blank line between blocks. Write it the way you would say it, in the first
 person; a few lines are enough to start. It saves as you type, and **Done**
 goes back to reading. **Edit**, under the words, opens the box again.
 
-**A line in capitals is a heading.** The lines under it, up to the next
-blank line or the next heading, are its text. Reading, the page shows the
-headings and the free lines; the text under a heading opens while the
-pointer rests on it and closes when it leaves, or on a tap on the phone. A
-text with no capitals-only line reads as its blocks. There is no button for
-any of this: the capitals are the formatting, and the text stays the one
-string you typed.
+**A line in capitals is a heading.** Everything under it, up to the next
+heading, is its text, and a blank line under a heading starts a second
+paragraph of the same heading. The lines before the first heading are the
+introduction and are always shown. Reading, the page shows the introduction
+and the headings; the text under a heading opens while the pointer rests on
+it and closes when it leaves, or on a tap on the phone. A text with no
+capitals-only line reads as it was written. There is no button for any of
+this: the capitals are the formatting, and the text stays the one string you
+typed.
 
 The same headings stand in a row under the day's title on Today, and a
 press on one opens what is under it there, so the morning's page is a

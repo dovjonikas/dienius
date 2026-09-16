@@ -766,6 +766,21 @@ test('a heading reads as a heading with its lines closed under it, and a press o
   expect(toggle).toHaveAttribute('aria-expanded', 'false')
 })
 
+test('a heading holds its paragraphs to the next heading, and the lines before the first heading stay on the page', async () => {
+  const user = userEvent.setup()
+  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
+  const { container } = render(<NorthView />)
+  expect([...container.querySelectorAll('.north-block')].map(b => b.textContent)).toEqual(['a line before any heading'])
+  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+
+  await user.click(screen.getByRole('button', { name: 'FIRST HEADING' }))
+  const first = container.querySelector('.north-section.is-open')
+  expect([...(first?.querySelectorAll('.north-section-lines') ?? [])].map(p => p.textContent)).toEqual([
+    'a line under it',
+    'a second paragraph under it',
+  ])
+})
+
 test('Escape closes an open heading, and a heading with nothing under it is not a control', async () => {
   const user = userEvent.setup()
   picture('FIRST SECTION\nline under it\n\nSECOND SECTION')
