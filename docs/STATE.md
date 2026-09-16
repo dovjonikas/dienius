@@ -6,7 +6,77 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.23, three small things and a count.
+**Last updated:** v2.24, in progress - North as one page, a window after
+sleep, and the day's timeline.
+
+## v2.24 - North as one page, a window after sleep, and the day's timeline
+
+Asked for in one message that replaces everything asked about North, the
+timeline and Review's counts earlier the same day, in nine stages. The rules
+over all of it: DECISIONS and CONVENTIONS kept; goals never measured, no
+streak, no red, no verdict; the repo carries none of the owner's text and
+every line in a test is a generic one; after each stage the tests are green
+and this section says where the wave is.
+
+The brief, as understood:
+
+- **A. The text's rules**, for display only - the text stays the one string
+  typed, and a backup carries it unchanged. The lines before the first
+  heading are the introduction. A line in capitals is a heading and owns
+  everything to the next heading or to a line of only `---`, blank lines
+  included. Everything after `---` is the signature. A text with no heading
+  reads as it was written.
+- **B. The North page.** A quiet goal at the top, one line, edited in place,
+  the rest of a goal behind More and a title enough to save; the
+  introduction, the headings unfolding on a hover or a tap, and the
+  signature at the foot, a little larger with more air over it; one field
+  with Save and Cancel, capitals and `---` drawn heavier while typing, and a
+  grey line saying both rules; an empty page is one line and one button; one
+  column, one rhythm, no frame, card or shadow on the reading page, and the
+  buttons in one style in one place.
+- **C. The day.** The signature always there as one quiet line, and the
+  headings as a quiet list unfolding the same way: a narrow column beside
+  the timeline on a desktop, one folded line on the phone. Never the
+  introduction. A switch, on by default.
+- **D. A window after sleep.** The introduction and the signature over the
+  day, the first time the app is opened after five hours closed and never
+  twice in twelve; closed by its button, Escape or a press outside, with no
+  timer and no tick; never with no introduction, in the demo or switched
+  off. The time is a device fact beside the day North was read, outside the
+  plan and outside sync. It replaces the morning's opening on the North page.
+- **E. The timeline.** The hour marks and the blocks on one scale, held by a
+  test; a thin now line with the time beside it, the hour mark near it
+  hidden, moving every minute, the grid opening with it in its top third;
+  the running block's "ends in" and, in a gap, the next block's "starts
+  in"; past blocks a step back; free labels from half an hour, small and at
+  the left; the sleep hours one quiet ground.
+- **F. Review's counts** - how many of the last 7 and 30 days each repeating
+  block happened on, a number and nothing else.
+
+### Stage 1 - what was already there
+
+Built earlier the same day, from the messages this one replaces, and kept:
+
+- The heading rule reaching to the next heading, blank lines as paragraphs,
+  the introduction always shown, the round trip held (`0e41084`).
+- The reading page: the introduction, the headings unfolding over the page
+  under a resting pointer and in the page on a press, one row of buttons
+  (`16d92c8`).
+- The field: one textarea, Save and Cancel, capitals drawn heavier while
+  typing, an empty page as one line and Write, no cap on length (`2e6501a`).
+- All of F, since v2.23 (`66e71a1`): "How many times" on Review, the last 7
+  and 30 days per repeating block, computed from the days as they are.
+- Part of E: free labels already start at 30 minutes, the now line already
+  moves every minute and hides the hour mark it would cover, and the wide
+  grid already opens with now in its top third.
+
+Left: the `---` signature in the parser, on the page and in the field (A,
+B); the goal as a quiet line at the top, the page as one column and the goal
+cards gone (B); the day's column in place of the headings row (C); the
+window after sleep in place of the morning page (D); the scale, the now
+line's weight and its time, the running and next block's lines, the past
+step back, the free labels' size and place, the sleep ground (E); F read
+against the brief once more; the phone everywhere, and the gates.
 
 ## v2.22 - the quality wave, part one: the pictures
 
