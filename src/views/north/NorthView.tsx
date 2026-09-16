@@ -1,11 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { activeGoals, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
 import { type Goal, type IfThenEntry } from '../../lib/types'
 import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
 import { rememberNorthRead } from '../../lib/northRead'
-import { parseNorth } from '../../lib/northSections'
+import { isNorthHeading, parseNorth } from '../../lib/northSections'
 import { todayKey } from '../../lib/dates'
 
 /**
@@ -13,18 +13,16 @@ import { todayKey } from '../../lib/dates'
  *
  * ## The text
  *
- * Since v2.22 the page opens on the person's own words - a dozen or so
- * short lines in blocks, a blank line between blocks, and nothing the app
- * adds to them: no heading over them, no fields, no structure. It is what
- * the owner asked for in one sentence: a text they see every morning that
- * they wrote themselves. It starts empty and the app suggests none of it;
- * the placeholder says where to write and nothing else. See DECISIONS
- * "North is a text".
+ * The person's own words, typed by them and suggested by nobody. Since
+ * v2.24 it reads as an introduction and a set of headings, each opening
+ * what it holds - lib/northSections.ts has the rule, and NorthText the
+ * page. See DECISIONS "North is a text" for where it came from.
  *
- * Written in a plain textarea on this page, saved on its own half a second
- * after the last keystroke and on the way out. One door: the field Compose
- * carried for the same text until v2.22 was a second way to one thing, and
- * two ways to one thing is one too many.
+ * An empty North is one line and one button rather than a field waiting on
+ * the page. Write, or Edit on a text that exists, opens one textarea with
+ * the whole text in it, and nothing is written until Save; Cancel drops
+ * what was typed. One door: the field Compose carried for the same text
+ * until v2.22 was a second way to one thing.
  *
  * ## The morning
  *
@@ -62,7 +60,7 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
   const archived = archivedGoals(data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
   // Open where there are goals to read; closed to the offer where there are
-  // none. Opened again by the first Done on a new text, so the one next
+  // none. Opened again by the first Save on a new text, so the one next
   // thing is in view once, and by Compose closing, so a goal just written
   // is not written into a fold.
   const [goalsOpen, setGoalsOpen] = useState(() => activeGoals(data.goals).length > 0)
@@ -70,11 +68,7 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
   useEffect(() => {
     rememberNorthRead(todayKey())
   }, [])
-  // Open on the editor when there is no text yet. Decided once, at mount:
-  // the first save of a new text must not flip the page to reading under
-  // the hand still typing it, which is what deriving this from the text
-  // alone did.
-  const [editing, setEditing] = useState(() => (data.picture?.text ?? '') === '')
+  const [editing, setEditing] = useState(false)
   const composeRef = useRef<HTMLButtonElement>(null)
   const wasComposing = useRef(false)
   // Focus goes back to Compose when the form closes. The form itself cannot
@@ -84,10 +78,16 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
     if (!composing && wasComposing.current) composeRef.current?.focus()
     wasComposing.current = composing !== null
   }, [composing])
+  // And back to the button that opened the text's field when the field
+  // closes: Edit, or Write where the text was emptied or never kept. Only
+  // one of the two is ever drawn, so one ref serves both.
+  const openerRef = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+  useEffect(() => {
+    if (!editing && wasEditing.current) openerRef.current?.focus()
+    wasEditing.current = editing
+  }, [editing])
   const text = data.picture?.text ?? ''
-  // And the editor whenever the text is gone - emptied here, or erased on
-  // another device - since there is nothing to read.
-  const writing = editing || text === ''
   // Compose only once there is something to compose. A rule with no goal
   // counts, since v2.19: deleting the last goal leaves its rules behind on
   // purpose, they wait inside Compose now, and a window that hid the only
@@ -123,21 +123,32 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
         />
       ) : (
         <>
-          {writing ? (
+          {editing ? (
             <NorthEditor
               text={text}
-              onDone={() => {
+              onSaved={kept => {
                 setEditing(false)
-                if (goals.length === 0) setGoalsOpen(true)
+                if (kept && goals.length === 0) setGoalsOpen(true)
               }}
+              onCancel={() => setEditing(false)}
             />
+          ) : text === '' ? (
+            <NorthInvite openerRef={openerRef} onWrite={() => setEditing(true)} />
           ) : (
-            <NorthText text={text} onEdit={() => setEditing(true)} morning={morning} onStartDay={onStartDay} />
+            <NorthText
+              text={text}
+              openerRef={openerRef}
+              onEdit={() => setEditing(true)}
+              morning={morning}
+              onStartDay={onStartDay}
+            />
           )}
 
-          {/* Under the editor the goals stand as they are, with nothing to
-              open: the page is the editor and they are what was there. */}
-          {writing ? (
+          {/* Under the field the goals stand as they are, with nothing to
+              open: the page is the field and they are what was there. An
+              empty North with no goal either is the one line and the one
+              button, and nothing under them. */}
+          {editing ? (
             goals.length > 0 && (
               <div className="north-goals">
                 {goals.map(goal => (
@@ -146,32 +157,60 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
               </div>
             )
           ) : (
-            <div className="north-goals-fold">
-              <button
-                type="button"
-                className="north-fold-toggle"
-                aria-expanded={goalsOpen}
-                onClick={() => setGoalsOpen(open => !open)}
-              >
-                {/* No count on the line. Nothing on this page counts anything
-                    - ARCHITECTURE section 6 - and a number beside the word
-                    would be the first. */}
-                <span className="north-fold-caret" aria-hidden="true" />
-                Goals
-              </button>
-              {goalsOpen && goals.length === 0 && <GoalOffer onWrite={() => setComposing('goal')} />}
-              {goalsOpen && goals.length > 0 && (
-                <div className="north-goals">
-                  {goals.map(goal => (
-                    <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
-                  ))}
-                </div>
-              )}
-            </div>
+            (text !== '' || goals.length > 0) && (
+              <div className="north-goals-fold">
+                <button
+                  type="button"
+                  className="north-fold-toggle"
+                  aria-expanded={goalsOpen}
+                  onClick={() => setGoalsOpen(open => !open)}
+                >
+                  {/* No count on the line. Nothing on this page counts anything
+                      - ARCHITECTURE section 6 - and a number beside the word
+                      would be the first. */}
+                  <span className="north-fold-caret" aria-hidden="true" />
+                  Goals
+                </button>
+                {goalsOpen && goals.length === 0 && <GoalOffer onWrite={() => setComposing('goal')} />}
+                {goalsOpen && goals.length > 0 && (
+                  <div className="north-goals">
+                    {goals.map(goal => (
+                      <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
           )}
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * An empty North: one line saying what the page is for, and the one button
+ * that starts it. Not a field waiting on the page - an empty box with an
+ * edge is a form somebody is asked to fill, and a page nobody has written
+ * yet is an invitation. The line says what the text is for and nothing
+ * about what to put in it.
+ */
+function NorthInvite({
+  onWrite,
+  openerRef,
+}: {
+  onWrite: () => void
+  openerRef: React.Ref<HTMLButtonElement>
+}) {
+  return (
+    <div className="north-invite">
+      <p className="north-invite-line">Write the words you want to start each day with.</p>
+      <div className="north-actions">
+        <button ref={openerRef} type="button" className="btn-primary" data-tour="picture-write" onClick={onWrite}>
+          Write
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -192,11 +231,13 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
  */
 function NorthText({
   text,
+  openerRef,
   onEdit,
   morning,
   onStartDay,
 }: {
   text: string
+  openerRef: React.Ref<HTMLButtonElement>
   onEdit: () => void
   morning: boolean
   onStartDay?: () => void
@@ -226,7 +267,7 @@ function NorthText({
             Start the day
           </button>
         )}
-        <button type="button" className="btn-secondary" onClick={onEdit}>
+        <button ref={openerRef} type="button" className="btn-secondary" onClick={onEdit}>
           Edit
         </button>
       </div>
@@ -314,90 +355,143 @@ function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: st
   )
 }
 
-/** Half a second after the last keystroke, the text is written. */
-export const NORTH_SAVE_AFTER_MS = 500
-
 /**
- * The text, written. A textarea and a Done, and nothing else on the page
- * while it is open.
+ * The text, written: one textarea holding all of it, Save and Cancel under
+ * it, and nothing written until Save.
  *
- * Saved on its own: half a second after the last keystroke, and whatever is
- * still pending on the way out - Done, or a press on the rail. Nothing typed
- * is ever lost to a press somewhere else, and Done is only ever the way back
- * to reading. What is typed is kept as typed; the store trims the two ends
- * of the whole text and nothing inside it.
+ * ## No formatting but capitals
  *
- * It grows with the text - a row per line, eight at least - rather than
- * measuring itself: jsdom has no layout, and a row count is the same answer
- * on every screen. The placeholder says where to write and suggests nothing,
- * because the app writes none of this.
+ * There is no toolbar and no rich text. A line in capitals is a heading,
+ * which is said once, in the grey line above the field, and shown while it
+ * is typed: every line the page will read as a heading is drawn heavier as
+ * soon as it is one. That is the one help the field gives.
+ *
+ * A textarea cannot draw one line heavier than another, so the field draws
+ * nothing itself. Its own text is transparent and a drawing of the same
+ * text sits exactly under it, line for line, in the same type, the same
+ * padding and the same wrapping - the caret, the selection and the typing
+ * are the field's, and the ink is the drawing's. Heavier is a stroke round
+ * the letters rather than a bolder face: a bolder face is wider, and one
+ * wider line would put every caret after it in the wrong place.
+ *
+ * The field never scrolls inside itself. It stands over the drawing and is
+ * exactly as tall, so the page scrolls instead; a field that scrolled on its
+ * own would slide its text away from the drawing under it. The drawing ends
+ * in one line more than the text has, so the caret on a new last line is
+ * always inside the box and the browser never has a reason to scroll it.
+ *
+ * ## When it is written
+ *
+ * On Save, as typed - the store trims the two ends of the whole text and
+ * nothing inside it, and emptying the text and saving removes it. Cancel
+ * drops what was typed. Leaving the page with the field open keeps what is
+ * in it, because nothing typed should be lost to a press somewhere else;
+ * Cancel is the one way to drop words. Save waits for a first line on a
+ * North that has no text yet, which is also how the tour knows to ask for
+ * one.
+ *
+ * There is no cap on its length and none on its headings: as many as the
+ * text has.
  */
-function NorthEditor({ text, onDone }: { text: string; onDone: () => void }) {
+function NorthEditor({
+  text,
+  onSaved,
+  onCancel,
+}: {
+  text: string
+  /** Saved; `kept` is false when the save emptied the text. */
+  onSaved: (kept: boolean) => void
+  onCancel: () => void
+}) {
   const [draft, setDraft] = useState(text)
-  const [saved, setSaved] = useState(false)
   const ref = useRef<HTMLTextAreaElement>(null)
-  const pending = useRef<{ timer: ReturnType<typeof setTimeout>; draft: string } | null>(null)
+  const ruleId = useId()
+  // What unmounting has to know, read from refs: the cleanup below belongs
+  // to the first render, and a render's own state is a keystroke behind.
+  const latest = useRef({ draft: text, text, settled: false })
+  latest.current.text = text
 
   useEffect(() => {
-    ref.current?.focus()
+    const el = ref.current
+    if (!el) return
+    el.focus()
+    el.setSelectionRange(el.value.length, el.value.length)
   }, [])
 
-  useEffect(() => {
-    if (draft === text) return
-    const timer = setTimeout(() => {
-      pending.current = null
-      actions.setPicture(draft)
-      setSaved(true)
-    }, NORTH_SAVE_AFTER_MS)
-    pending.current = { timer, draft }
-    return () => clearTimeout(timer)
-  }, [draft, text])
+  useEffect(
+    () => () => {
+      const { draft: last, text: kept, settled } = latest.current
+      if (!settled && last !== kept) actions.setPicture(last)
+    },
+    [],
+  )
 
-  // Whatever is still pending is written now: on Done, before the page
-  // decides what to show, and on the way out for a press on the rail.
-  function flush() {
-    const p = pending.current
-    if (!p) return
-    clearTimeout(p.timer)
-    pending.current = null
-    actions.setPicture(p.draft)
+  // The page scrolls, never the field - see above.
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.scrollTop = 0
+  }, [draft])
+
+  function save() {
+    latest.current.settled = true
+    actions.setPicture(draft)
+    onSaved(draft.trim() !== '')
   }
-  useEffect(() => flush, [])
+
+  function cancel() {
+    latest.current.settled = true
+    onCancel()
+  }
 
   return (
     <div className="north-editor">
-      <textarea
-        ref={ref}
-        className="north-editor-text"
-        aria-label="North"
-        data-tour="picture-field"
-        placeholder="Write here."
-        rows={Math.max(8, draft.split('\n').length + 1)}
-        maxLength={20000}
-        value={draft}
-        onChange={e => {
-          setDraft(e.target.value)
-          setSaved(false)
-        }}
-      />
-      <div className="north-editor-foot">
-        <span className="north-saved" role="status">
-          {saved ? 'Saved' : ''}
-        </span>
-        {/* Disabled while there is nothing written: Done on an empty page
-            has nothing to be done with, and the tour reads a disabled
-            target as not yet there, so its card asks for a line first. */}
+      <p id={ruleId} className="north-editor-rule">
+        A line in capitals becomes a heading
+      </p>
+      <div className="north-editor-field">
+        <div className="north-editor-mirror" aria-hidden="true">
+          {draft.split('\n').map((line, i) => (
+            <span key={i}>
+              {i > 0 && '\n'}
+              <span className={isNorthHeading(line) ? 'north-editor-line is-heading' : 'north-editor-line'}>
+                {line}
+              </span>
+            </span>
+          ))}
+          {/* One line more than the text has - see above. */}
+          {'\n​'}
+        </div>
+        <textarea
+          ref={ref}
+          className="north-editor-text"
+          aria-label="North"
+          aria-describedby={ruleId}
+          data-tour="picture-field"
+          placeholder="Write here."
+          value={draft}
+          onChange={e => {
+            setDraft(e.target.value)
+            latest.current.draft = e.target.value
+          }}
+          onScroll={e => {
+            e.currentTarget.scrollTop = 0
+          }}
+        />
+      </div>
+      <div className="north-actions">
+        {/* Waits for a first line on a North with no text yet: there is
+            nothing to save, and the tour reads a disabled target as not yet
+            there, so its card asks for the line first. */}
         <button
           type="button"
           className="btn-primary"
           data-tour="picture-keep"
-          disabled={draft.trim() === ''}
-          onClick={() => {
-            flush()
-            onDone()
-          }}
+          disabled={draft.trim() === '' && text === ''}
+          onClick={save}
         >
-          Done
+          Save
+        </button>
+        <button type="button" className="btn-secondary" onClick={cancel}>
+          Cancel
         </button>
       </div>
     </div>

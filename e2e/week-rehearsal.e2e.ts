@@ -278,12 +278,13 @@ test('the week map, North, a full list and the backup form all take what is type
 
   // --- North: a picture, three goals, and what each is worth ------------
   await page.getByRole('button', { name: 'North', exact: true }).first().click()
-  // The text is written on the page itself, in its own editor - an empty
-  // North opens on it - and Compose is for the goals under it. With no goal
-  // yet the goals wait behind one line, and the offer under it opens
-  // Compose on a blank goal.
+  // The text is written on the page itself, in its own field - an empty
+  // North is one line and Write - and Compose is for the goals under it.
+  // With no goal yet the goals wait behind one line, and the offer under it
+  // opens Compose on a blank goal.
+  await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   await page.getByRole('textbox', { name: 'North' }).fill('First line here\n\nSecond line here')
-  await page.getByRole('main').getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
   await page.getByRole('button', { name: 'Write one down' }).click()
 
   const goals = [

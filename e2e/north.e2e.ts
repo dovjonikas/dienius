@@ -21,13 +21,14 @@ test('the text is written on the page, reads back as blocks, and opens the next 
   await expect(page.getByPlaceholder('Add a task')).toBeVisible()
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
 
-  // Nothing written: the page is the editor, and it says only where to write.
+  // Nothing written: one line and one button, and no field until asked.
+  await expect(page.getByRole('textbox', { name: 'North' })).toHaveCount(0)
+  await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
   await expect(box).toBeFocused()
   await expect(box).toHaveAttribute('placeholder', 'Write here.')
   await box.fill('First line here\nSecond line here\n\nThird line here')
-  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible()
-  await page.getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
 
   // Read: no heading, so the whole text, the blank line kept as a paragraph break.
   const blocks = page.locator('.north-intro .north-paragraph')
@@ -59,10 +60,10 @@ test('the text is written on the page, reads back as blocks, and opens the next 
 test('a heading opens on a hover without moving the page, or on a tap where there is no pointer, and closes again', async ({ page }, info) => {
   await openFreshAt(page, wednesdayAt(10))
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
   await box.fill('First line here\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
-  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible()
-  await page.getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
 
   // At rest: the introduction, the two headings, and nothing under them.
   await expect(page.locator('.north-intro .north-paragraph')).toHaveText('First line here')

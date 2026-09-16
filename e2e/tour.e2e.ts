@@ -93,13 +93,13 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
 
   // One direction - the picture's first line, then a goal under it in the
   // North window, then shown under the day
-  await expect(card).toContainText('Type a line of your own')
+  await expect(card).toContainText(`${verb} Write.`)
+  await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
+  await expect(card).toContainText('Write a line of your own')
   const line = page.getByRole('textbox', { name: 'North' })
   await line.pressSequentially('First line here')
-  await expect(card).toContainText(`Now ${verb.toLowerCase()} Done.`)
-  // The editor's own Done: a Focus session is running from the step before,
-  // and its bar has a Done of its own.
-  await page.getByRole('main').getByRole('button', { name: 'Done' }).click()
+  await expect(card).toContainText(`Now ${verb.toLowerCase()} Save.`)
+  await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
   await expect(card).toContainText(`${verb} Write one down`)
   await page.getByRole('button', { name: 'Write one down' }).click()
   await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Save.`)

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthView } from './NorthView'
 import { actions, getData } from '../../lib/store'
@@ -52,68 +52,138 @@ async function openGoals(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Goals' }))
 }
 
-// --- the empty window --------------------------------------------------------
+// --- the empty page, and writing ---------------------------------------------
 
 /**
- * The text, since v2.22: written in a plain textarea on the page, saved on
- * its own, read back as the person typed it. Every line in these tests is
- * a generic one - the app suggests none of this text and the tests carry
- * none of anybody's.
+ * The text, since v2.24: an empty North is one line and one button, not a
+ * field waiting on the page; Write and Edit open one textarea holding the
+ * whole text, with Save and Cancel under it, and nothing is written until
+ * Save. What is typed is kept as typed. Every line in these tests is a
+ * generic one - the app suggests none of this text and the tests carry none
+ * of anybody's.
  */
-test('with nothing written, the page is the editor and nothing else', () => {
+test('with nothing written, the page is one line and one button, and no field', () => {
   render(<NorthView />)
+  expect(screen.queryByRole('textbox')).toBeNull()
+  expect(screen.getByText('Write the words you want to start each day with.')).toBeInTheDocument()
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Write'])
+})
+
+test('Write opens the field with the rule said once above it, and nothing to save until something is typed', async () => {
+  const user = userEvent.setup()
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
   const box = screen.getByRole('textbox', { name: 'North' })
   expect(box).toHaveFocus()
   expect(box).toHaveAttribute('placeholder', 'Write here.')
-  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Done'])
-  expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
-  expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Edit goals' })).toBeNull()
+  expect(box).toHaveAccessibleDescription('A line in capitals becomes a heading')
+  expect(screen.getAllByText('A line in capitals becomes a heading')).toHaveLength(1)
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Save', 'Cancel'])
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 })
 
-test('what is typed is saved on its own after a pause, blank lines and all', async () => {
+test('nothing is written while typing, and Save writes the text as typed and goes back to reading', async () => {
   const user = userEvent.setup()
   render(<NorthView />)
-  await user.type(screen.getByRole('textbox', { name: 'North' }), 'First line here{Enter}Second line here{Enter}{Enter}Third line here')
-  await waitFor(() => expect(getData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here'))
-  expect(await screen.findByText('Saved')).toBeInTheDocument()
-  // Still the editor: saving is not leaving.
-  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
-})
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), 'a first line{Enter}{Enter}FIRST HEADING{Enter}a line under it')
+  // A pause is not a save any more.
+  await new Promise(resolve => setTimeout(resolve, 700))
+  expect(getData().picture).toBeUndefined()
 
-test('Done writes what is still pending, shows the text, and offers the first goal under it', async () => {
-  const user = userEvent.setup()
-  render(<NorthView />)
-  await user.type(screen.getByRole('textbox', { name: 'North' }), 'First line here')
-  await user.click(screen.getByRole('button', { name: 'Done' }))
-
-  expect(getData().picture?.text).toBe('First line here')
-  expect(screen.getByText('First line here')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().picture?.text).toBe('a first line\n\nFIRST HEADING\na line under it')
   expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(screen.getByRole('heading', { level: 3, name: 'FIRST HEADING' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Write one down' })).toBeInTheDocument()
 })
 
-test('Edit opens the editor holding the text exactly, and Done goes back to reading', async () => {
+test('Edit opens the field holding the text exactly, and Cancel drops what was typed', async () => {
   const user = userEvent.setup()
-  picture('First line here\n\nSecond line here')
+  picture('a first line\n\n\nFIRST HEADING\na line under it')
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Edit' }))
-  expect(screen.getByRole('textbox', { name: 'North' })).toHaveValue('First line here\n\nSecond line here')
-  await user.click(screen.getByRole('button', { name: 'Done' }))
+  const box = screen.getByRole('textbox', { name: 'North' })
+  expect(box).toHaveValue('a first line\n\n\nFIRST HEADING\na line under it')
+  await user.type(box, '{Enter}a line nobody keeps')
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+  expect(getData().picture?.text).toBe('a first line\n\n\nFIRST HEADING\na line under it')
   expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
-  expect(getData().picture?.text).toBe('First line here\n\nSecond line here')
+  expect(screen.queryByText('a line nobody keeps')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Edit' })).toHaveFocus()
 })
 
-test('emptying the text removes it after the pause, and the page is the editor with nothing to be done', async () => {
+test('Cancel on a page with nothing written goes back to the one line and the one button', async () => {
   const user = userEvent.setup()
-  picture('First line here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), 'a first line')
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(getData().picture).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Write' })).toHaveFocus()
+})
+
+// Nothing typed is lost to a press somewhere else: leaving the page with the
+// field open keeps what is in it. Cancel is the one way to drop it.
+test('leaving the page with the field open keeps what was typed', async () => {
+  const user = userEvent.setup()
+  const { unmount } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), 'a first line')
+  unmount()
+  expect(getData().picture?.text).toBe('a first line')
+})
+
+test('emptying the text and saving removes it, and the page is the one line and the one button again', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Edit' }))
   await user.clear(screen.getByRole('textbox', { name: 'North' }))
-  expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
-  await waitFor(() => expect(getData().picture).toBeUndefined())
-  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().picture).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Write' })).toBeInTheDocument()
+})
+
+/**
+ * The one help the field gives: a line in capitals is drawn as a heading
+ * while it is typed, so what will be a heading is seen before Save. The
+ * field's own text is invisible and a drawing of the same text sits under
+ * it, so the drawing has to say exactly what the field holds, line for line
+ * - a drawing one keystroke behind would put the caret in the wrong word.
+ */
+test('while writing, a line in capitals is drawn as a heading, and the drawing holds exactly what the field holds', async () => {
+  const user = userEvent.setup()
+  const { container } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  const box = screen.getByRole('textbox', { name: 'North' })
+  await user.type(box, 'a first line{Enter}{Enter}FIRST HEADING{Enter}a line under it{Enter}SECOND HEADING')
+
+  const drawing = container.querySelector('.north-editor-mirror') as HTMLElement
+  expect(drawing).toHaveAttribute('aria-hidden', 'true')
+  expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  const lines = [...drawing.querySelectorAll('.north-editor-line')].map(l => l.textContent)
+  expect(lines.join('\n')).toBe((box as HTMLTextAreaElement).value)
+
+  await user.type(box, ' and more')
+  expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['FIRST HEADING'])
+})
+
+// As many headings as the text has: nothing on the page, in the field or on
+// the day counts them.
+test('a text with forty headings is written, saved and read as forty headings', async () => {
+  const text = Array.from({ length: 40 }, (_, i) => `HEADING ${i + 1}\na line under heading ${i + 1}`).join('\n\n')
+  const user = userEvent.setup()
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  const box = screen.getByRole('textbox', { name: 'North' })
+  expect(box).not.toHaveAttribute('maxlength')
+  await user.click(box)
+  await user.paste(text)
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().picture?.text).toBe(text)
+  expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(40)
 })
 
 // --- reading ------------------------------------------------------------------
@@ -178,12 +248,12 @@ test('on an ordinary visit there is no Start the day', () => {
 })
 
 // The page with goals but no text is every install from before the text
-// existed. The editor sits at the top until it is answered, and the goals
-// are under it exactly as they were.
-test('goals from before there was a text show under the editor, untouched', () => {
+// existed. The one line and the one button stand at the top until they are
+// answered, and the goals are under them exactly as they were.
+test('goals from before there was a text show under the invitation to write, untouched', () => {
   goal('Ship something people keep using', { why: 'Because rented is not mine.' })
   render(<NorthView />)
-  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Write' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Ship something people keep using' })).toBeInTheDocument()
   expect(screen.getByText('Because rented is not mine.')).toBeInTheDocument()
 })

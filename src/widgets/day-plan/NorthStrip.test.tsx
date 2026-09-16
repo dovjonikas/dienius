@@ -68,6 +68,13 @@ test('a heading opens everything under it to the next heading, a second paragrap
   expect(screen.queryByText('a line under the second')).toBeNull()
 })
 
+// As many headings as the text has: the row counts nothing and caps nothing.
+test('every heading stands in the row, however many the text has', () => {
+  actions.setPicture(Array.from({ length: 40 }, (_, i) => `HEADING ${i + 1}\na line under heading ${i + 1}`).join('\n\n'))
+  render(<NorthStrip date={DATE} />)
+  expect(within(screen.getByRole('group', { name: 'North' })).getAllByRole('button')).toHaveLength(40)
+})
+
 test('Escape closes it, and a press elsewhere leaves it as it is', async () => {
   const user = userEvent.setup()
   actions.setPicture('FIRST SECTION\nline under it')

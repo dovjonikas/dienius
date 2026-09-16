@@ -123,10 +123,12 @@ clears the lot.
 ## 4. Write down what the days are for
 
 **North** - the sixth icon in the rail, or the `6` key. It opens empty, on
-one plain box: your own text, read every morning. Short lines, in blocks, a
-blank line between blocks. Write it the way you would say it, in the first
-person; a few lines are enough to start. It saves as you type, and **Done**
-goes back to reading. **Edit**, under the words, opens the box again.
+one line and **Write**: your own text, read every morning. Short lines, a
+blank line between paragraphs. Write it the way you would say it, in the
+first person; a few lines are enough to start. **Save** keeps what you
+typed and **Cancel** drops it, and nothing is kept before Save - except
+that leaving the page with the box open keeps what is in it. **Edit**, at
+the end of the words, opens the box again.
 
 **A line in capitals is a heading.** Everything under it, up to the next
 heading, is its text, and a blank line under a heading starts a second
