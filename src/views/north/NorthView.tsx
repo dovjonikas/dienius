@@ -4,6 +4,8 @@ import { activeGoals, archivedGoals, rulesForGoal, unfiledRules } from '../../li
 import { type Goal, type IfThenEntry } from '../../lib/types'
 import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
+import { rememberNorthRead } from '../../lib/northRead'
+import { todayKey } from '../../lib/dates'
 
 /**
  * North: one text, read every morning, and under it the goals.
@@ -23,12 +25,22 @@ import { Explain } from '../Explain'
  * carried for the same text until v2.22 was a second way to one thing, and
  * two ways to one thing is one too many.
  *
+ * ## The morning
+ *
+ * The first open of the app on a new day opens here, and the page ends in
+ * Start the day, which is the one way on to the day - see northRead.ts for
+ * the rule and where it is kept. Any visit marks the day read.
+ *
  * ## The goals, under it
  *
  * What, why, who it makes you; what you do to deserve it; what pulls you
  * off it. Four at most, an age each, and nothing that measures anything -
  * as v2.1 built them, edited behind one quiet Compose that saves in one
- * press. See DECISIONS, "North is built once and left in peace".
+ * press. See DECISIONS, "North is built once and left in peace". Folded
+ * under the text behind one quiet line: open where there are goals, since
+ * they are the person's own words too, and closed to an offer where there
+ * are none, so a text with nothing under it is a text with nothing under
+ * it.
  *
  * ## What this screen refuses to do
  *
@@ -36,11 +48,27 @@ import { Explain } from '../Explain'
  * percentage, no milestone, no target date, no streak, no checkbox, and no
  * count of anything that goes up.
  */
-export function NorthView() {
+export interface NorthViewProps {
+  /** This open of the app is the day's first look, and the page ends in the way on. */
+  morning?: boolean
+  /** Start the day: the one way on from the morning's page. */
+  onStartDay?: () => void
+}
+
+export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
   const data = useAppData()
   const goals = activeGoals(data.goals)
   const archived = archivedGoals(data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
+  // Open where there are goals to read; closed to the offer where there are
+  // none. Opened again by the first Done on a new text, so the one next
+  // thing is in view once, and by Compose closing, so a goal just written
+  // is not written into a fold.
+  const [goalsOpen, setGoalsOpen] = useState(() => activeGoals(data.goals).length > 0)
+  // Any look at the page is the day's look.
+  useEffect(() => {
+    rememberNorthRead(todayKey())
+  }, [])
   // Open on the editor when there is no text yet. Decided once, at mount:
   // the first save of a new text must not flip the page to reading under
   // the hand still typing it, which is what deriving this from the text
@@ -85,22 +113,59 @@ export function NorthView() {
       </header>
 
       {composing ? (
-        <NorthCompose focus={composing} onDone={() => setComposing(null)} />
+        <NorthCompose
+          focus={composing}
+          onDone={() => {
+            setComposing(null)
+            setGoalsOpen(true)
+          }}
+        />
       ) : (
         <>
           {writing ? (
-            <NorthEditor text={text} onDone={() => setEditing(false)} />
+            <NorthEditor
+              text={text}
+              onDone={() => {
+                setEditing(false)
+                if (goals.length === 0) setGoalsOpen(true)
+              }}
+            />
           ) : (
-            <NorthText text={text} onEdit={() => setEditing(true)} />
+            <NorthText text={text} onEdit={() => setEditing(true)} morning={morning} onStartDay={onStartDay} />
           )}
 
-          {goals.length === 0 && !writing && <GoalOffer onWrite={() => setComposing('goal')} />}
-
-          {goals.length > 0 && (
-            <div className="north-goals">
-              {goals.map(goal => (
-                <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
-              ))}
+          {/* Under the editor the goals stand as they are, with nothing to
+              open: the page is the editor and they are what was there. */}
+          {writing ? (
+            goals.length > 0 && (
+              <div className="north-goals">
+                {goals.map(goal => (
+                  <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
+                ))}
+              </div>
+            )
+          ) : (
+            <div className="north-goals-fold">
+              <button
+                type="button"
+                className="north-fold-toggle"
+                aria-expanded={goalsOpen}
+                onClick={() => setGoalsOpen(open => !open)}
+              >
+                {/* No count on the line. Nothing on this page counts anything
+                    - ARCHITECTURE section 6 - and a number beside the word
+                    would be the first. */}
+                <span className="north-fold-caret" aria-hidden="true" />
+                Goals
+              </button>
+              {goalsOpen && goals.length === 0 && <GoalOffer onWrite={() => setComposing('goal')} />}
+              {goalsOpen && goals.length > 0 && (
+                <div className="north-goals">
+                  {goals.map(goal => (
+                    <GoalCard key={goal.id} goal={goal} rules={rulesForGoal(data.ifThens, goal.id)} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </>
@@ -112,12 +177,38 @@ export function NorthView() {
 /**
  * The text, read. The largest type on the screen, a loose line, the
  * person's own line breaks kept, and nothing over it or around it - no
- * label, no frame. Under it, one quiet Edit.
+ * label, no frame. A blank line in the text is a gap between blocks, and
+ * the gap is the one thing the page draws that the person did not type;
+ * two blank lines are still one gap. Under it, one quiet Edit - and in the
+ * morning, Start the day, at the end rather than the top, so the way on is
+ * past the words.
  */
-function NorthText({ text, onEdit }: { text: string; onEdit: () => void }) {
+function NorthText({
+  text,
+  onEdit,
+  morning,
+  onStartDay,
+}: {
+  text: string
+  onEdit: () => void
+  morning: boolean
+  onStartDay?: () => void
+}) {
+  const blocks = text.split(/\n[ \t]*\n+/)
   return (
     <div className="north-picture">
-      <p className="north-picture-text">{text}</p>
+      <div className="north-text">
+        {blocks.map((block, i) => (
+          <p key={i} className="north-block">
+            {block}
+          </p>
+        ))}
+      </div>
+      {morning && onStartDay && (
+        <button type="button" className="btn-primary north-start" onClick={onStartDay}>
+          Start the day
+        </button>
+      )}
       <p className="north-text-actions">
         <button type="button" className="north-compose-open" onClick={onEdit}>
           Edit

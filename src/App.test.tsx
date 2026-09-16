@@ -466,6 +466,39 @@ test('the week\'s bar has the door too, on the day the week is centred on', asyn
  * the journal it is most often confused with - which is also the clearest
  * place to see that they are two different boxes.
  */
+// --- the morning --------------------------------------------------------------
+
+/**
+ * The one thing the owner asked of North is to see it every morning, so the
+ * first open of the app on a new day opens on it, ending in Start the day.
+ * See lib/northRead.ts. The text here is a generic one.
+ */
+test('with a North text, the first open of the day is North, and Start the day is the way on', async () => {
+  const user = userEvent.setup()
+  actions.setPicture('First line here\n\nSecond line here')
+  render(<App />)
+  const north = screen.getByRole('region', { name: 'North' })
+  expect(within(north).getByText('First line here')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Start the day' }))
+  expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
+})
+
+test('the second open the same day is the day', () => {
+  actions.setPicture('First line here')
+  const first = render(<App />)
+  expect(screen.getByRole('region', { name: 'North' })).toBeInTheDocument()
+  first.unmount()
+  render(<App />)
+  expect(screen.queryByRole('region', { name: 'North' })).toBeNull()
+  expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
+})
+
+test('with no text there is no morning page', () => {
+  render(<App />)
+  expect(screen.queryByRole('region', { name: 'North' })).toBeNull()
+  expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
+})
+
 test('the header carries a button each for notes, the journal and the clock', () => {
   render(<App />)
   expect(screen.getByRole('button', { name: 'Notes' })).toBeInTheDocument()

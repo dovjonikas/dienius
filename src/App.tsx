@@ -42,6 +42,7 @@ import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { NorthView } from './views/north/NorthView'
+import { isNorthMorning } from './lib/northRead'
 import { NavRail, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
 
@@ -82,7 +83,14 @@ function tipFor(label: string, key: string): string {
 
 export function App() {
   const data = useAppData()
-  const [view, setView] = useState<View>('day')
+  // The first open of a new day opens on North when there is a text to read
+  // - see northRead.ts. Decided once, here, and the morning's page ends in
+  // the way on to the day.
+  const [view, setView] = useState<View>(() => (isNorthMorning(data.picture?.text, todayKey()) ? 'north' : 'day'))
+  const [morning, setMorning] = useState(view === 'north')
+  useEffect(() => {
+    if (view !== 'north') setMorning(false)
+  }, [view])
   const [clockOpen, setClockOpen] = useState(false)
   const [clockTab, setClockTab] = useState<ClockTab | undefined>(undefined)
   // The whole journal, as an overlay rather than a seventh tab in the rail:
@@ -653,7 +661,15 @@ export function App() {
             onOpenJournal={date => setJournalOpen({ date })}
           />
         )}
-        {view === 'north' && <NorthView />}
+        {view === 'north' && (
+          <NorthView
+            morning={morning}
+            onStartDay={() => {
+              setMorning(false)
+              setView('day')
+            }}
+          />
+        )}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}

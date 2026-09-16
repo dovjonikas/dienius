@@ -10654,16 +10654,58 @@ button.task-library:hover { color: var(--text); }
    room for it here now, and nothing under it is wider. */
 .north-picture { margin-bottom: var(--s7); }
 
-.north-picture-text {
-  margin: var(--s3) 0 0;
-  max-width: 70ch;
+.north-text { max-width: 70ch; }
+
+/* One block. The person's own lines, at the largest size on the screen and
+   a loose line; the room under each block is the one thing drawn here that
+   was not typed. */
+.north-block {
+  margin: 0 0 1.4em;
   color: var(--text);
   font-size: var(--t-lg);
   font-weight: 400;
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
+
+.north-block:last-child { margin-bottom: 0; }
+
+/* The way on, in the morning: past the words, not above them. */
+.north-start { margin-top: var(--s7); }
+
+/* The goals, folded under the text behind one quiet line. */
+.north-goals-fold { margin-top: var(--s8); }
+
+.north-fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 0;
+  margin-bottom: var(--s5);
+  padding: var(--s1) 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  letter-spacing: 0.04em;
+}
+
+.north-fold-toggle:hover { color: var(--text); }
+
+.north-fold-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The same small triangle the day's Done and Later folds turn. */
+.north-fold-caret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.north-fold-toggle[aria-expanded='true'] .north-fold-caret { transform: rotate(90deg); }
 
 /* The text, written: one box, the reading measure, and Done under it with
    the word Saved on the other side when there is something to say. The box

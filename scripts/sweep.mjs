@@ -252,6 +252,18 @@ const SCREENS = [
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   {
+    // The first open of a day, when there is a text: North, ending in Start
+    // the day. The device remembers the day it read, so it is forgotten
+    // first and the page opened again.
+    name: 'North (morning)',
+    go: async /** @param {Page} p */ p => {
+      await p.evaluate(() => localStorage.removeItem('dienius:north-read'))
+      await p.reload()
+      await p.waitForSelector('nav')
+      await p.waitForTimeout(300)
+    },
+  },
+  {
     // One goal with the pointer resting on it. Everything under a goal's
     // identity line folds away where there is a pointer, so the screen above
     // no longer measures any of it - the lines, the never lines and the

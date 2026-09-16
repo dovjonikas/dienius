@@ -6,6 +6,7 @@ import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { activeGoals, deserveForWeek } from '../../lib/north'
 import { MAX_ACTIVE_GOALS, MAX_RULES_PER_GOAL } from '../../lib/types'
+import { northReadOn } from '../../lib/northRead'
 
 const TODAY = '2026-09-05'
 
@@ -40,6 +41,15 @@ function picture(text = 'I wake before the house does.') {
  */
 async function compose(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Compose' }))
+}
+
+/**
+ * The goals wait under the text behind one line since v2.22, and with none
+ * written the line is closed over the offer - so a test that wants Write
+ * one down opens the line first, the way a person does.
+ */
+async function openGoals(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Goals' }))
 }
 
 // --- the empty window --------------------------------------------------------
@@ -105,6 +115,55 @@ test('emptying the text removes it, and the page is the editor again', async () 
   expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
 })
 
+// --- reading ------------------------------------------------------------------
+
+test('the text reads as blocks, a blank line between them, and every line kept', () => {
+  picture('First line here\nSecond line here\n\nThird line here\n\n\n\nFourth line here')
+  const { container } = render(<NorthView />)
+  const blocks = [...container.querySelectorAll('.north-block')].map(b => b.textContent)
+  expect(blocks).toEqual(['First line here\nSecond line here', 'Third line here', 'Fourth line here'])
+  // Read, not asked anything: no field, no label over the words.
+  expect(screen.queryByRole('textbox')).toBeNull()
+  expect(container.querySelector('.north-layer-label')).toBeNull()
+})
+
+test('goals wait under the text behind one line, and one press opens the offer', async () => {
+  const user = userEvent.setup()
+  picture('First line here')
+  render(<NorthView />)
+  expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
+  const fold = screen.getByRole('button', { name: 'Goals' })
+  expect(fold).toHaveAttribute('aria-expanded', 'false')
+  await user.click(fold)
+  expect(screen.getByRole('button', { name: 'Write one down' })).toBeInTheDocument()
+})
+
+test('where there are goals they are open under the text, and the line folds them', async () => {
+  const user = userEvent.setup()
+  picture('First line here')
+  goal('Ship something people keep using')
+  render(<NorthView />)
+  expect(screen.getByRole('heading', { name: 'Ship something people keep using' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Goals' }))
+  expect(screen.queryByRole('heading', { name: 'Ship something people keep using' })).toBeNull()
+})
+
+test('in the morning the page ends in Start the day, and any look marks the day read', async () => {
+  const user = userEvent.setup()
+  picture('First line here')
+  const onStartDay = vi.fn()
+  render(<NorthView morning onStartDay={onStartDay} />)
+  expect(northReadOn()).toBe(TODAY)
+  await user.click(screen.getByRole('button', { name: 'Start the day' }))
+  expect(onStartDay).toHaveBeenCalledTimes(1)
+})
+
+test('on an ordinary visit there is no Start the day', () => {
+  picture('First line here')
+  render(<NorthView />)
+  expect(screen.queryByRole('button', { name: 'Start the day' })).toBeNull()
+})
+
 // The page with goals but no text is every install from before the text
 // existed. The editor sits at the top until it is answered, and the goals
 // are under it exactly as they were.
@@ -126,6 +185,7 @@ test('Write one down opens Compose on a blank goal, and Save writes it with what
   const user = userEvent.setup()
   picture()
   render(<NorthView />)
+  await openGoals(user)
   await user.click(screen.getByRole('button', { name: 'Write one down' }))
 
   expect(screen.getByLabelText('What')).toHaveFocus()
@@ -154,6 +214,7 @@ test('the deserve field stops at four lines rather than trimming a fifth on save
   const user = userEvent.setup()
   picture()
   render(<NorthView />)
+  await openGoals(user)
   await user.click(screen.getByRole('button', { name: 'Write one down' }))
   const field = screen.getByLabelText('What I do to deserve this')
   await user.type(field, 'one{Enter}two{Enter}three{Enter}four{Enter}five')
