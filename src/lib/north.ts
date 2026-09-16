@@ -346,7 +346,8 @@ export interface GoalDraft {
 
 /** Everything Compose edits: the picture and the active goals, in one draft. */
 export interface NorthDraft {
-  picture: string
+  /** Absent leaves the text alone: Compose stopped carrying it in v2.22. */
+  picture?: string
   goals: GoalDraft[]
 }
 
@@ -401,5 +402,6 @@ export function applyNorthDraft(data: AppData, draft: NorthDraft, today: string)
       },
     ]
   }
-  return withPicture({ ...data, goals }, draft.picture)
+  const next = { ...data, goals }
+  return draft.picture === undefined ? next : withPicture(next, draft.picture)
 }

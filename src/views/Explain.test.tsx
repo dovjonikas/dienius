@@ -100,9 +100,6 @@ const replanChrome = {
  */
 const PLACED: Record<ExplainId, () => ReactElement> = {
   north: () => <NorthView />,
-  // The invitation carries the picture's own explanation, so an empty window
-  // has it; the deserve heading only exists under a goal.
-  picture: () => <NorthView />,
   // The word lives on the field it names, in Compose, since v2.19: the
   // heading it used to hang off is gone from the reading page.
   deserve: () => {

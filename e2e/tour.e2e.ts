@@ -93,11 +93,11 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
 
   // One direction - the picture's first line, then a goal under it in the
   // North window, then shown under the day
-  await expect(card).toContainText('Type one line of who you are becoming')
-  const line = page.getByRole('textbox', { name: 'The picture' })
-  await line.pressSequentially('Someone who finishes what he starts.')
-  await expect(card).toContainText(`Now ${verb.toLowerCase()} Keep it.`)
-  await page.getByRole('button', { name: 'Keep it' }).click()
+  await expect(card).toContainText('Type a line of your own')
+  const line = page.getByRole('textbox', { name: 'North' })
+  await line.pressSequentially('First line here')
+  await expect(card).toContainText(`Now ${verb.toLowerCase()} Done.`)
+  await page.getByRole('button', { name: 'Done' }).click()
   await expect(card).toContainText(`${verb} Write one down`)
   await page.getByRole('button', { name: 'Write one down' }).click()
   await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Save.`)

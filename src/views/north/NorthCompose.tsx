@@ -49,8 +49,8 @@ function GrowingText({
   )
 }
 
-/** Where the cursor lands when Compose opens: on the picture, or on a new goal. */
-export type ComposeFocus = 'picture' | 'goal'
+/** Where the cursor lands when Compose opens: on the first goal, or on a new one. */
+export type ComposeFocus = 'goals' | 'goal'
 
 export interface NorthComposeProps {
   focus: ComposeFocus
@@ -91,8 +91,9 @@ function blankRow(): GoalRow {
 }
 
 /**
- * The North window with every layer editable at once: the picture, each
- * goal's four fields, what to archive, what to add. One Save, one commit.
+ * The North window's goals, every one editable at once: each goal's four
+ * fields, what to archive, what to add. One Save, one commit. The text over
+ * them has its own editor on the page since v2.22 and is not in here.
  *
  * ## Why one form and not an Edit on every card
  *
@@ -123,7 +124,6 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
   const today = todayKey()
   const archived = archivedGoals(data.goals)
 
-  const [picture, setPicture] = useState(data.picture?.text ?? '')
   const [rows, setRows] = useState<GoalRow[]>(() => {
     const existing = activeGoals(data.goals).map(rowOf)
     // Always at least one row: a form with a picture and no goal on it would
@@ -134,20 +134,15 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
   const [showArchive, setShowArchive] = useState(false)
   const [focusKey, setFocusKey] = useState<string | null>(null)
 
-  const pictureRef = useRef<HTMLTextAreaElement>(null)
   const titleRefs = useRef(new Map<string, HTMLTextAreaElement>())
 
-  // Focus lands in the form the moment it opens - on the picture from
-  // Compose, on the new goal's name from Write one down - and on each row
-  // Add another makes. Otherwise somebody on a keyboard has no way to know
-  // a form appeared at all.
+  // Focus lands in the form the moment it opens - on the first goal's name
+  // from Compose, on the new goal's name from Write one down - and on each
+  // row Add another makes. Otherwise somebody on a keyboard has no way to
+  // know a form appeared at all.
   useEffect(() => {
-    if (focus === 'goal') {
-      const last = rows[rows.length - 1]
-      titleRefs.current.get(last.key)?.focus()
-    } else {
-      pictureRef.current?.focus()
-    }
+    const row = focus === 'goal' ? rows[rows.length - 1] : rows[0]
+    if (row) titleRefs.current.get(row.key)?.focus()
     // Only on mount: rows changing later is handled by focusKey below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -157,18 +152,6 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
     titleRefs.current.get(focusKey)?.focus()
     setFocusKey(null)
   }, [focusKey])
-
-  // The picture's box grows with what is in it. A textarea with a fixed row
-  // count either wastes half its height or scrolls inside itself the moment
-  // a line wraps on a phone, and a paragraph somebody is rewriting should
-  // never be partly hidden by its own box. jsdom has no layout and reports
-  // no scroll height, which is why nothing is written when it says zero.
-  useEffect(() => {
-    const el = pictureRef.current
-    if (!el || !el.scrollHeight) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
-  }, [picture])
 
   const activeRows = rows.filter(r => !r.archive).length
   const full = activeRows >= MAX_ACTIVE_GOALS
@@ -209,7 +192,6 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
 
   function save() {
     const draft: NorthDraft = {
-      picture,
       goals: rows.map(r => ({
         id: r.id,
         title: r.title,
@@ -235,23 +217,6 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
         onDone()
       }}
     >
-      <div className="north-compose-picture">
-        <label className="field">
-          <span className="north-layer-label">The picture</span>
-          <textarea
-            ref={pictureRef}
-            rows={5}
-            maxLength={700}
-            value={picture}
-            placeholder="I wake before the house does."
-            onChange={e => setPicture(e.target.value)}
-          />
-        </label>
-        <span className="north-compose-hint">
-          First person, present tense: how you look, how you live, what you do in the morning.
-        </span>
-      </div>
-
       {rows.map((row, index) =>
         row.archive ? (
           <p key={row.key} className="north-compose-archived">

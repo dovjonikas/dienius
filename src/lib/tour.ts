@@ -290,18 +290,16 @@ export const DESKTOP_STEPS: TourStep[] = [
   {
     id: 'north',
     title: 'One direction',
-    text: 'Type one line of who you are becoming.',
-    // Four, and the last one present wins. The picture's line is the whole
-    // of an empty North window; Keep it is disabled until a line is typed
-    // and takes over the moment it is not, so the ring lands on the button
-    // rather than the card landing on it. Once the picture is kept, the
-    // goal offer appears under it; once that is pressed, Compose opens on a
-    // blank goal and the step ends on Save. Somebody who already has a
-    // picture starts at the offer, which is the same walk with one step
-    // fewer.
+    text: 'Type a line of your own.',
+    // Four, and the last one present wins. The text's editor is the whole of
+    // an empty North; a line typed into it moves the ring to Done, which is
+    // the way back to reading. Once the text is there, the goal offer
+    // appears under it; once that is pressed, Compose opens on a blank goal
+    // and the step ends on Save. Somebody who already has a text starts at
+    // the offer, which is the same walk with one step fewer.
     targets: [
-      { selector: '[data-tour="picture-field"]', typed: 'Now click Keep it.' },
-      { selector: '[data-tour="picture-keep"]', text: 'Now click Keep it.' },
+      { selector: '[data-tour="picture-field"]', typed: 'Now click Done.' },
+      { selector: '[data-tour="picture-keep"]', text: 'Now click Done.' },
       { selector: '[data-tour="goal-add"]', text: 'Click Write one down. A goal never shows progress, only why.' },
       { selector: '[data-tour="goal-save"]', text: 'Name it, then click Save.' },
     ],

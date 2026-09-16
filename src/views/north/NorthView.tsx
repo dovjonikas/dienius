@@ -6,52 +6,46 @@ import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
 
 /**
- * North: the picture, the goals, what you do to deserve them, and what
- * pulls you off them. One window, read from the top as one piece of writing.
+ * North: one text, read every morning, and under it the goals.
  *
- * ## The four layers
+ * ## The text
  *
- * 1. **The picture** - who you are becoming, in the first person, a few
- *    lines at most. The heading over everything else here.
- * 2. **The goals** - what, why, who it makes you. Four at most, an age each
- *    and nothing that measures anything.
- * 3. **What I do to deserve this** - under each goal, two to four concrete
- *    things done most days. The bridge between a direction and a Tuesday,
- *    and the one line the Monday card carries.
- * 4. **What pulls me off this** - the if-then rules under the goal they
- *    protect, exactly as v2.0 built them.
+ * Since v2.22 the page opens on the person's own words - a dozen or so
+ * short lines in blocks, a blank line between blocks, and nothing the app
+ * adds to them: no heading over them, no fields, no structure. It is what
+ * the owner asked for in one sentence: a text they see every morning that
+ * they wrote themselves. It starts empty and the app suggests none of it;
+ * the placeholder says where to write and nothing else. See DECISIONS
+ * "North is a text".
  *
- * ## Built once, left in peace
+ * Written in a plain textarea on this page, saved on its own half a second
+ * after the last keystroke and on the way out. One door: the field Compose
+ * carried for the same text until v2.22 was a second way to one thing, and
+ * two ways to one thing is one too many.
  *
- * Until v2.1 a goal was written in Settings, four taps from the day, on the
- * argument that something you can rewrite from the screen you look at every
- * morning is something you will rewrite on a bad morning. That argument was
- * right about the day view and wrong about this window: North is not a
- * screen anybody lands on by accident. It is the sixth icon and the `6`
- * key, and nothing on the day view edits it. So editing lives here, behind
- * one quiet Compose in the corner rather than an Add on every card, and it
- * edits every layer at once and saves in one press - the shape of sitting
- * down to rewrite the whole page, which is a thing done rarely, rather than
- * the shape of fixing one goal, which is a thing done on bad mornings. See
- * DECISIONS, "North is built once and left in peace".
+ * ## The goals, under it
  *
- * The only thing written *without* Compose is the first line of the picture,
- * because an empty window with a twelve-field form on it is a form, and the
- * whole of what this window should ask of somebody new is one sentence.
+ * What, why, who it makes you; what you do to deserve it; what pulls you
+ * off it. Four at most, an age each, and nothing that measures anything -
+ * as v2.1 built them, edited behind one quiet Compose that saves in one
+ * press. See DECISIONS, "North is built once and left in peace".
  *
  * ## What this screen refuses to do
  *
  * Everything ARCHITECTURE section 6 says, unchanged: no progress, no
  * percentage, no milestone, no target date, no streak, no checkbox, and no
- * count of anything that goes up. The deserve lines are a plain list with
- * nothing to tick, because a list that could be ticked would be a
- * scoreboard, and a scoreboard is exactly the thing this window is not.
+ * count of anything that goes up.
  */
 export function NorthView() {
   const data = useAppData()
   const goals = activeGoals(data.goals)
   const archived = archivedGoals(data.goals)
   const [composing, setComposing] = useState<ComposeFocus | null>(null)
+  // Open on the editor when there is no text yet. Decided once, at mount:
+  // the first save of a new text must not flip the page to reading under
+  // the hand still typing it, which is what deriving this from the text
+  // alone did.
+  const [editing, setEditing] = useState(() => (data.picture?.text ?? '') === '')
   const composeRef = useRef<HTMLButtonElement>(null)
   const wasComposing = useRef(false)
   // Focus goes back to Compose when the form closes. The form itself cannot
@@ -61,16 +55,15 @@ export function NorthView() {
     if (!composing && wasComposing.current) composeRef.current?.focus()
     wasComposing.current = composing !== null
   }, [composing])
-  const picture = data.picture
-  // Compose only once there is something to compose. On an empty window the
-  // one control is the picture's own line, and a second control beside it
-  // would be a second question.
-  //
-  // A rule with no goal counts, since v2.19: deleting the last goal leaves
-  // its rules behind on purpose, they wait inside Compose now, and a window
-  // that hid the only way in would have hidden them with it.
-  const hasAnything =
-    !!picture || goals.length > 0 || archived.length > 0 || unfiledRules(data.ifThens, data.goals).length > 0
+  const text = data.picture?.text ?? ''
+  // And the editor whenever the text is gone - emptied here, or erased on
+  // another device - since there is nothing to read.
+  const writing = editing || text === ''
+  // Compose only once there is something to compose. A rule with no goal
+  // counts, since v2.19: deleting the last goal leaves its rules behind on
+  // purpose, they wait inside Compose now, and a window that hid the only
+  // way in would have hidden them with it.
+  const hasAnything = goals.length > 0 || archived.length > 0 || unfiledRules(data.ifThens, data.goals).length > 0
 
   return (
     <section className="north-view" aria-label="North">
@@ -84,7 +77,7 @@ export function NorthView() {
             type="button"
             className="north-compose-open"
             data-tour="north-compose"
-            onClick={() => setComposing('picture')}
+            onClick={() => setComposing('goals')}
           >
             Compose
           </button>
@@ -95,9 +88,13 @@ export function NorthView() {
         <NorthCompose focus={composing} onDone={() => setComposing(null)} />
       ) : (
         <>
-          {picture ? <ThePicture text={picture.text} /> : <PictureInvitation />}
+          {writing ? (
+            <NorthEditor text={text} onDone={() => setEditing(false)} />
+          ) : (
+            <NorthText text={text} onEdit={() => setEditing(true)} />
+          )}
 
-          {goals.length === 0 && picture && <GoalOffer onWrite={() => setComposing('goal')} />}
+          {goals.length === 0 && !writing && <GoalOffer onWrite={() => setComposing('goal')} />}
 
           {goals.length > 0 && (
             <div className="north-goals">
@@ -106,7 +103,6 @@ export function NorthView() {
               ))}
             </div>
           )}
-
         </>
       )}
     </section>
@@ -114,77 +110,110 @@ export function NorthView() {
 }
 
 /**
- * The picture, read. Set like the preface of a book: larger, looser, and
- * with more air around it than anything under it, because it is the one
- * thing on the screen that is about the person rather than about a goal.
- * Line breaks are the person's own and are kept.
+ * The text, read. The largest type on the screen, a loose line, the
+ * person's own line breaks kept, and nothing over it or around it - no
+ * label, no frame. Under it, one quiet Edit.
  */
-function ThePicture({ text }: { text: string }) {
+function NorthText({ text, onEdit }: { text: string; onEdit: () => void }) {
   return (
     <div className="north-picture">
-      {/* No label over it since v2.18. A small-caps THE PICTURE above
-          somebody's own sentences is the thing that made this window read
-          as a template with the fields filled in - and the page is better
-          for opening on the person's own words. The explanation for the
-          word lives on the invitation, which is where somebody meets it
-          for the first time and where Explain.test.tsx looks for it. */}
       <p className="north-picture-text">{text}</p>
+      <p className="north-text-actions">
+        <button type="button" className="north-compose-open" onClick={onEdit}>
+          Edit
+        </button>
+      </p>
     </div>
   )
 }
+
+/** Half a second after the last keystroke, the text is written. */
+export const NORTH_SAVE_AFTER_MS = 500
 
 /**
- * The one way in for somebody with no picture yet: a sentence and a line.
+ * The text, written. A textarea and a Done, and nothing else on the page
+ * while it is open.
  *
- * One line, not a paragraph, and not the four goals' twelve fields. A
- * window with nothing on it has to ask exactly one thing, and "one line
- * about who you are becoming" is the one thing everything else here hangs
- * off. It can grow into six lines later, in Compose.
+ * Saved on its own: half a second after the last keystroke, and whatever is
+ * still pending on the way out - Done, or a press on the rail. Nothing typed
+ * is ever lost to a press somewhere else, and Done is only ever the way back
+ * to reading. What is typed is kept as typed; the store trims the two ends
+ * of the whole text and nothing inside it.
  *
- * This is also the top of the window for everybody who wrote goals before
- * the picture existed: the invitation sits above their goals until it is
- * answered once, and then it is gone.
+ * It grows with the text - a row per line, eight at least - rather than
+ * measuring itself: jsdom has no layout, and a row count is the same answer
+ * on every screen. The placeholder says where to write and suggests nothing,
+ * because the app writes none of this.
  */
-function PictureInvitation() {
-  const [line, setLine] = useState('')
-  const ready = line.trim().length > 0
+function NorthEditor({ text, onDone }: { text: string; onDone: () => void }) {
+  const [draft, setDraft] = useState(text)
+  const [saved, setSaved] = useState(false)
+  const ref = useRef<HTMLTextAreaElement>(null)
+  const pending = useRef<{ timer: ReturnType<typeof setTimeout>; draft: string } | null>(null)
 
-  function keep() {
-    if (!ready) return
-    actions.setPicture(line)
+  useEffect(() => {
+    ref.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    if (draft === text) return
+    const timer = setTimeout(() => {
+      pending.current = null
+      actions.setPicture(draft)
+      setSaved(true)
+    }, NORTH_SAVE_AFTER_MS)
+    pending.current = { timer, draft }
+    return () => clearTimeout(timer)
+  }, [draft, text])
+
+  // Whatever is still pending is written now: on Done, before the page
+  // decides what to show, and on the way out for a press on the rail.
+  function flush() {
+    const p = pending.current
+    if (!p) return
+    clearTimeout(p.timer)
+    pending.current = null
+    actions.setPicture(p.draft)
   }
+  useEffect(() => flush, [])
 
   return (
-    <div className="north-invite">
-      <p className="north-layer-label">
-        <Explain id="picture">The picture</Explain>
-      </p>
-      <p className="north-invite-lead">
-        Who you are becoming: how you look, how you live, what you do in the morning - one line is enough
-        to start.
-      </p>
-      <input
-        className="north-invite-line"
-        aria-label="The picture"
+    <div className="north-editor">
+      <textarea
+        ref={ref}
+        className="north-editor-text"
+        aria-label="North"
         data-tour="picture-field"
-        maxLength={240}
-        placeholder="I wake before the house does."
-        value={line}
-        onChange={e => setLine(e.target.value)}
-        onKeyDown={e => {
-          if (e.key !== 'Enter') return
-          e.preventDefault()
-          keep()
+        placeholder="Write here."
+        rows={Math.max(8, draft.split('\n').length + 1)}
+        maxLength={20000}
+        value={draft}
+        onChange={e => {
+          setDraft(e.target.value)
+          setSaved(false)
         }}
       />
-      <button type="button" className="btn-primary" data-tour="picture-keep" disabled={!ready} onClick={keep}>
-        Keep it
-      </button>
+      <div className="north-editor-foot">
+        <span className="north-saved" role="status">
+          {saved ? 'Saved' : ''}
+        </span>
+        <button
+          type="button"
+          className="btn-primary"
+          data-tour="picture-keep"
+          onClick={() => {
+            flush()
+            onDone()
+          }}
+        >
+          Done
+        </button>
+      </div>
     </div>
   )
 }
 
-/** The one next thing once the picture exists and no goal does yet. */
+/** The one next thing once the text exists and no goal does yet. */
 function GoalOffer({ onWrite }: { onWrite: () => void }) {
   return (
     <div className="north-offer">

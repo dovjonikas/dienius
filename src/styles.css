@@ -10665,27 +10665,37 @@ button.task-library:hover { color: var(--text); }
   overflow-wrap: anywhere;
 }
 
-/* The invitation: a sentence and one line. The whole of an empty window. */
-.north-invite {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s3);
-  margin-bottom: var(--s8);
+/* The text, written: one box, the reading measure, and Done under it with
+   the word Saved on the other side when there is something to say. The box
+   is the base field rule's; it only grows here. */
+.north-editor { max-width: 70ch; margin-bottom: var(--s7); }
+
+.north-editor-text {
+  width: 100%;
+  font-size: var(--t-md);
+  line-height: 1.6;
+  resize: vertical;
 }
 
-.north-invite-lead,
+.north-editor-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: var(--s3);
+}
+
+.north-saved { color: var(--faint); font-size: var(--t-sm); }
+
+/* Under the text, read: the one quiet way into the editor. */
+.north-text-actions { margin: var(--s4) 0 0; }
+
 .north-offer p {
   margin: 0;
   max-width: 52ch;
   color: var(--muted);
   font-size: var(--t-md);
   line-height: 1.6;
-}
-
-.north-invite-line {
-  width: 100%;
-  max-width: 52ch;
 }
 
 .north-offer {

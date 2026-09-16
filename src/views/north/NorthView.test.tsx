@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthView } from './NorthView'
 import { actions, getData } from '../../lib/store'
@@ -44,44 +44,74 @@ async function compose(user: ReturnType<typeof userEvent.setup>) {
 
 // --- the empty window --------------------------------------------------------
 
-test('with nothing written, the window is one invitation to write the picture and nothing else', () => {
+/**
+ * The text, since v2.22: written in a plain textarea on the page, saved on
+ * its own, read back as the person typed it. Every line in these tests is
+ * a generic one - the app suggests none of this text and the tests carry
+ * none of anybody's.
+ */
+test('with nothing written, the page is the editor and nothing else', () => {
   render(<NorthView />)
-  expect(screen.getByRole('textbox', { name: 'The picture' })).toBeInTheDocument()
-  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Keep it'])
+  const box = screen.getByRole('textbox', { name: 'North' })
+  expect(box).toHaveFocus()
+  expect(box).toHaveAttribute('placeholder', 'Write here.')
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Done'])
   expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Compose' })).toBeNull()
 })
 
-test('one line and Keep it writes the picture, and the goal offer appears under it', async () => {
+test('what is typed is saved on its own after a pause, blank lines and all', async () => {
   const user = userEvent.setup()
   render(<NorthView />)
-  await user.type(screen.getByRole('textbox', { name: 'The picture' }), 'I wake before the house does.')
-  await user.click(screen.getByRole('button', { name: 'Keep it' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), 'First line here{Enter}Second line here{Enter}{Enter}Third line here')
+  await waitFor(() => expect(getData().picture?.text).toBe('First line here\nSecond line here\n\nThird line here'))
+  expect(await screen.findByText('Saved')).toBeInTheDocument()
+  // Still the editor: saving is not leaving.
+  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
+})
 
-  expect(getData().picture?.text).toBe('I wake before the house does.')
-  expect(screen.getByText('I wake before the house does.')).toBeInTheDocument()
-  expect(screen.queryByRole('textbox', { name: 'The picture' })).toBeNull()
+test('Done writes what is still pending, shows the text, and offers the first goal under it', async () => {
+  const user = userEvent.setup()
+  render(<NorthView />)
+  await user.type(screen.getByRole('textbox', { name: 'North' }), 'First line here')
+  await user.click(screen.getByRole('button', { name: 'Done' }))
+
+  expect(getData().picture?.text).toBe('First line here')
+  expect(screen.getByText('First line here')).toBeInTheDocument()
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Write one down' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Compose' })).toBeInTheDocument()
 })
 
-test('Enter in the picture line keeps it too, and a blank line keeps nothing', async () => {
+test('Edit opens the editor holding the text exactly, and Done goes back to reading', async () => {
   const user = userEvent.setup()
+  picture('First line here\n\nSecond line here')
   render(<NorthView />)
-  const line = screen.getByRole('textbox', { name: 'The picture' })
-  await user.type(line, '   {Enter}')
-  expect(getData().picture).toBeUndefined()
-  await user.type(line, 'Someone who finishes what he starts.{Enter}')
-  expect(getData().picture?.text).toBe('Someone who finishes what he starts.')
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  expect(screen.getByRole('textbox', { name: 'North' })).toHaveValue('First line here\n\nSecond line here')
+  await user.click(screen.getByRole('button', { name: 'Done' }))
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(getData().picture?.text).toBe('First line here\n\nSecond line here')
 })
 
-// The window with goals but no picture is every install from before North v2.
-// The invitation sits at the top until it is answered, and the goals are
-// under it exactly as they were.
-test('goals from before the picture existed show under the invitation, untouched', () => {
+test('emptying the text removes it, and the page is the editor again', async () => {
+  const user = userEvent.setup()
+  picture('First line here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  await user.clear(screen.getByRole('textbox', { name: 'North' }))
+  await user.click(screen.getByRole('button', { name: 'Done' }))
+  expect(getData().picture).toBeUndefined()
+  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
+})
+
+// The page with goals but no text is every install from before the text
+// existed. The editor sits at the top until it is answered, and the goals
+// are under it exactly as they were.
+test('goals from before there was a text show under the editor, untouched', () => {
   goal('Ship something people keep using', { why: 'Because rented is not mine.' })
   render(<NorthView />)
-  expect(screen.getByRole('textbox', { name: 'The picture' })).toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Ship something people keep using' })).toBeInTheDocument()
   expect(screen.getByText('Because rented is not mine.')).toBeInTheDocument()
 })
@@ -132,50 +162,48 @@ test('the deserve field stops at four lines rather than trimming a fifth on save
 
 // --- Compose ----------------------------------------------------------------
 
-// Fifteen seconds rather than the runner's five. Compose types a picture and
-// four goals through real key presses, which is four seconds on its own and
-// past five once the suite runs a hundred and forty files in parallel - the
-// same trade the 20MB import test makes, for the same reason.
-test('Compose edits the picture and every goal in place, and Cancel drops the draft', async () => {
+// Fifteen seconds rather than the runner's five. Compose types through real
+// key presses, which is seconds on its own and past five once the suite
+// runs a hundred and forty files in parallel - the same trade the 20MB
+// import test makes, for the same reason.
+test('Compose edits every goal in place, leaves the text alone, and Cancel drops the draft', async () => {
   const user = userEvent.setup()
-  picture('I wake early.')
+  picture('First line here')
   goal('Ship something', { why: 'Because.' })
   goal('Be strong at fifty')
   render(<NorthView />)
 
   await user.click(screen.getByRole('button', { name: 'Compose' }))
-  expect(screen.getByLabelText('The picture')).toHaveFocus()
-  await user.clear(screen.getByLabelText('The picture'))
-  await user.type(screen.getByLabelText('The picture'), 'I wake before the house does.')
+  expect(screen.getAllByLabelText('What')[0]).toHaveFocus()
+  // The text is not in here since v2.22: it has its own editor on the page.
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
   await user.clear(screen.getAllByLabelText('What')[1])
   await user.type(screen.getAllByLabelText('What')[1], 'Be strong at sixty')
   await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
-  expect(getData().picture?.text).toBe('I wake early.')
   expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at fifty'])
-  expect(screen.getByText('I wake early.')).toBeInTheDocument()
+  expect(screen.getByText('First line here')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Compose' }))
-  await user.clear(screen.getByLabelText('The picture'))
-  await user.type(screen.getByLabelText('The picture'), 'I wake before the house does.')
   await user.clear(screen.getAllByLabelText('What')[1])
   await user.type(screen.getAllByLabelText('What')[1], 'Be strong at sixty')
   await user.click(screen.getByRole('button', { name: 'Save' }))
 
-  expect(getData().picture?.text).toBe('I wake before the house does.')
+  expect(getData().picture?.text).toBe('First line here')
   expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at sixty'])
   expect(getData().goals[0].why).toBe('Because.')
 }, 15_000)
 
 test('Escape leaves Compose without saving', async () => {
   const user = userEvent.setup()
-  picture('I wake early.')
+  picture('First line here')
+  goal('Ship something')
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Compose' }))
-  await user.type(screen.getByLabelText('The picture'), ' And again.')
+  await user.type(screen.getAllByLabelText('What')[0], ' more')
   await user.keyboard('{Escape}')
-  expect(screen.queryByLabelText('The picture')).toBeNull()
-  expect(getData().picture?.text).toBe('I wake early.')
+  expect(screen.queryByLabelText('What')).toBeNull()
+  expect(getData().goals[0].title).toBe('Ship something')
 })
 
 test('Compose archives a goal on Save and not before, and Undo keeps it', async () => {
@@ -458,6 +486,9 @@ test('nothing on the page is a number', () => {
 test('leaving Compose puts focus back on the Compose control', async () => {
   const user = userEvent.setup()
   picture()
+  // Compose is for the goals since v2.22 - the text has its own editor - so
+  // there has to be one for the control to exist.
+  goal('Ship something')
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Compose' }))
   await user.keyboard('{Escape}')
