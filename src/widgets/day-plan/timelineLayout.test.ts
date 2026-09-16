@@ -862,6 +862,23 @@ test('a compressed stretch decides the step for the whole axis', () => {
   expect(new Set(steps).size).toBe(1)
 })
 
+/**
+ * The owner read this grid as hours that did not match the blocks: a block
+ * from 13:30 to 15:00 "drawn at the 14:00 mark". The marks and the blocks
+ * are on one scale - every position is the same map of its minute - but the
+ * scale is not even, and a number standing beside a block's body is read as
+ * that block's time. So an hour inside a block is not labelled, and the
+ * block says its own times; an hour at a block's edge still is, because
+ * there it says exactly where the block starts or ends.
+ */
+test('an hour inside a block is not labelled beside it, and an hour at its edge is', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Meeting', '13:30', 90)])
+  const kept = [...legibleHourLabels(EVERY_HOUR, linear(1), 28, layout.anchors)].map(m => m / 60)
+  expect(kept).toEqual(expect.arrayContaining([9, 11, 13, 15]))
+  expect(kept).not.toContain(10)
+  expect(kept).not.toContain(14)
+})
+
 /** The window grows only when it has to, and says so by handing back the same object. */
 const DRAWN = { start: 420, end: 1320 }
 

@@ -361,6 +361,57 @@ test('a full-length sized anchor does not carry the compact modifier class', () 
 
 // --- visual rebuild: half-hour rules --------------------------------------
 
+/**
+ * One scale for the blocks and the hours. The grid is not linear: a short
+ * block or a short gap is given the room it needs to be read and pressed,
+ * so an hour is not always the same height. But every block and every hour
+ * mark is placed by the same map of its minute, so a block that starts on an
+ * hour starts on that hour's line whatever the day did to the hours around
+ * it - and no hour's number is drawn beside a block's body, where the eye
+ * reads it as the block's time.
+ */
+const SQUEEZED_DAY = [
+  anchor('Deep work', '09:00', 120),
+  anchor('Standup', '11:00', 15),
+  anchor('Call', '11:30', 15),
+  anchor('Lunch', '12:30', 45),
+  anchor('Meeting', '13:30', 90),
+  anchor('Review', '15:00', 60),
+  anchor('Walk', '17:30', 40),
+]
+
+test('a block that starts on an hour starts on that hour line, however unevenly the hours are drawn', () => {
+  const { container } = render(<TimelineGrid tasks={SQUEEZED_DAY} />)
+  const hourTop = (minutes: number) =>
+    parseFloat((container.querySelector(`.timeline-hour[data-minutes="${minutes}"]`) as HTMLElement).style.top)
+  const blockTop = (title: string) =>
+    parseFloat(([...container.querySelectorAll<HTMLElement>('.timeline-anchor')].find(b => b.textContent?.startsWith(title)) as HTMLElement).style.top)
+
+  expect(blockTop('Deep work')).toBe(hourTop(9 * 60))
+  expect(blockTop('Standup')).toBe(hourTop(11 * 60))
+  expect(blockTop('Review')).toBe(hourTop(15 * 60))
+  // A block starting between two hours starts between their lines.
+  expect(blockTop('Meeting')).toBeGreaterThan(hourTop(13 * 60))
+  expect(blockTop('Meeting')).toBeLessThan(hourTop(14 * 60))
+  // And the hours really are uneven on this day, which is what makes the check worth having.
+  const heights = [9, 10, 11, 12, 13, 14, 15].map(h => Math.round(hourTop((h + 1) * 60) - hourTop(h * 60)))
+  expect(new Set(heights).size).toBeGreaterThan(1)
+})
+
+test('no hour number stands beside the body of a block', () => {
+  const { container } = render(<TimelineGrid tasks={SQUEEZED_DAY} />)
+  const blocks = [...container.querySelectorAll<HTMLElement>('.timeline-anchor')].map(b => {
+    const top = parseFloat(b.style.top)
+    return { top, bottom: top + parseFloat(b.style.height) }
+  })
+  const labelled = [...container.querySelectorAll<HTMLElement>('.timeline-hour')].filter(h => h.querySelector('.timeline-hour-label'))
+  expect(labelled.length).toBeGreaterThan(0)
+  for (const hour of labelled) {
+    const top = parseFloat(hour.style.top)
+    expect(blocks.some(b => b.top + 0.5 < top && top < b.bottom - 0.5)).toBe(false)
+  }
+})
+
 test('half-hour rules render at every half-hour within the window, with no label of their own', () => {
   const { container } = render(
     <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} />,

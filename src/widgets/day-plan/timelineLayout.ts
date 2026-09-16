@@ -817,6 +817,16 @@ export function fitPxPerMinute(
  * that even every sixth hour collides. It is worse to read than a regular
  * step and better than two numbers printed on top of each other, and the
  * rule that text is always readable is the one that cannot bend.
+ *
+ * **And no number beside a block's body.** The marks and the blocks are on
+ * one scale - both are placed by the same map of their minute - but the
+ * scale is not even, because a short block or gap is given the room it needs,
+ * and an hour label standing beside the middle of a block is read as that
+ * block's time. The owner's report, v2.24: a block from 13:30 to 15:00 "drawn
+ * at the 14:00 mark", which it was, a third of the way down, where 14:00 is.
+ * So an hour strictly inside a block is not a candidate for a label, and the
+ * block says its own start and end; an hour at a block's edge still is,
+ * because there it is exactly where the block starts or ends.
  */
 const HOUR_LABEL_STEPS = [1, 2, 3, 4, 6]
 
@@ -824,12 +834,15 @@ export function legibleHourLabels(
   marks: number[],
   topPx: (minutes: number) => number,
   minGapPx: number,
+  blocks: TimelineAnchorBlock[] = [],
 ): Set<number> {
+  const bodies = blocks.map(drawnInterval)
+  const open = marks.filter(mark => !bodies.some(body => body.start < mark && mark < body.end))
   for (const step of HOUR_LABEL_STEPS) {
-    const every = marks.filter(mark => mark % (step * 60) === 0)
+    const every = open.filter(mark => mark % (step * 60) === 0)
     if (every.length > 0 && allGapsClear(every, topPx, minGapPx)) return new Set(every)
   }
-  return greedyHourLabels(marks, topPx, minGapPx)
+  return greedyHourLabels(open, topPx, minGapPx)
 }
 
 function allGapsClear(marks: number[], topPx: (minutes: number) => number, minGapPx: number): boolean {

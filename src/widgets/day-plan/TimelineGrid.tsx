@@ -686,7 +686,7 @@ export function TimelineGrid({
 
   const vertical = computeVerticalLayout(window, anchors, { pxPerMinute, ...floors })
   const heightPx = Math.round(vertical.totalHeightPx)
-  const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX)
+  const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX, anchors)
 
   // The geometry object handed upward is created once and never replaced -
   // see the onGeometry prop. What changes every render is this ref, which it
@@ -816,7 +816,7 @@ export function TimelineGrid({
             })}
 
             {marks.map(mark => (
-              <div key={mark} className="timeline-hour" style={{ top: `${vertical.topPx(mark)}px` }}>
+              <div key={mark} className="timeline-hour" data-minutes={mark} style={{ top: `${vertical.topPx(mark)}px` }}>
                 {!hideHours && labelledMarks.has(mark) && <span className="timeline-hour-label">{formatClock(mark)}</span>}
                 <span className="timeline-hour-rule" />
               </div>

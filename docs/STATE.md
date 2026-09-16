@@ -165,6 +165,24 @@ device never seen, the memory staying out of the plan, and the old key
 cleared; the app shows it over the day, closes it three ways, and opens
 on the day.
 
+### Stage 6 - E, the timeline's scale: checked, and one thing fixed
+
+Measured on the sample day in a browser: every block and every hour line
+is placed by the same map of its minute (`computeVerticalLayout`'s
+`topPx`), and a block that starts on an hour starts exactly on that hour's
+line. The hours are uneven on purpose - CONVENTIONS 4: a short block or gap
+is given the room it needs to be read and pressed, and at 1366x768 the
+whole day fits by drawing an hour anywhere between nothing and seventy
+pixels. What was wrong was the labels: an hour mark inside a block's body
+put its number beside the block, and the eye read it as the block's time -
+the owner's "13:30 drawn at the 14:00 mark", which was 14:00, a third of
+the way down. `legibleHourLabels` no longer labels an hour strictly inside
+a block; the block says its own start and end, and an hour at a block's
+edge keeps its number. Tests: a block starting on an hour has that hour
+line's top on a day whose hours are measurably uneven, a block starting
+between two hours lies between their lines, and no labelled hour stands
+beside a block's body; planting the labels back fails two.
+
 Left: the day's column in place of the headings row (C); the
 window after sleep in place of the morning page (D); the scale, the now
 line's weight and its time, the running and next block's lines, the past
