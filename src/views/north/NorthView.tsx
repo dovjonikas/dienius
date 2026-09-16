@@ -288,10 +288,14 @@ function NorthEditor({ text, onDone }: { text: string; onDone: () => void }) {
         <span className="north-saved" role="status">
           {saved ? 'Saved' : ''}
         </span>
+        {/* Disabled while there is nothing written: Done on an empty page
+            has nothing to be done with, and the tour reads a disabled
+            target as not yet there, so its card asks for a line first. */}
         <button
           type="button"
           className="btn-primary"
           data-tour="picture-keep"
+          disabled={draft.trim() === ''}
           onClick={() => {
             flush()
             onDone()

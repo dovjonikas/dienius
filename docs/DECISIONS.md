@@ -3228,3 +3228,63 @@ block editor's title field a third of its width.
 after any change to a base rule, and the pictures are read after every
 wave, on the two devices the owner uses. A clean report from a pass is
 still what it always was: nothing was found, not nothing is there.
+
+## North is a text
+
+The owner asked for one thing in North, in one paragraph: a personal text
+they see every morning. A dozen or so short lines, in blocks, a blank line
+between blocks. No headings, no bullets, no "when I want to give up"
+fields. Just text they type themselves. And the repo is public, so not a
+word of it is the app's: it starts empty, the placeholder says where to
+write and nothing else, and every line in a test is a generic one.
+
+**It was already there, as the picture.** North had carried a first-person
+text over its goals since v2.18, called the picture, written in Compose
+behind a label and a hint that suggested what to write. So the model did
+not change - one entity, validated, synced under its own key, in every
+backup - and the name `picture` stays in the data for the sake of every
+backup and repo already holding it. What changed is everything the person
+meets: the text is the page.
+
+**Written on the page, saved on its own.** A plain textarea, opened by
+Edit under the text or by an empty North, saving half a second after the
+last keystroke and whatever is still pending on Done and on the way out.
+What is typed is kept as typed; the store trims the two ends of the whole
+text and nothing inside it. Compose lost its copy of the field: two ways
+to one text is one too many, and the hint under it - first person, present
+tense, what you do in the morning - was the app suggesting content, which
+the brief forbids. The "picture" explainer went with the word.
+
+**Read as blocks.** A blank line in the text is the gap between two
+blocks, two blank lines are still one gap, and each block is the person's
+own lines at the largest size on the screen, on a loose line, with nothing
+over or around them. Seventy characters of measure, set on the block at
+the block's own size - set on the wrapper at the body's size it came to
+490px and folded every line of the seed's text in two, which the picture
+showed and nothing else did.
+
+**The goals wait under it.** Behind one quiet line: open where there are
+goals, since they are the person's words too and the day's North line
+draws on them, and closed over the offer where there are none, so a text
+with nothing under it is a text with nothing under it. No count on the
+line - nothing on this page counts anything, and a number beside the word
+would have been the first.
+
+**The morning is the reason it hits.** A page one press away is a page
+seen when somebody remembers to press, which on the mornings it is for is
+never. So the first open of the app on a new day opens on North, and the
+page ends in Start the day: past the words, not above them, so the way on
+is the far side of reading. The day it was read is a device fact under its
+own key, outside the plan and outside sync, the same reasoning as the
+library's open lists: each screen the owner meets that day meets them
+with it once, and written to the plan it would have been a commit a day
+in a synced repo, for nothing. Never in the demo - a stranger opening the
+sample fortnight should meet the day - and never without a text, since
+an empty North is an editor, not a morning.
+
+What the research on this kind of text agrees on is small and the design
+leans on all of it: the words are the person's own and in their voice
+(the app suggests none); they are met at a fixed moment rather than
+looked for (the morning opening); they are read whole and in order (the
+way on is at the end); and nothing about them is scored, so reading them
+never becomes a task with a streak.

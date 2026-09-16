@@ -97,7 +97,9 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   const line = page.getByRole('textbox', { name: 'North' })
   await line.pressSequentially('First line here')
   await expect(card).toContainText(`Now ${verb.toLowerCase()} Done.`)
-  await page.getByRole('button', { name: 'Done' }).click()
+  // The editor's own Done: a Focus session is running from the step before,
+  // and its bar has a Done of its own.
+  await page.getByRole('main').getByRole('button', { name: 'Done' }).click()
   await expect(card).toContainText(`${verb} Write one down`)
   await page.getByRole('button', { name: 'Write one down' }).click()
   await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Save.`)

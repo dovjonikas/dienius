@@ -9640,6 +9640,7 @@ button.task-library:hover { color: var(--text); }
   .task-note-mark,
   .task-library,
   .library-detail-pick,
+  .north-fold-toggle,
   .task-title-select {
     position: relative;
   }
@@ -9655,6 +9656,8 @@ button.task-library:hover { color: var(--text); }
   .task-library::after,
   /* The picker's link under the address field, where it is a link. */
   .library-detail-pick::after,
+  /* The one line the goals wait behind under North's text. */
+  .north-fold-toggle::after,
   .library-color::after,
   .category-wheel::after,
   .task-size::after,
@@ -10654,12 +10657,13 @@ button.task-library:hover { color: var(--text); }
    room for it here now, and nothing under it is wider. */
 .north-picture { margin-bottom: var(--s7); }
 
-.north-text { max-width: 70ch; }
-
 /* One block. The person's own lines, at the largest size on the screen and
    a loose line; the room under each block is the one thing drawn here that
-   was not typed. */
+   was not typed. The measure is the block's own, at the block's own size:
+   70ch on the wrapper, whose type is the body's 13px, came to 490px and
+   folded every line of the seed's text in two. */
 .north-block {
+  max-width: 70ch;
   margin: 0 0 1.4em;
   color: var(--text);
   font-size: var(--t-lg);
@@ -10671,8 +10675,13 @@ button.task-library:hover { color: var(--text); }
 
 .north-block:last-child { margin-bottom: 0; }
 
-/* The way on, in the morning: past the words, not above them. */
+/* The way on, in the morning: past the words, not above them. On a phone
+   it is the width of the text, the way a phone's one button is. */
 .north-start { margin-top: var(--s7); }
+
+@media (max-width: 1023px) {
+  .north-start { width: 100%; max-width: 70ch; }
+}
 
 /* The goals, folded under the text behind one quiet line. */
 .north-goals-fold { margin-top: var(--s8); }

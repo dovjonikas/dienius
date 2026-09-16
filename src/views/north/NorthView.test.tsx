@@ -66,6 +66,7 @@ test('with nothing written, the page is the editor and nothing else', () => {
   expect(box).toHaveFocus()
   expect(box).toHaveAttribute('placeholder', 'Write here.')
   expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Done'])
+  expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
   expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Compose' })).toBeNull()
 })
@@ -104,14 +105,14 @@ test('Edit opens the editor holding the text exactly, and Done goes back to read
   expect(getData().picture?.text).toBe('First line here\n\nSecond line here')
 })
 
-test('emptying the text removes it, and the page is the editor again', async () => {
+test('emptying the text removes it after the pause, and the page is the editor with nothing to be done', async () => {
   const user = userEvent.setup()
   picture('First line here')
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Edit' }))
   await user.clear(screen.getByRole('textbox', { name: 'North' }))
-  await user.click(screen.getByRole('button', { name: 'Done' }))
-  expect(getData().picture).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
+  await waitFor(() => expect(getData().picture).toBeUndefined())
   expect(screen.getByRole('textbox', { name: 'North' })).toBeInTheDocument()
 })
 

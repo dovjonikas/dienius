@@ -260,6 +260,8 @@ const SCREENS = [
       await p.evaluate(() => localStorage.removeItem('dienius:north-read'))
       await p.reload()
       await p.waitForSelector('nav')
+      // A reload of its own throws away the audit the walk had just added.
+      await p.addScriptTag({ content: AUDIT })
       await p.waitForTimeout(300)
     },
   },

@@ -32,9 +32,11 @@ export default defineConfig({
     // too, in the phone's words, with the sheets it uses there - and so is
     // the phone call, whose whole promise is three presses with nothing
     // scrolled at this size. A block's note joins them because reading one
-    // is a press on a card the finger is already on, and the palette's door
-    // because the door exists for the phone - see palette.e2e.ts.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // is a press on a card the finger is already on, the palette's door
+    // because the door exists for the phone - see palette.e2e.ts - and North
+    // because a text read every morning is read on whichever screen is in
+    // hand.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

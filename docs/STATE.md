@@ -36,6 +36,17 @@ Notes and Journal popovers; and every time field on the phone had shrunk to
 that change ran on a desktop. None of these was visible from the passes.
 They were visible in a picture.
 
+## v2.22, part two - North is a text
+
+Asked for the same evening, in one paragraph: a personal text seen every
+morning, a dozen short lines in blocks, no headings and no fields, typed by
+the owner and never suggested by the app. Built in four stages, one commit
+each: the model held by tests (it was already there as the picture), the
+editor on the page, reading as blocks with the goals folded under and the
+morning opening, and the phone with the browser test on both devices. See
+DECISIONS "North is a text". The repo is public and carries none of the
+owner's text; every line in a test is a generic one.
+
 ## v2.21 - eight reports in one day, and what they had in common
 
 The owner used the app for a day and reported eight things. Six were real
