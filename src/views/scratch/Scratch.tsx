@@ -391,9 +391,11 @@ function ScratchPanel({
                 )}
                 <div className="scratch-note-foot">
                   <span className="scratch-note-when">{whenLabel(note)}</span>
-                  {/* One group, so that on a phone with a long date - "Thursday,
-                      September 3 17:47" - the four wrap under it together
-                      rather than Delete dropping onto a line of its own. */}
+                  {/* The one thing a note is usually for stays on the row; the
+                      three rarer things wait behind More. Five notes carried
+                      twenty words of actions until v2.22, which read as a
+                      toolbar per line rather than a list of what was
+                      written. */}
                   <span className="scratch-note-actions">
                     {note.taskId && note.taskDate ? (
                       <button
@@ -412,20 +414,12 @@ function ScratchPanel({
                         To task
                       </button>
                     )}
-                    <button type="button" className="scratch-note-action" onClick={() => toLater(note)}>
-                      To Later
-                    </button>
-                    <button
-                      type="button"
-                      className="scratch-note-action"
-                      aria-pressed={note.pinned ?? false}
-                      onClick={() => actions.toggleScratchPin(note.id)}
-                    >
-                      {note.pinned ? 'Unpin' : 'Pin'}
-                    </button>
-                    <button type="button" className="scratch-note-action is-danger" onClick={() => void remove(note)}>
-                      Delete
-                    </button>
+                    <NoteMore
+                      note={note}
+                      onToLater={() => toLater(note)}
+                      onPin={() => actions.toggleScratchPin(note.id)}
+                      onDelete={() => void remove(note)}
+                    />
                   </span>
                 </div>
               </li>
@@ -434,6 +428,80 @@ function ScratchPanel({
         )}
       </div>
     </div>
+  )
+}
+
+/**
+ * The three rarer things a note can have done to it, behind one quiet More
+ * on its row. A small menu of its own rather than the day's context menu,
+ * which is about a task and placed at a pointer: this one hangs off its
+ * button, closes on a press elsewhere, on Escape, and on a choice, and
+ * gives focus back to the button each time.
+ */
+function NoteMore({
+  note,
+  onToLater,
+  onPin,
+  onDelete,
+}: {
+  note: ScratchNote
+  onToLater: () => void
+  onPin: () => void
+  onDelete: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLSpanElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const away = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', away)
+    return () => document.removeEventListener('pointerdown', away)
+  }, [open])
+  const choose = (run: () => void) => {
+    setOpen(false)
+    button.current?.focus()
+    run()
+  }
+  const about = (note.text || 'this note').trim().slice(0, 40)
+  return (
+    <span
+      ref={wrap}
+      className="scratch-note-more-wrap"
+      onKeyDown={e => {
+        if (e.key !== 'Escape' || !open) return
+        e.stopPropagation()
+        setOpen(false)
+        button.current?.focus()
+      }}
+    >
+      <button
+        ref={button}
+        type="button"
+        className="scratch-note-action scratch-note-more"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`More for ${about}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        More
+      </button>
+      {open && (
+        <span className="scratch-note-menu" role="menu">
+          <button type="button" role="menuitem" onClick={() => choose(onToLater)}>
+            To Later
+          </button>
+          <button type="button" role="menuitem" aria-pressed={note.pinned ?? false} onClick={() => choose(onPin)}>
+            {note.pinned ? 'Unpin' : 'Pin'}
+          </button>
+          <button type="button" role="menuitem" className="danger" onClick={() => choose(onDelete)}>
+            Delete
+          </button>
+        </span>
+      )}
+    </span>
   )
 }
 

@@ -58,26 +58,40 @@ test('creates a template with a block', async () => {
   expect(saved[0].blocks[0]).toMatchObject({ time: '09:00', title: 'Gym' })
 })
 
-test('deleting a template requires a confirming second tap', async () => {
+// Delete lives inside the template's editor since v2.22 - see
+// DeleteTemplateButton - so the list is one control per row and the delete
+// is where a person is sure which template they mean.
+test('deleting a template is two presses inside its editor, and the list has no delete on it', async () => {
   const user = userEvent.setup()
   actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
   render(<TemplatesView />)
+  expect(screen.queryByRole('button', { name: 'Delete Old' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Edit Old' }))
   await user.click(screen.getByRole('button', { name: 'Delete Old' }))
   expect(getData().templates).toHaveLength(1)
   await user.click(screen.getByRole('button', { name: 'Confirm delete Old' }))
   expect(getData().templates).toHaveLength(0)
+  // And the editor is gone with it.
+  expect(screen.queryByPlaceholderText('Template name')).toBeNull()
 })
 
 test('the delete confirmation resets when focus moves elsewhere', async () => {
   const user = userEvent.setup()
   actions.addTemplate({ name: 'Old', color: '#f9d48a', blocks: [] })
   render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Old' }))
   await user.click(screen.getByRole('button', { name: 'Delete Old' }))
   expect(screen.getByRole('button', { name: 'Confirm delete Old' })).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Edit Old' }))
+  await user.click(screen.getByPlaceholderText('Template name'))
   expect(getData().templates).toHaveLength(1)
-  await user.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(screen.getByRole('button', { name: 'Delete Old' })).toBeInTheDocument()
+})
+
+test('a template still being written has nothing to delete', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  expect(screen.queryByRole('button', { name: /^Delete/ })).toBeNull()
 })
 
 test('editing an existing template and saving updates it in place', async () => {

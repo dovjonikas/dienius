@@ -147,7 +147,9 @@ test('To Later moves the words exactly as they were written, and leaves the stre
   const user = userEvent.setup()
   actions.addScratch('Look up the #idea about pricing')
   render(<Scratch open onClose={() => {}} />)
-  await user.click(screen.getByRole('button', { name: 'To Later' }))
+  // To Later, Pin and Delete wait behind the row's More since v2.22.
+  await user.click(screen.getByRole('button', { name: /^More for/ }))
+  await user.click(screen.getByRole('menuitem', { name: 'To Later' }))
   expect(getData().backlog.map(i => i.title)).toEqual(['Look up the #idea about pricing'])
   expect(getData().scratch).toHaveLength(0)
   expect(screen.getByRole('status')).toHaveTextContent('Moved to Later.')
@@ -161,9 +163,12 @@ test('Pin brings a note to the top; Delete removes it and offers an undo', async
   const rows = () => within(screen.getByRole('list')).getAllByRole('listitem').map(li => li.textContent ?? '')
   expect(rows()[0]).toContain('newer')
   const older = screen.getAllByRole('listitem')[1]
-  await user.click(within(older).getByRole('button', { name: 'Pin' }))
+  await user.click(within(older).getByRole('button', { name: /^More for/ }))
+  await user.click(within(older).getByRole('menuitem', { name: 'Pin' }))
   expect(rows()[0]).toContain('older')
-  await user.click(within(screen.getAllByRole('listitem')[0]).getByRole('button', { name: 'Delete' }))
+  const first = screen.getAllByRole('listitem')[0]
+  await user.click(within(first).getByRole('button', { name: /^More for/ }))
+  await user.click(within(first).getByRole('menuitem', { name: 'Delete' }))
   expect(getData().scratch.map(n => n.text)).toEqual(['newer'])
 })
 

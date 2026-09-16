@@ -13127,6 +13127,45 @@ main:has(.week) > .calendar {
 
 /* Always visible, never a hover reveal - see .task-menu-button's note. Text
    buttons, small and quiet, because there are four of them on every line. */
+/* The delete at the far end of a template editor's footer, apart from Save
+   and Cancel: the one control there that is not about the draft. */
+.row > .delete-template { margin-left: auto; }
+
+/* A note's More, and the three things behind it. The same surface the day's
+   context menu is drawn on, hung under its own button. */
+.scratch-note-more-wrap { position: relative; display: inline-flex; }
+
+.scratch-note-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--s1));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-control);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+}
+
+.scratch-note-menu button {
+  min-height: 36px;
+  padding: var(--s1) var(--s3);
+  border: none;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.scratch-note-menu button:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
+.scratch-note-menu button.danger { color: var(--danger); }
+.scratch-note-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.scratch-note-menu button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
 .scratch-note-action {
   min-height: 0;
   padding: 3px var(--s2);

@@ -21,6 +21,7 @@ import { takenBlocks } from './takenHours'
 import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
+import { DeleteTemplateButton } from './DeleteTemplateButton'
 import { useListReorder } from './useListReorder'
 import { paletteColorName } from '../lib/colors'
 
@@ -144,13 +145,15 @@ interface TemplateEditorProps {
   categories: Category[]
   onSave: (draft: Draft) => void
   onCancel: () => void
+  /** Present for a template that exists: the one way to delete it, in here. */
+  onDelete?: () => void
 }
 
 // A standalone component, mounted only while a draft is open, so it can own
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSave, onCancel }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSave, onCancel, onDelete }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
   // Closed on every open, including on a template that already carries a
   // type: the value is on the line above it either way, and what is hidden
@@ -696,6 +699,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           Save template
         </button>
         <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
       </div>
     </div>
   )
@@ -713,10 +717,8 @@ export function TemplatesView() {
   const [weekDraft, setWeekDraft] = useState<(WeekDraft & { id?: string }) | null>(null)
   /** Open while "New template" has been pressed and the kind is still open. */
   const [asking, setAsking] = useState(false)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   function startEdit(t: Template) {
-    setConfirmDeleteId(null)
     setAsking(false)
     if (t.kind === 'week') {
       setWeekDraft({
@@ -750,15 +752,6 @@ export function TemplatesView() {
         highlight: b.highlight,
       })),
     })
-  }
-
-  function handleDeleteClick(t: Template) {
-    if (confirmDeleteId === t.id) {
-      actions.deleteTemplate(t.id)
-      setConfirmDeleteId(null)
-    } else {
-      setConfirmDeleteId(t.id)
-    }
   }
 
   function useStarter(starter: StarterTemplate) {
@@ -805,7 +798,6 @@ export function TemplatesView() {
    * not lose the thing that already worked.
    */
   function expandToWeek(from: Template) {
-    setConfirmDeleteId(null)
     setDraft(null)
     setAsking(false)
     const blocks = from.blocks.flatMap(b => {
@@ -873,10 +865,7 @@ export function TemplatesView() {
         {!draft && !weekDraft && !asking && (
           <button
             className="primary"
-            onClick={() => {
-              setConfirmDeleteId(null)
-              setAsking(true)
-            }}
+            onClick={() => setAsking(true)}
           >
             New template
           </button>
@@ -940,6 +929,14 @@ export function TemplatesView() {
           onChange={next => setWeekDraft({ ...next, id: weekDraft.id })}
           onSave={saveWeek}
           onCancel={() => setWeekDraft(null)}
+          onDelete={
+            weekDraft.id
+              ? () => {
+                  actions.deleteTemplate(weekDraft.id!)
+                  setWeekDraft(null)
+                }
+              : undefined
+          }
         />
       )}
 
@@ -952,6 +949,14 @@ export function TemplatesView() {
           initial={draft}
           onSave={saveDraft}
           onCancel={() => setDraft(null)}
+          onDelete={
+            draft.id
+              ? () => {
+                  actions.deleteTemplate(draft.id!)
+                  setDraft(null)
+                }
+              : undefined
+          }
         />
       )}
 
@@ -1007,20 +1012,11 @@ export function TemplatesView() {
                   ` · ${data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? ''}`}
               </span>
             </div>
+            {/* One control on the row. Delete is inside the editor since
+                v2.22 - see DeleteTemplateButton - so a list of three is not
+                three red buttons before anything is pressed. */}
             <button className="btn-secondary" aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>
               Edit
-            </button>
-            {/* Outlined from the start, filled once armed - the two states
-                CONVENTIONS section 6 describes. It used to be a plain button
-                until the first press, which made the control that destroys a
-                template look exactly like the one beside it that opens it. */}
-            <button
-              aria-label={confirmDeleteId === t.id ? `Confirm delete ${t.name}` : `Delete ${t.name}`}
-              className={confirmDeleteId === t.id ? 'btn-danger is-armed' : 'btn-danger'}
-              onClick={() => handleDeleteClick(t)}
-              onBlur={() => setConfirmDeleteId(prev => (prev === t.id ? null : prev))}
-            >
-              {confirmDeleteId === t.id ? 'Delete?' : 'Delete'}
             </button>
           </li>
         ))}

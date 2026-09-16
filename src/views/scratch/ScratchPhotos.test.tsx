@@ -122,7 +122,8 @@ test('deleting a note takes its pictures with it, and the undo brings both back'
   actions.addScratchPhoto(note.id, { id: 'p1', width: 10, height: 10 })
   render(<Scratch open onClose={() => {}} />)
 
-  await user.click(screen.getByRole('button', { name: 'Delete' }))
+  await user.click(screen.getByRole('button', { name: /^More for/ }))
+  await user.click(screen.getByRole('menuitem', { name: 'Delete' }))
   await waitFor(() => expect(getData().scratch).toHaveLength(0))
   expect(await photoIds()).toEqual([])
 })

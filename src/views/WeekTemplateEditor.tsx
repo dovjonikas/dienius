@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PALETTE_COLORS, paletteColorName } from '../lib/colors'
 import { categoryColor, resolvedColor } from '../lib/categories'
 import { useAppData } from '../lib/store'
+import { DeleteTemplateButton } from './DeleteTemplateButton'
 import { parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { readLastDuration } from '../widgets/day-plan/quickAddPrefs'
 import type { CategoryId } from '../lib/categories'
@@ -124,6 +125,8 @@ export interface WeekTemplateEditorProps {
   onChange: (draft: WeekDraft) => void
   onSave: () => void
   onCancel: () => void
+  /** Present for a week that exists: the one way to delete it, in here. */
+  onDelete?: () => void
 }
 
 /**
@@ -156,7 +159,7 @@ export interface WeekTemplateEditorProps {
  * the same reasoning, and deliberately the same words, as the repeat scope in
  * the task detail sheet.
  */
-export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTemplateEditorProps) {
+export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete }: WeekTemplateEditorProps) {
   const data = useAppData()
   const nameRef = useRef<HTMLInputElement>(null)
   // The block title, so a press on empty track lands the cursor where the
@@ -900,6 +903,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel }: WeekTe
         <button className="btn-secondary" onClick={onCancel}>
           Cancel
         </button>
+        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
       </div>
     </div>
   )
