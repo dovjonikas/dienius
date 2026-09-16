@@ -488,6 +488,27 @@ test('in free time the next block says when it starts, and on another day nothin
   }
 })
 
+/**
+ * A block ticked done is not what somebody is doing, whatever the clock says
+ * - the day's own rule, and the header's. So a block finished before its end
+ * says nothing about its end, a finished block still to come says nothing
+ * about its start, and the next one not done says when it starts.
+ */
+test('a block ticked done says nothing of when it ends or starts, and the next one not done says when it starts', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 9, 35))
+  try {
+    const tasks = [anchor('Shift', '09:00', 60, true), anchor('Gym', '11:00', 30, true), anchor('Walk', '12:00', 30)]
+    const { container } = render(<TimelineGrid tasks={tasks} isToday />)
+    const hints = [...container.querySelectorAll('.timeline-anchor-hint')]
+    expect(hints).toHaveLength(1)
+    expect(hints[0].closest('.timeline-anchor')?.textContent?.startsWith('Walk')).toBe(true)
+    expect(hints[0].textContent).toBe('starts in 2h 25 min')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
 test('draws no current-time indicator when isToday is not set, even if the clock would fall inside the window', () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 7, 31, 9, 30))

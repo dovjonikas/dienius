@@ -1,7 +1,7 @@
 import type { Task } from '../../lib/types'
 import { categoryColor, categoryLabel } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
-import { formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
+import { activeTask, formatDuration, isAnchor, nextTask, timeToMinutes } from './capacity'
 import type { Capacity } from './capacity'
 import type { DayScore } from './score'
 import { linkFor } from '../../lib/link'
@@ -18,6 +18,12 @@ export interface DayDigestProps {
   nowMinutes: number
   /** Only today has a "next" - a day in the past or the future has no now to measure from. */
   isToday: boolean
+  /**
+   * Whether the day's grid stands beside the rail - a wide screen with the
+   * day pane showing. While nothing is running, the grid's next block says
+   * when it starts (see nowHint), and Up next does not say it again.
+   */
+  gridBeside: boolean
 }
 
 /**
@@ -51,12 +57,18 @@ export interface DayDigestProps {
  * lie about a day spent in somebody else's calendar. Free counts them - see
  * the busy argument to computeCapacity - and this is where that is said.
  */
-export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday }: DayDigestProps) {
+export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, isToday, gridBeside }: DayDigestProps) {
   const upNext = isToday ? nextTask(tasks, nowMinutes) : undefined
   const { categories, library } = useAppData()
   const upNextColor = upNext ? categoryColor(upNext.category, categories) : undefined
   const upNextLink = upNext ? linkFor(upNext, library) : undefined
   const minutesAway = upNext ? timeToMinutes(upNext.time!) - nowMinutes : undefined
+  // Once, CONVENTIONS 23: while nothing runs, the grid beside the rail says
+  // on the next block when it starts - the block Up next names, by the same
+  // rule (nextTask and nowHint both take the earliest start after now that
+  // is not done). While something runs the grid is saying when that ends,
+  // and this is the one place the next start is said.
+  const gridSaysWhen = gridBeside && activeTask(tasks, nowMinutes) === undefined
 
   // Only tasks in the Deep work category, timed or not. This is the one number
   // here that is not already on screen somewhere else, and it is the one people
@@ -119,7 +131,7 @@ export function DayDigest({ tasks, capacity, score, sleepMinutes, nowMinutes, is
           </span>
           <span className="up-next-meta">
             {categoryLabel(upNext.category, categories) ?? 'Scheduled'}
-            {minutesAway !== undefined && minutesAway > 0 && ` · in ${formatDuration(minutesAway)}`}
+            {minutesAway !== undefined && minutesAway > 0 && !gridSaysWhen && ` · in ${formatDuration(minutesAway)}`}
           </span>
           {/* The block's choices, on the card the owner says they use most.
               A meal at noon is three recipes and a press, here rather than

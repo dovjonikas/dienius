@@ -882,25 +882,39 @@ test('an hour inside a block is not labelled beside it, and an hour at its edge 
 })
 
 /**
- * The one line of time the grid says, and only about now: the block running
- * now says when it ends, and while nothing is running the next block says
- * when it starts. Nothing else on the grid counts anything down.
+ * The one line of time the grid says, and only about now: the block the day
+ * calls running says when it ends, and while nothing is running the next
+ * block says when it starts. Nothing else on the grid counts anything down.
+ * Which block is running is handed in - the day's own rule, `activeTask`,
+ * the one the header names - so the grid and the header can never be about
+ * two different blocks.
  */
 test('the block running now says when it ends', () => {
   const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Walk', '12:00', 30)])
-  expect(nowHint(layout.anchors, 10 * 60 + 35)).toEqual({ id: 'Deep work', text: 'ends in 25 min' })
-  expect(nowHint(layout.anchors, 9 * 60 + 55)).toEqual({ id: 'Deep work', text: 'ends in 1h 5 min' })
+  expect(nowHint(layout.anchors, 10 * 60 + 35, 'Deep work')).toEqual({ id: 'Deep work', text: 'ends in 25 min' })
+  expect(nowHint(layout.anchors, 9 * 60 + 55, 'Deep work')).toEqual({ id: 'Deep work', text: 'ends in 1h 5 min' })
+})
+
+test('a block around now that the day does not call running says nothing of its end, and the next one says when it starts', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Walk', '12:00', 30)])
+  expect(nowHint(layout.anchors, 10 * 60 + 35, undefined)).toEqual({ id: 'Walk', text: 'starts in 1h 25 min' })
+})
+
+test('a block running past the end of the grid says when it really ends, not where the grid cuts it', () => {
+  const layout = computeTimelineLayout([anchor('Night shift', '22:00', 180)])
+  expect(layout.anchors[0].clippedEnd).toBe(true)
+  expect(nowHint(layout.anchors, 23 * 60, 'Night shift')).toEqual({ id: 'Night shift', text: 'ends in 2h' })
 })
 
 test('in free time the next block says when it starts, and only the next one', () => {
   const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Walk', '12:00', 30), anchor('Call', '14:00', 15)])
-  expect(nowHint(layout.anchors, 11 * 60 + 50)).toEqual({ id: 'Walk', text: 'starts in 10 min' })
+  expect(nowHint(layout.anchors, 11 * 60 + 50, undefined)).toEqual({ id: 'Walk', text: 'starts in 10 min' })
 })
 
 test('after the last block there is nothing to say, and a block with no length is never running', () => {
   const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Groceries', '13:00'), anchor('Walk', '15:00', 30)])
-  expect(nowHint(layout.anchors, 16 * 60)).toBeNull()
-  expect(nowHint(layout.anchors, 13 * 60 + 10)).toEqual({ id: 'Walk', text: 'starts in 1h 50 min' })
+  expect(nowHint(layout.anchors, 16 * 60, undefined)).toBeNull()
+  expect(nowHint(layout.anchors, 13 * 60 + 10, 'Groceries')).toEqual({ id: 'Walk', text: 'starts in 1h 50 min' })
 })
 
 /**

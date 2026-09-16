@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Category, Task } from '../../lib/types'
-import { formatDuration, windowFor, type SleepSettings } from './capacity'
+import { activeTask, formatDuration, windowFor, type SleepSettings } from './capacity'
 import { categoryColor } from '../../lib/categories'
 import type { DayEvent } from '../../lib/calendars'
 import { GapPicker } from './GapPicker'
@@ -707,8 +707,17 @@ export function TimelineGrid({
   const asleep = (minutes: number) => sleepBands.some(band => band.start < minutes && minutes < band.end)
   // Now, said once on the grid: when the running block ends, or in free time
   // when the next one starts - see nowHint. And what has ended steps back.
-  // Today's grid only; no other day has a now.
-  const hint = isToday ? nowHint(anchors, nowMinutes) : null
+  // Today's grid only; no other day has a now. Running is the day's own rule,
+  // the one the header names (activeTask), so a block ticked done is not
+  // running whatever the clock says, and a block ticked done ahead of its
+  // time is not what starts next.
+  const hint = isToday
+    ? nowHint(
+        anchors.filter(a => !tasks.find(t => t.id === a.id)?.done),
+        nowMinutes,
+        activeTask(tasks, nowMinutes)?.id,
+      )
+    : null
 
   // The geometry object handed upward is created once and never replaced -
   // see the onGeometry prop. What changes every render is this ref, which it

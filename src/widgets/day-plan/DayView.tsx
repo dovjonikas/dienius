@@ -253,6 +253,7 @@ export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTa
             sleepMinutes={asleepMinutes}
             nowMinutes={nowMinutes}
             isToday={isToday}
+            gridBeside={isWide && dayLayoutFocus !== 'tasks'}
           />
         </div>
       )}

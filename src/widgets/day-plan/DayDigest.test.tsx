@@ -21,7 +21,7 @@ function task(over: Partial<Task> = {}): Task {
   return { id: crypto.randomUUID(), title: 'Something', done: false, ...over }
 }
 
-function digest(tasks: Task[]) {
+function digest(tasks: Task[], gridBeside = false) {
   return render(
     <DayDigest
       tasks={tasks}
@@ -30,6 +30,7 @@ function digest(tasks: Task[]) {
       sleepMinutes={480}
       nowMinutes={13 * 60}
       isToday
+      gridBeside={gridBeside}
     />,
   )
 }
@@ -94,6 +95,7 @@ test('a day with somebody else\'s events on it says so, in a row that is not the
       sleepMinutes={480}
       nowMinutes={13 * 60}
       isToday
+      gridBeside={false}
     />,
   )
   expect(screen.getByText('Calendar')).toBeInTheDocument()
@@ -136,6 +138,29 @@ test('an empty day draws no figures at all', () => {
  * what is coming, and one press is the thing itself. The link comes from the
  * task or from the library item it is bound to - see `linkFor`.
  */
+/**
+ * When the next block starts is said once. Beside the grid, while nothing is
+ * running, the grid's next block says it on the block (see nowHint), so Up
+ * next names the block without it. While something runs the grid is saying
+ * when that ends, and Up next is the one place the next start is said; with
+ * the grid put away, the same.
+ */
+test('beside the grid up next leaves when it starts to the grid while nothing runs, and says it while something does', () => {
+  const walk = task({ title: 'Walk', time: '14:00', minutes: 30 })
+  const call = task({ title: 'Call', time: '12:30', minutes: 60 })
+
+  const free = digest([walk], true)
+  expect(free.container.querySelector('.up-next-meta')?.textContent).toBe('Scheduled')
+  free.unmount()
+
+  const busy = digest([call, walk], true)
+  expect(busy.container.querySelector('.up-next-meta')?.textContent).toBe('Scheduled · in 1h')
+  busy.unmount()
+
+  const away = digest([walk])
+  expect(away.container.querySelector('.up-next-meta')?.textContent).toBe('Scheduled · in 1h')
+})
+
 test('up next carries the door to what is next, in a new tab', () => {
   digest([task({ time: '14:00', minutes: 45, title: 'Spanish', link: 'http://localhost:8080/easy' })])
   const link = screen.getByRole('link', { name: /Open Spanish at localhost:8080/ })

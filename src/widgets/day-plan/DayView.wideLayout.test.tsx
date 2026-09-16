@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayView } from './DayView'
@@ -248,6 +248,63 @@ test("a stored focus of 'tasks' unmounts the day pane at a wide viewport", () =>
   expect(container.querySelector('.day-pane')).not.toBeInTheDocument()
   expect(container.querySelector('.task-pane')).toBeInTheDocument()
   expect(container.querySelector('.day-view')).toHaveClass('focus-tasks')
+})
+
+/**
+ * How long the running task has left is said once. On a wide screen the grid
+ * stands beside the header and its running block says when it ends, so the
+ * header names the task without it - the way it yields to the focus strip.
+ * With the grid put away by the Tasks focus, or on a phone, where the grid
+ * is a scroll or a press away, the header says it. CONVENTIONS 23.
+ */
+test('at a wide viewport the running block says when it ends, and the header names the task without saying it again', () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(`${DATE}T09:20:00`))
+  try {
+    viewport = mockViewport(true)
+    seedFocus('both')
+    const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+    expect(container.querySelector('.day-now-task')).toHaveTextContent('Shift')
+    expect(container.querySelector('.day-now-left')).toBeNull()
+    expect(container.querySelectorAll('.timeline-anchor-hint')).toHaveLength(1)
+    expect(container.querySelector('.timeline-anchor-hint')).toHaveTextContent('ends in 40 min')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('in free time at a wide viewport the next block says when it starts, and up next in the rail does not say it again', () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(`${DATE}T08:30:00`))
+  try {
+    viewport = mockViewport(true)
+    seedFocus('both')
+    const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+    expect(container.querySelector('.timeline-anchor-hint')).toHaveTextContent('starts in 30 min')
+    expect(container.querySelector('.up-next-meta')?.textContent).toBe('Scheduled')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('with the grid put away by the Tasks focus, and on a phone, the header says how long is left', () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(`${DATE}T09:20:00`))
+  try {
+    viewport = mockViewport(true)
+    seedFocus('tasks')
+    const wide = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+    expect(wide.container.querySelector('.day-now-left')).toHaveTextContent('40 min left')
+    wide.unmount()
+    viewport.restore()
+
+    viewport = mockViewport(false)
+    seedFocus('both')
+    const phone = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+    expect(phone.container.querySelector('.day-now-left')).toHaveTextContent('40 min left')
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 test("a stored focus other than 'both' has no effect at a narrow viewport - both panes still render", () => {

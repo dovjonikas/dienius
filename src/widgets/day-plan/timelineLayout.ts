@@ -952,9 +952,15 @@ function clusterSegments(
  * starts later. Read from the clock alone, done or not: the time a block
  * holds is a fact about the day, and so is how much of it is left.
  */
-export function nowHint(anchors: TimelineAnchorBlock[], now: number): { id: string; text: string } | null {
-  const running = anchors.find(a => a.sized && a.startMinutes <= now && now < a.endMinutes!)
-  if (running) return { id: running.id, text: `ends in ${formatDuration(running.endMinutes! - now)}` }
+export function nowHint(
+  anchors: TimelineAnchorBlock[],
+  now: number,
+  runningId: string | undefined,
+): { id: string; text: string } | null {
+  // To its real end, which is not where it is drawn to when the grid's edge
+  // cuts it short - see clippedEnd.
+  const running = anchors.find(a => a.id === runningId && a.minutes !== undefined)
+  if (running) return { id: running.id, text: `ends in ${formatDuration(running.startMinutes + running.minutes! - now)}` }
   let next: TimelineAnchorBlock | undefined
   for (const a of anchors) {
     if (a.startMinutes > now && (!next || a.startMinutes < next.startMinutes)) next = a

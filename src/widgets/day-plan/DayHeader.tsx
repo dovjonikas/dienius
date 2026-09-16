@@ -106,6 +106,12 @@ export function DayHeader({
   // the bar at the top of the app carries the title and the countdown with
   // the session's own controls, and this line keeps the clock alone.
   const stripSaysIt = runningTask !== undefined && focusedTaskId === runningTask.id
+  // On a wide screen the grid stands beside the header, and its running
+  // block says when it ends (see nowHint), so the header names the task
+  // without its time left - once, CONVENTIONS 23. The Tasks focus puts the
+  // grid away, and on a phone it is a scroll or a press away, so there the
+  // header says it.
+  const gridSaysLeft = isWide && dayLayoutFocus !== 'tasks'
 
   // Only on today, and only once bedtime is close enough to matter. Measured
   // against the same waking window the grid greys and the capacity line counts
@@ -278,7 +284,7 @@ export function DayHeader({
               <>
                 <span className="day-now-sep" aria-hidden="true" />
                 <span className="day-now-task">{runningTask.title}</span>
-                {runningLeft !== undefined && (
+                {runningLeft !== undefined && !gridSaysLeft && (
                   <span className="day-now-left">{formatDuration(runningLeft)} left</span>
                 )}
               </>

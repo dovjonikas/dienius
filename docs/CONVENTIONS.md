@@ -1302,11 +1302,22 @@ What it settled, so the same doubles do not come back:
   the sentence counted apart from the timed tasks, is a Calendar row that
   only appears on a day with events on it. The phone keeps the sentence,
   because the phone has no rail.
-- **The now line carries no clock.** The header's clock is the minute; the
-  line only has to say where it falls. The hour label the line crosses is
-  dropped rather than covered.
+- **The now line carries its minute, and it is not a second clock.** Until
+  v2.24 it carried none, on the argument that the header's clock is the
+  minute and the line only has to say where it falls. It cannot say that on
+  its own: the grid's hours are spaced by what is in them (section 4), so a
+  line between two hour labels does not say where between them it is. The
+  marker in the hour column is the grid's scale at now, written as a time,
+  and the owner asked for it. The hour label it would sit on is dropped
+  rather than covered.
+- **The running block says when it ends, and the header yields it where the
+  grid is beside the header.** Since v2.24 the block on the grid says "ends
+  in 25 min" on its time line, the owner's ask, and on a wide screen, where
+  the grid stands beside the header, the header names the running task
+  without its time left - the same yielding it does to the focus strip. On
+  a phone the grid is a scroll or a press away, so the header keeps it.
 - **The running card carries no countdown.** Its ring says which card is
-  running; the header says how long is left.
+  running; the header, or the grid beside it, says how long is left.
 - **The header yields to the focus strip.** While a session runs on the
   running task, the strip at the top of the app names it with its
   countdown and its controls, and the header keeps the clock alone.
