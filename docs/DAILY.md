@@ -132,9 +132,11 @@ goes back to reading. **Edit**, under the words, opens the box again.
 heading, is its text, and a blank line under a heading starts a second
 paragraph of the same heading. The lines before the first heading are the
 introduction and are always shown. Reading, the page shows the introduction
-and the headings; the text under a heading opens while the pointer rests on
-it and closes when it leaves, or on a tap on the phone. A text with no
-capitals-only line reads as it was written. There is no button for any of
+and the headings. The words under a heading unfold while the pointer rests
+on it, with nothing on the page moving to make room, and fold away when it
+leaves; a press opens them in the page until a second press, which is how
+the phone does it. A text with no capitals-only line reads as it was
+written. There is no button for any of
 this: the capitals are the formatting, and the text stays the one string you
 typed.
 

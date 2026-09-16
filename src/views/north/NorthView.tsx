@@ -176,16 +176,19 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
 }
 
 /**
- * The text, read. The largest type on the screen, a loose line, the
- * person's own line breaks kept, and nothing over it or around it - no
- * label, no frame. A blank line in the text is a gap between blocks, and
- * the gap is the one thing the page draws that the person did not type;
- * two blank lines are still one gap. A line in capitals is a heading and
- * the lines under it fold away - see NorthSection, and lib/northSections.ts
- * for the rule; a text with no such line reads as its blocks, exactly as
- * before there were headings. Under it, one quiet Edit - and in the
- * morning, Start the day, at the end rather than the top, so the way on is
- * past the words.
+ * The text, read, as one column that reads like a page.
+ *
+ * The introduction first - the lines before the first heading, in the
+ * text's own type, always shown, with no frame and nothing over them - and
+ * then the headings, one under another with air between, each holding what
+ * is under it until it is asked for. A text with no heading is all
+ * introduction and reads whole, as it was written. lib/northSections.ts has
+ * the rule; nothing here decides what a heading is.
+ *
+ * What can be pressed stands in one row at the end: Edit, and in the
+ * morning Start the day beside it, past the words rather than over them, so
+ * the way on is the far side of reading. Nothing else on the page is a
+ * button except the headings themselves.
  */
 function NorthText({
   text,
@@ -200,50 +203,69 @@ function NorthText({
 }) {
   const { intro, sections } = parseNorth(text)
   return (
-    <div className="north-picture">
-      <div className="north-text">
-        {intro.map((paragraph, i) => (
-          <p key={`intro-${i}`} className="north-block">
-            {paragraph}
-          </p>
-        ))}
-        {sections.map((section, i) => (
-          <NorthSection key={i} heading={section.heading} paragraphs={section.paragraphs} />
-        ))}
-      </div>
-      {morning && onStartDay && (
-        <button type="button" className="btn-primary north-start" onClick={onStartDay}>
-          Start the day
-        </button>
+    <div className="north-read">
+      {intro.length > 0 && (
+        <div className="north-intro">
+          {intro.map((paragraph, i) => (
+            <p key={i} className="north-paragraph">
+              {paragraph}
+            </p>
+          ))}
+        </div>
       )}
-      <p className="north-text-actions">
-        <button type="button" className="north-compose-open" onClick={onEdit}>
+      {sections.length > 0 && (
+        <div className="north-sections">
+          {sections.map((section, i) => (
+            <NorthSection key={i} heading={section.heading} paragraphs={section.paragraphs} />
+          ))}
+        </div>
+      )}
+      <div className="north-actions">
+        {morning && onStartDay && (
+          <button type="button" className="btn-primary" onClick={onStartDay}>
+            Start the day
+          </button>
+        )}
+        <button type="button" className="btn-secondary" onClick={onEdit}>
           Edit
         </button>
-      </p>
+      </div>
     </div>
   )
 }
 
 /**
- * One heading and the lines under it.
+ * One heading and everything it holds.
  *
- * On the page at rest only the heading shows: the heaviest weight on the
- * screen, one after another with air between. What is under it comes when
- * asked and goes when the asking stops. With a pointer that can rest, that
- * is a hover - the lines appear under the heading, over the page, and
- * nothing beneath moves by a pixel, which is the answer the goal card
- * gives and CONVENTIONS 24's rule for a pointer. With a finger it is a tap,
- * and the lines open in the flow of the page until a second tap. A keyboard
- * reaches the heading and opens it the way a finger does; Escape closes it.
- * Which of the two a device gets is the stylesheet's decision by the pointer
- * it has, and the state here is the same on both.
+ * At rest only the heading shows. What is under it comes when asked, in two
+ * ways, and the state here is the same for both:
+ *
+ * - **A pointer resting on the heading** lays the words out under it, over
+ *   the page, and everything after the heading steps back to nothing while
+ *   they are read. Nothing is moved to make the room - CONVENTIONS 24 - so
+ *   the words unfold where the next headings were and fold away when the
+ *   pointer leaves, and the next heading is under the pointer the moment it
+ *   moves down to it. That is the stylesheet's, on a pointer that can rest.
+ * - **A press** opens the words in the page, on any device, and a second
+ *   press closes them. On a phone it is the only way, and on a desktop it is
+ *   how words longer than a glance stay open to be read. A press may move
+ *   the page where a pointer may not.
+ *
+ * A keyboard reaches the heading, which shows its words the way a resting
+ * pointer does, and opens it the way a press does; Escape closes it.
+ *
+ * A press that closes a heading leaves the pointer on it, and the hover would
+ * lay the same words straight back over the page - the press would seem to
+ * have done nothing. So a closed heading is quiet until the pointer or the
+ * focus leaves it, and only a heading that is neither open nor quiet offers
+ * its words to the hover (`can-preview`).
  *
  * A heading with nothing under it is a heading and not a control: there is
  * nothing to open, so nothing offers to.
  */
 function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: string[] }) {
   const [open, setOpen] = useState(false)
+  const [quiet, setQuiet] = useState(false)
   const id = useId()
   if (paragraphs.length === 0) {
     return (
@@ -252,9 +274,11 @@ function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: st
       </section>
     )
   }
+  const className = open ? 'north-section is-open' : quiet ? 'north-section' : 'north-section can-preview'
   return (
     <section
-      className={open ? 'north-section is-open' : 'north-section'}
+      className={className}
+      onPointerLeave={() => setQuiet(false)}
       onKeyDown={e => {
         if (e.key === 'Escape' && open) {
           e.stopPropagation()
@@ -268,17 +292,23 @@ function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: st
           className="north-heading-toggle"
           aria-expanded={open}
           aria-controls={id}
-          onClick={() => setOpen(o => !o)}
+          onClick={() => {
+            if (open) setQuiet(true)
+            setOpen(!open)
+          }}
+          onBlur={() => setQuiet(false)}
         >
           {heading}
         </button>
       </h3>
       <div id={id} className="north-section-body">
-        {paragraphs.map((paragraph, i) => (
-          <p key={i} className="north-section-lines">
-            {paragraph}
-          </p>
-        ))}
+        <div className="north-section-text">
+          {paragraphs.map((paragraph, i) => (
+            <p key={i} className="north-paragraph">
+              {paragraph}
+            </p>
+          ))}
+        </div>
       </div>
     </section>
   )

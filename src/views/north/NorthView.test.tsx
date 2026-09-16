@@ -118,14 +118,21 @@ test('emptying the text removes it after the pause, and the page is the editor w
 
 // --- reading ------------------------------------------------------------------
 
-test('the text reads as blocks, a blank line between them, and every line kept', () => {
-  picture('First line here\nSecond line here\n\nThird line here\n\n\n\nFourth line here')
+/**
+ * Reading, since v2.24: the introduction as it was written, then the
+ * headings with nothing under them until asked for. A text with no heading
+ * is all introduction, and reads whole.
+ */
+test('a text with no heading reads whole, paragraph by paragraph, with nothing in it to press', () => {
+  picture('a first line\na second line\n\na third line\n\n\n\na fourth line')
   const { container } = render(<NorthView />)
-  const blocks = [...container.querySelectorAll('.north-block')].map(b => b.textContent)
-  expect(blocks).toEqual(['First line here\nSecond line here', 'Third line here', 'Fourth line here'])
-  // Read, not asked anything: no field, no label over the words.
+  const paragraphs = [...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)
+  expect(paragraphs).toEqual(['a first line\na second line', 'a third line', 'a fourth line'])
+  expect(screen.queryByRole('heading', { level: 3 })).toBeNull()
+  // Read, not asked anything: no field, no label, and nothing to press but Edit.
   expect(screen.queryByRole('textbox')).toBeNull()
-  expect(container.querySelector('.north-layer-label')).toBeNull()
+  const read = container.querySelector('.north-read') as HTMLElement
+  expect(within(read).getAllByRole('button').map(b => b.textContent)).toEqual(['Edit'])
 })
 
 test('goals wait under the text behind one line, and one press opens the offer', async () => {
@@ -149,13 +156,18 @@ test('where there are goals they are open under the text, and the line folds the
   expect(screen.queryByRole('heading', { name: 'Ship something people keep using' })).toBeNull()
 })
 
-test('in the morning the page ends in Start the day, and any look marks the day read', async () => {
+test('in the morning Start the day and Edit stand together at the end of the page, and any look marks the day read', async () => {
   const user = userEvent.setup()
-  picture('First line here')
+  picture('a line before any heading\n\nFIRST HEADING\na line under it')
   const onStartDay = vi.fn()
-  render(<NorthView morning onStartDay={onStartDay} />)
+  const { container } = render(<NorthView morning onStartDay={onStartDay} />)
   expect(northReadOn()).toBe(TODAY)
-  await user.click(screen.getByRole('button', { name: 'Start the day' }))
+  const start = screen.getByRole('button', { name: 'Start the day' })
+  const edit = screen.getByRole('button', { name: 'Edit' })
+  // One row, past the words: the page has one place for what can be pressed.
+  expect(start.parentElement).toBe(edit.parentElement)
+  expect(container.querySelector('.north-read')?.lastElementChild).toBe(start.parentElement)
+  await user.click(start)
   expect(onStartDay).toHaveBeenCalledTimes(1)
 })
 
@@ -740,66 +752,72 @@ test('a goal name too long for its box wraps rather than running out of sight', 
 // --- headings ------------------------------------------------------------------
 
 /**
- * A line in capitals is a heading and the lines under it fold away - the
- * rule is lib/northSections.ts. Here: what the page draws for one, and the
- * one control it is. Whether the lines show on a hover or on a press is the
- * stylesheet's decision by pointer; the state is the same on both, and the
- * browser test walks each.
+ * A line in capitals is a heading and owns everything to the next one -
+ * lib/northSections.ts. On the page at rest the introduction shows and the
+ * headings stand under it with nothing under them; what a heading holds
+ * comes when asked. With a pointer that can rest it comes on the hover,
+ * over the page, which is the stylesheet's decision by pointer and the
+ * browser test's to walk; a press opens it in the page on any device, and a
+ * second press closes it.
  */
-test('a heading reads as a heading with its lines closed under it, and a press opens and closes them', async () => {
+test('the introduction stays on the page, the headings stand under it, and a press opens a heading and closes it', async () => {
   const user = userEvent.setup()
-  picture('First line here\n\nFIRST SECTION\nline under it\nsecond line under it')
+  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
   const { container } = render(<NorthView />)
-  expect(screen.getByRole('heading', { level: 3, name: 'FIRST SECTION' })).toBeInTheDocument()
-  const toggle = screen.getByRole('button', { name: 'FIRST SECTION' })
-  expect(toggle).toHaveAttribute('aria-expanded', 'false')
-  expect(container.querySelector('.north-section')).not.toHaveClass('is-open')
-  // The free line before it is a block, always on the page.
-  expect(container.querySelector('.north-block')).toHaveTextContent('First line here')
+  expect([...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)).toEqual(['a line before any heading'])
+  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
 
+  const toggle = screen.getByRole('button', { name: 'FIRST HEADING' })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await user.click(toggle)
   expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  expect(container.querySelector('.north-section')).toHaveClass('is-open')
-  expect(container.querySelector('.north-section-lines')?.textContent).toBe('line under it\nsecond line under it')
+  const body = document.getElementById(toggle.getAttribute('aria-controls') ?? '')
+  expect([...(body?.querySelectorAll('.north-paragraph') ?? [])].map(p => p.textContent)).toEqual([
+    'a line under it',
+    'a second paragraph under it',
+  ])
 
   await user.click(toggle)
   expect(toggle).toHaveAttribute('aria-expanded', 'false')
 })
 
-test('a heading holds its paragraphs to the next heading, and the lines before the first heading stay on the page', async () => {
+/**
+ * A press that closes a heading leaves the pointer resting on it, and the
+ * hover would lay the same words straight back over the page, so the press
+ * would look like it had done nothing. A closed heading stays quiet until
+ * the pointer leaves it. The stylesheet reads the class, since jsdom has no
+ * hover to show the words with.
+ */
+test('closing a heading with a press keeps its words from coming back under the pointer until the pointer leaves', async () => {
   const user = userEvent.setup()
-  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
+  picture('FIRST HEADING\na line under it')
   const { container } = render(<NorthView />)
-  expect([...container.querySelectorAll('.north-block')].map(b => b.textContent)).toEqual(['a line before any heading'])
-  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  const toggle = screen.getByRole('button', { name: 'FIRST HEADING' })
+  const section = container.querySelector('.north-section') as HTMLElement
+  expect(section).toHaveClass('can-preview')
 
-  await user.click(screen.getByRole('button', { name: 'FIRST HEADING' }))
-  const first = container.querySelector('.north-section.is-open')
-  expect([...(first?.querySelectorAll('.north-section-lines') ?? [])].map(p => p.textContent)).toEqual([
-    'a line under it',
-    'a second paragraph under it',
-  ])
+  await user.click(toggle)
+  expect(section).not.toHaveClass('can-preview')
+  await user.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(section).not.toHaveClass('can-preview')
+
+  await user.unhover(section)
+  expect(section).toHaveClass('can-preview')
 })
 
 test('Escape closes an open heading, and a heading with nothing under it is not a control', async () => {
   const user = userEvent.setup()
-  picture('FIRST SECTION\nline under it\n\nSECOND SECTION')
+  picture('FIRST HEADING\na line under it\n\nSECOND HEADING')
   render(<NorthView />)
-  const first = screen.getByRole('button', { name: 'FIRST SECTION' })
+  const first = screen.getByRole('button', { name: 'FIRST HEADING' })
   await user.click(first)
   expect(first).toHaveAttribute('aria-expanded', 'true')
   await user.keyboard('{Escape}')
   expect(first).toHaveAttribute('aria-expanded', 'false')
 
-  expect(screen.getByRole('heading', { level: 3, name: 'SECOND SECTION' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'SECOND SECTION' })).toBeNull()
-})
-
-test('a text with no heading has no heading and no control: its blocks, as before', () => {
-  picture('First line here\nSecond line here\n\nThird line here')
-  const { container } = render(<NorthView />)
-  expect(container.querySelectorAll('.north-section')).toHaveLength(0)
-  expect([...container.querySelectorAll('.north-block')].map(b => b.textContent)).toEqual(['First line here\nSecond line here', 'Third line here'])
+  expect(screen.getByRole('heading', { level: 3, name: 'SECOND HEADING' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'SECOND HEADING' })).toBeNull()
 })
 
 // --- what shows first -------------------------------------------------------------

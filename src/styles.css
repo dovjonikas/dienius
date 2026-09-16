@@ -10768,52 +10768,56 @@ button.task-library:hover { color: var(--text); }
   text-transform: uppercase;
 }
 
-/* The picture, read. A preface: the largest text on the screen, a looser
-   line than anything under it, and the person's own line breaks kept.
+/* The text, read, since v2.24: one column, the introduction and then the
+   headings, and one row of buttons at the end. The column is a measure and
+   not a layout - at about sixty-five characters of the text's type a line
+   reads as a line of a page, and stretched across a screen it reads as a
+   banner nobody's eye can travel back along. */
+.north-read {
+  max-width: 40rem;
+}
 
-   70ch rather than 52. Every line of it is one thought, written on its own
-   line by the person whose thought it is, and a measure that folds a
-   57-character sentence onto a second line has turned three thoughts into
-   five and a half. 70 is the top of the range prose is set at; there is
-   room for it here now, and nothing under it is wider. */
-.north-picture { margin-bottom: var(--s7); }
-
-/* One block. The person's own lines, at the largest size on the screen and
-   a loose line; the room under each block is the one thing drawn here that
-   was not typed. The measure is the block's own, at the block's own size:
-   70ch on the wrapper, whose type is the body's 13px, came to 490px and
-   folded every line of the seed's text in two. */
-.north-block {
-  max-width: 70ch;
-  margin: 0 0 1.4em;
+/* The introduction and every paragraph under a heading are one voice: the
+   same size, ink and leading, a paragraph's air between two of them, and
+   the person's own line breaks kept. No frame, no ground, nothing over it. */
+.north-paragraph {
+  margin: 0;
   color: var(--text);
-  font-size: var(--t-lg);
-  font-weight: 400;
-  line-height: 1.6;
+  font-size: var(--t-md);
+  line-height: 1.7;
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
 
-.north-block:last-child { margin-bottom: 0; }
+.north-paragraph + .north-paragraph { margin-top: var(--s4); }
 
-/* A heading and the lines under it - lib/northSections.ts has the rule. At
-   rest the page is its headings, one under another with the air a block
-   has, at the block's size and the page's heaviest weight; the lines under
-   one are the smaller text, and come when asked. */
-.north-section {
-  position: relative;
-  max-width: 70ch;
-  margin: 0 0 1.4em;
+/* The headings, one under another with the same air between every two. A
+   gap rather than a margin, so the words a heading opens sit inside its own
+   box and the distance to the next heading never changes with them. */
+.north-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
 }
 
-.north-section:last-child { margin-bottom: 0; }
+/* One step of air between the three parts of the page, whichever of them a
+   text has. */
+.north-intro + .north-sections,
+.north-intro + .north-actions,
+.north-sections + .north-actions {
+  margin-top: var(--s8);
+}
 
+/* A heading: the page's largest and heaviest type, a touch of tracking
+   because it is set in capitals, and nothing else - no rule, no marker, no
+   caret. */
 .north-heading {
   margin: 0;
   color: var(--text);
   font-size: var(--t-lg);
   font-weight: 700;
-  line-height: 1.4;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
@@ -10828,73 +10832,142 @@ button.task-library:hover { color: var(--text); }
   background: none;
   color: inherit;
   font: inherit;
+  letter-spacing: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.north-heading-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.north-section-lines {
-  max-width: 70ch;
-  margin: var(--s2) 0 0;
-  color: var(--text);
-  font-size: var(--t-md);
-  font-weight: 400;
-  line-height: 1.6;
-  white-space: pre-line;
-  overflow-wrap: anywhere;
+.north-heading-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-mark);
 }
 
-/* Closed, the lines take no room: a finger opens them into the page, and
-   a second tap closes them. */
-.north-section-body { display: none; }
+/* What a heading holds. Closed, it takes no room: a grid row of nothing
+   with the words clipped inside it. A press opens the row to the words' own
+   height, so they unfold in the page - which a press may do - and a second
+   press folds them again. On a phone this is the only way they come. */
+.north-section-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+}
 
-.north-section.is-open .north-section-body { display: block; }
+.north-section-text {
+  min-height: 0;
+  overflow: hidden;
+}
 
-/* With a pointer that can rest, the lines come on the hover and go when it
-   leaves - under the heading, over the page, on the page's own ground, so
-   nothing beneath moves by a pixel (CONVENTIONS 24). The soft edge below
-   says the layer is a layer. A keyboard on the heading opens it the same
-   way, and a press pins it open until the next. */
-@media (hover: hover) and (pointer: fine) {
+/* The air between a heading and its first line, inside the fold, so a
+   closed heading carries none of it. */
+.north-section-text::before {
+  content: '';
+  display: block;
+  height: var(--s3);
+}
+
+.north-section.is-open > .north-section-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
   .north-section-body {
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    z-index: 1;
-    padding-bottom: var(--s4);
-    background: var(--bg);
-    box-shadow: var(--e2);
-    visibility: hidden;
-    opacity: 0;
-    /* The layer takes no pointer: the hover lives on the heading line, and
-       a pointer moving down through the text reaches whatever the text is
-       over - the next heading, Edit, Start the day - the moment it leaves
-       the line. The sweep found the alternative: an open layer standing on
-       the Edit under it, with no way to the button but round the layer. */
-    pointer-events: none;
+    transition:
+      grid-template-rows var(--dur) var(--ease),
+      opacity var(--dur) var(--ease),
+      visibility 0s linear var(--dur);
   }
 
-  .north-section:hover .north-section-body,
-  .north-section:focus-within .north-section-body,
-  .north-section.is-open .north-section-body {
-    visibility: visible;
+  .north-section.is-open > .north-section-body {
+    transition:
+      grid-template-rows var(--dur) var(--ease),
+      opacity var(--dur) var(--ease),
+      visibility 0s;
+  }
+}
+
+/* On a pointer that can rest, a closed heading's words wait over the page
+   instead, and a pointer resting on the heading lays them out under it
+   while everything after it steps back to nothing. Nothing is moved to make
+   the room (CONVENTIONS 24): the words unfold top to bottom where the next
+   headings were, on the page's own ground, and fold away when the pointer
+   leaves - which puts the next heading under a pointer that moved down to
+   it. The words take no pointer, so moving through them is moving over what
+   they cover.
+
+   Shown after a pause of --dur-fast, so a pointer crossing the headings on
+   its way to something else does not flash each of them open on the way.
+   Leaving answers at once. A heading that was just closed with a press, or
+   is open in the page, does not offer this - see NorthSection. */
+@media (hover: hover) and (pointer: fine) {
+  .north-section { position: relative; }
+
+  .north-section:not(.is-open) > .north-section-body {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    grid-template-rows: 1fr;
+    background: var(--bg);
+    pointer-events: none;
+    clip-path: inset(0 0 100% 0);
+  }
+
+  .north-section.can-preview:hover > .north-section-body,
+  .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) > .north-section-body {
     opacity: 1;
+    visibility: visible;
+    clip-path: inset(0 0 0 0);
+  }
+
+  .north-section.can-preview:hover ~ .north-section,
+  .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
+  .north-read:has(.north-section.can-preview:hover) > .north-actions,
+  .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-actions {
+    opacity: 0;
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .north-section-body { transition: opacity var(--dur-fast) var(--ease); }
+    .north-section:not(.is-open) > .north-section-body {
+      transition:
+        opacity var(--dur) var(--ease),
+        clip-path var(--dur) var(--ease),
+        visibility 0s linear var(--dur);
+    }
+
+    .north-section.can-preview:hover > .north-section-body,
+    .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) > .north-section-body {
+      transition:
+        opacity var(--dur) var(--ease) var(--dur-fast),
+        clip-path var(--dur) var(--ease) var(--dur-fast),
+        visibility 0s linear var(--dur-fast);
+    }
+
+    .north-section,
+    .north-actions {
+      transition: opacity var(--dur) var(--ease);
+    }
+
+    .north-section.can-preview:hover ~ .north-section,
+    .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
+    .north-read:has(.north-section.can-preview:hover) > .north-actions,
+    .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-actions {
+      transition-delay: var(--dur-fast);
+    }
   }
 }
 
-/* The way on, in the morning: past the words, not above them. On a phone
-   it is the width of the text, the way a phone's one button is. */
-.north-start { margin-top: var(--s7); }
-
-@media (max-width: 1023px) {
-  .north-start { width: 100%; max-width: 70ch; }
+/* What can be pressed on the page, in one row at its end: Edit, and in the
+   morning Start the day before it. */
+.north-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
 }
 
 /* The goals, folded under the text behind one quiet line. */
@@ -10951,9 +11024,6 @@ button.task-library:hover { color: var(--text); }
 }
 
 .north-saved { color: var(--faint); font-size: var(--t-sm); }
-
-/* Under the text, read: the one quiet way into the editor. */
-.north-text-actions { margin: var(--s4) 0 0; }
 
 .north-offer p {
   margin: 0;
