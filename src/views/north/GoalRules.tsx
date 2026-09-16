@@ -100,7 +100,7 @@ function RuleLine({ rule, onEdit }: { rule: IfThenEntry; onEdit: () => void }) {
     <>
       <RuleText rule={rule} />
       <div className="north-rule-actions">
-        <button type="button" className="setting-quiet" aria-label={`Edit "${rule.trigger}"`} onClick={onEdit}>
+        <button type="button" className="btn-quiet" aria-label={`Edit "${rule.trigger}"`} onClick={onEdit}>
           Edit
         </button>
         <button

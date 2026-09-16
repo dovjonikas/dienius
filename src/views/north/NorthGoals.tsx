@@ -293,17 +293,13 @@ function GoalEditor({
         </div>
       )}
 
-      <div className="north-actions">
-        <button type="button" className="btn-primary" data-tour="goal-save" disabled={!ready} onClick={save}>
-          Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={() => onClose(goal?.id ?? null)}>
-          Cancel
-        </button>
+      {/* More at the left, the way into the rest of the goal; Cancel and
+          Save together at the right, Save last - docs/DESIGN.md. */}
+      <div className="north-actions north-goal-actions">
         {!more && (
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-quiet north-goal-more-open"
             onClick={() => {
               setMore(true)
               setIntoWhy(true)
@@ -312,6 +308,12 @@ function GoalEditor({
             More
           </button>
         )}
+        <button type="button" className="btn-quiet" onClick={() => onClose(goal?.id ?? null)}>
+          Cancel
+        </button>
+        <button type="button" className="btn-primary" data-tour="goal-save" disabled={!ready} onClick={save}>
+          Save
+        </button>
       </div>
 
       {more && (

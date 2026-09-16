@@ -66,7 +66,10 @@ a selected choice, and a key task. Nothing is 650 or 700.
 
 **Line heights: three.** `--lh-tight` 1.25 for titles, numerals and a
 control's single line; `--lh-ui` 1.4 for rows, labels and interface text
-that wraps; `--lh-read` 1.6 for anything read as prose.
+that wraps; `--lh-read` 1.6 for anything read as prose. North's page and
+its field are the one place prose is set a tenth looser, at 1.7, which the
+owner's brief for writing there asked for - written as `--lh-read` plus 0.1
+where it is used, so the step stays tied to the scale.
 
 **Labels are sentence case.** A label is `--t-xs`, `--w-medium`, `--muted`,
 with no tracking - "How long", not "HOW LONG". Capitals appear only where a
@@ -74,7 +77,7 @@ person typed them: North's headings are the owner's own capitals and stay
 so. A figure that changes or lines up with another uses tabular numerals.
 
 **At most four sizes on one screen.** Today is 11, 13, 15 and 20; North is
-13, 17 and 20.
+11, 13 and 17.
 
 ## Spacing
 
@@ -290,7 +293,9 @@ lead to the rest.
 - **The frame.** Every page's title is `--t-lg` at `--w-strong` and
   `--lh-tight`, at the same distance under the app's header on every page,
   with the page's action at the right of the same row and the content
-  `--s6` under it.
+  `--s6` under it. North's is the one exception, asked for: `--t-sm` in the
+  secondary ink, smaller than the words it heads, because on that page the
+  text is the thing.
 - **Two widths.** `--page-w` (840px) for the pages that are lists and forms -
   Templates, Library, Review, Settings - and `--read-w` (640px) for reading
   and writing - North, the journal's page. Today, the week and the month

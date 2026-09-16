@@ -3547,3 +3547,46 @@ of a neighbour's: the folded North line two pixels under the goal's line,
 and the goal lines at the top of North, which with the list half scrolled
 under the top of the screen gave a press on one line to the next. Both were
 given room rather than smaller targets.
+
+## North is written on a page, and a textarea decides what the page can show
+
+The v2.25 design pass, stage 7, from two messages: the pass's own brief for
+North, and a longer one about the editor that the owner queued for after
+the pass - a writing place like iA Writer or Bear rather than a form.
+
+**The field is the page.** No edge, no ground, no padding and no halo on
+focus: the words stand where the reading page puts them, at 17px and a
+leading of 1.7, and pressing Edit moves no line of the introduction. The
+caret is the field's focus. The empty field asks "Write who you are." and
+shows nobody's words; the example of the shape it used to show is gone,
+because a page that suggests sentences is a page that suggests a self.
+
+**Formatting is drawn under the field, and only what cannot move a caret.**
+A textarea draws every line in one face, size and leading, so the text is
+drawn a second time under it, line for line, and the field's own ink is
+transparent - the keyboard, undo, copy and paste and a phone's keyboard stay
+the browser's own. That drawing may change anything about a line except
+where its letters fall. So while typing: a heading is heavier by a stroke
+round its letters, a line of `---` is a thin faint rule across the page in
+its own line's height, and the signature's lines are the quieter ink. The
+brief also asked for a heading a little tracked and with more room over it.
+Both would move every caret after the heading - one letter wider, one line
+lower - and a caret a pixel away from its letter is the defect a writing
+surface cannot have, so both are the reading page's alone: there a heading
+is tracked, and the blank line the person typed is the room. The two
+drawings are measured against each other in a browser, not by eye.
+
+**Save is never a broken button.** It waits quiet, in its place and in
+the shape a button has when it cannot be pressed yet, until the text is
+different - hidden, it left Cancel standing beside a hole - and Cancel is
+always beside it. Ctrl or Cmd with Enter is Save; with nothing changed it
+closes the field. Escape is Cancel. The rule is one grey line under the
+field in sentence case: "Capital lines become headings. A line of ---
+starts your signature."
+
+**The page reads the way it was written.** The introduction, a heading's
+words and the signature are the writing's size and leading; a heading is
+the same size at the strong weight; the air between parts is one line, the
+blank line typed there; the signature follows a thin rule and is the
+quieter ink. The page's name, North, is smaller and quieter than the words
+under it. Going between reading and writing is a fade of about 150ms.

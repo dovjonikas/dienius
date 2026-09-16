@@ -38,10 +38,24 @@ test('the text is written on the page, reads back whole, and its introduction op
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
   await expect(box).toBeFocused()
-  // An example of the shape, nobody's words: headings and a signature.
-  await expect(box).toHaveAttribute('placeholder', /\n---\n/)
+  // One question, and nobody's words.
+  await expect(box).toHaveAttribute('placeholder', 'Write who you are.')
+  // The field is a plain field under its drawing: the browser's own undo
+  // takes back what was typed. How much one press takes back is the
+  // browser's to decide - Chromium takes a keystroke from a field whose
+  // value the page sets - so what is held is that it takes back the end of
+  // what was typed and leaves the rest as it was.
+  const typed = 'A line to take back'
+  await box.pressSequentially(typed)
+  await expect(box).toHaveValue(typed)
+  await page.keyboard.press('Control+z')
+  const undone = await box.inputValue()
+  expect(undone.length).toBeLessThan(typed.length)
+  expect(typed.startsWith(undone)).toBe(true)
   await box.fill('First line here\nSecond line here\n\nThird line here')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  // Ctrl and Enter is Save.
+  await box.press('Control+Enter')
+  await expect(page.getByRole('textbox', { name: 'North' })).toHaveCount(0)
 
   // Read: no heading, so the whole text, the blank line kept as a paragraph break.
   const blocks = page.locator('.north-intro .north-paragraph')
@@ -143,4 +157,55 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
     await expect(words.first()).toBeHidden()
   }
   await expect(page.getByText('First line here')).toHaveCount(0)
+})
+
+/**
+ * The field's own text is transparent and a drawing of it stands under it,
+ * so every line of the drawing has to end exactly where the field's line
+ * ends - a heading drawn heavier, the mark drawn as a rule and a long line
+ * wrapped across three included. The field's line ends are read from a
+ * copy of the field holding the text up to that line, which is the only
+ * way to ask a browser where a textarea's line is.
+ */
+test('what is typed and the drawing under it stand on the same lines, long wrapped lines too', async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
+  const box = page.getByRole('textbox', { name: 'North' })
+  const long = 'a long line that goes on past the width of the page and keeps going, so that it has to wrap onto a second line and then onto a third one before it stops'
+  await box.fill(['a first line', long, '', 'FIRST HEADING', long, '---', 'A SIGNATURE IN CAPITALS', long].join('\n'))
+
+  const drift = await page.evaluate(() => {
+    const field = document.querySelector('.north-editor-text') as HTMLTextAreaElement
+    const drawing = document.querySelector('.north-editor-mirror') as HTMLElement
+    const lines = [...drawing.querySelectorAll('.north-editor-line')] as HTMLElement[]
+    const top = drawing.getBoundingClientRect().top
+    const probe = field.cloneNode() as HTMLTextAreaElement
+    probe.removeAttribute('aria-describedby')
+    probe.style.cssText = `position: absolute; visibility: hidden; inset: auto; height: 0; min-height: 0; width: ${field.clientWidth}px`
+    field.parentElement!.appendChild(probe)
+    // Where each line ends in the field, and where its drawing's last line
+    // of letters ends. A span's box is its letters' height, a line's
+    // leading short of the line, so what has to hold is that the difference
+    // is the same on every line - a drawing that pushed one line down would
+    // push every line after it. The mark is an inline block the height of
+    // its whole line and is measured through the lines after it.
+    const ends = lines.map((line, i) => {
+      probe.value = field.value.split('\n').slice(0, i + 1).join('\n')
+      const rects = line.getClientRects()
+      return {
+        field: probe.scrollHeight,
+        drawn: rects.length ? rects[rects.length - 1].bottom - top : NaN,
+        measured: !line.classList.contains('is-mark') && line.textContent !== '',
+      }
+    })
+    probe.remove()
+    const measured = ends.filter(end => end.measured)
+    const leading = measured[0].field - measured[0].drawn
+    const worst = Math.max(...measured.map(end => Math.abs(end.field - end.drawn - leading)))
+    return { worst, lines: lines.length, measured: measured.length }
+  })
+  expect(drift.lines).toBe(8)
+  expect(drift.measured).toBe(6)
+  expect(drift.worst).toBeLessThanOrEqual(1)
 })

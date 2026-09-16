@@ -97,11 +97,11 @@ export function RuleForm({ draft, onSave, onCancel }: RuleFormProps) {
         instead.
       </p>
       <div className="rule-form-actions">
+        <button type="button" className="btn-quiet" onClick={onCancel}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={!ready} onClick={save}>
           Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>
-          Cancel
         </button>
       </div>
     </div>

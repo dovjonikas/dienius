@@ -5,7 +5,6 @@ import { NorthView } from './NorthView'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { activeGoals, deserveForWeek } from '../../lib/north'
-import { parseNorth } from '../../lib/northSections'
 import { MAX_ACTIVE_GOALS, MAX_RULES_PER_GOAL } from '../../lib/types'
 
 const TODAY = '2026-09-05'
@@ -49,24 +48,75 @@ test('with nothing written, the page is one line and one button, and no field', 
   expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Write'])
 })
 
-test('Write opens the field with the rule said once above it, and nothing to save until something is typed', async () => {
+test('Write opens the field with the rule said once under it, and nothing to save until something is typed', async () => {
   const user = userEvent.setup()
   render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Write' }))
   const box = screen.getByRole('textbox', { name: 'North' })
   expect(box).toHaveFocus()
-  const rule = 'A line in capitals becomes a heading. A line with --- starts the signature.'
+  // One calm line in sentence case, under the field rather than over it.
+  const rule = 'Capital lines become headings. A line of --- starts your signature.'
   expect(box).toHaveAccessibleDescription(rule)
   expect(screen.getAllByText(rule)).toHaveLength(1)
-  // The example in the empty field shows every part the page reads, by the
-  // page's own rule: an introduction, headings, and a signature.
-  const example = parseNorth(box.getAttribute('placeholder') ?? '')
-  expect(example.intro.length).toBeGreaterThan(0)
-  expect(example.sections.length).toBeGreaterThan(1)
-  expect(example.sections.every(section => section.paragraphs.length > 0)).toBe(true)
-  expect(example.signature.length).toBeGreaterThan(0)
-  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Save', 'Cancel'])
+  expect(box.compareDocumentPosition(screen.getByText(rule)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  // The empty field asks one thing, and shows nobody's words.
+  expect(box).toHaveAttribute('placeholder', 'Write who you are.')
+  // Cancel beside Save and before it, Save last, and nothing to save yet.
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Cancel', 'Save'])
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+})
+
+/**
+ * The two keys the brief asks for: Ctrl or Cmd with Enter is Save, and
+ * Escape is Cancel. Enter alone is a new line, as it always was.
+ */
+test('Ctrl and Enter or Cmd and Enter save the text as typed, and Escape drops what was typed', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  render(<NorthView />)
+
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), '{Enter}a second line')
+  await user.keyboard('{Control>}{Enter}{/Control}')
+  expect(getData().picture?.text).toBe('a first line\na second line')
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Edit' })).toHaveFocus()
+
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), '{Enter}a third line')
+  await user.keyboard('{Meta>}{Enter}{/Meta}')
+  expect(getData().picture?.text).toBe('a first line\na second line\na third line')
+
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  await user.type(screen.getByRole('textbox', { name: 'North' }), '{Enter}a line nobody keeps')
+  await user.keyboard('{Escape}')
+  expect(getData().picture?.text).toBe('a first line\na second line\na third line')
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Edit' })).toHaveFocus()
+})
+
+/**
+ * Save never looks broken: on a kept text it waits, out of sight, until
+ * something is different, and Cancel is always there. With nothing changed,
+ * Ctrl and Enter simply closes the field - there is nothing to lose.
+ */
+test('on a kept text Save waits for a change, and Ctrl and Enter with nothing changed closes the field', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled()
+
+  const box = screen.getByRole('textbox', { name: 'North' })
+  await user.type(box, '!')
+  expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
+  await user.keyboard('{Backspace}')
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+
+  await user.keyboard('{Control>}{Enter}{/Control}')
+  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
+  expect(getData().picture?.text).toBe('a first line')
 })
 
 test('nothing is written while typing, and Save writes the text as typed and goes back to reading', async () => {
@@ -151,6 +201,9 @@ test('while writing, headings and the signature mark are drawn as what they will
   expect(drawing).toHaveAttribute('aria-hidden', 'true')
   expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
   expect([...drawing.querySelectorAll('.is-mark')].map(l => l.textContent)).toEqual(['---'])
+  // The signature's lines, after the mark, are drawn quieter - and capitals
+  // there are not a heading.
+  expect([...drawing.querySelectorAll('.is-signature')].map(l => l.textContent)).toEqual(['NOT A HEADING HERE'])
   const lines = [...drawing.querySelectorAll('.north-editor-line')].map(l => l.textContent)
   expect(lines.join('\n')).toBe((box as HTMLTextAreaElement).value)
 

@@ -3475,27 +3475,6 @@ textarea:focus {
 
 .setting-remove:hover { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
 
-/* The same shape for something that is ordinary rather than destructive -
-   archiving a goal, which carries no verdict (ARCHITECTURE section 6). It
-   used to borrow .setting-remove and came out red and underlined beside a
-   plain Edit, which reads as "give up on this" before anybody presses it. */
-.setting-quiet {
-  align-self: flex-start;
-  min-height: 0;
-  margin-top: var(--s0);
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.setting-quiet:hover { color: var(--text); }
-
-.setting-quiet:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
 .setting-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* A dropdown is a field too. Left out of the rule above only because a
@@ -9700,7 +9679,6 @@ button.task-library:hover { color: var(--text); }
   .task-size,
   .clock-button,
   .setting-remove,
-  .setting-quiet,
   .north-line-title,
   button.north-day-line,
   .focus-bar-exit,
@@ -9743,7 +9721,6 @@ button.task-library:hover { color: var(--text); }
   .task-size::after,
   .clock-button::after,
   .setting-remove::after,
-  .setting-quiet::after,
   .north-line-title::after,
   /* North's line under the day's title, where there is no rail. */
   button.north-day-line::after,
@@ -10849,10 +10826,13 @@ button.north-day-line:focus-visible {
   margin-bottom: var(--s6);
 }
 
+/* The page's name, smaller and quieter than the words under it: on this page
+   the text is the thing, and the name only says where you are. */
 .north-view-head h2 {
   margin: 0;
-  font-size: var(--t-lg);
-  font-weight: 600;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
 }
 
 /* The goals: one quiet line each under the page's name, in the page's
@@ -10984,47 +10964,68 @@ button.north-day-line:focus-visible {
 
 .north-paragraph + .north-paragraph { margin-top: var(--s4); }
 
+/* The page, read, in the writing's own type: the reading size at a leading
+   a tenth over the app's reading one, which is what the field is set in -
+   so pressing Edit changes the ink of nothing and moves no line of the
+   introduction. The air between two paragraphs, between the parts of the
+   page and over the signature is one line of that leading, the blank line
+   the person typed there. */
+.north-read {
+  font-size: var(--t-read);
+  line-height: calc(var(--lh-read) + 0.1);
+}
+
+.north-read .north-paragraph {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.north-read .north-paragraph + .north-paragraph { margin-top: 1lh; }
+
 /* The headings, one under another with the same air between every two. A
    gap rather than a margin, so the words a heading opens sit inside its own
    box and the distance to the next heading never changes with them. */
 .north-sections {
   display: flex;
   flex-direction: column;
-  gap: var(--s6);
+  gap: 1lh;
 }
 
-/* One step of air between the parts of the page, whichever of them a text
-   has. */
-.north-intro + .north-sections,
+/* One line of air between the parts of the page, whichever of them a text
+   has, and a little more before what can be pressed. */
+.north-intro + .north-sections { margin-top: 1lh; }
+
 .north-intro + .north-actions,
 .north-sections + .north-actions,
 .north-signature + .north-actions {
   margin-top: var(--s8);
 }
 
-/* The signature: the words the page ends on, whole, a step larger than the
-   text and with more air over it than anything else on the page has, the
-   way the last line of a letter stands apart from the letter. No rule over
-   it - the air is the line. */
-.north-signature {
-  margin-top: calc(var(--s8) + var(--s4));
+/* The signature: the words the page ends on, whole, after a thin rule - the
+   rule its --- is drawn as while it is written - in the writing's size and
+   a little quieter, as they were typed. */
+.north-signature { margin-top: 1lh; }
+
+.north-signature::before {
+  content: '';
+  display: block;
+  height: 1lh;
+  background: linear-gradient(var(--border), var(--border)) center / 100% 1px no-repeat;
 }
 
-.north-signature > .north-paragraph {
-  font-size: var(--t-lg);
-  line-height: 1.5;
-}
+.north-signature > .north-paragraph { color: var(--muted); }
 
-/* A heading: the page's largest and heaviest type, a touch of tracking
+/* A heading: the writing's size, the strong weight and a touch of tracking
    because it is set in capitals, and nothing else - no rule, no marker, no
-   caret. */
+   caret. The tracking is the reading page's own: the field cannot track one
+   line without moving every caret after it. */
 .north-heading {
   margin: 0;
   color: var(--text);
-  font-size: var(--t-lg);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  line-height: 1.35;
+  font-size: var(--t-read);
+  font-weight: var(--w-strong);
+  letter-spacing: 0.04em;
+  line-height: calc(var(--lh-read) + 0.1);
   overflow-wrap: anywhere;
 }
 
@@ -11073,6 +11074,9 @@ button.north-day-line:focus-visible {
   display: block;
   height: var(--s3);
 }
+
+/* On the page the words follow their heading on the next line, as typed. */
+.north-read .north-section-text::before { height: 0; }
 
 .north-section.is-open > .north-section-body {
   grid-template-rows: 1fr;
@@ -11175,30 +11179,43 @@ button.north-day-line:focus-visible {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s3);
+  gap: var(--s2);
+}
+
+/* Reading and writing end the same way, at the right edge of the column:
+   Edit, and Cancel with Save in the same place when Edit opens the field. */
+.north-read > .north-actions,
+.north-editor > .north-actions { justify-content: flex-end; }
+
+/* Going between reading and writing is a fade of about 150ms, halfway
+   between the two durations the app has, and nothing slides. */
+@keyframes north-arrive {
+  from { opacity: 0; }
+}
+
+.north-read,
+.north-editor {
+  animation: north-arrive calc((var(--dur-fast) + var(--dur)) / 2) var(--ease);
 }
 
 /* An empty North: one line saying what the page is for and the one button
-   that starts it - no field and no edge until somebody asks to write. */
+   that starts it - no field and no edge until somebody asks to write. The
+   line in the writing's size, where the first written line will stand. */
 .north-invite-line {
   margin: 0;
   color: var(--muted);
-  font-size: var(--t-md);
-  line-height: 1.7;
+  font-size: var(--t-read);
+  line-height: calc(var(--lh-read) + 0.1);
 }
 
 .north-invite-line + .north-actions { margin-top: var(--s4); }
 
-/* The text, written. The grey line over the field says the page's two
-   rules, in a label's register: small, tracked, and in capitals, which is
-   what one of them is about. */
+/* The page's two rules, said once in one calm grey line under the field,
+   in sentence case. */
 .north-editor-rule {
-  margin: 0 0 var(--s2);
+  margin: var(--s3) 0 0;
   color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--t-sm);
 }
 
 /* The field stands exactly over a drawing of its own text - NorthEditor
@@ -11208,69 +11225,54 @@ button.north-day-line:focus-visible {
   position: relative;
 }
 
+/* A page, not a box: no edge, no ground and no padding, so the words stand
+   exactly where the reading page puts them, at the reading size - which is
+   also above the size a phone zooms a field at. */
 .north-editor-mirror,
 .north-editor-field > .north-editor-text {
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  padding: var(--s3) var(--s4);
-  border-width: 1px;
-  border-style: solid;
+  padding: 0;
+  border: 0;
   font-family: inherit;
-  font-size: var(--t-input);
-  font-weight: 400;
+  font-size: var(--t-read);
+  font-weight: var(--w-regular);
   letter-spacing: normal;
-  line-height: 1.7;
+  line-height: calc(var(--lh-read) + 0.1);
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: normal;
   tab-size: 4;
 }
 
-/* The text's own size where a field is not zoomed into on focus; on a
-   finger the field keeps the iOS floor, and the drawing keeps it with it. */
-@media (hover: hover) and (pointer: fine) {
-  .north-editor-mirror,
-  .north-editor-field > .north-editor-text {
-    font-size: var(--t-md);
-  }
-}
-
-/* The drawing is in the flow and gives the field its height: eight lines
-   at least, and one more than the text has. It carries the ground, since
-   the field over it has to stay clear. */
+/* The drawing is in the flow and gives the field its height: five lines at
+   least, and one more than the text has, growing with the text. */
 .north-editor-mirror {
-  min-height: calc(13.6em + var(--s3) * 2 + 2px);
-  border-color: transparent;
-  border-radius: var(--r-control);
-  background: var(--bg);
+  min-height: 5lh;
   color: var(--text);
 }
 
-.north-editor-field:focus-within > .north-editor-mirror {
-  background: var(--surface);
-}
-
-/* A line the page will read as a heading, and the signature's mark, drawn
-   heavier while they are typed. A stroke round the letters rather than a
-   bolder face, which would be wider and would move the caret on every line
-   after it. Three hyphens drawn heavier are still three short strokes, so
-   the mark also stands on a band of quiet ground - a ground and a spread
-   shadow, neither of which moves a letter. */
-.north-editor-line.is-heading,
-.north-editor-line.is-mark {
+/* A line the page will read as a heading, drawn heavier while it is typed:
+   a stroke round the letters rather than a bolder face, which would be
+   wider and would move the caret on every line after it. */
+.north-editor-line.is-heading {
   -webkit-text-stroke: 0.04em currentColor;
 }
 
+/* The signature's mark, drawn as the thin faint rule it becomes: its three
+   hyphens unseen, and a hairline behind them across the width of the page
+   in the height of their own line, so nothing on the line or after it
+   moves. */
 .north-editor-line.is-mark {
-  border-radius: var(--r-mark);
-  background: color-mix(in srgb, var(--muted) 28%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--muted) 28%, transparent);
+  display: inline-block;
+  width: 100%;
+  color: transparent;
+  background: linear-gradient(var(--border), var(--border)) center / 100% 1px no-repeat;
 }
 
-/* The empty field's example, held unseen in the drawing so the field is as
-   tall as the example it shows. */
-.north-editor-example { visibility: hidden; }
+/* The signature's lines, a little quieter, as the page reads them. */
+.north-editor-line.is-signature { color: var(--muted); }
 
 /* The field: its edge, its caret and its selection, and no ink or ground of
    its own. It never scrolls inside itself. */
@@ -11285,16 +11287,23 @@ button.north-day-line:focus-visible {
   caret-color: var(--text);
 }
 
+/* No ground under the pointer and no halo on focus: the caret is the
+   field's focus, and a writing surface does not light up when written in. */
+.north-editor-field > .north-editor-text:hover,
 .north-editor-field > .north-editor-text:focus {
   background: transparent;
+  box-shadow: none;
+  outline: none;
 }
+
+.north-editor-field > .north-editor-text::placeholder { color: var(--faint); }
 
 .north-editor-field > .north-editor-text::selection {
   color: transparent;
   background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
-.north-editor-field + .north-actions { margin-top: var(--s4); }
+.north-editor-rule + .north-actions { margin-top: var(--s4); }
 
 /* A fact, not a measurement - goalAge. Set in --faint at the smallest size
    so it can never be mistaken for the thing the card is about. */
@@ -11346,7 +11355,7 @@ button.north-day-line:focus-visible {
   max-width: 60ch;
   color: var(--muted);
   font-size: var(--t-sm);
-  line-height: 1.6;
+  line-height: var(--lh-read);
 }
 
 /* "If" is a word in the sentence, not a tag on a field. It was small caps in
@@ -11391,19 +11400,19 @@ button.north-day-line:focus-visible {
      needs is untouched, which is why this sits inside the fine-pointer
      query rather than overriding the button system for everyone. */
   .north-rule-actions button {
-    min-height: 26px;
+    min-height: var(--s6);
     padding: 0 var(--s2);
-    border: none;
-    background: none;
     font-size: var(--t-sm);
   }
 
+  /* On the rule's first line: the buttons are a little taller than a line
+     of the rule, so they stand half the difference above its top, centred
+     on the line rather than hanging from it. */
+  .north-rule-actions { margin-top: calc((var(--t-sm) * var(--lh-read) - var(--s6)) / 2); }
+
   .north-rule-actions .btn-danger { color: var(--danger); }
 
-  .north-rule-actions .btn-danger:hover {
-    background: color-mix(in srgb, var(--danger) 14%, transparent);
-    border-radius: var(--r-control);
-  }
+  .north-rule-actions .btn-danger:hover { background: var(--fill); }
 
   .north-rule-actions .btn-danger.is-armed {
     background: var(--danger);
@@ -11413,6 +11422,11 @@ button.north-day-line:focus-visible {
 }
 
 .north-rule-add { align-self: flex-start; }
+
+/* A goal's last row: More at the left, Cancel and Save at the right. */
+.north-goal-actions { justify-content: flex-end; }
+
+.north-goal-actions > .north-goal-more-open { margin-right: auto; }
 
 .north-rule-full {
   margin: 0;
@@ -11424,14 +11438,14 @@ button.north-day-line:focus-visible {
    it likes - see UnfiledRules. */
 .north-unfiled {
   margin-top: var(--s8);
-  padding-top: var(--s5);
+  padding-top: var(--s6);
   border-top: 1px solid var(--border);
 }
 
 .north-unfiled h3 {
   margin: 0;
   font-size: var(--t-md);
-  font-weight: 600;
+  font-weight: var(--w-strong);
 }
 
 .north-unfiled > .muted {
@@ -11453,13 +11467,14 @@ button.north-day-line:focus-visible {
 /* The rule form: two lines and a tag, and nothing about scheduling. The
    fields are the app's own .field rows, so this looks like every other place
    something is written down rather than like a form of its own. */
+/* A rule being written: a card on the page with no edge, its two fields on
+   it, and its last row Cancel and Save at the right. */
 .rule-form {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
   margin: var(--s2) 0 var(--s3);
-  padding: var(--s3);
-  border: 1px solid var(--border);
+  padding: var(--s4);
   border-radius: var(--r-card);
   background: var(--surface);
 }
@@ -11472,6 +11487,7 @@ button.north-day-line:focus-visible {
 .rule-form-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--s2);
   margin-top: var(--s1);
 }
@@ -15676,22 +15692,6 @@ main:has(.week) > .calendar {
 .wt-note-actions { display: flex; align-items: center; gap: var(--s2); }
 
 
-/* And the third of them sits where the row puts it.
- *
- * `.setting-quiet` and `.setting-remove` are written for the column they
- * were born in - a quiet word beside a two-line field, where flex-start puts
- * it on the first line - and `align-self` on a child beats `align-items` on
- * its row. Dropped into these two rows it put Close eleven pixels and every
- * category's Delete eight pixels above the buttons beside them. The owner's
- * screenshot of the week editor's note header found the first; the sweep's
- * new pass found the second, on six rows of Settings at once. The class is
- * left alone, because the column it was written for still needs it. The
- * category's Delete has since moved into its editor, so this is the note
- * header's alone. */
-.wt-note-actions > .setting-quiet {
-  align-self: center;
-  margin-top: 0;
-}
 
 .wt-add-to { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s1) var(--s3); }
 

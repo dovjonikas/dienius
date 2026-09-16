@@ -340,6 +340,45 @@ ratchet: borders drawn 104 to 89, pixel heights 57 to 46, weights 74 to 71,
 number line heights 78 to 76, tracked capitals 12 to 10, `--t-2xs` 10 to 8,
 `--t-input` 7 to 6, black as rgba 8 to 7.
 
+### Stage 7 - North: done
+
+Built to the North brief queued above, so its five stages later finish and
+prove what is here rather than redo it.
+
+- **The field is the page.** No edge, no ground, no padding and no halo:
+  17px at a leading of 1.7, the words standing exactly where the reading
+  page puts them, so Edit moves no line. It grows with the text and never
+  scrolls inside itself. The empty field asks "Write who you are." and
+  shows no example.
+- **Formatting while typing**, drawn under the transparent field: a heading
+  heavier by a stroke round its letters, `---` a thin faint rule across the
+  page in its own line's height, the signature's lines the quieter ink. The
+  tracking and the room over a heading the brief asked for are the reading
+  page's only - a textarea cannot give one line either without moving every
+  caret after it (DECISIONS). A browser test holds the drawing to the field
+  line by line, long wrapped lines included, and was made to fail first.
+- **The rule and the buttons.** One grey sentence-case line under the field,
+  "Capital lines become headings. A line of --- starts your signature.";
+  Cancel quiet and Save primary at the right, Save waiting quiet until
+  there is a change; Ctrl or Cmd with Enter saves, and with nothing changed
+  closes; Escape cancels. The browser's own undo still takes back typing.
+- **Reading.** The introduction, a heading's words and the signature at the
+  writing's size and leading; a heading the same size at the strong weight
+  and tracked; one line of air between the parts; the signature after a
+  thin rule in the quieter ink; Edit a quiet button at the right. The page's
+  name is smaller and quieter than the text. Reading and writing fade in
+  over about 150ms.
+- **A goal and its rules.** A goal's last row is More at the left, Cancel
+  and Save at the right; a rule being written is a card with no edge ending
+  Cancel and Save at the right; a rule's Edit and Delete stand on its first
+  line's centre. The underlined `.setting-quiet` is gone with its last use.
+
+The day's North - the rail and the window after sleep - keeps its own type
+until the North brief's stage 4, which is about exactly that. The ratchet:
+weights 71 to 66, number line heights 76 to 71, borders drawn 89 to 88,
+pixel heights 46 to 45, tracked capitals 10 to 9, `--s5` 10 to 9,
+`--t-input` 6 to 5.
+
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
 Asked for in one message that replaces everything asked about North, the

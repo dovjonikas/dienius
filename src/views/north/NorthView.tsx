@@ -159,7 +159,7 @@ function NorthText({
         </div>
       )}
       <div className="north-actions">
-        <button ref={openerRef} type="button" className="btn-secondary" onClick={onEdit}>
+        <button ref={openerRef} type="button" className="btn-quiet" onClick={onEdit}>
           Edit
         </button>
       </div>
@@ -174,48 +174,42 @@ const LINE_CLASS = {
   text: 'north-editor-line',
 } as const
 
-/**
- * The empty field's example: the shape of a North, in words that say what
- * goes where. The page's own tests read it by the page's own rule, so it
- * always shows every part the page reads.
- */
-const NORTH_EXAMPLE = [
-  'A line or two about who you are.',
-  '',
-  'AT WORK',
-  'How you want to work.',
-  '',
-  'WITH PEOPLE',
-  'How you want to be with others.',
-  '',
-  '---',
-  'The line you end on.',
-].join('\n')
+/** The signature's lines, after the mark: drawn a little quieter. */
+const SIGNATURE_LINE_CLASS = 'north-editor-line is-signature'
+
+/** What the empty field asks. One question, and nobody's words. */
+const NORTH_PLACEHOLDER = 'Write who you are.'
 
 /**
- * The text, written: one textarea holding all of it, Save and Cancel under
- * it, and nothing written until Save.
+ * The text, written: a page rather than a form. One textarea holding all
+ * of it, no edge and no ground, the words at the size and the leading the
+ * page reads them at and standing where the page puts them, so going from
+ * reading to writing moves nothing. The rule is one quiet line under it;
+ * Cancel and Save stand at the right, Save last.
  *
  * ## No formatting but capitals
  *
  * There is no toolbar and no rich text. A line in capitals is a heading and
  * a line of --- starts the signature, which is said once, in the grey line
- * above the field, and shown while it is typed: every line the page will
- * read as a heading, and the mark, is drawn heavier as soon as it is one -
- * by northLineKinds, the page's own rule, so capitals after the mark are
- * not. That is the one help the field gives.
+ * under the field, and shown while it is typed: every line the page will
+ * read as a heading is drawn heavier as soon as it is one, the mark is drawn
+ * as a thin rule across the page, and the signature's lines after it a
+ * little quieter - by northLineKinds, the page's own rule, so capitals after
+ * the mark are not a heading.
  *
- * The empty field shows an example of the shape, not of the words: an
- * introduction, two headings with a line each, and a signature, in sentences
- * that say what goes where. It is nobody's text.
- *
- * A textarea cannot draw one line heavier than another, so the field draws
- * nothing itself. Its own text is transparent and a drawing of the same
- * text sits exactly under it, line for line, in the same type, the same
- * padding and the same wrapping - the caret, the selection and the typing
- * are the field's, and the ink is the drawing's. Heavier is a stroke round
- * the letters rather than a bolder face: a bolder face is wider, and one
- * wider line would put every caret after it in the wrong place.
+ * A textarea cannot draw one line differently from another, so the field
+ * draws nothing itself. Its own text is transparent and a drawing of the
+ * same text sits exactly under it, line for line, in the same type, the
+ * same padding and the same wrapping - the caret, the selection, the typing,
+ * undo, copy and paste and a phone's keyboard are the field's, and the ink
+ * is the drawing's. So nothing the drawing does may move a letter: a heading
+ * is heavier by a stroke round its letters rather than a bolder face, which
+ * would be wider, and the rule a mark becomes is drawn behind its three
+ * hyphens in the height of their own line. The more room over a heading and
+ * the wider tracking the brief asked for are the reading page's: a line in
+ * a textarea cannot have either without every caret after it landing in the
+ * wrong place, which is the one thing a writing surface must never do. See
+ * DECISIONS.
  *
  * The field never scrolls inside itself. It stands over the drawing and is
  * exactly as tall, so the page scrolls instead; a field that scrolled on its
@@ -225,13 +219,16 @@ const NORTH_EXAMPLE = [
  *
  * ## When it is written
  *
- * On Save, as typed - the store trims the two ends of the whole text and
- * nothing inside it, and emptying the text and saving removes it. Cancel
- * drops what was typed. Leaving the page with the field open keeps what is
- * in it, because nothing typed should be lost to a press somewhere else;
- * Cancel is the one way to drop words. Save waits for a first line on a
- * North that has no text yet, which is also how the tour knows to ask for
- * one.
+ * On Save, or Ctrl or Cmd with Enter, as typed - the store trims the two
+ * ends of the whole text and nothing inside it, and emptying the text and
+ * saving removes it. Cancel, or Escape, drops what was typed. Leaving the
+ * page with the field open keeps what is in it, because nothing typed should
+ * be lost to a press somewhere else. Save waits, quiet, until there is
+ * something different to save - the shape a button has when it cannot be
+ * pressed yet, in its place, so it never looks broken and nothing moves
+ * when it wakes; with nothing changed the two keys simply close the field. On a North with
+ * no text yet it also waits for a first line, which is how the tour knows
+ * to ask for one.
  *
  * There is no cap on its length and none on its headings: as many as the
  * text has.
@@ -274,6 +271,9 @@ function NorthEditor({
   }, [draft])
 
   const kinds = northLineKinds(draft)
+  const markAt = kinds.indexOf('mark')
+  const changed = draft !== text
+  const nothingToSave = !changed || (draft.trim() === '' && text === '')
 
   function save() {
     latest.current.settled = true
@@ -288,26 +288,16 @@ function NorthEditor({
 
   return (
     <div className="north-editor">
-      <p id={ruleId} className="north-editor-rule">
-        A line in capitals becomes a heading. A line with --- starts the signature.
-      </p>
       <div className="north-editor-field">
         <div className="north-editor-mirror" aria-hidden="true">
-          {/* An empty field is as tall as its example, which the field draws
-              itself: the drawing holds the example unseen so that none of it
-              is cut off. */}
-          {draft === '' ? (
-            <span className="north-editor-example">{NORTH_EXAMPLE}</span>
-          ) : (
-            draft.split('\n').map((line, i) => (
-              <span key={i}>
-                {i > 0 && '\n'}
-                <span className={LINE_CLASS[kinds[i]]}>{line}</span>
-              </span>
-            ))
-          )}
+          {draft.split('\n').map((line, i) => (
+            <span key={i}>
+              {i > 0 && '\n'}
+              <span className={markAt >= 0 && i > markAt ? SIGNATURE_LINE_CLASS : LINE_CLASS[kinds[i]]}>{line}</span>
+            </span>
+          ))}
           {/* One line more than the text has - see above. */}
-          {'\n​'}
+          {'\n\u200b'}
         </div>
         <textarea
           ref={ref}
@@ -315,32 +305,50 @@ function NorthEditor({
           aria-label="North"
           aria-describedby={ruleId}
           data-tour="picture-field"
-          placeholder={NORTH_EXAMPLE}
+          placeholder={NORTH_PLACEHOLDER}
           value={draft}
           onChange={e => {
             setDraft(e.target.value)
             latest.current.draft = e.target.value
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault()
+              if (!nothingToSave) save()
+              else if (!changed) cancel()
+              return
+            }
+            if (e.key === 'Escape') {
+              // Stopped here, or one press would close the field and whatever
+              // is under it together - CONVENTIONS section 13.
+              e.preventDefault()
+              e.stopPropagation()
+              cancel()
+            }
           }}
           onScroll={e => {
             e.currentTarget.scrollTop = 0
           }}
         />
       </div>
+      <p id={ruleId} className="north-editor-rule">
+        Capital lines become headings. A line of --- starts your signature.
+      </p>
       <div className="north-actions">
-        {/* Waits for a first line on a North with no text yet: there is
-            nothing to save, and the tour reads a disabled target as not yet
-            there, so its card asks for the line first. */}
+        <button type="button" className="btn-quiet" onClick={cancel}>
+          Cancel
+        </button>
+        {/* Quiet until there is something to save - see above. The tour
+            reads a disabled target as not yet there, so its card asks for
+            the first line before it points here. */}
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary north-save"
           data-tour="picture-keep"
-          disabled={draft.trim() === '' && text === ''}
+          disabled={nothingToSave}
           onClick={save}
         >
           Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={cancel}>
-          Cancel
         </button>
       </div>
     </div>

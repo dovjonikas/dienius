@@ -172,22 +172,22 @@ const pressesThatScale = () =>
  * brings it down; never raise one.
  */
 const RETIRED: { what: string; now: () => number; left: number }[] = [
-  { what: 'uses of --s5 (20px)', now: () => count(/var\(--s5\)/g), left: 10 },
+  { what: 'uses of --s5 (20px)', now: () => count(/var\(--s5\)/g), left: 9 },
   { what: 'uses of --s7 (28px)', now: () => count(/var\(--s7\)/g), left: 2 },
   { what: 'uses of --t-2xs (10px)', now: () => count(/var\(--t-2xs\)/g), left: 8 },
-  { what: 'uses of --t-input (16px)', now: () => count(/var\(--t-input\)/g), left: 6 },
+  { what: 'uses of --t-input (16px)', now: () => count(/var\(--t-input\)/g), left: 5 },
   { what: 'uses of --e1, a resting shadow', now: () => count(/var\(--e1\)/g), left: 2 },
-  { what: 'font weights written as numbers', now: () => count(/font-weight\s*:\s*[0-9]+/g), left: 71 },
+  { what: 'font weights written as numbers', now: () => count(/font-weight\s*:\s*[0-9]+/g), left: 66 },
   {
     what: 'line heights written as numbers',
     now: () => count(/line-height\s*:\s*(?!1\s*[;}\s]|inherit|normal|var\()[0-9.]+(px)?/g),
-    left: 76,
+    left: 71,
   },
-  { what: 'tracked capitals', now: () => count(/text-transform\s*:\s*uppercase/g), left: 10 },
-  { what: 'borders drawn', now: drawnBorders, left: 89 },
+  { what: 'tracked capitals', now: () => count(/text-transform\s*:\s*uppercase/g), left: 9 },
+  { what: 'borders drawn', now: drawnBorders, left: 88 },
   { what: 'black written as rgba()', now: () => count(/rgba\(0,\s*0,\s*0,/g), left: 7 },
   { what: 'presses that scale', now: pressesThatScale, left: 0 },
-  { what: 'heights written as min-height in pixels', now: () => count(/min-height\s*:\s*[0-9]+px/g), left: 46 },
+  { what: 'heights written as min-height in pixels', now: () => count(/min-height\s*:\s*[0-9]+px/g), left: 45 },
 ]
 
 describe('what the design pass is retiring only goes down', () => {
