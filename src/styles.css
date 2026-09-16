@@ -5760,6 +5760,16 @@ button.danger {
   .chip,
   .swatch,
   .settings-nav-item,
+  button.core-toggle,
+  .block-note-toggle,
+  .block-remove,
+  .wt-day-toggle,
+  .week-col-day,
+  .week-col-template,
+  .library-item-open,
+  .library-list-fold,
+  .scratch-note-action,
+  .north-fold-toggle,
   .day-nav > button,
   .mini-cell,
   .theme-card,
@@ -5782,6 +5792,31 @@ button.danger {
   .mini-cell:hover { border-color: var(--muted); }
   .task-menu-button:hover { color: var(--text); }
   .up-next:hover { border-color: color-mix(in srgb, var(--cat) 45%, var(--border)); }
+
+  /* The rest of the controls that gave the pointer no answer at all, found
+     by hovering every button on every screen in v2.22 and reading back the
+     computed style. Colour, edge and ground only, as above. A segment or a
+     switch already chosen says nothing more under the pointer, since it has
+     nothing more to say. */
+  .segmented button:not(.active):hover,
+  .block-note-toggle:hover,
+  .week-col-day:hover,
+  .scratch-note-action:hover,
+  .north-fold-toggle:hover {
+    color: var(--text);
+  }
+  .block-note-toggle:hover { border-color: var(--border); }
+  button.core-toggle:not(.active):hover,
+  .wt-day-toggle:not([aria-pressed='true']):hover,
+  .week-col-template:hover {
+    border-color: var(--muted);
+  }
+  button.core-toggle:not(.active):hover { color: var(--text); }
+  .block-remove:hover { color: var(--danger); }
+  .library-item-open:hover,
+  .library-list-fold:hover {
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+  }
 }
 
 /* Pressing anything gives the press back, on every input including touch -

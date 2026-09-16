@@ -472,7 +472,7 @@ test('the calendar empty-templates message offers a way to go build one', async 
   const user = userEvent.setup()
   const onOpenTemplates = vi.fn()
   render(<CalendarView onOpenDay={() => {}} onOpenTemplates={onOpenTemplates} />)
-  await user.click(screen.getByRole('button', { name: /create a template/i }))
+  await user.click(screen.getByRole('button', { name: /new template/i }))
   expect(onOpenTemplates).toHaveBeenCalledTimes(1)
 })
 

@@ -162,13 +162,11 @@ export function TaskPane({
           template is, the tour, the sample week. */}
       {tasks.length === 0 && firstRun && (
         <div className="first-run">
-          <p className="first-run-lede">
-            A template is a reusable set of blocks stamped onto a date. Pick one below to plan today.
-          </p>
           {/* The tour: nine real actions on this very plan, two minutes.
               Offered before the starters because it starts by tapping one
               of them - and a person who takes it has, by the end, planned a
-              day, which is what this screen is for. */}
+              day, which is what this screen is for. The one filled button
+              on the screen; the starters under it are the several. */}
           <p className="first-run-tour">
             <button type="button" className="btn-primary" onClick={() => startTour(isWide ? 'desktop' : 'mobile')}>
               Take the tour
@@ -188,6 +186,12 @@ export function TaskPane({
               - a fortnight of somebody else's days, kept separate from yours.
             </p>
           )}
+          {/* Directly over the cards it is about. It stood at the top, over
+              the tour and the sample week, and "pick one below" pointed past
+              two other things at the third. */}
+          <p className="first-run-lede">
+            A template is a reusable set of blocks stamped onto a date. Pick one below to plan today.
+          </p>
           <StarterOffers onUse={handleUseStarter} />
         </div>
       )}

@@ -938,7 +938,7 @@ test('with no library at all, the day editor still offers a way to make a list',
 
   const row = within(document.querySelector('.block-add') as HTMLElement)
   expect(row.queryByLabelText('Library list')).toBeNull()
-  expect(row.getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+  expect(row.getByRole('button', { name: 'New list' })).toBeInTheDocument()
 })
 
 /**

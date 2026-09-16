@@ -264,7 +264,14 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         // Today gets the three doors; a day still ahead gets the one that
         // applies to it; a day that has passed gets none, because nothing
         // can come up in it any more.
-        replan={!isPast ? { away: day?.away, isToday, onOpen: mode => requestReplan(mode, date) } : undefined}
+        // And not on a today with nothing on it: Replan and Low day are about
+        // what is there. A day still ahead keeps Something came up, which is
+        // how a thing gets onto it.
+        replan={
+          !isPast && (!isToday || (day?.tasks.length ?? 0) > 0)
+            ? { away: day?.away, isToday, onOpen: mode => requestReplan(mode, date) }
+            : undefined
+        }
         lowDay={day?.lowDay}
       />
 

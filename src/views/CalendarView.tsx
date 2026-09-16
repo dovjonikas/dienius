@@ -474,7 +474,7 @@ export function CalendarView({
           {data.templates.length === 0 && (
             <div className="stamp-bar-empty">
               <p className="muted">No templates yet, so there is nothing here to stamp onto a day.</p>
-              <button type="button" className="btn-primary" onClick={onOpenTemplates}>Create a template</button>
+              <button type="button" className="btn-primary" onClick={onOpenTemplates}>New template</button>
             </div>
           )}
 

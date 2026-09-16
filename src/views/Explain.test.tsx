@@ -182,7 +182,7 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     // The kind question is behind New template, and the week editor's own two
     // terms are behind choosing the week.
     if (id === 'deserve') {
-      await user.click(screen.getByRole('button', { name: 'Compose' }))
+      await user.click(screen.getByRole('button', { name: 'Edit goals' }))
     }
     if (id === 'template-day' || id === 'template-week' || id === 'add-to' || id === 'copy-to') {
       await user.click(screen.getByRole('button', { name: 'New template' }))

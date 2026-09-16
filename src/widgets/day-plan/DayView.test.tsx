@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DayView } from './DayView'
 import { consumeDraft, saveDraft } from './draft'
@@ -1325,8 +1325,17 @@ import { todayKey } from '../../lib/dates'
 import { planLowDay } from './lowDay'
 
 test('today has a Low day door beside Replan, and a day that has passed does not', () => {
-  render(<DayView date={todayKey()} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  // Since v2.22 the two doors are about what is on the day, so a today with
+  // nothing on it has neither - a door onto nothing is noise on the first
+  // screen. One task, and both are there.
+  const today = todayKey()
+  const { rerender } = render(<DayView date={today} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  expect(screen.queryByRole('button', { name: 'Low day' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Replan' })).toBeNull()
+  act(() => actions.addTask(today, 'Deep work'))
+  rerender(<DayView date={today} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByRole('button', { name: 'Low day' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Replan' })).toBeInTheDocument()
 })
 
 test('a day that has passed has no Low day door', () => {

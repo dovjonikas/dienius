@@ -40,7 +40,7 @@ function picture(text = 'I wake before the house does.') {
  * the reading page is what somebody wrote and nothing that acts.
  */
 async function compose(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
 }
 
 /**
@@ -68,7 +68,7 @@ test('with nothing written, the page is the editor and nothing else', () => {
   expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Done'])
   expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
   expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Compose' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Edit goals' })).toBeNull()
 })
 
 test('what is typed is saved on its own after a pause, blank lines and all', async () => {
@@ -235,7 +235,7 @@ test('Compose edits every goal in place, leaves the text alone, and Cancel drops
   goal('Be strong at fifty')
   render(<NorthView />)
 
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   expect(screen.getAllByLabelText('What')[0]).toHaveFocus()
   // The text is not in here since v2.22: it has its own editor on the page.
   expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
@@ -246,7 +246,7 @@ test('Compose edits every goal in place, leaves the text alone, and Cancel drops
   expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at fifty'])
   expect(screen.getByText('First line here')).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.clear(screen.getAllByLabelText('What')[1])
   await user.type(screen.getAllByLabelText('What')[1], 'Be strong at sixty')
   await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -261,7 +261,7 @@ test('Escape leaves Compose without saving', async () => {
   picture('First line here')
   goal('Ship something')
   render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.type(screen.getAllByLabelText('What')[0], ' more')
   await user.keyboard('{Escape}')
   expect(screen.queryByLabelText('What')).toBeNull()
@@ -274,7 +274,7 @@ test('Compose archives a goal on Save and not before, and Undo keeps it', async 
   const g = goal('Old direction')
   render(<NorthView />)
 
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Archive "Old direction"' }))
   expect(screen.getByText(/will be archived when you save/)).toBeInTheDocument()
   expect(getData().goals[0].archivedAt).toBeUndefined()
@@ -294,7 +294,7 @@ test('Add another in Compose puts the cursor in a new goal, and a full window of
   goal('One')
   render(<NorthView />)
 
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Add another' }))
   expect(screen.getAllByLabelText('What')).toHaveLength(2)
   expect(screen.getAllByLabelText('What')[1]).toHaveFocus()
@@ -316,7 +316,7 @@ test('a new goal row can be removed before it is saved, and an empty one is neve
   picture()
   goal('One')
   render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Add another' }))
   await user.click(screen.getByRole('button', { name: 'Add another' }))
   await user.click(screen.getAllByRole('button', { name: 'Remove this goal' })[0])
@@ -333,7 +333,7 @@ test('archived goals are brought back or deleted from a fold inside Compose', as
   render(<NorthView />)
 
   expect(screen.queryByText(/Archived \(1\)/)).toBeNull()
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
   await user.click(screen.getByRole('button', { name: 'Bring back' }))
 
@@ -342,7 +342,7 @@ test('archived goals are brought back or deleted from a fold inside Compose', as
 
   await user.click(screen.getByRole('button', { name: 'Archive "Old direction"' }))
   await user.click(screen.getByRole('button', { name: 'Save' }))
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
   await user.click(screen.getByRole('button', { name: 'Delete' }))
   expect(getData().goals.find(x => x.id === g.id)).toBeUndefined()
@@ -355,7 +355,7 @@ test('bringing one back is refused while the window is full', async () => {
   actions.archiveGoal(g.id, TODAY)
   for (let i = 0; i < MAX_ACTIVE_GOALS; i++) goal(`Goal ${i}`)
   render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
   expect(screen.getByRole('button', { name: 'Bring back' })).toBeDisabled()
 })
@@ -552,9 +552,9 @@ test('leaving Compose puts focus back on the Compose control', async () => {
   // there has to be one for the control to exist.
   goal('Ship something')
   render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   await user.keyboard('{Escape}')
-  expect(screen.getByRole('button', { name: 'Compose' })).toHaveFocus()
+  expect(screen.getByRole('button', { name: 'Edit goals' })).toHaveFocus()
 })
 
 /**
@@ -698,7 +698,7 @@ test('a rule whose goal was deleted waits in Compose, and one press files it', a
   // Nothing about it on the page somebody reads.
   expect(screen.queryByText(/the kitchen is a mess/)).toBeNull()
 
-  await user.click(screen.getByRole('button', { name: 'Compose' }))
+  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
   const orphans = screen.getByRole('region', { name: 'Rules with no goal' })
   expect(within(orphans).getByText(/the kitchen is a mess/)).toBeInTheDocument()
 

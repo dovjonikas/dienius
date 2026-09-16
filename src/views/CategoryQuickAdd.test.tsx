@@ -25,7 +25,7 @@ test('a category is made from the block row, and the new block takes it', async 
   await openEditor(user)
   const before = getData().categories.length
 
-  await user.click(screen.getByRole('button', { name: 'Make a category' }))
+  await user.click(screen.getByRole('button', { name: 'New category' }))
   await user.type(screen.getByLabelText('Category name'), 'Training')
   await user.click(within(screen.getByRole('group', { name: 'Colour' })).getByRole('button', { name: 'Teal' }))
   await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -66,7 +66,7 @@ test('a colour another category already has is still offered, and says whose', a
   const taken = resolvedColor(getData().categories[0])
   const name = CATEGORY_PALETTE.find(c => c.value.toLowerCase() === taken.toLowerCase())?.name
 
-  await user.click(screen.getByRole('button', { name: 'Make a category' }))
+  await user.click(screen.getByRole('button', { name: 'New category' }))
   const swatches = within(screen.getByRole('group', { name: 'Colour' }))
   if (name) {
     // Two things may share a colour if that is what somebody wants. The app
@@ -100,7 +100,7 @@ test('the gate itself still refuses an unreadable colour', () => {
 test('a name with nothing in it cannot be saved', async () => {
   const user = userEvent.setup()
   await openEditor(user)
-  await user.click(screen.getByRole('button', { name: 'Make a category' }))
+  await user.click(screen.getByRole('button', { name: 'New category' }))
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   await user.type(screen.getByLabelText('Category name'), '   ')
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
@@ -110,7 +110,7 @@ test('Escape closes the sheet without making anything', async () => {
   const user = userEvent.setup()
   await openEditor(user)
   const before = getData().categories.length
-  await user.click(screen.getByRole('button', { name: 'Make a category' }))
+  await user.click(screen.getByRole('button', { name: 'New category' }))
   await user.type(screen.getByLabelText('Category name'), 'Abandoned')
   await user.keyboard('{Escape}')
   expect(screen.queryByLabelText('Category name')).not.toBeInTheDocument()

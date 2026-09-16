@@ -107,7 +107,7 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
             data-tour="north-compose"
             onClick={() => setComposing('goals')}
           >
-            Compose
+            Edit goals
           </button>
         )}
       </header>

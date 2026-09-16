@@ -31,7 +31,7 @@ import { useRestoreFocus } from '../lib/useRestoreFocus'
 export function CategoryQuickAdd({
   categories,
   onMade,
-  label = 'Make a category',
+  label = 'New category',
 }: {
   categories: Category[]
   /** The new or edited one, so the caller can select it for what it is on. */

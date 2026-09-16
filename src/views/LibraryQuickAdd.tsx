@@ -29,7 +29,7 @@ import { useRestoreFocus } from '../lib/useRestoreFocus'
  */
 export function LibraryQuickAdd({
   onMade,
-  label = 'Make a list',
+  label = 'New list',
   worded = false,
 }: {
   /** The new list's id, so the caller can bind the block to what it just made. */

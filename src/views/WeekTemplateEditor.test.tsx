@@ -355,7 +355,7 @@ test('an empty library offers no choice, and a way to make one', async () => {
   render(<TemplatesView />)
   await newWeek(user)
   expect(addRow().queryByLabelText('Library list')).toBeNull()
-  expect(addRow().getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+  expect(addRow().getByRole('button', { name: 'New list' })).toBeInTheDocument()
 })
 
 /**
@@ -768,7 +768,7 @@ test('with no library at all, the block panel still offers a way to make a list'
 
   // No select, because there is nothing to choose - and a door anyway.
   expect(openBlockPanel().queryByLabelText('Library list')).not.toBeInTheDocument()
-  expect(openBlockPanel().getByRole('button', { name: 'Make a list' })).toBeInTheDocument()
+  expect(openBlockPanel().getByRole('button', { name: 'New list' })).toBeInTheDocument()
 })
 
 test('a list made from the block binds that block to it, without a second choice', async () => {
@@ -779,7 +779,7 @@ test('a list made from the block binds that block to it, without a second choice
   await addBlock(user, 'Reading')
   await openBlock(user, 'Wednesday', 'Reading')
 
-  await user.click(openBlockPanel().getByRole('button', { name: 'Make a list' }))
+  await user.click(openBlockPanel().getByRole('button', { name: 'New list' }))
   await user.type(screen.getByLabelText('List name'), 'MIND')
   await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'chapter' }))
   await user.click(within(screen.getByRole('dialog', { name: 'A new list' })).getByRole('button', { name: 'Save' }))
@@ -798,7 +798,7 @@ test('the short form is derived rather than asked for, so the sheet is two answe
   await addBlock(user, 'Reading')
   await openBlock(user, 'Wednesday', 'Reading')
 
-  await user.click(openBlockPanel().getByRole('button', { name: 'Make a list' }))
+  await user.click(openBlockPanel().getByRole('button', { name: 'New list' }))
   const sheet = within(screen.getByRole('dialog', { name: 'A new list' }))
   expect(sheet.queryByText('Short form')).not.toBeInTheDocument()
   await user.type(sheet.getByLabelText('List name'), 'MIND')
