@@ -12,7 +12,9 @@ import {
   formatClock,
   halfHourMarks,
   hourMarks,
+  isPastBlock,
   legibleHourLabels,
+  nowHint,
   scrollToShow,
   widenToHold,
 } from './timelineLayout'
@@ -877,6 +879,44 @@ test('an hour inside a block is not labelled beside it, and an hour at its edge 
   expect(kept).toEqual(expect.arrayContaining([9, 11, 13, 15]))
   expect(kept).not.toContain(10)
   expect(kept).not.toContain(14)
+})
+
+/**
+ * The one line of time the grid says, and only about now: the block running
+ * now says when it ends, and while nothing is running the next block says
+ * when it starts. Nothing else on the grid counts anything down.
+ */
+test('the block running now says when it ends', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Walk', '12:00', 30)])
+  expect(nowHint(layout.anchors, 10 * 60 + 35)).toEqual({ id: 'Deep work', text: 'ends in 25 min' })
+  expect(nowHint(layout.anchors, 9 * 60 + 55)).toEqual({ id: 'Deep work', text: 'ends in 1h 5 min' })
+})
+
+test('in free time the next block says when it starts, and only the next one', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Walk', '12:00', 30), anchor('Call', '14:00', 15)])
+  expect(nowHint(layout.anchors, 11 * 60 + 50)).toEqual({ id: 'Walk', text: 'starts in 10 min' })
+})
+
+test('after the last block there is nothing to say, and a block with no length is never running', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Groceries', '13:00'), anchor('Walk', '15:00', 30)])
+  expect(nowHint(layout.anchors, 16 * 60)).toBeNull()
+  expect(nowHint(layout.anchors, 13 * 60 + 10)).toEqual({ id: 'Walk', text: 'starts in 1h 50 min' })
+})
+
+/**
+ * What is behind now steps back a little, so the eye goes to now and to what
+ * is left. Past is a fact about the clock and nothing else: a block that has
+ * ended, done or not, and never one running or still to come.
+ */
+test('a block that has ended is past, and one running or still to come is not', () => {
+  const layout = computeTimelineLayout([anchor('Deep work', '09:00', 120), anchor('Groceries', '12:00'), anchor('Walk', '15:00', 30)])
+  const [deep, groceries, walk] = layout.anchors
+  const at = 13 * 60
+  expect(isPastBlock(deep, at)).toBe(true)
+  expect(isPastBlock(groceries, at)).toBe(true)
+  expect(isPastBlock(walk, at)).toBe(false)
+  expect(isPastBlock(deep, 10 * 60)).toBe(false)
+  expect(isPastBlock(deep, 11 * 60)).toBe(true)
 })
 
 /** The window grows only when it has to, and says so by handing back the same object. */

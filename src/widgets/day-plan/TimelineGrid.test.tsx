@@ -436,7 +436,53 @@ test('draws a current-time indicator when the day is today and the clock falls i
       <TimelineGrid tasks={[anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
     )
     expect(container.querySelector('.timeline-now-line')).not.toBeNull()
-    expect(container.querySelector('.timeline-now-dot')).not.toBeNull()
+    expect(container.querySelector('.timeline-now-time')).not.toBeNull()
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+/**
+ * Now, on today's grid: a thin line, and in the hour column a small marker
+ * saying the time to the minute. The running block says when it ends on its
+ * time line; in free time the next block says when it starts; what has ended
+ * steps back. Nothing of it on any other day.
+ */
+test('the now line carries the time to the minute in the hour column, and the running block says when it ends', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 9, 35))
+  try {
+    const { container } = render(
+      <TimelineGrid tasks={[anchor('Early', '07:00', 30), anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]} isToday />,
+    )
+    expect(container.querySelector('.timeline-now-time')?.textContent).toBe('09:35')
+    const blocks = [...container.querySelectorAll<HTMLElement>('.timeline-anchor')]
+    const shift = blocks.find(b => b.textContent?.startsWith('Shift'))!
+    expect(shift.querySelector('.timeline-anchor-hint')?.textContent).toBe('ends in 25 min')
+    expect(container.querySelectorAll('.timeline-anchor-hint')).toHaveLength(1)
+    // Behind now, a step back; running and still to come, not.
+    expect(blocks.find(b => b.textContent?.startsWith('Early'))).toHaveClass('timeline-anchor-past')
+    expect(shift).not.toHaveClass('timeline-anchor-past')
+    expect(blocks.find(b => b.textContent?.startsWith('Gym'))).not.toHaveClass('timeline-anchor-past')
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+test('in free time the next block says when it starts, and on another day nothing says anything or steps back', () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 7, 31, 10, 50))
+  try {
+    const tasks = [anchor('Early', '07:00', 30), anchor('Shift', '09:00', 60), anchor('Gym', '11:00', 30)]
+    const today = render(<TimelineGrid tasks={tasks} isToday />)
+    const gym = [...today.container.querySelectorAll<HTMLElement>('.timeline-anchor')].find(b => b.textContent?.startsWith('Gym'))!
+    expect(gym.querySelector('.timeline-anchor-hint')?.textContent).toBe('starts in 10 min')
+    today.unmount()
+
+    const other = render(<TimelineGrid tasks={tasks} />)
+    expect(other.container.querySelector('.timeline-anchor-hint')).toBeNull()
+    expect(other.container.querySelector('.timeline-anchor-past')).toBeNull()
+    expect(other.container.querySelector('.timeline-now-time')).toBeNull()
   } finally {
     vi.useRealTimers()
   }

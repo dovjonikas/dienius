@@ -32,10 +32,10 @@ test('the now line sits under the blocks it crosses', () => {
   expect(line).toBeLessThan(anchor)
 })
 
-test('the dot in the gutter still sits above everything', () => {
-  // It marks the hour on the axis, where no block reaches, so it keeps the
-  // layer it always had.
-  const dot = Number(declaration('.timeline-now-dot', 'z-index'))
+test('the time marker in the gutter still sits above everything', () => {
+  // It marks the minute on the axis, where no block reaches, so it keeps the
+  // layer the dot it replaced in v2.24 always had.
+  const marker = Number(declaration('.timeline-now-time', 'z-index'))
   const anchor = Number(declaration('.timeline-anchor', 'z-index'))
-  expect(dot).toBeGreaterThan(anchor)
+  expect(marker).toBeGreaterThan(anchor)
 })

@@ -16,6 +16,8 @@ import {
   formatClock,
   halfHourMarks,
   hourMarks,
+  isPastBlock,
+  nowHint,
   fitPxPerMinute,
   gapLabelPlacement,
   legibleHourLabels,
@@ -215,11 +217,13 @@ const GUTTER_PX = 44
 const MIN_HOUR_LABEL_GAP_PX = 28
 
 /**
- * How close an hour label may sit to the now line before it is dropped. An
- * 11px label is about 15px tall, so anything inside ten pixels of the line
- * would have the line drawn through its digits.
+ * How close an hour label may sit to the now line before it is dropped. The
+ * line carries its own time in the hour column since v2.24, a marker about
+ * eighteen pixels tall centred on the line, so an hour label inside that is
+ * under the marker - and the marker says the time more exactly than the
+ * hour would.
  */
-const NOW_CLEARS_LABEL_PX = 10
+const NOW_CLEARS_LABEL_PX = 18
 
 /**
  * The shortest free stretch that gets its size written on it. Below this the
@@ -580,10 +584,22 @@ export function TimelineGrid({
   // a planner has no reason to animate every second, so this recomputes
   // once a minute rather than driving a render loop. Skipped entirely when
   // the grid is not drawing today, since nothing here would ever be shown.
+  //
+  // On the minute rather than a minute after the grid happened to mount: the
+  // now marker says the time to the minute since v2.24, and one that turned
+  // over fifty seconds late would disagree with every other clock on screen.
   useEffect(() => {
     if (!isToday) return
-    const timer = setInterval(() => setNowMinutes(currentMinutes()), 60_000)
-    return () => clearInterval(timer)
+    let interval: ReturnType<typeof setInterval> | undefined
+    const tick = () => setNowMinutes(currentMinutes())
+    const first = setTimeout(() => {
+      tick()
+      interval = setInterval(tick, 60_000)
+    }, 60_000 - (Date.now() % 60_000))
+    return () => {
+      clearTimeout(first)
+      if (interval) clearInterval(interval)
+    }
   }, [isToday])
 
   // Runs after every render, but only ever acts once - closeGap below sets
@@ -687,6 +703,12 @@ export function TimelineGrid({
   const vertical = computeVerticalLayout(window, anchors, { pxPerMinute, ...floors })
   const heightPx = Math.round(vertical.totalHeightPx)
   const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX, anchors)
+  // A minute inside sleep, not at its edge - see the hour rules below.
+  const asleep = (minutes: number) => sleepBands.some(band => band.start < minutes && minutes < band.end)
+  // Now, said once on the grid: when the running block ends, or in free time
+  // when the next one starts - see nowHint. And what has ended steps back.
+  // Today's grid only; no other day has a now.
+  const hint = isToday ? nowHint(anchors, nowMinutes) : null
 
   // The geometry object handed upward is created once and never replaced -
   // see the onGeometry prop. What changes every render is this ref, which it
@@ -795,7 +817,16 @@ export function TimelineGrid({
               return (
                 <div
                   key={`sleep-${band.start}`}
-                  className="timeline-sleep-band"
+                  // Which way the band meets the waking hours, so only that
+                  // edge fades: at the top or the foot of the drawn day the
+                  // band simply ends with the grid.
+                  className={[
+                    'timeline-sleep-band',
+                    band.start <= window.start ? 'is-first' : '',
+                    band.end >= window.end ? 'is-last' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   aria-hidden="true"
                   style={{ top: `${bandTop}px`, height: `${bandHeightPx}px` }}
                 >
@@ -815,14 +846,18 @@ export function TimelineGrid({
               )
             })}
 
+            {/* The hours' rules stop at sleep: the band is one quiet ground,
+                and rules ruled across it made it read as a block with rows
+                in it rather than as the background of the day. The hour's
+                number beside it stays. */}
             {marks.map(mark => (
               <div key={mark} className="timeline-hour" data-minutes={mark} style={{ top: `${vertical.topPx(mark)}px` }}>
                 {!hideHours && labelledMarks.has(mark) && <span className="timeline-hour-label">{formatClock(mark)}</span>}
-                <span className="timeline-hour-rule" />
+                {!asleep(mark) && <span className="timeline-hour-rule" />}
               </div>
             ))}
 
-            {halfMarks.map(mark => (
+            {halfMarks.filter(mark => !asleep(mark)).map(mark => (
               <div
                 key={`half-${mark}`}
                 className="timeline-half-hour-rule"
@@ -923,6 +958,7 @@ export function TimelineGrid({
               // until they read the list.
               if (sourceTask?.highlight) classNames.push('timeline-anchor-key')
               if (activeTaskId === anchor.id) classNames.push('timeline-anchor-now')
+              if (isToday && isPastBlock(anchor, nowMinutes)) classNames.push('timeline-anchor-past')
               if (compact) classNames.push('timeline-anchor-compact')
               if (inline) classNames.push('timeline-anchor-inline')
               // Not enough room for one padded line of title. See the CSS.
@@ -968,6 +1004,10 @@ export function TimelineGrid({
                     {anchor.sized
                       ? formatAnchorTimeRange(anchor.startMinutes, anchor.minutes!)
                       : `${anchor.time} - no length`}
+                    {/* On the time's own line and in its ink, so it is read
+                        as part of when the block is, and goes where the time
+                        goes when a narrow block has no room for either. */}
+                    {hint?.id === anchor.id && <span className="timeline-anchor-hint">{hint.text}</span>}
                   </span>
                 </div>
               )
@@ -1033,12 +1073,17 @@ export function TimelineGrid({
 
             {showNowLine && (
               <>
-                {/* The line and its dot, and no clock chip on it since v2.6:
-                    the chip said the minute the header already says, and the
-                    hour label it would have covered is dropped instead - see
-                    NOW_CLEARS_LABEL_PX. */}
+                {/* A thin line, and in the hour column the time to the
+                    minute, in the line's own colour. The line went without a
+                    time from v2.6, on the argument that the header says the
+                    minute; the owner asked for it back, because the hours on
+                    this grid are not evenly spaced and a line between two of
+                    them does not say where between. The hour label it would
+                    sit on is dropped - see NOW_CLEARS_LABEL_PX. */}
                 <div className="timeline-now-line" style={{ top: `${nowTop}px` }} />
-                <div className="timeline-now-dot" style={{ top: `${nowTop}px` }} />
+                <div className="timeline-now-time" style={{ top: `${nowTop}px` }}>
+                  {formatClock(nowMinutes)}
+                </div>
               </>
             )}
           </div>

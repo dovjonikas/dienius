@@ -1,5 +1,5 @@
 import type { Task } from '../../lib/types'
-import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
+import { clipToWindow, formatDuration, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
 
 /**
  * The geometry of the day's timeline: which anchors draw where, what is
@@ -938,6 +938,38 @@ function clusterSegments(
     segments.push({ start, end, floorPx })
   }
   return segments
+}
+
+/**
+ * The one line of time the grid says, and only about now.
+ *
+ * The block whose time holds now says when it ends; while no block's time
+ * holds now, the next block to start says when it starts. One line on one
+ * block, and nothing about any other: a grid of blocks each counting down is
+ * a departures board, and the owner's brief asked for this and for no other
+ * hint or notice. A block with no length is never running - it has no end to
+ * count to - so free time around it points at the next block that has one or
+ * starts later. Read from the clock alone, done or not: the time a block
+ * holds is a fact about the day, and so is how much of it is left.
+ */
+export function nowHint(anchors: TimelineAnchorBlock[], now: number): { id: string; text: string } | null {
+  const running = anchors.find(a => a.sized && a.startMinutes <= now && now < a.endMinutes!)
+  if (running) return { id: running.id, text: `ends in ${formatDuration(running.endMinutes! - now)}` }
+  let next: TimelineAnchorBlock | undefined
+  for (const a of anchors) {
+    if (a.startMinutes > now && (!next || a.startMinutes < next.startMinutes)) next = a
+  }
+  return next ? { id: next.id, text: `starts in ${formatDuration(next.startMinutes - now)}` } : null
+}
+
+/**
+ * Whether a block is behind now: one with a length has ended, and one without
+ * has started. The grid draws these a step back, so the eye goes to now and
+ * to what is left - never in a colour that says a thing was not done, since
+ * past is a fact about the clock and not about the person.
+ */
+export function isPastBlock(anchor: TimelineAnchorBlock, now: number): boolean {
+  return anchor.sized ? anchor.endMinutes! <= now : anchor.startMinutes < now
 }
 
 /** Every whole hour mark that falls within the window, for the hour gridlines. */

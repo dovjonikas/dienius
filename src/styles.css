@@ -1806,13 +1806,37 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    and .timeline-hour-label just below. color-mix keeps it a genuine wash
    rather than a solid block: legible against every one of the eleven
    presets' own --muted, light or dark, without a second per-theme rule. */
+/* Sleep, as the ground of the day rather than a block on it: one quiet tone
+   over the whole of it, no rules ruled across it (see TimelineGrid), and
+   edges that fade into the waking hours over a step instead of stopping at
+   a line - the owner's words were a grey bar with sharp edges that looked
+   like a block. */
 .timeline-sleep-band {
   position: absolute;
   left: 0;
   right: 0;
-  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--s3), #000 calc(100% - var(--s3)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--s3), #000 calc(100% - var(--s3)), transparent);
   display: flex;
   align-items: center;
+}
+
+/* The band that opens or closes the drawn day ends with the grid, and fades
+   only where it meets the waking hours. */
+.timeline-sleep-band.is-first {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--s3)), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--s3)), transparent);
+}
+
+.timeline-sleep-band.is-last {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--s3));
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--s3));
+}
+
+.timeline-sleep-band.is-first.is-last {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Same quiet register as .timeline-gap-label just below - muted, small,
@@ -1961,31 +1985,26 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    divider cannot be mistaken for a title. The box is 19px: the 11px line
    at 1.4 and 2px above and below, which is what GAP_LABEL_HEIGHT_PX in
    timelineLayout.ts counts on when it moves the label off the now line. */
+/* Since v2.24, at the left again, where the blocks' own words start - the
+   gap's padding is the block's edge and padding - and quieter than it was,
+   with the rules either side gone: the owner asked for the labels smaller
+   and not centred across the grid lines. Smaller here means the third ink,
+   upright, and nothing drawn beside it, because the type is already at the
+   smallest size Today uses and a fifth size on the screen is the thing
+   CONVENTIONS 5 counts. Half an hour is still the least that says anything
+   at all - MIN_LABELLED_GAP_MINUTES. */
 .timeline-gap-label {
   display: flex;
   align-items: center;
-  gap: var(--s3);
   flex: 1 1 auto;
   min-width: 0;
   margin-right: var(--s3);
   padding: var(--s0) 0;
-  color: var(--muted);
+  color: var(--faint);
   font-size: var(--t-xs);
-  font-style: italic;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
   white-space: nowrap;
-}
-
-/* The rules either side of the words, at half the border's strength: a
-   gap is the quietest thing on the grid, and two dashed lines running the
-   width of the column at nearly full border strength were louder than the
-   words between them. */
-.timeline-gap-label:not(.timeline-gap-empty)::before,
-.timeline-gap-label:not(.timeline-gap-empty)::after {
-  content: '';
-  flex: 1 1 auto;
-  border-top: 1px dashed color-mix(in srgb, var(--border) 50%, transparent);
 }
 
 /* Moved off the now line - see gapLabelPlacement in timelineLayout.ts. */
@@ -2297,9 +2316,35 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    greyscale, and the ring reads as a ring. It was also the loudest thing on
    the screen by area on a screen whose loudest thing is supposed to be a
    1.5px line. */
-.timeline-anchor-now {
-  box-shadow: 0 0 0 1.5px var(--mark);
-  z-index: 2;
+/* Since v2.24 there is no ring: the owner asked for the running block to be
+   lifted very gently and with no edge. It keeps its own category and takes
+   a little more of its own colour - a third rather than a fifth - which in
+   both modes keeps the title's ordinary contrast, and it says when it ends on
+   its time line. The now line under it says the rest. */
+.timeline-anchor-now { z-index: 2; }
+
+.timeline-anchor-now.timeline-anchor-cat {
+  background: color-mix(in srgb, var(--cat) 32%, var(--surface));
+}
+
+/* What has ended, a step back, so the eye goes to now and to what is left:
+   its colour quietened, and its time faded to --faded in place of the step
+   it already takes. The title keeps its ink - it is still what the block
+   was. Never a colour of its own, which would say something was not done,
+   and never on top of the finished look, which already pushes a done block
+   back (CONVENTIONS 22). Three shapes were measured and dropped on the way:
+   the whole block faded, which took the time under 3:1 by fading it twice;
+   the words in the second ink, 3.8:1 on a light category wash; and the title
+   faded too, 2.8:1 on the same wash. */
+.timeline-anchor-past:not(.timeline-anchor-done) { filter: saturate(0.55); }
+
+.timeline-anchor-past:not(.timeline-anchor-done) .timeline-anchor-time { opacity: var(--faded); }
+
+/* When the running block ends, or when the next one starts: on the time's
+   own line, after it. */
+.timeline-anchor-hint::before {
+  content: '\00B7';
+  margin: 0 var(--s1);
 }
 
 /* A block under the pointer takes a shadow, and shows the two things you
@@ -2466,24 +2511,38 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    time, and a line through a title in this app means done. The marker is
    what must never be hidden; the run across the day is the part that may be,
    because the only thing it can hide behind is the block it is pointing at. */
+/* Since v2.24 the line is a hairline in a softened now colour, and the bead
+   at the end of it is the time itself: a small rounded marker in the hour
+   column saying the minute, in the line's own colour. The owner asked for
+   both - a line that reads as a mark on the day rather than a bar across
+   it, and a time beside it, because the hours on this grid are not evenly
+   spaced and a line between two of them does not say where between. The
+   marker has the page's ground under it, so it reads over the hour rules
+   the way the hour labels do. */
 .timeline-now-line {
   position: absolute;
   left: 0;
   right: 0;
-  height: 1.5px;
-  background: var(--mark);
+  height: 1px;
+  background: color-mix(in srgb, var(--mark) 70%, transparent);
   pointer-events: none;
   z-index: 0;
 }
 
-.timeline-now-dot {
+.timeline-now-time {
   position: absolute;
-  left: calc(var(--timeline-gutter) - var(--s3));
-  width: 7px;
-  height: 7px;
-  border-radius: var(--r-round);
-  background: var(--mark);
-  transform: translate(-50%, -50%);
+  left: 0;
+  width: calc(var(--timeline-gutter) - var(--s1));
+  padding: 0 var(--s0);
+  border: 1px solid color-mix(in srgb, var(--mark) 70%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--mark) 22%, var(--bg));
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-align: center;
+  transform: translateY(-50%);
   pointer-events: none;
   z-index: 3;
 }
