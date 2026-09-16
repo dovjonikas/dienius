@@ -47,6 +47,8 @@ test('a category is made with a picked colour, used on a task, and deleted onto 
   await page.getByRole('navigation').getByRole('button', { name: 'Settings' }).click()
   await page.getByRole('button', { name: 'Categories', exact: true }).click()
   const row = page.getByRole('listitem').filter({ hasText: 'Gym' })
+  // Delete is inside the editor, so the row keeps one control: Edit first.
+  await row.getByRole('button', { name: 'Edit' }).click()
   await row.getByRole('button', { name: 'Delete' }).click()
 
   const dialog = page.getByRole('group', { name: 'Delete Gym' })

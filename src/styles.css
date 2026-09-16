@@ -822,7 +822,9 @@ button:disabled {
 h2 { font-family: var(--font-display); font-size: var(--t-lg); margin: var(--s2) 0 var(--s4); }
 h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-weight: 600; }
 
-.settings-group { margin-bottom: var(--s6); }
+/* The heading lands a little under the top edge when the list scrolls to
+   it, rather than flush against it. */
+.settings-group { margin-bottom: var(--s6); scroll-margin-top: var(--s4); }
 
 /* Settings as a modern app settings screen: a list of sections down one side,
    the settings themselves down the other. One scrolling document rather than
@@ -11430,6 +11432,10 @@ button.task-library:hover { color: var(--text); }
 .category-form .field { max-width: 52ch; }
 .category-form-actions { display: flex; gap: var(--s2); }
 
+/* At the far end of the editor's footer, apart from Save and Cancel - the
+   same place a template's delete sits. */
+.category-form-actions > .delete-category { margin-left: auto; }
+
 .category-picker.is-palette { flex-wrap: wrap; max-width: 52ch; }
 
 /* "The app's own colour" - the one swatch that is not a flat fill, because
@@ -15652,9 +15658,10 @@ main:has(.week) > .calendar {
  * category's Delete eight pixels above the buttons beside them. The owner's
  * screenshot of the week editor's note header found the first; the sweep's
  * new pass found the second, on six rows of Settings at once. The class is
- * left alone, because the column it was written for still needs it. */
-.wt-note-actions > .setting-quiet,
-.category-row-actions > .setting-remove {
+ * left alone, because the column it was written for still needs it. The
+ * category's Delete has since moved into its editor, so this is the note
+ * header's alone. */
+.wt-note-actions > .setting-quiet {
   align-self: center;
   margin-top: 0;
 }

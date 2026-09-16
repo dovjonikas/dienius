@@ -100,9 +100,8 @@ export function SyncSettings() {
         <div className="setting-label">
           <span className="setting-name">Between your devices</span>
           <span className="setting-desc">
-            Off by default, and the app works fully without it. Each device pulls when you come back
-            to it and pushes as you put it down, so picking up the phone shows what the computer just
-            did. Nothing is sent to anyone else, and there is no account.
+            Each device pulls when you come back to it and pushes as you put it down, so the phone
+            shows what the computer just did. Nothing goes to anyone else, and there is no account.
           </span>
         </div>
 
@@ -131,8 +130,8 @@ export function SyncSettings() {
         {via === 'github' ? (
           <p className="setting-desc sync-via-note">
             {repo
-              ? `Through ${repo}, in a file of its own beside the backup - the same repo and the same token, so there is nothing else to set up. Put the same repo and token into Backup on your other device and it joins.`
-              : 'Set the repo and token in Backup first, just above. Sync uses the same two and adds nothing of its own.'}
+              ? `Through ${repo}, in a file of its own beside the backup, with the same token. Put the same repo and token into Backup on your other device and it joins.`
+              : 'Set the repo and token in Backup first, just above. Sync uses the same two.'}
           </p>
         ) : (
         <div className="sync-fields">
@@ -186,10 +185,6 @@ export function SyncSettings() {
           {line.text}
         </p>
 
-        <p className="setting-desc">
-          Your daily snapshots stay on this device. A backup that travels the same wire as the thing
-          it is backing up is not a backup.
-        </p>
       </div>
     </div>
   )

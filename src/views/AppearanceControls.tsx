@@ -68,8 +68,7 @@ export function AppearanceControls() {
         <div className="setting-label">
           <span className="setting-name">Accent colour</span>
           <span className="setting-desc">
-            What the app points with - the progress bar, focus rings, the ring on a running task.
-            Remembered per theme.
+            The progress bar, focus rings and the ring on a running task. Remembered per theme.
           </span>
         </div>
         <div className="setting-control">
@@ -95,8 +94,8 @@ export function AppearanceControls() {
         <div className="setting-label">
           <span className="setting-name">Density</span>
           <span className="setting-desc">
-            Compact tightens the spacing scale everywhere at once. Useful on a short laptop screen,
-            where it is the difference between a full day fitting and not.
+            Compact tightens spacing everywhere at once, so a full day fits on a short laptop
+            screen.
           </span>
         </div>
         <div className="setting-control">
@@ -120,8 +119,7 @@ export function AppearanceControls() {
         <div className="setting-label">
           <span className="setting-name">Text size</span>
           <span className="setting-desc">
-            Scales the whole type system together, so the difference between a title and the line
-            under it stays exactly the same at every size.
+            Scales all text together.
           </span>
         </div>
         <div className="setting-control">

@@ -63,9 +63,8 @@ export function CategorySettings() {
         <div className="setting-label">
           <span className="setting-name">What a day is made of</span>
           <span className="setting-desc">
-            The colour on a card's edge and under a block on the timeline. About six is what a day can be
-            taken in at a glance with - past that a palette becomes a legend you have to look up. Nothing
-            here stops you going further; it is your day.
+            The colour on a card's edge and under a block on the timeline. About six can be read
+            at a glance; past that a palette becomes a legend to look up.
           </span>
         </div>
 
@@ -111,6 +110,11 @@ export function CategorySettings() {
               />
               <span className="category-row-label">{category.label}</span>
 
+              {/* One control on the row. Delete is inside the editor, at the
+                  far end of its footer, as a template's is: the place a
+                  person is sure which one they mean is inside it, and six
+                  red words down a list of six was the loudest thing on a
+                  page whose one job is Add a category. */}
               <div className="category-row-actions">
                 <button
                   type="button"
@@ -122,18 +126,6 @@ export function CategorySettings() {
                 >
                   Edit
                 </button>
-                <button
-                  type="button"
-                  className="setting-remove"
-                  disabled={categories.length <= 1}
-                  data-tip={categories.length <= 1 ? 'There has to be one' : undefined}
-                  onClick={() => {
-                    setEditingId(null)
-                    setDeletingId(deletingId === category.id ? null : category.id)
-                  }}
-                >
-                  Delete
-                </button>
               </div>
 
               {editingId === category.id && (
@@ -144,6 +136,11 @@ export function CategorySettings() {
                     setEditingId(null)
                   }}
                   onCancel={() => setEditingId(null)}
+                  onDelete={() => {
+                    setEditingId(null)
+                    setDeletingId(category.id)
+                  }}
+                  lastOne={categories.length <= 1}
                 />
               )}
 
@@ -257,6 +254,10 @@ interface CategoryFormProps {
   category?: Category
   onSave: (patch: { label?: string; color?: string | null }) => void
   onCancel: () => void
+  /** Opens the delete panel in place of the editor. Absent while adding. */
+  onDelete?: () => void
+  /** The last category cannot go, and the button says so rather than hiding. */
+  lastOne?: boolean
 }
 
 /**
@@ -275,7 +276,7 @@ interface CategoryFormProps {
  * tries a green Health and dislikes it should not have to remember the
  * original hex.
  */
-function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
+function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }: CategoryFormProps) {
   const [label, setLabel] = useState(category?.label ?? '')
   const [color, setColor] = useState<string | null>(category?.color ?? null)
   const canClear = category !== undefined && hasBuiltInColor(category.id)
@@ -353,6 +354,17 @@ function CategoryForm({ category, onSave, onCancel }: CategoryFormProps) {
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel
         </button>
+        {onDelete && (
+          <button
+            type="button"
+            className="btn-danger delete-category"
+            disabled={lastOne}
+            data-tip={lastOne ? 'There has to be one' : undefined}
+            onClick={onDelete}
+          >
+            Delete
+          </button>
+        )}
       </div>
     </div>
   )

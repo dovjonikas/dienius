@@ -23,6 +23,12 @@ function row(label: string): HTMLElement {
   return screen.getByText(label).closest('li') as HTMLElement
 }
 
+/** Delete sits inside the editor, so the row keeps one control: Edit first. */
+async function openDelete(user: ReturnType<typeof userEvent.setup>, label: string): Promise<void> {
+  await user.click(within(row(label)).getByRole('button', { name: 'Edit' }))
+  await user.click(within(row(label)).getByRole('button', { name: 'Delete' }))
+}
+
 test('the six the app ships are listed, in the order the swatch row draws them', () => {
   render(<CategorySettings />)
   const labels = screen.getAllByRole('listitem').map(li => li.querySelector('.category-row-label')?.textContent)
@@ -58,7 +64,7 @@ test('the delete dialog states what uses the category, once, as a fact', async (
   })
   render(<CategorySettings />)
 
-  await user.click(within(row('Health')).getByRole('button', { name: 'Delete' }))
+  await openDelete(user, 'Health')
   expect(screen.getByText('Delete Health?')).toBeTruthy()
   expect(screen.getByText('2 tasks, 1 template block and 1 in Later use it.')).toBeTruthy()
 })
@@ -68,7 +74,7 @@ test('the target is already chosen, so the ordinary path is one press', async ()
   seed({ days: { '2026-09-01': { date: '2026-09-01', tasks: [task({ category: 'health' })] } } })
   render(<CategorySettings />)
 
-  await user.click(within(row('Health')).getByRole('button', { name: 'Delete' }))
+  await openDelete(user, 'Health')
   // The first remaining category, which is the one at the top of the list.
   expect(screen.getByRole('button', { name: 'Deep work' })).toHaveAttribute('aria-pressed', 'true')
 
@@ -82,7 +88,7 @@ test('nothing using it means no sentence and a plain Delete', async () => {
   const user = userEvent.setup()
   render(<CategorySettings />)
 
-  await user.click(within(row('Commute')).getByRole('button', { name: 'Delete' }))
+  await openDelete(user, 'Commute')
   const dialog = within(screen.getByRole('group', { name: 'Delete Commute' }))
   expect(screen.queryByText(/use it\./)).toBeNull()
   expect(dialog.queryByRole('button', { name: 'Delete and move' })).toBeNull()
@@ -95,15 +101,26 @@ test('Cancel on the delete panel changes nothing at all', async () => {
   const user = userEvent.setup()
   render(<CategorySettings />)
 
-  await user.click(within(row('Health')).getByRole('button', { name: 'Delete' }))
+  await openDelete(user, 'Health')
   await user.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(getData().categories).toHaveLength(6)
 })
 
-test('the last one says why it cannot go, on the button rather than by hiding it', () => {
+test('a row carries Edit alone, and Delete is inside the editor it opens', async () => {
+  const user = userEvent.setup()
+  render(<CategorySettings />)
+
+  expect(within(row('Health')).queryByRole('button', { name: 'Delete' })).toBeNull()
+  await user.click(within(row('Health')).getByRole('button', { name: 'Edit' }))
+  expect(within(row('Health')).getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+})
+
+test('the last one says why it cannot go, on the button rather than by hiding it', async () => {
+  const user = userEvent.setup()
   seed({ categories: [{ id: 'core', label: 'Deep work' }] })
   render(<CategorySettings />)
 
+  await user.click(within(row('Deep work')).getByRole('button', { name: 'Edit' }))
   const button = within(row('Deep work')).getByRole('button', { name: 'Delete' })
   expect(button).toBeDisabled()
   expect(button).toHaveAttribute('data-tip', 'There has to be one')

@@ -252,15 +252,17 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           ))}
         </nav>
 
-        {/* Every section heading is on the page for a screen reader and off it
-            for an eye. The panel printed the section's name at the top of
-            itself while the list beside it named the same section and
-            highlighted it: one word, twice, forty pixels apart. A heading is
-            what a screen reader navigates a settings page by, so it stays in
-            the document; what went is the second copy of it on the screen. */}
+        {/* Every section shows its heading. Five of the nine hid theirs for
+            a while, on the argument that the list beside the panel already
+            named the section; the four written as components kept theirs,
+            and the page read as four sections with loose rows between them -
+            Week's rows ran straight into a heading that said Categories. On a
+            phone the list is a strip at the top that has scrolled away by the
+            second section, and the heading is the only thing that says where
+            you are. It is also what a screen reader navigates the page by. */}
         <div className="settings-content">
           <div className="settings-group" id="settings-general">
-            <h3 className="visually-hidden">General</h3>
+            <h3>General</h3>
 
             <div className="setting-row">
               <div className="setting-label">
@@ -272,8 +274,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                     being true the day sync was switched on. */}
                 <span className="setting-name">Export and import</span>
                 <span className="setting-desc">
-                  One JSON file with every template, day and setting in it. Export writes it;
-                  importing one replaces what is here. The copy kept in your GitHub repo is under Backup.
+                  One JSON file with every template, day and setting in it. Importing one replaces
+                  what is here. The copy kept in your GitHub repo is under Backup.
                 </span>
               </div>
               <div className="setting-control">
@@ -406,9 +408,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Erase all data</span>
                 <span className="setting-desc">
-                  Removes everything on this device - every template, every day of tasks, the rules under
-                  your goals, and any theme changes you have made. Export a backup first if you want to
-                  keep a copy.
+                  Removes everything on this device: every template, every day, the rules under your
+                  goals and the theme. Export a backup first if you want to keep a copy.
                 </span>
               </div>
               <div className="setting-control">
@@ -424,7 +425,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           </div>
 
           <div className="settings-group" id="settings-sleep">
-            <h3 className="visually-hidden">Sleep</h3>
+            <h3>Sleep</h3>
             {/* A named list rather than the pair of fixed windows this used
                 to be - an ordinary one and a hardcoded second one for a shift
                 the app had decided everybody worked. Each schedule is drawn as
@@ -446,8 +447,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                   )}
                   <span className="setting-desc">
                     {index === 0
-                      ? 'When you are normally asleep. The timeline greys it out and free time is measured around it, on every day from now on.'
-                      : 'Used on days and templates set to this schedule. Everything else keeps the default above.'}
+                      ? 'When you normally sleep. The timeline greys these hours out, and free time is counted around them.'
+                      : 'Used by the days and templates set to it. Everything else keeps the schedule above.'}
                   </span>
                   {/* Sits in the label column, not beside the two time fields:
                       with it in the control the second row's fields no longer
@@ -494,8 +495,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Another schedule</span>
                 <span className="setting-desc">
-                  For hours that are genuinely a different life - a rota that runs overnight, a week
-                  abroad. Days and templates can then pick which one they are measured against.
+                  For weeks on different hours: a night shift, a trip. A day or a template can then say
+                  which schedule it follows.
                 </span>
               </div>
               <div className="setting-control">
@@ -510,14 +511,14 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               because it is the other thing about a day that is decided once
               and then stops being a question. */}
           <div className="settings-group" id="settings-week">
-            <h3 className="visually-hidden">Week</h3>
+            <h3>Week</h3>
             <div className="setting-block">
               <div className="setting-label">
                 <span className="setting-name">A template per weekday</span>
                 <span className="setting-desc">
                   {data.templates.length === 0
-                    ? 'Build a template first, and this is where you say which days it belongs to.'
-                    : 'A new day opens already set up from the template its weekday points at - a day you stamp by hand always wins.'}
+                    ? 'Make a template first. This is where you say which weekdays it belongs to.'
+                    : 'A new day starts from the template its weekday points at. A day you set by hand keeps what you chose.'}
                 </span>
               </div>
               {data.templates.length > 0 && (
@@ -547,7 +548,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           <CategorySettings />
 
           <div className="settings-group" id="settings-nudges">
-            <h3 className="visually-hidden">Nudges</h3>
+            <h3>Nudges</h3>
             {/* The end of the day. Filed under Nudges because it is the only
                 other thing in this app that appears without being asked for -
                 though unlike the two above it, it never interrupts anything:
@@ -556,8 +557,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Close the day</span>
                 <span className="setting-desc">
-                  A quiet card in the evening, or the moment the last thing on the list is ticked off.
-                  One sentence about the day, and a way to end it.
+                  A quiet card in the evening, or when the last task is ticked off: one sentence about
+                  the day, and a way to end it.
                 </span>
               </div>
               <div className="setting-control">
@@ -607,9 +608,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Bring a goal forward</span>
                 <span className="setting-desc">
-                  A card on a Monday morning, and after a day that got away from you: the goal and its
-                  reason in full. Never a count of what was missed - it is a reminder of why, not a
-                  report on yesterday.
+                  A card on Monday morning, and after a day that got away from you: one goal and its
+                  reason, in full. Never a count of what was missed.
                 </span>
               </div>
               <div className="setting-control">
@@ -639,7 +639,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           <SyncSettings />
 
           <div className="settings-group" id="settings-appearance">
-            <h3 className="visually-hidden">Appearance</h3>
+            <h3>Appearance</h3>
             {/* Preset picks the room, mode says whether the light is on - see
                 docs/THEMES.md section 4. "Adjust this theme" below lets a
                 person hand-tune the active room's own tokens - see section 3. */}
@@ -647,8 +647,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Theme</span>
                 <span className="setting-desc">
-                  Three, and every one is a theme somebody would keep - every text is checked for
-                  contrast in each.
+                  The whole app takes its colours from the one you pick.
                 </span>
               </div>
               <ThemeGallery />
@@ -665,8 +664,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Match system appearance</span>
                 <span className="setting-desc">
-                  Use Light while this device is in light mode, and your chosen dark theme while it
-                  is in dark mode - switching with it during the day.
+                  Light while this device is in light mode, your dark theme while it is in dark mode.
                 </span>
               </div>
               <div className="setting-control">

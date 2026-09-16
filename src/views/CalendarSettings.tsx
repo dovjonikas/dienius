@@ -100,9 +100,8 @@ export function CalendarSettings() {
         <div className="setting-label">
           <span className="setting-name">Someone else's calendar, laid over yours</span>
           <span className="setting-desc">
-            Work meetings, a shared family calendar. They appear on Today and on the week as a
-            separate layer - outlined, never ticked off, never pushed - and the free-time figure
-            counts them, because a morning with three meetings in it is not a free morning.
+            Work meetings, a shared family calendar. They show on Today and on the week as an
+            outlined layer you cannot tick off or move, and free time counts them.
           </span>
         </div>
 

@@ -114,11 +114,10 @@ export function BackupSettings() {
         <div className="setting-label">
           <span className="setting-name">A copy on GitHub</span>
           <span className="setting-desc">
-            A private repo you own, written to after the day closes and on the first open of a new
-            day, as plain JSON you can read: <code>data/state.json</code>, and one file per day under{' '}
-            <code>data/history/</code>. Make a fine-grained token with Contents read and write on that
-            one repo, and nothing else. The token stays on this device - it is not in an export, and
-            it does not sync.
+            A private repo of your own, written to when the day closes and when a new day opens,
+            as plain JSON you can read. Make a fine-grained token with Contents read and write on
+            that one repo and nothing else. The token stays on this device: not in an export, and
+            not synced.
           </span>
         </div>
 
@@ -258,9 +257,9 @@ export function BackupSettings() {
         )}
 
         <p className="setting-desc">
-          This is the third copy, not a replacement for the other two: sync keeps your devices
-          agreeing, the daily snapshots keep a week of this device's own history, and this one is
-          off site, in a place you can open with a browser.
+          The third copy, beside the other two: sync keeps your devices agreeing, the daily
+          snapshots keep a week of this device's own history, and this one is off site, as{' '}
+          <code>data/state.json</code> and one file per day under <code>data/history/</code>.
         </p>
       </div>
     </div>
