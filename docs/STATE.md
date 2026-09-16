@@ -140,6 +140,53 @@ What shows: cards round at 10px, motion is shorter, and the light theme's
 secondary text is a step darker. The rest is tokens that stage 3 puts to
 work.
 
+### Stage 3 - what every screen shares: done
+
+In the shared rules, so every screen that used them changed at once:
+
+- **Buttons.** Three kinds: primary on the accent, secondary on the fill,
+  quiet with no ground (`btn-quiet`, new); destructive is the quiet kind in
+  the danger ink, filled once armed. No edges, one height, no shrink on a
+  press; a disabled one quietens to the fill and the secondary ink.
+- **Fields and selects.** The fill and no edge, one control's height, the
+  strong fill under the pointer, a halo of `--ring` on focus with a
+  transparent outline kept for forced colours; 15px on a mouse and 17px on a
+  finger, where 16px stood everywhere.
+- **Chips, segments, steppers, the task sheet's small buttons.** Chips are
+  fill pills with the accent's ground when chosen, a template's own colour
+  for a template chip; a segmented control is one fill with a thumb; a
+  picker's options are menu rows; steppers and the time and length fields
+  are fields.
+- **Layers.** Modals, sheets, popovers, menus, bubbles, the toast and the
+  floating clock stand on the raised ground with no border; `--e2` and `--e3`
+  carry a hairline ring of their own and are softer on Light; one `--scrim`
+  under every modal and sheet; labels in sentence case; the replan sheet's
+  actions at the right, Cancel quiet and first in the document. A swatch
+  ring's gap follows the ground of the sheet it stands on.
+- **Navigation and the page.** The rail loses its line and answers the
+  pointer with the fill; the header's tools are quiet buttons with no shadow
+  when lit; Templates, the Library, Review and Settings share `--page-w` and
+  one title row, so their titles begin at one height and one edge.
+- **A phone defect:** the Notes popover hangs from the right edge of the
+  header's tools on a phone, from x = 74 rather than -37.
+
+The tooling: the audit counts a thing partly past the left edge (a tenth
+self-check shape, planted); the sweep parks its pointer at the window's top
+edge, not on North's first heading; and the audit reads a mixed ground,
+which it had read as none - so the day the fields took the fill, a Return
+field's own hint came back as text over text. The sweep then found three
+real ones and each was fixed rather than excused: segmented options 40px
+tall on a finger, a replan row's time in the quiet ink on a fill at 4.46:1,
+and the key mark in the accent on a fill at 4.23:1 on Light. DESIGN.md
+gains what applying it taught: the thumb, quiet text never on a fill, menu
+rows, steppers as fields, the lifts' hairline, the phone's panel anchor, and
+Cancel first in the document.
+
+The ratchet: borders drawn 183 to 120, black as `rgba()` 29 to 8, pixel
+heights 76 to 64, weights 91 to 83, tracked capitals 23 to 20, `--s5` 18 to
+13, `--s7` 5 to 2, `--t-input` 9 to 7, `--e1` 8 to 6, and no press that
+scales - the count sees a transform that translates as well now.
+
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
 Asked for in one message that replaces everything asked about North, the

@@ -116,6 +116,10 @@
 :root {
   --fill: color-mix(in srgb, var(--text) 5%, var(--surface));
   --fill-strong: color-mix(in srgb, var(--text) 10%, var(--surface));
+  /* The chosen segment of a segmented control: a raised ground inside the
+     control's fill - the strong fill here, where a lighter step reads as
+     raised, and the card's white on the light theme. */
+  --thumb: var(--fill-strong);
   --scrim: rgba(0, 0, 0, 0.55);
   --ring: color-mix(in srgb, var(--accent) 40%, transparent);
 }
@@ -123,7 +127,12 @@
 :root[data-theme='light'] {
   --fill: color-mix(in srgb, var(--text) 4%, var(--bg));
   --fill-strong: color-mix(in srgb, var(--text) 8%, var(--bg));
+  --thumb: var(--surface);
   --scrim: rgba(24, 26, 30, 0.3);
+  /* Softer lifts on the light theme: a white layer over an off-white page
+     already reads, and a dark theme's shadow here would be a smudge. */
+  --e2: 0 0 0 1px rgba(20, 22, 26, 0.06), 0 8px 24px -8px rgba(20, 22, 26, 0.18);
+  --e3: 0 0 0 1px rgba(20, 22, 26, 0.05), 0 24px 60px -20px rgba(20, 22, 26, 0.3);
 }
 
 /**
@@ -257,8 +266,12 @@
      declared until the last card leaves it, and design.test.ts counts its
      uses down. */
   --e1: var(--shadow);
-  --e2: 0 4px 14px -4px rgba(0, 0, 0, 0.28);
-  --e3: 0 -4px 16px rgba(0, 0, 0, 0.12);
+  /* Each lift carries a hairline of its own - a one-pixel ring of the ink's
+     opposite at 6% - because a raised ground over a dark page is a step of a
+     few percent, and a layer needs an edge you can find without a border
+     that draws a box on everything under it. */
+  --e2: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px -8px rgba(0, 0, 0, 0.55);
+  --e3: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
 
   /* Motion. Two durations and one curve. Everything that moves in this app
      moves at one of these, so the whole interface feels like it has a single
@@ -505,10 +518,20 @@ body::after {
   }
 }
 
+/* A field's text is body size on a mouse and the reading size on a finger -
+   docs/DESIGN.md. It was 16px everywhere until v2.25, the size below which
+   iOS Safari zooms the page when a field takes focus, which made every
+   desktop form read in two sizes, a field's beside its buttons'. The
+   reading size is 17px, so a phone still never zooms. */
 input,
 textarea {
   font-family: inherit;
-  font-size: var(--t-input);
+  font-size: var(--t-md);
+}
+
+@media (pointer: coarse) {
+  input,
+  textarea { font-size: var(--t-read); }
 }
 
 /* A button reads at the size of what it sits in. It shared the input floor
@@ -549,16 +572,20 @@ button {
 }
 
 /* Views that are documents rather than a fixed-height day get their own
-   reading width, centred inside the shell. The shell itself never moves. */
+   width, centred inside the shell. The shell itself never moves.
+
+   One width for all of them since v2.25 - docs/DESIGN.md, the page. Settings
+   was 1080px, Templates 860, the Library and Review 860 with a padding of
+   their own that put their titles 16 and 20px lower than the others', and
+   North 640: five places a page began. The documents are --page-w now, and
+   what is read or written is --read-w. */
 .settings,
 .calendar,
 .templates {
   width: 100%;
-  max-width: 1080px;
+  max-width: var(--page-w);
   margin-inline: auto;
 }
-
-.templates { max-width: 860px; }
 
 /* The calendar is not a document and does not want a reading width. A month
    is a grid of seven columns and a week is seven days of one timeline: at
@@ -584,7 +611,7 @@ button {
 }
 
 /* The Library is a document too, and reads at the same width as Templates. */
-.library { max-width: 860px; }
+.library { max-width: var(--page-w); }
 
 /* The shell's bottom air, given back on the one view that has to fit. On a
    phone the month came out 23px past the fold with everything else already
@@ -611,7 +638,7 @@ main { flex: 1 1 auto; min-height: 0; }
 .brand {
   font-family: var(--font-display);
   font-size: var(--t-lg);
-  font-weight: 700;
+  font-weight: var(--w-strong);
   letter-spacing: -0.02em;
 }
 
@@ -641,7 +668,6 @@ main { flex: 1 1 auto; min-height: 0; }
   width: var(--rail-w);
   padding: calc(var(--s4) + env(safe-area-inset-top)) var(--s2) calc(var(--s4) + env(safe-area-inset-bottom))
     max(var(--s2), env(safe-area-inset-left));
-  border-right: 1px solid var(--border);
   background: var(--bg);
   overflow: hidden;
   /* clip, not hidden: hidden is still a scroll container, and anything that
@@ -658,7 +684,7 @@ main { flex: 1 1 auto; min-height: 0; }
    time - and read as two things printed over each other. */
 .nav-rail.is-open {
   width: var(--rail-open-w);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--e2);
 }
 
@@ -748,7 +774,7 @@ main { flex: 1 1 auto; min-height: 0; }
 .nav-rail.is-open .nav-rail-label { opacity: 1; }
 
 .nav-rail-item:hover,
-.nav-rail-pin:hover { color: var(--text); }
+.nav-rail-pin:hover { color: var(--text); background: var(--fill); }
 
 /* The active mark: a rule on the leading edge, and the label a shade
    brighter. Not a filled pill - that is a lot of paint for a fact the screen
@@ -871,7 +897,16 @@ button:disabled {
   opacity: var(--faded);
 }
 
-h2 { font-family: var(--font-display); font-size: var(--t-lg); margin: var(--s2) 0 var(--s4); }
+h2 { font-family: var(--font-display); font-size: var(--t-lg); font-weight: var(--w-strong); line-height: var(--lh-tight); margin: var(--s2) 0 var(--s4); }
+
+/* Settings opens with its title alone rather than a row, and stands it where
+   every other page's title row stands. */
+.settings > h2 {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+  margin: 0 0 var(--s6);
+}
 h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-weight: 600; }
 
 /* The heading lands a little under the top edge when the list scrolls to
@@ -1077,11 +1112,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    otherwise, and every surface that hosts one says so here, beside the ring
    that reads it; a translucent wash over one of these says its blend
    itself, where it is painted (.library-list-settings). */
-.task-detail,
 .template-editor,
-.swatch-picker-panel,
 .library-list {
   --ground: var(--surface);
+}
+
+/* A sheet and a popover stand on the raised ground since v2.25. */
+.task-detail,
+.swatch-picker-panel {
+  --ground: var(--surface-raised);
 }
 
 
@@ -1167,42 +1206,60 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   color: var(--muted);
 }
 
+/* One quiet ground with its options inside it - docs/DESIGN.md. It was a
+   box with an edge until v2.25; the fill is the shape now, the options sit
+   two pixels in from it at the small corner, and the whole control is one
+   control's height. */
 .segmented {
   display: inline-flex;
   flex-wrap: wrap;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  gap: var(--s0);
+  padding: var(--s0);
   border-radius: var(--r-control);
-  overflow: hidden;
+  background: var(--fill);
 }
 
 /* Four options instead of two need less padding to stay clear of a
    horizontal scroll at 375px; wrapping above is the fallback if a very
    narrow viewport still can't fit them in one row. */
 .day-type-picker .segmented button {
-  padding: var(--s2) var(--s3);
+  padding: 0 var(--s3);
   font-size: var(--t-md);
 }
 
 .segmented button {
+  min-height: calc(var(--control-h) - var(--s0) * 2);
+  padding: 0 var(--s4);
   border: none;
+  border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
-  padding: var(--s2) var(--s4);
   font-size: var(--t-sm);
+  font-weight: var(--w-medium);
 }
 
 /* A selection is the accent in a weaker form, not a fill.
    A solid accent segment is the same weight as the one primary action on the
    screen, and a screen with two of those has neither. The tint plus accent
    ink says "this one" and leaves the fill to the thing that acts. */
+/* On a finger each option is the whole touch target: the two-pixel inset
+   would leave the options 40px tall inside a 44px control, under the floor
+   every press holds to. The ground stays; the options meet its edge. */
+@media (pointer: coarse) {
+  .segmented { padding: 0; }
+  .segmented button { min-height: var(--control-h); }
+}
+
 .segmented button.active {
-  /* The tint marks it and the label stays ordinary ink. Accent-on-accent-tint
-     came out at 3.9:1 on Light, which is the exact trade CONVENTIONS 22
-     refuses: a selection nobody can read is not a selection. */
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  /* A raised ground and the ordinary ink, since v2.25 - the thumb every
+     segmented control has, rather than the accent's tint: the accent belongs
+     to the one action a screen is for, and three segmented controls on the
+     day's header made it the colour of the header. Accent ink on an accent
+     tint came out at 3.9:1 on Light, which is the exact trade CONVENTIONS 22
+     refuses; the text ink on the thumb reads at the text's own ratio. */
+  background: var(--thumb);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--w-strong);
 }
 
 /*
@@ -2659,7 +2716,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   border: none;
   margin: 0;
   padding: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--scrim);
 }
 
 .gap-picker {
@@ -2674,8 +2731,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card) var(--r-card) 0 0;
   box-shadow: var(--e3);
   padding: var(--s4) max(var(--s4), env(safe-area-inset-right)) max(var(--s4), env(safe-area-inset-bottom))
@@ -2706,9 +2762,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   flex-shrink: 0;
   width: var(--touch);
   height: var(--touch);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: none;
   color: var(--muted);
   font-size: var(--t-lg);
   line-height: 1;
@@ -2741,9 +2797,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   gap: var(--s3);
   min-height: var(--touch);
   padding: var(--s3) var(--s4);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-md);
   text-align: left;
@@ -2987,16 +3043,26 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    :where() the same exclusions weigh nothing, the rule is 0,0,1, and a
    class says what it means. notSpecificity.test.ts no longer needs to
    allow this one past its line. */
+/* The field itself, since v2.25 - docs/DESIGN.md: a quiet ground and no
+   edge, one control's height, the fill deepening under the pointer and a
+   halo around it when it has the caret. It was an outlined box on the page's
+   darkest ground, which on a card read as a sunken well and on the page as a
+   box the page's own colour - one rule, two different controls - with the
+   accent's edge and a 2px ring on focus, the loudest thing on any form. The
+   edge is still there and transparent, so a field is the same size as it
+   always was and a forced-colours display still draws it. */
 input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)),
 textarea {
   min-width: 0;
+  min-height: var(--control-h);
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   font-family: inherit;
-  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  line-height: var(--lh-ui);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input))::placeholder,
@@ -3077,18 +3143,21 @@ input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([
 @media (hover: hover) and (pointer: fine) {
   input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)):hover,
   textarea:hover {
-    border-color: color-mix(in srgb, var(--muted) 40%, var(--border));
+    background: var(--fill-strong);
   }
 }
 
-/* One focus ring for every field. Inset, so it never changes the size of the
-   control and never nudges what is beside it. */
+/* One focus for every field: the ground stays, and a halo of the accent at
+   40% stands around it - enough to find the caret's field, quiet beside the
+   primary button. Drawn outside as a shadow, so it never changes the size of
+   the control; the outline is transparent rather than gone, so a
+   forced-colours display, which drops shadows, still draws one. */
 input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)):focus,
 textarea:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-  border-color: var(--accent);
-  background: var(--surface);
+  outline: 2px solid transparent;
+  outline-offset: 0;
+  background: var(--fill);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 /* And the same rule the buttons follow: on a finger, a field is 44px.
@@ -3152,34 +3221,32 @@ textarea:focus {
 .time-picker-field {
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .time-picker-field:hover { border-color: color-mix(in srgb, var(--muted) 40%, var(--border)); }
+  .time-picker-field:hover { background: var(--fill-strong); }
 }
 
 /* The ring goes on the wrapper rather than the input, so tabbing to the field
    and tabbing to its caret both light the whole control - which is what the
    control actually is. */
 .time-picker-field:focus-within {
-  border-color: var(--accent);
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
+  outline: 2px solid transparent;
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .time-picker .time-input {
   width: 82px;
-  min-height: 38px;
+  min-height: calc(var(--control-h) - 2px);
   border: none;
   border-radius: 0;
   background: none;
   text-align: center;
-  font-size: var(--t-input);
 }
 
 .time-picker .time-input:focus {
@@ -3196,7 +3263,6 @@ textarea:focus {
   min-height: 0;
   padding: 0;
   border: none;
-  border-left: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: 0;
   background: none;
   color: var(--muted);
@@ -3205,7 +3271,7 @@ textarea:focus {
 
 @media (hover: hover) and (pointer: fine) {
   .time-picker-toggle:hover {
-    background: color-mix(in srgb, var(--border) 45%, transparent);
+    background: var(--fill-strong);
     color: var(--text);
   }
 }
@@ -3235,10 +3301,9 @@ textarea:focus {
   display: flex;
   gap: var(--s1);
   padding: var(--s1);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface-raised, var(--surface));
-  box-shadow: var(--e2), 0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--e2);
   /* Said once, here, because the wash on a taken hour has to be mixed into
      whatever is actually painted behind it. Inside quick-add's own panel the
      columns drop their background and this value is still the right one - the
@@ -3420,10 +3485,11 @@ textarea:focus {
    need a wrapper element, and a data URI here keeps it to one rule. */
 select {
   min-width: 0;
+  min-height: var(--control-h);
   padding: var(--s2) calc(var(--s3) + 18px) var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background-color: var(--bg);
+  background-color: var(--fill);
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: right 14px center, right 9px center;
@@ -3431,9 +3497,15 @@ select {
   background-repeat: no-repeat;
   color: var(--text);
   font-family: inherit;
-  font-size: var(--t-sm);
+  font-size: var(--t-md);
+  line-height: var(--lh-ui);
   appearance: none;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+
+/* The same text sizes as a field: a select is one, with a chevron. */
+@media (pointer: coarse) {
+  select { font-size: var(--t-read); }
 }
 
 /* The list itself is the one part the page cannot style on any engine, so it
@@ -3445,13 +3517,13 @@ select option {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  select:hover { border-color: color-mix(in srgb, var(--muted) 40%, var(--border)); }
+  select:hover { background-color: var(--fill-strong); }
 }
 
 select:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-  border-color: var(--accent);
+  outline: 2px solid transparent;
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 /* The day's own schedule picker sits in the header row beside the date, so it
@@ -3463,19 +3535,21 @@ select:focus {
    The three parts share a border and sit flush, and only the outer corners
    are rounded - so it reads as a single object the way a native spinner does,
    without inheriting a native spinner's unstylable chrome. */
+/* A stepper is a field: the fill and no edge, with its number and its two
+   arrows inside the one ground, and the field's halo when it has the caret. */
 .time-stepper {
   display: flex;
   align-items: stretch;
   gap: 0;
   flex: 0 0 auto;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
-.time-stepper:focus-within { border-color: var(--accent); }
+.time-stepper:focus-within { box-shadow: 0 0 0 3px var(--ring); }
 
 /* The number inside the box. The box, the border, the hover and the focus
    ring all belong to `.time-stepper` around it; the colour and the figures
@@ -3493,7 +3567,7 @@ select:focus {
 /* The ring goes on the box, not on the number inside it. */
 .time-stepper .time-input:focus,
 .time-stepper .minutes-input:focus { outline: none; }
-.time-stepper:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
+.time-stepper:focus-within { outline: 2px solid transparent; outline-offset: 0; }
 
 .time-stepper .time-input:focus,
 .time-stepper .minutes-input:focus {
@@ -3505,7 +3579,6 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-left: 1px solid var(--border);
 }
 
 /* The unit after the number, inside the box - see MinuteStepInput.
@@ -3555,14 +3628,12 @@ select:focus {
   transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
-.time-step + .time-step { border-top: 1px solid var(--border); }
-
 .time-step:hover {
-  background: color-mix(in srgb, var(--border) 45%, transparent);
+  background: var(--fill-strong);
   color: var(--text);
 }
 
-.time-step:active { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.time-step:active { background: var(--accent-dim); }
 
 .time-step:focus-visible {
   outline: 2px solid var(--accent);
@@ -4560,7 +4631,9 @@ select:focus {
      what every other view's header already does - Library, Review, North,
      the journal's and the calendar's bars all zero their h2. Templates was
      the one that did not. */
-  margin: var(--s2) 0 var(--s4);
+  gap: var(--s4);
+  min-height: var(--control-h);
+  margin: 0 0 var(--s6);
 }
 
 .templates-header h2 { margin: 0; }
@@ -4717,9 +4790,8 @@ button.primary {
   width: max-content;
   max-width: min(280px, 80vw);
   padding: var(--s2);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--e2);
 }
 
@@ -4932,19 +5004,19 @@ button.primary {
    wins the specificity tie in both places it appears. */
 button.core-toggle {
   flex: 0 0 auto;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  min-height: var(--control-h);
+  border: none;
+  background: var(--fill);
   border-radius: var(--r-pill);
   color: var(--muted);
   font-size: var(--t-sm);
-  padding: var(--s1) var(--s3);
+  padding: 0 var(--s3);
   white-space: nowrap;
 }
 
 button.core-toggle.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent, #fff);
+  background: var(--accent-dim);
+  color: var(--text);
 }
 
 /* ------------------------------------------------------------------------
@@ -5387,7 +5459,7 @@ button.danger {
   border: none;
   margin: 0;
   padding: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--scrim);
 }
 
 .task-actions-sheet {
@@ -5402,8 +5474,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card) var(--r-card) 0 0;
   box-shadow: var(--e3);
   padding: var(--s4) max(var(--s4), env(safe-area-inset-right)) max(var(--s4), env(safe-area-inset-bottom))
@@ -5437,9 +5508,9 @@ button.danger {
   flex-shrink: 0;
   width: var(--touch);
   height: var(--touch);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: none;
   color: var(--muted);
   font-size: var(--t-lg);
   line-height: 1;
@@ -5485,9 +5556,9 @@ button.danger {
   width: 100%;
   min-height: var(--touch);
   padding: var(--s3) var(--s4);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-md);
   text-align: left;
@@ -5513,7 +5584,7 @@ button.danger {
   border: none;
   margin: 0;
   padding: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--scrim);
 }
 
 .task-gap-offers {
@@ -5528,8 +5599,7 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card) var(--r-card) 0 0;
   box-shadow: var(--e3);
   padding: var(--s4) max(var(--s4), env(safe-area-inset-right)) max(var(--s4), env(safe-area-inset-bottom))
@@ -5563,9 +5633,9 @@ button.danger {
   flex-shrink: 0;
   width: var(--touch);
   height: var(--touch);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: none;
   color: var(--muted);
   font-size: var(--t-lg);
   line-height: 1;
@@ -5609,9 +5679,9 @@ button.danger {
   gap: var(--s0);
   min-height: var(--touch);
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
   text-align: left;
 }
@@ -5809,7 +5879,6 @@ button.danger {
   align-items: center;
   gap: var(--s3);
   padding: var(--s2) var(--s2) var(--s2) var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: var(--surface-raised);
   box-shadow: var(--e2);
@@ -5917,12 +5986,11 @@ button.danger {
     color: var(--text);
   }
   .block-note-toggle:hover { border-color: var(--border); }
-  button.core-toggle:not(.active):hover,
   .wt-day-toggle:not([aria-pressed='true']):hover,
   .week-col-template:hover {
     border-color: var(--muted);
   }
-  button.core-toggle:not(.active):hover { color: var(--text); }
+  button.core-toggle:not(.active):hover { color: var(--text); background: var(--fill-strong); }
   .block-remove:hover { color: var(--danger); }
   /* An edge rather than a ground: any tint of the ink under a row took the
      count beside its title under 4.5:1 on the light theme, at five percent
@@ -5935,27 +6003,18 @@ button.danger {
 }
 
 /* Pressing anything gives the press back, on every input including touch -
-   the one piece of feedback that has to survive not having a pointer. */
-.nav-rail-item:active,
-.segmented button:active,
-.chip:active,
-.theme-card:active,
+   the one piece of feedback that has to survive not having a pointer. A
+   deeper ground since v2.25 rather than a 97% shrink: nothing moves when it
+   is pressed - docs/DESIGN.md. */
+.segmented button:not(.active):active,
 .task-focus-button:active,
-.undo-toast-button:active,
 .day-nav > button:active {
-  transform: translateY(0) scale(0.97);
+  background: var(--fill-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .undo-toast { animation: none; }
   .task-list > li { animation: none; }
-  .nav-rail-item:active,
-  .segmented button:active,
-  .chip:active,
-  .theme-card:active,
-  .task-focus-button:active,
-  .undo-toast-button:active,
-  .day-nav > button:active { transform: none; }
 }
 
 /* ------------------------------------------------------------------------
@@ -5982,26 +6041,36 @@ button.danger {
 
 .clock-launcher { position: relative; }
 
+/* On a phone every panel hangs from the right edge of the header's tools
+   rather than from its own button. Hung from its button, the 300px Notes
+   panel - under a button in the middle of a 390px header - started 37px
+   left of the screen with its first characters cut, and the measuring pass
+   could not see it until v2.25 taught its left edge to count a part past.
+   The tools end at the page's gutter, so every panel fits. */
+@media (max-width: 599px) {
+  .header-tools { position: relative; }
+  .clock-launcher { position: static; }
+}
+
 /* The two worded ones. Quiet by default and lit while their panel is up,
    exactly like the clock beside them - a header is a place to leave from,
    not a row of buttons competing with the day underneath it. */
 .header-tool {
-  min-height: 36px;
+  min-height: var(--control-h);
   padding: var(--s1) var(--s3);
   border: none;
   border-radius: var(--r-control);
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
-  font-weight: 600;
+  font-weight: var(--w-strong);
 }
 
-.header-tool:hover { color: var(--text); }
+.header-tool:hover { color: var(--text); background: var(--fill); }
 
 .header-tool.active {
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
-  box-shadow: var(--e1);
 }
 
 /* On a finger every one of the three is 44px, without the row growing to
@@ -6023,15 +6092,15 @@ button.danger {
 /* The notes panel is a box and two lines under it; the journal is a date, a
    box and one line. Neither wants the clock's width. */
 .notes-popover,
-.journal-popover { width: min(300px, calc(100vw - var(--s5) * 2)); }
+.journal-popover { width: min(300px, calc(100vw - var(--s4) * 2)); }
 
 
 /* A clock face drawn from a circle and two borders, like every other mark in
    this app. No icon font, nothing to load. */
 .clock-button {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
   border: none;
@@ -6040,12 +6109,11 @@ button.danger {
   color: var(--muted);
 }
 
-.clock-button:hover { color: var(--text); }
+.clock-button:hover { color: var(--text); background: var(--fill); }
 
 .clock-button.active {
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
-  box-shadow: var(--e1);
 }
 
 .clock-button-face {
@@ -6098,7 +6166,6 @@ button.danger {
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s3);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface-raised);
   box-shadow: var(--e2);
@@ -6137,26 +6204,23 @@ button.danger {
 }
 
 .clock-preset {
-  min-height: 38px;
-  padding: var(--s1);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  background: var(--surface);
+  min-height: var(--control-h);
+  padding: 0 var(--s1);
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease);
 }
 
-.clock-preset:hover { border-color: var(--accent); }
+.clock-preset:hover { background: var(--fill-strong); }
 
 /* The one the field is holding. Marked the way every chosen chip in this app
-   is marked - a coloured edge and a wash, never a fill - so the accent still
-   belongs to Start and to the chosen tab. */
-.clock-preset.is-on {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
+   is marked - the accent's ground, never the accent itself - so the accent
+   still belongs to Start. */
+.clock-preset.is-on { background: var(--accent-dim); }
 
 .clock-preset:focus-visible {
   outline: 2px solid var(--accent);
@@ -6414,7 +6478,6 @@ button.danger {
   align-items: center;
   gap: var(--s2);
   padding: var(--s2) var(--s3) var(--s2) var(--s2);
-  border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: var(--surface-raised);
   box-shadow: var(--e2);
@@ -6805,16 +6868,28 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 }
 
 /* ------------------------------------------------------------------------
-   Buttons: three variants, and nothing else.
+   Buttons: three kinds, one height - docs/DESIGN.md.
 
-   Every button in this app was previously styled by whichever rule happened to
-   reach it - .row button, .settings-group > button, .template-card button, or
-   nothing at all, which is a browser-default button on a dark page. Three
-   variants cover every real case: the one action a screen is for, the several
-   it also offers, and the one that destroys something.
+   Every button in this app was once styled by whichever rule happened to
+   reach it - .row button, .settings-group > button, .template-card button,
+   or nothing at all, which is a browser-default button on a dark page. Since
+   v2.25 there are three kinds, each a ground and an ink and nothing else:
+
+   - primary, the accent: the one action a view or a sheet is for;
+   - secondary, the quiet fill: every other action with weight;
+   - quiet, no ground at all: Cancel, Dismiss, Edit, Copy, and every link
+     that does a button's job.
+
+   A destructive action is the quiet kind in the danger ink, filled only when
+   it is armed. None of them has an edge - the fill is the shape - and none
+   of them moves when pressed: the 97% shrink every press used to take was a
+   small jump in a row of controls that are meant to sit still. All four are
+   --control-h tall, so a row of them is one line on a mouse and a row of
+   44px targets on a finger.
    ------------------------------------------------------------------------ */
 .btn-primary,
 .btn-secondary,
+.btn-quiet,
 .btn-danger,
 button.primary,
 button.danger {
@@ -6822,14 +6897,14 @@ button.danger {
   align-items: center;
   justify-content: center;
   gap: var(--s2);
-  min-height: 38px;
-  padding: var(--s2) var(--s4);
+  min-height: var(--control-h);
+  padding: 0 var(--s4);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
   font-size: var(--t-sm);
-  font-weight: 600;
-  border: 1px solid transparent;
-  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-tight);
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
 /* --on-accent, not white. Every one of the eight accents this app offers is
@@ -6839,79 +6914,78 @@ button.danger {
 .btn-primary,
 button.primary {
   background: var(--accent);
-  border-color: var(--accent);
   color: var(--on-accent, #fff);
 }
 
-/* A primary that cannot be pressed yet. Fading a filled button takes its
-   background toward the surface and its text with it - "Save template"
-   greyed out read 2.61:1 - so it stops being filled instead: the surface's
-   own colour, a border, and muted text. It still reads as the loud button
-   of the pair by where it sits and what it says, and it is legible.
-
-   `opacity: 1` because the global `button:disabled` fade is what this
-   replaces, not something it adds to. */
-.btn-primary:disabled,
-button.primary:disabled {
-  background: color-mix(in srgb, var(--accent) 25%, var(--surface));
-  border-color: transparent;
-  color: var(--muted);
-  opacity: 1;
-}
-
+/* Under the pointer the accent moves a little toward the text: lighter on a
+   dark theme, deeper on the light one, and the ink derived for the accent
+   still reads on it either way. */
 .btn-primary:hover,
-button.primary:hover { background: color-mix(in srgb, var(--accent) 84%, #fff); }
+button.primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
 
 .btn-secondary {
-  background: var(--surface);
-  border-color: var(--border);
+  background: var(--fill);
   color: var(--text);
 }
 
-.btn-secondary:hover { border-color: var(--muted); }
+.btn-secondary:hover { background: var(--fill-strong); }
 
-/* Hollow, in the muted ink, at full opacity. At half opacity a surface
-   button's white text went grey on grey, and the library's Add read as a
-   button that had been forgotten rather than one waiting for a title. */
-.btn-secondary:disabled {
-  background: transparent;
-  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+.btn-quiet {
+  background: none;
   color: var(--muted);
-  opacity: 1;
 }
 
-/* Outline, never filled. A destructive action should be findable and should
-   not be the brightest thing on the screen - filled red reads as the button
-   you are supposed to press. It fills only once it is armed, which is the
-   second tap, when it genuinely is the one you are about to press. */
+.btn-quiet:hover {
+  background: var(--fill);
+  color: var(--text);
+}
+
+/* The danger ink on no ground: findable, and never the brightest thing on
+   the screen - filled red reads as the button you are supposed to press. It
+   fills only once it is armed, the second tap, when it genuinely is the one
+   you are about to press. The ground under the pointer is the quiet fill, as
+   on every quiet button. */
 .btn-danger,
 button.danger {
   background: none;
-  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
   color: var(--danger);
 }
 
 .btn-danger:hover,
-button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+button.danger:hover { background: var(--fill); }
 
-/* Armed: the second tap of a two-tap destructive action, and the one moment it
-   genuinely is the button you are about to press. */
 .btn-danger.is-armed {
   background: var(--danger);
-  border-color: var(--danger);
   color: var(--on-danger, #fff);
 }
 
-.btn-danger.is-armed:hover { background: color-mix(in srgb, var(--danger) 86%, #000); }
+.btn-danger.is-armed:hover { background: color-mix(in srgb, var(--danger) 88%, var(--text)); }
 
-.btn-primary:active,
-.btn-secondary:active,
-.btn-danger:active,
-button.primary:active,
-button.danger:active { transform: scale(0.97); }
+/* A button that cannot be pressed yet keeps its shape and quietens: the fill
+   and the secondary ink, whichever kind it is, so a Save waiting for a title
+   reads as waiting rather than as broken, and it is still legible - the
+   secondary ink reads at 4.5:1 on the fill in every preset (design.test.ts).
+   `opacity: 1` because the global `button:disabled` fade is what this
+   replaces, not something it adds to. */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled,
+button.primary:disabled,
+button.danger:disabled {
+  background: var(--fill);
+  color: var(--muted);
+  opacity: 1;
+}
+
+.btn-quiet:disabled {
+  background: none;
+  color: var(--faint);
+  opacity: 1;
+}
 
 .btn-primary:focus-visible,
 .btn-secondary:focus-visible,
+.btn-quiet:focus-visible,
 .btn-danger:focus-visible,
 button.primary:focus-visible,
 button.danger:focus-visible {
@@ -6920,9 +6994,6 @@ button.danger:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-primary:active,
-  .btn-secondary:active,
-  .btn-danger:active { transform: none; }
   .focus-bar { animation: none; }
 }
 
@@ -6945,8 +7016,7 @@ button.danger:focus-visible {
   gap: var(--s3);
   margin: 0 auto;
   max-width: 520px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card) var(--r-card) 0 0;
   box-shadow: var(--e3);
   padding: var(--s3) max(var(--s4), env(safe-area-inset-right)) calc(var(--s3) + env(safe-area-inset-bottom))
@@ -8088,12 +8158,10 @@ button.danger:focus-visible {
 .library {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
-  /* 860, the same as Templates - the rule near the top of this file said so
-     and this one, written later for the v1.1 page, quietly said 900. */
-  max-width: 860px;
+  gap: var(--s6);
+  max-width: var(--page-w);
   margin: 0 auto;
-  padding: var(--s5) var(--s4) var(--s7);
+  padding: 0 0 var(--s12);
 }
 
 .library-header {
@@ -8101,6 +8169,7 @@ button.danger:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: var(--s4);
+  min-height: var(--control-h);
 }
 
 .library-header h2 {
@@ -8962,7 +9031,7 @@ button.danger:focus-visible {
   /* Dark enough that the sheet is the foreground and the day behind it is
      the background: at 45% the day still competed with the sheet for the
      eye, and the sheet read as one more card among the cards. */
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -8990,10 +9059,9 @@ button.danger:focus-visible {
      scrolled 220px of a nine-field sheet behind a native scrollbar with
      arrows. */
   max-height: 100%;
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  background: var(--surface-raised);
+  box-shadow: var(--e3);
   outline: none;
 }
 
@@ -9078,9 +9146,7 @@ button.danger:focus-visible {
 .task-detail-label {
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 
 .task-detail-time {
@@ -9092,37 +9158,40 @@ button.danger:focus-visible {
 
 /* Five minutes either way, which is the correction an actual day needs -
    the picker beside them is for the jump from 09:00 to 14:00. */
+/* The sheet's small buttons are secondary buttons: the fill, one control's
+   height, no edge. */
 .task-detail-nudge {
-  min-height: 38px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
-.task-detail-nudge:hover:not(:disabled) { border-color: var(--muted); }
+.task-detail-nudge:hover:not(:disabled) { background: var(--fill-strong); }
 .task-detail-nudge:disabled { opacity: var(--faded); }
 
 .task-detail-clear,
 .task-detail-toggle {
-  min-height: 38px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
 }
 
 .task-detail-clear:hover,
-.task-detail-toggle:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+.task-detail-toggle:hover:not(:disabled) { color: var(--text); background: var(--fill-strong); }
 
+/* A key task's own colour, the mark, as a ground: the one toggle whose
+   chosen state means something other than chosen. */
 .task-detail-toggle.active {
-  border-color: var(--mark);
-  background: color-mix(in srgb, var(--mark) 18%, transparent);
+  background: color-mix(in srgb, var(--mark) 22%, var(--surface));
   color: var(--text);
 }
 
@@ -9173,10 +9242,9 @@ button.danger:focus-visible {
   flex-direction: column;
   min-width: 176px;
   padding: var(--s1);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface-raised, var(--surface));
-  box-shadow: var(--e2), 0 16px 36px -12px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--e2);
   outline: none;
 }
 
@@ -9348,10 +9416,9 @@ button.task-note-mark.is-open {
   width: min(560px, 100%);
   max-height: 80vh;
   padding: var(--s5);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2);
+  background: var(--surface-raised);
+  box-shadow: var(--e3);
 }
 
 .note-reader-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); }
@@ -9362,9 +9429,9 @@ button.task-note-mark.is-open {
 .note-reader-tab {
   min-height: 0;
   padding: var(--s1) var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
   max-width: 22ch;
@@ -9537,14 +9604,14 @@ button.task-library:hover { color: var(--text); }
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  min-height: 36px;
-  padding: var(--s1) var(--s3);
-  border: 1px solid var(--border);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
-  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease);
 }
 
 .template-chip-dot {
@@ -9556,13 +9623,14 @@ button.task-library:hover { color: var(--text); }
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .template-chip:hover { border-color: color-mix(in srgb, var(--chip, var(--accent)) 60%, var(--border)); }
+  .template-chip:hover { background: var(--fill-strong); }
 }
 
+/* The template's own colour, as a ground rather than an edge: the chip is
+   the template, and the dot beside its name already says which colour. */
 .template-chip.selected {
-  border-color: color-mix(in srgb, var(--chip, var(--accent)) 70%, var(--border));
-  background: color-mix(in srgb, var(--chip, var(--accent)) 14%, var(--surface));
-  font-weight: 600;
+  background: color-mix(in srgb, var(--chip, var(--accent)) 22%, var(--surface));
+  font-weight: var(--w-strong);
 }
 
 .template-chip:focus-visible {
@@ -9679,7 +9747,7 @@ button.task-library:hover { color: var(--text); }
   align-items: center;
   justify-content: center;
   padding: var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -9695,10 +9763,9 @@ button.task-library:hover { color: var(--text); }
   width: min(440px, 100%);
   max-height: min(640px, 100%);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  background: var(--surface-raised);
+  box-shadow: var(--e3);
   overflow-y: auto;
   outline: none;
 }
@@ -9735,10 +9802,8 @@ button.task-library:hover { color: var(--text); }
      a two-line key cap that reads as two keys. */
   white-space: nowrap;
   padding: var(--s0) 6px;
-  border: 1px solid var(--border);
-  border-bottom-width: 2px;
   border-radius: var(--r-mark);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   font-family: inherit;
   font-size: var(--t-sm);
@@ -10018,11 +10083,11 @@ button.task-library:hover { color: var(--text); }
 .review {
   display: flex;
   flex-direction: column;
-  gap: var(--s5);
+  gap: var(--s6);
   width: 100%;
-  max-width: 860px;
+  max-width: var(--page-w);
   margin: 0 auto;
-  padding: var(--s5) var(--s4) var(--s7);
+  padding: 0 0 var(--s12);
 }
 
 .review-header {
@@ -10031,6 +10096,7 @@ button.task-library:hover { color: var(--text); }
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--s4);
+  min-height: var(--control-h);
 }
 
 .review-header h2 { margin: 0; font-size: var(--t-lg); }
@@ -10236,7 +10302,7 @@ button.task-library:hover { color: var(--text); }
 }
 
 @media (max-width: 599px) {
-  .review { padding: var(--s4) var(--s3) var(--s7); }
+  .review { padding: 0 0 var(--s12); }
   .review-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* On a phone the columns are as wide as their names and no wider, so the
      room left goes to the blocks' names. */
@@ -10258,7 +10324,7 @@ button.task-library:hover { color: var(--text); }
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s8) * 2), 10vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -10271,10 +10337,9 @@ button.task-library:hover { color: var(--text); }
   flex-direction: column;
   width: min(560px, 100%);
   max-height: min(60vh, 520px);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  background: var(--surface-raised);
+  box-shadow: var(--e3);
   overflow: hidden;
 }
 
@@ -10305,9 +10370,7 @@ button.task-library:hover { color: var(--text); }
   padding: var(--s3) var(--s2) var(--s1);
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 
 .palette-row {
@@ -10652,7 +10715,6 @@ button.north-day-line:focus-visible {
   width: max-content;
   max-width: min(62ch, 100%);
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface-raised);
   --ground: var(--surface-raised);
@@ -10737,7 +10799,7 @@ button.north-day-line:focus-visible {
   align-items: center;
   justify-content: center;
   padding: var(--s4);
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -10757,12 +10819,10 @@ button.north-day-line:focus-visible {
   overflow-y: auto;
   gap: var(--s2);
   padding: var(--s4) var(--s5);
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
-  border-left: 3px solid color-mix(in srgb, var(--accent) 55%, var(--border));
   border-radius: var(--r-card);
-  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  background: var(--surface-raised);
   --ground: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--e3);
   outline: none;
 }
 
@@ -10807,9 +10867,9 @@ button.north-day-line:focus-visible {
   min-height: 38px;
   margin-top: var(--s1);
   padding: 0 var(--s5);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
 }
@@ -10831,11 +10891,10 @@ button.north-day-line:focus-visible {
   max-height: 100%;
   overflow-y: auto;
   padding: var(--s7) var(--s8);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   --ground: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--e3);
   outline: none;
 }
 
@@ -10931,7 +10990,7 @@ button.north-day-line:focus-visible {
 }
 
 .north-view-head {
-  margin-bottom: var(--s8);
+  margin-bottom: var(--s6);
 }
 
 .north-view-head h2 {
@@ -12251,8 +12310,7 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s2);
   padding: var(--s2);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card);
   box-shadow: var(--e3);
 }
@@ -12911,9 +12969,8 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s2);
   padding: var(--s3) var(--s4);
-  background: var(--surface);
+  background: var(--surface-raised);
   color: var(--text);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   box-shadow: var(--e3);
   pointer-events: auto;
@@ -13034,9 +13091,9 @@ main:has(.week) > .calendar {
 .tour-stuck button {
   min-height: 0;
   padding: var(--s1) var(--s2);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-mark);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
 }
@@ -13069,8 +13126,7 @@ main:has(.week) > .calendar {
   gap: var(--s3);
   flex-wrap: wrap;
   padding: var(--s3) var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card);
   box-shadow: var(--e3);
   font-size: var(--t-sm);
@@ -13174,7 +13230,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -13186,11 +13242,10 @@ main:has(.week) > .calendar {
   flex-direction: column;
   width: min(600px, 100%);
   max-height: min(78vh, 720px);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   --ground: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--e3);
   overflow: hidden;
 }
 
@@ -13321,7 +13376,6 @@ main:has(.week) > .calendar {
   flex-direction: column;
   min-width: 9rem;
   padding: var(--s1);
-  border: 1px solid var(--border);
   border-radius: var(--r-control);
   background: var(--surface-raised);
   box-shadow: var(--e2);
@@ -13331,7 +13385,7 @@ main:has(.week) > .calendar {
   min-height: 36px;
   padding: var(--s1) var(--s3);
   border: none;
-  border-radius: var(--r-chip);
+  border-radius: var(--r-mark);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
@@ -13392,9 +13446,9 @@ main:has(.week) > .calendar {
   height: 32px;
   min-height: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-glyph);
   line-height: 1;
@@ -13432,7 +13486,7 @@ main:has(.week) > .calendar {
   align-items: center;
   justify-content: center;
   padding: var(--s4);
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--scrim);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -13444,10 +13498,9 @@ main:has(.week) > .calendar {
   flex-direction: column;
   width: min(560px, 100%);
   max-height: min(84vh, 760px);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2), 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  background: var(--surface-raised);
+  box-shadow: var(--e3);
   overflow: hidden;
 }
 
@@ -13505,9 +13558,9 @@ main:has(.week) > .calendar {
   gap: var(--s0);
   min-height: 56px;
   padding: var(--s3) var(--s4);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-card);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   text-align: left;
 }
@@ -13527,7 +13580,7 @@ main:has(.week) > .calendar {
 
 .replan-conflicts { display: flex; flex-direction: column; gap: var(--s2); }
 .replan-conflicts-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
-.replan-label { color: var(--muted); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.replan-label { color: var(--muted); font-size: var(--t-xs); font-weight: var(--w-medium); }
 .replan-forall { display: inline-flex; gap: var(--s3); font-size: var(--t-sm); }
 
 .replan-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--s1); }
@@ -13539,14 +13592,20 @@ main:has(.week) > .calendar {
   gap: var(--s1) var(--s3);
   padding: var(--s2) var(--s3);
   border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--border) 25%, transparent);
+  background: var(--fill);
 }
 
 .replan-item-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--t-md); }
-.replan-item-was { color: var(--faint); font-variant-numeric: tabular-nums; }
+/* The secondary ink rather than the quiet one: a row's time sits on the
+   fill, on the raised ground of the sheet, and the quiet ink there came to
+   4.46:1. The secondary ink holds 4.5:1 on either fill in every preset. */
+.replan-item-was { color: var(--muted); font-variant-numeric: tabular-nums; }
 .replan-item-outcome { color: var(--muted); font-size: var(--t-sm); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .replan-item.is-move .replan-item-outcome { color: var(--text); }
-.replan-key { color: var(--accent); margin-right: var(--s1); font-weight: 700; }
+/* The text's ink at the strong weight: the accent on a row's fill reads at
+   4.23:1 on the light theme, and a mark somebody reads to know which tasks
+   are key is text. */
+.replan-key { color: var(--text); margin-right: var(--s1); font-weight: var(--w-strong); }
 
 .replan-seg { grid-column: 1 / -1; }
 .replan-seg button { padding: var(--s1) var(--s3); font-size: var(--t-sm); }
@@ -13575,6 +13634,7 @@ main:has(.week) > .calendar {
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
+  justify-content: flex-end;
   padding: var(--s3) var(--s4);
   border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
@@ -13617,22 +13677,23 @@ main:has(.week) > .calendar {
 .replan-chip {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: var(--s1) var(--s3);
-  border: 1px solid var(--border);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
   border-radius: var(--r-pill);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
-.replan-chip:hover { border-color: var(--muted); }
+.replan-chip:hover { background: var(--fill-strong); }
 
+/* The accent's ground and the text's ink, since v2.25 - a filled accent chip
+   was a second primary button on a sheet whose primary is Accept. */
 .replan-chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent, #fff);
+  background: var(--accent-dim);
+  color: var(--text);
 }
 
 /* A shape nothing is left of - the morning, at three in the afternoon. Kept
@@ -13788,7 +13849,7 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-value:hover,
-.duration-control-value:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.duration-control-value:hover { background: var(--fill-strong); }
 
 .quick-add-time-value:focus-visible,
 .duration-control-value:focus-visible {
@@ -13800,9 +13861,10 @@ main:has(.week) > .calendar {
   position: relative;
   flex: 0 0 auto;
   display: flex;
-  border: 1px solid var(--border);
+  min-height: var(--control-h);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   overflow: visible;
 }
 
@@ -13817,10 +13879,9 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s2);
   padding: var(--s2);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface-raised, var(--surface));
-  box-shadow: var(--e2), 0 12px 28px -8px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--e2);
 }
 
 .quick-add-time-panel { left: 0; }
@@ -13844,11 +13905,14 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-modes button,
+/* The options inside a picker's panel are rows of a menu rather than chips:
+   no ground at rest, the fill under the pointer, the accent's ground for
+   the one the field holds. */
 .duration-control-chips button {
   justify-content: flex-start;
-  min-height: 34px;
+  min-height: var(--control-h);
   padding: 0 var(--s2);
-  border: 1px solid transparent;
+  border: none;
   border-radius: var(--r-mark);
   background: none;
   color: var(--text);
@@ -13858,13 +13922,10 @@ main:has(.week) > .calendar {
 }
 
 .quick-add-time-modes button:hover,
-.duration-control-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.duration-control-chips button:hover { background: var(--fill); }
 
 .quick-add-time-modes button.is-on,
-.duration-control-chips button.is-on {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
+.duration-control-chips button.is-on { background: var(--accent-dim); }
 
 .duration-control-chips {
   display: grid;
@@ -13895,23 +13956,22 @@ main:has(.week) > .calendar {
   margin-top: var(--s2);
 }
 
+/* A chip is a choice - docs/DESIGN.md: the quiet fill, a pill, one
+   control's height, and the accent's ground once it is the chosen one. */
 .duration-chips button {
-  min-height: 34px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-mark);
-  background: none;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
 }
 
-.duration-chips button:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.duration-chips button:hover { background: var(--fill-strong); }
 
-.duration-chips button.is-on {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
+.duration-chips button.is-on { background: var(--accent-dim); }
 
 /* Inside a field, the label and the two ways of answering it are one stack
    on the field's own gap. `.duration-chips` carries a top margin for the
@@ -14201,17 +14261,17 @@ main:has(.week) > .calendar {
   align-items: center;
   gap: var(--s2);
   flex: 0 0 auto;
-  min-height: 34px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
   white-space: nowrap;
 }
 
-.library-chip:hover { border-color: var(--accent); }
+.library-chip:hover { background: var(--fill-strong); }
 
 .library-chip-count { color: var(--faint); font-variant-numeric: tabular-nums; }
 
@@ -14268,16 +14328,16 @@ main:has(.week) > .calendar {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  min-height: 34px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
 }
 
-.library-preset:hover { border-color: var(--accent); }
+.library-preset:hover { background: var(--fill-strong); }
 .library-preset-unit { color: var(--faint); font-size: var(--t-xs); }
 
 /* Nine dots, and where they break.
@@ -14642,9 +14702,9 @@ main:has(.week) > .calendar {
   height: 32px;
   min-height: 0;
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
 }
@@ -14835,8 +14895,6 @@ main:has(.week) > .calendar {
   left: var(--s4);
   width: 8px;
   height: 8px;
-  border-left: 1px solid var(--border);
-  border-top: 1px solid var(--border);
   background: inherit;
   transform: rotate(45deg);
 }
@@ -14855,9 +14913,8 @@ main:has(.week) > .calendar {
   width: max-content;
   max-width: min(34ch, calc(100vw - var(--s6) * 2));
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--e2);
   color: var(--text);
   font-size: var(--t-sm);
@@ -14906,7 +14963,6 @@ main:has(.week) > .calendar {
   width: max-content;
   max-width: 30ch;
   padding: var(--s1) var(--s2);
-  border: 1px solid var(--border);
   border-radius: var(--r-control);
   background: var(--surface-raised);
   box-shadow: var(--e2);
@@ -15074,9 +15130,8 @@ main:has(.week) > .calendar {
   max-height: 70vh;
   overflow: hidden;
   padding: var(--s3);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   box-shadow: var(--e3);
   color: var(--text);
   text-align: left;
@@ -16087,9 +16142,9 @@ main:has(.week) > .calendar {
   height: 32px;
   min-height: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-glyph);
   line-height: 1;
@@ -16218,7 +16273,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--scrim);
 }
 
 .note-task {
@@ -16229,9 +16284,8 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
+  background: var(--surface-raised);
   --ground: var(--surface);
   box-shadow: var(--e3);
 }
@@ -16539,7 +16593,7 @@ main:has(.week) > .calendar {
   align-items: flex-start;
   justify-content: center;
   padding: max(calc(var(--s6) * 2), 8vh) var(--s4) var(--s4);
-  background: rgba(0, 0, 0, 0.62);
+  background: var(--scrim);
 }
 
 .journal-overlay {

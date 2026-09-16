@@ -57,16 +57,20 @@
 
   // Whether something opaque is painted between the element that was hit and
   // the one behind it - two layers rather than a mess.
+  //
+  // The ground is read through parse() since v2.25, which knows the
+  // `color(srgb ...)` a color-mix() computes to. This read the `rgb()` form
+  // alone, so the day the fields took a mixed fill every field read as
+  // having no ground at all, and a Return field's own hint, drawn over the
+  // field's padding, came back as text over its placeholder.
   /** @param {Element} hit @param {{ el: Element }} behind */
   const coveredBySurface = (hit, behind) => {
     let el = hit
     while (el && el !== document.body) {
       if (el.contains(behind.el)) return false
       const cs = getComputedStyle(el)
-      const bg = cs.backgroundColor
-      const m = /rgba?\(([^)]+)\)/.exec(bg)
-      const a = m ? Number(m[1].split(',')[3] ?? 1) : 0
-      if ((bg && bg !== 'transparent' && a > 0.5) || cs.backgroundImage !== 'none') return true
+      const c = parse(cs.backgroundColor)
+      if ((c && c[3] > 0.5) || cs.backgroundImage !== 'none') return true
       el = el.parentElement
     }
     return false
@@ -85,9 +89,8 @@
       const cs = getComputedStyle(el)
       if (cs.pointerEvents !== 'none') continue
       if (el.contains(front)) return false
-      const m = /rgba?\(([^)]+)\)/.exec(cs.backgroundColor)
-      const alpha = m ? Number(m[1].split(',')[3] ?? 1) : 0
-      if (alpha > 0.5 || cs.backgroundImage !== 'none') return true
+      const c = parse(cs.backgroundColor)
+      if ((c && c[3] > 0.5) || cs.backgroundImage !== 'none') return true
     }
     return false
   }
@@ -594,9 +597,15 @@
     // this walked `all` and was blind to its own plant. Every picture the
     // sweep left in v2.21 had an empty navigation rail and nothing said so: a
     // driver had scrolled the overflow:hidden nav sideways and every icon sat
-    // at x = -95. Only something drawn - an icon, or a piece of text - and
-    // only when all of it is past the edge; a scroller's contents are its own
-    // business, the same as on the right.
+    // at x = -95. Only something drawn - an icon, or a piece of text - and a
+    // scroller's contents are its own business, the same as on the right.
+    //
+    // Partly past counts too, since v2.25. The check asked for all of a
+    // thing to be past the edge, so the Notes popover - 300px wide, anchored
+    // to a button in the middle of a phone's header, starting at x = -37 with
+    // its first characters cut - was neither past the edge nor text cut off,
+    // and every phone sweep measured it clean. The right edge always counted
+    // any overflow; the left counts it the same way now, and says which.
     for (const el of document.querySelectorAll('body *')) {
       const cs = getComputedStyle(el)
       if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0' || cs.position === 'fixed') continue
@@ -604,7 +613,7 @@
       const drawn = el.tagName.toLowerCase() === 'svg' || ownText(el) !== ''
       if (!drawn) continue
       const r = el.getBoundingClientRect()
-      if (r.width <= 0 || r.right > -1) continue
+      if (r.width <= 0 || r.left >= -1) continue
       let p = el.parentElement
       let scrolled = false
       while (p && p !== document.body) {
@@ -613,7 +622,7 @@
         p = p.parentElement
       }
       if (scrolled) continue
-      out.offscreen.push({ sel: sig(el), side: 'left', right: Math.round(r.right), text: (el.textContent || '').trim().slice(0, 40) })
+      out.offscreen.push({ sel: sig(el), side: r.right <= -1 ? 'left' : 'left-partly', right: Math.round(r.right), left: Math.round(r.left), text: (el.textContent || '').trim().slice(0, 40) })
     }
 
     // Text nobody can read. AA: 4.5:1 body, 3:1 large.
@@ -672,7 +681,7 @@
   /** @param {string} label */
   window.__brief = function brief(label) {
     const a = window.__audit(label)
-    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length, sideways: a.sideways.length }
+    return { label: a.label, size: a.w + 'x' + a.h, theme: a.theme, hScroll: a.hScroll, vScroll: a.vScroll, clipped: a.clipped.length, covered: a.covered.length, overlap: a.overlap.length, offscreen: a.offscreen.length, offscreenPartly: a.offscreen.filter(o => o.side === 'left-partly').length, faint: a.faint.length, ringCut: a.rings.filter(r => r.kind === 'cut').length, ringGap: a.rings.filter(r => r.kind === 'gap').length, chosen: a.chosen.length, offCentre: a.offCentre.length, mismatched: a.mismatched.length, sideways: a.sideways.length }
   }
 
   /** @param {string} tab */

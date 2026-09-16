@@ -165,29 +165,29 @@ const drawnBorders = () =>
     .filter(v => !/^(none|0)$/.test(v) && !/\btransparent\b/.test(v)).length
 
 const pressesThatScale = () =>
-  ALL.filter(r => r.selector.includes(':active') && /transform\s*:\s*scale\(/.test(r.body)).length
+  ALL.filter(r => r.selector.includes(':active') && /transform\s*:[^;]*scale\(/.test(r.body)).length
 
 /**
  * What is left of each retired thing. Lower a number in the commit that
  * brings it down; never raise one.
  */
 const RETIRED: { what: string; now: () => number; left: number }[] = [
-  { what: 'uses of --s5 (20px)', now: () => count(/var\(--s5\)/g), left: 18 },
-  { what: 'uses of --s7 (28px)', now: () => count(/var\(--s7\)/g), left: 5 },
+  { what: 'uses of --s5 (20px)', now: () => count(/var\(--s5\)/g), left: 13 },
+  { what: 'uses of --s7 (28px)', now: () => count(/var\(--s7\)/g), left: 2 },
   { what: 'uses of --t-2xs (10px)', now: () => count(/var\(--t-2xs\)/g), left: 10 },
-  { what: 'uses of --t-input (16px)', now: () => count(/var\(--t-input\)/g), left: 9 },
-  { what: 'uses of --e1, a resting shadow', now: () => count(/var\(--e1\)/g), left: 8 },
-  { what: 'font weights written as numbers', now: () => count(/font-weight\s*:\s*[0-9]+/g), left: 91 },
+  { what: 'uses of --t-input (16px)', now: () => count(/var\(--t-input\)/g), left: 7 },
+  { what: 'uses of --e1, a resting shadow', now: () => count(/var\(--e1\)/g), left: 6 },
+  { what: 'font weights written as numbers', now: () => count(/font-weight\s*:\s*[0-9]+/g), left: 83 },
   {
     what: 'line heights written as numbers',
     now: () => count(/line-height\s*:\s*(?!1\s*[;}\s]|inherit|normal|var\()[0-9.]+(px)?/g),
     left: 79,
   },
-  { what: 'tracked capitals', now: () => count(/text-transform\s*:\s*uppercase/g), left: 23 },
-  { what: 'borders drawn', now: drawnBorders, left: 183 },
-  { what: 'black written as rgba()', now: () => count(/rgba\(0,\s*0,\s*0,/g), left: 29 },
-  { what: 'presses that scale', now: pressesThatScale, left: 1 },
-  { what: 'heights written as min-height in pixels', now: () => count(/min-height\s*:\s*[0-9]+px/g), left: 76 },
+  { what: 'tracked capitals', now: () => count(/text-transform\s*:\s*uppercase/g), left: 20 },
+  { what: 'borders drawn', now: drawnBorders, left: 120 },
+  { what: 'black written as rgba()', now: () => count(/rgba\(0,\s*0,\s*0,/g), left: 8 },
+  { what: 'presses that scale', now: pressesThatScale, left: 0 },
+  { what: 'heights written as min-height in pixels', now: () => count(/min-height\s*:\s*[0-9]+px/g), left: 64 },
 ]
 
 describe('what the design pass is retiring only goes down', () => {

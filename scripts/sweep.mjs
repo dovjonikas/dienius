@@ -109,8 +109,14 @@ async function tab(page, name) {
   // is ever found in - leaving the cursor on it reported nine covered
   // mini-calendar cells and then hung the next click on a point the flyout
   // was over.
+  //
+  // At the top edge of the window rather than its centre, since v2.25. The
+  // centre of 1366x768 is North's first heading, so the North screen measured
+  // the heading's lines opened over the page, with the signature and Edit
+  // faded under them - never the page at rest. A screen that means to
+  // measure something under the pointer puts the pointer there itself.
   const size = page.viewportSize() ?? { width: 1200, height: 800 }
-  await page.mouse.move(size.width / 2, size.height / 2)
+  await page.mouse.move(size.width / 2, 1)
   await page.waitForTimeout(350)
 }
 
@@ -502,6 +508,12 @@ if (SELF_CHECK) {
     gone.style.cssText = 'position:fixed;left:-300px;top:520px;width:200px;height:30px'
     gone.innerHTML = '<span>Planted past the left edge</span>'
     document.body.appendChild(gone)
+    // Partly past it: a layer anchored too far left, the way the Notes
+    // popover was on a phone, its first characters cut.
+    const partly = document.createElement('div')
+    partly.style.cssText = 'position:absolute;left:-40px;top:600px;width:300px;height:30px;background:#222;z-index:5'
+    partly.innerHTML = '<span>Planted partly past the left edge</span>'
+    document.body.appendChild(partly)
     const row = document.createElement('div')
     row.style.cssText = 'position:fixed;left:100px;top:460px;background:#333;padding:4px;display:flex;gap:4px'
     const chip = 'border:1px solid #555;background:#222;color:#ccc;padding:4px 8px;font-weight:400'
@@ -522,6 +534,7 @@ if (SELF_CHECK) {
     'a ring cut off': planted.ringCut > clean.ringCut,
     'a ring gap off its ground': planted.ringGap > clean.ringGap,
     'past an edge of the window': planted.offscreen > clean.offscreen,
+    'partly past the left edge': planted.offscreenPartly > clean.offscreenPartly,
   }
   for (const [what, ok] of Object.entries(sees)) console.log(`${ok ? 'sees  ' : 'BLIND '} ${what}`)
   const blind = Object.values(sees).filter(v => !v).length
@@ -583,7 +596,10 @@ for (const run of runs) {
     for (const c of a.clipped) found(where, 'text cut off', `${c.sel} +${c.overX}x${c.overY} "${c.text}"`)
     for (const c of a.covered) found(where, 'control covered', `${c.sel} "${c.t}" under ${c.by}`)
     for (const o of a.overlap) found(where, 'text over text', `${o.a} "${o.ta}" over ${o.b} "${o.tb}"`)
-    for (const o of a.offscreen) found(where, o.side === 'left' ? 'past the left edge' : 'past the right edge', `${o.sel} right edge at ${o.right} "${o.text}"`)
+    for (const o of a.offscreen) {
+      if (o.side === 'left-partly') found(where, 'partly past the left edge', `${o.sel} left edge at ${o.left} "${o.text}"`)
+      else found(where, o.side === 'left' ? 'past the left edge' : 'past the right edge', `${o.sel} right edge at ${o.right} "${o.text}"`)
+    }
     for (const f of a.faint) found(where, 'text under AA', `${f.sel} ${f.ratio}:1 (needs ${f.need}) "${f.text}"`)
     for (const r of a.rings) found(where, r.kind === 'cut' ? 'ring cut off' : 'ring gap off its ground', r.detail)
     for (const c of a.chosen) found(where, 'the chosen one looks unchosen', `${c.sel} "${c.text}" is drawn exactly like "${c.like}" beside it, though ${c.attr} says otherwise`)

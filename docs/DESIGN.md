@@ -126,10 +126,11 @@ gives the values; a screen only ever names the role.
 | Secondary text | `--muted` | Meta, descriptions, labels, a quiet button's word |
 | Quiet text | `--faint` | A placeholder, an hour mark, a disabled control |
 | Accent | `--accent` | The one primary action, the current selection's mark, focus |
-| Accent ground | `--accent-dim` | A selected chip or segment |
+| Accent ground | `--accent-dim` | A chosen chip, a chosen option in a menu |
 | Line | `--border` | A divider, a scale, nothing else |
 | Fill | `--fill` | The ground of a control at rest: a field, a secondary button, a chip, a segmented control |
 | Strong fill | `--fill-strong` | The same ground under the pointer or pressed |
+| Thumb | `--thumb` | The chosen segment inside a segmented control: the strong fill in a dark mode, the card's white in the light one |
 | Scrim | `--scrim` | Under every modal and sheet, one strength per mode |
 | Focus | `--ring` | The halo around a focused field or control, the accent at 40% |
 | Mark, danger, good | `--mark`, `--danger`, `--good` | Now and a key task; a destructive action's ink; a finished thing |
@@ -145,7 +146,13 @@ every preset, the accent at 3:1. Light's secondary ink is `#60656a` since
 v2.25, a step darker, so that it does.
 
 **The accent is spent once per view.** One filled primary button at most; a
-selected chip or segment takes `--accent-dim` and keeps the text's ink.
+chosen chip takes `--accent-dim` and keeps the text's ink, and a chosen
+segment takes the thumb.
+
+**Quiet text never stands on a fill.** `--faint` is for the page and a card;
+anything written on a fill - a row in a sheet, a chip, a field's value -
+uses `--muted` or `--text`, which the contrast test holds on both fills. The
+first sheet rebuilt on the fill put a quiet time on a raised row at 4.46:1.
 **Danger is an ink, not a verdict**: it marks the control that deletes, and
 nothing else in the app is red.
 
@@ -171,6 +178,14 @@ shadows belong to layers only:
 |---|---|
 | `--e2` | A popover, a menu, a bubble, something in the hand while it is dragged |
 | `--e3` | A modal and a sheet |
+
+Every layer stands on `--surface-raised` with no border. Each lift carries a
+hairline of its own - a one-pixel ring at 6% drawn as part of the shadow -
+because a raised ground over a dark page is only a few percent lighter, and
+a layer needs an edge that can be found without a line around everything
+under it. The light theme's lifts are softer. Under every modal and sheet is
+the one `--scrim`; the photo viewer, which shows a picture rather than a
+layer, is the one darker ground.
 
 Nothing resting on the page casts a shadow. `--e1`, the resting card's
 shadow, is retired and goes when the last card leaves it.
@@ -226,9 +241,16 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
   second press, armed, fills with `--danger` and `--on-danger` ink.
 - **An icon button** is the quiet kind, square.
 - **A chip** is a choice: `--fill`, `--r-pill`, `--control-h`; chosen, the
-  accent ground.
-- **A segmented control** is one `--fill` ground with its options inside at
-  `--r-mark`; the chosen one takes the accent ground.
+  accent ground. A template's chip, chosen, takes the template's own colour
+  at 22% instead, since the chip is that template.
+- **A segmented control** is one `--fill` ground with its options inside it,
+  two pixels in, at `--r-mark`; the chosen one takes `--thumb`. On a finger
+  the options meet the ground's edge, so each is the full 44px.
+- **A menu's options**, and the options in a picker's panel, are rows: no
+  ground at rest, `--fill` under the pointer, the accent ground for the one
+  that is chosen, `--r-mark`.
+- **A stepper** is a field: the number and its two arrows inside one fill,
+  with the field's halo when it has the caret.
 - Disabled: the same shape, `--faint` ink, no ground change on hover.
 
 ### Where actions stand
@@ -236,7 +258,11 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
 - **A page's action** stands at the right end of the page's title row.
 - **A form, a sheet or a modal** ends in one row: a destructive action at
   the left, then the rest at the right with the primary last. Cancel is
-  quiet, beside the primary.
+  quiet, beside the primary, and comes first in the document too, so Tab
+  reads the row in the order it is seen.
+- **A header's panel** hangs from its button on a desktop, and on a phone
+  from the right edge of the header's tools, where it cannot start past the
+  left of the screen.
 - **A row's actions** stand at its right end, quiet, and appear in full
   under the pointer or on focus only where the row would otherwise be
   crowded.

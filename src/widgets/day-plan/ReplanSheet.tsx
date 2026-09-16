@@ -636,11 +636,11 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
         </div>
       )}
       <div className="replan-foot">
+        <button type="button" className="btn-quiet" onClick={onBack}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={!plan} onClick={accept}>
           Accept
-        </button>
-        <button type="button" className="btn-secondary" onClick={onBack}>
-          Cancel
         </button>
       </div>
     </>
@@ -697,11 +697,11 @@ function Shift({ tasks, nowMinutes, window, titles, onAccept, onBack }: ShiftPro
       </div>
       <p className="replan-summary" role="status">{plan.summary}</p>
       <div className="replan-foot">
+        <button type="button" className="btn-quiet" onClick={onBack}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={plan.moves.length + plan.tomorrow.length === 0} onClick={() => onAccept(plan)}>
           Accept
-        </button>
-        <button type="button" className="btn-secondary" onClick={onBack}>
-          Cancel
         </button>
       </div>
     </>
@@ -721,11 +721,11 @@ function Away({ nowMinutes, onAway, onBack }: { nowMinutes: number; onAway: () =
         </p>
       </div>
       <div className="replan-foot">
+        <button type="button" className="btn-quiet" onClick={onBack}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" onClick={onAway}>
           Away
-        </button>
-        <button type="button" className="btn-secondary" onClick={onBack}>
-          Cancel
         </button>
       </div>
     </>
@@ -761,11 +761,11 @@ function Back({ tasks, nowMinutes, window, busy, titles, away, onAccept, onNotNo
           </button>
         ) : (
           <>
+            <button type="button" className="btn-quiet" onClick={onNotNow}>
+              Not now
+            </button>
             <button type="button" className="btn-primary" onClick={() => onAccept(plan)}>
               Accept
-            </button>
-            <button type="button" className="btn-secondary" onClick={onNotNow}>
-              Not now
             </button>
           </>
         )}
@@ -831,11 +831,11 @@ function Low({ tasks, onAccept, onClose }: { tasks: Task[]; onAccept: (plan: Low
       </div>
       <p className="replan-summary replan-summary-lead" role="status">{plan.summary}</p>
       <div className="replan-foot">
+        <button type="button" className="btn-quiet" onClick={onClose}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={nothing} onClick={() => onAccept(plan)}>
           Accept
-        </button>
-        <button type="button" className="btn-secondary" onClick={onClose}>
-          Cancel
         </button>
       </div>
     </>
