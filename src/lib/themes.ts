@@ -183,12 +183,35 @@ const NO_SURFACE = {
   margin: '#00000000',
 } as const
 
+/**
+ * The two corners are one value since v2.25: a card rounds by the same 10px
+ * as the button inside it, which with the 6px mark and the pill is the whole
+ * corner scale - docs/DESIGN.md. A preset may still give its own edge (the
+ * hand-drawn one in THEMES section 5 is kept for that); none of these three
+ * does.
+ */
 const TYPE_AND_SHAPE = {
   fontDisplay: SYSTEM_SANS,
   fontBody: SYSTEM_SANS,
   fontMono: SYSTEM_MONO,
   radius: '10px',
-  edge: '12px',
+  edge: '10px',
+} as const
+
+/**
+ * The quiet grounds a control sits on - docs/DESIGN.md, colour. Not tokens
+ * of a preset: the stylesheet derives `--fill` and `--fill-strong` from
+ * `--text` mixed into a ground with `color-mix`, so every preset and every
+ * override has them without a value of its own. Written here once so that
+ * the contrast test mixes exactly what is painted, and so that design.test.ts
+ * can hold the stylesheet's two declarations to the same numbers.
+ *
+ * Over the surface in a dark mode; over the page in the light one, where a
+ * field has to read on a white card and on the off-white page alike.
+ */
+export const FILLS = {
+  dark: { over: 'surface', fill: 0.05, strong: 0.1 },
+  light: { over: 'bg', fill: 0.04, strong: 0.08 },
 } as const
 
 /**
@@ -248,7 +271,11 @@ const LIGHT: ThemePreset = {
       surfaceRaised: '#ffffff',
       border: '#e6e4df',
       text: '#2a2d31',
-      muted: '#6b7075',
+      // A step darker since v2.25 (#6b7075 before): secondary text sits on
+      // the quiet fill a control is drawn on now, and at the old value it
+      // read at 4.27:1 there. At this one it reads at 5.03:1 on the fill,
+      // 4.68:1 on the strong fill, and further from the quiet ink below.
+      muted: '#60656a',
       faint: '#6d7175',
       accent: '#4666e0',
       accentDim: '#c7d0f7',

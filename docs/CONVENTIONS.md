@@ -265,64 +265,77 @@ that.
 
 ## 5. Design tokens
 
+**The system is [`DESIGN.md`](DESIGN.md)**, since v2.25: what each token is
+for, the three kinds of button, the field, the page frame, the empty state.
+This section is the short form for somebody writing a rule, and
+`design.test.ts` and `scale.test.ts` hold the stylesheet to both.
+
 **No hard-coded values.** Everything comes from a token declared once on
 `:root`:
 
-- Spacing `--s0`..`--s8`, radius `--r-chip/-control/-card/-pill/-round`
-- Type `--t-2xs`..`--t-xl`, plus `--t-input` (16px, the iOS zoom floor - never
-  lower it), `--t-glyph`, and the two fluid sizes on the Focus screen
-- Elevation `--e1/e2/e3`, motion `--dur-fast`, `--dur`, `--ease`
-- Palette `--bg`, `--surface`, `--text`, `--muted`, `--faint`, `--accent`,
-  `--border`, `--danger`; and `--ground`, what is painted under the element
-  at hand - the page by default, and a surface sets it to itself - for the
-  one thing that has to match it exactly, the gap in a chosen swatch's ring
+- Spacing `--s1`..`--s4`, `--s6`, `--s8`, `--s12` (4 to 48), with `--s0` for a
+  hairline's offset
+- Type `--t-xs`, `--t-sm`, `--t-md`, `--t-read`, `--t-lg`, `--t-xl`; line
+  heights `--lh-tight`, `--lh-ui`, `--lh-read`; weights `--w-regular`,
+  `--w-medium`, `--w-strong`; `--t-glyph` and the two fluid sizes on the Focus
+  screen
+- Corners `--r-mark`, `--r-control`, `--r-card`, `--r-pill`, `--r-round`
+- One control height, `--control-h`; two page widths, `--page-w` and
+  `--read-w`
+- Elevation `--e2` (a popover, a menu) and `--e3` (a modal, a sheet); motion
+  `--dur-fast`, `--dur`, `--ease`
+- Palette `--bg`, `--surface`, `--surface-raised`, `--text`, `--muted`,
+  `--faint`, `--accent`, `--accent-dim`, `--border`, `--mark`, `--danger`,
+  `--good`; the derived `--fill`, `--fill-strong`, `--scrim` and `--ring`; and
+  `--ground`, what is painted under the element at hand - the page by
+  default, and a surface sets it to itself - for the one thing that has to
+  match it exactly, the gap in a chosen swatch's ring
 - Geometry the scales have no step for, named once: `--rail-w`,
   `--rail-open-w`, `--timeline-gutter`, and `--touch`, the 44px a control
   grows to under a finger
 
-### The two scales
+**Retired, counted down, not to be used:** `--s5`, `--s7`, `--t-2xs`,
+`--t-input`, `--e1`, a font weight or line height written as a number,
+tracked capitals, a border that is not a divider or a scale, black written
+as `rgba()`, a press that scales, a height written in pixels. Each is a
+number in `design.test.ts` that only goes down.
 
-Written down in v2.4, after the owner's screenshots kept finding a 14px
-here and a 9px there. These are the only sizes there are; `scale.test.ts`
-reads the stylesheet and fails on any other.
+### The scales
 
-| Type | Size | Where |
+| Type | Size | Role |
 |---|---|---|
-| `--t-2xs` | 10px | The month cell's lines and the week preview's letters, where the box is the constraint |
-| `--t-xs` | 11px | Labels, meta, chips, hour marks |
-| `--t-sm` | 13px | Body: cards, fields, buttons, the capacity line |
-| `--t-md` | 15px | The running task, a row's title |
-| `--t-lg` | 20px | The day's name, the clock, a view's heading |
-| `--t-xl` | 34px | The timer's reading |
-| `--t-input` | 16px | Every field on a phone - the iOS zoom floor |
+| `--t-xs` | 11px | Captions: labels, meta, counts, hour marks |
+| `--t-sm` | 13px | Interface: buttons, chips, rows, secondary text |
+| `--t-md` | 15px | Body and titles in a list; a field on a desktop |
+| `--t-read` | 17px | Reading and writing; every field on a phone |
+| `--t-lg` | 20px | A page's or a sheet's title, the clock |
+| `--t-xl` | 34px | Display numerals: the timer's reading |
 | `--t-focus`, `--t-focus-title` | fluid | The Focus screen, the one place type fills the window |
 
-**At most four of them on one screen**, not counting the input floor and
-the glyph size: a screen with five sizes is a screen with no hierarchy.
-Today is 11, 13, 15 and 20; the month is 10, 11, 13 and 20. The body
-carries `--t-sm` and a button inherits, so nothing falls to the browser's
-16px - which is not on the scale, and was the fifth size on four screens
-until the v2.4 critique measured them: every button without a size of
-its own, a template card's name, a step's title, a pace line.
+**At most four of them on one screen**, not counting the glyph size: a
+screen with five sizes is a screen with no hierarchy. The body carries
+`--t-sm` and a button inherits, so nothing falls to the browser's 16px -
+which is not on the scale, and was the fifth size on four screens until the
+v2.4 critique measured them.
 
-| Spacing | Size | Spacing | Size |
-|---|---|---|---|
-| `--s0` | 2px | `--s5` | 20px |
-| `--s1` | 4px | `--s6` | 24px |
-| `--s2` | 8px | `--s7` | 28px |
-| `--s3` | 12px | `--s8` | 32px |
-| `--s4` | 16px | | |
+| Spacing | Size | Between |
+|---|---|---|
+| `--s1` | 4px | An icon and its word; a label and its field |
+| `--s2` | 8px | Things in one row |
+| `--s3` | 12px | Rows in a list or a form; a control's inner edge |
+| `--s4` | 16px | A surface's inner edge; groups inside a surface |
+| `--s6` | 24px | Sections of a page |
+| `--s8` | 32px | Regions side by side |
+| `--s12` | 48px | The top of a page's content, and before it ends |
 
-Every padding, margin and gap is one of these, as a token - which is
-also what lets density redefine all of them at once. Three bare pixel
-values are allowed beside them and nothing else: `1px` for a hairline,
-`3px` and `6px` for the half-steps inside the smallest boxes the app
-draws, a week block and a timeline block. A pixel amount may also stand
-inside a `calc()` beside a token when it names a size the scale has no
-step for - the 32px close button the sheet's title keeps clear of, the
-24px check box the task's meta line starts after. A bare `14px` is a
-defect: it means somebody tuned one screen by eye, and the next screen
-will not match it.
+Every padding, margin and gap is one of these, as a token - which is also
+what lets density redefine all of them at once. Three bare pixel values are
+allowed beside them and nothing else: `1px` for a hairline, `3px` and `6px`
+for the half-steps inside the smallest boxes the app draws, a week block and
+a timeline block. A pixel amount may also stand inside a `calc()` beside a
+token when it names a size the scale has no step for. A bare `14px` is a
+defect: it means somebody tuned one screen by eye, and the next screen will
+not match it.
 
 Two are derived at runtime rather than declared: `--safe-ink` (readable on
 `--surface`) and `--on-accent` (readable on whatever accent is in force).
@@ -355,7 +368,9 @@ exist.
 Three presets, each in light and/or dark. A preset that fails a contrast check
 is not mergeable: `theme-contrast.test.ts` checks `--text`, `--accent`,
 `--muted` and `--danger` against both `--surface` and `--bg`, for every preset
-in every mode. Body and secondary text need 4.5:1; the accent needs 3:1.
+in every mode, and `design.test.ts` checks `--text` and `--muted` against
+the two fills a control sits on, mixed the way the browser mixes them. Body
+and secondary text need 4.5:1; the accent needs 3:1.
 
 `index.html` carries a pre-paint script that resolves the theme before React
 mounts, so a dark install never flashes light. It necessarily duplicates the

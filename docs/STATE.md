@@ -58,6 +58,28 @@ The brief, as understood:
 10. **The last look:** every screen again for old styles, colours or spacing
    outside the tokens, and what is left undone written into the audit.
 
+**Queued after the pass, from a message during stage 2:** North's editor as a
+writing place rather than a form - iA Writer, Bear, Notion - in five stages
+of its own, begun only once the ten are done. A page, not a field: no edge,
+no loud focus, about 640px, 17 to 18px at a line height near 1.7, growing
+with the text with no inner scroll and no resize corner. Formatting seen as
+it is typed through a layer under the transparent field, plain text kept,
+the caret, the selection and the text meeting to the pixel on long wrapped
+lines: a capitals line heavier, a little tracked, with more room over it; a
+`---` line a thin faint rule; the signature's lines a little quieter. One
+grey line under it in sentence case, "Capital lines become headings. A line
+of --- starts your signature.", and the placeholder "Write who you are.".
+Save at the right in the primary style, always looking live when there is a
+change and hidden or quiet when there is none, never looking broken; Cancel
+a quiet text button beside it; Ctrl or Cmd and Enter to save, Escape to
+cancel; 150ms between reading and writing, with nothing jumping. Reading
+and the day with the same type and spacing as the editor, so nothing moves
+between them; the page's title "North" smaller and quieter than its
+content. Tests for the keyboard, undo, the two keys, the text kept bit for
+bit, capitals and `---` recognised as typed; pictures in both themes at both
+widths. Stage 7 of the pass builds North to this brief already, so the five
+stages then finish and prove it rather than redo it.
+
 Pictures: the audit's are kept in the repo, one sheet per screen, in
 `docs/screenshots/design/before/`, and the last stage's go beside them. The
 before and after of the stages between are shown to the owner as each stage
@@ -83,6 +105,40 @@ so it could not see that; the sweep parks the pointer on North's first
 heading at 1366x768 and so never measures North at rest; `--faded` is
 declared three times; `--r-chip` is used and not defined. The first two are
 stage 3's, with the popovers.
+
+### Stage 2 - the system: done
+
+`docs/DESIGN.md` is the system, from five principles to where an action
+stands on a sheet, and CONVENTIONS section 5 is its short form. In the
+tokens:
+
+- **Spacing** in steps of four, 4 to 48, with `--s12` new; `--s5` and `--s7`
+  retired.
+- **Type** in six sizes, with `--t-read` (17px) new for reading, writing and
+  every field on a phone; three line heights and three weights as tokens;
+  `--t-2xs` and `--t-input` retired.
+- **One control height**, `--control-h`: 36px, 32px at compact density, the
+  touch target on a finger; and two page widths, `--page-w` 840px and
+  `--read-w` 640px.
+- **Two corners:** every preset's edge is 10px, the same as its radius.
+- **The quiet grounds** `--fill` and `--fill-strong`, the text mixed into
+  the surface in a dark mode and into the page in the light one, one
+  `--scrim` per mode, and `--ring` for focus. `FILLS` in `lib/themes.ts`
+  writes the mixes once. Light's secondary ink is `#60656a`, a step darker,
+  so it reads at 4.5:1 on both fills.
+- **Motion** at 120 and 180ms; `--e1` retired.
+- `--faded` is declared once, not three times.
+
+`design.test.ts`, new: every value against DESIGN.md; text and secondary
+text at 4.5:1 on both fills in every preset, mixed the way the browser mixes
+them; a fill that can be told from both the page and a card; and the
+ratchet, twelve retired things counted with what is left, each only going
+down. Planting 200ms, a 7% light fill or a new pixel height fails it, each
+one.
+
+What shows: cards round at 10px, motion is shorter, and the light theme's
+secondary text is a step darker. The rest is tokens that stage 3 puts to
+work.
 
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 

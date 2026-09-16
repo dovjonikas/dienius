@@ -100,6 +100,32 @@
   --cat-personal: #b8558c;
 }
 
+/* The quiet grounds a control sits on, the one scrim and the focus halo -
+   docs/DESIGN.md, colour. Derived from the preset's own tokens rather than
+   given by it, so every preset and every override has them: the text mixed
+   into a ground. In a dark mode over the surface, where a field on the page
+   and one on a card both read as the same small lift; in the light one over
+   the page, because a white card and an off-white page both have to see the
+   same field. The percentages are FILLS in src/lib/themes.ts, which the
+   contrast test mixes exactly - text and secondary text at 4.5:1 on both
+   fills, the accent at 3:1 - and design.test.ts holds these lines to them.
+
+   One scrim per mode, under every modal and sheet: dark enough on a dark
+   theme to take the page back a step, and on the light one a shade rather
+   than a black wash. */
+:root {
+  --fill: color-mix(in srgb, var(--text) 5%, var(--surface));
+  --fill-strong: color-mix(in srgb, var(--text) 10%, var(--surface));
+  --scrim: rgba(0, 0, 0, 0.55);
+  --ring: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+:root[data-theme='light'] {
+  --fill: color-mix(in srgb, var(--text) 4%, var(--bg));
+  --fill-strong: color-mix(in srgb, var(--text) 8%, var(--bg));
+  --scrim: rgba(24, 26, 30, 0.3);
+}
+
 /**
  * Structural tokens - the ones that are NOT part of the theme system above.
  *
@@ -119,9 +145,11 @@
  * in one room and cramped in another.
  */
 :root {
-  /* Spacing. One geometric-ish scale; every margin, padding and gap in the
-     app comes from it. --s0 exists so "half a step" has a name rather than
-     being written as a bare 2px in six places. */
+  /* Spacing, in steps of four and named by multiples of four: 4, 8, 12, 16,
+     24, 32 and 48 - docs/DESIGN.md. Every margin, padding and gap in the app
+     comes from it. --s0 exists so "half a step" has a name rather than being
+     written as a bare 2px in six places; it is a hairline's offset, not a
+     gap. */
   --s0: 2px;
   --s1: 4px;
   --s2: 8px;
@@ -130,12 +158,18 @@
   /* --s5 and --s7 were referenced by four components before they were ever
      declared, which makes the whole declaration invalid rather than falling
      back - so the Library, the Review tab and the North card were rendering
-     with no padding at all where they asked for three values. The scale runs
-     in fours from here, so these are the values it always implied. */
+     with no padding at all where they asked for three values.
+
+     Retired since v2.25: nobody could choose between 20 and its neighbours,
+     or 28 and its. Each use becomes 16, 24 or 32 as its screen is rebuilt,
+     and they stay declared until nothing names them - design.test.ts counts
+     the uses down. */
   --s5: 20px;
   --s6: 24px;
   --s7: 28px;
   --s8: 32px;
+  /* The top of a page's content, and the room before a page ends. */
+  --s12: 48px;
 
   /* Radius. Built on the theme's own --radius and --edge rather than
      replacing them, so a preset can still round its own corners, while every
@@ -160,6 +194,9 @@
 
      --r-control and --r-card are the theme's own --radius and --edge, so a
      preset sets both - including the hand-drawn corner in THEMES section 5.
+     Every preset sets both to 10px since v2.25: two radii and one shape for
+     the whole app, and a card no longer rounds more than the button inside
+     it - docs/DESIGN.md.
      The two shapes are not sizes: a pill is a capsule whatever it holds,
      and round is a circle. */
   --r-mark: 6px;
@@ -168,17 +205,36 @@
   --r-pill: 999px;
   --r-round: 50%;
 
-  /* Type. Four sizes, and that is the whole scale - see docs/DECISIONS.md.
-     A fifth size is almost never information, it is just a decision nobody
-     wrote down. --t-input is not a step in it: 16px is the threshold below
-     which iOS Safari zooms the page on focus, so form controls are pinned
-     there regardless of what the scale would otherwise say. */
+  /* Type. Six sizes, each a role - caption, interface, body, reading, title,
+     display - and at most four of them on one screen: docs/DESIGN.md. A
+     size outside them is almost never information, it is just a decision
+     nobody wrote down.
+
+     Retired since v2.25 and counted down by design.test.ts: --t-2xs, 10px,
+     below a size worth reading; and --t-input, the 16px every field was
+     pinned to so iOS Safari would not zoom it. A field is --t-md on a mouse
+     and --t-read on a finger now, which clears that floor where it matters
+     and stops a desktop form reading in two sizes. */
   --t-2xs: 10px;
   --t-xs: 11px;
   --t-sm: 13px;
   --t-md: 15px;
+  /* Reading and writing: North's text, a note being read, the journal's
+     page - and every field on a phone. */
+  --t-read: 17px;
   --t-lg: 20px;
   --t-xl: 34px;
+
+  /* Three line heights and three weights, and a rule names one of them
+     rather than a number - docs/DESIGN.md. Tight for a title, a numeral and
+     a control's one line; ui for rows and labels that wrap; read for prose.
+     A key task is --w-strong, and nothing is 650 or 700. */
+  --lh-tight: 1.25;
+  --lh-ui: 1.4;
+  --lh-read: 1.6;
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-strong: 600;
   /* The two fluid sizes, both on the Focus screen: the countdown and the
      task's name over it. Fluid because that screen is the one place type
      is meant to fill the window rather than sit in a column. */
@@ -191,10 +247,15 @@
      not how readable a line of prose is. Two of them, named once. */
   --t-glyph: 18px;
 
-  /* Elevation. Three levels, each with a job: a card sitting on the page, a
-     card lifted under the pointer, and something covering the page. Anything
-     that needs a fourth is really asking for a different layout. --e1 defers
-     to the theme, which sets its own resting shadow per preset. */
+  /* Elevation. Shadows belong to layers - docs/DESIGN.md: --e2 for a
+     popover, a menu, a bubble and a thing in the hand while it is dragged,
+     --e3 for a modal and a sheet. Depth everywhere else is the three steps of
+     ground.
+
+     --e1, the resting card's shadow, deferring to the theme's own, is retired
+     since v2.25: nothing resting on the page casts a shadow. It stays
+     declared until the last card leaves it, and design.test.ts counts its
+     uses down. */
   --e1: var(--shadow);
   --e2: 0 4px 14px -4px rgba(0, 0, 0, 0.28);
   --e3: 0 -4px 16px rgba(0, 0, 0, 0.12);
@@ -210,6 +271,15 @@
      which was written as a number in a hundred and thirty places until
      v2.4. */
   --rail-w: 56px;
+  /* One height for everything pressed or typed in - a button, a field, a
+     select, a chip, a segmented control, a stepper - so a row of them is
+     one line: 36px on a mouse, 32px at compact density, and the touch
+     target on a finger (below). docs/DESIGN.md. */
+  --control-h: 36px;
+  /* The two widths a page is: lists and forms, and reading and writing.
+     Today, the week and the month use the whole width for their own grids. */
+  --page-w: 840px;
+  --read-w: 640px;
   --rail-open-w: 176px;
   --timeline-gutter: 44px;
   --touch: 44px;
@@ -239,40 +309,6 @@
      second it is moving and nobody reads it there. */
   --faded: 0.55;
 
-  /* How far back a thing is pushed when it is still there but not the point:
-     a day from the month either side, a control that cannot be pressed yet,
-     a time under a title. One value, because "faded" is one idea and nine
-     hand-tuned numbers for it is how three of them ended up unreadable.
-
-     0.55 rather than the 0.35 to 0.5 this app used until v2.5. Those were
-     tuned by eye against a contrast pass that ignored opacity entirely - it
-     read a half-faded element as fully painted - so a fade could be
-     measured clean at 2:1. It was: the month grid's outside days sat at
-     2.04:1 in the light theme for five versions. 0.55 is the lowest value
-     that keeps every faded string in the app over 3:1, which is the line
-     between a whisper and a smudge. See CONVENTIONS section 22.
-
-     A drag is not on this token. A card under the cursor is faded for the
-     second it is moving and nobody reads it there. */
-  --faded: 0.55;
-
-  /* How far back a thing is pushed when it is still there but not the point:
-     a day from the month either side, a control that cannot be pressed yet,
-     a time under a title. One value, because "faded" is one idea and nine
-     hand-tuned numbers for it is how three of them ended up unreadable.
-
-     0.55 rather than the 0.35 to 0.5 this app used until v2.5. Those were
-     tuned by eye against a contrast pass that ignored opacity entirely - it
-     read a half-faded element as fully painted - so a fade could be
-     measured clean at 2:1. It was: the month grid's outside days sat at
-     2.04:1 in the light theme for five versions. 0.55 is the lowest value
-     that keeps every faded string in the app over 3:1, which is the line
-     between a whisper and a smudge. See CONVENTIONS section 22.
-
-     A drag is not on this token. A card under the cursor is faded for the
-     second it is moving and nobody reads it there. */
-  --faded: 0.55;
-
   /* Two durations for everything that moves, and one that is not movement.
      The night pass counted eleven: two tokens and nine numbers written at
      the point of use, from 220ms to 1.6s, no two of them alike and none of
@@ -281,13 +317,17 @@
      --dur-fast a control answering a press
      --dur      a layer arriving or leaving, a thing changing shape
 
+     120ms and 180ms since v2.25, from 150 and 200: the design pass asked for
+     motion inside 120 to 180, easing out, and a press that answers faster
+     reads as more exact rather than as quicker - docs/DESIGN.md.
+
      --dur-sweep is the odd one and is not UI motion at all: it is how long a
      ring takes to reach the number under it, and the number changes once a
      second. Without it a countdown ring steps rather than sweeps. It is a
      property of the clock, not of the interface, which is why it is allowed
      to be a third value and why it is named apart from the other two. */
-  --dur-fast: 150ms;
-  --dur: 200ms;
+  --dur-fast: 120ms;
+  --dur: 180ms;
   --dur-sweep: 1s;
   --ease: cubic-bezier(0.2, 0, 0, 1);
 }
@@ -310,6 +350,16 @@
   --s6: 18px;
   --s7: 21px;
   --s8: 24px;
+  --s12: 36px;
+  --control-h: 32px;
+}
+
+/* On a finger every control is the touch target itself, at either density:
+   44px is how big a press has to be, and a compact screen is not a smaller
+   finger. */
+@media (pointer: coarse) {
+  :root,
+  :root[data-density='compact'] { --control-h: var(--touch); }
 }
 
 /* Text size scales all four steps together, so the ratios between them - and
@@ -321,6 +371,7 @@
   --t-xs: 10px;
   --t-sm: 12px;
   --t-md: 14px;
+  --t-read: 16px;
   --t-lg: 18px;
   --t-xl: 31px;
 }
@@ -330,6 +381,7 @@
   --t-xs: 12px;
   --t-sm: 14.5px;
   --t-md: 17px;
+  --t-read: 19px;
   --t-lg: 23px;
   --t-xl: 39px;
 }
