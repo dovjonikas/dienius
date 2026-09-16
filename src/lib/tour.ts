@@ -291,18 +291,20 @@ export const DESKTOP_STEPS: TourStep[] = [
     id: 'north',
     title: 'One direction',
     text: 'Write a line of your own.',
-    // Five, and the last one present wins. An empty North is one line and
+    // Six, and the last one present wins. An empty North is one line and
     // Write; Write opens the field, and a line typed into it moves the ring
     // to Save, which keeps the text and goes back to reading. Once the text
-    // is there, the goal offer appears under it; once that is pressed,
-    // Compose opens on a blank goal and the step ends on Save. Somebody who
-    // already has a text starts at the offer, which is the same walk with
-    // two steps fewer.
+    // is there, Add a goal stands at the top of the page; once that is
+    // pressed, the goal's editor opens where the line was, its box asks for
+    // a name while its Save waits for one, and the step ends on Save.
+    // Somebody who already has a text starts at Add a goal, which is the
+    // same walk with two steps fewer.
     targets: [
       { selector: '[data-tour="picture-write"]', text: 'Click Write.' },
       { selector: '[data-tour="picture-field"]', typed: 'Now click Save.' },
       { selector: '[data-tour="picture-keep"]', text: 'Now click Save.' },
-      { selector: '[data-tour="goal-add"]', text: 'Click Write one down. A goal never shows progress, only why.' },
+      { selector: '[data-tour="goal-add"]', text: 'Click Add a goal. A goal never shows progress, only why.' },
+      { selector: '[data-tour="goal-field"]', text: 'Name it, then click Save.' },
       { selector: '[data-tour="goal-save"]', text: 'Name it, then click Save.' },
     ],
     view: 'north',

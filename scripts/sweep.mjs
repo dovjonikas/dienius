@@ -276,15 +276,16 @@ const SCREENS = [
     },
   },
   {
-    // One goal with the pointer resting on it. Everything under a goal's
-    // identity line folds away where there is a pointer, so the screen above
-    // no longer measures any of it - the lines, the never lines and the
-    // rules are only ever painted here.
-    name: 'North (goal open)',
-    pointerOnly: true,
+    // A goal's editor, open where its line was, with the rest of the goal
+    // and the rarer things at the end of More. The page shows a goal as its
+    // title alone, so this is the one screen that measures the fields, the
+    // rules and the examples in the empty boxes.
+    name: 'North (goal)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'North')
-      await p.locator('.north-goal').first().hover()
+      await p.getByRole('button', { name: /^Edit "/ }).first().click()
+      const more = p.getByRole('button', { name: 'More', exact: true })
+      if (await more.count()) await more.click()
       await p.waitForTimeout(300)
     },
   },
@@ -301,15 +302,14 @@ const SCREENS = [
     },
   },
   {
-    // Four goals editable at once. Never swept until v2.19, when it became
-    // four cards on one page rather than a column to scroll - which is a
-    // grid of raised surfaces full of small grey labels, and exactly the
-    // shape a contrast and a geometry pass are for.
-    name: 'North (Compose)',
+    // The text's field, open on the sample's text: the drawing under the
+    // field, the heading lines and the signature's mark drawn heavier, and
+    // the grey line over it saying both rules.
+    name: 'North (writing)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'North')
-      await press(p, 'Edit goals')
-      await p.waitForSelector('.north-compose')
+      await press(p, 'Edit')
+      await p.waitForSelector('.north-editor-field')
       await p.waitForTimeout(300)
     },
   },

@@ -1033,7 +1033,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 }
 
 
-
 .accent-swatch:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
@@ -5771,7 +5770,7 @@ button.danger {
   .library-item-open,
   .library-list-fold,
   .scratch-note-action,
-  .north-fold-toggle,
+  .north-goal-line,
   .day-nav > button,
   .mini-cell,
   .theme-card,
@@ -5803,8 +5802,7 @@ button.danger {
   .segmented button:not(.active):hover,
   .block-note-toggle:hover,
   .week-col-day:hover,
-  .scratch-note-action:hover,
-  .north-fold-toggle:hover {
+  .scratch-note-action:hover {
     color: var(--text);
   }
   .block-note-toggle:hover { border-color: var(--border); }
@@ -5915,7 +5913,6 @@ button.danger {
    box and one line. Neither wants the clock's width. */
 .notes-popover,
 .journal-popover { width: min(300px, calc(100vw - var(--s5) * 2)); }
-
 
 
 /* A clock face drawn from a circle and two borders, like every other mark in
@@ -9668,7 +9665,6 @@ button.task-library:hover { color: var(--text); }
   .setting-quiet,
   .north-line-title,
   .north-strip-heading,
-  .north-compose-open,
   .focus-bar-exit,
   .block-remove,
   .library-step,
@@ -9685,7 +9681,7 @@ button.task-library:hover { color: var(--text); }
   .task-note-mark,
   .task-library,
   .library-detail-pick,
-  .north-fold-toggle,
+  .north-goal-line,
   .north-heading-toggle,
   .task-title-select {
     position: relative;
@@ -9702,8 +9698,8 @@ button.task-library:hover { color: var(--text); }
   .task-library::after,
   /* The picker's link under the address field, where it is a link. */
   .library-detail-pick::after,
-  /* The one line the goals wait behind under North's text. */
-  .north-fold-toggle::after,
+  /* A goal's line at the top of North. */
+  .north-goal-line::after,
   /* A heading on North, which opens its lines on a finger. */
   .north-heading-toggle::after,
   .library-color::after,
@@ -9715,7 +9711,6 @@ button.task-library:hover { color: var(--text); }
   .north-line-title::after,
   /* A heading in the row under the day's title. */
   .north-strip-heading::after,
-  .north-compose-open::after,
   /* The one way out of a running Focus session, on every screen the bar can
      show on. A 30px cross in a row of 44px buttons; the overlay makes it the
      same target as its neighbours without making it the same size. */
@@ -10685,49 +10680,31 @@ button.task-library:hover { color: var(--text); }
 }
 
 /* ------------------------------------------------------------------------
-   The North window - views/north/NorthView.tsx.
+   North - views/north/.
 
-   Read as a page of writing, not as a settings screen: one column, capped
-   at a reading measure, and the only structure is a hairline down the left
-   of each goal. No cards with borders on four sides, no filled headers, no
-   accent panel. Everything on it is a sentence somebody wrote about
-   themselves, and the more furniture there is around one, the less it reads
-   like their own handwriting.
+   One page in one column, read as a page somebody wrote rather than as a
+   screen of controls: the goal at the top as a quiet line, and under it the
+   person's own text - an introduction, headings that open what they hold,
+   and a signature. No card, no frame and no shadow anywhere on the reading
+   page. The air does the separating, in two steps: the gap between two
+   headings, and the larger one between the parts of the page. What can be
+   pressed stands in one row wherever it stands.
 
-   Since v2.1 it is four layers read from the top as one text, and the type
-   does the work: the picture set like a preface, larger and looser than
-   anything under it; a goal as a chapter, with its why and its identity
-   line; what you do to deserve it as a plain list at body size; the rules
-   smaller and last. More air between layers than anywhere else in the app,
-   on purpose - this is the one window allowed to be slower.
-
-   Nothing here fills with the accent, and nothing measures anything -
-   ARCHITECTURE section 6.
+   Nothing here fills with the accent but the one primary button in a row,
+   and nothing measures anything - ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
-/* The window is as wide as the screen it is on, up to the width prose stops
-   being readable at.
-
-   It was 62ch - about 434px - which on a 1920 screen is a column down the
-   middle with a fifth of the window in it and four fifths of nothing beside
-   it. Four goals came to 1956px in that column, so three of them were below
-   the fold on the one screen somebody opens to see all of them at once, and
-   the picture's own sentences broke mid-phrase for want of a hundred pixels
-   nobody was using. The cap is on the *text* now, line by line, where it
-   belongs: the picture reads at 70ch and a goal's prose at its own measure,
-   and the width left over goes into standing the goals beside each other
-   rather than under each other. */
+/* One column at the measure the text reads at, centred the way the
+   settings page is, whatever the width of the window. It was 1360px wide
+   until v2.24, room for goal cards beside each other; the cards are gone,
+   and a line of text wider than this reads as a banner. */
 .north-view {
-  max-width: 1360px;
+  max-width: 40rem;
   margin: 0 auto;
   padding-bottom: var(--s8);
 }
 
 .north-view-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  margin-bottom: var(--s7);
+  margin-bottom: var(--s8);
 }
 
 .north-view-head h2 {
@@ -10736,47 +10713,111 @@ button.task-library:hover { color: var(--text); }
   font-weight: 600;
 }
 
-/* The one control on a written window. Quiet on purpose: a filled Add on a
-   page somebody reads every morning is an invitation to rewrite it every
-   morning, and this is meant to be opened rarely. On a finger it carries the
-   44px overlay like every other quiet control - see the coarse-pointer list. */
-.north-compose-open {
+/* The goals: one quiet line each under the page's name, in the page's
+   smallest reading type and the second ink. The line is the control that
+   edits it and looks like the line - no box, no edge - and comes up one
+   ink under the pointer. */
+.north-goal-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  margin-top: var(--s2);
+}
+
+.north-goal-lines:empty { display: none; }
+
+.north-goal-line {
   min-height: 0;
-  padding: var(--s1) 0;
+  padding: 0;
   border: none;
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
-  letter-spacing: 0.04em;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
 }
 
-.north-compose-open:hover { color: var(--text); }
+.north-goal-line:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-mark);
+}
 
-.north-compose-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .north-goal-line:hover { color: var(--text); }
+}
 
-/* The small heading over each layer: the picture's label, and the two
-   headings inside a goal. One register for all three, so the eye learns it
-   once and then stops reading it. */
-.north-layer-label {
+/* A goal, written, where its line was: the title in a box that wraps, the
+   rest behind More, and the row of buttons every part of the page uses. */
+.north-goal-editor {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: var(--s3);
+  margin: var(--s2) 0 var(--s3);
+}
+
+.north-goal-editor textarea {
+  width: 100%;
+  resize: none;
+  line-height: 1.5;
+}
+
+/* The two boxes that take a list rather than a sentence stand at two lines
+   when they are empty, because a one-line box with a two-line example in it
+   shows half its own example. */
+.north-goal-list-field { min-height: calc(var(--s8) + var(--s6)); }
+
+.north-goal-more {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+/* The rarer things at the end of More, under a hairline: archiving,
+   another goal, the archived goals and the rules with no goal. */
+.north-goal-rare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+
+.north-goal-full {
   margin: 0;
-  color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: var(--t-sm);
 }
 
-/* The text, read, since v2.24: one column, the introduction and then the
-   headings, and one row of buttons at the end. The column is a measure and
-   not a layout - at about sixty-five characters of the text's type a line
-   reads as a line of a page, and stretched across a screen it reads as a
-   banner nobody's eye can travel back along. */
-.north-read {
-  max-width: 40rem;
+.north-goal-archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin: var(--s3) 0 0;
+  padding: 0;
+  list-style: none;
 }
 
+.north-goal-archive-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+.north-goal-archive-title { color: var(--muted); }
+
+.north-goal-archive-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-left: auto;
+}
+
+/* The text, read, since v2.24: the introduction, the headings and the
+   signature, and one row of buttons at the end, in the page's column. */
 /* The introduction and every paragraph under a heading are one voice: the
    same size, ink and leading, a paragraph's air between two of them, and
    the person's own line breaks kept. No frame, no ground, nothing over it. */
@@ -10985,46 +11026,8 @@ button.task-library:hover { color: var(--text); }
   gap: var(--s3);
 }
 
-/* The goals, folded under the text behind one quiet line. */
-.north-goals-fold { margin-top: var(--s8); }
-
-.north-fold-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-  min-height: 0;
-  margin-bottom: var(--s5);
-  padding: var(--s1) 0;
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  letter-spacing: 0.04em;
-}
-
-.north-fold-toggle:hover { color: var(--text); }
-
-.north-fold-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-/* The same small triangle the day's Done and Later folds turn. */
-.north-fold-caret {
-  width: 0;
-  height: 0;
-  border-left: 5px solid currentColor;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  transition: transform var(--dur-fast) var(--ease);
-}
-
-.north-fold-toggle[aria-expanded='true'] .north-fold-caret { transform: rotate(90deg); }
-
 /* An empty North: one line saying what the page is for and the one button
-   that starts it, at the reading column's measure - no field and no edge
-   until somebody asks to write. */
-.north-invite {
-  max-width: 40rem;
-}
-
+   that starts it - no field and no edge until somebody asks to write. */
 .north-invite-line {
   margin: 0;
   color: var(--muted);
@@ -11034,13 +11037,9 @@ button.task-library:hover { color: var(--text); }
 
 .north-invite-line + .north-actions { margin-top: var(--s4); }
 
-/* The text, written, at the same measure as the text read. The grey line
-   over the field is the one rule the page has, in a label's register:
-   small, tracked, and in capitals, which is what it is about. */
-.north-editor {
-  max-width: 40rem;
-}
-
+/* The text, written. The grey line over the field says the page's two
+   rules, in a label's register: small, tracked, and in capitals, which is
+   what one of them is about. */
 .north-editor-rule {
   margin: 0 0 var(--s2);
   color: var(--muted);
@@ -11100,12 +11099,26 @@ button.task-library:hover { color: var(--text); }
   background: var(--surface);
 }
 
-/* A line the page will read as a heading, drawn heavier while it is typed.
-   A stroke round the letters rather than a bolder face, which would be
-   wider and would move the caret on every line after it. */
-.north-editor-line.is-heading {
+/* A line the page will read as a heading, and the signature's mark, drawn
+   heavier while they are typed. A stroke round the letters rather than a
+   bolder face, which would be wider and would move the caret on every line
+   after it. Three hyphens drawn heavier are still three short strokes, so
+   the mark also stands on a band of quiet ground - a ground and a spread
+   shadow, neither of which moves a letter. */
+.north-editor-line.is-heading,
+.north-editor-line.is-mark {
   -webkit-text-stroke: 0.04em currentColor;
 }
+
+.north-editor-line.is-mark {
+  border-radius: var(--r-mark);
+  background: color-mix(in srgb, var(--muted) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--muted) 28%, transparent);
+}
+
+/* The empty field's example, held unseen in the drawing so the field is as
+   tall as the example it shows. */
+.north-editor-example { visibility: hidden; }
 
 /* The field: its edge, its caret and its selection, and no ink or ground of
    its own. It never scrolls inside itself. */
@@ -11131,203 +11144,6 @@ button.task-library:hover { color: var(--text); }
 
 .north-editor-field + .north-actions { margin-top: var(--s4); }
 
-.north-offer p {
-  margin: 0;
-  max-width: 52ch;
-  color: var(--muted);
-  font-size: var(--t-md);
-  line-height: 1.6;
-}
-
-.north-offer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s3);
-}
-
-/* Four goals, beside each other, with nothing between them but room.
-
-   A column of four is a column three of them are below the fold of, and this
-   is the one screen whose whole point is seeing all of them at once. So: one
-   goal per row on a phone, two from 900px up, and no more than two ever -
-   four across at 1920 fits the height easily and costs the pairing, and the
-   two halves standing next to each other is the finding they are built on.
-
-   Each one sits on its own surface, lifted off the page by a shadow rather
-   than fenced in by a line.
-
-   It was a 2px rule down the left until v2.19, which made four goals read as
-   four cells of a table; the wave took the rule off and left the goals
-   standing on the page with nothing but room between them. The owner read
-   that and asked for depth - and depth is the opposite of a fence: a border
-   says where a thing stops, and a shadow says a thing is nearer than the
-   page. Same amount of air, no line anywhere, and the corner is the app's
-   own card radius.
-
-   The rows stretch, so two surfaces beside each other are one height. Once
-   an edge is visible, two of them ending at different places is the ragged
-   thing a border was going to be blamed for. */
-.north-goals {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--s6);
-}
-
-.north-goals > * {
-  padding: var(--s5) var(--s6);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2);
-}
-
-@media (min-width: 900px) {
-  .north-goals { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* One goal. What holds it together is that its lines are close and that they
-   share a surface; what separates it from the next one is the room between
-   the two surfaces. No line is drawn anywhere on it. */
-.north-goal {
-  position: relative;
-  min-width: 0;
-}
-
-.north-goal:focus { outline: none; }
-
-.north-goal:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Everything under the identity line - what is done, what is never done, and
-   what pulls you off it. On a page it is the operational half of a goal and
-   the reason four goals read as a pile; on a card it is what unfolds when
-   somebody looks at that goal in particular. */
-.north-goal-more {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s4);
-}
-
-/* Only where there is a pointer that can rest on something. A phone has none,
-   and there the whole goal is simply on the page - which is the right answer
-   on a screen showing one goal at a time. */
-@media (hover: hover) and (pointer: fine) {
-  /* Against the card's own bottom edge, on the card's own surface, so the
-     card appears to grow rather than a panel appearing beside it. Absolute,
-     so nothing under it moves by a pixel when it opens - CONVENTIONS 24 is
-     about layout shifting under a pointer, and a layer over the top is not
-     that. */
-  .north-goal-more {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    z-index: 1;
-    padding: 0 var(--s6) var(--s5);
-    border-radius: 0 0 var(--r-card) var(--r-card);
-    background: var(--surface);
-    box-shadow: var(--e2);
-    visibility: hidden;
-    opacity: 0;
-  }
-
-  /* Over its neighbours while it is open, and squared off at the bottom so
-     the card and the half below it read as one surface rather than two. */
-  .north-goal:hover,
-  .north-goal:focus-visible,
-  .north-goal:focus-within {
-    z-index: 2;
-    border-radius: var(--r-card) var(--r-card) 0 0;
-    /* An edge on three sides, drawn inside the box so nothing moves, and
-       none along the bottom, where the half below joins on. The elevation
-       alone did not separate an open goal from the neighbour it lies over
-       in a dark theme - the neighbour's identity line, showing under the
-       open half, read as a card of its own with nothing else on it. */
-    box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border), inset 0 1px 0 var(--border), var(--e2);
-  }
-
-  .north-goal:hover .north-goal-more,
-  .north-goal:focus-visible .north-goal-more,
-  .north-goal:focus-within .north-goal-more {
-    visibility: visible;
-    opacity: 1;
-    box-shadow: inset 1px 0 0 var(--border), inset -1px 0 0 var(--border), inset 0 -1px 0 var(--border), var(--e2);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .north-goal-more { transition: opacity var(--dur-fast) var(--ease); }
-  }
-}
-
-/* One order of importance, down the whole page, out of the four sizes
-   CONVENTIONS 5 allows and nothing else.
-
-   The trouble was never that any one thing was wrong; it was that a card
-   carried five kinds of content at almost one weight, so the eye had nowhere
-   to start. There are six levels to say and four sizes to say them in, so
-   the last two steps are weight and ink:
-
-     the picture   t-lg                 - and it is the only t-lg here
-     goal title    t-md  700  --text
-     why           t-md  400  --text    - a statement, not a caption
-     identity      t-md  400  --text    italic, with air on both sides
-     what I do     t-sm  400  --text
-     what I don't  t-sm  400  --muted
-     the rules     t-sm  400  --muted
-     every head    t-xs  600  --faint
-
-   t-xs is for labels and never for a sentence: the smallest thing on the
-   page should be the word naming a list, not the list. And the page's own
-   h2 stays at t-lg with every other view's - it is the window's name in a
-   row with Compose, not something anybody reads. */
-.north-goal-title {
-  margin: 0;
-  max-width: 40ch;
-  color: var(--text);
-  font-size: var(--t-md);
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  line-height: 1.35;
-}
-
-/* The line that has to cut through a bad day, so it is set as a thing said
-   rather than as a note under a heading. It was muted, which is how a caption
-   is set; full ink is the whole promotion, and the weight stays where body
-   copy has it so the title above keeps its own edge. */
-.north-goal-why {
-  margin: var(--s3) 0 0;
-  max-width: 56ch;
-  color: var(--text);
-  font-size: var(--t-md);
-  line-height: 1.55;
-}
-
-/* The only italic in the app besides the day view's own identity line, and
-   earned the same way: a sentence in the first person, set the way a
-   first-person aside has been set for four hundred years.
-
-   It is a different kind of sentence from everything around it - not what
-   this goal is or why, but who having it makes you - and what says so is the
-   italic and the air on either side of it, not size. It spent one version at
-   t-lg, louder than the goal's own title, which put the quietest-read line
-   on the card at the top of its order; the owner's reading is that the why
-   is the line that cuts through a bad day and this one sits just under it.
-   See docs/RESEARCH-NORTH.md section 8. */
-.north-goal-identity {
-  /* More room above and below it than anything else on the card has. With no
-     labels left, the air is what says this is a different kind of sentence
-     from the one over it and from the lines under it - not what the goal is
-     or why, but who having it makes you. */
-  margin: var(--s5) 0 var(--s5);
-  max-width: 52ch;
-  color: var(--text);
-  font-size: var(--t-md);
-  font-style: italic;
-  line-height: 1.5;
-}
-
 /* A fact, not a measurement - goalAge. Set in --faint at the smallest size
    so it can never be mistaken for the thing the card is about. */
 .north-goal-age {
@@ -11336,57 +11152,6 @@ button.task-library:hover { color: var(--text); }
   font-size: var(--t-xs);
   letter-spacing: 0.04em;
 }
-
-/* The two halves of one goal, in one list.
-
-   They were two columns under two heads until v2.19. The heads went with
-   every other label on this page, and two unlabelled columns is two columns
-   nobody can tell apart - so they are one run of lines now, the away ones
-   after the doing ones, adjacent, which is what the pairing needs. An
-   expected self predicts behaviour far better when it is held against a
-   feared self in the same domain, and the layout that loses that is one that
-   puts them in two sections of a page. docs/RESEARCH-NORTH.md sections 2
-   and 8.
-
-   The one word on this page the owner did not type is "never", at the front
-   of each away line, and it is inside their sentence rather than above it:
-   somebody wrote "go quiet for a day" into a field called what I don't do,
-   and on a page where that field has no name the line has to carry its own
-   sense. "never go quiet for a day" is the same sentence, whole, in the same
-   voice. The ink is set below, with the lines. */
-
-
-/* What you do to deserve it: a plain list. No marker and nothing to tick.
-   A size below the prose above it, because these are actions rather than
-   anything anybody reads for its own sake - the part of a goal that is
-   about a Tuesday, kept legible and kept quiet. */
-.north-deserve {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* No measure on these. 52ch capped them at about 340px inside a 650px card,
-   so "bad day, get up small, no big deal about it" broke across two lines
-   with three hundred pixels of empty column beside it - and a line that
-   wraps stops looking like one thing somebody does and starts looking like a
-   paragraph. They are short by nature; the card's own width is the only cap
-   they need, and on a phone they wrap because there genuinely is no room. */
-.north-deserve li {
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: 1.55;
-}
-
-/* One step quieter again. The eye should land on what he does first: making
-   the away half loud is making the threat loud, which is the half of Witte's
-   model that produces avoidance rather than action - RESEARCH-NORTH section
-   4. The word "never" is inside the line and takes its ink, because it is
-   part of the sentence rather than a label over it. */
-.north-avoid { color: var(--faint); }
 
 /* What pulls me off this, with no head over it since v2.19. What says it is
    a different kind of line from the ones above - a moment and an answer
@@ -11524,126 +11289,6 @@ button.task-library:hover { color: var(--text); }
   line-height: 1.5;
 }
 
-/* Compose - views/north/NorthCompose.tsx. The same page with every layer
-   open: the picture as a textarea, each goal as its four fields behind the
-   same hairline the read card has, and one Save at the bottom. The fields
-   are the app's own .field rows, so this looks like every other place
-   something is written down rather than like a form of its own. */
-/* Four goals to fill in, on one page.
-
-   This was one column down the middle: the picture, then four goals of six
-   stacked fields each, then the archive and the buttons - about two and a
-   half screens of form for a window whose whole subject is four things. The
-   owner opened it after v2.19 and said so. A form somebody scrolls is a form
-   they lose their place in, and the thing being edited here fits a screen
-   when it is read.
-
-   So it is the reading page's own shape: the picture across the top, the
-   goals two abreast under it, each on the same surface with the same shadow
-   the read card has. What made room for it: every label sits beside its box
-   rather than over it - one column of words down the left of each card, the
-   same shape the library panel uses - and the two hints that were saying
-   what the field name and the Explain already say are gone. */
-.north-compose {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--s4);
-}
-
-/* Everything that is not a goal takes the whole width: the picture over
-   them, and the three feet under. */
-.north-compose > :not(.north-compose-goal) { grid-column: 1 / -1; }
-
-@media (min-width: 900px) {
-  .north-compose { grid-template-columns: 1fr 1fr; }
-}
-
-/* Four abreast where there is room for four, which is the shape the owner
-   asked for in their own words: four cards ready to fill in on one page
-   rather than a form to scroll. A card is about 320px wide there and one
-   column of fields is what fits it - so the halves below are for the middle
-   width alone, where a card is 660 and standing six fields in one column of
-   that is what made this form two screens long. */
-@media (min-width: 1400px) {
-  .north-compose { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-
-.north-compose textarea {
-  resize: vertical;
-  line-height: 1.45;
-}
-
-/* The two boxes that take a list rather than a sentence. They grow like the
-   others and stand at two lines when they are empty, because a one-line box
-   with a two-line example in it shows half its own example. */
-.north-compose-lines { min-height: calc(var(--s8) + var(--s6)); }
-
-.north-compose-picture {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-}
-
-/* The picture's own runs the width of the box it is under; the ones inside
-   a card keep a measure, because a card is narrow and a hint that reaches
-   its far edge reads as another field. */
-.north-compose-picture .north-compose-hint { max-width: none; }
-
-.north-compose-hint {
-  max-width: 60ch;
-  color: var(--faint);
-  font-size: var(--t-xs);
-  line-height: 1.5;
-}
-
-/* One goal to fill in: the same surface and shadow the read card has, so
-   opening Compose is the same four things becoming editable rather than a
-   different screen about them.
-
-   Two halves inside it on anything wider than a phone - what the goal is on
-   the left, what it costs on the right - which is what puts four of these on
-   one screen. Six fields stacked is about 420 pixels of card and two rows of
-   that is more than a window; three beside three is about 300 and two rows
-   of that is not.
-
-   The labels stay over their boxes rather than beside them. Beside is what
-   the library panel does and it is right there, where a row is the width of
-   the panel; here a half is about 300px, and a 92px column of words in front
-   of that leaves a box too narrow for the sentences that go in it. */
-.north-compose-goal {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: start;
-  gap: var(--s2);
-  min-width: 0;
-  margin: 0;
-  padding: var(--s3) var(--s4);
-  border: none;
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2);
-}
-
-.north-compose-half {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  min-width: 0;
-}
-
-@media (min-width: 900px) {
-  .north-compose-goal { grid-template-columns: 1fr 1fr; column-gap: var(--s5); }
-  .north-compose-goal > .north-compose-goal-foot { grid-column: 1 / -1; }
-
-  /* A goal that is a title so far: one column, since the second half is
-     not on the form yet - see Add more in NorthCompose. */
-  .north-compose-goal.is-brief { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (min-width: 1400px) {
-  .north-compose-goal { grid-template-columns: minmax(0, 1fr); }
-}
-
 /* A word beside a label rather than a line under the box: the cap on the
    field below it, said without spending a row of the card on saying it. */
 .field-note {
@@ -11652,68 +11297,6 @@ button.task-library:hover { color: var(--text); }
   font-size: var(--t-xs);
 }
 
-.north-compose-goal-foot {
-  display: flex;
-  gap: var(--s3);
-}
-
-/* A goal marked for archiving, until Save: the row folds to one line and
-   keeps its place, so Undo puts it back where it was. */
-.north-compose-archived {
-  grid-column: auto;
-  margin: 0;
-  padding: var(--s4) var(--s5);
-  border-radius: var(--r-card);
-  background: var(--surface);
-  box-shadow: var(--e2);
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: 1.6;
-}
-
-/* Both of these stand in the buttons' own row, at its far end: the way to a
-   fifth goal, or the sentence saying there is not one. */
-.north-compose-add,
-.north-compose-full { margin: 0 0 0 auto; }
-
-.north-compose-full { font-size: var(--t-sm); }
-
-.north-compose-archive {
-  padding-top: var(--s4);
-  border-top: 1px solid var(--border);
-}
-
-.north-compose-archive-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  margin: var(--s3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.north-compose-archive-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2) var(--s3);
-}
-
-.north-compose-archive-title { color: var(--muted); }
-
-.north-compose-archive-actions {
-  display: flex;
-  gap: var(--s2);
-  margin-left: auto;
-}
-
-.north-compose-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2);
-  padding-top: var(--s2);
-}
 
 /* The rule form: two lines and a tag, and nothing about scheduling. The
    fields are the app's own .field rows, so this looks like every other place
@@ -11739,12 +11322,6 @@ button.task-library:hover { color: var(--text); }
   flex-wrap: wrap;
   gap: var(--s2);
   margin-top: var(--s1);
-}
-
-@media (max-width: 599px) {
-  .north-view { max-width: none; }
-  .north-goals { gap: var(--s7); }
-  .north-picture { margin-bottom: var(--s7); }
 }
 
 /* The category list in Settings. Rows rather than cards, plus a grip and a
@@ -14503,7 +14080,6 @@ main:has(.week) > .calendar {
 }
 
 
-
 /* The row, as one button. Everything a row can do lives in the panel it
    opens, which is what took four controls off every line. */
 .library-item-open {
@@ -16103,7 +15679,6 @@ main:has(.week) > .calendar {
 .wt-presets .chip:hover { color: var(--text); }
 
 
-
 /* A week of switches a finger has to hit one of without hitting its
    neighbour. Here rather than in the coarse block further up the file:
    the rule above it has the same specificity and comes later, so an
@@ -17029,10 +16604,10 @@ button.link-out {
   font-size: var(--t-xs);
 }
 
-/* What pulls me off this, inside Compose - see GoalRules.tsx. It moved off
-   the goal card in v2.19 and it is the one field here whose control is a
-   list rather than a box, so it stacks its own contents under its label
-   like the rest of them and simply needs less room between them. */
-.north-compose-rules { gap: var(--s1); }
+/* What pulls me off this, behind a goal's More - see GoalRules.tsx. The one
+   field there whose control is a list rather than a box, so it stacks its
+   own contents under its label like the rest and needs less room between
+   them. */
+.north-goal-rules { gap: var(--s1); }
 
-.north-compose-rules .north-rules { margin: 0; }
+.north-goal-rules .north-rules { margin: 0; }

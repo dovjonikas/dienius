@@ -26,7 +26,8 @@ test('the text is written on the page, reads back as blocks, and opens the next 
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
   await expect(box).toBeFocused()
-  await expect(box).toHaveAttribute('placeholder', 'Write here.')
+  // An example of the shape, nobody's words: headings and a signature.
+  await expect(box).toHaveAttribute('placeholder', /\n---\n/)
   await box.fill('First line here\nSecond line here\n\nThird line here')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 

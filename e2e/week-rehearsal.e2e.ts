@@ -285,7 +285,7 @@ test('the week map, North, a full list and the backup form all take what is type
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   await page.getByRole('textbox', { name: 'North' }).fill('First line here\n\nSecond line here')
   await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
-  await page.getByRole('button', { name: 'Write one down' }).click()
+  await page.getByRole('button', { name: 'Add a goal' }).click()
 
   const goals = [
     ['Be someone who finishes', 'Because half-done work is the thing that wears me out.', 'I am someone who ships.'],
@@ -293,17 +293,18 @@ test('the week map, North, a full list and the backup form all take what is type
     ['Keep learning on purpose', 'Because drifting is what happens by default.', 'I am someone who reads.'],
   ]
   for (let i = 0; i < goals.length; i++) {
-    if (i > 0) await page.getByRole('button', { name: 'Add another' }).click()
+    // One goal at a time, in the editor that stands where its line will be:
+    // Add another goal, at the end of More, keeps this one and opens the next.
+    if (i > 0) await page.getByRole('button', { name: 'Add another goal' }).click()
     const [what, why, who] = goals[i]
-    await page.getByLabel('What', { exact: true }).nth(i).fill(what)
-    // The rest of a goal waits behind one line; the one left is this row's.
-    await page.getByRole('button', { name: 'Add more' }).click()
-    await page.getByLabel('Why it matters').nth(i).fill(why)
-    await page.getByLabel('Who it makes you').nth(i).fill(who)
-    await page.getByLabel('What I do to deserve this').nth(i).fill('One thing a day\nOne thing a week\nOne thing a month')
+    await page.getByRole('textbox', { name: 'Goal' }).fill(what)
+    await page.getByRole('button', { name: 'More', exact: true }).click()
+    await page.getByLabel('Why it matters').fill(why)
+    await page.getByLabel('Who it makes you').fill(who)
+    await page.getByLabel('What I do to deserve this').fill('One thing a day\nOne thing a week\nOne thing a month')
     steps += 5
   }
-  await page.getByRole('button', { name: 'Save' }).click()
+  await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
 
   const north = await page.evaluate(() => {
     const data = JSON.parse(localStorage.getItem('dienius:data') || '{}')

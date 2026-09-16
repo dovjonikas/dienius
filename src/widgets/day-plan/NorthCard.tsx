@@ -4,7 +4,7 @@ import { actions, useAppData } from '../../lib/store'
 import { deserveForWeek, northPrompt, ruleForDay } from '../../lib/north'
 import { todayKey } from '../../lib/dates'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
-import { RuleText } from '../../views/north/NorthView'
+import { RuleText } from '../../views/north/RuleText'
 
 /**
  * The one time a goal comes forward on its own.

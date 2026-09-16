@@ -144,10 +144,19 @@
    * Settings came to be painted pure black on a dark surface for a whole
    * version without anything noticing: the colour a field shows is the one
    * thing in this app nobody can read from the DOM by walking text.
+   *
+   * And a field whose text is painted fully transparent paints no text: its
+   * value is the caret's and the selection's, and whatever draws the ink is
+   * measured as itself. North's field is the case - its words are drawn by
+   * a copy of the text under it, so the page's heading lines can be heavier
+   * - and read as a field with text it was two texts painted over each other
+   * on every line. Its placeholder is another matter, since that has a colour
+   * of its own, so an empty field still counts its placeholder.
    */
   const ownText = el => {
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
       if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'range' || el.type === 'color' || el.type === 'file') return ''
+      if (el.value && parse(getComputedStyle(el).color)?.[3] === 0) return ''
       return (el.value || el.placeholder || '').trim()
     }
     for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) return n.nodeValue.trim()

@@ -1,10 +1,11 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthView } from './NorthView'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { activeGoals, deserveForWeek } from '../../lib/north'
+import { parseNorth } from '../../lib/northSections'
 import { MAX_ACTIVE_GOALS, MAX_RULES_PER_GOAL } from '../../lib/types'
 import { northReadOn } from '../../lib/northRead'
 
@@ -21,36 +22,16 @@ function goal(title: string, more: { why?: string; identity?: string; deserve?: 
   return actions.addGoal({ title, ...more }, '2026-09-01')!
 }
 
-function picture(text = 'I wake before the house does.') {
+function picture(text: string) {
   actions.setPicture(text)
 }
 
 /**
- * The North window is built once and read every day. These tests are about
- * the four layers reading as one piece of writing, about the one way in for
- * somebody with nothing written yet, and about Compose - the one quiet
- * control that edits every layer and saves in one press.
- *
- * Nothing on the screen measures anything, and the tests near the bottom
- * hold that: no checkbox, no percentage, no count that goes up.
+ * North, since v2.24: one page, one column. A quiet goal at the top, the
+ * text under it - the introduction, the headings and the signature - and
+ * one field for writing the text. Every line and goal in these tests is a
+ * generic one: the app carries nobody's words and neither does this file.
  */
-
-/**
- * Compose, opened. Since v2.19 everything that writes anything is behind it -
- * the reading page is what somebody wrote and nothing that acts.
- */
-async function compose(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-}
-
-/**
- * The goals wait under the text behind one line since v2.22, and with none
- * written the line is closed over the offer - so a test that wants Write
- * one down opens the line first, the way a person does.
- */
-async function openGoals(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Goals' }))
-}
 
 // --- the empty page, and writing ---------------------------------------------
 
@@ -75,9 +56,16 @@ test('Write opens the field with the rule said once above it, and nothing to sav
   await user.click(screen.getByRole('button', { name: 'Write' }))
   const box = screen.getByRole('textbox', { name: 'North' })
   expect(box).toHaveFocus()
-  expect(box).toHaveAttribute('placeholder', 'Write here.')
-  expect(box).toHaveAccessibleDescription('A line in capitals becomes a heading')
-  expect(screen.getAllByText('A line in capitals becomes a heading')).toHaveLength(1)
+  const rule = 'A line in capitals becomes a heading. A line with --- starts the signature.'
+  expect(box).toHaveAccessibleDescription(rule)
+  expect(screen.getAllByText(rule)).toHaveLength(1)
+  // The example in the empty field shows every part the page reads, by the
+  // page's own rule: an introduction, headings, and a signature.
+  const example = parseNorth(box.getAttribute('placeholder') ?? '')
+  expect(example.intro.length).toBeGreaterThan(0)
+  expect(example.sections.length).toBeGreaterThan(1)
+  expect(example.sections.every(section => section.paragraphs.length > 0)).toBe(true)
+  expect(example.signature.length).toBeGreaterThan(0)
   expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['Save', 'Cancel'])
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 })
@@ -153,21 +141,24 @@ test('emptying the text and saving removes it, and the page is the one line and 
  * it, so the drawing has to say exactly what the field holds, line for line
  * - a drawing one keystroke behind would put the caret in the wrong word.
  */
-test('while writing, a line in capitals is drawn as a heading, and the drawing holds exactly what the field holds', async () => {
+test('while writing, headings and the signature mark are drawn as what they will be, and the drawing holds exactly what the field holds', async () => {
   const user = userEvent.setup()
   const { container } = render(<NorthView />)
   await user.click(screen.getByRole('button', { name: 'Write' }))
   const box = screen.getByRole('textbox', { name: 'North' })
-  await user.type(box, 'a first line{Enter}{Enter}FIRST HEADING{Enter}a line under it{Enter}SECOND HEADING')
+  await user.type(box, 'a first line{Enter}{Enter}FIRST HEADING{Enter}a line under it{Enter}SECOND HEADING{Enter}---{Enter}NOT A HEADING HERE')
 
   const drawing = container.querySelector('.north-editor-mirror') as HTMLElement
   expect(drawing).toHaveAttribute('aria-hidden', 'true')
   expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  expect([...drawing.querySelectorAll('.is-mark')].map(l => l.textContent)).toEqual(['---'])
   const lines = [...drawing.querySelectorAll('.north-editor-line')].map(l => l.textContent)
   expect(lines.join('\n')).toBe((box as HTMLTextAreaElement).value)
 
-  await user.type(box, ' and more')
-  expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['FIRST HEADING'])
+  // A heading typed on is a heading no more.
+  const value = (box as HTMLTextAreaElement).value
+  fireEvent.change(box, { target: { value: value.replace('FIRST HEADING', 'FIRST HEADING and more') } })
+  expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['SECOND HEADING'])
 })
 
 // As many headings as the text has: nothing on the page, in the field or on
@@ -205,27 +196,6 @@ test('a text with no heading reads whole, paragraph by paragraph, with nothing i
   expect(within(read).getAllByRole('button').map(b => b.textContent)).toEqual(['Edit'])
 })
 
-test('goals wait under the text behind one line, and one press opens the offer', async () => {
-  const user = userEvent.setup()
-  picture('First line here')
-  render(<NorthView />)
-  expect(screen.queryByRole('button', { name: 'Write one down' })).toBeNull()
-  const fold = screen.getByRole('button', { name: 'Goals' })
-  expect(fold).toHaveAttribute('aria-expanded', 'false')
-  await user.click(fold)
-  expect(screen.getByRole('button', { name: 'Write one down' })).toBeInTheDocument()
-})
-
-test('where there are goals they are open under the text, and the line folds them', async () => {
-  const user = userEvent.setup()
-  picture('First line here')
-  goal('Ship something people keep using')
-  render(<NorthView />)
-  expect(screen.getByRole('heading', { name: 'Ship something people keep using' })).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Goals' }))
-  expect(screen.queryByRole('heading', { name: 'Ship something people keep using' })).toBeNull()
-})
-
 test('in the morning Start the day and Edit stand together at the end of the page, and any look marks the day read', async () => {
   const user = userEvent.setup()
   picture('a line before any heading\n\nFIRST HEADING\na line under it')
@@ -248,576 +218,14 @@ test('on an ordinary visit there is no Start the day', () => {
 })
 
 // The page with goals but no text is every install from before the text
-// existed. The one line and the one button stand at the top until they are
-// answered, and the goals are under them exactly as they were.
-test('goals from before there was a text show under the invitation to write, untouched', () => {
-  goal('Ship something people keep using', { why: 'Because rented is not mine.' })
+// existed: the goal at the top, and the one line and the one button under it.
+test('a goal from before there was a text stands at the top, over the invitation to write', () => {
+  goal('First goal here', { why: 'a reason here' })
   render(<NorthView />)
+  expect(screen.getByRole('button', { name: 'Edit "First goal here"' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Write' })).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Ship something people keep using' })).toBeInTheDocument()
-  expect(screen.getByText('Because rented is not mine.')).toBeInTheDocument()
+  expect(screen.queryByText('a reason here')).toBeNull()
 })
-
-// --- writing a goal ----------------------------------------------------------
-
-// Four fields typed one keystroke at a time under fake timers is the slowest
-// interaction in this file: at a hundred and fifteen characters it crossed
-// the five-second budget with a browser pass running beside it. Shorter
-// words, and its own timeout - the budget is for hangs, not for typing.
-test('Write one down opens Compose on a blank goal, and Save writes it with what you do to deserve it', async () => {
-  const user = userEvent.setup()
-  picture()
-  render(<NorthView />)
-  await openGoals(user)
-  await user.click(screen.getByRole('button', { name: 'Write one down' }))
-
-  expect(screen.getByLabelText('What')).toHaveFocus()
-  await user.type(screen.getByLabelText('What'), 'Be strong at fifty')
-  // The rest of a goal waits behind one line.
-  await user.click(screen.getByRole('button', { name: 'Add more' }))
-  await user.type(screen.getByLabelText('Why it matters'), 'Dad stopped moving.')
-  await user.type(screen.getByLabelText('Who it makes you'), 'Someone who trains.')
-  await user.type(screen.getByLabelText('What I do to deserve this'), 'train four times{Enter}walk')
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-
-  const [written] = getData().goals
-  expect(written).toMatchObject({
-    title: 'Be strong at fifty',
-    why: 'Dad stopped moving.',
-    identity: 'Someone who trains.',
-    deserve: ['train four times', 'walk'],
-    createdAt: TODAY,
-  })
-  // Back to reading: the goal, its lines as a plain list, and no form.
-  expect(screen.getByRole('heading', { name: 'Be strong at fifty' })).toBeInTheDocument()
-  const items = screen.getAllByRole('listitem').map(li => li.textContent)
-  expect(items).toEqual(expect.arrayContaining(['train four times', 'walk']))
-  expect(screen.queryByLabelText('What')).toBeNull()
-}, 15_000)
-
-test('the deserve field stops at four lines rather than trimming a fifth on save', async () => {
-  const user = userEvent.setup()
-  picture()
-  render(<NorthView />)
-  await openGoals(user)
-  await user.click(screen.getByRole('button', { name: 'Write one down' }))
-  await user.click(screen.getByRole('button', { name: 'Add more' }))
-  const field = screen.getByLabelText('What I do to deserve this')
-  await user.type(field, 'one{Enter}two{Enter}three{Enter}four{Enter}five')
-  expect(field).toHaveValue('one\ntwo\nthree\nfourfive')
-})
-
-// --- Compose ----------------------------------------------------------------
-
-// Fifteen seconds rather than the runner's five. Compose types through real
-// key presses, which is seconds on its own and past five once the suite
-// runs a hundred and forty files in parallel - the same trade the 20MB
-// import test makes, for the same reason.
-test('Compose edits every goal in place, leaves the text alone, and Cancel drops the draft', async () => {
-  const user = userEvent.setup()
-  picture('First line here')
-  goal('Ship something', { why: 'Because.' })
-  goal('Be strong at fifty')
-  render(<NorthView />)
-
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  expect(screen.getAllByLabelText('What')[0]).toHaveFocus()
-  // The text is not in here since v2.22: it has its own editor on the page.
-  expect(screen.queryByRole('textbox', { name: 'North' })).toBeNull()
-  await user.clear(screen.getAllByLabelText('What')[1])
-  await user.type(screen.getAllByLabelText('What')[1], 'Be strong at sixty')
-  await user.click(screen.getByRole('button', { name: 'Cancel' }))
-
-  expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at fifty'])
-  expect(screen.getByText('First line here')).toBeInTheDocument()
-
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.clear(screen.getAllByLabelText('What')[1])
-  await user.type(screen.getAllByLabelText('What')[1], 'Be strong at sixty')
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-
-  expect(getData().picture?.text).toBe('First line here')
-  expect(getData().goals.map(g => g.title)).toEqual(['Ship something', 'Be strong at sixty'])
-  expect(getData().goals[0].why).toBe('Because.')
-}, 15_000)
-
-test('Escape leaves Compose without saving', async () => {
-  const user = userEvent.setup()
-  picture('First line here')
-  goal('Ship something')
-  render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.type(screen.getAllByLabelText('What')[0], ' more')
-  await user.keyboard('{Escape}')
-  expect(screen.queryByLabelText('What')).toBeNull()
-  expect(getData().goals[0].title).toBe('Ship something')
-})
-
-test('Compose archives a goal on Save and not before, and Undo keeps it', async () => {
-  const user = userEvent.setup()
-  picture()
-  const g = goal('Old direction')
-  render(<NorthView />)
-
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Archive "Old direction"' }))
-  expect(screen.getByText(/will be archived when you save/)).toBeInTheDocument()
-  expect(getData().goals[0].archivedAt).toBeUndefined()
-
-  await user.click(screen.getByRole('button', { name: 'Undo' }))
-  expect(screen.getByLabelText('What')).toHaveValue('Old direction')
-
-  await user.click(screen.getByRole('button', { name: 'Archive "Old direction"' }))
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-  expect(getData().goals.find(x => x.id === g.id)?.archivedAt).toBe(TODAY)
-  expect(screen.queryByRole('heading', { name: 'Old direction' })).toBeNull()
-})
-
-test('Add another in Compose puts the cursor in a new goal, and a full window offers no fifth and says why', async () => {
-  const user = userEvent.setup()
-  picture()
-  goal('One')
-  render(<NorthView />)
-
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Add another' }))
-  expect(screen.getAllByLabelText('What')).toHaveLength(2)
-  expect(screen.getAllByLabelText('What')[1]).toHaveFocus()
-  await user.type(screen.getAllByLabelText('What')[1], 'Two')
-  await user.click(screen.getByRole('button', { name: 'Add another' }))
-  await user.type(screen.getAllByLabelText('What')[2], 'Three')
-  await user.click(screen.getByRole('button', { name: 'Add another' }))
-  await user.type(screen.getAllByLabelText('What')[3], 'Four')
-
-  expect(screen.queryByRole('button', { name: 'Add another' })).toBeNull()
-  expect(screen.getByText(`${MAX_ACTIVE_GOALS} is the limit - archive one to make room.`)).toBeInTheDocument()
-
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-  expect(activeGoals(getData().goals).map(g => g.title)).toEqual(['One', 'Two', 'Three', 'Four'])
-})
-
-test('a new goal row can be removed before it is saved, and an empty one is never written', async () => {
-  const user = userEvent.setup()
-  picture()
-  goal('One')
-  render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Add another' }))
-  await user.click(screen.getByRole('button', { name: 'Add another' }))
-  await user.click(screen.getAllByRole('button', { name: 'Remove this goal' })[0])
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-  expect(getData().goals.map(g => g.title)).toEqual(['One'])
-})
-
-test('archived goals are brought back or deleted from a fold inside Compose', async () => {
-  const user = userEvent.setup()
-  picture()
-  const g = goal('Old direction')
-  goal('Current')
-  actions.archiveGoal(g.id, TODAY)
-  render(<NorthView />)
-
-  expect(screen.queryByText(/Archived \(1\)/)).toBeNull()
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
-  await user.click(screen.getByRole('button', { name: 'Bring back' }))
-
-  expect(getData().goals.find(x => x.id === g.id)?.archivedAt).toBeUndefined()
-  expect(screen.getAllByLabelText('What').map(f => (f as HTMLInputElement).value)).toEqual(['Current', 'Old direction'])
-
-  await user.click(screen.getByRole('button', { name: 'Archive "Old direction"' }))
-  await user.click(screen.getByRole('button', { name: 'Save' }))
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
-  await user.click(screen.getByRole('button', { name: 'Delete' }))
-  expect(getData().goals.find(x => x.id === g.id)).toBeUndefined()
-})
-
-test('bringing one back is refused while the window is full', async () => {
-  const user = userEvent.setup()
-  picture()
-  const g = goal('Old direction')
-  actions.archiveGoal(g.id, TODAY)
-  for (let i = 0; i < MAX_ACTIVE_GOALS; i++) goal(`Goal ${i}`)
-  render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
-  expect(screen.getByRole('button', { name: 'Bring back' })).toBeDisabled()
-})
-
-// --- the four layers, read --------------------------------------------------
-
-test('what you do to deserve a goal reads as a plain list, with nothing over it and nothing to tick', () => {
-  goal('Be strong at fifty', { deserve: ['train four times a week', 'sleep by eleven'] })
-  const { container } = render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-  // No head. The lines follow the sentence about who this makes you and read
-  // as what that costs; a word naming them is a field label, and this page
-  // stopped having those in v2.19.
-  expect(within(card).queryByText('What I do')).toBeNull()
-  expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['train four times a week', 'sleep by eleven'])
-  expect(container.querySelector('input[type="checkbox"], progress, meter')).toBeNull()
-})
-
-test('a goal with nothing written under it draws nothing under it', () => {
-  goal('Be strong at fifty', { why: 'My father stopped at fifty.' })
-  render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'Be strong at fifty' }).closest('article')!
-
-  // Not a head over nothing, and not an invitation where the lines should be
-  // either. An empty part of a goal is empty; Compose is where it is filled.
-  expect(within(card).queryByRole('listitem')).toBeNull()
-  expect(within(card).queryByRole('button')).toBeNull()
-  expect(card.textContent).toBe('Be strong at fiftyMy father stopped at fifty.')
-})
-
-test('the picture reads in full above the goals', () => {
-  picture('I wake before the house does.\nThe first hour is mine.')
-  goal('Ship something')
-  render(<NorthView />)
-  const text = screen.getByText(/I wake before the house does/)
-  expect(text.textContent).toBe('I wake before the house does.\nThe first hour is mine.')
-  expect(text.compareDocumentPosition(screen.getByRole('heading', { name: 'Ship something' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-})
-
-// --- the rules under each goal, unchanged from v2.0 -------------------------
-
-/**
- * The rules read as sentences and nothing more. They had a head over them, an
- * invitation under them when there were none, and Edit and Delete on each -
- * all of which is in Compose now, and the head with it: this page says what
- * somebody wrote and never what the app calls it.
- */
-test('rules read as sentences with no head over them and nothing to press', () => {
-  const g = goal('Ship something people keep using')
-  actions.addIfThen({ trigger: 'I open the laptop and stall', action: 'I open today', goalId: g.id })
-  render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
-
-  expect(within(card).getByText(/I open the laptop and stall/)).toBeInTheDocument()
-  expect(within(card).queryByText('What pulls me off this')).toBeNull()
-  expect(within(card).queryByRole('button')).toBeNull()
-})
-
-
-/**
- * The cap refuses rather than evicting, which means it has to be visible.
- * Quietly dropping the sixth rule would be a limit nobody can see and a
- * sentence somebody thinks they wrote down.
- */
-test('a goal with five rules offers no way to write a sixth, and says why', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
-    actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
-  }
-  render(<NorthView />)
-  await compose(user)
-
-  expect(screen.queryByRole('button', { name: /^Add another to/ })).toBeNull()
-  expect(screen.getByText(`${MAX_RULES_PER_GOAL} is the limit - delete one to make room.`)).toBeTruthy()
-})
-
-test('a rule written before rules had goals waits in its own group, and one press files it', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  const orphan = actions.addIfThen({ trigger: 'I get home and the kitchen is a mess', action: 'I do only the sink' })!
-  render(<NorthView />)
-  await compose(user)
-
-  const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
-  expect(within(unfiled).getByText(/I get home and the kitchen is a mess/)).toBeTruthy()
-
-  await user.click(within(unfiled).getByRole('button', { name: 'Ship something' }))
-  expect(getData().ifThens.find(e => e.id === orphan.id)?.goalId).toBe(g.id)
-  expect(screen.queryByRole('region', { name: 'Rules with no goal' })).toBeNull()
-})
-
-// A dangling id degrades everywhere in this app, and degrading here means the
-// rule comes back to the waiting group rather than disappearing with the goal.
-test('a rule whose goal was deleted comes back as unfiled rather than vanishing', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
-  actions.archiveGoal(g.id, TODAY)
-  actions.deleteGoal(g.id)
-
-  render(<NorthView />)
-  await compose(user)
-  const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
-  expect(within(unfiled).getByText(/I stall/)).toBeTruthy()
-})
-
-// Archiving a direction is not deciding the things that pull you off it never
-// happened, so its rules stay with it instead of coming loose.
-test('an archived goal keeps its rules rather than spilling them into the waiting group', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
-  actions.archiveGoal(g.id, TODAY)
-
-  render(<NorthView />)
-  // Asked where the waiting group lives, so the null means "it is not
-  // waiting" rather than "this page never had one".
-  await compose(user)
-  expect(screen.queryByRole('region', { name: 'Rules with no goal' })).toBeNull()
-})
-
-test('a full goal is offered but refused for an unfiled rule, so nothing looks broken when pressed', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
-    actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
-  }
-  actions.addIfThen({ trigger: 'Waiting', action: 'For room' })
-
-  render(<NorthView />)
-  await compose(user)
-  const unfiled = screen.getByRole('region', { name: 'Rules with no goal' })
-  expect(within(unfiled).getByRole('button', { name: 'Ship something' })).toBeDisabled()
-})
-
-test('deleting a rule takes two presses, and the first one says so', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
-  render(<NorthView />)
-  await compose(user)
-
-  await user.click(screen.getByRole('button', { name: 'Delete "I stall"' }))
-  expect(getData().ifThens).toHaveLength(1)
-
-  await user.click(screen.getByRole('button', { name: 'Confirm delete "I stall"' }))
-  expect(getData().ifThens).toHaveLength(0)
-})
-
-test('editing a rule rewrites it in place rather than adding a second one', async () => {
-  const user = userEvent.setup()
-  const g = goal('Ship something')
-  actions.addIfThen({ trigger: 'Old trigger', action: 'Old action', goalId: g.id })
-  render(<NorthView />)
-  await compose(user)
-
-  await user.click(screen.getByRole('button', { name: 'Edit "Old trigger"' }))
-  await user.clear(screen.getByLabelText('If'))
-  // Enter rather than Save, which is the rule form's own way out and the
-  // unambiguous one inside a form that has a Save of its own.
-  await user.type(screen.getByLabelText('If'), 'New trigger{Enter}')
-
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0].trigger).toBe('New trigger')
-  expect(getData().ifThens[0].goalId).toBe(g.id)
-})
-
-/**
- * Nothing on this screen measures anything - ARCHITECTURE section 6 - and
- * since v2.19 there is no number on it at all.
- *
- * The age went with the labels. It could not be earned or lost, which is why
- * v2.18 kept it after reading it against the streak rule; the owner's reading
- * a version later was that a figure counting days is a spreadsheet's idea of
- * a page whatever the figure can and cannot do, and that this is somewhere
- * you come to remember why rather than to check a number. See DECISIONS.
- */
-test('nothing on the page is a number', () => {
-  const g = actions.addGoal({ title: 'Ship something', why: 'Because renting is not owning.', deserve: ['open the editor first'] }, '2026-09-01')!
-  actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: g.id })
-  picture()
-  const { container } = render(<NorthView />)
-
-  expect(screen.queryByText(/lived toward this/)).toBeNull()
-  expect(container.querySelector('progress, meter, input[type="checkbox"]')).toBeNull()
-  expect(container.textContent).not.toMatch(/%|\b1 of \b|complete|streak/i)
-  expect(container.textContent).not.toMatch(/\d/)
-})
-test('leaving Compose puts focus back on the Compose control', async () => {
-  const user = userEvent.setup()
-  picture()
-  // Compose is for the goals since v2.22 - the text has its own editor - so
-  // there has to be one for the control to exist.
-  goal('Ship something')
-  render(<NorthView />)
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  await user.keyboard('{Escape}')
-  expect(screen.getByRole('button', { name: 'Edit goals' })).toHaveFocus()
-})
-
-/**
- * The pair: what he does, and what he does not, on one goal.
- *
- * docs/RESEARCH-NORTH.md is the argument. Oyserman's *balance* - an expected
- * self predicts behaviour far better when it is held against a feared self in
- * the same domain, and the unpaired case is the one that predicts the worse
- * outcome - is why they are one block about one goal rather than two sections
- * of a page. Witte's model is why the away half is never drawn alone: threat
- * without efficacy produces avoidance rather than action.
- */
-test('a goal shows what I do and what I do not, together, on the same card', () => {
-  goal('A dad my kid can tell anything', {
-    deserve: ['10 min sitting before anyone is up', 'listen without making a face'],
-    avoid: ['make a face at bad news', 'go quiet for a day'],
-  })
-  render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
-
-  // One list, no heads, and the away lines carrying the word that makes each
-  // of them a whole sentence rather than another thing to do.
-  expect(within(card).queryByText('What I do')).toBeNull()
-  expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual([
-    '10 min sitting before anyone is up',
-    'listen without making a face',
-    'never make a face at bad news',
-    'never go quiet for a day',
-  ])
-})
-
-test('the away half is never drawn without the doing half beside it', () => {
-  // The shape Witte's model says backfires: a threat with no answer next to
-  // it. A goal carrying only the away lines draws neither of them.
-  goal('A dad my kid can tell anything', { avoid: ['go quiet for a day'] })
-  render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
-
-  expect(within(card).queryByRole('listitem')).toBeNull()
-  expect(within(card).queryByText(/go quiet for a day/)).toBeNull()
-})
-
-test('a goal with only the doing half shows it alone', () => {
-  goal('A dad my kid can tell anything', { deserve: ['listen without making a face'] })
-  render(<NorthView />)
-  const card = screen.getByRole('heading', { name: 'A dad my kid can tell anything' }).closest('article')!
-
-  expect(within(card).getAllByRole('listitem').map(li => li.textContent)).toEqual(['listen without making a face'])
-  expect(within(card).queryByText(/never/)).toBeNull()
-})
-
-/**
- * The page is one person's own writing, so it is written in one voice.
- *
- * v2.18 shipped the pair as "He does" and "He doesn't" over lines somebody
- * had written as "hate the waiting, not me", and the owner read the seam
- * straight away: the app had started narrating them. This holds the whole
- * rendered window against that, with every layer on screen at once, because
- * the failure was one heading and the next one will be a different heading.
- */
-test('nothing on the page talks about its owner in the third person', () => {
-  picture()
-  goal('A dad my kid can tell anything', {
-    why: 'Because I want to be told things while they are still small.',
-    identity: 'I hear things without making them worse.',
-    deserve: ['10 min sitting before anyone is up'],
-    avoid: ['go quiet for a day'],
-  })
-  const { container } = render(<NorthView />)
-
-  expect(container.textContent).not.toMatch(/\b(he|his|him|she|hers)\b/i)
-})
-
-/**
- * And the rule the whole feature hangs on - research section 5. The goal
- * stays an approach goal; the away half is a contrast inside it. Avoidance
- * goals are their own well replicated literature and they cost wellbeing, so
- * nothing outside this window reads these lines: not the day view, not the
- * Monday card, not the evening close.
- */
-test('nothing the day carries reads the away half', () => {
-  goal('A dad my kid can tell anything', {
-    deserve: ['listens without making a face'],
-    avoid: ['goes quiet for a day'],
-  })
-  const [written] = getData().goals
-  expect(written.avoid).toEqual(['goes quiet for a day'])
-  // deserveForWeek is what the Monday card takes, and it takes from deserve.
-  expect(deserveForWeek(written, '2026-08-31')).toBe('listens without making a face')
-})
-
-/**
- * What pulls you off a goal is written where everything else about that goal
- * is written - see GoalRules.tsx. It lived on the card until v2.19, with a
- * heading, an invitation and two controls per rule, which is a form on a
- * page that is meant to be somebody's own writing.
- */
-test('a rule is written in Compose, and reads back under the goal it belongs to', async () => {
-  const user = userEvent.setup()
-  const ship = goal('Ship something people keep using')
-  goal('Be strong at forty')
-  render(<NorthView />)
-
-  await compose(user)
-  // Neither goal has anything past its What yet, so the rules wait behind Add more.
-  await user.click(screen.getAllByRole('button', { name: 'Add more' })[0])
-  await user.click(screen.getByRole('button', { name: 'What pulls me off "Ship something people keep using"' }))
-  // The instruction is beside the box being typed into, and only while
-  // somebody is typing into it. It is nowhere on the page they read.
-  expect(
-    screen.getByText(/Name one moment that takes you off this .* and the one thing you do instead./),
-  ).toBeInTheDocument()
-  await user.type(screen.getByLabelText('If'), 'I open the laptop and stall')
-  // Enter from either field is the rule form's own way out, and the
-  // unambiguous one now that it sits inside a form with a Save of its own.
-  await user.type(screen.getByLabelText('Then'), 'I open today and do the first unticked thing{Enter}')
-
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0].goalId).toBe(ship.id)
-
-  // And back on the page, it is under the goal it protects and no other.
-  await user.click(screen.getByRole('button', { name: 'Cancel' }))
-  const card = screen.getByRole('heading', { name: 'Ship something people keep using' }).closest('article')!
-  const other = screen.getByRole('heading', { name: 'Be strong at forty' }).closest('article')!
-  expect(within(card).getByText(/I open the laptop and stall/)).toBeTruthy()
-  expect(within(other).queryByText(/I open the laptop and stall/)).toBeNull()
-})
-
-/**
- * Deleting a goal leaves its rules behind on purpose - a sentence somebody
- * wrote about themselves should not go quietly with the goal it was filed
- * under. They wait in Compose, beside the fold that orphaned them, because
- * filing one is a form and nothing on the reading page acts.
- */
-test('a rule whose goal was deleted waits in Compose, and one press files it', async () => {
-  const user = userEvent.setup()
-  const gone = goal('A goal on its way out')
-  const kept = goal('Ship something people keep using')
-  actions.addIfThen({ trigger: 'I get home and the kitchen is a mess', action: 'I do only the sink', goalId: gone.id })
-  actions.deleteGoal(gone.id)
-  render(<NorthView />)
-
-  // Nothing about it on the page somebody reads.
-  expect(screen.queryByText(/the kitchen is a mess/)).toBeNull()
-
-  await user.click(screen.getByRole('button', { name: 'Edit goals' }))
-  const orphans = screen.getByRole('region', { name: 'Rules with no goal' })
-  expect(within(orphans).getByText(/the kitchen is a mess/)).toBeInTheDocument()
-
-  await user.click(within(orphans).getByRole('button', { name: 'Ship something people keep using' }))
-  expect(getData().ifThens[0].goalId).toBe(kept.id)
-})
-
-/**
- * A goal's name takes eighty characters and eighty characters of this type is
- * 640 pixels. No card on the Compose form is that wide, and an input does not
- * wrap - so a long name sat in its own box with the end of it cut off, at
- * every width, since the form existed. The measuring pass found it the first
- * time it was ever pointed at this screen.
- *
- * It is a box that wraps now, and still one line of writing: Enter does
- * nothing in it, the way Enter does nothing in an input.
- */
-test('a goal name too long for its box wraps rather than running out of sight', async () => {
-  const user = userEvent.setup()
-  goal('Ship something')
-  render(<NorthView />)
-  await compose(user)
-
-  const box = screen.getAllByLabelText('What', { exact: true })[0]
-  expect(box.tagName).toBe('TEXTAREA')
-
-  await user.clear(box)
-  await user.type(box, 'Leave the house before nine{Enter} on a Saturday')
-  expect(getData().goals[0].title).toBe('Ship something')
-  expect((box as HTMLTextAreaElement).value).toBe('Leave the house before nine on a Saturday')
-})
-
 
 // --- headings ------------------------------------------------------------------
 
@@ -909,56 +317,372 @@ test('Escape closes an open heading, and a heading with nothing under it is not 
   expect(screen.queryByRole('button', { name: 'SECOND HEADING' })).toBeNull()
 })
 
-// --- what shows first -------------------------------------------------------------
+// --- the goal, at the top ---------------------------------------------------------
 
 /**
- * A goal is a title until something more is written about it. The form
- * opens on What and one line, Add more; the why, the who, the lists and
- * the rules wait behind it. A goal that already has any of them opens with
- * them showing - a field with words in it is never hidden.
+ * A goal stands at the top of the page as one quiet line of its own words,
+ * and a press on it edits it in place. A title is a goal: the why, the who,
+ * the two lists and the rules wait behind More, with the rarer things about
+ * goals - archiving, another goal, the archived ones, rules with no goal -
+ * at the end of it. Nothing of a goal but its title is on the page.
  */
-test('a goal is saved with What alone, and the rest waits behind Add more', async () => {
+test('a goal is one quiet line at the top of the page, and nothing else of it is on the page', () => {
+  picture('a first line')
+  goal('First goal here', { why: 'a reason here', identity: 'a sentence here', deserve: ['a thing I do'] })
+  const { container } = render(<NorthView />)
+  const head = container.querySelector('.north-view-head') as HTMLElement
+  expect(within(head).getByRole('button', { name: 'Edit "First goal here"' })).toHaveTextContent('First goal here')
+  expect(screen.queryByText('a reason here')).toBeNull()
+  expect(screen.queryByText('a sentence here')).toBeNull()
+  expect(screen.queryByText('a thing I do')).toBeNull()
+  // No card, no fold, no second way into the goals.
+  expect(container.querySelector('article')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Goals' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Edit goals' })).toBeNull()
+})
+
+test('with no goal the top of the page offers one, and a title alone is enough to save it', async () => {
   const user = userEvent.setup()
-  picture()
+  picture('a first line')
   render(<NorthView />)
-  await openGoals(user)
-  await user.click(screen.getByRole('button', { name: 'Write one down' }))
-
+  await user.click(screen.getByRole('button', { name: 'Add a goal' }))
+  const field = screen.getByRole('textbox', { name: 'Goal' })
+  expect(field).toHaveFocus()
+  expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   expect(screen.queryByLabelText('Why it matters')).toBeNull()
-  expect(screen.queryByLabelText('What I do to deserve this')).toBeNull()
-  await user.type(screen.getByLabelText('What'), 'First goal here')
-  await user.click(screen.getByRole('button', { name: 'Save' }))
 
+  await user.type(field, 'First goal here')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
   expect(getData().goals).toHaveLength(1)
   expect(getData().goals[0]).toMatchObject({ title: 'First goal here', createdAt: TODAY })
   expect(getData().goals[0].why).toBeUndefined()
-  expect(getData().goals[0].deserve).toBeUndefined()
+  expect(screen.queryByRole('textbox', { name: 'Goal' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Edit "First goal here"' })).toHaveFocus()
 })
 
-test('Add more opens the rest of the goal, puts the cursor in the first of it, and stays open', async () => {
+test('a goal is edited in place: Enter saves it, and Escape or Cancel leaves it as it was', async () => {
   const user = userEvent.setup()
-  picture()
+  picture('a first line')
+  goal('First goal here')
   render(<NorthView />)
-  await openGoals(user)
-  await user.click(screen.getByRole('button', { name: 'Write one down' }))
-  await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  expect(screen.getByRole('textbox', { name: 'Goal' })).toHaveValue('First goal here')
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), ' and more')
+  await user.keyboard('{Escape}')
+  expect(getData().goals[0].title).toBe('First goal here')
+  expect(screen.queryByRole('textbox', { name: 'Goal' })).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), ' and more')
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(getData().goals[0].title).toBe('First goal here')
+
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.clear(screen.getByRole('textbox', { name: 'Goal' }))
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), 'A second name here{Enter}')
+  expect(getData().goals[0].title).toBe('A second name here')
+  expect(screen.queryByRole('textbox', { name: 'Goal' })).toBeNull()
+})
+
+// Several fields typed one keystroke at a time is the slowest interaction in
+// this file, so it has its own timeout - the budget is for hangs, not typing.
+test('More opens the rest of a goal with the cursor in it, and Save writes every field', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Add a goal' }))
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), 'First goal here')
+  await user.click(screen.getByRole('button', { name: 'More' }))
 
   expect(screen.getByLabelText('Why it matters')).toHaveFocus()
-  expect(screen.getByLabelText('Who it makes you')).toBeInTheDocument()
-  expect(screen.getByLabelText('What I do to deserve this')).toBeInTheDocument()
-  expect(screen.getByLabelText("What I don't do")).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Add more' })).toBeNull()
-})
+  expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
+  await user.type(screen.getByLabelText('Why it matters'), 'a reason')
+  await user.type(screen.getByLabelText('Who it makes you'), 'a sentence')
+  await user.type(screen.getByLabelText('What I do to deserve this'), 'one thing{Enter}two things')
+  await user.type(screen.getByLabelText("What I don't do"), 'a thing I skip')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
 
-test('a goal that already has more than a What opens with it showing, and one that has not opens brief', async () => {
+  expect(getData().goals[0]).toMatchObject({
+    title: 'First goal here',
+    why: 'a reason',
+    identity: 'a sentence',
+    deserve: ['one thing', 'two things'],
+    avoid: ['a thing I skip'],
+  })
+}, 15_000)
+
+test('a goal that already has more than a title opens with the rest showing', async () => {
   const user = userEvent.setup()
-  picture()
-  goal('First goal here', { why: 'Why line here' })
+  picture('a first line')
+  goal('First goal here', { why: 'a reason here' })
   goal('Second goal here')
   render(<NorthView />)
-  await compose(user)
 
-  expect(screen.getAllByLabelText('Why it matters')).toHaveLength(1)
-  expect(screen.getByLabelText('Why it matters')).toHaveValue('Why line here')
-  expect(screen.getAllByRole('button', { name: 'Add more' })).toHaveLength(1)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  expect(screen.getByLabelText('Why it matters')).toHaveValue('a reason here')
+  expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+  await user.click(screen.getByRole('button', { name: 'Edit "Second goal here"' }))
+  expect(screen.queryByLabelText('Why it matters')).toBeNull()
+  expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
 })
+
+test('the deserve field stops at four lines rather than trimming a fifth on save', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Add a goal' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  const field = screen.getByLabelText('What I do to deserve this')
+  await user.type(field, 'one{Enter}two{Enter}three{Enter}four{Enter}five')
+  expect(field).toHaveValue('one\ntwo\nthree\nfourfive')
+})
+
+/**
+ * A goal's title takes eighty characters, which no one-line box on a phone
+ * shows whole, so the box wraps. It is still one line of writing: a line
+ * break never reaches a title, and Enter is the way to keep it.
+ */
+test('a goal title too long for its box wraps, and a line break never reaches it', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  goal('First goal here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  const box = screen.getByRole('textbox', { name: 'Goal' })
+  expect(box.tagName).toBe('TEXTAREA')
+  await user.clear(box)
+  await user.click(box)
+  await user.paste('a title with\na line break pasted into it')
+  expect(box).toHaveValue('a title with a line break pasted into it')
+})
+
+// --- the rarer things, at the end of More -----------------------------------------------
+
+test('Archive puts a goal away at once, and its line goes from the top of the page', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const g = goal('First goal here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.click(screen.getByRole('button', { name: 'Archive this goal' }))
+
+  expect(getData().goals.find(x => x.id === g.id)?.archivedAt).toBe(TODAY)
+  expect(screen.queryByRole('button', { name: 'Edit "First goal here"' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Add a goal' })).toBeInTheDocument()
+})
+
+test('Add another goal keeps this one and opens a new one, and there is no fifth to add', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  goal('First goal here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.clear(screen.getByRole('textbox', { name: 'Goal' }))
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), 'One')
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.click(screen.getByRole('button', { name: 'Add another goal' }))
+
+  expect(getData().goals.map(g => g.title)).toEqual(['One'])
+  expect(screen.getByRole('textbox', { name: 'Goal' })).toHaveValue('')
+  expect(screen.getByRole('textbox', { name: 'Goal' })).toHaveFocus()
+  for (const title of ['Two', 'Three']) {
+    await user.type(screen.getByRole('textbox', { name: 'Goal' }), title)
+    await user.click(screen.getByRole('button', { name: 'More' }))
+    await user.click(screen.getByRole('button', { name: 'Add another goal' }))
+  }
+  await user.type(screen.getByRole('textbox', { name: 'Goal' }), 'Four')
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  expect(screen.queryByRole('button', { name: 'Add another goal' })).toBeNull()
+  expect(screen.getByText(`${MAX_ACTIVE_GOALS} is the limit - archive one to make room.`)).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(activeGoals(getData().goals).map(g => g.title)).toEqual(['One', 'Two', 'Three', 'Four'])
+}, 15_000)
+
+test('archived goals are brought back or deleted from a fold at the end of More', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const old = goal('An older goal')
+  goal('First goal here')
+  actions.archiveGoal(old.id, TODAY)
+  render(<NorthView />)
+
+  expect(screen.queryByText(/Archived \(1\)/)).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
+  await user.click(screen.getByRole('button', { name: 'Bring back' }))
+  expect(getData().goals.find(x => x.id === old.id)?.archivedAt).toBeUndefined()
+  expect(screen.getByRole('button', { name: 'Edit "An older goal"' })).toBeInTheDocument()
+
+  act(() => actions.archiveGoal(old.id, TODAY))
+  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
+  await user.click(screen.getByRole('button', { name: 'Delete' }))
+  expect(getData().goals.find(x => x.id === old.id)).toBeUndefined()
+})
+
+test('bringing one back is refused while there are four goals', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const old = goal('An older goal')
+  actions.archiveGoal(old.id, TODAY)
+  for (let i = 0; i < MAX_ACTIVE_GOALS; i++) goal(`Goal ${i}`)
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "Goal 0"' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.click(screen.getByRole('button', { name: 'Archived (1)' }))
+  expect(screen.getByRole('button', { name: 'Bring back' })).toBeDisabled()
+})
+
+// --- what pulls you off a goal, behind More ------------------------------------------
+
+/**
+ * The rules are written where the rest of a goal is written - GoalRules.tsx -
+ * and act at once rather than on Save, because a rule is its own entity with
+ * its own id. The cap refuses rather than evicting, so it is said.
+ */
+test('a rule is written behind More and belongs to the goal it was written under', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const first = goal('First goal here')
+  goal('Second goal here')
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.click(screen.getByRole('button', { name: 'What pulls me off "First goal here"' }))
+  expect(screen.getByText(/Name one moment that takes you off this .* and the one thing you do instead./)).toBeInTheDocument()
+  await user.type(screen.getByLabelText('If'), 'a moment here')
+  await user.type(screen.getByLabelText('Then'), 'a thing to do instead{Enter}')
+
+  expect(getData().ifThens).toHaveLength(1)
+  expect(getData().ifThens[0].goalId).toBe(first.id)
+  // Nothing of it on the page once the goal is closed.
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.queryByText(/a moment here/)).toBeNull()
+})
+
+test('a goal with five rules offers no way to write a sixth, and says why', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const g = goal('First goal here')
+  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
+    actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
+  }
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  expect(screen.queryByRole('button', { name: /^Add another to/ })).toBeNull()
+  expect(screen.getByText(`${MAX_RULES_PER_GOAL} is the limit - delete one to make room.`)).toBeTruthy()
+})
+
+test('deleting a rule takes two presses, and editing one rewrites it in place', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const g = goal('First goal here')
+  actions.addIfThen({ trigger: 'Old trigger', action: 'Old action', goalId: g.id })
+  actions.addIfThen({ trigger: 'A moment', action: 'A thing', goalId: g.id })
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+
+  await user.click(screen.getByRole('button', { name: 'Edit "Old trigger"' }))
+  await user.clear(screen.getByLabelText('If'))
+  await user.type(screen.getByLabelText('If'), 'New trigger{Enter}')
+  expect(getData().ifThens.map(r => r.trigger)).toEqual(['New trigger', 'A moment'])
+
+  await user.click(screen.getByRole('button', { name: 'Delete "A moment"' }))
+  expect(getData().ifThens).toHaveLength(2)
+  await user.click(screen.getByRole('button', { name: 'Confirm delete "A moment"' }))
+  expect(getData().ifThens.map(r => r.trigger)).toEqual(['New trigger'])
+})
+
+/**
+ * A rule with no goal - written before rules had goals, or left behind when
+ * its goal was deleted, on purpose - waits at the end of More to be filed.
+ * An archived goal keeps its own, and a full goal is offered but refused.
+ */
+test('rules with no goal wait at the end of More, and one press files one', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const kept = goal('First goal here')
+  const gone = goal('A goal on its way out')
+  actions.addIfThen({ trigger: 'a moment with no goal', action: 'a thing', goalId: gone.id })
+  actions.deleteGoal(gone.id)
+  const archived = goal('An archived goal')
+  actions.addIfThen({ trigger: 'an archived goal keeps this', action: 'a thing', goalId: archived.id })
+  actions.archiveGoal(archived.id, TODAY)
+  render(<NorthView />)
+
+  expect(screen.queryByText(/a moment with no goal/)).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  const waiting = screen.getByRole('region', { name: 'Rules with no goal' })
+  expect(within(waiting).getByText(/a moment with no goal/)).toBeInTheDocument()
+  expect(within(waiting).queryByText(/an archived goal keeps this/)).toBeNull()
+
+  await user.click(within(waiting).getByRole('button', { name: 'First goal here' }))
+  expect(getData().ifThens.find(r => r.trigger === 'a moment with no goal')?.goalId).toBe(kept.id)
+  expect(screen.queryByRole('region', { name: 'Rules with no goal' })).toBeNull()
+})
+
+test('a full goal is offered but refused for a rule with no goal, so nothing looks broken when pressed', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const g = goal('First goal here')
+  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
+    actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: g.id })
+  }
+  actions.addIfThen({ trigger: 'Waiting', action: 'For room' })
+  render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  const waiting = screen.getByRole('region', { name: 'Rules with no goal' })
+  expect(within(waiting).getByRole('button', { name: 'First goal here' })).toBeDisabled()
+})
+
+// --- what the page never does ----------------------------------------------------------
+
+/**
+ * Nothing on this screen measures anything - ARCHITECTURE section 6 - and
+ * nothing on it is a number: not a count, not an age, not a digit.
+ */
+test('nothing on the page is a number, with a goal open and everything in it showing', async () => {
+  const user = userEvent.setup()
+  const g = actions.addGoal({ title: 'First goal here', why: 'a reason here', deserve: ['a thing I do'] }, '2026-09-01')!
+  actions.addIfThen({ trigger: 'a moment here', action: 'a thing to do', goalId: g.id })
+  picture('a first line\n\nFIRST HEADING\na line under it\n---\na signature line')
+  const { container } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+
+  expect(screen.queryByText(/lived toward this/)).toBeNull()
+  expect(container.querySelector('progress, meter, input[type="checkbox"]')).toBeNull()
+  expect(container.textContent).not.toMatch(/%|\b1 of \b|complete|streak/i)
+  expect(container.textContent).not.toMatch(/\d/)
+})
+
+/**
+ * The page is one person's own writing, so it is written in one voice: the
+ * app never narrates its owner in the third person, in a label or anywhere
+ * else, with every part of a goal open at once.
+ */
+test('nothing on the page talks about its owner in the third person', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  goal('First goal here', { why: 'a reason here', identity: 'a sentence here', deserve: ['a thing I do'], avoid: ['a thing I skip'] })
+  const { container } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
+  expect(container.textContent).not.toMatch(/\b(he|his|him|she|hers)\b/i)
+})
+
+/**
+ * The goal stays an approach goal and the away half is a contrast inside it
+ * (docs/RESEARCH-NORTH.md section 5), so nothing the day carries reads it:
+ * the Monday card takes its line from what is done, never from what is not.
+ */
+test('nothing the day carries reads the away half', () => {
+  goal('First goal here', { deserve: ['a thing I do'], avoid: ['a thing I skip'] })
+  const [written] = getData().goals
+  expect(written.avoid).toEqual(['a thing I skip'])
+  expect(deserveForWeek(written, '2026-08-31')).toBe('a thing I do')
+})
+

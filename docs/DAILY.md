@@ -152,39 +152,37 @@ press away from nothing. Off, if you would rather not: **Settings → Nudges
 The first open of the app on a new day opens on North, and **Start the
 day** at the end of the words is the way on.
 
-### The goals under it
+### The goal at the top
 
-Under the text, behind one quiet line, the goals: **Goals** opens the fold,
-**Write one down** the form. A goal is a **What** - short, and something you
-do rather than something you get - and **Save** keeps it with that alone.
-**Add more** opens the rest when you want it:
+Under the page's name, one quiet line per goal. With none yet, and once
+there is a text, the line is **Add a goal**. Press a goal's line to edit it
+where it stands: a goal is its title - short, and something you do rather
+than something you get - and **Save** or Enter keeps it with that alone;
+**Cancel** or Escape leaves it as it was. **More** opens the rest when you
+want it:
 
 | | |
 |---|---|
 | **Why it matters** | In your own words, the reason you would say out loud |
-| **Who it makes you** | "I am someone who ..." |
-| **What I do to deserve this** | Two to four things you actually do, most days, one per line: "train four times a week", "apply to three places a day". Not wishes |
+| **Who it makes you** | "Someone who ..." |
+| **What I do to deserve this** | Two to four things you actually do, most days, one per line. Not wishes |
 | **What I don't do** | The same few from the other side |
 
-Up to four goals; the window refuses a fifth rather than dropping one. One
-goal appears under the day's title each morning, rotating. On a Monday the
-card that comes forward carries one of your deserve lines for the week.
-**Nothing here is ever measured** - no progress, no deadline, nothing to
-tick.
+The rarer things wait at the end of More: **Archive this goal**, **Add
+another goal**, the archived goals to bring back or delete, and any rule
+that belongs to no goal. Up to four goals; at four the form says so rather
+than dropping one. One goal appears under the day's title each morning,
+rotating. On a Monday the card that comes forward carries one of your
+deserve lines for the week. **Nothing here is ever measured** - no
+progress, no deadline, nothing to tick.
 
-Two of these is plenty to start with. Writing a fourth to fill the space is
-how you end up with one you do not believe.
-
-**Changing them later** is **Edit goals**, the quiet word in the corner. It
-opens every goal at once - what to archive, what to bring back - and
-**Save** writes all of it in one press; **Cancel** or Escape drops the lot.
-It is meant to be opened rarely: this is a page to read, and rewriting it on
-a bad morning is exactly what it is built not to invite.
+One goal is plenty to start with. Writing a fourth to fill the space is how
+you end up with one you do not believe.
 
 ### And what pulls you off them
 
-Under each goal's fields, once **Add more** has opened them, sits a short
-list headed **What pulls me off this**. Each line is a moment you can catch
+Under a goal's fields, once **More** has opened them, sits a short list
+headed **What pulls me off this**. Each line is a moment you can catch
 and the one thing you already decided to do about it:
 
 > If I catch myself scrolling at 23:00, then phone in the kitchen, book in hand.

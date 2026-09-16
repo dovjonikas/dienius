@@ -3,7 +3,7 @@ import { actions, useAppData } from '../../lib/store'
 import { activeGoals, canAddRule, rulesForGoal, unfiledRules } from '../../lib/north'
 import { MAX_RULES_PER_GOAL, type Goal, type IfThenEntry } from '../../lib/types'
 import { RuleForm } from './RuleForm'
-import { RuleText } from './NorthView'
+import { RuleText } from './RuleText'
 
 /**
  * What pulls you off one goal, written where everything else about that goal
@@ -35,7 +35,7 @@ export function GoalRules({ goalId, title }: { goalId: string; title: string }) 
   const room = rules.length < MAX_RULES_PER_GOAL
 
   return (
-    <div className="field north-compose-rules">
+    <div className="field north-goal-rules">
       <span className="field-label">What pulls me off this</span>
 
       {rules.length > 0 && (
@@ -70,7 +70,7 @@ export function GoalRules({ goalId, title }: { goalId: string; title: string }) 
       ) : room ? (
         <button
           type="button"
-          className="setting-quiet north-rule-add"
+          className="btn-secondary north-rule-add"
           aria-label={rules.length === 0 ? `What pulls me off "${title}"` : `Add another to "${title}"`}
           onClick={() => setAdding(true)}
         >

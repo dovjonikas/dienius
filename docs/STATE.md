@@ -86,9 +86,37 @@ carries a signature now and still comes back from validate, export and
 import character for character. The page already draws the signature whole
 at its foot, so no text lost it between stages.
 
-Left: the goal as a quiet line at the top, the page as one column and the
-goal cards gone, the field drawing `---` and the grey line saying both rules
-(B); the day's column in place of the headings row (C); the
+### Stage 3 - B, the North page: done
+
+One column, 40rem, centred the way Settings is. Under the page's name, each
+goal is one quiet line, and a press on it edits it where it stands: the
+title in a box that wraps, Save or Enter, Cancel or Escape, and More for
+the why, the who, the two lists and the rules. At the end of More, under a
+hairline, the rarer things: Archive this goal (at once), Add another goal
+(keeps this one and opens the next, and at four the sentence saying so),
+the archived fold, and rules with no goal. With no goal and a text, the
+line is Add a goal; an empty North stays one line and Write. The goal cards,
+the Goals fold, Edit goals and the Compose form are gone, with their styles
+- `NorthCompose.tsx` deleted, `RuleText` moved to its own file, `NorthGoals`
+new. The field draws heading lines and the `---` mark heavier - the mark on
+a quiet band as well, because three heavier hyphens are still three short
+strokes - by `northLineKinds`; the grey line says "A line in capitals
+becomes a heading. A line with --- starts the signature."; and the empty
+field shows an example of the shape, sized so none of it is cut off.
+Examples in empty boxes are one invented goal and one invented shape of a
+text, nobody's.
+
+The measuring pass read the field as two texts painted over each other on
+every line - the field's transparent value over its own drawing - and
+`scripts/audit.js` now counts a field whose text is fully transparent as
+painting none; planted, a visible value over text and a placeholder over
+text are still reported, and a transparent value is not. The sweep's North
+screens are North, morning, heading open, goal (the editor with More) and
+writing (the field); all clean at four widths in both themes. The tour's
+North step starts at Write and ends on the goal's Save, and walks on both
+devices.
+
+Left: the day's column in place of the headings row (C); the day's column in place of the headings row (C); the
 window after sleep in place of the morning page (D); the scale, the now
 line's weight and its time, the running and next block's lines, the past
 step back, the free labels' size and place, the sleep ground (E); F read
