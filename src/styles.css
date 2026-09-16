@@ -1540,8 +1540,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
      which the touch audit reads as a miss. The title is the part with
      room to shrink, so it is the part that does. */
   flex: 0 0 var(--touch);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: none;
+  border: none;
   border-radius: var(--r-control);
   color: var(--text);
   width: var(--touch);
@@ -1595,13 +1595,14 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .day-replan-button {
   display: inline-flex;
   align-items: center;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: var(--surface);
+  background: var(--fill);
   color: var(--text);
   font-size: var(--t-sm);
-  font-weight: 500;
+  font-weight: var(--w-strong);
   white-space: nowrap;
 }
 
@@ -1679,11 +1680,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .day-when {
   padding: 1px var(--s2);
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--border) 70%, transparent);
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .day-now-done {
@@ -1760,12 +1759,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .day-low {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--border) 40%, transparent);
-  color: var(--muted);
+  border: none;
+  border-radius: var(--r-control);
+  background: var(--fill);
+  color: var(--text);
   font-size: var(--t-sm);
   white-space: nowrap;
 }
@@ -1779,11 +1778,11 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  min-height: 36px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border: 1px solid color-mix(in srgb, var(--chip, var(--accent)) 45%, var(--border));
+  border: none;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--chip, var(--accent)) 12%, var(--surface));
+  background: color-mix(in srgb, var(--chip, var(--accent)) 18%, var(--surface));
   color: var(--text);
   font-size: var(--t-sm);
 }
@@ -1827,14 +1826,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 .timeline-toggle {
   display: inline-flex;
   align-items: center;
-  min-height: var(--touch);
+  min-height: var(--control-h);
   margin-bottom: var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--fill);
+  border: none;
   border-radius: var(--r-control);
-  color: var(--safe-ink);
-  padding: var(--s2) var(--s4);
-  font-size: var(--t-md);
+  color: var(--text);
+  padding: 0 var(--s4);
+  font-size: var(--t-sm);
+  font-weight: var(--w-strong);
 }
 
 .timeline-toggle:hover { border-color: var(--muted); }
@@ -2164,8 +2164,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   gap: var(--s0);
   padding: 6px var(--s2);
   border-radius: var(--r-control);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--fill);
+  border: 1px solid transparent;
   color: var(--text);
 }
 
@@ -2467,7 +2467,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   }
 
   .timeline-anchor-draggable:hover {
-    box-shadow: var(--e2);
+    filter: brightness(1.06) saturate(1.1);
     z-index: 2;
   }
 
@@ -3671,12 +3671,11 @@ select:focus {
    the card as a whole rather than against either line. */
 .task {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-card);
   margin-bottom: var(--s2);
   padding: var(--s2) var(--s1) var(--s2) var(--s4);
-  box-shadow: var(--e1);
-  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), opacity var(--dur) var(--ease);
+  transition: background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease), opacity var(--dur) var(--ease);
 }
 
 .task:hover { border-color: color-mix(in srgb, var(--muted) 45%, var(--border)); }
@@ -3731,8 +3730,7 @@ select:focus {
    already had - so the two are obviously the same task without either one
    losing what it was already saying. */
 .task-active {
-  border-color: color-mix(in srgb, var(--mark) 55%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mark) 45%, transparent), var(--e1);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mark) 55%, transparent);
   background: color-mix(in srgb, var(--mark) 5%, var(--surface));
 }
 
@@ -4496,7 +4494,7 @@ select:focus {
   align-items: center;
   gap: var(--s2);
   width: 100%;
-  min-height: 36px;
+  min-height: var(--control-h);
   padding: var(--s2) var(--s1);
   background: none;
   border: none;
@@ -4564,13 +4562,14 @@ select:focus {
   align-items: center;
   gap: var(--s2);
   margin-top: var(--s3);
-  padding: var(--s2) var(--s3);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  background: var(--fill);
+  border: none;
   border-radius: var(--r-control);
   color: var(--muted);
   font-size: var(--t-sm);
-  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 
 .rollover:hover {
@@ -5969,10 +5968,10 @@ button.danger {
      however small the shift. */
   .theme-card:hover { box-shadow: var(--e2); }
   .chip:hover, .swatch:hover { filter: brightness(1.1); }
-  .day-nav > button:hover { border-color: var(--muted); }
-  .mini-cell:hover { border-color: var(--muted); }
+  .day-nav > button:hover { background: var(--fill); }
+  .mini-cell:not(.mini-cell-has-template):hover { background: var(--fill-strong); }
   .task-menu-button:hover { color: var(--text); }
-  .up-next:hover { border-color: color-mix(in srgb, var(--cat) 45%, var(--border)); }
+  .up-next:hover { background: var(--fill); }
 
   /* The rest of the controls that gave the pointer no answer at all, found
      by hovering every button on every screen in v2.22 and reading back the
@@ -6720,15 +6719,10 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
    something, and it is the only badge the column draws. */
 .done-badge {
   min-width: 20px;
-  padding: 0 var(--s2);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--text);
+  color: var(--faint);
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
   text-align: center;
-  line-height: 18px;
 }
 
 /* Bedtime, once it is close enough to matter - see SLEEP_NOTICE_MINUTES. */
@@ -7517,7 +7511,7 @@ button.danger:focus-visible {
 
   /* The view toggle's height - 34px inside its border - so the chip, the
      doors and the toggle are one height across the row. */
-  .day-header .day-replan-button { min-height: 36px; }
+  .day-header .day-replan-button { min-height: var(--control-h); }
 
   .day-header .day-header-right {
     display: flex;
@@ -7901,9 +7895,7 @@ button.danger:focus-visible {
 
 .rail-heading {
   font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
   color: var(--muted);
   margin: 0 0 var(--s2);
 }
@@ -7916,12 +7908,10 @@ button.danger:focus-visible {
   flex-direction: column;
   gap: var(--s0);
   padding: var(--s2) var(--s3);
-  padding-left: var(--s3);
+  padding-left: calc(var(--s3) + 4px);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--cat, var(--border));
   border-radius: var(--r-card);
-  box-shadow: var(--e1);
+  box-shadow: inset 4px 0 0 var(--cat, var(--border));
 }
 
 /* The time gets the category colour as a small filled chip. At the rail's
@@ -7966,10 +7956,8 @@ button.danger:focus-visible {
 .digest-stats {
   margin-top: var(--s4);
   padding: var(--s3);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: var(--e1);
 }
 
 /* Three columns rather than four flex rows: the word on one edge, the figure
@@ -7998,8 +7986,6 @@ button.danger:focus-visible {
   min-width: 0;
   white-space: nowrap;
   font-size: var(--t-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -8107,7 +8093,7 @@ button.danger:focus-visible {
     align-items: center;
     justify-content: center;
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-mark);
     color: var(--text);
     font-size: var(--t-xs);
@@ -8116,7 +8102,7 @@ button.danger:focus-visible {
   }
 
   .mini-cell.outside { opacity: var(--faded); }
-  .mini-cell.today { border-color: var(--accent); border-width: 2px; }
+  .mini-cell.today { box-shadow: inset 0 0 0 2px var(--accent); }
   /* The day currently open in DayView - a dashed ring rather than
      .today's solid border, so the two read as related but distinct marks
      when they land on different cells (today vs. a day being planned
@@ -8128,7 +8114,6 @@ button.danger:focus-visible {
      would be unreadable against it - pin a dark number instead. */
   .mini-cell-has-template {
     background: color-mix(in srgb, var(--chip, var(--accent)) 30%, var(--surface));
-    box-shadow: inset 0 2px 0 var(--chip, var(--accent));
   }
 
   .mini-cell:focus-visible {
@@ -9533,11 +9518,10 @@ button.task-library:hover { color: var(--text); }
    the point of three-per-day is that they are visible before anything is
    read, and a word in the second line is not. */
 .task-key {
-  border-color: color-mix(in srgb, var(--mark) 45%, var(--border));
-  background: color-mix(in srgb, var(--mark) 7%, var(--surface));
+  background: color-mix(in srgb, var(--mark) 10%, var(--surface));
 }
 
-.task-key .task-title { font-weight: 650; }
+.task-key .task-title { font-weight: var(--w-strong); }
 
 /* The same mark on the picture and on the block list in the editor, drawn
    from the same token as .task-key above: three per day is a thing you see
@@ -9549,9 +9533,9 @@ button.task-library:hover { color: var(--text); }
    Wide enough to read at the 15px a squeezed block gets. */
 .timeline-anchor-key { border-left: 3px solid color-mix(in srgb, var(--mark) 70%, transparent); }
 
-.timeline-anchor-key .timeline-anchor-title { font-weight: 650; }
+.timeline-anchor-key .timeline-anchor-title { font-weight: var(--w-strong); }
 
-.block-list li.is-key .block-title { font-weight: 650; }
+.block-list li.is-key .block-title { font-weight: var(--w-strong); }
 
 .wt-block-key {
   flex: 0 0 auto;
@@ -9996,8 +9980,6 @@ button.task-library:hover { color: var(--text); }
   gap: var(--s3);
   margin-bottom: var(--s3);
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
-  border-left: 3px solid color-mix(in srgb, var(--mark) 70%, var(--border));
   border-radius: var(--r-card);
   background: var(--surface);
 }
@@ -10505,7 +10487,7 @@ button.task-library:hover { color: var(--text); }
   flex: 1 1 100%;
   order: 9;
   min-width: 0;
-  height: calc(var(--t-xs) * 1.4 + var(--s0) * 2);
+  height: calc(var(--t-sm) * 1.4 + var(--s0) * 2);
   margin-top: var(--s0);
 }
 
@@ -10517,11 +10499,9 @@ button.task-library:hover { color: var(--text); }
   border: none;
   background: none;
   color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
   line-height: 1.4;
-  text-transform: uppercase;
   text-align: left;
   /* Never wraps to a second line and never truncates mid-thought: a goal
      long enough to wrap here is a goal that wants shortening, and the
@@ -10574,9 +10554,7 @@ button.task-library:hover { color: var(--text); }
   flex: 0 0 auto;
   color: var(--faint);
   font-size: var(--t-xs);
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 
 .journal-line-input {
@@ -10962,7 +10940,6 @@ button.north-day-line:focus-visible {
 
 @media (max-width: 599px) {
   .north-card { padding: var(--s4); }
-  .north-line-title { letter-spacing: 0.12em; }
 }
 
 /* ------------------------------------------------------------------------

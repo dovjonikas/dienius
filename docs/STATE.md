@@ -187,6 +187,36 @@ heights 76 to 64, weights 91 to 83, tracked capitals 23 to 20, `--s5` 18 to
 13, `--s7` 5 to 2, `--t-input` 9 to 7, `--e1` 8 to 6, and no press that
 scales - the count sees a transform that translates as well now.
 
+### Stage 4 - the day and its timeline: done
+
+- **The header.** The day's template is a chip on its own colour, Replan and
+  Low day are secondary buttons, all three one control's height with no
+  edge; the arrows on a phone are quiet with no box; the note a day that is
+  not today wears is a fill in sentence case. North's goal under the title
+  is sentence case at the interface size, not tracked capitals, and so is
+  the journal's line.
+- **The yesterday banner** is a card on the page's ground with no edge and
+  no mark down its side, and the timeline's door on a phone is a secondary
+  button.
+- **The rail.** The mini calendar's days are grounds with no edge, today a
+  ring of the accent inside the cell, a stamped day its template's tint
+  without the bar over it; Up next is a card with its category as an inset
+  mark and no edge or shadow; the day's numbers are a card with neither;
+  every label in the rail is sentence case.
+- **The task pane.** A task card has no edge and no shadow, a key task its
+  warm ground, the running one a ring of the mark inside it; the key
+  task's weight is the strong weight rather than 650, on the card, the block
+  and the editor's list. Push to tomorrow is a quiet fill, and Done wears the
+  same plain count Later does.
+- **The timeline.** A block with no category stands on the fill with no
+  edge, and a block under the pointer brightens a little instead of lifting
+  on a shadow.
+
+Every screen of the day measures clean at four widths and on the phone in
+both themes, and Today again at 22:00 and 09:00. The ratchet: borders drawn
+120 to 106, weights 83 to 75, pixel heights 64 to 60, number line heights 79
+to 78, tracked capitals 20 to 15, `--e1` 6 to 2.
+
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
 Asked for in one message that replaces everything asked about North, the
