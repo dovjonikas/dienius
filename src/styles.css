@@ -913,6 +913,27 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    it, rather than flush against it. */
 .settings-group { margin-bottom: var(--s6); scroll-margin-top: var(--s4); }
 
+/* A group's name over its rows, and the one line on the page: between one
+   group and the next - docs/DESIGN.md, a divider between the groups of a
+   long list. The rows inside a group are separated by their room alone. */
+/* One control tall, so a group's name stands on the centre line of the
+   section's name in the list beside the page, which is a row of that height
+   starting at the same top. */
+.settings-group > h3 {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: var(--w-strong);
+}
+
+.settings-group + .settings-group {
+  padding-top: var(--s6);
+  border-top: 1px solid var(--border);
+}
+
 /* Settings as a modern app settings screen: a list of sections down one side,
    the settings themselves down the other. One scrolling document rather than
    four swappable panels - see SettingsView.tsx for why. */
@@ -933,25 +954,27 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   -webkit-overflow-scrolling: touch;
 }
 
+/* On a phone a strip of chips; the section in view takes the accent's quiet
+   ground. One weight for both, so a chip does not change width as the page
+   scrolls under it and push its neighbours along the strip. */
 .settings-nav-item {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
-  font-size: var(--t-md);
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
   white-space: nowrap;
 }
 
-.settings-nav-item:hover { color: var(--text); }
+.settings-nav-item:hover { color: var(--text); background: var(--fill-strong); }
 
 .settings-nav-item.active {
-  background: var(--surface);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-dim);
   color: var(--text);
-  font-weight: 600;
 }
 
 .settings-nav-item:focus-visible {
@@ -972,19 +995,14 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--s3) var(--s6);
-  padding: var(--s4) 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  padding: var(--s3) 0;
 }
-
-.settings-group h3 + .setting-row,
-.settings-group h3 + .setting-block { border-top: none; }
 
 /* The same row, for a setting whose control is too big to sit beside its own
    label - the theme gallery, the rules under a goal. Label on top, control filling
    the width under it. */
 .setting-block {
-  padding: var(--s4) 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  padding: var(--s3) 0;
 }
 
 .setting-label {
@@ -1005,14 +1023,14 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .setting-name {
   font-size: var(--t-md);
-  font-weight: 600;
+  font-weight: var(--w-medium);
   color: var(--text);
 }
 
 .setting-desc {
   color: var(--muted);
   font-size: var(--t-sm);
-  line-height: 1.5;
+  line-height: var(--lh-ui);
 }
 
 .setting-control {
@@ -1039,14 +1057,16 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
     gap: var(--s0);
   }
 
+  /* Beside the page a list of quiet rows, the one in view on the fill. */
   .settings-nav-item {
-    border: none;
     border-radius: var(--r-control);
+    background: none;
     text-align: left;
-    padding: var(--s2) var(--s3);
   }
 
-  .settings-nav-item.active { border: none; }
+  .settings-nav-item:hover { background: var(--fill); }
+
+  .settings-nav-item.active { background: var(--fill); }
 }
 
 /* The accent swatches in Appearance - eight curated colours, no picker. See
@@ -1139,6 +1159,9 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 /* A real switch, not a checkbox with a label - role="switch" with
    aria-checked, so it announces as on or off rather than as checked. */
+/* Off, a track on the strong fill with its thumb in the text's ink - on the
+   page's own ground the off track was a dark pill on a dark card with a
+   dark thumb in it, which in the dark theme read as nothing there. */
 .switch {
   position: relative;
   width: 46px;
@@ -1146,10 +1169,10 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   min-height: 0;
   padding: 0;
   flex-shrink: 0;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-pill);
-  background: var(--bg);
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  background: var(--fill-strong);
+  transition: background var(--dur) var(--ease);
 }
 
 .switch[aria-checked='true'] {
@@ -1164,8 +1187,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   width: 20px;
   height: 20px;
   border-radius: var(--r-round);
-  background: var(--surface);
-  box-shadow: var(--e1);
+  background: var(--muted);
   transition: transform var(--dur) var(--ease);
 }
 
@@ -1511,13 +1533,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .row { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.settings-group > button {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
-  padding: var(--s2) var(--s4);
-}
 
 .warning {
   background: color-mix(in srgb, var(--danger) 12%, transparent);
@@ -3444,36 +3459,46 @@ textarea:focus {
    heading until it is touched - a boxed input where every other row shows a
    plain label would make the second schedule look like a different kind of
    thing from the first. */
+/* Its words on the column's edge, where every other setting's name starts:
+   the field's inner edge and its hairline are pulled back past it, so the
+   ground that comes under the pointer reaches out from the words rather
+   than pushing them in. */
 .setting-name-input {
   width: 100%;
   max-width: 220px;
-  padding: var(--s1) var(--s2);
+  margin-left: calc((var(--s2) + 1px) * -1);
+  padding: 0 var(--s2);
   border-color: transparent;
-  background: color-mix(in srgb, var(--border) 30%, transparent);
+  background: none;
   font-size: var(--t-md);
-  font-weight: 600;
+  font-weight: var(--w-medium);
 }
 
-.setting-name-input:hover { border-color: var(--border); }
+.setting-name-input:hover { background: var(--fill); }
 
 /* A plain text button, because removing a schedule is a small, reversible
    correction to a list, not the destructive act .btn-danger is shaped for -
    see the button system above. It still carries the danger colour so it is
    never mistaken for the field beside it. */
+/* The quiet kind in the danger ink, small: a word, not an underlined link. */
 .setting-remove {
   align-self: flex-start;
-  min-height: 0;
+  min-height: var(--s6);
   margin-top: var(--s0);
-  padding: 0;
+  padding: 0 var(--s2);
   border: none;
+  border-radius: var(--r-control);
   background: none;
   color: var(--danger);
   font-size: var(--t-sm);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
-.setting-remove:hover { color: color-mix(in srgb, var(--danger) 80%, var(--text)); }
+.setting-remove:hover { background: var(--fill); }
+
+/* Under a setting's words its word stands on their edge, the ground under
+   the pointer reaching out from it. Not in a row of buttons, where the same
+   pull would close the gap to the button beside it. */
+.setting-label > .setting-remove { margin-left: calc(var(--s2) * -1); }
 
 .setting-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -9861,7 +9886,7 @@ button.task-library:hover { color: var(--text); }
   flex: 0 0 42px;
   color: var(--muted);
   font-size: var(--t-sm);
-  font-weight: 600;
+  font-weight: var(--w-medium);
 }
 
 .weekday-map-day select { flex: 1; min-width: 0; }
@@ -10256,11 +10281,10 @@ button.task-library:hover { color: var(--text); }
   align-items: center;
   flex-wrap: wrap;
   gap: var(--s2) var(--s3);
-  padding: var(--s2) 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  padding: var(--s1) 0;
 }
 
-.snapshot-when { flex: 0 0 auto; color: var(--text); font-size: var(--t-sm); font-weight: 600; }
+.snapshot-when { flex: 0 0 auto; color: var(--text); font-size: var(--t-sm); font-weight: var(--w-strong); }
 .snapshot-size { flex: 1 1 auto; min-width: 0; color: var(--muted); font-size: var(--t-sm); }
 
 /* The undo toast gained a dismiss, now that it can be armed from anywhere
@@ -11490,7 +11514,6 @@ button.north-day-line:focus-visible {
   flex-wrap: wrap;
   gap: var(--s2);
   padding: var(--s1) 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 .category-row.is-dragging { opacity: 0.45; }
@@ -11518,11 +11541,11 @@ button.north-day-line:focus-visible {
 .category-delete { flex: 1 0 100%; display: flex; flex-direction: column; gap: var(--s3); padding: var(--s3) 0; }
 
 .category-form .field { max-width: 52ch; }
-.category-form-actions { display: flex; gap: var(--s2); }
+/* The editor's last row: Cancel and Save at the right, and the delete at
+   the left - the same place a template's delete sits. */
+.category-form-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
 
-/* At the far end of the editor's footer, apart from Save and Cancel - the
-   same place a template's delete sits. */
-.category-form-actions > .delete-category { margin-left: auto; }
+.category-form-actions > .delete-category { margin-right: auto; }
 
 .category-picker.is-palette { flex-wrap: wrap; max-width: 52ch; }
 

@@ -118,7 +118,7 @@ export function CategorySettings() {
               <div className="category-row-actions">
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-quiet"
                   onClick={() => {
                     setDeletingId(null)
                     setEditingId(editingId === category.id ? null : category.id)
@@ -228,12 +228,14 @@ function DeleteCategory({
           </div>
         </div>
       )}
+      {/* Cancel and the delete this panel is for, at the right, the delete
+          last - it is the one thing the panel was opened to do. */}
       <div className="category-form-actions">
+        <button type="button" className="btn-quiet" onClick={onCancel}>
+          Cancel
+        </button>
         <button type="button" className="btn-danger is-armed" onClick={() => onDelete(total > 0 ? moveTo : undefined)}>
           {total > 0 ? 'Delete and move' : 'Delete'}
-        </button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>
-          Cancel
         </button>
       </div>
     </div>
@@ -342,18 +344,8 @@ function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }:
         )}
       </div>
 
+      {/* The delete at the left, Cancel and Save at the right, Save last. */}
       <div className="category-form-actions">
-        <button
-          type="button"
-          className="btn-primary"
-          disabled={!canSave}
-          onClick={() => onSave({ label, color })}
-        >
-          Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={onCancel}>
-          Cancel
-        </button>
         {onDelete && (
           <button
             type="button"
@@ -365,6 +357,17 @@ function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }:
             Delete
           </button>
         )}
+        <button type="button" className="btn-quiet" onClick={onCancel}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className="btn-primary"
+          disabled={!canSave}
+          onClick={() => onSave({ label, color })}
+        >
+          Save
+        </button>
       </div>
     </div>
   )

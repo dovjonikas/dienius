@@ -412,7 +412,28 @@ until the North brief's stage 4, which is about exactly that.
 
 The ratchet: borders drawn 88 to 70, weights 66 to 60, number line heights
 71 to 65, pixel heights 45 to 41, tracked capitals 9 to 7, `--t-input` 5 to
-2, `--s5` 9 to 8, `--s7` 2 to 1, `--t-2xs` 8 to 7, `--e1` 2 to 1. The ratchet:
+2, `--s5` 9 to 8, `--s7` 2 to 1, `--t-2xs` 8 to 7, `--e1` 2 to 1.
+
+### Stage 9 - Settings and the palette: done
+
+- **Settings.** The rows are separated by their room, and the one line left
+  on the page is between one group and the next - the divider DESIGN keeps
+  for a long list. A group's name is one control tall, so it stands on the
+  centre line of its section in the list beside the page. A setting's name
+  is the medium weight. The section list is quiet rows beside the page and
+  a strip of chips on a phone, one weight for all of them so a chip does not
+  change width as the page scrolls. A switch that is off is the strong fill
+  with its thumb in the secondary ink - on the page's own ground it had
+  disappeared in the dark theme - and the last resting shadow, the thumb's,
+  is gone. A second schedule's name and its Delete stand on the label
+  column's edge, Delete a quiet danger word rather than an underlined link.
+  A category's Edit is quiet; its editor ends Delete at the left and Cancel
+  and Save at the right, and its delete panel Cancel then the delete. The
+  snapshot row lost its rule.
+- **The palette** needed nothing more than stage 8 gave it.
+
+The ratchet: `--e1` 1 to 0, weights 60 to 55, borders drawn 70 to 68, number
+line heights 65 to 64, pixel heights 41 to 40. The ratchet:
 weights 71 to 66, number line heights 76 to 71, borders drawn 89 to 88,
 pixel heights 46 to 45, tracked capitals 10 to 9, `--s5` 10 to 9,
 `--t-input` 6 to 5.
