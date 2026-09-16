@@ -5,7 +5,7 @@ import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
-import { NorthStrip } from './NorthStrip'
+import { NorthDay } from './NorthDay'
 import { Explain } from '../../views/Explain'
 import type { ReplanMode } from '../../lib/replanState'
 
@@ -387,10 +387,10 @@ export function DayHeader({
           opens. */}
       <NorthLine date={date} onOpenNorth={onOpenNorth} />
 
-      {/* And under it, North's headings, so the text is read from the day
-          without going to the page - see NorthStrip. A press opens one
-          under the row: a press may move the day, a hover may not. */}
-      <NorthStrip date={date} />
+      {/* And under it, where there is no rail, North on the day folded to one
+          line - the signature, and the headings under it on a press. With a
+          rail it stands at the foot of the rail instead. See NorthDay. */}
+      {!isWide && <NorthDay date={date} folded />}
     </div>
   )
 }

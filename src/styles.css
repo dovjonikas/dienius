@@ -7581,9 +7581,6 @@ button.danger:focus-visible {
        values the column itself is built from rather than copied. */
     .north-line { margin-left: calc(var(--rail-max) + var(--s6)); }
 
-    /* And the row of North's headings under it, for the same reason. */
-    .north-strip { margin-left: calc(var(--rail-max) + var(--s6)); }
-
     .day-view:has(.day-notices:not(:empty)) {
       grid-template-areas:
         "header header   header"
@@ -9664,7 +9661,7 @@ button.task-library:hover { color: var(--text); }
   .setting-remove,
   .setting-quiet,
   .north-line-title,
-  .north-strip-heading,
+  button.north-day-line,
   .focus-bar-exit,
   .block-remove,
   .library-step,
@@ -9709,8 +9706,8 @@ button.task-library:hover { color: var(--text); }
   .setting-remove::after,
   .setting-quiet::after,
   .north-line-title::after,
-  /* A heading in the row under the day's title. */
-  .north-strip-heading::after,
+  /* North's line under the day's title, where there is no rail. */
+  button.north-day-line::after,
   /* The one way out of a running Focus session, on every screen the bar can
      show on. A 30px cross in a row of 44px buttons; the overlay makes it the
      same target as its neighbours without making it the same size. */
@@ -10376,76 +10373,104 @@ button.task-library:hover { color: var(--text); }
 
 .north-line-more[hidden] { display: none; }
 
-/* North's headings under the line, collapsed - see NorthStrip. The line's
-   own register - small, tracked, the third ink - in a row that wraps, with
-   no edge and no ground. A heading with nothing under it is a word in the
-   row; the rest are the one control each, and come up one ink when open,
-   the way the line does. */
-.north-strip {
+/* North on the day - see NorthDay. In the rail, where there is one, between
+   the templates and what is next: the signature as one quiet line and the
+   headings as a quiet list in the rail's small tracked register, with no
+   card, no edge and no ground. The words under a heading open the way they
+   do on the North page - the same component and the same stylesheet rules -
+   in the day's own smaller type. */
+.north-day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.rail > .north-day { margin-top: var(--s6); }
+
+.north-day .north-paragraph {
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+
+.north-day .north-paragraph + .north-paragraph { margin-top: var(--s2); }
+
+.north-day-signature > .north-paragraph { color: var(--muted); }
+
+.north-day .north-sections { gap: var(--s2); }
+
+.north-day .north-heading {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+}
+
+.north-day .north-section-text::before { height: var(--s1); }
+
+/* While a heading's words are laid out over the rail, what follows North in
+   the rail steps back with the headings after it, as the page does - the
+   words stand on the rail's ground, and a label half under them read as two
+   texts painted over each other. */
+@media (hover: hover) and (pointer: fine) {
+  .rail:has(> .north-day .north-section.can-preview:hover) > .north-day ~ *,
+  .rail:has(> .north-day .north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-day ~ * {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rail > .north-day ~ * {
+      transition:
+        opacity var(--dur) var(--ease),
+        background-color var(--dur) var(--ease),
+        border-color var(--dur) var(--ease),
+        color var(--dur) var(--ease),
+        box-shadow var(--dur) var(--ease);
+    }
+
+    .rail:has(> .north-day .north-section.can-preview:hover) > .north-day ~ *,
+    .rail:has(> .north-day .north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-day ~ * {
+      transition-delay: var(--dur-fast);
+    }
+  }
+}
+
+/* Where there is no rail: one line under the day's title, in the header's
+   own row, and a press on it opens the headings under it in the flow - a
+   press may move the day where a hover may not. The line is the signature
+   in the second ink, or the word North where the text has none. */
+.north-day.is-folded {
   flex: 1 1 100%;
   order: 10;
-  min-width: 0;
+  gap: var(--s2);
   margin-top: var(--s0);
 }
 
-.north-strip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s0) var(--s4);
-}
-
-.north-strip-heading,
-.north-strip-bare {
-  display: inline-block;
+.north-day-line {
   min-height: 0;
-  padding: var(--s0) 0;
+  margin: 0;
+  padding: 0;
   border: none;
   background: none;
-  color: var(--faint);
-  font-size: var(--t-xs);
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  line-height: 1.4;
-  text-transform: uppercase;
-  text-align: left;
-  transition: color var(--dur) var(--ease);
-}
-
-.north-strip-heading.is-open,
-.north-strip-heading:hover,
-.north-strip-heading:focus-visible {
   color: var(--muted);
-}
-
-.north-strip-heading:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: var(--r-mark);
-}
-
-/* What opens: the lines under the pressed heading, under the row, in the
-   flow of the header. A press may move the page where a hover may not
-   (CONVENTIONS 24 is about the pointer), and the first shape this had - a
-   bubble over the day, like the line's peek - stood on whatever buttons were
-   under it, which the sweep found on both devices. No edge and no ground:
-   the words on the page's own ground, as the North page draws them. */
-.north-strip-more {
-  max-width: 62ch;
-  margin-top: var(--s2);
-}
-
-.north-strip-lines {
-  margin: 0;
-  color: var(--text);
   font-size: var(--t-sm);
   line-height: 1.5;
-  white-space: pre-line;
+  text-align: left;
   overflow-wrap: anywhere;
 }
 
-/* A heading owns its paragraphs to the next heading, and a blank line
-   between two of them is a paragraph's worth of air. */
-.north-strip-lines + .north-strip-lines { margin-top: var(--s2); }
+button.north-day-line { cursor: pointer; }
+
+button.north-day-line:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-mark);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button.north-day-line:hover { color: var(--text); }
+}
 
 /* The peek: a bubble hanging under the line's left end, with an arrow up
    at the words, never over them. The same surface, edge and shadow as the

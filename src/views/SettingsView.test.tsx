@@ -332,17 +332,17 @@ test('Nudges is four rows: closing the day, when the evening starts, bringing a 
   const nudges = container.querySelector('#settings-nudges') as HTMLElement
 
   const names = Array.from(nudges.querySelectorAll('.setting-name')).map(el => el.textContent)
-  expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward', 'North at the top of the day'])
+  expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward', 'North on the day'])
 })
 
 // On until switched off, and the plan carries nothing until then: absent is
 // on, so every plan from before the row existed reads as on - see
 // NorthSettings.
-test('North at the top of the day is on until switched off', async () => {
+test('North on the day is on until switched off', async () => {
   const user = userEvent.setup()
   render(<SettingsView />)
 
-  const strip = screen.getByRole('switch', { name: 'North at the top of the day' })
+  const strip = screen.getByRole('switch', { name: 'North on the day' })
   expect(strip).toHaveAttribute('aria-checked', 'true')
   expect(getData().settings.north.stripOnDay).toBeUndefined()
 

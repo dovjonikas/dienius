@@ -116,7 +116,28 @@ writing (the field); all clean at four widths in both themes. The tour's
 North step starts at Write and ends on the goal's Save, and walks on both
 devices.
 
-Left: the day's column in place of the headings row (C); the day's column in place of the headings row (C); the
+### Stage 4 - C, the day: done
+
+`NorthDay` in place of the headings row under the day's title. Where there
+is a rail it stands in the rail, between the templates and what is next:
+the signature as one quiet line and the headings as a quiet list in the
+rail's small tracked register, each opening its words by the page's own
+`NorthSection` - a resting pointer lays them over the column, and what
+follows in the rail steps back while they are read; a press opens them in
+the column. Between the templates and the digest rather than at the rail's
+foot, because at the foot a 768px window needed the rail scrolled to see
+the signature; the day's numbers are what gives way there now. Where there
+is no rail it is one line under the day's title - the signature, or North
+where the text has none - and a press opens the headings under it. Never
+the introduction, and nothing at all when the text is only introduction.
+The switch is "North on the day", on by default; the field stays
+`stripOnDay`. Tests cover the parts on the day, the introduction kept off
+it, both shapes, the switch, forty headings and a day change; the browser
+test walks the rail's hover on a desktop and the folded line's taps on the
+phone; the sample seed carries a signature; every Today screen measures
+clean at four widths in both themes.
+
+Left: the day's column in place of the headings row (C); the
 window after sleep in place of the morning page (D); the scale, the now
 line's weight and its time, the running and next block's lines, the past
 step back, the free labels' size and place, the sleep ground (E); F read

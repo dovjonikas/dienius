@@ -3,6 +3,7 @@ import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
 import { rememberNorthRead } from '../../lib/northRead'
 import { northLineKinds, parseNorth } from '../../lib/northSections'
+import { NorthSection } from './NorthSection'
 import { todayKey } from '../../lib/dates'
 import { NorthGoals } from './NorthGoals'
 
@@ -193,85 +194,30 @@ function NorthText({
   )
 }
 
+/** How the drawing under the field marks each kind of line. */
+const LINE_CLASS = {
+  heading: 'north-editor-line is-heading',
+  mark: 'north-editor-line is-mark',
+  text: 'north-editor-line',
+} as const
+
 /**
- * One heading and everything it holds.
- *
- * At rest only the heading shows. What is under it comes when asked, in two
- * ways, and the state here is the same for both:
- *
- * - **A pointer resting on the heading** lays the words out under it, over
- *   the page, and everything after the heading steps back to nothing while
- *   they are read. Nothing is moved to make the room - CONVENTIONS 24 - so
- *   the words unfold where the next headings were and fold away when the
- *   pointer leaves, and the next heading is under the pointer the moment it
- *   moves down to it. That is the stylesheet's, on a pointer that can rest.
- * - **A press** opens the words in the page, on any device, and a second
- *   press closes them. On a phone it is the only way, and on a desktop it is
- *   how words longer than a glance stay open to be read. A press may move
- *   the page where a pointer may not.
- *
- * A keyboard reaches the heading, which shows its words the way a resting
- * pointer does, and opens it the way a press does; Escape closes it.
- *
- * A press that closes a heading leaves the pointer on it, and the hover would
- * lay the same words straight back over the page - the press would seem to
- * have done nothing. So a closed heading is quiet until the pointer or the
- * focus leaves it, and only a heading that is neither open nor quiet offers
- * its words to the hover (`can-preview`).
- *
- * A heading with nothing under it is a heading and not a control: there is
- * nothing to open, so nothing offers to.
+ * The empty field's example: the shape of a North, in words that say what
+ * goes where. The page's own tests read it by the page's own rule, so it
+ * always shows every part the page reads.
  */
-function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: string[] }) {
-  const [open, setOpen] = useState(false)
-  const [quiet, setQuiet] = useState(false)
-  const id = useId()
-  if (paragraphs.length === 0) {
-    return (
-      <section className="north-section is-bare">
-        <h3 className="north-heading">{heading}</h3>
-      </section>
-    )
-  }
-  const className = open ? 'north-section is-open' : quiet ? 'north-section' : 'north-section can-preview'
-  return (
-    <section
-      className={className}
-      onPointerLeave={() => setQuiet(false)}
-      onKeyDown={e => {
-        if (e.key === 'Escape' && open) {
-          e.stopPropagation()
-          setOpen(false)
-        }
-      }}
-    >
-      <h3 className="north-heading">
-        <button
-          type="button"
-          className="north-heading-toggle"
-          aria-expanded={open}
-          aria-controls={id}
-          onClick={() => {
-            if (open) setQuiet(true)
-            setOpen(!open)
-          }}
-          onBlur={() => setQuiet(false)}
-        >
-          {heading}
-        </button>
-      </h3>
-      <div id={id} className="north-section-body">
-        <div className="north-section-text">
-          {paragraphs.map((paragraph, i) => (
-            <p key={i} className="north-paragraph">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
+const NORTH_EXAMPLE = [
+  'A line or two about who you are.',
+  '',
+  'AT WORK',
+  'How you want to work.',
+  '',
+  'WITH PEOPLE',
+  'How you want to be with others.',
+  '',
+  '---',
+  'The line you end on.',
+].join('\n')
 
 /**
  * The text, written: one textarea holding all of it, Save and Cancel under
@@ -317,31 +263,6 @@ function NorthSection({ heading, paragraphs }: { heading: string; paragraphs: st
  * There is no cap on its length and none on its headings: as many as the
  * text has.
  */
-/** How the drawing under the field marks each kind of line. */
-const LINE_CLASS = {
-  heading: 'north-editor-line is-heading',
-  mark: 'north-editor-line is-mark',
-  text: 'north-editor-line',
-} as const
-
-/**
- * The empty field's example: the shape of a North, in words that say what
- * goes where. The page's own tests read it by the page's own rule, so it
- * always shows every part the page reads.
- */
-const NORTH_EXAMPLE = [
-  'A line or two about who you are.',
-  '',
-  'AT WORK',
-  'How you want to work.',
-  '',
-  'WITH PEOPLE',
-  'How you want to be with others.',
-  '',
-  '---',
-  'The line you end on.',
-].join('\n')
-
 function NorthEditor({
   text,
   onSaved,

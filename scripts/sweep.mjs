@@ -251,12 +251,15 @@ const SCREENS = [
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
   {
-    // A heading in the row under the day's title, pressed: the lines under
-    // it open in a bubble over the day, painted only then.
+    // North on the day with a heading open: in the rail on a desktop, a
+    // press opening its words in the column; on the phone, the folded line
+    // under the day's title pressed first. The words are painted only then.
     name: 'Today (North open)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
-      await p.locator('.north-strip-heading').first().click()
+      const line = p.locator('button.north-day-line')
+      if (await line.count()) await line.first().click()
+      await p.locator('.north-day .north-heading-toggle').first().click()
       await p.waitForTimeout(300)
     },
   },

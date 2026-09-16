@@ -63,7 +63,7 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
-  await box.fill('First line here\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
+  await box.fill('First line here\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second\n---\na signature line')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 
   // At rest: the introduction, the two headings, and nothing under them.
@@ -101,14 +101,31 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
     await expect(first).toHaveAttribute('aria-expanded', 'false')
   }
 
-  // And on the day: the headings in a row under the title, a press opens
-  // every paragraph a heading holds, and a second press closes it.
+  // And on the day: the signature and the headings, never the introduction.
+  // Beside the day on a desktop, where a resting pointer shows what a heading
+  // holds; on the phone one folded line, a tap opening the headings and a tap
+  // on one its words.
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
-  const strip = page.getByRole('group', { name: 'North' })
-  const heading = strip.getByRole('button', { name: 'FIRST HEADING' })
-  await expect(heading).toBeVisible()
-  await heading.click()
-  await expect(page.locator('.north-strip-lines')).toHaveText(['a line under it', 'a second paragraph under it'])
-  await heading.click()
-  await expect(page.locator('.north-strip-lines')).toHaveCount(0)
+  if (info.project.name === 'phone') {
+    const north = page.getByRole('group', { name: 'North' })
+    await north.getByRole('button', { name: 'a signature line' }).tap()
+    const heading = north.getByRole('button', { name: 'FIRST HEADING' })
+    await heading.tap()
+    const words = north.locator('.north-section').first().locator('.north-paragraph')
+    await expect(words).toHaveText(['a line under it', 'a second paragraph under it'])
+    await expect(words.nth(1)).toBeVisible()
+    await heading.tap()
+    await expect(words.first()).toBeHidden()
+  } else {
+    const north = page.getByRole('region', { name: 'North' })
+    await expect(north.getByText('a signature line')).toBeVisible()
+    const words = north.locator('.north-section').first().locator('.north-paragraph')
+    await expect(words.first()).toBeHidden()
+    await north.getByRole('button', { name: 'FIRST HEADING' }).hover()
+    await expect(words).toHaveText(['a line under it', 'a second paragraph under it'])
+    await expect(words.nth(1)).toBeVisible()
+    await page.mouse.move(700, 5)
+    await expect(words.first()).toBeHidden()
+  }
+  await expect(page.getByText('First line here')).toHaveCount(0)
 })

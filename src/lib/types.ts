@@ -1189,10 +1189,12 @@ export interface NorthSettings {
   /** A quiet card after a day that got away - never a scolding, never a number. */
   afterASlowDay: boolean
   /**
-   * North's headings in a row under the day's title, each opening what is
-   * under it - see NorthStrip. Absent means on: only the switch turned off
-   * is ever carried, so every payload from before the row existed reads as
-   * on without a migration and without a field on every plan.
+   * North's signature and headings on the day, each heading opening what is
+   * under it - see NorthDay. The name is from v2.23, when it was a row of
+   * headings under the day's title, and stays for every backup holding it.
+   * Absent means on: only the switch turned off is ever carried, so every
+   * payload from before the row existed reads as on without a migration and
+   * without a field on every plan.
    */
   stripOnDay?: boolean
 }

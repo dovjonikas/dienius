@@ -158,7 +158,8 @@
 
   // The picture over them - see views/north/NorthView.tsx. Five lines and
   // one heading with two under it - a line in capitals is a heading, see
-  // lib/northSections.ts - which is about what a person writes, and enough
+  // lib/northSections.ts - and a signature after a line of three hyphens,
+  // which is about what a person writes, and enough
   // to show the page at its real height, folded and open, on every screen
   // the sweep measures.
   const picture = {
@@ -172,6 +173,8 @@
       'THE WEEK',
       'Monday is the quiet one, and the long list waits for Tuesday.',
       'Friday ends at four, whatever the list says.',
+      '---',
+      'The rest of the day is allowed to be ordinary.',
     ].join('\n'),
     updatedAt: stamp,
   }

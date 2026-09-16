@@ -26,6 +26,7 @@ import { TaskGapOffers } from './TaskGapOffers'
 import { useIsWide } from '../../lib/viewport'
 import { busyIntervals, eventsOn, useCalendarCache } from '../../lib/calendars'
 import { MiniCalendar } from './MiniCalendar'
+import { NorthDay } from './NorthDay'
 import { TemplateRail } from './TemplateRail'
 import { DayDigest } from './DayDigest'
 import { DayHeader } from './DayHeader'
@@ -230,6 +231,12 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         <div className="rail">
           <MiniCalendar date={date} onDateChange={onDateChange} />
           <TemplateRail date={date} />
+          {/* North's signature and headings, between the two things that
+              navigate and what is next - see NorthDay. Above the digest rather
+              than under it, so a 768px window shows the signature without the
+              rail being scrolled; the day's numbers are what gives way. Where
+              there is no rail it is one folded line under the day's title. */}
+          <NorthDay date={date} />
           {/* What is coming and how the day is going - see DayDigest.tsx. Last
               in the rail, under the two things that navigate, because it is the
               one part of this column you read rather than act on. */}

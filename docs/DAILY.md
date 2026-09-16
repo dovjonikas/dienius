@@ -144,10 +144,12 @@ written. There is no button for any of
 this: the capitals are the formatting, and the text stays the one string you
 typed.
 
-The same headings stand in a row under the day's title on Today, and a
-press on one opens what is under it there, so the morning's page is a
-press away from nothing. Off, if you would rather not: **Settings → Nudges
-→ North at the top of the day**.
+On Today, the signature and the headings stand beside the day, in the
+column on the left between the templates and what is next - never the
+introduction. The words under a heading open the way they do on the page.
+On the phone they fold into one line under the day's title: the signature,
+and a press on it opens the headings. Off, if you would rather not:
+**Settings → Nudges → North on the day**.
 
 The first open of the app on a new day opens on North, and **Start the
 day** at the end of the words is the way on.
