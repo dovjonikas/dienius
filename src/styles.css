@@ -10140,9 +10140,55 @@ button.task-library:hover { color: var(--text); }
 }
 .review-reading-list + .review-reading-template { margin-top: var(--s2); }
 
+/* How many times - CountsSection in ReviewView.tsx. The block's name in the
+   reading's ink and weight, and under each window a number, muted and in
+   figures of one width, right-aligned so a column reads down. The windows
+   are named once over their columns, quieter than the names. No rule
+   between rows: the step between them is the reading's own, and the step
+   above a template's name is the one the reading leaves. Never wider than a
+   line of reading, so on a wide card a number stays within a glance of its
+   block rather than a card's width away from it. */
+.review-counts-table {
+  width: 100%;
+  max-width: 36rem;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  line-height: 1.4;
+}
+
+.review-counts-table th,
+.review-counts-table td {
+  padding: var(--s1) 0;
+  vertical-align: baseline;
+}
+
+.review-counts-table thead th {
+  padding-top: 0;
+  padding-left: var(--s2);
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: 400;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.review-counts-table tbody th { padding-right: var(--s3); text-align: left; }
+.review-counts-table tbody th[scope='rowgroup'] { padding-bottom: var(--s2); }
+.review-counts-table tbody + tbody th[scope='rowgroup'] { padding-top: var(--s4); }
+
+.review-counts-table td {
+  width: 6rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 @media (max-width: 599px) {
   .review { padding: var(--s4) var(--s3) var(--s7); }
   .review-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* On a phone the columns are as wide as their names and no wider, so the
+     room left goes to the blocks' names. */
+  .review-counts-table td { width: 4.5rem; }
 }
 
 /* ------------------------------------------------------------------------

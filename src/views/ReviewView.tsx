@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useId, useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, todayKey } from '../lib/dates'
 import { CopyJournalButton } from './CopyJournalButton'
@@ -299,32 +299,55 @@ function ReadingSection({ readings, title }: { readings: BlockReading[]; title: 
 }
 
 /**
- * One line per repeating block: its name, and how many of the last seven
- * and the last thirty days it happened on. The line the owner asked for in
- * place of anything counted in a row, in the reading's own shape - the name
- * in ink, the numbers muted after it - so the two lists read as one kind of
- * thing. Nothing here is a bar, a percentage, a target or a colour, and a
- * day a block did not happen changes nothing but the number.
+ * One row per repeating block: its name, and a number under each window -
+ * how many of the last seven and the last thirty days it happened on. The
+ * line the owner asked for in place of anything counted in a row, the name
+ * in the reading's ink and the numbers muted.
+ *
+ * A table since v2.24. The windows were a phrase on every line before it,
+ * "2 in the last 7 days, 3 in the last 30", said again for every block, and
+ * on a phone the phrase broke in the middle of nearly every line; the owner
+ * asked for the number and nothing else. So the windows are named once, over
+ * their columns, and what a row holds is the block and two numbers. Nothing
+ * here is a bar, a percentage, a target or a colour, and a day a block did
+ * not happen changes nothing but the number.
  */
 function CountsSection({ groups }: { groups: CountGroup[] }) {
+  const headingId = useId()
   return (
     <div className="review-block review-counts">
-      <h3>How many times</h3>
-      {groups.map(group => (
-        <Fragment key={group.templateId}>
-          {groups.length > 1 && <h4 className="review-reading-template">{group.templateName}</h4>}
-          <ul className="review-reading-list">
+      <h3 id={headingId}>How many times</h3>
+      <table className="review-counts-table" aria-labelledby={headingId}>
+        <thead>
+          <tr>
+            <th scope="col">
+              <span className="visually-hidden">Block</span>
+            </th>
+            <th scope="col">Last {COUNT_WINDOW_SHORT} days</th>
+            <th scope="col">Last {COUNT_WINDOW_LONG} days</th>
+          </tr>
+        </thead>
+        {groups.map(group => (
+          <tbody key={group.templateId}>
+            {groups.length > 1 && (
+              <tr>
+                <th scope="rowgroup" colSpan={3} className="review-reading-template">
+                  {group.templateName}
+                </th>
+              </tr>
+            )}
             {group.counts.map(count => (
-              <li key={count.blockId}>
-                <span className="review-reading-block">{count.time ? `${count.title} ${count.time}` : count.title}</span>
-                <span className="review-reading-facts">
-                  {' '}- {count.last7} in the last {COUNT_WINDOW_SHORT} days, {count.last30} in the last {COUNT_WINDOW_LONG}
-                </span>
-              </li>
+              <tr key={count.blockId}>
+                <th scope="row" className="review-reading-block">
+                  {count.time ? `${count.title} ${count.time}` : count.title}
+                </th>
+                <td>{count.last7}</td>
+                <td>{count.last30}</td>
+              </tr>
             ))}
-          </ul>
-        </Fragment>
-      ))}
+          </tbody>
+        ))}
+      </table>
     </div>
   )
 }

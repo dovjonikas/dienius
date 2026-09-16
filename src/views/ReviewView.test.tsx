@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ReviewView } from './ReviewView'
 import { actions } from '../lib/store'
@@ -173,12 +173,13 @@ test('the reading is not drawn on a month, nor on a week with nothing to say', a
 
 /**
  * How many times each repeating block happened, lately - lib/blockCounts.ts.
- * A count per block over the last seven and the last thirty days, and
- * nothing else on the line: no percentage, no target, no colour, no word
- * about it. Drawn on the week and the month alike, since the windows run
- * back from today.
+ * A row per block with how many of the last seven and the last thirty days
+ * it happened on, and nothing but the number in either: no percentage, no
+ * target, no colour, no word about it. The two windows are named once, over
+ * their columns, rather than in a phrase repeated on every line. Drawn on
+ * the week and the month alike, since the windows run back from today.
  */
-test('each repeating block has a line with how many of the last 7 and 30 days it happened on, and nothing else', async () => {
+test('each repeating block has a row with how many of the last 7 and 30 days it happened on, and only the numbers', async () => {
   const user = userEvent.setup()
   const days: Record<string, DayPlan> = {}
   for (const [back, tasks] of [
@@ -192,17 +193,48 @@ test('each repeating block has a line with how many of the last 7 and 30 days it
   actions.resetForTests({ ...defaultData(), templates: [work], days })
   render(<ReviewView />)
 
-  const section = screen.getByRole('heading', { name: 'How many times' }).closest('.review-block') as HTMLElement
-  expect(within(section).getAllByRole('listitem').map(li => li.textContent)).toEqual([
-    'Deep work 09:00 - 2 in the last 7 days, 3 in the last 30',
-    'Lunch 12:30 - 0 in the last 7 days, 1 in the last 30',
-    'Something outside - 0 in the last 7 days, 0 in the last 30',
+  const table = screen.getByRole('table', { name: 'How many times' })
+  expect(cellsOf(table)).toEqual([
+    ['Block', 'Last 7 days', 'Last 30 days'],
+    ['Deep work 09:00', '2', '3'],
+    ['Lunch 12:30', '0', '1'],
+    ['Something outside', '0', '0'],
   ])
-  expect(section.textContent).not.toMatch(/%|streak|missed|target|goal/i)
-  expect(section.querySelector('progress, meter, [style*="color"]')).toBeNull()
+  expect(within(table).getByRole('rowheader', { name: 'Deep work 09:00' })).toBeInTheDocument()
+  for (const cell of within(table).getAllByRole('cell')) expect(cell.textContent).toMatch(/^[0-9]+$/)
+  expect(table.textContent).not.toMatch(/%|streak|missed|target|goal/i)
+  expect(table.querySelector('progress, meter, [style*="color"]')).toBeNull()
 
   await user.click(screen.getByRole('button', { name: 'Month' }))
-  expect(screen.getByRole('heading', { name: 'How many times' })).toBeInTheDocument()
+  expect(screen.getByRole('table', { name: 'How many times' })).toBeInTheDocument()
+})
+
+test('blocks from two templates stand under each template’s name, and the windows are still named once', () => {
+  const rest: Template = { id: 't2', name: 'Rest day', color: '#a7c4f5', blocks: [{ id: 'r1', time: '10:00', title: 'Long walk' }] }
+  const one = addDays(TODAY, -1)
+  const two = addDays(TODAY, -2)
+  const walk: Task = { id: 'r', title: 'Long walk', time: '10:00', done: true, origin: { type: 'template', sourceId: 't2', blockId: 'r1' } }
+  actions.resetForTests({
+    ...defaultData(),
+    templates: [work, rest],
+    days: {
+      [one]: { date: one, templateId: 't2', tasks: [walk] },
+      [two]: { date: two, templateId: 't1', tasks: [stamped('b1', { done: true })] },
+    },
+  })
+  render(<ReviewView />)
+
+  const table = screen.getByRole('table', { name: 'How many times' })
+  expect(cellsOf(table)).toEqual([
+    ['Block', 'Last 7 days', 'Last 30 days'],
+    ['Work day'],
+    ['Deep work 09:00', '1', '1'],
+    ['Lunch 12:30', '0', '0'],
+    ['Something outside', '0', '0'],
+    ['Rest day'],
+    ['Long walk 10:00', '1', '1'],
+  ])
+  expect(within(table).getAllByRole('columnheader', { name: /^Last/ })).toHaveLength(2)
 })
 
 test('with no block on any of the last thirty days there is no count section at all', () => {
@@ -210,3 +242,47 @@ test('with no block on any of the last thirty days there is no count section at 
   render(<ReviewView />)
   expect(screen.queryByRole('heading', { name: 'How many times' })).not.toBeInTheDocument()
 })
+
+/**
+ * Nothing new is kept for the counts. Drawing them writes nothing, a tick is
+ * all it takes to move one, and what the tick saves is the plan with that one
+ * task done - no count in it, and nothing written beside it.
+ */
+test('the counts are read from the days each time they are drawn, and nothing about them is saved', () => {
+  const setItem = vi.spyOn(Storage.prototype, 'setItem')
+  try {
+    const tasks = [stamped('b1'), stamped('b2')]
+    const day: DayPlan = { date: TODAY, templateId: 't1', tasks }
+    const plan = { ...defaultData(), templates: [work], days: { [TODAY]: day } }
+    // Written down before anything is drawn, so a count slipped into the plan
+    // while drawing cannot also slip into what it is compared with.
+    const ticked = JSON.stringify({ ...plan, days: { [TODAY]: { ...day, tasks: [{ ...tasks[0], done: true }, tasks[1]] } } })
+    actions.resetForTests(plan)
+    render(<ReviewView />)
+
+    const table = screen.getByRole('table', { name: 'How many times' })
+    expect(cellsOf(table)[1]).toEqual(['Deep work 09:00', '0', '0'])
+    expect(setItem).not.toHaveBeenCalled()
+
+    act(() => actions.toggleTask(TODAY, tasks[0].id))
+    expect(cellsOf(table)[1]).toEqual(['Deep work 09:00', '1', '1'])
+    expect(setItem).toHaveBeenCalledTimes(1)
+    expect(withoutStamps(setItem.mock.calls[0][1])).toEqual(withoutStamps(ticked))
+  } finally {
+    setItem.mockRestore()
+  }
+})
+
+/** A table's rows, each as the words in its cells. */
+function cellsOf(table: HTMLElement): string[][] {
+  return within(table)
+    .getAllByRole('row')
+    .map(row => Array.from(row.children, cell => cell.textContent ?? ''))
+}
+
+/** A saved plan read back without the stamps sync writes on every change. */
+function withoutStamps(json: string): unknown {
+  return JSON.parse(json, (key, value) =>
+    key === 'updatedAt' || key === 'settingsUpdatedAt' || key === 'tombstones' ? undefined : value,
+  )
+}

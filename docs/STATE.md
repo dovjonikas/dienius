@@ -214,8 +214,32 @@ unsized blocks; on today's grid the marker's minute, the one hint and the
 past class, and on any other day none of them; the marker above the blocks.
 Today and Templates measure clean at four widths in both themes.
 
-Left: F read against the brief once more; the phone everywhere, and the
-gates.
+### Stage 8 - F, Review's counts: done
+
+Read against the brief - a count beside each block a template put on the
+days, from the days as they are, no percentage and no colour - one thing fell
+short of it and one was true and untested.
+
+- **Only the number.** Each line said its windows in words, "2 in the last 7
+  days, 3 in the last 30", the same phrase for every block, and on a phone
+  the phrase broke in the middle of seven lines of ten. The counts are a
+  table now: the block's name heads its row, a number stands under each
+  window, and "Last 7 days" and "Last 30 days" are said once, over their
+  columns. A template's name heads its rows when there is more than one. The
+  table is never wider than a line of reading, so on a wide card a number
+  stays near its block, and on a phone the columns are as wide as their
+  names.
+- **Nothing saved.** A test draws the counts, ticks a block and reads what
+  was saved: drawing writes nothing, the count moves with the tick, and what
+  the tick saves is the plan with that task done and nothing beside it.
+  Planting a count in storage while drawing, in the plan while counting, or
+  in the plan with the tick fails it, each one.
+
+Tests: a row per block with digits alone in the number cells; two templates
+under their names with the windows named once; the saved plan above. Review
+measures clean at four widths and on the phone, in both themes.
+
+Left: the phone everywhere, and the gates.
 
 ## v2.22 - the quality wave, part one: the pictures
 
