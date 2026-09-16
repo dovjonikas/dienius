@@ -730,3 +730,54 @@ test('a goal name too long for its box wraps rather than running out of sight', 
   expect(getData().goals[0].title).toBe('Ship something')
   expect((box as HTMLTextAreaElement).value).toBe('Leave the house before nine on a Saturday')
 })
+
+
+// --- headings ------------------------------------------------------------------
+
+/**
+ * A line in capitals is a heading and the lines under it fold away - the
+ * rule is lib/northSections.ts. Here: what the page draws for one, and the
+ * one control it is. Whether the lines show on a hover or on a press is the
+ * stylesheet's decision by pointer; the state is the same on both, and the
+ * browser test walks each.
+ */
+test('a heading reads as a heading with its lines closed under it, and a press opens and closes them', async () => {
+  const user = userEvent.setup()
+  picture('First line here\n\nFIRST SECTION\nline under it\nsecond line under it')
+  const { container } = render(<NorthView />)
+  expect(screen.getByRole('heading', { level: 3, name: 'FIRST SECTION' })).toBeInTheDocument()
+  const toggle = screen.getByRole('button', { name: 'FIRST SECTION' })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(container.querySelector('.north-section')).not.toHaveClass('is-open')
+  // The free line before it is a block, always on the page.
+  expect(container.querySelector('.north-block')).toHaveTextContent('First line here')
+
+  await user.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  expect(container.querySelector('.north-section')).toHaveClass('is-open')
+  expect(container.querySelector('.north-section-lines')?.textContent).toBe('line under it\nsecond line under it')
+
+  await user.click(toggle)
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('Escape closes an open heading, and a heading with nothing under it is not a control', async () => {
+  const user = userEvent.setup()
+  picture('FIRST SECTION\nline under it\n\nSECOND SECTION')
+  render(<NorthView />)
+  const first = screen.getByRole('button', { name: 'FIRST SECTION' })
+  await user.click(first)
+  expect(first).toHaveAttribute('aria-expanded', 'true')
+  await user.keyboard('{Escape}')
+  expect(first).toHaveAttribute('aria-expanded', 'false')
+
+  expect(screen.getByRole('heading', { level: 3, name: 'SECOND SECTION' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'SECOND SECTION' })).toBeNull()
+})
+
+test('a text with no heading has no heading and no control: its blocks, as before', () => {
+  picture('First line here\nSecond line here\n\nThird line here')
+  const { container } = render(<NorthView />)
+  expect(container.querySelectorAll('.north-section')).toHaveLength(0)
+  expect([...container.querySelectorAll('.north-block')].map(b => b.textContent)).toEqual(['First line here\nSecond line here', 'Third line here'])
+})

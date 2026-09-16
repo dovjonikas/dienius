@@ -156,9 +156,11 @@
     { id: id('g'), title: 'Leave the house before nine on a Saturday', why: 'The best days this year all started outside', identity: 'I am someone whose weekends start early', createdAt: shift(-3), updatedAt: stamp },
   ]
 
-  // The picture over them - see views/north/NorthView.tsx. Five lines, which
-  // is about what a person writes, and enough to show the window at its
-  // real height on every screen the sweep measures.
+  // The picture over them - see views/north/NorthView.tsx. Five lines and
+  // one heading with two under it - a line in capitals is a heading, see
+  // lib/northSections.ts - which is about what a person writes, and enough
+  // to show the page at its real height, folded and open, on every screen
+  // the sweep measures.
   const picture = {
     text: [
       'I wake before the house does, and the first hour is mine.',
@@ -166,6 +168,10 @@
       'I finish the things I start talking about, and I talk about fewer of them.',
       'The books on the shelf are read, not owned.',
       'On a Saturday I am already outside by nine, and the day is longer for it.',
+      '',
+      'THE WEEK',
+      'Monday is the quiet one, and the long list waits for Tuesday.',
+      'Friday ends at four, whatever the list says.',
     ].join('\n'),
     updatedAt: stamp,
   }

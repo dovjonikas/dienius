@@ -48,3 +48,43 @@ test('the text is written on the page, reads back as blocks, and opens the next 
   await expect(page.getByPlaceholder('Add a task')).toBeVisible()
   await expect(page.getByRole('region', { name: 'North' })).toHaveCount(0)
 })
+
+/**
+ * A line in capitals is a heading, and the lines under it come when asked:
+ * on a hover where there is a pointer, on a tap where there is not. The
+ * jsdom tests hold the state; this is the one place the two ways of
+ * asking are walked on the screens that have them.
+ */
+test('a heading opens on a hover, or on a tap where there is no pointer, and closes again', async ({ page }, info) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
+  const box = page.getByRole('textbox', { name: 'North' })
+  await box.fill('First line here\n\nFIRST SECTION\nline under it\n\nSECOND SECTION\nsecond line under it')
+  await expect(page.getByRole('status').filter({ hasText: 'Saved' })).toBeVisible()
+  await page.getByRole('button', { name: 'Done' }).click()
+
+  // At rest: the free line, the two headings, and nothing under them.
+  await expect(page.locator('.north-block')).toHaveText('First line here')
+  const first = page.getByRole('button', { name: 'FIRST SECTION' })
+  await expect(first).toBeVisible()
+  await expect(page.getByRole('button', { name: 'SECOND SECTION' })).toBeVisible()
+  const lines = page.locator('.north-section-lines').first()
+  await expect(lines).toBeHidden()
+
+  if (info.project.name === 'phone') {
+    await first.tap()
+    await expect(lines).toBeVisible()
+    await expect(lines).toHaveText('line under it')
+    await expect(first).toHaveAttribute('aria-expanded', 'true')
+    await first.tap()
+    await expect(lines).toBeHidden()
+  } else {
+    await first.hover()
+    await expect(lines).toBeVisible()
+    await expect(lines).toHaveText('line under it')
+    // Away, and it is gone: a hover pins nothing.
+    await page.mouse.move(5, 5)
+    await expect(lines).toBeHidden()
+    await expect(first).toHaveAttribute('aria-expanded', 'false')
+  }
+})

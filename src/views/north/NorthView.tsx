@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { activeGoals, archivedGoals, rulesForGoal, unfiledRules } from '../../lib/north'
 import { type Goal, type IfThenEntry } from '../../lib/types'
 import { NorthCompose, type ComposeFocus } from './NorthCompose'
 import { Explain } from '../Explain'
 import { rememberNorthRead } from '../../lib/northRead'
+import { parseNorth } from '../../lib/northSections'
 import { todayKey } from '../../lib/dates'
 
 /**
@@ -179,7 +180,10 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
  * person's own line breaks kept, and nothing over it or around it - no
  * label, no frame. A blank line in the text is a gap between blocks, and
  * the gap is the one thing the page draws that the person did not type;
- * two blank lines are still one gap. Under it, one quiet Edit - and in the
+ * two blank lines are still one gap. A line in capitals is a heading and
+ * the lines under it fold away - see NorthSection, and lib/northSections.ts
+ * for the rule; a text with no such line reads as its blocks, exactly as
+ * before there were headings. Under it, one quiet Edit - and in the
  * morning, Start the day, at the end rather than the top, so the way on is
  * past the words.
  */
@@ -194,15 +198,19 @@ function NorthText({
   morning: boolean
   onStartDay?: () => void
 }) {
-  const blocks = text.split(/\n[ \t]*\n+/)
+  const parts = parseNorth(text)
   return (
     <div className="north-picture">
       <div className="north-text">
-        {blocks.map((block, i) => (
-          <p key={i} className="north-block">
-            {block}
-          </p>
-        ))}
+        {parts.map((part, i) =>
+          part.kind === 'lines' ? (
+            <p key={i} className="north-block">
+              {part.lines.join('\n')}
+            </p>
+          ) : (
+            <NorthSection key={i} heading={part.heading} lines={part.lines} />
+          ),
+        )}
       </div>
       {morning && onStartDay && (
         <button type="button" className="btn-primary north-start" onClick={onStartDay}>
@@ -215,6 +223,61 @@ function NorthText({
         </button>
       </p>
     </div>
+  )
+}
+
+/**
+ * One heading and the lines under it.
+ *
+ * On the page at rest only the heading shows: the heaviest weight on the
+ * screen, one after another with air between. What is under it comes when
+ * asked and goes when the asking stops. With a pointer that can rest, that
+ * is a hover - the lines appear under the heading, over the page, and
+ * nothing beneath moves by a pixel, which is the answer the goal card
+ * gives and CONVENTIONS 24's rule for a pointer. With a finger it is a tap,
+ * and the lines open in the flow of the page until a second tap. A keyboard
+ * reaches the heading and opens it the way a finger does; Escape closes it.
+ * Which of the two a device gets is the stylesheet's decision by the pointer
+ * it has, and the state here is the same on both.
+ *
+ * A heading with nothing under it is a heading and not a control: there is
+ * nothing to open, so nothing offers to.
+ */
+function NorthSection({ heading, lines }: { heading: string; lines: string[] }) {
+  const [open, setOpen] = useState(false)
+  const id = useId()
+  if (lines.length === 0) {
+    return (
+      <section className="north-section is-bare">
+        <h3 className="north-heading">{heading}</h3>
+      </section>
+    )
+  }
+  return (
+    <section
+      className={open ? 'north-section is-open' : 'north-section'}
+      onKeyDown={e => {
+        if (e.key === 'Escape' && open) {
+          e.stopPropagation()
+          setOpen(false)
+        }
+      }}
+    >
+      <h3 className="north-heading">
+        <button
+          type="button"
+          className="north-heading-toggle"
+          aria-expanded={open}
+          aria-controls={id}
+          onClick={() => setOpen(o => !o)}
+        >
+          {heading}
+        </button>
+      </h3>
+      <div id={id} className="north-section-body">
+        <p className="north-section-lines">{lines.join('\n')}</p>
+      </div>
+    </section>
   )
 }
 

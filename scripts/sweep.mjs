@@ -279,6 +279,18 @@ const SCREENS = [
     },
   },
   {
+    // A heading with the pointer resting on it. The lines under a heading
+    // are painted only then, over the page, so this is the one screen that
+    // measures them.
+    name: 'North (heading open)',
+    pointerOnly: true,
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'North')
+      await p.locator('.north-heading-toggle').first().hover()
+      await p.waitForTimeout(300)
+    },
+  },
+  {
     // Four goals editable at once. Never swept until v2.19, when it became
     // four cards on one page rather than a column to scroll - which is a
     // grid of raised surfaces full of small grey labels, and exactly the
