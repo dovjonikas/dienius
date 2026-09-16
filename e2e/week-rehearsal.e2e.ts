@@ -295,10 +295,12 @@ test('the week map, North, a full list and the backup form all take what is type
     if (i > 0) await page.getByRole('button', { name: 'Add another' }).click()
     const [what, why, who] = goals[i]
     await page.getByLabel('What', { exact: true }).nth(i).fill(what)
+    // The rest of a goal waits behind one line; the one left is this row's.
+    await page.getByRole('button', { name: 'Add more' }).click()
     await page.getByLabel('Why it matters').nth(i).fill(why)
     await page.getByLabel('Who it makes you').nth(i).fill(who)
     await page.getByLabel('What I do to deserve this').nth(i).fill('One thing a day\nOne thing a week\nOne thing a month')
-    steps += 4
+    steps += 5
   }
   await page.getByRole('button', { name: 'Save' }).click()
 

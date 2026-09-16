@@ -11373,6 +11373,10 @@ button.task-library:hover { color: var(--text); }
 @media (min-width: 900px) {
   .north-compose-goal { grid-template-columns: 1fr 1fr; column-gap: var(--s5); }
   .north-compose-goal > .north-compose-goal-foot { grid-column: 1 / -1; }
+
+  /* A goal that is a title so far: one column, since the second half is
+     not on the form yet - see Add more in NorthCompose. */
+  .north-compose-goal.is-brief { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (min-width: 1400px) {

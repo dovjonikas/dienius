@@ -191,6 +191,8 @@ test('Write one down opens Compose on a blank goal, and Save writes it with what
 
   expect(screen.getByLabelText('What')).toHaveFocus()
   await user.type(screen.getByLabelText('What'), 'Be strong at fifty')
+  // The rest of a goal waits behind one line.
+  await user.click(screen.getByRole('button', { name: 'Add more' }))
   await user.type(screen.getByLabelText('Why it matters'), 'Dad stopped moving.')
   await user.type(screen.getByLabelText('Who it makes you'), 'Someone who trains.')
   await user.type(screen.getByLabelText('What I do to deserve this'), 'train four times{Enter}walk')
@@ -217,6 +219,7 @@ test('the deserve field stops at four lines rather than trimming a fifth on save
   render(<NorthView />)
   await openGoals(user)
   await user.click(screen.getByRole('button', { name: 'Write one down' }))
+  await user.click(screen.getByRole('button', { name: 'Add more' }))
   const field = screen.getByLabelText('What I do to deserve this')
   await user.type(field, 'one{Enter}two{Enter}three{Enter}four{Enter}five')
   expect(field).toHaveValue('one\ntwo\nthree\nfourfive')
@@ -659,6 +662,8 @@ test('a rule is written in Compose, and reads back under the goal it belongs to'
   render(<NorthView />)
 
   await compose(user)
+  // Neither goal has anything past its What yet, so the rules wait behind Add more.
+  await user.click(screen.getAllByRole('button', { name: 'Add more' })[0])
   await user.click(screen.getByRole('button', { name: 'What pulls me off "Ship something people keep using"' }))
   // The instruction is beside the box being typed into, and only while
   // somebody is typing into it. It is nowhere on the page they read.
@@ -780,4 +785,58 @@ test('a text with no heading has no heading and no control: its blocks, as befor
   const { container } = render(<NorthView />)
   expect(container.querySelectorAll('.north-section')).toHaveLength(0)
   expect([...container.querySelectorAll('.north-block')].map(b => b.textContent)).toEqual(['First line here\nSecond line here', 'Third line here'])
+})
+
+// --- what shows first -------------------------------------------------------------
+
+/**
+ * A goal is a title until something more is written about it. The form
+ * opens on What and one line, Add more; the why, the who, the lists and
+ * the rules wait behind it. A goal that already has any of them opens with
+ * them showing - a field with words in it is never hidden.
+ */
+test('a goal is saved with What alone, and the rest waits behind Add more', async () => {
+  const user = userEvent.setup()
+  picture()
+  render(<NorthView />)
+  await openGoals(user)
+  await user.click(screen.getByRole('button', { name: 'Write one down' }))
+
+  expect(screen.queryByLabelText('Why it matters')).toBeNull()
+  expect(screen.queryByLabelText('What I do to deserve this')).toBeNull()
+  await user.type(screen.getByLabelText('What'), 'First goal here')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+
+  expect(getData().goals).toHaveLength(1)
+  expect(getData().goals[0]).toMatchObject({ title: 'First goal here', createdAt: TODAY })
+  expect(getData().goals[0].why).toBeUndefined()
+  expect(getData().goals[0].deserve).toBeUndefined()
+})
+
+test('Add more opens the rest of the goal, puts the cursor in the first of it, and stays open', async () => {
+  const user = userEvent.setup()
+  picture()
+  render(<NorthView />)
+  await openGoals(user)
+  await user.click(screen.getByRole('button', { name: 'Write one down' }))
+  await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+  expect(screen.getByLabelText('Why it matters')).toHaveFocus()
+  expect(screen.getByLabelText('Who it makes you')).toBeInTheDocument()
+  expect(screen.getByLabelText('What I do to deserve this')).toBeInTheDocument()
+  expect(screen.getByLabelText("What I don't do")).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Add more' })).toBeNull()
+})
+
+test('a goal that already has more than a What opens with it showing, and one that has not opens brief', async () => {
+  const user = userEvent.setup()
+  picture()
+  goal('First goal here', { why: 'Why line here' })
+  goal('Second goal here')
+  render(<NorthView />)
+  await compose(user)
+
+  expect(screen.getAllByLabelText('Why it matters')).toHaveLength(1)
+  expect(screen.getByLabelText('Why it matters')).toHaveValue('Why line here')
+  expect(screen.getAllByRole('button', { name: 'Add more' })).toHaveLength(1)
 })

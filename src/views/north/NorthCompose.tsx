@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, getData, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
-import { activeGoals, ageLabel, archivedGoals, type NorthDraft } from '../../lib/north'
-import { MAX_ACTIVE_GOALS, MAX_DESERVE_LINES, type Goal } from '../../lib/types'
+import { activeGoals, ageLabel, archivedGoals, rulesForGoal, type NorthDraft } from '../../lib/north'
+import { MAX_ACTIVE_GOALS, MAX_DESERVE_LINES, type Goal, type IfThenEntry } from '../../lib/types'
 import { GoalRules, UnfiledRules } from './GoalRules'
 import { Explain } from '../Explain'
 
@@ -71,9 +71,16 @@ interface GoalRow {
   avoid: string
   /** Goes on Save, not before, so Cancel still means Cancel. */
   archive: boolean
+  /**
+   * Whether the rest of the goal is on the form. What is the whole of a
+   * goal until something more is written; the other four fields and the
+   * rules wait behind one line, Add more, and a goal that already has any
+   * of them opens with them showing.
+   */
+  more: boolean
 }
 
-function rowOf(goal: Goal): GoalRow {
+function rowOf(goal: Goal, ifThens: IfThenEntry[]): GoalRow {
   return {
     key: goal.id,
     id: goal.id,
@@ -83,11 +90,23 @@ function rowOf(goal: Goal): GoalRow {
     deserve: (goal.deserve ?? []).join('\n'),
     avoid: (goal.avoid ?? []).join('\n'),
     archive: false,
+    more: hasMore(goal, ifThens),
   }
 }
 
+/** Whether a goal carries anything past its What: a why, a who, a line either way, or a rule. */
+function hasMore(goal: Goal, ifThens: IfThenEntry[]): boolean {
+  return (
+    !!goal.why ||
+    !!goal.identity ||
+    (goal.deserve?.length ?? 0) > 0 ||
+    (goal.avoid?.length ?? 0) > 0 ||
+    rulesForGoal(ifThens, goal.id).length > 0
+  )
+}
+
 function blankRow(): GoalRow {
-  return { key: crypto.randomUUID(), title: '', why: '', identity: '', deserve: '', avoid: '', archive: false }
+  return { key: crypto.randomUUID(), title: '', why: '', identity: '', deserve: '', avoid: '', archive: false, more: false }
 }
 
 /**
@@ -111,6 +130,16 @@ function blankRow(): GoalRow {
  * them would mean a Cancel that also un-deletes. A goal brought back joins
  * the draft as a row, so Save writes it like the rest.
  *
+ * ## What shows first
+ *
+ * What, and one line under it: Add more. A goal is a title until something
+ * more is written about it - the store has always saved one with nothing
+ * else - and a form that opens six boxes for a sentence is the form the
+ * owner called too heavy. The why, the who, the two lists and the rules
+ * wait behind the line and come when asked; a goal that already has any of
+ * them opens with them showing, since a field with words in it is never
+ * hidden.
+ *
  * ## The two caps
  *
  * Four goals, and the form stops offering a fifth row - the same refusal
@@ -125,7 +154,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
   const archived = archivedGoals(data.goals)
 
   const [rows, setRows] = useState<GoalRow[]>(() => {
-    const existing = activeGoals(data.goals).map(rowOf)
+    const existing = activeGoals(data.goals).map(g => rowOf(g, data.ifThens))
     // Always at least one row: a form with a picture and no goal on it would
     // have a Save with nothing under it, and the tour's "name it, then Save"
     // would point at a field that is not there.
@@ -135,6 +164,10 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
   const [focusKey, setFocusKey] = useState<string | null>(null)
 
   const titleRefs = useRef(new Map<string, HTMLTextAreaElement>())
+  const whyRefs = useRef(new Map<string, HTMLTextAreaElement>())
+  // The row whose rest was just opened: the cursor goes into the first of
+  // its new fields once they are drawn.
+  const [moreKey, setMoreKey] = useState<string | null>(null)
 
   // Focus lands in the form the moment it opens - on the first goal's name
   // from Compose, on the new goal's name from Write one down - and on each
@@ -152,6 +185,12 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
     titleRefs.current.get(focusKey)?.focus()
     setFocusKey(null)
   }, [focusKey])
+
+  useEffect(() => {
+    if (!moreKey) return
+    whyRefs.current.get(moreKey)?.focus()
+    setMoreKey(null)
+  }, [moreKey])
 
   const activeRows = rows.filter(r => !r.archive).length
   const full = activeRows >= MAX_ACTIVE_GOALS
@@ -174,6 +213,11 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
     update(key, { avoid: value })
   }
 
+  function showMore(key: string) {
+    update(key, { more: true })
+    setMoreKey(key)
+  }
+
   function addRow() {
     const row = blankRow()
     setRows(current => [...current, row])
@@ -187,7 +231,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
     // that is still archived would be a lie the next Save wrote down.
     const restored = getData().goals.find(g => g.id === goal.id)
     if (!restored || restored.archivedAt) return
-    setRows(current => (current.some(r => r.id === goal.id) ? current : [...current, rowOf(restored)]))
+    setRows(current => (current.some(r => r.id === goal.id) ? current : [...current, rowOf(restored, getData().ifThens)]))
   }
 
   function save() {
@@ -226,7 +270,7 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
             </button>
           </p>
         ) : (
-          <fieldset key={row.key} className="north-compose-goal">
+          <fieldset key={row.key} className={row.more ? 'north-compose-goal' : 'north-compose-goal is-brief'}>
             <legend className="visually-hidden">Goal {index + 1}</legend>
             {/* Two halves, side by side on anything wider than a phone: what
                 the goal is on the left, what it costs on the right. Four
@@ -270,9 +314,15 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                 }}
               />
             </label>
+            {row.more && (
+              <>
             <label className="field">
               <span className="field-label">Why it matters</span>
               <GrowingText
+                ref={el => {
+                  if (el) whyRefs.current.set(row.key, el)
+                  else whyRefs.current.delete(row.key)
+                }}
                 value={row.why}
                 maxLength={280}
                 placeholder="Because they will remember who I was, not what I got done."
@@ -294,8 +344,11 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                 onChange={e => update(row.key, { identity: e.target.value })}
               />
             </label>
+              </>
+            )}
             </div>
 
+            {row.more && (
             <div className="north-compose-half">
             <label className="field">
               {/* The word is explained here since v2.19. It hung off the
@@ -344,8 +397,19 @@ export function NorthCompose({ focus, onDone }: NorthComposeProps) {
                 now has no id for a rule to belong to. */}
             {row.id && <GoalRules goalId={row.id} title={row.title} />}
             </div>
+            )}
 
             <div className="north-compose-goal-foot">
+              {/* The rest of the goal, behind one line. What alone is a goal
+                  - the store has always saved one - and the four fields and
+                  the rules are for the goal that has grown into them. Opened,
+                  they stay open, and the cursor lands in the first of them so
+                  a keyboard knows something appeared. */}
+              {!row.more && (
+                <button type="button" className="setting-quiet" onClick={() => showMore(row.key)}>
+                  Add more
+                </button>
+              )}
               {row.id ? (
                 <button
                   type="button"
