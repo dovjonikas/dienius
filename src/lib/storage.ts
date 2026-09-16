@@ -259,7 +259,14 @@ function normalizeLoaded(data: StoredAppData): AppData {
       textScale: data.settings.textScale ?? 'm',
       sleepProfiles: migrateSleepProfiles(data),
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
-      north: data.settings.north ? { afterASlowDay: data.settings.north.afterASlowDay } : { ...DEFAULT_NORTH },
+      // The row's switch is carried only when it is off - absent is on, see
+      // NorthSettings - so a plan that never touched it stays as it was.
+      north: data.settings.north
+        ? {
+            afterASlowDay: data.settings.north.afterASlowDay,
+            ...(data.settings.north.stripOnDay === false ? { stripOnDay: false } : {}),
+          }
+        : { ...DEFAULT_NORTH },
       eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
       // Read rather than trusted: this one is sanitised on the way in instead
       // of being refused at the door - see readChimeSettings for why a

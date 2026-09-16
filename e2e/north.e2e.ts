@@ -87,4 +87,15 @@ test('a heading opens on a hover, or on a tap where there is no pointer, and clo
     await expect(lines).toBeHidden()
     await expect(first).toHaveAttribute('aria-expanded', 'false')
   }
+
+  // And on the day: the headings in a row under the title, a press opens
+  // what is under one over the day, and a second press closes it.
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
+  const strip = page.getByRole('group', { name: 'North' })
+  const heading = strip.getByRole('button', { name: 'FIRST SECTION' })
+  await expect(heading).toBeVisible()
+  await heading.click()
+  await expect(page.locator('.north-strip-lines')).toHaveText('line under it')
+  await heading.click()
+  await expect(page.locator('.north-strip-lines')).toHaveCount(0)
 })

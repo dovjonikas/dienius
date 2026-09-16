@@ -5815,11 +5815,13 @@ button.danger {
   }
   button.core-toggle:not(.active):hover { color: var(--text); }
   .block-remove:hover { color: var(--danger); }
-  /* Three percent, not five: five took the count beside a title on the
-     light theme to 4.28:1, and the sweep said so. */
+  /* An edge rather than a ground: any tint of the ink under a row took the
+     count beside its title under 4.5:1 on the light theme, at five percent
+     and again at three, and the sweep said so both times. */
   .library-item-open:hover,
   .library-list-fold:hover {
-    background: color-mix(in srgb, var(--text) 3%, transparent);
+    box-shadow: inset 0 0 0 1px var(--border);
+    border-radius: var(--r-control);
   }
 }
 
@@ -9662,6 +9664,7 @@ button.task-library:hover { color: var(--text); }
   .setting-remove,
   .setting-quiet,
   .north-line-title,
+  .north-strip-heading,
   .north-compose-open,
   .focus-bar-exit,
   .block-remove,
@@ -9707,6 +9710,8 @@ button.task-library:hover { color: var(--text); }
   .setting-remove::after,
   .setting-quiet::after,
   .north-line-title::after,
+  /* A heading in the row under the day's title. */
+  .north-strip-heading::after,
   .north-compose-open::after,
   /* The one way out of a running Focus session, on every screen the bar can
      show on. A 30px cross in a row of 44px buttons; the overlay makes it the
@@ -10373,6 +10378,83 @@ button.task-library:hover { color: var(--text); }
 
 .north-line-more[hidden] { display: none; }
 
+/* North's headings under the line, collapsed - see NorthStrip. The line's
+   own register - small, tracked, the third ink - in a row that wraps, with
+   no edge and no ground. A heading with nothing under it is a word in the
+   row; the rest are the one control each, and come up one ink when open,
+   the way the line does. */
+.north-strip {
+  position: relative;
+  flex: 1 1 100%;
+  order: 10;
+  min-width: 0;
+  margin-top: var(--s0);
+}
+
+.north-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s0) var(--s4);
+}
+
+.north-strip-heading,
+.north-strip-bare {
+  display: inline-block;
+  min-height: 0;
+  padding: var(--s0) 0;
+  border: none;
+  background: none;
+  color: var(--faint);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  text-align: left;
+  transition: color var(--dur) var(--ease);
+}
+
+.north-strip-heading.is-open,
+.north-strip-heading:hover,
+.north-strip-heading:focus-visible {
+  color: var(--muted);
+}
+
+.north-strip-heading:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-mark);
+}
+
+/* What opens: the lines under the pressed heading, in a bubble under the
+   row - the same surface, edge and shadow as the line's peek and the
+   tooltip, because it is the same kind of thing, and never in the flow, so
+   the day beneath it never moves. Unlike the peek it takes the pointer: it
+   was opened on purpose, and a press on it must not fall through to a task. */
+.north-strip-more {
+  position: absolute;
+  top: calc(100% + var(--s2));
+  left: 0;
+  z-index: 60;
+  width: max-content;
+  max-width: min(62ch, 100%);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  --ground: var(--surface-raised);
+  box-shadow: var(--e2);
+}
+
+.north-strip-lines {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 /* The peek: a bubble hanging under the line's left end, with an arrow up
    at the words, never over them. The same surface, edge and shadow as the
    explanation bubble and the tooltip, because it is the same kind of thing
@@ -10790,6 +10872,12 @@ button.task-library:hover { color: var(--text); }
     box-shadow: var(--e2);
     visibility: hidden;
     opacity: 0;
+    /* The layer takes no pointer: the hover lives on the heading line, and
+       a pointer moving down through the text reaches whatever the text is
+       over - the next heading, Edit, Start the day - the moment it leaves
+       the line. The sweep found the alternative: an open layer standing on
+       the Edit under it, with no way to the button but round the layer. */
+    pointer-events: none;
   }
 
   .north-section:hover .north-section-body,

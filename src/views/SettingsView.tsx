@@ -630,6 +630,37 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 </button>
               </div>
             </div>
+
+            {/* North's headings under the day's title - see NorthStrip. Here
+                because it is the other thing that appears on the day without
+                being asked for. On by default: a text written to be read
+                every morning should be where the morning is. */}
+            <div className="setting-row">
+              <div className="setting-label">
+                <span className="setting-name">North at the top of the day</span>
+                <span className="setting-desc">
+                  The headings of your North text in a row under the day's title. A press on one opens
+                  what is under it.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button
+                  type="button"
+                  role="switch"
+                  className="switch"
+                  aria-checked={data.settings.north.stripOnDay !== false}
+                  aria-label="North at the top of the day"
+                  onClick={() =>
+                    actions.setNorthSettings({
+                      ...data.settings.north,
+                      stripOnDay: data.settings.north.stripOnDay === false,
+                    })
+                  }
+                >
+                  <span className="switch-thumb" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <CalendarSettings />

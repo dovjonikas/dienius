@@ -250,6 +250,16 @@ const SCREENS = [
   },
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
+  {
+    // A heading in the row under the day's title, pressed: the lines under
+    // it open in a bubble over the day, painted only then.
+    name: 'Today (North open)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await p.locator('.north-strip-heading').first().click()
+      await p.waitForTimeout(300)
+    },
+  },
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   {
     // The first open of a day, when there is a text: North, ending in Start

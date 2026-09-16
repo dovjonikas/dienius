@@ -1188,7 +1188,13 @@ export interface Picture extends Timestamped {
 export interface NorthSettings {
   /** A quiet card after a day that got away - never a scolding, never a number. */
   afterASlowDay: boolean
-  /** The same card, softer, on the first open of a Monday. */
+  /**
+   * North's headings in a row under the day's title, each opening what is
+   * under it - see NorthStrip. Absent means on: only the switch turned off
+   * is ever carried, so every payload from before the row existed reads as
+   * on without a migration and without a field on every plan.
+   */
+  stripOnDay?: boolean
 }
 
 /**

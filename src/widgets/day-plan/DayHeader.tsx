@@ -5,6 +5,7 @@ import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
+import { NorthStrip } from './NorthStrip'
 import { Explain } from '../../views/Explain'
 import type { ReplanMode } from '../../lib/replanState'
 
@@ -385,6 +386,11 @@ export function DayHeader({
           than as a notice about today, and so nothing below it moves when it
           opens. */}
       <NorthLine date={date} onOpenNorth={onOpenNorth} />
+
+      {/* And under it, North's headings, so the text is read from the day
+          without going to the page - see NorthStrip. A press opens one in
+          a bubble the way the line's peek opens, and the day never moves. */}
+      <NorthStrip date={date} />
     </div>
   )
 }

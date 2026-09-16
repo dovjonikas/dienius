@@ -1640,3 +1640,22 @@ test('a measurement that is not a whole positive number refuses the payload', ()
     expect(loadData().days, String(bad)).toEqual({})
   }
 })
+
+/**
+ * The row of North's headings on the day is on unless switched off, and
+ * only off is carried: a payload from before the switch existed, and one
+ * where it was turned back on, both read as on with nothing written.
+ */
+test('the North row switched off survives a reload, and a payload from before the switch reads as on', () => {
+  const data = defaultData()
+  data.settings.north = { afterASlowDay: true, stripOnDay: false }
+  expect(importJson(exportJson(data)).settings.north).toEqual({ afterASlowDay: true, stripOnDay: false })
+
+  data.settings.north = { afterASlowDay: true, stripOnDay: true }
+  expect(importJson(exportJson(data)).settings.north).toEqual({ afterASlowDay: true })
+
+  const before = importJson(
+    JSON.stringify({ templates: [], days: {}, settings: { theme: 'light', north: { afterASlowDay: true } } }),
+  )
+  expect(before.settings.north).toEqual({ afterASlowDay: true })
+})
