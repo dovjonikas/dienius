@@ -3363,3 +3363,73 @@ stays where STATE leaves it: the honest shape is a push that arrives at a
 time the owner chooses, and GitHub's cron cannot promise a time. A1, the
 sync check against the real GitHub, is the owner's to run, and its checklist
 is in CHECKS-BY-HAND.
+
+## A line in capitals is a heading
+
+Five things in one message, with a rule over all of them: nothing reworked,
+DECISIONS and CONVENTIONS kept, and North's own law - goals are not
+measured, there is no streak, and nothing is red. An hour before it, a
+message had asked for the goals to go altogether and North to be one text
+and nothing else; the owner's second thought kept them and asked for the
+form to be lighter instead, and nothing of the removal reached the repo.
+What did:
+
+**A heading is a line in capitals.** The lines under it, up to the next
+blank line or the next heading, are its text; a line before the first
+heading, or after a section's blank line, is free and always shown. There is
+no control for any of it and no syntax: the capitals are the formatting,
+which is the one kind of formatting a person cannot get wrong and a text
+cannot half-carry. Only the reading side knows the rule
+(`lib/northSections.ts`): the text is stored as the one string typed and
+parsed each time it is drawn, so a backup, an export and a sync carry the
+words and nothing the app made of them, and a text with no capitals-only
+line reads exactly as it did before there were headings.
+
+**The lines under a heading come when asked, and the page never moves for a
+pointer.** On the page at rest only the headings show, at the block's size
+and the page's heaviest weight. With a pointer that can rest, the lines
+appear under the heading on a hover, over the page, on the page's own ground
+- the answer the goal card gives and CONVENTIONS 24's rule - and the layer
+takes no pointer: the sweep found the alternative, an open layer standing on
+the Edit under it with no way to the button but round the layer. With a
+finger the lines open in the flow of the page on a tap and close on the
+next, and a keyboard opens one the way a finger does. A heading with nothing
+under it is a heading and not a control.
+
+**A goal is a What until more is written.** The form opened six boxes for a
+sentence, and the owner called it too heavy. It opens on What and one line,
+Add more; the why, the who, the two lists and the rules come when the line
+is pressed, the cursor lands in the first of them, and they stay open. A
+goal that already carries any of them opens with them showing, since a field
+with words in it is never hidden. Nothing about the goal changed: the store
+has always saved one with a title alone.
+
+**North's headings on the day.** The day is the one place, the owner said; a
+page in the rail is a press away, and a press away is where a text goes
+unread. So the headings stand in a row under the North line, in its
+register, and a press on one opens its lines in a bubble under the row, the
+way the line's own peek opens, so the day never moves. A press and not a
+hover, on both devices, because the row sits on the busiest screen in the
+app and a hover that opened text over the task list would open it on the way
+to a task. The row is an index and never the text: the free lines stay on
+the page. A switch under Nudges turns it off, and only off is ever carried
+in the plan - absent is on - so every plan from before the row existed reads
+as on without a migration.
+
+**A count instead of a streak.** Beside each block a template put on the
+days, Review says how many of the last seven and the last thirty days it was
+done on. A count and nothing else - no percentage, no target, no colour, no
+word about it - and no streak, so a day a block did not happen changes
+nothing but the number, because there is nothing else to change. A block
+happened on a day when the task standing for it is done, matched the way the
+plan reading matches; the day has to have been stamped from the block's
+template, the reading's own rule; a block that stood on no day in the thirty
+is not listed. Computed from the days as they are, every time, like
+everything on Review, so nothing can drift from the days it describes.
+
+**Two things the gates found on the way.** A library row's hover was a tint
+of ink under the row, and at five percent and again at three the tint took
+the count beside a title under 4.5:1 on the light theme; it is an edge now.
+And the sweep's Compose screen was pressing a button the voice pass had
+renamed, so eight pictures could not be reached: a screen name is a test,
+and a rename is a change to it.

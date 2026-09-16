@@ -44,9 +44,9 @@ Do these in order. Every button name is exact.
 
 ## North
 
-26. **North.** Type one line in **The picture**, press **Keep it**.
-27. Press **Compose**.
-28. Fill **What**, **Why it matters**, **Who it makes you**, **What I do to deserve this**.
+26. **North.** Type a few lines in the box - a line in capitals is a heading - and press **Done**.
+27. Press **Goals**, then **Write one down**.
+28. Fill **What**. **Add more** opens **Why it matters**, **Who it makes you** and **What I do to deserve this**, if you want them now.
 29. Press **Add another** for the second goal, then the third.
 30. Press **Save**.
 

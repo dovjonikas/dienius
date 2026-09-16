@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.22, the quality wave through part six.
+**Last updated:** v2.23, three small things and a count.
 
 ## v2.22 - the quality wave, part one: the pictures
 
@@ -66,6 +66,26 @@ Settings read as a document, every section with its heading and every
 description cut to what the setting does. Nothing was removed from Settings
 and no switch was hidden: what "fewer switches" turned out to mean was fewer
 words in front of each one.
+
+## v2.23 - three small things, and a count instead of a streak
+
+Asked for in one message, in five stages, one commit each - after a message
+an hour earlier that had asked for the goals to go altogether. The owner's
+second thought kept them and lightened the form, and nothing of the removal
+reached the repo. See DECISIONS "A line in capitals is a heading".
+
+1. **Headings in the North text** - a line in capitals is a heading and the
+   lines under it, to the next blank line, are its text. Parsed for display
+   only (`lib/northSections.ts`); the text stays the one string typed.
+2. **Reading with the lines folded** - the page shows its headings; the lines
+   under one come on a hover, over the page, and on a tap in the flow on the
+   phone. A text with no heading reads as before.
+3. **A lighter goal form** - a goal is a What until more is written; the
+   other fields and the rules wait behind Add more.
+4. **North on the day** - the headings in a row under the day's title, each
+   opening its lines in a bubble; a switch under Nudges, on by default.
+5. **How many times** - on Review, beside each repeating block, how many of
+   the last 7 and 30 days it happened on. A count and nothing else.
 
 ## v2.21 - eight reports in one day, and what they had in common
 
@@ -546,6 +566,7 @@ reading them.
 | Timer and stopwatch | Survive a refresh, run on every tab, keep time in a background tab, put the countdown in the tab title |
 | Day digest | In the wide rail: what is next, and how the day is going |
 | North line | One goal under the day's title, rotating daily, expanding on hover/tap/focus |
+| North headings row | The text's headings in a row under the North line, each opening what is under it in a bubble; off under Settings > Nudges |
 | North card | After a slow day or on a Monday, one goal comes forward with its reason - on a Monday with one line of what you do to deserve it, for the week. Never a word about how yesterday went |
 | Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, the journal's two optional questions, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
 | Journal | Three lines a day, none required: "Today: ..." under the North line, and the two questions at the close. Never counted, never streaked; read under the day in the week's agenda, copied as markdown for a week or a month. See `lib/journal.ts` |
@@ -558,8 +579,8 @@ reading them.
 | **Calendar → Week** | Seven columns of one shared timeline. Drag a block between days, tap to open, tap empty space to add, stamp per column or the whole week. Three days at a time on a phone |
 | **Templates** | Named, coloured sets of blocks; stamped onto dates by clicking or dragging, nothing commits until Save. A week template is drawn as a week - the calendar's own seven-column layout, fed template blocks, so a template week and a real week are drawn by one set of rules. Blocks sit at their real times; pressing one opens its note, its KEY mark and its removal in a panel under the grid; a block with no time sits under its column rather than vanishing; dragging moves it between days. "Add to" is seven day switches with Weekdays, Weekend, All days and Only-this-day as presets over them, and a line saying where the next press lands. The combination survives the add, so a rotation is set once |
 | **Library** | Lists worked through a unit at a time. The add line is the words plus a unit control and a count control that already hold an answer, remembering the unit per list; a typed "Dune, 20 chapters" still works and the controls redraw to show it. Lists fold and a chip row jumps between them; in each, the item you are on gets a card with its progress and its pace note while everything behind it is one quiet line. An item can be counted in the list unit, in pages, as a film, or as seasons and episodes. A session goes onto a day in two taps, or onto a template in one flow; ticking it off advances the book. When one ends, the list says what it moved on to and puts a sitting on today in one press - the block was already bound to the *list*, and until v2.0 nothing said so |
-| **Review** | Week and month facts, all derived from the days themselves: done over planned, deep work, key tasks, two charts, the goals' ages, what was read. No streak since v2.7. On a week, "Where the plan and the week disagreed": one line of facts per template block, sorted by disagreement, with a Copy - the reading the next brief comes out of |
-| **North** | One page, read from the top: the picture of who I am becoming, up to four goals with why and who it makes you, two to four deserve lines under each, and the if-then rules under each. Written in the window itself - one line of the picture to start, then everything behind one quiet Compose that saves in one press. Nothing measured, ever |
+| **Review** | Week and month facts, all derived from the days themselves: done over planned, deep work, key tasks, two charts, the goals' ages, what was read. No streak since v2.7. On a week, "Where the plan and the week disagreed": one line of facts per template block, sorted by disagreement, with a Copy - the reading the next brief comes out of. "How many times": beside each repeating block, how many of the last 7 and 30 days it happened on, a count and nothing else |
+| **North** | One text, read every morning: short lines in blocks, a line in capitals a heading whose lines come on a hover or a tap. Under it, behind one quiet line, up to four goals - a What until more is written, then why, who it makes you, the deserve and never lines, and the if-then rules under each - edited behind one Edit goals that saves in one press. Nothing measured, ever |
 | **Settings** | General, Sleep, Week, Categories, Nudges, Calendars, Backup, Sync, Appearance. General also replays the tour, in a sandbox. Nudges is exactly three rows since v2.5 - closing the day, when the evening starts, bringing a goal forward - and every setting in the screen has been walked against CONVENTIONS section 21 |
 
 ### Across the app

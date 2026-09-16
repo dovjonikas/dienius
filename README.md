@@ -43,7 +43,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - **Replans** a broken day in one press: something came up - on today or any day this week, with one line saying when you are still free - shift the rest, or away and back
 - Has a **low day** for when you do not feel like it: the key tasks stay at 40% of their length, the routine stays, the rest waits for tomorrow, and the day is scored on the key tasks alone
 - Times a **step** of a task from its own line - "Meditation 10 min" - with the one timer the app has, and ticks the step when the bell rings
-- Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went, with one reading of where the plan and the week disagreed
+- Keeps a **week view**, a **library** of books and series worked through a session at a time - finish one and it says what the queue moved on to - and a **review** of how the weeks went, with one reading of where the plan and the week disagreed and, beside each repeating block, how many of the last 7 and 30 days it happened on
 - Takes a **note** in one line from any screen, holds **pictures** in it - paste a screenshot, drag one in, or use the camera - and turns any note into a task with its editor already open
 - Keeps a **journal** that asks nothing and counts nothing: a day, one box, no questions, saving as you type, with the month copied as markdown for anywhere else
 - Never scores a bad day against you: no points, no badges, no red, no streak on the day view
@@ -73,7 +73,7 @@ After that it runs full screen, works with no connection, and keeps its data on 
 - Push twice, then decide: an unfinished task moves to tomorrow twice, after that you finish it, drop it, or mark it ongoing
 - What yesterday left, said once in a banner, moved forward in one tap, never on its own
 - An evening close: one sentence about the day at a time you set, or when the last thing is ticked. It never mentions what was not done
-- North: the picture of who you are becoming, up to four directions with a why and no progress bar, what you do to deserve each one, and the moments that pull you off it - one page, written once, read every day, one line of it under the day's title
+- North: your own text, read every morning - short lines in blocks, a line in capitals a heading whose lines open on a hover or a tap, and the headings in a row under the day's title - and under it up to four directions with a why and no progress bar, what you do to deserve each one, and the moments that pull you off it. Nothing measured, ever
 - Focus: the running task, its own planned time, a ring, a way out. Not a pomodoro
 - A timer and a stopwatch that survive a refresh and run on every tab
 - Task detail: exact minute, note, sub-steps, repeat, the three-a-day key mark

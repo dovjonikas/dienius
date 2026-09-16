@@ -122,59 +122,77 @@ clears the lot.
 
 ## 4. Write down what the days are for
 
-**North** - the sixth icon in the rail, or the `6` key. It opens empty with
-one question: **the picture**, one line about the person you are becoming.
-How you look, how you live, what you do in the morning, in the first person
-and the present tense. One line is enough to start; **Keep it**.
+**North** - the sixth icon in the rail, or the `6` key. It opens empty, on
+one plain box: your own text, read every morning. Short lines, in blocks, a
+blank line between blocks. Write it the way you would say it, in the first
+person; a few lines are enough to start. It saves as you type, and **Done**
+goes back to reading. **Edit**, under the words, opens the box again.
 
-Then **Write one down** - a goal, in four parts:
+**A line in capitals is a heading.** The lines under it, up to the next
+blank line or the next heading, are its text. Reading, the page shows the
+headings and the free lines; the text under a heading opens while the
+pointer rests on it and closes when it leaves, or on a tap on the phone. A
+text with no capitals-only line reads as its blocks. There is no button for
+any of this: the capitals are the formatting, and the text stays the one
+string you typed.
+
+The same headings stand in a row under the day's title on Today, and a
+press on one opens what is under it there, so the morning's page is a
+press away from nothing. Off, if you would rather not: **Settings → Nudges
+→ North at the top of the day**.
+
+The first open of the app on a new day opens on North, and **Start the
+day** at the end of the words is the way on.
+
+### The goals under it
+
+Under the text, behind one quiet line, the goals: **Goals** opens the fold,
+**Write one down** the form. A goal is a **What** - short, and something you
+do rather than something you get - and **Save** keeps it with that alone.
+**Add more** opens the rest when you want it:
 
 | | |
 |---|---|
-| **What** | Short, and something you do rather than something you get |
 | **Why it matters** | In your own words, the reason you would say out loud |
 | **Who it makes you** | "I am someone who ..." |
 | **What I do to deserve this** | Two to four things you actually do, most days, one per line: "train four times a week", "apply to three places a day". Not wishes |
+| **What I don't do** | The same few from the other side |
 
-**Save** keeps it. Up to four goals; the window refuses a fifth rather than
-dropping one.
-
-One goal appears under the day's title each morning, rotating. On a Monday
-the card that comes forward carries one of your deserve lines for the week.
+Up to four goals; the window refuses a fifth rather than dropping one. One
+goal appears under the day's title each morning, rotating. On a Monday the
+card that comes forward carries one of your deserve lines for the week.
 **Nothing here is ever measured** - no progress, no deadline, nothing to
-tick. The one number near a goal is how many days you have lived toward it,
-which is a fact and cannot be lost.
+tick.
 
 Two of these is plenty to start with. Writing a fourth to fill the space is
 how you end up with one you do not believe.
 
-**Changing it later** is **Compose**, the quiet word in the corner. It opens
-the whole page at once - the picture, every goal, what to archive, what to
-bring back - and **Save** writes all of it in one press; **Cancel** or Escape
-drops the lot. It is meant to be opened rarely: this is a page to read, and
-rewriting it on a bad morning is exactly what it is built not to invite.
+**Changing them later** is **Edit goals**, the quiet word in the corner. It
+opens every goal at once - what to archive, what to bring back - and
+**Save** writes all of it in one press; **Cancel** or Escape drops the lot.
+It is meant to be opened rarely: this is a page to read, and rewriting it on
+a bad morning is exactly what it is built not to invite.
 
 ### And what pulls you off them
 
-Under each goal sits a short list headed **What pulls me off this**. Each
-line is a moment you can catch and the one thing you already decided to do
-about it:
+Under each goal's fields, once **Add more** has opened them, sits a short
+list headed **What pulls me off this**. Each line is a moment you can catch
+and the one thing you already decided to do about it:
 
-> If I catch myself scrolling at 23:00 -> phone in the kitchen, book in hand.
+> If I catch myself scrolling at 23:00, then phone in the kitchen, book in hand.
 
 On a goal with none yet the heading is the invitation: press **What pulls me
-off this** and the form opens there, on the spot rather than in Compose,
-because noticing what pulls you off course happens the moment it does. Once
-one is written the heading goes back to being a heading and **Add another**
-sits under the list. Five per goal, and the cap refuses rather than dropping the oldest.
-Write them the way you would say them, about a moment specific enough to
-notice: "when I get home and the kitchen is a mess" is a moment; "when I feel
-unmotivated" is not.
+off this** and the form opens there. Once one is written the heading goes
+back to being a heading and **Add another** sits under the list. Five per
+goal, and the cap refuses rather than dropping the oldest. Write them the
+way you would say them, about a moment specific enough to notice: "when I
+get home and the kitchen is a mess" is a moment; "when I feel unmotivated"
+is not.
 
 Nothing counts them, nothing asks whether you did them, and nothing shows
-them on the day view. They appear in exactly two places: here, and once under
-the why on the card that comes forward after a day that got away, introduced
-as what you wrote yourself.
+them on the day view. They appear in exactly two places: here, and once
+under the why on the card that comes forward after a day that got away,
+introduced as what you wrote yourself.
 
 If you wrote rules before they belonged to goals, they are all still here,
 gathered under **Not under a goal yet** with the goals offered beside each
