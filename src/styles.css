@@ -8067,17 +8067,15 @@ button.danger:focus-visible {
   font-size: var(--t-lg);
 }
 
+/* An empty library: its sentence and the offers under it, where the lists
+   would begin, with no card round them - docs/DESIGN.md, empty states. */
 .library-empty {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
-  padding: var(--s5);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--surface);
+  gap: var(--s3);
 }
 
-.library-empty p { margin: 0; max-width: 60ch; line-height: 1.6; }
+.library-empty p { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
 
 .library-starters { display: flex; flex-wrap: wrap; gap: var(--s3); }
 
@@ -8086,7 +8084,6 @@ button.danger:focus-visible {
   flex-direction: column;
   gap: var(--s4);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
 }
@@ -8106,7 +8103,7 @@ button.danger:focus-visible {
 .library-new-fields .field-unit { max-width: none; }
 .library-new-fields .field-unit input { max-width: 280px; }
 .library-new-fields .field-short { max-width: 96px; }
-.library-new-actions { display: flex; gap: var(--s3); }
+.library-new-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
 
 /* One field and its label, stacked. The same shape the sleep window fields
    use, promoted to a shared class now that a second screen needs it. */
@@ -8153,10 +8150,10 @@ button.danger:focus-visible {
 
 .library-item-move-button {
   min-height: 0;
-  width: 24px;
-  height: 24px;
+  width: var(--s6);
+  height: var(--s6);
   padding: 0;
-  border: 1px solid transparent;
+  border: none;
   border-radius: var(--r-mark);
   background: none;
   color: var(--muted);
@@ -8164,7 +8161,7 @@ button.danger:focus-visible {
   line-height: 1;
 }
 
-.library-item-move-button:hover { color: var(--text); border-color: var(--border); }
+.library-item-move-button:hover:not(:disabled) { color: var(--text); background: var(--fill); }
 /* Faded by ink rather than by opacity, which is the lesson .btn-secondary's
    own disabled state already carries: half opacity puts a muted grey on a
    grey surface, and the sweep measured this arrow at 2.17:1 on Light against
@@ -8189,31 +8186,33 @@ button.danger:focus-visible {
 
 .library-add-many-open { align-self: flex-start; margin-top: var(--s2); }
 
+/* No ground of its own: its box is a field on the list's card. */
 .library-add-many {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
   margin-top: var(--s2);
-  padding: var(--s3);
-  border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--border) 22%, transparent);
 }
 
 .library-add-many-text {
   width: 100%;
-  min-height: calc(6 * 1.5em + 2 * var(--s2));
+  min-height: calc(6 * var(--lh-ui) * 1em + 2 * var(--s2));
   max-height: 50vh;
   overflow-y: auto;
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   font-family: inherit;
-  font-size: var(--t-input);
-  line-height: 1.5;
+  font-size: var(--t-md);
+  line-height: var(--lh-ui);
   white-space: pre-wrap;
   resize: none;
+}
+
+@media (pointer: coarse) {
+  .library-add-many-text { font-size: var(--t-read); }
 }
 
 .library-add-many-rule { margin: 0; color: var(--muted); font-size: var(--t-xs); }
@@ -8223,7 +8222,7 @@ button.danger:focus-visible {
 .library-add-many-count { margin: 0; color: var(--text); font-size: var(--t-sm); }
 .library-add-many-dupes { color: var(--muted); }
 
-.library-add-many-actions { display: flex; gap: var(--s2); }
+.library-add-many-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
 .library-add-many-actions button { flex: 0 0 auto; }
 
 .library-lists { display: flex; flex-direction: column; gap: var(--s4); }
@@ -8233,19 +8232,19 @@ button.danger:focus-visible {
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
-  box-shadow: var(--e1);
 }
 
+/* The list's name and what it is counted in at the left, Edit at the right,
+   on one centre line. */
 .library-list-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s3);
 }
 
-.library-list-head h3 { margin: 0; font-size: var(--t-md); }
+.library-list-head h3 { margin: 0; font-size: var(--t-md); font-weight: var(--w-strong); }
 
 .library-list-unit {
   flex: 1;
@@ -8264,17 +8263,19 @@ button.danger:focus-visible {
   .library-list-unit { white-space: normal; overflow: visible; }
 }
 
+/* A quiet button one control tall. */
 .library-list-edit {
-  min-height: 0;
-  padding: var(--s0) var(--s2);
+  flex: 0 0 auto;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
   border: none;
-  border-radius: var(--r-mark);
+  border-radius: var(--r-control);
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
 }
 
-.library-list-edit:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
+.library-list-edit:hover { color: var(--text); background: var(--fill); }
 
 /* Two rows: the three words the list is described in, then the dot and the
    one destructive control, each in its own corner.
@@ -8289,12 +8290,9 @@ button.danger:focus-visible {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
   gap: var(--s4);
-  padding: var(--s3);
-  border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--border) 22%, transparent);
-  /* A wash over the list's surface, so the ground under the colour dots is
-     the two blended, and the chosen dot's ring reads exactly that. */
-  --ground: color-mix(in srgb, var(--border) 22%, var(--surface));
+  /* No wash of its own: its fields stand on the list's card, and the ring
+     round a chosen dot is cut from the card's ground. */
+  --ground: var(--surface);
 }
 
 .library-list-settings .field-dot { grid-column: 1 / span 3; }
@@ -8309,8 +8307,6 @@ button.danger:focus-visible {
    bottom, behind a line, on its own. */
 .library-list-foot {
   grid-column: 1 / -1;
-  padding-top: var(--s3);
-  border-top: 1px solid var(--border);
 }
 
 /* The words take the whole first line when the two controls and the button
@@ -8338,18 +8334,6 @@ button.danger:focus-visible {
   flex: 0 0 auto;
 }
 
-/* One height across the row, the field included - on a mouse. Not the
-   stepper's two arrows: each is half its box, and giving each the row's
-   own minimum made the box twice the row - 78px beside a 39px field. */
-@media (hover: hover) and (pointer: fine) {
-  .library-add > input,
-  .library-add .library-amount,
-  .library-add .library-add-go { min-height: 40px; }
-  .library-add .library-unit,
-  .library-add .count-stepper,
-  .library-add-controls .count-input,
-  .library-add .duration-control-value { min-height: 38px; }
-}
 
 /* "12 chapters" is one answer, so the unit and the count are one box with
    a hairline between them. Two boxes with the row's own gap between them
@@ -8359,14 +8343,14 @@ button.danger:focus-visible {
   display: flex;
   align-items: stretch;
   flex: 0 0 auto;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease);
+  transition: box-shadow var(--dur-fast) var(--ease);
 }
 
-.library-amount:focus-within { border-color: var(--accent); }
+.library-amount:focus-within { box-shadow: 0 0 0 3px var(--ring); }
 
 /* The two halves give up their own edges to the shell around them. */
 .library-amount .library-unit .duration-control-value,
@@ -8376,7 +8360,7 @@ button.danger:focus-visible {
   background: none;
 }
 
-.library-amount .count-stepper { border-left: 1px solid var(--border); }
+
 .library-amount .library-unit { border: none; }
 
 /* Narrower than it was: 72px held four digits nothing in a library ever
@@ -8384,14 +8368,6 @@ button.danger:focus-visible {
    in a row whose subject is the title on the left. */
 .library-add .count-stepper .count-input { width: 52px; }
 
-/* Flat and quiet while there is nothing to add, rather than a faded copy
-   of the button beside it - the owner read the faded one as broken. */
-.library-add-go:disabled {
-  background: color-mix(in srgb, var(--border) 45%, transparent);
-  border-color: transparent;
-  color: var(--muted);
-  opacity: 1;
-}
 
 /* One step under the row it belongs to, not two. */
 .library-list-empty { margin: 0 0 calc(var(--s1) * -1); font-size: var(--t-sm); color: var(--muted); }
@@ -8415,7 +8391,11 @@ button.danger:focus-visible {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .library-item:hover { background: color-mix(in srgb, var(--border) 28%, transparent); }
+  .library-item:hover { background: var(--fill); }
+  /* An open row is a panel, not a row to point at: under the pointer it
+     would lay the fill under everything in the panel - its Delete's danger
+     ink came out at 4.2:1 on it in the light theme. */
+  .library-item.is-detailed:hover { background: none; }
 }
 
 .library-item.is-dragging { opacity: 0.45; }
@@ -8450,7 +8430,7 @@ button.danger:focus-visible {
   .library-item-grip { height: var(--touch); }
 }
 
-.library-item-grip:hover { background: color-mix(in srgb, var(--border) 45%, transparent); }
+.library-item-grip:hover { background: var(--fill); }
 
 .library-item-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
@@ -8524,11 +8504,11 @@ button.danger:focus-visible {
 }
 
 .library-step {
-  width: 26px;
-  height: 26px;
+  width: var(--s6);
+  height: var(--s6);
   min-height: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-round);
   background: none;
   color: var(--muted);
@@ -8536,24 +8516,24 @@ button.danger:focus-visible {
   line-height: 1;
 }
 
-.library-step:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
+.library-step:hover:not(:disabled) { color: var(--text); background: var(--fill); }
 .library-step:disabled { opacity: var(--faded); }
 
 .library-item-actions { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0; }
 
 .library-item-schedule,
 .library-item-reopen {
-  min-height: 0;
-  padding: 3px var(--s2);
-  border: 1px solid var(--border);
+  min-height: var(--s6);
+  padding: 0 var(--s2);
+  border: none;
   border-radius: var(--r-pill);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-xs);
 }
 
 .library-item-schedule:hover,
-.library-item-reopen:hover { color: var(--text); border-color: var(--muted); }
+.library-item-reopen:hover { color: var(--text); background: var(--fill-strong); }
 
 /* Two named days and nothing else. The whole promise is two taps, and a
    date picker here would make it four and a decision. Anything further out
@@ -8563,14 +8543,13 @@ button.danger:focus-visible {
   align-items: center;
   gap: var(--s0);
   padding: var(--s0);
-  border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  background: var(--bg);
+  background: var(--fill);
 }
 
 .library-schedule button {
-  min-height: 0;
-  padding: 3px var(--s2);
+  min-height: var(--s6);
+  padding: 0 var(--s2);
   border: none;
   border-radius: var(--r-pill);
   background: none;
@@ -8578,28 +8557,23 @@ button.danger:focus-visible {
   font-size: var(--t-xs);
 }
 
-.library-schedule button:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.library-schedule button:hover { background: var(--fill-strong); }
 
-/* The item panel reuses this class for a button with a word in it rather
-   than the glyph the circle was sized for, and "Delete" overflowed its own
-   click target - measured at 1366x768, scrollWidth 43 in a 26px box. Only
-   in the panel: the hover crosses on the rows stay circles. */
-.library-detail-actions .library-item-remove { width: auto; padding: 0 var(--s2); }
-
+/* The cross on a row: quiet, the danger ink under the pointer. */
 .library-item-remove {
-  width: 26px;
-  height: 26px;
+  width: var(--s6);
+  height: var(--s6);
   min-height: 0;
   padding: 0;
   border: none;
   border-radius: var(--r-round);
   background: none;
-  color: var(--faint);
+  color: var(--muted);
   font-size: var(--t-md);
   line-height: 1;
 }
 
-.library-item-remove:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.library-item-remove:hover { color: var(--danger); background: var(--fill); }
 
 .library-finished { margin-top: var(--s1); }
 
@@ -8842,7 +8816,6 @@ button.danger:focus-visible {
    the row becomes two: the title and its bar, then everything that acts on
    it. Nothing is hidden - a phone gets the same list, in two lines. */
 @media (max-width: 599px) {
-  .library { padding: var(--s4) var(--s3) var(--s7); }
   .library-item { flex-wrap: wrap; row-gap: var(--s2); padding-left: var(--s2); }
   /* The grip stays on the title line rather than taking a 44px row of its
      own: a basis just short of the full width fills line one with the grip
@@ -9942,12 +9915,24 @@ button.task-library:hover { color: var(--text); }
 .review-nav {
   display: flex;
   align-items: center;
-  gap: var(--s3);
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.review-nav > .review-range { margin-right: auto; }
+
+.review-nav > button:first-of-type { margin-left: var(--s2); }
+
+@media (max-width: 599px) {
+  .review-nav > .review-tools {
+    order: 1;
+    flex: 1 0 100%;
+  }
 }
 
 /* The same bare glyph the calendar and the day header use. It was a bordered
    38px box, which was also the one period arrow in the app that was not 44. */
-.review-nav button {
+.review-nav > button {
   width: var(--touch);
   height: var(--touch);
   min-height: 0;
@@ -9958,16 +9943,16 @@ button.task-library:hover { color: var(--text); }
   color: var(--muted);
 }
 
-.review-nav button:hover:not(:disabled) { color: var(--text); }
+.review-nav > button:hover:not(:disabled) { color: var(--text); }
 /* Quiet, not faded. The glyph went from --text to --muted when the box came
    off it, and --muted at the faded opacity is 2.09:1 - the sweep caught it
    the same run. --faint is the app own ink for "there but not for you" and
    clears the floor on both themes. */
-.review-nav button:disabled { color: var(--faint); opacity: 1; }
+.review-nav > button:disabled { color: var(--faint); opacity: 1; }
 
-.review-range { color: var(--text); font-size: var(--t-md); font-weight: 600; }
+.review-range { color: var(--text); font-size: var(--t-md); font-weight: var(--w-strong); }
 
-.review-empty { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: 1.6; }
+.review-empty { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
 
 /* Four figures across, dropping to two on a phone. Same shape as the day
    digest, which is the other place in this app that states a few numbers
@@ -9978,17 +9963,15 @@ button.task-library:hover { color: var(--text); }
   gap: var(--s4);
   margin: 0;
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
 }
 
+/* Labels, in the label's register - sentence case, as everywhere. */
 .review-figures dt {
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 
 .review-figures dd {
@@ -9998,19 +9981,18 @@ button.task-library:hover { color: var(--text); }
   font-variant-numeric: tabular-nums;
 }
 
-.review-figure-note { color: var(--muted); font-size: var(--t-sm); font-weight: 400; }
+.review-figure-note { color: var(--muted); font-size: var(--t-sm); font-weight: var(--w-regular); }
 
 .review-block {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
 }
 
-.review-block h3 { margin: 0; font-size: var(--t-md); }
+.review-block h3 { margin: 0; font-size: var(--t-md); font-weight: var(--w-strong); }
 
 /* One column per day. Boxes with a height, not a chart - see the Chart
    comment in ReviewView.tsx for why there are no axes here. */
@@ -10036,7 +10018,7 @@ button.task-library:hover { color: var(--text); }
   background: none;
 }
 
-.review-bar:hover:not(:disabled) { background: color-mix(in srgb, var(--border) 35%, transparent); }
+.review-bar:hover:not(:disabled) { background: var(--fill); }
 
 .review-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -10079,8 +10061,8 @@ button.task-library:hover { color: var(--text); }
    one sentence when it is read out. Nothing is coloured by its value and
    nothing is a bar: a line is a count, not a verdict. */
 .review-reading-list { display: flex; flex-direction: column; gap: var(--s2); margin: 0; padding: 0; list-style: none; }
-.review-reading-list li { font-size: var(--t-sm); line-height: 1.4; }
-.review-reading-block { color: var(--text); font-weight: 600; }
+.review-reading-list li { font-size: var(--t-sm); line-height: var(--lh-ui); }
+.review-reading-block { color: var(--text); font-weight: var(--w-strong); }
 .review-reading-facts { color: var(--muted); }
 
 /* The template's name over its lines, drawn only when the week used more
@@ -10090,9 +10072,7 @@ button.task-library:hover { color: var(--text); }
   margin: 0;
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 .review-reading-list + .review-reading-template { margin-top: var(--s2); }
 
@@ -10194,7 +10174,11 @@ button.task-library:hover { color: var(--text); }
   font-size: var(--t-lg);
 }
 
-.palette-input:focus { outline: none; background: none; border-color: color-mix(in srgb, var(--border) 70%, transparent); }
+/* No halo: the field is the whole dialog's subject, and the field's halo
+   was clipped by the dialog's own corners into a thick accent line along the
+   foot of the field. The rule under it is the divider it always was. */
+.palette-input:hover,
+.palette-input:focus { outline: none; background: none; border-color: color-mix(in srgb, var(--border) 70%, transparent); box-shadow: none; }
 
 .palette-results {
   overscroll-behavior: contain;
@@ -10223,7 +10207,7 @@ button.task-library:hover { color: var(--text); }
 /* The selection is the keyboard's, not the pointer's - there is no hover
    state here on purpose. A row that lights up under the mouse while a
    different row is armed for Enter is two cursors on one list. */
-.palette-row.is-selected { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.palette-row.is-selected { background: var(--accent-dim); }
 /* On the tinted row the detail steps up to text: muted on the tint was 3.8:1. */
 .palette-row.is-selected .palette-row-detail { color: var(--text); }
 
@@ -10296,7 +10280,9 @@ button.task-library:hover { color: var(--text); }
 
 .undo-toast-dismiss:hover { color: var(--text); background: color-mix(in srgb, var(--border) 50%, transparent); }
 
-.review-block-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+/* A block's name at the left and what it offers at the right, on one
+   centre line. */
+.review-block-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
 .review-peak { flex-shrink: 0; color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 
 /* A day with nothing on it. Two pixels of --border rather than an empty
@@ -12716,8 +12702,9 @@ main:has(.week) > .calendar {
     min-height: var(--touch);
   }
 
-  /* Square by its own rule, so the width has to move with the height. */
-  .review-nav button {
+  /* Square by its own rule, so the width has to move with the height. The
+     arrows only: the copy button beside them is a word, not a square. */
+  .review-nav > button {
     width: var(--touch);
     height: var(--touch);
   }
@@ -13172,7 +13159,6 @@ main:has(.week) > .calendar {
   max-height: 30vh;
   resize: none;
   border: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: 0;
   background: none;
   padding: var(--s4);
@@ -13182,10 +13168,10 @@ main:has(.week) > .calendar {
   color: var(--text);
 }
 
+.scratch-input:hover,
 .scratch-input:focus {
   outline: none;
   background: none;
-  border-color: color-mix(in srgb, var(--border) 70%, transparent);
   box-shadow: none;
 }
 
@@ -13198,9 +13184,12 @@ main:has(.week) > .calendar {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
-/* The count is a fact, set as quietly as the capacity line. Never a badge. */
+/* The count is a fact, set as quietly as the capacity line. Never a badge.
+   The one rule in the panel is under this row, across the whole panel: it
+   was under the field as well, where it stopped short of the buttons beside
+   the field and read as a line that had not been finished. */
 .scratch-count {
-  color: var(--faint);
+  color: var(--muted);
   font-size: var(--t-xs);
   margin-left: auto;
   white-space: nowrap;
@@ -13294,8 +13283,8 @@ main:has(.week) > .calendar {
 }
 
 .scratch-note-menu button {
-  min-height: 36px;
-  padding: var(--s1) var(--s3);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
   border: none;
   border-radius: var(--r-mark);
   background: none;
@@ -13304,14 +13293,13 @@ main:has(.week) > .calendar {
   text-align: left;
 }
 
-.scratch-note-menu button:hover { background: color-mix(in srgb, var(--border) 55%, transparent); }
+.scratch-note-menu button:hover { background: var(--fill); }
 .scratch-note-menu button.danger { color: var(--danger); }
-.scratch-note-menu button.danger:hover { background: color-mix(in srgb, var(--danger) 14%, transparent); }
 .scratch-note-menu button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .scratch-note-action {
-  min-height: 0;
-  padding: 3px var(--s2);
+  min-height: var(--s6);
+  padding: 0 var(--s2);
   border: none;
   border-radius: var(--r-mark);
   background: none;
@@ -13320,7 +13308,7 @@ main:has(.week) > .calendar {
 }
 
 @media (pointer: coarse) {
-  .scratch-note-action { min-height: 36px; position: relative; }
+  .scratch-note-action { position: relative; }
   .scratch-note-action::after {
     content: '';
     position: absolute;
@@ -13354,8 +13342,8 @@ main:has(.week) > .calendar {
    pointer is on them. They were a pill, a square and a bare glyph. */
 .scratch-close {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
   border: none;
@@ -13366,7 +13354,7 @@ main:has(.week) > .calendar {
   line-height: 1;
 }
 
-.scratch-close:hover { color: var(--text); border-color: var(--muted); }
+.scratch-close:hover { color: var(--text); background: var(--fill-strong); }
 
 @media (pointer: coarse) {
   .scratch-close { position: relative; }
@@ -14185,7 +14173,7 @@ main:has(.week) > .calendar {
 
 .library-chip:hover { background: var(--fill-strong); }
 
-.library-chip-count { color: var(--faint); font-variant-numeric: tabular-nums; }
+.library-chip-count { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .library-chip-dot {
   width: 8px;
@@ -14250,7 +14238,7 @@ main:has(.week) > .calendar {
 }
 
 .library-preset:hover { background: var(--fill-strong); }
-.library-preset-unit { color: var(--faint); font-size: var(--t-xs); }
+.library-preset-unit { color: var(--muted); font-size: var(--t-xs); }
 
 /* Nine dots, and where they break.
 
@@ -14317,30 +14305,28 @@ main:has(.week) > .calendar {
   align-items: center;
   gap: var(--s1) var(--s2);
   margin: 0 0 var(--s2);
-  padding: var(--s2);
-  border: 1px dashed var(--border);
-  border-radius: var(--r-card);
   color: var(--muted);
   font-size: var(--t-sm);
-  line-height: 1.4;
+  line-height: var(--lh-ui);
 }
 
 .library-upnext-said { flex: 1 1 14rem; min-width: 0; }
-.library-upnext-said strong { color: var(--text); font-weight: 600; }
+.library-upnext-said strong { color: var(--text); font-weight: var(--w-strong); }
 .library-upnext-done { color: var(--muted); }
 .library-upnext-go { flex-shrink: 0; }
 
-/* The one thing that is loud. A surface and a heavier title, so the eye
-   lands on what you are actually on before it reads anything else. */
+/* The one thing that is loud: the larger title, its bar and its lines, so
+   the eye lands on what you are actually on before it reads anything else.
+   No ground of its own - the list is already a card, and a fill under this
+   row swallowed the fields and buttons of its panel when it opened, each of
+   them drawn on the same fill. */
 .library-items.is-active { margin-bottom: var(--s2); }
 
 /* The same right inset as the quiet rows under it, so its count sits on
    their line rather than a few pixels in from it. */
 .library-item.is-active {
   padding: var(--s3) var(--s2) var(--s3) 0;
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
-  background: var(--surface);
 }
 
 .library-item.is-active .library-item-title { font-size: var(--t-lg); }
@@ -14367,13 +14353,14 @@ main:has(.week) > .calendar {
      buttons pushed its count thirty pixels left of a row with one, and
      the column of counts came out ragged even after they were all flush
      right. Two 26px buttons and the gap between them. */
-  min-width: 56px;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease);
+  min-width: calc(var(--s6) * 2 + var(--s1));
 }
 
-.library-item:hover .library-item-hover,
-.library-item:focus-within .library-item-hover { opacity: 1; }
+/* Always there, and quiet - the row's own actions at its right edge, the way
+   a template's block row carries its own. Hidden until hovered, they left a
+   hand's width of nothing at the end of every row, which read as the row
+   stopping short of its card; and while a row's panel is open the room is
+   kept by an empty placeholder, so nothing on the row jumps. */
 
 @media (hover: none), (pointer: coarse) {
   .library-item-hover { display: none; }
@@ -14397,8 +14384,6 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s3);
   margin-top: var(--s3);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--border);
 }
 
 .library-item.is-detailed { flex-wrap: wrap; }
@@ -14446,21 +14431,21 @@ main:has(.week) > .calendar {
   color: var(--text);
 }
 
+/* Small quiet buttons, not underlined words. */
 .library-detail-file-change,
 .library-detail-pick {
   flex: 0 0 auto;
-  min-height: 0;
-  padding: 0;
+  min-height: var(--s6);
+  padding: 0 var(--s3);
   border: none;
+  border-radius: var(--r-control);
   background: none;
   color: var(--muted);
   font-size: var(--t-xs);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .library-detail-file-change:hover,
-.library-detail-pick:hover { color: var(--text); }
+.library-detail-pick:hover { color: var(--text); background: var(--fill); }
 
 /* Under the field rather than under the label, so the two ways of
    answering the same question sit in one column. The label's own width plus
@@ -14493,9 +14478,12 @@ main:has(.week) > .calendar {
 .library-detail-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--s2);
   flex-wrap: wrap;
 }
+
+.library-detail-actions > .library-detail-delete { margin-right: auto; }
 
 .library-detail-note { margin: 0; font-size: var(--t-sm); }
 
@@ -14522,10 +14510,6 @@ main:has(.week) > .calendar {
   align-items: flex-end;
   gap: var(--s3);
   flex-wrap: wrap;
-  padding: var(--s3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--bg);
 }
 
 .library-template-form .field { margin: 0; }
@@ -14569,6 +14553,9 @@ main:has(.week) > .calendar {
   .library-item-main { flex: 1 0 100%; }
   .library-item-open .library-item-count { min-width: 0; text-align: left; }
   .library-detail-row .field-label { min-width: 0; flex: 1 0 100%; }
+  /* The labels stand over their fields here, so the picker starts where the
+     fields do - at the left - rather than a label's width in. */
+  .library-detail-pick { margin-left: 0; }
   .library-template-form { flex-direction: column; align-items: stretch; }
   .library-template-form input,
   .library-template-form select { width: 100%; }
@@ -14611,7 +14598,7 @@ main:has(.week) > .calendar {
 
 .scratch-intent {
   flex-shrink: 0;
-  height: 32px;
+  height: var(--control-h);
   min-height: 0;
   padding: 0 var(--s3);
   border: none;
@@ -14621,11 +14608,10 @@ main:has(.week) > .calendar {
   font-size: var(--t-sm);
 }
 
-.scratch-intent:hover { color: var(--text); border-color: var(--muted); }
+.scratch-intent:hover { color: var(--text); background: var(--fill-strong); }
 
 .scratch-intent.is-task {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: var(--accent-dim);
   color: var(--text);
 }
 
@@ -15338,12 +15324,7 @@ main:has(.week) > .calendar {
    button, right-aligned, one line: copying is not what either screen is
    for. */
 .week-tools, .review-tools { display: flex; justify-content: flex-end; flex: 0 0 auto; }
-.review-tools { margin-top: calc(-1 * var(--s2)); }
-.copy-journal { display: inline-flex; align-items: center; font-size: var(--t-sm); }
-/* `opacity: 1` against the global `button:disabled` fade: this row says
-   "nothing to copy" with `--faint` and the underline coming off, which is
-   two cues already. The fade underneath made three and took it to 2.08:1. */
-.copy-journal .link-button:disabled { color: var(--faint); text-decoration: none; cursor: default; opacity: 1; }
+.copy-journal { display: inline-flex; align-items: center; }
 
 .agenda-list {
   display: flex;
@@ -15907,8 +15888,8 @@ main:has(.week) > .calendar {
 
 .scratch-photo-add {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
   border: none;
@@ -15919,7 +15900,7 @@ main:has(.week) > .calendar {
   line-height: 1;
 }
 
-.scratch-photo-add:hover { color: var(--text); border-color: var(--muted); }
+.scratch-photo-add:hover { color: var(--text); background: var(--fill-strong); }
 
 .scratch-draft-photos { margin-top: var(--s2); }
 
@@ -15990,17 +15971,26 @@ main:has(.week) > .calendar {
 .clock-note-input {
   width: 100%;
   resize: none;
-  font-size: var(--t-input);
+  font-size: var(--t-md);
 }
 
+@media (pointer: coarse) {
+  .clock-note-input { font-size: var(--t-read); }
+}
+
+/* The lines under the box start where the box's own words start, a
+   control's inner edge in, and so does the way to the whole stream under
+   them: one left edge for everything written in the panel. */
 .clock-note-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 var(--s3);
   display: flex;
   flex-direction: column;
   gap: var(--s1);
 }
+
+.clock-notes > .clock-note { padding: 0 var(--s3); }
 
 .clock-note-list li {
   overflow: hidden;
@@ -16010,18 +16000,20 @@ main:has(.week) > .calendar {
   font-size: var(--t-xs);
 }
 
+/* A quiet button, its word on the panel's left edge of writing. */
 .clock-note-open {
   align-self: flex-start;
-  min-height: 0;
-  padding: var(--s1) var(--s2);
-  margin-left: calc(var(--s2) * -1);
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
   border: none;
+  border-radius: var(--r-control);
   background: none;
-  color: var(--accent);
+  color: var(--muted);
   font-size: var(--t-sm);
+  font-weight: var(--w-strong);
 }
 
-.clock-note-open:hover { text-decoration: underline; }
+.clock-note-open:hover { color: var(--text); background: var(--fill); }
 
 @media (pointer: coarse) {
   .clock-note-open { min-height: var(--touch); }
@@ -16313,19 +16305,22 @@ main:has(.week) > .calendar {
   font-size: var(--t-sm);
 }
 
+/* The day's two arrows: quiet squares one control tall, not boxes. */
 .journal-step {
-  width: 32px;
-  height: 32px;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
   background: none;
-  color: var(--text);
+  color: var(--muted);
   font-size: var(--t-glyph);
 }
 
-.journal-step:disabled { opacity: var(--faded); }
+.journal-step:hover:not(:disabled) { color: var(--text); background: var(--fill); }
+
+.journal-step:disabled { color: var(--faint); opacity: 1; }
 
 /* No resize handle: the panel and the overlay each give the box the
    height it has, and a grip in the corner of a sheet read as something
@@ -16333,8 +16328,12 @@ main:has(.week) > .calendar {
 .journal-box {
   width: 100%;
   resize: none;
-  font-size: var(--t-input);
-  line-height: 1.5;
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+}
+
+@media (pointer: coarse) {
+  .journal-box { font-size: var(--t-read); }
 }
 
 /* The one line that says this is not Notes. The quietest text on the panel:
@@ -16342,8 +16341,8 @@ main:has(.week) > .calendar {
    so it reads as a caption under the box rather than as a heading over it. */
 .journal-difference {
   margin: 0;
-  font-size: var(--t-2xs);
-  color: var(--faint);
+  font-size: var(--t-xs);
+  color: var(--muted);
   text-align: center;
 }
 
@@ -16365,20 +16364,30 @@ main:has(.week) > .calendar {
   background: var(--scrim);
 }
 
+/* A modal's lift and no edge. On the card's own ground rather than the
+   raised one every other layer takes: this one is a page of fields - a
+   search, a month of days and a day's box - and the fills they are drawn on
+   are mixed over the card's ground, so on the raised one they sank into it
+   and the search and both copy buttons lost their shape. */
 .journal-overlay {
   position: relative;
   width: min(900px, 100%);
   max-height: 100%;
   overflow-y: auto;
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
   --ground: var(--surface);
   box-shadow: var(--e3);
 }
 
-.journal-close { position: absolute; top: var(--s3); right: var(--s3); }
+/* The cross stands on the centre line of the head's row, at the same inset
+   from the corner as the title from the other one. */
+.journal-close {
+  position: absolute;
+  top: calc(var(--s4) + (var(--control-h) - 32px) / 2);
+  right: var(--s4);
+}
 
 /* Room on the right for the close, which is positioned over this row. */
 .journal-view-head {

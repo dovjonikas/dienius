@@ -86,7 +86,26 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         </div>
       </div>
 
+      {/* The stretch being looked at, as one row on the column's two edges:
+          its name at the left, and at the right the journal for it, as text
+          for somewhere else, and the arrows last, so they stand in one place
+          whatever the stretch is called - the calendar's bar and the day's
+          masthead are built the same way. On a phone the copy takes a line
+          of its own under the arrows. */}
       <div className="review-nav">
+        {/* The week's heading is the week view's own, so the two screens name
+            a week the same way; the month is the month's name. formatRange
+            used to spell the week from the machine's locale, which on a
+            Lithuanian desktop read "07 - 09-13" - the critique pass of v2.6
+            found it under the arrows. */}
+        <span className="review-range">{range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}</span>
+        <div className="review-tools">
+          <CopyJournalButton
+            dates={dates}
+            title={range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}
+            label={range === 'week' ? 'Copy week journal' : 'Copy month journal'}
+          />
+        </div>
         <button
           type="button"
           aria-label={range === 'week' ? 'The week before' : 'The month before'}
@@ -94,12 +113,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         >
           &larr;
         </button>
-        {/* The week's heading is the week view's own, so the two screens name
-            a week the same way; the month is the month's name. formatRange
-            used to spell the week from the machine's locale, which on a
-            Lithuanian desktop read "07 - 09-13" - the critique pass of v2.6
-            found it under the arrows. */}
-        <span className="review-range">{range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}</span>
         <button
           type="button"
           aria-label={range === 'week' ? 'The week after' : 'The month after'}
@@ -108,17 +121,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         >
           &rarr;
         </button>
-      </div>
-
-      {/* The one thing here that is not a figure: the journal for the stretch
-          being looked at, as text, for somewhere else. Under the arrows so a
-          phone's row of them keeps its width. */}
-      <div className="review-tools">
-        <CopyJournalButton
-          dates={dates}
-          title={range === 'week' ? formatWeekTitle(dates) : formatRange(from, to, range)}
-          label={range === 'week' ? 'Copy week journal' : 'Copy month journal'}
-        />
       </div>
 
       {stats.plannedDays === 0 ? (
@@ -266,7 +268,7 @@ function ReadingSection({ readings, title }: { readings: BlockReading[]; title: 
       <div className="review-block-head">
         <h3>Where the plan and the week disagreed</h3>
         <span className="copy-journal">
-          <button type="button" className="link-button" data-tip="As markdown, to paste anywhere" onClick={copy}>
+          <button type="button" className="btn-quiet" data-tip="As markdown, to paste anywhere" onClick={copy}>
             {state === 'copied' ? 'Copied' : state === 'failed' ? 'Could not copy' : 'Copy'}
           </button>
           {/* A status rather than an aria-live attribute, for the reason

@@ -45,7 +45,7 @@ export function CopyJournalButton({ dates, title, label }: CopyJournalButtonProp
     <span className="copy-journal">
       <button
         type="button"
-        className="link-button"
+        className="btn-quiet"
         disabled={!has}
         data-tip={has ? 'As markdown, to paste anywhere' : `No journal lines in this ${what.replace(/ journal$/, '')}`}
         onClick={copy}

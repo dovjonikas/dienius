@@ -374,7 +374,45 @@ prove what is here rather than redo it.
   line's centre. The underlined `.setting-quiet` is gone with its last use.
 
 The day's North - the rail and the window after sleep - keeps its own type
-until the North brief's stage 4, which is about exactly that. The ratchet:
+until the North brief's stage 4, which is about exactly that.
+
+### Stage 8 - the library, Review, notes, the journal and search: done
+
+- **The library.** A list is a card with no edge or resting shadow; its
+  name, what it is counted in and a quiet Edit share one centre line. The
+  add line is at the top of the list, under its name - the adding flow the
+  owner found a chore meant scrolling past every book to reach it - and its
+  amount is a field rather than an outlined box. A row's own actions stand
+  at its right edge: the count, the arrows, and + and the cross, always
+  there and quiet, where hidden until hovered they left a hand's width of
+  nothing at the end of every row; while a row's panel is open their room
+  is kept, so the arrows no longer jump. The loud row is the larger title
+  and its bar with no ground of its own - a fill under it swallowed the
+  fields and buttons of its panel, and an open row takes no fill under the
+  pointer, where its Delete read at 4.2:1. The panel has no rule over it and
+  ends with Delete at the left and its three errands at the right; its file
+  links are small quiet buttons. A new list's form ends Cancel and Save at
+  the right; a list's settings and Add many have no wash of their own. On a
+  phone the page stands on the same edge as every other page, 12px further
+  out than it did.
+- **Review.** The stretch's name at the left, and at the right Copy week
+  journal and the arrows, last, on one row - they were a row of arrows round
+  the name and a copy button on a row of its own. The cards have no edge,
+  the figures' labels and the reading's template names are sentence case,
+  and the copy buttons are quiet buttons rather than accent links.
+- **Notes and the journal.** The notes panel's lines and its Open notes
+  start where the box's words start. The journal panel's arrows are quiet
+  squares, its caption readable. The whole journal has no edge and stays on
+  the card's ground - on the raised ground its fields sank into it. Quick
+  notes has one rule, under its count, where a second one under the field
+  stopped short of the buttons beside it; its controls are one control
+  tall, and a note set to become a task takes the accent's quiet ground.
+- **Search.** The field's halo, clipped into a thick accent line under it,
+  is gone, and the chosen row takes the accent's quiet ground.
+
+The ratchet: borders drawn 88 to 70, weights 66 to 60, number line heights
+71 to 65, pixel heights 45 to 41, tracked capitals 9 to 7, `--t-input` 5 to
+2, `--s5` 9 to 8, `--s7` 2 to 1, `--t-2xs` 8 to 7, `--e1` 2 to 1. The ratchet:
 weights 71 to 66, number line heights 76 to 71, borders drawn 89 to 88,
 pixel heights 46 to 45, tracked capitals 10 to 9, `--s5` 10 to 9,
 `--t-input` 6 to 5.

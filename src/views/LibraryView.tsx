@@ -273,11 +273,11 @@ function NewListForm({ onDone }: { onDone: () => void }) {
         </label>
       </div>
       <div className="library-new-actions">
+        <button type="button" className="btn-quiet" onClick={onDone}>
+          Cancel
+        </button>
         <button type="button" className="btn-primary" disabled={!name.trim() || !unit.trim()} onClick={save}>
           Save
-        </button>
-        <button type="button" className="btn-secondary" onClick={onDone}>
-          Cancel
         </button>
       </div>
     </div>
@@ -453,6 +453,13 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
 
       {open && (
         <>
+          {/* The words, and two controls that already hold an answer - see
+              LibraryAddLine.tsx. "Daring Greatly, 12 chapters" still works,
+              and the controls redraw to show what was read. At the top of
+              the list, under its name, where a book is added without first
+              scrolling past every book already on it. */}
+          <LibraryAddLine list={list} />
+
           {going.length === 0 && finished.length === 0 && (
             <p className="muted library-list-empty">Nothing on this list yet.</p>
           )}
@@ -473,13 +480,9 @@ function ListSection({ list, open, onToggleOpen, onOpenDay }: ListSectionProps) 
             </ul>
           )}
 
-          {/* The words, and two controls that already hold an answer - see
-              LibraryAddLine.tsx. "Daring Greatly, 12 chapters" still works,
-              and the controls redraw to show what was read. */}
-          <LibraryAddLine list={list} />
-          {/* Beside the line rather than instead of it: one book is still one
-              line typed above, and this is for the afternoon somebody sits
-              down with a shelf - see LibraryAddMany. */}
+          {/* Under the list rather than instead of the line: one book is
+              still one line typed at the top, and this is for the afternoon
+              somebody sits down with a shelf - see LibraryAddMany. */}
           <LibraryAddMany list={list} />
 
           {finished.length > 0 && (
@@ -722,7 +725,9 @@ function ItemRow({
           Gone while the panel is open, because the panel has them: two
           buttons with the same name doing the same thing is a row a screen
           reader announces twice. */}
-      {!detailOpen && (
+      {detailOpen ? (
+        <span className="library-item-hover" aria-hidden="true" />
+      ) : (
       <div className="library-item-hover">
         {stepsOneAtATime(item) && (
           <button
@@ -1060,7 +1065,12 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         </p>
       )}
 
+      {/* The delete at the left edge, the three errands together at the
+          right - docs/DESIGN.md, where actions stand. */}
       <div className="library-detail-actions">
+        <button type="button" className="btn-danger library-detail-delete" aria-label={`Delete ${item.title}`} onClick={onRemove}>
+          Delete
+        </button>
         <button type="button" className="btn-secondary" data-tour="library-onto-today" onClick={() => schedule(todayKey(), 'today')}>
           Onto today
         </button>
@@ -1069,9 +1079,6 @@ function ItemDetail({ list, item, onOpenDay, onRemove }: ItemDetailProps) {
         </button>
         <button type="button" className="btn-secondary" onClick={() => setTemplateOpen(o => !o)}>
           Add to template
-        </button>
-        <button type="button" className="library-item-remove" aria-label={`Delete ${item.title}`} onClick={onRemove}>
-          Delete
         </button>
       </div>
       {scheduled && (
