@@ -218,11 +218,13 @@ function NorthInvite({
  * The text, read, as one column that reads like a page.
  *
  * The introduction first - the lines before the first heading, in the
- * text's own type, always shown, with no frame and nothing over them - and
- * then the headings, one under another with air between, each holding what
- * is under it until it is asked for. A text with no heading is all
- * introduction and reads whole, as it was written. lib/northSections.ts has
- * the rule; nothing here decides what a heading is.
+ * text's own type, always shown, with no frame and nothing over them - then
+ * the headings, one under another with air between, each holding what is
+ * under it until it is asked for, and last the signature, whole, a little
+ * larger and with more air over it, the way a letter ends. A text with no
+ * heading is all introduction and reads whole, as it was written.
+ * lib/northSections.ts has the rule; nothing here decides what a heading
+ * or a signature is.
  *
  * What can be pressed stands in one row at the end: Edit, and in the
  * morning Start the day beside it, past the words rather than over them, so
@@ -242,7 +244,7 @@ function NorthText({
   morning: boolean
   onStartDay?: () => void
 }) {
-  const { intro, sections } = parseNorth(text)
+  const { intro, sections, signature } = parseNorth(text)
   return (
     <div className="north-read">
       {intro.length > 0 && (
@@ -258,6 +260,15 @@ function NorthText({
         <div className="north-sections">
           {sections.map((section, i) => (
             <NorthSection key={i} heading={section.heading} paragraphs={section.paragraphs} />
+          ))}
+        </div>
+      )}
+      {signature.length > 0 && (
+        <div className="north-signature">
+          {signature.map((paragraph, i) => (
+            <p key={i} className="north-paragraph">
+              {paragraph}
+            </p>
           ))}
         </div>
       )}

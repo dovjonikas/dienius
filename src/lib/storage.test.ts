@@ -1413,9 +1413,9 @@ test('the North text survives export and import with its blank lines exactly', (
  * different page. The file has to pass validation and come back as the same
  * string, character for character.
  */
-test('a North text with headings and paragraphs passes validate and comes back from export and import character for character', () => {
+test('a North text with headings, paragraphs and a signature passes validate and comes back from export and import character for character', () => {
   const text =
-    'a line before any heading\n\n\nFIRST HEADING\na line under it  \n\na second paragraph under it\n   \n\nSECOND HEADING\n\na line under it'
+    'a line before any heading\n\n\nFIRST HEADING\na line under it  \n\na second paragraph under it\n   \n\nSECOND HEADING\n\na line under it\n\n  ---\na signature line\n\n\na second signature paragraph'
   const data = defaultData()
   data.picture = { text, updatedAt: '2026-09-01T08:00:00.000Z' }
 

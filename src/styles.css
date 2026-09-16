@@ -10800,12 +10800,26 @@ button.task-library:hover { color: var(--text); }
   gap: var(--s6);
 }
 
-/* One step of air between the three parts of the page, whichever of them a
-   text has. */
+/* One step of air between the parts of the page, whichever of them a text
+   has. */
 .north-intro + .north-sections,
 .north-intro + .north-actions,
-.north-sections + .north-actions {
+.north-sections + .north-actions,
+.north-signature + .north-actions {
   margin-top: var(--s8);
+}
+
+/* The signature: the words the page ends on, whole, a step larger than the
+   text and with more air over it than anything else on the page has, the
+   way the last line of a letter stands apart from the letter. No rule over
+   it - the air is the line. */
+.north-signature {
+  margin-top: calc(var(--s8) + var(--s4));
+}
+
+.north-signature > .north-paragraph {
+  font-size: var(--t-lg);
+  line-height: 1.5;
 }
 
 /* A heading: the page's largest and heaviest type, a touch of tracking
@@ -10926,8 +10940,8 @@ button.task-library:hover { color: var(--text); }
 
   .north-section.can-preview:hover ~ .north-section,
   .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
-  .north-read:has(.north-section.can-preview:hover) > .north-actions,
-  .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-actions {
+  .north-read:has(.north-section.can-preview:hover) > :is(.north-signature, .north-actions),
+  .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > :is(.north-signature, .north-actions) {
     opacity: 0;
   }
 
@@ -10948,14 +10962,15 @@ button.task-library:hover { color: var(--text); }
     }
 
     .north-section,
+    .north-signature,
     .north-actions {
       transition: opacity var(--dur) var(--ease);
     }
 
     .north-section.can-preview:hover ~ .north-section,
     .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
-    .north-read:has(.north-section.can-preview:hover) > .north-actions,
-    .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-actions {
+    .north-read:has(.north-section.can-preview:hover) > :is(.north-signature, .north-actions),
+    .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > :is(.north-signature, .north-actions) {
       transition-delay: var(--dur-fast);
     }
   }

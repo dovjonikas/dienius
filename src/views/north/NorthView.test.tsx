@@ -876,6 +876,25 @@ test('closing a heading with a press keeps its words from coming back under the 
   expect(section).toHaveClass('can-preview')
 })
 
+/**
+ * After a line of only --- the rest is the signature: read whole at the foot
+ * of the page, past the headings and before the buttons, never under a
+ * heading and never one itself.
+ */
+test('the signature reads whole at the foot of the page, after the headings, and folds under nothing', () => {
+  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\n---\nA LINE IN CAPITALS\na signature line\n\na second signature paragraph')
+  const { container } = render(<NorthView />)
+  const signature = container.querySelector('.north-read .north-signature') as HTMLElement
+  expect([...signature.querySelectorAll('.north-paragraph')].map(p => p.textContent)).toEqual([
+    'A LINE IN CAPITALS\na signature line',
+    'a second signature paragraph',
+  ])
+  expect(signature.previousElementSibling).toHaveClass('north-sections')
+  expect(signature.nextElementSibling).toHaveClass('north-actions')
+  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING'])
+  expect(container.querySelector('.north-section-body')?.textContent).toBe('a line under it')
+})
+
 test('Escape closes an open heading, and a heading with nothing under it is not a control', async () => {
   const user = userEvent.setup()
   picture('FIRST HEADING\na line under it\n\nSECOND HEADING')

@@ -133,7 +133,9 @@ the end of the words, opens the box again.
 **A line in capitals is a heading.** Everything under it, up to the next
 heading, is its text, and a blank line under a heading starts a second
 paragraph of the same heading. The lines before the first heading are the
-introduction and are always shown. Reading, the page shows the introduction
+introduction and are always shown. **A line of `---` starts the
+signature**: everything after it is shown whole at the foot of the page, a
+little larger, and nothing after it is a heading. Reading, the page shows the introduction
 and the headings. The words under a heading unfold while the pointer rests
 on it, with nothing on the page moving to make room, and fold away when it
 leaves; a press opens them in the page until a second press, which is how

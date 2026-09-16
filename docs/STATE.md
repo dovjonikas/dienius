@@ -70,9 +70,25 @@ Built earlier the same day, from the messages this one replaces, and kept:
   moves every minute and hides the hour mark it would cover, and the wide
   grid already opens with now in its top third.
 
-Left: the `---` signature in the parser, on the page and in the field (A,
-B); the goal as a quiet line at the top, the page as one column and the goal
-cards gone (B); the day's column in place of the headings row (C); the
+### Stage 2 - A, the text's rules: done
+
+A line of only `---` - spaces around it aside, and nothing else counting -
+ends the headings, and everything after it is the signature, in paragraphs;
+after it nothing is a heading, capitals or not, and a second `---` is a line
+of the signature. `parseNorth` returns the signature beside the
+introduction and the sections, and `northLineKinds` reads each line of the
+text as a heading, the mark or text by the same rule, for the field to draw.
+Tests cover a heading with two paragraphs, the introduction, a text with no
+heading, blank lines, the signature and a text without one, and a property
+that every line but the mark comes out once and in order; planting capitals
+after the mark as headings fails two of them. The round trip test's text
+carries a signature now and still comes back from validate, export and
+import character for character. The page already draws the signature whole
+at its foot, so no text lost it between stages.
+
+Left: the goal as a quiet line at the top, the page as one column and the
+goal cards gone, the field drawing `---` and the grey line saying both rules
+(B); the day's column in place of the headings row (C); the
 window after sleep in place of the morning page (D); the scale, the now
 line's weight and its time, the running and next block's lines, the past
 step back, the free labels' size and place, the sleep ground (E); F read
