@@ -398,30 +398,12 @@ export function CalendarView({
             forty-two times: a stamped day carries its template's colour and
             its own lines, and an empty one is empty. */}
 
-        <div className="segmented" role="group" aria-label="Calendar view">
-          <button
-            type="button"
-            className={mode === 'month' ? 'active' : ''}
-            aria-pressed={mode === 'month'}
-            onClick={() => setMode('month')}
-          >
-            Month
-          </button>
-          <button
-            type="button"
-            className={mode === 'week' ? 'active' : ''}
-            aria-pressed={mode === 'week'}
-            onClick={() => setMode('week')}
-          >
-            Week
-          </button>
-        </div>
-
-        {/* Only while the week is showing, and after the mode it belongs to,
-            because it is a question about that mode rather than about the
-            calendar. Grid is the default: the shape of a week is the thing
-            this view was built for, and a list is what every other screen in
-            this app already is. */}
+        {/* Only while the week is showing, because it is a question about
+            that mode rather than about the calendar. Before the mode, in the
+            document and on a wide screen, so the mode stands in one place in
+            both modes and this grows to its left. Grid is the default: the
+            shape of a week is the thing this view was built for, and a list
+            is what every other screen in this app already is. */}
         {mode === 'week' && (
           <div className="segmented segmented-quiet" role="group" aria-label="How to read the week">
             <button
@@ -442,6 +424,25 @@ export function CalendarView({
             </button>
           </div>
         )}
+
+        <div className="segmented" role="group" aria-label="Calendar view">
+          <button
+            type="button"
+            className={mode === 'month' ? 'active' : ''}
+            aria-pressed={mode === 'month'}
+            onClick={() => setMode('month')}
+          >
+            Month
+          </button>
+          <button
+            type="button"
+            className={mode === 'week' ? 'active' : ''}
+            aria-pressed={mode === 'week'}
+            onClick={() => setMode('week')}
+          >
+            Week
+          </button>
+        </div>
       </div>
 
       {mode === 'month' && (

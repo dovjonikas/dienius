@@ -80,6 +80,62 @@ bit, capitals and `---` recognised as typed; pictures in both themes at both
 widths. Stage 7 of the pass builds North to this brief already, so the five
 stages then finish and prove it rather than redo it.
 
+**Asked for during stage 6, and folded into the pass from there on:** the
+owner looked at the sheets and found Today's and the calendar's bars
+careless - random gaps between buttons, controls centred on a different
+line than the title beside them, the now line floating between the date and
+the view toggle, Month and Week floating between two groups - and asked for
+the same care everywhere, because these are the first things anybody sees.
+The rule taken from it for every remaining stage and for the screens
+already done: every control stands in a group anchored to an edge of its
+column, nothing floats in the middle of a row, one row has one centre line,
+the stacked blocks of a column share its two edges, and nothing moves when a
+title changes length.
+
+Done first, before stage 6 went on: Today's masthead is two rows over the
+day and the task column at every wide width - the day's name and date at
+the left, its template, doors and arrows at the right; the clock and the
+running task at the left, the progress and the view toggle at the right -
+and no longer spans the rail from 1500px. The calendar's bar has its title
+at the left and one group at the right with the arrows last, the mode in
+one place in both modes. A settings row centres its control. `npm run
+precision` now measures every row of controls for one centre line and for
+anything floating between two open gaps, at 1366 and 1920, and was made to
+fail on the old stylesheet first; `e2e/header.e2e.ts` holds the masthead's
+new geometry.
+
+**Queued after the North editor, from a message during stage 6: Kitchen.** A
+recipe library that looks and feels like the Library but keeps its own data
+- a recipe has no progress units, so it is not a `LibraryList`. A recipe is a
+name and one free text, with optional meal types (breakfast, lunch, dinner,
+pre-gym, post-gym, snack, several allowed), kcal, protein, carbs and fat per
+serving, servings and minutes. The text follows North's rule - a line in
+capitals is a heading; lines under INGREDIENTS are an ingredient list, under
+STEPS numbered steps, and a text with no headings is shown as it is - with
+the parser shared with North, not copied. Screens: the list with meal-type
+chips (All and the six) and a quiet row per recipe (name, kcal and protein
+on one quiet line when set, times cooked); a recipe's page (name, macro
+line, ingredients, steps); adding and editing (name, a large text field,
+More for the optional fields, saveable with a name and a text); Cook - larger
+type, ingredients and steps ticked off with a press, the screen kept awake
+through the Screen Wake Lock API where it exists and silently not where it
+does not, and Done adding one to times cooked; search by name and text
+through `lib/search.ts`. On the day: a block or a template block whose
+category is a meal may carry a recipe or a meal type - a recipe shows its
+name and opens it, a meal type opens Kitchen filtered to it, and a block
+with neither works as it does now. Not in it: calorie goals, day totals,
+progress bars or any verdict (macros are information on a recipe), serving
+scaling, ingredient quantities, shopping lists. The data: a new entity by
+CONVENTIONS 7 with sync, validation and an export and import round trip; a
+backup without Kitchen imports cleanly; demo mode with three or four generic
+recipes, tests with generic text only, none of the owner's recipes in the
+repo; `docs/RESEARCH-KITCHEN.md` and a DECISIONS entry. Seven stages, the
+tests green and this file updated after each: the model with validation,
+export, import and migration; the shared heading parser; the list with its
+filters and search; a recipe's page, adding and editing; Cook with the wake
+lock and the count; the meal blocks on the day and in templates; the phone,
+pictures in both themes and the last tests.
+
 Pictures: the audit's are kept in the repo, one sheet per screen, in
 `docs/screenshots/design/before/`, and the last stage's go beside them. The
 before and after of the stages between are shown to the owner as each stage

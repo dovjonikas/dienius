@@ -1,5 +1,5 @@
 /**
- * Two kinds of untidiness the sweep cannot see, on every screen.
+ * The untidiness the sweep cannot see, on every screen.
  *
  * The sweep measures whether a thing is readable, reachable and inside its
  * box. It says nothing about whether a thing is *placed well*, and that is
@@ -8,7 +8,7 @@
  * row. Both were found by a person looking at the screen, twice, and neither
  * would have been found by any pass in this repo.
  *
- * So: two checks, each written from a defect that actually happened.
+ * So: checks, each written from a defect that actually happened.
  *
  * **A mark sits in the middle of its box.** An icon inside a control, or a
  * drawn mark inside a checkbox, should have the same air on both sides. The
@@ -22,10 +22,15 @@
  * digest gave each part a column and right-aligned it, which keeps three
  * straight edges and lets the air between them change on every line.
  *
+ * **A row of controls has one centre line, and nothing floats in it.** From
+ * the owner's reading of the v2.25 sheets: a template chip 10.5px under the
+ * title beside it, and a toggle floating in the middle of a bar with 151px
+ * of nothing on each side. See the checks themselves for how a row is found.
+ *
  * Reports differences rather than absolutes wherever it can, for the reason
  * written at the top of text-scale-check.mjs: a pass that has not been made
- * to fail is not a pass yet. Both checks below were confirmed against the two
- * defects before they were fixed.
+ * to fail is not a pass yet. Every check below was confirmed against its own
+ * defect before that defect was fixed.
  *
  * `npm run precision`
  */
@@ -246,6 +251,146 @@ const measure = page => page.evaluate(([offCentre, rhythm, nearMiss]) => {
     }
   }
 
+  // ---- a row of controls has one centre line, and nothing floats in it ---
+  //
+  // The fourth and fifth checks, written from the owner's reading of the
+  // v2.25 sheets: Today's template chip and doors stood 10.5px under the
+  // title beside them, because the row centred them on a two-line block;
+  // and Month and Week floated in the middle of the week's bar with 151px of
+  // nothing on either side, because both toggles carried an auto margin and
+  // the row's slack was split between them. "Random centring", "random gaps
+  // between the buttons".
+  //
+  // A line is the laid-out items of one flex or grid box that share a band
+  // of height - a display: contents wrapper's children count as the box's
+  // own, which is how the day's masthead places its arrows. Only lines that
+  // hold a control, and only items no taller than a control on a finger:
+  // a card beside its checkbox is a layout, not a row.
+  const interactive = (/** @type {Element} */ el) =>
+    el.matches('button, select, input, a[href], [role="button"], [role="group"], .segmented') ||
+    !!el.querySelector('button, select, input, a[href], [role="button"]')
+  /** @param {Element} box @returns {HTMLElement[]} */
+  const itemsOf = box => {
+    /** @type {HTMLElement[]} */
+    const out = []
+    for (const child of box.children) {
+      if (!(child instanceof HTMLElement)) continue
+      const cs = getComputedStyle(child)
+      if (cs.display === 'contents') { out.push(...itemsOf(child)); continue }
+      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'absolute' || cs.position === 'fixed') continue
+      const r = child.getBoundingClientRect()
+      if (r.width < 1 || r.height < 1) continue
+      out.push(child)
+    }
+    return out
+  }
+  const label = (/** @type {HTMLElement} */ e) =>
+    `${e.tagName.toLowerCase()}${typeof e.className === 'string' && e.className ? '.' + e.className.trim().split(/\s+/).join('.') : ''} "${(e.getAttribute('aria-label') ?? e.textContent ?? '').trim().slice(0, 20)}"`
+  for (const box of document.querySelectorAll('main *, .app-header *')) {
+    if (!(box instanceof HTMLElement)) continue
+    const cs = getComputedStyle(box)
+    const flexRow = (cs.display === 'flex' || cs.display === 'inline-flex') && !cs.flexDirection.startsWith('column')
+    const grid = cs.display === 'grid' || cs.display === 'inline-grid'
+    if (!flexRow && !grid) continue
+    if (cs.alignItems === 'baseline' || cs.alignItems.includes('baseline')) continue
+    let items = itemsOf(box).map(el => ({ el, r: el.getBoundingClientRect() }))
+    // An item a grid lays across two of its rows is centred on both of them
+    // by design - a card's menu beside its title line and its meta line - and
+    // is not on either row's centre line. The tracks are read back as the
+    // browser resolved them.
+    if (grid) {
+      const tracks = cs.gridTemplateRows.split(' ').map(parseFloat).filter(n => Number.isFinite(n))
+      if (tracks.length > 1) {
+        const outer = box.getBoundingClientRect()
+        let y = outer.top + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)
+        const gap = parseFloat(cs.rowGap) || 0
+        const bands = tracks.map(size => { const band = [y, y + size]; y += size + gap; return band })
+        items = items.filter(i => bands.filter(([top, bottom]) => Math.min(bottom, i.r.bottom) - Math.max(top, i.r.top) > 1).length < 2)
+      }
+    }
+    if (items.length < 2) continue
+    // Lines: items whose centres are closer than half the shorter item's
+    // height. A card's title line and the meta line under it are two lines
+    // of one grid, twelve pixels apart; a chip ten pixels under a title is
+    // one line drawn badly.
+    items.sort((a, b) => a.r.top - b.r.top)
+    /** @type {{ el: HTMLElement, r: DOMRect }[][]} */
+    const lines = []
+    const mid = (/** @type {DOMRect} */ r) => (r.top + r.bottom) / 2
+    for (const item of items) {
+      const line = lines.find(l => l.some(o => Math.abs(mid(o.r) - mid(item.r)) < Math.min(o.r.height, item.r.height) / 2))
+      if (line) line.push(item)
+      else lines.push([item])
+    }
+    for (const line of lines) {
+      if (line.length < 2) continue
+      if (line.some(i => i.r.height > 48)) continue
+      if (!line.some(i => interactive(i.el))) continue
+      if (line.some(i => getComputedStyle(i.el).alignSelf.includes('baseline'))) continue
+
+      const centres = line.map(i => (i.r.top + i.r.bottom) / 2).sort((a, b) => a - b)
+      const median = centres[Math.floor(centres.length / 2)]
+      for (const i of line) {
+        const off = (i.r.top + i.r.bottom) / 2 - median
+        if (Math.abs(off) > offCentre) {
+          found.push(`${label(box)}: ${label(i.el)} sits ${round(off)}px off the row's centre line`)
+        }
+      }
+
+      // Nothing floats: at most one open gap in a row. Two are allowed only
+      // around words standing between two single controls at the row's
+      // edges - a title between its arrows. Month and Week were exactly
+      // centred between their two gaps, 151px each side, and still floating:
+      // a group of controls in the middle of a bar is never meant.
+      const across = [...line].sort((a, b) => a.r.left - b.r.left)
+      const gaps = across.slice(1).map((i, k) => ({ gap: i.r.left - across[k].r.right, after: across[k], before: i }))
+      const open = gaps.filter(g => g.gap > 48)
+      if (open.length >= 2) {
+        const [first, second] = open
+        const between = across.slice(across.indexOf(first.before), across.indexOf(second.after) + 1)
+        const bracketed = open.length === 2 && across.indexOf(first.after) === 0 && across.indexOf(second.before) === across.length - 1 &&
+          !between.some(i => interactive(i.el)) && Math.abs(first.gap - second.gap) <= 2
+        if (!bracketed) {
+          found.push(`${label(box)}: ${label(first.before.el)} floats between gaps of ${round(first.gap)}px and ${round(second.gap)}px`)
+        }
+      }
+    }
+  }
+
+  // A heading and the controls in its band. The row check above compares
+  // the items of one box, and the chip under Today's title was not an item
+  // of the title's box: the title sat in a two-line block and the chip beside
+  // the block, so the row was two items and one of them was 60px tall. What
+  // the eye compares is the title and the controls level with it, whichever
+  // boxes hold them - so every heading is measured against the controls in
+  // the rows it belongs to, up to the first box taller than a header.
+  for (const h of document.querySelectorAll('main h1, main h2, main h3')) {
+    if (!(h instanceof HTMLElement)) continue
+    const hr = h.getBoundingClientRect()
+    if (hr.width < 1 || getComputedStyle(h).visibility === 'hidden') continue
+    const hc = (hr.top + hr.bottom) / 2
+    /** @type {Set<Element>} */
+    const controls = new Set()
+    for (let a = h.parentElement, up = 0; a && up < 5; a = a.parentElement, up++) {
+      if (a.getBoundingClientRect().height > 160) break
+      for (const c of a.querySelectorAll('button, select, [role="group"], .day-template')) {
+        const group = c.parentElement?.closest('[role="group"]')
+        if (group && a.contains(group)) continue
+        if (!h.contains(c) && !c.contains(h)) controls.add(c)
+      }
+    }
+    for (const c of controls) {
+      if (!(c instanceof HTMLElement)) continue
+      const cr = c.getBoundingClientRect()
+      if (cr.width < 1) continue
+      if (Math.min(hr.bottom, cr.bottom) - Math.max(hr.top, cr.top) < hr.height / 2) continue
+      const off = (cr.top + cr.bottom) / 2 - hc
+      if (Math.abs(off) > offCentre) {
+        found.push(`${label(c)} sits ${round(off)}px off the centre line of the heading "${(h.textContent ?? '').trim().slice(0, 24)}"`)
+      }
+    }
+  }
+
   return [...new Set(found)]
 }, /** @type {[number, number, number[]]} */ ([OFF_CENTRE_PX, RHYTHM_PX, NEAR_MISS_PX]))
 
@@ -256,8 +401,10 @@ async function main() {
   /** @type {string[]} */
   const findings = []
   try {
-    for (const theme of ['dark', 'light']) {
-      const ctx = await browser.newContext({ viewport: { width: 1366, height: 820 }, timezoneId: 'Europe/Vilnius', locale: 'en-GB' })
+    // A laptop and a desktop monitor. The rows and the headers lay out
+    // differently at the two, and the owner works at the wider one.
+    for (const [theme, width, height] of /** @type {const} */ ([['dark', 1366, 820], ['light', 1366, 820], ['dark', 1920, 1080]])) {
+      const ctx = await browser.newContext({ viewport: { width, height }, timezoneId: 'Europe/Vilnius', locale: 'en-GB' })
       await ctx.clock.setFixedTime(FIXED)
       const page = await ctx.newPage()
       await page.goto(`${BASE}?demo=1`)
@@ -274,7 +421,7 @@ async function main() {
         await page.waitForSelector('nav')
         await screen.go(page)
         await page.waitForTimeout(350)
-        for (const f of await measure(page)) findings.push(`  [${theme} ${screen.name}] ${f}`)
+        for (const f of await measure(page)) findings.push(`  [${theme} ${width} ${screen.name}] ${f}`)
       }
       await ctx.close()
     }
@@ -282,7 +429,7 @@ async function main() {
     await browser.close()
     await server.close()
   }
-  console.log(findings.length ? `${findings.length} findings\n${findings.join('\n')}` : '0 findings: every mark is centred, every repeated row keeps its rhythm, and nothing stacked is a few pixels out of line')
+  console.log(findings.length ? `${findings.length} findings\n${findings.join('\n')}` : '0 findings: every mark is centred, every repeated row keeps its rhythm, nothing stacked is a few pixels out of line, and every row of controls has one centre line with nothing floating in it')
 }
 
 main()

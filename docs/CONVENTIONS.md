@@ -294,6 +294,12 @@ This section is the short form for somebody writing a rule, and
   `--rail-open-w`, `--timeline-gutter`, and `--touch`, the 44px a control
   grows to under a finger
 
+**A row stands on two edges.** A row's items are a group at the left edge
+of its column and a group at the right, one centre line across both, and
+nothing floating between them; a period's arrows stand last at the right of
+its title row, so nothing moves when the name changes. `npm run precision`
+measures it - see DESIGN.md, "Where actions stand".
+
 **Retired, counted down, not to be used:** `--s5`, `--s7`, `--t-2xs`,
 `--t-input`, `--e1`, a font weight or line height written as a number,
 tracked capitals, a border that is not a divider or a scale, black written

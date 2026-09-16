@@ -963,10 +963,12 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    changes it on the right. Every switch in this app reads the same way now,
    instead of each one inventing its own arrangement of label, paragraph and
    button. Wraps to stacked at a narrow width rather than squeezing the
-   control into a column too thin to use. */
+   control into a column too thin to use. The control stands on the middle
+   of what it sets: at the top it sat a few pixels off the centre of a
+   two-line label, a line of its own that belonged to neither. */
 .setting-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--s3) var(--s6);
@@ -6700,17 +6702,12 @@ body.has-floating-clock-bottom .app { padding-bottom: calc(var(--s8) + 48px + en
 
 .reminder-toast-close:hover { color: var(--text); }
 
-/* Which of the two things Enter does - see captureMode in DayView. Sits above
-   the field it changes the meaning of, small, so it reads as a label on the
-   input rather than as navigation. */
+/* Which of the two things Enter does - see captureMode in DayView. Above the
+   field it changes the meaning of, at the start of the column, and the same
+   segmented control as the one in the day's masthead: it was 28px at 11px
+   type under a 36px toggle at 13, two sizes of one control on one screen. */
 .capture-mode {
   align-self: flex-start;
-}
-
-.capture-mode button {
-  padding: var(--s1) var(--s3);
-  min-height: 28px;
-  font-size: var(--t-xs);
 }
 
 /* The Done fold's count, which is what that fold says most of the time.
@@ -7344,17 +7341,17 @@ button.danger:focus-visible {
   .day-view.focus-calendar {
     grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
     grid-template-areas:
-      "header header"
-      "rail   day";
+      "rail header"
+      "rail day";
     max-width: calc(240px + var(--s6) + 1336px);
     margin-inline: auto;
   }
 
   .day-view.focus-calendar:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "header  header"
-      "notices notices"
-      "rail    day";
+      "rail header"
+      "rail notices"
+      "rail day";
   }
 
   /* The same columns, and the task column's own name for the one it lands
@@ -7363,99 +7360,98 @@ button.danger:focus-visible {
   .day-view.focus-tasks {
     grid-template-columns: minmax(200px, 240px) minmax(400px, 1336px);
     grid-template-areas:
-      "header header"
-      "rail   tasks";
+      "rail header"
+      "rail tasks";
     max-width: calc(240px + var(--s6) + 1336px);
     margin-inline: auto;
   }
 
   .day-view.focus-tasks:has(.day-notices:not(:empty)) {
     grid-template-areas:
-      "header  header"
-      "notices notices"
-      "rail    tasks";
+      "rail header"
+      "rail notices"
+      "rail tasks";
   }
 
 
-  /* The header row: day-nav plus the focus control, side by side, wrapping
-     if the window is narrow enough at the breakpoint's own edge that they
-     cannot both fit on one line without crowding. */
-  /* One thin line across the top of the day: where you are, how far along
-     you are, and which panes are showing. Everything in it is a fixed height
-     except the progress bar, which takes the slack - so the row's height
-     does not change as the day fills up. */
-  /* One row, two zones. On the left, the day: its name, its chip, Replan
-     and Low day. On the right, its status: the clock, what is running, how
-     far the day has come - and the view toggle, which is about this screen
-     rather than the day, at the row's end. One gap between the zones, the
-     slack of the row, and the same smaller gap inside each. The status used
-     to take the slack itself, so it sat in the middle with the toggle alone
-     at the far right and three different gaps between the parts; it hugs
-     the right now and the running title ellipsises before anything wraps.
-     When the row is too short for both zones the right one goes down a
-     line, whole, still on the right. */
+  /* The day's masthead: two rows over the day and the task column, each
+     row one centre line, and in each row two groups standing on the
+     column's two edges with nothing between them.
+
+     The first row is the day - its name and date at the left edge, and at
+     the right edge what the day came from, its doors and the arrows that
+     leave it, the arrows last so they stand in one place whatever the day
+     is called and whatever it carries. The second row is its status - the
+     clock and what is running at the left edge, and at the right edge how
+     far the day has come and which panes are showing. The goal's line is
+     a third row under both, at the same left edge.
+
+     What this replaced was one flex row that wrapped. Its day block was
+     the rail's 240px, so over the day column its arrows stood 150px after
+     the word "Today"; everything beside it was centred on the block's two
+     lines, so the template chip and the doors sat nine pixels under the
+     title they belong to; and when the status wrapped, its clock began
+     wherever its right-anchored group happened to end, forty pixels after
+     the date and level with nothing. The owner, from the stage four sheet:
+     random gaps, random centring, a line floating between the date and
+     the toggle. From 1500px the same row spanned the rail as well, which
+     put the day's name over the month and the chip three pixels outside
+     the day column's edge. One layout at every wide width now: the rail
+     is its own column top to bottom, and the masthead has the day and the
+     task column's two edges. */
   .day-header {
     grid-area: header;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--s2) var(--s5);
-  }
-
-  /* Which day it is, in the width of the month it stands over.
-
-     One block, exactly the rail's own 240px, so its left edge and its right
-     edge are the calendar's. Two rows inside it: the arrows and the day's
-     word on the first, the date across the whole block on the second.
-
-     What this replaced was one line - two 44px arrows and a title measured
-     by the longest day this app prints - which came to 353px standing over
-     a 240px month. The date ran 55 pixels past the calendar's edge, and the
-     fixed box left 58 pixels of dead space between the date and the chip
-     after it. The owner read the first as text escaping the calendar and
-     the second as a gap left by accident; they were the same cause.
-
-     The date takes the whole width rather than the cell beside the arrows,
-     because that cell is 136px and the longest date in this type is 153.
-     Taking the row is also what makes it safe at every text size: a longer
-     date wraps inside the block rather than pushing out of it.
-
-     Nothing is measured by a hidden copy any more. The block is one width
-     because the column is one width, so the chip cannot move whatever the
-     day is called - which is what the ghost was for. */
-  /* The day's name at the block's left edge and the arrows at its right.
-     They led the row until v2.18 - two bordered 44px squares, then the word -
-     which put the loudest boxes in the masthead in front of the most
-     important text on the screen and left "Today" as the one thing in this
-     column not standing on the column's own left edge. The date under it,
-     the identity line under that, the month, Templates and Up next all start
-     at that edge; the word started 96 pixels in.
-
-     And row-gap was zero, so the date sat against the underside of a row of
-     44px buttons. The owner reported both, in those words. */
-  .day-header .day-nav {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto auto;
     grid-template-areas:
-      "word prev next"
-      "date date date";
+      "title schedule tools prev next"
+      "status status status status status";
     align-items: center;
-    column-gap: var(--s1);
-    row-gap: var(--s1);
-    width: 240px;
-    flex: 0 0 auto;
-    margin-bottom: 0;
+    column-gap: 0;
+    row-gap: var(--s2);
   }
 
-  .day-header .day-nav > button:first-of-type { grid-area: prev; }
-  .day-header .day-nav > button:last-of-type { grid-area: next; }
+  /* The arrows and the title are the grid's own items; both wrappers step
+     out of the way. On a phone they are what lays the row out instead. */
+  .day-header .day-nav,
+  .day-header .day-title {
+    display: contents;
+  }
 
-  /* The same arrows as the month's, sixty pixels below them.
+  /* The name and the date on one baseline, as one item, so the row can
+     centre them against its controls as a unit. */
+  .day-header .day-title-text {
+    grid-area: title;
+    display: flex;
+    align-items: baseline;
+    gap: var(--s3);
+    min-width: 0;
+  }
 
-     They were a bordered box on the app surface and the month's are a bare
-     glyph, which is one job drawn two ways within one column - CONVENTIONS
-     23. The month's is the right one of the two: this is navigation beside a
-     title, not an action. */
+  .day-header .day-title h2 {
+    flex: 0 0 auto;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .day-header .day-subtitle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .day-header .day-schedule { grid-area: schedule; margin-left: var(--s4); }
+
+  .day-header .day-tools {
+    grid-area: tools;
+    flex-wrap: nowrap;
+    margin: 0 0 0 var(--s4);
+  }
+
+  /* The box stays 44 wide on every pointer, and a glyph with no ground: a
+     fit is never worth a target - e2e/header.e2e.ts measures it. The row's
+     last 88px, so the right arrow's box ends on the task column's edge. */
   .day-header .day-nav > button {
     background: none;
     border: none;
@@ -7463,109 +7459,44 @@ button.danger:focus-visible {
     font-size: var(--t-glyph);
   }
 
+  /* The arrows a group of their own: sixteen pixels from the doors, eight
+     between them - the calendar's bar keeps the same two spaces. */
+  .day-header .day-nav > button:first-of-type { grid-area: prev; margin-left: var(--s4); }
+  .day-header .day-nav > button:last-of-type { grid-area: next; margin-left: var(--s2); }
+
   .day-header .day-nav > button:hover { color: var(--text); }
 
-  /* The title's two elements are the grid's own items: the heading in the
-     cell beside the arrows, the date across the row under them. Both
-     wrappers step out of the way rather than being laid out - see
-     DayHeader, where they are what a phone lays out instead. */
-  .day-header .day-title,
-  .day-header .day-title-text {
-    display: contents;
-  }
-
-  /* Both against the block's left edge, which is the calendar's: the base
-     rule centres them for the phone, where the nav row is the width of the
-     screen and centred is right. */
-  .day-header .day-title h2 {
-    grid-area: word;
-    min-width: 0;
-    text-align: left;
-  }
-
-  .day-header .day-subtitle {
-    grid-area: date;
-    min-width: 0;
-    text-align: left;
-  }
-
-  /* The heading and the date, in the block's own two rows rather than side
-     by side: this wrapper laid them out on one line until the block became
-     the width of the month, which is not wide enough for both. It steps out
-     of the way now and the grid above places each of them. The heading
-     never wraps - it is one word - and the date is allowed to, which is
-     what keeps it inside the block at a larger text size. */
-  .day-header .day-title h2 { white-space: nowrap; }
-
-  /* The box stays 44 on every pointer. It was tempting to shrink it on a
-     mouse - two 44px squares either side of a 20px word is what made this
-     row read as a toolbar - but the boxes were the weight, not the width:
-     with the border and the surface gone the glyph reads as a glyph and the
-     target is still the one CONVENTIONS 6 asks for. e2e/header.e2e.ts
-     measures it, on the argument that a fit is never worth a target. */
-
-  .day-header .day-tools {
-    flex: 0 0 auto;
-    margin: 0;
-  }
-
-  /* The view toggle's height - 34px inside its border - so the chip, the
-     doors and the toggle are one height across the row. */
-  .day-header .day-replan-button { min-height: var(--control-h); }
-
   .day-header .day-header-right {
+    grid-area: status;
     display: flex;
     align-items: center;
-    gap: var(--s5);
-    flex: 0 1 auto;
+    gap: var(--s4);
     min-width: 0;
-    margin-left: auto;
   }
 
+  /* The clock and the running task take the left edge and give way first:
+     the title ellipsises before anything moves. The progress stands at the
+     right, against the toggle. */
   .day-header .day-status {
     display: flex;
     align-items: center;
-    gap: var(--s5);
-    flex: 0 1 auto;
+    gap: var(--s4);
+    flex: 1 1 auto;
     min-width: 0;
   }
 
   .day-header .day-now { flex: 0 1 auto; }
 
-  /* Hugs what is beside it rather than filling the slack. Given the row's
-     spare width it stretched to 420px and floated between the now strip and
-     the focus control with a hole on each side, which read as a loading bar
-     rather than as a day. */
   .day-header .day-progress {
     flex: 0 0 auto;
-    margin-bottom: 0;
+    margin: 0 0 0 auto;
   }
 
   .day-header .day-layout-focus { flex: 0 0 auto; }
 
-  /* Which panes are showing is a preference about this screen, not
-     information about the day, so it does not get to be the loudest accent
-     on it - the progress bar next to it earns that. A tinted fill instead of
-     the solid accent .segmented uses everywhere else, and shorter, so the
-     header stays one thin line. Scoped to this control and one other; the
-     same component in Settings and Templates is unchanged.
+  /* The goal's line under both rows, at the same left edge. */
+  .day-header > .north-line { grid-column: 1 / -1; }
 
-     The other is the capture toggle at the top of the task column. The two
-     are one control drawn twice: what is in force in this header row, and
-     what is in force on the field. One rule for both, so they can only
-     ever be one height, one size of type and one tint - the field's was
-     28px at 11px type beside the header's 36 at 13, and two segmented
-     controls of two sizes on one screen read as two kinds of thing. Below
-     the breakpoint the capture toggle keeps its own rule, and under a
-     finger the coarse-pointer floor further down still raises it to 44. */
-  .day-layout-focus button,
-  .capture-mode button { padding: 6px var(--s3); min-height: 34px; font-size: var(--t-sm); }
-
-  .day-layout-focus button.active,
-  .capture-mode button.active {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-    color: var(--text);
-  }
 
   /* Thinner at this width than on a phone, where the top padding is also
      clearing a notch. The room goes to the day underneath it. */
@@ -7729,68 +7660,6 @@ button.danger:focus-visible {
       "rail tasks";
   }
 
-  /* From 1500px the header spans the rail's column as well: a masthead
-     runs the width of the page, and the mini calendar sits under it.
-     Beside the rail it had 1304px at 2000, which is less than the day's
-     name, its chip and its door, the clock with the running task, the bar
-     and the view toggle need in one row - and a flex row wraps on content
-     width before anything in it is allowed to shrink, so the toggle went
-     to a second line on the owner's own screen. Not below 1500: the rail
-     needs the height the header would take from it, and at 1366x768 the
-     digest ended 120px under the window's edge. There the toggle wraps,
-     alone, still on the right, which is the lesser thing. */
-  @media (min-width: 1500px) {
-    .day-view {
-      grid-template-areas:
-        "header header header"
-        "rail   day    tasks";
-    }
-
-    /* The goal's line stays above the day, the way it does at every narrower
-       width. From here the masthead spans the rail's column too, and this
-       line is a full-width item inside it - so it began above the mini
-       calendar and ran across into the timeline, a quiet grey sentence
-       crossing two columns it has nothing to do with. The owner: "matos kad
-       north pranesimas iseina is ribu, neturetu iseit".
-       Indented by the rail column and the gap beside it, read from the two
-       values the column itself is built from rather than copied. */
-    .north-line { margin-left: calc(var(--rail-max) + var(--s6)); }
-
-    .day-view:has(.day-notices:not(:empty)) {
-      grid-template-areas:
-        "header header   header"
-        "rail   notices  notices"
-        "rail   day      tasks";
-    }
-
-    /* And from here the right zone never goes down a line. A flex row
-       breaks on each item's content width before anything is allowed to
-       shrink, so the zone is given no content width to break on: a basis
-       of zero, and it then grows into whatever the row has left after the
-       day's name, the arrows, the chip and the doors. The header is at
-       least 1400px here, which is more than every control in it needs;
-       what does not fit is the running task's title, and a title that
-       ends in an ellipsis is a better header than a toggle standing alone
-       under the chip. The North line, a full-width item of its own, still
-       wraps under the row as it always did. Below 1500 the header is
-       narrower than the zone's own controls, and there it goes down whole. */
-    .day-header .day-header-right {
-      flex: 1 1 0;
-      min-width: 0;
-      justify-content: flex-end;
-    }
-
-    /* The single-pane rules above outrank this block's two on specificity
-       alone - two classes against one, and four against three with the
-       notices - so they need no restating here: a single pane is the same
-       two columns at every width. */
-
-    .day-view:has(.first-run) {
-      grid-template-areas:
-        "header header"
-        "rail   tasks";
-    }
-  }
 
   .day-view:has(.first-run) .day-pane { display: none; }
 
@@ -11836,6 +11705,47 @@ button.north-day-line:focus-visible {
 
 .calendar-bar .calendar-nav { flex: 0 0 auto; margin: 0; }
 .calendar-bar .segmented { margin-left: auto; }
+
+/* The bar on a wide screen: the title at the left edge and everything else
+   one group at the right edge - the week's buttons, how to read it, the
+   mode, and the arrows last.
+
+   Both toggles carried the auto margin above, so the row's slack was split
+   between them and Month and Week floated in the middle of the week's bar,
+   151px from the buttons on its left and 151px from Grid and Agenda on its
+   right; and the week's buttons stood after a title that is a different
+   length every week, so Today walked whenever the week did. The owner, from
+   the stage five sheet: random gaps between the buttons. Now the one space
+   that changes is between the title and the group, the mode stands in the
+   same place in both modes - the week's own controls grow to its left - and
+   the arrows stand at the edge whatever the title says. */
+@media (min-width: 1024px) {
+  .calendar-bar {
+    flex-wrap: nowrap;
+    gap: var(--s2);
+  }
+
+  .calendar-bar .calendar-nav { display: contents; }
+
+  .calendar-bar .calendar-nav > h2,
+  .calendar-bar .calendar-nav-title {
+    order: 0;
+    min-width: 0;
+    margin-right: auto;
+  }
+
+  .calendar-bar .calendar-nav-title { justify-items: start; }
+
+  .calendar-bar > .btn-secondary { order: 1; }
+
+  .calendar-bar .segmented {
+    order: 2;
+    margin-left: var(--s2);
+  }
+
+  .calendar-bar .calendar-nav > button { order: 3; }
+  .calendar-bar .calendar-nav > button:first-of-type { margin-left: var(--s2); }
+}
 
 /* The week's door to Something came up. On a wide screen it sits beside
    Today and Stamp week where it was written. Below the wide breakpoint the

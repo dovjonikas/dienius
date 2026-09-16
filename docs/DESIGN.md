@@ -255,6 +255,16 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
 
 ### Where actions stand
 
+- **A row is two groups on two edges.** Whatever stands in a row - a title
+  and its buttons, a status and its toggle - stands in a group anchored to
+  the left edge of its column or in one anchored to the right, and the one
+  space that changes is between the two. Nothing floats in the middle with
+  room on both sides; the only middle thing allowed is words between two
+  arrows. Every item in a row shares the row's centre line, whichever box
+  holds it. `npm run precision` measures both.
+- **Nothing moves when a word changes.** A period's arrows stand at the
+  right end of its title row, last, so a longer day or week name moves
+  nothing; the controls that come and go with the period grow to their left.
 - **A page's action** stands at the right end of the page's title row.
 - **A form, a sheet or a modal** ends in one row: a destructive action at
   the left, then the rest at the right with the primary last. Cancel is
