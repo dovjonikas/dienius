@@ -48,6 +48,12 @@ export interface DayViewProps {
    */
   onOpenNorth: () => void
   /**
+   * North's window after sleep is open over the day, so the goal card that
+   * comes forward on a Monday waits for it to close rather than standing
+   * under it as a second sheet.
+   */
+  holdNorthCard?: boolean
+  /**
    * A task to open the details of, asked for from outside the day - the
    * note that became it, so far. Read once and handed back, so asking for
    * the same task twice opens it twice.
@@ -81,7 +87,7 @@ export interface DayViewProps {
  */
 const NOW_TICK_MS = 30_000
 
-export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskDone, onOpenNote }: DayViewProps) {
+export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTask, onOpenTaskDone, onOpenNote }: DayViewProps) {
   const data = useAppData()
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
   // Everything about one task that the row deliberately does not show - see
@@ -312,7 +318,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           from the day; a sheet moves nothing. Outside the row on purpose: a
           wrapper with a fixed-position child in it is not :empty, and the
           row's own height comes from that. */}
-      {isToday && <NorthCard />}
+      {isToday && !holdNorthCard && <NorthCard />}
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line and the
           timeline grid group into one region - the "picture of the day" - so

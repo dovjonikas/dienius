@@ -7,7 +7,6 @@ import { defaultData } from '../../lib/storage'
 import { activeGoals, deserveForWeek } from '../../lib/north'
 import { parseNorth } from '../../lib/northSections'
 import { MAX_ACTIVE_GOALS, MAX_RULES_PER_GOAL } from '../../lib/types'
-import { northReadOn } from '../../lib/northRead'
 
 const TODAY = '2026-09-05'
 
@@ -196,24 +195,14 @@ test('a text with no heading reads whole, paragraph by paragraph, with nothing i
   expect(within(read).getAllByRole('button').map(b => b.textContent)).toEqual(['Edit'])
 })
 
-test('in the morning Start the day and Edit stand together at the end of the page, and any look marks the day read', async () => {
-  const user = userEvent.setup()
-  picture('a line before any heading\n\nFIRST HEADING\na line under it')
-  const onStartDay = vi.fn()
-  const { container } = render(<NorthView morning onStartDay={onStartDay} />)
-  expect(northReadOn()).toBe(TODAY)
-  const start = screen.getByRole('button', { name: 'Start the day' })
+// The page ends in its one row of what can be pressed, past the words; the
+// morning's Start the day went with the morning's page opening, in v2.24.
+test('Edit stands in one row at the end of the page, past the signature, and there is no Start the day', () => {
+  picture('a line before any heading\n\nFIRST HEADING\na line under it\n---\na signature line')
+  const { container } = render(<NorthView />)
   const edit = screen.getByRole('button', { name: 'Edit' })
-  // One row, past the words: the page has one place for what can be pressed.
-  expect(start.parentElement).toBe(edit.parentElement)
-  expect(container.querySelector('.north-read')?.lastElementChild).toBe(start.parentElement)
-  await user.click(start)
-  expect(onStartDay).toHaveBeenCalledTimes(1)
-})
-
-test('on an ordinary visit there is no Start the day', () => {
-  picture('First line here')
-  render(<NorthView />)
+  expect(container.querySelector('.north-read')?.lastElementChild).toBe(edit.parentElement)
+  expect(edit.parentElement?.previousElementSibling).toHaveClass('north-signature')
   expect(screen.queryByRole('button', { name: 'Start the day' })).toBeNull()
 })
 

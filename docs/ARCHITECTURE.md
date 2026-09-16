@@ -142,8 +142,12 @@ of them is in a backup. The ones that hold something worth knowing about:
 And a few device-local preferences under their own keys for the same
 reason, each explained where it lives: the evening close's and the yesterday
 banner's dismissals for the day, the quick-add draft, which library lists are
-folded and what each was last counted in, where the scratch button sits, and
-the tour's progress.
+folded and what each was last counted in, where the scratch button sits, the
+tour's progress, and the two moments North's window after sleep is decided
+from - when the app was last in view and when the window was last shown
+(`dienius:north-seen`, `dienius:north-window`,
+[`northRead.ts`](../src/lib/northRead.ts)). Written to the plan, those two
+would be a commit on every open in a synced repo.
 
 And one key that is a whole separate copy of everything:
 

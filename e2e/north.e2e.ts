@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test'
-import { openFreshAt, reopenAt, wednesdayAt } from './app'
+import { expect, test, type Page } from '@playwright/test'
+import { openFreshAt, wednesdayAt } from './app'
 
 /**
  * North as a text: written on the page, read as blocks, and the first thing
@@ -14,7 +14,19 @@ import { openFreshAt, reopenAt, wednesdayAt } from './app'
 
 test.use({ timezoneId: 'Europe/Vilnius' })
 
-test('the text is written on the page, reads back as blocks, and opens the next morning', async ({ page }) => {
+/**
+ * Closing the app and opening it again later. The page is left before the
+ * clock moves, the way a night is - closed at ten, opened at seven - since
+ * leaving view is the moment the app writes as the start of a break.
+ */
+async function leaveAndReturnAt(page: Page, time: Date): Promise<void> {
+  await page.goto('about:blank')
+  await page.clock.setFixedTime(time)
+  await page.goto('./')
+  await page.getByRole('navigation').first().waitFor()
+}
+
+test('the text is written on the page, reads back whole, and its introduction opens over the day after sleep', async ({ page }) => {
   await openFreshAt(page, wednesdayAt(10))
 
   // A fresh app opens on the day: there is no text to read yet.
@@ -36,19 +48,22 @@ test('the text is written on the page, reads back as blocks, and opens the next 
   await expect(blocks).toHaveCount(2)
   await expect(blocks.nth(0)).toHaveText('First line here\nSecond line here')
   await expect(blocks.nth(1)).toHaveText('Third line here')
-  await expect(page.getByRole('button', { name: 'Start the day' })).toHaveCount(0)
 
-  // The next morning the app opens on it, and Start the day is the way on.
-  await reopenAt(page, wednesdayAt(7 + 24))
-  await expect(page.getByRole('region', { name: 'North' })).toBeVisible()
-  await expect(blocks.nth(0)).toHaveText('First line here\nSecond line here')
-  await page.getByRole('button', { name: 'Start the day' }).click()
+  // The next morning, after a night away, the app opens on the day with the
+  // introduction over it, and Close leaves the day.
+  await leaveAndReturnAt(page, wednesdayAt(7 + 24))
+  const window = page.getByRole('dialog', { name: 'North' })
+  await expect(window).toBeVisible()
+  await expect(window.locator('.north-paragraph').first()).toHaveText('First line here\nSecond line here')
+  await expect(page.getByPlaceholder('Add a task')).toBeAttached()
+  await window.getByRole('button', { name: 'Close' }).click()
+  await expect(window).toHaveCount(0)
   await expect(page.getByPlaceholder('Add a task')).toBeVisible()
 
-  // Opened again the same day, it is the day.
-  await reopenAt(page, wednesdayAt(9 + 24))
+  // Opened again two hours later, it is the day and nothing over it.
+  await leaveAndReturnAt(page, wednesdayAt(9 + 24))
   await expect(page.getByPlaceholder('Add a task')).toBeVisible()
-  await expect(page.getByRole('region', { name: 'North' })).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'North' })).toHaveCount(0)
 })
 
 /**

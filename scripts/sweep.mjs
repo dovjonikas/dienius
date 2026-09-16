@@ -265,12 +265,20 @@ const SCREENS = [
   },
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   {
-    // The first open of a day, when there is a text: North, ending in Start
-    // the day. The device remembers the day it read, so it is forgotten
-    // first and the page opened again.
-    name: 'North (morning)',
+    // The app coming into view after sleep, when the text has an
+    // introduction: the window over the day. The device remembers when the
+    // app was last in view and when the window was last shown, so both are
+    // set back six hours and the page opened again.
+    name: 'Today (North after sleep)',
     go: async /** @param {Page} p */ p => {
-      await p.evaluate(() => localStorage.removeItem('dienius:north-read'))
+      // Written after the app's own pagehide, which records the moment the
+      // page leaves view and would otherwise make the reload no break at all.
+      await p.evaluate(() => {
+        window.addEventListener('pagehide', () => {
+          localStorage.setItem('dienius:north-seen', String(Date.now() - 6 * 60 * 60 * 1000))
+          localStorage.removeItem('dienius:north-window')
+        })
+      })
       await p.reload()
       await p.waitForSelector('nav')
       // A reload of its own throws away the audit the walk had just added.

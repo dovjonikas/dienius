@@ -327,12 +327,31 @@ test('the sleep fields step by five minutes with the up and down arrows', async 
  * The count is the test. See CONVENTIONS section 21 and DECISIONS "A
  * setting has to earn its place".
  */
-test('Nudges is four rows: closing the day, when the evening starts, bringing a goal forward, and North on the day', async () => {
+test('Nudges is five rows: closing the day, when the evening starts, bringing a goal forward, North on the day and North after sleep', async () => {
   const { container } = await renderSettled()
   const nudges = container.querySelector('#settings-nudges') as HTMLElement
 
   const names = Array.from(nudges.querySelectorAll('.setting-name')).map(el => el.textContent)
-  expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward', 'North on the day'])
+  expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward', 'North on the day', 'North after sleep'])
+})
+
+// The same shape as the row above it: on until switched off, and only off is
+// ever carried in the plan.
+test('North after sleep is on until switched off', async () => {
+  const user = userEvent.setup()
+  render(<SettingsView />)
+
+  const window = screen.getByRole('switch', { name: 'North after sleep' })
+  expect(window).toHaveAttribute('aria-checked', 'true')
+  expect(getData().settings.north.windowAfterSleep).toBeUndefined()
+
+  await user.click(window)
+  expect(window).toHaveAttribute('aria-checked', 'false')
+  expect(getData().settings.north).toEqual({ afterASlowDay: true, windowAfterSleep: false })
+
+  await user.click(window)
+  expect(window).toHaveAttribute('aria-checked', 'true')
+  expect(getData().settings.north).toEqual({ afterASlowDay: true })
 })
 
 // On until switched off, and the plan carries nothing until then: absent is

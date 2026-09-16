@@ -469,7 +469,7 @@ const SLEEP_PROFILE = record({ id: text(1, Number.POSITIVE_INFINITY), name: text
 const sleepProfiles: Check = x =>
   listOf(SLEEP_PROFILE)(x) && (x as SleepProfile[]).length > 0 && new Set((x as SleepProfile[]).map(p => p.id)).size === (x as SleepProfile[]).length
 
-const NORTH = record({ afterASlowDay: boolean, stripOnDay: optional(boolean) })
+const NORTH = record({ afterASlowDay: boolean, stripOnDay: optional(boolean), windowAfterSleep: optional(boolean) })
 
 // The time is checked, not merely typed: "at": "banana" would make the
 // comparison in shouldClose silently never true, which is a feature quietly

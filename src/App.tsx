@@ -42,7 +42,7 @@ import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { NorthView } from './views/north/NorthView'
-import { isNorthMorning } from './lib/northRead'
+import { NorthWindow, useNorthAfterSleep } from './views/north/NorthWindow'
 import { NavRail, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
 
@@ -83,14 +83,11 @@ function tipFor(label: string, key: string): string {
 
 export function App() {
   const data = useAppData()
-  // The first open of a new day opens on North when there is a text to read
-  // - see northRead.ts. Decided once, here, and the morning's page ends in
-  // the way on to the day.
-  const [view, setView] = useState<View>(() => (isNorthMorning(data.picture?.text, todayKey()) ? 'north' : 'day'))
-  const [morning, setMorning] = useState(view === 'north')
-  useEffect(() => {
-    if (view !== 'north') setMorning(false)
-  }, [view])
+  // The app opens on the day. North's introduction comes forward over it
+  // once after sleep, in a window - see NorthWindow and northRead.ts - where
+  // until v2.24 the first open of each calendar day opened the North page.
+  const [view, setView] = useState<View>('day')
+  const northAfterSleep = useNorthAfterSleep()
   const [clockOpen, setClockOpen] = useState(false)
   const [clockTab, setClockTab] = useState<ClockTab | undefined>(undefined)
   // The whole journal, as an overlay rather than a seventh tab in the rail:
@@ -646,6 +643,7 @@ export function App() {
               date={selectedDate}
               onDateChange={setSelectedDate}
               onOpenNorth={() => setView('north')}
+              holdNorthCard={northAfterSleep.open}
               openTask={openTaskRequest}
               onOpenTaskDone={() => setOpenTaskRequest(null)}
               onOpenNote={() => setScratchOpen({})}
@@ -661,15 +659,7 @@ export function App() {
             onOpenJournal={date => setJournalOpen({ date })}
           />
         )}
-        {view === 'north' && (
-          <NorthView
-            morning={morning}
-            onStartDay={() => {
-              setMorning(false)
-              setView('day')
-            }}
-          />
-        )}
+        {view === 'north' && <NorthView />}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}
@@ -695,6 +685,9 @@ export function App() {
         />
       )}
 
+      {/* After sleep, over the day - see NorthWindow. At the root, like every
+          sheet, so it is over whatever tab the app opened on. */}
+      {northAfterSleep.open && <NorthWindow onClose={northAfterSleep.close} />}
       {shortcutsOpen && (
         <ShortcutsOverlay
           onClose={() => setShortcutsOpen(false)}

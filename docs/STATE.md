@@ -137,6 +137,34 @@ test walks the rail's hover on a desktop and the folded line's taps on the
 phone; the sample seed carries a signature; every Today screen measures
 clean at four widths in both themes.
 
+### Stage 5 - D, the window after sleep: done
+
+The app opens on the day. The first time it is in view after five hours
+out of view, and never twice in twelve, North's introduction and signature
+open in a window over it - one Close, and Escape and a press outside do the
+same; no timer and no tick. Never with no introduction, in the demo, or
+with "North after sleep" off (on by default, only off carried). The rule is
+`northWindowDue` in `lib/northRead.ts`, pure, over two device moments -
+last in view, last shown - written on arriving, on every minute in view and
+on leaving view; a tick that comes back hours late is a laptop waking and
+opens the window then. The sleep schedules were not used: they say when
+somebody means to sleep, and the nights this is for are the ones that did
+not go to plan. The morning's opening of the North page, its Start the day
+and the day-read key went; the Monday goal card waits under the window
+rather than standing beside it.
+
+Two things the tests found. Leaving view is only leaving from in view: a
+tab closed hours after it went out of view fires pagehide too, and wrote
+the break's start as the closing - a test plants that and fails. And any
+reload writes the moment it leaves, so the browser test, the sweep's new
+Today (North after sleep) screen and the look script all set the break
+back after the app's own pagehide; a picture of the sweep's screen shows
+the window it measured. Tests cover five hours against two, a night shift
+against a nap, twelve hours, no introduction, the switch, the demo, a
+device never seen, the memory staying out of the plan, and the old key
+cleared; the app shows it over the day, closes it three ways, and opens
+on the day.
+
 Left: the day's column in place of the headings row (C); the
 window after sleep in place of the morning page (D); the scale, the now
 line's weight and its time, the running and next block's lines, the past

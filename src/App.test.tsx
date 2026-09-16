@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from './App'
@@ -469,31 +469,116 @@ test('the week\'s bar has the door too, on the day the week is centred on', asyn
 // --- the morning --------------------------------------------------------------
 
 /**
- * The one thing the owner asked of North is to see it every morning, so the
- * first open of the app on a new day opens on it, ending in Start the day.
- * See lib/northRead.ts. The text here is a generic one.
+ * North's introduction and signature open in a window over the day the
+ * first time the app is in view after five hours out of view, and never
+ * twice in twelve - lib/northRead.ts has the rule. The day is under the
+ * window and the app opens on it; the North page is for reading and writing
+ * the whole text. The text here is a generic one.
  */
-test('with a North text, the first open of the day is North, and Start the day is the way on', async () => {
+const HOURS = 60 * 60 * 1000
+const WITH_EVERY_PART = 'a line of the introduction\n\nFIRST HEADING\na line under it\n---\na signature line'
+
+function awayFor(hours: number) {
+  localStorage.setItem('dienius:north-seen', String(Date.now() - hours * HOURS))
+}
+
+test('opened after five hours away, the day is under a window with the introduction and the signature, and Close leaves the day', async () => {
   const user = userEvent.setup()
-  actions.setPicture('First line here\n\nSecond line here')
+  actions.setPicture(WITH_EVERY_PART)
+  awayFor(6)
   render(<App />)
-  const north = screen.getByRole('region', { name: 'North' })
-  expect(within(north).getByText('First line here')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Start the day' }))
+
+  const window = screen.getByRole('dialog', { name: 'North' })
+  expect(within(window).getByText('a line of the introduction')).toBeInTheDocument()
+  expect(within(window).getByText('a signature line')).toBeInTheDocument()
+  expect(within(window).queryByText('FIRST HEADING')).toBeNull()
+  // No timer, no tick, nothing to confirm: one button, and it closes.
+  expect(within(window).getAllByRole('button').map(b => b.textContent)).toEqual(['Close'])
+  expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
+
+  await user.click(within(window).getByRole('button', { name: 'Close' }))
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
   expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
 })
 
-test('the second open the same day is the day', () => {
-  actions.setPicture('First line here')
+test('Escape closes the window, and so does a press outside it', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(WITH_EVERY_PART)
+  awayFor(8)
   const first = render(<App />)
-  expect(screen.getByRole('region', { name: 'North' })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
   first.unmount()
+
+  localStorage.removeItem('dienius:north-window')
+  awayFor(8)
   render(<App />)
-  expect(screen.queryByRole('region', { name: 'North' })).toBeNull()
-  expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
+  const window = screen.getByRole('dialog', { name: 'North' })
+  await user.click(window.parentElement as HTMLElement)
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
 })
 
-test('with no text there is no morning page', () => {
+test('opened again after two hours there is no window, and after a night inside twelve hours of the last one there is none either', () => {
+  actions.setPicture(WITH_EVERY_PART)
+  awayFor(2)
+  const first = render(<App />)
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
+  first.unmount()
+
+  localStorage.setItem('dienius:north-window', String(Date.now() - 8 * HOURS))
+  awayFor(6)
+  render(<App />)
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
+})
+
+test('with no introduction, or with the switch off, there is no window', () => {
+  actions.setPicture('FIRST HEADING\na line under it\n---\na signature line')
+  awayFor(9)
+  const first = render(<App />)
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
+  first.unmount()
+
+  actions.setPicture(WITH_EVERY_PART)
+  actions.setNorthSettings({ afterASlowDay: true, windowAfterSleep: false })
+  awayFor(9)
+  render(<App />)
+  expect(screen.queryByRole('dialog', { name: 'North' })).toBeNull()
+})
+
+// The break starts when the app leaves view. A tab closed hours after it
+// went out of view fires pagehide as well, and that must not start the break
+// again from the closing.
+test('a tab closed while it was out of view does not start the break over', () => {
+  actions.setPicture(WITH_EVERY_PART)
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  const visibility = vi.spyOn(document, 'visibilityState', 'get')
+  try {
+    visibility.mockReturnValue('visible')
+    const first = render(<App />)
+    visibility.mockReturnValue('hidden')
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    const leftAt = Number(localStorage.getItem('dienius:north-seen'))
+
+    vi.setSystemTime(new Date(Date.now() + 6 * HOURS))
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'))
+    })
+    first.unmount()
+    expect(Number(localStorage.getItem('dienius:north-seen'))).toBe(leftAt)
+
+    visibility.mockReturnValue('visible')
+    render(<App />)
+    expect(screen.getByRole('dialog', { name: 'North' })).toBeInTheDocument()
+  } finally {
+    visibility.mockRestore()
+    vi.useRealTimers()
+  }
+})
+
+test('the app opens on the day, not on the North page, whatever the hour', () => {
+  actions.setPicture(WITH_EVERY_PART)
   render(<App />)
   expect(screen.queryByRole('region', { name: 'North' })).toBeNull()
   expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()

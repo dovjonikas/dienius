@@ -151,8 +151,12 @@ On the phone they fold into one line under the day's title: the signature,
 and a press on it opens the headings. Off, if you would rather not:
 **Settings → Nudges → North on the day**.
 
-The first open of the app on a new day opens on North, and **Start the
-day** at the end of the words is the way on.
+**After sleep** the introduction comes to you: the first time the app is
+in view after five hours out of view - a night, whatever hours your nights
+keep, and not a nap - the introduction and the signature open in a window
+over the day. **Close**, Escape or a press outside it leaves it, and it
+never opens twice in twelve hours. Nothing checks whether you read it. Off,
+if you would rather not: **Settings → Nudges → North after sleep**.
 
 ### The goal at the top
 

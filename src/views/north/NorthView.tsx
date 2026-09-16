@@ -1,10 +1,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
-import { rememberNorthRead } from '../../lib/northRead'
 import { northLineKinds, parseNorth } from '../../lib/northSections'
 import { NorthSection } from './NorthSection'
-import { todayKey } from '../../lib/dates'
 import { NorthGoals } from './NorthGoals'
 
 /**
@@ -31,11 +29,13 @@ import { NorthGoals } from './NorthGoals'
  * text and the Compose form that edited all of them at once are gone: the
  * page is the text, and a goal over it is a line.
  *
- * ## The morning
+ * ## After sleep
  *
- * The first open of the app on a new day opens here, and the page ends in
- * Start the day, which is the one way on to the day - see northRead.ts for
- * the rule and where it is kept. Any visit marks the day read.
+ * The introduction comes forward on its own once after sleep, in a window
+ * over the day - see NorthWindow and northRead.ts. Until v2.24 the first open
+ * of each calendar day opened this page instead, ending in Start the day;
+ * the page is for reading the whole text and writing it now, and the app
+ * opens on the day.
  *
  * ## What this screen refuses to do
  *
@@ -43,19 +43,8 @@ import { NorthGoals } from './NorthGoals'
  * percentage, no milestone, no target date, no streak, no checkbox, and no
  * count of anything that goes up.
  */
-export interface NorthViewProps {
-  /** This open of the app is the day's first look, and the page ends in the way on. */
-  morning?: boolean
-  /** Start the day: the one way on from the morning's page. */
-  onStartDay?: () => void
-}
-
-export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
+export function NorthView() {
   const data = useAppData()
-  // Any look at the page is the day's look.
-  useEffect(() => {
-    rememberNorthRead(todayKey())
-  }, [])
   const [editing, setEditing] = useState(false)
   // Focus goes back to the button that opened the text's field when the
   // field closes: Edit, or Write where the text was emptied or never kept.
@@ -84,13 +73,7 @@ export function NorthView({ morning = false, onStartDay }: NorthViewProps) {
       ) : text === '' ? (
         <NorthInvite openerRef={openerRef} onWrite={() => setEditing(true)} />
       ) : (
-        <NorthText
-          text={text}
-          openerRef={openerRef}
-          onEdit={() => setEditing(true)}
-          morning={morning}
-          onStartDay={onStartDay}
-        />
+        <NorthText text={text} openerRef={openerRef} onEdit={() => setEditing(true)} />
       )}
     </section>
   )
@@ -134,23 +117,18 @@ function NorthInvite({
  * lib/northSections.ts has the rule; nothing here decides what a heading
  * or a signature is.
  *
- * What can be pressed stands in one row at the end: Edit, and in the
- * morning Start the day beside it, past the words rather than over them, so
- * the way on is the far side of reading. Nothing else on the page is a
- * button except the headings themselves.
+ * What can be pressed stands in one row at the end, past the words rather
+ * than over them: Edit. Nothing else on the page is a button except the
+ * headings themselves.
  */
 function NorthText({
   text,
   openerRef,
   onEdit,
-  morning,
-  onStartDay,
 }: {
   text: string
   openerRef: React.Ref<HTMLButtonElement>
   onEdit: () => void
-  morning: boolean
-  onStartDay?: () => void
 }) {
   const { intro, sections, signature } = parseNorth(text)
   return (
@@ -181,11 +159,6 @@ function NorthText({
         </div>
       )}
       <div className="north-actions">
-        {morning && onStartDay && (
-          <button type="button" className="btn-primary" onClick={onStartDay}>
-            Start the day
-          </button>
-        )}
         <button ref={openerRef} type="button" className="btn-secondary" onClick={onEdit}>
           Edit
         </button>

@@ -259,12 +259,14 @@ function normalizeLoaded(data: StoredAppData): AppData {
       textScale: data.settings.textScale ?? 'm',
       sleepProfiles: migrateSleepProfiles(data),
       weekdayTemplates: data.settings.weekdayTemplates ?? {},
-      // The row's switch is carried only when it is off - absent is on, see
-      // NorthSettings - so a plan that never touched it stays as it was.
+      // The two North switches are carried only when they are off - absent
+      // is on, see NorthSettings - so a plan that never touched them stays as
+      // it was.
       north: data.settings.north
         ? {
             afterASlowDay: data.settings.north.afterASlowDay,
             ...(data.settings.north.stripOnDay === false ? { stripOnDay: false } : {}),
+            ...(data.settings.north.windowAfterSleep === false ? { windowAfterSleep: false } : {}),
           }
         : { ...DEFAULT_NORTH },
       eveningClose: data.settings.eveningClose ?? { ...DEFAULT_EVENING_CLOSE },
