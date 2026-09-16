@@ -5,6 +5,7 @@ import { CopyJournalButton } from './CopyJournalButton'
 import { activeGoals, ageLabel } from '../lib/north'
 import { copyText } from '../lib/journal'
 import { planReading, readingGroups, readingLine, readingMarkdown, type BlockReading } from '../lib/planReading'
+import { COUNT_WINDOW_LONG, COUNT_WINDOW_SHORT, blockCounts, countGroups, type CountGroup } from '../lib/blockCounts'
 import { formatDuration } from '../widgets/day-plan/capacity'
 import {
   KEY_TASKS_PER_DAY,
@@ -54,6 +55,7 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
   const dates = useMemo(() => datesBetween(from, to), [from, to])
   const today = todayKey()
   const readings = useMemo(() => planReading(data, dates, today), [data, dates, today])
+  const counts = useMemo(() => blockCounts(data, today), [data, today])
   const step = range === 'week' ? 7 : 31
   const isCurrent = today >= from && today <= to
 
@@ -173,6 +175,13 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
             <ReadingSection readings={readings} title={formatWeekTitle(dates)} />
           )}
 
+          {/* How many times each repeating block happened over the last
+              seven and thirty days - lib/blockCounts.ts. Counts and nothing
+              else, on the week and the month alike, since the two windows
+              run back from today rather than over the stretch being looked
+              at. */}
+          {counts.length > 0 && <CountsSection groups={countGroups(counts)} />}
+
           <NorthSection />
 
           {stats.library.length > 0 && (
@@ -282,6 +291,37 @@ function ReadingSection({ readings, title }: { readings: BlockReading[]; title: 
                 </li>
               )
             })}
+          </ul>
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * One line per repeating block: its name, and how many of the last seven
+ * and the last thirty days it happened on. The line the owner asked for in
+ * place of anything counted in a row, in the reading's own shape - the name
+ * in ink, the numbers muted after it - so the two lists read as one kind of
+ * thing. Nothing here is a bar, a percentage, a target or a colour, and a
+ * day a block did not happen changes nothing but the number.
+ */
+function CountsSection({ groups }: { groups: CountGroup[] }) {
+  return (
+    <div className="review-block review-counts">
+      <h3>How many times</h3>
+      {groups.map(group => (
+        <Fragment key={group.templateId}>
+          {groups.length > 1 && <h4 className="review-reading-template">{group.templateName}</h4>}
+          <ul className="review-reading-list">
+            {group.counts.map(count => (
+              <li key={count.blockId}>
+                <span className="review-reading-block">{count.time ? `${count.title} ${count.time}` : count.title}</span>
+                <span className="review-reading-facts">
+                  {' '}- {count.last7} in the last {COUNT_WINDOW_SHORT} days, {count.last30} in the last {COUNT_WINDOW_LONG}
+                </span>
+              </li>
+            ))}
           </ul>
         </Fragment>
       ))}

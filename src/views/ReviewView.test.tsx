@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ReviewView } from './ReviewView'
 import { actions } from '../lib/store'
@@ -128,7 +128,9 @@ test('the week reads where the plan and the week disagreed, one line per block, 
 
   await user.click(screen.getByRole('button', { name: 'The week before' }))
   expect(screen.getByRole('heading', { name: 'Where the plan and the week disagreed' })).toBeInTheDocument()
-  const lines = screen.getAllByRole('listitem').map(li => li.textContent)
+  // The reading's own lines: the counts under it have lines of their own.
+  const reading = screen.getByRole('heading', { name: 'Where the plan and the week disagreed' }).closest('.review-block') as HTMLElement
+  const lines = within(reading).getAllByRole('listitem').map(li => li.textContent)
   expect(lines).toEqual([
     'Something outside - happened 1 of 3 days, not done twice',
     'Deep work 09:00 - happened at its time 2 of 3 days, moved later once (+1h)',
@@ -167,4 +169,44 @@ test('the reading is not drawn on a month, nor on a week with nothing to say', a
 
   await user.click(screen.getByRole('button', { name: 'Month' }))
   expect(screen.queryByRole('heading', { name: 'Where the plan and the week disagreed' })).not.toBeInTheDocument()
+})
+
+/**
+ * How many times each repeating block happened, lately - lib/blockCounts.ts.
+ * A count per block over the last seven and the last thirty days, and
+ * nothing else on the line: no percentage, no target, no colour, no word
+ * about it. Drawn on the week and the month alike, since the windows run
+ * back from today.
+ */
+test('each repeating block has a line with how many of the last 7 and 30 days it happened on, and nothing else', async () => {
+  const user = userEvent.setup()
+  const days: Record<string, DayPlan> = {}
+  for (const [back, tasks] of [
+    [1, [stamped('b1', { done: true }), stamped('b2')]],
+    [3, [stamped('b1', { done: true })]],
+    [10, [stamped('b1', { done: true }), stamped('b2', { done: true })]],
+  ] as [number, Task[]][]) {
+    const date = addDays(TODAY, -back)
+    days[date] = { date, templateId: 't1', tasks }
+  }
+  actions.resetForTests({ ...defaultData(), templates: [work], days })
+  render(<ReviewView />)
+
+  const section = screen.getByRole('heading', { name: 'How many times' }).closest('.review-block') as HTMLElement
+  expect(within(section).getAllByRole('listitem').map(li => li.textContent)).toEqual([
+    'Deep work 09:00 - 2 in the last 7 days, 3 in the last 30',
+    'Lunch 12:30 - 0 in the last 7 days, 1 in the last 30',
+    'Something outside - 0 in the last 7 days, 0 in the last 30',
+  ])
+  expect(section.textContent).not.toMatch(/%|streak|missed|target|goal/i)
+  expect(section.querySelector('progress, meter, [style*="color"]')).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Month' }))
+  expect(screen.getByRole('heading', { name: 'How many times' })).toBeInTheDocument()
+})
+
+test('with no block on any of the last thirty days there is no count section at all', () => {
+  actions.addTask(TODAY, 'One')
+  render(<ReviewView />)
+  expect(screen.queryByRole('heading', { name: 'How many times' })).not.toBeInTheDocument()
 })

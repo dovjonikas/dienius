@@ -93,7 +93,7 @@ type Outcome =
  * template's identity, as stamping's own pool is. A repeat instance is in
  * neither and never stands for a block, whatever it is called.
  */
-function tasksForBlocks(blocks: TemplateBlock[], tasks: Task[], templateId: string): Map<string, Task> {
+export function tasksForBlocks(blocks: TemplateBlock[], tasks: Task[], templateId: string): Map<string, Task> {
   const matched = new Map<string, Task>()
   const taken = new Set<Task>()
   const ofTemplate = (task: Task) => {
