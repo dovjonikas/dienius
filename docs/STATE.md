@@ -183,11 +183,39 @@ line's top on a day whose hours are measurably uneven, a block starting
 between two hours lies between their lines, and no labelled hour stands
 beside a block's body; planting the labels back fails two.
 
-Left: the day's column in place of the headings row (C); the
-window after sleep in place of the morning page (D); the scale, the now
-line's weight and its time, the running and next block's lines, the past
-step back, the free labels' size and place, the sleep ground (E); F read
-against the brief once more; the phone everywhere, and the gates.
+### Stage 7 - E, now, the running block, the past, free time, sleep: done
+
+- **Now**: a 1px line in a softened now colour, and in the hour column a
+  small rounded marker with the time to the minute in the line's colour -
+  back after v2.6 took the line's clock away, because on an unevenly spaced
+  grid a line between two hours does not say where between. An hour label
+  inside eighteen pixels of it is dropped; the minute turns over on the
+  minute rather than a minute after mount; the wide grid still opens with now
+  in its top third.
+- **The running block** loses its ring and takes a third of its colour
+  rather than a fifth, and says "ends in 25 min" on its time line; in free
+  time the next block says "starts in 10 min". One line on one block, from
+  `nowHint`, and nothing else counts down.
+- **The past** - a block that has ended, `isPastBlock` - steps back: its
+  colour quietened and its time faded once; its title keeps its ink. Never a
+  colour of its own. Three shapes were measured and dropped first, each by
+  the sweep's contrast pass: the whole block faded, the words in the second
+  ink, and the title faded.
+- **Free labels** stay from half an hour, at the blocks' own left, upright,
+  in the third ink, with the rules either side gone - quieter rather than a
+  smaller size, because 11px is already the smallest Today uses and a fifth
+  size is what CONVENTIONS 5 counts.
+- **Sleep** is one quiet ground: a lighter tone, no hour or half-hour rules
+  across it, and an edge that fades only toward the waking hours.
+
+Tests: the hint for a running block, for the next block in free time, for
+hours and minutes, and after the last block; past for ended, running and
+unsized blocks; on today's grid the marker's minute, the one hint and the
+past class, and on any other day none of them; the marker above the blocks.
+Today and Templates measure clean at four widths in both themes.
+
+Left: F read against the brief once more; the phone everywhere, and the
+gates.
 
 ## v2.22 - the quality wave, part one: the pictures
 
