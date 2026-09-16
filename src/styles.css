@@ -10544,12 +10544,19 @@ button.task-library:hover { color: var(--text); }
 /* Where there is no rail: one line under the day's title, in the header's
    own row, and a press on it opens the headings under it in the flow - a
    press may move the day where a hover may not. The line is the signature
-   in the second ink, or the word North where the text has none. */
+   in the second ink, or the word North where the text has none.
+
+   A step under the goal's line rather than a hair: both lines are presses,
+   and on a finger each one's target is 44px tall around its middle. Two
+   pixels apart, the two middles were 21px apart, so the signature's target
+   reached over the middle of the goal's and a press on the goal opened the
+   headings - the phone sweep's "control covered". Eight apart, each target
+   stops short of the other's middle. */
 .north-day.is-folded {
   flex: 1 1 100%;
   order: 10;
   gap: var(--s2);
-  margin-top: var(--s0);
+  margin-top: var(--s2);
 }
 
 .north-day-line {
@@ -10891,6 +10898,16 @@ button.north-day-line:focus-visible {
   align-items: flex-start;
   gap: var(--s1);
   margin-top: var(--s2);
+}
+
+/* On a finger each line is a 44px target around its middle (the touch
+   overlays, above), and four pixels apart the lines' middles were 23px
+   apart - a target reached to within a pixel and a half of the next line's
+   middle, and with the list half scrolled under the top of the screen the
+   line below took the press. Sixteen apart, a target stops well short of
+   its neighbour's middle however the list is scrolled. */
+@media (pointer: coarse) {
+  .north-goal-lines { gap: var(--s4); }
 }
 
 .north-goal-lines:empty { display: none; }
