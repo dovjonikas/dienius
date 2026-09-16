@@ -3446,3 +3446,104 @@ inside a column: the day the header grew a line, the demo's last task
 overflowed its list and Tab from it to the Done fold under the list read as
 a climb. It measures where a stop is on the screen once focus has brought it
 into view, plus the page's own scroll.
+
+## The signature stays on the day, the introduction comes after sleep, and now says its minute
+
+One message replaced everything asked the same day about North, the day's
+timeline and Review's counts, in nine stages, over the rules that hold
+everywhere: DECISIONS and CONVENTIONS kept, goals never measured, no streak,
+nothing red, no verdict, none of the owner's words in the repo, and every
+line in a test a generic one. Where it met what an earlier message had
+already built, the earlier work was read first and kept.
+
+**A heading owns everything to the next heading.** v2.23 ended a heading's
+text at its first blank line, which cut a heading with two paragraphs in
+half and showed the second as a free line. A heading's text is now every
+line to the next heading, blank lines and all, and the lines before the
+first heading are the introduction, always shown. Capitals stay the only
+formatting there is.
+
+**Three hyphens end the headings.** A line of only `---` starts the
+signature: everything after it, and nothing after it is a heading, in
+capitals or not. A mark rather than a word, because a word would be a
+keyword in one language and a line of the text in another, and three
+hyphens are what a person already types to close a letter off. The text is
+still the one string typed, parsed each time it is drawn, and a backup
+carries it back character for character - a test holds that.
+
+**One page, and one field for the text.** North is one column: the goals
+as quiet lines at the top, each edited where it stands, a title enough to
+save one and the rest behind More; then the introduction, the headings and
+the signature at the foot, a little larger with more air above it. The
+text is written in one plain textarea with Save and Cancel. Its heading
+lines and the mark are drawn heavier as they are typed, by a drawing under
+the field that the field's own text is laid over transparently, so the
+keyboard, undo, paste, the phone's keyboard and every other thing a real
+field does are the browser's own.
+
+**The day carries the signature and the headings, and never the
+introduction.** The introduction is read, and the day is glanced at: a
+page of it beside the task list would be a page nobody reads twice. The
+signature is one line that can stand there all day, and the headings are
+an index a press or a resting pointer opens. Where there is a rail they
+stand in it, between the templates and the day's numbers, because at the
+rail's foot a 768px window needed a scroll to reach them; where there is
+no rail they are one line under the day's title. A switch turns it off,
+and only off is stored.
+
+**The introduction opens once after sleep, and the clock that says so is
+the gap.** The window opens the first time the app is in view after five
+hours out of view, and never twice in twelve. Not the sleep schedules:
+those say when somebody means to sleep, and the nights this is for are the
+ones that did not go to plan. Five hours because a meal or a meeting away
+is not a night; twelve because a nap is not a morning. The two moments are
+a fact about this screen and live on the device, outside the plan and
+outside sync, so each device opens it once. It closes when it is closed -
+its button, Escape or a press outside - and never by a timer. It replaces
+the morning's opening of the whole North page, which put a page between
+the person and a day with work waiting on it.
+
+**The hours and the blocks are one scale, and the scale is not even.**
+Measured in a browser, every block and every hour line comes from the same
+map of its minute, and CONVENTIONS 4 is why an hour can be anywhere from
+nothing to seventy pixels tall. What read as a block drawn at the wrong
+hour was an hour's number standing beside a block's body; an hour inside a
+block is not labelled now, and the block says its own times.
+
+**Now says its minute, the running block says when it ends, and what is
+behind steps back.** The now line is a hairline with a small marker in the
+hour column saying the time. CONVENTIONS 23 said the line carries no clock
+because the header's clock is the minute; on a grid whose hours are uneven
+a line between two labels does not say where between them it is, so the
+marker is the grid's scale at now, and 23 says so. The running block says
+"ends in 25 min" and, while nothing runs, the next block says "starts in 10
+min". Running is the day's own rule, the one the header names: a block
+ticked done is not running whatever the clock says, and one ticked done
+ahead of its time is not what starts next. Said once: on a wide screen,
+where the grid stands beside them, the header names the running task
+without its time left and the rail's Up next leaves a start the grid is
+already saying; with the grid put away, or on a phone, they say it. What
+has ended loses some of its colour and fades its time once, and keeps its
+title's ink - three stronger shapes failed the contrast pass first. Free
+labels start at half an hour, at the blocks' left, quieter rather than
+smaller, since 11px is already the smallest size Today uses. Sleep is one
+quiet ground with no rules across it.
+
+**On a phone the day does not scroll itself to now.** The wide grid scrolls
+inside its own column and opens with now a third of the way down. On a
+phone the grid is part of the page, under the header, and a page that
+scrolled itself on open would take the day's title, the running line and
+North off the screen to show it.
+
+**Review's counts are a number under each window.** "2 in the last 7 days,
+3 in the last 30" was one phrase said again for every block, and on a phone
+it broke mid-phrase on most lines. The windows are named once over two
+columns, the cells hold digits and nothing else, and the table is never
+wider than a line of reading. Nothing about the counts is kept: a test
+reads what a tick saves and finds the plan and the tick.
+
+**What the phone found.** Two presses whose 44px targets reached the middle
+of a neighbour's: the folded North line two pixels under the goal's line,
+and the goal lines at the top of North, which with the list half scrolled
+under the top of the screen gave a press on one line to the next. Both were
+given room rather than smaller targets.

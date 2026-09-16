@@ -6,8 +6,8 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.24, in progress - North as one page, a window after
-sleep, and the day's timeline.
+**Last updated:** v2.24, done - North as one page, a window after sleep,
+and the day's timeline.
 
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
@@ -239,7 +239,45 @@ Tests: a row per block with digits alone in the number cells; two templates
 under their names with the windows named once; the saved plan above. Review
 measures clean at four widths and on the phone, in both themes.
 
-Left: the phone everywhere, and the gates.
+### Stage 9 - the phone, the gates, and what they found: done
+
+Every screen at four desktop widths and on the phone in both themes, the
+screens that depend on the clock again at 22:00 and at 09:00, and the
+audit's self-check; then the browser tests, the keys and precision passes
+and the privacy guard. What they found, and what changed:
+
+- **Two presses reached into their neighbours.** On a phone the folded
+  North line stood two pixels under the goal's line, and each is a 44px
+  target around its middle, so a press on the goal opened the headings:
+  the line is a step lower now. On North the goal lines were four pixels
+  apart, and with the list half scrolled under the top of the screen a press
+  on one went to the next: sixteen apart on a finger. The sweep counted six
+  and two; both are none.
+- **Running means what the day means.** A block ticked done before its end
+  still said "ends in", and one ticked done ahead of its time could say
+  "starts in". The grid takes the running block from `activeTask`, the
+  header's own rule, and the next from the blocks not done; a block running
+  past the grid's edge says its real end rather than where it is cut.
+- **Said once.** With the grid beside the header, the header said the
+  running task's time left and the block said when it ends; in free time
+  the rail's Up next said "in 50 min" beside the block's "starts in 50 min".
+  On a wide screen with the day pane showing, the header names the task
+  without its time left and Up next leaves a start the grid is saying; with
+  the Tasks focus, or on a phone, both say it as before. CONVENTIONS 23 says
+  what the now line and the running block carry now, and why.
+- **On a phone the day does not scroll itself to now**, and DECISIONS says
+  why.
+
+Tests: the hint for a block the day does not call running, for a real end
+past the grid's edge, and for blocks ticked done; the header and Up next on
+a wide screen, with the Tasks focus, and on a phone. Each failed before its
+change.
+
+DECISIONS: "The signature stays on the day, the introduction comes after
+sleep, and now says its minute".
+
+Left for later, from the same day: the library's adding flow, which the
+owner found a chore to fill in, goes into the design pass's library stage.
 
 ## v2.22 - the quality wave, part one: the pictures
 
