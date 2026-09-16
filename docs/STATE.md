@@ -217,6 +217,22 @@ both themes, and Today again at 22:00 and 09:00. The ratchet: borders drawn
 120 to 106, weights 83 to 75, pixel heights 64 to 60, number line heights 79
 to 78, tracked capitals 20 to 15, `--e1` 6 to 2.
 
+### Stage 5 - the week and the calendar: done
+
+- **The month** is 35 grounds with no edge: a stamped day keeps its wash
+  and the strip of its template's colour, today its outline on the page's
+  ground.
+- **The week.** A day's track is the surface with no edge, today's a ring
+  of the accent inside it; a weekday is sentence case; an offered template
+  over an empty day is quiet text that takes the fill under the pointer; the
+  stamp menu is a popover on the raised ground with a popover's lift; the
+  question it can ask has buttons one control tall.
+- **The agenda**'s dates and its journal's labels are sentence case.
+
+The calendar measures clean at four widths and on the phone in both
+themes. The ratchet: borders drawn 106 to 104, weights 75 to 74, pixel
+heights 60 to 59, tracked capitals 15 to 12.
+
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
 Asked for in one message that replaces everything asked about North, the

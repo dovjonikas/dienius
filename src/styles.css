@@ -5302,7 +5302,7 @@ button.danger {
   justify-content: flex-start;
   gap: var(--s0);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
   color: var(--text);
   padding: 6px var(--s0);
@@ -12151,7 +12151,7 @@ main:has(.week) > .calendar {
   min-width: 0;
 }
 
-.week-col-weekday { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; }
+.week-col-weekday { font-size: var(--t-xs); }
 .week-col-date { font-size: var(--t-sm); font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
 .week-col.is-today .week-col-day { color: var(--accent); }
@@ -12215,11 +12215,11 @@ main:has(.week) > .calendar {
    names one. Outlined rather than filled, because it is a suggestion. */
 .week-col-template.is-offer {
   background: none;
-  border-color: var(--border);
+  border-color: transparent;
   color: var(--muted);
 }
 
-.week-col-template.is-offer:hover { border-color: var(--accent); color: var(--text); }
+.week-col-template.is-offer:hover { background: var(--fill); color: var(--text); }
 
 .week-col-template.is-empty {
   background: none;
@@ -12227,7 +12227,7 @@ main:has(.week) > .calendar {
   color: var(--faint);
 }
 
-.week-col-template.is-empty:hover { border-color: var(--border); color: var(--muted); }
+.week-col-template.is-empty:hover { background: var(--fill); color: var(--muted); }
 .week-col-template.is-empty:disabled { opacity: 0; pointer-events: none; }
 
 .week-stamp-menu {
@@ -12240,10 +12240,9 @@ main:has(.week) > .calendar {
   flex-direction: column;
   gap: var(--s0);
   padding: var(--s1);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--r-card);
-  box-shadow: var(--e3);
+  box-shadow: var(--e2);
 }
 
 .week-stamp-option {
@@ -12300,7 +12299,7 @@ main:has(.week) > .calendar {
 
 .week-col-ask-actions { display: flex; gap: var(--s2); }
 
-.week-col-ask-actions button { flex: 1 1 auto; min-height: 32px; font-size: var(--t-sm); }
+.week-col-ask-actions button { flex: 1 1 auto; min-height: var(--control-h); font-size: var(--t-sm); }
 
 @media (pointer: coarse) {
   .week-col-ask-actions button { min-height: var(--touch); }
@@ -12313,14 +12312,14 @@ main:has(.week) > .calendar {
   position: relative;
   min-height: 0;
   border-radius: var(--r-mark);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background: var(--surface);
+  border: 1px solid transparent;
   overflow: hidden;
   cursor: crosshair;
 }
 
 .week-col.is-today .week-track {
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
   background: color-mix(in srgb, var(--accent) 5%, var(--surface));
 }
 
@@ -15335,9 +15334,7 @@ main:has(.week) > .calendar {
   background: none;
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
   text-align: left;
 }
 
@@ -15382,7 +15379,7 @@ main:has(.week) > .calendar {
 }
 
 .agenda-journal div { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: baseline; }
-.agenda-journal dt { flex: 0 0 auto; color: var(--faint); font-size: var(--t-xs); letter-spacing: 0.06em; text-transform: uppercase; }
+.agenda-journal dt { flex: 0 0 auto; color: var(--faint); font-size: var(--t-xs); }
 .agenda-journal dd { margin: 0; color: var(--text); font-size: var(--t-sm); line-height: 1.4; }
 
 /* The morning line under a day's name in the grid, one line, on a desktop
