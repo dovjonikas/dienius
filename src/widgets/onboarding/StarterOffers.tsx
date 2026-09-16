@@ -22,7 +22,7 @@ export function StarterOffers({ onUse }: StarterOffersProps) {
   return (
     <ul className="starter-offers">
       {STARTER_TEMPLATES.map(starter => (
-        <li key={starter.id} className="starter-card" style={{ borderColor: starter.color }}>
+        <li key={starter.id} className="starter-card" style={{ ['--chip' as string]: starter.color } as React.CSSProperties}>
           <div className="starter-card-head">
             <span className="dot" style={{ background: starter.color }} aria-hidden="true" />
             <strong>{starter.name}</strong>

@@ -489,7 +489,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
                 <Explain id="copy-to">
                   <button
                     type="button"
-                    className="setting-quiet wt-copy"
+                    className="btn-quiet wt-copy"
                     aria-expanded={copyFrom === day}
                     onClick={() => setCopyFrom(copyFrom === day ? null : day)}
                   >
@@ -691,7 +691,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
 
       {/* Folded to one line while a block is open - see addOpen. */}
       {!addOpen && (
-        <button type="button" className="block-add-open" onClick={() => setAddAsked(true)}>
+        <button type="button" className="btn-secondary block-add-open" onClick={() => setAddAsked(true)}>
           Add a block
         </button>
       )}
@@ -896,14 +896,14 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
       </div>
       )}
 
-      <div className="row">
-        <button className="primary" disabled={!draft.name.trim()} onClick={onSave}>
-          Save template
-        </button>
-        <button className="btn-secondary" onClick={onCancel}>
+      <div className="template-editor-actions">
+        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
+        <button className="btn-quiet" onClick={onCancel}>
           Cancel
         </button>
-        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
+        <button className="btn-primary" disabled={!draft.name.trim()} onClick={onSave}>
+          Save template
+        </button>
       </div>
     </div>
   )

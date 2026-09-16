@@ -533,7 +533,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
                 to say so. */}
             {libraryLists.length > 0 && (
               <select
-                className="block-library"
+                className={b.libraryListId ? 'block-library is-set' : 'block-library'}
                 aria-label={`What ${b.title} draws from`}
                 value={b.libraryListId ?? ''}
                 onChange={e => setBlockLibrary(i, e.target.value || undefined)}
@@ -694,12 +694,14 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
         </button>
         </div>
       </div>
-      <div className="row">
-        <button className="primary" disabled={!draft.name.trim()} onClick={() => onSave(draft)}>
+      {/* The last row: the delete at the left, Cancel and Save at the right,
+          Save last, and Tab reading them in that order. */}
+      <div className="template-editor-actions">
+        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
+        <button className="btn-quiet" onClick={onCancel}>Cancel</button>
+        <button className="btn-primary" disabled={!draft.name.trim()} onClick={() => onSave(draft)}>
           Save template
         </button>
-        <button className="btn-secondary" onClick={onCancel}>Cancel</button>
-        {onDelete && <DeleteTemplateButton name={draft.name} onDelete={onDelete} />}
       </div>
     </div>
   )
@@ -916,7 +918,7 @@ export function TemplatesView() {
                 ))}
             </p>
           )}
-          <button type="button" className="setting-quiet" onClick={() => setAsking(false)}>
+          <button type="button" className="btn-quiet" onClick={() => setAsking(false)}>
             Cancel
           </button>
         </div>
@@ -1015,7 +1017,7 @@ export function TemplatesView() {
             {/* One control on the row. Delete is inside the editor since
                 v2.22 - see DeleteTemplateButton - so a list of three is not
                 three red buttons before anything is pressed. */}
-            <button className="btn-secondary" aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>
+            <button className="btn-quiet" aria-label={`Edit ${t.name}`} onClick={() => startEdit(t)}>
               Edit
             </button>
           </li>

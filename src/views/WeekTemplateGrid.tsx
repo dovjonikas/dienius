@@ -125,8 +125,14 @@ export function WeekTemplateGrid({
   /** The block behind a laid-out one. Blocks carry their own ids through `blocksAsTasks`. */
   const blockFor = (placed: WeekBlock) => blocks.find(b => b.id === placed.task.id)
 
+  // The most blocks with no time any one day has. Every foot keeps room for
+  // that many, so what stands under the strip - Copy to, the day type -
+  // stands on one line across the seven columns rather than rising under a
+  // day with fewer.
+  const untimedRows = Math.max(0, ...layout.days.map(day => day.untimed.length))
+
   return (
-    <div className="week-grid wt-grid">
+    <div className="week-grid wt-grid" style={{ ['--untimed-rows' as string]: untimedRows } as React.CSSProperties}>
       <div className="week-axis" aria-hidden="true">
         {layout.hours.map(minutes => (
           <span key={minutes} className="week-hour" style={{ top: `${((minutes - layout.window.start) / span) * 100}%` }}>
@@ -235,7 +241,7 @@ export function WeekTemplateGrid({
                   on the day, and a block nobody can see is a block nobody can
                   remove. The chip list this grid replaced showed it by
                   accident; this shows it on purpose. */}
-              {day.untimed.length > 0 && (
+              {untimedRows > 0 && (
                 <div className="wt-untimed">
                   {day.untimed.map(task => {
                     const block = blocks.find(b => b.id === task.id)

@@ -289,6 +289,57 @@ The calendar measures clean at four widths and on the phone in both
 themes. The ratchet: borders drawn 106 to 104, weights 75 to 74, pixel
 heights 60 to 59, tracked capitals 15 to 12.
 
+### Between 5 and 6 - the bars lined up: done
+
+Today's masthead and the calendar's bar rebuilt to the alignment rule above,
+a settings row centred, and `npm run precision` taught to measure rows -
+see the paragraph under the brief.
+
+### Stage 6 - the template editors: done
+
+- **The list.** A template is a card on the page with no edge, its name at
+  the medium weight, Edit a quiet button at its right. The question a new
+  template asks is a card with no edge, the question in the text's ink,
+  Cancel quiet at the card's right. The first run's sentence is the empty
+  state's quiet line at the left edge over the offers, and an offer is a
+  card with its colour as an inset mark rather than a coloured edge.
+- **A day template.** The editor is a card with no edge. The day type is a
+  quiet button whose words stand where the name's words stand in the field
+  above it; `change` is not underlined. A block's row has no rule under it,
+  and its own controls are quiet - Key, Ongoing and Note are words until
+  pointed at or chosen, the library a quiet select one width on every row,
+  the cross a quiet square - so the note, the list and the cross stand in
+  columns down the list. A block's note panel has no ground: its box is a
+  field on the card.
+- **The add row** stopped painting every button in it with the page's
+  ground and an edge. The time and the length are fields, a chip is a chip,
+  a chosen control the accent's quiet ground, and the pencil and the pluses
+  quiet round grounds instead of dashed rings. The pencil was a 20 by 32
+  oval on a mouse and is round.
+- **The last row** is the destructive action at the left and Cancel then
+  Save template at the right, in the document too; on a phone the delete
+  takes its own line above. `.row button` painted Delete template the
+  surface and an edge with the text's ink, so it had lost its danger ink.
+- **A week template.** The day switches are the fill, on ones the accent's
+  quiet ground rather than seven accent squares; What and Where are labels
+  in sentence case; a block with no time is a chip on the fill in every
+  column's foot, the feet keep room for the busiest day's chips so Copy to
+  stands on one line across the week, and Copy to and the day type are
+  small quiet buttons, not underlined words. The open block's cross is a
+  quiet square, Remove has no rule over it, and folded Add a block is a
+  secondary button rather than a dashed box across the editor.
+- **What every screen shares.** A one-line field is exactly one control
+  tall, 36px where it was 39 beside 36px buttons; a field's label is the
+  label style; a note's box is a field; the chip class is the system's
+  chip. The rules of the seven-column week editor, gone since the week
+  became a grid, are deleted.
+
+Both editors measure clean on the precision pass at 1366 and 1920, and the
+whole app on the sweep at four widths and on the phone in both themes. The
+ratchet: borders drawn 104 to 89, pixel heights 57 to 46, weights 74 to 71,
+number line heights 78 to 76, tracked capitals 12 to 10, `--t-2xs` 10 to 8,
+`--t-input` 7 to 6, black as rgba 8 to 7.
+
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
 Asked for in one message that replaces everything asked about North, the

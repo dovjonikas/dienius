@@ -1511,7 +1511,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 .row { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.row button,
 .settings-group > button {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2936,6 +2935,18 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    only make it harder to read. */
 .first-run { padding: var(--s4) 0 var(--s2); }
 
+/* On the templates page the offers stand where the list would begin, and
+   their sentence over them is the empty state's one quiet line at their
+   left edge, not a status centred in the column. */
+.templates > .first-run { padding: 0; }
+
+.templates > .first-run > .empty {
+  margin: 0 0 var(--s4);
+  padding: 0;
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
 .first-run-lede {
   margin: 0 0 var(--s4);
   color: var(--text);
@@ -2954,14 +2965,15 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   gap: var(--s3);
 }
 
+/* A card on the page with the starter's colour as a mark down its left
+   side, drawn inside the card rather than as a coloured edge round it. */
 .starter-card {
   display: flex;
   flex-direction: column;
   gap: var(--s2);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-left-width: 3px;
   border-radius: var(--r-card);
+  box-shadow: inset 3px 0 0 var(--chip, var(--border));
   padding: var(--s4);
 }
 
@@ -3000,7 +3012,6 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   white-space: nowrap;
 }
 
-.starter-card button.primary { margin-top: var(--s1); }
 
 /* ------------------------------------------------------------------------
    Form controls: one definition of what a field looks like.
@@ -3070,6 +3081,15 @@ textarea {
 input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input))::placeholder,
 textarea::placeholder {
   color: var(--faint);
+}
+
+/* A one-line field is exactly one control tall, its text centred in that
+   height rather than held by padding above and below it. With the padding
+   a field came out 39px beside 36px buttons, so every row that put a field
+   beside a button - the template editor's name, its add row, the library's
+   - had two heights in it. On a finger the height is 44 either way. */
+input:where(:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']):not(.time-input):not(.task-library-input)) {
+  padding-block: 0;
 }
 
 /* ------------------------------------------------------------------------
@@ -3852,18 +3872,19 @@ select:focus {
   height: 20px;
   min-height: 0;
   padding: 0;
-  border: 1px dashed var(--border);
+  border: none;
   border-radius: var(--r-round);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: 1;
 }
 
-.category-edit { border-style: solid; }
-
+/* A door is a quiet ground with its mark in it, the pencil and the plus
+   alike: the dashed ring said "somewhere to add" in a line the system keeps
+   for scales and dividers. */
 .category-swatch.is-add:hover,
-.category-edit:hover { border-color: var(--accent); color: var(--text); }
+.category-edit:hover { background: var(--fill-strong); color: var(--text); }
 
 /* The sheet. Its own line under the row rather than a layer over it: the
    thing being named is the block being typed, and covering that to name its
@@ -4649,7 +4670,6 @@ button.primary {
 
 .template-editor {
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   padding: var(--s4);
   margin-bottom: var(--s4);
@@ -4673,6 +4693,13 @@ button.primary {
   flex-wrap: wrap;
 }
 
+/* The two questions' names, in the label's register. */
+.day-type-picker .muted,
+.wt-add-to .muted {
+  font-size: var(--t-xs);
+  font-weight: var(--w-medium);
+}
+
 /* The day type as one line until it is asked for - see TemplatesView. The
    value in the body's own colour because it is a fact about this template,
    and the way in beside it in the muted one because it is an offer. No
@@ -4687,26 +4714,29 @@ button.primary {
   align-items: flex-start;
 }
 
-.day-type { margin-bottom: var(--s3); }
 
+/* A quiet button, and the words in it stand where the name's words stand
+   in the field above: the button's own inner edge is the field's. */
 .day-type-summary {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  min-height: var(--touch);
-  padding: 0;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
   border: none;
+  border-radius: var(--r-control);
   background: none;
   color: var(--text);
   font-size: var(--t-sm);
   text-align: left;
+  transition: background var(--dur-fast) var(--ease);
 }
 
-.day-type-change {
-  color: var(--muted);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+@media (hover: hover) and (pointer: fine) {
+  .day-type-summary:hover { background: var(--fill); }
 }
+
+.day-type-change { color: var(--muted); }
 
 .day-type-summary:hover .day-type-change,
 .day-type-summary:focus-visible .day-type-change {
@@ -4721,12 +4751,16 @@ button.primary {
 
 /* The week editor's own, in a column foot that is 128px wide at its
    narrowest: the same line, the same two weights, one size down. */
+/* A small quiet button in a column's foot, the same kind as Copy to above
+   it: the foot is a seventh of the editor, so both are a caption tall on a
+   mouse and a finger tall on a phone. */
 .wt-day-type-summary {
   display: inline-flex;
   align-items: center;
-  min-height: var(--touch);
-  padding: 0;
+  min-height: var(--s6);
+  padding: 0 var(--s2);
   border: none;
+  border-radius: var(--r-control);
   background: none;
   color: var(--muted);
   font-size: var(--t-xs);
@@ -4735,6 +4769,14 @@ button.primary {
 
 .wt-day-type-summary:hover,
 .wt-day-type-summary:focus-visible { color: var(--text); }
+
+@media (hover: hover) and (pointer: fine) {
+  .wt-day-type-summary:hover { background: var(--fill); }
+}
+
+@media (pointer: coarse) {
+  .wt-day-type-summary { min-height: var(--touch); }
+}
 
 .wt-day-type-summary:focus-visible {
   outline: 2px solid var(--accent);
@@ -4826,8 +4868,7 @@ button.primary {
   row-gap: var(--s1);
   /* Room on the left for .block-cat-edge, which is absolute at left: 0 and
      was drawn straight over the first digit of the time. */
-  padding: var(--s2) 0 var(--s2) var(--s3);
-  border-bottom: 1px solid var(--border);
+  padding: var(--s1) 0 var(--s1) var(--s3);
 }
 
 .block-list .block-title {
@@ -4839,12 +4880,50 @@ button.primary {
   white-space: nowrap;
 }
 
-.block-list button {
+/* A row's own controls are quiet - docs/DESIGN.md, a row's actions: no
+   ground and the secondary ink until they are pressed or pointed at, one
+   control tall, so a list of nine blocks is nine lines of words rather than
+   eighteen grey pills. Only the row's own children: the note panel that
+   opens under a row keeps its buttons as they are everywhere else, which
+   a descendant rule had stripped until this. A chosen Key or Ongoing keeps
+   the accent's ground - .core-toggle.active outranks this. */
+.block-list li > button {
+  flex-shrink: 0;
   border: none;
   background: none;
   color: var(--muted);
-  font-size: var(--t-md);
-  flex-shrink: 0;
+  font-size: var(--t-sm);
+}
+
+/* The cross that removes a block: a quiet square, its glyph at the glyph
+   size, turning to the danger ink under the pointer. */
+.block-list .block-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0;
+  border-radius: var(--r-control);
+  font-size: var(--t-glyph);
+  line-height: 1;
+}
+
+/* What a block draws from, as quiet as the words beside it and the same
+   width on every row, so the note and the cross after it stand in columns
+   down the list. Its own ink once it names a list. */
+.block-list .block-library {
+  width: calc(var(--s12) * 3);
+  max-width: none;
+  background-color: transparent;
+  color: var(--muted);
+}
+
+.block-list .block-library.is-set { color: var(--text); }
+
+@media (hover: hover) and (pointer: fine) {
+  .block-list .block-library:hover { background-color: var(--fill); }
+  .block-list li > button.core-toggle:not(.active):hover { background: var(--fill); }
 }
 
 /* Two levels. This was one row carrying a time, a title, a duration, six
@@ -4865,17 +4944,6 @@ button.primary {
   align-items: stretch;
 }
 
-/* A floor, never a ceiling, and only where a pointer is fine: on a finger
-   every one of these is 44px and stays that way. Setting the height flat
-   pulled the duration control and the Add button back under the touch target
-   they had, which is exactly what CONVENTIONS section 6 means by auditing by
-   measuring rather than by reading the stylesheet - the phone pass found both
-   the same afternoon they were written. */
-@media (hover: hover) and (pointer: fine) {
-  .block-add-line > * { min-height: 40px; }
-  .block-add-line .time-picker .time-input,
-  .block-add-line .duration-control-value { min-height: 38px; }
-}
 
 .block-add-marks {
   display: flex;
@@ -4890,23 +4958,6 @@ button.primary {
    28px and 44px, which put three baselines in one row. */
 .block-add-marks { padding-left: var(--s0); }
 
-/* Not the swatches: a 20px circle given the row's 32px minimum was a
-   20x32 oval, and with the generic block-add button rule below giving it
-   the page's ground for a fill, a border and a control's corners, it was a
-   dark rounded square - six of them, and the owner could not see the
-   colours. A swatch is a swatch wherever it sits.
-
-   Nor the plus that makes a library list, which is drawn as the same 20px
-   circle as the one that makes a category and came out 25x32 the moment it
-   joined this row - the same oval, in the same place, a version later. A
-   round mark is round wherever it sits, and its target grows underneath it
-   on a finger rather than by growing the mark. The worded form of the same
-   control is a pill and is deliberately not excluded: it belongs to this row
-   the way Ongoing does. */
-@media (hover: hover) and (pointer: fine) {
-  .block-add-marks button:not(:where(.category-swatch, .library-quick-round)),
-  .block-add-marks .category-picker { min-height: 32px; }
-}
 
 .block-add-marks .btn-secondary { margin-left: auto; }
 
@@ -4921,9 +4972,7 @@ button.primary {
 .block-add-heading {
   color: var(--muted);
   font-size: var(--t-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: var(--w-medium);
 }
 
 .block-add-where {
@@ -4933,12 +4982,6 @@ button.primary {
   gap: var(--s2) var(--s3);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  /* Not the day squares: they are sized in em and have to stay square,
-     and this rule is more specific than theirs, so it was making seven
-     rectangles out of them. */
-  .block-add-where button:not(:where(.wt-day-toggle)) { min-height: 32px; }
-}
 
 .block-add input { flex: 1 1 120px; }
 .block-add .duration-control { flex: 0 0 auto; }
@@ -4964,12 +5007,13 @@ button.primary {
    0,1,1 and stays there however many things get excluded next, which is what
    the comment below has assumed all along - it says .core-toggle wins by
    being placed after this, and being placed after only wins a tie. */
+/* Since v2.25 this paints nothing: every control in the add row is the
+   kind it is everywhere else - the time and the length are fields, a chip
+   is a chip, Add a block is a secondary button - and all it says is that no
+   word in the row wraps. It painted the page's ground and an edge on every
+   button here, the time's caret and the length inside their own fields
+   included, which is why they came out as boxes within boxes. */
 .block-add button:not(:where(.category-swatch, .time-picker-option, .library-quick-round)) {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-control);
-  color: var(--text);
-  padding: 0 var(--s3);
   white-space: nowrap;
 }
 
@@ -4981,9 +5025,8 @@ button.primary {
    a block was about to land on. A pressed control is a fact about what
    happens next, and it is worth the loudest treatment in the row. */
 .block-add button[aria-pressed='true']:not(.category-swatch) {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent, #fff);
+  background: var(--accent-dim);
+  color: var(--text);
 }
 
 /* Settings' own sleep-window controls - two TimeStepInput fields per row
@@ -5029,31 +5072,29 @@ button.core-toggle.active {
    there is anything behind it. */
 .block-note-toggle {
   flex: 0 0 auto;
-  padding: var(--s1) var(--s2);
-  border: 1px solid transparent;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
   border-radius: var(--r-pill);
   background: none;
-  color: var(--faint);
+  color: var(--muted);
   font-size: var(--t-sm);
   white-space: nowrap;
 }
 
-.block-note-toggle.has-note {
-  border-color: var(--border);
-  color: var(--text);
-}
+.block-note-toggle.has-note { color: var(--text); }
 
 /* The whole width of the row it hangs under, which on the day editor means
    breaking the row it is a child of. */
+/* No ground of its own: the note's box is a field, and a field on a tinted
+   panel on a card was three boxes deep. The room under it is what ends it. */
 .block-note {
   flex: 1 0 100%;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
   margin-top: var(--s2);
-  padding: var(--s3);
-  border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--border) 22%, transparent);
+  padding: 0 0 var(--s3);
 }
 
 /* The one box a note is typed into, wherever a note is typed - see
@@ -5064,23 +5105,23 @@ button.core-toggle.active {
 
 .note-editor-text {
   width: 100%;
-  min-height: calc(3 * 1.5em + 2 * var(--s2));
+  min-height: calc(3 * var(--lh-read) * 1em + 2 * var(--s2));
   /* Grown to fit its own text by NoteEditor, up to here, and scrolling
      inside itself after that. Half the window is as much as a note may take
      of a sheet whose way out is at the bottom of it. */
   max-height: 50vh;
   overflow-y: auto;
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--text);
   /* The lines somebody typed, and no engine over them. A line that starts
      with spaces stays where it was put, which is the whole of the list
      support this needed - see BlockNote.tsx. */
   font-family: inherit;
-  font-size: var(--t-input);
-  line-height: 1.5;
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
   white-space: pre-wrap;
   /* The height follows the text now, which is the whole of what a handle was
      ever for here, and a height dragged by hand would be overwritten by the
@@ -5091,7 +5132,12 @@ button.core-toggle.active {
 /* Tall enough while it is empty to hold the whole example. An example cut
    off after two lines teaches the half of the rule that was already
    obvious, which is how this box read for a version. */
-.note-editor-text:placeholder-shown { min-height: calc(5 * 1.5em + 2 * var(--s2)); }
+.note-editor-text:placeholder-shown { min-height: calc(5 * var(--lh-read) * 1em + 2 * var(--s2)); }
+
+/* A field's size on a finger. */
+@media (pointer: coarse) {
+  .note-editor-text { font-size: var(--t-read); }
+}
 
 /* The sentence and the button that writes what it describes, on one line.
    They wrap onto two in a narrow column rather than the sentence being cut. */
@@ -5105,34 +5151,41 @@ button.core-toggle.active {
 
 .note-editor-hint { margin: 0; color: var(--muted); font-size: var(--t-xs); }
 
-/* The day editor's block list strips every button inside it back to plain
-   words - a block's row is words with controls hidden among them - and this
-   one is not in the row, it is in the panel under it. Said again at a weight
-   that reaches it, so the button reads the same in all three places a note
-   is typed. Nothing about its height: the 38px, and the 44px a finger gets,
-   are .btn-secondary's own. */
-.note-editor .note-editor-choice {
-  flex: 0 0 auto;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: var(--t-sm);
-}
+/* The button under the text, at its own width in a row that wraps. */
+.note-editor .note-editor-choice { flex: 0 0 auto; }
 
 /* The edge is the wrapper's now - see .note-sections - and off a card it is
    the box's own left edge, which .note-editor-preview above sets to zero. */
 
-/* And their own edges back, for the same reason the button above needs its
-   own: a preview whose choices are drawn as plain words is not showing what
-   the card will show. */
-.note-editor-preview .note-section-button {
-  border: 1px solid transparent;
-  background: color-mix(in srgb, var(--border) 50%, transparent);
-  color: var(--text);
-  font-size: var(--t-sm);
+
+/* The editor's sections: the add row and the last row each stand a
+   section's space from what is above them. */
+.template-editor > .block-add,
+.template-editor > .block-add-open { margin-top: var(--s3); }
+
+/* The last row: a destructive action at the left edge, Cancel and Save
+   together at the right, Save last - docs/DESIGN.md, where actions stand. */
+.template-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s3);
 }
 
-.note-editor-preview .note-section-button.is-more { color: var(--muted); }
+.template-editor-actions > .delete-template { margin-right: auto; }
+
+/* On a phone the three do not fit one line. The delete takes a line of its
+   own above, still at the left and still first to Tab to, and Cancel and
+   Save share the line under it at the right - rather than Save wrapping
+   alone under the other two. */
+@media (max-width: 599px) {
+  .template-editor-actions > .delete-template {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+}
 
 .template-list { list-style: none; margin: 0; padding: 0; }
 
@@ -5141,7 +5194,6 @@ button.core-toggle.active {
   align-items: center;
   gap: var(--s3);
   background: var(--surface);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   padding: var(--s3) var(--s4);
   margin-bottom: var(--s2);
@@ -5152,7 +5204,7 @@ button.core-toggle.active {
    width to its own unbroken length and the whole card runs off a phone -
    648px of document on a 390px screen, the one horizontal scroll in the app. */
 .template-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.template-info strong { font-size: var(--t-md); }
+.template-info strong { font-size: var(--t-md); font-weight: var(--w-medium); }
 .muted { color: var(--muted); font-size: var(--t-sm); }
 
 /* The two buttons on a card are the two variants they claim to be, and this
@@ -5264,18 +5316,22 @@ button.danger {
   padding: 0 var(--s4);
 }
 
+/* A choice - docs/DESIGN.md: the fill, a pill, one control tall, the
+   accent's quiet ground once chosen. */
 .chip {
   display: inline-flex;
   align-items: center;
-  min-height: var(--touch);
-  border: 2px solid transparent;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: 1px solid transparent;
   border-radius: var(--r-pill);
-  color: rgba(0, 0, 0, 0.65);
+  background: var(--fill);
+  color: var(--text);
   font-size: var(--t-sm);
-  padding: var(--s1) var(--s3);
+  white-space: nowrap;
 }
 
-.chip.selected { border-color: var(--text); }
+.chip.selected { background: var(--accent-dim); }
 
 .chip:focus-visible {
   outline: 2px solid var(--accent);
@@ -5969,7 +6025,8 @@ button.danger {
      shifts under the mouse is the thing CONVENTIONS section 24 is about,
      however small the shift. */
   .theme-card:hover { box-shadow: var(--e2); }
-  .chip:hover, .swatch:hover { filter: brightness(1.1); }
+  .chip:hover { background: var(--fill-strong); }
+  .swatch:hover { filter: brightness(1.1); }
   .day-nav > button:hover { background: var(--fill); }
   .mini-cell:not(.mini-cell-has-template):hover { background: var(--fill-strong); }
   .task-menu-button:hover { color: var(--text); }
@@ -5986,13 +6043,13 @@ button.danger {
   .scratch-note-action:hover {
     color: var(--text);
   }
-  .block-note-toggle:hover { border-color: var(--border); }
-  .wt-day-toggle:not([aria-pressed='true']):hover,
+  .block-note-toggle:hover { background: var(--fill); }
+  .wt-day-toggle:not([aria-pressed='true']):hover { background: var(--fill-strong); color: var(--text); }
   .week-col-template:hover {
     border-color: var(--muted);
   }
   button.core-toggle:not(.active):hover { color: var(--text); background: var(--fill-strong); }
-  .block-remove:hover { color: var(--danger); }
+  .block-remove:hover { color: var(--danger); background: var(--fill); }
   /* An edge rather than a ground: any tint of the ink under a row took the
      count beside its title under 4.5:1 on the light theme, at five percent
      and again at three, and the sweep said so both times. */
@@ -8075,7 +8132,7 @@ button.danger:focus-visible {
 /* One field and its label, stacked. The same shape the sleep window fields
    use, promoted to a shared class now that a second screen needs it. */
 .field { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
-.field-label { color: var(--muted); font-size: var(--t-sm); }
+.field-label { color: var(--muted); font-size: var(--t-xs); font-weight: var(--w-medium); }
 .field input { width: 100%; }
 
 /* A whole list pasted at once - see LibraryAddMany. Folded to one quiet
@@ -8617,6 +8674,7 @@ button.danger:focus-visible {
   min-width: var(--field-label-w);
   color: var(--muted);
   font-size: var(--t-xs);
+  font-weight: var(--w-medium);
 }
 
 /* Ongoing sits at the end of the library line rather than in the middle of
@@ -8635,44 +8693,23 @@ button.danger:focus-visible {
   margin-top: var(--s2);
 }
 
-/* Folded. One line that says what pressing it does, quiet enough not to
-   compete with the block being read above it. */
-.block-add-open {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--s2);
-  width: 100%;
-  margin-top: var(--s3);
-  padding: var(--s2) var(--s3);
-  border: 1px dashed var(--border);
-  border-radius: var(--r-control);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-sm);
-}
-
-.block-add-open:hover { border-color: var(--accent); color: var(--text); }
-
-.block-add-open:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+/* Folded, while a block is open: the form's own button, a secondary one at
+   its own width, standing where the form begins. It was a dashed box the
+   width of the editor, the one dashed edge left in it. */
+.block-add-open { align-self: flex-start; }
 
 /* The way out of an open block, the same cross thirteen other surfaces use.
    It was an underlined word at seventeen pixels, which is the one shape in
    that header nobody could find. */
-/* 38 to match the Key beside it - the two are the whole header, and the
-   sweep's two-heights pass caught them six pixels apart the first time it
-   ran over this panel. A finger gets the touch height from the block below,
-   the same as every other control in this row. */
+/* A quiet square one control tall, like the Key beside it - the two are
+   the whole header. */
 .wt-note-close {
   flex: 0 0 auto;
-  width: 38px;
-  height: 38px;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
-  border: 1px solid transparent;
+  border: none;
   border-radius: var(--r-control);
   background: none;
   color: var(--muted);
@@ -8680,7 +8717,7 @@ button.danger:focus-visible {
   line-height: 1;
 }
 
-.wt-note-close:hover { color: var(--text); border-color: var(--border); }
+.wt-note-close:hover { color: var(--text); background: var(--fill); }
 
 .wt-note-close:focus-visible {
   outline: 2px solid var(--accent);
@@ -8692,13 +8729,6 @@ button.danger:focus-visible {
 .wt-note-foot {
   display: flex;
   margin-top: var(--s2);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--border);
-}
-
-@media (pointer: coarse) {
-  .wt-note-close { min-height: var(--touch); width: var(--touch); }
-  .block-add-open { min-height: var(--touch); }
 }
 
 /* ------------------------------------------------------------------------
@@ -8721,6 +8751,7 @@ button.danger:focus-visible {
 .library-binding-label {
   color: var(--muted);
   font-size: var(--t-xs);
+  font-weight: var(--w-medium);
 }
 
 /* The plus, drawn exactly like the one that makes a category, because it is
@@ -8738,9 +8769,9 @@ button.danger:focus-visible {
   height: 20px;
   min-height: 0;
   padding: 0;
-  border: 1px dashed var(--border);
+  border: none;
   border-radius: var(--r-round);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-glyph);
   line-height: 1;
@@ -8756,15 +8787,18 @@ button.danger:focus-visible {
    in the row, which is one control drawn two ways. It matches Ongoing, and
    Ongoing is what it stands beside. */
 .library-quick-word {
-  min-height: 32px;
+  min-height: var(--control-h);
   padding: 0 var(--s3);
-  border-radius: var(--r-control);
-  font-size: var(--t-xs);
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--t-sm);
   white-space: nowrap;
 }
 
 .library-quick-round:hover,
-.library-quick-word:hover { border-color: var(--accent); color: var(--text); }
+.library-quick-word:hover { background: var(--fill-strong); color: var(--text); }
 
 .library-quick-round:focus-visible,
 .library-quick-word:focus-visible {
@@ -8816,18 +8850,13 @@ button.danger:focus-visible {
    of chips rather than to look like a form field. */
 .block-library {
   flex-shrink: 0;
-  max-width: 150px;
-  min-height: 28px;
-  padding-top: var(--s0);
-  padding-bottom: var(--s0);
-  font-size: var(--t-xs);
+  max-width: calc(var(--s12) * 3);
 }
 
-/* 28px is a chip on a mouse and a miss on a finger. It sat that way for four
-   versions because nothing measured the template editor: the phone pass had
-   no screen that opened one, and it does now. */
-@media (pointer: coarse) {
-  .block-library { min-height: var(--touch); }
+/* The row's type on a mouse. A finger keeps the field's own size, which is
+   also the size iOS needs before it stops zooming a select it opens. */
+@media (hover: hover) and (pointer: fine) {
+  .block-library { font-size: var(--t-sm); }
 }
 
 /* Under the wide breakpoint a row of five things does not fit a phone, so
@@ -9406,23 +9435,6 @@ button.task-library:hover { color: var(--text); }
 
 .block-list li.is-key .block-title { font-weight: var(--w-strong); }
 
-.wt-block-key {
-  flex: 0 0 auto;
-  min-height: 0;
-  padding: 0 var(--s1);
-  border: 1px solid transparent;
-  border-radius: var(--r-mark);
-  background: none;
-  color: var(--faint);
-  font-size: var(--t-2xs);
-}
-
-.wt-block-key.is-on {
-  border-color: color-mix(in srgb, var(--mark) 45%, var(--border));
-  background: color-mix(in srgb, var(--mark) 12%, transparent);
-  color: var(--text);
-}
-
 /* Why a KEY press did nothing. Said in the ink a refusal deserves, which is
    the ordinary muted one - it is a limit somebody chose, not an error. */
 .template-key-note { margin: var(--s2) 0 0; color: var(--muted); font-size: var(--t-sm); }
@@ -9702,7 +9714,6 @@ button.task-library:hover { color: var(--text); }
   .switch,
   .template-chip,
   .category-edit,
-  .wt-block-key,
   .wt-untimed-block,
   .task-note-mark,
   .task-library,
@@ -9715,7 +9726,6 @@ button.task-library:hover { color: var(--text); }
 
   .category-swatch::after,
   .category-edit::after,
-  .wt-block-key::after,
   .wt-untimed-block::after,
   .task-note-mark::after,
   /* The progress chip on a card - 17px of number, and the one control on a
@@ -13053,16 +13063,19 @@ main:has(.week) > .calendar {
 
 /* The template editor's block row on a phone. Seven things in one flex line
    left the title - the only one of them that says what the block is - with
-   a single character at 390px: "(" for "Coffee and the plan". Two lines
-   instead: when, what and how long on the first, the toggles and the
-   remove cross on the second. */
+   a single character at 390px: "(" for "Coffee and the plan". So the row
+   wraps: when, what and how long on the first line, and what qualifies the
+   block after it, with the cross that removes it at the right edge of the
+   last line - by its own class, because a row with a binding or an open
+   note has other children after the cross, and :last-child left it
+   standing beside Note on those rows. */
 @media (max-width: 599px) {
   .block-list li { flex-wrap: wrap; row-gap: var(--s1); }
   .block-list .block-title { flex: 1 1 calc(100% - 140px); }
   .block-list .task-size { margin-left: auto; }
   .block-list .core-toggle:first-of-type,
   .block-list .core-toggle + .core-toggle { margin-left: 0; }
-  .block-list li > button:last-child { margin-left: auto; }
+  .block-list .block-remove { margin-left: auto; }
 }
 
 /* Every select is a touch control too. The weekday map's seven dropdowns
@@ -13245,9 +13258,6 @@ main:has(.week) > .calendar {
 
 /* Always visible, never a hover reveal - see .task-menu-button's note. Text
    buttons, small and quiet, because there are four of them on every line. */
-/* The delete at the far end of a template editor's footer, apart from Save
-   and Cancel: the one control there that is not about the draft. */
-.row > .delete-template { margin-left: auto; }
 
 /* A note's More, and the three things behind it. The same surface the day's
    context menu is drawn on, hung under its own button. */
@@ -15458,12 +15468,20 @@ main:has(.week) > .calendar {
   gap: var(--s3);
   margin-bottom: var(--s4);
   padding: var(--s4);
-  border: 1px solid var(--border);
   border-radius: var(--r-card);
   background: var(--surface);
 }
 
-.template-kind > .muted { margin: 0; }
+/* The question, in the text's own ink: it is what the card is for. */
+.template-kind > .muted {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: var(--w-medium);
+}
+
+/* The way out at the card's right edge, where a card's actions end. */
+.template-kind > .btn-quiet { align-self: flex-end; }
 
 .template-kind-choices {
   display: flex;
@@ -15482,72 +15500,17 @@ main:has(.week) > .calendar {
   gap: var(--s1);
   flex: 1 1 240px;
   min-height: 0;
-  padding: var(--s3);
+  padding: var(--s3) var(--s4);
+  font-weight: var(--w-regular);
   text-align: left;
   white-space: normal;
 }
 
+.template-kind-choices strong { font-weight: var(--w-strong); }
+
 .template-kind-choices .explain-inline { font-size: var(--t-sm); }
 
 .template-kind-from { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1); }
-
-/* Seven columns of one week. They scroll sideways together below the width
-   where a column stops being able to hold a block title - the alternative
-   was wrapping into two rows of four, which is not a week. */
-.wt-columns {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--s1);
-  overflow-x: auto;
-}
-
-.wt-column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  min-width: 0;
-  padding: var(--s1);
-  border: 1px solid transparent;
-  border-radius: var(--r-control);
-}
-
-/* The day "Add to" means, marked the way the rail marks the view you are on:
-   one thin accent rule, not a filled panel. */
-.wt-column.is-active { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-
-/* Every column is a drop target while something is being dragged, and says so
-   quietly - a dashed edge, the same language the Later chips under the week
-   use for "no day yet". */
-.wt-column.is-dropping { border-style: dashed; border-color: var(--border); }
-
-.wt-day {
-  min-height: 28px;
-  padding: var(--s0) var(--s1);
-  border: none;
-  border-radius: var(--r-mark);
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.wt-column.is-active .wt-day { color: var(--text); }
-
-.wt-day:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.wt-blocks {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s0);
-  margin: 0;
-  padding: 0;
-  min-height: 40px;
-  list-style: none;
-}
-
-.wt-block { display: flex; align-items: flex-start; gap: var(--s0); min-width: 0; }
 
 /* The open block's note, under all seven columns. See WeekTemplateEditor -
    a column is a seventh of the editor, and a recipe typed into a 110px box
@@ -15566,84 +15529,34 @@ main:has(.week) > .calendar {
    the way it does inside the day editor's block list. */
 .wt-note .block-note { flex: 0 0 auto; margin-top: 0; }
 
-/* A named field on the open block, rather than a chip in a sentence - which
-   is why this one carries its label where the add row's carries an
-   aria-label. The panel is a column, so the sentence under it is a sibling
-   rather than the add row's `flex: 1 0 100%` wrap, which in a column would
-   be a hundred percent of the column's height. */
-.wt-note-field { display: flex; align-items: center; gap: var(--s2); }
-.wt-note-label { color: var(--muted); font-size: var(--t-xs); }
+/* What the open block's list puts on a day, under its field. */
 .wt-note-binding { margin: 0; color: var(--muted); font-size: var(--t-xs); }
 
-.wt-block-body {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  min-width: 0;
-  min-height: 0;
-  padding: 3px var(--s1) 3px var(--s2);
-  border: none;
-  border-left: 2px solid var(--cat, var(--border));
-  border-radius: 0 var(--r-mark) var(--r-mark) 0;
-  background: var(--surface);
-  color: var(--text);
+/* A column's own questions, in a foot a seventh of the editor wide: the
+   caption size, and room for the chevron so "Week default" is not cut. */
+.wt-col-foot .setting-select {
+  max-width: 100%;
+  min-height: var(--s6);
+  padding: 0 var(--s6) 0 var(--s2);
   font-size: var(--t-xs);
-  line-height: 1.3;
-  text-align: left;
-  touch-action: none;
-  cursor: grab;
 }
 
-.wt-block.is-dragging .wt-block-body { cursor: grabbing; box-shadow: var(--e2); }
-
-.wt-block-time { color: var(--muted); font-variant-numeric: tabular-nums; }
-
-.wt-block-title {
-  width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Copy to: the quiet kind, a caption tall in a foot a seventh of the editor
+   wide, where it was an underlined word. */
+.wt-copy {
+  min-height: var(--s6);
+  padding: 0 var(--s2);
+  font-size: var(--t-xs);
+  font-weight: var(--w-regular);
 }
 
-.wt-block-size { color: var(--faint); }
-
-/* Thirty-five blocks on a full week means thirty-five of these, and
-   --danger is the loudest ink in the app: at rest they are invisible on a
-   mouse and arrive when the pointer is on the block, which is the same
-   treatment the rules under a goal and the dots on a task card already get. A
-   finger has no hover, so there they stay where they are. */
-.wt-block .setting-remove { flex: 0 0 auto; margin-top: 0; font-size: var(--t-sm); }
-
-@media (hover: hover) and (pointer: fine) {
-  .wt-block .setting-remove {
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease);
-  }
-
-  .wt-block:hover .setting-remove,
-  .wt-block:focus-within .setting-remove { opacity: 1; }
+@media (pointer: coarse) {
+  .wt-copy { min-height: var(--touch); }
 }
 
-/* Said in words rather than as a dash: "-" read as a figure missing. The
-   muted ink, which reads, rather than the faint one, which does not. */
-.wt-empty { color: var(--muted); font-size: var(--t-xs); font-style: italic; text-align: center; }
+.wt-copy-panel { display: flex; flex-wrap: wrap; gap: var(--s1); }
 
-.wt-column-foot { display: flex; flex-direction: column; gap: var(--s1); margin-top: auto; }
-
-/* Room for the arrow: the select draws its chevron over the last 22px, and
-   with 4px of padding there the word under it read "Same as the wee". The
-   option is "Week default" now, as well, which fits a 105px column with the
-   arrow's room taken. */
-.wt-column-foot .setting-select { font-size: var(--t-xs); padding: var(--s0) var(--s6) var(--s0) var(--s1); min-height: 26px; }
-
-.wt-copy { align-self: flex-start; font-size: var(--t-xs); }
-
-.wt-copy-panel { display: flex; flex-wrap: wrap; gap: var(--s0); }
-
-.wt-copy-panel .chip { font-size: var(--t-xs); padding: var(--s0) var(--s2); min-height: 24px; }
+.wt-copy-panel .chip { min-height: var(--s6); padding: 0 var(--s2); font-size: var(--t-xs); }
 
 .wt-scope { align-self: flex-start; }
 
@@ -15713,7 +15626,17 @@ main:has(.week) > .calendar {
 /* Blocks with no time, which the clock has nowhere to put. */
 .week-block-from { display: block; font-size: var(--t-2xs); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.wt-untimed { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+/* As tall as the busiest day's strip in every column - see untimedRows in
+   WeekTemplateGrid - so the feet under it share their lines. A chip is a
+   caption's line and its two pixels of padding; the strip is that many of
+   them and a pixel between each. */
+.wt-untimed {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  min-height: calc(var(--untimed-rows, 0) * (var(--t-xs) * var(--lh-ui) + 2px) + (var(--untimed-rows, 1) - 1) * 1px);
+}
 
 /* Room under the strip on a finger. Copy to sits straight under it since
    v2.21 and carries the 44px overlay every quiet control gets, which
@@ -15724,21 +15647,25 @@ main:has(.week) > .calendar {
   .wt-untimed { margin-bottom: var(--s3); }
 }
 
+/* A block with no time, on the fill rather than in a dashed edge - the
+   same ground a chip has, at the caption size; open, the accent's quiet
+   ground. */
 .wt-untimed-block {
   width: 100%;
   min-height: 0;
   padding: 1px var(--s1);
-  border: 1px dashed var(--border);
+  border: none;
   border-radius: var(--r-mark);
-  background: none;
+  background: var(--fill);
   color: var(--muted);
-  font-size: var(--t-2xs);
+  font-size: var(--t-xs);
+  line-height: var(--lh-ui);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.wt-untimed-block.is-open { border-style: solid; border-color: var(--accent); color: var(--text); }
+.wt-untimed-block.is-open { background: var(--accent-dim); color: var(--text); }
 
 /* The block whose panel is open, said on the block as well as under the
    grid - otherwise the panel names a block and nothing points at it. */
@@ -15748,15 +15675,6 @@ main:has(.week) > .calendar {
 .wt-note-title { font-size: var(--t-sm); color: var(--text); }
 .wt-note-actions { display: flex; align-items: center; gap: var(--s2); }
 
-/* Key takes the plain button rule's 44px floor and the Remove beside it sits
-   at the variants' 38, so the two stood six pixels apart in a row of three.
-   The same shape .block-add-marks was fixed for in v2.9 - "everything here
-   was between 28px and 44px, which put three baselines in one row" - found
-   this time by the sweep rather than by eye. On a finger both are already
-   the touch height, so this is the mouse only. */
-@media (hover: hover) and (pointer: fine) {
-  .wt-note-actions .core-toggle { min-height: 38px; }
-}
 
 /* And the third of them sits where the row puts it.
  *
@@ -15797,28 +15715,24 @@ main:has(.week) > .calendar {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 2.3em;
-  height: 2.3em;
+  width: var(--control-h);
+  height: var(--control-h);
   min-height: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--r-control);
-  background: var(--bg);
+  background: var(--fill);
   color: var(--muted);
   font-size: var(--t-sm);
   /* One weight for both states. A bold on the chosen one moves the letter
      by a fraction and the row reads as shifting when you press it. */
-  font-weight: 600;
-  letter-spacing: 0;
+  font-weight: var(--w-strong);
   line-height: 1;
 }
 
-/* Ground and edge, never size. */
-.wt-day-toggle.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent, #fff);
-}
+/* A day that is on takes the accent's quiet ground and the text's ink - the
+   add row's rule for a pressed control, .block-add button[aria-pressed]. It
+   was the accent itself, seven of them, the loudest thing on the screen. */
 
 /* The shortcuts are a different kind of thing from the days, and the row
    read as one long list of nine. Pills rather than squares, quieter, and
@@ -15846,24 +15760,11 @@ main:has(.week) > .calendar {
   .wt-presets { margin-left: 0; }
 }
 
-.wt-presets .chip {
-  border-radius: var(--r-pill);
-  color: var(--muted);
-  font-size: var(--t-sm);
-}
+.wt-presets .chip { color: var(--muted); }
 
 .wt-presets .chip:hover { color: var(--text); }
 
 
-/* A week of switches a finger has to hit one of without hitting its
-   neighbour. Here rather than in the coarse block further up the file:
-   the rule above it has the same specificity and comes later, so an
-   override written up there never applied at all. */
-@media (pointer: coarse) {
-  /* Square still: a height without a matching width would make seven
-     rectangles out of seven squares the moment a finger touched them. */
-  .wt-day-toggle { width: var(--touch); height: var(--touch); }
-}
 
 /* What the press will do. A line rather than a count next to the switches,
    because the question it answers is "which days" and the answer is the
@@ -15875,24 +15776,8 @@ main:has(.week) > .calendar {
 .wt-add-summary { margin: var(--s1) 0 0; color: var(--muted); font-size: var(--t-sm); }
 
 @media (pointer: coarse) {
-  .wt-day { min-height: var(--touch); }
   .wt-copy-panel .chip,
-  .wt-column-foot .setting-select { min-height: var(--touch); }
-  /* A block is a drag handle before it is anything else, and a 20px one is
-     a handle a finger cannot take hold of. The columns already scroll
-     sideways at this width - seven of them will not fit 390px whatever
-     height they are - so the room this costs is room the screen did not
-     have either way. */
-  .wt-block-body { min-height: var(--touch); justify-content: center; }
-}
-
-/* Below the width where a column can hold a title, the week scrolls sideways
-   inside its own box rather than the page doing it - nothing scrolls
-   horizontally, ever, and this is what that costs here. */
-@media (max-width: 899px) {
-  /* Wide enough for "Same as the week" in the foot's select at its size:
-     at 96px the phone showed "Same as the we" under the arrow. */
-  .wt-columns { grid-template-columns: repeat(7, minmax(128px, 1fr)); }
+  .wt-col-foot .setting-select { min-height: var(--touch); }
 }
 
 /* ------------------------------------------------------------------------

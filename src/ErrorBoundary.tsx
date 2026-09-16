@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
             Export backup
           </button>
           <button
-            className={this.state.confirmReset ? 'danger' : ''}
+            className={this.state.confirmReset ? 'btn-danger is-armed' : 'btn-danger'}
             onClick={this.handleResetClick}
           >
             {this.state.confirmReset ? 'Erase?' : 'Erase all data'}
