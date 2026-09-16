@@ -6,8 +6,83 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.24, done - North as one page, a window after sleep,
-and the day's timeline.
+**Last updated:** v2.25, in progress - the design pass.
+
+## v2.25 - the design pass
+
+Asked for in one message the evening v2.24 closed: the app should feel like
+one calm, exact thing - the owner named Things 3, Linear, Bear and iA Writer
+- where today every screen looks put together on its own, fields look like
+forms, spacing and type sizes differ, and buttons are scattered. Precision,
+not decoration. Ten stages.
+
+The rules over all of it: the look and the experience only - no feature
+changes and no change to the data model; every existing test stays green;
+DECISIONS and CONVENTIONS keep their voice, with nothing red and no verdict;
+no questions back to the owner; screenshots and tests carry generic or demo
+content only; never stop in the middle of a stage. After each stage:
+pictures before and after in both themes on a desktop and a phone, the tests
+green, and this section brought up to date.
+
+The brief, as understood:
+
+1. **Audit.** Every screen - the day, the week, the calendar, templates, the
+   library, Review, North, notes, the journal, search, Settings, the palette,
+   the modals and the empty states - in both themes at desktop and phone
+   width, and what is uneven written down with its place in the code in
+   `docs/DESIGN-AUDIT.md`.
+2. **The system**, in `docs/DESIGN.md` and as tokens, extending
+   `lib/theme.ts` and `lib/themes.ts` rather than replacing them: one type
+   scale of five or six sizes with clear weights and a reading line height
+   near 1.6; one spacing scale (4, 8, 12, 16, 24, 32, 48); two or three
+   corners; ground, surface, raised surface, text, secondary, quiet, accent
+   and line, passing the contrast tests there are; as few borders as
+   possible, separation by ground and space; shadows only on modals and
+   menus; motion at 120 to 180ms, easing out, never bouncing, and still for
+   reduced motion; fields with no loud edge, a quiet ground and a quiet
+   focus; three buttons (primary, secondary, quiet text) at one height, one
+   spacing, always in the same place; an empty state as one quiet line and
+   one action.
+3. **What every screen shares:** buttons, fields, modals, menus, navigation.
+4. **The day and the timeline.**
+5. **The week and the calendar.**
+6. **The template editors.**
+7. **North:** a writing surface with no frame, 17 to 18px type about 640px
+   wide, capitals and `---` drawn as they are typed by a layer under the
+   transparent field (the keyboard, undo, copy and paste and the phone's
+   keyboard all the field's own), the rule under it in sentence case,
+   Ctrl or Cmd and Enter to save, Escape to cancel.
+8. **The library, Review, notes, the journal and search** - and the
+   library's adding flow, asked for earlier the same day.
+9. **Settings and the palette.**
+10. **The last look:** every screen again for old styles, colours or spacing
+   outside the tokens, and what is left undone written into the audit.
+
+Pictures: the audit's are kept in the repo, one sheet per screen, in
+`docs/screenshots/design/before/`, and the last stage's go beside them. The
+before and after of the stages between are shown to the owner as each stage
+closes and not kept, so the repo does not carry eight sets of the same
+screens half-done.
+
+### Stage 1 - the audit: done
+
+`docs/DESIGN-AUDIT.md`, from two readings that check each other:
+`scripts/design-inventory.mjs`, new, which counts every type size, line
+height, weight, letter spacing, spacing value off the scale, corner, border,
+shadow, duration, colour literal and button kind in the stylesheet with its
+line, and 45 screens photographed at 1366x768 and on an iPhone 13 in both
+themes, 45 sheets. What it found, in short: seven title positions for seven
+views; nine heights for pressable things; 183 drawn borders; one field rule
+whose ground is the page's wherever it stands; 180 buttons outside the
+three shared kinds; tracked capitals at six spacings beside sentence-case
+labels; empty states of up to five actions.
+
+And on the way: the Notes popover starts 37px left of a phone's screen; the
+audit script reports a thing past the left edge only when all of it is past,
+so it could not see that; the sweep parks the pointer on North's first
+heading at 1366x768 and so never measures North at rest; `--faded` is
+declared three times; `--r-chip` is used and not defined. The first two are
+stage 3's, with the popovers.
 
 ## v2.24 - North as one page, a window after sleep, and the day's timeline
 
