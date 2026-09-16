@@ -83,7 +83,7 @@ reached the repo. See DECISIONS "A line in capitals is a heading".
 3. **A lighter goal form** - a goal is a What until more is written; the
    other fields and the rules wait behind Add more.
 4. **North on the day** - the headings in a row under the day's title, each
-   opening its lines in a bubble; a switch under Nudges, on by default.
+   opening its lines under the row; a switch under Nudges, on by default.
 5. **How many times** - on Review, beside each repeating block, how many of
    the last 7 and 30 days it happened on. A count and nothing else.
 
@@ -566,7 +566,7 @@ reading them.
 | Timer and stopwatch | Survive a refresh, run on every tab, keep time in a background tab, put the countdown in the tab title |
 | Day digest | In the wide rail: what is next, and how the day is going |
 | North line | One goal under the day's title, rotating daily, expanding on hover/tap/focus |
-| North headings row | The text's headings in a row under the North line, each opening what is under it in a bubble; off under Settings > Nudges |
+| North headings row | The text's headings in a row under the North line, each opening what is under it under the row; off under Settings > Nudges |
 | North card | After a slow day or on a Monday, one goal comes forward with its reason - on a Monday with one line of what you do to deserve it, for the week. Never a word about how yesterday went |
 | Evening close | A quiet card at a set time, or the moment the last task is ticked. One sentence about the day, an optional line about the best moment, the journal's two optional questions, and a way to end it. Never a word about what was not done - see CONVENTIONS section 15 |
 | Journal | Three lines a day, none required: "Today: ..." under the North line, and the two questions at the close. Never counted, never streaked; read under the day in the week's agenda, copied as markdown for a week or a month. See `lib/journal.ts` |

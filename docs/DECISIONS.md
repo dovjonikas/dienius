@@ -3407,11 +3407,14 @@ has always saved one with a title alone.
 **North's headings on the day.** The day is the one place, the owner said; a
 page in the rail is a press away, and a press away is where a text goes
 unread. So the headings stand in a row under the North line, in its
-register, and a press on one opens its lines in a bubble under the row, the
-way the line's own peek opens, so the day never moves. A press and not a
-hover, on both devices, because the row sits on the busiest screen in the
-app and a hover that opened text over the task list would open it on the way
-to a task. The row is an index and never the text: the free lines stay on
+register, and a press on one opens its lines under the row, in the flow of
+the header. A press and not a hover, on both devices, because the row sits on
+the busiest screen in the app and a hover that opened text over the task
+list would open it on the way to a task; and in the flow rather than in a
+bubble, because the bubble - the first shape, the line's own peek - stood on
+the buttons under it, the yesterday banner's on the phone and the calendar's
+arrows at 1920, and the sweep said so. A press may move the page; CONVENTIONS
+24 is about the pointer. The row is an index and never the text: the free lines stay on
 the page. A switch under Nudges turns it off, and only off is ever carried
 in the plan - absent is on - so every plan from before the row existed reads
 as on without a migration.
@@ -3427,9 +3430,19 @@ template, the reading's own rule; a block that stood on no day in the thirty
 is not listed. Computed from the days as they are, every time, like
 everything on Review, so nothing can drift from the days it describes.
 
-**Two things the gates found on the way.** A library row's hover was a tint
-of ink under the row, and at five percent and again at three the tint took
-the count beside a title under 4.5:1 on the light theme; it is an edge now.
-And the sweep's Compose screen was pressing a button the voice pass had
-renamed, so eight pictures could not be reached: a screen name is a test,
-and a rename is a change to it.
+**What the gates found on the way.** A library row's hover was a tint of
+ink under the row, and at five percent and again at three the tint took the
+count beside a title under 4.5:1 on the light theme; it is an edge now. The
+sweep's Compose screen was pressing a button the voice pass had renamed, so
+eight pictures could not be reached: a screen name is a test, and a rename
+is a change to it. The audit's hit test cannot see a layer that takes no
+pointer, so the lines North opens over the page read as text behind the
+Edit they stand on; a layer that paints an opaque ground and takes no
+pointer is a surface over what it covers now, the reading
+`coveredBySurface` already gave a layer the pointer can reach. And the keys
+pass measured a stop by its offset in the document, which does not move
+when a box scrolls - right for the page, wrong for a list that scrolls
+inside a column: the day the header grew a line, the demo's last task
+overflowed its list and Tab from it to the Done fold under the list read as
+a climb. It measures where a stop is on the screen once focus has brought it
+into view, plus the page's own scroll.

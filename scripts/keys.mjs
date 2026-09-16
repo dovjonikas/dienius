@@ -93,13 +93,23 @@ const focused = (/** @type {Page} */ page) => page.evaluate(() => {
     cls: el.className && typeof el.className === 'string' ? el.className.split(' ')[0] : '',
     name,
     ring,
-    // Position in the document rather than in the viewport: focusing a stop
-    // that is off screen scrolls it into view, and a viewport-relative top
-    // read after that scroll cannot be compared with one read before it.
-    // Settings read as "Tab climbs the screen" five times over for that
-    // reason alone. offsetTop does not move when a box scrolls.
-    top: (() => { let t = 0; for (let o = /** @type {HTMLElement | null} */ (el); o; o = /** @type {HTMLElement | null} */ (o.offsetParent)) t += o.offsetTop; return Math.round(t) })(),
-    left: (() => { let l = 0; for (let o = /** @type {HTMLElement | null} */ (el); o; o = /** @type {HTMLElement | null} */ (o.offsetParent)) l += o.offsetLeft; return Math.round(l) })(),
+    // Where the stop is on the screen once focus has brought it into view,
+    // plus the page's own scroll, so a stop the page scrolled to compares
+    // with one read before the scroll - Settings read as "Tab climbs the
+    // screen" five times over when this was viewport-relative. It was the
+    // offset in the document until v2.23, which does not move when a box
+    // scrolls: right for the page, wrong for a list that scrolls inside a
+    // column, where a task past the bottom of the list has an offset below
+    // the Done fold that follows the list, and Tab from the one to the
+    // other read as a climb the day the header grew a line. The eye sees the
+    // task at the foot of the list and the fold under it, so that is what is
+    // measured; the scroll is made instant first, so a smooth one is not
+    // read halfway.
+    top: (() => {
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+      return Math.round(el.getBoundingClientRect().top + scrollY)
+    })(),
+    left: Math.round(el.getBoundingClientRect().left + scrollX),
     visible: r.width > 0 && r.height > 0,
     key: el.dataset.keysStop,
   }

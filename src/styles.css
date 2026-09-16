@@ -7584,6 +7584,9 @@ button.danger:focus-visible {
        values the column itself is built from rather than copied. */
     .north-line { margin-left: calc(var(--rail-max) + var(--s6)); }
 
+    /* And the row of North's headings under it, for the same reason. */
+    .north-strip { margin-left: calc(var(--rail-max) + var(--s6)); }
+
     .day-view:has(.day-notices:not(:empty)) {
       grid-template-areas:
         "header header   header"
@@ -10384,7 +10387,6 @@ button.task-library:hover { color: var(--text); }
    row; the rest are the one control each, and come up one ink when open,
    the way the line does. */
 .north-strip {
-  position: relative;
   flex: 1 1 100%;
   order: 10;
   min-width: 0;
@@ -10426,24 +10428,15 @@ button.task-library:hover { color: var(--text); }
   border-radius: var(--r-mark);
 }
 
-/* What opens: the lines under the pressed heading, in a bubble under the
-   row - the same surface, edge and shadow as the line's peek and the
-   tooltip, because it is the same kind of thing, and never in the flow, so
-   the day beneath it never moves. Unlike the peek it takes the pointer: it
-   was opened on purpose, and a press on it must not fall through to a task. */
+/* What opens: the lines under the pressed heading, under the row, in the
+   flow of the header. A press may move the page where a hover may not
+   (CONVENTIONS 24 is about the pointer), and the first shape this had - a
+   bubble over the day, like the line's peek - stood on whatever buttons were
+   under it, which the sweep found on both devices. No edge and no ground:
+   the words on the page's own ground, as the North page draws them. */
 .north-strip-more {
-  position: absolute;
-  top: calc(100% + var(--s2));
-  left: 0;
-  z-index: 60;
-  width: max-content;
-  max-width: min(62ch, 100%);
-  padding: var(--s3) var(--s4);
-  border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--surface-raised);
-  --ground: var(--surface-raised);
-  box-shadow: var(--e2);
+  max-width: 62ch;
+  margin-top: var(--s2);
 }
 
 .north-strip-lines {

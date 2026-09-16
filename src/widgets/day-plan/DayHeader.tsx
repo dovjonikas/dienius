@@ -388,8 +388,8 @@ export function DayHeader({
       <NorthLine date={date} onOpenNorth={onOpenNorth} />
 
       {/* And under it, North's headings, so the text is read from the day
-          without going to the page - see NorthStrip. A press opens one in
-          a bubble the way the line's peek opens, and the day never moves. */}
+          without going to the page - see NorthStrip. A press opens one
+          under the row: a press may move the day, a hover may not. */}
       <NorthStrip date={date} />
     </div>
   )

@@ -72,6 +72,26 @@
     return false
   }
 
+  // The same thing from the other side. A layer that paints an opaque ground
+  // but takes no pointer is never what elementFromPoint returns, so the text
+  // in it reads as *behind* the control it stands on. If the element judged
+  // behind sits in such a layer, and the layer does not hold the other one,
+  // it is the one painted on top - two layers again, not a mess. North's
+  // headings open their lines this way, over the page and through to the
+  // Edit beneath, which is where this was found.
+  /** @param {Element} behind @param {Element} front */
+  const paintedOver = (behind, front) => {
+    for (let el = behind; el && el !== document.body; el = el.parentElement) {
+      const cs = getComputedStyle(el)
+      if (cs.pointerEvents !== 'none') continue
+      if (el.contains(front)) return false
+      const m = /rgba?\(([^)]+)\)/.exec(cs.backgroundColor)
+      const alpha = m ? Number(m[1].split(',')[3] ?? 1) : 0
+      if (alpha > 0.5 || cs.backgroundImage !== 'none') return true
+    }
+    return false
+  }
+
   /**
    * How much of this element actually reaches the screen: its own opacity
    * times every ancestor's.
@@ -540,6 +560,7 @@
         if (!front) continue
         const behind = front === a ? b : a
         if (coveredBySurface(mid, behind)) continue
+        if (paintedOver(behind.el, front.el)) continue
         out.overlap.push({ a: sig(a.el), b: sig(b.el), share: +share.toFixed(2), ta: a.t.slice(0, 25), tb: b.t.slice(0, 25) })
       }
     }

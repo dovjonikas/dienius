@@ -52,7 +52,7 @@ test('the headings stand in a row; a press opens what is under one, and a second
   expect(screen.queryByText('second line under it')).toBeNull()
 })
 
-test('Escape closes it, and so does a press anywhere else', async () => {
+test('Escape closes it, and a press elsewhere leaves it as it is', async () => {
   const user = userEvent.setup()
   actions.setPicture('FIRST SECTION\nline under it')
   render(
@@ -66,9 +66,10 @@ test('Escape closes it, and so does a press anywhere else', async () => {
   await user.keyboard('{Escape}')
   expect(screen.queryByText('line under it')).toBeNull()
 
+  // In the flow of the page, it stays until it is pressed again.
   await user.click(screen.getByRole('button', { name: 'FIRST SECTION' }))
   await user.click(screen.getByRole('button', { name: 'Elsewhere' }))
-  expect(screen.queryByText('line under it')).toBeNull()
+  expect(screen.getByText('line under it')).toBeInTheDocument()
 })
 
 test('a heading with nothing under it is a word in the row and not a control', () => {

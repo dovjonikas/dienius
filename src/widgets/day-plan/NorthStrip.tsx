@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { parseNorth, type NorthPart } from '../../lib/northSections'
 
@@ -12,11 +12,13 @@ type NorthSection = Extract<NorthPart, { kind: 'section' }>
  * headings of the text - a line in capitals is one, see lib/northSections.ts
  * - stand in a row under the North line, in its register: small, tracked,
  * the third ink, no edge and no ground, collapsed. A press on one opens what
- * is under it in a bubble under the row, the way the line's own peek opens,
- * so the day beneath never moves; a second press, Escape, or a press
- * anywhere else closes it. A finger and a mouse do the same thing here,
- * because the row sits on the busiest screen in the app, and a hover that
- * opened text over the task list would be opening it on the way to a task.
+ * is under it under the row, in the flow of the header - a press may move
+ * the page where a hover may not (CONVENTIONS 24), and a bubble over the
+ * day, the first shape this had, stood on the buttons under it - and a
+ * second press or Escape closes it. A finger and a mouse do the same thing
+ * here, because the row sits on the busiest screen in the app, and a hover
+ * that opened text over the task list would be opening it on the way to a
+ * task.
  *
  * Only the headings, never the free lines: the row is an index of the text,
  * not the text, and the page keeps the whole of it. A text with no heading
@@ -27,24 +29,12 @@ type NorthSection = Extract<NorthPart, { kind: 'section' }>
 export function NorthStrip({ date }: { date: string }) {
   const data = useAppData()
   const [open, setOpen] = useState<number | null>(null)
-  const ref = useRef<HTMLDivElement>(null)
   const id = useId()
 
   // Closed whenever the day changes underneath it - see NorthLine.
   useEffect(() => {
     setOpen(null)
   }, [date])
-
-  // A press anywhere else closes it. pointerdown rather than click, so the
-  // press that lands on a task closes the bubble before the task opens.
-  useEffect(() => {
-    if (open === null) return
-    function onPointerDown(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null)
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [open])
 
   if (data.settings.north.stripOnDay === false) return null
   const sections = parseNorth(data.picture?.text ?? '').filter((p): p is NorthSection => p.kind === 'section')
@@ -53,7 +43,6 @@ export function NorthStrip({ date }: { date: string }) {
 
   return (
     <div
-      ref={ref}
       className="north-strip"
       onKeyDown={e => {
         if (e.key !== 'Escape' || open === null) return
