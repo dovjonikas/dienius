@@ -3288,3 +3288,78 @@ leans on all of it: the words are the person's own and in their voice
 looked for (the morning opening); they are read whole and in order (the
 way on is at the end); and nothing about them is scored, so reading them
 never becomes a task with a streak.
+
+
+## Every press has an answer, and every screen has one thing to do
+
+The rest of the quality wave, parts two to six, in one entry because they
+were done in one sitting and share one rule: nothing on the screen may cost
+a thought it does not pay for.
+
+**One voice.** Four verbs for making a thing - Make a category, Make a list,
+Create a template, Compose - are one now: New category, New list, New
+template, and the goals' button says Edit goals, since beside the text's own
+Edit the word Compose read as a second verb for the same thing. Every button
+label on every screen was collected into one list and read as a vocabulary,
+which is the only way a vocabulary can be checked, and these four were the
+whole of the disagreement.
+
+**An answer to every press.** Every button on every screen was hovered under
+a script and its computed style read back, and eleven kinds of control said
+nothing at all to the pointer: the segments, the note toggles, the week's
+day headers, a scratch row's actions, the core toggle, the seven day
+switches, the week's template pickers, the block remove, the library's rows
+and folds, North's fold. Each has a hover now, in the one register the rest
+of the app uses - colour, edge or ground, never movement - and a segment or a
+switch already chosen still says nothing more, because it has nothing more
+to say. The transition list was extended to match, so the answer arrives at
+the same speed everywhere.
+
+**The first minute.** A fresh open had four filled buttons on it, the tour's
+and three starter templates', and a Replan and a Low day for a today with
+nothing on it - doors onto nothing. The starters are secondary, the one
+sentence that says what to do sits directly above them, and Replan and Low
+day appear only on a day that has something to replan; a day ahead keeps
+Something came up, which is how a thing gets onto it.
+
+**One clear action per row.** Three templates listed meant three red Delete
+buttons before anybody had pressed anything, the loudest thing on a page
+whose one job is New template. Deleting is rarer than opening by a hundred
+to one, and the place a person is sure which template they mean is inside
+it; so the row keeps Edit, and Delete sits at the far end of the editor's
+footer, outlined until armed and filled once armed. The category list in
+Settings did the same thing with six rows and does the same thing now: Edit
+on the row, Delete inside the editor, then the panel that says what uses the
+category and where that goes. A scratch note carried five controls in a row,
+To task, Open, To Later, Pin and Delete; the two pressed daily stay in the
+row, and the three pressed rarely are behind More, a menu that closes on a
+choice, on Escape and on a press outside, and hands focus back to the button
+that opened it.
+
+**Settings in plain words.** Read as a document, in the pictures, the
+settings page had three faults. Five of the nine sections hid their headings
+on an argument that only held on a desktop - the list beside the panel
+already named the section - while the four sections written as components
+showed theirs, so Week's rows ran straight into a heading that said
+Categories and the page read as four sections with loose rows between them.
+Every section shows its heading now; on the phone, where the list is a strip
+that has scrolled away by the second section, the heading is the only thing
+that says where you are. The descriptions had been written as prose about
+the app rather than sentences to a person - "every one is a theme somebody
+would keep", "for hours that are genuinely a different life", "a backup that
+travels the same wire as the thing it is backing up is not a backup" - and
+were cut to what a setting does: the theme's line is "The whole app takes
+its colours from the one you pick", text size is "Scales all text
+together", and Sync's closing aphorism is gone, since Backup's own last line
+already says what the three copies are for. The repo paths a person would
+look for in the backup repo moved from the paragraph above the fields, where
+they were read before the token was, to that last line, which is where
+somebody wonders what is in there. Nothing was removed from Settings and no
+switch was hidden: every row on it is one the owner presses, and what "fewer
+switches" turned out to mean was fewer words in front of each one.
+
+**What was not done.** The morning digest, the second half of part seven,
+stays where STATE leaves it: the honest shape is a push that arrives at a
+time the owner chooses, and GitHub's cron cannot promise a time. A1, the
+sync check against the real GitHub, is the owner's to run, and its checklist
+is in CHECKS-BY-HAND.

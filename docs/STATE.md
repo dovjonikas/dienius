@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.22, the pictures looked at.
+**Last updated:** v2.22, the quality wave through part six.
 
 ## v2.22 - the quality wave, part one: the pictures
 
@@ -20,13 +20,19 @@ calendar does for one person, so the wave is a quality wave, in this order:
    see DECISIONS "The pictures, looked at". The sweep leaves the pictures
    behind now (`--shots=DIR`), so the next look costs one command.
 2. **One voice** - every label, verb and sentence consistent across screens.
+   Done.
 3. **One clear action per screen** - the rarely-pressed demoted, the empty
-   states saying the one thing to do.
+   states saying the one thing to do. Done.
 4. **An answer to every press** - hover, press, tick and undo consistent,
-   transitions one length, nothing jumping.
+   transitions one length, nothing jumping. Done.
 5. **The first minute** - a fresh open with a clear path and no thinking.
-6. **Settings in plain words**, grouped, fewer switches on the screen.
-7. **Trust** - A1 run by the owner; the morning digest push if wanted.
+   Done.
+6. **Settings in plain words**, grouped, fewer switches on the screen. Done.
+   Parts two to six are one DECISIONS entry, "Every press has an answer,
+   and every screen has one thing to do".
+7. **Trust** - A1 run by the owner; the morning digest push if wanted. A1 is
+   the owner's, with its checklist in CHECKS-BY-HAND; the digest stays where
+   "D3 is not built" below leaves it.
 
 What part one found is the reason the rest is worth doing: the navigation
 rail could be scrolled empty by anything that scrolls; the sweep had been
@@ -46,6 +52,20 @@ editor on the page, reading as blocks with the goals folded under and the
 morning opening, and the phone with the browser test on both devices. See
 DECISIONS "North is a text". The repo is public and carries none of the
 owner's text; every line in a test is a generic one.
+
+## v2.22, part three - the rest of the quality wave
+
+Parts two to six, done in one sitting and written up together in DECISIONS
+"Every press has an answer, and every screen has one thing to do": one
+vocabulary for making a thing (New category, New list, New template, Edit
+goals); a hover for the eleven kinds of control that had none, in the
+register the rest of the app uses; a first screen with one filled button on
+it and no door onto nothing; Delete moved inside the editor for templates
+and categories, with a scratch note's three rarer actions behind More; and
+Settings read as a document, every section with its heading and every
+description cut to what the setting does. Nothing was removed from Settings
+and no switch was hidden: what "fewer switches" turned out to mean was fewer
+words in front of each one.
 
 ## v2.21 - eight reports in one day, and what they had in common
 
