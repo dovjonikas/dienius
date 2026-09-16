@@ -286,7 +286,7 @@ const SCREENS = [
     name: 'North (Compose)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'North')
-      await press(p, 'Compose')
+      await press(p, 'Edit goals')
       await p.waitForSelector('.north-compose')
       await p.waitForTimeout(300)
     },

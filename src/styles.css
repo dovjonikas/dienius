@@ -5815,9 +5815,11 @@ button.danger {
   }
   button.core-toggle:not(.active):hover { color: var(--text); }
   .block-remove:hover { color: var(--danger); }
+  /* Three percent, not five: five took the count beside a title on the
+     light theme to 4.28:1, and the sweep said so. */
   .library-item-open:hover,
   .library-list-fold:hover {
-    background: color-mix(in srgb, var(--text) 5%, transparent);
+    background: color-mix(in srgb, var(--text) 3%, transparent);
   }
 }
 

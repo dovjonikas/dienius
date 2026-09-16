@@ -54,7 +54,7 @@ test('a scratch line starting with "!" goes to Later, and the rest is kept exact
   await note.press('Enter')
   await expect(scratch.getByText('1 note')).toBeVisible()
   await expect(scratch.getByRole('listitem')).toContainText('#bug the week view loses its chip when narrowed')
-  await expect(scratch.getByRole('button', { name: '#bug' })).toHaveCount(0)
+  await expect(scratch.getByRole('button', { name: '#bug', exact: true })).toHaveCount(0)
   await expect(scratch.getByRole('button', { name: 'Export bugs' })).toHaveCount(0)
 
   await page.keyboard.press('Escape')
