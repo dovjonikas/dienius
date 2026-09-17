@@ -5264,7 +5264,8 @@ button.core-toggle.active {
    as a tint rather than a ground: the eight template colours are pastels, and
    text on one of them at full strength is a contrast question per colour, which
    the chip in the calendar already answered this way. */
-.kind-mark {
+.kind-mark,
+.roster-legend-letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5397,6 +5398,127 @@ button.danger {
 }
 
 .stamp-bar-empty p { margin: 0; }
+
+/* The way into the roster stands at the right end of the stamp bar: the bar
+   holds the templates, and the roster is the other thing to do with them. */
+.roster-open { margin-left: auto; }
+
+/* ------------------------------------------------------------------------
+   The roster - rotating shifts, since v2.29, docs/RESEARCH-SHIFTS.md section
+   2.5 and views/shifts/RosterBar.tsx.
+
+   A mode of the month, so its bar stands where the stamp bar does and the
+   grid under it is the same grid. Two rows: the way out with the letters and
+   the two tools, then what a tap does and how much is waiting. The cycle
+   opens under them on its own card.
+   ------------------------------------------------------------------------ */
+.roster-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+}
+
+.roster-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.roster-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.roster-legend-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+}
+
+/* A tool is a chip: the quiet fill, a pill, one control tall, and the
+   accent's ground while it is the one in hand. */
+.roster-tool {
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.roster-tool:hover { background: var(--fill-strong); }
+.roster-tool.is-on { background: var(--accent-dim); }
+
+.roster-tool:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* What a tap does at the left, what is waiting at the right, on one line. */
+.roster-line { margin: 0; max-width: var(--read-w); }
+.roster-waiting { margin: 0 0 0 auto; }
+
+/* The cycle, on its own card under the bar: the kinds to press in order, the
+   sequence as it stands, the day it starts on and the one press that fills. */
+.roster-cycle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+}
+
+.roster-cycle-kinds { margin: 0; }
+
+.roster-cycle-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+/* The sequence in letters, on the tabular figures every clock and count in
+   this app uses, so D D N N lines up with the month under it. */
+.roster-sequence {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.roster-cycle-date { width: auto; }
+
+/* The letter a date carries in the roster, in the middle of the cell where
+   the day's own lines stand the rest of the time: while a month is being laid
+   out, the one thing a cell says is which kind of day it is. */
+.cell-kind {
+  align-self: center;
+  margin-block: auto;
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-weight: var(--w-strong);
+  line-height: 1;
+}
+
+/* A phone's cell is the height of two lines, and at the largest text size the
+   letter at the reading size was taller than what was left under the date. It
+   is a letter either way: one step down still reads across the grid. */
+@media (max-width: 599px) {
+  .cell-kind { font-size: var(--t-md); }
+}
 
 
 /* A choice - docs/DESIGN.md: the fill, a pill, one control tall, the

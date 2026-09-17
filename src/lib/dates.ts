@@ -71,6 +71,17 @@ export function weekdayName(key: string): string {
 }
 
 /** The rest of it - "September 30" - for the line under that heading. */
+/**
+ * The last date of the month a date falls in - the far end of a stretch the
+ * roster fills. Built from the month after it at day zero, which is the one
+ * arithmetic that needs no table of lengths and no leap-year rule of its own.
+ */
+export function monthEnd(key: string): string {
+  const [y, m] = key.split('-').map(Number)
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return `${key.slice(0, 8)}${String(last).padStart(2, '0')}`
+}
+
 export function monthAndDay(key: string): string {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })

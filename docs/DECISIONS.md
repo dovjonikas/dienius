@@ -4065,6 +4065,29 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## The roster is a mode of the month, and its draft is the device's
+
+v2.29 stage 6, from docs/RESEARCH-SHIFTS.md section 2.5.
+
+**A rota is read as a month, so it is laid out on one.** It arrives as eight
+rows of letters on a photograph from an employer, and the month is the one
+screen already shaped like that. A tap walks a date through the kinds, so a
+week is seven taps with nothing to choose first, and Clear is the other
+gesture rather than a second meaning for the same one.
+
+**In the roster a cell says its kind and nothing else.** The three lines of
+what is on a day are what the date will be made of once the draft is applied;
+while the rota is being typed in they are in the way of the one thing being
+decided, and a cell is 52px tall.
+
+**The draft is on the device, not in the plan.** A half-built month is one
+device's scratch of a rota nobody has decided yet: syncing it, backing it up or
+exporting it would all be wrong, and a draft inside the plan would be a second
+answer to what kind a date is for as long as it sat there. It still has to
+outlive a reload, because a month is typed in with the phone in the other hand,
+so it lives under its own key and is read defensively - what does not read as a
+draft reads as no draft.
+
 ## Where a kind of day and a routine are written
 
 v2.29 stage 5, from docs/RESEARCH-SHIFTS.md sections 2.1 and 2.3.

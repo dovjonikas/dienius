@@ -38,6 +38,9 @@ const FIXED = new Date('2026-09-16T12:00:00Z')
 /** More stops than any screen has; a guard against a focus trap looping. */
 const MAX_STOPS = 400
 
+/** How many Tabs one control may hold before the walk calls it a trap - a date field is three. */
+const SEGMENTS = 4
+
 /** A stop this far above the previous one, without moving right, is a climb. */
 const CLIMB_PX = 40
 
@@ -48,6 +51,8 @@ const SCREENS = [
   { name: 'Calendar month', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Month', exact: true }).click() } },
   { name: 'Calendar week', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Week', exact: true }).click() } },
   { name: 'Templates', go: p => tab(p, 'Templates') },
+  { name: 'Calendar (the roster)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Roster', exact: true }).click() } },
+  { name: 'Calendar (a cycle)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Roster', exact: true }).click(); await p.getByRole('button', { name: 'Cycle', exact: true }).click() } },
   { name: 'Templates (a routine)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await p.getByRole('button', { name: 'New routine' }).click() } },
   { name: 'Library', go: p => tab(p, 'Library') },
   { name: 'Review', go: p => tab(p, 'Review') },
@@ -177,10 +182,24 @@ async function main() {
         /** @type {NonNullable<Awaited<ReturnType<typeof focused>>>[]} */
         const stops = []
         const seen = new Set()
+        // A control can hold focus for more than one Tab: a date field is
+        // three fields to the browser - day, month, year - and each of them
+        // takes one. The walk reads that as the same stop again, and until
+        // v2.29 it read it as the ring closing and stopped there, so
+        // everything after a date field went unwalked: the month's own grid
+        // behind the roster's cycle was reported as reachable only with a
+        // pointer, which is how this was found. The same element twice in a
+        // row is a segment; the same element after others is the loop.
+        let held = 0
         for (let i = 0; i < MAX_STOPS; i++) {
           await page.keyboard.press('Tab')
           const f = await focused(page)
           if (!f) break
+          if (stops.length > 0 && f.key === stops[stops.length - 1].key) {
+            if (++held > SEGMENTS) break
+            continue
+          }
+          held = 0
           if (seen.has(f.key)) break
           seen.add(f.key)
           stops.push(f)

@@ -177,6 +177,29 @@ const SCREENS = [
     },
   },
   { name: 'Calendar week', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Week') } },
+  // The roster - rotating shifts. The sample marks two of its templates as
+  // kinds of day, so the month offers it; the second screen lays a few dates
+  // out and opens the cycle, where the sequence and the date field stand.
+  {
+    name: 'Calendar (the roster)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Calendar')
+      await p.getByRole('button', { name: 'Roster', exact: true }).click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: 'Calendar (a cycle)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Calendar')
+      await p.getByRole('button', { name: 'Roster', exact: true }).click()
+      const cells = await p.locator('.cell:not(.outside)').all()
+      for (const cell of cells.slice(20, 24)) await cell.click()
+      await p.getByRole('button', { name: 'Cycle', exact: true }).click()
+      await p.getByRole('group', { name: 'The cycle' }).getByRole('button').first().click()
+      await p.waitForTimeout(200)
+    },
+  },
   { name: 'Templates', go: /** @param {Page} p */ p => tab(p, 'Templates') },
   // The routines under the templates - rotating shifts. The sample marks two
   // of its templates as kinds of day, so the section is drawn; the second

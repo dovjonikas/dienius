@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
+import { addDays, formatWeekTitle, monthEnd, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
@@ -13,6 +13,9 @@ import { Explain } from './Explain'
 import { requestReplan } from '../lib/replanState'
 import { hasJournal } from '../lib/journal'
 import { datesWithNotes } from '../lib/scratch'
+import { dayKinds, nextKind } from '../lib/dayKinds'
+import { clearDraft, cycleDates, kindAfterDraft, readDraft, writeCycle, writeDraft, type RosterDraft } from '../lib/rosterDraft'
+import { RosterBar } from './shifts/RosterBar'
 
 
 /**
@@ -109,6 +112,16 @@ export function CalendarView({
   const [month, setMonth] = useState(now.getMonth())
   const [stampTemplateId, setStampTemplateId] = useState<string | null>(null)
   const [staged, setStaged] = useState<Record<string, string | null>>({})
+  /**
+   * The roster - rotating shifts, docs/RESEARCH-SHIFTS.md section 2.5. A mode
+   * of the month rather than a screen of its own: a rota is read as a month and
+   * laid out on one. The draft it builds is this device's, read off it when the
+   * month opens and written back on every tap, so a month typed in from a
+   * photograph survives the phone locking - see lib/rosterDraft.ts.
+   */
+  const [roster, setRoster] = useState(false)
+  const [draft, setDraft] = useState<RosterDraft>(() => readDraft())
+  const [clearing, setClearing] = useState(false)
   const [reading, setReading] = useState<WeekReading>('grid')
   // Which day is open, and null every other moment. A press opens it and it
   // stays open until it is closed - see DayCard.tsx for why the 400ms hover
@@ -288,6 +301,47 @@ export function CalendarView({
     setOpenDate(null)
   }
 
+  const kinds = useMemo(() => dayKinds(data.templates), [data.templates])
+
+  /** The draft, held and written to the device in one move, so neither can be forgotten. */
+  function putDraft(next: RosterDraft) {
+    setDraft(next)
+    writeDraft(next)
+  }
+
+  /**
+   * A tap in the roster: the next kind round, or the kind taken off while the
+   * Clear tool is on. A date behind today is drawn and never changed - a lived
+   * day says what it was, which is the rule the weekday map and Stamp week keep.
+   */
+  function tapRoster(date: string) {
+    if (date < today) return
+    if (clearing) {
+      putDraft({ dates: { ...draft.dates, [date]: null } })
+      return
+    }
+    const next = nextKind(data.templates, kindAfterDraft(data, draft, date)?.id)
+    if (!next) return
+    putDraft({ dates: { ...draft.dates, [date]: next.id } })
+  }
+
+  /** A cycle's stretch, laid into the draft in one press: today onward, never behind it. */
+  function fillCycle(sequence: string[], from: string) {
+    const filled = cycleDates({ kinds: sequence, from }, monthEnd(from))
+    const dates = { ...draft.dates }
+    for (const [date, kind] of Object.entries(filled)) {
+      if (date >= today) dates[date] = kind
+    }
+    putDraft({ dates })
+    writeCycle({ kinds: sequence, from })
+  }
+
+  function throwDraftAway() {
+    setDraft({ dates: {} })
+    clearDraft()
+    setClearing(false)
+  }
+
   function save() {
     actions.stamp(staged)
     setStaged({})
@@ -448,7 +502,24 @@ export function CalendarView({
       {mode === 'month' && (
         <>
 
-          {data.templates.length > 0 && (
+          {roster && (
+            <RosterBar
+              kinds={kinds}
+              waiting={Object.keys(draft.dates).length}
+              clearing={clearing}
+              today={today}
+              monthStart={`${cells.find(c => c.inMonth)!.key.slice(0, 8)}01`}
+              onLeave={() => {
+                setRoster(false)
+                setClearing(false)
+              }}
+              onClearing={setClearing}
+              onFill={fillCycle}
+              onThrowAway={throwDraftAway}
+            />
+          )}
+
+          {data.templates.length > 0 && !roster && (
             <div className="stamp-bar">
               <Explain id="stamp">
                 <span className="muted">Stamp</span>
@@ -465,6 +536,22 @@ export function CalendarView({
                   {t.name}
                 </button>
               ))}
+              {/* The way into the roster, beside the templates it is made of:
+                  a kind of day is one of the chips in this bar. Only once one
+                  of them is a kind - there is no rota without kinds. */}
+              {kinds.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-secondary roster-open"
+                  onClick={() => {
+                    setRoster(true)
+                    setStampTemplateId(null)
+                    setOpenDate(null)
+                  }}
+                >
+                  Roster
+                </button>
+              )}
             </div>
           )}
 
@@ -508,6 +595,11 @@ export function CalendarView({
                 {week.map(cell => {
                   const templateId = effectiveTemplateId(cell.key)
                   const template = resolveTemplate(templateId, data.templates)
+                  // In the roster a date is its kind: the draft's where it has
+                  // one, the plan's where it does not - and the letter, the
+                  // colour and the name it is read by all come from that.
+                  const kind = roster ? kindAfterDraft(data, draft, cell.key) : undefined
+                  const drawn = roster ? kind : template
                   const state = taskState(data.days[cell.key])
                   // A day that is over. The future has nothing to report and
                   // says nothing - a "0/9" on Thursday is not information, it
@@ -515,7 +607,10 @@ export function CalendarView({
                   // neither has today, which is still being lived.
                   const past = cell.key < today
                   const stat = past ? dayStat(data.days[cell.key]) : undefined
-                  const showStats = !!stat && stat.rate !== null
+                  // Nor how a past day went, in the roster: a cell there says
+                  // its kind and nothing else, and at the largest text size a
+                  // 5/9 under a letter is the line that gets cut.
+                  const showStats = !!stat && stat.rate !== null && !roster
                   // Every day shows what is on it, the same way: two or three
                   // lines, decided by the viewport's height - see useCellLines
                   // for why that decision cannot live in the stylesheet - and
@@ -536,7 +631,8 @@ export function CalendarView({
                     cell.inMonth ? '' : 'outside',
                     cell.key === today ? 'today' : '',
                     cell.key in staged ? 'staged' : '',
-                    template ? 'cell-has-template' : '',
+                    roster && cell.key in draft.dates ? 'staged' : '',
+                    drawn ? 'cell-has-template' : '',
                     state !== 'none' ? 'cell-has-tasks' : '',
                     state === 'done' ? 'cell-tasks-done' : '',
                     showStats ? `cell-tone-${stat!.tone}` : '',
@@ -554,8 +650,8 @@ export function CalendarView({
                       // inks stay readable on a stamped day. A solid pastel
                       // fill with dark ink pinned on it was a piece of the
                       // light theme sitting in the dark one.
-                      style={template ? ({ ['--chip' as string]: template.color } as React.CSSProperties) : undefined}
-                      aria-label={cellLabel(cell, template?.name, state, { journal: journalled, note: noted })}
+                      style={drawn ? ({ ['--chip' as string]: drawn.color } as React.CSSProperties) : undefined}
+                      aria-label={cellLabel(cell, drawn?.name, state, { journal: journalled, note: noted })}
                       aria-current={cell.key === today ? 'date' : undefined}
                       aria-expanded={stampTemplateId ? undefined : openDate === cell.key}
                       onPointerDown={e => handlePointerDown(cell.key, e)}
@@ -568,12 +664,24 @@ export function CalendarView({
                       // it, because the month is what somebody came to the
                       // month for and leaving it should be asked for.
                       onClick={() => {
+                        if (roster) {
+                          tapRoster(cell.key)
+                          return
+                        }
                         if (stampTemplateId) return
                         dropPeek()
                         setOpenDate(cell.key)
                       }}
                     >
                       <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
+                      {/* The letter, where the day's lines would start: in the
+                          roster a date is read as its kind, and the lines are
+                          what it will be made of once it is applied. */}
+                      {kind && (
+                        <span className="cell-kind" aria-hidden="true">
+                          {kind.dayKind!.letter}
+                        </span>
+                      )}
                       {showStats && (
                         <span className="cell-stats" aria-hidden="true">
                           <span className="cell-ratio">
@@ -583,7 +691,13 @@ export function CalendarView({
                           {keptEveryKeyTask(stat!) && <span className="cell-kept" />}
                         </span>
                       )}
-                      {points.points.length > 0 ? (
+                      {/* In the roster the month is read as a rota: the
+                          letter and the kind's name, and not the three lines
+                          of what is on the day. Those lines are what a date
+                          will be made of once the draft is applied, and while
+                          a month is being laid out they are in the way of the
+                          one thing being decided. */}
+                      {points.points.length > 0 && !roster ? (
                         /* What is actually on the day, rather than what the
                            shape of day was called. A template's name is a
                            word somebody chose two months ago; "09:00 Job
@@ -600,7 +714,7 @@ export function CalendarView({
                           {points.more > 0 && <span className="cell-more">+{points.more}</span>}
                         </span>
                       ) : (
-                        template && <span className="cell-template" aria-hidden="true">{template.name}</span>
+                        drawn && <span className="cell-template" aria-hidden="true">{drawn.name}</span>
                       )}
                       {/* The bar, along the bottom edge. A ring in a corner was
                           the other option and lost: a 52px cell has no corner to

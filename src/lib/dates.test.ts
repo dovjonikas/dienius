@@ -1,4 +1,4 @@
-import { dateKey, addDays, monthAndDay, monthGrid, formatDayTitle, weekdayName } from './dates'
+import { dateKey, addDays, monthAndDay, monthEnd, monthGrid, formatDayTitle, weekdayName } from './dates'
 
 test('dateKey formats local date as YYYY-MM-DD', () => {
   expect(dateKey(new Date(2026, 8, 1))).toBe('2026-09-01')
@@ -71,4 +71,12 @@ test('the header prints the day in two halves, and they add up to the whole', ()
   expect(weekdayName('2026-09-30')).toBe('Wednesday')
   expect(monthAndDay('2026-09-30')).toBe('September 30')
   expect(`${weekdayName('2026-09-30')}, ${monthAndDay('2026-09-30')}`).toBe(formatDayTitle('2026-09-30'))
+})
+
+test('monthEnd is the last date of the month a date falls in, leap years included', () => {
+  expect(monthEnd('2026-09-16')).toBe('2026-09-30')
+  expect(monthEnd('2026-09-01')).toBe('2026-09-30')
+  expect(monthEnd('2026-02-10')).toBe('2026-02-28')
+  expect(monthEnd('2028-02-10')).toBe('2028-02-29')
+  expect(monthEnd('2026-12-31')).toBe('2026-12-31')
 })

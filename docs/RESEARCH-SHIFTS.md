@@ -311,8 +311,13 @@ nothing composes a day a second way.
   times a routine is asked for are the kinds in the list above it. Nothing is
   drawn there until a template is a kind.
 - **The roster** is a mode of the month (stage 6): a tap on a date walks it
-  through the kinds by `order` and back round; a long press or the Clear tool
-  takes the kind off. Letters and colours on every date.
+  through the kinds by `order` and back round; the Clear tool takes the kind
+  off. Letters and colours on every date, and nothing else on them: the lines
+  of what is on a day are what the date will be made of once it is applied.
+- **The Clear tool, and not a long press** (stage 6, changing this design): on a
+  grid where a tap walks the kinds, a press held a moment too long would take a
+  kind off by accident, and there is no way to see that it was about to. The
+  tool says what the next tap will do before it is made.
 - **The cycle** is a sequence of kinds and a start date, filling a chosen
   stretch (stage 6): `D D N N A R R R` from the 3rd to the end of the month.
 - **Taps and cycles build a draft**, kept on this device under its own key

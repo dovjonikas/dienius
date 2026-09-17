@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 5 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts, stage 6 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,55 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 6 - the roster: the month, the taps, the cycle and a draft: done
+
+- **A mode of the month** (`views/shifts/RosterBar.tsx` and the month's own
+  cells), because a rota arrives as a month and is read as one. The bar carries
+  the letters, the Clear tool and the cycle; the grid under it is the same grid.
+  It is offered only once a template is a kind of day.
+- **A tap walks the kinds** by their order and round again (`nextKind`); Clear
+  is the other gesture, kept apart from the tap so neither can be the other by
+  accident. A date behind today is drawn and never changed.
+- **In the roster a cell is read as a rota**: the letter in the middle, the
+  kind's name under it and the kind's colour on it, and none of the three lines
+  of what is on the day - those are what the date will be made of once the draft
+  is applied, and while a month is being laid out they are in the way of the one
+  thing being decided.
+- **The cycle** (`cycleDates`): the kinds pressed in the order they come round and
+  a date to start on, filling to the end of that month in one press, keeping its
+  place over today and writing nothing behind it. The last cycle used is offered
+  again, because next month is usually this pattern moved on.
+- **The draft is this device's** (`lib/rosterDraft.ts`, under `dienius:roster-draft`):
+  read when the month opens, written on every tap, thrown away in one press, and
+  never in `AppData`. A half-built month is not something to sync, back up or
+  export, and a draft in the plan would be a second answer to what kind a date
+  is. Everything under the key is read defensively: what does not read as a
+  draft reads as no draft.
+- **Nothing reaches the plan yet.** Apply and its preview are stage 7; the bar
+  says how many days are waiting, and Throw it away is the other way out.
+- **The runs walk it**: the sweep lays a few dates out and opens the cycle, and
+  keys, precision and the text sizes mark a kind through a template and open the
+  roster on the demo. Two things came back. The text sizes found the ratio of a
+  past day cut under the letter at the largest size, which was the roster drawing
+  what a cell in it does not say: how a day went goes with the lines. And keys
+  found the month behind an open cycle "reachable only with a pointer", which
+  was the walk itself: a date field is three fields to a browser and takes three
+  Tabs, and the walk read the second as the ring closing and stopped there.
+  Since v2.29 the same element twice in a row is a segment and the same element
+  after others is the loop; a planted trap that always takes focus back is still
+  caught.
+
+New tests: `lib/rosterDraft.test.ts` (a draft kept on the device and not in the
+plan, a draft that is not one, the cycle and its edges, the last cycle kept, and
+what a date is after a draft), `views/shifts/RosterMode.test.tsx` (the roster
+offered only where there is a kind, a tap walking and round again, a date behind
+today, the Clear tool, a cycle that keeps its place over today and is offered
+again, and a draft that outlives a reload and can be thrown away), and `monthEnd`
+in `dates.test.ts`. A mutation pass over the draft, the cycle and the month
+broke twelve rules; two lived at first - a template that is no longer a kind
+read as one, and the last cycle not offered again - and each has its own test
+now.
 
 ### Stage 5 - the routine editor, and what makes a template a kind: done
 
