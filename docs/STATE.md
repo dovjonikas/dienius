@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 5 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+**Last updated:** v2.30 done - Kitchen as it was meant, all six stages. v2.29 (rotating shifts) resumes at stage 5.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -35,6 +35,23 @@ already takes; numbers are never read from inside the ingredients or the steps;
 a recipe for two meals stands under both; several recipes on a block are walked
 by the date, and the block's `recipeId` is written as the first of them so an
 older device still stamps a meal.
+
+### Stage 6 - the phone, the pictures and the last tests: done
+
+- **The browser walk goes on into a template** (`e2e/kitchen.e2e.ts`): two
+  recipes put into a template's dinner from their own pages, the block holding
+  them in that order with the keys back on the button, and the two days stamped
+  from it taking one recipe each. The first walk runs on the phone too, where it
+  also checks the open field stays inside the screen; the stamping half is the
+  wide layout's, since a phone stamps a template from the calendar. A walk that
+  has not been made to fail is not a walk yet: a planted walk that always gave
+  the first recipe failed the second test and nothing else.
+- **Looked at on every screen**: the field open with sixteen recipes at 1366x768,
+  1920x1080 and on a phone, in both themes, and Add to template with a new block
+  in both. The sections stand side by side where there is width and one under
+  another on a phone.
+- The whole run, once more: 3116 unit tests, the build, 115 walks, the sweep on
+  both screens, keys, precision, the three text sizes and the privacy guard.
 
 ### Stage 5 - a meal block takes recipes from Kitchen, and Add to template: done
 

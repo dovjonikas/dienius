@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { openFreshAt, wednesdayAt } from './app'
+import { goToDay, openFreshAt, wednesdayAt } from './app'
 
 /**
  * Kitchen, walked end to end on both screens - v2.27.
@@ -10,7 +10,10 @@ import { openFreshAt, wednesdayAt } from './app'
  * read back as a list and numbered steps, found by a chip and by a word in its
  * text, and a meal on the day opening it. The phone's walk also measures what a
  * finger needs - the meals wrapping inside the screen. Cook went in v2.30.
- * Every recipe here is a generic one.
+ *
+ * Since v2.30 the walk goes on into a template: a recipe put into a meal block
+ * from its own page, and the days stamped from that block taking its recipes
+ * one a day. Every recipe here is a generic one.
  */
 
 test.use({ timezoneId: 'Europe/Vilnius' })
@@ -102,4 +105,81 @@ test("a meal on the day names its recipe, and a press on it opens the recipe's p
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
   await page.locator('.task-list').getByRole('button', { name: 'Lunch recipes' }).click()
   await expect(page.getByRole('group', { name: 'Meal' }).getByRole('button', { name: 'Lunch' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+/** Two generic dinners and a day template with a dinner block, written straight into the plan. */
+async function planWithDinner(page: Page, recipeIds?: string[]): Promise<void> {
+  await page.evaluate(ids => {
+    const key = 'dienius:data'
+    const d = JSON.parse(localStorage.getItem(key) ?? '{}')
+    d.recipes = [
+      { id: 'soup', title: 'A simple soup', text: '', mealTypes: ['dinner'] },
+      { id: 'curry', title: 'A quick curry', text: '', mealTypes: ['dinner'] },
+    ]
+    d.templates = [
+      {
+        id: 'weekday',
+        name: 'Weekday',
+        color: '#a7c4f5',
+        blocks: [
+          {
+            id: 'dinner',
+            time: '19:00',
+            title: 'Dinner',
+            minutes: 45,
+            category: 'meal',
+            ...(ids ? { recipeIds: ids, recipeId: ids[0] } : {}),
+          },
+        ],
+      },
+    ]
+    localStorage.setItem(key, JSON.stringify(d))
+  }, recipeIds)
+  await page.reload()
+}
+
+test("recipes go into a template's meal block from their own pages, and the block holds them in that order", async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await planWithDinner(page)
+  const views = page.getByRole('navigation', { name: 'Views' })
+
+  for (const title of ['A simple soup', 'A quick curry']) {
+    await views.getByRole('button', { name: 'Kitchen', exact: true }).click()
+    await page.getByRole('button', { name: new RegExp(title) }).first().click()
+    await page.getByRole('button', { name: 'Add to template', exact: true }).click()
+    await page.getByRole('radiogroup', { name: 'Into' }).getByRole('radio', { name: '19:00 Dinner' }).check()
+    await page.getByRole('button', { name: 'Add', exact: true }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Added to Dinner on Weekday.' })).toBeVisible()
+    // The keys come back to the button the panel was opened from.
+    await expect(page.getByRole('button', { name: 'Add to template', exact: true })).toBeFocused()
+  }
+
+  await views.getByRole('button', { name: 'Templates', exact: true }).click()
+  await page.getByRole('button', { name: /^Edit Weekday/ }).first().click()
+  const line = page.getByRole('button', { name: /^Recipes for Dinner: / })
+  await expect(line).toHaveAccessibleName('Recipes for Dinner: A simple soup and 1 more')
+  await line.click()
+  await expect(page.getByRole('list', { name: 'Walked in this order' }).getByRole('listitem')).toHaveText([
+    /A simple soup/,
+    /A quick curry/,
+  ])
+  // Open, the field stays inside the screen - the phone's included.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
+})
+
+test('the days stamped from a meal block take its recipes, one a day', async ({ page }, info) => {
+  test.skip(info.project.name === 'phone', "the template rail is the wide layout's; a phone stamps a template from the calendar")
+  await openFreshAt(page, wednesdayAt(10))
+  await planWithDinner(page, ['soup', 'curry'])
+
+  const recipeOn = async (date: string) => {
+    await goToDay(page, date)
+    await page.getByRole('button', { name: 'Weekday', pressed: false }).click()
+    const pill = page.locator('.task-list').getByRole('button', { name: /^Recipe: / })
+    await expect(pill).toHaveCount(1)
+    return (await pill.getAttribute('aria-label'))!.replace('Recipe: ', '')
+  }
+  const wednesday = await recipeOn('2026-09-16')
+  const thursday = await recipeOn('2026-09-17')
+  expect([wednesday, thursday].sort()).toEqual(['A quick curry', 'A simple soup'])
 })
