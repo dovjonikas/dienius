@@ -29,9 +29,9 @@ import { NorthSection } from '../../views/north/NorthSection'
  * a row over the task list is on the way to everything.
  *
  * Where there is no rail - a phone, a window too narrow for one - it is one
- * line under the day's title instead: the signature, or the word North
- * where the text has none, and a press on the line opens the headings under
- * it.
+ * line under the day's title instead: the word North, and a press on it
+ * opens the headings under it. The signature is in the day's own line above
+ * it since v2.26 (NorthLine), so the fold does not say it again.
  *
  * No card, no edge and no ground: it is part of the page, not a widget on
  * it. The switch under Nudges takes it off the day, and only off is carried
@@ -62,24 +62,18 @@ export function NorthDay({ date, folded = false }: { date: string; folded?: bool
     ) : null
 
   if (folded) {
-    const line = signature.length > 0 ? signature.join(' ') : 'North'
+    if (!headings) return null
     return (
       <div className="north-day is-folded" role="group" aria-label="North">
-        {/* The line is a control only when there is something to open under
-            it; a signature on its own is a line of the page. */}
-        {headings ? (
-          <button
-            type="button"
-            className="north-day-line"
-            aria-expanded={open}
-            aria-controls={open ? listId : undefined}
-            onClick={() => setOpen(o => !o)}
-          >
-            {line}
-          </button>
-        ) : (
-          <p className="north-day-line">{line}</p>
-        )}
+        <button
+          type="button"
+          className="north-day-line"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          onClick={() => setOpen(o => !o)}
+        >
+          North
+        </button>
         {open && headings}
       </div>
     )

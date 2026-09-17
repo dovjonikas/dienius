@@ -64,6 +64,34 @@ section brought up to date after each stage.
 Changed tests: `northRead.test.ts`'s count of the device's own keys is three,
 with the waking.
 
+### Stage 2 - the day's top: done
+
+- **The line** (`NorthLine`): where North has a text, the day's top under
+  the date is the text's line for the date and the part of the day - today's
+  part of the day only on today - in the text's ink at the body size, whole
+  and wrapping, with the signature under it a step smaller in the secondary
+  ink, the two one thing to press, which opens North. At an hour whose lines
+  are all under the other tag the signature stands alone.
+- **The goal's name** stands there only where the text has nothing for the
+  day - no text, or introduction alone with no signature - and where the
+  switch under Nudges takes North's text off the day; the tour, which types
+  one line and a goal, still ends on the goal's line.
+- **In the masthead** the line runs down from the top of its row, its first
+  line on the centre line of the progress and the view toggle beside it, and
+  the row grows to hold the signature.
+- **On the phone** the folded North under it says North and opens the
+  headings; the signature is the day's line's to say.
+- The sample day and the demo have a `[morning]` heading and an `[evening]`
+  one, generic lines, so the pictures and the sweep show all three parts of
+  the day.
+
+Changed tests: `NorthDay.test.tsx`'s folded line says North and draws
+nothing without a heading; `e2e/north.e2e.ts` taps North on the phone rather
+than the signature. New: the text's line in `NorthLine.test.tsx` (which line,
+the press, the same date, the morning and the evening, the signature alone,
+the goal where the text has nothing) and its wholeness and place in
+`e2e/north-line.e2e.ts`.
+
 ## v2.25 - the design pass
 
 Asked for in one message the evening v2.24 closed: the app should feel like

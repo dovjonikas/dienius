@@ -192,17 +192,28 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
     templates: [work, rest],
     days,
     // The picture over the goals: a few lines in the first person, the way
-    // the North window asks for it, and one heading - a line in capitals,
-    // see lib/northSections.ts - with a line under it. Sample copy, like
-    // the goals.
+    // the North window asks for it, headings - a line in capitals, see
+    // lib/northSections.ts - one of them for the morning and one for the
+    // evening (lib/northLine.ts), and a signature. Sample copy, like the
+    // goals.
     picture: {
       text:
         'I wake before the house does and the first hour is mine.\n' +
         'I ship small things on Fridays and I do not apologise for them.\n' +
         'People ask me how the training is going, and I have an answer.\n' +
         '\n' +
+        'MORNINGS [morning]\n' +
+        'The editor opens before the inbox does.\n' +
+        'Training first on the days it is on.\n' +
+        '\n' +
         'FRIDAYS\n' +
-        'One small thing shipped, and the laptop closed by four.',
+        'One small thing shipped, and the laptop closed by four.\n' +
+        'Whatever is not done waits for Monday without a note.\n' +
+        '\n' +
+        'EVENINGS [evening]\n' +
+        'Tomorrow is written down before the screen goes off.\n' +
+        '---\n' +
+        'A good day is an ordinary one that went to plan.',
     },
     goals: [
       {

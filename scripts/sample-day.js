@@ -156,12 +156,12 @@
     { id: id('g'), title: 'Leave the house before nine on a Saturday', why: 'The best days this year all started outside', identity: 'I am someone whose weekends start early', createdAt: shift(-3), updatedAt: stamp },
   ]
 
-  // The picture over them - see views/north/NorthView.tsx. Five lines and
-  // one heading with two under it - a line in capitals is a heading, see
-  // lib/northSections.ts - and a signature after a line of three hyphens,
-  // which is about what a person writes, and enough
-  // to show the page at its real height, folded and open, on every screen
-  // the sweep measures.
+  // The picture over them - see views/north/NorthView.tsx. Five lines of
+  // introduction, three headings - a line in capitals is a heading, see
+  // lib/northSections.ts - one of them for the morning and one for the
+  // evening (lib/northLine.ts), and a signature after a line of three
+  // hyphens: about what a person writes, and enough to show the page at its
+  // real height on every screen the sweep measures.
   const picture = {
     text: [
       'I wake before the house does, and the first hour is mine.',
@@ -170,9 +170,16 @@
       'The books on the shelf are read, not owned.',
       'On a Saturday I am already outside by nine, and the day is longer for it.',
       '',
+      'WHEN THE DAY STARTS [morning]',
+      'Water first, then the window, then the list.',
+      'The first hour is not for the phone.',
+      '',
       'THE WEEK',
       'Monday is the quiet one, and the long list waits for Tuesday.',
       'Friday ends at four, whatever the list says.',
+      '',
+      'BEFORE SLEEP [evening]',
+      'The day is closed when tomorrow has three things on it.',
       '---',
       'The rest of the day is allowed to be ordinary.',
     ].join('\n'),

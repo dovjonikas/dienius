@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
 import { goalForDay } from '../../lib/north'
+import { todayKey } from '../../lib/dates'
+import { northLineForDay } from '../../lib/northLine'
+import { parseNorth } from '../../lib/northSections'
+import { useNorthMoment } from '../../lib/useNorthMoment'
 
 export interface NorthLineProps {
   date: string
@@ -9,7 +13,62 @@ export interface NorthLineProps {
 }
 
 /**
- * One line of quiet text under the header: the thing the days are for.
+ * North on the day's top, under the date.
+ *
+ * Where North has a text, one line of it - a line written under one of its
+ * headings, picked for the date and the part of the day by
+ * lib/northLine.ts - whole, wrapping rather than cut, and the signature
+ * under it, quieter, always. A press anywhere on it opens North. Since
+ * v2.26 this is what the day's top carries: the goal's name that stood here
+ * was a label written once and cut off at the width of the row, and the
+ * text is the part written to be read.
+ *
+ * The goal's name stands here only where the text has nothing for the day -
+ * no text, or a text with no line under a heading and no signature - and
+ * where the switch under Nudges has taken North's text off the day.
+ */
+export function NorthLine({ date, onOpenNorth }: NorthLineProps) {
+  const data = useAppData()
+  const text = data.picture?.text ?? ''
+  if (data.settings.north.stripOnDay !== false && hasSomethingForTheDay(text)) {
+    return <NorthTextLine text={text} date={date} onOpenNorth={onOpenNorth} />
+  }
+  return <NorthGoalLine date={date} onOpenNorth={onOpenNorth} />
+}
+
+/** A signature, or a line written under any heading, tagged or not. */
+function hasSomethingForTheDay(text: string): boolean {
+  const { sections, signature } = parseNorth(text)
+  return signature.length > 0 || sections.some(section => section.paragraphs.length > 0)
+}
+
+/**
+ * The text's line and the signature, as one thing to press.
+ *
+ * The line is in the text's own ink at the body size, and the signature a
+ * step smaller in the secondary ink under it: the line is today's, the
+ * signature every day's. The part of the day is only today's - another day,
+ * looked at ahead or back, shows its line for the day. At an hour whose
+ * lines are all under the other part's tag the signature stands alone.
+ */
+function NorthTextLine({ text, date, onOpenNorth }: { text: string; date: string; onOpenNorth: () => void }) {
+  const moment = useNorthMoment()
+  const line = northLineForDay(text, date, date === todayKey() ? moment : 'day')
+  const { signature } = parseNorth(text)
+  if (line === undefined && signature.length === 0) return null
+  return (
+    <div className="north-line is-text" data-tour="north-line">
+      <button type="button" className="north-line-text" onClick={onOpenNorth}>
+        {line !== undefined && <span className="north-line-words">{line}</span>}
+        {signature.length > 0 && <span className="north-line-signature">{signature.join('\n')}</span>}
+      </button>
+    </div>
+  )
+}
+
+/**
+ * The goal's line, where the text has nothing for the day: one line of
+ * quiet text under the header, the thing the days are for.
  *
  * Everything about how this is drawn is an argument that it is not UI. No
  * icon, no border, no background, no chevron, nothing that looks pressable
@@ -51,7 +110,7 @@ export interface NorthLineProps {
  * about - and the bubble names the key instead. A goal too long for the
  * line ends in an ellipsis, and the bubble opens with the whole of it.
  */
-export function NorthLine({ date, onOpenNorth }: NorthLineProps) {
+function NorthGoalLine({ date, onOpenNorth }: NorthLineProps) {
   const data = useAppData()
   const [peeking, setPeeking] = useState(false)
   // Whether the title has been cut short by the width of its row. Read at the

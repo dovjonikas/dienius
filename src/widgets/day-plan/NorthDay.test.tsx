@@ -100,11 +100,13 @@ test('the day changing under it closes what was open', async () => {
  * the headings under it; a second press folds them again. Without a
  * signature the line says North.
  */
-test('folded, it is one line with the signature, and a press opens the headings under it', async () => {
+test('folded, it is one line that says North, and a press opens the headings under it', async () => {
   const user = userEvent.setup()
   actions.setPicture(TEXT)
   render(<NorthDay date={DATE} folded />)
-  const line = screen.getByRole('button', { name: 'a signature line' })
+  // The signature is the day's own line's to say since v2.26 - see NorthLine.
+  expect(screen.queryByText('a signature line')).toBeNull()
+  const line = screen.getByRole('button', { name: 'North' })
   expect(line).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByRole('button', { name: 'FIRST HEADING' })).toBeNull()
 
@@ -119,13 +121,12 @@ test('folded, it is one line with the signature, and a press opens the headings 
   expect(screen.queryByText('a line before any heading')).toBeNull()
 })
 
-test('folded with no signature the line says North, and with no heading it is only the signature', () => {
+test('folded with no heading there is nothing to open, and nothing is drawn', () => {
   actions.setPicture('FIRST HEADING\na line under it')
-  const { rerender } = render(<NorthDay date={DATE} folded />)
+  const { container, rerender } = render(<NorthDay date={DATE} folded />)
   expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'false')
 
   act(() => actions.setPicture('a line before any heading\n---\na signature line'))
   rerender(<NorthDay date={DATE} folded />)
-  expect(screen.getByText('a signature line')).toBeInTheDocument()
-  expect(screen.queryByRole('button')).toBeNull()
+  expect(container).toBeEmptyDOMElement()
 })

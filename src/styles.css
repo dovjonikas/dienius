@@ -7594,11 +7594,21 @@ button.danger:focus-visible {
     margin: 0;
   }
 
+  /* The text's line runs down from the top of its row, and its first line
+     stands on the centre line of the controls beside it: the row is as tall
+     as the line and the signature need, and the controls keep their place at
+     its top. */
+  .day-header > .north-line.is-text {
+    align-self: start;
+    padding-block: calc((var(--control-h) - var(--t-md) * var(--lh-ui)) / 2);
+  }
+
   /* The progress from the column's left edge - a bar that takes what the
      fraction and the toggle leave - and the toggle at its right edge. */
   .day-masthead-status {
     grid-row: 2;
     grid-column: 2;
+    align-self: start;
     display: flex;
     align-items: center;
     gap: var(--s4);
@@ -10470,6 +10480,59 @@ button.task-library:hover { color: var(--text); }
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: var(--r-mark);
+}
+
+/* The text's line, since v2.26 - see NorthLine. Whole, and wrapping: the
+   fixed height above is the goal's one line and its ellipsis, and a line
+   somebody wrote is never cut. The line in the text's ink at the body size,
+   the signature under it a step smaller in the secondary ink. The press is
+   the whole block, and the ground under the pointer reaches out past the
+   words rather than pushing them in. */
+.north-line.is-text {
+  height: auto;
+  margin-top: 0;
+}
+
+.north-line-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s0);
+  width: calc(100% + var(--s2) * 2);
+  min-height: 0;
+  margin: 0 calc(var(--s2) * -1);
+  padding: 0 var(--s2);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  font: inherit;
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.north-line-text:hover { background: var(--fill); }
+
+.north-line-text:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.north-line-words {
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: var(--lh-ui);
+}
+
+.north-line-signature {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+  white-space: pre-line;
+}
+
+/* A finger's height for the press, the words where they are. */
+@media (pointer: coarse) {
+  .north-line-text { min-height: var(--touch); justify-content: center; }
 }
 
 /* What opens. Sentence case and the ordinary reading size, because this is

@@ -132,12 +132,13 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
 
   // And on the day: the signature and the headings, never the introduction.
   // Beside the day on a desktop, where a resting pointer shows what a heading
-  // holds; on the phone one folded line, a tap opening the headings and a tap
+  // holds; on the phone one folded line that says North - the signature is
+  // the day's own line's since v2.26 - a tap opening the headings and a tap
   // on one its words.
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
   if (info.project.name === 'phone') {
     const north = page.getByRole('group', { name: 'North' })
-    await north.getByRole('button', { name: 'a signature line' }).tap()
+    await north.getByRole('button', { name: 'North', exact: true }).tap()
     const heading = north.getByRole('button', { name: 'FIRST HEADING' })
     await heading.tap()
     const words = north.locator('.north-section').first().locator('.north-paragraph')

@@ -48,3 +48,40 @@ for (const width of [1366, 1500, 1920]) {
     expect(lineBox.x + lineBox.width).toBeLessThanOrEqual(width)
   })
 }
+
+/**
+ * Where North has a text, the day's top carries one line of it and the
+ * signature under it, since v2.26. The line is never cut: a line longer than
+ * the day's column wraps. A press opens North.
+ */
+test("the text's line on the day is whole however long, the signature is under it, and a press opens North", async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'measured at the wide masthead')
+  await page.setViewportSize({ width: 1366, height: 900 })
+  await openFreshAt(page, wednesdayAt(10))
+  await stampWorkingDay(page)
+
+  const long = 'a line under the heading that runs on for long enough that no day column in this app could hold it on one line, however wide the window is'
+  await page.evaluate(line => {
+    const key = 'dienius:data'
+    const d = JSON.parse(localStorage.getItem(key) ?? '{}')
+    d.picture = { text: `An introduction line.\n\nONLY HEADING\n${line}\n---\nA signature line.`, updatedAt: '2026-09-16T08:00:00.000Z' }
+    localStorage.setItem(key, JSON.stringify(d))
+  }, long)
+  await page.reload()
+
+  const words = page.locator('.north-line-words')
+  await expect(words).toHaveText(long)
+  await expect(page.locator('.north-line-signature')).toHaveText('A signature line.')
+  await expect(page.getByText('An introduction line.')).toHaveCount(0)
+  // Whole: nothing clipped sideways, and more than one line tall.
+  const size = await words.evaluate(el => ({ scroll: el.scrollWidth, client: el.clientWidth, height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) }))
+  expect(size.scroll).toBeLessThanOrEqual(size.client + 1)
+  expect(size.height).toBeGreaterThan(size.line * 1.5)
+  // Inside the day's column.
+  const lineBox = await words.boundingBox()
+  const grid = await page.locator('.timeline-grid').first().boundingBox()
+  expect(lineBox!.x + lineBox!.width).toBeLessThanOrEqual(grid!.x + grid!.width + 1)
+
+  await page.locator('.north-line-text').click()
+  await expect(page.getByRole('heading', { name: 'North' })).toBeVisible()
+})
