@@ -4,10 +4,10 @@ import { defaultData } from '../storage'
 import { cleanRecipe } from '../kitchen'
 
 /**
- * Writing a recipe down, changing it, cooking it and letting it go. A recipe
- * is a name and a text, and the rest is information a person may add when
- * they have it: which meals it is for, the numbers on a serving, how many
- * servings, how long. Nothing here adds anything up across recipes or days.
+ * Writing a recipe down, changing it and letting it go. A recipe is a name,
+ * a text when there is one, and information a person may add when they have
+ * it: which meals it is for, the numbers on a serving, how many servings, how
+ * long. Nothing here adds anything up across recipes or days.
  *
  * Every recipe here is a generic one.
  */
@@ -16,14 +16,17 @@ beforeEach(() => {
   actions.resetForTests(defaultData())
 })
 
-test('a recipe is saved with a name and a text, each trimmed at its ends, and not without both', () => {
+test('a recipe is saved with a name, and a text when there is one, each trimmed at its ends', () => {
   expect(actions.addRecipe({ title: '   ', text: 'a text' })).toBeUndefined()
-  expect(actions.addRecipe({ title: 'A title', text: ' \n ' })).toBeUndefined()
   expect(getData().recipes).toEqual([])
+  // A name alone is a recipe, since v2.30: the method can be written later.
+  const plain = actions.addRecipe({ title: 'A title', text: ' \n ' })
+  expect(plain).toMatchObject({ title: 'A title', text: '' })
+  actions.removeRecipe(plain!.id)
 
   const soup = actions.addRecipe({ title: '  A simple soup ', text: '\nINGREDIENTS\nwater\n\nSTEPS\nSimmer it.\n\n' })
   expect(soup).toMatchObject({ title: 'A simple soup', text: 'INGREDIENTS\nwater\n\nSTEPS\nSimmer it.' })
-  expect(getData().recipes).toEqual([soup])
+  expect(getData().recipes.map(r => r.id)).toEqual([soup!.id])
   expect(soup!.id).toMatch(/\S/)
   // Nothing optional is written that was not given, and nothing is cooked yet.
   expect(Object.keys(soup!).sort()).toEqual(['id', 'text', 'title', 'updatedAt'])
@@ -69,29 +72,26 @@ test('the optional fields are kept when they are real, and left out when they ar
   ).toEqual({ title: 'A title', text: 'a text' })
 })
 
-test('an edit rewrites what the form holds and keeps how many times it was cooked', () => {
-  const soup = actions.addRecipe({ title: 'A simple soup', text: 'a text', kcal: 300, mealTypes: ['lunch'] })!
-  actions.markCooked(soup.id)
-  actions.updateRecipe(soup.id, { title: 'A thicker soup', text: 'another text', mealTypes: ['dinner'] })
+test('an edit rewrites what the form holds, and keeps a times-cooked count an older device wrote', () => {
+  const data = defaultData()
+  data.recipes = [{ id: 'soup', title: 'A simple soup', text: 'a text', kcal: 300, mealTypes: ['lunch'], cooked: 1 }]
+  actions.resetForTests(data)
+  actions.updateRecipe('soup', { title: 'A thicker soup', text: 'another text', mealTypes: ['dinner'] })
   const [edited] = getData().recipes
-  expect(edited).toMatchObject({ id: soup.id, title: 'A thicker soup', text: 'another text', mealTypes: ['dinner'], cooked: 1 })
+  expect(edited).toMatchObject({ id: 'soup', title: 'A thicker soup', text: 'another text', mealTypes: ['dinner'], cooked: 1 })
   // Cleared in the form, gone from the recipe.
   expect(edited.kcal).toBeUndefined()
 
-  // An edit that would leave no name or no text changes nothing.
-  actions.updateRecipe(soup.id, { title: '', text: 'another text' })
+  // An edit that would leave no name changes nothing.
+  actions.updateRecipe('soup', { title: '', text: 'another text' })
   expect(getData().recipes[0].title).toBe('A thicker soup')
 })
 
-test('cooking a recipe adds one to how many times it was cooked, and removing it takes it out', () => {
+test('there is nothing left to count a cooking with, and removing a recipe takes it out', () => {
+  expect('markCooked' in actions).toBe(false)
   const soup = actions.addRecipe({ title: 'A simple soup', text: 'a text' })!
   const oats = actions.addRecipe({ title: 'Overnight oats', text: 'a text' })!
-  actions.markCooked(soup.id)
-  actions.markCooked(soup.id)
-  expect(getData().recipes.find(r => r.id === soup.id)?.cooked).toBe(2)
-  expect(getData().recipes.find(r => r.id === oats.id)?.cooked).toBeUndefined()
-
-  actions.markCooked('no-such-recipe')
+  expect(getData().recipes.find(r => r.id === soup.id)?.cooked).toBeUndefined()
   actions.removeRecipe(oats.id)
   expect(getData().recipes.map(r => r.title)).toEqual(['A simple soup'])
   expect(getData().tombstones?.[`recipe:${oats.id}`]).toBeDefined()
@@ -99,12 +99,11 @@ test('cooking a recipe adds one to how many times it was cooked, and removing it
 
 test('a removed recipe put back is the same recipe again, and its deletion is forgotten', () => {
   const soup = actions.addRecipe({ title: 'A simple soup', text: 'a text', kcal: 300 })!
-  actions.markCooked(soup.id)
   const before = getData().recipes[0]
   actions.removeRecipe(soup.id)
   actions.restoreRecipe(before)
   expect(getData().recipes).toHaveLength(1)
-  expect(getData().recipes[0]).toMatchObject({ id: soup.id, title: 'A simple soup', kcal: 300, cooked: 1 })
+  expect(getData().recipes[0]).toMatchObject({ id: soup.id, title: 'A simple soup', kcal: 300 })
   expect(getData().tombstones?.[`recipe:${soup.id}`]).toBeUndefined()
   // Put back twice is put back once.
   actions.restoreRecipe(before)

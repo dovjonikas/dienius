@@ -1,15 +1,14 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef } from 'react'
 import { factsLine, fullMacroLine } from '../../lib/kitchen'
 import { readRecipe, type RecipePart } from '../../lib/recipeText'
 import type { Recipe } from '../../lib/types'
-import { CookMode } from './CookMode'
 
 /**
  * A recipe, read - Kitchen, since v2.27.
  *
- * Kitchen at the top goes back to the list, and the recipe's actions stand at
- * the right of the same row: Edit, and Cook, which opens the recipe larger
- * over everything to cook from (CookMode). Under it, one card: the name, the
+ * Kitchen at the top goes back to the list, and Edit stands at the right of
+ * the same row - Cook, with its screen kept awake, went in v2.30, asked for.
+ * Under it, one card: the name, the
  * numbers for a serving and the facts on two quiet lines when there are any,
  * then the text as lib/recipeText.ts reads it - the lines before the headings
  * as they were typed, INGREDIENTS as a list, STEPS as numbered steps and any
@@ -24,7 +23,7 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
   const macros = fullMacroLine(recipe)
   const facts = factsLine(recipe)
   const reading = readRecipe(recipe.text)
-  const [cooking, setCooking] = useState(false)
+  const written = reading.intro.length > 0 || reading.parts.length > 0
 
   useEffect(() => {
     titleRef.current?.focus()
@@ -38,11 +37,8 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
           Kitchen
         </button>
         <div className="kitchen-head-actions">
-          <button type="button" className="btn-quiet" onClick={onEdit}>
+          <button type="button" className="btn-secondary" onClick={onEdit}>
             Edit
-          </button>
-          <button type="button" className="btn-primary" onClick={() => setCooking(true)}>
-            Cook
           </button>
         </div>
       </div>
@@ -69,9 +65,11 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
         {reading.parts.map((part, i) => (
           <RecipePartView key={i} part={part} />
         ))}
-      </article>
 
-      {cooking && <CookMode recipe={recipe} onClose={() => setCooking(false)} />}
+        {/* A recipe kept as a name and its facts: one quiet line where the
+            method would begin, and Edit above is the way to write it. */}
+        {!written && <p className="kitchen-recipe-none">Nothing written yet.</p>}
+      </article>
     </>
   )
 }

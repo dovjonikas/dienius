@@ -294,7 +294,6 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         fat: 9,
         servings: 1,
         minutes: 5,
-        cooked: 6,
       },
       {
         id: 'demo-recipe-2',
@@ -318,7 +317,6 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         fat: 14,
         servings: 2,
         minutes: 30,
-        cooked: 4,
       },
       {
         id: 'demo-recipe-3',

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cookedLabel, factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipesForMeal } from './kitchen'
+import { factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipesForMeal } from './kitchen'
 import type { Recipe } from './types'
 
 /**
@@ -19,14 +19,6 @@ test("a row's quiet line is the kcal and the protein, whichever of the two are k
   // Carbs and fat are the recipe page's to say, not the row's.
   expect(macroLine(recipe({ carbs: 55, fat: 9 }))).toBeUndefined()
   expect(macroLine(recipe())).toBeUndefined()
-})
-
-test('how many times a recipe was cooked is said in words, and not at all before the first', () => {
-  expect(cookedLabel(undefined)).toBeUndefined()
-  expect(cookedLabel(0)).toBeUndefined()
-  expect(cookedLabel(1)).toBe('Cooked once')
-  expect(cookedLabel(2)).toBe('Cooked twice')
-  expect(cookedLabel(6)).toBe('Cooked 6 times')
 })
 
 test('the list is every recipe, or the ones for a meal, in the order of their names', () => {
@@ -49,8 +41,9 @@ test("a recipe page's number line is every one of the four that is known, per se
   expect(fullMacroLine(recipe())).toBeUndefined()
 })
 
-test("a recipe page's facts are its meals, its servings, its time and how often it was cooked, whichever are known", () => {
-  expect(factsLine(recipe({ mealTypes: ['breakfast', 'pre-gym'], servings: 1, minutes: 5, cooked: 6 }))).toBe('Breakfast, pre-gym · 1 serving · 5 min · Cooked 6 times')
+test("a recipe page's facts are its meals, its servings and its time, whichever are known", () => {
+  // How often it was cooked is kept in the data and said nowhere, since v2.30.
+  expect(factsLine(recipe({ mealTypes: ['breakfast', 'pre-gym'], servings: 1, minutes: 5, cooked: 6 }))).toBe('Breakfast, pre-gym · 1 serving · 5 min')
   expect(factsLine(recipe({ servings: 4, minutes: 90 }))).toBe('4 servings · 1h 30 min')
   expect(factsLine(recipe({ mealTypes: ['snack'] }))).toBe('Snack')
   expect(factsLine(recipe())).toBeUndefined()

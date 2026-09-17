@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 1 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 2 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -35,6 +35,30 @@ already takes; numbers are never read from inside the ingredients or the steps;
 a recipe for two meals stands under both; several recipes on a block are walked
 by the date, and the block's `recipeId` is written as the first of them so an
 older device still stamps a meal.
+
+### Stage 2 - Cook goes, and a recipe needs only its name: done
+
+- **Cook is gone**, with what only it did: `CookMode`, the screen kept awake
+  (`useWakeLock` and its tests), `markCooked`, the "Cooked 3 times" on a row
+  and in a page's facts, Cook's styles, its picture in the sweep and its part of
+  the Kitchen walk. A recipe's page has Edit, a secondary button now that it is
+  the only action.
+- **`cooked` stays in the data**: a backup and an older device carry it and
+  both guards accept it; an edit keeps a count an older device wrote, and
+  nothing shows it or writes it.
+- **A name alone is a recipe.** Save waits for the name; the text is kept as
+  the empty string, which the guard and v2.28's frozen copy both take, and the
+  page says "Nothing written yet." where the method would begin.
+- The demo and the sample day lost their counts; DAILY and ARCHITECTURE say
+  what Kitchen is now.
+
+New tests: a page with Edit and no Cook and no count, a recipe saved with only
+its name, and an empty text through both guards. Changed tests: the row, the
+page's facts and `factsLine` no longer say how often a recipe was cooked;
+`cookedLabel`'s, `markCooked`'s and Cook's tests went with them; a recipe saved
+with a name and no text is a recipe now, where it was refused; an edit keeps a
+count an older device wrote rather than one Cook made; the Kitchen walk reads
+the page instead of cooking.
 
 ## v2.29 - Rotating shifts
 

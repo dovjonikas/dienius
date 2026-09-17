@@ -444,8 +444,9 @@ something to do today with no hour on it.
 ## Recipes, in Kitchen
 
 **Kitchen** - the pot in the rail, or the `7` key - is the recipes you
-actually cook. **New recipe** asks for two things: a name, and one big box
-for the recipe itself. Paste it from wherever it lives. The same rule as
+actually cook. **New recipe** asks for a name, and one big box for the recipe
+itself - paste it from wherever it lives, or leave it for later: a name alone
+is enough to keep a recipe, and its page says nothing is written yet. The same rule as
 North: **a line in capitals is a heading**, and two of them mean something
 more - the lines under `INGREDIENTS` are the ingredients, one to a line, and
 the lines under `STEPS` are the steps, numbered for you. A pasted bullet or a
@@ -459,14 +460,8 @@ nothing ever adds it up - there are no daily totals, no targets and no bars.
 The numbers are there to help you pick something for after the gym.
 
 The list has a chip for each meal and a search box that looks in the names
-and inside the recipes, so `lentils` finds the soup. A recipe's page has
-**Edit** and **Cook**.
-
-**Cook** puts the recipe over everything, bigger, for reading from across the
-counter. Tap an ingredient or a step to tick it off as you go; the screen
-stays awake while it is open, on a browser that can do that. **Done** adds one
-to how many times you have cooked it, which the list shows; **Close** counts
-nothing. The ticks are for this cooking only and are gone next time.
+and inside the recipes, so `lentils` finds the soup. A recipe's page reads the
+recipe and has **Edit**.
 
 **On the day.** A block whose category is **Meals** can point at a recipe, or
 just at a kind of meal: in a template, pick it under the block (or on the add

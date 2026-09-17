@@ -4,6 +4,7 @@ import { defaultData, exportJson, importJson, validate } from './storage'
 import { collectEntities, stampChanges } from './syncEntities'
 import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
 import type { AppData, Recipe } from './types'
+import { validate as validateV228 } from './fixtures/validate-v2.28'
 
 /**
  * Kitchen's data: a recipe is an entity of its own - CONVENTIONS 7 - in a
@@ -70,6 +71,14 @@ test('a recipe without a title or a text as strings is refused, and so is a list
   expect(validate(payload([recipe({ text: 12 as unknown as string })]))).toBe(false)
   expect(validate(payload([{ title: 'A title', text: 'a text' }]))).toBe(false)
   expect(validate(payload({ r1: recipe() }))).toBe(false)
+})
+
+// v2.30: a recipe needs only its name. The empty text it is kept with is a
+// string, which the guard has always taken - on an older device too.
+test('a recipe with only a name, its text empty, passes the guard and an older device\'s', () => {
+  const file = payload([recipe({ text: '' })])
+  expect(validate(file)).toBe(true)
+  expect(validateV228(file)).toBe(true)
 })
 
 test('a meal type this app does not have is refused', () => {

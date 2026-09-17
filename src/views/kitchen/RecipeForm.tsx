@@ -22,13 +22,13 @@ const NUMBER_LABELS: Record<NumberName, string> = {
  * A recipe, written - Kitchen, since v2.27.
  *
  * Two fields are the recipe: its name, and one large field for everything
- * else, read by the capitals rule the grey line under it says once. That is
- * enough to save one. More opens the rest, which a recipe has when somebody
+ * else, read by the capitals rule the grey line under it says once. The name
+ * alone is enough to save one, since v2.30. More opens the rest, which a recipe has when somebody
  * knows it: the meals it is for, as chips, several at once; kcal, protein,
  * carbs and fat for a serving; how many servings; how long. Editing a recipe
  * that has any of them opens with More open, so nothing it holds is hidden.
  *
- * Save waits, in its place, until there is a name and a text; Cancel is
+ * Save waits, in its place, until there is a name; Cancel is
  * always beside it. Ctrl or Cmd with Enter is Save and Escape is Cancel, the
  * way North's field works. What the fields hold becomes a recipe through
  * `cleanRecipe` - a number that is not one, or is out of bounds, is simply
@@ -57,7 +57,7 @@ export function RecipeForm({
   const nameRef = useRef<HTMLInputElement>(null)
   const ruleId = useId()
   const mealsId = useId()
-  const canSave = title.trim() !== '' && text.trim() !== ''
+  const canSave = title.trim() !== ''
 
   useEffect(() => {
     nameRef.current?.focus()

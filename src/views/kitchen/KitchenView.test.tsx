@@ -9,9 +9,9 @@ import type { Recipe } from '../../lib/types'
 
 /**
  * Kitchen's list: the meals as chips over it, a field that searches the
- * recipes by name and by text, and each recipe as a quiet row - its name,
- * the kcal and the protein on one quiet line when they are known, and how
- * many times it was cooked. Every recipe here is a generic one.
+ * recipes by name and by text, and each recipe as a quiet row - its name, and
+ * the kcal and the protein on one quiet line when they are known. Every recipe
+ * here is a generic one.
  */
 
 beforeEach(() => {
@@ -43,17 +43,16 @@ test('with no recipes the page says what Kitchen is for, and draws no chips and 
   expect(screen.queryByRole('searchbox')).toBeNull()
 })
 
-test('every recipe is a quiet row in the order of the names: its name, its kcal and protein when known, and how often it was cooked', () => {
+test('every recipe is a quiet row in the order of the names: its name, and its kcal and protein when known', () => {
   seed(SAMPLE)
   render(<KitchenView />)
   expect(rows()).toEqual(['Banana toast', 'Lentil soup', 'Overnight oats'])
   const [toast, soup, oats] = screen.getAllByRole('listitem')
   expect(within(oats).getByText('380 kcal · 18 g protein')).toBeInTheDocument()
-  expect(within(oats).getByText('Cooked 6 times')).toBeInTheDocument()
   expect(within(soup).getByText('420 kcal')).toBeInTheDocument()
-  expect(within(soup).queryByText(/Cooked/)).toBeNull()
-  expect(within(toast).getByText('Cooked once')).toBeInTheDocument()
   expect(within(toast).queryByText(/kcal|protein/)).toBeNull()
+  // How often a recipe was cooked was Cook's to count, and Cook is gone.
+  expect(screen.queryByText(/Cooked/)).toBeNull()
 })
 
 test('the meal chips are All and the six, one pressed at a time, and a chip shows only its recipes', async () => {
@@ -127,7 +126,8 @@ test("a row opens the recipe's page: its name, its numbers and facts, the ingred
 
   expect(screen.getByRole('heading', { level: 2, name: 'Overnight oats' })).toBeInTheDocument()
   expect(screen.getByText('380 kcal · 18 g protein per serving')).toBeInTheDocument()
-  expect(screen.getByText('Breakfast, snack · 1 serving · 5 min · Cooked 6 times')).toBeInTheDocument()
+  // How often it was cooked is kept in the data and said nowhere since v2.30.
+  expect(screen.getByText('Breakfast, snack · 1 serving · 5 min')).toBeInTheDocument()
   expect(screen.getByText('Made the night before.')).toBeInTheDocument()
   const ingredients = screen.getByRole('list', { name: 'INGREDIENTS' })
   expect(within(ingredients).getAllByRole('listitem').map(li => li.textContent)).toEqual(['50 g oats', '150 ml milk'])
@@ -171,7 +171,22 @@ test('opened on a recipe, Kitchen starts on its page', () => {
 
 // --- writing one ------------------------------------------------------------------
 
-test('New recipe asks for a name and a text, Save waits for both, and the saved recipe opens on its page', async () => {
+test('a recipe can be saved with only its name, and its page says that nothing is written yet', async () => {
+  const user = userEvent.setup()
+  render(<KitchenView />)
+  await user.click(screen.getByRole('button', { name: 'New recipe' }))
+  const save = screen.getByRole('button', { name: 'Save' })
+  expect(save).toBeDisabled()
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Greek yogurt with berries')
+  expect(save).toBeEnabled()
+  await user.click(save)
+
+  expect(getData().recipes[0]).toMatchObject({ title: 'Greek yogurt with berries', text: '' })
+  expect(screen.getByRole('heading', { level: 2, name: 'Greek yogurt with berries' })).toBeInTheDocument()
+  expect(screen.getByText('Nothing written yet.')).toBeInTheDocument()
+})
+
+test('New recipe asks for a name and the recipe, and the saved recipe opens on its page', async () => {
   const user = userEvent.setup()
   render(<KitchenView />)
   await user.click(screen.getByRole('button', { name: 'New recipe' }))
@@ -180,9 +195,8 @@ test('New recipe asks for a name and a text, Save waits for both, and the saved 
   const save = screen.getByRole('button', { name: 'Save' })
   expect(save).toBeDisabled()
   await user.type(name, 'A simple soup')
-  expect(save).toBeDisabled()
-  await user.type(screen.getByRole('textbox', { name: 'Recipe' }), 'INGREDIENTS{Enter}water{Enter}{Enter}STEPS{Enter}Boil it.')
   expect(save).toBeEnabled()
+  await user.type(screen.getByRole('textbox', { name: 'Recipe' }), 'INGREDIENTS{Enter}water{Enter}{Enter}STEPS{Enter}Boil it.')
   // The optional fields wait behind More.
   expect(screen.queryByRole('spinbutton', { name: 'kcal' })).toBeNull()
   await user.click(save)
@@ -278,59 +292,13 @@ test('Delete asks a second time, removes the recipe, goes back to the list and o
 
 // --- cooking ----------------------------------------------------------------------
 
-test("Cook opens the recipe over everything, larger, with each ingredient and step to tick, and ticks are the cooking's own", async () => {
-  const user = userEvent.setup()
-  seed([
-    {
-      title: 'Overnight oats',
-      text: 'Made the night before.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n\nSTEPS\nStir it together.\nLeave it overnight.',
-      cooked: 6,
-    },
-  ])
+// v2.30: Cook is gone, and what only Cook did with it - docs/RESEARCH-KITCHEN.md
+// section 6.1. A recipe's page reads the recipe and edits it.
+test("a recipe's page offers Edit, and nothing to cook from, and says nothing of how often it was cooked", () => {
+  seed([{ title: 'Overnight oats', text: 'INGREDIENTS\noats\nmilk', mealTypes: ['breakfast'], servings: 1, cooked: 6 }])
   render(<KitchenView recipeId="r0" />)
-  const cook = screen.getByRole('button', { name: 'Cook' })
-  await user.click(cook)
-
-  const dialog = screen.getByRole('dialog', { name: 'Cook: Overnight oats' })
-  expect(dialog).toHaveAttribute('aria-modal', 'true')
-  expect(within(dialog).getByText('Made the night before.')).toBeInTheDocument()
-  const ingredients = within(within(dialog).getByRole('group', { name: 'INGREDIENTS' })).getAllByRole('checkbox')
-  expect(ingredients.map(box => box.closest('label')?.textContent)).toEqual(['50 g oats', '150 ml milk'])
-  const steps = within(within(dialog).getByRole('group', { name: 'STEPS' })).getAllByRole('checkbox')
-  expect(steps).toHaveLength(2)
-  expect(steps[0]).toHaveAccessibleName('1 Stir it together.')
-
-  await user.click(ingredients[0])
-  expect(ingredients[0]).toBeChecked()
-  await user.click(within(dialog).getByText('Stir it together.'))
-  expect(steps[0]).toBeChecked()
-  await user.click(ingredients[0])
-  expect(ingredients[0]).not.toBeChecked()
-
-  // Leaving counts nothing, and the ticks go with the cooking.
-  await user.click(within(dialog).getByRole('button', { name: /Close/ }))
-  expect(screen.queryByRole('dialog')).toBeNull()
-  expect(getData().recipes[0].cooked).toBe(6)
-  expect(cook).toHaveFocus()
-  await user.click(cook)
-  expect(within(screen.getByRole('dialog')).getAllByRole('checkbox').some(box => (box as HTMLInputElement).checked)).toBe(false)
-})
-
-test('Done adds one to how many times it was cooked and closes, and Escape closes without counting', async () => {
-  const user = userEvent.setup()
-  seed([{ title: 'Banana toast', text: 'Toast the bread and slice a banana over it.', cooked: 1 }])
-  render(<KitchenView recipeId="r0" />)
-
-  await user.click(screen.getByRole('button', { name: 'Cook' }))
-  await user.keyboard('{Escape}')
-  expect(screen.queryByRole('dialog')).toBeNull()
-  expect(getData().recipes[0].cooked).toBe(1)
-
-  await user.click(screen.getByRole('button', { name: 'Cook' }))
-  // A text with no lists is read, larger, with nothing to tick.
-  expect(within(screen.getByRole('dialog')).queryAllByRole('checkbox')).toHaveLength(0)
-  await user.click(screen.getByRole('button', { name: 'Done' }))
-  expect(screen.queryByRole('dialog')).toBeNull()
-  expect(getData().recipes[0].cooked).toBe(2)
-  expect(screen.getByText('Cooked twice')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Cook' })).toBeNull()
+  expect(screen.getByText('Breakfast · 1 serving')).toBeInTheDocument()
+  expect(screen.queryByText(/Cooked/)).toBeNull()
 })

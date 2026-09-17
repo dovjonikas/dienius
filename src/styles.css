@@ -14318,10 +14318,9 @@ main:has(.week) > .calendar {
 /* The field across the top of the card, where the Library's add line stands. */
 .kitchen-search { width: 100%; }
 
-/* A recipe's row: its name and a quiet line under it, and how often it was
-   cooked at the end, on the row's centre. Its words stand on the card's inner
-   edge, the search field's edge, and the ground under the pointer reaches
-   out past them into the card's padding rather than pushing them in. */
+/* A recipe's row: its name and a quiet line under it. Its words stand on the
+   card's inner edge, the search field's edge, and the ground under the pointer
+   reaches out past them into the card's padding rather than pushing them in. */
 .kitchen-row {
   margin-inline: calc(var(--s2) * -1);
   padding: var(--s2);
@@ -14341,8 +14340,9 @@ main:has(.week) > .calendar {
   line-height: var(--lh-ui);
 }
 
-/* A meal with nothing in it, or a search that found nothing: one quiet line
-   where the rows would be. */
+/* A meal with nothing in it, a search that found nothing, or a recipe with
+   nothing written: one quiet line where the rows or the method would be. */
+.kitchen-recipe-none,
 .kitchen-none {
   margin: 0;
   color: var(--muted);
@@ -14350,8 +14350,7 @@ main:has(.week) > .calendar {
   line-height: var(--lh-ui);
 }
 
-/* The row is one button, the Library's: the name and its line at the left,
-   the count at the end, on one centre. */
+/* The row is one button, the Library's: the name and its line at the left. */
 .kitchen-row-open { gap: var(--s3); }
 
 /* A recipe's first row: Kitchen at the left, back to the list, with its
@@ -14568,125 +14567,6 @@ main:has(.week) > .calendar {
 .kitchen-delete {
   margin-right: auto;
   margin-left: calc(var(--s4) * -1);
-}
-
-/* Cook - views/kitchen/CookMode.tsx. The recipe over everything on the page's
-   own ground, the way Focus is, and a step larger than its page: read from
-   arm's length with wet hands. It scrolls, and Close stays where it is. */
-.kitchen-cook {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  overflow-y: auto;
-  padding:
-    max(var(--s4), env(safe-area-inset-top))
-    var(--s6)
-    calc(var(--s12) + env(safe-area-inset-bottom));
-  background: var(--bg);
-  outline: none;
-}
-
-.kitchen-cook > .focus-close { position: fixed; }
-
-/* One column at the reading width, starting under Close. */
-.kitchen-cook-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s8);
-  max-width: var(--read-w);
-  margin: calc(var(--control-h) + var(--s8)) auto 0;
-}
-
-.kitchen-cook-title {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--t-xl);
-  font-weight: var(--w-strong);
-  line-height: var(--lh-tight);
-  overflow-wrap: anywhere;
-}
-
-.kitchen-cook-paragraph {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--t-lg);
-  line-height: var(--lh-read);
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
-.kitchen-cook-paragraph + .kitchen-cook-paragraph { margin-top: var(--s3); }
-
-.kitchen-cook-part {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-}
-
-.kitchen-cook-heading {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--t-lg);
-  font-weight: var(--w-strong);
-  line-height: var(--lh-tight);
-  overflow-wrap: anywhere;
-}
-
-.kitchen-cook-list {
-  display: flex;
-  flex-direction: column;
-}
-
-/* A line to tick: the whole line is the press, a finger tall at least, its
-   box on the first line's centre and a step's number in a column of its
-   own, so every line's words start on one edge. */
-.kitchen-cook-item {
-  align-items: flex-start;
-  gap: var(--s3);
-  min-height: var(--touch);
-  padding: var(--s2) 0;
-  color: var(--text);
-  font-size: var(--t-lg);
-  line-height: var(--lh-read);
-  cursor: pointer;
-}
-
-/* The box drawn down onto the first line's centre: the box is 24px whatever
-   the density, so this is drawing rather than a step of room. */
-.kitchen-cook-item > .check { translate: 0 calc((1lh - 24px) / 2); }
-
-.kitchen-cook-number {
-  min-width: 2ch;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.kitchen-cook-words {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  transition: color var(--dur-fast) var(--ease);
-}
-
-/* Ticked: the words step back and are struck through, so the eye goes to
-   the first line not yet done. */
-.kitchen-cook-item:has(input:checked) .kitchen-cook-words {
-  color: var(--muted);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-}
-
-/* Done at the end of the recipe, where the last step leaves the hand. */
-.kitchen-cook-done {
-  align-self: flex-start;
-  min-width: 12rem;
-  min-height: var(--touch);
-  font-size: var(--t-md);
-}
-
-@media (max-width: 599px) {
-  .kitchen-cook { padding-inline: var(--s4); }
-  .kitchen-cook-done { align-self: stretch; }
 }
 
 /* The Note/Task marker beside the scratch field.

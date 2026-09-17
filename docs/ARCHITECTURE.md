@@ -52,8 +52,9 @@ AppData
 ├── goals: Goal[]                retired in v2.28; kept for old files and devices - see §6
 ├── picture?: Picture            North: one text, one entity - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
-├── recipes: Recipe[]            Kitchen: title + one text, meal types?, macros?,
-│                                servings?, minutes?, cooked? - never summed
+├── recipes: Recipe[]            Kitchen: title + a text (may be empty), meal types?,
+│                                macros?, servings?, minutes? - never summed;
+│                                cooked? kept for old files, shown by nothing
 ├── routines: Routine[]          rotating shifts: title, minutes, weekdays and a
 │                                time per kind of day - docs/RESEARCH-SHIFTS.md
 ├── ifThens: IfThenEntry[]       the rules under goals; retired and kept with them - see §6
@@ -276,7 +277,6 @@ src/
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
     kitchen.ts         recipes: the words for the meals, and what a form's input becomes when saved
-    useWakeLock.ts     keeps the screen awake while Cook is open, where the browser can
     headings.ts        the capitals rule and its one parser, for North's text and a recipe's
     northSections.ts   what North adds to it: the two tags and the signature
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
@@ -316,7 +316,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             North: the page that reads the text, the one field that writes it, and the window after sleep
-    kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, the form, Cook, and the recipe select every meal shares
+    kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, the form, and the recipe select every meal shares
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor

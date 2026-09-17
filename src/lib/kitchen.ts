@@ -66,7 +66,9 @@ export function fullMacroLine(recipe: Recipe): string | undefined {
 
 /**
  * A recipe page's facts, whichever are known: the meals it is for, in one
- * phrase, how many servings, how long, and how often it was cooked.
+ * phrase, how many servings, and how long. How often it was cooked was Cook's
+ * to count, and is said nowhere since Cook went - docs/RESEARCH-KITCHEN.md
+ * section 6.1.
  */
 export function factsLine(recipe: Recipe): string | undefined {
   const parts: string[] = []
@@ -76,17 +78,7 @@ export function factsLine(recipe: Recipe): string | undefined {
   }
   if (recipe.servings !== undefined) parts.push(`${recipe.servings} ${recipe.servings === 1 ? 'serving' : 'servings'}`)
   if (recipe.minutes !== undefined) parts.push(formatDuration(recipe.minutes))
-  const cooked = cookedLabel(recipe.cooked)
-  if (cooked) parts.push(cooked)
   return parts.length > 0 ? parts.join(' · ') : undefined
-}
-
-/** How many times a recipe was cooked, in words - and nothing before the first. */
-export function cookedLabel(cooked: number | undefined): string | undefined {
-  if (!cooked) return undefined
-  if (cooked === 1) return 'Cooked once'
-  if (cooked === 2) return 'Cooked twice'
-  return `Cooked ${cooked} times`
 }
 
 /**
@@ -139,18 +131,19 @@ export type RecipeFields = Omit<Recipe, 'id' | 'cooked' | 'updatedAt'>
 /**
  * A form's input as a recipe's fields, or nothing when it cannot be saved.
  *
- * A recipe needs a name and a text, each trimmed at its two ends and nothing
- * inside - the text keeps its blank lines, which part it into paragraphs the
- * way North's do. The rest is kept only when it is real: meal types this app
- * has, in its order and once each; numbers from nought within
- * `RECIPE_LIMITS`, kcal whole and grams to one decimal; servings and minutes
- * whole from one. Anything else is left out rather than stored as nought,
- * because nought is a number somebody meant.
+ * A recipe needs a name, trimmed at its two ends. Its text is trimmed the same
+ * way and may be empty since v2.30 - a breakfast and its numbers are worth
+ * keeping before anybody types the method - and it keeps its blank lines
+ * inside, which part it into paragraphs the way North's do. The rest is kept
+ * only when it is real: meal types this app has, in its order and once each;
+ * numbers from nought within `RECIPE_LIMITS`, kcal whole and grams to one
+ * decimal; servings and minutes whole from one. Anything else is left out
+ * rather than stored as nought, because nought is a number somebody meant.
  */
 export function cleanRecipe(input: RecipeInput): RecipeFields | undefined {
   const title = input.title.trim()
   const text = input.text.trim()
-  if (!title || !text) return undefined
+  if (!title) return undefined
 
   const fields: RecipeFields = { title, text }
   const meals = MEAL_TYPES.filter(meal => input.mealTypes?.includes(meal))

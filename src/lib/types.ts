@@ -1324,7 +1324,11 @@ export interface Recipe extends Timestamped {
   id: string
   /** The name, trimmed, never empty. */
   title: string
-  /** Everything else about it, as typed: the two ends trimmed, nothing inside. Never empty. */
+  /**
+   * Everything else about it, as typed: the two ends trimmed, nothing inside.
+   * Empty for a recipe kept as a name and its facts, since v2.30 - the guard has
+   * always taken any string, so an older device reads one too.
+   */
   text: string
   /** Which meals it is for, in `MEAL_TYPES` order, each once. Absent rather than empty. */
   mealTypes?: MealType[]
@@ -1341,9 +1345,9 @@ export interface Recipe extends Timestamped {
   /** How long it takes, start to plate. A whole number from one. */
   minutes?: number
   /**
-   * How many times Done was pressed in Cook. Absent until the first. A fact
-   * about the recipe, shown beside it; nothing reads it as a score, and no
-   * date is kept with it, so nothing can say how long ago.
+   * How many times Done was pressed in Cook, until v2.30 took Cook away. Kept
+   * for the backups and the older devices that carry it; nothing shows it or
+   * writes it any more - docs/RESEARCH-KITCHEN.md section 6.1.
    */
   cooked?: number
 }

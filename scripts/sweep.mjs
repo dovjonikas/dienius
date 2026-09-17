@@ -330,22 +330,6 @@ const SCREENS = [
       await p.waitForTimeout(200)
     },
   },
-  // Cook over everything, one ingredient and one step ticked, so the struck
-  // line and the box's tick are measured with the rest.
-  {
-    name: 'Kitchen (cooking)',
-    go: async /** @param {Page} p */ p => {
-      await tab(p, 'Kitchen')
-      await p.getByRole('button', { name: /Overnight oats/ }).click()
-      await press(p, 'Cook')
-      // A line is ticked the way a finger ticks it, on the line: the box
-      // itself is drawn, and the real input under it is out of sight.
-      const lines = p.getByRole('dialog', { name: /^Cook:/ }).locator('.kitchen-cook-item')
-      await lines.first().click()
-      await lines.nth(4).click()
-      await p.waitForTimeout(200)
-    },
-  },
   {
     name: 'Kitchen (writing)',
     go: async /** @param {Page} p */ p => {

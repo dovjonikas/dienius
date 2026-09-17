@@ -238,13 +238,13 @@
         id: oatsId,
         title: 'Overnight oats',
         text: 'Made the night before and eaten cold.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n2 tbsp yoghurt\nA handful of berries\n\nSTEPS\nStir the oats, milk and yoghurt together in a jar.\nLeave it in the fridge overnight.\nPut the berries on top in the morning.',
-        mealTypes: ['breakfast', 'snack'], kcal: 380, protein: 18, carbs: 55, fat: 9, servings: 1, minutes: 5, cooked: 6, updatedAt: stamp,
+        mealTypes: ['breakfast', 'snack'], kcal: 380, protein: 18, carbs: 55, fat: 9, servings: 1, minutes: 5, updatedAt: stamp,
       },
       {
         id: bowlId,
         title: 'Chicken and rice bowl',
         text: 'INGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce\n\nSTEPS\nCook the rice.\nSeason the chicken and cook it in a hot pan, about six minutes a side.\nSlice the chicken and the cucumber.\nShare the rice between two bowls and put everything on top.',
-        mealTypes: ['lunch', 'post-gym'], kcal: 610, protein: 45, carbs: 70, fat: 14, servings: 2, minutes: 30, cooked: 4, updatedAt: stamp,
+        mealTypes: ['lunch', 'post-gym'], kcal: 610, protein: 45, carbs: 70, fat: 14, servings: 2, minutes: 30, updatedAt: stamp,
       },
       {
         id: soupId,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
-import { MEAL_TYPE_LABELS, cookedLabel, macroLine, recipesForMeal, type MealFilter } from '../../lib/kitchen'
+import { MEAL_TYPE_LABELS, macroLine, recipesForMeal, type MealFilter } from '../../lib/kitchen'
 import { searchRecipes } from '../../lib/search'
 import { offerUndo } from '../../lib/undo'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
@@ -21,9 +21,9 @@ import { RecipeForm } from './RecipeForm'
  * The chips are the meals - All and the six - one pressed at a time, and a
  * chip shows the recipes for it. The field at the top of the card searches
  * the names and the texts through lib/search.ts, within the chosen meal. A
- * row is a recipe's name, the kcal and the protein on one quiet line when
- * they are known, and how many times it was cooked. The recipes stand in
- * the order of their names, the way a cookbook's index does.
+ * row is a recipe's name, and the kcal and the protein on one quiet line when
+ * they are known. The recipes stand in the order of their names, the way a
+ * cookbook's index does.
  *
  * ## A recipe, and writing one
  *
@@ -175,13 +175,10 @@ function noneLine(meal: MealFilter, query: string): string {
 
 /**
  * One recipe in the list, as one button that opens it: its name, and under
- * it the kcal and the protein on one quiet line when either is known; how
- * many times it was cooked at the row's end, where the Library says how far
- * through a book is.
+ * it the kcal and the protein on one quiet line when either is known.
  */
 function RecipeRow({ recipe, onOpen }: { recipe: Recipe; onOpen: () => void }) {
   const macros = macroLine(recipe)
-  const cooked = cookedLabel(recipe.cooked)
   return (
     <li className="library-item kitchen-row">
       <button type="button" className="library-item-open kitchen-row-open" data-recipe-id={recipe.id} onClick={onOpen}>
@@ -189,7 +186,6 @@ function RecipeRow({ recipe, onOpen }: { recipe: Recipe; onOpen: () => void }) {
           <span className="library-item-title kitchen-row-title">{recipe.title}</span>
           {macros && <span className="kitchen-row-macros">{macros}</span>}
         </span>
-        {cooked && <span className="library-item-count kitchen-row-cooked">{cooked}</span>}
       </button>
     </li>
   )
