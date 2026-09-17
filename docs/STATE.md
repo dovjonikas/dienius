@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 3 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 4 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -35,6 +35,32 @@ already takes; numbers are never read from inside the ingredients or the steps;
 a recipe for two meals stands under both; several recipes on a block are walked
 by the date, and the block's `recipeId` is written as the first of them so an
 older device still stamps a meal.
+
+### Stage 4 - Kitchen on cards, by meal: done
+
+- **Sections by meal** (`recipeSections`): each meal with a recipe, in the app's
+  order, with how many it has; a recipe for two meals under both; the recipes
+  with no meal yet last under "No meal yet". A chip shows one meal's cards as one
+  grid with no heading, since the chip says which; the search narrows every
+  section, and a meal or a search with nothing says so in one line, as before.
+- **A card** (`cardLines`): the name, how long and how many servings, the kcal
+  and protein, and the first three ingredients on one line that ellipsises - a
+  whole button that opens the recipe, and the focus comes back to it.
+- **North's plate with a kitchen's mark**: the cards lie in a grid on the shelf's
+  width (the page and half the reading width, four abreast on a laptop and a
+  1080p screen, one to a row on a phone), carry North's small shadow and in a
+  dark theme the light at their top, and take the Meals category's colour down
+  their left edge with a breath of it in the ground. Under the pointer the ground
+  deepens; the keyboard's halo is the ring. DESIGN counts them as the second
+  exception to "nothing on the page casts a shadow".
+- Looked at with a dozen more generic recipes at 1366x768, 1920x1080, on a phone
+  and in the light theme.
+
+New tests: `recipeSections` and `cardLines` in `kitchen.test.ts`; the sections
+with their counts, a card's lines and the Meals colour in `KitchenView.test.tsx`.
+Changed tests: the chips, the search and a meal to open on read cards in
+sections where they read rows; opening a recipe presses the first of its two
+cards; the Kitchen walk reads the cards under their sections.
 
 ### Stage 3 - numbers read from the text: done
 

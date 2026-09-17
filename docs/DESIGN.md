@@ -213,10 +213,13 @@ under it. The light theme's lifts are softer. Under every modal and sheet is
 the one `--scrim`; the photo viewer, which shows a picture rather than a
 layer, is the one darker ground.
 
-Nothing resting on the page casts a shadow - except North's cards, asked
-for: on that one page the picture's plate, the heading cards and the field
-carry `--e2`, and in a dark theme a few percent of light at their top edge.
-See DECISIONS "North is one text, goals retired".
+Nothing resting on the page casts a shadow - except two sets of cards, each
+asked for: North's (the picture's plate, the heading cards and the field) and
+Kitchen's recipe cards since v2.30. They carry `--e2`, and in a dark theme a
+few percent of light at their top edge; Kitchen's also take the Meals
+category's colour down their left edge and a breath of it in their ground, the
+mark a meal block has on the day. See DECISIONS "North is one text, goals
+retired" and "Kitchen, as it was meant".
 
 ## Motion
 
@@ -348,7 +351,8 @@ lead to the rest.
   and writing - the journal's page. Today, the week and the month use the
   whole width for their own grids, and North's cards take the page width
   and half the reading width (1160px), three abreast, so the text stands on
-  one screen.
+  one screen. Kitchen's shelf of recipe cards takes the same width, four
+  abreast; a recipe's page and its form keep the page width.
 - **On a phone** the columns become the screen with a 16px gutter, the same
   title row stands at the top, and the rail is the bar at the bottom.
 

@@ -49,9 +49,10 @@ test('a recipe is written, read as a list and steps, and found by its meal and i
   await page.getByRole('button', { name: 'Save', exact: true }).click()
   await page.getByRole('button', { name: 'Kitchen', exact: true }).last().click()
 
-  // The list: a meal's chip, and a word from inside a recipe.
-  const rows = page.locator('.kitchen-row-title')
-  await expect(rows).toHaveText(['A simple soup', 'Overnight oats'])
+  // The cards, by meal: a meal's chip, and a word from inside a recipe.
+  const rows = page.locator('.kitchen-card-title')
+  await expect(page.locator('.kitchen-section-name')).toHaveText(['Breakfast', 'Dinner'])
+  await expect(rows).toHaveText(['Overnight oats', 'A simple soup'])
   await page.getByRole('group', { name: 'Meal' }).getByRole('button', { name: 'Breakfast' }).click()
   await expect(rows).toHaveText(['Overnight oats'])
   await page.getByRole('group', { name: 'Meal' }).getByRole('button', { name: 'All' }).click()

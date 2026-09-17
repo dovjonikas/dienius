@@ -6,12 +6,14 @@ import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { getUndo, runUndo } from '../../lib/undo'
 import type { Recipe } from '../../lib/types'
+import { categoryColor } from '../../lib/categories'
 
 /**
- * Kitchen's list: the meals as chips over it, a field that searches the
- * recipes by name and by text, and each recipe as a quiet row - its name, and
- * the kcal and the protein on one quiet line when they are known. Every recipe
- * here is a generic one.
+ * Kitchen: the meals as chips, a field that searches the recipes by name and by
+ * text, and the recipes on cards in sections by meal - since v2.30,
+ * docs/RESEARCH-KITCHEN.md section 6.4. A card is a recipe's name, how long and
+ * how many servings, its kcal and protein, and its first ingredients. Every
+ * recipe here is a generic one.
  */
 
 beforeEach(() => {
@@ -30,9 +32,17 @@ const SAMPLE: Partial<Recipe>[] = [
   { title: 'Banana toast', text: 'Toast the bread and slice a banana over it.', mealTypes: ['pre-gym', 'snack'], cooked: 1 },
 ]
 
-/** The names in the list, top to bottom. */
+/** The names on the cards, top to bottom, across every section. */
 function rows(): string[] {
-  return screen.getAllByRole('listitem').map(row => row.querySelector('.kitchen-row-title')?.textContent ?? '')
+  return [...document.querySelectorAll('.kitchen-card-title')].map(title => title.textContent ?? '')
+}
+
+/** Kitchen's sections as they read: each one's heading, when it has one, and the names on its cards. */
+function sections(): [string, string[]][] {
+  return [...document.querySelectorAll<HTMLElement>('.kitchen-section')].map(section => [
+    section.querySelector('.kitchen-section-name')?.textContent ?? '',
+    [...section.querySelectorAll('.kitchen-card-title')].map(title => title.textContent ?? ''),
+  ])
 }
 
 test('with no recipes the page says what Kitchen is for, and draws no chips and no field', () => {
@@ -43,16 +53,46 @@ test('with no recipes the page says what Kitchen is for, and draws no chips and 
   expect(screen.queryByRole('searchbox')).toBeNull()
 })
 
-test('every recipe is a quiet row in the order of the names: its name, and its kcal and protein when known', () => {
-  seed(SAMPLE)
+test('the recipes stand on cards in sections by meal, each with how many it has, a recipe for two meals under both', () => {
+  seed([...SAMPLE, { title: 'Apple', text: '' }])
   render(<KitchenView />)
-  expect(rows()).toEqual(['Banana toast', 'Lentil soup', 'Overnight oats'])
-  const [toast, soup, oats] = screen.getAllByRole('listitem')
-  expect(within(oats).getByText('380 kcal · 18 g protein')).toBeInTheDocument()
-  expect(within(soup).getByText('420 kcal')).toBeInTheDocument()
-  expect(within(toast).queryByText(/kcal|protein/)).toBeNull()
+  expect(sections()).toEqual([
+    ['Breakfast', ['Overnight oats']],
+    ['Lunch', ['Lentil soup']],
+    ['Dinner', ['Lentil soup']],
+    ['Pre-gym', ['Banana toast']],
+    ['Snack', ['Banana toast', 'Overnight oats']],
+    ['No meal yet', ['Apple']],
+  ])
+  const snack = screen.getByRole('region', { name: 'Snack' })
+  expect(within(snack).getByText('2', { selector: '.kitchen-section-count' })).toBeInTheDocument()
   // How often a recipe was cooked was Cook's to count, and Cook is gone.
   expect(screen.queryByText(/Cooked/)).toBeNull()
+})
+
+test("a card is the recipe's name, how long and how many servings, its kcal and protein, and its first ingredients", () => {
+  seed([
+    {
+      title: 'Chicken and rice bowl',
+      text: 'INGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce',
+      mealTypes: ['lunch'],
+      minutes: 30,
+      servings: 2,
+      kcal: 610,
+      protein: 45,
+    },
+  ])
+  render(<KitchenView />)
+  const card = screen.getByRole('button', { name: /Chicken and rice bowl/ })
+  expect(within(card).getByText('30 min · 2 servings')).toBeInTheDocument()
+  expect(within(card).getByText('610 kcal · 45 g protein')).toBeInTheDocument()
+  expect(within(card).getByText('2 chicken breasts · 150 g rice · 1 cucumber')).toBeInTheDocument()
+})
+
+test("the cards carry the Meals category's colour, the mark a meal block has on the day", () => {
+  seed(SAMPLE)
+  const { container } = render(<KitchenView />)
+  expect((container.querySelector('.kitchen-sections') as HTMLElement).style.getPropertyValue('--cat')).toBe(categoryColor('meal', getData().categories))
 })
 
 test('the meal chips are All and the six, one pressed at a time, and a chip shows only its recipes', async () => {
@@ -66,14 +106,15 @@ test('the meal chips are All and the six, one pressed at a time, and a chip show
   await user.click(within(chips).getByRole('button', { name: 'Snack' }))
   expect(within(chips).getByRole('button', { name: 'Snack' })).toHaveAttribute('aria-pressed', 'true')
   expect(within(chips).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'false')
-  expect(rows()).toEqual(['Banana toast', 'Overnight oats'])
+  // One meal is one grid, and the chip already says which.
+  expect(sections()).toEqual([['', ['Banana toast', 'Overnight oats']]])
 
   await user.click(within(chips).getByRole('button', { name: 'Post-gym' }))
-  expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+  expect(rows()).toHaveLength(0)
   expect(screen.getByText('No post-gym recipes yet.')).toBeInTheDocument()
 
   await user.click(within(chips).getByRole('button', { name: 'All' }))
-  expect(rows()).toHaveLength(3)
+  expect(sections()).toHaveLength(5)
 })
 
 test('the field searches the names and the texts, within the meal that is chosen, and says when nothing matches', async () => {
@@ -83,13 +124,19 @@ test('the field searches the names and the texts, within the meal that is chosen
   const field = screen.getByRole('searchbox', { name: 'Search recipes' })
 
   await user.type(field, 'onion')
-  expect(rows()).toEqual(['Lentil soup'])
+  expect(sections()).toEqual([
+    ['Lunch', ['Lentil soup']],
+    ['Dinner', ['Lentil soup']],
+  ])
 
   await user.clear(field)
   await user.type(field, 'toast')
-  expect(rows()).toEqual(['Banana toast'])
+  expect(sections()).toEqual([
+    ['Pre-gym', ['Banana toast']],
+    ['Snack', ['Banana toast']],
+  ])
   await user.click(screen.getByRole('button', { name: 'Breakfast' }))
-  expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+  expect(rows()).toHaveLength(0)
   expect(screen.getByText('No breakfast recipe matches "toast".')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'All' }))
@@ -107,7 +154,7 @@ test('opened for a meal, the list starts on that meal', () => {
 
 // --- a recipe's page ------------------------------------------------------------
 
-test("a row opens the recipe's page: its name, its numbers and facts, the ingredients as a list and the steps in order", async () => {
+test("a card opens the recipe's page: its name, its numbers and facts, the ingredients as a list and the steps in order", async () => {
   const user = userEvent.setup()
   seed([
     {
@@ -122,7 +169,9 @@ test("a row opens the recipe's page: its name, its numbers and facts, the ingred
     },
   ])
   render(<KitchenView />)
-  await user.click(screen.getByRole('button', { name: /Overnight oats/ }))
+  // A breakfast that is also a snack stands under both; either card opens it.
+  const [underBreakfast] = screen.getAllByRole('button', { name: /Overnight oats/ })
+  await user.click(underBreakfast)
 
   expect(screen.getByRole('heading', { level: 2, name: 'Overnight oats' })).toBeInTheDocument()
   expect(screen.getByText('380 kcal · 18 g protein per serving')).toBeInTheDocument()
@@ -149,7 +198,7 @@ test('a recipe with no heading reads as it was typed', async () => {
   expect(screen.queryByRole('list')).toBeNull()
 })
 
-test('Kitchen on the page goes back to the list as it was left - the same meal, the same search - with the focus on the row', async () => {
+test('Kitchen on the page goes back to the cards as they were left - the same meal, the same search - with the focus on the card', async () => {
   const user = userEvent.setup()
   seed(SAMPLE)
   render(<KitchenView />)

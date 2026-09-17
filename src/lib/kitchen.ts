@@ -1,4 +1,5 @@
 import { MEAL_TYPES, RECIPE_LIMITS, type MealType, type Recipe } from './types'
+import { readRecipe, recipeIngredients } from './recipeText'
 import { formatDuration } from '../widgets/day-plan/capacity'
 
 /**
@@ -37,6 +38,66 @@ export type MealFilter = MealType | 'all'
 export function recipesForMeal(recipes: readonly Recipe[], meal: MealFilter): Recipe[] {
   const chosen = meal === 'all' ? [...recipes] : recipes.filter(r => r.mealTypes?.includes(meal))
   return chosen.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+}
+
+/** One of Kitchen's sections: a meal and its recipes, or the recipes with no meal yet. */
+export interface RecipeSection {
+  meal: MealType | 'none'
+  label: string
+  recipes: Recipe[]
+}
+
+/**
+ * Kitchen's sections, by meal - v2.30, docs/RESEARCH-KITCHEN.md section 6.4.
+ *
+ * With every meal showing, each meal that has a recipe is a section, in the
+ * app's order of meals, and the recipes with no meal yet stand last. A recipe
+ * for two meals stands under both, the way a cookbook's index lists a dish in
+ * two chapters - a breakfast that is also a snack is looked for under either.
+ * A meal with nothing is not a section. With one meal chosen, that meal is the
+ * one section, empty or not, so the page can say it has nothing.
+ *
+ * Each section keeps the order the recipes were given in: the names' order,
+ * or a search's.
+ */
+export function recipeSections(recipes: readonly Recipe[], meal: MealFilter): RecipeSection[] {
+  if (meal !== 'all') return [{ meal, label: MEAL_TYPE_LABELS[meal], recipes: recipes.filter(r => r.mealTypes?.includes(meal)) }]
+  const sections: RecipeSection[] = MEAL_TYPES.map(type => ({
+    meal: type,
+    label: MEAL_TYPE_LABELS[type],
+    recipes: recipes.filter(r => r.mealTypes?.includes(type)),
+  }))
+  sections.push({ meal: 'none', label: 'No meal yet', recipes: recipes.filter(r => !r.mealTypes?.length) })
+  return sections.filter(section => section.recipes.length > 0)
+}
+
+/** A card's quiet lines, whichever are known. */
+export interface CardLines {
+  /** How long, and how many servings. */
+  facts?: string
+  /** The kcal and the protein a serving has. */
+  numbers?: string
+  /** The first three ingredients. */
+  ingredients?: string
+}
+
+/**
+ * What a recipe's card says under its name: how long and how many servings,
+ * its kcal and protein for a serving, and the first three of its ingredients -
+ * what a choice between two dinners is made on. Each line only when there is
+ * something to say.
+ */
+export function cardLines(recipe: Recipe): CardLines {
+  const lines: CardLines = {}
+  const facts: string[] = []
+  if (recipe.minutes !== undefined) facts.push(formatDuration(recipe.minutes))
+  if (recipe.servings !== undefined) facts.push(`${recipe.servings} ${recipe.servings === 1 ? 'serving' : 'servings'}`)
+  if (facts.length > 0) lines.facts = facts.join(' · ')
+  const numbers = macroLine(recipe)
+  if (numbers) lines.numbers = numbers
+  const ingredients = recipeIngredients(readRecipe(recipe.text)).slice(0, 3)
+  if (ingredients.length > 0) lines.ingredients = ingredients.join(' · ')
+  return lines
 }
 
 /**

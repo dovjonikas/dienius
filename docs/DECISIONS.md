@@ -4064,3 +4064,38 @@ template off a day wiped the day; a task moved onto a day was dropped by a
 stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
+
+## Kitchen, as it was meant
+
+v2.30, from the owner using Kitchen: there will be a lot of recipes, they
+should be easy to find and lie on cards like North's, the Cook button is not
+needed, recipes should go into a template's meal block the way books go into a
+reading block, and numbers typed into a recipe should fill its fields.
+docs/RESEARCH-KITCHEN.md section 6 has each part; this is what was decided.
+
+**Cook goes, and what only it did.** The mode, the screen kept awake and the
+times-cooked count went with the button: the count had one source, and a number
+that can never move again is a false fact on every recipe. The field stays in
+the data, because backups and older devices carry it.
+
+**A name alone is a recipe.** A breakfast and its numbers are worth keeping
+before anybody types the method. The empty text is the empty string, which the
+guard - and v2.28's frozen copy - has always taken, so nothing an older device
+reads changed.
+
+**Numbers are read from the text, never from the ingredients or the steps.**
+"450 kcal" beside its word fills the kcal field, in English or Lithuanian, and
+the field and the text are one truth by CONVENTIONS 16. "30 g protein powder"
+under INGREDIENTS is an ingredient, so the lists are never read: the rule that
+amounts in a line stay words still holds where it was made.
+
+**Sections by meal, a recipe under every meal it is for.** With many recipes a
+flat list is a list read top to bottom. A cookbook's index lists a dish in each
+chapter it belongs to, and a breakfast that is also a snack is looked for under
+either, so a recipe for two meals has two cards rather than one chosen place.
+
+**Cards with North's shadow, and the Meals colour as Kitchen's own mark.** The
+second exception to "nothing on the page casts a shadow", asked for. What makes
+them Kitchen's rather than North's is the mark a meal already has on the day:
+the Meals category's colour down the edge and a breath of it in the ground. No
+colour says anything about a number, which section 3 of the research forbids.

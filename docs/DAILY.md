@@ -464,9 +464,14 @@ are left alone: `30 g protein powder` is an ingredient. None of it is needed, an
 nothing ever adds it up - there are no daily totals, no targets and no bars.
 The numbers are there to help you pick something for after the gym.
 
-The list has a chip for each meal and a search box that looks in the names
-and inside the recipes, so `lentils` finds the soup. A recipe's page reads the
-recipe and has **Edit**.
+The recipes stand on **cards, in sections by meal** - Breakfast, Lunch,
+Dinner, Pre-gym, Post-gym, Snack, and last the ones with no meal yet - each
+section saying how many it has. A recipe for two meals is under both, so a
+breakfast that is also a snack is found under either. A card shows how long it
+takes and how many servings, its kcal and protein, and its first few
+ingredients. The chips at the top show one meal's cards on their own, and the
+search box looks in the names and inside the recipes, so `lentils` finds the
+soup. A card opens the recipe's page, which reads the recipe and has **Edit**.
 
 **On the day.** A block whose category is **Meals** can point at a recipe, or
 just at a kind of meal: in a template, pick it under the block (or on the add

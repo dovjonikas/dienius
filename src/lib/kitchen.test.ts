@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipesForMeal } from './kitchen'
+import { cardLines, factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipeSections, recipesForMeal } from './kitchen'
 import type { Recipe } from './types'
 
 /**
@@ -47,6 +47,58 @@ test("a recipe page's facts are its meals, its servings and its time, whichever 
   expect(factsLine(recipe({ servings: 4, minutes: 90 }))).toBe('4 servings · 1h 30 min')
   expect(factsLine(recipe({ mealTypes: ['snack'] }))).toBe('Snack')
   expect(factsLine(recipe())).toBeUndefined()
+})
+
+// --- the cards, by meal (v2.30) ----------------------------------------------------
+
+/**
+ * Kitchen on cards, in sections by meal - docs/RESEARCH-KITCHEN.md section 6.4.
+ * A recipe for two meals stands under both, the way a cookbook's index lists a
+ * dish in two chapters; recipes with no meal yet stand last; a meal with nothing
+ * is not a section. Each section keeps the order it was given, which is the
+ * names' order, or a search's.
+ */
+test('every meal with a recipe is a section in the app\'s order, a recipe for two meals under both, and the recipes with no meal last', () => {
+  const oats = recipe({ title: 'Overnight oats', mealTypes: ['breakfast', 'snack'] })
+  const soup = recipe({ title: 'Lentil soup', mealTypes: ['lunch', 'dinner'] })
+  const toast = recipe({ title: 'Banana toast', mealTypes: ['pre-gym', 'snack'] })
+  const apple = recipe({ title: 'Apple' })
+  const sections = recipeSections([apple, toast, soup, oats], 'all')
+  expect(sections.map(s => [s.label, s.recipes.map(r => r.title)])).toEqual([
+    ['Breakfast', ['Overnight oats']],
+    ['Lunch', ['Lentil soup']],
+    ['Dinner', ['Lentil soup']],
+    ['Pre-gym', ['Banana toast']],
+    ['Snack', ['Banana toast', 'Overnight oats']],
+    ['No meal yet', ['Apple']],
+  ])
+})
+
+test('one meal chosen is one section, with or without recipes, and the order given is kept', () => {
+  const oats = recipe({ title: 'Overnight oats', mealTypes: ['breakfast', 'snack'] })
+  const toast = recipe({ title: 'Banana toast', mealTypes: ['snack'] })
+  expect(recipeSections([oats, toast], 'snack').map(s => [s.meal, s.recipes.map(r => r.title)])).toEqual([['snack', ['Overnight oats', 'Banana toast']]])
+  expect(recipeSections([oats, toast], 'dinner')).toEqual([{ meal: 'dinner', label: 'Dinner', recipes: [] }])
+})
+
+test("a card's lines: how long and how many servings, its kcal and protein, and its first three ingredients", () => {
+  const bowl = recipe({
+    title: 'Chicken and rice bowl',
+    text: 'Quick.\n\nINGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce\n\nSTEPS\nCook it.',
+    minutes: 30,
+    servings: 2,
+    kcal: 610,
+    protein: 45,
+    carbs: 70,
+  })
+  expect(cardLines(bowl)).toEqual({
+    facts: '30 min · 2 servings',
+    numbers: '610 kcal · 45 g protein',
+    ingredients: '2 chicken breasts · 150 g rice · 1 cucumber',
+  })
+  // Only what is known, and nothing for a recipe that is a name.
+  expect(cardLines(recipe({ text: '', servings: 1 }))).toEqual({ facts: '1 serving' })
+  expect(cardLines(recipe({ text: 'Toast the bread.' }))).toEqual({})
 })
 
 // --- a meal on the day ------------------------------------------------------------

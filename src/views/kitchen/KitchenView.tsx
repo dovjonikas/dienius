@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
-import { MEAL_TYPE_LABELS, macroLine, recipesForMeal, type MealFilter } from '../../lib/kitchen'
+import { MEAL_TYPE_LABELS, cardLines, recipeSections, recipesForMeal, type MealFilter } from '../../lib/kitchen'
+import { categoryColor } from '../../lib/categories'
 import { searchRecipes } from '../../lib/search'
 import { offerUndo } from '../../lib/undo'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
@@ -8,22 +9,26 @@ import { RecipePage } from './RecipePage'
 import { RecipeForm } from './RecipeForm'
 
 /**
- * Kitchen: the recipes cooked in this house - since v2.27.
+ * Kitchen: the recipes cooked in this house - since v2.27, on cards since v2.30.
  *
- * It looks and feels like the Library, and is built from its parts: the
- * page's name at the top with its action, a row of chips under it, and the
- * list as one card of quiet rows. It keeps its own data, because a recipe has
- * no units to be counted through - `Recipe` in lib/types.ts, and
- * docs/RESEARCH-KITCHEN.md.
+ * The page's name at the top with its action, a row of chips under it, the
+ * search, and the recipes on cards in sections by meal. It keeps its own data,
+ * because a recipe has no units to be counted through - `Recipe` in
+ * lib/types.ts, and docs/RESEARCH-KITCHEN.md.
  *
- * ## The list
+ * ## The cards
  *
- * The chips are the meals - All and the six - one pressed at a time, and a
- * chip shows the recipes for it. The field at the top of the card searches
- * the names and the texts through lib/search.ts, within the chosen meal. A
- * row is a recipe's name, and the kcal and the protein on one quiet line when
- * they are known. The recipes stand in the order of their names, the way a
- * cookbook's index does.
+ * There will be a lot of recipes, so they stand sorted by meal: with every
+ * meal showing, each meal with a recipe is a section with how many it has, a
+ * recipe for two meals under both, and the recipes with no meal yet last
+ * (`recipeSections`). The chips are the meals - All and the six - one pressed
+ * at a time, and a chip shows its meal's cards alone. The field searches the
+ * names and the texts through lib/search.ts, within the chosen meal. A card is
+ * a recipe's name, how long and how many servings, its kcal and protein, and
+ * its first ingredients (`cardLines`); the cards lie in a grid on North's small
+ * shadow, each marked with the Meals category's colour, the mark a meal block
+ * has on the day. The recipes stand in the order of their names, the way a
+ * cookbook's index does, or a search's.
  *
  * ## A recipe, and writing one
  *
@@ -119,10 +124,12 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
     )
   }
 
-  const shown = searchRecipes(recipesForMeal(recipes, meal), query)
+  const shown = recipeSections(searchRecipes(recipesForMeal(recipes, 'all'), query), meal)
+  const anything = shown.some(section => section.recipes.length > 0)
+  const mealColor = categoryColor('meal', data.categories)
 
   return (
-    <section className="library kitchen" aria-label="Kitchen">
+    <section className="library kitchen kitchen-shelf" aria-label="Kitchen">
       {header}
 
       <div className="library-chips kitchen-chips" role="group" aria-label="Meal">
@@ -139,25 +146,43 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
         ))}
       </div>
 
-      <div className="library-list kitchen-list" ref={listRef}>
-        <input
-          type="search"
-          className="kitchen-search"
-          aria-label="Search recipes"
-          placeholder="Search recipes"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-        {shown.length > 0 ? (
-          <ul className="library-items">
-            {shown.map(recipe => (
-              <RecipeRow key={recipe.id} recipe={recipe} onOpen={() => setPage({ kind: 'recipe', id: recipe.id })} />
-            ))}
-          </ul>
-        ) : (
-          <p className="kitchen-none">{noneLine(meal, query)}</p>
-        )}
-      </div>
+      <input
+        type="search"
+        className="kitchen-search"
+        aria-label="Search recipes"
+        placeholder="Search recipes"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+      />
+
+      {anything ? (
+        <div
+          className="kitchen-sections"
+          ref={listRef}
+          style={mealColor ? ({ '--cat': mealColor } as React.CSSProperties) : undefined}
+        >
+          {shown.map(section => (
+            <section key={section.meal} className="kitchen-section" aria-label={section.label}>
+              {/* A chosen meal is one grid, and its chip already says which. */}
+              {meal === 'all' && (
+                <h3 className="kitchen-section-heading">
+                  <span className="kitchen-section-name">{section.label}</span>
+                  <span className="kitchen-section-count">{section.recipes.length}</span>
+                </h3>
+              )}
+              <ul className="kitchen-cards">
+                {section.recipes.map(recipe => (
+                  <li key={recipe.id} className="kitchen-cards-item">
+                    <RecipeCard recipe={recipe} onOpen={() => setPage({ kind: 'recipe', id: recipe.id })} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p className="kitchen-none">{noneLine(meal, query)}</p>
+      )}
     </section>
   )
 }
@@ -174,19 +199,18 @@ function noneLine(meal: MealFilter, query: string): string {
 }
 
 /**
- * One recipe in the list, as one button that opens it: its name, and under
- * it the kcal and the protein on one quiet line when either is known.
+ * One recipe's card, as one button that opens it: its name, and under it how
+ * long and how many servings, its kcal and protein, and its first
+ * ingredients - each line only when there is something to say.
  */
-function RecipeRow({ recipe, onOpen }: { recipe: Recipe; onOpen: () => void }) {
-  const macros = macroLine(recipe)
+function RecipeCard({ recipe, onOpen }: { recipe: Recipe; onOpen: () => void }) {
+  const lines = cardLines(recipe)
   return (
-    <li className="library-item kitchen-row">
-      <button type="button" className="library-item-open kitchen-row-open" data-recipe-id={recipe.id} onClick={onOpen}>
-        <span className="kitchen-row-main">
-          <span className="library-item-title kitchen-row-title">{recipe.title}</span>
-          {macros && <span className="kitchen-row-macros">{macros}</span>}
-        </span>
-      </button>
-    </li>
+    <button type="button" className="kitchen-card" data-recipe-id={recipe.id} onClick={onOpen}>
+      <span className="kitchen-card-title">{recipe.title}</span>
+      {lines.facts && <span className="kitchen-card-line">{lines.facts}</span>}
+      {lines.numbers && <span className="kitchen-card-line">{lines.numbers}</span>}
+      {lines.ingredients && <span className="kitchen-card-line kitchen-card-ingredients">{lines.ingredients}</span>}
+    </button>
   )
 }

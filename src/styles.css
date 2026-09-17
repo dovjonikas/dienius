@@ -14315,29 +14315,117 @@ main:has(.week) > .calendar {
   overflow-x: visible;
 }
 
-/* The field across the top of the card, where the Library's add line stands. */
+/* Kitchen on cards - v2.30, docs/RESEARCH-KITCHEN.md section 6.4. The shelf
+   takes North's width, the page's and half the reading width, so three or four
+   cards stand abreast on a laptop and the sections read as a cookbook's
+   chapters rather than a long list. A recipe's page and the form keep the
+   page's own width. */
+.kitchen-shelf { max-width: calc(var(--page-w) + var(--read-w) / 2); }
+
+/* The search across the page, under the chips. */
 .kitchen-search { width: 100%; }
 
-/* A recipe's row: its name and a quiet line under it. Its words stand on the
-   card's inner edge, the search field's edge, and the ground under the pointer
-   reaches out past them into the card's padding rather than pushing them in. */
-.kitchen-row {
-  margin-inline: calc(var(--s2) * -1);
-  padding: var(--s2);
+.kitchen-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s8);
 }
 
-.kitchen-row-main {
+/* A section's name and how many it has, on one baseline over its cards. */
+.kitchen-section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  margin: 0 0 var(--s3);
+  font-size: var(--t-md);
+  line-height: var(--lh-tight);
+}
+
+.kitchen-section-name {
+  color: var(--text);
+  font-weight: var(--w-strong);
+}
+
+.kitchen-section-count {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: var(--w-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.kitchen-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--s4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kitchen-cards-item { display: flex; }
+
+/* A card: North's plate - the surface, the small shadow, in a dark theme the
+   light along its top - with a kitchen's own mark, the Meals category's colour
+   down its left edge and a breath of it in the ground, the way a meal block is
+   drawn on the day. Nothing about it says anything about a number. */
+.kitchen-card {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--s0);
+  align-items: flex-start;
+  gap: var(--s1);
   min-width: 0;
+  padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) + 3px);
+  border: 0;
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--cat, var(--surface)) 6%, var(--surface));
+  --ground: var(--surface);
+  box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
 }
 
-.kitchen-row-macros {
+:root:not([data-theme='light']) .kitchen-card {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, transparent), transparent 64%),
+    color-mix(in srgb, var(--cat, var(--surface)) 6%, var(--surface));
+  box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+/* Under the pointer the ground deepens, and nothing moves. */
+.kitchen-card:hover {
+  background: color-mix(in srgb, var(--cat, var(--surface)) 11%, var(--surface));
+}
+
+.kitchen-card:focus-visible {
+  outline: none;
+  box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent), 0 0 0 3px var(--ring);
+}
+
+.kitchen-card-title {
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+.kitchen-card-line {
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
+  overflow-wrap: anywhere;
+}
+
+/* The first ingredients: one line, and an ellipsis where it would run on. */
+.kitchen-card-ingredients {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* A meal with nothing in it, a search that found nothing, or a recipe with
@@ -14349,9 +14437,6 @@ main:has(.week) > .calendar {
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
 }
-
-/* The row is one button, the Library's: the name and its line at the left. */
-.kitchen-row-open { gap: var(--s3); }
 
 /* A recipe's first row: Kitchen at the left, back to the list, with its
    caret on the column's edge and the ground under the pointer reaching out

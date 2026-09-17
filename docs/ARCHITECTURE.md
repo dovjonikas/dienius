@@ -317,7 +317,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             North: the page that reads the text, the one field that writes it, and the window after sleep
-    kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, the form, and the recipe select every meal shares
+    kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page, the form, and the recipe select every meal shares
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor

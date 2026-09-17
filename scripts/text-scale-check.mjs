@@ -38,7 +38,7 @@ const SCREENS = [
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
-  { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).click() } },
+  { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
 ]
 

@@ -326,7 +326,7 @@ const SCREENS = [
     name: 'Kitchen (a recipe)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Kitchen')
-      await p.getByRole('button', { name: /Overnight oats/ }).click()
+      await p.getByRole('button', { name: /Overnight oats/ }).first().click()
       await p.waitForTimeout(200)
     },
   },
@@ -334,7 +334,7 @@ const SCREENS = [
     name: 'Kitchen (writing)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Kitchen')
-      await p.getByRole('button', { name: /Overnight oats/ }).click()
+      await p.getByRole('button', { name: /Overnight oats/ }).first().click()
       await press(p, 'Edit')
       await p.waitForTimeout(200)
     },
