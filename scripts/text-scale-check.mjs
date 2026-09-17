@@ -34,6 +34,7 @@ const SCREENS = [
   { name: 'Calendar month', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Month', exact: true }).click() } },
   { name: 'Calendar week', go: async p => { await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Week', exact: true }).click() } },
   { name: 'Templates', go: p => tab(p, 'Templates') },
+  { name: 'Templates (a routine)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await p.getByRole('button', { name: 'New routine' }).click() } },
   { name: 'Library', go: p => tab(p, 'Library') },
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },

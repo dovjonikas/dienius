@@ -4065,6 +4065,28 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## Where a kind of day and a routine are written
+
+v2.29 stage 5, from docs/RESEARCH-SHIFTS.md sections 2.1 and 2.3.
+
+**The letter is the mark.** A template is a kind of day when it has a letter
+to draw on a date, so one field says both things and there is no second
+switch to disagree with it. Emptying the field is how a kind stops being one.
+
+**Both live on the Templates tab.** A kind of day is a day template, and a
+routine is timed per kind: the times a routine is asked for are the templates
+in the list above it, read in the same breath. A tab of its own for one list
+would be a tab nobody opens, and Settings is for what is decided once.
+
+**Routines are not drawn until a kind exists.** A routine does nothing on a
+date with no kind, so with nothing marked there is nothing to show and nothing
+to explain - the offer appears the moment a template is marked, which is the
+same "offer without installing" this app follows everywhere else.
+
+**Where kinds come in the cycle is the roster's question, not the editor's.**
+A kind takes its place at the end when it is first marked. The order only
+means anything where a tap walks through the kinds, and that is the month.
+
 ## Kitchen, as it was meant
 
 v2.30, from the owner using Kitchen: there will be a lot of recipes, they

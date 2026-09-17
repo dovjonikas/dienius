@@ -134,6 +134,8 @@ const PLACED: Record<ExplainId, () => ReactElement> = {
   'template-week': () => <TemplatesView />,
   'add-to': () => <TemplatesView />,
   'copy-to': () => <TemplatesView />,
+  'day-kind': () => <TemplatesView />,
+  routine: () => <TemplatesView />,
 }
 
 test('every term on the audit list is placed on a real screen', () => {
@@ -154,7 +156,18 @@ describe.each(EXPLAIN_IDS)('%s', id => {
           { id: 's2', name: 'Night shift', window: { start: '09:00', end: '16:00' } },
         ],
       },
-      templates: [{ id: 'tpl', name: 'Workday', color: '#a7c4f5', blocks: [{ id: 'b1', title: 'Deep work', time: '09:00', minutes: 60 }] }],
+      // A kind of day, so the two words rotating shifts added have somewhere
+      // to be read: the letter in a template's editor, and the routines under
+      // the list, which are drawn only once a kind exists.
+      templates: [
+        {
+          id: 'tpl',
+          name: 'Workday',
+          color: '#a7c4f5',
+          dayKind: { letter: 'D', order: 0 },
+          blocks: [{ id: 'b1', title: 'Deep work', time: '09:00', minutes: 60 }],
+        },
+      ],
       library: [{ id: 'lst', name: 'Books', unit: 'chapter', items: [] }],
       backlog: [{ id: 'b1', title: 'Move the ISA' }],
       days: { [DATE]: { date: DATE, tasks: [{ ...task, time: undefined }] } },
@@ -165,7 +178,7 @@ describe.each(EXPLAIN_IDS)('%s', id => {
 
     // The template editor and the day-type note only exist once a template is
     // open for editing, and the four day-type values only one at a time.
-    if (id === 'ongoing' || id === 'day-type' || id.startsWith('day-type-') || id === 'sleep-schedule') {
+    if (id === 'ongoing' || id === 'day-type' || id.startsWith('day-type-') || id === 'sleep-schedule' || id === 'day-kind') {
       await user.click(screen.getByRole('button', { name: /Edit Workday/ }))
     }
     // The day type's four values, and the term over them, live behind the

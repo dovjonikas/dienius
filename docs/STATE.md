@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30 done - Kitchen as it was meant, all six stages. v2.29 (rotating shifts) resumes at stage 5.
+**Last updated:** v2.29 rotating shifts, stage 5 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,43 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 5 - the routine editor, and what makes a template a kind: done
+
+- **A day template is marked a kind of day by its letter**: one field in its
+  editor, under the day type, kept in capitals as it is typed. The mark is the
+  letter - typed, the template is a kind; emptied, it is an ordinary template
+  again. It is written through `setDayKind` and after the template itself,
+  since an ordinary update writes the template as it was read and would put the
+  mark straight back. A kind takes its place at the end of the cycle when it is
+  first marked; where kinds come in that cycle is arranged with the roster, in
+  stage 6. The list draws the letter where the dot goes, in the template's own
+  colour as a tint.
+- **Routines** (`views/shifts/RoutinesSection.tsx`) stand under the templates on
+  the same tab, because a routine is timed per kind of day and a kind of day is
+  one of the templates above it. A name, a category, a length, the weekdays it
+  is on, and a time for each kind. Save waits for a name and for one weekday,
+  which is `cleanRoutine`'s own rule said on the button rather than found out
+  by pressing it. A row says what a routine is in one line - "Mon, Wed, Fri, 60
+  min, D 17:00, R needs a time" - and a kind left with no time says so, because
+  the day it lands on will say the same and never borrow one.
+- **Nothing is drawn until a kind exists.** The offer is made where a kind is
+  made, in a day template's editor, and the section appears the moment one is.
+- **A routine removed can be undone**: `removeRoutine` hands back its undo, the
+  way `removeRecipe` does, through the app's one undo bar.
+- Two words joined the vocabulary, "A kind of day" and "Routine", each placed on
+  a real screen - which `Explain.test.tsx` checks.
+- **DAILY says nothing about routines yet, on purpose.** Written today, a routine
+  reaches no day until the roster stamps kinds on dates, which is stages 6 and 7;
+  a guide that said otherwise would be wrong for two stages.
+
+New tests: `views/shifts/RoutinesSection.test.tsx` (the section is not drawn
+without a kind, a routine written once, Save waiting for a name and a day,
+editing in the same form, the undo, and a time kept only for a kind) and five in
+`TemplatesView.test.tsx` (the letter marks a template and comes off again, a
+second kind after the first, a week template never asked, the routines appearing
+once a kind exists, and the letter in the list). A mutation pass broke ten of the
+editor's rules and each failed a named test.
 
 ### Stage 4 - midnight and daylight saving everywhere: done
 

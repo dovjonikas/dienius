@@ -302,6 +302,14 @@ nothing composes a day a second way.
 
 ### 2.5 Where the roster is edited, and what is kept on the device
 
+- **A kind is marked in its day template's editor** (stage 5): one field for
+  the letter, kept in capitals, and the letter is the mark - emptied, the
+  template is an ordinary one again. A kind takes its place at the end of the
+  cycle when it is first marked, since where it comes in the cycle only means
+  anything where a tap walks the kinds, which is the month.
+- **Routines are written under the templates**, on the same tab (stage 5): the
+  times a routine is asked for are the kinds in the list above it. Nothing is
+  drawn there until a template is a kind.
 - **The roster** is a mode of the month (stage 6): a tap on a date walks it
   through the kinds by `order` and back round; a long press or the Clear tool
   takes the kind off. Letters and colours on every date.

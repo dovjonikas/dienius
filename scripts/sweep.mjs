@@ -178,6 +178,25 @@ const SCREENS = [
   },
   { name: 'Calendar week', go: async /** @param {Page} p */ p => { await tab(p, 'Calendar'); await press(p, 'Week') } },
   { name: 'Templates', go: /** @param {Page} p */ p => tab(p, 'Templates') },
+  // The routines under the templates - rotating shifts. The sample marks two
+  // of its templates as kinds of day, so the section is drawn; the second
+  // screen opens the form, where the times per kind stand.
+  {
+    name: 'Templates (routines)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await p.locator('.routines').scrollIntoViewIfNeeded()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: 'Templates (a routine)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await p.getByRole('button', { name: 'New routine' }).click()
+      await p.waitForTimeout(200)
+    },
+  },
   {
     name: 'Template editor',
     go: async /** @param {Page} p */ p => {

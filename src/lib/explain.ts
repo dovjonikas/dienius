@@ -59,6 +59,8 @@ export const EXPLAIN_IDS = [
   'template-week',
   'add-to',
   'copy-to',
+  'day-kind',
+  'routine',
 ] as const
 
 export type ExplainId = (typeof EXPLAIN_IDS)[number]
@@ -166,6 +168,14 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   'copy-to': {
     term: 'Copy to',
     text: 'Takes a day you have already built and puts it on the others, as it stands. What it copies is not linked back to the original except through the group it joins.',
+  },
+  'day-kind': {
+    term: 'A kind of day',
+    text: 'A day template with a letter, drawn on every date it is stamped on - D, N, R. Marking one is what lets a rota be laid out date by date, and what a routine is given a time for.',
+  },
+  routine: {
+    term: 'Routine',
+    text: 'Something you do on the same weekdays, at a different time on each kind of day - the gym at five on a day shift, at nine after nights. Give a kind no time and the day says it needs one.',
   },
 }
 

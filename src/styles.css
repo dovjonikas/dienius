@@ -1130,7 +1130,8 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
    that reads it; a translucent wash over one of these says its blend
    itself, where it is painted (.library-list-settings). */
 .template-editor,
-.library-list {
+.library-list,
+.routines-form {
   --ground: var(--surface);
 }
 
@@ -5257,6 +5258,36 @@ button.core-toggle.active {
 }
 
 .template-card .dot { width: 14px; height: 14px; border-radius: var(--r-round); flex-shrink: 0; }
+
+/* A kind of day where the dot goes - rotating shifts, docs/RESEARCH-SHIFTS.md
+   section 2.1. The letter the roster draws on a date, on the template's colour
+   as a tint rather than a ground: the eight template colours are pastels, and
+   text on one of them at full strength is a contrast question per colour, which
+   the chip in the calendar already answered this way. */
+.kind-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-mark);
+  background: color-mix(in srgb, var(--chip, var(--accent)) 22%, var(--surface));
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-weight: var(--w-strong);
+  line-height: 1;
+}
+
+/* The letter that makes a template a kind: a field the size of what it takes,
+   two characters, centred. The capitals are the value's own - cleanLetter puts
+   the letter in capitals as it is typed, because that is how it is kept and
+   how a date draws it - not a transform painted over lower-case text, which is
+   the thing the design pass retired. */
+.kind-letter {
+  width: 4ch;
+  text-align: center;
+}
 /* min-width: 0, or the nowrap preview line inside sets the item's minimum
    width to its own unbroken length and the whole card runs off a phone -
    648px of document on a 390px screen, the one horizontal scroll in the app. */
@@ -9683,6 +9714,118 @@ button.task-recipe:focus-visible {
 .template-meta {
   color: var(--faint);
   font-size: var(--t-xs);
+}
+
+/* ------------------------------------------------------------------------
+   Routines - rotating shifts, since v2.29, docs/RESEARCH-SHIFTS.md section
+   2.3 and views/shifts/RoutinesSection.tsx.
+
+   Under the templates, on the same column: a routine is timed per kind of
+   day, and a kind of day is one of the templates above it. Its own heading
+   and one line saying what a routine is, then the routines as rows on the
+   card the rest of this page uses, and the form in their place.
+   ------------------------------------------------------------------------ */
+.routines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s8);
+}
+
+.routines-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--control-h);
+}
+
+.routines-head h3 {
+  margin: 0;
+  font-size: var(--t-md);
+  font-weight: var(--w-strong);
+}
+
+.routines-line { margin: 0; max-width: var(--read-w); }
+
+.routines-none {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+.routines-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A routine's row: its name, then what it is in one quiet line, and the two
+   words that change it at the right - the template card's own shape. */
+.routines-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-width: 0;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.routines-row-title {
+  font-size: var(--t-md);
+  font-weight: var(--w-medium);
+  overflow-wrap: anywhere;
+}
+
+.routines-row-line {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* The form where the rows are, on the same card, its fields on one gap. */
+.routines-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+
+.routines-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+.routines-name { flex: 1 1 12rem; }
+
+.routines-days { margin: 0; }
+
+/* One field per kind of day, side by side where there is room: four kinds is
+   the pattern this feature was asked for, and four fields is one row on a
+   laptop and two on a phone. */
+.routines-times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+  gap: var(--s3);
+}
+
+.routines-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s2);
 }
 
 /* The label on the one gap an unplanned day has. Centred rather than pinned
@@ -14631,8 +14774,10 @@ main:has(.week) > .calendar {
 }
 
 /* A name over a group of fields, a step over the fields' own labels: the
-   meals, and the four numbers for a serving. */
-.kitchen-group-label {
+   meals and the four numbers for a serving in Kitchen, and the time a routine
+   keeps for each kind of day. */
+.kitchen-group-label,
+.routines-group-label {
   color: var(--text);
   font-size: var(--t-sm);
   font-weight: var(--w-medium);

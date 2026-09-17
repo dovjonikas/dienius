@@ -319,6 +319,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             North: the page that reads the text, the one field that writes it, and the window after sleep
+    shifts/            rotating shifts: the routines under the templates, timed per kind of day
     kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page with Add to template, the form, and the recipes field every meal shares - Kitchen in small
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone

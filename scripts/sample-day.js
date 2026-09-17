@@ -84,6 +84,7 @@
     },
     {
       id: tmplShift, name: 'Twelve-hour shift', color: '#f5b0a7', updatedAt: stamp,
+      dayKind: { letter: 'D', order: 0 },
       blocks: [
         { id: id('b'), time: '06:00', title: 'Out the door', minutes: 30, category: 'commute' },
         { id: id('b'), time: '07:00', title: 'On shift', minutes: 720, core: true, unbounded: true, category: 'core' },
@@ -92,6 +93,7 @@
     },
     {
       id: tmplRest, name: 'Slow Sunday', color: '#a7e3bd', updatedAt: stamp,
+      dayKind: { letter: 'R', order: 1 },
       blocks: [
         { id: id('b'), time: '09:30', title: 'Long breakfast', minutes: 60, category: 'meal', recipeId: oatsId },
         { id: id('b'), title: 'Something outside', minutes: 90, category: 'health' },
@@ -192,6 +194,13 @@
 
   const data = {
     templates,
+    // Two routines against those kinds - rotating shifts. One with a time on
+    // each kind, one still needing a time on the rest day, which is the state
+    // the day is meant to say out loud.
+    routines: [
+      { id: id('rt'), title: 'Training', category: 'health', minutes: 60, weekdays: [1, 3, 5], times: { [tmplShift]: '17:00' }, updatedAt: stamp },
+      { id: id('rt'), title: 'Language practice', minutes: 20, weekdays: [1, 2, 3, 4, 5], times: { [tmplShift]: '07:30', [tmplRest]: '10:00' }, updatedAt: stamp },
+    ],
     days,
     settings: {
       theme: { presetId: 'dark', mode: 'dark', overrides: {} },

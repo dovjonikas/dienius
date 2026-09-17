@@ -51,8 +51,14 @@ export const shiftActions = {
     commit({ ...data, routines: data.routines.map(r => (r.id === id ? { id, ...clean } : r)) })
   },
 
-  removeRoutine(id: string): void {
-    const data = getData()
-    commit({ ...data, routines: data.routines.filter(r => r.id !== id) })
+  /**
+   * Takes a routine away, and hands back the way to put it back - a routine is
+   * a handful of fields somebody typed once, and losing it to a misplaced press
+   * is the kind of mistake lib/undo.ts exists for.
+   */
+  removeRoutine(id: string): { undo: () => void } {
+    const previous = getData()
+    commit({ ...previous, routines: previous.routines.filter(r => r.id !== id) })
+    return { undo: () => commit(previous) }
   },
 }

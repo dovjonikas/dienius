@@ -1120,3 +1120,79 @@ test('the add line in both template editors is one joined line of three, the sam
   const own = css.match(/\n\.block-add-line \{([^}]*)\}/)?.[1] ?? ''
   expect(own).not.toMatch(/gap:/)
 })
+
+// --- a kind of day - rotating shifts, v2.29 stage 5 ----------------------------------------------
+//
+// What makes a day template a kind on the roster is one letter, asked here
+// because the template is the kind - docs/RESEARCH-SHIFTS.md section 2.1.
+
+test('a day template is marked a kind of day by its letter, and the mark comes off when the letter goes', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  render(<TemplatesView />)
+
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  const letter = screen.getByRole('textbox', { name: 'Letter on the roster' })
+  await user.type(letter, 'n')
+  // Kept in capitals, so it reads on a date at a glance.
+  expect(letter).toHaveValue('N')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates.find(t => t.name === 'Night shift')!.dayKind).toEqual({ letter: 'N', order: 0 })
+
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  await user.clear(screen.getByRole('textbox', { name: 'Letter on the roster' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates.find(t => t.name === 'Night shift')!.dayKind).toBeUndefined()
+})
+
+test('a second kind comes after the first in the cycle, and a template that is no kind is left alone', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  actions.addTemplate({ name: 'Rest day', color: '#a7e3bd', blocks: [] })
+  actions.addTemplate({ name: 'Working day', color: '#a7c4f5', blocks: [] })
+  render(<TemplatesView />)
+
+  for (const [name, mark] of [
+    ['Night shift', 'N'],
+    ['Rest day', 'R'],
+  ] as const) {
+    await user.click(screen.getByRole('button', { name: `Edit ${name}` }))
+    await user.type(screen.getByRole('textbox', { name: 'Letter on the roster' }), mark)
+    await user.click(screen.getByRole('button', { name: 'Save template' }))
+  }
+
+  expect(getData().templates.find(t => t.name === 'Night shift')!.dayKind).toEqual({ letter: 'N', order: 0 })
+  expect(getData().templates.find(t => t.name === 'Rest day')!.dayKind).toEqual({ letter: 'R', order: 1 })
+  expect(getData().templates.find(t => t.name === 'Working day')!.dayKind).toBeUndefined()
+})
+
+test('a week template is never a kind of day, so its editor never asks', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A week/ }))
+  expect(screen.queryByRole('textbox', { name: 'Letter on the roster' })).toBeNull()
+})
+
+test('routines stand under the templates once there is a kind of day to time them against', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  render(<TemplatesView />)
+  expect(screen.queryByRole('heading', { name: 'Routines' })).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  await user.type(screen.getByRole('textbox', { name: 'Letter on the roster' }), 'N')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(screen.getByRole('heading', { name: 'Routines' })).toBeInTheDocument()
+})
+
+test('the list says which templates are kinds, by the letter the roster draws', async () => {
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  actions.addTemplate({ name: 'Working day', color: '#a7c4f5', blocks: [] })
+  actions.setDayKind(getData().templates.find(t => t.name === 'Night shift')!.id, { letter: 'N', order: 0 })
+  render(<TemplatesView />)
+
+  const rows = screen.getAllByRole('listitem')
+  expect(within(rows[0]).getByLabelText('A kind of day: N')).toHaveTextContent('N')
+  expect(within(rows[1]).queryByLabelText(/^A kind of day/)).toBeNull()
+})

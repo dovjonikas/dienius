@@ -4,12 +4,14 @@ import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { Category, DayType, LibraryList, MealType, Recipe, SleepProfile, Template } from '../lib/types'
+import type { Category, DayKindMark, DayType, LibraryList, MealType, Recipe, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
 import { DurationControl } from './DurationControl'
 import { TemplateTimeline } from './TemplateTimeline'
+import { RoutinesSection } from './shifts/RoutinesSection'
+import { cleanLetter, dayKinds } from '../lib/dayKinds'
 import { BlockNoteButton, BlockNotePanel } from './BlockNote'
 import { bindingLine } from '../lib/library'
 import { ReturnField } from './ReturnField'
@@ -136,10 +138,17 @@ interface Draft {
    *  Undefined means the first one, which is what nearly every template wants
    *  and the only thing that exists until somebody adds a second. */
   sleepProfileId?: string
+  /**
+   * The letter that makes this template a kind of day on the roster - rotating
+   * shifts, docs/RESEARCH-SHIFTS.md section 2.1. Empty is no kind. Where it
+   * comes in the cycle is not asked here: a kind takes its place at the end
+   * when it is marked, and the roster is where a cycle is arranged.
+   */
+  kindLetter: string
   blocks: DraftBlock[]
 }
 
-const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'full', blocks: [] })
+const emptyDraft = (): Draft => ({ name: '', color: TEMPLATE_COLORS[0], type: 'full', kindLetter: '', blocks: [] })
 
 interface TemplateEditorProps {
   initial: Draft
@@ -439,6 +448,22 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           </select>
         </div>
       )}
+      {/* What this template is on the roster - rotating shifts, section 2.1.
+          One letter, and the mark is the letter: typed, this template is a kind
+          of day; emptied, it is an ordinary template again. Kept in capitals as
+          it is typed, because that is how it is drawn on a date. */}
+      <div className="day-type-picker">
+        <Explain id="day-kind">
+          <span className="muted">A kind of day</span>
+        </Explain>
+        <input
+          className="kind-letter"
+          aria-label="Letter on the roster"
+          placeholder="D"
+          value={draft.kindLetter}
+          onChange={e => setDraft({ ...draft, kindLetter: cleanLetter(e.target.value) })}
+        />
+      </div>
       {/* The template as the day it makes, live - see TemplateTimeline. A
           list says what is on the day; only the picture says whether there
           is room for it, which is the question a template is about. */}
@@ -794,6 +819,7 @@ export function TemplatesView() {
       color: t.color,
       type: t.type ?? 'full',
       sleepProfileId: t.sleepProfileId,
+      kindLetter: t.dayKind?.letter ?? '',
       blocks: t.blocks.map(b => ({
         id: b.id,
         time: b.time ?? '',
@@ -894,6 +920,15 @@ export function TemplatesView() {
       noteExpanded: b.noteExpanded || undefined,
       highlight: b.highlight || undefined,
     }))
+    // The kind mark goes through setDayKind rather than with the rest of the
+    // template: it is the one door that cleans a letter and refuses a week, and
+    // a kind takes its place at the end of the cycle when it is first marked.
+    // Written only when it changed, so an ordinary save stays one commit.
+    const markKind = (id: string, was: DayKindMark | undefined) => {
+      const letter = cleanLetter(next.kindLetter)
+      if (letter === (was?.letter ?? '')) return
+      actions.setDayKind(id, letter ? { letter, order: was?.order ?? dayKinds(data.templates).length } : null)
+    }
     if (next.id) {
       const existing = data.templates.find(t => t.id === next.id)
       if (existing) {
@@ -909,15 +944,17 @@ export function TemplatesView() {
           // but it would silently break any future feature keyed on them.
           blocks: next.blocks.map((b, i) => ({ ...blocks[i], id: b.id ?? crypto.randomUUID() })),
         })
+        markKind(existing.id, existing.dayKind)
       }
     } else {
-      actions.addTemplate({
+      const made = actions.addTemplate({
         name: next.name.trim(),
         color: next.color,
         type: next.type,
         sleepProfileId: next.sleepProfileId,
         blocks,
       })
+      markKind(made.id, undefined)
     }
     setDraft(null)
   }
@@ -1042,7 +1079,20 @@ export function TemplatesView() {
       <ul className="template-list">
         {data.templates.map(t => (
           <li key={t.id} className="template-card">
-            <span className="dot" style={{ background: t.color }} />
+            {/* A kind of day carries its letter where the dot goes, in the
+                template's own colour - the same mark the roster draws on a
+                date, so the list and the month read as one thing. */}
+            {t.dayKind ? (
+              <span
+                className="kind-mark"
+                style={{ ['--chip' as string]: t.color } as React.CSSProperties}
+                aria-label={`A kind of day: ${t.dayKind.letter}`}
+              >
+                {t.dayKind.letter}
+              </span>
+            ) : (
+              <span className="dot" style={{ background: t.color }} />
+            )}
             <div className="template-info">
               <strong>{t.name}</strong>
               {/* "4 blocks" is the least informative summary a template could
@@ -1090,6 +1140,11 @@ export function TemplatesView() {
           </li>
         ))}
       </ul>
+
+      {/* Routines, under the templates: a routine is timed per kind of day, and
+          a kind of day is one of the templates above it. Nothing is drawn until
+          one of them is a kind - see RoutinesSection. */}
+      <RoutinesSection />
     </section>
   )
 }
