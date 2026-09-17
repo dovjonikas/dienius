@@ -6,7 +6,35 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29, in progress - rotating shifts, stage 4 of 10 done.
+**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 1 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+
+## v2.30 - Kitchen, as it was meant
+
+The owner used Kitchen and said what it had missed, between the fourth and the
+fifth stage of rotating shifts, with the word to finish everything that is not
+finished after it: a lot of recipes, sorted by meal; on cards like North's,
+with a kitchen's character; no Cook button; recipes into a template's meal
+block the way books go into a reading block; and numbers typed into a recipe's
+text filling their fields, which can still be filled by hand. Six stages;
+docs/RESEARCH-KITCHEN.md section 6 has every decision and why.
+
+1. The design.
+2. Cook goes, and a recipe needs only its name.
+3. Numbers read from the text, one truth with the fields.
+4. Kitchen on cards, by meal.
+5. A meal block takes recipes from Kitchen, a day at a time, and Add to template.
+6. The phone, the pictures and the last tests.
+
+### Stage 1 - the design: done
+
+RESEARCH-KITCHEN section 6, written from reading Kitchen's code, the Library's
+add line and its Add to template, North's cards and the guard. The decisions
+that shape the rest: the `cooked` field stays in the data and is shown by
+nothing; an empty text is the empty string, which every guard back to v2.28
+already takes; numbers are never read from inside the ingredients or the steps;
+a recipe for two meals stands under both; several recipes on a block are walked
+by the date, and the block's `recipeId` is written as the first of them so an
+older device still stamps a meal.
 
 ## v2.29 - Rotating shifts
 

@@ -84,11 +84,106 @@ Planning meals ahead is associated with more varied and better quality diets in 
 cohort (Ducrot and colleagues, 2017). **Moderate**, cross-sectional. It supports making the link
 easy; it does not support nagging anybody to plan, and nothing does.
 
-## 6. What is left out, on purpose
+## 6. v2.30: many recipes, on cards, into templates
+
+The owner used Kitchen and said what v2.27 had missed: there will be a lot of
+recipes, so they need to stand sorted by meal and be easy to find; they should
+lie on cards the way North's headings do, with a kitchen's own character; the
+Cook button is not needed; a meal block in a template should take recipes from
+Kitchen the way a reading block takes books from the Library; and writing a
+recipe should work like the Library's add line - numbers typed into the text
+fill their fields, and the fields can still be filled by hand. What follows is
+what was decided for each, and why.
+
+### 6.1 Cook goes, and what only Cook did
+
+Cook, its screen kept awake, and Done adding to times cooked are removed:
+`CookMode`, `useWakeLock`, `markCooked`, and the "Cooked 3 times" on a row and
+a page. The count had one source, and a number that can never move again is a
+false fact on every recipe. The `cooked` field stays in the data - a backup
+and an older device still carry it, and both guards accept it - and nothing
+shows it or writes it. Section 4 stands as the record of what was built.
+
+### 6.2 A recipe needs only its name
+
+Many recipes arrive as a name and a few facts long before anybody types the
+method: a breakfast, its kcal, its tag. So Save waits for a name, and the text
+may be empty. An empty text is stored as the empty string, which the guard has
+always taken - `text` is checked as a string, in v2.28's frozen copy too - so
+an older device reads such a recipe and shows its name.
+
+### 6.3 Numbers typed into the text fill their fields
+
+`recipeNumbers(text)` reads kcal, protein, carbs and fat for a serving,
+servings and minutes where a number stands beside its word: "450 kcal", "kcal
+450", "Protein: 30 g", "30g protein", "2 servings", "serves 2", "45 min",
+"1 h 30 min". The words are English and Lithuanian, with and without the
+Lithuanian letters, because recipes are written in the language they are
+cooked in; a decimal comma is a decimal. The first mention of each number is
+the one read.
+
+- **Never from inside the ingredients or the steps.** "30 g protein powder" is
+  an ingredient, not a serving's protein; section 2 keeps amounts in an
+  ingredient line as words. Numbers are read from the lines around those two
+  lists - an introduction, a heading of their own.
+- **One truth with the fields** (CONVENTIONS 16). Where the text says a number,
+  its field shows it, and changing the field rewrites that number in the text;
+  where the text says nothing, the field is filled by hand. More opens by itself
+  when a number is read, so the filled fields are seen.
+- **Still information, never a total** (section 3): reading a number into a
+  recipe's field adds nothing up anywhere.
+
+### 6.4 Kitchen on cards, by meal
+
+- **Sections by meal** in the app's order - Breakfast, Lunch, Dinner, Pre-gym,
+  Post-gym, Snack - and one for recipes with no meal yet. A recipe for two
+  meals stands under both, the way a cookbook's index lists a dish in two
+  chapters. The chips choose one meal; the search narrows every section.
+- **A card is a recipe at a glance**: its name, how long and how many servings,
+  its kcal and protein, and the first few ingredients on a quiet line - what a
+  choice between dinners is made on. A press opens the recipe.
+- **North's plate, with a kitchen's character**: the cards lie in a grid the
+  way North's headings do, carry North's small shadow and top light - the second
+  exception in DESIGN, asked for - and each carries the Meals category's colour
+  down its edge, the mark a meal block already has on the day. No colour says
+  anything about a number.
+
+### 6.5 A meal block takes recipes from Kitchen, like a reading block takes books
+
+- **Several recipes on a block** (`TemplateBlock.recipeIds`), chosen in a picker
+  that is Kitchen in small - sections by meal, a search, a press to add or take
+  away - in the order they were added.
+- **Each day gets the next one.** A day stamped from the block holds one recipe
+  (`Task.recipeId`, as now), and which one walks the list by the date, so
+  Monday's dinner is not Tuesday's and every chosen meal comes round. Worked
+  out from the date alone, so it is the same on every device and needs nothing
+  stored; a day skipped moves the walk on rather than holding it back.
+- **What the day shows and does is unchanged**: the card names the recipe and a
+  press opens it; choosing another on the day is the day's. A kind of meal
+  left open to choose on the day stays as it is.
+- **From a recipe's page, Add to template**, the way a book is added: a
+  template and one of its meal blocks, or a new meal block with a time and a
+  length. The recipe joins that block's list.
+- **An older device** reads `recipeId`, which is written as the first of the
+  list, so it still stamps a meal rather than none.
+
+### 6.6 Tests
+
+Each rule gets a unit test that fails first: the number reader (every word, both
+languages, decimals, never inside the ingredients or steps, the first mention
+only), the form's one truth both ways, a recipe with only a name through the
+guard and v2.28's, the sections and the card's lines, `recipeIds` through the
+guard, a backup and sync, the walk by date (every recipe comes round, the same
+date the same meal, a skipped day), stamping and the echo, the picker, Add to
+template, and nothing left of Cook. The phone and both themes are walked and
+pictured at the end, with generic recipes only.
+
+## 7. What is left out, on purpose
 
 Calorie or macro goals, day or week totals, progress bars and any verdict (section 3); scaling
-servings and parsing ingredient amounts (section 2); shopping lists. Each is a feature of its own
-with its own costs, and none was asked for yet.
+servings and parsing ingredient amounts (section 2); shopping lists; tags of one's own beyond the
+six meals, which cover what was asked. Each is a feature of its own with its own costs, and none was
+asked for yet.
 
 ---
 
