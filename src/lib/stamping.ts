@@ -255,7 +255,17 @@ export function applyStamps(
   const next = { ...days }
   for (const [date, templateId] of Object.entries(stamps)) {
     const existing = next[date] ?? { date, tasks: [] }
-    const manual = existing.tasks.filter(t => !t.fromTemplate)
+    // What this stamp replaces is the day's own template's tasks, and nothing
+    // else. A task that names the template it came from belongs to that
+    // template: one moved onto this day from another day's template is not
+    // the day's to lose when the day is stamped with something else, or with
+    // nothing - which it was until v2.28's audit found it. A template task
+    // from before origins existed is read as the day's own, as it always was.
+    const manual = existing.tasks.filter(t => {
+      if (!t.fromTemplate) return true
+      const origin = originFor(t)
+      return origin.type === 'template' && !!origin.sourceId && origin.sourceId !== existing.templateId
+    })
     if (templateId === null) {
       // Only the template comes off: its tasks, its id and the day type it
       // gave. Everything else on the day is the day's own - what was written

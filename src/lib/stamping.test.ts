@@ -111,6 +111,50 @@ test('stamping null keeps everything the day had besides the template', () => {
   })
 })
 
+/**
+ * A task moved onto a day from another day keeps the mark of the template it
+ * came from, and stamping read every task with that mark as the day's own
+ * template's - so a stamp of anything else, or of nothing, dropped it. Found
+ * in the audit for rotating shifts, where changing a date's kind is exactly
+ * such a stamp.
+ */
+test('a task moved in from another template stays when the day is stamped with a different one, or with none', () => {
+  const other: Template = { id: 't2', name: 'Other', color: '#f9d48a', blocks: [{ id: 'o1', time: '18:00', title: 'Swim' }] }
+  const third: Template = { id: 't3', name: 'Third', color: '#a7c4f5', blocks: [{ id: 'c1', time: '07:00', title: 'Walk' }] }
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  const movedIn = {
+    id: 'moved',
+    title: 'Swim',
+    time: '18:00',
+    done: false,
+    fromTemplate: true,
+    origin: { type: 'template' as const, sourceId: 't2', blockId: 'o1' },
+  }
+  const day: DayPlan = { ...stamped['2026-09-01'], tasks: [...stamped['2026-09-01'].tasks, movedIn] }
+  const templates = [workDay, other, third]
+
+  const restamped = applyStamps({ '2026-09-01': day }, templates, { '2026-09-01': 't3' })['2026-09-01']
+  expect(restamped.tasks.map(t => t.title)).toEqual(['Walk', 'Swim'])
+  expect(restamped.tasks.find(t => t.title === 'Swim')?.id).toBe('moved')
+
+  const erased = applyStamps({ '2026-09-01': day }, templates, { '2026-09-01': null })['2026-09-01']
+  expect(erased.tasks.map(t => t.id)).toEqual(['moved'])
+
+  // And the day's own template's tasks still go when another comes, the way they always did.
+  expect(restamped.tasks.some(t => t.title === 'Gym' || t.title === 'Deep work')).toBe(false)
+})
+
+test('a task moved in from the template being stamped is the one its block keeps, not a second copy', () => {
+  const other: Template = { id: 't2', name: 'Other', color: '#f9d48a', blocks: [{ id: 'o1', time: '18:00', title: 'Swim' }] }
+  const day: DayPlan = {
+    date: '2026-09-01',
+    tasks: [{ id: 'moved', title: 'Swim', time: '18:00', done: true, fromTemplate: true, origin: { type: 'template', sourceId: 't2', blockId: 'o1' } }],
+  }
+  const stamped = applyStamps({ '2026-09-01': day }, [workDay, other], { '2026-09-01': 't2' })['2026-09-01']
+  expect(stamped.tasks).toHaveLength(1)
+  expect(stamped.tasks[0]).toMatchObject({ id: 'moved', done: true })
+})
+
 test('does not mutate the input days object', () => {
   const days: Record<string, DayPlan> = {}
   applyStamps(days, [workDay], { '2026-09-01': 't1' })
