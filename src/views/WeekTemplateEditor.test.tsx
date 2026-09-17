@@ -914,11 +914,11 @@ test('remove says which days it will take the block from, in words', async () =>
 })
 
 /**
- * A meal block's recipe in a week - Kitchen, since v2.27: asked on the add
+ * A meal block's recipes in a week - Kitchen, since v2.27: asked on the add
  * row once the block is a meal, and in an open meal block's panel after, for
  * every day the block is on, the way its binding to a list is.
  */
-test('a meal block in a week is given a kind of meal as it is added, and its panel changes it to a recipe on every day', async () => {
+test('a meal block in a week is given a kind of meal as it is added, and its panel changes it to recipes on every day', async () => {
   const user = userEvent.setup()
   const soup = actions.addRecipe({ title: 'Lentil soup', text: 'INGREDIENTS\nred lentils' })!
   render(<TemplatesView />)
@@ -926,21 +926,23 @@ test('a meal block in a week is given a kind of meal as it is added, and its pan
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
   await user.click(screen.getByRole('button', { name: 'All days' }))
   await openAddRow(user)
-  expect(addRow().queryByLabelText('Recipe')).toBeNull()
+  expect(addRow().queryByRole('button', { name: /^Recipes for the new block: / })).toBeNull()
   await user.click(addRow().getByRole('button', { name: 'Meals' }))
-  await user.selectOptions(addRow().getByLabelText('Recipe'), 'Lunch recipes')
+  await user.click(addRow().getByRole('button', { name: /^Recipes for the new block: / }))
+  await user.click(within(addRow().getByRole('group', { name: 'Or choose on the day' })).getByRole('button', { name: 'Lunch' }))
   await addBlock(user, 'Lunch')
   expect(getData().templates).toHaveLength(0)
 
   await openBlock(user, 'Monday', 'Lunch')
-  const panelRecipe = openBlockPanel().getByLabelText('Recipe')
-  expect(panelRecipe).toHaveValue('meal:lunch')
-  await user.selectOptions(panelRecipe, 'Lentil soup')
+  const panelField = openBlockPanel().getByRole('button', { name: /^Recipes for Lunch: / })
+  expect(panelField).toHaveTextContent('Lunch, chosen on the day')
+  await user.click(panelField)
+  await user.click(openBlockPanel().getByRole('button', { name: 'Lentil soup' }))
   await user.click(screen.getByRole('button', { name: 'Save template' }))
 
   const blocks = getData().templates[0].blocks
   expect(blocks).toHaveLength(7)
-  expect(blocks.every(b => b.category === 'meal' && b.recipeId === soup.id && b.mealType === undefined)).toBe(true)
+  expect(blocks.every(b => b.category === 'meal' && b.recipeId === soup.id && b.recipeIds?.[0] === soup.id && b.mealType === undefined)).toBe(true)
 })
 
 test('a block that is not a meal is asked about no recipe, in the add row or in its panel', async () => {
@@ -951,5 +953,5 @@ test('a block that is not a meal is asked about no recipe, in the add row or in 
   await user.type(screen.getByPlaceholderText('Week name'), 'My week')
   await addBlock(user, 'Deep work')
   await openBlock(user, 'Wednesday', 'Deep work')
-  expect(openBlockPanel().queryByLabelText('Recipe')).toBeNull()
+  expect(openBlockPanel().queryByRole('button', { name: /^Recipes for / })).toBeNull()
 })

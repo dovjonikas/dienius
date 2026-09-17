@@ -68,6 +68,8 @@ const SCREENS = [
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
   { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click() } },
   { name: 'Kitchen (writing)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Edit', exact: true }).click() } },
+  { name: 'Kitchen (to a template)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Add to template', exact: true }).click() } },
+  { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
 ]
 

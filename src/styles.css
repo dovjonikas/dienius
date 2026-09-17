@@ -6428,7 +6428,8 @@ button.danger {
 .clock-sound-caret,
 .north-day-caret,
 .kitchen-more-caret,
-.kitchen-back-caret {
+.kitchen-back-caret,
+.recipes-field-caret {
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
@@ -6439,7 +6440,8 @@ button.danger {
 
 .clock-sound-head[aria-expanded='true'] .clock-sound-caret,
 .north-day-line[aria-expanded='true'] .north-day-caret,
-.kitchen-more[aria-expanded='true'] .kitchen-more-caret {
+.kitchen-more[aria-expanded='true'] .kitchen-more-caret,
+.recipes-field-summary[aria-expanded='true'] .recipes-field-caret {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
 
@@ -14431,7 +14433,10 @@ main:has(.week) > .calendar {
 /* A meal with nothing in it, a search that found nothing, or a recipe with
    nothing written: one quiet line where the rows or the method would be. */
 .kitchen-recipe-none,
-.kitchen-none {
+.kitchen-none,
+.kitchen-template-note,
+.kitchen-template-said,
+.recipes-field-none {
   margin: 0;
   color: var(--muted);
   font-size: var(--t-sm);
@@ -14652,6 +14657,247 @@ main:has(.week) > .calendar {
 .kitchen-delete {
   margin-right: auto;
   margin-left: calc(var(--s4) * -1);
+}
+
+/* Add to template - v2.30, docs/RESEARCH-KITCHEN.md section 6.5. Opened under
+   the recipe's first row as the Library's card: the template, where the recipe
+   goes, and for a new block its name, time and length, ending the way the
+   form ends. */
+.kitchen-template-form { gap: var(--s4); }
+
+/* The template's name is short; the select is as wide as a name needs, not
+   the card. */
+.kitchen-template-form > .field > select {
+  align-self: flex-start;
+  min-width: min(100%, 16rem);
+  max-width: 100%;
+}
+
+/* Where it goes, as chips: a week's meal blocks can be a dozen, and chips wrap
+   where rows would run down the page. The radio under each is kept for the
+   keys - the arrows move between them and Tab lands on the one chosen - and
+   the chip draws it: the quiet fill, the accent's ground once chosen, the
+   ring when the keys are on it. */
+.kitchen-template-into {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+}
+
+.kitchen-template-choice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--lh-tight);
+  cursor: pointer;
+}
+
+.kitchen-template-choice > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .kitchen-template-choice:hover { background: var(--fill-strong); }
+}
+
+.kitchen-template-choice:has(> input:checked) { background: var(--accent-dim); }
+
+.kitchen-template-choice:has(> input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A new block's name, time and length on one row where the card is wide
+   enough, the name taking what is left; on a phone they wrap. */
+.kitchen-template-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3);
+}
+
+.kitchen-template-new > .field:first-child { flex: 1 1 12rem; }
+
+.kitchen-template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+@media (pointer: coarse) {
+  .kitchen-template-choice { min-height: var(--touch); }
+}
+
+/* A meal's recipes, chosen from Kitchen - v2.30, views/kitchen/RecipesField.tsx.
+   The field is no box of its own: its line stands in the row it was put in,
+   beside the word that names it, and its panel opens as a full-width break in
+   that row, the way the Library's quick sheet does, so nothing beside the line
+   moves when it opens. */
+.recipes-field { display: contents; }
+
+.library-binding:has(> .recipes-field > .recipes-field-panel) { flex: 1 0 100%; }
+
+/* The line says what the meal holds, on a field's fill, at a field's size,
+   with the caret everything that folds carries: it stands where a select stood
+   and answers the same question, but what it opens is Kitchen in small rather
+   than a list of names. */
+.recipes-field-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s3);
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: none;
+  border-radius: var(--r-control);
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: var(--lh-ui);
+  text-align: left;
+}
+
+.recipes-field-summary-words {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recipes-field-summary:hover { background: var(--fill-strong); }
+}
+
+.recipes-field-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.recipes-field-panel {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  min-width: 0;
+  margin-top: var(--s2);
+}
+
+/* Across the panel, and one line tall: the add row gives every input in it a
+   120px basis, which in a column is a height. */
+.recipes-field-panel > .recipes-field-search {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* The recipes a block walks, in the order days get them. Numbered, because the
+   order is the fact: the days take them in turn, one a day, and round again. */
+.recipes-field-walk {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: walk;
+}
+
+.recipes-field-walk-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--control-h);
+  counter-increment: walk;
+}
+
+.recipes-field-walk-item::before {
+  content: counter(walk);
+  flex: 0 0 2ch;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.recipes-field-walk-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+  overflow-wrap: anywhere;
+}
+
+/* Take out with its word on the row's right edge, the ground under the
+   pointer reaching past it. */
+.recipes-field-out {
+  flex: 0 0 auto;
+  margin-right: calc(var(--s4) * -1);
+}
+
+/* The sections side by side where the panel is wide - a cookbook's index, a
+   column to a meal - and one under another on a phone. It is not boxed into a
+   height of its own to scroll: a shelf cut at its foot read as a section with
+   nothing in it, and on a phone it was a scroll inside the page's scroll. With
+   a lot of recipes the search over it is the way to one, the way it is on
+   Kitchen's own page. */
+.recipes-field-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  align-items: start;
+  gap: var(--s4);
+}
+
+.recipes-field-shelf > .recipes-field-none { grid-column: 1 / -1; }
+
+.recipes-field-section,
+.recipes-field-kinds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.recipes-field-section-name {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-weight: var(--w-medium);
+  line-height: var(--lh-ui);
+}
+
+.recipes-field-options { margin: 0; }
+
+/* A long name ends in an ellipsis rather than a pill two lines tall; the chip
+   is named in full for a screen reader, and the recipe's page has the rest. */
+.recipes-field-options button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipes-field-foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (pointer: coarse) {
+  .recipes-field-summary { min-height: var(--touch); }
 }
 
 /* The Note/Task marker beside the scratch field.

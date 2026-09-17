@@ -1,5 +1,6 @@
 import { MEAL_TYPES, RECIPE_LIMITS, type MealType, type Recipe } from './types'
 import { readRecipe, recipeIngredients } from './recipeText'
+import { dayNumber } from './north'
 import { formatDuration } from '../widgets/day-plan/capacity'
 
 /**
@@ -150,6 +151,53 @@ export function factsLine(recipe: Recipe): string | undefined {
  */
 export function isMealCategory(category: string | undefined): boolean {
   return category === 'meal'
+}
+
+/**
+ * What a meal is given from Kitchen: the recipes it walks, in the order they
+ * come round, or a kind of meal left to the day to choose from. Neither is a
+ * meal with no recipe.
+ */
+export interface MealRecipes {
+  recipeIds?: string[]
+  mealType?: MealType
+}
+
+/**
+ * The recipes a template's meal block walks - v2.30: its list, or the one
+ * recipe a block was given before there were lists.
+ */
+export function blockRecipeIds(block: { recipeIds?: string[]; recipeId?: string }): string[] {
+  if (block.recipeIds?.length) return block.recipeIds
+  return block.recipeId ? [block.recipeId] : []
+}
+
+/** What a block holds, as the recipes field reads it. */
+export function mealRecipesOf(block: { recipeIds?: string[]; recipeId?: string; mealType?: MealType }): MealRecipes {
+  const recipeIds = blockRecipeIds(block)
+  return { ...(recipeIds.length > 0 ? { recipeIds } : {}), ...(block.mealType ? { mealType: block.mealType } : {}) }
+}
+
+/**
+ * What a meal's field writes onto a block: every recipe field said, so a block
+ * given recipes loses its kind of meal and the other way round. `recipeId` is
+ * the first of the list, for a device on an older version.
+ */
+export function mealFields(value: MealRecipes): { recipeIds: string[] | undefined; recipeId: string | undefined; mealType: MealType | undefined } {
+  const ids = value.recipeIds?.length ? value.recipeIds : undefined
+  return { recipeIds: ids, recipeId: ids?.[0], mealType: ids ? undefined : value.mealType }
+}
+
+/**
+ * The recipe a date gets from a block's walk - v2.30, docs/RESEARCH-KITCHEN.md
+ * section 6.5. Consecutive dates take consecutive recipes, and round again
+ * after the last, worked out from the date alone: the same on every device and
+ * nothing stored. A day skipped moves the walk on rather than holding it back.
+ */
+export function recipeForDate(recipeIds: readonly string[], date: string): string | undefined {
+  if (recipeIds.length === 0) return undefined
+  const n = recipeIds.length
+  return recipeIds[((dayNumber(date) % n) + n) % n]
 }
 
 /** What a meal block on the day or in a template points at - see `mealLink`. */

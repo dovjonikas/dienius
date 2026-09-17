@@ -87,8 +87,8 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
           onCancel={() => setPage({ kind: 'recipe', id: open.id })}
           onDelete={() => {
             const before = open
-            actions.removeRecipe(open.id)
-            offerUndo(`${before.title} deleted`, () => actions.restoreRecipe(before))
+            const { undo } = actions.removeRecipe(open.id)
+            offerUndo(`${before.title} deleted`, undo)
             backToList()
           }}
         />

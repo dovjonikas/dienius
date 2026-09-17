@@ -473,9 +473,17 @@ ingredients. The chips at the top show one meal's cards on their own, and the
 search box looks in the names and inside the recipes, so `lentils` finds the
 soup. A card opens the recipe's page, which reads the recipe and has **Edit**.
 
-**On the day.** A block whose category is **Meals** can point at a recipe, or
-just at a kind of meal: in a template, pick it under the block (or on the add
-row once the block is a meal); on a day, in the task's details. The card then
+**In templates, and on the day.** A block whose category is **Meals** takes
+recipes from Kitchen. Under the block, **Recipes** says what it holds; press it
+and Kitchen opens in small - a search, the recipes in their sections, and a
+press on one to add it or take it out. Choose several - a week of dinners - and
+the days take them in turn, one a day in the order they are numbered, and round
+again; a date always gets the same one, on every device. Or leave the meal to
+the day under **Or choose on the day**. The add row asks the same once a new
+block is a meal. From a recipe's own page, **Add to template** puts it into one
+of a template's meal blocks, or makes a new meal block at a time and a length.
+
+On a day, the task's details choose one recipe for that day only. The card
 shows the recipe's name - press it to open the recipe - or "Lunch recipes",
 which opens Kitchen on lunch so you can choose there. A meal pointing at
 nothing works exactly as it always did.

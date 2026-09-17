@@ -4099,3 +4099,25 @@ second exception to "nothing on the page casts a shadow", asked for. What makes
 them Kitchen's rather than North's is the mark a meal already has on the day:
 the Meals category's colour down the edge and a breath of it in the ground. No
 colour says anything about a number, which section 3 of the research forbids.
+
+**A meal block walks its recipes by the date.** A reading block reads the next
+book because a list remembers where it is. A walk of dinners needs nothing
+remembered if the date decides - consecutive dates take consecutive recipes -
+so every device gives a date the same meal and nothing new is stored or synced.
+`recipeId` is still written, as the first, so a device on v2.29 stamps a meal
+rather than none.
+
+**Recipes or a kind of meal, never both.** A block holding both would ask two
+questions of one meal. Choosing one takes the other away, and a block that came
+in holding both keeps its recipes, the more particular answer.
+
+**Kitchen in small, not a select.** A select listing every recipe by name is a
+long scroll through names once there are many. The field opens Kitchen's own
+sections and a search. It is not boxed into a height to scroll: a shelf cut at
+its foot read as a section with nothing in it, and on a phone it was a scroll
+inside a scroll. On a day's details it has no Done of its own, because the
+sheet's Done stands under it.
+
+**Add to template makes a new block only on a day template.** On a week a block
+belongs to a weekday, and the week's editor is where that is said; a week with
+no meal block says so.

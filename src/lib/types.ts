@@ -99,8 +99,19 @@ export interface TemplateBlock {
    * since v2.27. Copied onto the task it stamps, where the day shows the
    * recipe's name and a press opens it. An id that resolves to nothing - the
    * recipe was removed - is read as absent, see `mealLink` in lib/kitchen.ts.
+   *
+   * Since v2.30 the first of `recipeIds`, kept so a device on an older version
+   * still stamps a meal from the block rather than none.
    */
   recipeId?: string
+  /**
+   * The recipes this meal walks - Kitchen, since v2.30: each day stamped from
+   * the block gets the next one, worked out from the date (`recipeForDate` in
+   * lib/kitchen.ts), the way a reading block moves through a list of books.
+   * In the order they were chosen. Absent on a block with one recipe written
+   * before lists, whose `recipeId` is its list of one.
+   */
+  recipeIds?: string[]
   /**
    * On a block in the meals category, with no recipe chosen yet: the kind of
    * meal it is, so a press on the day opens Kitchen on that meal's recipes

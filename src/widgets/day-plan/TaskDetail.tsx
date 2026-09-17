@@ -18,7 +18,7 @@ import { stepTime, windowFor } from './capacity'
 import { carriedIntervals, sleepOn } from '../../lib/shiftDay'
 import { todayKey } from '../../lib/dates'
 import { isMealCategory } from '../../lib/kitchen'
-import { RecipeSelect } from '../../views/kitchen/RecipeBinding'
+import { RecipesField } from '../../views/kitchen/RecipesField'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -322,14 +322,17 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               Kitchen. Only on a meal, where the question means something. */}
           {isMealCategory(task.category) && (
             <div className="task-detail-field">
-              <span className="task-detail-label">Recipe</span>
+              <span className="task-detail-label" aria-hidden="true">
+                Recipe
+              </span>
               <div className="task-detail-time">
-                <RecipeSelect
-                  label="Recipe"
+                <RecipesField
+                  id={`task-recipe-${task.id}`}
+                  label={`Recipe for ${task.title}`}
+                  single
                   recipes={data.recipes}
-                  recipeId={task.recipeId}
-                  mealType={task.mealType}
-                  onChange={link => actions.setTaskMealLink(date, task.id, link)}
+                  value={{ ...(task.recipeId ? { recipeIds: [task.recipeId] } : {}), ...(task.mealType ? { mealType: task.mealType } : {}) }}
+                  onChange={value => actions.setTaskMealLink(date, task.id, { recipeId: value.recipeIds?.[0], mealType: value.recipeIds?.length ? undefined : value.mealType })}
                 />
               </div>
             </div>

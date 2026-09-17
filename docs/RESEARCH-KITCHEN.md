@@ -152,7 +152,9 @@ the one read.
 
 - **Several recipes on a block** (`TemplateBlock.recipeIds`), chosen in a picker
   that is Kitchen in small - sections by meal, a search, a press to add or take
-  away - in the order they were added.
+  away - in the order they were added. The chosen ones stand numbered at its top,
+  each with Take out, and under the sections the kinds of meal to leave to the
+  day; a block is one or the other.
 - **Each day gets the next one.** A day stamped from the block holds one recipe
   (`Task.recipeId`, as now), and which one walks the list by the date, so
   Monday's dinner is not Tuesday's and every chosen meal comes round. Worked
@@ -163,7 +165,9 @@ the one read.
   left open to choose on the day stays as it is.
 - **From a recipe's page, Add to template**, the way a book is added: a
   template and one of its meal blocks, or a new meal block with a time and a
-  length. The recipe joins that block's list.
+  length. The recipe joins that block's list, once. A new block is offered on a
+  day template only: on a week a block belongs to a weekday, which the week's
+  editor asks.
 - **An older device** reads `recipeId`, which is written as the first of the
   list, so it still stamps a meal rather than none.
 

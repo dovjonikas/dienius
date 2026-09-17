@@ -54,6 +54,8 @@ const SCREENS = [
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
   { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click() } },
   { name: 'Kitchen (writing)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Edit', exact: true }).click() } },
+  { name: 'Kitchen (to a template)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Add to template', exact: true }).click() } },
+  { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
 ]
 
@@ -89,7 +91,7 @@ const focused = (/** @type {Page} */ page) => page.evaluate(() => {
   // since. The rail widens while it holds focus, so a nav button's position
   // at the moment Tab lands on it is not its position a second later, and a
   // key built from coordinates called all eight of them pointer-only.
-  const w = /** @type {Window & { __keysStops?: number }} */ (window)
+  const w = /** @type {Window & { __keysStops?: number, __keysBoxes?: number }} */ (window)
   if (!el.dataset.keysStop) el.dataset.keysStop = String((w.__keysStops = (w.__keysStops ?? 0) + 1))
   return {
     tag: el.tagName,
@@ -111,6 +113,20 @@ const focused = (/** @type {Page} */ page) => page.evaluate(() => {
     top: (() => {
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
       return Math.round(el.getBoundingClientRect().top + scrollY)
+    })(),
+    // The box the stop scrolls inside, if it is not the page, and where the
+    // stop stands in what that box holds. A template's picture of its day
+    // scrolls in its own box, and a browser brings a focused gap to the
+    // middle of it: the gap after one at the foot of the box was drawn
+    // higher on the screen, though it is lower in the picture, and read as
+    // a climb. Two stops in one box are compared where they stand in it -
+    // see check 2 - and stops in different boxes as the eye sees them.
+    ...(() => {
+      let box = el.parentElement
+      while (box && !(box.scrollHeight > box.clientHeight && /(auto|scroll)/.test(getComputedStyle(box).overflowY))) box = box.parentElement
+      if (!box) return { box: '', inBox: 0 }
+      if (!box.dataset.keysBox) box.dataset.keysBox = String((w.__keysBoxes = (w.__keysBoxes ?? 0) + 1))
+      return { box: box.dataset.keysBox, inBox: Math.round(el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop) }
     })(),
     left: Math.round(el.getBoundingClientRect().left + scrollX),
     visible: r.width > 0 && r.height > 0,
@@ -183,7 +199,7 @@ async function main() {
           const a = stops[i - 1]
           const b = stops[i]
           if (!a.visible || !b.visible) continue
-          const climbed = a.top - b.top > CLIMB_PX
+          const climbed = a.box && a.box === b.box ? a.inBox - b.inBox > CLIMB_PX : a.top - b.top > CLIMB_PX
           const movedRight = b.left - a.left > 80
           if (climbed && !movedRight) {
             findings.push(`  [${where}] Tab climbs the screen: "${a.name}" (y ${a.top}) then "${b.name}" (y ${b.top})`)

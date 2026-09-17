@@ -6,7 +6,6 @@ import { TaskDetail } from '../../widgets/day-plan/TaskDetail'
 import { actions, getData, useAppData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import type { Task } from '../../lib/types'
-import { RecipeSelect, mealBindingValue, readMealBinding } from './RecipeBinding'
 
 /**
  * A meal on the day - Kitchen, since v2.27. A task whose category is Meals
@@ -77,62 +76,35 @@ function openDetail() {
   return render(<Harness />)
 }
 
-test("the detail sheet chooses a meal's recipe or its kind of meal, and only for a meal", async () => {
+// Since v2.30 chosen from Kitchen in small rather than from one long select -
+// docs/RESEARCH-KITCHEN.md section 6.5: a day's meal has one recipe, and a
+// press chooses it, or takes it away again.
+test("the detail sheet chooses a meal's recipe from Kitchen, or its kind of meal, and only for a meal", async () => {
   const user = userEvent.setup()
   seedDay([{ title: 'Lunch', category: 'meal' }])
   const { unmount } = openDetail()
-  const select = screen.getByRole('combobox', { name: 'Recipe' })
-  expect(select).toHaveValue('')
+  const field = () => screen.getByRole('button', { name: /^Recipe for Lunch: / })
+  expect(field()).toHaveTextContent('No recipe')
 
-  await user.selectOptions(select, 'Lunch recipes')
+  await user.click(field())
+  await user.click(within(screen.getByRole('group', { name: 'Or choose on the day' })).getByRole('button', { name: 'Lunch' }))
   expect(getData().days[DATE].tasks[0]).toMatchObject({ mealType: 'lunch' })
   expect(getData().days[DATE].tasks[0].recipeId).toBeUndefined()
 
-  await user.selectOptions(select, 'Lentil soup')
+  await user.click(field())
+  await user.click(within(screen.getByRole('group', { name: 'No meal yet' })).getByRole('button', { name: 'Lentil soup' }))
   expect(getData().days[DATE].tasks[0]).toMatchObject({ recipeId: 'soup' })
   expect(getData().days[DATE].tasks[0].mealType).toBeUndefined()
+  expect(field()).toHaveTextContent('Lentil soup')
 
-  await user.selectOptions(select, 'No recipe')
+  await user.click(field())
+  await user.click(within(screen.getByRole('group', { name: 'No meal yet' })).getByRole('button', { name: 'Lentil soup' }))
   expect(getData().days[DATE].tasks[0].recipeId).toBeUndefined()
   expect(getData().days[DATE].tasks[0].mealType).toBeUndefined()
   unmount()
 
   seedDay([{ title: 'Deep work', category: 'core' }])
   openDetail()
-  expect(screen.queryByRole('combobox', { name: 'Recipe' })).toBeNull()
+  expect(screen.queryByRole('button', { name: /^Recipe for / })).toBeNull()
 })
 
-test('the recipe select offers no recipe, the six kinds of meal to choose on the day and every recipe by name, and reads a removed recipe as its kind of meal', async () => {
-  const user = userEvent.setup()
-  const recipes = [
-    { id: 'soup', title: 'Lentil soup', text: 'a text' },
-    { id: 'oats', title: 'Apple and oats', text: 'a text' },
-  ]
-  const onChange = vi.fn()
-  const { rerender } = render(<RecipeSelect label="Recipe" recipes={recipes} recipeId="soup" onChange={onChange} />)
-  const select = screen.getByRole('combobox', { name: 'Recipe' })
-  expect([...select.querySelectorAll('option')].map(o => o.textContent)).toEqual([
-    'No recipe',
-    'Breakfast recipes',
-    'Lunch recipes',
-    'Dinner recipes',
-    'Pre-gym recipes',
-    'Post-gym recipes',
-    'Snack recipes',
-    'Apple and oats',
-    'Lentil soup',
-  ])
-  expect(select).toHaveValue('recipe:soup')
-
-  await user.selectOptions(select, 'Snack recipes')
-  expect(onChange).toHaveBeenLastCalledWith({ mealType: 'snack' })
-
-  rerender(<RecipeSelect label="Recipe" recipes={recipes} recipeId="gone" mealType="dinner" onChange={onChange} />)
-  expect(select).toHaveValue('meal:dinner')
-
-  expect(mealBindingValue({ recipeId: 'gone' }, recipes)).toBe('')
-  expect(readMealBinding('recipe:soup')).toEqual({ recipeId: 'soup' })
-  expect(readMealBinding('meal:lunch')).toEqual({ mealType: 'lunch' })
-  expect(readMealBinding('meal:brunch')).toEqual({})
-  expect(readMealBinding('')).toEqual({})
-})

@@ -339,6 +339,42 @@ const SCREENS = [
       await p.waitForTimeout(200)
     },
   },
+  // v2.30: a recipe put into a template from its page, and a meal block's
+  // recipes open in the editor with one chosen, so the walk's numbers and its
+  // Take out are measured too; and a day's meal choosing its one recipe in the
+  // details. Each presses straight at its control, so one that is not there
+  // throws rather than measuring the screen it failed to open.
+  {
+    name: 'Kitchen (to a template)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await p.getByRole('button', { name: /Overnight oats/ }).first().click()
+      await p.getByRole('button', { name: 'Add to template', exact: true }).click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: "Template editor (a meal's recipes)",
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Templates')
+      await p.getByRole('button', { name: /^Edit Working day/ }).first().click()
+      await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click()
+      await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: "Task detail (a meal's recipe)",
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      await p.getByRole('button', { name: /^More actions for Dinner/ }).first().click()
+      await p.waitForTimeout(250)
+      await p.getByRole('button', { name: /Details/ }).first().click()
+      await p.waitForTimeout(250)
+      await p.getByRole('button', { name: /^Recipe for Dinner: / }).first().click()
+      await p.waitForTimeout(200)
+    },
+  },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
   {
     name: 'Task detail',

@@ -1,14 +1,15 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { factsLine, fullMacroLine } from '../../lib/kitchen'
 import { readRecipe, type RecipePart } from '../../lib/recipeText'
 import type { Recipe } from '../../lib/types'
+import { AddRecipeToTemplate } from './AddRecipeToTemplate'
 
 /**
  * A recipe, read - Kitchen, since v2.27.
  *
- * Kitchen at the top goes back to the list, and Edit stands at the right of
- * the same row - Cook, with its screen kept awake, went in v2.30, asked for.
- * Under it, one card: the name, the
+ * Kitchen at the top goes back to the list, and Add to template and Edit stand
+ * at the right of the same row - Cook, with its screen kept awake, went in
+ * v2.30, asked for. Under it, one card: the name, the
  * numbers for a serving and the facts on two quiet lines when there are any,
  * then the text as lib/recipeText.ts reads it - the lines before the headings
  * as they were typed, INGREDIENTS as a list, STEPS as numbered steps and any
@@ -24,6 +25,18 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
   const facts = factsLine(recipe)
   const reading = readRecipe(recipe.text)
   const written = reading.intro.length > 0 || reading.parts.length > 0
+  // Add to template, the way a book is added - v2.30. What was done is said
+  // once, in the page's own words, where the panel was, and the keys go back
+  // to the button that opened it rather than to the top of the page.
+  const addRef = useRef<HTMLButtonElement>(null)
+  const [adding, setAdding] = useState(false)
+  const [added, setAdded] = useState<string | null>(null)
+
+  function closeAdding(said: string | null) {
+    setAdding(false)
+    setAdded(said)
+    addRef.current?.focus()
+  }
 
   useEffect(() => {
     titleRef.current?.focus()
@@ -37,11 +50,36 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
           Kitchen
         </button>
         <div className="kitchen-head-actions">
+          <button
+            ref={addRef}
+            type="button"
+            className="btn-secondary"
+            aria-expanded={adding}
+            onClick={() => {
+              setAdded(null)
+              setAdding(open => !open)
+            }}
+          >
+            Add to template
+          </button>
           <button type="button" className="btn-secondary" onClick={onEdit}>
             Edit
           </button>
         </div>
       </div>
+
+      {adding && (
+        <AddRecipeToTemplate
+          recipe={recipe}
+          onCancel={() => closeAdding(null)}
+          onAdded={closeAdding}
+        />
+      )}
+      {added && (
+        <p className="kitchen-template-said" role="status">
+          {added}
+        </p>
+      )}
 
       <article className="library-list kitchen-recipe" aria-labelledby={titleId}>
         <header className="kitchen-recipe-head">

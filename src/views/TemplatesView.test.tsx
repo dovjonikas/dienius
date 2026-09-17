@@ -1017,35 +1017,47 @@ test('a block added in this session can be dragged too, and still gets a fresh i
 })
 
 /**
- * A meal block's recipe - Kitchen, since v2.27. Asked on the add row once the
- * block is a meal, and on a meal block's own row after, with the one select
- * every meal is chosen with: no recipe, a kind of meal to choose from on the
- * day, or a recipe by name.
+ * A meal block's recipes - Kitchen, since v2.27, and several of them walked a
+ * day at a time since v2.30. Asked on the add row once the block is a meal, and
+ * on a meal block's own row after, with the field every meal is chosen with:
+ * recipes from Kitchen, or a kind of meal to choose from on the day.
  */
-test('a meal block in a day template is given a recipe as it is added, and its row changes it to a kind of meal', async () => {
+test('a meal block in a day template is given recipes as it is added, and its row changes them to a kind of meal', async () => {
   const user = userEvent.setup()
   const soup = actions.addRecipe({ title: 'Lentil soup', text: 'INGREDIENTS\nred lentils' })!
+  const oats = actions.addRecipe({ title: 'Overnight oats', text: '' })!
   render(<TemplatesView />)
   await user.click(screen.getByRole('button', { name: 'New template' }))
   await user.click(screen.getByRole('button', { name: /^A day/ }))
   await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
 
   const row = within(document.querySelector('.block-add') as HTMLElement)
+  const addField = () => row.getByRole('button', { name: /^Recipes for the new block: / })
   // Not a meal yet, so there is no recipe to ask about.
-  expect(row.queryByLabelText('Recipe')).toBeNull()
+  expect(row.queryByRole('button', { name: /^Recipes for the new block: / })).toBeNull()
   await user.click(row.getByRole('button', { name: 'Meals' }))
-  await user.selectOptions(row.getByLabelText('Recipe'), 'Lentil soup')
+  await user.click(addField())
+  await user.click(row.getByRole('button', { name: 'Lentil soup' }))
+  await user.click(row.getByRole('button', { name: 'Overnight oats' }))
+  await user.click(row.getByRole('button', { name: 'Done' }))
+  expect(addField()).toHaveTextContent('Lentil soup and 1 more')
   await user.type(screen.getByPlaceholderText('What happens'), 'Lunch')
   await user.click(screen.getByRole('button', { name: 'Add a block' }))
-  // A meal's recipe is that meal's: the next block starts with none.
-  expect(row.getByLabelText('Recipe')).toHaveValue('')
+  // A meal's recipes are that meal's: the next block starts with none.
+  expect(addField()).toHaveTextContent('No recipe')
 
-  const blockRecipe = screen.getByRole('combobox', { name: 'Recipe for Lunch' })
-  expect(blockRecipe).toHaveValue(`recipe:${soup.id}`)
-  await user.selectOptions(blockRecipe, 'Dinner recipes')
+  const blockField = screen.getByRole('button', { name: /^Recipes for Lunch: / })
+  expect(blockField).toHaveTextContent('Lentil soup and 1 more')
   await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Lunch', category: 'meal', recipeIds: [soup.id, oats.id], recipeId: soup.id })
 
+  // Reopened, the row changes the recipes to a kind of meal left to the day.
+  await user.click(screen.getByRole('button', { name: /^Edit Meals/ }))
+  await user.click(screen.getByRole('button', { name: /^Recipes for Lunch: / }))
+  await user.click(within(screen.getByRole('group', { name: 'Or choose on the day' })).getByRole('button', { name: 'Dinner' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
   expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Lunch', category: 'meal', mealType: 'dinner' })
+  expect(getData().templates[0].blocks[0].recipeIds).toBeUndefined()
   expect(getData().templates[0].blocks[0].recipeId).toBeUndefined()
 })
 

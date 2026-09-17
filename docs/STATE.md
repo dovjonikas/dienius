@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 4 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 5 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -35,6 +35,55 @@ already takes; numbers are never read from inside the ingredients or the steps;
 a recipe for two meals stands under both; several recipes on a block are walked
 by the date, and the block's `recipeId` is written as the first of them so an
 older device still stamps a meal.
+
+### Stage 5 - a meal block takes recipes from Kitchen, and Add to template: done
+
+- **`TemplateBlock.recipeIds`**: a meal block holds several recipes, optional in
+  the guard and v2.28's frozen copy, carried whole by a backup. `recipeId` is
+  written as the first of them, so a device on v2.29 still stamps a meal;
+  `blockRecipeIds` reads a block either way, and `mealFields` is what every
+  editor writes - recipes or a kind of meal, never both, the recipes first.
+- **The walk** (`recipeForDate`): consecutive dates take consecutive recipes and
+  round again, from the date alone - the same on every device, nothing stored, a
+  skipped day moving it on. Stamping and a re-stamp give each date its own, and
+  the echo remembers what the block gave that date.
+- **`views/kitchen/RecipesField.tsx`** replaces the one select every meal was
+  chosen with. Its line says what the meal holds ("Lentil soup and 2 more") and
+  names itself for a screen reader; pressed, it is Kitchen in small: a search,
+  the recipes in sections by meal (side by side on a wide screen, one under
+  another on a phone, never boxed into a scroll of their own), a press to add or
+  take out, the chosen ones numbered in the order the days take them with Take
+  out on each, and the kinds of meal to leave to the day. Both template editors
+  use it; the day's details use it for one recipe, which closes it, with no Done
+  of its own beside the sheet's.
+- **Add to template** on a recipe's page (`AddRecipeToTemplate.tsx`): a template,
+  then one of its meal blocks to join - chips, with their radios kept for the
+  arrow keys - or, on a day template, a new meal block named for the recipe's
+  first meal at a time and a length. The page says where it went and the keys go
+  back to the button. `addRecipeToTemplate` joins a recipe once.
+- **A recipe deleted** leaves every walk it was in (`removeRecipe`), and its undo
+  puts the recipe and the walks back.
+- **The runs look at them**: the sweep, keys, precision and text size open Add
+  to template and a meal block's recipes, and the sweep a day's meal choosing
+  its recipe. Opening the template editor showed keys a climb that was not one:
+  the template's picture of its day scrolls in its own box, and the browser
+  brings a focused gap to the middle of it, so the next gap down stood higher on
+  the screen. Two stops in one scrolling box are compared where they stand in it
+  now; a climb planted inside the box was caught in both themes before the zero
+  was believed.
+- DAILY, ARCHITECTURE and DECISIONS say it. Looked at on a laptop, a phone and in
+  the light theme, with sixteen generic recipes. A mutation pass broke twelve of
+  the field's and the walk's rules and eleven failed a named test; the one that
+  lived - a block keeping its kind of meal beside recipes - has its own test now.
+
+New tests: `kitchenTemplates.test.ts` (the walk by date, `blockRecipeIds`,
+`mealFields`, stamping and the echo, a day following its block's new list,
+`recipeIds` through both guards and a backup, a deleted recipe leaving the
+walks and its undo, and Add to template in the store), `RecipesField.test.tsx`
+and `AddRecipeToTemplate.test.tsx`. Changed tests: the day's details and both
+template editors choose through the recipes field where they chose in a select
+(`MealOnDay.test.tsx`, `TemplatesView.test.tsx`, `WeekTemplateEditor.test.tsx`),
+and the select's own test went with it.
 
 ### Stage 4 - Kitchen on cards, by meal: done
 

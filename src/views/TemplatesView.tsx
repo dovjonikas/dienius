@@ -22,8 +22,8 @@ import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
 import { DeleteTemplateButton } from './DeleteTemplateButton'
-import { RecipeBindingField, RecipeSelect, type MealBinding } from './kitchen/RecipeBinding'
-import { isMealCategory } from '../lib/kitchen'
+import { RecipesField } from './kitchen/RecipesField'
+import { isMealCategory, mealFields, mealRecipesOf, type MealRecipes } from '../lib/kitchen'
 import { useListReorder } from './useListReorder'
 import { paletteColorName } from '../lib/colors'
 
@@ -115,6 +115,8 @@ interface DraftBlock {
   libraryListId?: string
   /** A meal's recipe - see TemplateBlock.recipeId. */
   recipeId?: string
+  /** The recipes a meal walks - see TemplateBlock.recipeIds. */
+  recipeIds?: string[]
   /** A meal's kind, to choose a recipe for on the day - see TemplateBlock.mealType. */
   mealType?: MealType
   /** What the block says when it lands on a day - see TemplateBlock.note. */
@@ -183,7 +185,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
   // here meant adding it first and then finding its row again.
   const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
   // A meal's recipe, asked on the add row once the new block is a meal.
-  const [blockMeal, setBlockMeal] = useState<MealBinding>({})
+  const [blockMeal, setBlockMeal] = useState<MealRecipes>({})
   // Opens holding an answer, the rule every control in this app keeps
   // (CONVENTIONS section 16): the length quick-add last used. It opened
   // empty and read as the bare word "min". No length is one press away in
@@ -232,7 +234,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           minutes: blockMinutes.trim(),
           libraryListId: blockLibraryListId,
           // Only a meal carries one, whatever the add row was last asked.
-          ...(isMealCategory(blockCategory) ? blockMeal : {}),
+          ...(isMealCategory(blockCategory) ? mealFields(blockMeal) : {}),
         },
       ],
     }))
@@ -283,10 +285,10 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
     setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, noteExpanded } : b)) }))
   }
 
-  function setMealOn(index: number, link: MealBinding) {
+  function setMealOn(index: number, value: MealRecipes) {
     setDraft(d => ({
       ...d,
-      blocks: d.blocks.map((b, i) => (i === index ? { ...b, recipeId: link.recipeId, mealType: link.mealType } : b)),
+      blocks: d.blocks.map((b, i) => (i === index ? { ...b, ...mealFields(value) } : b)),
     }))
   }
 
@@ -591,15 +593,14 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
             {isMealCategory(b.category) && (
               <div className="library-binding block-meal">
                 <span className="library-binding-label" aria-hidden="true">
-                  Recipe
+                  Recipes
                 </span>
-                <RecipeSelect
-                  label={`Recipe for ${b.title}`}
-                  className="block-library block-recipe"
+                <RecipesField
+                  id={`block-recipes-${i}`}
+                  label={`Recipes for ${b.title}`}
                   recipes={recipes}
-                  recipeId={b.recipeId}
-                  mealType={b.mealType}
-                  onChange={link => setMealOn(i, link)}
+                  value={mealRecipesOf(b)}
+                  onChange={value => setMealOn(i, value)}
                 />
               </div>
             )}
@@ -722,13 +723,12 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
             list, and two questions there pushed Add a block onto a line of
             its own. A list already chosen stays in sight. */}
         {isMealCategory(blockCategory) && !blockLibraryListId ? (
-          <RecipeBindingField
-            id="block-add-recipe"
-            recipes={recipes}
-            recipeId={blockMeal.recipeId}
-            mealType={blockMeal.mealType}
-            onChange={setBlockMeal}
-          />
+          <div className="library-binding recipe-binding">
+            <span className="library-binding-label" aria-hidden="true">
+              Recipes
+            </span>
+            <RecipesField id="block-add-recipes" label="Recipes for the new block" recipes={recipes} value={blockMeal} onChange={setBlockMeal} />
+          </div>
         ) : (
           <LibraryBindingField
             id="block-add-library"
@@ -804,6 +804,7 @@ export function TemplatesView() {
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
         libraryListId: b.libraryListId,
         recipeId: b.recipeId,
+        recipeIds: b.recipeIds,
         mealType: b.mealType,
         note: b.note,
         noteExpanded: b.noteExpanded,
@@ -882,10 +883,11 @@ export function TemplatesView() {
       unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),
       libraryListId: b.libraryListId,
-      // A meal's recipe travels only on a meal; a block recoloured out of
-      // Meals leaves it behind rather than carrying a hidden one.
-      recipeId: isMealCategory(b.category) ? b.recipeId : undefined,
-      mealType: isMealCategory(b.category) ? b.mealType : undefined,
+      // A meal's recipes travel only on a meal; a block recoloured out of
+      // Meals leaves them behind rather than carrying hidden ones.
+      ...(isMealCategory(b.category)
+        ? mealFields(mealRecipesOf(b))
+        : { recipeIds: undefined, recipeId: undefined, mealType: undefined }),
       // Blank is absent, so a note opened and left empty does not become a
       // field on every block it was opened on.
       note: b.note?.trim() || undefined,

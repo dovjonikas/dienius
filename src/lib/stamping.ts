@@ -1,4 +1,5 @@
 import { currentItem } from './library'
+import { blockRecipeIds, recipeForDate } from './kitchen'
 import { originFor } from './taskIdentity'
 import { weekdayOf } from './repeats'
 import { MAX_HIGHLIGHTS } from './types'
@@ -151,7 +152,8 @@ export function refreshFromTemplate(
         time: block.time,
         minutes: block.minutes,
         category: block.category,
-        recipeId: block.recipeId,
+        // The recipe this date gets from the block's walk - v2.30.
+        recipeId: recipeForDate(blockRecipeIds(block), day.date),
         mealType: block.mealType,
       }
       /** @returns the block's value where the day is still carrying the old one. */
@@ -166,7 +168,7 @@ export function refreshFromTemplate(
       if (follow('category')) moved.category = block.category
       // A meal's recipe and its kind of meal, the same way: a recipe chosen
       // on the day for a block that left it open is the day's.
-      if (follow('recipeId')) moved.recipeId = block.recipeId
+      if (follow('recipeId')) moved.recipeId = gave.recipeId
       if (follow('mealType')) moved.mealType = block.mealType
       if (Object.keys(moved).length > 0) next = { ...next, ...moved, fromBlock: { ...echo, ...gave } }
     }
@@ -323,7 +325,8 @@ export function applyStamps(
         // A meal's recipe, or the kind of meal it leaves open - Kitchen. From
         // the block, like the category, and echoed with it below, so a
         // recipe somebody chose on the day survives the day being opened.
-        recipeId: b.recipeId,
+        // A meal's recipe: this date's in the block's walk - v2.30.
+        recipeId: recipeForDate(blockRecipeIds(b), date),
         mealType: b.mealType,
         // What was handed over, kept beside it - see Task.fromBlock. It is
         // what lets a day opened later tell "the block changed its mind"
@@ -334,7 +337,7 @@ export function applyStamps(
           time: b.time,
           minutes: b.minutes,
           category: b.category,
-          recipeId: b.recipeId,
+          recipeId: recipeForDate(blockRecipeIds(b), date),
           mealType: b.mealType,
         },
         // State a day earned, kept: whether it was one of the day's key

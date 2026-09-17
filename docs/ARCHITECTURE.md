@@ -39,7 +39,9 @@ AppData
 ├── templates: Template[]        a named, coloured set of blocks; dayKind? marks
 │   │                            a day template as a kind on the roster
 │   └── blocks: TemplateBlock[]  time?, title, minutes?, core?, category?,
-│                                unbounded?, libraryListId?
+│                                unbounded?, libraryListId?, and on a meal
+│                                recipeIds? walked a day at a time (recipeId?
+│                                the first, for older devices) or mealType?
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
 │       │                        repeatSkips?, routineSkips?, autoApplied?,
@@ -317,7 +319,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             North: the page that reads the text, the one field that writes it, and the window after sleep
-    kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page, the form, and the recipe select every meal shares
+    kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page with Add to template, the form, and the recipes field every meal shares - Kitchen in small
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor

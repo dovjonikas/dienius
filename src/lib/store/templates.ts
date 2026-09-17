@@ -29,6 +29,7 @@ export const templateActions = {
       category?: CategoryId
       libraryListId?: string
       recipeId?: string
+      recipeIds?: string[]
       mealType?: MealType
       weekday?: number
       groupId?: string
@@ -56,6 +57,7 @@ export const templateActions = {
         category: b.category,
         libraryListId: b.libraryListId,
         recipeId: b.recipeId,
+        recipeIds: b.recipeIds,
         mealType: b.mealType,
         weekday: b.weekday,
         groupId: b.groupId,

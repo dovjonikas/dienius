@@ -18,8 +18,8 @@ import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 import { bindingLine } from '../lib/library'
 import { LibraryBindingField } from './LibraryQuickAdd'
-import { RecipeBindingField, type MealBinding } from './kitchen/RecipeBinding'
-import { isMealCategory } from '../lib/kitchen'
+import { RecipesField } from './kitchen/RecipesField'
+import { isMealCategory, mealFields, mealRecipesOf, type MealRecipes } from '../lib/kitchen'
 import { ReturnField } from './ReturnField'
 import { WeekTemplateGrid } from './WeekTemplateGrid'
 
@@ -220,7 +220,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
   const [blockUnbounded, setBlockUnbounded] = useState(false)
   const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
   // A meal's recipe, asked on the add row once the new block is a meal - Kitchen.
-  const [blockMeal, setBlockMeal] = useState<MealBinding>({})
+  const [blockMeal, setBlockMeal] = useState<MealRecipes>({})
 
   const dragRef = useRef<{ id: string; x: number; y: number } | null>(null)
   const sleepProfiles = data.settings.sleepProfiles
@@ -307,7 +307,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
       unbounded: blockUnbounded || undefined,
       libraryListId: blockLibraryListId,
       // Only a meal carries one, whatever the add row was last asked.
-      ...(isMealCategory(blockCategory) ? blockMeal : {}),
+      ...(isMealCategory(blockCategory) ? mealFields(blockMeal) : {}),
       weekday: day,
       groupId,
     }))
@@ -648,13 +648,18 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
               on - Kitchen - where another block is asked what it draws from.
               A list already chosen stays in sight. */}
           {isMealCategory(noteBlock.category) && !noteBlock.libraryListId ? (
-            <RecipeBindingField
-              id={`wt-note-recipe-${noteBlock.id}`}
-              recipes={data.recipes}
-              recipeId={noteBlock.recipeId}
-              mealType={noteBlock.mealType}
-              onChange={link => editBlock(noteBlock, { recipeId: link.recipeId, mealType: link.mealType })}
-            />
+            <div className="library-binding recipe-binding">
+              <span className="library-binding-label" aria-hidden="true">
+                Recipes
+              </span>
+              <RecipesField
+                id={`wt-note-recipes-${noteBlock.id}`}
+                label={`Recipes for ${noteBlock.title}`}
+                recipes={data.recipes}
+                value={mealRecipesOf(noteBlock)}
+                onChange={value => editBlock(noteBlock, mealFields(value))}
+              />
+            </div>
           ) : (
             <LibraryBindingField
               id={`wt-note-library-${noteBlock.id}`}
@@ -799,13 +804,12 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
           {/* A meal is asked which recipe it is where another block is asked
               what it draws from - see the day editor's add row. */}
           {isMealCategory(blockCategory) && !blockLibraryListId ? (
-            <RecipeBindingField
-              id="wt-add-recipe"
-              recipes={data.recipes}
-              recipeId={blockMeal.recipeId}
-              mealType={blockMeal.mealType}
-              onChange={setBlockMeal}
-            />
+            <div className="library-binding recipe-binding">
+              <span className="library-binding-label" aria-hidden="true">
+                Recipes
+              </span>
+              <RecipesField id="wt-add-recipes" label="Recipes for the new block" recipes={data.recipes} value={blockMeal} onChange={setBlockMeal} />
+            </div>
           ) : (
             <LibraryBindingField
               id="wt-add-library"
