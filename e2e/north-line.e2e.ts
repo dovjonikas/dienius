@@ -51,11 +51,11 @@ for (const width of [1366, 1500, 1920]) {
 }
 
 /**
- * Where North has a text, the day's top carries one line of it and the
- * signature under it, since v2.26. The line is never cut: a line longer than
- * the day's column wraps. A press opens North.
+ * Where North has a text, the day's top carries one line of it, since v2.26,
+ * and from 21:00 the signature under it, since v2.28. The line is never cut:
+ * a line longer than the day's column wraps. A press opens North.
  */
-test("the text's line on the day is whole however long, the signature is under it, and a press opens North", async ({ page }, info) => {
+test("the text's line on the day is whole however long, the signature comes under it in the evening, and a press opens North", async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'measured at the wide masthead')
   await page.setViewportSize({ width: 1366, height: 900 })
   await openFreshAt(page, wednesdayAt(10))
@@ -72,7 +72,8 @@ test("the text's line on the day is whole however long, the signature is under i
 
   const words = page.locator('.north-line-words')
   await expect(words).toHaveText(long)
-  await expect(page.locator('.north-line-signature')).toHaveText('A signature line.')
+  // Ten in the morning: the line alone.
+  await expect(page.locator('.north-line-signature')).toHaveCount(0)
   await expect(page.getByText('An introduction line.')).toHaveCount(0)
   // Whole: nothing clipped sideways, and more than one line tall.
   const size = await words.evaluate(el => ({ scroll: el.scrollWidth, client: el.clientWidth, height: el.getBoundingClientRect().height, line: parseFloat(getComputedStyle(el).lineHeight) }))
@@ -82,6 +83,14 @@ test("the text's line on the day is whole however long, the signature is under i
   const lineBox = await words.boundingBox()
   const grid = await page.locator('.timeline-grid').first().boundingBox()
   expect(lineBox!.x + lineBox!.width).toBeLessThanOrEqual(grid!.x + grid!.width + 1)
+
+  // After nine, the signature under the same line, in the same press.
+  await reopenAt(page, wednesdayAt(21, 30))
+  await expect(words).toHaveText(long)
+  const signature = page.locator('.north-line-text .north-line-signature')
+  await expect(signature).toHaveText('A signature line.')
+  const [wordsBox, signatureBox] = [await words.boundingBox(), await signature.boundingBox()]
+  expect(signatureBox!.y).toBeGreaterThanOrEqual(wordsBox!.y + wordsBox!.height - 1)
 
   await page.locator('.north-line-text').click()
   await expect(page.getByRole('heading', { name: 'North' })).toBeVisible()
@@ -119,10 +128,11 @@ test("the day's line keeps to the day and its hours, and no tag is ever shown", 
   const words = page.locator('.north-line-words')
   const tags = /\[(morning|evening)\]/i
 
-  // Wednesday, ten in the morning and nobody just woken: a line for the day.
+  // Wednesday, ten in the morning and nobody just woken: a line for the day,
+  // and no signature before the evening.
   await expect(words).toHaveText(/^a (first|second) line for the day$/)
   const wednesday = await words.textContent()
-  await expect(page.locator('.north-line-signature')).toHaveText('A signature line.')
+  await expect(page.locator('.north-line-signature')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText(tags)
   await expect(page.getByText('An introduction line.')).toHaveCount(0)
 
@@ -130,9 +140,10 @@ test("the day's line keeps to the day and its hours, and no tag is ever shown", 
   await reopenAt(page, wednesdayAt(16))
   await expect(words).toHaveText(wednesday!)
 
-  // After nine, the evening's.
+  // After nine, the evening's, and the signature under it.
   await reopenAt(page, wednesdayAt(21, 30))
   await expect(words).toHaveText('a line for the evening')
+  await expect(page.locator('.north-line-signature')).toHaveText('A signature line.')
   await expect(page.locator('body')).not.toContainText(tags)
 
   // Thursday, after a night away: the window after sleep, and under it the
@@ -143,6 +154,7 @@ test("the day's line keeps to the day and its hours, and no tag is ever shown", 
   await expect(window).not.toContainText(tags)
   await window.getByRole('button', { name: 'Close' }).click()
   await expect(words).toHaveText('a line for the morning')
+  await expect(page.locator('.north-line-signature')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText(tags)
 
   // Three hours on, the morning is over: Thursday's line for the day, the
@@ -153,13 +165,13 @@ test("the day's line keeps to the day and its hours, and no tag is ever shown", 
 })
 
 /**
- * On the phone the day's North is one group under the progress: its line,
- * the signature, and the word North with the caret every fold carries,
- * opening the headings. The group ends with more air under it than there is
- * inside it, so what follows reads as the next thing on the day and not as
- * something the word North labels.
+ * On the phone the day's North is one group under the progress: its line -
+ * with the signature under it in the evening - and the word North with the
+ * caret every fold carries, opening the headings. The group ends with more
+ * air under it than there is inside it, so what follows reads as the next
+ * thing on the day and not as something the word North labels.
  */
-test('on the phone the line, the signature and the fold stand together, with more air under them than inside', async ({ page }, info) => {
+test('on the phone the line and the fold stand together, with more air under them than inside', async ({ page }, info) => {
   test.skip(info.project.name !== 'phone', 'the fold is the phone layout&apos;s')
   await openFreshAt(page, wednesdayAt(10))
   await stampWorkingDay(page)
@@ -169,7 +181,7 @@ test('on the phone the line, the signature and the fold stand together, with mor
   await expect(fold).toBeVisible()
   await expect(fold.locator('.north-day-caret')).toBeVisible()
   const air = await page.evaluate(() => {
-    const signature = document.querySelector('.north-line-signature')!.getBoundingClientRect()
+    const line = document.querySelector('.north-line')!.getBoundingClientRect()
     const group = document.querySelector('.north-day.is-folded')!
     const fold = group.getBoundingClientRect()
     // The next thing drawn on the day after the group, whatever it is.
@@ -177,7 +189,7 @@ test('on the phone the line, the signature and the fold stand together, with mor
       .map(el => el.getBoundingClientRect())
       .filter(box => box.height > 0 && box.top >= fold.bottom)
       .reduce((top, box) => Math.min(top, box.top), Infinity)
-    return { inside: fold.top - signature.bottom, under: after - fold.bottom }
+    return { inside: fold.top - line.bottom, under: after - fold.bottom }
   })
   expect(air.under).toBeGreaterThan(air.inside)
 

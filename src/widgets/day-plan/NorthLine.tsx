@@ -15,14 +15,16 @@ export interface NorthLineProps {
  *
  * One line of North's text - a line written under one of its headings,
  * picked for the date and the part of the day by lib/northLine.ts - whole,
- * wrapping rather than cut, and the signature under it, quieter. A press
- * anywhere on it opens North.
+ * wrapping rather than cut. In the evening, from 21:00, the signature stands
+ * under it, quieter: the signature is what the day ends on, and the rest of
+ * the day's top is the day's line alone (v2.28). A press anywhere on it
+ * opens North.
  *
- * Nothing stands here where the text has nothing for the day - no text, or
- * a text with no line under a heading and no signature - or where the
- * switch under Nudges has taken North's text off the day. Until v2.28 a
- * goal's name stood in for it then; goals are retired, and an empty line is
- * not a placeholder.
+ * Nothing stands here where the text has nothing for the hour - no line under
+ * a heading for this part of the day and, outside the evening, no signature
+ * to stand alone - or where the switch under Nudges has taken North's text
+ * off the day. Until v2.28 a goal's name stood in for it then; goals are
+ * retired, and an empty line is not a placeholder.
  */
 export function NorthLine({ date, onOpenNorth }: NorthLineProps) {
   const data = useAppData()
@@ -32,24 +34,28 @@ export function NorthLine({ date, onOpenNorth }: NorthLineProps) {
 }
 
 /**
- * The text's line and the signature, as one thing to press.
+ * The text's line, and in the evening the signature, as one thing to press.
  *
  * The line is in the text's own ink at the body size, and the signature a
- * step smaller in the secondary ink under it: the line is today's, the
- * signature every day's. The part of the day is only today's - another day,
- * looked at ahead or back, shows its line for the day. At an hour whose
- * lines are all under the other part's tag the signature stands alone.
+ * step smaller in the secondary ink under it. The part of the day is only
+ * today's - another day, looked at ahead or back, shows its line for the day
+ * and no signature. The evening is lib/northLine.ts's: from 21:00, unless the
+ * three hours after waking are still running, when it is the morning. In the
+ * evening, at an hour whose lines are all under the other part's tag, the
+ * signature stands alone; at any other hour with no line, nothing does.
  */
 function NorthTextLine({ text, date, onOpenNorth }: { text: string; date: string; onOpenNorth: () => void }) {
   const moment = useNorthMoment()
-  const line = northLineForDay(text, date, date === todayKey() ? moment : 'day')
+  const today = date === todayKey()
+  const line = northLineForDay(text, date, today ? moment : 'day')
   const { signature } = parseNorth(text)
-  if (line === undefined && signature.length === 0) return null
+  const signing = today && moment === 'evening' && signature.length > 0
+  if (line === undefined && !signing) return null
   return (
     <div className="north-line" data-tour="north-line">
       <button type="button" className="north-line-text" onClick={onOpenNorth}>
         {line !== undefined && <span className="north-line-words">{line}</span>}
-        {signature.length > 0 && <span className="north-line-signature">{signature.join('\n')}</span>}
+        {signing && <span className="north-line-signature">{signature.join('\n')}</span>}
       </button>
     </div>
   )

@@ -128,6 +128,33 @@ sizes and inks (`NorthView.test.tsx`, whose space helper now reads a step
 times a number), and the browser walk reads the picture as one block
 (`north.e2e.ts`).
 
+### Stage 4 - the window after sleep, and the signature in the evening: done
+
+- **The window after sleep** shows the picture and the signature and nothing
+  else: the picture as typed, blank lines and all, in the page's own type, and
+  the signature under it calm, in the quieter ink after a wide gap. It opens
+  only where the text has a picture, and one press closes it - Close, Escape
+  or a press outside.
+- **The day's top** is the day's line alone until the evening. From 21:00 -
+  the evening as the day's line already reads it, so the three hours after
+  waking stay the morning - the signature stands under the line, inside the
+  same press; with no line for the evening it stands alone, and with no
+  signature nothing does. Another day looked at in the evening shows no
+  signature.
+- **The evening close** ends on the signature (since stage 2), and on
+  nothing when there is none.
+- Settings says what the window holds in plain words: the lines before the
+  first heading and the signature.
+
+New tests: the window holds the picture as typed and the signature and no
+heading, and a picture with no signature opens alone (`App.test.tsx`); the
+signature comes under the line from 21:00 and not at 20:59, not on another
+day, alone in the evening with no line, and nowhere without a signature
+(`NorthLine.test.tsx`). Changed tests: the day's line at noon has no
+signature (`NorthLine.test.tsx`), and the browser walks read the signature
+on the day only after nine, the window's picture as one block, and the
+phone's North group from the line (`north-line.e2e.ts`, `north.e2e.ts`).
+
 ## After v2.27 - one line everywhere
 
 From two screenshots the owner sent: a Cancel alone on a row of its own, and

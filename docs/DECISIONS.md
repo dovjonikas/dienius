@@ -3916,3 +3916,13 @@ the rail. The field stays one size: a textarea cannot set one line larger
 than another without every caret after it landing in the wrong place, so
 pressing Edit shows the picture at the writing size, and the lines under the
 headings are where reading and writing still stand on the same lines.
+
+**The morning opens on the picture, the evening ends on the signature.** The
+window after sleep holds the picture as typed and the signature, the two
+parts written to be read whole. The day's top is the day's line and nothing
+more until 21:00; from then the signature stands under it, the way it ends
+the evening close. The evening is the one the day's line already reads, so a
+night shift woken at 20:00 is still in its morning at 21:30 and gets no
+signature under its morning line, and a text with no signature leaves
+nothing where one would stand. Until v2.28 the signature stood under the
+line all day, which put the words a day ends on at its start.

@@ -560,6 +560,33 @@ test('opened after five hours away, the day is under a window with the introduct
   expect(screen.getByPlaceholderText('Add a task')).toBeInTheDocument()
 })
 
+// v2.28: the window shows North's picture and its signature and nothing else,
+// the picture as typed - every blank line kept, the way the page shows it -
+// and the signature under it in its own place.
+test('the window after sleep holds the picture as typed and the signature, and no heading or line under one', () => {
+  actions.setPicture('a first picture line\n\n\na second picture line\n\nFIRST HEADING\na line under it\n---\na signature line\n\na second signature paragraph')
+  awayFor(6)
+  render(<App />)
+
+  const window = screen.getByRole('dialog', { name: 'North' })
+  const pictures = window.querySelectorAll('.north-picture')
+  expect(pictures).toHaveLength(1)
+  expect(pictures[0].textContent).toBe('a first picture line\n\n\na second picture line')
+  const signature = [...window.querySelectorAll('.north-window-signature > .north-paragraph')].map(p => p.textContent)
+  expect(signature).toEqual(['a signature line', 'a second signature paragraph'])
+  expect(within(window).queryByText('FIRST HEADING')).toBeNull()
+  expect(within(window).queryByText('a line under it')).toBeNull()
+})
+
+test('a text with a picture and no signature opens the window with the picture alone', () => {
+  actions.setPicture('a picture line\n\nFIRST HEADING\na line under it')
+  awayFor(6)
+  render(<App />)
+  const window = screen.getByRole('dialog', { name: 'North' })
+  expect(window.querySelector('.north-picture')?.textContent).toBe('a picture line')
+  expect(window.querySelector('.north-window-signature')).toBeNull()
+})
+
 test('Escape closes the window, and so does a press outside it', async () => {
   const user = userEvent.setup()
   actions.setPicture(WITH_EVERY_PART)

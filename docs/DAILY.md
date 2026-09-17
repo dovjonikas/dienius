@@ -150,13 +150,16 @@ wake - the first time the app is in view after five hours away - and
 `[evening]` to the hours after nine. The tag is only ever seen in the box
 you write in; everywhere else the heading reads without it.
 
-**On Today**, under the date, stands one line from under your headings, with
-the signature under it, quieter. It is a different line each day and the
-same one on every device, never a heading and never the introduction, and
+**On Today**, under the date, stands one line from under your headings. It
+is a different line each day and the same one on every device, never a
+heading and never the picture, and
 it is always whole - a long line wraps. In the morning hours it comes from
 the `[morning]` headings, after nine from the `[evening]` ones, and the rest
-of the day from the headings with neither. A press on it opens North. Until
-the text has a line under a heading or a signature, nothing stands there.
+of the day from the headings with neither. From nine in the evening your
+signature stands under it, quieter - the words the day ends on - and the
+same signature ends the card that closes the day. A press on it opens
+North. Until the text has a line under a heading for the hour, nothing
+stands there.
 
 Beside the day, in the column on the left between the templates and what
 is next, stand your headings as you wrote them, with the signature under
@@ -166,10 +169,10 @@ into one line, **North**, under the day's title; a tap opens them, and a tap
 on a heading opens the same card. Off, if you would rather not:
 **Settings → Nudges → North on the day**.
 
-**After sleep** the introduction comes to you: the first time the app is
-in view after five hours out of view - a night, whatever hours your nights
-keep, and not a nap - the introduction and the signature open in a window
-over the day. **Close**, Escape or a press outside it leaves it, and it
+**After sleep** your picture comes to you: the first time the app is in
+view after five hours out of view - a night, whatever hours your nights
+keep, and not a nap - the lines before your first heading and your
+signature open in a window over the day, as you typed them. **Close**, Escape or a press outside it leaves it, and it
 never opens twice in twelve hours. Nothing checks whether you read it. Off,
 if you would rather not: **Settings → Nudges → North after sleep**.
 

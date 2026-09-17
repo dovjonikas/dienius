@@ -55,7 +55,8 @@ test('the text is written on the page, reads back whole, and its introduction op
   await leaveAndReturnAt(page, wednesdayAt(7 + 24))
   const window = page.getByRole('dialog', { name: 'North' })
   await expect(window).toBeVisible()
-  await expect(window.locator('.north-paragraph').first()).toHaveText('First line here\nSecond line here')
+  // The picture as typed, its blank line kept, the way the page shows it.
+  await expect(window.locator('.north-picture')).toHaveText('First line here\nSecond line here\n\nThird line here')
   await expect(page.getByPlaceholder('Add a task')).toBeAttached()
   await window.getByRole('button', { name: 'Close' }).click()
   await expect(window).toHaveCount(0)

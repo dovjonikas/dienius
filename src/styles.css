@@ -10760,12 +10760,12 @@ button.north-day-line:focus-visible {
   .north-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
 }
 
-/* North after sleep - views/north/NorthWindow.tsx. The introduction and the
+/* North after sleep - views/north/NorthWindow.tsx. The picture and the
    signature over the day, on its own scrim and with a sheet's lift: a
    surface of its own, because words over a timeline need a ground to be read
-   on, and on it the page's reading type - the introduction at the text's
-   size, the signature a step larger with more air over it. No accent edge:
-   it is somebody's own words, not a note the app left. */
+   on, and on it the page's reading type - the picture as the page draws it,
+   the signature at its step in the quieter ink with more air over it. No
+   accent edge: it is somebody's own words, not a note the app left. */
 .north-window {
   display: flex;
   flex-direction: column;
@@ -10783,6 +10783,7 @@ button.north-day-line:focus-visible {
 .north-window-signature { margin-top: calc(var(--s8) + var(--s4)); }
 
 .north-window-signature > .north-paragraph {
+  color: var(--muted);
   font-size: var(--t-lg);
   line-height: var(--lh-read);
 }

@@ -637,7 +637,7 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               </div>
             </div>
 
-            {/* North's introduction after sleep - see northRead.ts. The one
+            {/* North's picture and signature after sleep - see northRead.ts. The one
                 thing about North the app brings forward on a clock of its
                 own, so it is the one a person has to be able to stop. On by
                 default: the owner asked for it. Only off is carried, as for
@@ -646,8 +646,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">North after sleep</span>
                 <span className="setting-desc">
-                  The introduction and signature of your North text, the first time you open the app after
-                  five hours away. Never twice in twelve hours.
+                  The lines before your first heading and your signature, the first time you open the app
+                  after five hours away. Never twice in twelve hours.
                 </span>
               </div>
               <div className="setting-control">

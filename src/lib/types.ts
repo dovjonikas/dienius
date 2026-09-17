@@ -1149,7 +1149,7 @@ export interface NorthSettings {
    */
   stripOnDay?: boolean
   /**
-   * North's introduction and signature in a window over the day, the first
+   * North's picture and signature in a window over the day, the first
    * time the app is in view after five hours out of view - see northRead.ts.
    * Absent means on, the same way and for the same reason as `stripOnDay`.
    */

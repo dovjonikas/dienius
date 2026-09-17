@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppData } from '../../lib/store'
-import { parseNorth } from '../../lib/northSections'
+import { northPicture, parseNorth } from '../../lib/northSections'
 import { arriveAtNorth, leaveNorth } from '../../lib/northRead'
 import { isDemoMode } from '../../lib/demoMode'
 import { useRestoreFocus } from '../../lib/useRestoreFocus'
@@ -22,7 +22,7 @@ export function useNorthAfterSleep(): { open: boolean; close: () => void } {
   // and the switch are whatever they are when the app comes into view.
   const terms = useRef({ intro: false, enabled: true })
   terms.current = {
-    intro: parseNorth(data.picture?.text ?? '').intro.length > 0,
+    intro: northPicture(data.picture?.text ?? '') !== '',
     enabled: data.settings.north.windowAfterSleep !== false,
   }
 
@@ -62,12 +62,14 @@ export function useNorthAfterSleep(): { open: boolean; close: () => void } {
 }
 
 /**
- * North's introduction and signature, over the day, once after sleep.
+ * North's picture and signature, over the day, once after sleep.
  *
- * The introduction is the part of the text written to be read whole, and
- * the day never shows it; this is where it is read, at the one moment of
- * the day it is for. The headings stay on the day and on the page. The
- * signature closes it, the way it closes the page.
+ * The picture - the lines before the first heading - is the part of the text
+ * written to be read whole, and the day never shows it; this is where it is
+ * read, at the one moment of the day it is for, as it was typed and in the
+ * page's own type, blank lines and all. The headings stay on the day and on
+ * the page. The signature closes it, the way it closes the page: calm, a step
+ * over the words, after a wide gap.
  *
  * One button, and Escape and a press outside do the same: it closes. No
  * timer, no tick, nothing that notices whether it was read - a window that
@@ -76,7 +78,9 @@ export function useNorthAfterSleep(): { open: boolean; close: () => void } {
  */
 export function NorthWindow({ onClose }: { onClose: () => void }) {
   const data = useAppData()
-  const { intro, signature } = parseNorth(data.picture?.text ?? '')
+  const text = data.picture?.text ?? ''
+  const picture = northPicture(text)
+  const { signature } = parseNorth(text)
   // Focus comes to the window and goes back where it was when it closes -
   // CONVENTIONS section 6, a sheet hands focus back.
   useRestoreFocus()
@@ -103,11 +107,7 @@ export function NorthWindow({ onClose }: { onClose: () => void }) {
         }}
       >
         <div className="north-window-intro">
-          {intro.map((paragraph, i) => (
-            <p key={i} className="north-paragraph">
-              {paragraph}
-            </p>
-          ))}
+          <p className="north-picture">{picture}</p>
         </div>
         {signature.length > 0 && (
           <div className="north-window-signature">
