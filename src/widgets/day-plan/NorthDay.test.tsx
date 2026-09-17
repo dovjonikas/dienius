@@ -15,12 +15,13 @@ beforeEach(() => {
 })
 
 /**
- * North beside the day: a small North, the headings as they were written,
- * each showing a small card of its lines beside it - on a resting pointer or
- * on a press - and the signature under them. Never the introduction: that is
- * met in the window after sleep and on the page. Beside the day where there
- * is a rail; folded under the day's top where there is not. Every line here
- * is a generic one.
+ * North beside the day, v2.28: a small North that folds with one press, and
+ * the headings as they were written, one line each, each showing a small
+ * card of its lines beside it - on a resting pointer or on a press. Never the
+ * picture and never the signature: the picture is met in the window after
+ * sleep and on the page, the signature on the day's top in the evening and at
+ * the end of the day. Beside the day where there is a rail; folded under the
+ * day's top where there is not. Every line here is a generic one.
  */
 
 const TEXT =
@@ -29,18 +30,123 @@ const TEXT =
 const card = () => document.querySelector('.north-heading-card')
 const cardLines = () => [...(card()?.querySelectorAll('.north-paragraph') ?? [])].map(p => p.textContent)
 
-test('a small North, the headings as written and the signature under them stand on the day, and the introduction never does', () => {
+test('in the rail, a small North that folds and the headings as written, and neither the picture nor the signature', () => {
   actions.setPicture(TEXT)
   render(<NorthDay date={DATE} />)
   const north = screen.getByRole('region', { name: 'North' })
-  expect(within(north).getByRole('heading', { name: 'North' })).toBeInTheDocument()
-  expect(within(north).getAllByRole('button').map(b => b.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
-  expect(within(north).getByText('a signature line')).toBeInTheDocument()
-  // The signature closes the section, after the headings.
-  const signature = within(north).getByText('a signature line')
-  expect(within(north).getAllByRole('button')[1].compareDocumentPosition(signature) & 4).toBe(4)
+  const label = within(north).getByRole('heading', { name: 'North' })
+  expect(within(label).getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'true')
+  expect(within(north).getAllByRole('button').map(b => b.textContent)).toEqual(['North', 'FIRST HEADING', 'SECOND HEADING'])
+  expect(screen.queryByText('a signature line')).toBeNull()
   expect(screen.queryByText('a line before any heading')).toBeNull()
   expect(north.textContent).not.toMatch(/\[evening\]/)
+})
+
+// One line each, however long: a long heading is cut with an ellipsis and
+// never wraps onto a second line. jsdom has no layout, so the rule is read.
+test('a heading is one line in the small type, cut with an ellipsis rather than wrapped', () => {
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const heading = css.match(/\n\.north-day-heading \{([^}]*)\}/)?.[1] ?? ''
+  expect(heading).toMatch(/font-size:\s*var\(--t-sm\)/)
+  expect(heading).toMatch(/white-space:\s*nowrap/)
+  expect(heading).toMatch(/overflow:\s*hidden/)
+  expect(heading).toMatch(/text-overflow:\s*ellipsis/)
+  expect(heading).not.toMatch(/overflow-wrap/)
+})
+
+/** Says the heading's words are wider than its line, the way a cut one is. */
+function cutShort(el: HTMLElement) {
+  Object.defineProperty(el, 'scrollWidth', { configurable: true, value: 400 })
+  Object.defineProperty(el, 'clientWidth', { configurable: true, value: 200 })
+}
+
+test('a heading cut short shows itself whole at the top of its card, and one that fits does not', () => {
+  actions.setPicture(TEXT)
+  render(<NorthDay date={DATE} />)
+  const first = screen.getByRole('button', { name: 'FIRST HEADING' })
+  cutShort(first)
+  fireEvent.pointerEnter(first, { pointerType: 'mouse' })
+  expect(card()!.querySelector('.north-heading-card-heading')).toHaveTextContent('FIRST HEADING')
+  expect(cardLines()).toEqual(['a line under it', 'a second paragraph under it'])
+  fireEvent.pointerLeave(first, { pointerType: 'mouse' })
+
+  const second = screen.getByRole('button', { name: 'SECOND HEADING' })
+  fireEvent.pointerEnter(second, { pointerType: 'mouse' })
+  expect(card()!.querySelector('.north-heading-card-heading')).toBeNull()
+  expect(cardLines()).toEqual(['a line under the second'])
+})
+
+// --- the fold, remembered on the device -------------------------------------------------
+
+test('a press on North folds the headings away and another opens them, and this device remembers', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(TEXT)
+  const first = render(<NorthDay date={DATE} />)
+  const fold = screen.getByRole('button', { name: 'North' })
+  await user.click(fold)
+  expect(fold).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('button', { name: 'FIRST HEADING' })).toBeNull()
+  expect(localStorage.getItem('dienius:north-fold')).toBe('folded')
+  first.unmount()
+
+  render(<NorthDay date={DATE} />)
+  const again = screen.getByRole('button', { name: 'North' })
+  expect(again).toHaveAttribute('aria-expanded', 'false')
+  await user.click(again)
+  expect(screen.getByRole('button', { name: 'FIRST HEADING' })).toBeInTheDocument()
+  expect(localStorage.getItem('dienius:north-fold')).toBe('open')
+  // A fact about this screen, not about the plan: nothing of it is written there.
+  expect(localStorage.getItem('dienius:data') ?? '').not.toContain('north-fold')
+})
+
+test('the day changing keeps the fold as it was', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(TEXT)
+  const { rerender } = render(<NorthDay date={DATE} />)
+  await user.click(screen.getByRole('button', { name: 'North' }))
+  rerender(<NorthDay date="2026-09-06" />)
+  expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'false')
+})
+
+/**
+ * The rail holds the month, the templates, North, what is next and the day's
+ * numbers, and on an ordinary screen all of it fits. Where it does not - a
+ * long list of headings, a short window - North is what starts folded, before
+ * anything is drawn so nothing jumps: its headings are an index to a page one
+ * press away, where the rest of the rail is the day itself. A choice made on
+ * this device wins over that, either way.
+ */
+test('a rail too full for its window starts with North folded, and a choice made on this device wins', () => {
+  actions.setPicture(TEXT)
+  function railThatOverflows() {
+    const rail = document.createElement('div')
+    rail.className = 'rail'
+    Object.defineProperty(rail, 'scrollHeight', { configurable: true, value: 1200 })
+    Object.defineProperty(rail, 'clientHeight', { configurable: true, value: 900 })
+    document.body.appendChild(rail)
+    return rail
+  }
+
+  const full = render(<NorthDay date={DATE} />, { container: railThatOverflows() })
+  expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'false')
+  // Not a choice: nothing is remembered for it.
+  expect(localStorage.getItem('dienius:north-fold')).toBeNull()
+  full.unmount()
+
+  localStorage.setItem('dienius:north-fold', 'open')
+  render(<NorthDay date={DATE} />, { container: railThatOverflows() })
+  expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'true')
+})
+
+test('a rail with room starts with North open', () => {
+  actions.setPicture(TEXT)
+  const rail = document.createElement('div')
+  rail.className = 'rail'
+  Object.defineProperty(rail, 'scrollHeight', { configurable: true, value: 900 })
+  Object.defineProperty(rail, 'clientHeight', { configurable: true, value: 900 })
+  document.body.appendChild(rail)
+  render(<NorthDay date={DATE} />, { container: rail })
+  expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'true')
 })
 
 test("a resting pointer shows a heading's lines on a card, and leaving takes them away", () => {
@@ -98,19 +204,18 @@ test('the card is a layer out of the flow that takes no press, so nothing under 
 test('a heading with nothing under it is words and not a control', () => {
   actions.setPicture('FIRST HEADING\nSECOND HEADING\na line under the second')
   render(<NorthDay date={DATE} />)
-  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['SECOND HEADING'])
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['North', 'SECOND HEADING'])
   expect(screen.getByText('FIRST HEADING').tagName).toBe('SPAN')
 })
 
-test('a signature with no heading is North and the signature, and a heading with no signature is North and the list', () => {
+test('a text with no heading puts nothing in the rail, and a heading is North and the list', () => {
   actions.setPicture('a line before any heading\n---\na signature line')
-  const { rerender } = render(<NorthDay date={DATE} />)
-  expect(screen.getByText('a signature line')).toBeInTheDocument()
-  expect(screen.queryByRole('button')).toBeNull()
+  const { container, rerender } = render(<NorthDay date={DATE} />)
+  expect(container).toBeEmptyDOMElement()
 
   act(() => actions.setPicture('a line before any heading\n\nFIRST HEADING\na line under it'))
   rerender(<NorthDay date={DATE} />)
-  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['FIRST HEADING'])
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['North', 'FIRST HEADING'])
   expect(screen.queryByText('a line before any heading')).toBeNull()
 })
 
@@ -133,7 +238,7 @@ test('switched off in Settings, nothing of North is on the day', () => {
 test('every heading stands in the list, however many the text has', () => {
   actions.setPicture(Array.from({ length: 40 }, (_, i) => `HEADING ${i + 1}\na line under heading ${i + 1}`).join('\n\n'))
   render(<NorthDay date={DATE} />)
-  expect(screen.getAllByRole('button')).toHaveLength(40)
+  expect(screen.getAllByRole('button', { name: /^HEADING / })).toHaveLength(40)
 })
 
 test('the day changing under it puts away a card that was out', async () => {
@@ -158,7 +263,7 @@ test('the day changing under it puts away a card that was out', async () => {
 test('folded, it is one line that says North, a press opens the headings, and a press on one its card', async () => {
   const user = userEvent.setup()
   actions.setPicture(TEXT)
-  render(<NorthDay date={DATE} folded />)
+  const { unmount } = render(<NorthDay date={DATE} folded />)
   expect(screen.queryByText('a signature line')).toBeNull()
   const line = screen.getByRole('button', { name: 'North' })
   expect(line).toHaveAttribute('aria-expanded', 'false')
@@ -173,6 +278,21 @@ test('folded, it is one line that says North, a press opens the headings, and a 
   expect(screen.queryByRole('button', { name: 'FIRST HEADING' })).toBeNull()
   expect(card()).toBeNull()
   expect(screen.queryByText('a line before any heading')).toBeNull()
+  unmount()
+})
+
+// Folded is where the phone starts; opened, it stays open on this device.
+test('on the phone North starts folded, and once opened this device keeps it open', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(TEXT)
+  const first = render(<NorthDay date={DATE} folded />)
+  await user.click(screen.getByRole('button', { name: 'North' }))
+  expect(localStorage.getItem('dienius:north-fold')).toBe('open')
+  first.unmount()
+
+  render(<NorthDay date={DATE} folded />)
+  expect(screen.getByRole('button', { name: 'North' })).toHaveAttribute('aria-expanded', 'true')
+  expect(screen.getByRole('button', { name: 'FIRST HEADING' })).toBeInTheDocument()
 })
 
 /**

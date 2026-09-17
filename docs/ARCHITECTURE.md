@@ -277,6 +277,7 @@ src/
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
+    northFold.ts       whether North's headings are folded on the day, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
     useRestoreFocus.ts hands focus back to whatever opened a sheet, panel or popover
     gridKeys.ts        the arrow keys and the one tab stop of a month grid

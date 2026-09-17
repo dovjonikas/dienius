@@ -140,11 +140,11 @@ test('the page shows everything at rest with Edit beside its name, and on the da
     await expect(lines.nth(1)).toBeVisible()
   }
 
-  // And on the day: the headings and the signature, never the introduction.
-  // Beside the day on a desktop, where a resting pointer shows a heading's
-  // lines on a card beside it and moves nothing; on the phone one folded
-  // line that says North - the signature is the day's own line's since
-  // v2.26 - a tap opening the headings and a tap on one its card.
+  // And on the day: the headings, never the picture and never the signature
+  // (the day's own line says that, in the evening, since v2.28). Beside the
+  // day on a desktop, where a resting pointer shows a heading's lines on a
+  // card beside it and moves nothing; on the phone one folded line that says
+  // North, a tap opening the headings and a tap on one its card.
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
   const card = page.locator('.north-heading-card .north-paragraph')
   if (info.project.name === 'phone') {
@@ -158,7 +158,8 @@ test('the page shows everything at rest with Edit beside its name, and on the da
     await expect(card).toHaveCount(0)
   } else {
     const north = page.getByRole('region', { name: 'North' })
-    await expect(north.getByText('a signature line')).toBeVisible()
+    await expect(north.getByRole('button', { name: 'North', exact: true })).toHaveAttribute('aria-expanded', 'true')
+    await expect(north.getByText('a signature line')).toHaveCount(0)
     await expect(card).toHaveCount(0)
     const next = page.locator('.rail > .north-day ~ *').first()
     const nextAtRest = await next.boundingBox()

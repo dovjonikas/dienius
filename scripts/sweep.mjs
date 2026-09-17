@@ -264,7 +264,9 @@ const SCREENS = [
     name: 'Today (North open)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
-      const line = p.locator('button.north-day-line')
+      // The word North folds on both screens since v2.28: pressed only while
+      // it is folded, or the press would put the headings away.
+      const line = p.locator("button.north-day-line[aria-expanded='false']")
       if (await line.count()) await line.first().click()
       await p.locator('.north-day button.north-day-heading').first().click()
       await p.waitForTimeout(300)

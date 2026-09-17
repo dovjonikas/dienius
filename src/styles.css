@@ -10578,11 +10578,12 @@ button.task-recipe:focus-visible {
 }
 
 /* North beside the day - see NorthDay. In the rail, where there is one,
-   between the templates and what is next: a small North, the headings as
-   they were written, and the signature under them, with no card, no edge and
-   no ground. A heading is written the way it was typed, in the reading ink
-   at the interface size - not tracked small in the secondary ink, which read
-   as a menu of sections rather than as the person's own words. */
+   between the templates and what is next: a small North that folds, and the
+   headings as they were written, one line each, with no card, no edge and no
+   ground. A heading is written the way it was typed, in the reading ink - not
+   tracked in the secondary ink, which read as a menu of sections rather than
+   as the person's own words - and in the small type at the reading weight,
+   so a list of capitals stays quiet beside the day. */
 .north-day {
   display: flex;
   flex-direction: column;
@@ -10594,33 +10595,41 @@ button.task-recipe:focus-visible {
 
 .north-day-label { margin: 0; }
 
+/* The word North is the fold, in the rail heading's own type: the label that
+   stood here, now pressable, with the caret everything that folds carries. */
+.north-day-label > .north-day-line { font-size: inherit; }
+
 .north-day-headings {
   display: flex;
   flex-direction: column;
-  gap: var(--s0);
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* The ground under the pointer, and while the card is out, reaches past the
-   words rather than pushing them in. */
+/* One line each: a heading too long for the rail is cut with an ellipsis,
+   never wrapped onto a second line, and its card says it whole. The ground
+   under the pointer, and while the card is out, reaches past the words
+   rather than pushing them in. */
 .north-day-heading {
   display: block;
   width: calc(100% + var(--s2) * 2);
   min-height: 0;
   margin: 0 calc(var(--s2) * -1);
-  padding: var(--s1) var(--s2);
+  padding: var(--s0) var(--s2);
   border: none;
   border-radius: var(--r-control);
   background: none;
   color: var(--text);
   font: inherit;
   font-size: var(--t-sm);
-  font-weight: var(--w-medium);
+  font-weight: var(--w-regular);
   line-height: var(--lh-ui);
   text-align: left;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background var(--dur-fast) var(--ease);
 }
 
@@ -10634,17 +10643,6 @@ button.north-day-heading:hover { background: var(--fill); }
 
 /* A heading with nothing under it is words, not a control. */
 .north-day-heading.is-bare { color: var(--muted); }
-
-.north-day-signature { margin-top: var(--s2); }
-
-.north-day-signature > .north-paragraph {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: var(--lh-read);
-}
-
-.north-day-signature > .north-paragraph + .north-paragraph { margin-top: var(--s2); }
 
 /* A heading's card: its lines on a layer beside the heading, or under it on a
    phone - see northCardPlacement.ts. Fixed to the window, out of the flow,
@@ -10661,6 +10659,16 @@ button.north-day-heading:hover { background: var(--fill); }
   --ground: var(--surface-raised);
   box-shadow: var(--e2);
   pointer-events: none;
+}
+
+/* The heading written whole, over its lines, when the rail had to cut it. */
+.north-heading-card-heading {
+  margin: 0 0 var(--s1);
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-ui);
+  overflow-wrap: anywhere;
 }
 
 .north-heading-card > .north-paragraph {

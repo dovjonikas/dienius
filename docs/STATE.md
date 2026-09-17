@@ -155,6 +155,40 @@ signature (`NorthLine.test.tsx`), and the browser walks read the signature
 on the day only after nine, the window's picture as one block, and the
 phone's North group from the line (`north-line.e2e.ts`, `north.e2e.ts`).
 
+### Stage 5 - the rail: a compact North that folds, and a column that fits: done
+
+- **North in the rail** is a small North and the headings, nothing else: one
+  line each in the small type at the reading weight, a long one cut with an
+  ellipsis and never wrapped. A resting pointer or a press shows the
+  heading's lines on a card beside it, opening with the heading written whole
+  when the rail cut it; nothing moves. The signature left the rail - the
+  day's top says it in the evening, and the day's end.
+- **The word North is the fold**, on the rail and on the phone alike: one
+  press puts the headings away and another brings them back, and the device
+  remembers which (`lib/northFold.ts`, its own key, outside the plan and
+  sync).
+- **Where nobody chose**, the rail starts with North open unless the rail
+  would not fit its window with it open - measured before the first paint,
+  once, so nothing jumps - and then North starts folded: the month, the
+  templates, what is next and the day's numbers are the day, and North's
+  headings are an index to a page one press away. The phone starts folded.
+- **The whole rail fits 1920 by 1080** with five templates and eight headings,
+  two of them longer than the rail, with nothing scrolled; in a 1366 by 768
+  window North starts folded.
+
+New tests: the rail's small North that folds and no picture or signature in
+it, a heading on one line cut with an ellipsis, a cut heading whole on its
+card, the fold remembered on the device and kept across days, North folded
+from the start in a rail too full and open in one with room, a choice on the
+device winning over both, and the phone opened once staying open
+(`NorthDay.test.tsx`); the rail fitting 1920 by 1080 with nothing
+scrolled, every heading on one line and a long one's card whole, with the
+picture attached to the run, and North starting folded in a short window and
+staying open once pressed (`rail.e2e.ts`). Changed tests: a text with no
+heading puts nothing in the rail (`NorthDay.test.tsx`), and the North walk
+finds the rail's North open with no signature (`north.e2e.ts`). The sweep's
+North open scene presses the fold only while it is folded.
+
 ## After v2.27 - one line everywhere
 
 From two screenshots the owner sent: a Cancel alone on a row of its own, and

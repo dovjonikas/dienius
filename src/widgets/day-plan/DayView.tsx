@@ -236,11 +236,11 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         <div className="rail">
           <MiniCalendar date={date} onDateChange={onDateChange} />
           <TemplateRail date={date} />
-          {/* North's signature and headings, between the two things that
-              navigate and what is next - see NorthDay. Above the digest rather
-              than under it, so a 768px window shows the signature without the
-              rail being scrolled; the day's numbers are what gives way. Where
-              there is no rail it is one folded line under the day's title. */}
+          {/* North's headings, between the two things that navigate and what
+              is next - see NorthDay. One line each, folded with one press, and
+              folded from the start where the rail would not fit its window
+              open. Where there is no rail it is one folded line under the
+              day's title. */}
           <NorthDay date={date} />
           {/* What is coming and how the day is going - see DayDigest.tsx. Last
               in the rail, under the two things that navigate, because it is the

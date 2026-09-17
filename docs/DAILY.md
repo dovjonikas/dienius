@@ -140,9 +140,9 @@ is shown whole at the very foot of the page, after a wide gap, a little
 larger and quieter, and nothing after it is a heading. The headings are
 bold, with their lines under them a size smaller. The page is for reading,
 so all of it is open at once - the picture, every heading with its lines,
-and the signature - with nothing to press. A text with no capitals-only line reads as it was
-written. There is no button for any of this: the capitals are the
-formatting, and the text stays the one string you typed.
+and the signature - with nothing to press. A text with no capitals-only
+line reads as it was written. There is no button for any of this: the
+capitals are the formatting, and the text stays the one string you typed.
 
 **A heading can end on `[morning]` or `[evening]`.** Its lines then
 belong to a part of the day: `[morning]` to the first three hours after you
@@ -162,12 +162,15 @@ North. Until the text has a line under a heading for the hour, nothing
 stands there.
 
 Beside the day, in the column on the left between the templates and what
-is next, stand your headings as you wrote them, with the signature under
-them. Rest the pointer on a heading and its lines come on a small card
-beside it, with nothing moving to make room. On the phone the headings fold
-into one line, **North**, under the day's title; a tap opens them, and a tap
-on a heading opens the same card. Off, if you would rather not:
-**Settings → Nudges → North on the day**.
+is next, stand your headings as you wrote them, one line each - a long one
+ends in "..." - under a small **North**. Rest the pointer on a heading and its
+lines come on a small card beside it, the heading whole at its top when the
+line cut it, with nothing moving to make room. Press **North** to fold the
+headings away, and again to bring them back; this device remembers which.
+If the column would not fit your window with them open, they start folded.
+On the phone the headings fold into one line, **North**, under the day's
+title; a tap opens them, and a tap on a heading opens the same card. Off, if
+you would rather not: **Settings → Nudges → North on the day**.
 
 **After sleep** your picture comes to you: the first time the app is in
 view after five hours out of view - a night, whatever hours your nights

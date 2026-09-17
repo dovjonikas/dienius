@@ -3926,3 +3926,21 @@ night shift woken at 20:00 is still in its morning at 21:30 and gets no
 signature under its morning line, and a text with no signature leaves
 nothing where one would stand. Until v2.28 the signature stood under the
 line all day, which put the words a day ends on at its start.
+
+**The rail's North is an index, and it gives way first.** A small North and
+the headings, one line each in the small type, a long one cut with an
+ellipsis - a wrapped heading doubled its row and pushed what is next and the
+day's numbers under the fold of the window. Its lines come on the card they
+already came on, and the card opens with the heading whole where the rail
+cut it. The signature left the rail: the day's top says it in the evening
+and the evening close ends on it, and a third copy beside the day all day
+was the weight the rail did not need. The word North folds the headings on
+both screens, remembered on the device and never in the plan, because a
+phone and a laptop are allowed to disagree about what is folded. Where
+nobody has chosen, the rail measures itself once before it is drawn: with
+room, North is open; without, North starts folded, since the month, the
+templates, what is next and the day's numbers are the day itself and the
+headings are an index to a page one press away. Measured once and not on
+every change, because a section that folded itself as a plan grew would be
+the rail moving under somebody's hand. The whole rail fits a 1920 by 1080
+window with five templates and eight headings.
