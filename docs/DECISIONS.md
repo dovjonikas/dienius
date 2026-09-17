@@ -3813,3 +3813,27 @@ own - unless a list is already chosen, which stays in sight. On a meal
 block's row it stands on a line of its own under the row: inside it, it was
 one more control on the meals' rows only, and every column of those rows
 stood left of the same column on the rows around them.
+
+## One joined line wherever a thing is written in parts
+
+After v2.27, from the owner's screenshots: a template editor's time, words
+and length stood as three boxes with gaps between them, where Today's
+quick-add had been one line since the design pass, and a Cancel stood alone
+on a row under a card with room for it above.
+
+**The line is one set of rules.** Quick-add's joined line became
+`.joined-line`, worn by quick-add, both template editors' add rows and the
+Library's add line: the parts touch with a hairline of the ground between
+them, only the outer corners are rounded, and one halo stands round the whole
+line while any part has the focus. Three boxes with gaps read as three forms
+to fill in; a task, a block and a book are each one thing being written. A
+fourth composite line wears the class rather than copying the rules.
+
+**On a phone it is one block of two rows**, the words across the top and the
+controls across the row under them to the same right edge, the four outer
+corners rounded and none inside. A wrapped line with its inner corners round
+reads as parts that fell apart.
+
+**A lone action joins the row of what it acts on.** The kind question's
+Cancel stands at the end of the question's row - the row the card always
+has - the rule a status and its actions already keep.

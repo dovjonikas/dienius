@@ -627,7 +627,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           words are the top line now; everything that qualifies them is the
           second, where it can be ignored until it is wanted. */}
       <div className="block-add">
-        <div className="block-add-line">
+        <div className="block-add-line joined-line">
           <TimePicker
             value={blockTime}
             onChange={setBlockTime}
@@ -941,7 +941,14 @@ export function TemplatesView() {
           worth of blocks. */}
       {asking && (
         <div className="template-kind">
-          <p className="muted">One day, or a whole week?</p>
+          {/* The question and its way out on one row: Cancel alone on a row
+              under everything took a line of the card for one quiet word. */}
+          <div className="template-kind-head">
+            <p className="muted">One day, or a whole week?</p>
+            <button type="button" className="btn-quiet" onClick={() => setAsking(false)}>
+              Cancel
+            </button>
+          </div>
           <div className="template-kind-choices">
             <button
               type="button"
@@ -978,9 +985,6 @@ export function TemplatesView() {
                 ))}
             </p>
           )}
-          <button type="button" className="btn-quiet" onClick={() => setAsking(false)}>
-            Cancel
-          </button>
         </div>
       )}
 

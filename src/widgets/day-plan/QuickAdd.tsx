@@ -278,7 +278,7 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
         </button>
       </div>
 
-      <div className="quick-add-row">
+      <div className="quick-add-row joined-line">
         {/* A Later line has no day and therefore no hour, so the time control
             goes rather than sitting there greyed out - a disabled control
             still asks to be read. */}

@@ -1,4 +1,6 @@
 import { beforeEach, expect, test } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LibraryAddLine } from './LibraryAddLine'
@@ -113,4 +115,24 @@ test('a Watching list offers films and series first', async () => {
   const chips = screen.getByRole('group', { name: 'How it is counted' })
   expect(chips.querySelectorAll('button')[0].textContent).toBe('a film')
   expect(chips.querySelectorAll('button')[1].textContent).toBe('seasons and episodes')
+})
+
+/**
+ * The words, the amount and Add are one line that touches, the line quick-add
+ * is on the day: a hairline between the parts rather than a gap, one halo
+ * round the whole line. Three boxes with gaps between read as three forms,
+ * where adding a book is one thing being written.
+ */
+test('the add line is one joined line: the words, the amount and Add touch', () => {
+  render(<LibraryAddLine list={books} />)
+  const line = document.querySelector('.library-add') as HTMLElement
+  expect(line).toHaveClass('joined-line')
+  const controls = line.querySelector('.library-add-controls') as HTMLElement
+  expect(controls).toContainElement(screen.getByRole('button', { name: 'Add' }))
+
+  const css = readFileSync(join(__dirname, '../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const rule = css.match(/\n\.library-add-controls \{([^}]*)\}/)?.[1] ?? ''
+  expect(rule).toMatch(/gap:\s*1px/)
+  const own = css.match(/\n\.library-add \{([^}]*)\}/)?.[1] ?? ''
+  expect(own).not.toMatch(/gap:\s*var/)
 })

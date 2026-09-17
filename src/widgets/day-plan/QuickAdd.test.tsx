@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QuickAdd } from './QuickAdd'
@@ -309,4 +311,21 @@ test('the palette can ask for Later, and asking twice works twice', async () => 
   expect(screen.getByPlaceholderText(/Add a task/)).toBeInTheDocument()
   act(() => requestCapture('later'))
   expect(screen.getByPlaceholderText(/just not today/i)).toBeInTheDocument()
+})
+
+/**
+ * On a phone the line is two rows of one block: the words across the top,
+ * the time and the length under them across the whole width, the block's
+ * four outer corners rounded and none inside it. The rule ordered the input,
+ * which is not the line's part since the Return field wraps it, so for a
+ * while the time hung alone on the top row with square corners and the words
+ * started square under it. The part the rule moves is the Return field.
+ */
+test('on a phone the words take the top row of the line, and the time and the length share the row under them', () => {
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const phone = css.match(/@media \(max-width: 420px\) \{\n  \.quick-add-row \{ flex-wrap: wrap; \}([\s\S]*?)\n\}/)?.[1] ?? ''
+  expect(phone).toMatch(/\.quick-add-row > \.return-field \{[^}]*order: -1;[^}]*flex: 1 0 100%/)
+  expect(phone).toMatch(/\.quick-add-row > \.return-field > \.quick-add \{[^}]*border-radius: var\(--r-control\) var\(--r-control\) 0 0/)
+  expect(phone).toMatch(/\.quick-add-row > \.duration-control \{[^}]*flex: 1 1 auto/)
+  expect(phone).not.toMatch(/\.quick-add-row \.quick-add \{ order/)
 })

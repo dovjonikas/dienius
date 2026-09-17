@@ -6,7 +6,37 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.27, done - Kitchen. Nothing is queued.
+**Last updated:** v2.27, done - Kitchen, and one line everywhere after it.
+Queued: North as one text (goals retired), then rotating shifts.
+
+## After v2.27 - one line everywhere
+
+From two screenshots the owner sent: a Cancel alone on a row of its own, and
+a template editor's time, words and length as three boxes with gaps where
+Today's quick-add is one line.
+
+- **The kind question's Cancel** (Templates, New template) stands at the end
+  of the question's own row, its word on the choices' right edge. The row is
+  the one the card always has, so Cancel is in the same place with or
+  without a day to start a week from.
+- **One joined line, shared** (`.joined-line`): quick-add's rules became the
+  line's, and both template editors' add rows and the Library's add line wear
+  it - the parts touching with a hairline between, only the outer corners
+  rounded, one halo round the whole line.
+- **On a phone** the line is one block of two rows: the words across the top
+  and the rest across the row under them, the block's four outer corners
+  rounded and none inside. Quick-add's phone rule had been dead since the
+  Return field began wrapping its input - it ordered the input rather than
+  the line's own part - so the time hung alone on the top row with square
+  corners; it moves the Return field now. The Library's add line does the
+  same.
+- A scan of every main screen for field-like controls side by side with a
+  gap found nothing else of the kind.
+
+New tests: the kind question's row (`TemplatesView.test.tsx`), the joined
+line in both template editors (the same file) and in the Library's add line
+(`LibraryAddLine.test.tsx`), and quick-add's phone rule
+(`QuickAdd.test.tsx`).
 
 ## v2.27 - Kitchen
 

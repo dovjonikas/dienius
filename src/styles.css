@@ -5003,14 +5003,10 @@ button.primary {
 /* One height per row, and it is measured rather than assumed: the time
    control came out 41px, the field 39 and the duration control 21, which is
    three different rows pretending to be one. */
-.block-add-line {
-  display: flex;
-  gap: var(--s2);
-  /* Stretched, not centred: three controls with three box models came out
-     41, 39 and 40px when each kept its own height. Stretched to the row
-     they are one height whatever each one's border adds. */
-  align-items: stretch;
-}
+/* The template's line: the joined line - see .joined-line - stretched, not
+   centred, which the shared rule already is: three controls with three box
+   models came out 41, 39 and 40px when each kept its own height. */
+.block-add-line { min-width: 0; }
 
 
 .block-add-marks {
@@ -8459,23 +8455,41 @@ button.danger:focus-visible {
    They used to be four siblings in a wrapping row, so a narrow screen broke
    the line between the unit and the count - two halves of one answer, on two
    lines, with the field's tail between them. */
-.library-add {
-  display: flex;
-  /* Stretched, so the field and the three controls beside it are one
-     height whatever each one's border adds - centred, the field came out a
-     pixel short of the controls. */
-  align-items: stretch;
-  flex-wrap: wrap;
-  gap: var(--s2);
-}
+/* The joined line - see .joined-line - the words, the amount and Add
+   touching the way quick-add's parts do on the day. It wraps where the words
+   would be squeezed, and then the words keep a line of their own. */
+.library-add { flex-wrap: wrap; }
 
 .library-add > input { flex: 1 1 240px; min-width: 0; }
 
 .library-add-controls {
   display: flex;
   align-items: stretch;
-  gap: var(--s2);
+  gap: 1px;
   flex: 0 0 auto;
+}
+
+/* Inside the line the amount and Add give up their inner corners: only the
+   line's outer ones are rounded, Add's right pair. The amount's halo is the
+   line's. */
+.library-add-controls > .library-amount { border-radius: 0; }
+
+.library-add-controls > .library-amount:focus-within { box-shadow: none; }
+
+.library-add-controls > .library-add-go {
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+}
+
+/* Where the words take a row of their own, the line is one block of two
+   rows, the way quick-add's is on a phone: the words across the top, the
+   amount and Add across the row under them, Add taking what the amount
+   leaves, the four outer corners rounded and none inside. */
+@media (max-width: 599px) {
+  .library-add > .return-field { flex: 1 0 100%; }
+  .library-add > .return-field > input { border-radius: var(--r-control) var(--r-control) 0 0; }
+  .library-add-controls { flex: 1 1 100%; }
+  .library-add-controls > .library-amount { border-radius: 0 0 0 var(--r-control); }
+  .library-add-controls > .library-add-go { flex: 1 1 auto; border-radius: 0 0 var(--r-control) 0; }
 }
 
 
@@ -13861,41 +13875,56 @@ main:has(.week) > .calendar {
    is absolute at top: 100%, which is the rule a popover in this codebase has
    broken twice now: without a positioned ancestor .time-picker-panel
    measures itself against the whole task column. */
-/* One line of three controls that touch: one ground, a hairline of the
-   column's own ground between the parts, and only the outer corners
-   rounded. Three boxes with a gap between each read as three forms to fill
-   in, where a task is one thing being written. While any part of it has the
-   focus the halo stands round the whole line - drawn as an outline rather
-   than the field's shadow, so it is the ring a focus is everywhere else in
-   this stylesheet, and a forced-colours display still draws it. */
-.quick-add-row {
+/* One line of controls that touch - quick-add's on the day, and the time,
+   the words and the length on both template editors' add rows since the
+   owner asked for the same line everywhere. One ground, a hairline of the
+   ground under it between the parts, and only the outer corners rounded.
+   Three boxes with a gap between each read as three forms to fill in, where
+   a task or a block is one thing being written. While any part of it has
+   the focus the halo stands round the whole line - drawn as an outline
+   rather than a field's shadow, so it is the ring a focus is everywhere else
+   in this stylesheet, and a forced-colours display still draws it. */
+.joined-line {
   display: flex;
   align-items: stretch;
   gap: 1px;
-  margin-bottom: var(--s4);
   border-radius: var(--r-control);
 }
 
-.quick-add-row:focus-within { outline: 3px solid var(--ring); outline-offset: 0; }
+.joined-line:focus-within { outline: 3px solid var(--ring); outline-offset: 0; }
 
-.quick-add-row > .time-stepper,
-.quick-add-row > .duration-control,
-.quick-add-row .quick-add {
+/* Each part's own corners and its own halo go: the line has them. The time
+   is a stepper on the day and a picker in a template, whose ground is its
+   field; the words are an input in a Return field. */
+.joined-line > .time-stepper,
+.joined-line > .time-picker > .time-picker-field,
+.joined-line > .duration-control,
+.joined-line > .return-field > input {
   border-radius: 0;
 }
 
-.quick-add-row > .time-stepper:focus-within { box-shadow: none; }
+.joined-line > .time-stepper:focus-within,
+.joined-line > .time-picker > .time-picker-field:focus-within { box-shadow: none; }
 
-.quick-add-row > :first-child,
-.quick-add-row > .return-field:first-child > .quick-add {
+.joined-line > .return-field > input:focus {
+  outline: 2px solid transparent;
+  box-shadow: none;
+}
+
+.joined-line > :first-child,
+.joined-line > .time-picker:first-child > .time-picker-field,
+.joined-line > .return-field:first-child > input {
   border-top-left-radius: var(--r-control);
   border-bottom-left-radius: var(--r-control);
 }
 
-.quick-add-row > :last-child {
+.joined-line > :last-child {
   border-top-right-radius: var(--r-control);
   border-bottom-right-radius: var(--r-control);
 }
+
+/* Quick-add's line: the joined line, with the day's air under it. */
+.quick-add-row { margin-bottom: var(--s4); }
 
 /* The line is a field of the row's own height and ground: the card it was,
    on the surface with its own padding, was the one part of the three that
@@ -14150,11 +14179,25 @@ main:has(.week) > .calendar {
 /* Below the breakpoint the three parts stop sharing one line: at 390px a
    66px time control, a 52px duration control and their gaps leave the input
    under 200px, which is four or five words of a task title before it starts
-   scrolling under the cursor. The line keeps the width; the two controls sit
-   under it, still side by side and still in the same left-to-right order. */
+   scrolling under the cursor. The words keep the whole width on the top row;
+   the two controls share the row under them, still in the same left-to-right
+   order, the length taking what the time leaves so the block has one right
+   edge. One block of two rows: its four outer corners rounded and none
+   inside it.
+
+   The part moved is the Return field, which is the line's child. The rule
+   named the input inside it, which order and flex do nothing to, so for a
+   while the time hung alone on the top row with its right corners square
+   and the words began square beneath it. */
 @media (max-width: 420px) {
   .quick-add-row { flex-wrap: wrap; }
-  .quick-add-row .quick-add { order: -1; flex: 1 0 100%; }
+  .quick-add-row > .return-field { order: -1; flex: 1 0 100%; }
+  .quick-add-row > .return-field > .quick-add { border-radius: var(--r-control) var(--r-control) 0 0; }
+  .quick-add-row > .time-stepper { border-radius: 0 0 0 var(--r-control); }
+  .quick-add-row > .duration-control { flex: 1 1 auto; border-radius: 0 0 var(--r-control) 0; }
+  /* Its button fills the room it takes, so the whole of it is the press and
+     the length stands in the middle of it rather than at its left. */
+  .quick-add-row > .duration-control > .duration-control-value { flex: 1 1 auto; }
 
   /* Measured at 390x844: the row sits about 430px down once the header, the
      North line and the capacity sentence are above it, which leaves roughly
@@ -16075,16 +16118,29 @@ main:has(.week) > .calendar {
   background: var(--surface);
 }
 
+/* The question and its way out, one row across the card on one centre:
+   the question at the left, Cancel at the right with its word on the card's
+   inner edge, where the choices under it end, and the ground under the
+   pointer reaching out past it. Cancel had a row of its own under
+   everything, a line of the card for one quiet word. */
+.template-kind-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  width: 100%;
+}
+
+.template-kind-head > .btn-quiet { margin-right: calc(var(--s4) * -1); }
+
 /* The question, in the text's own ink: it is what the card is for. */
+.template-kind-head > .muted,
 .template-kind > .muted {
   margin: 0;
   color: var(--text);
   font-size: var(--t-md);
   font-weight: var(--w-medium);
 }
-
-/* The way out at the card's right edge, where a card's actions end. */
-.template-kind > .btn-quiet { align-self: flex-end; }
 
 .template-kind-choices {
   display: flex;

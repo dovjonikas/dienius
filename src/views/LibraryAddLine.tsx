@@ -90,7 +90,7 @@ export function LibraryAddLine({ list }: { list: LibraryList }) {
     t === 'units' ? unitPlural(list) : t === 'movie' ? 'film' : t === 'series' ? 'series' : 'pages'
 
   return (
-    <div className="library-add">
+    <div className="library-add joined-line">
       {/* The words on the left and every control in one group on the right.
           They used to be four siblings in a wrapping row, which meant a
           narrow screen broke the line between the unit and the count - two

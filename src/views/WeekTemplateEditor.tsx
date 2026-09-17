@@ -728,7 +728,7 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
       <div className="block-add">
         <div className="block-add-group">
         <span className="block-add-heading">What</span>
-        <div className="block-add-line">
+        <div className="block-add-line joined-line">
           <TimePicker
             value={blockTime}
             onChange={setBlockTime}

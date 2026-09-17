@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TemplatesView } from './TemplatesView'
@@ -1045,4 +1047,64 @@ test('a meal block in a day template is given a recipe as it is added, and its r
 
   expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Lunch', category: 'meal', mealType: 'dinner' })
   expect(getData().templates[0].blocks[0].recipeId).toBeUndefined()
+})
+
+/**
+ * The question's way out stands at the end of the question's own row - a
+ * status and its action share a row - rather than alone on a row under
+ * everything, where it took a line of the card for one quiet word. The same
+ * place whether or not there is a day template to start a week from, since
+ * the question's row is the one row the card always has.
+ */
+test("the kind question's Cancel stands at the end of the question's own row, with or without a day to start a week from", async () => {
+  const user = userEvent.setup()
+  const { unmount } = render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  const question = screen.getByText('One day, or a whole week?')
+  const cancel = screen.getByRole('button', { name: 'Cancel' })
+  expect(cancel.parentElement).toBe(question.parentElement)
+  expect(question.parentElement).toHaveClass('template-kind-head')
+  expect(question.parentElement?.lastElementChild).toBe(cancel)
+  await user.click(cancel)
+  expect(screen.queryByText('One day, or a whole week?')).toBeNull()
+  unmount()
+
+  actions.addTemplate({ name: 'Workday', color: '#8ab6f9', blocks: [{ time: '09:00', title: 'Deep work' }] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  expect(screen.getByRole('button', { name: 'Workday' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Cancel' }).parentElement).toHaveClass('template-kind-head')
+})
+
+/**
+ * The time, the words and the length are one line that touches in both
+ * template editors, the way quick-add's line on the day is: one class, one
+ * set of rules, a hairline between the three parts rather than a gap, the
+ * outer corners rounded and one halo round the whole line. Three boxes with
+ * gaps between read as three forms to fill in, where a block is one thing
+ * being written.
+ */
+test('the add line in both template editors is one joined line of three, the same line quick-add is', async () => {
+  const user = userEvent.setup()
+  const { unmount } = render(<TemplatesView />)
+  await newDayTemplate(user)
+  const dayLine = document.querySelector('.block-add-line') as HTMLElement
+  expect(dayLine).toHaveClass('joined-line')
+  expect(dayLine.children).toHaveLength(3)
+  unmount()
+
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A week/ }))
+  if (!document.querySelector('.block-add')) await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  const weekLine = document.querySelector('.block-add-line') as HTMLElement
+  expect(weekLine).toHaveClass('joined-line')
+
+  const css = readFileSync(join(__dirname, '../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const joined = css.match(/\n\.joined-line \{([^}]*)\}/)?.[1] ?? ''
+  expect(joined).toMatch(/gap:\s*1px/)
+  expect(css).toMatch(/\n\.joined-line:focus-within \{[^}]*outline:/)
+  // The template line keeps no gap of its own that would part the three.
+  const own = css.match(/\n\.block-add-line \{([^}]*)\}/)?.[1] ?? ''
+  expect(own).not.toMatch(/gap:/)
 })
