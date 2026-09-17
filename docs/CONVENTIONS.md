@@ -228,11 +228,12 @@ seen yet, and the day itself was below the fold. The demo line at the very
 top is not one of the two: it is chrome, one 30px row, and never goes away
 while the sample is open.
 
-The North card - the goal that comes forward on a Monday or after a day
-that got away - was the third of them until v2.6, and is a sheet over the
-day since: it took a fifth of a 768px screen away from the day while it
-stood in the flow, and everything jumped back when Ok was pressed. A sheet
-moves nothing. The evening close stays in the flow on purpose: it arrives at
+The North card - the goal that came forward on a Monday or after a day
+that got away - was the third of them until v2.6, and a sheet over the
+day from then until goals were retired in v2.28: it took a fifth of a 768px
+screen away from the day while it stood in the flow, and everything jumped
+back when Ok was pressed. A sheet moves nothing, and North's window after
+sleep is one for the same reason. The evening close stays in the flow on purpose: it arrives at
 a set time while somebody may be typing, and a sheet that lands
 mid-sentence is worse than a card that pushes. See DECISIONS "Nothing moves
 on hover".
@@ -450,7 +451,8 @@ bar and everything under it.
 - **Content the person authors is a top-level list, never a settings field.**
   A settings field is one sync entity, so two devices editing two different
   things in it fight over one key and one of the edits vanishes. `library`,
-  `goals` and `categories` are all lists for that reason; a preference about
+  `categories` and `recipes` are all lists for that reason, and so were
+  `goals`, kept for old files since they were retired in v2.28; a preference about
   how the app behaves is a settings field, and that is the whole of the
   distinction. The picture is the singleton case of the same rule: one
   authored text, so one entity of its own at `picture:north` - top-level like
@@ -1217,7 +1219,8 @@ STATE's "Asked for, not yet built" until it is done.
 had a switch each. They are the same card in two moments, and nobody has
 ever wanted one without the other: a person who does not want a goal
 brought forward does not want it brought forward on a Monday either. Two
-switches for one decision is a question asked twice.
+switches for one decision is a question asked twice. (The card and its one
+switch went with goals in v2.28; the rule stands.)
 
 **What is never removed, whatever this rule says:** Backup, Sync, Sleep
 profiles, Categories, the week's template map. These are not preferences,
