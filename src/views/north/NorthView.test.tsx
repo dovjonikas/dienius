@@ -377,54 +377,65 @@ test("a heading's [morning] or [evening] is never drawn on the page", () => {
 })
 
 /**
- * The page's type, v2.28, read from the stylesheet since jsdom has no layout.
- * The picture first, a step larger than the lines under the headings and in
- * the text's own ink, its lines and blank lines as typed. A heading at that
- * step too and in the strong weight - in capitals, which is what makes it the
- * larger - written as typed, with more air over it than under it, and its
- * lines a step smaller at the reading size. The signature at the foot, a step
- * over those lines and in the quieter ink, after the largest gap on the
- * page. The column about 640px wide.
+ * The page on cards, v2.28, as the owner asked once the brief's page stood:
+ * all of it on one screen, on clean cards with a small shadow, and dark. Read
+ * from the stylesheet, since jsdom has no layout; the browser walk measures
+ * the screen.
+ *
+ * The picture first, on a plate across the page, a step larger than the
+ * lines on the cards and in the text's own ink, its lines and blank lines as
+ * typed. Every heading on a card of its own in a grid under it, at the
+ * picture's step in the strong weight - in capitals, which makes it the
+ * larger - with its lines a step smaller. The signature at the foot on no
+ * card, a step over the lines and in the quieter ink, after the widest gap.
  */
-test("the picture is a step over the headings' lines, a heading is that step and bold, and the signature is calm under the largest gap", () => {
+test("the picture is on a plate, every heading on a card in a grid, and the signature on no card at the foot", () => {
   const pictureRule = cssRule('.north-picture')
   expect(pictureRule).toMatch(/font-size:\s*var\(--t-lg\)/)
   expect(pictureRule).toMatch(/color:\s*var\(--text\)/)
   expect(pictureRule).toMatch(/white-space:\s*pre-line/)
   expect(pictureRule).not.toMatch(/font-weight/)
 
-  // The lines under a heading: the reading size, one step under the picture.
-  expect(cssRule('.north-read')).toMatch(/font-size:\s*var\(--t-read\)/)
-  expect(cssRule('.north-read .north-paragraph')).toMatch(/font-size:\s*inherit/)
+  // A card: the surface's ground, the card's corner and the small shadow.
+  const card = cssRule('.north-intro,\n.north-section')
+  expect(card).toMatch(/background:\s*var\(--surface\)/)
+  expect(card).toMatch(/border-radius:\s*var\(--r-card\)/)
+  expect(card).toMatch(/box-shadow:\s*var\(--e2\)/)
+  expect(card).not.toMatch(/(^|\n)\s*border(-(top|right|bottom|left|width|style|color))?\s*:/)
+
+  const grid = cssRule('.north-sections')
+  expect(grid).toMatch(/display:\s*grid/)
+  // auto-fit: fewer cards than fit share the whole width, and never stop short of the plate's edge.
+  expect(grid).toMatch(/grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(/)
 
   const heading = cssRule('.north-heading')
   expect(heading).toMatch(/font-size:\s*var\(--t-lg\)/)
   expect(heading).toMatch(/font-weight:\s*var\(--w-strong\)/)
   expect(heading).toMatch(/color:\s*var\(--text\)/)
   expect(heading).not.toMatch(/letter-spacing|text-transform/)
-  // margin: 0 0 var(--s2) - the one step in it is the air under the heading.
-  const under = spacePx(heading, 'margin')
-  const over = spacePx(cssRule('.north-sections'), 'gap')
-  expect(spacePx(cssRule('.north-intro + .north-sections'), 'margin-top')).toBe(over)
-  expect(under).toBeGreaterThan(0)
-  expect(over).toBeGreaterThan(under * 2)
+  // The lines under a heading: a step under the picture and the heading.
+  expect(cssRule('.north-read .north-paragraph')).toMatch(/font-size:\s*var\(--t-md\)/)
 
   const signature = cssRule('.north-read .north-signature > .north-paragraph')
   expect(signature).toMatch(/font-size:\s*var\(--t-lg\)/)
   expect(signature).toMatch(/color:\s*var\(--muted\)/)
-  expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThanOrEqual(over * 2)
+  const between = spacePx(grid, 'gap')
+  expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThan(between)
+  expect(cssRule('.north-signature')).not.toMatch(/background|box-shadow/)
 
-  expect(cssRule('.north-view')).toMatch(/max-width:\s*var\(--read-w\)/)
-  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8')
-  expect(css).toMatch(/--read-w:\s*640px;/)
+  // Wide enough for three cards abreast: the page width and half the reading width.
+  expect(cssRule('.north-view')).toMatch(/max-width:\s*calc\(var\(--page-w\) \+ var\(--read-w\) \/ 2\)/)
 })
 
-// No frame and no card anywhere on the reading page: no edge, no ground, no
-// shadow round the text or any part of it.
-test('nothing on the reading page has a frame, a ground or a shadow', () => {
-  for (const selector of ['.north-view', '.north-read', '.north-intro', '.north-picture', '.north-sections', '.north-section', '.north-heading', '.north-paragraph', '.north-read .north-paragraph', '.north-signature', '.north-read .north-signature > .north-paragraph']) {
-    expect(cssRule(selector), selector).not.toMatch(/(^|\n)\s*(border|background|box-shadow|outline)(-[a-z]+)?\s*:/)
-  }
+// One card per heading, in the order written, and the picture's plate first.
+test('the picture stands on its plate first, and each heading with its lines is one card', () => {
+  picture('a picture line\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second\n---\na signature line')
+  const { container } = render(<NorthView />)
+  const read = container.querySelector('.north-read') as HTMLElement
+  expect([...read.children].map(c => c.className)).toEqual(['north-intro', 'north-sections', 'north-signature'])
+  const cards = [...read.querySelectorAll('.north-sections > .north-section')]
+  expect(cards.map(c => c.querySelector('h3')?.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  expect([...cards[0].querySelectorAll('.north-paragraph')].map(p => p.textContent)).toEqual(['a line under it', 'a second paragraph under it'])
 })
 
 /**

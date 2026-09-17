@@ -5,7 +5,7 @@ import { northLineKinds, northPicture, northTagAt, parseNorth } from '../../lib/
 import { NorthSection } from './NorthSection'
 
 /**
- * North: one page, in one column - the person's own text.
+ * North: one page, on one screen - the person's own text, on cards.
  *
  * ## The text
  *
@@ -119,17 +119,19 @@ function NorthInvite({
 }
 
 /**
- * The text, read, as one column that reads like a page - the three parts of
- * North, v2.28, and nothing else.
+ * The text, read, on one screen - the three parts of North, v2.28, and
+ * nothing else.
  *
  * Everything is open: the page is where the text is read, and nothing on it
- * waits behind a press or a pointer. The picture first - the lines before
- * the first heading, the first thing on the page - a step larger than the
- * lines under the headings, in the text's own ink, every line and blank line
- * as it was typed. Then every heading, at the picture's step in the strong
- * weight, with its lines under it at the reading size. Last the signature,
- * after the largest gap on the page, a step over those lines and in the
- * quieter ink, the way a letter ends. A text with no heading is all picture
+ * waits behind a press or a pointer. The picture first, on a plate across the
+ * top - the lines before the first heading, a step larger than the lines on
+ * the cards, in the text's own ink, every line and blank line as it was
+ * typed. Then every heading on a card of its own, in a grid under the plate,
+ * at the picture's step in the strong weight with its lines under it a step
+ * smaller. Last the signature, on no card, after the widest gap on the page,
+ * a step over the lines and in the quieter ink, the way a letter ends. The
+ * cards, their small shadow and the page's width are the stylesheet's - see
+ * DECISIONS "North is one text, goals retired". A text with no heading is all picture
  * and reads whole. lib/northSections.ts has the rules; nothing here decides
  * what a heading or a signature is, and a heading's [morning] or [evening] is
  * never drawn.

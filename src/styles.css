@@ -10809,28 +10809,28 @@ button.north-day-line:focus-visible {
 /* ------------------------------------------------------------------------
    North - views/north/.
 
-   One page in one column, read as a page somebody wrote rather than as a
-   screen of controls: the person's own text - a picture, headings with what
-   they hold, and a signature. No card, no frame and no shadow anywhere on
-   the reading page. The air does the separating, in two steps: the gap
-   between two headings, and the larger one over the signature. What can be
+   The person's own text on one screen: the picture on a plate across the
+   top, every heading on a card of its own in a grid under it, and the
+   signature at the foot on no card. Cards with a small shadow on the dark
+   ground, as the owner asked once the brief's single column stood - see
+   DECISIONS "North is one text, goals retired". The one page where something
+   resting on the page casts a shadow (docs/DESIGN.md, elevation). What can be
    pressed stands in one row wherever it stands.
 
    Nothing here fills with the accent but the one primary button in a row,
    and nothing measures anything - ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
-/* One column at the reading width, centred the way the settings page is,
-   whatever the width of the window. It was 1360px wide until v2.24, room for
-   goal cards beside each other; the cards are gone, and a line of text wider
-   than this reads as a banner. */
+/* Wide enough for three cards abreast, centred the way every page is: the
+   page width and half the reading width, 1160px. A picture and eight
+   headings stand on one 1080p screen at that width. */
 .north-view {
-  max-width: var(--read-w);
+  max-width: calc(var(--page-w) + var(--read-w) / 2);
   margin: 0 auto;
   padding-bottom: var(--s8);
 }
 
 .north-view-head {
-  margin-bottom: var(--s6);
+  margin-bottom: var(--s4);
 }
 
 /* The page's name and its one action, Edit, in one row at the top: the name
@@ -10860,11 +10860,10 @@ button.north-day-line:focus-visible {
   font-weight: var(--w-medium);
 }
 
-/* The text, read, since v2.24: the introduction, the headings and the
-   signature, and one row of buttons at the end, in the page's column. */
-/* The introduction and every paragraph under a heading are one voice: the
-   same size, ink and leading, a paragraph's air between two of them, and
-   the person's own line breaks kept. No frame, no ground, nothing over it. */
+/* A paragraph of North's words wherever it is drawn - a heading's card on
+   the day, the window after sleep, a card on the page - in one voice: the
+   same ink, a paragraph's air between two of them, and the person's own line
+   breaks kept. */
 .north-paragraph {
   margin: 0;
   color: var(--text);
@@ -10876,27 +10875,46 @@ button.north-day-line:focus-visible {
 
 .north-paragraph + .north-paragraph { margin-top: var(--s4); }
 
-/* The page, read. The lines under the headings are in the writing's own
-   type: the reading size at a leading a tenth over the app's reading one,
-   which is what the field is set in. The air between two of their
-   paragraphs is one line of that leading, the blank line typed there. */
+/* The page, read: the plate, the grid of cards and the signature, one under
+   another. */
 .north-read {
-  font-size: var(--t-read);
-  line-height: calc(var(--lh-read) + 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
 }
 
-.north-read .north-paragraph {
-  font-size: inherit;
-  line-height: inherit;
+/* A card on North: the surface's ground on the page's, the card's corner and
+   the small shadow - a hairline ring and a soft fall of dark under it, the
+   lift a popover has. No border: the ring is the edge. */
+.north-intro,
+.north-section {
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+  box-shadow: var(--e2);
 }
 
-.north-read .north-paragraph + .north-paragraph { margin-top: 1lh; }
+/* In a dark theme a card is matte metal: its top lit a few percent and a
+   hair of light along its upper edge, the way a dark plate takes a light
+   from above. The light theme's cards are flat, since a light from above on
+   a white card is no light at all. */
+:root:not([data-theme='light']) .north-intro,
+:root:not([data-theme='light']) .north-section {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text) 4%, var(--surface)), var(--surface) 64%);
+  box-shadow: var(--e2), inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+}
 
-/* The picture, v2.28: the first thing on the page, a step over the lines
-   under the headings and in the text's own ink - the page title's size, in
-   the reading weight and at the reading leading, so it reads as prose rather
-   than as a title. One block with the person's own line breaks, so every
-   blank line typed in it is a blank line on the page. */
+/* The picture's plate: across the page, the first thing on it, with more
+   room inside than a card. */
+.north-intro {
+  padding: var(--s8);
+}
+
+/* The picture: the first thing on the page, a step over the lines on the
+   cards and in the text's own ink - the page title's size, in the reading
+   weight and at the reading leading, so it reads as prose rather than as a
+   title. One block with the person's own line breaks, so every blank line
+   typed in it is a blank line on the page. */
 .north-picture {
   margin: 0;
   color: var(--text);
@@ -10906,27 +10924,28 @@ button.north-day-line:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* Everything on the page is open, since v2.26: the page is where the text is
-   read, and nothing on it folds behind a press or a pointer. The headings
-   stand one under another with the most air of the text over each, more than
-   the blank line between two paragraphs, and a heading's lines follow it
-   close - so a heading reads as the start of what is under it rather than
-   the end of what is over it. A gap rather than margins, so the air over a
-   heading is the same whatever the section before it ends on. */
+/* Everything on the page is open, since v2.26: nothing folds behind a press
+   or a pointer. The cards stand as many abreast as fit at 17rem or more
+   each, in columns that line up from row to row and rows whose cards are one
+   height; fewer cards than fit share the whole width, so a row never stops
+   short of the plate's right edge. */
 .north-sections {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s12);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--s4);
 }
 
-.north-intro + .north-sections { margin-top: var(--s12); }
+.north-section {
+  min-width: 0;
+  padding: var(--s6);
+}
 
 /* A heading: the picture's step, larger than the lines under it, in the
    strong weight - and in capitals, which is what makes it the larger of the
    two - written as typed: no tracking, no rule, no marker, no caret, and
    never its tag. */
 .north-heading {
-  margin: 0 0 var(--s2);
+  margin: 0 0 var(--s3);
   color: var(--text);
   font-size: var(--t-lg);
   font-weight: var(--w-strong);
@@ -10934,11 +10953,18 @@ button.north-day-line:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* The signature: the words the page ends on, whole, at the very foot - a
-   step over the lines under the headings and in the quieter ink, so it
-   reads calm rather than loud, after the largest gap on the page, twice the
-   air over a heading - the way a letter ends. */
-.north-signature { margin-top: calc(var(--s12) * 2); }
+/* A heading's lines: a step under the heading, at the reading leading. */
+.north-read .north-paragraph {
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+}
+
+.north-read .north-paragraph + .north-paragraph { margin-top: var(--s2); }
+
+/* The signature: the words the page ends on, whole, on no card at the foot,
+   after the widest gap on the page - a step over the lines on the cards and
+   in the quieter ink, so it reads calm rather than loud. */
+.north-signature { margin-top: var(--s8); }
 
 .north-read .north-signature > .north-paragraph {
   color: var(--muted);
@@ -10955,7 +10981,24 @@ button.north-day-line:focus-visible {
   gap: var(--s2);
 }
 
-/* The field ends at the right edge of the column, Save last. */
+/* Writing: the one field on a card of its own, at the page width, so a line
+   typed is a line that can be read across. */
+.north-editor {
+  max-width: var(--page-w);
+  padding: var(--s8);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+  box-shadow: var(--e2);
+}
+
+@media (max-width: 599px) {
+  .north-intro,
+  .north-editor { padding: var(--s6); }
+  .north-section { padding: var(--s4); }
+}
+
+/* The field ends at the right edge of the card, Save last. */
 .north-editor > .north-actions { justify-content: flex-end; }
 
 /* Going between reading and writing is a fade of about 150ms, halfway

@@ -139,10 +139,12 @@ typed them. **A line of `---` starts the signature**: everything after it
 is shown whole at the very foot of the page, after a wide gap, a little
 larger and quieter, and nothing after it is a heading. The headings are
 bold, with their lines under them a size smaller. The page is for reading,
-so all of it is open at once - the picture, every heading with its lines,
-and the signature - with nothing to press. A text with no capitals-only
-line reads as it was written. There is no button for any of this: the
-capitals are the formatting, and the text stays the one string you typed.
+so all of it is open at once, on one screen - the picture on a plate across
+the top, every heading with its lines on a card of its own under it, and
+the signature at the foot - with nothing to press. A text with no
+capitals-only line reads as it was written. There is no button for any of
+this: the capitals are the formatting, and the text stays the one string
+you typed.
 
 **A heading can end on `[morning]` or `[evening]`.** Its lines then
 belong to a part of the day: `[morning]` to the first three hours after you

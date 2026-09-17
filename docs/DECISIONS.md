@@ -3944,3 +3944,29 @@ headings are an index to a page one press away. Measured once and not on
 every change, because a section that folded itself as a plan grew would be
 the rail moving under somebody's hand. The whole rail fits a 1920 by 1080
 window with five templates and eight headings.
+
+**North is cards on one screen, asked for after the brief.** Once the single
+column stood, the owner asked for North to fit one screen with nothing
+scrolled, on clean cards with a small shadow, premium and dark - which
+replaces the brief's 640px column with no cards. A column cannot fit one
+screen: a picture and eight headings of two lines each run to twice the
+height of a 1080p window when every part stands under the one before. So the
+picture stands on a plate across the top, the first thing seen; the headings
+stand on cards in a grid under it, which is what turns a tall page into a
+wide one; and the signature ends the page on no card, because a card would
+make the words the day ends on one more box to read. The page is 1160px, the
+page width and half the reading width - three cards abreast - and the grid
+fits as many cards as keep 17rem each, with fewer cards than fit sharing the
+whole width so no row stops short of the plate's edge and the columns line
+up from row to row.
+
+The cards break one rule of the design on purpose: nothing resting on the
+page casts a shadow anywhere else in the app. Here each card has the lift a
+popover has, a hairline ring and a soft fall of dark, because the owner asked
+for it and because on North the cards are the page rather than furniture on
+it. In a dark theme a card is matte metal, its top lit a few percent and a
+hair of light along its upper edge; a light theme's card is flat, since light
+from above on a white card is no light at all. No accent, no border, no
+number: the dark is carried by the ground, the plate and the type. Writing
+is the one field on a card of its own at the page width, so a typed line
+stays a line that can be read across.

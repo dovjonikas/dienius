@@ -113,7 +113,10 @@ test('the page shows everything at rest with Edit beside its name, and on the da
   })
   expect(Math.abs(editWordRight - (column!.x + column!.width))).toBeLessThanOrEqual(2)
 
-  // More air over a heading than under it, measured letter to letter.
+  // Each heading on a card of its own, with more room over the heading, from
+  // the card's edge, than between it and its lines - measured letter to
+  // letter. On a wide window the cards stand abreast; on a phone, one under
+  // another.
   const air = await page.evaluate(() => {
     const ink = (el: Element) => {
       const range = document.createRange()
@@ -121,15 +124,16 @@ test('the page shows everything at rest with Edit beside its name, and on the da
       const rects = [...range.getClientRects()]
       return { top: rects[0].top, bottom: rects[rects.length - 1].bottom }
     }
-    const second = document.querySelectorAll('.north-section')[1]
-    const before = document.querySelectorAll('.north-section')[0].querySelectorAll('.north-paragraph')
+    const [first, second] = [...document.querySelectorAll('.north-section')]
     const heading = ink(second.querySelector('.north-heading')!)
     return {
-      over: heading.top - ink(before[before.length - 1]).bottom,
+      over: heading.top - second.getBoundingClientRect().top,
       under: ink(second.querySelector('.north-paragraph')!).top - heading.bottom,
+      abreast: Math.abs(first.getBoundingClientRect().top - second.getBoundingClientRect().top) < 1,
     }
   })
-  expect(air.over).toBeGreaterThan(air.under * 2)
+  expect(air.over).toBeGreaterThan(air.under)
+  expect(air.abreast).toBe(info.project.name !== 'phone')
 
   // A pointer resting on a heading changes nothing on the page.
   if (info.project.name !== 'phone') {
@@ -176,6 +180,61 @@ test('the page shows everything at rest with Edit beside its name, and on the da
     await expect(card).toHaveCount(0)
   }
   await expect(page.getByText('First line here')).toHaveCount(0)
+})
+
+/**
+ * North on one screen, v2.28, as the owner asked: a picture and eight
+ * headings of two lines each, on cards, stand in a 1920 by 1080 window with
+ * nothing scrolled - the picture on its plate across the top, the cards in
+ * rows whose edges meet the plate's, and the signature under them. Generic
+ * lines only.
+ */
+test('North stands on one 1080p screen on cards, with nothing scrolled', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'one screen is the wide window&apos;s promise')
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  await openFreshAt(page, wednesdayAt(10))
+  const headings = ['WHEN THE DAY STARTS [morning]', 'THE WORK', 'THE BODY, AND WHAT IT NEEDS FROM ME ON THE DAYS I WOULD RATHER NOT', 'PEOPLE', 'MONEY', 'THE WEEK', 'WHAT I DO NOT DO, HOWEVER THE DAY HAS GONE', 'BEFORE SLEEP [evening]']
+  await page.evaluate(list => {
+    const key = 'dienius:data'
+    const d = JSON.parse(localStorage.getItem(key) ?? '{}')
+    const sections = list.map((h: string, i: number) => `${h}\na line under heading ${i + 1}, long enough to take most of a card\na second line under it`)
+    d.picture = {
+      text: `A first line of the picture, as long as a sentence somebody means.\nA second line of it.\nA third line of it, and a little more.\n\n${sections.join('\n\n')}\n---\nA signature line.`,
+      updatedAt: '2026-09-16T08:00:00.000Z',
+    }
+    localStorage.setItem(key, JSON.stringify(d))
+  }, headings)
+  await page.reload()
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
+  await page.locator('.north-read').waitFor()
+
+  const fit = await page.evaluate(() => {
+    const doc = document.scrollingElement!
+    const read = document.querySelector('.north-read')!.getBoundingClientRect()
+    const plate = document.querySelector('.north-intro')!.getBoundingClientRect()
+    const cards = [...document.querySelectorAll('.north-section')].map(c => c.getBoundingClientRect())
+    return {
+      scroll: doc.scrollHeight,
+      client: doc.clientHeight,
+      bottom: read.bottom,
+      plate: { left: plate.left, right: plate.right },
+      lefts: [...new Set(cards.map(c => Math.round(c.left)))],
+      right: Math.max(...cards.map(c => c.right)),
+      shadow: getComputedStyle(document.querySelector('.north-section')!).boxShadow,
+    }
+  })
+  expect(fit.scroll).toBeLessThanOrEqual(fit.client + 1)
+  expect(fit.bottom).toBeLessThanOrEqual(1080)
+  await expect(page.locator('.north-section')).toHaveCount(8)
+  // Columns line up under the plate: the first column on its left edge, the
+  // last card's right edge on its right.
+  expect(fit.lefts[0]).toBeCloseTo(fit.plate.left, 0)
+  expect(fit.right).toBeCloseTo(fit.plate.right, 0)
+  expect(fit.shadow).not.toBe('none')
+  await expect(page.locator('.north-signature')).toBeInViewport()
+
+  const shot = await page.screenshot()
+  await info.attach('North at 1920 by 1080', { body: shot, contentType: 'image/png' })
 })
 
 /**

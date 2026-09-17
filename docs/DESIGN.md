@@ -213,7 +213,10 @@ under it. The light theme's lifts are softer. Under every modal and sheet is
 the one `--scrim`; the photo viewer, which shows a picture rather than a
 layer, is the one darker ground.
 
-Nothing resting on the page casts a shadow.
+Nothing resting on the page casts a shadow - except North's cards, asked
+for: on that one page the picture's plate, the heading cards and the field
+carry `--e2`, and in a dark theme a few percent of light at their top edge.
+See DECISIONS "North is one text, goals retired".
 
 ## Motion
 
@@ -342,8 +345,10 @@ lead to the rest.
   text is the thing.
 - **Two widths.** `--page-w` (840px) for the pages that are lists and forms -
   Templates, Library, Review, Settings - and `--read-w` (640px) for reading
-  and writing - North, the journal's page. Today, the week and the month
-  use the whole width for their own grids.
+  and writing - the journal's page. Today, the week and the month use the
+  whole width for their own grids, and North's cards take the page width
+  and half the reading width (1160px), three abreast, so the text stands on
+  one screen.
 - **On a phone** the columns become the screen with a 16px gutter, the same
   title row stands at the top, and the rail is the bar at the bottom.
 

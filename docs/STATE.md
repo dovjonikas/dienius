@@ -189,6 +189,38 @@ heading puts nothing in the rail (`NorthDay.test.tsx`), and the North walk
 finds the rail's North open with no signature (`north.e2e.ts`). The sweep's
 North open scene presses the fold only while it is folded.
 
+### After stage 5 - North on cards, on one screen: done
+
+The owner asked, once the page of stage 3 stood, for North to fit one
+screen with nothing scrolled, on clean cards with a small shadow, premium
+and dark. That replaces the brief's single 640px column without cards.
+
+- **The picture on a plate** across the top of the page, with more room inside
+  than a card; **every heading on a card** of its own in a grid under it, as
+  many abreast as fit at 17rem or more, in columns that line up from row to
+  row, and fewer cards than fit share the whole width so no row stops short
+  of the plate; **the signature at the foot** on no card, calm, after the
+  widest gap. The sizes are stage 3's: the picture and the headings a step
+  over the lines, the signature in the quieter ink.
+- **Cards** stand on the surface's ground with the card corner and the small
+  shadow a popover has - a hairline ring and a soft fall of dark. In a dark
+  theme each is matte metal: its top lit a few percent and a hair of light
+  along its upper edge. The light theme's cards are flat.
+- **The page is 1160px wide** - the page width and half the reading width -
+  enough for three cards abreast, and a picture and eight headings of two
+  lines stand on one 1920 by 1080 screen. On a phone the cards stack.
+- **Writing** is the one field on a card of its own at the page width.
+
+New tests: the plate, the cards in an auto-fit grid, the shadow and the
+signature on no card, read from the stylesheet, and the picture's plate
+first with one card per heading (`NorthView.test.tsx`); North standing on
+one 1080p screen with eight headings, columns under the plate's edges and a
+shadow on the cards, with its picture attached to the run (`north.e2e.ts`).
+Changed tests: the page's type test holds the cards' sizes and no longer
+the single column, the no-frame guard went with the column, and the North
+walk measures a heading's air inside its card and the cards abreast on a
+wide window (`north.e2e.ts`).
+
 ## After v2.27 - one line everywhere
 
 From two screenshots the owner sent: a Cancel alone on a row of its own, and
