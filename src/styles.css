@@ -9799,7 +9799,6 @@ button.task-library:hover { color: var(--text); }
   .task-library,
   .library-detail-pick,
   .north-goal-line,
-  .north-heading-toggle,
   .task-title-select {
     position: relative;
   }
@@ -9816,8 +9815,6 @@ button.task-library:hover { color: var(--text); }
   .library-detail-pick::after,
   /* A goal's line at the top of North. */
   .north-goal-line::after,
-  /* A heading on North, which opens its lines on a finger. */
-  .north-heading-toggle::after,
   .library-color::after,
   .category-wheel::after,
   .task-size::after,
@@ -11014,12 +11011,12 @@ button.north-day-line:focus-visible {
    Nothing here fills with the accent but the one primary button in a row,
    and nothing measures anything - ARCHITECTURE section 6.
    ------------------------------------------------------------------------ */
-/* One column at the measure the text reads at, centred the way the
-   settings page is, whatever the width of the window. It was 1360px wide
-   until v2.24, room for goal cards beside each other; the cards are gone,
-   and a line of text wider than this reads as a banner. */
+/* One column at the reading width, centred the way the settings page is,
+   whatever the width of the window. It was 1360px wide until v2.24, room for
+   goal cards beside each other; the cards are gone, and a line of text wider
+   than this reads as a banner. */
 .north-view {
-  max-width: 40rem;
+  max-width: var(--read-w);
   margin: 0 auto;
   padding-bottom: var(--s8);
 }
@@ -11027,6 +11024,28 @@ button.north-day-line:focus-visible {
 .north-view-head {
   margin-bottom: var(--s6);
 }
+
+/* The page's name and its one action, Edit, in one row at the top: the name
+   at the left, Edit at the right edge of the column, one centre. The row is
+   one control tall whether Edit is drawn or not, so opening the field, which
+   takes Edit away, moves no line under it. Since v2.26; Edit stood after the
+   last line until then, a scroll away on a long text. */
+.north-view-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: var(--control-h);
+}
+
+/* Edit's word on the column's right edge, where the page's lines end, and
+   the ground under the pointer reaching out past it rather than pushing the
+   word in - the way a quiet word under a setting stands. */
+.north-view-title > .btn-quiet { margin-right: calc(var(--s4) * -1); }
+
+/* The goals follow the name straight under the row: the row's own air
+   under the name is the gap. */
+.north-view-title + .north-goal-lines { margin-top: 0; }
 
 /* The page's name, smaller and quieter than the words under it: on this page
    the text is the thing, and the name only says where you are. */
@@ -11184,199 +11203,44 @@ button.north-day-line:focus-visible {
 
 .north-read .north-paragraph + .north-paragraph { margin-top: 1lh; }
 
-/* The headings, one under another with the same air between every two. A
-   gap rather than a margin, so the words a heading opens sit inside its own
-   box and the distance to the next heading never changes with them. */
+/* Everything on the page is open, since v2.26: the page is where the text is
+   read, and nothing on it folds behind a press or a pointer. The headings
+   stand one under another with the most air of the text over each, more than
+   the blank line between two paragraphs, and a heading's lines follow it
+   close - so a heading reads as the start of what is under it rather than
+   the end of what is over it. A gap rather than margins, so the air over a
+   heading is the same whatever the section before it ends on. */
 .north-sections {
   display: flex;
   flex-direction: column;
-  gap: 1lh;
+  gap: var(--s12);
 }
 
-/* One line of air between the parts of the page, whichever of them a text
-   has, and a little more before what can be pressed. */
-.north-intro + .north-sections { margin-top: 1lh; }
+.north-intro + .north-sections { margin-top: var(--s12); }
 
-.north-intro + .north-actions,
-.north-sections + .north-actions,
-.north-signature + .north-actions {
-  margin-top: var(--s8);
-}
-
-/* The signature: the words the page ends on, whole, after a thin rule - the
-   rule its --- is drawn as while it is written - in the writing's size and
-   a little quieter, as they were typed. */
-.north-signature { margin-top: 1lh; }
-
-.north-signature::before {
-  content: '';
-  display: block;
-  height: 1lh;
-  background: linear-gradient(var(--border), var(--border)) center / 100% 1px no-repeat;
-}
-
-.north-signature > .north-paragraph { color: var(--muted); }
-
-/* A heading: the writing's size, the strong weight and a touch of tracking
-   because it is set in capitals, and nothing else - no rule, no marker, no
-   caret. The tracking is the reading page's own: the field cannot track one
-   line without moving every caret after it. */
+/* A heading: a step larger than the words and the strong weight, written as
+   typed - no tracking, no rule, no marker, no caret, and never its tag. */
 .north-heading {
-  margin: 0;
+  margin: 0 0 var(--s2);
   color: var(--text);
-  font-size: var(--t-read);
+  font-size: var(--t-lg);
   font-weight: var(--w-strong);
-  letter-spacing: 0.04em;
-  line-height: calc(var(--lh-read) + 0.1);
+  line-height: var(--lh-tight);
   overflow-wrap: anywhere;
 }
 
-/* The heading is the control and looks like the heading: no box, no edge,
-   the text's own ink at the heading's own size. */
-.north-heading-toggle {
-  display: block;
-  width: 100%;
-  min-height: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-align: left;
-  cursor: pointer;
+/* The signature: the words the page ends on, whole, a step larger than the
+   words and in their ink, with more air over it than any heading has - the
+   way a letter ends, and the way the window after sleep ends. */
+.north-signature { margin-top: calc(var(--s12) + var(--s6)); }
+
+.north-read .north-signature > .north-paragraph {
+  font-size: var(--t-lg);
+  line-height: var(--lh-read);
 }
 
-.north-heading-toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: var(--r-mark);
-}
-
-/* What a heading holds. Closed, it takes no room: a grid row of nothing
-   with the words clipped inside it. A press opens the row to the words' own
-   height, so they unfold in the page - which a press may do - and a second
-   press folds them again. On a phone this is the only way they come. */
-.north-section-body {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  visibility: hidden;
-}
-
-.north-section-text {
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* The air between a heading and its first line, inside the fold, so a
-   closed heading carries none of it. */
-.north-section-text::before {
-  content: '';
-  display: block;
-  height: var(--s3);
-}
-
-/* On the page the words follow their heading on the next line, as typed. */
-.north-read .north-section-text::before { height: 0; }
-
-.north-section.is-open > .north-section-body {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  visibility: visible;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .north-section-body {
-    transition:
-      grid-template-rows var(--dur) var(--ease),
-      opacity var(--dur) var(--ease),
-      visibility 0s linear var(--dur);
-  }
-
-  .north-section.is-open > .north-section-body {
-    transition:
-      grid-template-rows var(--dur) var(--ease),
-      opacity var(--dur) var(--ease),
-      visibility 0s;
-  }
-}
-
-/* On a pointer that can rest, a closed heading's words wait over the page
-   instead, and a pointer resting on the heading lays them out under it
-   while everything after it steps back to nothing. Nothing is moved to make
-   the room (CONVENTIONS 24): the words unfold top to bottom where the next
-   headings were, on the page's own ground, and fold away when the pointer
-   leaves - which puts the next heading under a pointer that moved down to
-   it. The words take no pointer, so moving through them is moving over what
-   they cover.
-
-   Shown after a pause of --dur-fast, so a pointer crossing the headings on
-   its way to something else does not flash each of them open on the way.
-   Leaving answers at once. A heading that was just closed with a press, or
-   is open in the page, does not offer this - see NorthSection. */
-@media (hover: hover) and (pointer: fine) {
-  .north-section { position: relative; }
-
-  .north-section:not(.is-open) > .north-section-body {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1;
-    grid-template-rows: 1fr;
-    background: var(--bg);
-    pointer-events: none;
-    clip-path: inset(0 0 100% 0);
-  }
-
-  .north-section.can-preview:hover > .north-section-body,
-  .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) > .north-section-body {
-    opacity: 1;
-    visibility: visible;
-    clip-path: inset(0 0 0 0);
-  }
-
-  .north-section.can-preview:hover ~ .north-section,
-  .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
-  .north-read:has(.north-section.can-preview:hover) > :is(.north-signature, .north-actions),
-  .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > :is(.north-signature, .north-actions) {
-    opacity: 0;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .north-section:not(.is-open) > .north-section-body {
-      transition:
-        opacity var(--dur) var(--ease),
-        clip-path var(--dur) var(--ease),
-        visibility 0s linear var(--dur);
-    }
-
-    .north-section.can-preview:hover > .north-section-body,
-    .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) > .north-section-body {
-      transition:
-        opacity var(--dur) var(--ease) var(--dur-fast),
-        clip-path var(--dur) var(--ease) var(--dur-fast),
-        visibility 0s linear var(--dur-fast);
-    }
-
-    .north-section,
-    .north-signature,
-    .north-actions {
-      transition: opacity var(--dur) var(--ease);
-    }
-
-    .north-section.can-preview:hover ~ .north-section,
-    .north-section.can-preview:has(> .north-heading > .north-heading-toggle:focus-visible) ~ .north-section,
-    .north-read:has(.north-section.can-preview:hover) > :is(.north-signature, .north-actions),
-    .north-read:has(.north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > :is(.north-signature, .north-actions) {
-      transition-delay: var(--dur-fast);
-    }
-  }
-}
-
-/* What can be pressed on the page, in one row at its end: Edit, and in the
-   morning Start the day before it. */
+/* A row of what can be pressed: Write under the invitation, and Cancel with
+   Save under the field. */
 .north-actions {
   display: flex;
   flex-wrap: wrap;
@@ -11384,9 +11248,7 @@ button.north-day-line:focus-visible {
   gap: var(--s2);
 }
 
-/* Reading and writing end the same way, at the right edge of the column:
-   Edit, and Cancel with Save in the same place when Edit opens the field. */
-.north-read > .north-actions,
+/* The field ends at the right edge of the column, Save last. */
 .north-editor > .north-actions { justify-content: flex-end; }
 
 /* Going between reading and writing is a fade of about 150ms, halfway
@@ -11460,6 +11322,14 @@ button.north-day-line:focus-visible {
    wider and would move the caret on every line after it. */
 .north-editor-line.is-heading {
   -webkit-text-stroke: 0.04em currentColor;
+}
+
+/* A heading's [morning] or [evening], the one place it is ever seen: in the
+   quiet ink and without the heading's stroke, so it reads as a note on the
+   heading rather than words of it. Colour and stroke move no letter. */
+.north-editor-tag {
+  color: var(--muted);
+  -webkit-text-stroke: 0;
 }
 
 /* The signature's mark, drawn as the thin faint rule it becomes: its three

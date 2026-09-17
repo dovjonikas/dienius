@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { isNorthHeading, northLineKinds, parseNorth, splitNorthHeading } from './northSections'
+import { isNorthHeading, northLineKinds, northTagAt, parseNorth, splitNorthHeading } from './northSections'
 
 /**
  * A line in capitals is a heading, and everything under it up to the next
@@ -53,6 +53,15 @@ test('the tag is read in either case, and only at the very end of the line', () 
   // In the middle it is words of the heading, and any other word is not a tag.
   expect(splitNorthHeading('A [MORNING] HEADING')).toEqual({ heading: 'A [MORNING] HEADING' })
   expect(isNorthHeading('A HEADING [noon]')).toBe(false)
+})
+
+test("where a heading's tag starts in the line as typed, spaces before it included, and nowhere on any other line", () => {
+  expect(northTagAt('A HEADING [morning]')).toBe(9)
+  expect(northTagAt('  A HEADING   [Evening]  ')).toBe(11)
+  expect(northTagAt('A HEADING')).toBe(-1)
+  // Only a heading has a tag: on text, or alone, it is words.
+  expect(northTagAt('A line of text [morning]')).toBe(-1)
+  expect(northTagAt('[morning]')).toBe(-1)
 })
 
 test('a line with lowercase words and a tag is text, and a line that is only a tag is text', () => {

@@ -270,6 +270,9 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   },
+  // The page, read: since v2.26 every heading's lines are on it at rest, so
+  // this one screen measures all of them - the scene that rested a pointer
+  // on a heading to paint its lines went with the fold.
   { name: 'North', go: /** @param {Page} p */ p => tab(p, 'North') },
   {
     // The app coming into view after sleep, when the text has an
@@ -304,18 +307,6 @@ const SCREENS = [
       await p.getByRole('button', { name: /^Edit "/ }).first().click()
       const more = p.getByRole('button', { name: 'More', exact: true })
       if (await more.count()) await more.click()
-      await p.waitForTimeout(300)
-    },
-  },
-  {
-    // A heading with the pointer resting on it. The lines under a heading
-    // are painted only then, over the page, so this is the one screen that
-    // measures them.
-    name: 'North (heading open)',
-    pointerOnly: true,
-    go: async /** @param {Page} p */ p => {
-      await tab(p, 'North')
-      await p.locator('.north-heading-toggle').first().hover()
       await p.waitForTimeout(300)
     },
   },

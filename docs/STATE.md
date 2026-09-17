@@ -119,6 +119,36 @@ card); `e2e/north.e2e.ts` hovers a rail heading for its card and checks that
 nothing in the rail moved, and taps one on the phone; `scripts/sweep.mjs`'s
 Today (North open) presses the new heading. New: `northCardPlacement.test.ts`.
 
+### Stage 4 - the page: done
+
+- **Everything open** (`NorthSection`): a heading is an `h3` over its lines,
+  not a control, and nothing on the page folds - no press, no hover preview,
+  no Escape. The fold, the preview laid over the page and the state that kept
+  a just-closed heading quiet are gone with their rules.
+- **The type.** The introduction and the lines at the reading size in the
+  text's ink, as before; a heading `--t-lg` at the strong weight, written as
+  typed with no tracking, 48px of air over it and 8px under it; the signature
+  a step larger in the text's ink after 72px, no longer after a rule and no
+  longer grey - the same ending the window after sleep has.
+- **Edit** stands at the right of the title's row, its word on the column's
+  edge and its ground reaching out past it, on one centre with North. The row
+  is one control tall with or without Edit, so opening the field moves no
+  line under it. The column is `--read-w`.
+- **In the field** a heading's `[morning]` or `[evening]` is drawn in the
+  quiet ink without the heading's stroke (`northTagAt`), the only place a tag
+  is ever seen.
+- `docs/DAILY.md` says the day's line, the tags, the rail's card and the open
+  page.
+
+Changed tests: `NorthView.test.tsx`'s reading and heading tests are rewritten
+for the open page (nothing in the words to press, Edit in the title's row and
+its row kept while writing, every heading with its lines, the tag never
+drawn, the type and the air read from the stylesheet); `e2e/north.e2e.ts`
+walks the open page and measures the air over and under a heading and Edit's
+place, and its drift test writes a tag; the sweep's North (heading open) went
+with the fold, since North at rest now measures every line. New: the tag in
+the field, `northTagAt`.
+
 ## v2.25 - the design pass
 
 Asked for in one message the evening v2.24 closed: the app should feel like

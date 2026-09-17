@@ -128,27 +128,40 @@ blank line between paragraphs. Write it the way you would say it, in the
 first person; a few lines are enough to start. **Save** keeps what you
 typed and **Cancel** drops it, and nothing is kept before Save - except
 that leaving the page with the box open keeps what is in it. **Edit**, at
-the end of the words, opens the box again.
+the right of the page's name, opens the box again.
 
 **A line in capitals is a heading.** Everything under it, up to the next
 heading, is its text, and a blank line under a heading starts a second
 paragraph of the same heading. The lines before the first heading are the
-introduction and are always shown. **A line of `---` starts the
-signature**: everything after it is shown whole at the foot of the page, a
-little larger, and nothing after it is a heading. Reading, the page shows the introduction
-and the headings. The words under a heading unfold while the pointer rests
-on it, with nothing on the page moving to make room, and fold away when it
-leaves; a press opens them in the page until a second press, which is how
-the phone does it. A text with no capitals-only line reads as it was
-written. There is no button for any of
-this: the capitals are the formatting, and the text stays the one string you
-typed.
+introduction. **A line of `---` starts the signature**: everything after
+it is shown whole at the foot of the page, a little larger, and nothing
+after it is a heading. The page is for reading, so all of it is open at
+once - the introduction, every heading with its lines, and the signature -
+with nothing to press. A text with no capitals-only line reads as it was
+written. There is no button for any of this: the capitals are the
+formatting, and the text stays the one string you typed.
 
-On Today, the signature and the headings stand beside the day, in the
-column on the left between the templates and what is next - never the
-introduction. The words under a heading open the way they do on the page.
-On the phone they fold into one line under the day's title: the signature,
-and a press on it opens the headings. Off, if you would rather not:
+**A heading can end on `[morning]` or `[evening]`.** Its lines then
+belong to a part of the day: `[morning]` to the first three hours after you
+wake - the first time the app is in view after five hours away - and
+`[evening]` to the hours after nine. The tag is only ever seen in the box
+you write in; everywhere else the heading reads without it.
+
+**On Today**, under the date, stands one line from under your headings, with
+the signature under it, quieter. It is a different line each day and the
+same one on every device, never a heading and never the introduction, and
+it is always whole - a long line wraps. In the morning hours it comes from
+the `[morning]` headings, after nine from the `[evening]` ones, and the rest
+of the day from the headings with neither. A press on it opens North. Until
+the text has a line under a heading or a signature, your goal's title
+stands there instead.
+
+Beside the day, in the column on the left between the templates and what
+is next, stand your headings as you wrote them, with the signature under
+them. Rest the pointer on a heading and its lines come on a small card
+beside it, with nothing moving to make room. On the phone the headings fold
+into one line, **North**, under the day's title; a tap opens them, and a tap
+on a heading opens the same card. Off, if you would rather not:
 **Settings → Nudges → North on the day**.
 
 **After sleep** the introduction comes to you: the first time the app is

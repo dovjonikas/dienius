@@ -89,6 +89,17 @@ export function splitNorthHeading(line: string): { heading: string; tag?: NorthT
 }
 
 /**
+ * Where a heading's tag starts in the line as it was typed, the spaces
+ * before it included, or -1 when the line is not a heading or ends on no
+ * tag. The field draws the tag apart from the heading's words by it, so it
+ * counts in the line untrimmed.
+ */
+export function northTagAt(line: string): number {
+  if (!isNorthHeading(line)) return -1
+  return line.search(NORTH_TAG)
+}
+
+/**
  * Whether a line is a heading: it has at least one letter, and every letter
  * in it is a capital. Digits and punctuation are neither here nor there,
  * so "PLAN 2026" is a heading and "2026" is not; and a lowercase letter

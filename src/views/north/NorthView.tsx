@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
-import { northLineKinds, parseNorth } from '../../lib/northSections'
+import { northLineKinds, northTagAt, parseNorth } from '../../lib/northSections'
 import { NorthSection } from './NorthSection'
 import { NorthGoals } from './NorthGoals'
 
@@ -60,9 +60,20 @@ export function NorthView() {
   return (
     <section className="north-view" aria-label="North">
       <header className="north-view-head">
-        <h2>
-          <Explain id="north">North</Explain>
-        </h2>
+        {/* Edit at the right of the page's name, where every page keeps its
+            action (docs/DESIGN.md, the frame), rather than after the words.
+            The row keeps its height while the field is open, so going from
+            reading to writing moves no line under it. */}
+        <div className="north-view-title">
+          <h2>
+            <Explain id="north">North</Explain>
+          </h2>
+          {!editing && text !== '' && (
+            <button ref={openerRef} type="button" className="btn-quiet" onClick={() => setEditing(true)}>
+              Edit
+            </button>
+          )}
+        </div>
         {/* No offer of a goal on an empty North: the empty page is one line
             and one button, and the button is Write. */}
         <NorthGoals offer={text !== ''} />
@@ -73,7 +84,7 @@ export function NorthView() {
       ) : text === '' ? (
         <NorthInvite openerRef={openerRef} onWrite={() => setEditing(true)} />
       ) : (
-        <NorthText text={text} openerRef={openerRef} onEdit={() => setEditing(true)} />
+        <NorthText text={text} />
       )}
     </section>
   )
@@ -108,28 +119,21 @@ function NorthInvite({
 /**
  * The text, read, as one column that reads like a page.
  *
- * The introduction first - the lines before the first heading, in the
- * text's own type, always shown, with no frame and nothing over them - then
- * the headings, one under another with air between, each holding what is
- * under it until it is asked for, and last the signature, whole, a little
- * larger and with more air over it, the way a letter ends. A text with no
- * heading is all introduction and reads whole, as it was written.
- * lib/northSections.ts has the rule; nothing here decides what a heading
- * or a signature is.
+ * Everything is open, since v2.26: the page is where the text is read, and
+ * nothing on it waits behind a press or a pointer. The introduction first -
+ * the lines before the first heading, in the text's own type and ink - then
+ * every heading with its lines under it, a little larger and heavier than
+ * the words and with more air over it than under it, and last the
+ * signature, whole, a step larger and with the most air over it, the way a
+ * letter ends. A text with no heading is all introduction and reads whole,
+ * as it was written. lib/northSections.ts has the rule; nothing here decides
+ * what a heading or a signature is, and a heading's [morning] or [evening]
+ * is never drawn.
  *
- * What can be pressed stands in one row at the end, past the words rather
- * than over them: Edit. Nothing else on the page is a button except the
- * headings themselves.
+ * Nothing in the words is a button. Edit stands at the right of the page's
+ * name.
  */
-function NorthText({
-  text,
-  openerRef,
-  onEdit,
-}: {
-  text: string
-  openerRef: React.Ref<HTMLButtonElement>
-  onEdit: () => void
-}) {
+function NorthText({ text }: { text: string }) {
   const { intro, sections, signature } = parseNorth(text)
   return (
     <div className="north-read">
@@ -158,11 +162,6 @@ function NorthText({
           ))}
         </div>
       )}
-      <div className="north-actions">
-        <button ref={openerRef} type="button" className="btn-quiet" onClick={onEdit}>
-          Edit
-        </button>
-      </div>
     </div>
   )
 }
@@ -192,10 +191,12 @@ const NORTH_PLACEHOLDER = 'Write who you are.'
  * There is no toolbar and no rich text. A line in capitals is a heading and
  * a line of --- starts the signature, which is said once, in the grey line
  * under the field, and shown while it is typed: every line the page will
- * read as a heading is drawn heavier as soon as it is one, the mark is drawn
- * as a thin rule across the page, and the signature's lines after it a
- * little quieter - by northLineKinds, the page's own rule, so capitals after
- * the mark are not a heading.
+ * read as a heading is drawn heavier as soon as it is one, a [morning] or
+ * [evening] at its end in the quiet ink and the plain weight, since this
+ * field is the one place a tag is ever seen, the mark is drawn as a thin rule
+ * across the page, and the signature's lines after it a little quieter - by
+ * northLineKinds, the page's own rule, so capitals after the mark are not a
+ * heading.
  *
  * A textarea cannot draw one line differently from another, so the field
  * draws nothing itself. Its own text is transparent and a drawing of the
@@ -290,12 +291,24 @@ function NorthEditor({
     <div className="north-editor">
       <div className="north-editor-field">
         <div className="north-editor-mirror" aria-hidden="true">
-          {draft.split('\n').map((line, i) => (
-            <span key={i}>
-              {i > 0 && '\n'}
-              <span className={markAt >= 0 && i > markAt ? SIGNATURE_LINE_CLASS : LINE_CLASS[kinds[i]]}>{line}</span>
-            </span>
-          ))}
+          {draft.split('\n').map((line, i) => {
+            const tagAt = kinds[i] === 'heading' ? northTagAt(line) : -1
+            return (
+              <span key={i}>
+                {i > 0 && '\n'}
+                <span className={markAt >= 0 && i > markAt ? SIGNATURE_LINE_CLASS : LINE_CLASS[kinds[i]]}>
+                  {tagAt < 0 ? (
+                    line
+                  ) : (
+                    <>
+                      {line.slice(0, tagAt)}
+                      <span className="north-editor-tag">{line.slice(tagAt)}</span>
+                    </>
+                  )}
+                </span>
+              </span>
+            )
+          })}
           {/* One line more than the text has - see above. */}
           {'\n\u200b'}
         </div>

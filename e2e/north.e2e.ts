@@ -81,53 +81,75 @@ test('the text is written on the page, reads back whole, and its introduction op
 })
 
 /**
- * A line in capitals is a heading and owns everything to the next one, and
- * what it holds comes when asked: on a hover where there is a pointer, over
- * the page and moving nothing, and on a tap where there is not. The jsdom
- * tests hold the state; this is the one place the two ways of asking are
- * walked on the screens that have them.
+ * A line in capitals is a heading and owns everything to the next one. On
+ * the page, since v2.26, all of it is open at rest, on every screen: the
+ * introduction, every heading with its lines and the signature, with Edit at
+ * the right of the page's name. The jsdom tests hold the parts and the
+ * stylesheet; this walks the laid-out page, where the air over a heading and
+ * under it can be measured, and then the day, where a heading's lines come
+ * when asked: on a hover where there is a pointer, over the day and moving
+ * nothing, and on a tap where there is not.
  */
-test('a heading opens on a hover without moving the page, or on a tap where there is no pointer, and closes again', async ({ page }, info) => {
+test('the page shows everything at rest with Edit beside its name, and on the day a heading opens on a hover or a tap', async ({ page }, info) => {
   await openFreshAt(page, wednesdayAt(10))
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'North', exact: true }).click()
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
-  await box.fill('First line here\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second\n---\na signature line')
+  await box.fill('First line here\n\nFIRST HEADING [morning]\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second\n---\na signature line')
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 
-  // At rest: the introduction, the two headings, and nothing under them.
+  // At rest, and nothing asked: every part of the text is on the page.
   await expect(page.locator('.north-intro .north-paragraph')).toHaveText('First line here')
-  const first = page.getByRole('button', { name: 'FIRST HEADING' })
-  const second = page.getByRole('button', { name: 'SECOND HEADING' })
-  await expect(first).toBeVisible()
-  await expect(second).toBeVisible()
+  const headings = page.getByRole('main').getByRole('heading', { level: 3 })
+  await expect(headings).toHaveText(['FIRST HEADING', 'SECOND HEADING'])
   const lines = page.locator('.north-section').first().locator('.north-paragraph')
-  await expect(lines.first()).toBeHidden()
+  await expect(lines).toHaveText(['a line under it', 'a second paragraph under it'])
+  await expect(lines.nth(1)).toBeVisible()
+  await expect(page.locator('.north-section').nth(1).locator('.north-paragraph')).toBeVisible()
+  await expect(page.locator('.north-read .north-signature')).toBeVisible()
+  await expect(page.locator('.north-read')).not.toContainText('[morning]')
+  await expect(page.locator('.north-read').getByRole('button')).toHaveCount(0)
 
-  if (info.project.name === 'phone') {
-    await first.tap()
-    await expect(lines).toHaveText(['a line under it', 'a second paragraph under it'])
+  // Edit at the right of the page's name, on the name's centre, its word on
+  // the column's right edge.
+  const name = await page.locator('.north-view-title h2').boundingBox()
+  const edit = page.getByRole('button', { name: 'Edit', exact: true })
+  const editBox = await edit.boundingBox()
+  const column = await page.locator('.north-read').boundingBox()
+  expect(Math.abs(name!.y + name!.height / 2 - (editBox!.y + editBox!.height / 2))).toBeLessThanOrEqual(1)
+  expect(editBox!.x).toBeGreaterThan(name!.x + name!.width)
+  const editWordRight = await edit.evaluate(el => {
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    return range.getBoundingClientRect().right
+  })
+  expect(Math.abs(editWordRight - (column!.x + column!.width))).toBeLessThanOrEqual(2)
+
+  // More air over a heading than under it, measured letter to letter.
+  const air = await page.evaluate(() => {
+    const ink = (el: Element) => {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      const rects = [...range.getClientRects()]
+      return { top: rects[0].top, bottom: rects[rects.length - 1].bottom }
+    }
+    const second = document.querySelectorAll('.north-section')[1]
+    const before = document.querySelectorAll('.north-section')[0].querySelectorAll('.north-paragraph')
+    const heading = ink(second.querySelector('.north-heading')!)
+    return {
+      over: heading.top - ink(before[before.length - 1]).bottom,
+      under: ink(second.querySelector('.north-paragraph')!).top - heading.bottom,
+    }
+  })
+  expect(air.over).toBeGreaterThan(air.under * 2)
+
+  // A pointer resting on a heading changes nothing on the page.
+  if (info.project.name !== 'phone') {
+    const signatureAtRest = await page.locator('.north-read .north-signature').boundingBox()
+    await headings.first().hover()
+    await page.waitForTimeout(300)
+    expect(await page.locator('.north-read .north-signature').boundingBox()).toEqual(signatureAtRest)
     await expect(lines.nth(1)).toBeVisible()
-    await expect(first).toHaveAttribute('aria-expanded', 'true')
-    await first.tap()
-    await expect(lines.first()).toBeHidden()
-  } else {
-    const edit = page.getByRole('button', { name: 'Edit', exact: true })
-    const editAtRest = await edit.boundingBox()
-    await first.hover()
-    await expect(lines.nth(1)).toBeVisible()
-    await expect(lines).toHaveText(['a line under it', 'a second paragraph under it'])
-    // Nothing on the page moved to make the room (CONVENTIONS 24).
-    expect(await edit.boundingBox()).toEqual(editAtRest)
-    // Down to where the second heading is drawn, and its words take over.
-    const at = await second.boundingBox()
-    await page.mouse.move((at?.x ?? 0) + 20, (at?.y ?? 0) + (at?.height ?? 0) / 2, { steps: 5 })
-    await expect(lines.first()).toBeHidden()
-    await expect(page.locator('.north-section').nth(1).locator('.north-paragraph')).toBeVisible()
-    // Away, and it is gone: a hover pins nothing.
-    await page.mouse.move(5, 5)
-    await expect(page.locator('.north-section').nth(1).locator('.north-paragraph')).toBeHidden()
-    await expect(first).toHaveAttribute('aria-expanded', 'false')
   }
 
   // And on the day: the headings and the signature, never the introduction.
@@ -170,10 +192,10 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
 /**
  * The field's own text is transparent and a drawing of it stands under it,
  * so every line of the drawing has to end exactly where the field's line
- * ends - a heading drawn heavier, the mark drawn as a rule and a long line
- * wrapped across three included. The field's line ends are read from a
- * copy of the field holding the text up to that line, which is the only
- * way to ask a browser where a textarea's line is.
+ * ends - a heading drawn heavier with its tag drawn quieter, the mark drawn
+ * as a rule and a long line wrapped across three included. The field's line
+ * ends are read from a copy of the field holding the text up to that line,
+ * which is the only way to ask a browser where a textarea's line is.
  */
 test('what is typed and the drawing under it stand on the same lines, long wrapped lines too', async ({ page }) => {
   await openFreshAt(page, wednesdayAt(10))
@@ -181,7 +203,7 @@ test('what is typed and the drawing under it stand on the same lines, long wrapp
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   const box = page.getByRole('textbox', { name: 'North' })
   const long = 'a long line that goes on past the width of the page and keeps going, so that it has to wrap onto a second line and then onto a third one before it stops'
-  await box.fill(['a first line', long, '', 'FIRST HEADING', long, '---', 'A SIGNATURE IN CAPITALS', long].join('\n'))
+  await box.fill(['a first line', long, '', 'FIRST HEADING [evening]', long, '---', 'A SIGNATURE IN CAPITALS', long].join('\n'))
 
   const drift = await page.evaluate(() => {
     const field = document.querySelector('.north-editor-text') as HTMLTextAreaElement

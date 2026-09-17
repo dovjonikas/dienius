@@ -1,4 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthView } from './NorthView'
@@ -22,6 +24,21 @@ function goal(title: string, more: { why?: string; identity?: string; deserve?: 
 
 function picture(text: string) {
   actions.setPicture(text)
+}
+
+/** A rule's body in the stylesheet, by its selector exactly as written there. */
+function cssRule(selector: string): string {
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return css.match(new RegExp('\\n' + escaped + ' \\{([^}]*)\\}'))?.[1] ?? ''
+}
+
+/** A space declared in steps of the scale, in pixels: var(--s8), or a calc of steps added. */
+function spacePx(body: string, property: string): number {
+  const value = body.match(new RegExp('(?:^|\\n)\\s*' + property + ':\\s*([^;]+);'))?.[1] ?? ''
+  const steps: Record<string, number> = { s1: 4, s2: 8, s3: 12, s4: 16, s6: 24, s8: 32, s12: 48 }
+  const found = [...value.matchAll(/--(s\d+)/g)]
+  return found.length ? found.reduce((sum, m) => sum + (steps[m[1]] ?? NaN), 0) : NaN
 }
 
 /**
@@ -213,6 +230,27 @@ test('while writing, headings and the signature mark are drawn as what they will
   expect([...drawing.querySelectorAll('.is-heading')].map(l => l.textContent)).toEqual(['SECOND HEADING'])
 })
 
+/**
+ * A heading's [morning] or [evening] is only ever seen in the field, where
+ * it is written, and the drawing sets it apart from the heading's words: in
+ * a quieter span of its own, the spaces before it included, so the line
+ * still holds exactly what the field holds. Words in brackets on a line of
+ * text are words.
+ */
+test("while writing, a heading's tag is drawn apart from its words, and brackets on a line of text are not", async () => {
+  const user = userEvent.setup()
+  const { container } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Write' }))
+  const box = screen.getByRole('textbox', { name: 'North' })
+  fireEvent.change(box, { target: { value: 'FIRST HEADING [morning]\na line under it [evening]\nSECOND HEADING' } })
+
+  const drawing = container.querySelector('.north-editor-mirror') as HTMLElement
+  expect([...drawing.querySelectorAll('.north-editor-tag')].map(t => t.textContent)).toEqual([' [morning]'])
+  expect(drawing.querySelector('.north-editor-tag')?.parentElement).toHaveClass('is-heading')
+  const lines = [...drawing.querySelectorAll('.north-editor-line')].map(l => l.textContent)
+  expect(lines.join('\n')).toBe((box as HTMLTextAreaElement).value)
+})
+
 // As many headings as the text has: nothing on the page, in the field or on
 // the day counts them.
 test('a text with forty headings is written, saved and read as forty headings', async () => {
@@ -233,8 +271,9 @@ test('a text with forty headings is written, saved and read as forty headings', 
 
 /**
  * Reading, since v2.24: the introduction as it was written, then the
- * headings with nothing under them until asked for. A text with no heading
- * is all introduction, and reads whole.
+ * headings, then the signature. A text with no heading is all introduction,
+ * and reads whole. Since v2.26 nothing in the words is a control: the page is
+ * for reading, and Edit stands at the right of its name.
  */
 test('a text with no heading reads whole, paragraph by paragraph, with nothing in it to press', () => {
   picture('a first line\na second line\n\na third line\n\n\n\na fourth line')
@@ -242,21 +281,43 @@ test('a text with no heading reads whole, paragraph by paragraph, with nothing i
   const paragraphs = [...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)
   expect(paragraphs).toEqual(['a first line\na second line', 'a third line', 'a fourth line'])
   expect(screen.queryByRole('heading', { level: 3 })).toBeNull()
-  // Read, not asked anything: no field, no label, and nothing to press but Edit.
+  // Read, not asked anything: no field, no label, and nothing to press.
   expect(screen.queryByRole('textbox')).toBeNull()
   const read = container.querySelector('.north-read') as HTMLElement
-  expect(within(read).getAllByRole('button').map(b => b.textContent)).toEqual(['Edit'])
+  expect(within(read).queryAllByRole('button')).toEqual([])
 })
 
-// The page ends in its one row of what can be pressed, past the words; the
-// morning's Start the day went with the morning's page opening, in v2.24.
-test('Edit stands in one row at the end of the page, past the signature, and there is no Start the day', () => {
+// Edit is the page's action, and a page's action stands at the right of its
+// name (docs/DESIGN.md, the frame) - not after the last line, where a long
+// text put it a scroll away. The morning's Start the day went with the
+// morning's page opening, in v2.24.
+test("Edit stands at the right of the page's name, not after the words, and there is no Start the day", () => {
   picture('a line before any heading\n\nFIRST HEADING\na line under it\n---\na signature line')
   const { container } = render(<NorthView />)
   const edit = screen.getByRole('button', { name: 'Edit' })
-  expect(container.querySelector('.north-read')?.lastElementChild).toBe(edit.parentElement)
-  expect(edit.parentElement?.previousElementSibling).toHaveClass('north-signature')
+  const title = container.querySelector('.north-view-head > .north-view-title') as HTMLElement
+  expect(edit.parentElement).toBe(title)
+  expect(title.firstElementChild?.tagName).toBe('H2')
+  expect(title.lastElementChild).toBe(edit)
+  expect(container.querySelector('.north-read')?.lastElementChild).toHaveClass('north-signature')
   expect(screen.queryByRole('button', { name: 'Start the day' })).toBeNull()
+})
+
+// The row Edit stands in is kept while the field is open, one control tall
+// whether Edit is drawn or not, so nothing under it moves when it goes.
+test('while the field is open Edit is gone and its row is kept, and an empty page has no Edit', async () => {
+  const user = userEvent.setup()
+  picture('a first line')
+  const { container, unmount } = render(<NorthView />)
+  await user.click(screen.getByRole('button', { name: 'Edit' }))
+  expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+  expect(container.querySelector('.north-view-head > .north-view-title > h2')).not.toBeNull()
+  expect(cssRule('.north-view-title')).toMatch(/min-height:\s*var\(--control-h\)/)
+  unmount()
+
+  actions.setPicture('')
+  render(<NorthView />)
+  expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
 })
 
 // The page with goals but no text is every install from before the text
@@ -273,65 +334,71 @@ test('a goal from before there was a text stands at the top, over the invitation
 
 /**
  * A line in capitals is a heading and owns everything to the next one -
- * lib/northSections.ts. On the page at rest the introduction shows and the
- * headings stand under it with nothing under them; what a heading holds
- * comes when asked. With a pointer that can rest it comes on the hover,
- * over the page, which is the stylesheet's decision by pointer and the
- * browser test's to walk; a press opens it in the page on any device, and a
- * second press closes it.
+ * lib/northSections.ts. Since v2.26 the page shows all of it at once, with
+ * nothing to press and nothing behind a pointer: the introduction, every
+ * heading with every paragraph under it, and the signature. A heading with
+ * nothing under it is a heading all the same. The day beside the page is
+ * where a heading's lines come on a hover or a tap (NorthDay).
  */
-test('the introduction stays on the page, the headings stand under it, and a press opens a heading and closes it', async () => {
-  const user = userEvent.setup()
-  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second')
+test('everything is on the page without a press: the introduction, every heading with its lines, and the signature', () => {
+  picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\nTHIRD HEADING\na line under the third\n---\na signature line')
   const { container } = render(<NorthView />)
   expect([...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)).toEqual(['a line before any heading'])
-  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
-
-  const toggle = screen.getByRole('button', { name: 'FIRST HEADING' })
-  expect(toggle).toHaveAttribute('aria-expanded', 'false')
-  await user.click(toggle)
-  expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  const body = document.getElementById(toggle.getAttribute('aria-controls') ?? '')
-  expect([...(body?.querySelectorAll('.north-paragraph') ?? [])].map(p => p.textContent)).toEqual([
-    'a line under it',
-    'a second paragraph under it',
+  const sections = [...container.querySelectorAll('.north-sections > .north-section')].map(section => [
+    section.querySelector('h3')?.textContent,
+    ...[...section.querySelectorAll('.north-paragraph')].map(p => p.textContent),
   ])
+  expect(sections).toEqual([
+    ['FIRST HEADING', 'a line under it', 'a second paragraph under it'],
+    ['SECOND HEADING'],
+    ['THIRD HEADING', 'a line under the third'],
+  ])
+  expect(screen.getByText('a signature line')).toBeInTheDocument()
+  // Nothing folds: no control in the words, nothing expanded or collapsed.
+  const read = container.querySelector('.north-read') as HTMLElement
+  expect(within(read).queryAllByRole('button')).toEqual([])
+  expect(read.querySelector('[aria-expanded], [hidden]')).toBeNull()
+})
 
-  await user.click(toggle)
-  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+// The tag says when a heading's lines belong on the day; on the page it is
+// never drawn.
+test("a heading's [morning] or [evening] is never drawn on the page", () => {
+  picture('FIRST HEADING [morning]\na line under it\nSECOND HEADING [Evening]\na line under the second')
+  const { container } = render(<NorthView />)
+  expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  expect(container.querySelector('.north-read')?.textContent).not.toMatch(/morning|evening/i)
 })
 
 /**
- * A press that closes a heading leaves the pointer resting on it, and the
- * hover would lay the same words straight back over the page, so the press
- * would look like it had done nothing. A closed heading stays quiet until
- * the pointer leaves it. The stylesheet reads the class, since jsdom has no
- * hover to show the words with.
+ * The page's type, read from the stylesheet since jsdom has no layout: a
+ * heading a step larger and heavier than the words and written as typed,
+ * with more air over it than under it; the signature a step larger than the
+ * words, with more air over it than a heading has; and the column at the
+ * reading width.
  */
-test('closing a heading with a press keeps its words from coming back under the pointer until the pointer leaves', async () => {
-  const user = userEvent.setup()
-  picture('FIRST HEADING\na line under it')
-  const { container } = render(<NorthView />)
-  const toggle = screen.getByRole('button', { name: 'FIRST HEADING' })
-  const section = container.querySelector('.north-section') as HTMLElement
-  expect(section).toHaveClass('can-preview')
+test('a heading is a step over the words with more air over it than under it, and the signature has the most air over it', () => {
+  const heading = cssRule('.north-heading')
+  expect(heading).toMatch(/font-size:\s*var\(--t-lg\)/)
+  expect(heading).toMatch(/font-weight:\s*var\(--w-strong\)/)
+  expect(heading).not.toMatch(/letter-spacing|text-transform/)
+  // margin: 0 0 var(--s2) - the one step in it is the air under the heading.
+  const under = spacePx(heading, 'margin')
+  const over = spacePx(cssRule('.north-sections'), 'gap')
+  expect(spacePx(cssRule('.north-intro + .north-sections'), 'margin-top')).toBe(over)
+  expect(under).toBeGreaterThan(0)
+  expect(over).toBeGreaterThan(under * 2)
 
-  await user.click(toggle)
-  expect(section).not.toHaveClass('can-preview')
-  await user.click(toggle)
-  expect(toggle).toHaveAttribute('aria-expanded', 'false')
-  expect(section).not.toHaveClass('can-preview')
-
-  await user.unhover(section)
-  expect(section).toHaveClass('can-preview')
+  expect(cssRule('.north-read .north-signature > .north-paragraph')).toMatch(/font-size:\s*var\(--t-lg\)/)
+  expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThan(over)
+  expect(cssRule('.north-view')).toMatch(/max-width:\s*var\(--read-w\)/)
 })
 
 /**
  * After a line of only --- the rest is the signature: read whole at the foot
- * of the page, past the headings and before the buttons, never under a
- * heading and never one itself.
+ * of the page, past the headings, never under a heading and never one
+ * itself.
  */
-test('the signature reads whole at the foot of the page, after the headings, and folds under nothing', () => {
+test('the signature reads whole at the foot of the page, after the headings', () => {
   picture('a line before any heading\n\nFIRST HEADING\na line under it\n\n---\nA LINE IN CAPITALS\na signature line\n\na second signature paragraph')
   const { container } = render(<NorthView />)
   const signature = container.querySelector('.north-read .north-signature') as HTMLElement
@@ -340,23 +407,9 @@ test('the signature reads whole at the foot of the page, after the headings, and
     'a second signature paragraph',
   ])
   expect(signature.previousElementSibling).toHaveClass('north-sections')
-  expect(signature.nextElementSibling).toHaveClass('north-actions')
+  expect(signature.nextElementSibling).toBeNull()
   expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['FIRST HEADING'])
-  expect(container.querySelector('.north-section-body')?.textContent).toBe('a line under it')
-})
-
-test('Escape closes an open heading, and a heading with nothing under it is not a control', async () => {
-  const user = userEvent.setup()
-  picture('FIRST HEADING\na line under it\n\nSECOND HEADING')
-  render(<NorthView />)
-  const first = screen.getByRole('button', { name: 'FIRST HEADING' })
-  await user.click(first)
-  expect(first).toHaveAttribute('aria-expanded', 'true')
-  await user.keyboard('{Escape}')
-  expect(first).toHaveAttribute('aria-expanded', 'false')
-
-  expect(screen.getByRole('heading', { level: 3, name: 'SECOND HEADING' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'SECOND HEADING' })).toBeNull()
+  expect(container.querySelector('.north-section .north-paragraph')?.textContent).toBe('a line under it')
 })
 
 // --- the goal, at the top ---------------------------------------------------------
