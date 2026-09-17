@@ -2,7 +2,7 @@ import { useAppData } from '../lib/store'
 
 import { TimelineGrid } from '../widgets/day-plan/TimelineGrid'
 import { useTimelineDrag } from '../widgets/day-plan/useTimelineDrag'
-import { formatDuration, windowFor } from '../widgets/day-plan/capacity'
+import { formatDuration, wakingDayFor } from '../widgets/day-plan/capacity'
 import { blocksAsTasks, overlapsIn, templateSummary, type DrawableBlock } from './templateDay'
 
 /**
@@ -81,7 +81,10 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
     },
   })
   const live = onReshape !== undefined
-  const window = windowFor(sleepProfileId, { profiles: data.settings.sleepProfiles })
+  // The whole waking day, to the schedule's next sleep - past midnight for a
+  // bedtime after it - so the sleep figure is the schedule's own sleep and not
+  // a day less a waking window cut at midnight.
+  const window = wakingDayFor(sleepProfileId, { profiles: data.settings.sleepProfiles }).waking
   const summary = templateSummary(mine, window)
   const clashes = overlapsIn(mine)
 

@@ -4,7 +4,7 @@ import { addDays, formatWeekTitle, shortWeekday, todayKey, weekOf } from '../../
 import { CopyJournalButton } from '../CopyJournalButton'
 import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
-import { columnFor } from '../../lib/stamping'
+import { sleepOn } from '../../lib/shiftDay'
 import { categoryColor } from '../../lib/categories'
 import { formatDuration } from '../../widgets/day-plan/capacity'
 import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayout'
@@ -113,20 +113,18 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
   // it: "Copy week journal" says week, and three days of it would not be one.
   const week = useMemo(() => weekOf(date), [date])
 
-  const templateProfile = useMemo(() => {
-    return (day: string) => {
-      const id = data.days[day]?.templateId
-      const template = id ? data.templates.find(t => t.id === id) : undefined
-      // Through columnFor - a week template answers per weekday. See DayView.
-      return template ? columnFor(template, day).sleepProfileId : undefined
-    }
-  }, [data.days, data.templates])
+  // Each column's sleep as every reader of a date's sleep has it - its kind or
+  // template column, and tonight's bedtime from the next date. See sleepOn.
+  const sleepFor = useMemo(() => {
+    const today = todayKey()
+    return (day: string) => sleepOn(data, day, today)
+  }, [data])
 
   const calendarCache = useCalendarCache()
 
   const layout = useMemo(
-    () => computeWeekLayout(visible, data.days, { profiles: data.settings.sleepProfiles }, templateProfile),
-    [visible, data.days, data.settings.sleepProfiles, templateProfile],
+    () => computeWeekLayout(visible, data.days, { profiles: data.settings.sleepProfiles }, sleepFor),
+    [visible, data.days, data.settings.sleepProfiles, sleepFor],
   )
 
   const detailTask = detailDate && detailTaskId

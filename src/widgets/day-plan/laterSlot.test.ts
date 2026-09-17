@@ -24,6 +24,25 @@ function withTasks(tasks: Task[], date = DATE, over: Partial<AppData['days'][str
  * is in Later.test.tsx and WeekAgenda.test.tsx.
  */
 describe('where a pulled item lands', () => {
+  it("reads the day's sleep the way the day does: a week template's own column, and tonight's bedtime from the next date", () => {
+    const data = defaultData()
+    data.settings.sleepProfiles = [
+      { id: 'default', name: 'Nights', window: { start: '23:00', end: '07:00' } },
+      { id: 'daytime', name: 'Daytime', window: { start: '08:00', end: '15:00' } },
+    ]
+    // 2 September 2026 is a Wednesday, and this week template sleeps in the daytime on Wednesdays.
+    data.templates = [{ id: 'week', name: 'Week', color: '#cccccc', kind: 'week', blocks: [], weekDays: { 3: { sleepProfileId: 'daytime' } } }]
+    data.days['2026-09-02'] = { date: '2026-09-02', templateId: 'week', tasks: [] }
+    expect(nextSlotFor({ data, date: '2026-09-02', minutes: 30, busy: [] })).toBe('15:00')
+  })
+
+  it("does not land on what still runs in from last night", () => {
+    const data = defaultData()
+    data.settings.sleepProfiles = [{ id: 'default', name: 'Early', window: { start: '21:30', end: '05:00' } }]
+    data.days['2026-09-01'] = { date: '2026-09-01', tasks: [{ id: 'night', title: 'Night shift', done: false, time: '22:00', minutes: 480 }] }
+    expect(nextSlotFor({ data, date: '2026-09-02', minutes: 30, busy: [] })).toBe('06:00')
+  })
+
   it('starts the day when there is nothing on it', () => {
     expect(nextSlotFor({ data: defaultData(), date: DATE, minutes: 30, busy: [] })).toBe('07:00')
   })

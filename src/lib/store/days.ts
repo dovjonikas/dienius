@@ -372,11 +372,13 @@ export const dayActions = {
    * task to any day, always. It is a refusal to move one *in bulk, blindly*,
    * which is the only mode this button has.
    */
-  rolloverUnfinished(date: string): RolloverResult {
+  rolloverUnfinished(date: string, leave: string[] = []): RolloverResult {
     const data = getData()
     const day = data.days[date]
     if (!day) return { moved: 0, held: 0, skipped: 0 }
-    const unfinished = day.tasks.filter(t => !t.done)
+    // `leave` is what is still happening - last night's shift at half past
+    // midnight - which is not unfinished yet and is not the push's to move.
+    const unfinished = day.tasks.filter(t => !t.done && !leave.includes(t.id))
     if (unfinished.length === 0) return { moved: 0, held: 0, skipped: 0 }
 
     const targetDate = addDays(date, 1)

@@ -2,6 +2,7 @@ import type { AppData } from '../../lib/types'
 import type { Interval } from './capacity'
 import { todayKey } from '../../lib/dates'
 import { suggestSlot } from './autoSlot'
+import { carriedIntervals, sleepOn } from '../../lib/shiftDay'
 
 export interface LaterSlotQuery {
   data: AppData
@@ -38,13 +39,15 @@ export interface LaterSlotQuery {
  */
 export function nextSlotFor({ data, date, minutes, busy, nowMinutes }: LaterSlotQuery): string | undefined {
   const day = data.days[date]
-  const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
+  // The day's sleep as every reader of it has it - see sleepOn.
+  const { profileId, sleep } = sleepOn(data, date, todayKey())
   return suggestSlot({
     tasks: day?.tasks ?? [],
     durationMinutes: minutes ?? 30,
-    busy,
-    sleepProfileId: day?.sleepProfileId ?? template?.sleepProfileId,
-    sleep: { profiles: data.settings.sleepProfiles },
+    // Last night's shift still running this morning is time spoken for.
+    busy: [...busy, ...carriedIntervals(data, date)],
+    sleepProfileId: profileId,
+    sleep,
     notBefore: date === todayKey() ? nowMinutes : undefined,
   })
 }

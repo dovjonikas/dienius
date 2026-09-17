@@ -163,7 +163,7 @@ test('a day whose own hours are narrower than the axis reports where they are', 
     [MON]: { date: MON, tasks: [], sleepProfileId: 'late' },
     [TUE]: { date: TUE, tasks: [] },
   }
-  const layout = computeWeekLayout(WEEK, plans, sleep)
+  const layout = computeWeekLayout(WEEK, plans, sleep, date => ({ profileId: plans[date]?.sleepProfileId, sleep }))
   // The axis covers 07:00 to 03:00-next-day, clipped to midnight.
   expect(layout.days[0].wakeHeightPercent).toBeGreaterThan(0)
   expect(layout.days[0].wakeTopPercent).toBeGreaterThanOrEqual(0)

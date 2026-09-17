@@ -5,7 +5,8 @@ import { actions, useAppData } from '../../lib/store'
 import { offerUndo } from '../../lib/undo'
 import type { ReplanMode } from '../../lib/replanState'
 import { todayKey } from '../../lib/dates'
-import { columnFor } from '../../lib/stamping'
+import { carriedIntervals, sleepOn } from '../../lib/shiftDay'
+import { awayOn, awaySince } from '../../lib/away'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { hasIdentity } from '../../lib/taskIdentity'
 import { usePointerCoarse } from '../../lib/viewport'
@@ -96,34 +97,38 @@ export function ReplanSheet(props: ReplanSheetProps) {
   }, [props])
 
   /**
-   * One day as the arithmetic sees it. The sleep schedule is the day's own,
-   * else its template's through `columnFor` - a week template's Wednesday
-   * can be a night shift while its Saturday is not - else the default, the
-   * same three steps the day view takes; somebody else's calendar is time
-   * already spoken for on that day.
+   * One day as the arithmetic sees it. Its sleep is read the way every reader
+   * of a date's sleep reads it (`sleepOn`) - the day's own schedule, its kind
+   * or template column, and tonight's bedtime from the next date; somebody
+   * else's calendar is time already spoken for on that day.
    */
   function contextFor(date: string): DayContext {
     const day = data.days[date]
-    const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
-    const sleepProfileId = day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
+    const { profileId, sleep } = sleepOn(data, date, todayKey())
     return {
       tasks: day?.tasks ?? [],
-      window: windowFor(sleepProfileId, { profiles: data.settings.sleepProfiles }),
-      busy: busyIntervals(date, data.settings.calendars, calendarCache),
+      window: windowFor(profileId, sleep),
+      // Last night's shift still running this morning is time spoken for.
+      busy: [...busyIntervals(date, data.settings.calendars, calendarCache), ...carriedIntervals(data, date)],
       away: day?.away,
     }
   }
+
+  // Away since last night is still away today, and Back clears it where it is
+  // written - see lib/away.ts.
+  const awayMark = awayOn(data, today, nowMinutes)
+  const awayText = awayMark ? awaySince(awayMark, today) : undefined
 
   const todayContext = contextFor(today)
   const titles = new Map(todayContext.tasks.map(t => [t.id, t.title]))
 
   function accept(date: string, plan: ReplanPlan, label: string, clearAway = false) {
-    const wasAway = todayContext.away
+    const wasAway = awayMark
     const { undo } = actions.applyReplan(date, plan)
-    if (clearAway) actions.setAway(today, undefined)
+    if (clearAway && wasAway) actions.setAway(wasAway.date, undefined)
     offerUndo(label, () => {
       undo()
-      if (clearAway && wasAway) actions.setAway(today, wasAway)
+      if (clearAway && wasAway) actions.setAway(wasAway.date, wasAway.time)
     })
     props.onClose()
   }
@@ -138,7 +143,7 @@ export function ReplanSheet(props: ReplanSheetProps) {
     <div className="replan-scrim" onClick={props.onClose}>
       <div className="replan" role="dialog" aria-label="Replan" data-keeps-keys="" onClick={e => e.stopPropagation()}>
         {mode === 'menu' && (
-          <Menu away={todayContext.away} onPick={setMode} onClose={props.onClose} />
+          <Menu away={awayText} onPick={setMode} onClose={props.onClose} />
         )}
         {mode === 'interrupt' && (
           <Interrupt
@@ -179,10 +184,10 @@ export function ReplanSheet(props: ReplanSheetProps) {
             window={todayContext.window}
             busy={todayContext.busy}
             titles={titles}
-            away={todayContext.away}
+            away={awayText}
             onAccept={plan => accept(today, plan, 'Day replanned', true)}
             onNotNow={() => {
-              actions.setAway(today, undefined)
+              if (awayMark) actions.setAway(awayMark.date, undefined)
               props.onClose()
             }}
           />
@@ -313,7 +318,10 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
   const { window } = ctx
   // Where fitting may start: now on today, and nothing that has already
   // happened is moved; the start of the waking window on a day still ahead.
-  const from = isToday ? Math.min(roundUp(nowMinutes), window.end) : window.start
+  // Never past the day's last minute: a start is on its own date's clock, and
+  // in the last minutes of a day "from now" rounds up to 24:00, which is not a
+  // start anywhere.
+  const from = isToday ? Math.min(roundUp(nowMinutes), window.end, 24 * 60 - 1) : window.start
   const words = dayWordsFor(date, today)
   const chips = dayChoices(today)
 

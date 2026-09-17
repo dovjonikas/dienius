@@ -653,8 +653,11 @@ test('computeCapacity on a day set to a second schedule measures against that sc
     'shift',
     sleep,
   )
-  // The Shift schedule gives a waking window of 15:00-24:00 (9h = 540 min).
-  expect(capacity.freeMinutes).toBe(540 - 30)
+  // The Shift schedule sleeps 08:00-15:00, so the day it wakes into is awake
+  // from 15:00 until the same schedule's next sleep at 08:00 the next morning:
+  // seventeen hours. Until v2.29 this was cut at midnight, nine hours - see
+  // docs/RESEARCH-SHIFTS.md section 3.
+  expect(capacity.freeMinutes).toBe(17 * 60 - 30)
 })
 
 /**

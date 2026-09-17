@@ -31,6 +31,31 @@ test('yesterday with nothing unfinished is not mentioned', () => {
   expect(container).toBeEmptyDOMElement()
 })
 
+// Rotating shifts, stage 4: a shift that started last night and is still
+// running is not unfinished yet, and a push does not move it to tonight.
+test('a task from yesterday still running is not counted unfinished, and a push leaves it where it is', async () => {
+  const user = userEvent.setup()
+  const now = new Date()
+  const startedAt = `${String(Math.max(0, now.getHours() - 1)).padStart(2, '0')}:00`
+  actions.resetForTests({
+    ...defaultData(),
+    days: {
+      [YESTERDAY]: {
+        date: YESTERDAY,
+        tasks: [
+          // Started an hour before this hour yesterday, and a day and a half long: still running now.
+          { id: 'long', title: 'Long shift', done: false, time: startedAt, minutes: 36 * 60 },
+          { id: 'call', title: 'Call the bank', done: false },
+        ],
+      },
+    },
+  })
+  render(<YesterdayBanner date={TODAY} />)
+  expect(screen.getByRole('status')).toHaveTextContent('Yesterday: 1 unfinished')
+  await user.click(screen.getByRole('button', { name: 'Push to today' }))
+  expect(getData().days[YESTERDAY].tasks.map(t => t.id)).toEqual(['long'])
+})
+
 test('what is left is counted, and only on today', () => {
   actions.addTask(YESTERDAY, 'Call the bank')
   actions.addTask(YESTERDAY, 'Reply to Ana')

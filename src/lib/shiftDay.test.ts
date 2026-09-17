@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { defaultData } from './storage'
 import { clockTimeExists, realMinutes, wallInstant } from './wallClock'
-import { applyRoster, busyOn, composeDay, handEdits, ownedSleep, placeRoutines, sleepWindowOn } from './shiftDay'
+import { applyRoster, busyOn, carriedInto, composeDay, handEdits, placeRoutines, sleepOn, sleepWindowOn, wakingDayOn } from './shiftDay'
 import type { AppData, Routine, SleepProfile, Template } from './types'
 import { wakingWindow } from '../widgets/day-plan/capacity'
 
@@ -94,12 +94,6 @@ test('03:30 does not exist on 29 March 2026, and exists - first as summer time -
 
 // --- sleep: a date owns the sleep it wakes from ----------------------------------------------
 
-test('a sleep over midnight belongs to the date it ends on, a daytime sleep to its own date, and equal times are no sleep', () => {
-  expect(ownedSleep({ start: '23:00', end: '07:00' })).toEqual({ start: -60, end: 7 * 60 })
-  expect(ownedSleep({ start: '08:00', end: '15:00' })).toEqual({ start: 8 * 60, end: 15 * 60 })
-  expect(ownedSleep({ start: '07:00', end: '07:00' })).toBeNull()
-})
-
 test("a date's sleep comes from its own kind, a day's own schedule wins over its kind's, and a date with no kind reads its template or the default", () => {
   const rostered = roster({ '2026-09-07': 'day', '2026-09-08': 'night' })
   expect(sleepWindowOn(rostered, '2026-09-07', kindOf(rostered))).toEqual({ start: '21:30', end: '05:00' })
@@ -187,6 +181,58 @@ test('night shifts on 28 and 29 February 2028 run into 29 February and 1 March, 
   expect(plan.days['2028-02-28'].tasks.filter(t => t.routineId)).toEqual([])
   expect(plan.days['2028-02-29'].tasks.filter(t => t.routineId).map(t => t.time)).toEqual(['17:00'])
   expect(plan.days['2028-03-01'].tasks.filter(t => t.routineId)).toEqual([])
+})
+
+test("a date's waking day ends at the bedtime of the next date's kind, and a date ahead nobody has opened reads the template its weekday will give it", () => {
+  const plan = roster({ '2026-09-12': 'rest', '2026-09-13': 'day' })
+  expect(wakingDayOn(plan, '2026-09-12', '2026-09-12').waking).toEqual({ start: 420, end: 1290 })
+
+  // 19 September 2026 is a Saturday. Nobody has opened it, so opening it will
+  // stamp what the weekday map says - and its sleep is tonight's for the 18th.
+  const mapped = { ...plan, settings: { ...plan.settings, weekdayTemplates: { 6: 'night' } } }
+  expect(wakingDayOn(mapped, '2026-09-18', '2026-09-12').tonight).toEqual({ start: 1440 + 480, end: 1440 + 900 })
+  // Not once it has been opened without a template, and never for a date behind today.
+  const opened = { ...mapped, days: { ...mapped.days, '2026-09-19': { date: '2026-09-19', tasks: [], autoApplied: true } } }
+  expect(wakingDayOn(opened, '2026-09-18', '2026-09-12').tonight).toEqual({ start: 1440 - 60, end: 1440 + 420 })
+  expect(wakingDayOn(mapped, '2026-09-18', '2026-09-20').tonight).toEqual({ start: 1440 - 60, end: 1440 + 420 })
+})
+
+test("every reader of a date's sleep is handed the schedule it wakes from and tonight's, a week template's column included", () => {
+  const plan = roster({ '2026-09-12': 'rest', '2026-09-13': 'day' })
+  expect(sleepOn(plan, '2026-09-12', '2026-09-12')).toEqual({ profileId: 'default', sleep: { profiles: PROFILES, tonightProfileId: 'early' } })
+  // Nothing on the next date: tonight is the default, named, so it is not read as "the same as today".
+  expect(sleepOn(plan, '2026-09-13', '2026-09-12').sleep.tonightProfileId).toBe('default')
+
+  // 16 September 2026 is a Wednesday, and this week template sleeps in the daytime on Wednesdays.
+  const week: Template = { id: 'week', name: 'Week', color: '#cccccc', kind: 'week', blocks: [], weekDays: { 3: { sleepProfileId: 'daytime' } } }
+  const withWeek = { ...plan, templates: [...plan.templates, week], days: { ...plan.days, '2026-09-16': { date: '2026-09-16', templateId: 'week', tasks: [] } } }
+  expect(sleepOn(withWeek, '2026-09-16', '2026-09-12').profileId).toBe('daytime')
+  expect(sleepOn(withWeek, '2026-09-15', '2026-09-12').sleep.tonightProfileId).toBe('daytime')
+})
+
+test("what still runs in from yesterday is yesterday's timed task on today's clock, and nothing that ended by midnight or waits aside", () => {
+  const plan = roster({ '2026-09-08': 'night', '2026-09-09': 'after' })
+  const yesterday = plan.days['2026-09-08']
+  const withMore = {
+    ...plan,
+    days: {
+      ...plan.days,
+      '2026-09-08': {
+        ...yesterday,
+        tasks: [
+          ...yesterday.tasks,
+          { id: 'evening', title: 'Evening', done: false, time: '20:00', minutes: 240 },
+          { id: 'aside', title: 'Aside', done: false, time: '23:00', minutes: 120, setAside: true },
+        ],
+      },
+    },
+  }
+  expect(carriedInto(withMore, '2026-09-09').map(c => [c.task.title, c.start, c.end])).toEqual([['Night shift', -120, 360]])
+})
+
+test('a day stamped with a template that has since been deleted reads the default, and the weekday map does not argue with it', () => {
+  const plan = { ...data, settings: { ...data.settings, weekdayTemplates: { 6: 'night' } }, days: { '2026-09-19': { date: '2026-09-19', templateId: 'deleted-template', tasks: [] } } }
+  expect(wakingDayOn(plan, '2026-09-18', '2026-09-12').tonight).toEqual({ start: 1440 - 60, end: 1440 + 420 })
 })
 
 // --- where each routine goes -----------------------------------------------------------------------

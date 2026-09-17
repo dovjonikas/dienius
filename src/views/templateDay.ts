@@ -1,6 +1,6 @@
 import type { Interval } from '../widgets/day-plan/capacity'
 import { mergeIntervals, timeToMinutes } from '../widgets/day-plan/capacity'
-import { formatClock } from '../widgets/day-plan/timelineLayout'
+import { formatEndClock } from '../widgets/day-plan/timelineLayout'
 import { UNSIZED_ASSUMED_MINUTES } from '../widgets/day-plan/replan'
 import type { Task, TemplateBlock } from '../lib/types'
 
@@ -89,7 +89,7 @@ export function overlapsIn(blocks: DrawableBlock[]): TemplateOverlap[] {
     .filter((x): x is { id: string; span: Interval } => x.span !== null)
   const edges = [...new Set(timed.flatMap(x => [x.span.start, x.span.end]))].sort((a, b) => a - b)
 
-  const out: TemplateOverlap[] = []
+  const spans: { from: number; to: number; ids: string[] }[] = []
   for (let i = 0; i < edges.length - 1; i += 1) {
     const from = edges[i]
     const to = edges[i + 1]
@@ -98,15 +98,17 @@ export function overlapsIn(blocks: DrawableBlock[]): TemplateOverlap[] {
     const ids = on.map(x => x.id)
     // One clash rather than a slice per edge: two blocks that overlap in
     // three places because a third crosses them is still one thing to say.
-    const last = out[out.length - 1]
-    if (last && last.to === formatClock(from) && last.ids.some(id => ids.includes(id))) {
-      last.to = formatClock(to)
+    // Joined on the minutes, not on how they read.
+    const last = spans[spans.length - 1]
+    if (last && last.to === from && last.ids.some(id => ids.includes(id))) {
+      last.to = to
       for (const id of ids) if (!last.ids.includes(id)) last.ids.push(id)
       continue
     }
-    out.push({ from: formatClock(from), to: formatClock(to), ids })
+    spans.push({ from, to, ids })
   }
-  return out
+  // An end past midnight is on the next day's clock, and says so.
+  return spans.map(span => ({ from: formatEndClock(span.from), to: formatEndClock(span.to), ids: span.ids }))
 }
 
 export interface TemplateSummary {

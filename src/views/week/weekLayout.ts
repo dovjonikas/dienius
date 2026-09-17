@@ -74,12 +74,12 @@ export interface WeekLayout {
  * the axis stretches to cover it. A 05:00 flight is exactly the sort of thing
  * somebody opens a week view to look at.
  */
-export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sleep: SleepSettings, templateProfile?: (date: string) => string | undefined): Interval {
+export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sleep: SleepSettings, sleepFor?: SleepFor): Interval {
   let start = Infinity
   let end = -Infinity
   dates.forEach((date, i) => {
     const day = days[i]
-    const w = windowFor(day?.sleepProfileId ?? templateProfile?.(date), sleep)
+    const w = windowOf(date, sleep, sleepFor)
     start = Math.min(start, w.start)
     end = Math.max(end, w.end)
     for (const task of day?.tasks ?? []) {
@@ -97,14 +97,26 @@ export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sle
   return { start: Math.floor(start / 60) * 60, end: Math.min(24 * 60, Math.ceil(end / 60) * 60) }
 }
 
+/**
+ * Each date's sleep, as every reader of a date's sleep has it - `sleepOn` in
+ * lib/shiftDay.ts, which the week view hands in. Without one every date sleeps
+ * the default schedule, which is all a test with no plan needs.
+ */
+export type SleepFor = (date: string) => { profileId: string | undefined; sleep: SleepSettings }
+
+function windowOf(date: string, sleep: SleepSettings, sleepFor: SleepFor | undefined): Interval {
+  const own = sleepFor?.(date)
+  return own ? windowFor(own.profileId, own.sleep) : windowFor(undefined, sleep)
+}
+
 export function computeWeekLayout(
   dates: string[],
   days: Record<string, DayPlan>,
   sleep: SleepSettings,
-  templateProfile?: (date: string) => string | undefined,
+  sleepFor?: SleepFor,
 ): WeekLayout {
   const plans = dates.map(d => days[d])
-  const window = sharedWindow(plans, dates, sleep, templateProfile)
+  const window = sharedWindow(plans, dates, sleep, sleepFor)
   const span = window.end - window.start
 
   return {
@@ -115,7 +127,7 @@ export function computeWeekLayout(
       const tasks = plan?.tasks ?? []
       const anchors = tasks.filter(isAnchor)
       const untimed = tasks.filter(t => !isAnchor(t))
-      const own = windowFor(plan?.sleepProfileId ?? templateProfile?.(date), sleep)
+      const own = windowOf(date, sleep, sleepFor)
 
       const placed = anchors
         .map(task => {

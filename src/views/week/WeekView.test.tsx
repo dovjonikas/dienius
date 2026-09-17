@@ -100,6 +100,15 @@ test('a half-hour block carries its start and end, the same as an hour would', (
   expect(deep.querySelector('.week-block-time')?.textContent).toBe('10:00 - 11:00')
 })
 
+test('a block that runs past midnight says where it ends on the next day, not 24:00', () => {
+  actions.addTask(MON, 'Night shift', '22:00')
+  actions.setTaskMinutes(MON, getData().days[MON].tasks[0].id, 480)
+  renderWeek()
+
+  const shift = within(column(MON)).getByRole('button', { name: /Night shift/ })
+  expect(shift.querySelector('.week-block-time')?.textContent).toBe('22:00 - 06:00 (next day)')
+})
+
 // --- moving a block between days ----------------------------------------
 
 /**

@@ -442,6 +442,99 @@ test in that file checks the setting took - that 25 October 2026 has 25 hours -
 so a test that silently ran in UTC fails instead of passing for the wrong
 reason.
 
+### 4.5 Stage 4, reader by reader
+
+A second audit at `fda1cb8` walked every place a time is written past
+midnight, every reader of "now", every reader of a day's sleep, and `away`.
+What stage 4 changed - all of it built, each with a test that failed first:
+
+**A day's sleep, from one resolver** (`sleepOn` in `shiftDay.ts`, the day
+between two sleeps in `wakingDay.ts`):
+
+- The day view, replan, quick-add, Later, the task sheet, the set-aside strip
+  and the week all ask `sleepOn`, and a test reads the source to keep it the
+  only place a date's sleep is worked out. Four of them had disagreed about a
+  week template's column.
+- A date's evening ends at tonight's bedtime, which is the next date's schedule.
+  A date nobody has opened reads the template its weekday will give it, or
+  Friday's evening would change the moment Saturday was opened.
+- The free-time figure counts the waking day to that bedtime, past midnight
+  where it is, and what still runs in from last night takes its time from the
+  morning.
+- The grid greys the sleeps that fall on the day, not the waking hours turned
+  inside out: after a night shift, midnight to a daytime sleep is awake.
+- "Sleep in" counts real minutes to the next bedtime, past midnight included.
+- The day's sleep figure is the real length of the sleep it woke from, and the
+  phone's sentence names tonight's bedtime where it differs.
+- The grid's screen-reader sentence says the real bedtime and wake time, and a
+  template's sleep total is its schedule's sleep rather than a day less the
+  waking window cut at midnight.
+
+**Clock text:**
+
+- `formatClock` writes a value past midnight on the next day's clock and a value
+  before it on the day before's; exactly 1440 stays "24:00", the end of the day.
+- Every range adds "(next day)" to an end past midnight: the day grid already
+  did, and now the week's blocks, the week template grid and a template's
+  overlap line do too.
+- No start is saved as "24:00": a drag to the bottom of the grid stops at 23:59,
+  and so does replan's "from now" in the last minutes of a day.
+- Resizing a block drawn cut at midnight moves its real end by the distance
+  dragged, not to where the cut edge was dropped - a grab and release no
+  longer shortens an eight-hour shift to two.
+
+**Now, after midnight:**
+
+- What still runs in from yesterday is running today: the header's running
+  task and time left, the F key, the focus bar and the focus screen, in real
+  minutes.
+- A focus session open across midnight counts on its own date's clock, so it
+  reads the hours left rather than a day and a half.
+- Last night's block still running is busy time for quick-add's and Later's
+  slot, and a taken hour in the time picker.
+- Yesterday's banner does not count a task still running as unfinished.
+- `away` set before midnight is still away after it, through the night until the
+  day wakes: when today has none, the header, the menu, the palette and Back
+  read yesterday's, and Back clears it where it is. After the sleep the day wakes
+  from, a new waking day has begun, and an away nobody came back from is not
+  carried into it.
+
+**Left to stage 9**, the views: the continuation band on the next day's grid
+and in the next week column, and the running block drawn there. And the
+evening close, which shows from 21:30 and offers to push what is unfinished -
+on a night-shift day that includes a shift that has not started yet.
+
+**How it was built**, for whoever reads the code next:
+
+- `wakingDay.ts` is the day between two sleeps, in minutes on the date's own
+  clock; `SleepSettings.tonightProfileId` carries the next date's schedule into
+  every function that already took a schedule id, so no reader's signature
+  changed and a template - which has no next date - reads its own schedule on
+  both sides. `windowFor` is that day cut to its own clock (for placing and
+  drawing) and `wakingDayFor` is the whole of it (for amounts); on one
+  schedule the first is exactly the old waking window, every existing case
+  measured.
+- `sleepOn`, `carriedInto`, `carriedIntervals` and `runningOn` are in
+  `shiftDay.ts`; `clockMinutesOn` is in `wallClock.ts`; `awayOn` in `away.ts`;
+  `formatEndClock`, `formatTimeRange` and `sleepSentence` beside `formatClock`.
+
+**Kept as it is, and why:**
+
+- The time pickers' arrows wrap round the clock - 23:58 and five minutes is
+  00:03 on the same date. It is a documented choice (`stepTime`), and the field
+  shows what happened.
+- Grids are drawn on the wall clock (section 4.2): a 23-hour day still draws the
+  skipped hour, and a 25-hour day draws the repeated one once.
+- "Moved earlier 23h 15 min" for a block moved from 23:30 to 00:15 is true: a
+  time is on its own date's clock.
+
+**Not this feature's**, and written down so they are not lost: a replan with
+no length sets `away` to the interruption's start, which can be later than
+now; `away` promises that no nudges fire, and there are no nudges; the yesterday
+banner reads its dismissal once, so it is not asked again when the date turns
+while the app is open; the soak e2e test steps dates by twenty-four hours of
+milliseconds, which drifts an hour across a clock change.
+
 ---
 
 ## 5. Conflicts
@@ -505,6 +598,11 @@ not listed.
   rewritten, so applying the same draft twice leaves the plan equal, entity
   stamps included.
 - **Undo.** The existing undo offer, restoring every touched day as it was.
+- **Every door that stamps a kind composes it.** A kind can reach a date without
+  the roster - the rail's template chip, the month's paint, Stamp week, the
+  weekday map on first open - and until stage 7 those stamp its blocks with no
+  routines. Stage 7 puts `composeDay` behind every one of them, so a kind
+  means the same day whichever door it came through.
 
 ### 6.3 A date changed by hand
 

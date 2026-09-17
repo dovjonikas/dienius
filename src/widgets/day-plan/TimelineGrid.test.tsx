@@ -783,6 +783,41 @@ test('states the sleep window in a visually-hidden sentence, once, regardless of
   expect(screen.getByText('Asleep from 23:00 to 07:00.')).toHaveClass('visually-hidden')
 })
 
+// Rotating shifts, stage 4: the sentence says the schedule's own times, not
+// the waking window cut at midnight - which read "Asleep from 24:00 to 13:00"
+// for a midnight bedtime and lost a bedtime after it altogether.
+test('the accessible sleep sentence says a bedtime at or after midnight as the clock reads it', () => {
+  const sleep = {
+    profiles: [
+      { id: 'default', name: 'Sleep schedule', window: { start: '00:00', end: '13:00' } },
+      { id: 'late', name: 'Late', window: { start: '02:00', end: '10:00' } },
+    ],
+  }
+  const { unmount } = render(<TimelineGrid tasks={[anchor('Lunch', '14:00', 60)]} sleep={sleep} />)
+  expect(screen.getByText('Asleep from 00:00 to 13:00.')).toBeInTheDocument()
+  unmount()
+  render(<TimelineGrid tasks={[anchor('Lunch', '14:00', 60)]} sleepProfileId="late" sleep={sleep} />)
+  expect(screen.getByText('Asleep from 02:00 to 10:00.')).toBeInTheDocument()
+})
+
+test("where tonight's schedule is the next date's, the sentence says both edges of the day", () => {
+  const sleep = {
+    profiles: [
+      { id: 'default', name: 'Sleep schedule', window: { start: '23:00', end: '07:00' } },
+      { id: 'early', name: 'Early', window: { start: '21:30', end: '05:00' } },
+    ],
+    tonightProfileId: 'early',
+  }
+  render(<TimelineGrid tasks={[anchor('Lunch', '12:00', 60)]} sleep={sleep} />)
+  expect(screen.getByText('Asleep until 07:00, and from 21:30.')).toBeInTheDocument()
+})
+
+test('a schedule with no sleep in it says nothing about sleep', () => {
+  const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '09:00', end: '09:00' } }] }
+  const { container } = render(<TimelineGrid tasks={[anchor('Lunch', '12:00', 60)]} sleep={sleep} />)
+  expect(container.textContent).not.toMatch(/Asleep/)
+})
+
 test('the accessible sleep sentence follows whichever schedule the day is on', () => {
   const sleep = { profiles: [{ id: 'default', name: 'Sleep schedule', window: { start: '22:00', end: '06:00' } }, { id: 'shift', name: 'Shift', window: { start: '17:00', end: '09:00' } }] }
   render(<TimelineGrid tasks={[anchor('Shift', '10:00', 60)]} sleepProfileId="shift" sleep={sleep} />)

@@ -12,7 +12,9 @@ import { ClockPopover, type ClockTab } from './widgets/clock/ClockPopover'
 import { FloatingClock } from './widgets/clock/FloatingClock'
 import { FocusBar } from './widgets/clock/FocusBar'
 import { FocusView } from './widgets/day-plan/FocusView'
-import { activeTask as findActiveTask } from './widgets/day-plan/capacity'
+import { runningOn } from './lib/shiftDay'
+import { awayOn } from './lib/away'
+import { currentMinutes } from './widgets/day-plan/timelineLayout'
 import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { requestCloudBackup } from './lib/cloudBackup'
@@ -378,9 +380,11 @@ export function App() {
           // happening now and the button that starts it exists only on
           // today's running card; reading the selected day instead meant F
           // from next Tuesday started Focus on a block nobody was sitting at.
+          // Last night's shift still running after midnight counts - on its
+          // own date, which is where the session looks for it.
           const running = activeTaskToday()
           if (!running) return
-          clockTools.startFocus(todayKey(), running.id)
+          clockTools.startFocus(running.date, running.task.id)
           break
         }
         default:
@@ -441,7 +445,7 @@ export function App() {
       detail: 'Pause the day; one rescue when you are back',
       run: () => {
         openDay(todayKey())
-        requestReplan(getData().days[todayKey()]?.away ? 'back' : 'away')
+        requestReplan(awayOn(getData(), todayKey(), currentMinutes()) ? 'back' : 'away')
       },
     },
     {
@@ -512,11 +516,7 @@ export function App() {
    * Tuesday's plan is not happening, whatever the clock reads.
    */
   function activeTaskToday() {
-    const day = data.days[todayKey()]
-    if (!day) return undefined
-    const now = new Date()
-    const minutes = now.getHours() * 60 + now.getMinutes()
-    return findActiveTask(day.tasks, minutes)
+    return runningOn(data, todayKey(), currentMinutes())
   }
 
   return (
@@ -695,6 +695,7 @@ export function App() {
       {focusExpanded && focusTask && tools.focus && (
         <FocusView
           task={focusTask}
+          date={tools.focus.date}
           onDone={() => {
             if (!focusTask.done) storeActions.toggleTask(tools.focus!.date, focusTask.id)
             clockTools.endFocus()

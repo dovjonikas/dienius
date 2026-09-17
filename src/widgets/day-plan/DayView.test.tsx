@@ -553,10 +553,13 @@ test('a day on a second sleep schedule reads its capacity against that schedule'
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
-  // The Shift schedule bedtime 09:00, wake 17:00 gives a waking window of
-  // 17:00-24:00 (7h, clamped at midnight); the 30-minute prep task leaves
-  // 6h 30 min free, split between the 30 minutes before it and the six hours after.
-  expect(screen.getByText('Timed tasks: 30 min. Free: 6h 30 min across 2 gaps.')).toBeInTheDocument()
+  // The day wakes from the Shift schedule at 17:00, and its evening ends at the
+  // next date's bedtime - the default's 23:00, since a sleep belongs to the day
+  // it wakes into (docs/RESEARCH-SHIFTS.md section 3). Six hours, and the
+  // 30-minute prep task leaves 5h 30 min free: the 30 minutes before it and the
+  // five hours after. Until v2.29 the evening ran to midnight on this day's own
+  // schedule.
+  expect(screen.getByText('Timed tasks: 30 min. Free: 5h 30 min across 2 gaps.')).toBeInTheDocument()
 })
 
 test('a mid-day shift leaves real free time within the window, not a false "no free time" claim', () => {
@@ -634,6 +637,9 @@ test('a day set to a second schedule is measured against that schedule, not the 
         sleepProfileId: 'shift',
         tasks: [{ id: 'shift', title: 'Night shift', done: false, time: '22:00', minutes: 480 }],
       },
+      // Tonight's sleep is the next date's, so the next date sleeps the same
+      // schedule for this day's evening to close at its midnight bedtime.
+      '2026-09-02': { date: '2026-09-02', sleepProfileId: 'shift', tasks: [] },
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)
@@ -664,6 +670,8 @@ test('an overnight shift reads as a partial figure, not as its own full length',
           { id: 'wind-down', title: 'Wind-down task', done: false, minutes: 30 },
         ],
       },
+      // Tonight's sleep is the next date's - see the test above.
+      '2026-09-02': { date: '2026-09-02', sleepProfileId: 'shift', tasks: [] },
     },
   })
   render(<DayView date="2026-09-01" onDateChange={() => {}} onOpenNorth={() => {}} />)

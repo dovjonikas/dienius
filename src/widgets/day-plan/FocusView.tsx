@@ -4,6 +4,7 @@ import type { Task } from '../../lib/types'
 import { categoryColor } from '../../lib/categories'
 import { useAppData } from '../../lib/store'
 import { timeToMinutes } from './capacity'
+import { clockMinutesOn } from '../../lib/wallClock'
 import { linkFor } from '../../lib/link'
 import { LinkOut } from '../../views/LinkOut'
 
@@ -16,14 +17,17 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 export interface FocusViewProps {
   /** The task being worked on - always the one `activeTask` picked, never an arbitrary one. */
   task: Task
+  /** The date the task is on, whose clock it counts on - last night's, for a shift still running. */
+  date: string
   /** Marks it done and closes. The one action this view offers besides leaving. */
   onDone: () => void
   onClose: () => void
 }
 
-function secondsNow(): number {
+/** Seconds past the midnight that starts `date`, past a day's worth on the days after it. */
+function secondsOn(date: string): number {
   const d = new Date()
-  return d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()
+  return clockMinutesOn(date, d) * 60 + d.getSeconds()
 }
 
 /** "53:12", or "1:02:40" once there is more than an hour left. */
@@ -59,15 +63,15 @@ function formatCountdown(totalSeconds: number): string {
  * number that visibly moves is the point rather than a distraction, and it
  * only runs while this is actually open.
  */
-export function FocusView({ task, onDone, onClose }: FocusViewProps) {
+export function FocusView({ task, date, onDone, onClose }: FocusViewProps) {
   useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
-  const [nowSeconds, setNowSeconds] = useState(secondsNow)
+  const [nowSeconds, setNowSeconds] = useState(() => secondsOn(date))
 
   useEffect(() => {
-    const timer = setInterval(() => setNowSeconds(secondsNow()), 1000)
+    const timer = setInterval(() => setNowSeconds(secondsOn(date)), 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [date])
 
   useEffect(() => {
     dialogRef.current?.focus()

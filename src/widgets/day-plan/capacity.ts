@@ -1,4 +1,6 @@
 import type { SleepProfile, SleepWindow, Task } from '../../lib/types'
+import { wakingDay, wakingOnDay, type WakingDay } from '../../lib/wakingDay'
+import { realMinutes } from '../../lib/wallClock'
 import { TIME_RE } from './parse'
 
 /**
@@ -53,6 +55,15 @@ export const DEFAULT_SLEEP_PROFILE_ID = 'default'
 /** The schedules `windowFor` picks between. Never empty - see `Settings.sleepProfiles`. */
 export interface SleepSettings {
   profiles: SleepProfile[]
+  /**
+   * The schedule tonight's sleep follows, where it is not the day's own: the
+   * next date's. A sleep belongs to the date it ends on (docs/RESEARCH-SHIFTS.md
+   * section 3), so the bedtime that closes a day is tomorrow's - see
+   * `sleepOn` in lib/shiftDay.ts, which every date's reader asks. Absent reads
+   * the day's own schedule twice, which is what a template means, having no
+   * next date.
+   */
+  tonightProfileId?: string
 }
 
 export const DEFAULT_SLEEP_SETTINGS: SleepSettings = {
@@ -114,11 +125,24 @@ export function sleepMinutes(sleep: SleepWindow): number {
 }
 
 export function wakingWindow(sleep: SleepWindow): Interval {
-  const bedtime = timeToMinutes(sleep.start)
-  const wake = timeToMinutes(sleep.end)
-  const wakingMinutes = ((bedtime - wake) % DAY_MINUTES + DAY_MINUTES) % DAY_MINUTES
-  if (wakingMinutes === 0) return { start: 0, end: DAY_MINUTES }
-  return { start: wake, end: Math.min(DAY_MINUTES, wake + wakingMinutes) }
+  // Since v2.29 the same answer comes from the one model of a day between two
+  // sleeps (lib/wakingDay.ts), read with one schedule on both sides and cut to
+  // the calendar day - every case above measured identical to the formula it
+  // replaced.
+  return wakingOnDay(wakingDay(sleep, sleep))
+}
+
+/**
+ * A day between two sleeps on the schedules it is given: the sleep it wakes
+ * from, tonight's, and the whole waking stretch between them - past midnight
+ * where tonight starts after it. What an amount of waking time is measured
+ * against (the free-time figure, "Sleep in"); `windowFor` is the same day cut
+ * to its own clock, for placing and drawing.
+ */
+export function wakingDayFor(profileId: string | undefined, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): WakingDay {
+  const own = sleepProfileWindow(profileId, sleep)
+  const tonight = sleep.tonightProfileId === undefined ? own : sleepProfileWindow(sleep.tonightProfileId, sleep)
+  return wakingDay(own, tonight)
 }
 
 // Exported so a caller outside this module can measure something against
@@ -132,7 +156,7 @@ export function wakingWindow(sleep: SleepWindow): Interval {
 // any code written before this setting existed - measures against exactly
 // the fixed window this app always used, unchanged.
 export function windowFor(profileId: string | undefined, sleep: SleepSettings = DEFAULT_SLEEP_SETTINGS): Interval {
-  return wakingWindow(sleepProfileWindow(profileId, sleep))
+  return wakingOnDay(wakingDayFor(profileId, sleep))
 }
 
 /**
@@ -345,6 +369,16 @@ export function computeCapacity(
    * about a day you spent in somebody else's calendar.
    */
   busy: Interval[] = [],
+  /**
+   * What still runs in from the day before - a night shift after midnight - in
+   * minutes on this day's clock, so starting below zero. It takes time from the
+   * morning exactly as a block does, and it is not one of the day's tasks, so
+   * it is counted in neither the day's timed tasks nor its meetings. Only what
+   * reaches into the waking hours counts at all: a shift that ended before the
+   * day woke changes nothing, not even whether there is a figure to give.
+   * docs/RESEARCH-SHIFTS.md section 3.3.
+   */
+  carried: Interval[] = [],
 ): Capacity {
   const anchors = tasks.filter(isAnchor)
   const floats = tasks.filter(t => !isAnchor(t))
@@ -352,7 +386,15 @@ export function computeCapacity(
   const floatsMinutes = floats.reduce((sum, t) => sum + (t.minutes ?? 0), 0)
   const unsizedFloatCount = floats.filter(t => t.minutes === undefined).length
 
-  if (anchors.length === 0 && busy.length === 0) {
+  // The whole waking day, to tonight's bedtime - past midnight where that is
+  // where it falls. A night shift is its start date's whole, and a bedtime at
+  // one in the morning leaves the hour before it free.
+  const window = wakingDayFor(sleepProfileId, sleep).waking
+  const carriedClipped = carried
+    .map(interval => clipToWindow(interval, window))
+    .filter((interval): interval is Interval => interval !== null)
+
+  if (anchors.length === 0 && busy.length === 0 && carriedClipped.length === 0) {
     return {
       anchorCount: 0,
       unsizedAnchorCount: 0,
@@ -368,7 +410,6 @@ export function computeCapacity(
     }
   }
 
-  const window = windowFor(sleepProfileId, sleep)
   const sizedAnchors = anchors.filter(t => t.minutes !== undefined)
   const unsizedAnchorCount = anchors.length - sizedAnchors.length
   const rawIntervals = sizedAnchors.map(anchorInterval)
@@ -385,7 +426,7 @@ export function computeCapacity(
   const externalMerged = mergeIntervals(externalClipped)
   const externalMinutes = externalMerged.reduce((sum, block) => sum + (block.end - block.start), 0)
 
-  const merged = mergeIntervals([...clipped, ...externalClipped])
+  const merged = mergeIntervals([...clipped, ...externalClipped, ...carriedClipped])
   // Compared against the raw, unclipped interval for each sized anchor in
   // turn (not against the merged blocks) - merging two overlapping anchors
   // into their union is already-accepted, separate honesty, not a
@@ -483,11 +524,15 @@ export function activeTask(tasks: Task[], nowMinutes: number): Task | undefined 
  * number is there to say there is still time, and zero says the opposite.
  * Undefined for anything that has no honest end to count toward.
  */
-export function minutesLeft(task: Task, nowMinutes: number): number | undefined {
+export function minutesLeft(task: Task, nowMinutes: number, date?: string): number | undefined {
   if (!isAnchor(task) || task.minutes === undefined) return undefined
   const end = timeToMinutes(task.time!) + task.minutes
   if (nowMinutes >= end) return undefined
-  return Math.max(1, Math.ceil(end - nowMinutes))
+  // With the task's date, the time that really passes - an hour more or less
+  // across the night the clocks change (docs/RESEARCH-SHIFTS.md section 4.2);
+  // without one, the clock face, as before there were dates to ask.
+  const left = date === undefined ? end - nowMinutes : realMinutes(date, nowMinutes, end - nowMinutes)
+  return Math.max(1, Math.ceil(left))
 }
 
 /**
@@ -508,25 +553,6 @@ export function nextTask(tasks: Task[], nowMinutes: number): Task | undefined {
   }
   return best
 }
-
-/**
- * How long until bedtime, in minutes, wrapping past midnight.
- *
- * Returns null once bedtime has already passed for tonight and the wake time
- * has not yet come round - that is, while you are inside the sleep window.
- * The app has nothing useful to say about how long until sleep at two in the
- * morning except that you are late, and it does not say that.
- */
-export function minutesUntilSleep(nowMinutes: number, waking: Interval): number | null {
-  const asleep = waking.start <= waking.end
-    ? nowMinutes < waking.start || nowMinutes >= waking.end
-    : nowMinutes >= waking.end && nowMinutes < waking.start
-  if (asleep) return null
-  const until = waking.end - nowMinutes
-  return until >= 0 ? until : until + DAY_IN_MINUTES
-}
-
-const DAY_IN_MINUTES = 24 * 60
 
 /**
  * A length, as it is read.

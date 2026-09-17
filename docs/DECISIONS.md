@@ -4037,6 +4037,28 @@ sleep, is busy time for that routine. Without the second half a session at 23:30
 could be placed across a shift starting at 00:30, which is the kind of case the
 property tests exist to rule out.
 
+**One resolver for a day's sleep, and the evening is tomorrow's** (stage 4).
+Every reader of a date's sleep asks `sleepOn`, which a test keeps the only
+place that works it out - four readers had disagreed about a week template's
+column. The bedtime that closes a day is the next date's schedule's, which is
+the midnight rule read at the evening end; on a plan where two days share a
+schedule nothing changes. A reader's function kept its signature: the next
+date's schedule travels in the sleep settings it was already handed, so a
+template, which has no next date, reads its own on both sides.
+
+**24:00 is the end of a day, never a time in one** (stage 4). A time past
+midnight is written on the next day's clock with "(next day)" wherever a range
+ends, and nothing is saved to start at 24:00 - the last start is 23:59. The time
+pickers' arrows still wrap round the clock: a documented choice, and the field
+shows what happened.
+
+**What runs past midnight is still happening after it** (stage 4). At 00:30 last
+night's shift is the running task, its session counts on its own date's clock,
+it is busy time for a slot, and it is not "unfinished yesterday" until it ends;
+`away` set at 22:00 is still away at 00:30 - until the day wakes, when a new
+waking day has begun. Drawing its continuation on the next day is the views'
+stage.
+
 **Four defects the audit found were fixed first**, each with a test: taking a
 template off a day wiped the day; a task moved onto a day was dropped by a
 stamp of another template; Review's month skipped the month after a short one;

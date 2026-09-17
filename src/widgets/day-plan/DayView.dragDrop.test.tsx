@@ -279,6 +279,42 @@ test('letting go takes the label away, and so does Escape', () => {
 })
 
 /**
+ * Midnight on the grid - rotating shifts, stage 4, docs/RESEARCH-SHIFTS.md
+ * section 3.4. A start is on its own date's clock, so the last one there is is
+ * 23:59; and a block drawn cut at midnight is still its whole length, so a
+ * resize moves its real end by the distance dragged rather than to the edge the
+ * cut left under the pointer.
+ */
+test('a block dragged to the bottom of the grid starts at 23:59, never at 24:00', () => {
+  seed([{ id: 'late', title: 'Late', done: false, time: '22:00', minutes: 60 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  mockElementFromPoint(container.querySelector('.timeline-grid'))
+
+  const block = container.querySelector('.timeline-anchor')!
+  fireEvent.pointerDown(block, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 100000 })
+  expect(container.querySelector('.timeline-drop-label')?.textContent).toBe('23:59')
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 100000 })
+
+  expect(getData().days[DATE].tasks[0].time).toBe('23:59')
+})
+
+test('resizing a night shift drawn cut at midnight changes its length by what was dragged, and does not cut it to the edge', () => {
+  seed([{ id: 'night', title: 'Night shift', done: false, time: '22:00', minutes: 480 }], true)
+  const { container } = render(<DayView date={DATE} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  mockElementFromPoint(container.querySelector('.timeline-grid'))
+
+  const grip = container.querySelector('.timeline-anchor-resize')!
+  fireEvent.pointerDown(grip, { pointerId: 1, clientX: 100, clientY: 100 })
+  fireEvent.pointerMove(document, { pointerId: 1, clientX: 100, clientY: 130 })
+  fireEvent.pointerUp(document, { pointerId: 1, clientX: 100, clientY: 130 })
+
+  const minutes = getData().days[DATE].tasks[0].minutes!
+  expect(minutes).toBeGreaterThan(480)
+  expect(minutes).toBeLessThan(600)
+})
+
+/**
  * A resize is holding the bottom edge, so the number it owes you is where
  * that edge lands - the end of the block - not where it started.
  */

@@ -216,6 +216,23 @@ test('a recent name is one press, and the name given is remembered for next time
   expect(readRecentTitles()).toEqual(['Dad', 'Dentist'])
 })
 
+// Rotating shifts, stage 4 - a time is on its own date's clock, so the last
+// start a day has is 23:59, and "from now" in its last minutes is that.
+test('something that came up in the last minutes of a day starts at 23:59, never at 24:00', async () => {
+  const user = userEvent.setup()
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, sleepProfiles: [{ id: 'default', name: 'Late', window: { start: '00:00', end: '08:00' } }] },
+  })
+  clockAt(23, 57)
+  actions.addTask(TODAY, 'Read', '23:00')
+  renderSheet('interrupt')
+
+  await user.click(screen.getByRole('button', { name: 'Not sure how long' }))
+  await user.click(screen.getByRole('button', { name: 'Accept' }))
+  expect(getData().days[TODAY].tasks.find(t => t.title === 'Something came up')?.time).toBe('23:59')
+})
+
 test('a shape already behind you is not offered', () => {
   clockAt(15)
   seed()
@@ -319,6 +336,22 @@ test('the day header offers Replan on today, and "I\'m back" while away', () => 
   rerender(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.getByText('Away since 11:00')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument()
+})
+
+// Rotating shifts, stage 4: away set before midnight is still true after it -
+// through the night, until the day wakes.
+test('away since last night is still away after midnight, and Back clears it where it was set', async () => {
+  const user = userEvent.setup()
+  clockAt(0, 30)
+  seed()
+  act(() => actions.setAway(addDays(TODAY, -1), '22:00'))
+  render(<DayView date={TODAY} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  expect(screen.getByText('Away since 22:00 yesterday')).toBeInTheDocument()
+
+  renderSheet('back')
+  const sheet = screen.getByRole('dialog', { name: 'Replan' })
+  await user.click(within(sheet).getByRole('button', { name: /^(Not now|Back to the day)$/ }))
+  expect(getData().days[addDays(TODAY, -1)].away).toBeUndefined()
 })
 
 test('a day still ahead offers Something came up straight onto it', () => {

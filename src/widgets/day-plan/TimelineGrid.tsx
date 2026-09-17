@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Category, Task } from '../../lib/types'
-import { activeTask, formatDuration, windowFor, type SleepSettings } from './capacity'
+import { activeTask, formatDuration, wakingDayFor, type SleepSettings } from './capacity'
 import { categoryColor } from '../../lib/categories'
 import type { DayEvent } from '../../lib/calendars'
 import { GapPicker } from './GapPicker'
@@ -14,6 +14,7 @@ import {
   currentMinutes,
   formatAnchorTimeRange,
   formatClock,
+  formatEndClock,
   halfHourMarks,
   hourMarks,
   isPastBlock,
@@ -23,6 +24,7 @@ import {
   legibleHourLabels,
   scrollToShow,
   sleepBandsIn,
+  sleepSentence,
   widenToHold,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
@@ -641,11 +643,11 @@ export function TimelineGrid({
   // Redrawn only where the window actually grew, so a day with no candidate
   // on it keeps exactly the bands the layout computed for it.
   const sleepBands =
-    window === layout.displayWindow ? layout.sleepBands : sleepBandsIn(window, windowFor(sleepProfileId, sleep))
+    window === layout.displayWindow ? layout.sleepBands : sleepBandsIn(window, wakingDayFor(sleepProfileId, sleep))
   const marks = hourMarks(window)
   const halfMarks = halfHourMarks(window)
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
-  const waking = windowFor(sleepProfileId, sleep)
+  const sleepWords = sleepSentence(wakingDayFor(sleepProfileId, sleep))
 
   // At the wide breakpoint, draw denser than the phone's own fixed density
   // whenever there is real, measured room to use it - see
@@ -1073,9 +1075,11 @@ export function TimelineGrid({
                 reads across the one being moved. */}
             {dropMinutes != null && (
               <>
-                <div className="timeline-drop-line" style={{ top: `${vertical.topPx(dropMinutes)}px` }} />
-                <div className="timeline-drop-label" style={{ top: `${vertical.topPx(dropMinutes)}px` }}>
-                  {formatClock(dropMinutes)}
+                {/* Held at the grid's edge when a resize takes a block's end
+                    past it, and saying which day that end is on. */}
+                <div className="timeline-drop-line" style={{ top: `${vertical.topPx(Math.min(dropMinutes, window.end))}px` }} />
+                <div className="timeline-drop-label" style={{ top: `${vertical.topPx(Math.min(dropMinutes, window.end))}px` }}>
+                  {formatEndClock(dropMinutes)}
                 </div>
               </>
             )}
@@ -1159,7 +1163,7 @@ export function TimelineGrid({
           day whose display window happens not to reach the boundary today -
           the setting is still true regardless of what today's anchors leave
           room to show. */}
-      <p className="visually-hidden">Asleep from {formatClock(waking.end)} to {formatClock(waking.start)}.</p>
+      {sleepWords && <p className="visually-hidden">{sleepWords}</p>}
 
       {unsizedAnchorCount > 0 && (
         <p className="timeline-note">Gaps are not shown - not every timed task above has a size yet.</p>

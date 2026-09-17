@@ -1,18 +1,13 @@
 import { useEffect, useId, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
-import { columnFor } from '../../lib/stamping'
+import { carriedInto, runningOn, sleepOn } from '../../lib/shiftDay'
+import { awayOn, awaySince } from '../../lib/away'
+import { ownedSleep } from '../../lib/wakingDay'
+import { realMinutes } from '../../lib/wallClock'
 import { sortTasks } from './sort'
 import { dayScore } from './score'
-import {
-  activeTask as findActiveTask,
-  computeCapacity,
-  formatCapacityLine,
-  formatDuration,
-  minutesLeft,
-  sleepMinutes,
-  sleepProfileWindow,
-} from './capacity'
+import { computeCapacity, formatCapacityLine, formatDuration, sleepProfileWindow } from './capacity'
 import { currentMinutes } from './timelineLayout'
 import { TimelineGrid } from './TimelineGrid'
 import { TaskActionsSheet } from './TaskActionsSheet'
@@ -115,30 +110,34 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
   // block and its card can never disagree about which task is current. Only
   // ever on today: "now" has no honest position on a day in the past or the
   // future - the same rule the grid's own time indicator already follows.
-  const runningTask = isToday ? findActiveTask(day?.tasks ?? [], nowMinutes) : undefined
-  const runningLeft = runningTask ? minutesLeft(runningTask, nowMinutes) : undefined
+  // Last night's shift, still running after midnight, is what is running now:
+  // a block belongs to the day it starts on, and it is still happening.
+  const running = isToday ? runningOn(data, date, nowMinutes) : undefined
+  const runningTask = running?.task
+  const runningLeft = running?.left
   // The focus session, if one is running on this day: the strip at the top
   // of the app names its task and its countdown, and the header yields
   // both to it while they are the same task - see DayHeader.
   const focus = useClockTools().focus
-  const focusedTaskId = focus?.date === date ? focus.taskId : undefined
+  // A session on last night's shift is on yesterday's date, and still the
+  // running task's - the strip says it, and the header does not say it twice.
+  const focusedTaskId = focus && (focus.date === date || focus.date === running?.date) ? focus.taskId : undefined
 
-  // Which schedule this day is measured against: its own if it has one, else
-  // whatever its template chose, else the default.
-  // Through columnFor, not straight off the template: a week template's
-  // Wednesday can be a night shift while its Saturday is not, and the answer
-  // for this date is its own column's. A day template answers with its own
-  // one field, exactly as it always has.
-  const daySleepProfileId = day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
+  // Which schedule this day wakes from, and which tonight's sleep follows -
+  // the next date's, since a sleep belongs to the day it wakes into. One
+  // resolver for every reader of a date's sleep: see sleepOn.
+  const { profileId: daySleepProfileId, sleep } = sleepOn(data, date, todayKey())
   const sleepProfiles = data.settings.sleepProfiles
-  const sleep = { profiles: sleepProfiles }
   // Somebody else's calendar, as a layer and as time already spoken for -
   // see calendars.ts. Both come from the same list, so the blocks drawn on the
   // grid and the hours subtracted from the free figure can never disagree.
   const calendarCache = useCalendarCache()
   const events = eventsOn(date, data.settings.calendars, calendarCache)
   const busy = busyIntervals(date, data.settings.calendars, calendarCache)
-  const capacity = computeCapacity(day?.tasks ?? [], daySleepProfileId, sleep, busy)
+  // Last night's shift still running this morning takes its time here too,
+  // without being one of today's tasks.
+  const carried = carriedInto(data, date).map(({ start, end }) => ({ start, end }))
+  const capacity = computeCapacity(day?.tasks ?? [], daySleepProfileId, sleep, busy, carried)
   const capacityLine = formatCapacityLine(capacity)
   const timelineExpanded = data.settings.timelineExpanded
   // docs/LAYOUT-WIDE.md section 5, build step 2: at the wide breakpoint the
@@ -221,8 +220,17 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
     .join(' ')
 
   const keyCount = (day?.tasks ?? []).filter(t => t.highlight).length
+  // Away since last night is still away today - see lib/away.ts.
+  const awayMark = isToday ? awayOn(data, date, nowMinutes) : undefined
+  const awayText = awayMark ? awaySince(awayMark, date) : day?.away
   const sleepHours = sleepProfileWindow(daySleepProfileId, sleep)
-  const asleepMinutes = sleepMinutes(sleepHours)
+  // The sleep this day woke from, in real time: an hour longer on the night the
+  // clocks go back, an hour shorter on the night they go forward.
+  const woke = ownedSleep(sleepHours)
+  const asleepMinutes = woke ? realMinutes(date, woke.start, woke.end - woke.start) : 0
+  // Tonight's bedtime, where tomorrow's schedule puts it somewhere else.
+  const tonightHours = sleepProfileWindow(sleep.tonightProfileId ?? daySleepProfileId, sleep)
+  const tonightDiffers = ownedSleep(tonightHours) !== null && tonightHours.start !== sleepHours.start
 
   return (
     <section className={dayViewClassName}>
@@ -267,9 +275,11 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         nowMinutes={nowMinutes}
         runningTask={runningTask}
         runningLeft={runningLeft}
+        runningOnGrid={running === undefined || running.date === date}
         focusedTaskId={focusedTaskId}
         sleepProfiles={sleepProfiles}
         daySleepProfileId={daySleepProfileId}
+        tonightProfileId={sleep.tonightProfileId}
         isWide={isWide}
         dayLayoutFocus={dayLayoutFocus}
         onOpenNorth={onOpenNorth}
@@ -282,7 +292,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
         // how a thing gets onto it.
         replan={
           !isPast && (!isToday || (day?.tasks.length ?? 0) > 0)
-            ? { away: day?.away, isToday, onOpen: mode => requestReplan(mode, date) }
+            ? { away: awayText, isToday, onOpen: mode => requestReplan(mode, date) }
             : undefined
         }
         lowDay={day?.lowDay}
@@ -342,7 +352,8 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
                   together, which is exactly the sum that does not mean
                   anything. */}
               <p className="capacity-sleep">
-                Sleep {sleepHours.start}-{sleepHours.end} ({formatDuration(asleepMinutes)}) is not counted as free.
+                Sleep {sleepHours.start}-{sleepHours.end} ({formatDuration(asleepMinutes)})
+                {tonightDiffers ? `, and from ${tonightHours.start} tonight,` : ''} is not counted as free.
               </p>
             </div>
           )}

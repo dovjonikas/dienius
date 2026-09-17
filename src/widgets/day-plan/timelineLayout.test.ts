@@ -10,6 +10,7 @@ import {
   fitPxPerMinute,
   formatAnchorTimeRange,
   formatClock,
+  formatTimeRange,
   halfHourMarks,
   hourMarks,
   isPastBlock,
@@ -198,6 +199,21 @@ test('formatClock renders a plain zero-padded 24-hour time', () => {
 
 test('formatClock renders the end of a night window as 24:00, not 00:00', () => {
   expect(formatClock(24 * 60)).toBe('24:00')
+})
+
+// Rotating shifts, stage 4 - docs/RESEARCH-SHIFTS.md section 3.4. 24:00 is the
+// one value meaning exactly midnight at a day's end; anything after it is on
+// the next day's clock, and anything before a day's midnight on the day before's.
+test("formatClock writes a time past midnight on the next day's clock, and one before a day's midnight on the day before's", () => {
+  expect(formatClock(25 * 60)).toBe('01:00')
+  expect(formatClock(30 * 60 + 5)).toBe('06:05')
+  expect(formatClock(-90)).toBe('22:30')
+})
+
+test('a range whose end is past midnight says so, and one that ends exactly at midnight ends at 24:00', () => {
+  expect(formatTimeRange(22 * 60, 30 * 60)).toBe('22:00 - 06:00 (next day)')
+  expect(formatTimeRange(23 * 60, 24 * 60)).toBe('23:00 - 24:00')
+  expect(formatTimeRange(9 * 60, 10 * 60)).toBe('09:00 - 10:00')
 })
 
 // --- formatAnchorTimeRange ---------------------------------------------

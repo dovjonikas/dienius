@@ -1,6 +1,6 @@
 import { categoryColor } from '../lib/categories'
 import type { Category, SleepProfile, TemplateBlock, WeekDayOverride } from '../lib/types'
-import { formatClock } from '../widgets/day-plan/timelineLayout'
+import { formatClock, formatTimeRange } from '../widgets/day-plan/timelineLayout'
 import { blocksAsTasks } from './templateDay'
 import { computeWeekLayout, type WeekBlock } from './week/weekLayout'
 import { useTimeGhost } from '../lib/timeGhost'
@@ -213,7 +213,7 @@ export function WeekTemplateGrid({
                       <span className="week-block-from">from {libraryNames[block.libraryListId] ?? 'a list'}</span>
                     )}
                     <span className="week-block-time">
-                      {formatClock(placed.startMinutes)} - {formatClock(placed.endMinutes)}
+                      {formatTimeRange(placed.startMinutes, placed.endMinutes)}
                     </span>
                   </button>
                 )

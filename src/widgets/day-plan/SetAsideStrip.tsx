@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { offerUndo } from '../../lib/undo'
 import { formatDuration, windowFor } from './capacity'
+import { sleepOn } from '../../lib/shiftDay'
 import { planReturn, setAsideOf } from './setAside'
 
 /**
@@ -40,7 +41,10 @@ export function SetAsideStrip({ date, nowMinutes, isToday }: SetAsideStripProps)
 
   if (!isToday || waiting.length === 0) return null
 
-  const window = windowFor(day?.sleepProfileId, { profiles: data.settings.sleepProfiles })
+  // The day's sleep as every reader of it has it - see sleepOn. This strip is
+  // only ever on today, so today is the date.
+  const daySleep = sleepOn(data, date, date)
+  const window = windowFor(daySleep.profileId, daySleep.sleep)
   const open = waiting.find(t => t.id === openId)
   const offer = open ? planReturn(open, day?.tasks ?? [], nowMinutes, window) : null
 

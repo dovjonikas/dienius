@@ -285,7 +285,9 @@ src/
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
     routines.ts        rotating shifts: a routine as it is kept, and its task leaving a date by hand
     shiftDay.ts        rotating shifts: a date composed of its kind - busy time, routines placed, a roster applied, hand edits
-    wallClock.ts       a time on a date's wall clock as an instant, and how long a block really lasts
+    wallClock.ts       a time on a date's wall clock as an instant, how long a block really lasts, and where now is on a date's clock
+    wakingDay.ts       a day between two sleeps: the sleep it woke from, tonight's, the waking hours, "Sleep in"
+    away.ts            away across midnight: today's, or last night's until somebody is back
     northFold.ts       whether North's headings are folded on the day, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
     useRestoreFocus.ts hands focus back to whatever opened a sheet, panel or popover

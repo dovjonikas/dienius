@@ -241,7 +241,7 @@ test("2. no routine task still as its rule left it runs into busy time, each is 
           expect(tasks).toEqual([])
           continue
         }
-        const busy = busyOn(after, date, kindOf)
+        const busy = busyOn(after, date, kindOf, plan.today)
         for (const task of tasks) {
           const routine = after.routines.find(r => r.id === task.routineId)!
           if (task.time === undefined) continue

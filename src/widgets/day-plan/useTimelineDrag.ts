@@ -35,6 +35,14 @@ import type { GridGeometry } from './TimelineGrid'
 const MIN_DRAG_DISTANCE_PX = 8
 const MIN_TASK_MINUTES = SNAP_MINUTES
 
+/**
+ * The last start a day has. A time is on its own date's clock, and "24:00" is
+ * the end of a day rather than a start in it - a block dropped at the bottom
+ * edge used to be saved as 24:00, a time nothing else can read.
+ * docs/RESEARCH-SHIFTS.md section 3.4.
+ */
+const LAST_START_MINUTES = 24 * 60 - 1
+
 export interface TimelineDragHost {
   /** What is on the grid. Ids are what the callbacks get back. */
   tasks: Task[]
@@ -66,7 +74,15 @@ export function useTimelineDrag(host: TimelineDragHost): TimelineDrag {
   const dragStartRef = useRef<{ x: number; y: number } | null>(null)
   // What kind of drag is running, and what it needs to compute a new value.
   const dragKindRef = useRef<'move' | 'resize' | null>(null)
-  const dragGrabRef = useRef<{ offsetPx: number; startMinutes: number }>({ offsetPx: 0, startMinutes: 0 })
+  // `grabMinutes` and `cutAtEdge` are a resize's: where on the clock the edge
+  // was taken hold of, and whether the block runs on past the drawn window, so
+  // the edge under the pointer is not its real end.
+  const dragGrabRef = useRef<{ offsetPx: number; startMinutes: number; grabMinutes: number; cutAtEdge: boolean }>({
+    offsetPx: 0,
+    startMinutes: 0,
+    grabMinutes: 0,
+    cutAtEdge: false,
+  })
   const geometryRef = useRef<GridGeometry | null>(null)
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null)
   const [dropMinutes, setDropMinutes] = useState<number | null>(null)
@@ -80,15 +96,32 @@ export function useTimelineDrag(host: TimelineDragHost): TimelineDrag {
     setDropMinutes(null)
   }
 
+  /** Where a moved block starts: snapped, and never before the day's first minute or after its last. */
+  function movedStart(geometry: GridGeometry, clientY: number): number {
+    return Math.min(LAST_START_MINUTES, Math.max(0, snapToStep(geometry.minutesAtClientY(clientY - dragGrabRef.current.offsetPx))))
+  }
+
+  /**
+   * A resized block's length. Normally its end is where the pointer is. A block
+   * drawn cut at the window's edge - a night shift, on the day it starts - has
+   * its real end beyond what is drawn, so its length changes by as much as the
+   * pointer moved: a grab and a small drag no longer cut an eight-hour shift to
+   * the two hours left before midnight.
+   */
+  function resizedLength(geometry: GridGeometry, task: Task, clientY: number): number {
+    const grab = dragGrabRef.current
+    if (grab.cutAtEdge && task.minutes !== undefined) {
+      return Math.max(MIN_TASK_MINUTES, task.minutes + snapToStep(geometry.minutesAtClientY(clientY) - grab.grabMinutes))
+    }
+    return Math.max(MIN_TASK_MINUTES, snapToStep(geometry.minutesAtClientY(clientY) - grab.startMinutes))
+  }
+
   function edgeAt(taskId: string, kind: 'move' | 'resize', clientY: number): number | null {
     const geometry = geometryRef.current
     const task = hostRef.current.tasks.find(t => t.id === taskId)
     if (!geometry || !task?.time) return null
-    if (kind === 'move') {
-      return Math.max(0, snapToStep(geometry.minutesAtClientY(clientY - dragGrabRef.current.offsetPx)))
-    }
-    const length = Math.max(MIN_TASK_MINUTES, snapToStep(geometry.minutesAtClientY(clientY) - dragGrabRef.current.startMinutes))
-    return dragGrabRef.current.startMinutes + length
+    if (kind === 'move') return movedStart(geometry, clientY)
+    return dragGrabRef.current.startMinutes + resizedLength(geometry, task, clientY)
   }
 
   function beginPointerDrag(taskId: string, kind: 'move' | 'resize', e: React.PointerEvent) {
@@ -102,12 +135,18 @@ export function useTimelineDrag(host: TimelineDragHost): TimelineDrag {
     e.preventDefault()
     e.stopPropagation()
     const startMinutes = timeToMinutes(task.time)
+    const geometry = geometryRef.current
+    const realEnd = task.minutes !== undefined ? startMinutes + task.minutes : undefined
     dragRef.current = taskId
     dragKindRef.current = kind
     dragStartRef.current = { x: e.clientX, y: e.clientY }
     dragGrabRef.current = {
-      offsetPx: e.clientY - (geometryRef.current?.clientYAt(startMinutes) ?? e.clientY),
+      offsetPx: e.clientY - (geometry?.clientYAt(startMinutes) ?? e.clientY),
       startMinutes,
+      grabMinutes: geometry?.minutesAtClientY(e.clientY) ?? startMinutes,
+      // The drawn window stops where the grid does: an end beyond it reads back
+      // as the window's edge.
+      cutAtEdge: !!geometry && realEnd !== undefined && geometry.minutesAtClientY(geometry.clientYAt(realEnd)) < realEnd,
     }
     setDraggingTaskId(taskId)
   }
@@ -118,7 +157,7 @@ export function useTimelineDrag(host: TimelineDragHost): TimelineDrag {
     const task = tasks.find(t => t.id === taskId)
     if (!geometry || !task?.time) return false
     if (kind === 'move') {
-      const next = formatClock(Math.max(0, snapToStep(geometry.minutesAtClientY(clientY - dragGrabRef.current.offsetPx))))
+      const next = formatClock(movedStart(geometry, clientY))
       if (next === task.time) return false
       const previous = task.time
       if (!reshape(taskId, { time: next })) return false
@@ -126,7 +165,7 @@ export function useTimelineDrag(host: TimelineDragHost): TimelineDrag {
       offerUndo?.(`${task.title} moved to ${next}`, () => reshape(taskId, { time: previous }))
       return true
     }
-    const next = Math.max(MIN_TASK_MINUTES, snapToStep(geometry.minutesAtClientY(clientY) - dragGrabRef.current.startMinutes))
+    const next = resizedLength(geometry, task, clientY)
     if (next === task.minutes) return false
     const previous = task.minutes
     if (!reshape(taskId, { minutes: next })) return false

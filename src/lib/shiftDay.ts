@@ -4,8 +4,9 @@ import { weekdayOf } from './repeats'
 import { applyStamps, columnFor } from './stamping'
 import { originFor } from './taskIdentity'
 import { ROUTINE_LIMITS, type AppData, type DayPlan, type Routine, type SleepWindow, type Task, type Template, type TemplateBlock } from './types'
+import { ownedSleep, type WakingDay } from './wakingDay'
 import { clockTimeExists, wallInstant } from './wallClock'
-import { isAnchor, sleepProfileWindow, timeToMinutes } from '../widgets/day-plan/capacity'
+import { activeTask, isAnchor, minutesLeft, sleepProfileWindow, timeToMinutes, wakingDayFor, type Interval, type SleepSettings } from '../widgets/day-plan/capacity'
 
 /**
  * A date's composition - rotating shifts, since v2.29, and
@@ -61,35 +62,118 @@ const DAY_MINUTES = 24 * 60
 const MINUTE = 60_000
 
 /**
- * The sleep a schedule gives the date that owns it, in minutes from that
- * date's midnight: a sleep belongs to the date it ends on, the day you wake
- * into (section 3). Over midnight it starts the evening before, so its start
- * is below zero; within one day it is that day's. Bedtime equal to wake time
- * is no sleep at all, rather than twenty-four hours of it.
+ * The template a date's sleep comes from, as far as the plan can know it.
+ *
+ * Its kind first. Then the ordinary template stamped on it - not a kind the
+ * draft takes off, which will not be there, and not an id naming a template
+ * deleted since, which reads as none. Then, for a date today or ahead that
+ * nobody has opened, the template its weekday will stamp the moment it is
+ * (`ensuredDay`): otherwise Friday's evening would change the moment Saturday
+ * was opened. Like opening, the weekday map never argues with a stamp and
+ * never reaches back; without a `today` it is not asked at all.
  */
-export function ownedSleep(window: SleepWindow): { start: number; end: number } | null {
-  if (!CLOCK.test(window.start) || !CLOCK.test(window.end)) return null
-  const start = timeToMinutes(window.start)
-  const end = timeToMinutes(window.end)
-  if (start === end) return null
-  return start < end ? { start, end } : { start: start - DAY_MINUTES, end }
+function templateOn(data: AppData, date: string, kindOf: KindOf, today: string | undefined): Template | undefined {
+  const kind = kindOf(date)
+  if (kind) return kind
+  const day = data.days[date]
+  const stamped = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
+  const takenOff = !!stamped && isDayKind(stamped)
+  if (day?.templateId && !takenOff) return stamped
+  if (today === undefined || date < today || day?.autoApplied) return undefined
+  const mapped = data.settings.weekdayTemplates[weekdayOf(date)]
+  return mapped ? data.templates.find(t => t.id === mapped) : undefined
 }
 
 /**
- * The sleep schedule a date wakes from.
+ * The id of the sleep schedule a date wakes from, or undefined for the default.
  *
  * A day's own choice wins, as it does in the day view: it is set by hand, and
- * the day you had is the one that knows how you slept. Then the date's kind.
- * A date with no kind reads the template stamped on it, the way the day view
- * does today - unless that template is a kind the draft takes off, which will
- * not be there. The default after that, as everywhere.
+ * the day you had is the one that knows how you slept. Then its template's,
+ * through its column on a week template - see `templateOn`.
  */
-export function sleepWindowOn(data: AppData, date: string, kindOf: KindOf): SleepWindow {
+function sleepProfileIdOn(data: AppData, date: string, kindOf: KindOf, today: string | undefined): string | undefined {
   const day = data.days[date]
-  const stamped = data.templates.find(t => t.id === day?.templateId)
-  const template = kindOf(date) ?? (stamped && !isDayKind(stamped) ? stamped : undefined)
-  const id = day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
-  return sleepProfileWindow(id, { profiles: data.settings.sleepProfiles })
+  const template = templateOn(data, date, kindOf, today)
+  return day?.sleepProfileId ?? (template ? columnFor(template, date).sleepProfileId : undefined)
+}
+
+/** The sleep schedule a date wakes from - see `sleepProfileIdOn` - the default when it names none. */
+export function sleepWindowOn(data: AppData, date: string, kindOf: KindOf, today?: string): SleepWindow {
+  return sleepProfileWindow(sleepProfileIdOn(data, date, kindOf, today), { profiles: data.settings.sleepProfiles })
+}
+
+/**
+ * A date's sleep, as every reader of it is handed it - the one function in
+ * front of all of them (docs/RESEARCH-SHIFTS.md section 1.3, where four readers
+ * disagreed about a day on a week template). The schedule the date wakes from,
+ * and settings carrying tonight's, which is the next date's: a sleep belongs to
+ * the date it ends on, so the bedtime that closes a day is tomorrow's.
+ *
+ * Tonight's is always named, the default by its own id, so a reader never
+ * mistakes "tomorrow sleeps the default" for "tomorrow sleeps like today".
+ * `today` is what lets a date not yet opened read the template its weekday will
+ * give it.
+ */
+export function sleepOn(data: AppData, date: string, today: string, kindOf: KindOf = on => kindOnDate(data, on)): { profileId: string | undefined; sleep: SleepSettings } {
+  const profiles = data.settings.sleepProfiles
+  const tonight = sleepProfileIdOn(data, addDays(date, 1), kindOf, today)
+  const named = profiles.find(p => p.id === tonight) ?? profiles[0]
+  return { profileId: sleepProfileIdOn(data, date, kindOf, today), sleep: { profiles, tonightProfileId: named?.id } }
+}
+
+/**
+ * A date's waking day: the sleep it wakes from, tonight's, and the hours
+ * between - `sleepOn` read through `wakingDayFor`, so the grey bands, the
+ * free-time figure and "Sleep in" agree about when a day ends. `kindOf` is the
+ * plan's kinds unless a draft is being read.
+ */
+export function wakingDayOn(data: AppData, date: string, today: string, kindOf: KindOf = on => kindOnDate(data, on)): WakingDay {
+  const { profileId, sleep } = sleepOn(data, date, today, kindOf)
+  return wakingDayFor(profileId, sleep)
+}
+
+/**
+ * What still runs in from the day before, on this date's clock: yesterday's
+ * timed tasks with a length that takes them past midnight, from below zero to
+ * where they end today. Still yesterday's tasks - a block is its start date's
+ * (section 3) - so this is only the time they take here: the morning's free
+ * time, and what is running at one in the morning. A task waiting aside is not
+ * on the clock and does not run in.
+ */
+export function carriedInto(data: AppData, date: string): { task: Task; start: number; end: number }[] {
+  return (data.days[addDays(date, -1)]?.tasks ?? [])
+    .filter((t): t is Task & { time: string; minutes: number } => isAnchor(t) && CLOCK.test(t.time!) && t.minutes !== undefined)
+    .map(task => {
+      const start = timeToMinutes(task.time) - DAY_MINUTES
+      return { task, start, end: start + task.minutes }
+    })
+    .filter(carried => carried.end > 0)
+}
+
+/**
+ * The part of today's clock that last night's blocks still take - from
+ * midnight to where each ends, within the day. Busy time for a slot quick-add or
+ * Later suggests and an hour the time picker shows as taken, the way somebody
+ * else's calendar is.
+ */
+export function carriedIntervals(data: AppData, date: string): Interval[] {
+  return carriedInto(data, date).map(({ end }) => ({ start: 0, end: Math.min(end, DAY_MINUTES) }))
+}
+
+/**
+ * What is running at `nowMinutes` on `date`'s clock, the date it belongs to,
+ * and its real minutes left: today's own block, or one of last night's still
+ * running in. Where both are, today's wins - it started later, which is the
+ * rule `activeTask` keeps for any two - and a ticked block is not running,
+ * whatever the clock says.
+ */
+export function runningOn(data: AppData, date: string, nowMinutes: number): { task: Task; date: string; left: number } | undefined {
+  const own = activeTask(data.days[date]?.tasks ?? [], nowMinutes)
+  if (own) return { task: own, date, left: minutesLeft(own, nowMinutes, date)! }
+  const yesterday = addDays(date, -1)
+  const carried = carriedInto(data, date).find(c => !c.task.done && c.start <= nowMinutes && nowMinutes < c.end)
+  if (!carried) return undefined
+  return { task: carried.task, date: yesterday, left: minutesLeft(carried.task, nowMinutes + DAY_MINUTES, yesterday)! }
 }
 
 /**
@@ -135,7 +219,7 @@ function kindBlocksOn(data: AppData, date: string, kind: Template): { title: str
  * and a routine is refused only where the day's own kind or sleep leaves no
  * room. A block whose date has no kind is not the roster's and is not read.
  */
-export function busyOn(data: AppData, date: string, kindOf: KindOf): Busy[] {
+export function busyOn(data: AppData, date: string, kindOf: KindOf, today?: string): Busy[] {
   const from = wallInstant(date, 0)
   const to = wallInstant(date, DAY_MINUTES + ROUTINE_LIMITS.minutes)
   const busy: Busy[] = []
@@ -154,7 +238,7 @@ export function busyOn(data: AppData, date: string, kindOf: KindOf): Busy[] {
   }
   for (let offset = 0; offset <= 2; offset++) {
     const on = addDays(date, offset)
-    const sleep = ownedSleep(sleepWindowOn(data, on, kindOf))
+    const sleep = ownedSleep(sleepWindowOn(data, on, kindOf, today))
     if (sleep) busy.push({ start: wallInstant(on, sleep.start), end: wallInstant(on, sleep.end), reason: { kind: 'sleep' } })
   }
   return busy.filter(b => b.end > from && b.start < to).sort((a, b) => a.start - b.start || a.end - b.end)
@@ -298,7 +382,7 @@ function withRoutineTasks(day: DayPlan, placements: Placement[]): DayPlan {
  * every other date as `kindOf` says. The day comes back as the same object when
  * nothing about it changes, which is how Apply knows to leave it alone.
  */
-export function composeDay(data: AppData, date: string, kind: Template | undefined, kindOf: KindOf): Composition {
+export function composeDay(data: AppData, date: string, kind: Template | undefined, kindOf: KindOf, today?: string): Composition {
   const existing = data.days[date] ?? { date, tasks: [] }
   const stamped = data.templates.find(t => t.id === existing.templateId)
   let day = existing
@@ -309,7 +393,7 @@ export function composeDay(data: AppData, date: string, kind: Template | undefin
   }
   const composing = { ...data, days: { ...data.days, [date]: day } }
   const asDrafted: KindOf = on => (on === date ? kind : kindOf(on))
-  const placements = placeRoutines(composing, date, kind, busyOn(composing, date, asDrafted))
+  const placements = placeRoutines(composing, date, kind, busyOn(composing, date, asDrafted, today))
   return { day: withRoutineTasks(day, placements), placements }
 }
 
@@ -343,7 +427,7 @@ export function applyRoster(data: AppData, draft: Record<string, string | null>,
   let days = data.days
   for (const [date, kind] of drafted) {
     const before = data.days[date]
-    const { day } = composeDay(data, date, kind, kindOf)
+    const { day } = composeDay(data, date, kind, kindOf, today)
     const unchanged = before ? day === before : !day.templateId && day.tasks.length === 0
     if (unchanged) continue
     if (days === data.days) days = { ...data.days }

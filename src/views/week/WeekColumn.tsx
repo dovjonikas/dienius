@@ -3,7 +3,7 @@ import type { Category, Template } from '../../lib/types'
 import type { DayStat } from '../../lib/dayStats'
 import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
-import { formatClock } from '../../widgets/day-plan/timelineLayout'
+import { formatTimeRange } from '../../widgets/day-plan/timelineLayout'
 import { categoryColor } from '../../lib/categories'
 import { shortWeekday } from '../../lib/dates'
 import type { DayEvent } from '../../lib/calendars'
@@ -321,7 +321,7 @@ export function WeekColumn({
                   grid does with one line of room, so under two lines the
                   block is its title. */}
               <span className="week-block-time">
-                {formatClock(block.startMinutes)} - {formatClock(block.endMinutes)}
+                {formatTimeRange(block.startMinutes, block.endMinutes)}
               </span>
             </button>
           )

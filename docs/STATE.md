@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29, in progress - rotating shifts, stage 3 of 10 done.
+**Last updated:** v2.29, in progress - rotating shifts, stage 4 of 10 done.
 
 ## v2.29 - Rotating shifts
 
@@ -90,6 +90,64 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 4 - midnight and daylight saving everywhere: done
+
+A second audit - every place a time is written past midnight, every reader of
+"now", every reader of a day's sleep, and `away` - and what it found, fixed.
+docs/RESEARCH-SHIFTS.md section 4.5 lists it reader by reader.
+
+- **A day's sleep has one resolver** (`sleepOn`). The day view, replan,
+  quick-add, Later, the task sheet, the set-aside strip and the week all ask it,
+  and a test reads the source to keep it that way; four of them had disagreed
+  about a week template's column. A date nobody has opened reads the template
+  its weekday will give it.
+- **The evening ends at tomorrow's bedtime.** A sleep belongs to the date it
+  ends on (`wakingDay.ts`), so the bedtime that closes a day is the next
+  date's schedule's. The free-time figure counts to it, past midnight where it
+  is; last night's shift still running takes its time from the morning; the
+  grid greys the sleeps that fall on the day, so the hours after a night shift
+  are not grey; "Sleep in" counts real minutes to the next bedtime; the day's
+  sleep figure is the real length of the sleep it woke from; the grid's
+  screen-reader sentence says the real bedtime; a template's sleep total is its
+  schedule's sleep.
+- **Clock text**: `formatClock` writes a time past midnight on the next day's
+  clock, and every range ends with "(next day)" there - the week's blocks, the
+  week template grid, a template's overlap line, a resize's drop label. 24:00 is
+  only the end of a day: a drag to the bottom edge starts a block at 23:59, and
+  so does replan's "from now" in a day's last minutes.
+- **A resize of a block cut at midnight** changes its real length by the
+  distance dragged. It used to set the end where the cut edge was dropped, so a
+  grab and a small drag cut an eight-hour shift to two.
+- **After midnight, last night's shift is running**: the header's running line
+  and time left, the F key, the focus bar and the focus screen - on the
+  session's own date's clock, so a session at 01:30 reads "4h 30 min left" and
+  not a day and a half. On a wide screen the header says that time left itself,
+  since today's grid does not draw last night's block yet (stage 9), and not a
+  second time while the focus strip is saying it. It is busy time for
+  quick-add's and Later's slot and a taken hour in the time pickers, and
+  yesterday's banner neither counts it unfinished nor pushes it.
+- **Away lasts past midnight, until the day wakes**: when today has none, the
+  header, the menu, the palette and Back read last night's ("Away since 22:00
+  yesterday"), and Back clears it where it was written. The first full e2e run
+  caught the first version carrying it through the whole next day - the week
+  soak went away on Wednesday and found no Away door on Thursday - so it ends
+  at the end of the sleep the day wakes from.
+- **Kept**: the time pickers' arrows wrap round the clock; grids are drawn on
+  the wall clock.
+
+New tests: the day between two sleeps and "Sleep in" across the clock change
+(`wakingDay.test.ts`), what is true after midnight (`afterMidnight.test.ts`),
+the one resolver (`sleepReaders.test.ts`), the day's arithmetic at night
+(`capacity.nights.test.ts`), the header at night
+(`DayHeader.night.test.tsx`), and new cases in the tests of the layout, the
+template summary and timeline, the week, the drag, replan, Later, the focus
+bar and yesterday's banner. Changed tests: four encoded the evening cut at
+midnight and the old sleep rule - a daytime sleeper's free time in
+`capacity.test.ts`, and three day views in `DayView.test.tsx`, two of which
+now give the next date the same schedule so they still test what they were
+written for; the week layout's per-day window test hands in the resolver; and
+the test of a date's own sleep moved with `ownedSleep` to `wakingDay.test.ts`.
 
 ### Stage 3 - composition: done
 

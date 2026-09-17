@@ -223,6 +223,11 @@ Never a time on a block that has not got the room for it. Half a line of
 digits under a title is text cut off, which is a defect anywhere in the
 app.
 
+**An end past midnight says so.** "22:00 - 06:00 (next day)", written by
+`formatTimeRange`, on every grid and in every sentence that gives a range;
+24:00 is only exactly the end of a day, and never a start. Since v2.29 - see
+DECISIONS "24:00 is the end of a day, never a time in one".
+
 ### Text is never clipped, and a control is never shorter than its label
 
 Anywhere. Not a button whose word ends in "wee", not a chip whose count

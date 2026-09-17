@@ -15,6 +15,8 @@ import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
 import { NoteEditor } from '../../views/NoteEditor'
 import { stepTime, windowFor } from './capacity'
+import { carriedIntervals, sleepOn } from '../../lib/shiftDay'
+import { todayKey } from '../../lib/dates'
 import { isMealCategory } from '../../lib/kitchen'
 import { RecipeSelect } from '../../views/kitchen/RecipeBinding'
 
@@ -103,21 +105,19 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
   // and says which hours are already gone - the same two answers quick-add's
   // own control gives, from the same arithmetic. This task's own block is left
   // out of it: an hour is not taken by the thing being moved into it.
-  const day = data.days[date]
-  const dayTemplate = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
   const calendarCache = useCalendarCache()
   const taken = useMemo(
     () =>
       takenBlocks(
         tasks.filter(t => t.id !== task.id),
         data.categories,
-        busyIntervals(date, data.settings.calendars, calendarCache),
+        [...busyIntervals(date, data.settings.calendars, calendarCache), ...carriedIntervals(data, date)],
       ),
-    [tasks, task.id, data.categories, date, data.settings.calendars, calendarCache],
+    [tasks, task.id, data, date, calendarCache],
   )
-  const waking = windowFor(day?.sleepProfileId ?? dayTemplate?.sleepProfileId, {
-    profiles: data.settings.sleepProfiles,
-  })
+  // The day's sleep as every reader of it has it - see sleepOn.
+  const daySleep = sleepOn(data, date, todayKey())
+  const waking = windowFor(daySleep.profileId, daySleep.sleep)
 
   const scopeHint =
     scope === 'series'

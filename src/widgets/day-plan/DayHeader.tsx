@@ -1,7 +1,8 @@
 import { MAX_HIGHLIGHTS, type SleepProfile, type Task, type Template } from '../../lib/types'
 import { actions } from '../../lib/store'
 import { addDays, formatDayTitle, monthAndDay, todayKey, weekdayName } from '../../lib/dates'
-import { formatDuration, minutesUntilSleep, windowFor } from './capacity'
+import { formatDuration, wakingDayFor } from './capacity'
+import { minutesUntilSleep } from '../../lib/wakingDay'
 import { formatClock } from './timelineLayout'
 import { formatDayScore, type DayScore } from './score'
 import { NorthLine } from './NorthLine'
@@ -44,6 +45,12 @@ export interface DayHeaderProps {
   runningTask: Task | undefined
   runningLeft: number | undefined
   /**
+   * Whether the running task is one of this day's own blocks, drawn on its grid.
+   * Last night's shift running after midnight is not, so the header says its
+   * time left itself. Absent is true.
+   */
+  runningOnGrid?: boolean
+  /**
    * The task a focus session is running on, when there is one on this day.
    * While it is the running task, the focus strip above the app already says
    * its name and its countdown, and the header says only the clock - the
@@ -52,6 +59,8 @@ export interface DayHeaderProps {
   focusedTaskId?: string
   sleepProfiles: SleepProfile[]
   daySleepProfileId: string | undefined
+  /** The schedule tonight's sleep follows - the next date's; absent is the day's own. */
+  tonightProfileId?: string
   isWide: boolean
   dayLayoutFocus: 'both' | 'calendar' | 'tasks'
   /** Passed straight to the North line - see NorthLine. */
@@ -77,9 +86,11 @@ export function DayHeader({
   nowMinutes,
   runningTask,
   runningLeft,
+  runningOnGrid = true,
   focusedTaskId,
   sleepProfiles,
   daySleepProfileId,
+  tonightProfileId,
   isWide,
   dayLayoutFocus,
   onOpenNorth,
@@ -111,13 +122,14 @@ export function DayHeader({
   // without its time left - once, CONVENTIONS 23. The Tasks focus puts the
   // grid away, and on a phone it is a scroll or a press away, so there the
   // header says it.
-  const gridSaysLeft = isWide && dayLayoutFocus !== 'tasks'
+  const gridSaysLeft = isWide && dayLayoutFocus !== 'tasks' && runningOnGrid
 
   // Only on today, and only once bedtime is close enough to matter. Measured
-  // against the same waking window the grid greys and the capacity line counts
-  // against, so the three can never disagree about when the day ends.
+  // against the same waking day the grid greys and the capacity line counts
+  // against, so the three can never disagree about when the day ends - to
+  // tonight's bedtime, past midnight where that is, in real minutes.
   const untilSleep = isToday
-    ? minutesUntilSleep(nowMinutes, windowFor(daySleepProfileId, { profiles: sleepProfiles }))
+    ? minutesUntilSleep(date, nowMinutes, wakingDayFor(daySleepProfileId, { profiles: sleepProfiles, tonightProfileId }))
     : null
   const showSleep = untilSleep !== null && untilSleep <= SLEEP_NOTICE_MINUTES
 

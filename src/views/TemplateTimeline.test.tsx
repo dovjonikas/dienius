@@ -32,6 +32,22 @@ test('the line under it is the day in four numbers, live', () => {
   expect(screen.getByText(/^Timed 2h - Free 14h - Sleep 8h - 1 key$/)).toBeInTheDocument()
 })
 
+test("a schedule that sleeps after midnight counts its own sleep, and the evening before it as free", () => {
+  actions.resetForTests({
+    ...defaultData(),
+    settings: {
+      ...defaultData().settings,
+      sleepProfiles: [
+        { id: 'default', name: 'Nights', window: { start: '23:00', end: '07:00' } },
+        { id: 'late', name: 'Late', window: { start: '02:00', end: '10:00' } },
+      ],
+    },
+  })
+  render(<TemplateTimeline blocks={[block({ time: '12:00', minutes: 120 })]} sleepProfileId="late" />)
+  // Awake 10:00 to 02:00 the next night: sixteen hours, less the two-hour block.
+  expect(screen.getByText(/^Timed 2h - Free 14h - Sleep 8h - 0 key$/)).toBeInTheDocument()
+})
+
 test('a narrow column says the same thing in two', () => {
   render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 120, highlight: true })]} compact />)
   expect(screen.getByText('2h / 1 key')).toBeInTheDocument()

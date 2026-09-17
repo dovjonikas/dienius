@@ -1,5 +1,6 @@
 import type { Task } from '../../lib/types'
-import { clipToWindow, formatDuration, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, windowFor, type Interval, type SleepSettings } from './capacity'
+import { bandsOnDay, type WakingDay } from '../../lib/wakingDay'
+import { clipToWindow, formatDuration, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, wakingDayFor, windowFor, type Interval, type SleepSettings } from './capacity'
 
 /**
  * The geometry of the day's timeline: which anchors draw where, what is
@@ -424,12 +425,7 @@ export function computeTimelineLayout(
     start: Math.min(...starts),
     end: Math.max(...effectiveEndsForWindow),
   })
-  const sleepBands = [
-    { start: 0, end: waking.start },
-    { start: waking.end, end: DAY_MINUTES },
-  ]
-    .map(segment => clipToWindow(segment, displayWindow))
-    .filter((segment): segment is Interval => segment !== null)
+  const sleepBands = sleepBandsIn(displayWindow, wakingDayFor(sleepProfileId, sleep))
 
   return { window, displayWindow, anchors: blocks, gaps, unsizedAnchorCount, sleepBands }
 }
@@ -1020,12 +1016,52 @@ export function currentMinutes(date: Date = new Date()): number {
  * every anchor's own `time` already uses. `DAY_MINUTES` itself (the night
  * window's own close) renders as "24:00" rather than wrapping to "00:00" -
  * it is the end of today, not the start of tomorrow.
+ *
+ * Anything past it is on the next day's clock, and anything before a day's
+ * midnight on the day before's: until v2.29 every minute after midnight read
+ * "24:00", so a widened grid labelled each hour past midnight 24:00 and a
+ * week block from 22:00 for eight hours ended at 24:00. A value that is an end
+ * says which day it is on - see `formatEndClock`. docs/RESEARCH-SHIFTS.md
+ * section 3.4.
  */
 export function formatClock(minutes: number): string {
-  if (minutes >= DAY_MINUTES) return '24:00'
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
+  if (minutes === DAY_MINUTES) return '24:00'
+  const onClock = ((minutes % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES
+  const h = Math.floor(onClock / 60)
+  const m = onClock % 60
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/**
+ * An end on a day's clock, saying "(next day)" when it is past midnight. The
+ * one way a range's end is written, so no range anywhere ends at 24:00 for
+ * something that ends in the small hours.
+ */
+export function formatEndClock(minutes: number): string {
+  return minutes > DAY_MINUTES ? `${formatClock(minutes)} (next day)` : formatClock(minutes)
+}
+
+/**
+ * The day's sleep said in words, for a screen reader: what the grey bands show
+ * a sighted eye. One schedule on both sides reads as it always has - "Asleep
+ * from 23:00 to 07:00." - with a bedtime at or after midnight as the clock
+ * reads it. Where tonight's sleep is the next date's and differs, both edges of
+ * the day are said. A day with no sleep on either side says nothing.
+ */
+export function sleepSentence(day: WakingDay): string | null {
+  const { woke, tonight } = day
+  if (woke && tonight && woke.start + DAY_MINUTES === tonight.start && woke.end + DAY_MINUTES === tonight.end) {
+    return `Asleep from ${formatClock(tonight.start - DAY_MINUTES)} to ${formatClock(woke.end)}.`
+  }
+  if (woke && tonight) return `Asleep until ${formatClock(woke.end)}, and from ${formatClock(tonight.start - DAY_MINUTES)}.`
+  if (woke) return `Asleep until ${formatClock(woke.end)}.`
+  if (tonight) return `Asleep from ${formatClock(tonight.start - DAY_MINUTES)}.`
+  return null
+}
+
+/** A start and an end on a day's clock - "22:00 - 06:00 (next day)" for a night shift. */
+export function formatTimeRange(startMinutes: number, endMinutes: number): string {
+  return `${formatClock(startMinutes)} - ${formatEndClock(endMinutes)}`
 }
 
 /**
@@ -1086,11 +1122,7 @@ export function gapLabelPlacement(
  * length was never in question, only how much of it fits in today's view.
  */
 export function formatAnchorTimeRange(startMinutes: number, minutes: number): string {
-  const realEnd = startMinutes + minutes
-  if (realEnd <= DAY_MINUTES) {
-    return `${formatClock(startMinutes)} - ${formatClock(realEnd)}`
-  }
-  return `${formatClock(startMinutes)} - ${formatClock(realEnd - DAY_MINUTES)} (next day)`
+  return formatTimeRange(startMinutes, startMinutes + minutes)
 }
 
 // Only the stretches strictly between two sized anchors - never before the
@@ -1167,16 +1199,19 @@ export function widenToHold(window: Interval, start: number, minutes: number | u
 }
 
 /**
- * The stretches of a window that are outside the waking day - the same two
- * segments `computeTimelineLayout` clips, pulled out so a window that had to
+ * The sleeps that fall on a window of the day's clock - the grey bands, the
+ * same ones `computeTimelineLayout` draws, pulled out so a window that had to
  * grow around a candidate can have them computed again for its new edges
  * rather than keeping bands cut to the old ones.
+ *
+ * The sleeps themselves, not the waking hours turned inside out: after a night
+ * shift the hours from midnight to a daytime sleep are awake and are not grey,
+ * and a bedtime at one in the morning leaves the hour before midnight awake.
+ * On a day that sleeps across midnight on one schedule the two readings are
+ * the same bands.
  */
-export function sleepBandsIn(window: Interval, waking: Interval): Interval[] {
-  return [
-    { start: 0, end: waking.start },
-    { start: waking.end, end: DAY_MINUTES },
-  ]
-    .map(segment => clipToWindow(segment, window))
-    .filter((segment): segment is Interval => segment !== null)
+export function sleepBandsIn(window: Interval, day: WakingDay): Interval[] {
+  return bandsOnDay(day)
+    .map(band => clipToWindow(band, window))
+    .filter((band): band is Interval => band !== null)
 }

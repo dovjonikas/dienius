@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { addDays, todayKey } from '../../lib/dates'
+import { carriedInto } from '../../lib/shiftDay'
+import { clockMinutesOn } from '../../lib/wallClock'
 import { isPushable } from '../../lib/pushRules'
 
 const DISMISSED_KEY = 'dienius:yesterday-dismissed'
@@ -30,7 +32,13 @@ export function YesterdayBanner({ date }: { date: string }) {
 
   const isToday = date === todayKey()
   const yesterday = addDays(date, -1)
-  const unfinished = (data.days[yesterday]?.tasks ?? []).filter(t => !t.done)
+  // A block from yesterday still running - last night's shift at half past
+  // midnight - is not unfinished yet, and the push leaves it where it is.
+  const nowMinutes = clockMinutesOn(date)
+  const stillRunning = carriedInto(data, date)
+    .filter(c => nowMinutes < c.end)
+    .map(c => c.task.id)
+  const unfinished = (data.days[yesterday]?.tasks ?? []).filter(t => !t.done && !stillRunning.includes(t.id))
 
   if (!isToday || dismissed) return null
 
@@ -77,7 +85,7 @@ export function YesterdayBanner({ date }: { date: string }) {
           className="btn-secondary"
           disabled={pushable === 0}
           onClick={() => {
-            const result = actions.rolloverUnfinished(yesterday)
+            const result = actions.rolloverUnfinished(yesterday, stillRunning)
             writeDismissed(date)
             setPushed(result)
           }}

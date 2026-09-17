@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Task } from '../../lib/types'
 import { actions, getData, useAppData } from '../../lib/store'
-import { todayKey } from '../../lib/dates'
+import { addDays, todayKey } from '../../lib/dates'
+import { carriedIntervals, sleepOn } from '../../lib/shiftDay'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
 import { useCaptureRequest } from '../../lib/captureRequest'
 import { categoryColor, categoryLabel, defaultCategoryId, resolvedColor, type CategoryId } from '../../lib/categories'
@@ -100,9 +101,10 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
 
   const isToday = date === todayKey()
   const now = new Date()
-  const day = data.days[date]
-  const template = day?.templateId ? data.templates.find(t => t.id === day.templateId) : undefined
-  const sleepProfileId = day?.sleepProfileId ?? template?.sleepProfileId
+  // The day's sleep as every reader of it has it - its template's column on a
+  // week template, and tonight's bedtime from the next date. See sleepOn.
+  const { profileId: sleepProfileId, sleep: daySleep } = sleepOn(data, date, todayKey())
+  const tonightProfileId = daySleep.tonightProfileId
   const sleepProfiles = data.settings.sleepProfiles
   const subscriptions = data.settings.calendars
   const slotMinutes = draft?.minutes ?? duration
@@ -113,9 +115,15 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   // not moved. Neither depends on the text, only on the length read out of
   // it, so a memo on what they actually read turns a per-character scan into
   // a per-length one.
+  // Last night's shift still running this morning is time spoken for, the way
+  // somebody else's calendar is.
+  const yesterdayPlan = data.days[addDays(date, -1)]
   const busy = useMemo(
-    () => busyIntervals(date, subscriptions, calendarCache),
-    [date, subscriptions, calendarCache],
+    () => [...busyIntervals(date, subscriptions, calendarCache), ...carriedIntervals(data, date)],
+    // Only yesterday's day decides what runs in, so nothing else in the plan -
+    // and no keystroke - rebuilds this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [date, subscriptions, calendarCache, yesterdayPlan],
   )
   // The minute, not the instant. `new Date()` on every render made the memo
   // below miss on every keystroke; the suggestion is only ever offered to
@@ -128,10 +136,10 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
         durationMinutes: slotMinutes,
         busy,
         sleepProfileId,
-        sleep: { profiles: sleepProfiles },
+        sleep: { profiles: sleepProfiles, tonightProfileId },
         notBefore: isToday ? nowMinutes : undefined,
       }),
-    [tasks, slotMinutes, busy, sleepProfileId, sleepProfiles, isToday, nowMinutes],
+    [tasks, slotMinutes, busy, sleepProfileId, sleepProfiles, tonightProfileId, isToday, nowMinutes],
   )
 
   // What the hour column paints, and where it opens: the day's own blocks and
@@ -140,7 +148,10 @@ export function QuickAdd({ date, tasks }: QuickAddProps) {
   // gathered a second time. Memoised for the same reason they are - typing is
   // what renders this component, and neither of these moves on a keystroke.
   const taken = useMemo(() => takenBlocks(tasks, data.categories, busy), [tasks, data.categories, busy])
-  const waking = useMemo(() => windowFor(sleepProfileId, { profiles: sleepProfiles }), [sleepProfileId, sleepProfiles])
+  const waking = useMemo(
+    () => windowFor(sleepProfileId, { profiles: sleepProfiles, tonightProfileId }),
+    [sleepProfileId, sleepProfiles, tonightProfileId],
+  )
 
   // What Enter would actually use, in the order the three sources outrank each
   // other: the typed line first, then whatever the control was pushed to, then

@@ -36,6 +36,21 @@ test('a running session names the task it is on', () => {
   expect(screen.getByText('Deep work')).toBeInTheDocument()
 })
 
+// Rotating shifts, stage 4: a session on last night's shift counts on that
+// date's clock, so half past one reads the hours left, not a day and a half.
+test("a session on last night's shift still counts down after midnight", () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 8, 17, 1, 30))
+  actions.resetForTests({
+    ...defaultData(),
+    days: { '2026-09-16': { date: '2026-09-16', tasks: [{ id: 'night', title: 'Night shift', done: false, time: '22:00', minutes: 480 }] } },
+  })
+  clockTools.startFocus('2026-09-16', 'night')
+  render(<FocusBar onExpand={() => {}} />)
+  expect(screen.getByText('4h 30 min left')).toBeInTheDocument()
+  vi.useRealTimers()
+})
+
 test('leaving the bar ends the session rather than hiding it', async () => {
   const user = userEvent.setup()
   const id = seedTask()

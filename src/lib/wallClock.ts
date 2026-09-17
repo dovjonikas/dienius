@@ -23,6 +23,18 @@ export function wallInstant(date: string, minutes: number): number {
   return new Date(y, m - 1, d, 0, minutes).getTime()
 }
 
+/**
+ * Where a moment is on `date`'s wall clock: minutes past that date's midnight,
+ * past 1440 on the days after it. At half past one in the morning, last night's
+ * date reads 1530 - which is how a block that started there is still found
+ * running, and a focus session on it still counts down.
+ */
+export function clockMinutesOn(date: string, at: Date = new Date()): number {
+  const [y, m, d] = date.split('-').map(Number)
+  const days = Math.round((Date.UTC(at.getFullYear(), at.getMonth(), at.getDate()) - Date.UTC(y, m - 1, d)) / 86_400_000)
+  return days * 24 * 60 + at.getHours() * 60 + at.getMinutes()
+}
+
 /** Whether `time` ("HH:MM") happens on `date` at all: 03:30 on the night the clocks go forward does not. */
 export function clockTimeExists(date: string, time: string): boolean {
   const [h, m] = time.split(':').map(Number)

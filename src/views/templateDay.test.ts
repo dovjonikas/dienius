@@ -26,6 +26,12 @@ function block(over: Partial<TemplateBlock> = {}): TemplateBlock {
 
 const WINDOW = { start: 7 * 60, end: 23 * 60 }
 
+// Rotating shifts, stage 4 - docs/RESEARCH-SHIFTS.md section 3.4.
+test("an overlap that runs past midnight is named on the next day's clock, not as 24:00", () => {
+  const found = overlapsIn([block({ time: '23:00', minutes: 120 }), block({ time: '23:30', minutes: 60 })])
+  expect(found).toEqual([{ from: '23:30', to: '00:30 (next day)', ids: ['b1', 'b2'] }])
+})
+
 // --- the blocks as a day ---------------------------------------------------
 
 test('a block becomes the task the grid already knows how to draw', () => {

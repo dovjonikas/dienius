@@ -3,7 +3,7 @@ import { actions, useAppData } from '../../lib/store'
 import { clockTools, useClockTools } from '../../lib/clockTools'
 import { categoryColor } from '../../lib/categories'
 import { formatDuration, minutesLeft, timeToMinutes } from '../day-plan/capacity'
-import { currentMinutes } from '../day-plan/timelineLayout'
+import { clockMinutesOn } from '../../lib/wallClock'
 
 const RING_RADIUS = 13
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
@@ -37,14 +37,18 @@ export interface FocusBarProps {
 export function FocusBar({ onExpand }: FocusBarProps) {
   const data = useAppData()
   const tools = useClockTools()
-  const [now, setNow] = useState(() => currentMinutes())
+  const [at, setAt] = useState(() => new Date())
 
   const session = tools.focus
   const task = session ? data.days[session.date]?.tasks.find(t => t.id === session.taskId) : undefined
+  // Now on the session's own date's clock: a session on last night's shift at
+  // half past one counts from 25:30, not from today's 01:30.
+  const now = session ? clockMinutesOn(session.date, at) : 0
 
   useEffect(() => {
     if (!session) return
-    const id = setInterval(() => setNow(currentMinutes()), 20_000)
+    setAt(new Date())
+    const id = setInterval(() => setAt(new Date()), 20_000)
     return () => clearInterval(id)
   }, [session])
 
@@ -58,7 +62,7 @@ export function FocusBar({ onExpand }: FocusBarProps) {
 
   if (!session || !task) return null
 
-  const left = task.time !== undefined ? minutesLeft(task, now) : undefined
+  const left = task.time !== undefined ? minutesLeft(task, now, session.date) : undefined
   const total = task.minutes
   const elapsed = task.time !== undefined && total !== undefined
     ? Math.min(total, Math.max(0, now - timeToMinutes(task.time)))
