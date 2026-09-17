@@ -5285,7 +5285,10 @@ button.core-toggle.active {
    how a date draws it - not a transform painted over lower-case text, which is
    the thing the design pass retired. */
 .kind-letter {
-  width: 4ch;
+  /* Two characters and the field's own air either side, not four characters
+     total: a width in ch on a bordered box is the box, and the letter came out
+     clipped by its own padding. */
+  width: calc(3ch + var(--s3) * 2);
   text-align: center;
 }
 /* min-width: 0, or the nowrap preview line inside sets the item's minimum
@@ -9781,13 +9784,26 @@ button.task-recipe:focus-visible {
   overflow-wrap: anywhere;
 }
 
+/* The line wraps between its parts, never inside them: a clock broken across
+   two lines - "D 07:3 / 0" - is what `overflow-wrap: anywhere` did to it on a
+   phone. The name above it is the one part that may break, since a name can be
+   longer than the screen. */
 .routines-row-line {
   flex: 1;
   min-width: 0;
   color: var(--muted);
   font-size: var(--t-sm);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+}
+
+/* On a phone the row is a stack: the name, what it is, and the two words that
+   change it on their own line at the right. Three columns at 390px gave the
+   middle one about twelve characters. */
+@media (max-width: 599px) {
+  .routines-row { flex-wrap: wrap; gap: var(--s1) var(--s2); }
+  .routines-row-title,
+  .routines-row-line { flex: 1 0 100%; }
+  .routines-row > button:nth-last-of-type(2) { margin-left: auto; }
 }
 
 /* The form where the rows are, on the same card, its fields on one gap. */
