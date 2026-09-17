@@ -38,8 +38,18 @@
 
 const SEEN_KEY = 'dienius:north-seen'
 const SHOWN_KEY = 'dienius:north-window'
+/**
+ * The last waking: the moment the app came into view after a break long
+ * enough to be sleep. Written whether or not the window shows - the day's
+ * line reads it for its morning (lib/northLine.ts), and a North with no
+ * introduction, or the window switched off, still has mornings.
+ */
+const WOKE_KEY = 'dienius:north-woke'
 /** Where the page opening kept the day North was read, until v2.24. */
 const OLD_READ_KEY = 'dienius:north-read'
+
+/** Said on the window when a waking has just been written, so the day's line can turn to its morning at once. */
+export const NORTH_WOKE_EVENT = 'dienius:north-woke'
 
 /** Out of view this long is sleep rather than a break. */
 export const NORTH_BREAK_MS = 5 * 60 * 60 * 1000
@@ -81,15 +91,40 @@ export function northWindowDue(memory: NorthWindowMemory, now: number, terms: No
 }
 
 /**
+ * Whether the app coming into view at `now` is a waking: the break since it
+ * was last in view is sleep. The same break the window reads, and nothing
+ * else of its terms - a waking is a waking with the window off.
+ */
+export function isWaking(memory: NorthWindowMemory, now: number): boolean {
+  return memory.seenAt !== null && now - memory.seenAt >= NORTH_BREAK_MS
+}
+
+/** The last waking this device has seen, as epoch milliseconds, or none. */
+export function northWokeAt(): number | null {
+  return readMoment(WOKE_KEY)
+}
+
+/**
  * The app is in view at `now`: on opening, on coming back into view, and on
  * every tick while it stays there. Decides whether the window is due, and
- * remembers the moment - and the showing, when it is.
+ * remembers the moment - the showing, when it is, and the waking, when this
+ * is one.
  */
 export function arriveAtNorth(now: number, terms: NorthWindowTerms): boolean {
   if (terms.demo) return false
-  const due = northWindowDue(read(), now, terms)
+  const memory = read()
+  const due = northWindowDue(memory, now, terms)
+  const woke = isWaking(memory, now)
   write(SEEN_KEY, now)
   if (due) write(SHOWN_KEY, now)
+  if (woke) {
+    write(WOKE_KEY, now)
+    try {
+      window.dispatchEvent(new Event(NORTH_WOKE_EVENT))
+    } catch {
+      // Nothing listening is nothing lost: the line reads the moment on its next tick.
+    }
+  }
   try {
     localStorage.removeItem(OLD_READ_KEY)
   } catch {

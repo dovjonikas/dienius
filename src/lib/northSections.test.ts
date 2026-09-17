@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { isNorthHeading, northLineKinds, parseNorth } from './northSections'
+import { isNorthHeading, northLineKinds, parseNorth, splitNorthHeading } from './northSections'
 
 /**
  * A line in capitals is a heading, and everything under it up to the next
@@ -35,6 +35,46 @@ test('a capital with a diacritic is a capital', () => {
 
 test('spaces around a line do not decide anything', () => {
   expect(isNorthHeading('  FIRST HEADING  ')).toBe(true)
+})
+
+// --- a heading's tag ------------------------------------------------------------------
+
+test('a heading may end on [morning] or [evening]: it is still a heading, and the tag is read off it', () => {
+  expect(isNorthHeading('A HEADING [morning]')).toBe(true)
+  expect(isNorthHeading('A HEADING [evening]')).toBe(true)
+  expect(splitNorthHeading('A HEADING [morning]')).toEqual({ heading: 'A HEADING', tag: 'morning' })
+  expect(splitNorthHeading('  A HEADING   [evening]  ')).toEqual({ heading: 'A HEADING', tag: 'evening' })
+  expect(splitNorthHeading('A HEADING')).toEqual({ heading: 'A HEADING' })
+})
+
+test('the tag is read in either case, and only at the very end of the line', () => {
+  expect(splitNorthHeading('A HEADING [MORNING]')).toEqual({ heading: 'A HEADING', tag: 'morning' })
+  expect(splitNorthHeading('A HEADING [Evening]')).toEqual({ heading: 'A HEADING', tag: 'evening' })
+  // In the middle it is words of the heading, and any other word is not a tag.
+  expect(splitNorthHeading('A [MORNING] HEADING')).toEqual({ heading: 'A [MORNING] HEADING' })
+  expect(isNorthHeading('A HEADING [noon]')).toBe(false)
+})
+
+test('a line with lowercase words and a tag is text, and a line that is only a tag is text', () => {
+  expect(isNorthHeading('A line of text [morning]')).toBe(false)
+  expect(isNorthHeading('[morning]')).toBe(false)
+  expect(isNorthHeading('  [evening]  ')).toBe(false)
+})
+
+test('the page reads a tagged heading without its tag, and keeps the tag on the section', () => {
+  expect(parseNorth('WAKING [morning]\na line\nLATER [evening]\nanother line\nPLAIN\na third line')).toEqual({
+    intro: [],
+    sections: [
+      { heading: 'WAKING', tag: 'morning', paragraphs: ['a line'] },
+      { heading: 'LATER', tag: 'evening', paragraphs: ['another line'] },
+      { heading: 'PLAIN', paragraphs: ['a third line'] },
+    ],
+    signature: [],
+  })
+})
+
+test("the field draws a tagged heading as a heading, and a tag after the signature mark is the signature's", () => {
+  expect(northLineKinds('WAKING [morning]\na line\n---\nLATER [evening]')).toEqual(['heading', 'text', 'mark', 'text'])
 })
 
 // --- what a heading holds ------------------------------------------------------------

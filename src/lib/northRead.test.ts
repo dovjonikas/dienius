@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { arriveAtNorth, leaveNorth, northWindowDue } from './northRead'
+import { NORTH_WOKE_EVENT, arriveAtNorth, isWaking, leaveNorth, northWindowDue, northWokeAt } from './northRead'
 
 /**
  * North's introduction comes forward on its own once after sleep: the first
@@ -88,8 +88,49 @@ test('the morning key the page opening used is cleared on the first arrival', ()
   expect(localStorage.getItem('dienius:north-read')).toBeNull()
 })
 
-test('nothing of it reaches the plan: it lives under two keys of its own', () => {
+test('nothing of it reaches the plan: it lives under three keys of its own', () => {
   arriveAtNorth(at(0), ON)
   arriveAtNorth(at(6), ON)
-  expect(Object.keys(localStorage).sort()).toEqual(['dienius:north-seen', 'dienius:north-window'])
+  expect(Object.keys(localStorage).sort()).toEqual(['dienius:north-seen', 'dienius:north-window', 'dienius:north-woke'])
+})
+
+// --- the waking the day's line reads ---------------------------------------------------
+
+test('a waking is the same break the window reads, and nothing else of its terms', () => {
+  expect(isWaking({ seenAt: at(0), shownAt: null }, at(5))).toBe(true)
+  expect(isWaking({ seenAt: at(0), shownAt: null }, at(4.99))).toBe(false)
+  expect(isWaking({ seenAt: null, shownAt: null }, at(10))).toBe(false)
+  // Shown an hour ago is no reason for a sleep not to be a waking.
+  expect(isWaking({ seenAt: at(0), shownAt: at(5) }, at(6))).toBe(true)
+})
+
+test('arriving after sleep writes the waking, with the window off or no introduction too, and says so', () => {
+  let said = 0
+  const listen = () => said++
+  window.addEventListener(NORTH_WOKE_EVENT, listen)
+  try {
+    arriveAtNorth(at(0), { ...ON, enabled: false, intro: false })
+    expect(northWokeAt()).toBeNull()
+    expect(said).toBe(0)
+    arriveAtNorth(at(2), { ...ON, enabled: false, intro: false })
+    expect(northWokeAt()).toBeNull()
+    arriveAtNorth(at(8), { ...ON, enabled: false, intro: false })
+    expect(northWokeAt()).toBe(at(8))
+    expect(said).toBe(1)
+    // A minute later is no new waking.
+    arriveAtNorth(at(8.02), ON)
+    expect(northWokeAt()).toBe(at(8))
+    expect(said).toBe(1)
+  } finally {
+    window.removeEventListener(NORTH_WOKE_EVENT, listen)
+  }
+})
+
+test('the first arrival on a device is no waking, and the demo writes none', () => {
+  arriveAtNorth(at(0), ON)
+  expect(northWokeAt()).toBeNull()
+  localStorage.clear()
+  arriveAtNorth(at(0), { ...ON, demo: true })
+  arriveAtNorth(at(10), { ...ON, demo: true })
+  expect(northWokeAt()).toBeNull()
 })

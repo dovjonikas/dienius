@@ -35,9 +35,24 @@
  * kept.
  */
 
+/**
+ * The two words a heading may end on, in square brackets, to say when its
+ * lines belong on the day: `[morning]` for the first hours after waking and
+ * `[evening]` for the end of the day - lib/northLine.ts has the rule. Read,
+ * and never shown: the day, the rail, the page and the window all show the
+ * heading without it, and only the field the text is written in holds it.
+ */
+export type NorthTag = 'morning' | 'evening'
+
+/** A tag at the very end of a line, in either case, spaces around it aside. */
+const NORTH_TAG = /\s*\[(morning|evening)\]\s*$/i
+
 /** One heading and everything under it, to the next heading or the signature. */
 export interface NorthSection {
+  /** The heading as it is shown: the line, trimmed, without its tag. */
   heading: string
+  /** The tag the heading's line ended on, when it ended on one. */
+  tag?: NorthTag
   /**
    * The text under the heading in paragraphs, each one its lines joined by
    * a line break. Several blank lines are one break, and a heading with
@@ -63,15 +78,30 @@ export interface NorthReading {
 }
 
 /**
+ * A line taken apart into its words and the tag it ends on, if it ends on
+ * one. The words are trimmed; a line that is only a tag has no words.
+ */
+export function splitNorthHeading(line: string): { heading: string; tag?: NorthTag } {
+  const t = line.trim()
+  const found = NORTH_TAG.exec(t)
+  if (!found) return { heading: t }
+  return { heading: t.slice(0, found.index).trim(), tag: found[1].toLowerCase() as NorthTag }
+}
+
+/**
  * Whether a line is a heading: it has at least one letter, and every letter
  * in it is a capital. Digits and punctuation are neither here nor there,
  * so "PLAN 2026" is a heading and "2026" is not; and a lowercase letter
  * anywhere means an ordinary line, so "Not THIS" is text. Compared through
  * the string's own case mapping, so a capital with a diacritic counts the
  * same as a plain one.
+ *
+ * A tag at the end is not part of the question - "A HEADING [morning]" is a
+ * heading, in capitals, that ends on a tag - and a line that is only a tag
+ * is text.
  */
 export function isNorthHeading(line: string): boolean {
-  const t = line.trim()
+  const t = splitNorthHeading(line).heading
   if (!t) return false
   return t === t.toUpperCase() && t !== t.toLowerCase()
 }
@@ -118,7 +148,8 @@ export function parseNorth(text: string): NorthReading {
       paragraphs = signature
     } else if (!signing && isNorthHeading(line)) {
       closeParagraph()
-      const section: NorthSection = { heading: line, paragraphs: [] }
+      const { heading, tag } = splitNorthHeading(line)
+      const section: NorthSection = tag ? { heading, tag, paragraphs: [] } : { heading, paragraphs: [] }
       sections.push(section)
       paragraphs = section.paragraphs
     } else {

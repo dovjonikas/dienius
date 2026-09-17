@@ -6,8 +6,63 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.25 - the design pass, done. North's two briefs and
-Kitchen are queued, in that order.
+**Last updated:** v2.26, in progress - North that holds the eye. Kitchen is
+queued after it.
+
+## v2.26 - North that holds the eye
+
+Asked for the night v2.25's last stage ran, and begun when it closed, with
+the owner's word to go on through everything queued without stopping. North
+worked, the owner wrote, and did not hold anybody: the day showed a goal's
+name cut off under the date, the rail's headings read like a menu, and the
+page opened folded. The brief, as understood, and the North editor's own
+last two stages, which are done inside it:
+
+1. **The line.** One whole line of the text on the day, from under a
+   heading - never a heading, a blank line or the introduction - the same
+   all day on every device and another the next. A heading ending on
+   `[morning]` lends its lines only to the three hours after waking, waking
+   read as the window after sleep reads it; one ending on `[evening]` only
+   to the day from 21:00; untagged headings the rest of the time. The tags
+   are read and never shown.
+2. **The day's top.** That line where the goal's name was, never cut - it
+   wraps - with the signature under it, quieter, always; a press opens
+   North; the goal's name only where North has no text.
+3. **The rail.** Headings as they were written, not tracked like a menu; a
+   small card of a heading's lines beside it under the pointer, moving
+   nothing, and the same card on a press on a phone; a small "North" over
+   them and the signature under them.
+4. **The page.** For reading, so everything is open: the introduction at the
+   text's own size and ink, headings a little larger and heavier with more
+   room over them than under, the signature last after more room and a
+   little larger, Edit at the right of the title's row, about 640px wide.
+5. **The phone and the last tests.**
+
+Generic text only in the tests and the pictures, the tests green and this
+section brought up to date after each stage.
+
+### Stage 1 - the line and its two tags: done
+
+- **Tags.** A heading may end on `[morning]` or `[evening]`, in either case;
+  it is still a heading, the tag is kept on its section and its heading is
+  the words without it (`lib/northSections.ts`), so nothing that draws a
+  heading can show one. A line that is only a tag, or lowercase with one, is
+  text.
+- **The line** (`lib/northLine.ts`): every line written under the headings
+  for the part of the day, one a day in the order written by the date's day
+  number, so the same on every device, never the same two days running while
+  there is another, and read through end to end. The morning is the three
+  hours after the last waking, the evening from 21:00 by the device's clock,
+  a morning past 21:00 still the morning; a part of the day with no heading
+  of its own takes the untagged lines, and with none of those the day has no
+  line rather than one from the wrong hour.
+- **The waking** (`lib/northRead.ts`): the moment the app comes into view
+  after five hours out of view, written on the device whether or not the
+  window shows, and said on the window so the line can turn to its morning
+  at once; `useNorthMoment` keeps the part of the day current by the minute.
+
+Changed tests: `northRead.test.ts`'s count of the device's own keys is three,
+with the waking.
 
 ## v2.25 - the design pass
 
