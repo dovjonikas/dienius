@@ -286,3 +286,33 @@ function withoutStamps(json: string): unknown {
     key === 'updatedAt' || key === 'settingsUpdatedAt' || key === 'tombstones' ? undefined : value,
   )
 }
+
+/**
+ * A month goes back and forth by whole months. Forward added thirty-one days
+ * to the anchor, and back leaves the anchor on the last day of the month
+ * before - so from August's last day forward landed on the first of October
+ * and September was skipped. Found in the audit for rotating shifts, which
+ * looked at every date step in the app.
+ */
+test('a month back and then forward is the month it started on, whatever the months are called', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(2026, 8, 17, 12, 0))
+  try {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<ReviewView />)
+    await user.click(screen.getByRole('button', { name: 'Month' }))
+    const range = () => document.querySelector('.review-range')?.textContent
+    expect(range()).toBe('September 2026')
+
+    await user.click(screen.getByRole('button', { name: 'The month before' }))
+    expect(range()).toBe('August 2026')
+    await user.click(screen.getByRole('button', { name: 'The month before' }))
+    expect(range()).toBe('July 2026')
+    await user.click(screen.getByRole('button', { name: 'The month after' }))
+    expect(range()).toBe('August 2026')
+    await user.click(screen.getByRole('button', { name: 'The month after' }))
+    expect(range()).toBe('September 2026')
+  } finally {
+    vi.useRealTimers()
+  }
+})

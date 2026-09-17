@@ -55,7 +55,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
   const today = todayKey()
   const readings = useMemo(() => planReading(data, dates, today), [data, dates, today])
   const counts = useMemo(() => blockCounts(data, today), [data, today])
-  const step = range === 'week' ? 7 : 31
   const isCurrent = today >= from && today <= to
 
   const peak = Math.max(1, ...stats.days.map(d => d.total))
@@ -116,7 +115,10 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
           type="button"
           aria-label={range === 'week' ? 'The week after' : 'The month after'}
           disabled={isCurrent}
-          onClick={() => setAnchor(a => addDays(a, step))}
+          // A week on by seven days from its Monday, a month on to the first of
+          // the next: thirty-one days from a month's last day skipped the
+          // month after a short one.
+          onClick={() => setAnchor(a => (range === 'week' ? addDays(startOfWeek(a), 7) : addDays(endOfMonth(a), 1)))}
         >
           &rarr;
         </button>
