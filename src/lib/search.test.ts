@@ -122,6 +122,18 @@ test('recipes are found by their name and by their text, a name first', () => {
   expect(searchRecipes([soup, bowl, onion, oats], 'LENTIL').map(r => r.title)).toEqual(['Lentil soup'])
 })
 
+test('the palette finds recipes too, by name and by text, once each, and opens them in Kitchen', () => {
+  const soup = recipe('Lentil soup', 'INGREDIENTS\nred lentils\nonion')
+  const tart = recipe('Onion tart', 'INGREDIENTS\npastry\nan onion')
+  data.recipes = [soup, tart]
+  const found = searchEverything(data, 'onion', TODAY)
+  expect(found.map(r => [r.kind, r.title, r.detail])).toEqual([
+    ['recipe', 'Onion tart', 'Recipe'],
+    ['recipe', 'Lentil soup', 'Recipe'],
+  ])
+  expect(found[1].target).toEqual({ type: 'recipe', id: soup.id })
+})
+
 test('an empty field is every recipe in the order given, one letter already narrows, and accents are ignored', () => {
   const crepes = recipe('Crêpes', 'flour, eggs, milk')
   const soup = recipe('Lentil soup', 'lentils')

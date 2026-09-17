@@ -353,6 +353,23 @@ test('the rail names every view and the key that also reaches it', () => {
  * on screen there, so "Today · 1" was a lie for anybody who had arrowed a
  * week ahead and pressed 1 to get back.
  */
+test("a recipe found in the palette opens on its page in Kitchen, and the rail's Kitchen opens the list", async () => {
+  const user = userEvent.setup()
+  const data = defaultData()
+  data.recipes = [{ id: 'r1', title: 'Lentil soup', text: 'INGREDIENTS\nred lentils\nonion' }]
+  actions.resetForTests(data)
+  render(<App />)
+  await user.keyboard('{Control>}k{/Control}')
+  await user.keyboard('lentils')
+  await user.click(screen.getByRole('option', { name: /Lentil soup/ }))
+  expect(screen.getByRole('heading', { name: 'Lentil soup', level: 2 })).toBeInTheDocument()
+
+  const nav = screen.getByRole('navigation', { name: 'Views' })
+  await user.click(within(nav).getByRole('button', { name: 'Today' }))
+  await user.click(within(nav).getByRole('button', { name: 'Kitchen' }))
+  expect(screen.getByRole('heading', { name: 'Kitchen', level: 2 })).toBeInTheDocument()
+})
+
 test("pressing 7 opens Kitchen, and so does the rail's button", async () => {
   const user = userEvent.setup()
   render(<App />)

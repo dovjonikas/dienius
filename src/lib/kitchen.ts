@@ -1,4 +1,5 @@
 import { MEAL_TYPES, RECIPE_LIMITS, type MealType, type Recipe } from './types'
+import { formatDuration } from '../widgets/day-plan/capacity'
 
 /**
  * Kitchen: recipes, since v2.27.
@@ -47,6 +48,36 @@ export function macroLine(recipe: Recipe): string | undefined {
   const parts: string[] = []
   if (recipe.kcal !== undefined) parts.push(`${recipe.kcal} kcal`)
   if (recipe.protein !== undefined) parts.push(`${recipe.protein} g protein`)
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
+/**
+ * A recipe page's line of numbers: every one of the four that is known, and
+ * that they are for a serving, or nothing.
+ */
+export function fullMacroLine(recipe: Recipe): string | undefined {
+  const parts: string[] = []
+  if (recipe.kcal !== undefined) parts.push(`${recipe.kcal} kcal`)
+  if (recipe.protein !== undefined) parts.push(`${recipe.protein} g protein`)
+  if (recipe.carbs !== undefined) parts.push(`${recipe.carbs} g carbs`)
+  if (recipe.fat !== undefined) parts.push(`${recipe.fat} g fat`)
+  return parts.length > 0 ? `${parts.join(' · ')} per serving` : undefined
+}
+
+/**
+ * A recipe page's facts, whichever are known: the meals it is for, in one
+ * phrase, how many servings, how long, and how often it was cooked.
+ */
+export function factsLine(recipe: Recipe): string | undefined {
+  const parts: string[] = []
+  if (recipe.mealTypes?.length) {
+    const [first, ...rest] = recipe.mealTypes.map(meal => MEAL_TYPE_LABELS[meal])
+    parts.push([first, ...rest.map(label => label.toLowerCase())].join(', '))
+  }
+  if (recipe.servings !== undefined) parts.push(`${recipe.servings} ${recipe.servings === 1 ? 'serving' : 'servings'}`)
+  if (recipe.minutes !== undefined) parts.push(formatDuration(recipe.minutes))
+  const cooked = cookedLabel(recipe.cooked)
+  if (cooked) parts.push(cooked)
   return parts.length > 0 ? parts.join(' · ') : undefined
 }
 

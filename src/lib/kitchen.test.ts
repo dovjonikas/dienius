@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cookedLabel, macroLine, recipesForMeal } from './kitchen'
+import { cookedLabel, factsLine, fullMacroLine, macroLine, recipesForMeal } from './kitchen'
 import type { Recipe } from './types'
 
 /**
@@ -41,4 +41,17 @@ test('the list is every recipe, or the ones for a meal, in the order of their na
   expect(recipesForMeal(all, 'dinner')).toEqual([])
   // The list it was given is left as it was.
   expect(all.map(r => r.title)).toEqual(['overnight oats', 'Chicken and rice bowl', 'Banana toast', 'Apple'])
+})
+
+test("a recipe page's number line is every one of the four that is known, per serving, and nothing when none is", () => {
+  expect(fullMacroLine(recipe({ kcal: 380, protein: 18, carbs: 55, fat: 9 }))).toBe('380 kcal · 18 g protein · 55 g carbs · 9 g fat per serving')
+  expect(fullMacroLine(recipe({ carbs: 61.5 }))).toBe('61.5 g carbs per serving')
+  expect(fullMacroLine(recipe())).toBeUndefined()
+})
+
+test("a recipe page's facts are its meals, its servings, its time and how often it was cooked, whichever are known", () => {
+  expect(factsLine(recipe({ mealTypes: ['breakfast', 'pre-gym'], servings: 1, minutes: 5, cooked: 6 }))).toBe('Breakfast, pre-gym · 1 serving · 5 min · Cooked 6 times')
+  expect(factsLine(recipe({ servings: 4, minutes: 90 }))).toBe('4 servings · 1h 30 min')
+  expect(factsLine(recipe({ mealTypes: ['snack'] }))).toBe('Snack')
+  expect(factsLine(recipe())).toBeUndefined()
 })

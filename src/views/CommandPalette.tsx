@@ -17,6 +17,8 @@ export interface CommandPaletteProps {
   onOpenDay: (date: string) => void
   onOpenLibrary: () => void
   onOpenScratch: () => void
+  /** A recipe found by the search, on its page in Kitchen. */
+  onOpenRecipe: (id: string) => void
   onClose: () => void
 }
 
@@ -33,7 +35,7 @@ export interface CommandPaletteProps {
  * do. Search is a linear scan over the store - see `search.ts` for why there
  * is no index.
  */
-export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratch, onClose }: CommandPaletteProps) {
+export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratch, onOpenRecipe, onClose }: CommandPaletteProps) {
   useRestoreFocus()
   const data = useAppData()
   const [query, setQuery] = useState('')
@@ -80,6 +82,7 @@ export function CommandPalette({ actions, onOpenDay, onOpenLibrary, onOpenScratc
   function open(result: SearchResult) {
     if (result.target.type === 'day') onOpenDay(result.target.date)
     else if (result.target.type === 'scratch') onOpenScratch()
+    else if (result.target.type === 'recipe') onOpenRecipe(result.target.id)
     else onOpenLibrary()
   }
 

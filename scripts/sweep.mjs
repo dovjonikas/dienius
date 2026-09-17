@@ -332,6 +332,25 @@ const SCREENS = [
       await press(p, 'Snack')
     },
   },
+  // A recipe's page - its lines, the ingredients' dots and the steps'
+  // numbers - and its form with More open, every field of the recipe in it.
+  {
+    name: 'Kitchen (a recipe)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await p.getByRole('button', { name: /Overnight oats/ }).click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: 'Kitchen (writing)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await p.getByRole('button', { name: /Overnight oats/ }).click()
+      await press(p, 'Edit')
+      await p.waitForTimeout(200)
+    },
+  },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
   {
     name: 'Task detail',

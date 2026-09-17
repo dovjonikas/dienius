@@ -99,14 +99,46 @@ North and a recipe finding the same headings in the same texts) and
   in precision, keys and the text sizes; the sample day has four generic
   recipes, twenty when heavy.
 
-Not yet: a row opens nothing until the recipe's page (stage 4), and the
-palette's search finds recipes from there too.
+A row opens nothing until the recipe's page, stage 4.
 
 Changed tests: `NavRail.test.tsx` counts seven views in the order of their
 keys and presses Kitchen; `App.test.tsx` names Kitchen · 7. New:
 `kitchen.test.ts`, recipe search in `search.test.ts`,
 `views/kitchen/KitchenView.test.tsx`, and 7 opening Kitchen in
 `App.test.tsx`.
+
+### Stage 4 - a recipe's page, and writing one: done
+
+- **The page** (`RecipePage`): in the list's place, Kitchen at the top with
+  its caret on the column's edge goes back to the list as it was left - the
+  same meal and search, the focus on the row - and Edit stands at the right
+  of the row. One card: the name, the four numbers for a serving and the
+  facts (meals, servings, time, times cooked) on two quiet lines when there
+  are any, then the text by `readRecipe` - the introduction as typed,
+  INGREDIENTS after small dots, STEPS numbered in their own column, the
+  words of both lists on one edge, other headings over their paragraphs,
+  everything at the reading measure. The name takes the focus on opening.
+- **The form** (`RecipeForm`), for New recipe in the header and for Edit:
+  Name, one large Recipe field with the rule said once under it, and More
+  with the fold's caret for the rest - the meals as chips, servings and
+  minutes, and kcal, protein, carbs and fat under Per serving, four to a row
+  and two on a phone. More opens by itself on a recipe that has any of them.
+  Save waits for a name and a text; Ctrl or Cmd with Enter saves and Escape
+  cancels. Saving opens the recipe's page. Delete, on a recipe that exists,
+  asks a second time, goes back to the list and offers the recipe back
+  (`restoreRecipe`).
+- **The palette** finds recipes by name and by text and opens one on its page;
+  every other way into Kitchen - the rail, 7, the palette's Kitchen - opens
+  the list, a fresh Kitchen each time.
+- **The gates**: the sweep, precision and keys measure the recipe's page and
+  its form, and the text sizes the page. The keys walk no longer presses the
+  demo banner's way out, which had left every screen after it measured on an
+  empty plan - found when the recipe's page could not find a recipe.
+
+New tests: the page, going back, opening on a recipe, New recipe, More, Edit,
+the keys and Delete in `KitchenView.test.tsx`; `fullMacroLine` and
+`factsLine` in `kitchen.test.ts`; `restoreRecipe`; recipes in the palette's
+search; the palette opening a recipe in `App.test.tsx`.
 
 ## v2.26 - North that holds the eye
 

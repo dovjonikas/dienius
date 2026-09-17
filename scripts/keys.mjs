@@ -52,6 +52,8 @@ const SCREENS = [
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
+  { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).click() } },
+  { name: 'Kitchen (writing)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).click(); await p.getByRole('button', { name: 'Edit', exact: true }).click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
 ]
 
@@ -208,7 +210,11 @@ async function main() {
         // 3. Escape closes an overlay and gives focus back. Only buttons the
         // walk reached, pressed with Enter; anything that opened a dialog is
         // closed again with Escape, and focus must land on an element.
-        const openers = stops.filter(s => s.tag === 'BUTTON').slice(0, 40)
+        // Not the demo banner's way out: pressed, it left the sample data for
+        // an empty plan, and every screen after it in the walk was measured
+        // on nothing - found when Kitchen's recipe page, the first screen
+        // that needs a recipe to open, could not find one.
+        const openers = stops.filter(s => s.tag === 'BUTTON' && s.cls !== 'demo-banner-exit').slice(0, 40)
         for (const opener of openers) {
           // Refocus that exact stop by walking to it again, from the top.
           await page.evaluate(() => {

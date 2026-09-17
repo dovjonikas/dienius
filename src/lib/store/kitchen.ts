@@ -41,6 +41,16 @@ export const kitchenActions = {
     commit({ ...data, recipes: data.recipes.map(r => (r.id === id ? { ...r, cooked: (r.cooked ?? 0) + 1 } : r)) })
   },
 
+  /**
+   * A removed recipe put back, whole, by the undo its removal offered - the
+   * commit clears its tombstone. A recipe already there is left as it is.
+   */
+  restoreRecipe(recipe: Recipe): void {
+    const data = getData()
+    if (data.recipes.some(r => r.id === recipe.id)) return
+    commit({ ...data, recipes: [...data.recipes, recipe] })
+  },
+
   /** Gone, on every device - the commit leaves the tombstone. A block that named it simply names nothing. */
   removeRecipe(id: string): void {
     const data = getData()

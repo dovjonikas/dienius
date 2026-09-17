@@ -6435,7 +6435,9 @@ button.danger {
    a hover is what CONVENTIONS 24 allows: nothing moves under a pointer that
    is only resting. North's fold on the phone carries the same one. */
 .clock-sound-caret,
-.north-day-caret {
+.north-day-caret,
+.kitchen-more-caret,
+.kitchen-back-caret {
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
@@ -6445,7 +6447,8 @@ button.danger {
 }
 
 .clock-sound-head[aria-expanded='true'] .clock-sound-caret,
-.north-day-line[aria-expanded='true'] .north-day-caret {
+.north-day-line[aria-expanded='true'] .north-day-caret,
+.kitchen-more[aria-expanded='true'] .kitchen-more-caret {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
 
@@ -14792,6 +14795,226 @@ main:has(.week) > .calendar {
   color: var(--muted);
   font-size: var(--t-sm);
   line-height: var(--lh-ui);
+}
+
+/* The row is one button, the Library's: the name and its line at the left,
+   the count at the end, on one centre. */
+.kitchen-row-open { gap: var(--s3); }
+
+/* A recipe's first row: Kitchen at the left, back to the list, with its
+   caret on the column's edge and the ground under the pointer reaching out
+   past it; the recipe's actions at the right, on the same centre. */
+.kitchen-back { margin-left: calc(var(--s4) * -1); }
+
+/* The caret turned to point back. */
+.kitchen-back-caret { transform: rotate(135deg) translate(-2px, -2px); }
+
+.kitchen-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* A quiet action last in the row stands on the right edge the same way. */
+.kitchen-head-actions > .btn-quiet:last-child { margin-right: calc(var(--s4) * -1); }
+
+/* The recipe, read, as one card: more room inside than a list's, because it
+   is read rather than scanned, and its text at the reading measure however
+   wide the page is. */
+.kitchen-recipe {
+  gap: var(--s6);
+  padding: var(--s6);
+}
+
+.kitchen-recipe > :not(.kitchen-recipe-head) { max-width: var(--read-w); }
+
+.kitchen-recipe-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+
+.kitchen-recipe-title {
+  margin: 0 0 var(--s1);
+  font-size: var(--t-lg);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+/* The focus is put on the name so the page starts there; it is not a stop. */
+.kitchen-recipe-title:focus { outline: none; }
+
+.kitchen-recipe-line {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+/* The words of a recipe: the text's ink at the body size and the reading
+   leading, the person's own line breaks kept. */
+.kitchen-paragraph {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.kitchen-paragraph + .kitchen-paragraph { margin-top: var(--s3); }
+
+/* A part under its heading, the heading close over what it holds. */
+.kitchen-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.kitchen-part-heading {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-md);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+
+/* The ingredients: one to a line, each after a small quiet dot centred on
+   its first line, at the end of the column the steps' numbers stand in, so
+   the words of both lists start on one edge. */
+.kitchen-ingredients,
+.kitchen-steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kitchen-ingredients { gap: var(--s1); }
+
+.kitchen-ingredients > li {
+  position: relative;
+  padding-left: calc(2ch + var(--s3));
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  overflow-wrap: anywhere;
+}
+
+.kitchen-ingredients > li::before {
+  content: '';
+  position: absolute;
+  top: calc((1lh - var(--s1)) / 2);
+  left: calc(2ch - var(--s1));
+  width: var(--s1);
+  height: var(--s1);
+  border-radius: var(--r-round);
+  background: var(--muted);
+}
+
+/* The steps: numbered by the page, the numbers in their own column so every
+   step's words start on one edge and a step that wraps keeps it. */
+.kitchen-steps {
+  gap: var(--s3);
+  counter-reset: step;
+}
+
+.kitchen-steps > li {
+  display: grid;
+  grid-template-columns: 2ch minmax(0, 1fr);
+  column-gap: var(--s3);
+  color: var(--text);
+  font-size: var(--t-md);
+  line-height: var(--lh-read);
+  overflow-wrap: anywhere;
+  counter-increment: step;
+}
+
+.kitchen-steps > li::before {
+  content: counter(step);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* The form: the Library's card, its fields stacked on one gap. */
+.kitchen-form { gap: var(--s4); }
+
+.kitchen-text {
+  width: 100%;
+  resize: vertical;
+  line-height: var(--lh-read);
+}
+
+/* The rule for the big field, said once, close under it. */
+.kitchen-rule {
+  margin: calc(var(--s2) * -1) 0 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+/* More, with the caret every fold carries, its word on the card's edge. */
+.kitchen-more {
+  align-self: flex-start;
+  margin-left: calc(var(--s4) * -1);
+}
+
+.kitchen-more-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.kitchen-meal-chips { margin: 0; }
+
+/* The numbers four to a row on a wide card, so servings and minutes stand
+   under kcal and protein; two to a row on a phone. */
+.kitchen-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.kitchen-numbers > legend {
+  margin-bottom: var(--s2);
+  padding: 0;
+}
+
+/* A name over a group of fields, a step over the fields' own labels: the
+   meals, and the four numbers for a serving. */
+.kitchen-group-label {
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
+  line-height: var(--lh-ui);
+}
+
+@media (max-width: 599px) {
+  .kitchen-numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kitchen-recipe { padding: var(--s4); }
+}
+
+/* Cancel and Save at the right, Save last; Delete, on a recipe that exists,
+   alone at the left with its word on the card's edge. */
+.kitchen-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+.kitchen-delete {
+  margin-right: auto;
+  margin-left: calc(var(--s4) * -1);
 }
 
 /* The Note/Task marker beside the scratch field.

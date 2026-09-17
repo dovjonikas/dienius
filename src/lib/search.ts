@@ -19,7 +19,7 @@ import type { AppData, Recipe } from './types'
  * thing a search box cannot afford.
  */
 
-export type ResultKind = 'task' | 'note' | 'library' | 'scratch'
+export type ResultKind = 'task' | 'note' | 'library' | 'scratch' | 'recipe'
 
 export interface SearchResult {
   kind: ResultKind
@@ -28,8 +28,12 @@ export interface SearchResult {
   title: string
   /** The line under the title - a date, a list name, the note itself. */
   detail: string
-  /** Where Enter goes: a day to open, or a library item to reveal. */
-  target: { type: 'day'; date: string } | { type: 'library'; listId: string; itemId: string } | { type: 'scratch'; id: string }
+  /** Where Enter goes: a day to open, a library item to reveal, a note, or a recipe's page. */
+  target:
+    | { type: 'day'; date: string }
+    | { type: 'library'; listId: string; itemId: string }
+    | { type: 'scratch'; id: string }
+    | { type: 'recipe'; id: string }
   score: number
 }
 
@@ -123,6 +127,21 @@ export function searchEverything(data: AppData, query: string, today: string): S
       detail: `Note - ${formatDayTitle(note.date)}`,
       target: { type: 'scratch', id: note.id },
       score: score + (note.date >= today ? 0.6 : 0.4),
+    })
+  }
+
+  // A recipe by its name, or by what is in it: a search for an ingredient is
+  // a search for what to cook with it. Once each, the name first.
+  for (const recipe of data.recipes) {
+    const score = Math.max(matchScore(recipe.title, needle) * 2, matchScore(recipe.text, needle))
+    if (score === 0) continue
+    results.push({
+      kind: 'recipe',
+      id: `recipe:${recipe.id}`,
+      title: recipe.title,
+      detail: 'Recipe',
+      target: { type: 'recipe', id: recipe.id },
+      score,
     })
   }
 

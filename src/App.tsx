@@ -43,6 +43,7 @@ import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { NorthView } from './views/north/NorthView'
 import { KitchenView } from './views/kitchen/KitchenView'
+import type { MealType } from './lib/types'
 import { NorthWindow, useNorthAfterSleep } from './views/north/NorthWindow'
 import { NavRail, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
@@ -217,6 +218,16 @@ export function App() {
     setView('day')
   }
 
+  // Kitchen, opened on its list, on a recipe's page or on a meal. Each
+  // opening is a fresh Kitchen - the key - so the rail's Kitchen after a
+  // recipe from the palette opens the list rather than that recipe again.
+  const [kitchenOpening, setKitchenOpening] = useState<{ key: number; recipeId?: string; meal?: MealType }>({ key: 0 })
+
+  function openKitchen(opening: { recipeId?: string; meal?: MealType } = {}) {
+    setKitchenOpening(current => ({ ...opening, key: current.key + 1 }))
+    setView('kitchen')
+  }
+
   /**
    * The keyboard layer - see lib/shortcuts.ts for the two rules that make a
    * bare-letter shortcut safe in an app whose main gesture is typing.
@@ -357,7 +368,7 @@ export function App() {
           setView('north')
           break
         case '7':
-          setView('kitchen')
+          openKitchen()
           break
         case ',':
           setView('settings')
@@ -394,7 +405,7 @@ export function App() {
     { id: 'go-library', label: 'Library', detail: 'Books, series, anything with a unit', run: () => setView('library') },
     { id: 'go-review', label: 'Review', detail: 'How the week went', run: () => setView('review') },
     { id: 'go-north', label: 'North', detail: 'The few things the days are for', run: () => setView('north') },
-    { id: 'go-kitchen', label: 'Kitchen', detail: 'The recipes cooked here', run: () => setView('kitchen') },
+    { id: 'go-kitchen', label: 'Kitchen', detail: 'The recipes cooked here', run: () => openKitchen() },
     { id: 'go-settings', label: 'Settings', detail: 'Sleep, week, nudges, appearance', run: () => setView('settings') },
     {
       id: 'new-task',
@@ -513,7 +524,7 @@ export function App() {
       <NavRail
         view={view}
         isWide={isWide}
-        onNavigate={next => (next === 'day' ? openDay(todayKey()) : setView(next))}
+        onNavigate={next => (next === 'day' ? openDay(todayKey()) : next === 'kitchen' ? openKitchen() : setView(next))}
       />
       <header className="app-header">
         <span className="brand">Dienius</span>
@@ -665,7 +676,9 @@ export function App() {
           />
         )}
         {view === 'north' && <NorthView />}
-        {view === 'kitchen' && <KitchenView />}
+        {view === 'kitchen' && (
+          <KitchenView key={kitchenOpening.key} recipeId={kitchenOpening.recipeId} meal={kitchenOpening.meal} />
+        )}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}
@@ -711,6 +724,7 @@ export function App() {
           onOpenDay={openDay}
           onOpenLibrary={() => setView('library')}
           onOpenScratch={() => setScratchOpen({})}
+          onOpenRecipe={id => openKitchen({ recipeId: id })}
           onClose={() => setPaletteOpen(false)}
         />
       )}
