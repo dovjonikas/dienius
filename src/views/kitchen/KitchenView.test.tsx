@@ -275,3 +275,62 @@ test('Delete asks a second time, removes the recipe, goes back to the list and o
   act(() => runUndo())
   expect(getData().recipes.map(r => r.title)).toContain('Lentil soup')
 })
+
+// --- cooking ----------------------------------------------------------------------
+
+test("Cook opens the recipe over everything, larger, with each ingredient and step to tick, and ticks are the cooking's own", async () => {
+  const user = userEvent.setup()
+  seed([
+    {
+      title: 'Overnight oats',
+      text: 'Made the night before.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n\nSTEPS\nStir it together.\nLeave it overnight.',
+      cooked: 6,
+    },
+  ])
+  render(<KitchenView recipeId="r0" />)
+  const cook = screen.getByRole('button', { name: 'Cook' })
+  await user.click(cook)
+
+  const dialog = screen.getByRole('dialog', { name: 'Cook: Overnight oats' })
+  expect(dialog).toHaveAttribute('aria-modal', 'true')
+  expect(within(dialog).getByText('Made the night before.')).toBeInTheDocument()
+  const ingredients = within(within(dialog).getByRole('group', { name: 'INGREDIENTS' })).getAllByRole('checkbox')
+  expect(ingredients.map(box => box.closest('label')?.textContent)).toEqual(['50 g oats', '150 ml milk'])
+  const steps = within(within(dialog).getByRole('group', { name: 'STEPS' })).getAllByRole('checkbox')
+  expect(steps).toHaveLength(2)
+  expect(steps[0]).toHaveAccessibleName('1 Stir it together.')
+
+  await user.click(ingredients[0])
+  expect(ingredients[0]).toBeChecked()
+  await user.click(within(dialog).getByText('Stir it together.'))
+  expect(steps[0]).toBeChecked()
+  await user.click(ingredients[0])
+  expect(ingredients[0]).not.toBeChecked()
+
+  // Leaving counts nothing, and the ticks go with the cooking.
+  await user.click(within(dialog).getByRole('button', { name: /Close/ }))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(getData().recipes[0].cooked).toBe(6)
+  expect(cook).toHaveFocus()
+  await user.click(cook)
+  expect(within(screen.getByRole('dialog')).getAllByRole('checkbox').some(box => (box as HTMLInputElement).checked)).toBe(false)
+})
+
+test('Done adds one to how many times it was cooked and closes, and Escape closes without counting', async () => {
+  const user = userEvent.setup()
+  seed([{ title: 'Banana toast', text: 'Toast the bread and slice a banana over it.', cooked: 1 }])
+  render(<KitchenView recipeId="r0" />)
+
+  await user.click(screen.getByRole('button', { name: 'Cook' }))
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(getData().recipes[0].cooked).toBe(1)
+
+  await user.click(screen.getByRole('button', { name: 'Cook' }))
+  // A text with no lists is read, larger, with nothing to tick.
+  expect(within(screen.getByRole('dialog')).queryAllByRole('checkbox')).toHaveLength(0)
+  await user.click(screen.getByRole('button', { name: 'Done' }))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(getData().recipes[0].cooked).toBe(2)
+  expect(screen.getByText('Cooked twice')).toBeInTheDocument()
+})

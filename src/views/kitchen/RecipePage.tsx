@@ -1,16 +1,18 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { factsLine, fullMacroLine } from '../../lib/kitchen'
 import { readRecipe, type RecipePart } from '../../lib/recipeText'
 import type { Recipe } from '../../lib/types'
+import { CookMode } from './CookMode'
 
 /**
  * A recipe, read - Kitchen, since v2.27.
  *
  * Kitchen at the top goes back to the list, and the recipe's actions stand at
- * the right of the same row: Edit. Under it, one card: the name, the numbers
- * for a serving and the facts on two quiet lines when there are any, then
- * the text as lib/recipeText.ts reads it - the lines before the headings as
- * they were typed, INGREDIENTS as a list, STEPS as numbered steps and any
+ * the right of the same row: Edit, and Cook, which opens the recipe larger
+ * over everything to cook from (CookMode). Under it, one card: the name, the
+ * numbers for a serving and the facts on two quiet lines when there are any,
+ * then the text as lib/recipeText.ts reads it - the lines before the headings
+ * as they were typed, INGREDIENTS as a list, STEPS as numbered steps and any
  * other heading over its paragraphs, every part where it was written.
  *
  * The name takes the focus when the page opens, so a screen reader starts on
@@ -22,6 +24,7 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
   const macros = fullMacroLine(recipe)
   const facts = factsLine(recipe)
   const reading = readRecipe(recipe.text)
+  const [cooking, setCooking] = useState(false)
 
   useEffect(() => {
     titleRef.current?.focus()
@@ -37,6 +40,9 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
         <div className="kitchen-head-actions">
           <button type="button" className="btn-quiet" onClick={onEdit}>
             Edit
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setCooking(true)}>
+            Cook
           </button>
         </div>
       </div>
@@ -64,6 +70,8 @@ export function RecipePage({ recipe, onBack, onEdit }: { recipe: Recipe; onBack:
           <RecipePartView key={i} part={part} />
         ))}
       </article>
+
+      {cooking && <CookMode recipe={recipe} onClose={() => setCooking(false)} />}
     </>
   )
 }

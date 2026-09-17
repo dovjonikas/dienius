@@ -140,6 +140,34 @@ the keys and Delete in `KitchenView.test.tsx`; `fullMacroLine` and
 `factsLine` in `kitchen.test.ts`; `restoreRecipe`; recipes in the palette's
 search; the palette opening a recipe in `App.test.tsx`.
 
+### Stage 5 - Cook: done
+
+- **Cook** (`CookMode`), the primary action beside Edit on a recipe's page:
+  the recipe over everything on the page's own ground, the way Focus is, a
+  step larger - the name, the introduction, each ingredient and each step as
+  a line with the app's drawn box that a press anywhere on the line ticks,
+  a finger tall at least, a step's number in its own column, a ticked line
+  struck and quieter. Other headings stand over their paragraphs. It scrolls,
+  and Close stays put.
+- **The ticks are the cooking's own**: they live in the screen and go with
+  it, so the next Cook starts clean.
+- **Awake** (`lib/useWakeLock.ts`): the Screen Wake Lock API while Cook is
+  open, asked again whenever the page comes back into view (a browser lets a
+  lock go when the page leaves it) and every lock released on closing.
+  Without the API, or when the browser refuses, nothing is said and nothing
+  breaks.
+- **Done** adds one to times cooked and closes; the page's facts say it at
+  once. Close or Escape counts nothing and gives the focus back to Cook. A
+  bare key pressed inside is Cook's own (`data-keeps-keys`), so a stray 3
+  cannot take the recipe away mid-step.
+- The sweep measures Cook with a ticked ingredient and a ticked step; the keys
+  walk opens it from the page and closes it with Escape.
+
+New tests: `useWakeLock.test.tsx` (awake, asked again on coming back,
+released, off, and no API or a refusal) and Cook in `KitchenView.test.tsx`
+(the lines to tick, a tick by the line's words, the ticks gone with the
+cooking, Done counting, Close and Escape not).
+
 ## v2.26 - North that holds the eye
 
 Asked for the night v2.25's last stage ran, and begun when it closed, with

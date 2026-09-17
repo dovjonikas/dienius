@@ -272,6 +272,7 @@ src/
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
     kitchen.ts         recipes: the words for the meals, and what a form's input becomes when saved
+    useWakeLock.ts     keeps the screen awake while Cook is open, where the browser can
     headings.ts        the capitals rule and its one parser, for North's text and a recipe's
     northSections.ts   what North adds to it: the two tags and the signature
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
@@ -304,7 +305,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             the North window: the picture, the goals, what deserves them, the rules - and Compose, which edits all four
-    kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, and the form
+    kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, the form, and Cook
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor
