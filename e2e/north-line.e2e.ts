@@ -1,15 +1,15 @@
-import { expect, test } from '@playwright/test'
-import { openFreshAt, stampWorkingDay, wednesdayAt } from './app'
+import { expect, test, type Page } from '@playwright/test'
+import { leaveAndReturnAt, openFreshAt, reopenAt, stampWorkingDay, wednesdayAt } from './app'
 
 /**
  * The goal's line starts where the day starts.
  *
- * It is one quiet uppercase sentence above the timeline, and at every width
- * from 1024 up it begins at the day column's left edge. From 1500 the header
- * becomes a masthead spanning the rail's column as well - so the line, a
- * full-width item inside that header, began above the mini calendar instead
- * and ran across into the timeline. The owner: "matos kad north pranesimas
- * iseina is ribu, neturetu iseit".
+ * It is one quiet sentence above the timeline, and at every width from 1024
+ * up it begins at the day column's left edge. From 1500 the header became a
+ * masthead spanning the rail's column as well - so the line, a full-width
+ * item inside that header, began above the mini calendar instead and ran
+ * across into the timeline, out of the day's bounds, which is how it was
+ * reported.
  *
  * Checked at three widths on either side of that breakpoint, because the bug
  * existed only above it and nothing in the repo was looking there. An
@@ -32,7 +32,7 @@ for (const width of [1366, 1500, 1920]) {
     await page.evaluate(() => {
       const key = 'dienius:data'
       const d = JSON.parse(localStorage.getItem(key) ?? '{}')
-      d.goals = [{ id: 'g1', title: 'A few people who know the real me', why: 'Because it is the point.', identity: 'Someone who stays.', createdAt: '2026-07-18', updatedAt: '2026-09-16T10:00:00.000Z' }]
+      d.goals = [{ id: 'g1', title: 'A goal title here', why: 'a reason here', identity: 'a sentence here', createdAt: '2026-07-18', updatedAt: '2026-09-16T10:00:00.000Z' }]
       localStorage.setItem(key, JSON.stringify(d))
     })
     await page.reload()
@@ -84,4 +84,103 @@ test("the text's line on the day is whole however long, the signature is under i
 
   await page.locator('.north-line-text').click()
   await expect(page.getByRole('heading', { name: 'North' })).toBeVisible()
+})
+
+/** North's text, written straight into storage, and the page reloaded on it. */
+async function writeNorth(page: Page, text: string): Promise<void> {
+  await page.evaluate(value => {
+    const key = 'dienius:data'
+    const d = JSON.parse(localStorage.getItem(key) ?? '{}')
+    d.picture = { text: value, updatedAt: '2026-09-16T08:00:00.000Z' }
+    localStorage.setItem(key, JSON.stringify(d))
+  }, text)
+  await page.reload()
+  await page.getByRole('navigation').first().waitFor()
+}
+
+/**
+ * The day's line on a real clock, the whole way round, on both screens: the
+ * same line all day, another the next day, the morning heading's line in
+ * the hours after waking - a night away, not a reload - the evening
+ * heading's after nine, and the untagged headings' between. Two lines for
+ * the day, so the next day can be seen to take the other. The tags are read
+ * and never shown, on the day or in the window after sleep. The unit tests
+ * hold each rule; this is the one place they run on a clock that moves and a
+ * page that is left and opened again.
+ */
+test("the day's line keeps to the day and its hours, and no tag is ever shown", async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(10))
+  await stampWorkingDay(page)
+  await writeNorth(
+    page,
+    'An introduction line.\n\nWAKING [morning]\na line for the morning\nTHE DAY\na first line for the day\na second line for the day\nWINDING DOWN [Evening]\na line for the evening\n---\nA signature line.',
+  )
+  const words = page.locator('.north-line-words')
+  const tags = /\[(morning|evening)\]/i
+
+  // Wednesday, ten in the morning and nobody just woken: a line for the day.
+  await expect(words).toHaveText(/^a (first|second) line for the day$/)
+  const wednesday = await words.textContent()
+  await expect(page.locator('.north-line-signature')).toHaveText('A signature line.')
+  await expect(page.locator('body')).not.toContainText(tags)
+  await expect(page.getByText('An introduction line.')).toHaveCount(0)
+
+  // Later the same day, the same line.
+  await reopenAt(page, wednesdayAt(16))
+  await expect(words).toHaveText(wednesday!)
+
+  // After nine, the evening's.
+  await reopenAt(page, wednesdayAt(21, 30))
+  await expect(words).toHaveText('a line for the evening')
+  await expect(page.locator('body')).not.toContainText(tags)
+
+  // Thursday, after a night away: the window after sleep, and under it the
+  // morning's line.
+  await leaveAndReturnAt(page, wednesdayAt(7 + 24))
+  const window = page.getByRole('dialog', { name: 'North' })
+  await expect(window).toBeVisible()
+  await expect(window).not.toContainText(tags)
+  await window.getByRole('button', { name: 'Close' }).click()
+  await expect(words).toHaveText('a line for the morning')
+  await expect(page.locator('body')).not.toContainText(tags)
+
+  // Three hours on, the morning is over: Thursday's line for the day, the
+  // other one.
+  await reopenAt(page, wednesdayAt(10, 30 + 24 * 60))
+  await expect(words).toHaveText(/^a (first|second) line for the day$/)
+  expect(await words.textContent()).not.toBe(wednesday)
+})
+
+/**
+ * On the phone the day's North is one group under the progress: its line,
+ * the signature, and the word North with the caret every fold carries,
+ * opening the headings. The group ends with more air under it than there is
+ * inside it, so what follows reads as the next thing on the day and not as
+ * something the word North labels.
+ */
+test('on the phone the line, the signature and the fold stand together, with more air under them than inside', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone', 'the fold is the phone layout&apos;s')
+  await openFreshAt(page, wednesdayAt(10))
+  await stampWorkingDay(page)
+  await writeNorth(page, 'FIRST HEADING\na line under it\n---\nA signature line.')
+
+  const fold = page.getByRole('group', { name: 'North' }).getByRole('button', { name: 'North', exact: true })
+  await expect(fold).toBeVisible()
+  await expect(fold.locator('.north-day-caret')).toBeVisible()
+  const air = await page.evaluate(() => {
+    const signature = document.querySelector('.north-line-signature')!.getBoundingClientRect()
+    const group = document.querySelector('.north-day.is-folded')!
+    const fold = group.getBoundingClientRect()
+    // The next thing drawn on the day after the group, whatever it is.
+    const after = [...document.querySelectorAll('.day-view *')]
+      .map(el => el.getBoundingClientRect())
+      .filter(box => box.height > 0 && box.top >= fold.bottom)
+      .reduce((top, box) => Math.min(top, box.top), Infinity)
+    return { inside: fold.top - signature.bottom, under: after - fold.bottom }
+  })
+  expect(air.under).toBeGreaterThan(air.inside)
+
+  await fold.tap()
+  await expect(fold).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('group', { name: 'North' }).getByRole('button', { name: 'FIRST HEADING' })).toBeVisible()
 })

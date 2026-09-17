@@ -143,11 +143,13 @@ And a few device-local preferences under their own keys for the same
 reason, each explained where it lives: the evening close's and the yesterday
 banner's dismissals for the day, the quick-add draft, which library lists are
 folded and what each was last counted in, where the scratch button sits, the
-tour's progress, and the two moments North's window after sleep is decided
-from - when the app was last in view and when the window was last shown
-(`dienius:north-seen`, `dienius:north-window`,
-[`northRead.ts`](../src/lib/northRead.ts)). Written to the plan, those two
-would be a commit on every open in a synced repo.
+tour's progress, and the three moments North reads on this screen - when the
+app was last in view and when the window after sleep was last shown, which
+decide the window, and when the app last came back after a break long enough
+to be a night, which gives the day's line its morning (`dienius:north-seen`,
+`dienius:north-window`, `dienius:north-woke`,
+[`northRead.ts`](../src/lib/northRead.ts)). Written to the plan, those would
+be a commit on every open in a synced repo.
 
 And one key that is a whole separate copy of everything:
 

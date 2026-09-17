@@ -6,8 +6,8 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.26, in progress - North that holds the eye. Kitchen is
-queued after it.
+**Last updated:** v2.26, done - North that holds the eye. Kitchen is next,
+as v2.27.
 
 ## v2.26 - North that holds the eye
 
@@ -148,6 +148,43 @@ walks the open page and measures the air over and under a heading and Edit's
 place, and its drift test writes a tag; the sweep's North (heading open) went
 with the fold, since North at rest now measures every line. New: the tag in
 the field, `northTagAt`.
+
+### Stage 5 - the phone and the last tests: done
+
+- **The fold says it opens.** On the phone the word North under the day's
+  line carries the caret every fold in the app carries, turned by its state
+  (the clock panel's rule, shared).
+- **The day's North is one group.** Line, signature and fold ended flush on
+  whatever came next, so the word North read as the next notice's label; the
+  group now ends with the progress's own step of air under it.
+- **The last tests.** `e2e/north-line.e2e.ts` walks the day's line on a
+  clock that moves, on both screens: the same line all day, the evening's
+  after nine, the window after a night away and the morning's line under it,
+  the next day's other line three hours on, and no tag anywhere - on the day
+  or in the window. On the phone the group's air is measured and the fold
+  opens. The phone project runs the file now; its wide-layout tests skip
+  there. `leaveAndReturnAt` moved to `e2e/app.ts` for both files.
+- That file's oldest test told its story with a quote and a goal title that
+  were not generic; both are generic now.
+- DECISIONS has the entry, "North holds the eye"; ARCHITECTURE lists the
+  device's third North key.
+
+What the brief's tests asked for, and where each is held: the day's line is
+never a heading, a blank line or the introduction (`northLine.test.ts`, and
+on the screen `north-line.e2e.ts`); `[morning]` only in the three hours after
+waking and `[evening]` only from 21:00 (`northLine.test.ts`,
+`northRead.test.ts`, `NorthLine.test.tsx`, and on a moving clock
+`north-line.e2e.ts`); the tags never shown (`NorthView.test.tsx`,
+`NorthDay.test.tsx`, `NorthLine.test.tsx`, `north.e2e.ts`,
+`north-line.e2e.ts`); the same day the same line and another day another
+(`northLine.test.ts`, `north-line.e2e.ts`); the page open without a press
+(`NorthView.test.tsx`, `north.e2e.ts`); generic text only (the privacy guard,
+and every line in these files).
+
+Changed tests: `NorthDay.test.tsx` has the fold's caret and the group's air;
+`playwright.config.ts` gives the phone `north-line.e2e.ts`.
+
+v2.26 is done. Kitchen is next.
 
 ## v2.25 - the design pass
 

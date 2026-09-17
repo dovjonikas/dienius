@@ -35,8 +35,8 @@ export default defineConfig({
     // is a press on a card the finger is already on, the palette's door
     // because the door exists for the phone - see palette.e2e.ts - and North
     // because a text read every morning is read on whichever screen is in
-    // hand.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // hand - its line on the day as well as its page.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

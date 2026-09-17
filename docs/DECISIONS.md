@@ -3681,3 +3681,67 @@ sheet's link to its note - are the kinds; boxes that had an edge - the
 evening's card, a calendar's and a restore's rows in Settings, the colour
 and library sheets in a template's block row, the day peek, the reminder -
 do not. What is kept, and why, is at the end of docs/DESIGN-AUDIT.md.
+
+## North holds the eye: a line of its words on the day, and a page that is open
+
+v2.26, from one brief: North worked and held nobody. Under the date the day
+showed a goal's name, cut off; the rail's headings read like a menu; the
+page opened folded. Five stages, the North editor's last two inside them.
+
+**The day's top is one line of the text, not the goal.** A line from under
+a heading - never a heading, a blank line, the introduction or the
+signature - whole, wrapping when it is long, with the signature under it in
+the quieter ink, and a press on either opens North. A goal's name is a
+label; a line somebody wrote to themselves is the thing the page exists
+for, and cut off it said nothing. The goal's name stays only where the text
+has nothing to give the day: no text, or an introduction alone. The tour,
+which writes one line and a goal, ends on the goal as it did.
+
+**Which line is the date's to decide.** The lines for the part of the day,
+in the order they were written, one a day by the date's day number. No
+random pick, nothing stored and nothing synced: the same date gives the same
+line on every device, the next date the next line, and a text of forty lines
+is read end to end in forty days. A line changing with each open would be a
+slot machine, and one kept in storage would be a second copy of the text to
+disagree with.
+
+**Two tags, read and never shown.** A heading ending on `[morning]` gives
+its lines to the three hours after waking, one ending on `[evening]` to the
+hours from 21:00, and the rest of the day takes the headings with neither.
+A suffix in brackets rather than a setting, because the text stays the one
+string typed and a backup carries the tags in it; a word the owner named
+rather than a symbol, in either case. Waking is the break the window after
+sleep already reads - the first time the app is in view after five hours
+out of view - written on the device, since it is a fact about this screen.
+The morning wins over the evening, so a morning that starts late at night
+is still a morning. 21:00 is the hour the brief named, not the evening
+setting under Nudges, which asks when the day wants closing: a different
+question with its own answer. A part of the day with no lines of its own
+takes the untagged ones, and with none of those the signature stands alone.
+The tags are only ever seen in the field they are written in, drawn in the
+quiet ink there.
+
+**A heading's lines come on a card beside it, and nothing moves.** In the
+rail the headings are written as typed, in the reading ink with no
+tracking, under a small North and over the signature. A resting pointer or
+the focus shows a small card of the heading's lines beside it, its first
+line level with the heading, on a layer fixed to the window; leaving takes
+it away, a press keeps it, and a press elsewhere or Escape puts it away. The
+rail's old way - laying the words over what followed and fading it - moved
+the eye even when it moved no box. On a phone the headings fold into the
+word North with the caret every fold carries, and a tap on a heading opens
+the same card. The group ends with a step of air under it, because flush on
+the next notice the word North read as that notice's label.
+
+**The page is for reading, so it is open.** No fold, no hover preview and
+no heading that is a control: the introduction in the text's ink and size,
+every heading a step larger and heavier with 48px over it and 8px under it,
+so it opens what follows rather than closing what came before, and the
+signature a step larger again after 72px, the ending the window after sleep
+has. v2.25 tracked a heading on the page and drew the signature quieter
+after a rule; both went, the first because a heading written as typed is
+the rail's rule too, the second because a signature that ends the page is
+not an aside. Edit is the page's action and stands where every page keeps
+its action, at the right of the title's row, its word on the column's edge;
+the row keeps its height while the field is open, so going from reading to
+writing still moves no line of the introduction.

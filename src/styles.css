@@ -6422,8 +6422,9 @@ button.danger {
 /* The same chevron the app draws everywhere else, turned by the state. It
    rotates, which is a transform - and a transform on a *state* rather than on
    a hover is what CONVENTIONS 24 allows: nothing moves under a pointer that
-   is only resting. */
-.clock-sound-caret {
+   is only resting. North's fold on the phone carries the same one. */
+.clock-sound-caret,
+.north-day-caret {
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
@@ -6432,7 +6433,8 @@ button.danger {
   transform: rotate(45deg) translate(-2px, -2px);
 }
 
-.clock-sound-head[aria-expanded='true'] .clock-sound-caret {
+.clock-sound-head[aria-expanded='true'] .clock-sound-caret,
+.north-day-line[aria-expanded='true'] .north-day-caret {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
 
@@ -10717,7 +10719,23 @@ button.north-day-heading:hover { background: var(--fill); }
   text-align: left;
 }
 
-button.north-day-line { cursor: pointer; }
+/* The word and the caret that says it opens, on one centre. */
+button.north-day-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  cursor: pointer;
+}
+
+/* The day's North on the phone - its line, and the fold under it when there
+   are headings - ends with a step of air, the step the progress over it
+   leaves, so the notice or the digest after it reads as the next thing on
+   the day rather than as what the word North labels. It stood flush on
+   whatever came next. The wide masthead has neither in last place. */
+.day-header > .north-day.is-folded,
+.day-header > .north-line:last-child {
+  margin-bottom: var(--s4);
+}
 
 button.north-day-line:focus-visible {
   outline: 2px solid var(--accent);

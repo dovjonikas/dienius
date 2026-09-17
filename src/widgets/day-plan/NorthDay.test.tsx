@@ -175,6 +175,34 @@ test('folded, it is one line that says North, a press opens the headings, and a 
   expect(screen.queryByText('a line before any heading')).toBeNull()
 })
 
+/**
+ * A word in the secondary ink does not say it opens. The fold carries the
+ * caret the app draws on every other thing that folds, turned by its state,
+ * and hidden from a screen reader, which hears the button's expanded state.
+ * And on the phone the day's North - its line and the fold - ends with a
+ * step of air under it, so what follows reads as the next thing on the day
+ * rather than as what the word North labels.
+ */
+test('folded, North carries the turning caret of everything that folds, and the day leaves a step of air under it', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(TEXT)
+  const { container } = render(<NorthDay date={DATE} folded />)
+  const line = screen.getByRole('button', { name: 'North' })
+  const caret = line.querySelector('.north-day-caret')
+  expect(caret).toHaveAttribute('aria-hidden', 'true')
+  await user.click(line)
+  expect(line.querySelector('.north-day-caret')).not.toBeNull()
+  expect(container.querySelectorAll('.north-day-caret')).toHaveLength(1)
+
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const turned = css.match(/\n([^{}\n]*\[aria-expanded='true'\] \.clock-sound-caret[^{}]*)\{([^}]*)\}/)
+  expect(turned?.[1]).toContain(".north-day-line[aria-expanded='true'] .north-day-caret")
+  const drawn = css.match(/\n([^{}\n]*\.clock-sound-caret,?[^{}]*)\{([^}]*border-right[^}]*)\}/)
+  expect(drawn?.[1]).toContain('.north-day-caret')
+  const air = css.match(/\n\.day-header > \.north-day\.is-folded,\n\.day-header > \.north-line:last-child \{([^}]*)\}/)
+  expect(air?.[1]).toMatch(/margin-bottom:\s*var\(--s4\)/)
+})
+
 test('folded with no heading there is nothing to open, and nothing is drawn', () => {
   actions.setPicture('FIRST HEADING\na line under it')
   const { container, rerender } = render(<NorthDay date={DATE} folded />)

@@ -280,10 +280,10 @@ export function DayHeader({
   if (!isWide) {
     // The phone: a stack. The arrows bracket the day's name, because there is
     // no month on this screen to move the day with; the chip and the doors
-    // are a row under it, then the clock and the day's progress, the goal's
-    // line, and North on the day folded to one line - the signature, and the
-    // headings under it on a press. The left and right arrow keys move a day
-    // at any width, and T comes back to today.
+    // are a row under it, then the clock and the day's progress, North's line
+    // for the day with its signature, and North's headings folded to one
+    // word under it, opening on a press. The left and right arrow keys move a
+    // day at any width, and T comes back to today.
     return (
       <div className="day-header">
         <div className="day-nav">

@@ -71,6 +71,7 @@ export function NorthDay({ date, folded = false }: { date: string; folded?: bool
           onClick={() => setOpen(o => !o)}
         >
           North
+          <span className="north-day-caret" aria-hidden="true" />
         </button>
         {open && headings}
       </div>

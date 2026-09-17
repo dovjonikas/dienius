@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { openFreshAt, wednesdayAt } from './app'
+import { expect, test } from '@playwright/test'
+import { leaveAndReturnAt, openFreshAt, wednesdayAt } from './app'
 
 /**
  * North as a text: written on the page, read as blocks, and the first thing
@@ -13,18 +13,6 @@ import { openFreshAt, wednesdayAt } from './app'
  */
 
 test.use({ timezoneId: 'Europe/Vilnius' })
-
-/**
- * Closing the app and opening it again later. The page is left before the
- * clock moves, the way a night is - closed at ten, opened at seven - since
- * leaving view is the moment the app writes as the start of a break.
- */
-async function leaveAndReturnAt(page: Page, time: Date): Promise<void> {
-  await page.goto('about:blank')
-  await page.clock.setFixedTime(time)
-  await page.goto('./')
-  await page.getByRole('navigation').first().waitFor()
-}
 
 test('the text is written on the page, reads back whole, and its introduction opens over the day after sleep', async ({ page }) => {
   await openFreshAt(page, wednesdayAt(10))

@@ -80,6 +80,19 @@ export async function reopenAt(page: Page, time: Date): Promise<void> {
   await page.getByRole('navigation').waitFor()
 }
 
+/**
+ * Closing the app and opening it again later. The page is left before the
+ * clock moves, the way a night is - closed at ten, opened at seven - since
+ * leaving view is the moment the app writes as the start of a break. Unlike
+ * reopenAt, whose reload leaves at the new time and so makes no break.
+ */
+export async function leaveAndReturnAt(page: Page, time: Date): Promise<void> {
+  await page.goto('about:blank')
+  await page.clock.setFixedTime(time)
+  await page.goto('./')
+  await page.getByRole('navigation').first().waitFor()
+}
+
 /** A Wednesday, in Vilnius time - the same day scripts/shots.mjs pins. */
 export function wednesdayAt(hours: number, minutes = 0): Date {
   return new Date(Date.UTC(2026, 8, 16, hours - 3, minutes))
