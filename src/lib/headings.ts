@@ -158,6 +158,25 @@ export function parseHeadings(text: string, rules: HeadingRules = {}): HeadedTex
 }
 
 /**
+ * The introduction as it was typed: its lines, each read trimmed, with every
+ * blank line between them kept and the blank lines at its two ends dropped.
+ * `parseHeadings` gathers the same lines into paragraphs, where several blank
+ * lines are one break; a page that keeps the person's own spacing reads this
+ * instead. It ends where the paragraphs do, at the first heading or at the
+ * signature's mark when the rules have one.
+ */
+export function introText(text: string, rules: HeadingRules = {}): string {
+  const lines: string[] = []
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (rules.signature && isSignatureMark(line)) break
+    if (isHeading(line, rules)) break
+    lines.push(line)
+  }
+  return lines.join('\n').replace(/^\n+|\n+$/g, '')
+}
+
+/**
  * Every line of a text, in order, as `parseHeadings` will read it: a heading,
  * the signature's mark, or text. A field draws each line by this while it is
  * typed, so it is the same rule and not a second reading of capitals - after

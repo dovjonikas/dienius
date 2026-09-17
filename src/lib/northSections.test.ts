@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { isNorthHeading, northLineKinds, northTagAt, parseNorth, splitNorthHeading } from './northSections'
+import { isNorthHeading, northLineKinds, northPicture, northTagAt, parseNorth, splitNorthHeading } from './northSections'
 
 /**
  * A line in capitals is a heading, and everything under it up to the next
@@ -269,5 +269,90 @@ test('every line that is not blank comes out once, in the order it was written, 
     const mark = written.indexOf('---')
     if (mark >= 0) written.splice(mark, 1)
     expect(read).toEqual(written)
+  }
+})
+
+// --- the three parts, v2.28 ---------------------------------------------------------------
+
+/**
+ * North is one text in three parts, and nothing else since goals were
+ * retired: the picture before the first heading, the headings with their
+ * lines, and the signature after a line of ---. Any of the three may be
+ * missing, and a text is read the same way whichever ones it has.
+ */
+test('picture, headings and signature: each part is read into its own place', () => {
+  expect(parseNorth('a picture line\n\nFIRST HEADING\na line under it\n\nSECOND HEADING\na line under the second\n---\na signature line')).toEqual({
+    intro: ['a picture line'],
+    sections: [
+      { heading: 'FIRST HEADING', paragraphs: ['a line under it'] },
+      { heading: 'SECOND HEADING', paragraphs: ['a line under the second'] },
+    ],
+    signature: ['a signature line'],
+  })
+})
+
+test('a text with no headings is a picture and, after its mark, a signature', () => {
+  expect(parseNorth('a picture line\na second picture line\n---\na signature line')).toEqual({
+    intro: ['a picture line\na second picture line'],
+    sections: [],
+    signature: ['a signature line'],
+  })
+})
+
+test('only a picture: every line is the picture, and there is no heading and no signature', () => {
+  expect(parseNorth('a picture line\n\na second paragraph of it')).toEqual({
+    intro: ['a picture line', 'a second paragraph of it'],
+    sections: [],
+    signature: [],
+  })
+})
+
+test('only a signature: no picture and no heading', () => {
+  expect(parseNorth('---\na signature line\n\na second signature paragraph')).toEqual({
+    intro: [],
+    sections: [],
+    signature: ['a signature line', 'a second signature paragraph'],
+  })
+})
+
+test('only headings: no picture and no signature', () => {
+  expect(parseNorth('FIRST HEADING\na line under it\nSECOND HEADING')).toEqual({
+    intro: [],
+    sections: [
+      { heading: 'FIRST HEADING', paragraphs: ['a line under it'] },
+      { heading: 'SECOND HEADING', paragraphs: [] },
+    ],
+    signature: [],
+  })
+})
+
+/**
+ * The picture as it was typed, for the page that shows it: its lines and
+ * every blank line between them, where the paragraphs above count several
+ * blank lines as one break. Only the blank lines at its two ends go, and
+ * each line is read trimmed, the way every other line of the text is.
+ */
+test("the picture as typed keeps its lines and every blank line between them, and stops at the first heading or the signature's mark", () => {
+  expect(northPicture('a picture line\n\n\na second picture line\nFIRST HEADING\na line under it')).toBe('a picture line\n\n\na second picture line')
+  expect(northPicture('\n\n  a picture line  \n   \na second picture line\n\n\n---\na signature line')).toBe('a picture line\n\na second picture line')
+  expect(northPicture('a picture line\n\nFIRST HEADING\n\na line under it')).toBe('a picture line')
+})
+
+test('no picture part is an empty picture', () => {
+  expect(northPicture('')).toBe('')
+  expect(northPicture('\n  \n')).toBe('')
+  expect(northPicture('FIRST HEADING\na line under it')).toBe('')
+  expect(northPicture('---\na signature line')).toBe('')
+})
+
+test('the picture as typed holds the same lines the paragraphs do', () => {
+  const texts = [
+    'a first line\n\n\na second line\n  \na third line\nFIRST HEADING\na line under it',
+    'a first line\na second line\n---\na signature line',
+    'FIRST HEADING\na line under it',
+  ]
+  for (const text of texts) {
+    const typed = northPicture(text).split('\n').filter(Boolean)
+    expect(typed).toEqual(parseNorth(text).intro.flatMap(p => p.split('\n')))
   }
 })

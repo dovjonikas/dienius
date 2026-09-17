@@ -3898,3 +3898,21 @@ goals, because the text is what a restore could now take away. Two store
 areas, four components, a card, their tests and some eighteen thousand
 characters of stylesheet went with them, and a test reads the source so that
 no screen says goal again and nothing outside the data layer reads one.
+
+**The page reads in three voices, inside the six sizes.** The picture is the
+first thing on it, at the page title's step in the text's ink and the
+reading weight - larger than the lines under the headings, and still prose
+rather than a title. A heading takes the same step in the strong weight: the
+scale has six sizes and the one over it is the timer's numerals, and a
+heading is always in capitals, which at the same step in the strong weight
+reads as the larger of the two. Its lines are a step smaller, at the reading
+size. The signature ends the page a step over those lines, in the quieter
+ink so it reads calm, after twice the air a heading has over it.
+
+**The picture keeps its blank lines.** It is drawn as one block of the lines
+as typed, so two blank lines are two; the paragraphs the parser makes, where
+several blank lines are one break, still serve the headings, the day and
+the rail. The field stays one size: a textarea cannot set one line larger
+than another without every caret after it landing in the wrong place, so
+pressing Edit shows the picture at the writing size, and the lines under the
+headings are where reading and writing still stand on the same lines.

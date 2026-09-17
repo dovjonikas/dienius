@@ -10801,10 +10801,10 @@ button.north-day-line:focus-visible {
    North - views/north/.
 
    One page in one column, read as a page somebody wrote rather than as a
-   screen of controls: the person's own text - an introduction, headings
-   with what they hold, and a signature. No card, no frame and no shadow anywhere on the reading
-   page. The air does the separating, in two steps: the gap between two
-   headings, and the larger one between the parts of the page. What can be
+   screen of controls: the person's own text - a picture, headings with what
+   they hold, and a signature. No card, no frame and no shadow anywhere on
+   the reading page. The air does the separating, in two steps: the gap
+   between two headings, and the larger one over the signature. What can be
    pressed stands in one row wherever it stands.
 
    Nothing here fills with the accent but the one primary button in a row,
@@ -10842,7 +10842,6 @@ button.north-day-line:focus-visible {
    word in - the way a quiet word under a setting stands. */
 .north-view-title > .btn-quiet { margin-right: calc(var(--s4) * -1); }
 
-
 /* The page's name, smaller and quieter than the words under it: on this page
    the text is the thing, and the name only says where you are. */
 .north-view-head h2 {
@@ -10868,12 +10867,10 @@ button.north-day-line:focus-visible {
 
 .north-paragraph + .north-paragraph { margin-top: var(--s4); }
 
-/* The page, read, in the writing's own type: the reading size at a leading
-   a tenth over the app's reading one, which is what the field is set in -
-   so pressing Edit changes the ink of nothing and moves no line of the
-   introduction. The air between two paragraphs, between the parts of the
-   page and over the signature is one line of that leading, the blank line
-   the person typed there. */
+/* The page, read. The lines under the headings are in the writing's own
+   type: the reading size at a leading a tenth over the app's reading one,
+   which is what the field is set in. The air between two of their
+   paragraphs is one line of that leading, the blank line typed there. */
 .north-read {
   font-size: var(--t-read);
   line-height: calc(var(--lh-read) + 0.1);
@@ -10885,6 +10882,20 @@ button.north-day-line:focus-visible {
 }
 
 .north-read .north-paragraph + .north-paragraph { margin-top: 1lh; }
+
+/* The picture, v2.28: the first thing on the page, a step over the lines
+   under the headings and in the text's own ink - the page title's size, in
+   the reading weight and at the reading leading, so it reads as prose rather
+   than as a title. One block with the person's own line breaks, so every
+   blank line typed in it is a blank line on the page. */
+.north-picture {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-lg);
+  line-height: var(--lh-read);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
 
 /* Everything on the page is open, since v2.26: the page is where the text is
    read, and nothing on it folds behind a press or a pointer. The headings
@@ -10901,8 +10912,10 @@ button.north-day-line:focus-visible {
 
 .north-intro + .north-sections { margin-top: var(--s12); }
 
-/* A heading: a step larger than the words and the strong weight, written as
-   typed - no tracking, no rule, no marker, no caret, and never its tag. */
+/* A heading: the picture's step, larger than the lines under it, in the
+   strong weight - and in capitals, which is what makes it the larger of the
+   two - written as typed: no tracking, no rule, no marker, no caret, and
+   never its tag. */
 .north-heading {
   margin: 0 0 var(--s2);
   color: var(--text);
@@ -10912,12 +10925,14 @@ button.north-day-line:focus-visible {
   overflow-wrap: anywhere;
 }
 
-/* The signature: the words the page ends on, whole, a step larger than the
-   words and in their ink, with more air over it than any heading has - the
-   way a letter ends, and the way the window after sleep ends. */
-.north-signature { margin-top: calc(var(--s12) + var(--s6)); }
+/* The signature: the words the page ends on, whole, at the very foot - a
+   step over the lines under the headings and in the quieter ink, so it
+   reads calm rather than loud, after the largest gap on the page, twice the
+   air over a heading - the way a letter ends. */
+.north-signature { margin-top: calc(var(--s12) * 2); }
 
 .north-read .north-signature > .north-paragraph {
+  color: var(--muted);
   font-size: var(--t-lg);
   line-height: var(--lh-read);
 }

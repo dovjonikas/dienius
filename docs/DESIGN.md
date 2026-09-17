@@ -80,7 +80,8 @@ person typed them: North's headings are the owner's own capitals and stay
 so. A figure that changes or lines up with another uses tabular numerals.
 
 **At most four sizes on one screen.** Today is 11, 13, 15 and 20; North is
-11, 13 and 17.
+13, 17 and 20 - the picture, the headings and the signature at 20, the
+lines under the headings at 17.
 
 ## Spacing
 

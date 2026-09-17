@@ -102,6 +102,32 @@ explanation. Browser walks: the North line's edge is measured on a text, the
 tour writes a line and saves it, and the week rehearsal writes the whole
 text in one field.
 
+### Stage 3 - the page: picture, headings, signature, one field: done
+
+- **The picture** - the lines before the first heading - is the first thing
+  on the page, at the page title's size (`--t-lg`) in the text's own ink and
+  the reading weight, as one block with the person's own line breaks: every
+  blank line typed in it is a blank line on the page (`northPicture`, read by
+  the shared parser's new `introText`).
+- **The headings** at the same step in the strong weight - in capitals, which
+  makes them the larger - with their lines under them a step smaller at the
+  reading size, all open.
+- **The signature** at the very foot after the largest gap on the page (96px,
+  twice the air over a heading), a step over the lines and in the quieter
+  ink.
+- The column is 640px, with no frame, ground or shadow on any part of it; the
+  small quiet North and Edit at the right stand as they did, and Edit opens
+  the one field with the whole text and the grey line under it.
+
+New tests: the three parts by name - all three, no headings, only a picture,
+only a signature, only headings - and the picture as typed
+(`northSections.test.ts`), and nothing on the reading page with a frame, a
+ground or a shadow (`NorthView.test.tsx`). Changed tests: the picture reads
+as one block with its blank lines, and the page's type test holds the new
+sizes and inks (`NorthView.test.tsx`, whose space helper now reads a step
+times a number), and the browser walk reads the picture as one block
+(`north.e2e.ts`).
+
 ## After v2.27 - one line everywhere
 
 From two screenshots the owner sent: a Cancel alone on a row of its own, and

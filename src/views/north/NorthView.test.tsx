@@ -27,12 +27,13 @@ function cssRule(selector: string): string {
   return css.match(new RegExp('\\n' + escaped + ' \\{([^}]*)\\}'))?.[1] ?? ''
 }
 
-/** A space declared in steps of the scale, in pixels: var(--s8), or a calc of steps added. */
+/** A space declared in steps of the scale, in pixels: var(--s8), a calc of steps added, or of steps times a number. */
 function spacePx(body: string, property: string): number {
   const value = body.match(new RegExp('(?:^|\\n)\\s*' + property + ':\\s*([^;]+);'))?.[1] ?? ''
   const steps: Record<string, number> = { s1: 4, s2: 8, s3: 12, s4: 16, s6: 24, s8: 32, s12: 48 }
   const found = [...value.matchAll(/--(s\d+)/g)]
-  return found.length ? found.reduce((sum, m) => sum + (steps[m[1]] ?? NaN), 0) : NaN
+  const times = Number(value.match(/\*\s*(\d+(?:\.\d+)?)/)?.[1] ?? 1)
+  return found.length ? found.reduce((sum, m) => sum + (steps[m[1]] ?? NaN), 0) * times : NaN
 }
 
 /**
@@ -269,11 +270,13 @@ test('a text with forty headings is written, saved and read as forty headings', 
  * and reads whole. Since v2.26 nothing in the words is a control: the page is
  * for reading, and Edit stands at the right of its name.
  */
-test('a text with no heading reads whole, paragraph by paragraph, with nothing in it to press', () => {
+test('a text with no heading is all picture and reads whole, every line and blank line as typed, with nothing in it to press', () => {
   picture('a first line\na second line\n\na third line\n\n\n\na fourth line')
   const { container } = render(<NorthView />)
-  const paragraphs = [...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)
-  expect(paragraphs).toEqual(['a first line\na second line', 'a third line', 'a fourth line'])
+  // One block, in the person's own spacing: three blank lines are three.
+  const pictures = container.querySelectorAll('.north-intro > .north-picture')
+  expect(pictures).toHaveLength(1)
+  expect(pictures[0].textContent).toBe('a first line\na second line\n\na third line\n\n\n\na fourth line')
   expect(screen.queryByRole('heading', { level: 3 })).toBeNull()
   // Read, not asked anything: no field, no label, and nothing to press.
   expect(screen.queryByRole('textbox')).toBeNull()
@@ -346,7 +349,8 @@ test('a plan that still holds goals shows none of them, and nothing on the page 
 test('everything is on the page without a press: the introduction, every heading with its lines, and the signature', () => {
   picture('a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\nTHIRD HEADING\na line under the third\n---\na signature line')
   const { container } = render(<NorthView />)
-  expect([...container.querySelectorAll('.north-intro .north-paragraph')].map(p => p.textContent)).toEqual(['a line before any heading'])
+  expect(container.querySelector('.north-read')?.firstElementChild).toHaveClass('north-intro')
+  expect(container.querySelector('.north-intro > .north-picture')?.textContent).toBe('a line before any heading')
   const sections = [...container.querySelectorAll('.north-sections > .north-section')].map(section => [
     section.querySelector('h3')?.textContent,
     ...[...section.querySelectorAll('.north-paragraph')].map(p => p.textContent),
@@ -373,16 +377,30 @@ test("a heading's [morning] or [evening] is never drawn on the page", () => {
 })
 
 /**
- * The page's type, read from the stylesheet since jsdom has no layout: a
- * heading a step larger and heavier than the words and written as typed,
- * with more air over it than under it; the signature a step larger than the
- * words, with more air over it than a heading has; and the column at the
- * reading width.
+ * The page's type, v2.28, read from the stylesheet since jsdom has no layout.
+ * The picture first, a step larger than the lines under the headings and in
+ * the text's own ink, its lines and blank lines as typed. A heading at that
+ * step too and in the strong weight - in capitals, which is what makes it the
+ * larger - written as typed, with more air over it than under it, and its
+ * lines a step smaller at the reading size. The signature at the foot, a step
+ * over those lines and in the quieter ink, after the largest gap on the
+ * page. The column about 640px wide.
  */
-test('a heading is a step over the words with more air over it than under it, and the signature has the most air over it', () => {
+test("the picture is a step over the headings' lines, a heading is that step and bold, and the signature is calm under the largest gap", () => {
+  const pictureRule = cssRule('.north-picture')
+  expect(pictureRule).toMatch(/font-size:\s*var\(--t-lg\)/)
+  expect(pictureRule).toMatch(/color:\s*var\(--text\)/)
+  expect(pictureRule).toMatch(/white-space:\s*pre-line/)
+  expect(pictureRule).not.toMatch(/font-weight/)
+
+  // The lines under a heading: the reading size, one step under the picture.
+  expect(cssRule('.north-read')).toMatch(/font-size:\s*var\(--t-read\)/)
+  expect(cssRule('.north-read .north-paragraph')).toMatch(/font-size:\s*inherit/)
+
   const heading = cssRule('.north-heading')
   expect(heading).toMatch(/font-size:\s*var\(--t-lg\)/)
   expect(heading).toMatch(/font-weight:\s*var\(--w-strong\)/)
+  expect(heading).toMatch(/color:\s*var\(--text\)/)
   expect(heading).not.toMatch(/letter-spacing|text-transform/)
   // margin: 0 0 var(--s2) - the one step in it is the air under the heading.
   const under = spacePx(heading, 'margin')
@@ -391,9 +409,22 @@ test('a heading is a step over the words with more air over it than under it, an
   expect(under).toBeGreaterThan(0)
   expect(over).toBeGreaterThan(under * 2)
 
-  expect(cssRule('.north-read .north-signature > .north-paragraph')).toMatch(/font-size:\s*var\(--t-lg\)/)
-  expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThan(over)
+  const signature = cssRule('.north-read .north-signature > .north-paragraph')
+  expect(signature).toMatch(/font-size:\s*var\(--t-lg\)/)
+  expect(signature).toMatch(/color:\s*var\(--muted\)/)
+  expect(spacePx(cssRule('.north-signature'), 'margin-top')).toBeGreaterThanOrEqual(over * 2)
+
   expect(cssRule('.north-view')).toMatch(/max-width:\s*var\(--read-w\)/)
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8')
+  expect(css).toMatch(/--read-w:\s*640px;/)
+})
+
+// No frame and no card anywhere on the reading page: no edge, no ground, no
+// shadow round the text or any part of it.
+test('nothing on the reading page has a frame, a ground or a shadow', () => {
+  for (const selector of ['.north-view', '.north-read', '.north-intro', '.north-picture', '.north-sections', '.north-section', '.north-heading', '.north-paragraph', '.north-read .north-paragraph', '.north-signature', '.north-read .north-signature > .north-paragraph']) {
+    expect(cssRule(selector), selector).not.toMatch(/(^|\n)\s*(border|background|box-shadow|outline)(-[a-z]+)?\s*:/)
+  }
 })
 
 /**

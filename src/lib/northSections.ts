@@ -1,5 +1,6 @@
 import {
   headingLineKinds,
+  introText,
   isHeading,
   isSignatureMark,
   parseHeadings,
@@ -131,6 +132,15 @@ export function isNorthSignatureMark(line: string): boolean {
  */
 export function parseNorth(text: string): NorthReading {
   return parseHeadings(text, NORTH_RULES) as NorthReading
+}
+
+/**
+ * The picture - the lines before the first heading - as it was typed, blank
+ * lines and all, for the page and the window after sleep, which keep the
+ * person's own spacing. Empty when the text has no picture part.
+ */
+export function northPicture(text: string): string {
+  return introText(text, NORTH_RULES)
 }
 
 /** What a line of the text is read as - see `northLineKinds`. */

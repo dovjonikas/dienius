@@ -132,12 +132,15 @@ the right of the page's name, opens the box again.
 
 **A line in capitals is a heading.** Everything under it, up to the next
 heading, is its text, and a blank line under a heading starts a second
-paragraph of the same heading. The lines before the first heading are the
-introduction. **A line of `---` starts the signature**: everything after
-it is shown whole at the foot of the page, a little larger, and nothing
-after it is a heading. The page is for reading, so all of it is open at
-once - the introduction, every heading with its lines, and the signature -
-with nothing to press. A text with no capitals-only line reads as it was
+paragraph of the same heading. The lines before the first heading are your
+picture - who you are and where you are going - and they are the first
+thing on the page, a little larger, with every line and blank line as you
+typed them. **A line of `---` starts the signature**: everything after it
+is shown whole at the very foot of the page, after a wide gap, a little
+larger and quieter, and nothing after it is a heading. The headings are
+bold, with their lines under them a size smaller. The page is for reading,
+so all of it is open at once - the picture, every heading with its lines,
+and the signature - with nothing to press. A text with no capitals-only line reads as it was
 written. There is no button for any of this: the capitals are the
 formatting, and the text stays the one string you typed.
 

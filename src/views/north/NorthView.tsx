@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
-import { northLineKinds, northTagAt, parseNorth } from '../../lib/northSections'
+import { northLineKinds, northPicture, northTagAt, parseNorth } from '../../lib/northSections'
 import { NorthSection } from './NorthSection'
 
 /**
@@ -119,33 +119,32 @@ function NorthInvite({
 }
 
 /**
- * The text, read, as one column that reads like a page.
+ * The text, read, as one column that reads like a page - the three parts of
+ * North, v2.28, and nothing else.
  *
- * Everything is open, since v2.26: the page is where the text is read, and
- * nothing on it waits behind a press or a pointer. The introduction first -
- * the lines before the first heading, in the text's own type and ink - then
- * every heading with its lines under it, a little larger and heavier than
- * the words and with more air over it than under it, and last the
- * signature, whole, a step larger and with the most air over it, the way a
- * letter ends. A text with no heading is all introduction and reads whole,
- * as it was written. lib/northSections.ts has the rule; nothing here decides
- * what a heading or a signature is, and a heading's [morning] or [evening]
- * is never drawn.
+ * Everything is open: the page is where the text is read, and nothing on it
+ * waits behind a press or a pointer. The picture first - the lines before
+ * the first heading, the first thing on the page - a step larger than the
+ * lines under the headings, in the text's own ink, every line and blank line
+ * as it was typed. Then every heading, at the picture's step in the strong
+ * weight, with its lines under it at the reading size. Last the signature,
+ * after the largest gap on the page, a step over those lines and in the
+ * quieter ink, the way a letter ends. A text with no heading is all picture
+ * and reads whole. lib/northSections.ts has the rules; nothing here decides
+ * what a heading or a signature is, and a heading's [morning] or [evening] is
+ * never drawn.
  *
  * Nothing in the words is a button. Edit stands at the right of the page's
  * name.
  */
 function NorthText({ text }: { text: string }) {
-  const { intro, sections, signature } = parseNorth(text)
+  const { sections, signature } = parseNorth(text)
+  const picture = northPicture(text)
   return (
     <div className="north-read" data-tour="north-text">
-      {intro.length > 0 && (
+      {picture !== '' && (
         <div className="north-intro">
-          {intro.map((paragraph, i) => (
-            <p key={i} className="north-paragraph">
-              {paragraph}
-            </p>
-          ))}
+          <p className="north-picture">{picture}</p>
         </div>
       )}
       {sections.length > 0 && (

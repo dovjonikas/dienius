@@ -45,11 +45,10 @@ test('the text is written on the page, reads back whole, and its introduction op
   await box.press('Control+Enter')
   await expect(page.getByRole('textbox', { name: 'North' })).toHaveCount(0)
 
-  // Read: no heading, so the whole text, the blank line kept as a paragraph break.
-  const blocks = page.locator('.north-intro .north-paragraph')
-  await expect(blocks).toHaveCount(2)
-  await expect(blocks.nth(0)).toHaveText('First line here\nSecond line here')
-  await expect(blocks.nth(1)).toHaveText('Third line here')
+  // Read: no heading, so the whole text is the picture, its blank line kept.
+  const picture = page.locator('.north-intro .north-picture')
+  await expect(picture).toHaveCount(1)
+  await expect(picture).toHaveText('First line here\nSecond line here\n\nThird line here')
 
   // The next morning, after a night away, the app opens on the day with the
   // introduction over it, and Close leaves the day.
@@ -87,7 +86,7 @@ test('the page shows everything at rest with Edit beside its name, and on the da
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 
   // At rest, and nothing asked: every part of the text is on the page.
-  await expect(page.locator('.north-intro .north-paragraph')).toHaveText('First line here')
+  await expect(page.locator('.north-intro .north-picture')).toHaveText('First line here')
   const headings = page.getByRole('main').getByRole('heading', { level: 3 })
   await expect(headings).toHaveText(['FIRST HEADING', 'SECOND HEADING'])
   const lines = page.locator('.north-section').first().locator('.north-paragraph')
