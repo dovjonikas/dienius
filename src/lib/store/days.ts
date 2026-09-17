@@ -8,6 +8,7 @@ import { addWithoutDuplicates, dayHas, hasIdentity, willReceive } from '../taskI
 import { ensuredDay } from '../ensureDay'
 import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
+import { arrivingByHand, leftByHand } from '../routines'
 import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
 import type { ReturnOffer } from '../../widgets/day-plan/setAside'
@@ -158,12 +159,18 @@ export const dayActions = {
     }
     const { templateId: _stamped, dayType: _kind, replannedOn: _moved, ...kept } = day
     commit(
-      withDay(date, {
-        ...kept,
-        tasks: [],
-        repeatSkips: skips.size > 0 ? [...skips] : undefined,
-        autoApplied: true,
-      }),
+      withDay(
+        date,
+        leftByHand(
+          {
+            ...kept,
+            tasks: [],
+            repeatSkips: skips.size > 0 ? [...skips] : undefined,
+            autoApplied: true,
+          },
+          day.tasks,
+        ),
+      ),
     )
     return { cleared: day.tasks.length, undo: () => commit(previous) }
   },
@@ -225,7 +232,8 @@ export const dayActions = {
     }
 
     const skips = task?.repeatOf ? [...new Set([...(day.repeatSkips ?? []), task.repeatOf])] : day.repeatSkips
-    commit(withDay(date, { ...day, repeatSkips: skips, tasks: day.tasks.filter(t => t.id !== taskId) }))
+    const left = { ...day, repeatSkips: skips, tasks: day.tasks.filter(t => t.id !== taskId) }
+    commit(withDay(date, leftByHand(left, task ? [task] : [])))
   },
 
   setTaskTime(date: string, taskId: string, time: string | undefined): void {
@@ -400,13 +408,13 @@ export const dayActions = {
     // task is still genuinely necessary, the push bound already forces a
     // decision on it - unbounded is the escape hatch from that decision,
     // core is not, and the two stay separate for exactly this reason.
-    const moved = pushable.map(pushedForward)
+    const moved = pushable.map(t => pushedForward(arrivingByHand(t)))
     const landed = addWithoutDuplicates(targetDay.tasks, moved)
     commit({
       ...data,
       days: {
         ...data.days,
-        [date]: { ...day, tasks: day.tasks.filter(t => !movedIds.has(t.id)) },
+        [date]: leftByHand({ ...day, tasks: day.tasks.filter(t => !movedIds.has(t.id)) }, pushable),
         [targetDate]: { ...targetDay, tasks: landed },
       },
     })
@@ -437,8 +445,8 @@ export const dayActions = {
       ...data,
       days: {
         ...data.days,
-        [date]: { ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) },
-        [targetDate]: { ...target, tasks: [...target.tasks, pushedForward(task)] },
+        [date]: leftByHand({ ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) }, [task]),
+        [targetDate]: { ...target, tasks: [...target.tasks, pushedForward(arrivingByHand(task))] },
       },
     })
     return true
@@ -606,8 +614,8 @@ export const dayActions = {
       ...data,
       days: {
         ...data.days,
-        [from]: { ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) },
-        [to]: { ...target, tasks: [...target.tasks, task] },
+        [from]: leftByHand({ ...day!, tasks: day!.tasks.filter(t => t.id !== taskId) }, [task]),
+        [to]: { ...target, tasks: [...target.tasks, arrivingByHand(task)] },
       },
     })
     return true

@@ -4022,6 +4022,21 @@ change of kind on a date somebody changed by hand - something done, moved,
 deleted or placed by hand - names what would go and asks, the way replan asks;
 what was added by hand always stays.
 
+**Composing a date never stamps its own kind again** (stage 3). A stamp puts
+every block back where its template has it, so a shift moved or deleted by hand
+would come back every time a roster was applied; only a change of kind stamps.
+A routine's task follows its rule only in the fields it still carries from the
+rule. A task that leaves its date by hand - deleted, moved, pushed, sent on -
+leaves a skip, so nothing a person took away comes back, and lands with no echo,
+so nothing a person put somewhere is moved.
+
+**Busy time reaches past midnight both ways** (stage 3). What still runs in from
+the night before is busy time on the day after, and what a routine late in the
+evening could run into after midnight, the next date's first blocks and its
+sleep, is busy time for that routine. Without the second half a session at 23:30
+could be placed across a shift starting at 00:30, which is the kind of case the
+property tests exist to rule out.
+
 **Four defects the audit found were fixed first**, each with a test: taking a
 template off a day wiped the day; a task moved onto a day was dropped by a
 stamp of another template; Review's month skipped the month after a short one;

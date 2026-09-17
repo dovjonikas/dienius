@@ -223,10 +223,27 @@ weekday map and repeats go on working for everyone else exactly as they do.
 ticked, moved, noted and pushed:
 
 ```ts
-Task.routineId?: string                              // the routine it came from
-Task.fromRoutine?: { time?: string; minutes: number } // what the rule gave, for telling it from a hand edit
-DayPlan.routineSkips?: string[]                      // routine ids deleted from this day by hand
+Task.routineId?: string          // the routine it came from
+Task.fromRoutine?: {             // what the rule gave, for telling it from a hand edit
+  title?: string; time?: string; minutes: number; category?: CategoryId
+}
+DayPlan.routineSkips?: string[]  // routines taken off this day by hand
 ```
+
+**The echo holds the title and the category as well as the time and the
+length** (stage 3). Section 6.3 asks whether a routine's task was renamed or
+recategorised by hand, and only an echo can answer that. Stage 2's validation
+checks the echo with a record check that ignores keys it was not told about, so
+a device on stage 2 reads the two new fields without complaint.
+
+**A routine's task that leaves its date by hand leaves a skip behind.**
+Deleting it, clearing the day, moving it to another day, pushing it, rolling
+the day over, and a replan's or a low day's "tomorrow" all add its routine to
+the date's `routineSkips` (`leftByHand` in `routines.ts`), so composing the
+date again does not bring it back. Where it lands it keeps its routine id - a
+date still never holds two - and loses its echo (`arrivingByHand`): it is
+where a person put it, and composing that date leaves it there and never takes
+it away. Setting it aside keeps it on its day and writes nothing.
 
 Its identity is `routine:<id>`, read by `identityOf` from `routineId`, so the
 guard that keeps a day from holding two copies of a block keeps it from holding
@@ -258,10 +275,30 @@ For a date D with kind K:
 4. Everything the day already had that is not K's template's or a routine's -
    hand-written tasks, repeats, moved tasks, what was written on it - stays.
 
-One pure function composes it: `composeDay(data, date, kindTemplateId)` returns
-the day and what it found (routines without a time, conflicts). Applying,
-previewing and the property tests all call it; nothing composes a day a second
-way.
+One pure function composes it: `composeDay(data, date, kind, kindOf)` in
+`shiftDay.ts` returns the day and where each routine went. `kindOf` answers
+which kind every other date is - the plan's, or a draft's laid over it - so a
+preview reads tomorrow as it will be. `applyRoster` composes every date of a
+roster through it. Applying, previewing and the property tests all call it;
+nothing composes a day a second way.
+
+- **Only a change of kind stamps.** A stamp puts every block back at its
+  template's time, so stamping a date's own kind again would undo a shift moved
+  or deleted by hand every time a roster was applied. A kind's template edits
+  reach its dates the way any template's do (section 6.5).
+- **A routine's task follows its rule field by field**, and only in the fields
+  that still carry what the rule last gave: a time moved by hand stays while a
+  changed length follows. A ticked task is a record and is not touched. A task
+  whose routine is no longer on the date - deleted, off the weekday, the date no
+  longer a kind - leaves, unless it was ticked, moved or put there by hand. Two
+  tasks of one routine on a date, which two devices can make, become one unless
+  the second was changed by hand.
+- **No kind** takes a kind off a date and nothing else; a date whose template is
+  not a kind has no kind to take off and is left as it is. A draft's id naming a
+  kind deleted since leaves its date as it is, rather than guessing.
+- **A date whose composition changes nothing keeps its own object**, and a
+  roster that changes nothing returns the plan itself - which is how Apply knows
+  there is nothing to commit.
 
 ### 2.5 Where the roster is edited, and what is kept on the device
 
@@ -416,14 +453,26 @@ reason.
 3. The sleep D wakes from (D's kind's schedule, ending on D).
 4. The sleep that starts on D's evening (D+1's kind's schedule, when it starts
    before midnight).
+5. What a routine late in the evening can reach past midnight: D+1's blocks and
+   the sleep after them. A routine is at most twelve hours long, so busy time is
+   read as far as noon on D+1. Stage 3 added this: without it a session at
+   23:30 could be placed across a shift that starts at 00:30.
+
+**Which blocks.** A date that already carries its kind is read from what is on
+it - a shift moved by hand is where it was moved, one deleted or set aside is
+not on the clock. A date a draft is about to give a kind is read from the kind's
+template, which is exactly what the stamp will write. So a preview and the plan
+after Apply measure the same busy time. Blocks are read from the two dates
+before D, which covers any block up to two days long from any start time.
 
 **A routine conflicts** when its interval overlaps busy time by at least a
 minute. Touching is not overlapping: a gym session ending at 22:00 before a
 22:00 shift is free.
 
 - An **untimed** block is not on the clock and takes no time.
-- A block with a **time and no length** takes its start minute only, so a
-  routine covering that minute conflicts with it and one beside it does not.
+- A block with a **time and no length** - or a length of nothing - takes its
+  start minute only, so a routine covering that minute conflicts with it and
+  one beside it does not.
 - A date whose neighbour has **no kind** reads that neighbour the way the day
   view does today: its template's sleep if it has one, the default otherwise.
 - Hand-written tasks and repeats are **not** busy time for placing a routine.
@@ -465,6 +514,12 @@ category differs from what its block or rule gave (`fromBlock`,
 `fromRoutine`); a block or routine has no task on the day and no skip (it was
 deleted); a routine task was placed by hand. Hand-written tasks do not count -
 they stay through any stamp.
+
+`handEdits` counts each task once, a done tick before a move, and a routine's
+task that arrived by hand as moved. A block added to a kind after a date was
+stamped reads as deleted from it, since nothing records which blocks a stamp
+placed: the question then names one too many, and Apply gives the date the whole
+new kind, which is what was asked.
 
 Changing such a date's kind asks first, the way replan asks, naming what would
 go: "Wednesday was changed by hand: 1 done, 2 moved. Apply Night shift anyway?
@@ -557,6 +612,20 @@ every date of the stretch:
 A failing run prints its seed and its shrunk case, and a found case becomes a
 unit test before it is fixed.
 
+As built in stage 3 (`shiftDay.property.test.ts`): two rosters from random
+cycles with hand edits between them - a task written, a tick, a routine or a
+block moved, a routine deleted - and sometimes every routine's time and length
+changed. Invariant 2 is held on the dates the second roster composed; a date
+whose draft id names a deleted kind is left as it is, and so is its routine.
+Invariant 3 is held as strictly as it can be: the second Apply returns the very
+same plan object, so there is nothing for sync to stamp. Twenty-five runs each in
+the suite, which keeps it to a few seconds; `SHIFT_RUNS=300` hunts harder and
+takes about eighty. Over twenty-five runs a sample measured about six thousand
+composed dates, most of them a change of kind, and about fourteen hundred routine
+sessions checked against busy time, eighteen hundred dates with a shift running
+in from the night before, thirty blocks across a clock change, and 29 February
+2028 in ten of the twenty-five stretches.
+
 ### 8.3 Migration
 
 - An old backup with week templates, weekday overrides and a weekday map - a
@@ -587,7 +656,8 @@ the week view draws the long shift.
    `routineSkips`; validation, sync kinds, backup counts, export and import, the
    migration fixture and the older-validate test; `hasIdentity`.
 3. **Composition**: `composeDay`, busy time, placement, hand edits; fast-check
-   and the property tests.
+   and the property tests; every door a routine's task leaves its date by
+   writes its skip.
 4. **Midnight and daylight saving everywhere**: one sleep function in front of
    every reader, the evening from the next date's kind, `realMinutes`, clock text
    after midnight, continuation and the running block after midnight.

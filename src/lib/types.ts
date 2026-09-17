@@ -409,12 +409,15 @@ export interface Task extends Timestamped {
    */
   routineId?: string
   /**
-   * What the routine's rule gave this task when it was placed: its time (absent
-   * when it placed the task with none) and its length. The echo that tells a
-   * task still as the rule left it from one somebody moved - the same job
-   * `fromBlock` does for a template's blocks.
+   * What the routine's rule gave this task when it was placed: its title, its
+   * time (absent when it placed the task with none), its length and its
+   * category. The echo that tells a task still as the rule left it from one
+   * somebody moved or renamed - the same job `fromBlock` does for a template's
+   * blocks. A field the echo does not hold is never followed: there is nothing
+   * to tell a change from. A routine's task that arrived on its date by hand -
+   * moved or pushed there - carries none, so it is left where it was put.
    */
-  fromRoutine?: { time?: string; minutes: number }
+  fromRoutine?: { title?: string; time?: string; minutes: number; category?: CategoryId }
   /**
    * Free text the owner attached to this task - see the task detail sheet -
    * or, on a task a template stamped, what the block had to say. Absent and

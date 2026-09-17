@@ -2,6 +2,7 @@ import type { AppData, DayPlan, Task } from '../../lib/types'
 import type { CategoryId } from '../../lib/categories'
 import { addDays } from '../../lib/dates'
 import { dayHas, hasIdentity } from '../../lib/taskIdentity'
+import { arrivingByHand, leftByHand } from '../../lib/routines'
 import { DEFAULT_TITLE } from './interrupt'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Gap, type Interval } from './capacity'
 import { formatClock } from './timelineLayout'
@@ -498,9 +499,11 @@ export function applyPlan(data: AppData, date: string, plan: ReplanPlan, makeId:
 
   // The same identity check every other move between days uses: a task
   // tomorrow already has is not added a second time.
-  const arriving = goingTomorrow.filter(t => !dayHas(target, t))
+  const arriving = goingTomorrow.filter(t => !dayHas(target, t)).map(arrivingByHand)
 
-  const replanned: DayPlan = { ...day, tasks: staying }
+  // A routine's task sent on is gone from this day by a person's choice, so
+  // composing the day again does not bring it back - see leftByHand.
+  const replanned: DayPlan = leftByHand({ ...day, tasks: staying }, goingTomorrow)
   if (skips.size > 0) replanned.repeatSkips = [...skips]
   if (opts.replannedOn) replanned.replannedOn = opts.replannedOn
   const days = { ...data.days, [date]: replanned }

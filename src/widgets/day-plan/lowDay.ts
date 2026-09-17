@@ -1,6 +1,7 @@
 import type { AppData, DayPlan, Task } from '../../lib/types'
 import { addDays } from '../../lib/dates'
 import { dayHas, hasIdentity } from '../../lib/taskIdentity'
+import { arrivingByHand, leftByHand } from '../../lib/routines'
 import { formatDuration } from './capacity'
 
 /**
@@ -117,9 +118,9 @@ export function applyLowDayPlan(data: AppData, date: string, plan: LowDayPlan): 
     const minutes = sizes.get(task.id)
     staying.push(minutes !== undefined && minutes !== task.minutes ? { ...task, minutes } : task)
   }
-  const arriving = leaving.filter(t => !dayHas(target, t))
+  const arriving = leaving.filter(t => !dayHas(target, t)).map(arrivingByHand)
 
-  const lowered: DayPlan = { ...day, tasks: staying, lowDay: true }
+  const lowered: DayPlan = leftByHand({ ...day, tasks: staying, lowDay: true }, leaving)
   const days = { ...data.days, [date]: lowered }
   if (leaving.length > 0) days[next] = { ...target, tasks: [...target.tasks, ...arriving] }
   return { ...data, days }

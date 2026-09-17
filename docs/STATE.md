@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29, in progress - rotating shifts, stage 2 of 10 done.
+**Last updated:** v2.29, in progress - rotating shifts, stage 3 of 10 done.
 
 ## v2.29 - Rotating shifts
 
@@ -90,6 +90,45 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 3 - composition: done
+
+- **The wall clock** (`wallClock.ts`): the instant a date's clock reads a
+  time, whether a time happens at all that night, and a block's real minutes -
+  540 for 22:00 plus eight hours on 24 October 2026, 420 on 28 March.
+- **A date's composition** (`shiftDay.ts`), the one place a date is made of
+  its kind: a sleep belongs to the date it ends on; a date's sleep is its own
+  choice, then its kind's, then its template's, then the default; busy time is
+  the kind's blocks, what still runs in from the two dates before, the sleep the
+  date wakes from and the one its evening ends in, and what a late routine
+  reaches past midnight; each routine goes at its kind's time, or with none and
+  why - it needs a time, the clock skips that hour, or what it runs into.
+  `composeDay` stamps a change of kind and never the same kind again, and brings
+  routine tasks in line field by field where they are still as the rule left
+  them; `applyRoster` lays a draft over the plan from today on and hands back
+  the plan itself when nothing changes; `handEdits` counts what was done, moved
+  and deleted by hand.
+- **The echo grew a title and a category**, so a routine's task renamed by hand
+  is known for what it is; stage 2's validation ignores keys it does not know.
+- **Every door a routine's task leaves its date by writes a skip** - delete,
+  clear, move, push, roll over, a replan's and a low day's "tomorrow" - and the
+  task lands elsewhere without its echo, left where it was put.
+- **fast-check** joined the dev dependencies: seven invariants over 400-day
+  stretches from 2026 to 2028, with two rosters and hand edits between them -
+  one kind per date and nothing else touched, no routine left by its rule in
+  busy time, a second Apply returning the same plan object, export and import
+  byte for byte, nothing duplicated, nothing written by hand lost, real minutes
+  off by exactly sixty and only across a clock change. Twenty-five runs in the
+  suite; three hundred were run once, all green.
+- **Nothing on screen yet.** The editor, the roster and Apply are stages 5 to 7.
+
+New tests: every rule of composition, the calendar's edges (29 February 2028,
+31 December, the four clock-change nights of 2026 to 2028), and a mutation
+pass: thirty-two deliberate breaks of the rules, each made to fail a named test
+before this was called done (`shiftDay.test.ts`); the doors a routine's task
+leaves by (`routineLeaves.test.ts`); the invariants
+(`shiftDay.property.test.ts`). Changed test: the echo's validation cases in
+`shifts.data.test.ts` gained the title and the category.
 
 ## v2.28 - North is one text
 

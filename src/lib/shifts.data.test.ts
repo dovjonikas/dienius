@@ -132,12 +132,15 @@ test('a routine has a title, a length from a minute to twelve hours, at least on
   expect(validate(none), 'a routine with no time for any kind yet, and no category').toBe(true)
 })
 
-test("a routine task's routine id is text, what the rule gave it is a time and a length, and a day's skips are ids", () => {
+test("a routine task's routine id is text, what the rule gave it is a title, a time, a length and a category, and a day's skips are ids", () => {
   const cases: [string, (p: { days: Record<string, { routineSkips?: unknown; tasks: Record<string, unknown>[] }> }) => void][] = [
     ['routineId', p => (p.days['2026-09-02'].tasks[0].routineId = 3)],
     ['fromRoutine not a record', p => (p.days['2026-09-02'].tasks[0].fromRoutine = '17:00')],
     ['fromRoutine time off the clock', p => (p.days['2026-09-02'].tasks[0].fromRoutine = { time: '24:30', minutes: 60 })],
     ['fromRoutine without minutes', p => (p.days['2026-09-02'].tasks[0].fromRoutine = { time: '17:00' })],
+    ['fromRoutine title empty', p => (p.days['2026-09-02'].tasks[0].fromRoutine = { title: '', minutes: 60 })],
+    ['fromRoutine title too long', p => (p.days['2026-09-02'].tasks[0].fromRoutine = { title: 'x'.repeat(121), minutes: 60 })],
+    ['fromRoutine category not text', p => (p.days['2026-09-02'].tasks[0].fromRoutine = { minutes: 60, category: 7 })],
     ['routineSkips not a list', p => (p.days['2026-09-02'].routineSkips = 'rt-gone')],
     ['routineSkips not text', p => (p.days['2026-09-02'].routineSkips = [4])],
   ]
@@ -149,6 +152,9 @@ test("a routine task's routine id is text, what the rule gave it is a time and a
   const untimed = shiftPlan()
   untimed.days['2026-09-02'].tasks[0] = { ...untimed.days['2026-09-02'].tasks[0], time: undefined, fromRoutine: { minutes: 60 } }
   expect(validate(file(untimed)), 'a routine task the rule gave no time').toBe(true)
+  const named = shiftPlan()
+  named.days['2026-09-02'].tasks[0] = { ...named.days['2026-09-02'].tasks[0], fromRoutine: { title: 'Training', time: '17:00', minutes: 60, category: 'health' } }
+  expect(validate(file(named)), 'the title and category the rule gave').toBe(true)
 })
 
 // --- the file ----------------------------------------------------------------

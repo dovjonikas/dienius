@@ -118,6 +118,24 @@ A test that asserts a loop *terminates* is not a timing test and must not be
 written as one. Assert the bounded output, and let the runner's own timeout be
 the failure - see the endless-rule test in `ics.test.ts`.
 
+### A test about the clock says which clock
+
+The suite runs in UTC on CI and in Europe/Vilnius on the owner's machine, so a
+test about daylight saving or a local midnight that relies on whichever zone it
+lands in passes in one place for the wrong reason. Such a file sets
+`process.env.TZ` at its top, and its first test checks that it took - that 25
+October 2026 has twenty-five hours. Each test file runs in a process of its own,
+so the setting never reaches another file; measured, not assumed.
+
+### Property tests
+
+A rule that has to hold for every date, every kind and every clock change is
+tested twice: a unit test that says what the rule is, and a fast-check property
+that looks for the case nobody thought of (`shiftDay.property.test.ts`). A
+failing run prints its seed and its shrunk case; the case becomes a named unit
+test before it is fixed. The suite runs few enough cases to stay quick, and an
+environment variable asks for more when hunting.
+
 ---
 
 ## 4. Layout

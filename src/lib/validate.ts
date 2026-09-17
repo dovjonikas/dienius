@@ -234,7 +234,12 @@ const FROM_BLOCK = record({
   mealType: optional(oneOf(MEAL_TYPES)),
 })
 
-const FROM_ROUTINE = record({ time: optional(clockTime), minutes: wholeNumber(0, 1440) })
+const FROM_ROUTINE = record({
+  title: optional(text(1, ROUTINE_LIMITS.title)),
+  time: optional(clockTime),
+  minutes: wholeNumber(0, 1440),
+  category: categoryRef,
+})
 
 const TASK = record({
   id: string,
