@@ -113,10 +113,13 @@ test('the page shows everything at rest with Edit beside its name, and on the da
   })
   expect(Math.abs(editWordRight - (column!.x + column!.width))).toBeLessThanOrEqual(2)
 
-  // Each heading on a card of its own, with more room over the heading, from
-  // the card's edge, than between it and its lines - measured letter to
-  // letter. On a wide window the cards stand abreast; on a phone, one under
-  // another.
+  // Each heading on a card of its own, with more room over the heading than
+  // between it and its lines - measured letter to letter. On a wide window
+  // the cards stand abreast and the room over a heading is its own card's,
+  // from the edge; on a phone they stand one under another and it is the
+  // room from the last line of the card above, which is what the eye reads
+  // there. Within a phone's card the edge and the lines are too close to
+  // call on every font, and on Linux's they came out level.
   const air = await page.evaluate(() => {
     const ink = (el: Element) => {
       const range = document.createRange()
@@ -126,10 +129,12 @@ test('the page shows everything at rest with Edit beside its name, and on the da
     }
     const [first, second] = [...document.querySelectorAll('.north-section')]
     const heading = ink(second.querySelector('.north-heading')!)
+    const abreast = Math.abs(first.getBoundingClientRect().top - second.getBoundingClientRect().top) < 1
+    const above = first.querySelectorAll('.north-paragraph')
     return {
-      over: heading.top - second.getBoundingClientRect().top,
+      over: abreast ? heading.top - second.getBoundingClientRect().top : heading.top - ink(above[above.length - 1]).bottom,
       under: ink(second.querySelector('.north-paragraph')!).top - heading.bottom,
-      abreast: Math.abs(first.getBoundingClientRect().top - second.getBoundingClientRect().top) < 1,
+      abreast,
     }
   })
   expect(air.over).toBeGreaterThan(air.under)
