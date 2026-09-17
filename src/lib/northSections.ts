@@ -1,22 +1,31 @@
+import {
+  headingLineKinds,
+  isHeading,
+  isSignatureMark,
+  parseHeadings,
+  splitHeading,
+  tagAt,
+  type HeadedLineKind,
+  type HeadingRules,
+} from './headings'
+
 /**
- * North's text, read for display: which lines are headings, and what each
- * heading holds.
+ * North's text, read for display: which lines are headings, what each
+ * heading holds, and the signature.
  *
- * The rule is the owner's and has no control behind it: a line written in
- * capitals is a heading, and everything under it up to the next heading is
- * its text. A blank line does not end a heading. It parts the text under it
- * into paragraphs, which is what a blank line means in anything a person
- * writes, and the heading still owns the paragraph after it. There is no
- * button for bold, no syntax to learn and nothing to get wrong - typing in
- * capitals is the formatting, and a text with no capitals-only line in it
- * has no headings at all.
+ * The capitals rule is the owner's and is not North's alone: a line written
+ * in capitals is a heading, and everything under it up to the next heading
+ * is its text, blank lines and all. Since v2.27 it lives in lib/headings.ts,
+ * where a recipe reads by the same function - this module is what North adds
+ * to it, and the names North's screens have always called.
  *
- * One more line means something, and only one: a line of three hyphens and
- * nothing else ends the headings, and everything after it is the signature -
- * the words a letter ends on, shown whole at the foot of the page and never
- * folded under a heading. After it nothing is a heading, capitals or not, and
- * a second such line is a line of the signature. It is the one piece of
- * syntax, and it is the one a person already writes above a signature.
+ * One more line means something to North, and only one: a line of three
+ * hyphens and nothing else ends the headings, and everything after it is the
+ * signature - the words a letter ends on, shown whole at the foot of the page
+ * and never folded under a heading. After it nothing is a heading, capitals
+ * or not, and a second such line is a line of the signature. It is the one
+ * piece of syntax, and it is the one a person already writes above a
+ * signature.
  *
  * Until v2.24 a blank line ended a heading, and whatever followed it was
  * free text shown beside the headings. That made a second paragraph under a
@@ -46,6 +55,9 @@ export type NorthTag = 'morning' | 'evening'
 
 /** A tag at the very end of a line, in either case, spaces around it aside. */
 const NORTH_TAG = /\s*\[(morning|evening)\]\s*$/i
+
+/** What North adds to the capitals rule: its two tags and its signature. */
+export const NORTH_RULES: HeadingRules = { tag: NORTH_TAG, signature: true }
 
 /** One heading and everything under it, to the next heading or the signature. */
 export interface NorthSection {
@@ -82,10 +94,7 @@ export interface NorthReading {
  * one. The words are trimmed; a line that is only a tag has no words.
  */
 export function splitNorthHeading(line: string): { heading: string; tag?: NorthTag } {
-  const t = line.trim()
-  const found = NORTH_TAG.exec(t)
-  if (!found) return { heading: t }
-  return { heading: t.slice(0, found.index).trim(), tag: found[1].toLowerCase() as NorthTag }
+  return splitHeading(line, NORTH_RULES) as { heading: string; tag?: NorthTag }
 }
 
 /**
@@ -95,26 +104,16 @@ export function splitNorthHeading(line: string): { heading: string; tag?: NorthT
  * counts in the line untrimmed.
  */
 export function northTagAt(line: string): number {
-  if (!isNorthHeading(line)) return -1
-  return line.search(NORTH_TAG)
+  return tagAt(line, NORTH_RULES)
 }
 
 /**
- * Whether a line is a heading: it has at least one letter, and every letter
- * in it is a capital. Digits and punctuation are neither here nor there,
- * so "PLAN 2026" is a heading and "2026" is not; and a lowercase letter
- * anywhere means an ordinary line, so "Not THIS" is text. Compared through
- * the string's own case mapping, so a capital with a diacritic counts the
- * same as a plain one.
- *
- * A tag at the end is not part of the question - "A HEADING [morning]" is a
- * heading, in capitals, that ends on a tag - and a line that is only a tag
- * is text.
+ * Whether a line is a heading - lib/headings.ts has the rule. A tag at the
+ * end is not part of the question - "A HEADING [morning]" is a heading, in
+ * capitals, that ends on a tag - and a line that is only a tag is text.
  */
 export function isNorthHeading(line: string): boolean {
-  const t = splitNorthHeading(line).heading
-  if (!t) return false
-  return t === t.toUpperCase() && t !== t.toLowerCase()
+  return isHeading(line, NORTH_RULES)
 }
 
 /**
@@ -123,56 +122,19 @@ export function isNorthHeading(line: string): boolean {
  * after them, are text.
  */
 export function isNorthSignatureMark(line: string): boolean {
-  return line.trim() === '---'
+  return isSignatureMark(line)
 }
 
 /**
- * The text as an introduction, its headings and its signature. Lines are
- * read trimmed, and a line of spaces is a blank line.
- *
- * Paragraphs are gathered line by line and closed by a blank line, by a
- * heading, or by the end of the text - so a blank line beside a heading, or
- * two blank lines in a row, close nothing that is open and make no empty
- * paragraph.
+ * The text as an introduction, its headings and its signature, by the
+ * shared parser with North's rules.
  */
 export function parseNorth(text: string): NorthReading {
-  const intro: string[] = []
-  const sections: NorthSection[] = []
-  const signature: string[] = []
-  let paragraphs = intro
-  let lines: string[] = []
-  let signing = false
-
-  function closeParagraph() {
-    if (lines.length === 0) return
-    paragraphs.push(lines.join('\n'))
-    lines = []
-  }
-
-  for (const raw of text.split('\n')) {
-    const line = raw.trim()
-    if (!line) {
-      closeParagraph()
-    } else if (!signing && isNorthSignatureMark(line)) {
-      closeParagraph()
-      signing = true
-      paragraphs = signature
-    } else if (!signing && isNorthHeading(line)) {
-      closeParagraph()
-      const { heading, tag } = splitNorthHeading(line)
-      const section: NorthSection = tag ? { heading, tag, paragraphs: [] } : { heading, paragraphs: [] }
-      sections.push(section)
-      paragraphs = section.paragraphs
-    } else {
-      lines.push(line)
-    }
-  }
-  closeParagraph()
-  return { intro, sections, signature }
+  return parseHeadings(text, NORTH_RULES) as NorthReading
 }
 
 /** What a line of the text is read as - see `northLineKinds`. */
-export type NorthLineKind = 'heading' | 'mark' | 'text'
+export type NorthLineKind = HeadedLineKind
 
 /**
  * Every line of the text, in order, as the page will read it: a heading, the
@@ -181,13 +143,5 @@ export type NorthLineKind = 'heading' | 'mark' | 'text'
  * capitals - after the mark, capitals are the signature's.
  */
 export function northLineKinds(text: string): NorthLineKind[] {
-  let signing = false
-  return text.split('\n').map(line => {
-    if (signing) return 'text'
-    if (isNorthSignatureMark(line)) {
-      signing = true
-      return 'mark'
-    }
-    return isNorthHeading(line) ? 'heading' : 'text'
-  })
+  return headingLineKinds(text, NORTH_RULES)
 }

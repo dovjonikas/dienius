@@ -272,6 +272,9 @@ src/
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
     kitchen.ts         recipes: the words for the meals, and what a form's input becomes when saved
+    headings.ts        the capitals rule and its one parser, for North's text and a recipe's
+    northSections.ts   what North adds to it: the two tags and the signature
+    recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape

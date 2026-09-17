@@ -53,6 +53,27 @@ from before Kitchen, stamps and tombstones, two merges, the syncable shape,
 the summary) and `store/kitchen.store.test.ts` (saving, the optional fields,
 an edit, cooking, removing).
 
+### Stage 2 - one parser for North and a recipe: done
+
+- **`lib/headings.ts`** holds the capitals rule and the one parser,
+  `parseHeadings(text, rules)`, with its line kinds, heading test, tag and
+  mark. The rules are what a kind of text adds: a tag pattern and a
+  signature. Without them a line of `---` is text and brackets are words.
+- **North** (`lib/northSections.ts`) is now its rules on top -
+  `NORTH_RULES`, the two tags and the signature - and the names its screens
+  call, each one line into the shared parser. No North test changed.
+- **A recipe** (`lib/recipeText.ts`): `readRecipe` reads the text by the
+  same parser with no rules, and turns a heading of INGREDIENTS into a list
+  and one of STEPS into steps - one item a line, a pasted bullet or step
+  number taken off, with or without a colon after the heading, the whole
+  heading only. Other headings stand over their paragraphs, every part in
+  its written place, and a text with no heading reads as typed.
+  `recipeIngredients` and `recipeSteps` gather every list for Cook.
+
+New tests: `headings.test.ts` (the rule with no rules, North's rules, and
+North and a recipe finding the same headings in the same texts) and
+`recipeText.test.ts`.
+
 ## v2.26 - North that holds the eye
 
 Asked for the night v2.25's last stage ran, and begun when it closed, with
