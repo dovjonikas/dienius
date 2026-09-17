@@ -146,7 +146,8 @@ Template.dayKind?: { letter: string; order: number }
 ```
 
 - `letter` is what the roster draws on a date - one or two characters, `R`,
-  `D`, `N`, `A` - in the template's own colour.
+  `D`, `N`, `A` - in the template's own colour, kept in capitals so it reads
+  at a glance (`cleanLetter`).
 - `order` is the kind's place in the cycle a tap walks through.
 - Only a day template can be a kind. A week template carrying the field is data
   out of place and is not offered as a kind, the way every other field out of
@@ -197,7 +198,7 @@ interface Routine extends Timestamped {
   id: string
   title: string
   category?: CategoryId
-  minutes: number                  // its length, 5 to 720
+  minutes: number                  // its length, 1 to 720
   weekdays: number[]               // 0 = Sunday ... 6 = Saturday, at least one
   times: Record<string, string>    // kind template id -> 'HH:MM'
 }
@@ -240,9 +241,10 @@ every kind template: the gym on Monday, Wednesday and Friday would be the same
 block written into four templates, with four copies of its title to keep in
 step, and a template has no weekdays.
 
-**`isRoutine` in `taskIdentity.ts`** today means "has an identity" (a template
-block or a repeat). Stage 2 renames it `hasIdentity` before the word means
-something else.
+**`isRoutine` in `taskIdentity.ts`** meant "has an identity" (a template block
+or a repeat). Stage 2 renamed it `hasIdentity` before the word could mean
+something else; a routine's task has an identity too, so replan leaves it
+where it is and an interruption drops it for the day, as it does a block.
 
 ### 2.4 A date's composition
 

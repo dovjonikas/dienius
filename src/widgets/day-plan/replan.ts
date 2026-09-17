@@ -1,7 +1,7 @@
 import type { AppData, DayPlan, Task } from '../../lib/types'
 import type { CategoryId } from '../../lib/categories'
 import { addDays } from '../../lib/dates'
-import { dayHas, isRoutine } from '../../lib/taskIdentity'
+import { dayHas, hasIdentity } from '../../lib/taskIdentity'
 import { DEFAULT_TITLE } from './interrupt'
 import { clipToWindow, gapsInWindow, isAnchor, mergeIntervals, timeToMinutes, type Gap, type Interval } from './capacity'
 import { formatClock } from './timelineLayout'
@@ -134,7 +134,7 @@ function titleList(tasks: Task[]): string {
 export function findConflicts(tasks: Task[], interruption: Interruption): Task[] {
   const end = interruption.minutes === undefined ? Number.POSITIVE_INFINITY : interruption.start + interruption.minutes
   return tasks
-    .filter(t => !t.done && isAnchor(t) && !isRoutine(t))
+    .filter(t => !t.done && isAnchor(t) && !hasIdentity(t))
     .filter(t => startOf(t) < end && endOf(t) > interruption.start)
     .sort((a, b) => startOf(a) - startOf(b))
 }
@@ -208,7 +208,7 @@ function pack(tasks: Task[], gaps: Gap[], day: Task[] = []): { placed: { taskId:
  */
 export function routineOf(tasks: Task[], interruption: Interruption): Task[] {
   const end = interruption.minutes === undefined ? Number.POSITIVE_INFINITY : interruption.start + interruption.minutes
-  return tasks.filter(t => !t.done && isAnchor(t) && isRoutine(t) && startOf(t) < end && endOf(t) > interruption.start)
+  return tasks.filter(t => !t.done && isAnchor(t) && hasIdentity(t) && startOf(t) < end && endOf(t) > interruption.start)
 }
 
 export function planInterrupt(
@@ -338,7 +338,7 @@ export function describeDelta(delta: number): string {
  * used to fit a missed Standup into the evening because the evening was
  * free, which was honest arithmetic and a silly plan: nobody does a standup
  * at eight at night, and the whole point of the rescue is producing a plan
- * somebody believes. What makes a task routine is `isRoutine` - it came from
+ * somebody believes. What makes a task routine is `hasIdentity` - it came from
  * a template or a repeat, which means it has a slot in the shape of the day
  * rather than a job that needs doing at some point - and it is the same
  * judgment the rollover button already makes when it declines to push a
@@ -354,8 +354,8 @@ export function describeDelta(delta: number): string {
 export function planRescue(tasks: Task[], nowMinutes: number, window: Interval, busy: Interval[] = []): ReplanPlan {
   const open = tasks.filter(t => !t.done)
   const passed = open.filter(t => isAnchor(t) && startOf(t) < nowMinutes)
-  const passedRoutine = passed.filter(isRoutine)
-  const passedOneOffs = passed.filter(t => !isRoutine(t))
+  const passedRoutine = passed.filter(hasIdentity)
+  const passedOneOffs = passed.filter(t => !hasIdentity(t))
   const floats = open.filter(t => !isAnchor(t))
   const upcoming = open.filter(t => isAnchor(t) && startOf(t) >= nowMinutes)
   const candidates = byPriority([...passedOneOffs, ...floats])

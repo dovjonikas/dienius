@@ -152,6 +152,7 @@ export function defaultData(): AppData {
     // hand the module's own list to a store that then edits it in place.
     categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
     recipes: [],
+    routines: [],
   }
 }
 
@@ -252,6 +253,8 @@ function normalizeLoaded(data: StoredAppData): AppData {
     // Kitchen, since v2.27: a backup from before it has no recipes, which is
     // what an absent list means.
     recipes: data.recipes ?? [],
+    // Rotating shifts, since v2.29: a backup from before them has no routines.
+    routines: data.routines ?? [],
     settings: {
       // Spread first, then normalise. Listing every field by name meant an
       // optional one added later was silently dropped on load: the value was

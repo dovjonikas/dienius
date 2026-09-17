@@ -7,7 +7,7 @@ import type { ReplanMode } from '../../lib/replanState'
 import { todayKey } from '../../lib/dates'
 import { columnFor } from '../../lib/stamping'
 import { busyIntervals, useCalendarCache } from '../../lib/calendars'
-import { isRoutine } from '../../lib/taskIdentity'
+import { hasIdentity } from '../../lib/taskIdentity'
 import { usePointerCoarse } from '../../lib/viewport'
 import { formatDuration, parseTimeInput, timeToMinutes, windowFor, type Interval } from './capacity'
 import { currentMinutes, formatClock } from './timelineLayout'
@@ -573,7 +573,7 @@ function Interrupt({ initialDate, today, nowMinutes, contextFor, onAccept, onBac
               {conflicts.map(task => {
                 const choice = allChoices[task.id] ?? 'squeeze'
                 const move = plan.moves.find(m => m.taskId === task.id)
-                const routine = isRoutine(task)
+                const routine = hasIdentity(task)
                 // "Gaps" with "tomorrow" beside it read as a contradiction;
                 // it is not one, there was simply no gap left. Say that.
                 const outcome =

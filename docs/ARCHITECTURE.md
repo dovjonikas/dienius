@@ -36,14 +36,16 @@ explaining what absent means, because absent is a real state almost everywhere.
 
 ```
 AppData
-├── templates: Template[]        a named, coloured set of blocks
+├── templates: Template[]        a named, coloured set of blocks; dayKind? marks
+│   │                            a day template as a kind on the roster
 │   └── blocks: TemplateBlock[]  time?, title, minutes?, core?, category?,
 │                                unbounded?, libraryListId?
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
-│       │                        repeatSkips?, autoApplied?, away?,
-│       │                        bestMoment?, replannedOn?, journal?
-│       └── tasks: Task[]        the one type most of the app is about
+│       │                        repeatSkips?, routineSkips?, autoApplied?,
+│       │                        away?, bestMoment?, replannedOn?, journal?
+│       └── tasks: Task[]        the one type most of the app is about;
+│                                routineId? and fromRoutine? on a routine's task
 ├── library: LibraryList[]       name + unit + items, colour?
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
 │                                track? (pages/movie/series), pace?, season?
@@ -52,6 +54,8 @@ AppData
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
 ├── recipes: Recipe[]            Kitchen: title + one text, meal types?, macros?,
 │                                servings?, minutes?, cooked? - never summed
+├── routines: Routine[]          rotating shifts: title, minutes, weekdays and a
+│                                time per kind of day - docs/RESEARCH-SHIFTS.md
 ├── ifThens: IfThenEntry[]       the rules under goals; retired and kept with them - see §6
 ├── backlog: LaterItem[]         Later: something to do on no day, in the owner's order
 │                                (the field keeps its wire name - see section 7)
@@ -235,6 +239,7 @@ src/
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
       categories.ts    the category list, and the delete that moves what it would orphan
       kitchen.ts       recipes: written, rewritten, cooked once more, let go
+      shifts.ts        kinds of day marked on templates, and routines written, changed, removed
       lifecycle.ts     import, snapshot restore, the tour's two endings
     later.ts           the fold: an older payload's inbox into the top of Later, once, with tombstones
     planReading.ts     where the plan and the week disagreed: one line of facts per template block
@@ -277,6 +282,8 @@ src/
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
+    dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
+    routines.ts        rotating shifts: a routine as it is kept
     northFold.ts       whether North's headings are folded on the day, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
     useRestoreFocus.ts hands focus back to whatever opened a sheet, panel or popover

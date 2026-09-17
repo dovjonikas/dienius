@@ -38,7 +38,17 @@ function withoutComments(text: string): string {
  * the load step and its one migration, and sync - the data, and nothing
  * that shows it.
  */
-const DATA_LAYER = ['lib/types.ts', 'lib/validate.ts', 'lib/storage.ts', 'lib/syncEntities.ts', 'lib/syncMerge.ts', 'lib/north.ts']
+const DATA_LAYER = [
+  'lib/types.ts',
+  'lib/validate.ts',
+  'lib/storage.ts',
+  'lib/syncEntities.ts',
+  'lib/syncMerge.ts',
+  'lib/north.ts',
+  // v2.28's validation, frozen for rotating shifts' older-device test: it is
+  // the data layer's own tables as they were, goals and rules included.
+  'lib/fixtures/validate-v2.28.ts',
+]
 
 test('nothing outside the data layer reads a goal or a rule', () => {
   const readers = FILES.filter(f => !DATA_LAYER.includes(f.path))

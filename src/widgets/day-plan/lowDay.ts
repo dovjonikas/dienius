@@ -1,6 +1,6 @@
 import type { AppData, DayPlan, Task } from '../../lib/types'
 import { addDays } from '../../lib/dates'
-import { dayHas, isRoutine } from '../../lib/taskIdentity'
+import { dayHas, hasIdentity } from '../../lib/taskIdentity'
 import { formatDuration } from './capacity'
 
 /**
@@ -67,8 +67,8 @@ export function planLowDay(tasks: Task[]): LowDayPlan {
   // Key wins over routine: a standup marked key is the standup that matters
   // today, and it is kept and cut like any other key task.
   const key = open.filter(t => t.highlight)
-  const routine = open.filter(t => !t.highlight && isRoutine(t))
-  const rest = open.filter(t => !t.highlight && !isRoutine(t))
+  const routine = open.filter(t => !t.highlight && hasIdentity(t))
+  const rest = open.filter(t => !t.highlight && !hasIdentity(t))
 
   const keep: LowDayKeep[] = key.map(t =>
     t.minutes === undefined ? { taskId: t.id } : { taskId: t.id, minutes: lowDayMinutes(t.minutes), wasMinutes: t.minutes },

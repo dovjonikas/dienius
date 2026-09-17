@@ -1,4 +1,4 @@
-import { MEAL_TYPES, RECIPE_LIMITS, type DayPlan, type IfThenEntry, type Settings, type SleepProfile, type SleepWindow, type Template, type ThemeState } from './types'
+import { MEAL_TYPES, RECIPE_LIMITS, ROUTINE_LIMITS, type DayPlan, type IfThenEntry, type Settings, type SleepProfile, type SleepWindow, type Template, type ThemeState } from './types'
 
 /**
  * The shape a stored payload has to have before any of it is trusted.
@@ -234,6 +234,8 @@ const FROM_BLOCK = record({
   mealType: optional(oneOf(MEAL_TYPES)),
 })
 
+const FROM_ROUTINE = record({ time: optional(clockTime), minutes: wholeNumber(0, 1440) })
+
 const TASK = record({
   id: string,
   title: string,
@@ -254,6 +256,11 @@ const TASK = record({
   // dangle like every other; the meal has to be one Kitchen has.
   recipeId: optional(string),
   mealType: optional(oneOf(MEAL_TYPES)),
+  // A routine's task - rotating shifts, since v2.29. The id may dangle like
+  // every other; what the rule gave is a time on the clock or none, and a
+  // length.
+  routineId: optional(string),
+  fromRoutine: optional(FROM_ROUTINE),
   note: optional(string),
   templateNote: optional(string),
   fromBlock: optional(FROM_BLOCK),
@@ -308,6 +315,10 @@ const TEMPLATE_BLOCK = record({
   groupId: optional(string),
 })
 
+// A day template marked as a kind of day on the roster - rotating shifts,
+// since v2.29: a letter of one or two characters, and a whole-number order.
+const DAY_KIND_MARK = record({ letter: text(1, ROUTINE_LIMITS.letter), order: wholeNumber(0) })
+
 const WEEK_DAY_OVERRIDE = record({
   type: optional(oneOf(DAY_TYPES)),
   sleepProfileId: optional(string),
@@ -327,6 +338,7 @@ const TEMPLATE = record({
   kind: optional(oneOf(TEMPLATE_KINDS)),
   weekDays: optional(mapOf(k => typeof k === 'string' && /^[0-6]$/.test(k), WEEK_DAY_OVERRIDE)),
   sleepProfileId: optional(string),
+  dayKind: optional(DAY_KIND_MARK),
   tourCreated: optional(boolean),
 })
 
@@ -347,6 +359,7 @@ const DAY_PLAN = record({
   bestMoment: optional(string),
   dayType: optional(oneOf(DAY_TYPES)),
   repeatSkips: optional(listOf(string)),
+  routineSkips: optional(listOf(string)),
   autoApplied: optional(boolean),
   replannedOn: optional(string),
   // Free text since v2.5. A three-field journal from an older backup still
@@ -445,6 +458,22 @@ const PICTURE = record({ text: string })
 // so a hand-edited file cannot put a figure in a line no layout holds; the
 // grams may carry a decimal and kcal may too in a file, though the form
 // writes it whole. The count of times cooked is a count like any other.
+// Rotating shifts' routines, since v2.29: a title, a length from a minute to
+// twelve hours, each weekday at most once and at least one, and a time on the
+// clock for each kind it names - none at all is a routine still waiting for
+// its times, not a broken one.
+const weekdayList: Check = x =>
+  listOf(wholeNumber(0, 6))(x) && (x as number[]).length > 0 && new Set(x as number[]).size === (x as number[]).length
+
+const ROUTINE = record({
+  id: string,
+  title: text(1, ROUTINE_LIMITS.title),
+  category: categoryRef,
+  minutes: wholeNumber(1, ROUTINE_LIMITS.minutes),
+  weekdays: weekdayList,
+  times: mapOf(text(1, Number.POSITIVE_INFINITY), clockTime),
+})
+
 const RECIPE = record({
   id: string,
   title: string,
@@ -586,9 +615,10 @@ export interface StoredAppData {
   categories?: AppDataLists['categories']
   picture?: import('./types').Picture
   recipes?: AppDataLists['recipes']
+  routines?: AppDataLists['routines']
 }
 
-type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories' | 'recipes'>
+type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories' | 'recipes' | 'routines'>
 
 // Templates, days and settings are required: a payload without them is not
 // a plan. A shape check on those three alone once let {"templates":[{}],
@@ -608,6 +638,7 @@ const STORED_APP_DATA = record({
   categories: optional(listOf(CATEGORY)),
   picture: optional(PICTURE),
   recipes: optional(listOf(RECIPE)),
+  routines: optional(listOf(ROUTINE)),
 })
 
 export function validate(x: unknown): x is StoredAppData {

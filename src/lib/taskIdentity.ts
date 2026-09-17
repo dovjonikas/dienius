@@ -19,6 +19,9 @@ import type { DayPlan, Task, TaskOrigin } from './types'
 
 /** The stable key for a task, or null when it is a one-off. */
 export function identityOf(task: Task): string | null {
+  // A routine's task is known by its routine - rotating shifts, since v2.29.
+  // Its own field rather than an origin, which an older device would refuse.
+  if (task.routineId) return `routine:${task.routineId}:`
   const origin = task.origin
   if (origin && origin.type !== 'manual' && origin.sourceId) {
     return `${origin.type}:${origin.sourceId}:${origin.blockId ?? ''}`
@@ -28,7 +31,17 @@ export function identityOf(task: Task): string | null {
   return null
 }
 
-export function isRoutine(task: Task): boolean {
+/**
+ * Whether a task is one of the things that come back on their own - a
+ * template's block, a repeat's instance, a routine's task - rather than a
+ * one-off. Replan does not move these, an interruption drops them for the day,
+ * and the rollover does not push one tomorrow is getting anyway.
+ *
+ * Called `isRoutine` until v2.29, when rotating shifts gave "routine" a
+ * meaning of its own (`Routine` in types.ts); a routine's task is one of
+ * these, and so is every template block.
+ */
+export function hasIdentity(task: Task): boolean {
   return identityOf(task) !== null
 }
 

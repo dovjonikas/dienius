@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29, in progress - rotating shifts, stage 1 of 10 done.
+**Last updated:** v2.29, in progress - rotating shifts, stage 2 of 10 done.
 
 ## v2.29 - Rotating shifts
 
@@ -49,6 +49,47 @@ template, and a moved-in task stays through another stamp
 (`stamping.test.ts`); a month back and forward is the month it started on
 (`ReviewView.test.tsx`); a copy made just after midnight is today's
 (`cloudBackup.test.ts`).
+
+### Stage 2 - the data: done
+
+- **Recorded first** (`7d38aed`), before any data was touched: a backup a
+  person without shifts has - a week template with weekday overrides, a day
+  template on the weekday map, a stamped day written on, a repeat, a block
+  moved by hand - opened for a month with a range painted and a stamp erased,
+  kept as a golden file every later stage is compared with day by day.
+- **v2.28's validation, frozen** in `src/lib/fixtures/validate-v2.28.ts` with
+  the two constants it read written in: the older device every new field has
+  to get past. The test proves the copy can still say no - a task origin it
+  does not know is refused - which is why a routine's task names its routine in
+  a field of its own.
+- **The fields**: `Template.dayKind` (a letter of one or two characters and a
+  whole-number order), `AppData.routines` (a title, a length from a minute to
+  twelve hours, weekdays each once and at least one, a clock time per kind),
+  `Task.routineId` and `Task.fromRoutine` (what the rule gave: a time or
+  none, and a length), and `DayPlan.routineSkips`. Validated, backfilled on
+  load, synced (`routine:<id>` entities, merged and tombstoned per routine),
+  counted in the restore's summary, carried out and back byte for byte.
+- **A routine's task is known by its routine** (`routine:<id>`), so a day
+  never holds two; `isRoutine` became `hasIdentity`, since a template's
+  block, a repeat's instance and a routine's task are all things that come back
+  on their own.
+- **The helpers** (`dayKinds.ts`): a kind is a day template with a mark, the
+  kinds in order with the name breaking a tie, a date's kind is its stamped
+  kind template, and a tap walks to the next and round, never to none. And
+  `cleanRoutine` with the store's four actions: mark or unmark a kind (a week
+  template is never one), add, change and remove a routine - a routine with no
+  title or no weekday is not written, and a change that would leave none
+  changes nothing.
+
+New tests: the golden month and the old backup's round trip
+(`shiftsMigration.test.ts`); the guard for every new field, the file, v2.28's
+validation accepting all of it and still refusing an unknown origin, a
+routine's identity, routines as sync entities, a kind mark travelling with its
+template, and the summary's Routines row (`shifts.data.test.ts`); kinds, the
+tap's walk, a routine as it is kept, and the store's actions
+(`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
+`taskIdentity.test.ts`, and the goal readers' search counts the frozen
+validation as the data layer's own (`goalsRetired.test.ts`).
 
 ## v2.28 - North is one text
 

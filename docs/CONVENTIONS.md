@@ -685,8 +685,8 @@ week, and five more rules came with it:
   interruption lands on and where each block goes - before anybody says
   anything. A row is pressed to say otherwise, never to say yes. If a change
   makes the proposal wait for a choice, it is wrong.
-- **A routine block is skipped, a one-off is moved.** A template's or a
-  repeat's block (`isRoutine`) taken by the interruption is dropped for that
+- **A routine block is skipped, a one-off is moved.** A template's block, a
+  repeat's instance or a routine's task (`hasIdentity`) taken by the interruption is dropped for that
   day and the summary says "Skipped", because the template makes it again;
   a task somebody typed is fitted into a gap, key tasks first, or sent on to
   the next day. A one-off the person chooses to let go of reads "Dropped".

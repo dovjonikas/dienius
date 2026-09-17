@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { actions, getData } from './store'
 import { STORAGE_KEY, defaultData, loadData } from './storage'
-import { addWithoutDuplicates, dedupeTasks, identityOf, isRoutine } from './taskIdentity'
+import { addWithoutDuplicates, dedupeTasks, identityOf, hasIdentity } from './taskIdentity'
 import { addDays, todayKey } from './dates'
 import { weekdayOf } from './repeats'
 import type { Task } from './types'
@@ -63,7 +63,7 @@ test('two blocks of one template are not the same task', () => {
 test('a manual task is the same as nothing, including another with its name', () => {
   expect(identityOf(task({ origin: { type: 'manual' } }))).toBeNull()
   expect(identityOf(task())).toBeNull()
-  expect(isRoutine(task({ origin: { type: 'manual' } }))).toBe(false)
+  expect(hasIdentity(task({ origin: { type: 'manual' } }))).toBe(false)
 })
 
 test('a repeat instance written before origins existed still knows its series', () => {

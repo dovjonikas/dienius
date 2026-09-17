@@ -104,6 +104,8 @@ export interface StateSummary {
   later: number
   /** Kitchen's recipes. */
   recipes: number
+  /** Rotating shifts' routines. */
+  routines: number
   /** The latest date key with anything on it, or null on an empty plan. */
   newest: string | null
 }
@@ -413,6 +415,7 @@ export function summarise(data: AppData): StateSummary {
     categories: data.categories.length,
     later: data.backlog.length,
     recipes: data.recipes.length,
+    routines: data.routines.length,
     newest: dates.at(-1) ?? null,
   }
 }
@@ -450,6 +453,7 @@ export function compareSummaries(here: StateSummary, cloud: StateSummary): Summa
     row('Categories', 'categories', false),
     row('Later', 'later'),
     row('Recipes', 'recipes'),
+    row('Routines', 'routines'),
   ]
 }
 

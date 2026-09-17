@@ -4,7 +4,7 @@ import type { DayPlan, LibraryRef, MealType, Repeat, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
 import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
-import { addWithoutDuplicates, dayHas, isRoutine, willReceive } from '../taskIdentity'
+import { addWithoutDuplicates, dayHas, hasIdentity, willReceive } from '../taskIdentity'
 import { ensuredDay } from '../ensureDay'
 import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
@@ -380,7 +380,7 @@ export const dayActions = {
     // opened, whatever else is on it. So does the source itself, for the
     // same reason - see sourceCovers.
     const covered = unfinished.filter(
-      t => (isRoutine(t) && (t.repeatOf !== undefined || willReceive(target, t, mapped))) || sourceCovers(t, date, targetDate),
+      t => (hasIdentity(t) && (t.repeatOf !== undefined || willReceive(target, t, mapped))) || sourceCovers(t, date, targetDate),
     )
     const coveredIds = new Set(covered.map(t => t.id))
     const candidates = unfinished.filter(t => !coveredIds.has(t.id))

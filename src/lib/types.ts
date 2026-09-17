@@ -203,12 +203,67 @@ export interface Template extends Timestamped {
    */
   type?: DayType
   /**
+   * Marks a day template as a kind of day on the roster - rotating shifts,
+   * since v2.29; see `DayKindMark`. Absent is an ordinary template, which is
+   * every template there has ever been.
+   */
+  dayKind?: DayKindMark
+  /**
    * Made by the tour. "Start clean" at the end of it removes exactly the
    * entities carrying this, and "Keep what I built" strips it, so it is only
    * ever present while the question is still open. See lib/tour.ts.
    */
   tourCreated?: boolean
 }
+
+/**
+ * What makes a day template a kind of day - rotating shifts, since v2.29, and
+ * docs/RESEARCH-SHIFTS.md section 2.1. Rest, day shift, night shift and after
+ * nights are templates the owner already builds; the mark gives one the letter
+ * the roster draws on a date and its place in the cycle a tap walks through.
+ * The roster itself is the stamps: a date's kind is the kind template stamped
+ * on it, and nothing else holds it.
+ *
+ * Only a day template can be one. A week template carrying the mark is data
+ * out of place, read as no kind - see `isDayKind` in lib/dayKinds.ts.
+ */
+export interface DayKindMark {
+  /** One or two characters, drawn on a date in the template's colour. */
+  letter: string
+  /** The kind's place in the cycle, from nought; ties fall back to the name. */
+  order: number
+}
+
+/**
+ * A commitment written once - rotating shifts, since v2.29, and
+ * docs/RESEARCH-SHIFTS.md section 2.3. On a date whose kind is a template in
+ * `times` and whose weekday is in `weekdays`, it puts one real task on the
+ * day at that kind's time; with no time for the kind, or a time that runs into
+ * the kind's shift or sleep, the task has no time and the day says why. It
+ * never guesses a time, and it does nothing on a date with no kind.
+ *
+ * A top-level list, one sync entity per routine, for the reason every list the
+ * person writes is one: CONVENTIONS 7.
+ */
+export interface Routine extends Timestamped {
+  id: string
+  title: string
+  category?: CategoryId
+  /** Its length in minutes, 1 to `ROUTINE_LIMITS.minutes`. */
+  minutes: number
+  /** The weekdays it is on, 0 = Sunday to 6 = Saturday, at least one, each once. */
+  weekdays: number[]
+  /** Its time on each kind, by kind template id. A kind with none here needs a time. */
+  times: Record<string, string>
+}
+
+/** How large a routine may be before a file carrying it is not somebody's routine. */
+export const ROUTINE_LIMITS = {
+  title: 120,
+  /** Twelve hours: a routine longer than half a day is a kind of day, not a routine. */
+  minutes: 720,
+  letter: 2,
+} as const
 
 export interface Task extends Timestamped {
   id: string
@@ -344,6 +399,22 @@ export interface Task extends Timestamped {
   recipeId?: string
   /** The kind of meal it is, to choose a recipe for on the day - see `TemplateBlock.mealType`. */
   mealType?: MealType
+  /**
+   * The routine this task is the day's instance of - rotating shifts, since
+   * v2.29. Its identity is `routine:<id>` (see `identityOf`), so a day never
+   * holds two of one routine. Deliberately a field of its own and not a task
+   * origin: an origin of `routine` would fail an older device's validation and
+   * open it empty (docs/RESEARCH-SHIFTS.md section 1.4). A routine that no
+   * longer exists leaves an ordinary task.
+   */
+  routineId?: string
+  /**
+   * What the routine's rule gave this task when it was placed: its time (absent
+   * when it placed the task with none) and its length. The echo that tells a
+   * task still as the rule left it from one somebody moved - the same job
+   * `fromBlock` does for a template's blocks.
+   */
+  fromRoutine?: { time?: string; minutes: number }
   /**
    * Free text the owner attached to this task - see the task detail sheet -
    * or, on a task a template stamped, what the block had to say. Absent and
@@ -676,6 +747,14 @@ export interface DayPlan extends Timestamped {
    * means nothing was skipped, which is nearly every day.
    */
   repeatSkips?: string[]
+  /**
+   * Routines this day has been told not to carry - the ids of routines whose
+   * task here was deleted by hand. The same tombstone `repeatSkips` is, for
+   * the same reason: placing routines is idempotent and runs again whenever
+   * the roster is applied, and without a record a deleted gym session would
+   * come straight back. Absent means nothing was skipped.
+   */
+  routineSkips?: string[]
   /**
    * True once this day has been through `ensureDay` - the one pass that
    * applies the weekday template map and generates repeats.
@@ -1331,6 +1410,11 @@ export interface AppData {
    * written before Kitchen existed and the shipped state.
    */
   recipes: Recipe[]
+  /**
+   * Rotating shifts' routines, since v2.29 - see `Routine`. Backfilled to
+   * empty, which is every backup written before them and the shipped state.
+   */
+  routines: Routine[]
   /**
    * When each synced settings field last changed - see `SYNCED_SETTINGS`. A
    * map rather than a field on `Settings`, because a boolean has nowhere to

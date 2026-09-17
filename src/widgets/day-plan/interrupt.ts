@@ -1,5 +1,5 @@
 import { addDays, shortWeekday } from '../../lib/dates'
-import { isRoutine } from '../../lib/taskIdentity'
+import { hasIdentity } from '../../lib/taskIdentity'
 import type { Task } from '../../lib/types'
 import type { Interval } from './capacity'
 import type { ConflictChoice, DayWords } from './replan'
@@ -132,7 +132,7 @@ export function dayWordsFor(date: string, today: string): DayWords {
 
 /**
  * What the sheet proposes for each block in the way, before anybody says
- * anything: a routine block - a template's or a repeat's, see `isRoutine` -
+ * anything: a routine block - a template's or a repeat's, see `hasIdentity` -
  * is skipped for the day, because the template makes it again wherever it
  * belongs and moving it would put a commute at nine in the evening; every
  * one-off is fitted into the gaps, key tasks first, which is what
@@ -140,5 +140,5 @@ export function dayWordsFor(date: string, today: string): DayWords {
  * an entry, so this is exactly the record of what is not the default.
  */
 export function defaultChoices(conflicts: Task[]): Record<string, ConflictChoice> {
-  return Object.fromEntries(conflicts.filter(isRoutine).map(t => [t.id, 'drop' as const]))
+  return Object.fromEntries(conflicts.filter(hasIdentity).map(t => [t.id, 'drop' as const]))
 }

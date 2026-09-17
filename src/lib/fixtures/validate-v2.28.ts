@@ -1,0 +1,633 @@
+/**
+ * The validation tables exactly as v2.28 shipped them, copied from
+ * validate.ts at 4e02c1c - its last change before rotating shifts - and never
+ * to be edited. An older device runs these on every plan sync hands it, and
+ * discards a plan that fails them whole: docs/RESEARCH-SHIFTS.md section 1.4.
+ * `olderValidate.test.ts` runs them over a plan with every field this
+ * version adds, so a change that would open an older device empty fails
+ * there first.
+ *
+ * Only the import paths differ from the original, and the two constants it
+ * read from types.ts are written in as they were.
+ */
+import type { DayPlan, IfThenEntry, Settings, SleepProfile, SleepWindow, Template, ThemeState } from '../types'
+
+// The two values v2.28 read from types.ts, frozen here as they were, so a
+// meal type or a limit added later cannot quietly make this older check
+// accept what the real older device refuses.
+const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'pre-gym', 'post-gym', 'snack'] as const
+const RECIPE_LIMITS = { kcal: 100_000, grams: 10_000, servings: 1_000, minutes: 100_000, cooked: 100_000 } as const
+
+/**
+ * The shape a stored payload has to have before any of it is trusted.
+ *
+ * This is the import path for a file a person may have edited, and the
+ * load path for a key any extension on the page can write, so it is a
+ * deep type guard rather than a shape check: every field the app reads is
+ * checked to the value, and a payload that fails anywhere is discarded
+ * whole rather than partly trusted. `loadData` and `importJson` only ever
+ * replace state after this says yes, which is why a bad backup changes
+ * nothing.
+ *
+ * Written as tables, one per entity: a field, and what a value in it may
+ * be. The checks are the small vocabulary at the top - a string, a whole
+ * number in a range, one of a list, a list of, optional - and a table
+ * reads the way `types.ts` reads, field by field, with the same names in
+ * the same order. It used to be a hand-written guard per entity, each a
+ * chain of `typeof` and `&&`, and the one thing that made hard was
+ * answering "is this field checked at all" without reading every line.
+ *
+ * What absent means is documented on the type, in `types.ts`, and what
+ * absent becomes is decided in `normalizeLoaded` in `storage.ts` - some
+ * of those are migrations rather than defaults, and they belong beside the
+ * load rather than in a table about validity. A field marked `optional`
+ * here is one the app reads as "not set"; nothing is ever coerced.
+ *
+ * Every rule that is tighter than the type - a bounded reminder interval,
+ * a real "HH:MM", a hex colour - has its reason beside it, because each
+ * one was a bug or a hole first.
+ */
+
+type Check = (x: unknown) => boolean
+
+// --- the vocabulary -----------------------------------------------------------
+
+const string: Check = x => typeof x === 'string'
+const boolean: Check = x => typeof x === 'boolean'
+
+/** Absent is a state; present must pass. Nothing here ever coerces. */
+const optional = (check: Check): Check => x => x === undefined || check(x)
+
+const listOf = (check: Check): Check => x => {
+  if (!Array.isArray(x)) return false
+  for (const item of x) if (!check(item)) return false
+  return true
+}
+
+const oneOf = (values: readonly string[]): Check => x => typeof x === 'string' && values.includes(x)
+
+/** A whole number in a range: never fractional, never negative unless said so. */
+const wholeNumber = (min: number, max = Number.POSITIVE_INFINITY): Check => x =>
+  typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max
+
+/** Any finite number in a range, fractions included. */
+const amountIn = (min: number, max: number): Check => x =>
+  typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max
+
+/** A string with a length cap - a backup is an untrusted document. */
+const text = (min: number, max: number): Check => x => typeof x === 'string' && x.length >= min && x.length <= max
+
+const matching = (re: RegExp): Check => x => typeof x === 'string' && re.test(x)
+
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === 'object' && x !== null && !Array.isArray(x)
+}
+
+/**
+ * An object whose named fields each pass their check. Fields not named are
+ * not read by the app and ride along untouched, which is what lets a backup
+ * from a newer build load on an older one. `also` is for the rule that is
+ * about the object rather than one field in it.
+ */
+const record = (fields: Record<string, Check>, also?: (x: Record<string, unknown>) => boolean): Check => {
+  // The table is read once, here, not on every value: a twenty-megabyte
+  // backup runs this a few hundred thousand times, and an entries array per
+  // call was the difference between a second and five.
+  const entries = Object.entries(fields)
+  return x => {
+    if (!isRecord(x)) return false
+    for (const [key, check] of entries) if (!check(x[key])) return false
+    return also === undefined || also(x)
+  }
+}
+
+/** An object used as a map: every key and every value checked. */
+const mapOf = (key: Check, value: Check): Check => x =>
+  isRecord(x) && Object.entries(x).every(([k, v]) => key(k) && value(v))
+
+// --- the values with a grammar --------------------------------------------------
+
+// A crafted backup could set Template.color, IfThenEntry.color, or any value
+// inside a ThemeOverrides patch to a CSS url() value. None of these strings
+// are ever built into a "property: value;" text this app writes itself -
+// they only reach the page through CSSStyleDeclaration.setProperty or a
+// React style object, and a live check confirmed both reject a malformed
+// combined declaration. What does work is a single url() value landing
+// somewhere a browser accepts one as a value on its own - a background
+// layer being the confirmed case - which fires a real request and leaks the
+// viewer's IP, user agent and timing to whoever crafted the file.
+// Validating here, at the one place every one of these strings passes
+// through before it is trusted, closes the whole class rather than chasing
+// every render site that happens to use one today.
+//
+// Template.color and IfThenEntry.color are always one of the eight palette
+// values in practice, chosen from a swatch grid with no free-text field
+// anywhere - see colors.ts. Every hex length CSS recognises is accepted (3,
+// 4, 6 or 8 digits) rather than only the 6 the palette uses, so a hand-picked
+// value from an older export is not punished for a shape the UI never needed.
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+const color = matching(HEX_COLOR_RE)
+
+// A real "HH:MM" clock time. Stricter than a bare string, because a
+// malformed sleep-window time does not stay contained to one row - it feeds
+// straight into wakingWindow's arithmetic in capacity.ts, where a NaN from
+// a bad split corrupts the capacity line, every gap and the grid's greyed
+// band for the whole day. Task.time and TemplateBlock.time are a bare
+// string still: a bad one there breaks one card, not the day.
+const TIME_STRING_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+const clockTime = matching(TIME_STRING_RE)
+
+// The 21 keys ThemeTokens in themes.ts actually names, grouped by what a
+// legitimate value looks like - duplicated here rather than imported because
+// this file only needs the shape, not the values, and a hand-maintained list
+// next to its own validator is easier to audit than a cross-module
+// reference. Keep in sync with ThemeTokens in themes.ts.
+const COLOR_TOKEN_KEYS = new Set([
+  'bg', 'surface', 'rule', 'border', 'margin',
+  'text', 'muted', 'accent', 'accentDim', 'mark', 'danger', 'good',
+])
+const DIMENSION_TOKEN_KEYS = new Set(['ruleSize', 'radius', 'edge'])
+const FONT_TOKEN_KEYS = new Set(['fontDisplay', 'fontBody', 'fontMono'])
+
+const DIMENSION_PART_RE = /^-?\d+(?:\.\d+)?(?:px|em|rem|%)$/
+
+// edge alone can be a full CSS border-radius shorthand - four lengths and an
+// optional "/" group for the hand-drawn preset's asymmetric corner (see
+// HAND_DRAWN_EDGE in themes.ts) - so every space- or slash-separated piece
+// is checked as its own plain length. A value built entirely from digits, a
+// decimal point and a known unit can never spell a function call: there is
+// no character left to write a "(" with.
+const dimensionList: Check = x =>
+  typeof x === 'string' && x.length > 0 && x.length <= 100 && x.split(/[\s/]+/).every(part => DIMENSION_PART_RE.test(part))
+
+// grain: "a plain 0-1 number as a string", per ThemeTokens' own doc comment.
+const unitInterval = matching(/^(?:0|1|0?\.\d+)$/)
+
+// vignette: "a css percentage string", per the same.
+const percent = matching(/^\d+(?:\.\d+)?%$/)
+
+// A font stack is letters, digits, spaces, hyphens, apostrophes and commas -
+// "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif" (see
+// SYSTEM_SANS in themes.ts). No parenthesis is ever legitimate in one, so
+// excluding it leaves no way to write a function call.
+const fontStack: Check = x => typeof x === 'string' && x.length > 0 && x.length <= 200 && /^[a-zA-Z0-9 ,'-]+$/.test(x)
+
+// shadow: a real box-shadow, "0 1px 3px rgba(0, 0, 0, 0.06)" or several
+// joined with commas - the one token whose legitimate grammar needs
+// parentheses. Only rgba()/rgb()/hsla()/hsl() calls may carry them: every
+// such call is stripped first, and whatever is left must hold no parenthesis
+// at all, so a url() can hide neither inside a fake function name nor
+// outside one.
+const SHADOW_FUNCTION_RE = /\b(?:rgba|rgb|hsla|hsl)\([\d.\s,%]*\)/gi
+const shadow: Check = x => {
+  if (typeof x !== 'string' || x.length === 0 || x.length > 300) return false
+  const withoutFunctions = x.replace(SHADOW_FUNCTION_RE, '')
+  return !/[(){}]/.test(withoutFunctions) && /^[\d.,#a-zA-Z%\s-]*$/.test(withoutFunctions)
+}
+
+// One value in a ThemeOverrides patch, keyed by which token it claims to
+// override. A key naming none of the 21 - a stale token from an older build,
+// "ruleStyle" (carried in the patch but never written to a custom property,
+// see applyOverrides in theme.ts), a typo - is checked only as a bounded
+// string: applyOverrides ignores any key outside the list, so it never
+// reaches a style attribute whatever it holds.
+function overrideValue(key: string, value: unknown): boolean {
+  if (COLOR_TOKEN_KEYS.has(key)) return color(value)
+  if (DIMENSION_TOKEN_KEYS.has(key)) return dimensionList(value)
+  if (key === 'grain') return unitInterval(value)
+  if (key === 'vignette') return percent(value)
+  if (FONT_TOKEN_KEYS.has(key)) return fontStack(value)
+  if (key === 'shadow') return shadow(value)
+  return typeof value === 'string' && value.length <= 200
+}
+
+const themeOverrides: Check = x => isRecord(x) && Object.entries(x).every(([key, v]) => overrideValue(key, v))
+
+// --- the lists a value may come from ------------------------------------------
+
+const DAY_TYPES = ['full', 'shift', 'night', 'rest'] as const
+const TEMPLATE_KINDS = ['day', 'week'] as const
+const THEME_MODES = ['light', 'dark', 'system'] as const
+const DAY_LAYOUT_FOCUSES = ['both', 'calendar', 'tasks'] as const
+const LIBRARY_TRACKS = ['pages', 'movie', 'series'] as const
+const REPEATS = ['daily', 'weekdays', 'weekly'] as const
+const ORIGIN_TYPES = ['template', 'repeat', 'manual'] as const
+
+// A category id used to be checked by identity against the six the app
+// defined. It cannot be any more, and the loosening is deliberate: once the
+// owner can make a category up, its id comes from crypto.randomUUID() and
+// there is no closed list to check it against. A category id is now exactly
+// what templateId, libraryRef and sleepProfileId already are - an id that
+// may dangle, which every reader already answers as "no category" rather
+// than crashing. What is still checked is that it is a string of a sane
+// length, so a number or an object in that field still fails the payload.
+const categoryRef = optional(text(1, 64))
+
+// A whole number of minutes, never negative. Rejecting a fractional or
+// negative value rather than coercing it keeps a corrupted field from
+// silently poisoning the capacity arithmetic - docs/TIMELINE.md section 4.
+const minutes = wholeNumber(0)
+
+// A count typed by a person, or restored from a file they may have edited:
+// bounded well below anything that could make a progress bar misbehave.
+const count = wholeNumber(0, 100_000)
+
+// --- the entities, field by field ----------------------------------------------
+
+const LIBRARY_REF = record({ listId: string, itemId: string })
+
+const SUBTASK = record({ id: string, title: string, done: boolean, minutes: optional(minutes) })
+
+const ORIGIN = record({ type: oneOf(ORIGIN_TYPES), sourceId: optional(string), blockId: optional(string) })
+
+// What a template block last handed a task - see Task.fromBlock. Every field
+// is optional because a block need not have one, and the whole object is
+// absent on anything written by hand.
+const FROM_BLOCK = record({
+  title: optional(string),
+  time: optional(string),
+  minutes: optional(minutes),
+  category: categoryRef,
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
+})
+
+const TASK = record({
+  id: string,
+  title: string,
+  done: boolean,
+  time: optional(string),
+  fromTemplate: optional(boolean),
+  pushCount: optional(wholeNumber(0)),
+  core: optional(boolean),
+  minutes: optional(minutes),
+  // Held to exactly what `minutes` is held to, and for the stronger reason:
+  // this one is measured rather than typed, so a negative or fractional value
+  // in a file is not somebody's mistake, it is a file that has been edited.
+  actualMinutes: optional(minutes),
+  unbounded: optional(boolean),
+  category: categoryRef,
+  libraryRef: optional(LIBRARY_REF),
+  // A meal's recipe or kind of meal - Kitchen, since v2.27. The id may
+  // dangle like every other; the meal has to be one Kitchen has.
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
+  note: optional(string),
+  templateNote: optional(string),
+  fromBlock: optional(FROM_BLOCK),
+  noteExpanded: optional(boolean),
+  link: optional(string),
+  highlight: optional(boolean),
+  subtasks: optional(listOf(SUBTASK)),
+  repeat: optional(oneOf(REPEATS)),
+  repeatOf: optional(string),
+  origin: optional(ORIGIN),
+  tourCreated: optional(boolean),
+  // These three sat on the backlog item's table until v2.7, where they
+  // checked nothing: a backlog item never carried them. They are Task's -
+  // the note a task was made from, the set-aside flag, the latest start -
+  // and a payload with a set-aside that is not a boolean is exactly the
+  // kind of half-trusted file this guard exists to refuse whole.
+  fromNote: optional(string),
+  setAside: optional(boolean),
+  // A bare string like `time` above, for the same reason: a "9:30" typed by
+  // hand into the latest-start field breaks one placement, not the whole
+  // backup that carries it.
+  latest: optional(string),
+})
+
+// A step on a template block: SUBTASK without `done`, which is the day's to
+// hold rather than the template's.
+const TEMPLATE_STEP = record({ id: string, title: string, minutes: optional(minutes) })
+
+const TEMPLATE_BLOCK = record({
+  id: string,
+  title: string,
+  time: optional(string),
+  core: optional(boolean),
+  minutes: optional(minutes),
+  unbounded: optional(boolean),
+  category: categoryRef,
+  libraryListId: optional(string),
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
+  note: optional(string),
+  noteExpanded: optional(boolean),
+  steps: optional(listOf(TEMPLATE_STEP)),
+  // Deliberately not derived from `core` on import: core counts on a
+  // non-full day type, KEY is the day's three that matter, and merging
+  // them would be a guess about somebody's data.
+  highlight: optional(boolean),
+  // 0 = Sunday through 6 = Saturday, the numbering Date.getDay() uses and
+  // the one WeekdayMap already keys by. Bounded rather than any number,
+  // because a block on weekday 9 is a block that stamps onto nothing and
+  // there is no reading of it that is somebody's real data.
+  weekday: optional(wholeNumber(0, 6)),
+  groupId: optional(string),
+})
+
+const WEEK_DAY_OVERRIDE = record({
+  type: optional(oneOf(DAY_TYPES)),
+  sleepProfileId: optional(string),
+})
+
+const TEMPLATE = record({
+  id: string,
+  name: string,
+  color,
+  blocks: listOf(TEMPLATE_BLOCK),
+  // Absent for a template saved before day types existed; anything but the
+  // four known values - a typo, a future build's value - fails rather than
+  // being coerced into a guess.
+  type: optional(oneOf(DAY_TYPES)),
+  // Absent means a day template, which is every template saved before week
+  // ones existed.
+  kind: optional(oneOf(TEMPLATE_KINDS)),
+  weekDays: optional(mapOf(k => typeof k === 'string' && /^[0-6]$/.test(k), WEEK_DAY_OVERRIDE)),
+  sleepProfileId: optional(string),
+  tourCreated: optional(boolean),
+})
+
+// Three optional lines of text and nothing else. A number or an object in
+// one of them is somebody else's write and fails the payload, the same way
+// a task with a numeric title would.
+const DAY_JOURNAL = record({
+  intent: optional(string),
+  real: optional(string),
+  tomorrow: optional(string),
+})
+
+const DAY_PLAN = record({
+  date: string,
+  templateId: optional(string),
+  sleepProfileId: optional(string),
+  away: optional(string),
+  bestMoment: optional(string),
+  dayType: optional(oneOf(DAY_TYPES)),
+  repeatSkips: optional(listOf(string)),
+  autoApplied: optional(boolean),
+  replannedOn: optional(string),
+  // Free text since v2.5. A three-field journal from an older backup still
+  // validates, because `normalizeLoaded` folds it into one entry on the way
+  // in - see `mergeOldJournal`. Refusing the old shape would mean a v2.3
+  // backup failing to restore, which is the one day a backup has to work.
+  journal: optional(x => typeof x === 'string' || DAY_JOURNAL(x)),
+  lowDay: optional(boolean),
+  tasks: listOf(TASK),
+})
+
+// `dayTypes`, `when` and `lastSurfaced` are not here and that is deliberate.
+// They belonged to the day view's old one-rule-at-a-time surfacing, which is
+// gone in v2.0 along with everything that read them. A payload written before
+// then still carries all three; unnamed fields ride along untouched rather
+// than failing the payload, which is the whole reason these tables name what
+// the app reads instead of everything a stored object may hold.
+const IF_THEN_ENTRY = record({
+  id: string,
+  trigger: string,
+  action: string,
+  // A goal id, or absent for a rule nobody has filed yet. Not checked
+  // against the goal list: a dangling id is not an error anywhere in this
+  // app, and here it simply reads as unassigned.
+  goalId: optional(string),
+})
+
+// Nothing has written one since v2.7, but a backup or a sync payload from
+// before then still carries them, and a file is refused whole when any part
+// of it fails - so the shape stays until no such payload can turn up. What
+// arrives here is folded into Later on the way in; see lib/later.ts.
+const INBOX_ITEM = record({ id: string, text: string, captured: string })
+
+// A label is capped like every other free string in a payload, and required
+// to be non-empty: a category with no name is a swatch nobody can identify,
+// and the editor will not save one either. The colour is optional because
+// absent is a real state - it means the built-in dark/light pair in
+// styles.css for one of the six ids the app ships. Its readability is not
+// checked here: this is the guard on a file's shape, and a hex that is
+// merely hard to read is not a corrupt payload. The editor refuses one at
+// the point somebody picks it, which is where saying so is any use.
+const CATEGORY = record({
+  id: string,
+  label: text(1, 40),
+  color: optional(color),
+})
+
+// A Later item. The list it sits in is still called `backlog` in the file -
+// see `LaterItem` in types.ts for why the wire name did not move.
+const LATER_ITEM = record({
+  id: string,
+  title: string,
+  category: categoryRef,
+  minutes: optional(minutes),
+})
+
+// A picture's id and shape. The blob is in IndexedDB and never in a
+// document this validates - see lib/photos.ts. A backup written by another
+// device names pictures this one does not have, and that is not an error:
+// the note says so and reads fine without them.
+const NOTE_PHOTO = record({
+  id: string,
+  width: wholeNumber(1, 20_000),
+  height: wholeNumber(1, 20_000),
+})
+
+const SCRATCH_NOTE = record({
+  id: string,
+  text: string,
+  createdAt: string,
+  date: string,
+  pinned: optional(boolean),
+  taskId: optional(string),
+  taskDate: optional(string),
+  photos: optional(listOf(NOTE_PHOTO)),
+})
+
+const GOAL = record({
+  id: string,
+  title: string,
+  createdAt: string,
+  why: optional(string),
+  identity: optional(string),
+  // Lines of text, and nothing about whether any of them happened. Absent
+  // in every goal written before North v2; the app reads absent as none.
+  deserve: optional(listOf(string)),
+  avoid: optional(listOf(string)),
+  archivedAt: optional(string),
+  tourCreated: optional(boolean),
+})
+
+// One text. `updatedAt` rides along unnamed like every other timestamp.
+const PICTURE = record({ text: string })
+
+// A recipe - Kitchen, since v2.27. The numbers are bounded by RECIPE_LIMITS
+// so a hand-edited file cannot put a figure in a line no layout holds; the
+// grams may carry a decimal and kcal may too in a file, though the form
+// writes it whole. The count of times cooked is a count like any other.
+const RECIPE = record({
+  id: string,
+  title: string,
+  text: string,
+  mealTypes: optional(listOf(oneOf(MEAL_TYPES))),
+  kcal: optional(amountIn(0, RECIPE_LIMITS.kcal)),
+  protein: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  carbs: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  fat: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  servings: optional(wholeNumber(1, RECIPE_LIMITS.servings)),
+  minutes: optional(wholeNumber(0, RECIPE_LIMITS.minutes)),
+  cooked: optional(wholeNumber(0, RECIPE_LIMITS.cooked)),
+})
+
+const LIBRARY_ITEM = record({
+  id: string,
+  title: string,
+  total: optional(count),
+  progress: optional(count),
+  track: optional(oneOf(LIBRARY_TRACKS)),
+  pace: optional(string),
+  link: optional(string),
+  season: optional(count),
+  seasons: optional(count),
+  finished: optional(string),
+})
+
+const LIBRARY_LIST = record({
+  id: string,
+  name: string,
+  unit: string,
+  unitPlural: optional(string),
+  unitShort: optional(string),
+  // A colour is a CSS value that gets painted, so it goes through the same
+  // check every other colour in a payload does.
+  color: optional(color),
+  items: listOf(LIBRARY_ITEM),
+  tourCreated: optional(boolean),
+})
+
+// Both halves required once a window is present at all: a bedtime with no
+// wake time is not a shape the app can use, and defaulting the missing half
+// would be inventing a fact.
+const SLEEP_WINDOW = record({ start: clockTime, end: clockTime })
+
+const SLEEP_PROFILE = record({ id: text(1, Number.POSITIVE_INFINITY), name: text(1, 60), window: SLEEP_WINDOW })
+
+// Two schedules with the same id would make which one a day points at a
+// matter of array order - the same reason preset ids are checked for
+// uniqueness in themes.test.ts. An empty list is refused too: a payload on
+// profiles has at least the default one.
+const sleepProfiles: Check = x =>
+  listOf(SLEEP_PROFILE)(x) && (x as SleepProfile[]).length > 0 && new Set((x as SleepProfile[]).map(p => p.id)).size === (x as SleepProfile[]).length
+
+const NORTH = record({ afterASlowDay: boolean, stripOnDay: optional(boolean), windowAfterSleep: optional(boolean) })
+
+// The time is checked, not merely typed: "at": "banana" would make the
+// comparison in shouldClose silently never true, which is a feature quietly
+// switching itself off rather than a file being refused.
+const EVENING_CLOSE = record({ enabled: boolean, at: clockTime })
+
+// Keys 0-6, values template ids. A weekday outside the week, or a non-string
+// id, would be a map the app silently ignores forever, so it is refused at
+// the door instead.
+const WEEKDAY_MAP = mapOf(matching(/^[0-6]$/), string)
+
+const THEME_STATE = record({
+  presetId: string,
+  overrides: mapOf(() => true, themeOverrides),
+  mode: oneOf(THEME_MODES),
+})
+
+/** Pre-migration payloads stored the theme as a bare 'light' | 'dark'. */
+export type LegacyTheme = 'light' | 'dark'
+export type StoredTheme = LegacyTheme | ThemeState
+
+export function isLegacyTheme(x: unknown): x is LegacyTheme {
+  return x === 'light' || x === 'dark'
+}
+
+export function isStoredTheme(x: unknown): x is StoredTheme {
+  return isLegacyTheme(x) || THEME_STATE(x)
+}
+
+// Every field after theme is checked only when present: a payload written
+// before the field existed has no such key at all, and that is not
+// corruption, it is every real backup on disk before the feature shipped.
+// normalizeLoaded backfills them once validation passes. A field that is
+// present but malformed fails the whole payload, exactly like a bad
+// Template.color does.
+//
+// A field this app has removed is not listed at all, which means an old
+// payload carrying it passes and normalizeLoaded drops it - see
+// REMOVED_SETTINGS. Refusing the payload instead would turn every backup
+// written before v2.5 into a file that no longer opens, which is the one
+// thing a local-first app's backups may never do.
+const SETTINGS = record({
+  theme: isStoredTheme,
+  timelineExpanded: optional(boolean),
+  dayLayoutFocus: optional(oneOf(DAY_LAYOUT_FOCUSES)),
+  density: optional(oneOf(['comfortable', 'compact'])),
+  textScale: optional(oneOf(['s', 'm', 'l'])),
+  sleepWindow: optional(SLEEP_WINDOW),
+  nightSleepWindow: optional(SLEEP_WINDOW),
+  sleepProfiles: optional(sleepProfiles),
+  weekdayTemplates: optional(WEEKDAY_MAP),
+  north: optional(NORTH),
+  eveningClose: optional(EVENING_CLOSE),
+  // `chime` and `calendars` are deliberately not listed, and for the same
+  // reason from two directions: neither is the plan. A malformed `density`
+  // means a file somebody edited by hand and opening the rest of it on trust
+  // is how a planner quietly loses a day - but refusing to open a year of
+  // days because a timer's volume says "banana" is the wrong trade, so that
+  // one is clamped on the way in by `readChimeSettings` instead. What is not
+  // listed here rides through and `normalizeLoaded` decides what to do with
+  // it, which is what has always happened to `calendars`.
+})
+
+/**
+ * The shape `validate` accepts: everything AppData requires, except that
+ * settings.theme may still be the pre-migration string and every list added
+ * since v1.0 may be absent. `normalizeLoaded` turns this into a real
+ * AppData.
+ */
+export interface StoredAppData {
+  templates: Template[]
+  days: Record<string, DayPlan>
+  settings: Omit<Partial<Settings>, 'theme'> & {
+    theme: StoredTheme
+    sleepWindow?: SleepWindow
+    nightSleepWindow?: SleepWindow
+  }
+  ifThens?: IfThenEntry[]
+  inbox?: AppDataLists['inbox']
+  backlog?: AppDataLists['backlog']
+  scratch?: AppDataLists['scratch']
+  library?: AppDataLists['library']
+  goals?: AppDataLists['goals']
+  categories?: AppDataLists['categories']
+  picture?: import('../types').Picture
+  recipes?: AppDataLists['recipes']
+}
+
+type AppDataLists = Pick<import('../types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories' | 'recipes'>
+
+// Templates, days and settings are required: a payload without them is not
+// a plan. A shape check on those three alone once let {"templates":[{}],
+// "days":{},"settings":{}} through, which crashed the templates view on
+// t.blocks.length with no way back except clearing storage by hand - hence
+// the tables above go all the way down.
+const STORED_APP_DATA = record({
+  templates: listOf(TEMPLATE),
+  days: mapOf(() => true, DAY_PLAN),
+  settings: SETTINGS,
+  ifThens: optional(listOf(IF_THEN_ENTRY)),
+  inbox: optional(listOf(INBOX_ITEM)),
+  backlog: optional(listOf(LATER_ITEM)),
+  scratch: optional(listOf(SCRATCH_NOTE)),
+  library: optional(listOf(LIBRARY_LIST)),
+  goals: optional(listOf(GOAL)),
+  categories: optional(listOf(CATEGORY)),
+  picture: optional(PICTURE),
+  recipes: optional(listOf(RECIPE)),
+})
+
+export function validate(x: unknown): x is StoredAppData {
+  return STORED_APP_DATA(x)
+}

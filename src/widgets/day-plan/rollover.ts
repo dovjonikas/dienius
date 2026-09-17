@@ -1,7 +1,7 @@
 import type { AppData, Task } from '../../lib/types'
 import { addDays } from '../../lib/dates'
 import { isPushable } from '../../lib/pushRules'
-import { isRoutine, willReceive } from '../../lib/taskIdentity'
+import { hasIdentity, willReceive } from '../../lib/taskIdentity'
 import { sourceCovers, weekdayOf } from '../../lib/repeats'
 
 /**
@@ -27,7 +27,7 @@ export function rolloverSplit(data: AppData, date: string, tasks: Task[]): Rollo
   const mappedTomorrow = data.settings.weekdayTemplates[weekdayOf(tomorrow)]
   const covered = unfinished.filter(
     t =>
-      (isRoutine(t) && (t.repeatOf !== undefined || willReceive(data.days[tomorrow], t, mappedTomorrow))) ||
+      (hasIdentity(t) && (t.repeatOf !== undefined || willReceive(data.days[tomorrow], t, mappedTomorrow))) ||
       sourceCovers(t, date, tomorrow),
   )
   const oneOff = unfinished.filter(t => !covered.includes(t))
