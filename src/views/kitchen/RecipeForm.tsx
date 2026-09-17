@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { actions } from '../../lib/store'
 import { MEAL_TYPE_LABELS, type RecipeInput } from '../../lib/kitchen'
+import { clearRecipeNumber, recipeNumbers, writeRecipeNumber } from '../../lib/recipeNumbers'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
 
 /** The numbers the form asks for, each as the text in its field. */
@@ -27,6 +28,13 @@ const NUMBER_LABELS: Record<NumberName, string> = {
  * knows it: the meals it is for, as chips, several at once; kcal, protein,
  * carbs and fat for a serving; how many servings; how long. Editing a recipe
  * that has any of them opens with More open, so nothing it holds is hidden.
+ *
+ * **The text and the numbers are one truth** (CONVENTIONS 16), since v2.30:
+ * a number typed into the text beside its word - "450 kcal", "Serves 2" -
+ * fills its field, and More opens so the filled fields are seen; a field
+ * changed rewrites the number the text says, and a field cleared takes it out
+ * of the text. A field the text says nothing about is filled by hand, as
+ * before. lib/recipeNumbers.ts reads and writes the numbers.
  *
  * Save waits, in its place, until there is a name; Cancel is
  * always beside it. Ctrl or Cmd with Enter is Save and Escape is Cancel, the
@@ -89,6 +97,28 @@ export function RecipeForm({
     if (made) onSaved(made.id)
   }
 
+  /** The text as typed, and every number it says read into its field. */
+  function changeText(next: string) {
+    setText(next)
+    const said = recipeNumbers(next)
+    const read = NUMBER_NAMES.filter(name => said[name] !== undefined)
+    if (read.length === 0) return
+    setNumbers(current => ({ ...current, ...Object.fromEntries(read.map(name => [name, String(said[name]!.value)])) }))
+    setMore(true)
+  }
+
+  /** A field as typed, and the number the text says for it rewritten, or taken out when the field is cleared. */
+  function changeNumber(name: NumberName, value: string) {
+    setNumbers(current => ({ ...current, [name]: value }))
+    if (recipeNumbers(text)[name] === undefined) return
+    if (value.trim() === '') {
+      setText(clearRecipeNumber(text, name))
+      return
+    }
+    const number = Number(value)
+    if (Number.isFinite(number) && number >= 0) setText(writeRecipeNumber(text, name, number))
+  }
+
   function toggleMeal(meal: MealType) {
     setMeals(current => (current.includes(meal) ? current.filter(m => m !== meal) : [...current, meal]))
   }
@@ -103,7 +133,7 @@ export function RecipeForm({
           min={0}
           step="any"
           value={numbers[name]}
-          onChange={e => setNumbers(current => ({ ...current, [name]: e.target.value }))}
+          onChange={e => changeNumber(name, e.target.value)}
         />
       </label>
     )
@@ -149,11 +179,12 @@ export function RecipeForm({
             rows={12}
             aria-describedby={ruleId}
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={e => changeText(e.target.value)}
           />
         </label>
         <p id={ruleId} className="kitchen-rule">
           A line in capitals is a heading. Under INGREDIENTS each line is an ingredient, and under STEPS each line is a step.
+          Anywhere else, 450 kcal or Serves 2 fills its field under More.
         </p>
 
         <button type="button" className="btn-quiet kitchen-more" aria-expanded={more} onClick={() => setMore(open => !open)}>

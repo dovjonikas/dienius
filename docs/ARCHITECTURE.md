@@ -280,6 +280,7 @@ src/
     headings.ts        the capitals rule and its one parser, for North's text and a recipe's
     northSections.ts   what North adds to it: the two tags and the signature
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
+    recipeNumbers.ts   kcal, protein, carbs, fat, servings and minutes read from a recipe's text, and written back
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next

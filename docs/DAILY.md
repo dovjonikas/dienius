@@ -455,7 +455,12 @@ typed it.
 
 **More** holds the rest, when you know it: which meals it is for (several is
 fine - overnight oats are breakfast and a snack), kcal, protein, carbs and fat
-for one serving, how many servings, and how long. None of it is needed, and
+for one serving, how many servings, and how long. You can also just write them
+into the recipe - `Per serving: 450 kcal, 30 g protein`, `Serves 2`, `45 min`,
+in English or Lithuanian - and the fields fill themselves and More opens to
+show them. Change a field and the number in your text changes with it; clear
+it and it comes out of the text. Numbers inside the ingredients and the steps
+are left alone: `30 g protein powder` is an ingredient. None of it is needed, and
 nothing ever adds it up - there are no daily totals, no targets and no bars.
 The numbers are there to help you pick something for after the gym.
 

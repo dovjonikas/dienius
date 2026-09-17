@@ -1035,6 +1035,8 @@ A bare `<input type="number">` or a native `<select>` over a fixed set of
 answers is a control that has not been built yet. The library's add line
 (`LibraryAddLine.tsx`) is quick-add's shape applied to a book: the words,
 a unit control, a count control, and the same one-truth rule between them.
+A recipe's form keeps it too, since v2.30: "450 kcal" in the text is the kcal
+field, and the field changed is the text rewritten (`lib/recipeNumbers.ts`).
 
 - **A default is a real answer, not a placeholder.** The time control opens on
   the first free slot the day genuinely has (`widgets/day-plan/autoSlot.ts`), not on a

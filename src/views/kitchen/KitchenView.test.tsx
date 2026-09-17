@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { KitchenView } from './KitchenView'
 import { actions, getData } from '../../lib/store'
@@ -204,6 +204,56 @@ test('New recipe asks for a name and the recipe, and the saved recipe opens on i
   expect(getData().recipes).toHaveLength(1)
   expect(getData().recipes[0]).toMatchObject({ title: 'A simple soup', text: 'INGREDIENTS\nwater\n\nSTEPS\nBoil it.' })
   expect(screen.getByRole('heading', { level: 2, name: 'A simple soup' })).toBeInTheDocument()
+})
+
+// v2.30: numbers typed into the text fill their fields, the way the Library's
+// add line reads a book's length - docs/RESEARCH-KITCHEN.md section 6.3.
+test('numbers typed into the recipe fill their fields, More opens to show them, and they are saved', async () => {
+  const user = userEvent.setup()
+  render(<KitchenView />)
+  await user.click(screen.getByRole('button', { name: 'New recipe' }))
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Chicken and rice bowl')
+  const more = screen.getByRole('button', { name: 'More' })
+  expect(more).toHaveAttribute('aria-expanded', 'false')
+  await user.type(screen.getByRole('textbox', { name: 'Recipe' }), 'Per serving: 520 kcal, 38 g protein{Enter}Serves 2, ready in 30 min')
+
+  expect(more).toHaveAttribute('aria-expanded', 'true')
+  // The line under the field says it can.
+  expect(screen.getByText(/450 kcal or Serves 2 fills its field under More/)).toBeInTheDocument()
+  expect(screen.getByRole('spinbutton', { name: 'kcal' })).toHaveValue(520)
+  expect(screen.getByRole('spinbutton', { name: 'Protein (g)' })).toHaveValue(38)
+  expect(screen.getByRole('spinbutton', { name: 'Servings' })).toHaveValue(2)
+  expect(screen.getByRole('spinbutton', { name: 'Minutes' })).toHaveValue(30)
+
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().recipes[0]).toMatchObject({ kcal: 520, protein: 38, servings: 2, minutes: 30 })
+})
+
+test('a field changed rewrites the number the text says, and a field cleared takes it out of the text', async () => {
+  const user = userEvent.setup()
+  render(<KitchenView />)
+  await user.click(screen.getByRole('button', { name: 'New recipe' }))
+  const recipe = screen.getByRole('textbox', { name: 'Recipe' })
+  await user.type(recipe, 'Per serving: 450 kcal, 30 g protein')
+
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'kcal' }), { target: { value: '500' } })
+  expect(recipe).toHaveValue('Per serving: 500 kcal, 30 g protein')
+  fireEvent.change(screen.getByRole('spinbutton', { name: 'Protein (g)' }), { target: { value: '' } })
+  expect(recipe).toHaveValue('Per serving: 500 kcal')
+})
+
+test('a field filled by hand where the text says nothing leaves the text as it is, and is saved', async () => {
+  const user = userEvent.setup()
+  render(<KitchenView />)
+  await user.click(screen.getByRole('button', { name: 'New recipe' }))
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Banana toast')
+  const recipe = screen.getByRole('textbox', { name: 'Recipe' })
+  await user.type(recipe, 'Toast the bread and slice a banana over it.')
+  await user.click(screen.getByRole('button', { name: 'More' }))
+  await user.type(screen.getByRole('spinbutton', { name: 'kcal' }), '300')
+  expect(recipe).toHaveValue('Toast the bread and slice a banana over it.')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(getData().recipes[0]).toMatchObject({ kcal: 300, text: 'Toast the bread and slice a banana over it.' })
 })
 
 test('More opens the meals, the numbers for a serving, the servings and the minutes, and they are saved with the recipe', async () => {

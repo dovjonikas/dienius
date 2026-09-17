@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 2 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
+**Last updated:** v2.30, in progress - Kitchen as it was meant, stage 3 of 6 done. v2.29 (rotating shifts) resumes at stage 5 when it closes.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -35,6 +35,28 @@ already takes; numbers are never read from inside the ingredients or the steps;
 a recipe for two meals stands under both; several recipes on a block are walked
 by the date, and the block's `recipeId` is written as the first of them so an
 older device still stamps a meal.
+
+### Stage 3 - numbers read from the text: done
+
+- **`lib/recipeNumbers.ts`** reads kcal, protein, carbs and fat for a serving,
+  servings and minutes where a number stands beside its word, after it or
+  before it, with grams or a colon between, in English and in Lithuanian with
+  and without its letters; a decimal comma is a decimal, and "1 h 30 min" and
+  "1 val. 15 min" are minutes. Never from inside INGREDIENTS or STEPS, never
+  from a word inside another ("carbonara", "fatty"), one number never read
+  twice, and the first mention of each is the one read.
+- **The form keeps text and fields one truth**: typing the numbers fills the
+  fields and opens More; a field changed rewrites the number in the text, in
+  the style it was written in (a comma stays a comma, hours stay hours); a field
+  cleared takes the mention out with the comma it was listed with, and a line
+  left empty goes. A field the text says nothing about is filled by hand, as
+  before. The line under the field now says so.
+- DAILY, ARCHITECTURE and CONVENTIONS 16 say it; a mutation pass broke eight of
+  the reader's rules and each failed a named test.
+
+New tests: `recipeNumbers.test.ts`, and three in `KitchenView.test.tsx` - the
+fields filled from the text and saved, a field rewriting and clearing the text,
+and a field filled by hand leaving the text alone.
 
 ### Stage 2 - Cook goes, and a recipe needs only its name: done
 

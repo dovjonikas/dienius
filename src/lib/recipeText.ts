@@ -36,7 +36,7 @@ export interface RecipeReading {
 }
 
 /** A heading that makes a list, by its words, with or without a colon after them. */
-function listKind(heading: string): 'ingredients' | 'steps' | undefined {
+export function listKind(heading: string): 'ingredients' | 'steps' | undefined {
   const words = heading.replace(/\s*:$/, '')
   if (words === 'INGREDIENTS') return 'ingredients'
   if (words === 'STEPS') return 'steps'
