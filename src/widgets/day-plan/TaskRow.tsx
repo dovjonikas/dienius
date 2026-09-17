@@ -10,6 +10,8 @@ import { Explain } from '../../views/Explain'
 import { LinkOut } from '../../views/LinkOut'
 import { NoteSections } from '../../views/NoteSections'
 import { parseNote } from '../../lib/note'
+import { mealLink } from '../../lib/kitchen'
+import type { MealType, Recipe } from '../../lib/types'
 
 const PUSH_COUNT_WORDS: Record<number, string> = { 1: 'once', 2: 'twice' }
 
@@ -82,6 +84,10 @@ export interface TaskRowProps {
    * `library` above is passed down rather than looked up here.
    */
   categories?: Category[]
+  /** Every recipe, so a meal's card can name the one it points at - passed down like `library`. */
+  recipes?: Recipe[]
+  /** Opens Kitchen from a meal's card: on its recipe, or on its kind of meal. */
+  onOpenKitchen?: (opening: { recipeId?: string; meal?: MealType }) => void
   /**
    * Checking the task off, or unchecking it. Routed up to `DayView` rather
    * than calling `actions.toggleTask` here the way this row used to, because
@@ -134,6 +140,8 @@ export function TaskRow({
   onContextMenu,
   library = [],
   categories = [],
+  recipes = [],
+  onOpenKitchen,
   onToggleDone,
   selected,
   onToggleSelect,
@@ -198,6 +206,10 @@ export function TaskRow({
   // does not have to carry the address the book already has, and one typed
   // onto this task is about this task and wins. See lib/link.ts and LinkOut.
   const link = task.link ?? boundItem?.link
+  // A meal's recipe, or the kind of meal it leaves open - Kitchen. Nothing for
+  // a task in another category, or for a recipe removed on another device
+  // with no kind of meal behind it; see mealLink.
+  const meal = mealLink(task, recipes)
 
   // Selecting has to live somewhere that (a) is not the checkbox, so it
   // cannot be mistaken for completing the task, and (b) is not the row's
@@ -363,6 +375,28 @@ export function TaskRow({
             </span>
           ) : null}
           {boundPace && <span className="task-pace">{boundPace}</span>}
+          {/* The meal's recipe by name, or its kind of meal, as a press that
+              opens it in Kitchen - the one mark on a meal's card that is a
+              way somewhere else, like the note's. Where nothing can open
+              Kitchen it is a label. */}
+          {meal &&
+            (onOpenKitchen ? (
+              <button
+                type="button"
+                className="task-recipe"
+                aria-label={meal.kind === 'recipe' ? `Recipe: ${meal.recipe.title}` : meal.label}
+                onClick={e => {
+                  e.stopPropagation()
+                  onOpenKitchen(meal.kind === 'recipe' ? { recipeId: meal.recipe.id } : { meal: meal.meal })
+                }}
+              >
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? meal.recipe.title : meal.label}</span>
+              </button>
+            ) : (
+              <span className="task-recipe">
+                <span className="task-recipe-name">{meal.kind === 'recipe' ? meal.recipe.title : meal.label}</span>
+              </span>
+            ))}
           {/* A control among marks, which is why it is an anchor with its own
               target rather than another chip: pressing the card still means
               what it meant, and this means the other thing. */}

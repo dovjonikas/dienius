@@ -4,8 +4,9 @@
  *
  * Not the demo. The demo (src/lib/demo.ts) is a sample fortnight under its
  * own storage key, built to be shown to a stranger; this is one person's
- * ordinary Friday under the real key, built to be measured - ten tasks with
- * three key ones, a reading block bound to a library list, four goals, seven
+ * ordinary Friday under the real key, built to be measured - eleven tasks
+ * with three key ones, a reading block bound to a library list, a dinner
+ * pointing at a recipe, four goals, seven
  * in Later (two of them bare lines), a scratch stream, three templates, a
  * weekday map, four recipes in Kitchen, and forty days behind it so the
  * calendar and Review have something to draw.
@@ -58,6 +59,13 @@
     return { id: id('item'), title, track: 'series', seasons, season: 1, total: eps, progress: 2, updatedAt: stamp }
   })
 
+  // Kitchen's recipes, named before the templates and the day that point at
+  // them.
+  const oatsId = id('rc')
+  const bowlId = id('rc')
+  const soupId = id('rc')
+  const toastId = id('rc')
+
   const tmplWork = id('tpl')
   const tmplShift = id('tpl')
   const tmplRest = id('tpl')
@@ -68,7 +76,7 @@
         { id: id('b'), time: '07:00', title: 'Get up, shower, coffee', minutes: 45, category: 'routine' },
         { id: id('b'), time: '08:00', title: 'Plan the day', minutes: 15, core: true, category: 'core' },
         { id: id('b'), time: '09:00', title: 'Deep work block', minutes: 120, core: true, category: 'core' },
-        { id: id('b'), time: '12:30', title: 'Lunch', minutes: 45, category: 'meal' },
+        { id: id('b'), time: '12:30', title: 'Lunch', minutes: 45, category: 'meal', mealType: 'lunch' },
         { id: id('b'), time: '13:30', title: 'Email and admin', minutes: 45, category: 'routine' },
         { id: id('b'), time: '17:30', title: 'Walk', minutes: 40, category: 'health' },
         { id: id('b'), time: '21:00', title: 'Reading', minutes: 30, libraryListId: listBooks, category: 'personal' },
@@ -79,31 +87,34 @@
       blocks: [
         { id: id('b'), time: '06:00', title: 'Out the door', minutes: 30, category: 'commute' },
         { id: id('b'), time: '07:00', title: 'On shift', minutes: 720, core: true, unbounded: true, category: 'core' },
-        { id: id('b'), time: '19:30', title: 'Eat something real', minutes: 40, category: 'meal' },
+        { id: id('b'), time: '19:30', title: 'Eat something real', minutes: 40, category: 'meal', mealType: 'dinner' },
       ],
     },
     {
       id: tmplRest, name: 'Slow Sunday', color: '#a7e3bd', updatedAt: stamp,
       blocks: [
-        { id: id('b'), time: '09:30', title: 'Long breakfast', minutes: 60, category: 'meal' },
+        { id: id('b'), time: '09:30', title: 'Long breakfast', minutes: 60, category: 'meal', recipeId: oatsId },
         { id: id('b'), title: 'Something outside', minutes: 90, category: 'health' },
         { id: id('b'), time: '20:00', title: 'Reading', minutes: 45, libraryListId: listBooks, category: 'personal' },
       ],
     },
   ]
 
-  // Today: ten tasks, three of them key, one bound to the reading list.
+  // Today: eleven tasks, three of them key, one bound to the reading list
+  // and two meals pointing at their recipes.
   const todayTasks = [
     T({ time: '07:00', title: 'Get up, shower, coffee', minutes: 45, done: true, category: 'routine', fromTemplate: true, origin: { type: 'template', sourceId: tmplWork } }),
     T({ time: '08:00', title: 'Plan the day', minutes: 15, done: true, core: true, category: 'core', fromTemplate: true, origin: { type: 'template', sourceId: tmplWork } }),
     T({ time: '09:00', title: 'Deep work block', minutes: 120, core: true, highlight: true, category: 'core', fromTemplate: true, note: 'The pricing page rewrite. Nothing else in this block.', subtasks: [{ id: id('s'), title: 'Outline the three sections', done: true }, { id: id('s'), title: 'Draft the middle one', done: false }, { id: id('s'), title: 'Read it back out loud', done: false }] }),
     T({ time: '11:30', title: 'Call the dentist about the crown', minutes: 15, category: 'personal', highlight: true, pushCount: 2 }),
-    T({ time: '12:30', title: 'Lunch', minutes: 45, done: true, category: 'meal', fromTemplate: true }),
+    T({ time: '12:30', title: 'Lunch', minutes: 45, done: true, category: 'meal', fromTemplate: true, recipeId: bowlId }),
     T({ time: '13:30', title: 'Email and admin', minutes: 45, category: 'routine', fromTemplate: true }),
     T({ time: '15:00', title: 'Review the quarter numbers with Ada', minutes: 60, core: true, highlight: true, category: 'core' }),
     T({ title: 'Order the replacement charger', minutes: 10, category: 'personal', pushCount: 1 }),
     T({ time: '17:30', title: 'Walk', minutes: 40, category: 'health', fromTemplate: true, repeat: 'weekdays' }),
     T({ time: '21:00', title: 'Reading', minutes: 30, category: 'personal', fromTemplate: true, libraryRef: { listId: listBooks, itemId: bookIds[0] } }),
+    // A meal left open to choose from Kitchen, and the recipe chosen for it.
+    T({ time: '19:00', title: 'Dinner', minutes: 40, category: 'meal', recipeId: soupId }),
   ]
 
   const days = {}
@@ -237,25 +248,25 @@
     // INGREDIENTS and STEPS, one a plain paragraph; two cooked, two not yet.
     recipes: [
       {
-        id: id('rc'),
+        id: oatsId,
         title: 'Overnight oats',
         text: 'Made the night before and eaten cold.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n2 tbsp yoghurt\nA handful of berries\n\nSTEPS\nStir the oats, milk and yoghurt together in a jar.\nLeave it in the fridge overnight.\nPut the berries on top in the morning.',
         mealTypes: ['breakfast', 'snack'], kcal: 380, protein: 18, carbs: 55, fat: 9, servings: 1, minutes: 5, cooked: 6, updatedAt: stamp,
       },
       {
-        id: id('rc'),
+        id: bowlId,
         title: 'Chicken and rice bowl',
         text: 'INGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce\n\nSTEPS\nCook the rice.\nSeason the chicken and cook it in a hot pan, about six minutes a side.\nSlice the chicken and the cucumber.\nShare the rice between two bowls and put everything on top.',
         mealTypes: ['lunch', 'post-gym'], kcal: 610, protein: 45, carbs: 70, fat: 14, servings: 2, minutes: 30, cooked: 4, updatedAt: stamp,
       },
       {
-        id: id('rc'),
+        id: soupId,
         title: 'Lentil soup',
         text: 'Keeps for three days, and better on the second.\n\nINGREDIENTS\n250 g red lentils\n1 onion\n2 carrots\n1 litre stock\n\nSTEPS\nChop the onion and the carrots and soften them in a little oil.\nAdd the lentils and the stock and simmer for twenty-five minutes.\nBlend half of it and stir it back in.',
         mealTypes: ['lunch', 'dinner'], kcal: 420, protein: 22, carbs: 60, fat: 8, servings: 4, minutes: 45, updatedAt: stamp,
       },
       {
-        id: id('rc'),
+        id: toastId,
         title: 'Banana toast',
         text: 'Toast a slice of bread, spread it with peanut butter and slice a banana over it.',
         mealTypes: ['pre-gym', 'snack'], kcal: 330, protein: 11, carbs: 45, fat: 12, servings: 1, minutes: 5, updatedAt: stamp,

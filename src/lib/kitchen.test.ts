@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { cookedLabel, factsLine, fullMacroLine, macroLine, recipesForMeal } from './kitchen'
+import { cookedLabel, factsLine, fullMacroLine, isMealCategory, macroLine, mealLink, recipesForMeal } from './kitchen'
 import type { Recipe } from './types'
 
 /**
@@ -54,4 +54,32 @@ test("a recipe page's facts are its meals, its servings, its time and how often 
   expect(factsLine(recipe({ servings: 4, minutes: 90 }))).toBe('4 servings · 1h 30 min')
   expect(factsLine(recipe({ mealTypes: ['snack'] }))).toBe('Snack')
   expect(factsLine(recipe())).toBeUndefined()
+})
+
+// --- a meal on the day ------------------------------------------------------------
+
+/**
+ * A block on the day or in a template whose category is Meals may point at a
+ * recipe, or only at a kind of meal. A recipe it points at is the one it
+ * shows; a kind of meal is a door into Kitchen for choosing. A recipe that is
+ * no longer there degrades to the kind of meal, or to nothing - CONVENTIONS
+ * 7 - and a block in another category shows neither, whatever it carries.
+ */
+test('a meal block shows the recipe it points at, or its kind of meal, and nothing that is not there', () => {
+  const soup = recipe({ id: 'soup', title: 'Lentil soup' })
+  const recipes = [soup]
+  expect(mealLink({ category: 'meal', recipeId: 'soup' }, recipes)).toEqual({ kind: 'recipe', recipe: soup })
+  expect(mealLink({ category: 'meal', mealType: 'lunch' }, recipes)).toEqual({ kind: 'meal', meal: 'lunch', label: 'Lunch recipes' })
+  // Both: the recipe is the more particular answer.
+  expect(mealLink({ category: 'meal', recipeId: 'soup', mealType: 'lunch' }, recipes)).toEqual({ kind: 'recipe', recipe: soup })
+  // A recipe removed elsewhere: the kind of meal if there is one, else nothing.
+  expect(mealLink({ category: 'meal', recipeId: 'gone', mealType: 'dinner' }, recipes)).toEqual({ kind: 'meal', meal: 'dinner', label: 'Dinner recipes' })
+  expect(mealLink({ category: 'meal', recipeId: 'gone' }, recipes)).toBeUndefined()
+  // Not a meal, or nothing pointed at: nothing.
+  expect(mealLink({ category: 'health', recipeId: 'soup' }, recipes)).toBeUndefined()
+  expect(mealLink({ recipeId: 'soup' }, recipes)).toBeUndefined()
+  expect(mealLink({ category: 'meal' }, recipes)).toBeUndefined()
+  expect(isMealCategory('meal')).toBe(true)
+  expect(isMealCategory('core')).toBe(false)
+  expect(isMealCategory(undefined)).toBe(false)
 })

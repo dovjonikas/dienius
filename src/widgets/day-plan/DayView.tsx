@@ -37,6 +37,7 @@ import { useDoneAnimation } from './useDoneAnimation'
 import { useTaskSelection } from './useTaskSelection'
 import { requestReplan } from '../../lib/replanState'
 import { clockTools, useClockTools } from '../../lib/clockTools'
+import type { MealType } from '../../lib/types'
 
 export interface DayViewProps {
   date: string
@@ -62,6 +63,11 @@ export interface DayViewProps {
   onOpenTaskDone?: () => void
   /** Opens the note a task was made from - the way back to its pictures. */
   onOpenNote?: (noteId: string) => void
+  /**
+   * Opens Kitchen from a meal's card: on its recipe, or on its kind of meal
+   * to choose from. The shell owns which view is showing, as with North.
+   */
+  onOpenKitchen?: (opening: { recipeId?: string; meal?: MealType }) => void
 }
 
 /**
@@ -87,7 +93,7 @@ export interface DayViewProps {
  */
 const NOW_TICK_MS = 30_000
 
-export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTask, onOpenTaskDone, onOpenNote }: DayViewProps) {
+export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTask, onOpenTaskDone, onOpenNote, onOpenKitchen }: DayViewProps) {
   const data = useAppData()
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
   // Everything about one task that the row deliberately does not show - see
@@ -444,6 +450,7 @@ export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTa
           onOpenActions={setActionsSheetTaskId}
           onOpenDetails={setDetailTaskId}
           onContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
+          onOpenKitchen={onOpenKitchen}
         />
       )}
 

@@ -1,5 +1,5 @@
 import { commit, getData } from './core'
-import type { DayType, Template, TemplateKind, WeekDayOverride } from '../types'
+import type { DayType, MealType, Template, TemplateKind, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
 
@@ -28,6 +28,8 @@ export const templateActions = {
       unbounded?: boolean
       category?: CategoryId
       libraryListId?: string
+      recipeId?: string
+      mealType?: MealType
       weekday?: number
       groupId?: string
       note?: string
@@ -53,6 +55,8 @@ export const templateActions = {
         unbounded: b.unbounded,
         category: b.category,
         libraryListId: b.libraryListId,
+        recipeId: b.recipeId,
+        mealType: b.mealType,
         weekday: b.weekday,
         groupId: b.groupId,
         note: b.note,

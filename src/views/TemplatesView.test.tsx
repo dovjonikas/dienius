@@ -1013,3 +1013,36 @@ test('a block added in this session can be dragged too, and still gets a fresh i
   expect(saved.id).toBeTruthy()
   expect(saved.id).not.toMatch(/^draft-/)
 })
+
+/**
+ * A meal block's recipe - Kitchen, since v2.27. Asked on the add row once the
+ * block is a meal, and on a meal block's own row after, with the one select
+ * every meal is chosen with: no recipe, a kind of meal to choose from on the
+ * day, or a recipe by name.
+ */
+test('a meal block in a day template is given a recipe as it is added, and its row changes it to a kind of meal', async () => {
+  const user = userEvent.setup()
+  const soup = actions.addRecipe({ title: 'Lentil soup', text: 'INGREDIENTS\nred lentils' })!
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: /^A day/ }))
+  await user.type(screen.getByPlaceholderText('Template name'), 'Meals')
+
+  const row = within(document.querySelector('.block-add') as HTMLElement)
+  // Not a meal yet, so there is no recipe to ask about.
+  expect(row.queryByLabelText('Recipe')).toBeNull()
+  await user.click(row.getByRole('button', { name: 'Meals' }))
+  await user.selectOptions(row.getByLabelText('Recipe'), 'Lentil soup')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Lunch')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  // A meal's recipe is that meal's: the next block starts with none.
+  expect(row.getByLabelText('Recipe')).toHaveValue('')
+
+  const blockRecipe = screen.getByRole('combobox', { name: 'Recipe for Lunch' })
+  expect(blockRecipe).toHaveValue(`recipe:${soup.id}`)
+  await user.selectOptions(blockRecipe, 'Dinner recipes')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+
+  expect(getData().templates[0].blocks[0]).toMatchObject({ title: 'Lunch', category: 'meal', mealType: 'dinner' })
+  expect(getData().templates[0].blocks[0].recipeId).toBeUndefined()
+})

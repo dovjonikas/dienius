@@ -15,6 +15,8 @@ import { DurationChips } from '../../views/DurationControl'
 import { Explain } from '../../views/Explain'
 import { NoteEditor } from '../../views/NoteEditor'
 import { stepTime, windowFor } from './capacity'
+import { isMealCategory } from '../../lib/kitchen'
+import { RecipeSelect } from '../../views/kitchen/RecipeBinding'
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
@@ -315,6 +317,23 @@ export function TaskDetail({ task, tasks, date, library, onClose, onDelete, onOp
               ))}
             </div>
           </div>
+
+          {/* A meal's recipe, or its kind of meal to choose from on the day -
+              Kitchen. Only on a meal, where the question means something. */}
+          {isMealCategory(task.category) && (
+            <div className="task-detail-field">
+              <span className="task-detail-label">Recipe</span>
+              <div className="task-detail-time">
+                <RecipeSelect
+                  label="Recipe"
+                  recipes={data.recipes}
+                  recipeId={task.recipeId}
+                  mealType={task.mealType}
+                  onChange={link => actions.setTaskMealLink(date, task.id, link)}
+                />
+              </div>
+            </div>
+          )}
 
           {/* The cap is stated on the control itself, not discovered by
               being refused. See actions.toggleTaskHighlight for why it

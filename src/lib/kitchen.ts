@@ -89,6 +89,37 @@ export function cookedLabel(cooked: number | undefined): string | undefined {
   return `Cooked ${cooked} times`
 }
 
+/**
+ * Whether a category is the meals one - the built-in Meals category, by its
+ * id, whatever it has been renamed to. The one a day's meal blocks already
+ * carry; a category somebody made for food is theirs to use, and a block in
+ * it has no link to Kitchen.
+ */
+export function isMealCategory(category: string | undefined): boolean {
+  return category === 'meal'
+}
+
+/** What a meal block on the day or in a template points at - see `mealLink`. */
+export type MealLink = { kind: 'recipe'; recipe: Recipe } | { kind: 'meal'; meal: MealType; label: string }
+
+/**
+ * The recipe a meal block points at, or the kind of meal it leaves open, or
+ * nothing. Only a block in the meals category has either. A recipe comes
+ * before a kind of meal, being the more particular answer; a recipe that is
+ * no longer there - removed on another device - degrades to the kind of meal
+ * if the block has one, and to nothing if it has not.
+ */
+export function mealLink(
+  block: { category?: string; recipeId?: string; mealType?: MealType },
+  recipes: readonly Recipe[],
+): MealLink | undefined {
+  if (!isMealCategory(block.category)) return undefined
+  const recipe = block.recipeId === undefined ? undefined : recipes.find(r => r.id === block.recipeId)
+  if (recipe) return { kind: 'recipe', recipe }
+  if (block.mealType) return { kind: 'meal', meal: block.mealType, label: `${MEAL_TYPE_LABELS[block.mealType]} recipes` }
+  return undefined
+}
+
 /** What a recipe's form holds when it is saved. Numbers the form could not read arrive as NaN or absent. */
 export interface RecipeInput {
   title: string

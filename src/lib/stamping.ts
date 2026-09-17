@@ -146,7 +146,14 @@ export function refreshFromTemplate(
     // re-stamp puts that right in the one place a person has asked for it.
     const echo = task.fromBlock
     if (echo) {
-      const gave = { title: block.title, time: block.time, minutes: block.minutes, category: block.category }
+      const gave = {
+        title: block.title,
+        time: block.time,
+        minutes: block.minutes,
+        category: block.category,
+        recipeId: block.recipeId,
+        mealType: block.mealType,
+      }
       /** @returns the block's value where the day is still carrying the old one. */
       const follow = <K extends keyof typeof gave>(key: K): boolean =>
         next[key] === echo[key] && gave[key] !== echo[key]
@@ -157,6 +164,10 @@ export function refreshFromTemplate(
       if (follow('time')) moved.time = block.time
       if (follow('minutes')) moved.minutes = block.minutes
       if (follow('category')) moved.category = block.category
+      // A meal's recipe and its kind of meal, the same way: a recipe chosen
+      // on the day for a block that left it open is the day's.
+      if (follow('recipeId')) moved.recipeId = block.recipeId
+      if (follow('mealType')) moved.mealType = block.mealType
       if (Object.keys(moved).length > 0) next = { ...next, ...moved, fromBlock: { ...echo, ...gave } }
     }
 
@@ -293,11 +304,23 @@ export function applyStamps(
         minutes: b.minutes,
         unbounded: b.unbounded,
         category: b.category,
+        // A meal's recipe, or the kind of meal it leaves open - Kitchen. From
+        // the block, like the category, and echoed with it below, so a
+        // recipe somebody chose on the day survives the day being opened.
+        recipeId: b.recipeId,
+        mealType: b.mealType,
         // What was handed over, kept beside it - see Task.fromBlock. It is
         // what lets a day opened later tell "the block changed its mind"
         // from "somebody moved this", for the fields where the two look
         // identical the moment after a stamp.
-        fromBlock: { title: bound?.title ?? b.title, time: b.time, minutes: b.minutes, category: b.category },
+        fromBlock: {
+          title: bound?.title ?? b.title,
+          time: b.time,
+          minutes: b.minutes,
+          category: b.category,
+          recipeId: b.recipeId,
+          mealType: b.mealType,
+        },
         // State a day earned, kept: whether it was one of the day's key
         // tasks, how far it has been carried. Editing a template is a
         // statement about its shape, not permission to erase what happened on

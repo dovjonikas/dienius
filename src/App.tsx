@@ -663,6 +663,7 @@ export function App() {
               openTask={openTaskRequest}
               onOpenTaskDone={() => setOpenTaskRequest(null)}
               onOpenNote={() => setScratchOpen({})}
+              onOpenKitchen={openKitchen}
             />
           ))}
         {view === 'calendar' && (

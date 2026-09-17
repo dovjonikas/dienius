@@ -4,7 +4,7 @@ import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { Category, DayType, LibraryList, SleepProfile, Template } from '../lib/types'
+import type { Category, DayType, LibraryList, MealType, Recipe, SleepProfile, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -22,6 +22,8 @@ import { Explain } from './Explain'
 import { ColorSwatchPicker } from './ColorSwatchPicker'
 import { WeekPreview, WeekTemplateEditor, type WeekDraft } from './WeekTemplateEditor'
 import { DeleteTemplateButton } from './DeleteTemplateButton'
+import { RecipeBindingField, RecipeSelect, type MealBinding } from './kitchen/RecipeBinding'
+import { isMealCategory } from '../lib/kitchen'
 import { useListReorder } from './useListReorder'
 import { paletteColorName } from '../lib/colors'
 
@@ -111,6 +113,10 @@ interface DraftBlock {
    * named after the next unfinished book, rather than the word "Reading".
    */
   libraryListId?: string
+  /** A meal's recipe - see TemplateBlock.recipeId. */
+  recipeId?: string
+  /** A meal's kind, to choose a recipe for on the day - see TemplateBlock.mealType. */
+  mealType?: MealType
   /** What the block says when it lands on a day - see TemplateBlock.note. */
   note?: string
   /** Whether its note shows without a press - see TemplateBlock.noteExpanded. */
@@ -143,6 +149,8 @@ interface TemplateEditorProps {
   libraryLists: LibraryList[]
   /** The category list, so the block row offers what this person actually uses. */
   categories: Category[]
+  /** Every recipe, for a meal block's recipe - Kitchen. */
+  recipes: Recipe[]
   onSave: (draft: Draft) => void
   onCancel: () => void
   /** Present for a template that exists: the one way to delete it, in here. */
@@ -153,7 +161,7 @@ interface TemplateEditorProps {
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSave, onCancel, onDelete }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, recipes, onSave, onCancel, onDelete }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
   // Closed on every open, including on a template that already carries a
   // type: the value is on the line above it either way, and what is hidden
@@ -174,6 +182,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
   // the week editor has always had and this one did not, so a reading block
   // here meant adding it first and then finding its row again.
   const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
+  // A meal's recipe, asked on the add row once the new block is a meal.
+  const [blockMeal, setBlockMeal] = useState<MealBinding>({})
   // Opens holding an answer, the rule every control in this app keeps
   // (CONVENTIONS section 16): the length quick-add last used. It opened
   // empty and read as the bare word "min". No length is one press away in
@@ -221,6 +231,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
           unbounded: blockUnbounded,
           minutes: blockMinutes.trim(),
           libraryListId: blockLibraryListId,
+          // Only a meal carries one, whatever the add row was last asked.
+          ...(isMealCategory(blockCategory) ? blockMeal : {}),
         },
       ],
     }))
@@ -230,6 +242,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
     setBlockUnbounded(false)
     // The binding is not cleared, the way the time and the category are
     // not: somebody adding a reading block is usually adding two.
+    // A meal's recipe is, because breakfast, lunch and dinner are three.
+    setBlockMeal({})
   }
 
   function removeBlock(index: number) {
@@ -267,6 +281,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
 
   function setBlockExpanded(index: number, noteExpanded: boolean) {
     setDraft(d => ({ ...d, blocks: d.blocks.map((b, i) => (i === index ? { ...b, noteExpanded } : b)) }))
+  }
+
+  function setMealOn(index: number, link: MealBinding) {
+    setDraft(d => ({
+      ...d,
+      blocks: d.blocks.map((b, i) => (i === index ? { ...b, recipeId: link.recipeId, mealType: link.mealType } : b)),
+    }))
   }
 
   function setBlockLibrary(index: number, libraryListId: string | undefined) {
@@ -563,6 +584,25 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             {b.libraryListId && (
               <p className="block-binding">{bindingLine(libraryLists.find(l => l.id === b.libraryListId))}</p>
             )}
+            {/* A meal's recipe - Kitchen - on a line of its own under the row,
+                where the binding's line goes. In the row it was one more
+                control on the meals' rows only, and every column of a meal's
+                row stood left of the same column on the rows around it. */}
+            {isMealCategory(b.category) && (
+              <div className="library-binding block-meal">
+                <span className="library-binding-label" aria-hidden="true">
+                  Recipe
+                </span>
+                <RecipeSelect
+                  label={`Recipe for ${b.title}`}
+                  className="block-library block-recipe"
+                  recipes={recipes}
+                  recipeId={b.recipeId}
+                  mealType={b.mealType}
+                  onChange={link => setMealOn(i, link)}
+                />
+              </div>
+            )}
             {noteOpen === i && (
               <BlockNotePanel
                 note={b.note}
@@ -677,12 +717,26 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, onSa
             asked this on its add row since the feature shipped; this one
             only asked it afterwards, on the block row, so the answer came
             after the question was over. */}
-        <LibraryBindingField
-          id="block-add-library"
-          lists={libraryLists}
-          value={blockLibraryListId}
-          onChange={setBlockLibraryListId}
-        />
+        {/* A meal is asked which recipe it is - Kitchen - where another
+            block is asked what it draws from: a meal does not read through a
+            list, and two questions there pushed Add a block onto a line of
+            its own. A list already chosen stays in sight. */}
+        {isMealCategory(blockCategory) && !blockLibraryListId ? (
+          <RecipeBindingField
+            id="block-add-recipe"
+            recipes={recipes}
+            recipeId={blockMeal.recipeId}
+            mealType={blockMeal.mealType}
+            onChange={setBlockMeal}
+          />
+        ) : (
+          <LibraryBindingField
+            id="block-add-library"
+            lists={libraryLists}
+            value={blockLibraryListId}
+            onChange={setBlockLibraryListId}
+          />
+        )}
         {/* The button stays, and it is not a double of the mark in the title
             field: the mark is for the hand already on the keys, this is the
             answer for anybody who has never tried Return. What went with the
@@ -749,6 +803,8 @@ export function TemplatesView() {
         unbounded: b.unbounded ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
         libraryListId: b.libraryListId,
+        recipeId: b.recipeId,
+        mealType: b.mealType,
         note: b.note,
         noteExpanded: b.noteExpanded,
         highlight: b.highlight,
@@ -826,6 +882,10 @@ export function TemplatesView() {
       unbounded: b.unbounded || undefined,
       minutes: parseMinutesInput(b.minutes),
       libraryListId: b.libraryListId,
+      // A meal's recipe travels only on a meal; a block recoloured out of
+      // Meals leaves it behind rather than carrying a hidden one.
+      recipeId: isMealCategory(b.category) ? b.recipeId : undefined,
+      mealType: isMealCategory(b.category) ? b.mealType : undefined,
       // Blank is absent, so a note opened and left empty does not become a
       // field on every block it was opened on.
       note: b.note?.trim() || undefined,
@@ -947,6 +1007,7 @@ export function TemplatesView() {
           sleepProfiles={data.settings.sleepProfiles}
           libraryLists={data.library}
           categories={data.categories}
+          recipes={data.recipes}
           key={draft.id ?? 'new'}
           initial={draft}
           onSave={saveDraft}

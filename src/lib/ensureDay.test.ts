@@ -454,3 +454,55 @@ test('a task already done keeps the shape it was done in', () => {
 
   expect(ensuredDay(data, THE_DAY_AFTER, THURSDAY)).toBeNull()
 })
+
+/**
+ * A meal's recipe follows its block the same way, Kitchen since v2.27: a day
+ * still carrying what the block last gave takes the block's new recipe, or
+ * its new kind of meal; a recipe somebody chose on the day for it stays. A
+ * task stamped before the echo carried a recipe reads the block adding one as
+ * the block changing its mind, which is what it is.
+ */
+function stampedMeal(over: Partial<AppData['days'][string]['tasks'][number]> = {}): AppData {
+  const data = defaultData()
+  data.templates = [{
+    id: 'meals',
+    name: 'Meals',
+    color: '#a7c4f5',
+    blocks: [{ id: 'l1', title: 'Lunch', time: '12:30', category: 'meal', mealType: 'lunch' }],
+  }]
+  data.days = {
+    [THE_DAY_AFTER]: {
+      date: THE_DAY_AFTER,
+      templateId: 'meals',
+      autoApplied: true,
+      tasks: [{
+        id: 't1',
+        title: 'Lunch',
+        done: false,
+        time: '12:30',
+        category: 'meal',
+        mealType: 'lunch',
+        fromTemplate: true,
+        origin: { type: 'template', sourceId: 'meals', blockId: 'l1' },
+        fromBlock: { title: 'Lunch', time: '12:30', category: 'meal', mealType: 'lunch' },
+        ...over,
+      }],
+    },
+  }
+  return data
+}
+
+test("a meal block given a recipe after the stamp gives it to the day that is waiting, and the day's own choice stays", () => {
+  const waiting = stampedMeal()
+  waiting.templates[0].blocks[0] = { ...waiting.templates[0].blocks[0], recipeId: 'soup', mealType: undefined }
+  const task = ensuredDay(waiting, THE_DAY_AFTER, THURSDAY)!.days[THE_DAY_AFTER].tasks[0]
+  expect(task.recipeId).toBe('soup')
+  expect(task.mealType).toBeUndefined()
+  expect(task.fromBlock).toMatchObject({ recipeId: 'soup' })
+
+  // A recipe chosen on the day for the kind of meal is the day's: opening
+  // the day changes nothing.
+  const chosen = stampedMeal({ recipeId: 'oats' })
+  chosen.templates[0].blocks[0] = { ...chosen.templates[0].blocks[0], recipeId: 'soup' }
+  expect(ensuredDay(chosen, THE_DAY_AFTER, THURSDAY)).toBeNull()
+})

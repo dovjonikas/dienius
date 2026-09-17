@@ -168,6 +168,43 @@ released, off, and no API or a refusal) and Cook in `KitchenView.test.tsx`
 (the lines to tick, a tick by the line's words, the ticks gone with the
 cooking, Done counting, Close and Escape not).
 
+### Stage 6 - meals on the day and in templates: done
+
+- **The fields**: `recipeId` and `mealType` on `TemplateBlock` and on `Task`,
+  each optional, checked by the guard, carried by a backup. `mealLink`
+  (`lib/kitchen.ts`) is the one reading of them: only a block or task in the
+  built-in Meals category (`isMealCategory`, the id `meal`, whatever it is
+  called now) has one; a recipe before a kind of meal; a recipe removed on
+  another device degrades to the kind of meal, or to nothing.
+- **Stamping** copies both from the block, like the category, and echoes them
+  in `fromBlock`, so opening a day takes a block's new recipe while the day
+  still holds what the block gave, and keeps a recipe chosen on the day for a
+  block that left a kind of meal open. A re-stamp takes the block's, the
+  way it takes a category.
+- **On the day** a meal's card carries its recipe's name, or "Lunch recipes",
+  in the card's pill, and a press opens the recipe's page in Kitchen or
+  Kitchen on that meal; a long name gives way inside the pill. The detail
+  sheet asks Recipe on a meal only (`setTaskMealLink`), and choosing a recipe
+  clears the kind of meal it was chosen for.
+- **In templates** one select asks every meal the same question
+  (`views/kitchen/RecipeBinding.tsx`): no recipe, a kind of meal to choose
+  from on the day, or a recipe by name. The day editor asks it on the add row
+  once the block is a meal - where a list would be asked, since a meal does
+  not read through one and two questions there pushed Add a block onto a line
+  of its own - and on a meal block's own line under its row, where the
+  binding's line goes: in the row it pushed every column of the meal's row
+  left of the rows around it. The week editor asks it on the add row and in
+  an open meal block's panel, for every day the block is on. A list already
+  chosen stays in sight. The add row's recipe clears after each block;
+  `addTemplate` carries both fields.
+- The demo and the sample day point meals at recipes and kinds of meal.
+
+New tests: stamping and the echo (`stamping.test.ts`, `ensureDay.test.ts`),
+the fields through a backup and the guard (`kitchen.data.test.ts`),
+`mealLink`, the card's press, the detail sheet and the select
+(`views/kitchen/MealOnDay.test.tsx`), both editors (`TemplatesView.test.tsx`,
+`WeekTemplateEditor.test.tsx`), and a card opening Kitchen in `App.test.tsx`.
+
 ## v2.26 - North that holds the eye
 
 Asked for the night v2.25's last stage ran, and begun when it closed, with

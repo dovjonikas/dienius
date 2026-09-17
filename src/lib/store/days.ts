@@ -1,6 +1,6 @@
 import { commit, dayOf, getData, withDay } from './core'
 import { advanceForTask } from './library'
-import type { DayPlan, LibraryRef, Repeat, Task } from '../types'
+import type { DayPlan, LibraryRef, MealType, Repeat, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
 import type { CategoryId } from '../categories'
 import { sourceCovers, sourceFor, weekdayOf } from '../repeats'
@@ -325,6 +325,21 @@ export const dayActions = {
       ]),
     )
     commit({ ...data, days })
+  },
+
+  /**
+   * What a meal on the day points at - a recipe, a kind of meal left open, or
+   * neither - Kitchen, since v2.27. One or the other, never both: choosing a
+   * recipe is the choice a kind of meal left open.
+   */
+  setTaskMealLink(date: string, taskId: string, link: { recipeId?: string; mealType?: MealType }): void {
+    const day = dayOf(date)
+    commit(withDay(date, {
+      ...day,
+      tasks: day.tasks.map(t =>
+        t.id === taskId ? { ...t, recipeId: link.recipeId, mealType: link.recipeId ? undefined : link.mealType } : t,
+      ),
+    }))
   },
 
   setTaskLibraryRef(date: string, taskId: string, ref: LibraryRef | undefined): void {

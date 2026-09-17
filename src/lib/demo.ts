@@ -1,4 +1,4 @@
-import type { AppData, Task, Template } from './types'
+import type { AppData, MealType, Task, Template } from './types'
 import { addDays, todayKey } from './dates'
 import { weekdayOf } from './repeats'
 
@@ -24,6 +24,9 @@ interface Seed {
   minutes: number
   category?: Task['category']
   core?: boolean
+  /** A meal's recipe or kind of meal - Kitchen. */
+  recipeId?: string
+  mealType?: MealType
 }
 
 const WORKDAY: Seed[] = [
@@ -31,7 +34,7 @@ const WORKDAY: Seed[] = [
   { time: '08:00', title: 'Commute', minutes: 45, category: 'commute' },
   { time: '09:00', title: 'Deep work: pricing page', minutes: 120, category: 'core', core: true },
   { time: '11:15', title: 'Standup', minutes: 15, category: 'routine' },
-  { time: '12:30', title: 'Lunch', minutes: 45, category: 'meal' },
+  { time: '12:30', title: 'Lunch', minutes: 45, category: 'meal', mealType: 'lunch' },
   { time: '13:30', title: 'Code review', minutes: 60, category: 'core' },
   { time: '14:45', title: 'Draft the launch email', minutes: 60, category: 'core' },
   { time: '17:30', title: 'Gym', minutes: 60, category: 'health' },
@@ -39,10 +42,10 @@ const WORKDAY: Seed[] = [
 ]
 
 const RESTDAY: Seed[] = [
-  { time: '09:30', title: 'Slow breakfast', minutes: 45, category: 'meal' },
+  { time: '09:30', title: 'Slow breakfast', minutes: 45, category: 'meal', recipeId: 'demo-recipe-1' },
   { time: '11:00', title: 'Long walk', minutes: 90, category: 'health' },
   { time: '15:00', title: 'Call parents', minutes: 30, category: 'personal' },
-  { time: '19:00', title: 'Cook something new', minutes: 60, category: 'meal' },
+  { time: '19:00', title: 'Cook something new', minutes: 60, category: 'meal', mealType: 'dinner' },
 ]
 
 /**
@@ -99,14 +102,14 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
     id: 'demo-template-work',
     name: 'Working day',
     color: '#a7c4f5',
-    blocks: WORKDAY.map((s, i) => ({ id: `demo-template-work-${i}`, time: s.time, title: s.title, minutes: s.minutes, category: s.category, core: s.core })),
+    blocks: WORKDAY.map((s, i) => ({ id: `demo-template-work-${i}`, time: s.time, title: s.title, minutes: s.minutes, category: s.category, core: s.core, recipeId: s.recipeId, mealType: s.mealType })),
   }
   const rest: Template = {
     id: 'demo-template-rest',
     name: 'Rest day',
     color: '#cde39e',
     type: 'rest',
-    blocks: RESTDAY.map((s, i) => ({ id: `demo-template-rest-${i}`, time: s.time, title: s.title, minutes: s.minutes, category: s.category })),
+    blocks: RESTDAY.map((s, i) => ({ id: `demo-template-rest-${i}`, time: s.time, title: s.title, minutes: s.minutes, category: s.category, recipeId: s.recipeId, mealType: s.mealType })),
   }
 
   const days: AppData['days'] = {}
@@ -128,6 +131,8 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         title: seed.title,
         time: seed.time,
         minutes: seed.minutes,
+        recipeId: seed.recipeId,
+        mealType: seed.mealType,
         category: seed.category,
         core: seed.core,
         // Finished from the top of the day down, which is how a day actually

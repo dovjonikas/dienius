@@ -230,6 +230,8 @@ const FROM_BLOCK = record({
   time: optional(string),
   minutes: optional(minutes),
   category: categoryRef,
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
 })
 
 const TASK = record({
@@ -248,6 +250,10 @@ const TASK = record({
   unbounded: optional(boolean),
   category: categoryRef,
   libraryRef: optional(LIBRARY_REF),
+  // A meal's recipe or kind of meal - Kitchen, since v2.27. The id may
+  // dangle like every other; the meal has to be one Kitchen has.
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
   note: optional(string),
   templateNote: optional(string),
   fromBlock: optional(FROM_BLOCK),
@@ -285,6 +291,8 @@ const TEMPLATE_BLOCK = record({
   unbounded: optional(boolean),
   category: categoryRef,
   libraryListId: optional(string),
+  recipeId: optional(string),
+  mealType: optional(oneOf(MEAL_TYPES)),
   note: optional(string),
   noteExpanded: optional(boolean),
   steps: optional(listOf(TEMPLATE_STEP)),

@@ -183,3 +183,38 @@ test("a copy's summary counts its recipes, and a restore that would bring fewer 
   const row = compareSummaries(summarise(here), summarise(cloud)).find(r => r.label === 'Recipes')
   expect(row).toMatchObject({ here: 2, cloud: 0, loses: true })
 })
+
+// --- a meal on the day and in a template ------------------------------------------
+
+test('a template block and a task may point at a recipe or a kind of meal, carried whole by a backup, and a meal that is not one is refused', () => {
+  const data = withRecipes(base, [recipe()])
+  data.templates = [
+    {
+      id: 't',
+      name: 'A day',
+      color: '#a7c4f5',
+      blocks: [
+        { id: 'b1', title: 'Lunch', category: 'meal', recipeId: 'r1' },
+        { id: 'b2', title: 'Dinner', category: 'meal', mealType: 'dinner' },
+      ],
+    },
+  ]
+  data.days['2026-09-01'] = {
+    date: '2026-09-01',
+    tasks: [{ id: 'k', title: 'Lunch', done: false, category: 'meal', recipeId: 'r1', mealType: 'lunch' }],
+  }
+  const text = exportJson(data)
+  const back = importJson(text)
+  expect(back.templates[0].blocks.map(b => [b.recipeId, b.mealType])).toEqual([['r1', undefined], [undefined, 'dinner']])
+  expect(back.days['2026-09-01'].tasks[0]).toMatchObject({ recipeId: 'r1', mealType: 'lunch' })
+  expect(exportJson(back)).toBe(text)
+
+  const file = JSON.parse(text) as { templates: { blocks: Record<string, unknown>[] }[]; days: Record<string, { tasks: Record<string, unknown>[] }> }
+  file.templates[0].blocks[1].mealType = 'brunch'
+  expect(validate(file)).toBe(false)
+  file.templates[0].blocks[1].mealType = 'dinner'
+  file.days['2026-09-01'].tasks[0].recipeId = 12
+  expect(validate(file)).toBe(false)
+  file.days['2026-09-01'].tasks[0].recipeId = 'r1'
+  expect(validate(file)).toBe(true)
+})

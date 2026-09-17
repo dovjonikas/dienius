@@ -370,6 +370,36 @@ test("a recipe found in the palette opens on its page in Kitchen, and the rail's
   expect(screen.getByRole('heading', { name: 'Kitchen', level: 2 })).toBeInTheDocument()
 })
 
+test("a meal's recipe on the day opens on its page in Kitchen, and a kind of meal opens Kitchen on that meal", async () => {
+  const user = userEvent.setup()
+  const data = defaultData()
+  const today = todayKey()
+  data.recipes = [
+    { id: 'r1', title: 'Lentil soup', text: 'INGREDIENTS\nred lentils', mealTypes: ['lunch'] },
+    { id: 'r2', title: 'Overnight oats', text: 'Oats and milk.', mealTypes: ['breakfast'] },
+  ]
+  data.days[today] = {
+    date: today,
+    autoApplied: true,
+    tasks: [
+      { id: 't1', title: 'Lunch', done: false, category: 'meal', recipeId: 'r1' },
+      { id: 't2', title: 'Breakfast', done: false, category: 'meal', mealType: 'breakfast' },
+    ],
+  }
+  actions.resetForTests(data)
+  render(<App />)
+
+  await user.click(screen.getByRole('button', { name: 'Recipe: Lentil soup' }))
+  expect(screen.getByRole('heading', { name: 'Lentil soup', level: 2 })).toBeInTheDocument()
+
+  await user.click(within(screen.getByRole('navigation', { name: 'Views' })).getByRole('button', { name: 'Today' }))
+  await user.click(screen.getByRole('button', { name: 'Breakfast recipes' }))
+  expect(screen.getByRole('heading', { name: 'Kitchen', level: 2 })).toBeInTheDocument()
+  expect(within(screen.getByRole('group', { name: 'Meal' })).getByRole('button', { name: 'Breakfast' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByText('Overnight oats')).toBeInTheDocument()
+  expect(screen.queryByText('Lentil soup')).toBeNull()
+})
+
 test("pressing 7 opens Kitchen, and so does the rail's button", async () => {
   const user = userEvent.setup()
   render(<App />)

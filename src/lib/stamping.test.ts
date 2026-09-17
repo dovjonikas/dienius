@@ -389,3 +389,29 @@ test('core is not read as KEY, in either direction', () => {
   expect(day.tasks[0].core).toBe(true)
   expect(day.tasks[0].highlight).toBeFalsy()
 })
+
+// --- a meal's recipe - Kitchen, since v2.27 ----------------------------------------
+
+test("a meal block's recipe, or its kind of meal, reaches the day with the echo, and a re-stamp takes the block's current one", () => {
+  const meals: Template = {
+    id: 'meals',
+    name: 'Meals',
+    color: '#8ab6f9',
+    blocks: [
+      { id: 'lunch', time: '12:30', title: 'Lunch', category: 'meal', recipeId: 'soup' },
+      { id: 'dinner', time: '19:00', title: 'Dinner', category: 'meal', mealType: 'dinner' },
+      { id: 'walk', time: '13:00', title: 'Walk', category: 'health' },
+    ],
+  }
+  const stamped = applyStamps({}, [meals], { '2026-09-01': 'meals' })
+  const [lunch, dinner, walk] = stamped['2026-09-01'].tasks
+  expect(lunch).toMatchObject({ recipeId: 'soup', fromBlock: { recipeId: 'soup' } })
+  expect(lunch.mealType).toBeUndefined()
+  expect(dinner).toMatchObject({ mealType: 'dinner', fromBlock: { mealType: 'dinner' } })
+  expect(walk.recipeId).toBeUndefined()
+  expect(walk.mealType).toBeUndefined()
+
+  const changed: Template = { ...meals, blocks: [{ ...meals.blocks[0], recipeId: 'oats' }, meals.blocks[1], meals.blocks[2]] }
+  const restamped = applyStamps(stamped, [changed], { '2026-09-01': 'meals' })
+  expect(restamped['2026-09-01'].tasks[0].recipeId).toBe('oats')
+})

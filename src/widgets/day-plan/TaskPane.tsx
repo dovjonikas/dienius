@@ -15,6 +15,7 @@ import { StarterOffers } from '../onboarding/StarterOffers'
 import { QuickAdd } from './QuickAdd'
 import { TaskRow } from './TaskRow'
 import { Later } from './Later'
+import type { MealType } from '../../lib/types'
 
 /**
  * The task column: capturing something, the list of what is on the day, what
@@ -43,6 +44,8 @@ export interface TaskPaneProps {
   onOpenActions: (taskId: string) => void
   onOpenDetails: (taskId: string) => void
   onContextMenu: (taskId: string, x: number, y: number) => void
+  /** Opens Kitchen from a meal's card - see DayViewProps.onOpenKitchen. */
+  onOpenKitchen?: (opening: { recipeId?: string; meal?: MealType }) => void
 }
 
 export function TaskPane({
@@ -59,6 +62,7 @@ export function TaskPane({
   onOpenActions,
   onOpenDetails,
   onContextMenu,
+  onOpenKitchen,
 }: TaskPaneProps) {
   const data = useAppData()
   const [sizeEditingId, setSizeEditingId] = useState<string | null>(null)
@@ -140,6 +144,8 @@ export function TaskPane({
       onContextMenu: (x: number, y: number) => onContextMenu(task.id, x, y),
       library,
       categories: data.categories,
+      recipes: data.recipes,
+      onOpenKitchen,
       selected: selectedTaskId === task.id,
       onToggleSelect: () => onToggleSelect(task.id),
     }

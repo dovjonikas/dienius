@@ -95,6 +95,19 @@ export interface TemplateBlock {
    */
   libraryListId?: string
   /**
+   * On a block in the meals category: the recipe this meal is - Kitchen,
+   * since v2.27. Copied onto the task it stamps, where the day shows the
+   * recipe's name and a press opens it. An id that resolves to nothing - the
+   * recipe was removed - is read as absent, see `mealLink` in lib/kitchen.ts.
+   */
+  recipeId?: string
+  /**
+   * On a block in the meals category, with no recipe chosen yet: the kind of
+   * meal it is, so a press on the day opens Kitchen on that meal's recipes
+   * to choose from. Copied onto the task like `recipeId`.
+   */
+  mealType?: MealType
+  /**
    * What this block says when it arrives on a day - the recipe, the four
    * things the routine is, the weight to start the set at.
    *
@@ -327,6 +340,10 @@ export interface Task extends Timestamped {
    * already keeps.
    */
   libraryRef?: LibraryRef
+  /** The recipe this meal is, when its category is meals - see `TemplateBlock.recipeId`. */
+  recipeId?: string
+  /** The kind of meal it is, to choose a recipe for on the day - see `TemplateBlock.mealType`. */
+  mealType?: MealType
   /**
    * Free text the owner attached to this task - see the task detail sheet -
    * or, on a task a template stamped, what the block had to say. Absent and
@@ -380,6 +397,10 @@ export interface Task extends Timestamped {
     time?: string
     minutes?: number
     category?: string
+    /** The meal's recipe the block gave - Kitchen, since v2.27. */
+    recipeId?: string
+    /** The kind of meal the block gave, with no recipe. */
+    mealType?: MealType
   }
   /**
    * Whether the note shows without being asked for.

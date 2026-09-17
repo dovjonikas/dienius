@@ -18,6 +18,8 @@ import { canMarkKey } from './blockHighlights'
 import { CategoryEdit, CategoryQuickAdd } from './CategoryQuickAdd'
 import { bindingLine } from '../lib/library'
 import { LibraryBindingField } from './LibraryQuickAdd'
+import { RecipeBindingField, type MealBinding } from './kitchen/RecipeBinding'
+import { isMealCategory } from '../lib/kitchen'
 import { ReturnField } from './ReturnField'
 import { WeekTemplateGrid } from './WeekTemplateGrid'
 
@@ -217,6 +219,8 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
   const [blockCategory, setBlockCategory] = useState<CategoryId | undefined>(() => data.categories[0]?.id)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
   const [blockLibraryListId, setBlockLibraryListId] = useState<string | undefined>(undefined)
+  // A meal's recipe, asked on the add row once the new block is a meal - Kitchen.
+  const [blockMeal, setBlockMeal] = useState<MealBinding>({})
 
   const dragRef = useRef<{ id: string; x: number; y: number } | null>(null)
   const sleepProfiles = data.settings.sleepProfiles
@@ -302,13 +306,17 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
       category: blockCategory,
       unbounded: blockUnbounded || undefined,
       libraryListId: blockLibraryListId,
+      // Only a meal carries one, whatever the add row was last asked.
+      ...(isMealCategory(blockCategory) ? blockMeal : {}),
       weekday: day,
       groupId,
     }))
     onChange({ ...draft, blocks: [...draft.blocks, ...made] })
     // The title clears; the size stays, like the category, because the next
-    // block is usually the same kind of thing as the last.
+    // block is usually the same kind of thing as the last. A meal's recipe
+    // clears with the title: breakfast, lunch and dinner are three.
     setBlockTitle('')
+    setBlockMeal({})
   }
 
   /**
@@ -636,12 +644,25 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
            * control nobody can name. Hidden while the library is empty, the
            * same rule the add row follows: a template editor stays a
            * template editor for the many people who never build a list. */}
-          <LibraryBindingField
-            id={`wt-note-library-${noteBlock.id}`}
-            lists={data.library}
-            value={noteBlock.libraryListId}
-            onChange={libraryListId => editBlock(noteBlock, { libraryListId })}
-          />
+          {/* A meal is asked which recipe it is, for every day the block is
+              on - Kitchen - where another block is asked what it draws from.
+              A list already chosen stays in sight. */}
+          {isMealCategory(noteBlock.category) && !noteBlock.libraryListId ? (
+            <RecipeBindingField
+              id={`wt-note-recipe-${noteBlock.id}`}
+              recipes={data.recipes}
+              recipeId={noteBlock.recipeId}
+              mealType={noteBlock.mealType}
+              onChange={link => editBlock(noteBlock, { recipeId: link.recipeId, mealType: link.mealType })}
+            />
+          ) : (
+            <LibraryBindingField
+              id={`wt-note-library-${noteBlock.id}`}
+              lists={data.library}
+              value={noteBlock.libraryListId}
+              onChange={libraryListId => editBlock(noteBlock, { libraryListId })}
+            />
+          )}
           {/* What this block would actually put on a day. See bindingLine: a
               list is not a book, and the control above names a list. Keyed on
               the list being found rather than on the id being set, because the
@@ -775,12 +796,24 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
             one for a category, one for a list, nothing to tell them apart.
             A line each, and the label says which. */}
         <div className="block-add-field">
-          <LibraryBindingField
-            id="wt-add-library"
-            lists={data.library}
-            value={blockLibraryListId}
-            onChange={setBlockLibraryListId}
-          />
+          {/* A meal is asked which recipe it is where another block is asked
+              what it draws from - see the day editor's add row. */}
+          {isMealCategory(blockCategory) && !blockLibraryListId ? (
+            <RecipeBindingField
+              id="wt-add-recipe"
+              recipes={data.recipes}
+              recipeId={blockMeal.recipeId}
+              mealType={blockMeal.mealType}
+              onChange={setBlockMeal}
+            />
+          ) : (
+            <LibraryBindingField
+              id="wt-add-library"
+              lists={data.library}
+              value={blockLibraryListId}
+              onChange={setBlockLibraryListId}
+            />
+          )}
           <Explain id="ongoing">
             <button
               type="button"
