@@ -7,11 +7,12 @@
  * ordinary Friday under the real key, built to be measured - ten tasks with
  * three key ones, a reading block bound to a library list, four goals, seven
  * in Later (two of them bare lines), a scratch stream, three templates, a
- * weekday map, and forty days behind it so the calendar and Review have
- * something to draw.
+ * weekday map, four recipes in Kitchen, and forty days behind it so the
+ * calendar and Review have something to draw.
  *
  * Options, all off by default:
- *   heavy           twenty tasks today, thirty-two in Later, fifteen books
+ *   heavy           twenty tasks today, thirty-two in Later, fifteen books,
+ *                   twenty recipes
  *   extraToday      that many more anchors on today, for a crowded grid
  *   calendarEvents  that many external calendar events in the local cache
  *
@@ -232,6 +233,44 @@
     ],
     goals,
     picture,
+    // Kitchen: everyday recipes, generic like everything else here. Three with
+    // INGREDIENTS and STEPS, one a plain paragraph; two cooked, two not yet.
+    recipes: [
+      {
+        id: id('rc'),
+        title: 'Overnight oats',
+        text: 'Made the night before and eaten cold.\n\nINGREDIENTS\n50 g oats\n150 ml milk\n2 tbsp yoghurt\nA handful of berries\n\nSTEPS\nStir the oats, milk and yoghurt together in a jar.\nLeave it in the fridge overnight.\nPut the berries on top in the morning.',
+        mealTypes: ['breakfast', 'snack'], kcal: 380, protein: 18, carbs: 55, fat: 9, servings: 1, minutes: 5, cooked: 6, updatedAt: stamp,
+      },
+      {
+        id: id('rc'),
+        title: 'Chicken and rice bowl',
+        text: 'INGREDIENTS\n2 chicken breasts\n150 g rice\n1 cucumber\nSoy sauce\n\nSTEPS\nCook the rice.\nSeason the chicken and cook it in a hot pan, about six minutes a side.\nSlice the chicken and the cucumber.\nShare the rice between two bowls and put everything on top.',
+        mealTypes: ['lunch', 'post-gym'], kcal: 610, protein: 45, carbs: 70, fat: 14, servings: 2, minutes: 30, cooked: 4, updatedAt: stamp,
+      },
+      {
+        id: id('rc'),
+        title: 'Lentil soup',
+        text: 'Keeps for three days, and better on the second.\n\nINGREDIENTS\n250 g red lentils\n1 onion\n2 carrots\n1 litre stock\n\nSTEPS\nChop the onion and the carrots and soften them in a little oil.\nAdd the lentils and the stock and simmer for twenty-five minutes.\nBlend half of it and stir it back in.',
+        mealTypes: ['lunch', 'dinner'], kcal: 420, protein: 22, carbs: 60, fat: 8, servings: 4, minutes: 45, updatedAt: stamp,
+      },
+      {
+        id: id('rc'),
+        title: 'Banana toast',
+        text: 'Toast a slice of bread, spread it with peanut butter and slice a banana over it.',
+        mealTypes: ['pre-gym', 'snack'], kcal: 330, protein: 11, carbs: 45, fat: 12, servings: 1, minutes: 5, updatedAt: stamp,
+      },
+      ...(heavy
+        ? Array.from({ length: 16 }, (_, i) => ({
+            id: id('rc'),
+            title: 'Everyday recipe number ' + (i + 1),
+            text: 'INGREDIENTS\nsomething\n\nSTEPS\nCook it.',
+            mealTypes: [['breakfast'], ['lunch'], ['dinner'], ['snack']][i % 4],
+            kcal: 300 + i * 10,
+            updatedAt: stamp,
+          }))
+        : []),
+    ],
   }
 
   if (heavy) {

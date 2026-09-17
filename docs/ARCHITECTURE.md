@@ -304,6 +304,7 @@ src/
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             the North window: the picture, the goals, what deserves them, the rules - and Compose, which edits all four
+    kitchen/           Kitchen: the recipe list with its meal chips and search
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor

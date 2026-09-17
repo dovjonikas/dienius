@@ -836,8 +836,8 @@ main { flex: 1 1 auto; min-height: 0; }
     gap: 0;
   }
 
-  /* Settings and Scratch sit in the same row as the six rather than at an
-     end of their own: a bar with two groups in it reads as two bars. */
+  /* Settings sits in the same row as the views rather than at an end of
+     its own: a bar with two groups in it reads as two bars. */
   .nav-rail-foot { flex: 0 0 auto; }
 
   .nav-rail-item,
@@ -852,7 +852,18 @@ main { flex: 1 1 auto; min-height: 0; }
   }
 
   .nav-rail-label { display: none; }
+}
 
+/* Eight in the bar since Kitchen, v2.27: eight 44px targets and the bar's
+   gutters are 368px, wider than a 360px or a 320px screen, where the bar ran
+   off its right edge. Under 376px each keeps its full height and gives up
+   a few pixels of width - 38 at the narrowest - rather than a view. */
+@media (max-width: 375px) {
+  .nav-rail-item,
+  .nav-rail.is-open .nav-rail-item { min-width: 38px; }
+}
+
+@media (max-width: 1023px) {
   /* Along the bottom the mark goes above the icon rather than beside it -
      there is no leading edge to put a rule on when the items sit in a row. */
   .nav-rail-item.is-active::before {
@@ -14726,6 +14737,61 @@ main:has(.week) > .calendar {
   .library-template-form { flex-direction: column; align-items: stretch; }
   .library-template-form input,
   .library-template-form select { width: 100%; }
+}
+
+/* ------------------------------------------------------------------------
+   Kitchen - views/kitchen/, since v2.27.
+
+   Built from the Library's parts: its page, header, chips, card and rows,
+   with what a recipe needs added here and nothing of the Library's changed.
+   ------------------------------------------------------------------------ */
+
+/* A chip that chooses rather than jumps: the pressed one on the accent's
+   ground in the text's ink, the replan sheet's chosen chip. After the
+   Library's hover, so the chosen chip keeps its ground under the pointer. */
+.library-chip[aria-pressed='true'] { background: var(--accent-dim); }
+
+/* The meals wrap rather than scroll: a filter whose last choices are off the
+   screen is a filter that hides them, and seven fit on two rows of a phone. */
+.kitchen-chips {
+  flex-wrap: wrap;
+  padding-bottom: 0;
+  overflow-x: visible;
+}
+
+/* The field across the top of the card, where the Library's add line stands. */
+.kitchen-search { width: 100%; }
+
+/* A recipe's row: its name and a quiet line under it, and how often it was
+   cooked at the end, on the row's centre. Its words stand on the card's inner
+   edge, the search field's edge, and the ground under the pointer reaches
+   out past them into the card's padding rather than pushing them in. */
+.kitchen-row {
+  margin-inline: calc(var(--s2) * -1);
+  padding: var(--s2);
+}
+
+.kitchen-row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s0);
+  min-width: 0;
+}
+
+.kitchen-row-macros {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+/* A meal with nothing in it, or a search that found nothing: one quiet line
+   where the rows would be. */
+.kitchen-none {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
 }
 
 /* The Note/Task marker beside the scratch field.

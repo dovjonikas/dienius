@@ -1,7 +1,7 @@
 import { formatDayTitle } from './dates'
 import { progressLabel } from './library'
 import { scratchTitle } from './scratch'
-import type { AppData } from './types'
+import type { AppData, Recipe } from './types'
 
 /**
  * Finding things, without an index.
@@ -129,6 +129,24 @@ export function searchEverything(data: AppData, query: string, today: string): S
   return results
     .sort((a, b) => (b.score === a.score ? a.title.localeCompare(b.title) : b.score - a.score))
     .slice(0, MAX_RESULTS)
+}
+
+/**
+ * Kitchen's own field: its recipes that match, by name and by text, with the
+ * matching everything else here uses. A name counts twice what a text does,
+ * so a recipe called what was typed comes before one that only mentions it;
+ * recipes that score the same keep the order they were given in, which is
+ * the list's. It filters a list already on the screen rather than searching
+ * a store, so an empty field is every recipe and one letter already narrows.
+ */
+export function searchRecipes(recipes: readonly Recipe[], query: string): Recipe[] {
+  const needle = fold(query.trim())
+  if (!needle) return [...recipes]
+  return recipes
+    .map(recipe => ({ recipe, score: Math.max(matchScore(recipe.title, needle) * 2, matchScore(recipe.text, needle)) }))
+    .filter(found => found.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(found => found.recipe)
 }
 
 /** Month arithmetic on a date key, clamped to the target month's real length. */

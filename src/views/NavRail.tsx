@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { readRailPinned, writeRailPinned } from '../lib/railPrefs'
 import {
   CalendarIcon,
+  KitchenIcon,
   LibraryIcon,
   NorthIcon,
   PinIcon,
@@ -11,7 +12,7 @@ import {
   TodayIcon,
 } from './NavIcons'
 
-export type NavView = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'north' | 'settings'
+export type NavView = 'day' | 'calendar' | 'templates' | 'library' | 'review' | 'north' | 'kitchen' | 'settings'
 
 export interface NavItem {
   view: NavView
@@ -22,10 +23,12 @@ export interface NavItem {
 }
 
 /**
- * The six places the app is used through, in the order the keys number them,
- * and Settings after them. Settings keeps a key of its own rather than a
- * seventh number, because the numbers are for the six screens and a seventh
- * would make that a coincidence rather than a rule.
+ * The seven places the app is used through, in the order the keys number them,
+ * and Settings after them. Settings keeps a key of its own rather than an
+ * eighth number, because the numbers are for the screens and one more would
+ * make that a coincidence rather than a rule. Kitchen joined as the seventh in
+ * v2.27, at the end, so every key a hand already knows still reaches what it
+ * reached.
  */
 export const NAV_ITEMS: NavItem[] = [
   { view: 'day', label: 'Today', key: '1', Icon: TodayIcon },
@@ -34,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { view: 'library', label: 'Library', key: '4', Icon: LibraryIcon },
   { view: 'review', label: 'Review', key: '5', Icon: ReviewIcon },
   { view: 'north', label: 'North', key: '6', Icon: NorthIcon },
+  { view: 'kitchen', label: 'Kitchen', key: '7', Icon: KitchenIcon },
 ]
 
 export const SETTINGS_ITEM: NavItem = { view: 'settings', label: 'Settings', key: ',', Icon: SettingsIcon }

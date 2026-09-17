@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { defaultData } from './storage'
-import { addMonths, parseDateQuery, searchEverything } from './search'
-import type { AppData, Task } from './types'
+import { addMonths, parseDateQuery, searchEverything, searchRecipes } from './search'
+import type { AppData, Recipe, Task } from './types'
 
 // 2026-09-02 is a Wednesday.
 const TODAY = '2026-09-02'
@@ -98,6 +98,37 @@ test('nothing matching is an empty list, not a guess', () => {
 test('results are capped, so a common word does not return the whole store', () => {
   seed(TODAY, Array.from({ length: 40 }, (_, i) => task({ title: `Task about banking ${i}` })))
   expect(searchEverything(data, 'banking', TODAY).length).toBeLessThanOrEqual(12)
+})
+
+// --- Kitchen's own search ---------------------------------------------------
+
+/**
+ * Kitchen's field searches its recipes by name and by text, with the same
+ * matching as everything else - case and accents ignored, a whole or a word
+ * start before anywhere - and a name before a text. It is a filter over a
+ * list already on screen, so an empty field is the whole list and one letter
+ * already narrows it.
+ */
+function recipe(title: string, text: string): Recipe {
+  return { id: crypto.randomUUID(), title, text }
+}
+
+test('recipes are found by their name and by their text, a name first', () => {
+  const soup = recipe('Lentil soup', 'INGREDIENTS\nred lentils\nonion')
+  const bowl = recipe('Chicken bowl', 'INGREDIENTS\nrice\nhalf an onion')
+  const onion = recipe('Onion tart', 'INGREDIENTS\npastry')
+  const oats = recipe('Overnight oats', 'INGREDIENTS\noats')
+  expect(searchRecipes([soup, bowl, onion, oats], 'onion').map(r => r.title)).toEqual(['Onion tart', 'Lentil soup', 'Chicken bowl'])
+  expect(searchRecipes([soup, bowl, onion, oats], 'LENTIL').map(r => r.title)).toEqual(['Lentil soup'])
+})
+
+test('an empty field is every recipe in the order given, one letter already narrows, and accents are ignored', () => {
+  const crepes = recipe('Crêpes', 'flour, eggs, milk')
+  const soup = recipe('Lentil soup', 'lentils')
+  expect(searchRecipes([soup, crepes], '  ')).toEqual([soup, crepes])
+  expect(searchRecipes([soup, crepes], 'crepe')).toEqual([crepes])
+  expect(searchRecipes([soup, crepes], 'k')).toEqual([crepes])
+  expect(searchRecipes([soup, crepes], 'zebra')).toEqual([])
 })
 
 // --- typing a date -------------------------------------------------------

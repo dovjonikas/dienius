@@ -38,6 +38,7 @@ export const SHORTCUTS: Shortcut[] = [
   { key: '4', label: '4', description: 'Library' },
   { key: '5', label: '5', description: 'Review' },
   { key: '6', label: '6', description: 'North - the few things the days are for' },
+  { key: '7', label: '7', description: 'Kitchen - the recipes cooked here' },
   { key: ',', label: ',', description: 'Settings' },
   { key: 'f', label: 'F', description: 'Start Focus on the task that is running now' },
   { key: 'r', label: 'R', description: 'Something came up - fit it into today or any day this week' },

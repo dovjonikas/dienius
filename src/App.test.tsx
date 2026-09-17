@@ -339,6 +339,7 @@ test('the rail names every view and the key that also reaches it', () => {
     const nav = screen.getByRole('navigation', { name: 'Views' })
     expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('data-tip', 'Today · 1')
     expect(within(nav).getByRole('button', { name: 'North' })).toHaveAttribute('data-tip', 'North · 6')
+    expect(within(nav).getByRole('button', { name: 'Kitchen' })).toHaveAttribute('data-tip', 'Kitchen · 7')
     expect(within(nav).getByRole('button', { name: 'Settings' })).toHaveAttribute('data-tip', 'Settings · comma')
     expect(within(nav).getByRole('button', { name: 'Today' })).toHaveAttribute('aria-current', 'page')
   } finally {
@@ -352,6 +353,17 @@ test('the rail names every view and the key that also reaches it', () => {
  * on screen there, so "Today · 1" was a lie for anybody who had arrowed a
  * week ahead and pressed 1 to get back.
  */
+test("pressing 7 opens Kitchen, and so does the rail's button", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.keyboard('7')
+  expect(screen.getByRole('heading', { name: 'Kitchen', level: 2 })).toBeInTheDocument()
+  await user.keyboard('1')
+  expect(screen.queryByRole('heading', { name: 'Kitchen', level: 2 })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Kitchen' }))
+  expect(screen.getByRole('heading', { name: 'Kitchen', level: 2 })).toBeInTheDocument()
+})
+
 test("pressing 1 opens today, as the rail's button does", async () => {
   const user = userEvent.setup()
   render(<App />)

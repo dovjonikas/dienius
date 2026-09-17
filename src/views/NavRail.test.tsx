@@ -79,6 +79,8 @@ test('pressing an item asks the shell for that view', async () => {
   const { onNavigate } = renderRail()
   await user.click(screen.getByRole('button', { name: 'North' }))
   expect(onNavigate).toHaveBeenCalledWith('north')
+  await user.click(screen.getByRole('button', { name: 'Kitchen' }))
+  expect(onNavigate).toHaveBeenCalledWith('kitchen')
 })
 
 test('the view you are on carries the mark, and nothing else does', () => {
@@ -91,9 +93,13 @@ test('the view you are on carries the mark, and nothing else does', () => {
 
 // The pen stood here for two versions, because Scratch had no visible way
 // in on a desktop. It has one in the header now, beside the journal, so the
-// rail is the six views and the two things under them and nothing else.
-test('the rail is the six views, Settings and the pin - no pen among them', () => {
+// rail is the views and the two things under them and nothing else - seven
+// views since Kitchen, v2.27, numbered 1 to 7 in the order they stand.
+test('the rail is the seven views in the order of their keys, Settings and the pin - no pen among them', () => {
   renderRail()
+  const nav = screen.getByRole('navigation', { name: 'Views' })
+  expect(NAV_ITEMS.map(item => item.key)).toEqual(['1', '2', '3', '4', '5', '6', '7'])
+  expect(within(nav).getAllByRole('button').slice(0, 7).map(b => b.getAttribute('aria-label'))).toEqual(['Today', 'Calendar', 'Templates', 'Library', 'Review', 'North', 'Kitchen'])
   expect(screen.queryByRole('button', { name: 'Scratch' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Today' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument()

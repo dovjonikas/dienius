@@ -42,6 +42,7 @@ import { ReviewView } from './views/ReviewView'
 import { SettingsView } from './views/SettingsView'
 import { TemplatesView } from './views/TemplatesView'
 import { NorthView } from './views/north/NorthView'
+import { KitchenView } from './views/kitchen/KitchenView'
 import { NorthWindow, useNorthAfterSleep } from './views/north/NorthWindow'
 import { NavRail, type NavView } from './views/NavRail'
 import { WIDGETS } from './widgets/registry'
@@ -355,6 +356,9 @@ export function App() {
         case '6':
           setView('north')
           break
+        case '7':
+          setView('kitchen')
+          break
         case ',':
           setView('settings')
           break
@@ -390,6 +394,7 @@ export function App() {
     { id: 'go-library', label: 'Library', detail: 'Books, series, anything with a unit', run: () => setView('library') },
     { id: 'go-review', label: 'Review', detail: 'How the week went', run: () => setView('review') },
     { id: 'go-north', label: 'North', detail: 'The few things the days are for', run: () => setView('north') },
+    { id: 'go-kitchen', label: 'Kitchen', detail: 'The recipes cooked here', run: () => setView('kitchen') },
     { id: 'go-settings', label: 'Settings', detail: 'Sleep, week, nudges, appearance', run: () => setView('settings') },
     {
       id: 'new-task',
@@ -660,6 +665,7 @@ export function App() {
           />
         )}
         {view === 'north' && <NorthView />}
+        {view === 'kitchen' && <KitchenView />}
         {view === 'templates' && <TemplatesView />}
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}

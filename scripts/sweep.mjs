@@ -322,6 +322,16 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   },
+  // Kitchen's list, and a meal chosen - the chips wrap on a phone, and the
+  // pressed one is the only chip with a ground of its own.
+  { name: 'Kitchen', go: /** @param {Page} p */ p => tab(p, 'Kitchen') },
+  {
+    name: 'Kitchen (a meal chosen)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await press(p, 'Snack')
+    },
+  },
   { name: 'Settings', go: /** @param {Page} p */ p => tab(p, 'Settings') },
   {
     name: 'Task detail',

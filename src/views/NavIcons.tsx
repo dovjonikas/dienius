@@ -1,13 +1,13 @@
 /**
  * The rail's icons, drawn rather than installed.
  *
- * No icon font, no sprite sheet, no library: eight small paths in one file,
+ * No icon font, no sprite sheet, no library: nine small paths in one file,
  * and nothing to keep in step with a version number. The same reasoning as
  * the caret made of borders and the clock face made of a pseudo-element -
  * this app has never shipped an image it could draw.
  *
- * They are one set and have to read as one, so all eight obey the same
- * rules and a ninth has to as well:
+ * They are one set and have to read as one, so all nine obey the same
+ * rules and a tenth has to as well:
  *
  * - **A 20x20 box**, on the whole-pixel grid wherever a line is horizontal or
  *   vertical, because a 1.5px stroke on a half pixel is a 2px grey smudge.
@@ -88,6 +88,17 @@ export function NorthIcon() {
     <svg {...BOX}>
       <circle cx="10" cy="10" r="7.25" {...STROKE} />
       <path d="M10 4.75l2.2 5.25L10 15.25 7.8 10z" {...STROKE} />
+    </svg>
+  )
+}
+
+/** A pot with its lid on. Kitchen is where the recipes are, and a pot reads at 20px where a whisk does not. */
+export function KitchenIcon() {
+  return (
+    <svg {...BOX}>
+      <path d="M4 9.5V14a2.5 2.5 0 0 0 2.5 2.5h7A2.5 2.5 0 0 0 16 14V9.5" {...STROKE} />
+      <path d="M2.5 9.5h15" {...STROKE} />
+      <path d="M6.5 6.5h7M10 4v2.5" {...STROKE} />
     </svg>
   )
 }

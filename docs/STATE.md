@@ -74,6 +74,40 @@ New tests: `headings.test.ts` (the rule with no rules, North's rules, and
 North and a recipe finding the same headings in the same texts) and
 `recipeText.test.ts`.
 
+### Stage 3 - the list, its chips and its search: done
+
+- **A seventh view**, Kitchen, with a pot in the rail and the bar, the `7`
+  key, a palette command and a line on the shortcut card. At the end of the
+  rail, so every key a hand knows still reaches what it reached. Eight in
+  the phone's bar: under 376px each keeps its height and gives up a few
+  pixels of width, 38 at the narrowest, where eight 44px targets ran off a
+  320px screen.
+- **The list** (`views/kitchen/KitchenView.tsx`), built from the Library's
+  parts: its page and header, the chip row, one card and quiet rows. The
+  chips are All and the six meals, one pressed at a time on the accent's
+  ground, wrapping rather than scrolling; the field at the top of the card
+  searches names and texts within the chosen meal. A row is the name, the
+  kcal and protein on one quiet line when known (`macroLine`) and how often
+  it was cooked at the end (`cookedLabel`), the recipes in the order of their
+  names (`recipesForMeal`). An empty Kitchen says what it is for; a meal or a
+  search with nothing says so in one line. The view takes a meal to open on,
+  for the day's meal blocks later.
+- **Search** (`searchRecipes` in `lib/search.ts`): the app's own matching,
+  a name counting twice a text, ties in the list's order, an empty field
+  the whole list and one letter already narrowing.
+- **The gates**: Kitchen is a screen in the sweep (and with a meal chosen),
+  in precision, keys and the text sizes; the sample day has four generic
+  recipes, twenty when heavy.
+
+Not yet: a row opens nothing until the recipe's page (stage 4), and the
+palette's search finds recipes from there too.
+
+Changed tests: `NavRail.test.tsx` counts seven views in the order of their
+keys and presses Kitchen; `App.test.tsx` names Kitchen · 7. New:
+`kitchen.test.ts`, recipe search in `search.test.ts`,
+`views/kitchen/KitchenView.test.tsx`, and 7 opening Kitchen in
+`App.test.tsx`.
+
 ## v2.26 - North that holds the eye
 
 Asked for the night v2.25's last stage ran, and begun when it closed, with

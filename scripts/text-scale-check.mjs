@@ -37,6 +37,7 @@ const SCREENS = [
   { name: 'Library', go: p => tab(p, 'Library') },
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },
+  { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
   { name: 'Settings', go: p => tab(p, 'Settings') },
 ]
 

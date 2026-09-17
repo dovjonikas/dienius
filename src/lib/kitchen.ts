@@ -24,6 +24,40 @@ export const MEAL_TYPE_LABELS: Record<MealType, string> = {
   snack: 'Snack',
 }
 
+/** Which recipes the list shows: all of them, or the ones for one meal. */
+export type MealFilter = MealType | 'all'
+
+/**
+ * The recipes for a meal - every one for 'all' - in the order of their
+ * names, which is the order a cookbook's index is in and the one a person
+ * finds a name in without reading every row. A new array; the one given is
+ * left as it was.
+ */
+export function recipesForMeal(recipes: readonly Recipe[], meal: MealFilter): Recipe[] {
+  const chosen = meal === 'all' ? [...recipes] : recipes.filter(r => r.mealTypes?.includes(meal))
+  return chosen.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
+}
+
+/**
+ * A row's one quiet line: the kcal and the protein a serving has, whichever
+ * of the two are known, or nothing. Carbs and fat are the recipe page's; a
+ * row says the two numbers a choice for after the gym is made on.
+ */
+export function macroLine(recipe: Recipe): string | undefined {
+  const parts: string[] = []
+  if (recipe.kcal !== undefined) parts.push(`${recipe.kcal} kcal`)
+  if (recipe.protein !== undefined) parts.push(`${recipe.protein} g protein`)
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
+/** How many times a recipe was cooked, in words - and nothing before the first. */
+export function cookedLabel(cooked: number | undefined): string | undefined {
+  if (!cooked) return undefined
+  if (cooked === 1) return 'Cooked once'
+  if (cooked === 2) return 'Cooked twice'
+  return `Cooked ${cooked} times`
+}
+
 /** What a recipe's form holds when it is saved. Numbers the form could not read arrive as NaN or absent. */
 export interface RecipeInput {
   title: string
