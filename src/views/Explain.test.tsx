@@ -100,13 +100,6 @@ const replanChrome = {
  */
 const PLACED: Record<ExplainId, () => ReactElement> = {
   north: () => <NorthView />,
-  // The word lives on the field it names, in the goal's own editor since
-  // v2.24: the page shows a goal as its title and nothing else.
-  deserve: () => {
-    actions.setPicture('a first line')
-    actions.addGoal({ title: 'First goal here', deserve: ['a thing I do'] }, DATE)
-    return <NorthView />
-  },
   'key-task': () => <TaskDetail task={task} tasks={[task]} date={DATE} library={[]} onClose={() => {}} />,
   push: () => (
     <TaskActionsSheet
@@ -182,9 +175,6 @@ describe.each(EXPLAIN_IDS)('%s', id => {
     }
     // The kind question is behind New template, and the week editor's own two
     // terms are behind choosing the week.
-    if (id === 'deserve') {
-      await user.click(screen.getByRole('button', { name: 'Edit "First goal here"' }))
-    }
     if (id === 'template-day' || id === 'template-week' || id === 'add-to' || id === 'copy-to') {
       await user.click(screen.getByRole('button', { name: 'New template' }))
     }

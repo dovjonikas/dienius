@@ -91,8 +91,8 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText('A session of Dune is on today')
   await card.getByRole('button', { name: 'Next' }).click()
 
-  // One direction - the picture's first line, then a goal under it in the
-  // North window, then shown under the day
+  // Your own words - a line of North's text, written on the page and kept,
+  // and the caption over the words it kept. No goal: goals are retired.
   await expect(card).toContainText(`${verb} Write.`)
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
   await expect(card).toContainText('Write a line of your own')
@@ -100,14 +100,9 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await line.pressSequentially('First line here')
   await expect(card).toContainText(`Now ${verb.toLowerCase()} Save.`)
   await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
-  await expect(card).toContainText(`${verb} Add a goal`)
-  await page.getByRole('button', { name: 'Add a goal' }).click()
-  await expect(card).toContainText(`Name it, then ${verb.toLowerCase()} Save.`)
-  await page.getByRole('textbox', { name: 'Goal' }).fill('Finish things')
-  await page.getByRole('button', { name: 'Save', exact: true }).click()
-  await expect(card).toContainText('It sits under the day now')
-  await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible()
-  await expect(page.getByText('Finish things')).toBeVisible()
+  await expect(card).toContainText('This comes back after sleep')
+  await expect(page.getByRole('main').getByText('First line here')).toBeVisible()
+  await expect(page.getByRole('button', { name: /goal/i })).toHaveCount(0)
   await card.getByRole('button', { name: 'Next' }).click()
 
   // The end

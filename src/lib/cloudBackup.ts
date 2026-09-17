@@ -77,7 +77,7 @@ export type BackupReason = 'evening-close' | 'new-day' | 'manual'
  * What one copy of the plan holds, part by part.
  *
  * Tasks and days were the whole of it until v2.17, and a restore replaces
- * *everything* - so a cloud copy carrying fourteen books and four goals over
+ * *everything* - so a cloud copy carrying fourteen books and a North text over
  * an empty week read as "empty", and a restore about to wipe a library looked
  * exactly like one that would not. The file always had all of it; the screen
  * that asks somebody to confirm was the part that could not see it.
@@ -92,7 +92,13 @@ export interface StateSummary {
   templates: number
   /** Items across every library list, which is what a person calls "books". */
   books: number
-  goals: number
+  /**
+   * The lines of North's text that hold words. Goals had this row until they
+   * were retired in v2.28; the text is what North is now, and a restore
+   * about to replace it with a shorter one - or with none - is the one to
+   * be told about.
+   */
+  north: number
   categories: number
   /** Later, still called `backlog` in the file - see LaterItem in types.ts. */
   later: number
@@ -401,7 +407,7 @@ export function summarise(data: AppData): StateSummary {
     days: days.length,
     templates: data.templates.length,
     books: data.library.reduce((n, l) => n + l.items.length, 0),
-    goals: data.goals.length,
+    north: (data.picture?.text ?? '').split('\n').filter(line => line.trim() !== '').length,
     categories: data.categories.length,
     later: data.backlog.length,
     recipes: data.recipes.length,
@@ -438,7 +444,7 @@ export function compareSummaries(here: StateSummary, cloud: StateSummary): Summa
     row('Tasks', 'tasks'),
     row('Templates', 'templates'),
     row('Library books', 'books'),
-    row('Goals', 'goals'),
+    row('North lines', 'north'),
     row('Categories', 'categories', false),
     row('Later', 'later'),
     row('Recipes', 'recipes'),

@@ -47,12 +47,12 @@ AppData
 ├── library: LibraryList[]       name + unit + items, colour?
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
 │                                track? (pages/movie/series), pace?, season?
-├── goals: Goal[]                directions, never measured - see §6
-├── picture?: Picture            who I am becoming: one text, one entity - see §6
+├── goals: Goal[]                retired in v2.28; kept for old files and devices - see §6
+├── picture?: Picture            North: one text, one entity - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
 ├── recipes: Recipe[]            Kitchen: title + one text, meal types?, macros?,
 │                                servings?, minutes?, cooked? - never summed
-├── ifThens: IfThenEntry[]       trigger + action under a goal, never measured
+├── ifThens: IfThenEntry[]       the rules under goals; retired and kept with them - see §6
 ├── backlog: LaterItem[]         Later: something to do on no day, in the owner's order
 │                                (the field keeps its wire name - see section 7)
 ├── inbox: InboxItem[]           empty since v2.7; folded into Later on load
@@ -222,18 +222,17 @@ src/
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, load/save, migrations, export/import
     validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
-    store.ts           the facade: `actions` spread from the twelve areas below core.ts
+    store.ts           the facade: `actions` spread from the eleven areas below core.ts
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
       library.ts       lists, items, progress, sessions onto days and templates
       templates.ts     templates, stamping, the weekday map
-      goals.ts         North: the goals, the picture, Compose's one commit, and the card switches
+      north.ts         North: the text, and its two switches
       later.ts         Later, the one undated shelf, and the door from it onto a day
       scratch.ts       the scratch stream and its two ways out
       calendars.ts     external calendar subscriptions
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
-      ifThen.ts        the rules under a goal, and the cap that refuses
       categories.ts    the category list, and the delete that moves what it would orphan
       kitchen.ts       recipes: written, rewritten, cooked once more, let go
       lifecycle.ts     import, snapshot restore, the tour's two endings
@@ -242,7 +241,7 @@ src/
     stamping.ts        template + dates -> day plans, and which column a date takes
     repeats.ts         which days a series owes, and what an instance carries
     review.ts          week/month statistics, all derived, nothing recorded
-    north.ts           goals: rotation, ages, the rules under each, when one comes forward; the picture, the deserve lines, and the compose draft applied
+    north.ts           North's text written or removed, the day number its line is picked by, and goals retired once at every door
     eveningClose.ts    how a day ends, and what may be said about it
     journal.ts         three lines a day, none required, and the week or month as markdown
     dayStats.ts        one past day, small enough for a calendar cell
@@ -304,7 +303,7 @@ src/
                        (cardPlacement.ts is its geometry, tested on its own -
                         jsdom has no layout)
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
-    north/             the North window: the picture, the goals, what deserves them, the rules - and Compose, which edits all four
+    north/             North: the page that reads the text, the one field that writes it, and the window after sleep
     kitchen/           Kitchen: the list with its meal chips and search, a recipe's page, the form, Cook, and the recipe select every meal shares
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
@@ -457,62 +456,44 @@ tasks or a repeat instance, and re-opening the day leaves it deleted.
 
 Everything else in Dienius measures something. North does not, and the refusal
 is the feature rather than a gap in it. If you are changing anything in
-`north.ts`, `views/north/`, `NorthLine.tsx` or `NorthCard.tsx`, this is the
-constraint:
+`north.ts`, `northSections.ts`, `northLine.ts`, `views/north/`, `NorthLine.tsx`
+or `NorthDay.tsx`, this is the constraint:
 
-**Never show progress toward a goal.** No percentage, no milestones, no target
-date, no streak, no checkbox, no count of anything that goes up. The behaviour
-this is built around is well established: shown how far they have come toward
-something they care about, people ease off - a visible advance reads as licence
-to spend it. Shown instead *why* it matters, the same person keeps going.
-Progress framing and commitment framing pull in opposite directions, and a
-progress bar is the purest possible progress framing.
+**Never show progress toward anything written there.** No percentage, no
+milestones, no target date, no streak, no checkbox, no count of anything that
+goes up. The behaviour this is built around is well established: shown how far
+they have come toward something they care about, people ease off - a visible
+advance reads as licence to spend it. Shown instead *why* it matters, the same
+person keeps going. Progress framing and commitment framing pull in opposite
+directions, and a progress bar is the purest possible progress framing.
 
-Since v2.1 the window is four layers, read from the top as one text, and none
-of them carries a number:
+Since v2.28 North is one text - DECISIONS, "North is one text, goals retired" -
+kept as the one string typed (`AppData.picture`, one entity at `PICTURE_KEY`)
+and read every time it is drawn, by the capitals rule in `lib/headings.ts` with
+North's additions in `lib/northSections.ts`:
 
-| Layer | What it holds | Where it lives |
+| Part | What it is | Where it is read |
 |---|---|---|
-| **The picture** | Who I am becoming - first person, a few lines. The heading over everything | `AppData.picture`, one entity at `PICTURE_KEY` |
-| **A goal** | `title` what, `why` what it is for, `identity` who it makes you | `AppData.goals`, four active at most |
-| **What I do to deserve this** | Two to four concrete things done most days. A plain list, never ticked | `Goal.deserve`, at most `MAX_DESERVE_LINES` |
-| **What pulls me off this** | The if-then rules under the goal they protect | `AppData.ifThens` by `goalId`, five per goal |
+| **The picture** | The lines before the first heading: who I am and where I am going | North's page, and the window after sleep |
+| **The headings** | A line in capitals, and every line under it to the next heading; `[morning]` or `[evening]` at its end gives its lines to that part of the day | The page, the rail's headings, and the day's one line (`northLine.ts`) |
+| **The signature** | Everything after a line of `---` | The page, the window after sleep, the day's line, and the evening close |
 
-The rules are DECISIONS, "A rule with no goal is noise; under a goal it is
-armour". They appear in exactly two places: the window, and under the why on
-the card that comes forward after a slow day.
+**Goals are retired and nothing is lost.** `Goal` and `IfThenEntry` stay in
+the types, in `validate.ts` and as sync kinds, so an old backup and an older
+device keep every goal and rule. `retireGoals` in `north.ts` runs in
+`normalizeLoaded` and after every sync merge: where a plan has active goals and
+the text has no picture part, their titles and whys become it, and every active
+goal is archived, once, stamped now. `afterASlowDay` is still written because an
+older device's check requires it; nothing reads it. `goalsRetired.test.ts`
+reads the source so that nothing outside the data layer reads a goal again.
 
-The one number allowed near a goal is its **age** - "32 days lived toward
-this". It is a fact, not a measurement: it cannot be earned or lost, it does
-not move faster when you try harder, and it means the same thing on a bad week
-as on a good one. If a future change makes the age respond to how the days
-went, it has become a score and must be removed.
+Two more rules the feature holds to:
 
-Three more rules the feature holds to:
-
-- **Four active, and the cap refuses.** Quietly evicting the oldest would make
-  the cap invisible and the choice arbitrary. Five rules per goal and four
-  deserve lines, for the same reason.
-- **Everything is written in North, behind one Compose.** Until v2.1 a goal
-  was written in Settings, deliberately far from the day, on the argument that
-  something you can rewrite from the screen you look at every morning is
-  something you will rewrite on a bad morning. That argument still governs the
-  day view, which edits nothing here. North itself is not a screen anybody
-  lands on by accident - the sixth icon, the `6` key - so the distance is a
-  decision now rather than a tab: the empty window asks for one line of the
-  picture and nothing else, and everything after that is behind Compose,
-  which edits every layer at once and saves in one commit (`applyNorthDraft`
-  in `north.ts`, pure and tested on its own). A rule is the exception and
-  always was: noticing what pulls you off course happens the moment it pulls
-  you off course, so a rule is written on its own line under its goal. See
-  DECISIONS, "North is built once and left in peace".
-- **The card that appears after a slow day never mentions the slow day.** No
-  count, no percentage, nothing red. The app knows exactly how it went and
-  says none of it: the moment that card contains a number about the past it is
-  a report card, and a report card from a planner is a planner people stop
-  opening. The Monday card carries one deserve line for the week, the same one
-  from Monday to Sunday (`deserveForWeek`), and never a word about whether
-  last week's happened.
+- **The app suggests none of the words.** North starts empty; the placeholder
+  says where to write, and every line in a test is a generic one.
+- **Nothing is scored when it is read.** The window after sleep opens once, is
+  closed with one press, and records nothing about whether it was read; the
+  day's line is picked by the date's day number, never by what happened.
 
 The same tone rule governs the calendar's day stats (`dayStats.ts`): no red at
 any threshold, and a day nobody planned is its own case rather than a zero.
@@ -590,9 +571,9 @@ erases the other's morning. Every entity therefore carries its own
 | Template | `template:<id>` | Blocks change together; splitting them buys nothing |
 | Library list | `list:<id>` | Name and unit |
 | Library item | `item:<id>` | Progress advances independently of the list |
-| Goal | `goal:<id>` | |
+| Goal | `goal:<id>` | Retired in v2.28; still merged, so an older device's goals are kept |
 | Picture | `picture:north` | One text, one fixed key. Absent is a tombstone, so an erase sticks; a blank string in a settings field would be a body that wins the next merge and comes back |
-| If-then | `ifthen:<id>` | |
+| If-then | `ifthen:<id>` | Retired with goals, and kept the same way |
 | Later item | `backlog:<id>` | The list is called Later on screen since v2.7; the kind keeps the wire name an older device's tombstones carry |
 | Inbox item | `inbox:<id>` | Nothing writes one since v2.7; the kind stays so a tombstone for a folded line still matches on an older device |
 | Scratch note | `scratch:<id>` | |

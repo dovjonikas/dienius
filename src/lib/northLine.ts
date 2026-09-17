@@ -16,8 +16,8 @@ import { parseNorth, type NorthReading } from './northSections'
  *
  * ## The same line all day, another tomorrow
  *
- * Deterministic from the date, like the goal and the rule the day used to
- * show (lib/north.ts): every device shows the same line on the same day, and
+ * Deterministic from the date (`dayNumber` in lib/north.ts): every device
+ * shows the same line on the same day, and
  * a reload never re-rolls it. The lines are taken in the order they are
  * written, one a day, so a text of twelve lines is read through in twelve
  * days and a line never shows two days running while there is another.

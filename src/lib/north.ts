@@ -1,99 +1,27 @@
-import { addDays, todayKey } from './dates'
-import { weekdayOf } from './repeats'
-import {
-  MAX_ACTIVE_GOALS,
-  MAX_DESERVE_LINES,
-  MAX_RULES_PER_GOAL,
-  type AppData,
-  type DayPlan,
-  type Goal,
-  type IfThenEntry,
-} from './types'
+import { dateKey } from './dates'
+import { parseNorth } from './northSections'
+import type { AppData, Goal } from './types'
 
 /**
- * North: the few things the days are for.
+ * North: one text, in the person's own words.
+ *
+ * Since v2.28 it is nothing else - see DECISIONS "North is one text, goals
+ * retired". The text reads in three parts, by lib/northSections.ts: the
+ * picture before the first heading, the headings with the lines under them,
+ * and the signature after a line of `---`. The page reads all of it, the
+ * window after sleep the picture and the signature, the day's top one line
+ * from under a heading, and the evening the signature.
  *
  * ## Why this has no progress bar
  *
  * Every other feature in this app measures something. This one refuses to,
- * and the refusal is the feature.
- *
- * The behaviour it is built around is well established and deeply
- * unhelpful: when people are shown how far they have come toward a goal they
- * care about, they *ease off*. A visible advance reads as licence to spend
- * it. The same person shown instead why the goal matters - the commitment
- * itself, restated - keeps going. Progress framing and commitment framing
- * pull in opposite directions, and a progress bar is the purest possible
- * progress framing: a number that goes up, attached to something you already
- * said you wanted.
- *
- * So a goal here has no percentage, no milestones, no target date, no streak
- * and no checkbox. There is nothing to tick and nothing that fills. The one
- * number anywhere near it is how many days it has been carried, and that is
- * deliberately not a score: it does not go up faster when you try harder, it
- * cannot be lost, and it means the same thing on a bad week as on a good one.
- *
- * ## Why four
- *
- * A cap, because four directions is already more than a life points in at
- * once, and because a list of twelve is a list nobody reads. Four is small
- * enough that the rotation below shows each one about twice a week - often
- * enough to stay real, rarely enough that it never becomes wallpaper.
- *
- * ## Why it is barely visible
- *
- * On the day view a goal is one line of quiet text under the header, with no
- * icon, no border, no background - closer to a watermark than to a control.
- * It is not there to be acted on. It is there so that on the four hundredth
- * ordinary Tuesday, the thing the Tuesdays are for is still in the room.
+ * and the refusal is the feature. When people are shown how far they have
+ * come toward something they care about, they ease off: a visible advance
+ * reads as licence to spend it. The same person shown instead why it matters
+ * - the commitment itself, restated - keeps going. A text read every morning
+ * is the commitment restated, and there is nothing in it to tick, fill or
+ * count.
  */
-
-/** Active goals, in the order they were written. */
-export function activeGoals(goals: Goal[]): Goal[] {
-  return goals.filter(g => !g.archivedAt)
-}
-
-export function archivedGoals(goals: Goal[]): Goal[] {
-  return goals.filter(g => g.archivedAt)
-}
-
-export function canAddGoal(goals: Goal[]): boolean {
-  return activeGoals(goals).length < MAX_ACTIVE_GOALS
-}
-
-/**
- * Days a goal has been carried, counting the day it was written as the first.
- *
- * Not progress. It is the one fact about a goal that is true regardless of
- * how the week went: you cannot fall behind on it, you cannot lose it, and it
- * says nothing about whether anything is working. "Thirty-two days lived
- * toward this" is a description of a stretch of life, not a measurement of
- * it - which is exactly why it is allowed to exist here when a percentage is
- * not.
- */
-export function goalAge(goal: Goal, today = todayKey()): number {
-  if (goal.createdAt > today) return 0
-  let days = 1
-  for (let cursor = goal.createdAt; cursor < today; cursor = addDays(cursor, 1)) days++
-  return days
-}
-
-/**
- * Which goal today shows.
- *
- * Deterministic from the date, so it is the same goal all day and a different
- * one tomorrow. Random-per-render would re-roll on every refresh, which turns
- * a steady thing into a slot machine; random-per-day would still mean two
- * devices disagree about what today's goal is.
- *
- * The date is turned into a day number rather than parsed, so the rotation
- * does not shift with the timezone the app happens to be opened in.
- */
-export function goalForDay(goals: Goal[], date: string): Goal | undefined {
-  const active = activeGoals(goals)
-  if (active.length === 0) return undefined
-  return active[dayNumber(date) % active.length]
-}
 
 /** Days since an arbitrary fixed epoch. Only its remainder is ever used. */
 export function dayNumber(date: string): number {
@@ -102,221 +30,11 @@ export function dayNumber(date: string): number {
 }
 
 /**
- * The age, as a sentence. One place, because it is said in three: the goal
- * list in Settings, the North window, and the review's own North line.
- */
-export function ageLabel(goal: Goal, asOf: string): string {
-  const days = goalAge(goal, asOf)
-  return days === 1 ? '1 day lived toward this' : `${days} days lived toward this`
-}
-
-// --- what pulls you off a goal -------------------------------------------
-
-/**
- * The rules filed under one goal, in the order they were written.
- *
- * An if-then rule used to live in a flat list of its own, surfaced onto the
- * day view one at a time by day type and time of day. Nobody ever opened the
- * list and the surfaced line read as noise on the one screen that has to
- * answer "what am I doing now" in two seconds, so it was unmounted and the
- * rules went quiet. The diagnosis was wrong: the problem was never how hard
- * they were surfaced, it was that a rule with no goal is a chore somebody
- * set themselves. Under the goal it protects, the same sentence is armour.
- */
-export function rulesForGoal(entries: IfThenEntry[], goalId: string): IfThenEntry[] {
-  return entries.filter(e => e.goalId === goalId)
-}
-
-/**
- * Rules that are not under any goal that exists.
- *
- * Two shapes land here and they are treated identically: a rule written
- * before rules had goals, and a rule whose goal has since been deleted. A
- * dangling id degrades rather than erroring anywhere in this app, and
- * "degrades" here means the rule is still yours, still readable, and still
- * one press from being filed - not that it quietly vanishes with the goal.
- *
- * Archived goals are still goals: their rules stay with them rather than
- * falling back into this group, because archiving a direction is not the
- * same as deciding the things that pull you off it never happened.
- */
-export function unfiledRules(entries: IfThenEntry[], goals: Goal[]): IfThenEntry[] {
-  const known = new Set(goals.map(g => g.id))
-  return entries.filter(e => !e.goalId || !known.has(e.goalId))
-}
-
-/** Whether one more rule fits under this goal. The cap refuses; it never evicts. */
-export function canAddRule(entries: IfThenEntry[], goalId: string): boolean {
-  return rulesForGoal(entries, goalId).length < MAX_RULES_PER_GOAL
-}
-
-/**
- * The one rule from a goal that the slack card shows under the why.
- *
- * Deterministic from the date, exactly like `goalForDay` above and for the
- * same reason: the same line all day, a different one tomorrow. Rotating on
- * render would turn a steady sentence into a slot machine, and there is
- * deliberately nothing recorded about which rule was shown when - the old
- * `lastSurfaced` bookkeeping went with the day view's surfacing, and nothing
- * replaced it, because arithmetic on a date needs no memory.
- */
-export function ruleForDay(entries: IfThenEntry[], goalId: string, date: string): IfThenEntry | undefined {
-  const rules = rulesForGoal(entries, goalId)
-  if (rules.length === 0) return undefined
-  return rules[dayNumber(date) % rules.length]
-}
-
-// --- when a goal comes forward on its own --------------------------------
-
-export type NorthPrompt =
-  | { kind: 'slack'; goal: Goal }
-  | { kind: 'monday'; goal: Goal }
-
-/** Below this share of a day's tasks done, the day is treated as one that got away. */
-export const SLOW_DAY_RATE = 0.4
-
-/** How many days the same task must be carried before it counts as stuck. */
-export const STUCK_PUSH_DAYS = 3
-
-/**
- * Whether yesterday was a day that got away.
- *
- * Two conditions, and both have to be true, because either alone is a normal
- * day: a low done rate *and* nothing that was marked as mattering got
- * finished. A day where two of nine ordinary tasks happened but the one key
- * thing did is a good day with a long list on it, and this must not fire on
- * it.
- *
- * A day with no plan at all is not a slow day. Nothing was intended, so
- * nothing was missed, and an app that treats a rest day as a failure is an
- * app that gets closed.
- */
-export function wasSlowDay(day: DayPlan | undefined): boolean {
-  const tasks = day?.tasks ?? []
-  if (tasks.length === 0) return false
-  const done = tasks.filter(t => t.done).length
-  if (done / tasks.length >= SLOW_DAY_RATE) return false
-  const highlights = tasks.filter(t => t.highlight)
-  return !highlights.some(t => t.done)
-}
-
-/**
- * Whether the same task has been carried forward for several days running.
- *
- * Read off `pushCount` rather than by walking history: the count is exactly
- * "how many days this has been moved", it survives a reload, and it is
- * already the number the push bound is measured against.
- */
-export function hasStuckTask(day: DayPlan | undefined, days = STUCK_PUSH_DAYS): boolean {
-  return (day?.tasks ?? []).some(t => !t.done && (t.pushCount ?? 0) >= days)
-}
-
-/**
- * The card today should show, if any.
- *
- * Order matters: Monday wins over a slow day. A week that begins by being
- * told the last one went badly is a week that begins with an apology, and the
- * Monday card says the same thing in the register somebody can actually use
- * on a Monday morning.
- *
- * Both conditions are read from yesterday and from today's own tasks - there
- * is no separate record of "the app noticed something", because a stored flag
- * would need clearing and could drift from the days it describes.
- */
-export function northPrompt(data: AppData, today: string, dismissedOn: string | null): NorthPrompt | undefined {
-  if (dismissedOn === today) return undefined
-  const goal = goalForDay(data.goals, today)
-  if (!goal) return undefined
-
-  // One switch, not two. Monday's card and the slow-day card are the same
-  // card in two moments, and nobody has ever wanted one without the other -
-  // a person who does not want a goal brought forward does not want it
-  // brought forward on a Monday either. See CONVENTIONS section 21.
-  if (!data.settings.north.afterASlowDay) return undefined
-
-  if (weekdayOf(today) === 1) return { kind: 'monday', goal }
-
-  const yesterday = data.days[addDays(today, -1)]
-  if (wasSlowDay(yesterday) || hasStuckTask(data.days[today]) || hasStuckTask(yesterday)) {
-    return { kind: 'slack', goal }
-  }
-  return undefined
-}
-// --- what you do to deserve it -------------------------------------------
-
-/**
- * The lines under "What I do to deserve this", cleaned the way they are
- * stored: trimmed, blank lines gone, at most `MAX_DESERVE_LINES`, and no
- * list at all when nothing is left. An empty array in the store would be a
- * field that says nothing and still has to be carried by every reader, and
- * absent already means "not written" everywhere else in this app.
- *
- * The cap trims here only because this runs on save; the form stops offering
- * a fifth line before that, which is where refusing belongs.
- */
-export function cleanDeserve(lines: readonly string[] | undefined): string[] | undefined {
-  const kept = (lines ?? [])
-    .map(line => line.trim())
-    .filter(Boolean)
-    .slice(0, MAX_DESERVE_LINES)
-  return kept.length > 0 ? kept : undefined
-}
-
-/**
- * The other half: what the person this goal makes you does **not** do.
- *
- * Same cleaning, same cap, deliberately - see docs/RESEARCH-NORTH.md. The
- * finding it is built on is Oyserman's *balance*: an expected self predicts
- * behaviour far better when it is paired with a feared self in the same
- * domain, and the unpaired case is the one that predicts the worse outcome.
- * So this is not a list of rules kept somewhere on the page; it is the
- * opposite half of one goal, and it is capped at the same four so that
- * neither side of the pair can outgrow the other and turn a portrait back
- * into a checklist.
- *
- * The same function twice rather than one with a parameter, because the two
- * are the same rule for different reasons and the next change to either is
- * unlikely to be a change to both.
- */
-export function cleanAvoid(lines: readonly string[] | undefined): string[] | undefined {
-  const kept = (lines ?? [])
-    .map(line => line.trim())
-    .filter(Boolean)
-    .slice(0, MAX_DESERVE_LINES)
-  return kept.length > 0 ? kept : undefined
-}
-
-/**
- * Which week a date is in, counting Monday-first weeks from the epoch. Only
- * its remainder is ever used, like `dayNumber`. The epoch itself was a
- * Thursday, hence the three.
- */
-export function weekNumber(date: string): number {
-  return Math.floor((dayNumber(date) + 3) / 7)
-}
-
-/**
- * The one deserve line the Monday card carries.
- *
- * Chosen from the week rather than the day, so it is the same sentence from
- * Monday to Sunday: "this week: train four times" is a promise about a week,
- * and a card that changed its mind on Wednesday would not be one. No memory
- * of which line was shown when, for the same reason `ruleForDay` keeps none.
- */
-export function deserveForWeek(goal: Goal, date: string): string | undefined {
-  const lines = goal.deserve ?? []
-  if (lines.length === 0) return undefined
-  return lines[weekNumber(date) % lines.length]
-}
-
-// --- the picture, and compose ---------------------------------------------
-
-/**
- * The store with the picture written, rewritten or - when the text is
- * empty - removed. Removed rather than blank, because absent is what syncs
- * as a deletion (see `PICTURE_KEY`) and a blank would be a body that wins
- * the next merge and comes back. The same object is kept when the text has
- * not changed, so nothing is stamped for a save that changed nothing.
+ * The store with the text written, rewritten or - when the text is empty -
+ * removed. Removed rather than blank, because absent is what syncs as a
+ * deletion (see `PICTURE_KEY`) and a blank would be a body that wins the
+ * next merge and comes back. The same object is kept when the text has not
+ * changed, so nothing is stamped for a save that changed nothing.
  */
 export function withPicture(data: AppData, text: string): AppData {
   const trimmed = text.trim()
@@ -330,78 +48,56 @@ export function withPicture(data: AppData, text: string): AppData {
 }
 
 /**
- * One goal as the compose form holds it. `id` absent means a goal being
- * written now; `archive` means it goes on Save, not before. A field left
- * out is a field left alone.
+ * Goals retired, once, at every door a plan comes in through: `loadData` and
+ * `importJson` by way of `normalizeLoaded`, and the sync merge.
+ *
+ * Until v2.28 a goal was a title, a why, an identity, two short lists and
+ * the rules under it, shown on North, on the day and on four cards. North is
+ * one text now and nothing shows a goal, so a plan that still has active
+ * goals is handled here, in two steps:
+ *
+ * - **Where the text has no picture part** - no text at all, or a text that
+ *   starts with a heading or its signature - the active goals' titles and
+ *   whys become its picture, one paragraph a goal in the order they were
+ *   written, so what somebody wrote there is still the first thing North
+ *   shows. A text that already has a picture is left exactly as it is: it is
+ *   the person's own picture, and goals stacked over it would be a second
+ *   one. The words are kept as written; only their ends are trimmed.
+ * - **Every active goal is archived**, dated today. Nothing is deleted: every
+ *   field of every goal and every rule stays in the plan, in a backup and in
+ *   sync, readable by an older device and by any later import. Archiving is
+ *   what makes this happen once. A plan with no active goal is handed back
+ *   as the same object, so a picture part deleted months later does not
+ *   bring the goals back, and the ordinary open costs one pass over a short
+ *   list.
+ *
+ * What changed is stamped now, the way the inbox fold stamps its tombstones
+ * (see later.ts): the text and the archived goals have to win the next merge
+ * against a device that still holds the goals active, or the move would be
+ * undone there and done again here on every round trip.
  */
-export interface GoalDraft {
-  id?: string
-  title: string
-  why?: string
-  identity?: string
-  deserve?: string[]
-  avoid?: string[]
-  archive?: boolean
-}
+export function retireGoals(data: AppData, now: string): AppData {
+  const active = data.goals.filter(goal => !goal.archivedAt)
+  if (active.length === 0) return data
 
-/** Everything Compose edits: the picture and the active goals, in one draft. */
-export interface NorthDraft {
-  /** Absent leaves the text alone: Compose stopped carrying it in v2.22. */
-  picture?: string
-  goals: GoalDraft[]
-}
-
-/**
- * The store after a compose draft is saved. Pure, so it is tested as
- * arithmetic; `actions.composeNorth` commits what this returns, once.
- *
- * Three rules, each the answer to a way the form could lose something:
- *
- * - **Archives first, then additions.** Archiving one goal and writing its
- *   replacement in the same press has to fit under the cap of four.
- * - **A title emptied is a title kept.** Every other field becomes what the
- *   form holds, an empty one becoming absent; the title falls back to what
- *   it was, because a goal with no name is not a state, and deleting a
- *   direction by backspacing over its name is not a thing anybody means.
- * - **The cap refuses.** A fifth new goal is not written and the rest of
- *   the draft still is. The form never offers a fifth row; this is the
- *   guard behind the guard.
- *
- * A blank new row - no title - was never a goal and is skipped.
- */
-export function applyNorthDraft(data: AppData, draft: NorthDraft, today: string): AppData {
-  const byId = new Map(draft.goals.filter(g => g.id).map(g => [g.id as string, g]))
-  let goals = data.goals.map(goal => {
-    const d = byId.get(goal.id)
-    if (!d) return goal
-    if (d.archive) return goal.archivedAt ? goal : { ...goal, archivedAt: today }
-    return {
-      ...goal,
-      title: d.title.trim() || goal.title,
-      why: d.why === undefined ? goal.why : d.why.trim() || undefined,
-      identity: d.identity === undefined ? goal.identity : d.identity.trim() || undefined,
-      deserve: d.deserve === undefined ? goal.deserve : cleanDeserve(d.deserve),
-      avoid: d.avoid === undefined ? goal.avoid : cleanAvoid(d.avoid),
-    }
-  })
-  for (const d of draft.goals) {
-    if (d.id || !d.title.trim()) continue
-    if (!canAddGoal(goals)) continue
-    const deserve = cleanDeserve(d.deserve)
-    const avoid = cleanAvoid(d.avoid)
-    goals = [
-      ...goals,
-      {
-        id: crypto.randomUUID(),
-        title: d.title.trim(),
-        why: d.why?.trim() || undefined,
-        identity: d.identity?.trim() || undefined,
-        ...(deserve ? { deserve } : {}),
-        ...(avoid ? { avoid } : {}),
-        createdAt: today,
-      },
-    ]
+  const today = dateKey(new Date(now))
+  const next: AppData = {
+    ...data,
+    goals: data.goals.map(goal => (goal.archivedAt ? goal : { ...goal, archivedAt: today, updatedAt: now })),
   }
-  const next = { ...data, goals }
-  return draft.picture === undefined ? next : withPicture(next, draft.picture)
+
+  const text = data.picture?.text ?? ''
+  const words = active.map(goalWords).filter(Boolean).join('\n\n')
+  if (words && parseNorth(text).intro.length === 0) {
+    next.picture = { ...data.picture, text: text ? `${words}\n\n${text}` : words, updatedAt: now }
+  }
+  return next
+}
+
+/** A goal as a paragraph of the picture: its title, and its why under it. */
+function goalWords(goal: Goal): string {
+  return [goal.title, goal.why]
+    .map(part => part?.trim())
+    .filter(Boolean)
+    .join('\n')
 }

@@ -153,8 +153,7 @@ same one on every device, never a heading and never the introduction, and
 it is always whole - a long line wraps. In the morning hours it comes from
 the `[morning]` headings, after nine from the `[evening]` ones, and the rest
 of the day from the headings with neither. A press on it opens North. Until
-the text has a line under a heading or a signature, your goal's title
-stands there instead.
+the text has a line under a heading or a signature, nothing stands there.
 
 Beside the day, in the column on the left between the templates and what
 is next, stand your headings as you wrote them, with the signature under
@@ -171,58 +170,16 @@ over the day. **Close**, Escape or a press outside it leaves it, and it
 never opens twice in twelve hours. Nothing checks whether you read it. Off,
 if you would rather not: **Settings → Nudges → North after sleep**.
 
-### The goal at the top
+### No goals, and nothing lost
 
-Under the page's name, one quiet line per goal. With none yet, and once
-there is a text, the line is **Add a goal**. Press a goal's line to edit it
-where it stands: a goal is its title - short, and something you do rather
-than something you get - and **Save** or Enter keeps it with that alone;
-**Cancel** or Escape leaves it as it was. **More** opens the rest when you
-want it:
-
-| | |
-|---|---|
-| **Why it matters** | In your own words, the reason you would say out loud |
-| **Who it makes you** | "Someone who ..." |
-| **What I do to deserve this** | Two to four things you actually do, most days, one per line. Not wishes |
-| **What I don't do** | The same few from the other side |
-
-The rarer things wait at the end of More: **Archive this goal**, **Add
-another goal**, the archived goals to bring back or delete, and any rule
-that belongs to no goal. Up to four goals; at four the form says so rather
-than dropping one. One goal appears under the day's title each morning,
-rotating. On a Monday the card that comes forward carries one of your
-deserve lines for the week. **Nothing here is ever measured** - no
-progress, no deadline, nothing to tick.
-
-One goal is plenty to start with. Writing a fourth to fill the space is how
-you end up with one you do not believe.
-
-### And what pulls you off them
-
-Under a goal's fields, once **More** has opened them, sits a short list
-headed **What pulls me off this**. Each line is a moment you can catch
-and the one thing you already decided to do about it:
-
-> If I catch myself scrolling at 23:00, then phone in the kitchen, book in hand.
-
-On a goal with none yet the heading is the invitation: press **What pulls me
-off this** and the form opens there. Once one is written the heading goes
-back to being a heading and **Add another** sits under the list. Five per
-goal, and the cap refuses rather than dropping the oldest. Write them the
-way you would say them, about a moment specific enough to notice: "when I
-get home and the kitchen is a mess" is a moment; "when I feel unmotivated"
-is not.
-
-Nothing counts them, nothing asks whether you did them, and nothing shows
-them on the day view. They appear in exactly two places: here, and once
-under the why on the card that comes forward after a day that got away,
-introduced as what you wrote yourself.
-
-If you wrote rules before they belonged to goals, they are all still here,
-gathered under **Not under a goal yet** with the goals offered beside each
-one. Nothing was filed for you, and a rule can stay there as long as it
-likes.
+North is the text and nothing else: there are no goals to add, and no
+rules under them. What a goal said belongs in the text - where you are
+going and why in the introduction, what you do and what you do not under
+a heading. If your plan had goals from before, their titles and whys were
+put at the top of your text the first time it opened, unless the text
+already began with lines of its own; every goal and every rule is still in
+your backups, and nothing was deleted. **Nothing here is ever measured** -
+no progress, no deadline, nothing to tick.
 
 ## 5. Point a reading block at the Library
 
@@ -646,8 +603,8 @@ ask at all.
 
 Worth knowing so they do not read as missing:
 
-- **It never shows progress toward a goal**, and never will. Being shown how
-  far along you are is what makes people ease off. The reason is written down
+- **It never shows progress toward anything you wrote in North**, and never
+  will. Being shown how far along you are is what makes people ease off. The reason is written down
   in [`DECISIONS.md`](DECISIONS.md) if you want it.
 - **It never says what you did not do.** Not on the evening card, not on a
   past day in the calendar, not in a colour. Everything left is still in the

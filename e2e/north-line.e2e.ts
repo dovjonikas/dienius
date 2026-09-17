@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test'
 import { leaveAndReturnAt, openFreshAt, reopenAt, stampWorkingDay, wednesdayAt } from './app'
 
 /**
- * The goal's line starts where the day starts.
+ * North's line starts where the day starts.
  *
- * It is one quiet sentence above the timeline, and at every width from 1024
+ * It is one sentence above the timeline, and at every width from 1024
  * up it begins at the day column's left edge. From 1500 the header became a
  * masthead spanning the rail's column as well - so the line, a full-width
  * item inside that header, began above the mini calendar instead and ran
@@ -20,19 +20,20 @@ import { leaveAndReturnAt, openFreshAt, reopenAt, stampWorkingDay, wednesdayAt }
 test.use({ timezoneId: 'Europe/Vilnius' })
 
 for (const width of [1366, 1500, 1920]) {
-  test(`the goal's line and the day below it share a left edge at ${width}`, async ({ page }, info) => {
+  test(`North's line and the day below it share a left edge at ${width}`, async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop', 'the rail and the masthead are the wide layout&apos;s')
     await page.setViewportSize({ width, height: 900 })
     await openFreshAt(page, wednesdayAt(10))
     await stampWorkingDay(page)
 
-    // A goal, because the line is only drawn when there is one. Written
-    // straight into storage: what is being checked is where the line lands,
-    // not the road to making one, which North's own tests walk.
+    // A text with a line under a heading, because the line is only drawn
+    // when there is one. Written straight into storage: what is being checked
+    // is where the line lands, not the road to writing it, which North's own
+    // tests walk. It was a goal until goals were retired in v2.28.
     await page.evaluate(() => {
       const key = 'dienius:data'
       const d = JSON.parse(localStorage.getItem(key) ?? '{}')
-      d.goals = [{ id: 'g1', title: 'A goal title here', why: 'a reason here', identity: 'a sentence here', createdAt: '2026-07-18', updatedAt: '2026-09-16T10:00:00.000Z' }]
+      d.picture = { text: 'FIRST HEADING\na line under it\n---\nA signature line.', updatedAt: '2026-09-16T10:00:00.000Z' }
       localStorage.setItem(key, JSON.stringify(d))
     })
     await page.reload()

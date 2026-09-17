@@ -404,7 +404,7 @@ export function App() {
     { id: 'go-templates', label: 'Templates', detail: 'Build and edit day templates', run: () => setView('templates') },
     { id: 'go-library', label: 'Library', detail: 'Books, series, anything with a unit', run: () => setView('library') },
     { id: 'go-review', label: 'Review', detail: 'How the week went', run: () => setView('review') },
-    { id: 'go-north', label: 'North', detail: 'The few things the days are for', run: () => setView('north') },
+    { id: 'go-north', label: 'North', detail: 'Your own words, read every morning', run: () => setView('north') },
     { id: 'go-kitchen', label: 'Kitchen', detail: 'The recipes cooked here', run: () => openKitchen() },
     { id: 'go-settings', label: 'Settings', detail: 'Sleep, week, nudges, appearance', run: () => setView('settings') },
     {
@@ -659,7 +659,6 @@ export function App() {
               date={selectedDate}
               onDateChange={setSelectedDate}
               onOpenNorth={() => setView('north')}
-              holdNorthCard={northAfterSleep.open}
               openTask={openTaskRequest}
               onOpenTaskDone={() => setOpenTaskRequest(null)}
               onOpenNote={() => setScratchOpen({})}

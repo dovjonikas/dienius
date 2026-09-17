@@ -3837,3 +3837,64 @@ reads as parts that fell apart.
 **A lone action joins the row of what it acts on.** The kind question's
 Cancel stands at the end of the question's row - the row the card always
 has - the rule a status and its actions already keep.
+
+## North is one text, goals retired
+
+v2.28, the owner's final North model, replacing every North brief before
+it: goals come out, and North is one text in the three parts the shared
+parser already reads - the picture before the first heading, the headings
+with their lines, and the signature after `---`.
+
+**Why one text.** Since v2.22 North has been the person's own text, and
+since v2.26 the day's top reads it; the goals over it were a second way of
+saying the same things, in fields. A goal's title and why are the picture:
+who somebody is and where they are going. Its "what I do to deserve this",
+its "what I do not" and the rules under it are lines under a heading, which
+is where a person writes them when nothing is asking for them field by
+field. Two sources meant two editors, a card and a line that had to agree
+with a page, and a form that had grown to five fields and a rules list on
+the one screen that is not meant to be a form. One text is one editor, one
+thing synced, and one thing every surface reads.
+
+**Nothing is lost.** The data stays: `Goal` and `IfThenEntry`, their tables
+in `validate.ts` and their sync kinds, so a backup or an older device keeps
+every goal and every rule, and they load, merge and export as before.
+`afterASlowDay` is still written, required, because an older device's check
+refuses a plan without it, and `northDismissedOn` still syncs; nothing reads
+either. Where a plan has active goals and its text has no picture part - no
+text, or a text that starts with a heading or its signature - the goals'
+titles and whys become the picture, one paragraph a goal in the order they
+were written, over whatever the text already holds. Title and why only,
+because those are the picture-shaped part and the brief named them; the
+lists and rules stay in the file. A text that already has a picture is left
+exactly as it is: it is the person's own, and goals stacked over it would be
+a second picture.
+
+**Once, at every door.** `retireGoals` in north.ts runs in `normalizeLoaded`,
+so on every open and every import, and after every sync merge, which never
+passes through the load step - the inbox fold's two doors. It archives every
+active goal, dated today, whether or not their words moved: an archived goal
+is what makes it happen once, so a picture part deleted months later does
+not bring the goals back. What it changed is stamped now, like the fold's
+tombstones, or a device still holding the goals active would win the next
+merge with the older stamps and the move would undo and redo on every round
+trip. A plan with no active goal comes back as the same object, so an
+ordinary open costs one pass over a short list and re-saves nothing.
+
+**Every reader, replaced or gone.** The day's top shows nothing where the
+text has nothing for the day: the goal's name that filled the gap was a
+placeholder, and an empty line is not one. The card that brought a goal
+forward on a Monday and after a day that got away is gone with its switch:
+the window after sleep brings the picture every morning, and a second card
+over the day would say it again. The evening close ends on the signature
+where it ended on the first goal's name, and on nothing when there is none.
+Review's goals and their ages went - an age was a goal's fact, and a text
+has none. North's page is the text alone. The tour's North step ends on
+Save, its caption pointing at the words kept rather than at a goal's line on
+the day. The demo and the sample day carry a text and no goals. The deserve
+explanation went; the palette, the shortcut card and North's explanation say
+what the text is. The restore summary counts North's lines where it counted
+goals, because the text is what a restore could now take away. Two store
+areas, four components, a card, their tests and some eighteen thousand
+characters of stylesheet went with them, and a test reads the source so that
+no screen says goal again and nothing outside the data layer reads one.

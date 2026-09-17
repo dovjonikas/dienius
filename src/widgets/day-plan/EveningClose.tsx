@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
-import { activeGoals } from '../../lib/north'
+import { parseNorth } from '../../lib/northSections'
 import {
   DEFAULT_EVENING_CLOSE,
   eveningSummary,
@@ -56,7 +56,7 @@ export function EveningClose({ date }: { date: string }) {
   const summary = eveningSummary(day)
   if (!open || !summary) return null
 
-  const goal = activeGoals(data.goals)[0]
+  const { signature } = parseNorth(data.picture?.text ?? '')
   const unfinished = pushableAtClose(day)
 
   function close() {
@@ -110,9 +110,11 @@ export function EveningClose({ date }: { date: string }) {
         )}
       </div>
 
-      {/* The morning card says why you are starting; this says where you are
-          going. Small, last, and only when there is a goal to say it with. */}
-      {goal && <p className="evening-close-north">{goal.title}</p>}
+      {/* North's signature, the words the day ends on - the window after
+          sleep opens the day with the picture and this closes it. Small,
+          last, and only when there is one. It was the first goal's name
+          until goals were retired in v2.28. */}
+      {signature.length > 0 && <p className="evening-close-north">{signature.join('\n')}</p>}
     </aside>
   )
 }

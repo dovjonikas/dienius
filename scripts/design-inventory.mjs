@@ -241,7 +241,7 @@ const rings = shadowDecls.filter(({ d }) => isRing(d.value))
 const shadows = shadowDecls.filter(({ d }) => !isRing(d.value))
 /** Something that covers the page: a sheet, a panel, a menu, a bubble, a card opened over the day. */
 const LAYER =
-  /(sheet|panel|dialog|popover|menu|toast|bubble|overlay|palette|peek|\.tip\b|modal|scrim|window|picker|notice|drawer|dropdown|\.task-detail\b|\.shortcuts\b|\.north-card\b|\.scratch\b|\.replan\b|\.day-card\b|\.note-reader\b|\.tour-card\b|\.tour-offer\b|\.north-line-more\b|\.week-col-ask\b|\.task-gap-offers\b|\.floating-clock\b|\.note-task\b)/
+  /(sheet|panel|dialog|popover|menu|toast|bubble|overlay|palette|peek|\.tip\b|modal|scrim|window|picker|notice|drawer|dropdown|\.task-detail\b|\.shortcuts\b|\.scratch\b|\.replan\b|\.day-card\b|\.note-reader\b|\.tour-card\b|\.tour-offer\b|\.week-col-ask\b|\.task-gap-offers\b|\.floating-clock\b|\.note-task\b)/
 const shadowsOffLayers = shadows.filter(({ rule }) => !LAYER.test(rule.selector))
 const outlines = all(d => d.property === 'outline' && !/^(none|0)$/.test(d.value))
 

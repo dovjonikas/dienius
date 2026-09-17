@@ -3,11 +3,9 @@ import { actions, useAppData } from '../../lib/store'
 import { Explain } from '../Explain'
 import { northLineKinds, northTagAt, parseNorth } from '../../lib/northSections'
 import { NorthSection } from './NorthSection'
-import { NorthGoals } from './NorthGoals'
 
 /**
- * North: one page, in one column. The goal at the top as a quiet line, and
- * under it the person's own text.
+ * North: one page, in one column - the person's own text.
  *
  * ## The text
  *
@@ -22,12 +20,13 @@ import { NorthGoals } from './NorthGoals'
  * what was typed. One door: the field Compose carried for the same text
  * until v2.22 was a second way to one thing.
  *
- * ## The goal
+ * ## No goals
  *
- * A quiet line at the top, pressed to edit where it stands, with the rest of
- * a goal behind More - see NorthGoals. The four cards that stood under the
- * text and the Compose form that edited all of them at once are gone: the
- * page is the text, and a goal over it is a line.
+ * Goals stood over the text until v2.28 - a quiet line each, with a why, an
+ * identity, two lists and rules behind More. They are retired: North is one
+ * text, and what a goal said belongs in its picture, where a plan that still
+ * had them finds their titles and whys - see DECISIONS "North is one text,
+ * goals retired" and retireGoals in lib/north.ts.
  *
  * ## After sleep
  *
@@ -69,14 +68,17 @@ export function NorthView() {
             <Explain id="north">North</Explain>
           </h2>
           {!editing && text !== '' && (
-            <button ref={openerRef} type="button" className="btn-quiet" onClick={() => setEditing(true)}>
+            <button
+              ref={openerRef}
+              type="button"
+              className="btn-quiet"
+              data-tour="picture-edit"
+              onClick={() => setEditing(true)}
+            >
               Edit
             </button>
           )}
         </div>
-        {/* No offer of a goal on an empty North: the empty page is one line
-            and one button, and the button is Write. */}
-        <NorthGoals offer={text !== ''} />
       </header>
 
       {editing ? (
@@ -136,7 +138,7 @@ function NorthInvite({
 function NorthText({ text }: { text: string }) {
   const { intro, sections, signature } = parseNorth(text)
   return (
-    <div className="north-read">
+    <div className="north-read" data-tour="north-text">
       {intro.length > 0 && (
         <div className="north-intro">
           {intro.map((paragraph, i) => (

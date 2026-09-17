@@ -1158,9 +1158,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .gap-picker,
   .journal-overlay,
   .nav-rail.is-open,
-  .north-card,
   .north-heading-card,
-  .north-line-more,
   .north-window,
   .note-reader,
   .note-task,
@@ -1202,9 +1200,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .gap-picker,
   .journal-overlay,
   .nav-rail.is-open,
-  .north-card,
   .north-heading-card,
-  .north-line-more,
   .north-window,
   .note-reader,
   .note-task,
@@ -6090,7 +6086,6 @@ button.danger {
   .library-item-open,
   .library-list-fold,
   .scratch-note-action,
-  .north-goal-line,
   .day-nav > button,
   .mini-cell,
   .theme-card,
@@ -7608,19 +7603,15 @@ button.danger:focus-visible {
     margin-left: auto;
   }
 
-  /* The goal's line under the day's own line, at the same left edge. */
+  /* North's line under the day's own line, at the same left edge. It runs
+     down from the top of its row, and its first line stands on the centre
+     line of the controls beside it: the row is as tall as the line and the
+     signature need, and the controls keep their place at its top. */
   .day-header > .north-line {
     grid-row: 2;
     grid-column: 1;
-    margin: 0;
-  }
-
-  /* The text's line runs down from the top of its row, and its first line
-     stands on the centre line of the controls beside it: the row is as tall
-     as the line and the signature need, and the controls keep their place at
-     its top. */
-  .day-header > .north-line.is-text {
     align-self: start;
+    margin: 0;
     padding-block: calc((var(--control-h) - var(--t-md) * var(--lh-ui)) / 2);
   }
 
@@ -9848,7 +9839,6 @@ button.task-recipe:focus-visible {
   .task-size,
   .clock-button,
   .setting-remove,
-  .north-line-title,
   button.north-day-line,
   .focus-bar-exit,
   .block-remove,
@@ -9866,7 +9856,6 @@ button.task-recipe:focus-visible {
   .task-library,
   .task-recipe,
   .library-detail-pick,
-  .north-goal-line,
   .task-title-select {
     position: relative;
   }
@@ -9883,14 +9872,11 @@ button.task-recipe:focus-visible {
   .task-recipe::after,
   /* The picker's link under the address field, where it is a link. */
   .library-detail-pick::after,
-  /* A goal's line at the top of North. */
-  .north-goal-line::after,
   .library-color::after,
   .category-wheel::after,
   .task-size::after,
   .clock-button::after,
   .setting-remove::after,
-  .north-line-title::after,
   /* North's line under the day's title, where there is no rail. */
   button.north-day-line::after,
   /* The one way out of a running Focus session, on every screen the bar can
@@ -10492,83 +10478,27 @@ button.task-recipe:focus-visible {
 .review-figures dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--s1); }
 
 /* ------------------------------------------------------------------------
-   North - the line, and the card.
+   North - the day's line.
 
-   Everything about how the line is drawn is an argument that it is not a
-   control. No icon, no border, no background, no chevron, no colour of its
-   own. Small, wide-tracked, uppercase, in the third ink - the register a
-   running head or a watermark is set in, which is the register of something
-   that is *present* rather than something that is *offered*.
-
-   Uppercase and letter-spaced rather than italic: an italic line at this size
-   on a dark surface reads as an aside or an apology, and this is neither. The
-   tracking is what does the work - it slows the eye down enough to read the
-   words without ever competing with the day's own title two lines above.
+   One line of North's text under the day's title, and the signature under
+   it - see NorthLine. The line in the text's ink at the body size, the
+   signature a step smaller in the secondary ink. Until v2.28 a goal's name
+   stood here, small and tracked, where the text had nothing for the day;
+   goals are retired, and that line's rules went with them.
    ------------------------------------------------------------------------ */
 /* Its own row across the header, which is a wrapping flex row rather than
    a grid - a 100% basis is what makes a flex item take a line of its own.
    Ordered last so it sits under the title and the day figures rather than
    between them. */
-/* One height, whatever the goal says and whatever the pointer does. The
-   peek used to open in the flow under the title and slide the whole day
-   down two lines every time the mouse crossed the goal - CONVENTIONS
-   section 24 - so the row is exactly one line of the title's own type and
-   the peek is positioned under it instead. */
 .north-line {
-  position: relative;
   flex: 1 1 100%;
   order: 9;
   min-width: 0;
-  height: calc(var(--t-sm) * 1.4 + var(--s0) * 2);
-  margin-top: var(--s0);
 }
 
-.north-line-title {
-  display: block;
-  width: 100%;
-  min-height: 0;
-  padding: var(--s0) 0;
-  border: none;
-  background: none;
-  color: var(--faint);
-  font-size: var(--t-sm);
-  font-weight: var(--w-medium);
-  line-height: var(--lh-ui);
-  text-align: left;
-  /* Never wraps to a second line and never truncates mid-thought: a goal
-     long enough to wrap here is a goal that wants shortening, and the
-     ellipsis is the app saying so quietly. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: color var(--dur) var(--ease);
-}
-
-/* The one state change it has. Not a highlight and not an accent - it simply
-   comes up one ink, the way a thing you are looking at directly does. */
-.north-line.is-open .north-line-title,
-.north-line-title:hover,
-.north-line-title:focus-visible {
-  color: var(--muted);
-}
-
-.north-line-title:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: var(--r-mark);
-}
-
-/* The text's line, since v2.26 - see NorthLine. Whole, and wrapping: the
-   fixed height above is the goal's one line and its ellipsis, and a line
-   somebody wrote is never cut. The line in the text's ink at the body size,
-   the signature under it a step smaller in the secondary ink. The press is
-   the whole block, and the ground under the pointer reaches out past the
-   words rather than pushing them in. */
-.north-line.is-text {
-  height: auto;
-  margin-top: 0;
-}
-
+/* Whole, and wrapping: a line somebody wrote is never cut. The press is the
+   whole block, and the ground under the pointer reaches out past the words
+   rather than pushing them in. */
 .north-line-text {
   display: flex;
   flex-direction: column;
@@ -10611,13 +10541,6 @@ button.task-recipe:focus-visible {
   .north-line-text { min-height: var(--touch); justify-content: center; }
 }
 
-/* What opens. Sentence case and the ordinary reading size, because this is
-   the half meant to be read rather than glanced at - the line above is the
-   watermark, this is the sentence behind it. */
-/* [hidden] is a UA rule of display:none, and an author rule setting display
-   on the same element beats it whatever the specificity - so the panel was
-   always open and the hidden attribute was doing nothing at all. This is the
-   line that makes it mean something. */
 /* The morning line, under the North line: the label in the North line's
    register - faint, small, uppercase, tracked - and beside it an ordinary
    field, boxed like every other field in the app. A quieter, boxless line
@@ -10653,8 +10576,6 @@ button.task-recipe:focus-visible {
 @media (hover: hover) and (pointer: fine) {
   .journal-line-input { min-height: 0; padding: var(--s1) var(--s2); }
 }
-
-.north-line-more[hidden] { display: none; }
 
 /* North beside the day - see NorthDay. In the rail, where there is one,
    between the templates and what is next: a small North, the headings as
@@ -10820,98 +10741,10 @@ button.north-day-line:focus-visible {
   .north-day-heading { min-height: var(--touch); display: flex; align-items: center; }
 }
 
-/* The peek: a bubble hanging under the line's left end, with an arrow up
-   at the words, never over them. The same surface, edge and shadow as the
-   explanation bubble and the tooltip, because it is the same kind of thing
-   - an aside that appears and moves nothing. Pointer-transparent for the
-   same reason those are. */
-.north-line-more {
-  position: absolute;
-  top: calc(100% + var(--s2));
-  left: 0;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  width: max-content;
-  max-width: min(62ch, 100%);
-  padding: var(--s2) var(--s3);
-  border-radius: var(--r-card);
-  background: var(--surface-raised);
-  --ground: var(--surface-raised);
-  box-shadow: var(--e2);
-  pointer-events: none;
-}
-
-.north-line-more::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: var(--s4);
-  width: 8px;
-  height: 8px;
-  border-left: 1px solid var(--border);
-  border-top: 1px solid var(--border);
-  background: inherit;
-  transform: rotate(45deg);
-}
-
-/* The whole of a goal the line had to cut short, in the line's own words
-   but at reading size and in the reading ink. */
-.north-line-full {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--t-sm);
-  font-weight: var(--w-strong);
-  line-height: var(--lh-read);
-}
-
-/* Where the line goes, and the key that goes there too - what the browser's
-   own tooltip used to say, on top of the words. */
-.north-line-key {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--t-xs);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .north-line-more { animation: north-open var(--dur) var(--ease) both; }
-}
-
-@keyframes north-open {
-  from { opacity: 0; transform: translateY(-3px); }
-  to { opacity: 1; transform: none; }
-}
-
-.north-line-why {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: var(--lh-read);
-}
-
-/* The identity line, one step quieter again and the only italic in the app -
-   earned here because it is a sentence in the first person and italic is how
-   a first-person aside has been set for four hundred years. */
-.north-line-identity {
-  margin: 0;
-  color: var(--faint);
-  font-size: var(--t-sm);
-  font-style: italic;
-  line-height: var(--lh-read);
-}
-
-/* ------------------------------------------------------------------------
-   The card. A note from somebody to themselves, not a system message.
-
-   No border on three sides and a single soft rule down the left, in the
-   accent at low strength: the shape of a pulled quote rather than of an
-   alert. Nothing red exists here and nothing ever will - see NorthCard.
-   ------------------------------------------------------------------------ */
-/* A sheet since v2.6, over the day rather than in it: the same backdrop
-   and the same rise as the task sheet, so it is recognisably one of the
-   app's moments. It moves nothing, and nothing moves back when Ok is
-   pressed - see NorthCard. */
+/* The scrim North's window after sleep stands on - see NorthWindow. The
+   same backdrop and the same rise as the task sheet, so it is recognisably
+   one of the app's moments, and it moves nothing under it. It was the goal
+   card's first, until the card went with goals in v2.28. */
 .north-scrim {
   position: fixed;
   inset: 0;
@@ -10925,80 +10758,10 @@ button.north-day-line:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .north-scrim { animation: detail-scrim-in var(--dur-fast) var(--ease) both; }
-  .north-card { animation: detail-in var(--dur) var(--ease) both; }
 }
-
-.north-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  /* Capped, so it reads as a note somebody left rather than as a banner the
-     system put up. A card running the full width of a 1440px screen with
-     four words in it is the second thing. */
-  width: min(64ch, 100%);
-  max-height: 100%;
-  overflow-y: auto;
-  gap: var(--s2);
-  padding: var(--s6);
-  border-radius: var(--r-card);
-  background: var(--surface-raised);
-  --ground: var(--surface);
-  box-shadow: var(--e3);
-  outline: none;
-}
-
-.north-card-lead {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: var(--w-medium);
-}
-
-.north-card-title {
-  margin: 0;
-  max-width: 40ch;
-  color: var(--text);
-  font-size: var(--t-lg);
-  font-weight: var(--w-strong);
-  line-height: var(--lh-tight);
-}
-
-.north-card-why {
-  margin: 0;
-  max-width: 56ch;
-  color: var(--text);
-  font-size: var(--t-md);
-  line-height: var(--lh-read);
-}
-
-.north-card-identity {
-  margin: 0;
-  max-width: 56ch;
-  color: var(--muted);
-  font-size: var(--t-md);
-  font-style: italic;
-  line-height: var(--lh-read);
-}
-
-/* One button, and a quiet one. A filled primary here would make the card
-   read as a thing to get past. */
-.north-card-ok {
-  min-height: var(--control-h);
-  margin-top: var(--s1);
-  padding: 0 var(--s4);
-  border: none;
-  border-radius: var(--r-control);
-  background: var(--fill);
-  color: var(--text);
-  font-size: var(--t-sm);
-}
-
-.north-card-ok:hover { border-color: var(--muted); }
-
-.north-card-ok:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* North after sleep - views/north/NorthWindow.tsx. The introduction and the
-   signature over the day, on the goal card's own scrim and with its lift: a
+   signature over the day, on its own scrim and with a sheet's lift: a
    surface of its own, because words over a timeline need a ground to be read
    on, and on it the page's reading type - the introduction at the text's
    size, the signature a step larger with more air over it. No accent edge:
@@ -11034,62 +10797,12 @@ button.north-day-line:focus-visible {
   .north-window { padding: var(--s6); }
 }
 
-/* The Monday version is the same card in a lower key: it is not responding
-   to anything, it is just the start of a week. */
-.north-card.is-monday {
-  border-left-color: color-mix(in srgb, var(--mark) 50%, var(--border));
-  background: color-mix(in srgb, var(--mark) 5%, var(--surface));
-}
-
-/* The one rule under the why. It is the same sentence the North window
-   draws and it is drawn by the same component now - see NorthCard, which
-   wrote its own copy of it until the two drifted. The lead line above it
-   is what makes it the person's own rather than the app's advice, and the
-   Monday card has no lead because it has nothing to defend against. */
-.north-card-rule {
-  max-width: 56ch;
-}
-
-/* Inside this card the sentence has no indent of its own: on the North page
-   the indent is what sets a rule apart from the lines above it, and here
-   there are no lines above it. */
-.north-card-rule .north-rule-line {
-  flex: 0 1 auto;
-  padding-left: 0;
-}
-
-.north-card-rule-lead {
-  display: block;
-  margin-bottom: var(--s0);
-  color: var(--faint);
-  font-size: var(--t-xs);
-  letter-spacing: 0.04em;
-}
-
-/* The one deserve line on the Monday card - see NorthCard. Same lead line
-   as the rule on the slack card, and in the text colour rather than the
-   muted one, because it is the one thing on the card that is about the week
-   ahead rather than about why. */
-.north-card-deserve {
-  display: block;
-  margin: 0;
-  max-width: 56ch;
-  color: var(--text);
-  font-size: var(--t-md);
-  line-height: var(--lh-read);
-}
-
-@media (max-width: 599px) {
-  .north-card { padding: var(--s4); }
-}
-
 /* ------------------------------------------------------------------------
    North - views/north/.
 
    One page in one column, read as a page somebody wrote rather than as a
-   screen of controls: the goal at the top as a quiet line, and under it the
-   person's own text - an introduction, headings that open what they hold,
-   and a signature. No card, no frame and no shadow anywhere on the reading
+   screen of controls: the person's own text - an introduction, headings
+   with what they hold, and a signature. No card, no frame and no shadow anywhere on the reading
    page. The air does the separating, in two steps: the gap between two
    headings, and the larger one between the parts of the page. What can be
    pressed stands in one row wherever it stands.
@@ -11129,9 +10842,6 @@ button.north-day-line:focus-visible {
    word in - the way a quiet word under a setting stands. */
 .north-view-title > .btn-quiet { margin-right: calc(var(--s4) * -1); }
 
-/* The goals follow the name straight under the row: the row's own air
-   under the name is the gap. */
-.north-view-title + .north-goal-lines { margin-top: 0; }
 
 /* The page's name, smaller and quieter than the words under it: on this page
    the text is the thing, and the name only says where you are. */
@@ -11140,119 +10850,6 @@ button.north-day-line:focus-visible {
   color: var(--muted);
   font-size: var(--t-sm);
   font-weight: var(--w-medium);
-}
-
-/* The goals: one quiet line each under the page's name, in the page's
-   smallest reading type and the second ink. The line is the control that
-   edits it and looks like the line - no box, no edge - and comes up one
-   ink under the pointer. */
-.north-goal-lines {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s1);
-  margin-top: var(--s2);
-}
-
-/* On a finger each line is a 44px target around its middle (the touch
-   overlays, above), and four pixels apart the lines' middles were 23px
-   apart - a target reached to within a pixel and a half of the next line's
-   middle, and with the list half scrolled under the top of the screen the
-   line below took the press. Sixteen apart, a target stops well short of
-   its neighbour's middle however the list is scrolled. */
-@media (pointer: coarse) {
-  .north-goal-lines { gap: var(--s4); }
-}
-
-.north-goal-lines:empty { display: none; }
-
-.north-goal-line {
-  min-height: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: var(--lh-ui);
-  text-align: left;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-
-.north-goal-line:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: var(--r-mark);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .north-goal-line:hover { color: var(--text); }
-}
-
-/* A goal, written, where its line was: the title in a box that wraps, the
-   rest behind More, and the row of buttons every part of the page uses. */
-.north-goal-editor {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: var(--s3);
-  margin: var(--s2) 0 var(--s3);
-}
-
-.north-goal-editor textarea {
-  width: 100%;
-  resize: none;
-  line-height: var(--lh-read);
-}
-
-/* The two boxes that take a list rather than a sentence stand at two lines
-   when they are empty, because a one-line box with a two-line example in it
-   shows half its own example. */
-.north-goal-list-field { min-height: calc(var(--s8) + var(--s6)); }
-
-.north-goal-more {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-}
-
-/* The rarer things at the end of More, under a hairline: archiving,
-   another goal, the archived goals and the rules with no goal. */
-.north-goal-rare {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  padding-top: var(--s3);
-  border-top: 1px solid var(--border);
-}
-
-.north-goal-full {
-  margin: 0;
-  font-size: var(--t-sm);
-}
-
-.north-goal-archive-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s3);
-  margin: var(--s3) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.north-goal-archive-list li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s2) var(--s3);
-}
-
-.north-goal-archive-title { color: var(--muted); }
-
-.north-goal-archive-actions {
-  display: flex;
-  gap: var(--s2);
-  margin-left: auto;
 }
 
 /* The text, read, since v2.24: the introduction, the headings and the
@@ -11463,194 +11060,6 @@ button.north-day-line:focus-visible {
 
 .north-editor-rule + .north-actions { margin-top: var(--s4); }
 
-/* A fact, not a measurement - goalAge. Set in --faint at the smallest size
-   so it can never be mistaken for the thing the card is about. */
-.north-goal-age {
-  margin: var(--s2) 0 0;
-  color: var(--faint);
-  font-size: var(--t-xs);
-  letter-spacing: 0.04em;
-}
-
-/* What pulls me off this, with no head over it since v2.19. What says it is
-   a different kind of line from the ones above - a moment and an answer
-   rather than a habit - is the room over it and the indent, which is where
-   the tag colour draws when there is one. */
-.north-rules {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  margin: var(--s4) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* A rule and its two controls share a row on a wide screen, so the hidden
-   controls reserve no band of their own under every rule - which is what
-   they did until v2.1, and four blank bands on the calmest screen in the
-   app read as something failing to render. The line's basis is wide enough
-   that on a phone the controls wrap to a row of their own, where a finger
-   wants them anyway. */
-.north-rule {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--s1) var(--s3);
-  min-width: 0;
-}
-
-.north-rule > .rule-form { flex: 1 1 100%; }
-
-/* One rule, one sentence, wrapping like prose - and a size down from the
-   deserve lines above it, because a rule is about a moment and a deserve
-   line is about a week. The size and the quieter ink are what set it apart
-   from them. It was indented as well, which stood every rule sixteen pixels
-   in from the edge its label and every field above it stand on; before that
-   it had a two-pixel rule painted with the entry's tag colour, and that tag
-   is gone - see DECISIONS. */
-.north-rule-line {
-  flex: 1 1 36ch;
-  margin: 0;
-  max-width: 60ch;
-  color: var(--muted);
-  font-size: var(--t-sm);
-  line-height: var(--lh-read);
-}
-
-/* "If" is a word in the sentence, not a tag on a field. It was small caps in
-   --faint at a size of its own, which is how a form labels a box - and this
-   page stopped labelling boxes. Same size and leading as the rest of the
-   line, one ink quieter, exactly like the "then" halfway along it. */
-.north-rule-prefix { color: var(--faint); }
-
-/* The word the arrow stood for, in the ink of punctuation: it is the joint
-   of the sentence, not a third thing in it. */
-.north-rule-then { color: var(--faint); }
-
-/* Edit and Delete on every rule, at rest, would put the loudest control in
-   the app - an outlined danger button - five times on the calmest screen in
-   it. They fade in when the pointer crosses the rule or something inside it
-   takes focus, which is exactly what the dots on a task card already do. A
-   coarse pointer has no hover to reveal anything with, so there they simply
-   stay visible - the block below. */
-.north-rule-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  flex-shrink: 0;
-  gap: var(--s2);
-  padding-left: var(--s3);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .north-rule-actions {
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease);
-  }
-
-  .north-rule:hover .north-rule-actions,
-  .north-rule:focus-within .north-rule-actions {
-    opacity: 1;
-  }
-
-  /* Compact and unfilled at rest, and the same box when armed - so the row
-     under the cursor does not change height at the moment somebody is
-     deciding whether to press it. Only on a mouse: the 44px floor a finger
-     needs is untouched, which is why this sits inside the fine-pointer
-     query rather than overriding the button system for everyone. */
-  .north-rule-actions button {
-    min-height: var(--s6);
-    padding: 0 var(--s2);
-    font-size: var(--t-sm);
-  }
-
-  /* On the rule's first line: the buttons are a little taller than a line
-     of the rule, so they stand half the difference above its top, centred
-     on the line rather than hanging from it. */
-  .north-rule-actions { margin-top: calc((var(--t-sm) * var(--lh-read) - var(--s6)) / 2); }
-
-  .north-rule-actions .btn-danger { color: var(--danger); }
-
-  .north-rule-actions .btn-danger:hover { background: var(--fill); }
-
-  .north-rule-actions .btn-danger.is-armed {
-    background: var(--danger);
-    color: var(--on-danger, #fff);
-    border-radius: var(--r-control);
-  }
-}
-
-.north-rule-add { align-self: flex-start; }
-
-/* A goal's last row: More at the left, Cancel and Save at the right. */
-.north-goal-actions { justify-content: flex-end; }
-
-.north-goal-actions > .north-goal-more-open { margin-right: auto; }
-
-.north-rule-full {
-  margin: 0;
-  font-size: var(--t-sm);
-}
-
-/* Rules waiting for a goal. Separated by a hairline rather than by a heavier
-   surface: it is a group, not a warning, and a rule can sit here as long as
-   it likes - see UnfiledRules. */
-.north-unfiled {
-  margin-top: var(--s8);
-  padding-top: var(--s6);
-  border-top: 1px solid var(--border);
-}
-
-.north-unfiled h3 {
-  margin: 0;
-  font-size: var(--t-md);
-  font-weight: var(--w-strong);
-}
-
-.north-unfiled > .muted {
-  margin: var(--s1) 0 var(--s4);
-  max-width: 56ch;
-  font-size: var(--t-sm);
-  line-height: var(--lh-ui);
-}
-
-/* A word beside a label rather than a line under the box: the cap on the
-   field below it, said without spending a row of the card on saying it. */
-.field-note {
-  margin-left: var(--s2);
-  color: var(--faint);
-  font-size: var(--t-xs);
-}
-
-
-/* The rule form: two lines and a tag, and nothing about scheduling. The
-   fields are the app's own .field rows, so this looks like every other place
-   something is written down rather than like a form of its own. */
-/* A rule being written: a card on the page with no edge, its two fields on
-   it, and its last row Cancel and Save at the right. */
-.rule-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-  margin: var(--s2) 0 var(--s3);
-  padding: var(--s4);
-  border-radius: var(--r-card);
-  background: var(--surface);
-}
-
-.rule-form-hint {
-  margin: 0;
-  font-size: var(--t-sm);
-}
-
-.rule-form-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--s2);
-  margin-top: var(--s1);
-}
-
 /* The category list in Settings. Rows rather than cards, plus a grip and a
    dot: the order is what the swatch row under quick-add draws,
    so it has to be draggable, and the dot is the only part of a row that says
@@ -11853,12 +11262,6 @@ button.north-day-line:focus-visible {
 }
 
 .backup-preview .sync-actions { margin-bottom: 0; }
-
-/* The Review section. Two lines per goal, the second one the age. */
-.review-north { display: flex; flex-direction: column; gap: var(--s3); margin: 0; padding: 0; list-style: none; }
-.review-north li { display: flex; flex-direction: column; gap: var(--s0); }
-.review-north-title { color: var(--text); font-size: var(--t-sm); }
-.review-north-age { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 
 /* ------------------------------------------------------------------------
    Calendar, compact - the same zero-scroll promise the day view makes.
@@ -15308,9 +14711,9 @@ main:has(.week) > .calendar {
    The one filled control is the button that ends it, which is the only thing
    on here that is an action.
 
-   Compare .north-card, which is the same idea at the other end of the day and
-   is allowed to be a little warmer - a morning card is an invitation, and an
-   evening one is a full stop. */
+   Compare .north-window, North after sleep, which opens the day the way this
+   ends it - a morning window is an invitation, and an evening card is a full
+   stop. */
 .evening-close {
   display: flex;
   flex-direction: column;
@@ -15376,12 +14779,13 @@ main:has(.week) > .calendar {
 
 .evening-close-push:hover { color: var(--text); }
 
-/* Where you are going, small and last. The morning card says why you are
-   starting; this says the same thing from the other end. */
+/* North's signature, small and last: the words the day ends on. Its
+   paragraphs keep their own lines. */
 .evening-close-north {
   margin: var(--s1) 0 0;
   color: var(--faint);
   font-size: var(--t-xs);
+  white-space: pre-line;
 }
 
 @media (pointer: coarse) {
@@ -15440,8 +14844,8 @@ main:has(.week) > .calendar {
 .explain-block > button { flex: 1 1 auto; min-width: 0; }
 
 /* [hidden] is a UA display:none, and an author rule setting display on the
-   same element beats it whatever the specificity - the same trap
-   .north-line-more walked into. This is the line that makes the attribute
+   same element beats it whatever the specificity - the same trap the goal
+   line's peek walked into, until v2.28. This is the line that makes the attribute
    mean something. */
 .explain-bubble[hidden] { display: none; }
 
@@ -17335,10 +16739,3 @@ button.link-out {
   font-size: var(--t-xs);
 }
 
-/* What pulls me off this, behind a goal's More - see GoalRules.tsx. The one
-   field there whose control is a list rather than a box, so it stacks its
-   own contents under its label like the rest and needs less room between
-   them. */
-.north-goal-rules { gap: var(--s1); }
-
-.north-goal-rules .north-rules { margin: 0; }

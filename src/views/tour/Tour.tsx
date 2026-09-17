@@ -234,24 +234,18 @@ function TourOverlay({ onNavigate }: TourProps) {
   // timer was cleared by the effect's own cleanup the moment `celebrating`
   // flipped, and the tour showed a tick forever.
   //
-  // A caption that relocates takes the shell with it: the goal step is
-  // written in Settings and lives under the day's title, and the person is
-  // shown where it went rather than told.
-  //
   // Guarded on the snapshot's step for the same reason the done-check is:
   // for one render after a step advances, `celebrating` is still the last
-  // step's and `step` is already the next one. Without the guard the goal
-  // step's relocation fired the moment the library step ended, sent the
-  // shell to the day view on top of the index effect's `settings`, and the
-  // card sat on the wrong tab saying its control was not on the screen.
+  // step's and `step` is already the next one. Without the guard the next
+  // step's caption acted the moment the step before it ended - until v2.28
+  // the goal step's caption took the shell to the day view that way, on top
+  // of the index effect's own tab, and the card sat on the wrong tab saying
+  // its control was not on the screen.
   useEffect(() => {
     if (!celebrating || before.step !== index) return
-    if (step.outcome?.view) onNavigate(step.outcome.view)
     if (step.outcome?.wait) return
     const timer = setTimeout(advance, OUTCOME_HOLD_MS)
     return () => clearTimeout(timer)
-    // onNavigate is stable - see above.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [celebrating, advance, step.outcome, before.step, index])
 
   // --- has it been too long? ----------------------------------------------

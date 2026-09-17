@@ -59,6 +59,49 @@ helpers and every goal-shaped word in copy, tests, gates and docs.
 | Gates and tests | the sweep's North (goal), the tour and week-rehearsal walks, `NorthCard`, `north.test.ts` goal helpers, Review's, Evening close's, Settings', Explain's and the tour's goal tests | changed or taken out with their readers |
 | Docs | DAILY's "The goal at the top" and "And what pulls you off them", ARCHITECTURE section 6, DESIGN's North notes | rewritten as the stages reach them |
 
+### Stage 2 - goals retired, and nothing lost: done
+
+- **The migration** (`retireGoals`, lib/north.ts): where a plan has active
+  goals and North's text has no picture part, their titles and whys become
+  it, one paragraph a goal, over whatever the text holds; every active goal
+  is archived today, every field kept, and what changed is stamped now. It
+  runs in `normalizeLoaded` - every open and import - and after every sync
+  merge, once: a plan with no active goal comes back as the same object.
+- **Out of use:** the day's goal line (nothing stands there now where the
+  text has nothing for the day), the Monday and slow-day card and its
+  Nudges row, Review's goals, North's goal lines, editor and rules, the goal
+  and rule store areas (eleven areas now), the tour's goal step (the North
+  step ends on Save, the caption on the words kept), the demo's and the
+  sample day's goals and rules, the deserve explanation, and some eighteen
+  thousand characters of stylesheet. The evening close ends on the
+  signature. The restore summary counts North's lines where it counted goals.
+- **Kept:** the goal and rule types, their validation and their sync kinds;
+  `afterASlowDay` is still written because an older device requires it.
+- DECISIONS: "North is one text, goals retired".
+
+New tests: the migration's rules (`north.test.ts`), an old backup with
+goals opening with them as its picture and every goal and rule kept, a text
+with a picture left alone, the plan on the device read the same way, and
+export then import bit for bit (`storage.test.ts`), a remote and a poll
+with active goals arriving retired (`syncClient.test.ts`), the source read
+for any goal reader, any screen saying goal, any store action or CSS rule
+for one, and the doors that retire them (`goalsRetired.test.ts`), the
+evening close's signature (`EveningClose.test.tsx`), the North step and
+its event (`tour.test.ts`, `tourAssist.test.ts`, `Tour.test.tsx`), a
+plan holding goals showing none on North (`NorthView.test.tsx`), and the
+restore summary's North lines (`cloudBackup.test.ts`,
+`BackupSettings.test.tsx`). Changed tests: the day's line with nothing for
+the day draws nothing (`NorthLine.test.tsx`), Nudges is four rows
+(`SettingsView.test.tsx`), the demo carries a text and no goals
+(`demo.test.ts`), a Kitchen fixture lost its goal (`kitchen.data.test.ts`),
+and the borders ratchet came down to 47 (`design.test.ts`). Removed with
+what they tested: `NorthCard.test.tsx`, the goal helpers' and compose tests
+in `north.test.ts`, North's goal and rule tests in `NorthView.test.tsx`,
+the if-then store tests, the goal line's peek tests, and the goal's
+explanation. Browser walks: the North line's edge is measured on a text, the
+tour writes a line and saves it, and the week rehearsal writes the whole
+text in one field.
+
 ## After v2.27 - one line everywhere
 
 From two screenshots the owner sent: a Cancel alone on a row of its own, and

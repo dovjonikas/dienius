@@ -240,7 +240,7 @@ const RETIRED: { what: string; now: () => number; left: number }[] = [
     left: 5,
   },
   { what: 'tracked capitals', now: () => count(/text-transform\s*:\s*uppercase/g), left: 0 },
-  { what: 'borders drawn', now: drawnBorders, left: 51 },
+  { what: 'borders drawn', now: drawnBorders, left: 47 },
   { what: 'black written as rgba()', now: () => count(/rgba\(0,\s*0,\s*0,/g), left: 7 },
   { what: 'presses that scale', now: pressesThatScale, left: 0 },
   { what: 'heights written as min-height in pixels', now: () => count(/min-height\s*:\s*[0-9]+px/g), left: 20 },

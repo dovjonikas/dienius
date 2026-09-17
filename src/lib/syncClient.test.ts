@@ -168,6 +168,40 @@ test('a remote that still carries an inbox arrives folded into Later', async () 
   expect(back.tombstones?.['inbox:phone-line']).toEqual(expect.any(String))
 })
 
+// Goals are retired since v2.28 - see retireGoals in north.ts. A merge result
+// never passes through loadData, so a device still holding active goals and
+// no picture has to be met here too, before anything is committed or posted
+// back: otherwise the goals would stand active and unseen on this device
+// until its next reload, and the server would keep them that way.
+test('a remote that still has active goals arrives with them as the picture, and goes back that way', async () => {
+  const remote = defaultData()
+  remote.goals = [{ id: 'g1', title: 'A goal title', why: 'a reason for it', createdAt: DATE, updatedAt: '2026-09-01T08:00:00.000Z' }]
+  remote.picture = { text: 'FIRST HEADING\na line under it', updatedAt: '2026-09-01T08:00:00.000Z' }
+  const posted = serverHolding(remote)
+
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await syncNow()
+
+  expect(getData().picture?.text).toBe('A goal title\na reason for it\n\nFIRST HEADING\na line under it')
+  expect(getData().goals).toHaveLength(1)
+  expect(getData().goals[0].archivedAt).toEqual(expect.any(String))
+  const back = posted.at(-1)!
+  expect(back.picture?.text).toBe(getData().picture?.text)
+  expect(back.goals[0].archivedAt).toEqual(expect.any(String))
+})
+
+test('a poll that brings active goals retires them the same way', async () => {
+  const remote = defaultData()
+  remote.goals = [{ id: 'g1', title: 'A goal title', createdAt: DATE, updatedAt: '2026-09-01T08:00:00.000Z' }]
+  serverHolding(remote)
+
+  setSyncConfig({ url: URL, token: 'abc', enabled: true })
+  await pullOnly()
+
+  expect(getData().picture?.text).toBe('A goal title')
+  expect(getData().goals[0].archivedAt).toEqual(expect.any(String))
+})
+
 /**
  * The rule that matters more than any feature here. A server answering with
  * a login page, a proxy error, or somebody else's JSON must never be treated

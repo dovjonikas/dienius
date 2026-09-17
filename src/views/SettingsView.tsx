@@ -54,9 +54,9 @@ const WEEKDAYS: { value: number; label: string; full: string }[] = [
 
 const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'general', label: 'General' },
-  // No North section since v2.1. What the app is for is written in the
-  // North window itself; the one thing Settings still decides about it -
-  // whether a goal may come forward on its own - is a nudge and sits there.
+  // No North section since v2.1. What the app is for is written on North
+  // itself; the two things Settings still decides about it - North on the
+  // day and after sleep - are nudges and sit there.
   { id: 'sleep', label: 'Sleep' },
   { id: 'week', label: 'Week' },
   // After Week and before Nudges: it is about what a day is made of, which
@@ -408,8 +408,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
               <div className="setting-label">
                 <span className="setting-name">Erase all data</span>
                 <span className="setting-desc">
-                  Removes everything on this device: every template, every day, the rules under your
-                  goals and the theme. Export a backup first if you want to keep a copy.
+                  Removes everything on this device: every template, every day, your North and the
+                  theme. Export a backup first if you want to keep a copy.
                 </span>
               </div>
               <div className="setting-control">
@@ -602,35 +602,10 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
                 need a service worker and a push subscription, which is a
                 piece of work of its own - see STATE's "Asked for, not yet
                 built". The North row that sat under them said what the
-                North tab says, which is the sixth icon and the 6 key.
-                CONVENTIONS section 21. */}
-            <div className="setting-row">
-              <div className="setting-label">
-                <span className="setting-name">Bring a goal forward</span>
-                <span className="setting-desc">
-                  A card on Monday morning, and after a day that got away from you: one goal and its
-                  reason, in full. Never a count of what was missed.
-                </span>
-              </div>
-              <div className="setting-control">
-                <button
-                  type="button"
-                  role="switch"
-                  className="switch"
-                  aria-checked={data.settings.north.afterASlowDay}
-                  aria-label="Bring a goal forward"
-                  onClick={() =>
-                    actions.setNorthSettings({
-                      ...data.settings.north,
-                      afterASlowDay: !data.settings.north.afterASlowDay,
-                    })
-                  }
-                >
-                  <span className="switch-thumb" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
+                North tab says, which is the sixth icon and the 6 key. Bring
+                a goal forward, the switch for the card that brought a goal
+                forward on a Monday and after a day that got away, went with
+                goals in v2.28. CONVENTIONS section 21. */}
             {/* North's signature and headings on the day - see NorthDay. Here
                 because it is the other thing that appears on the day without
                 being asked for. On by default: a text written to be read

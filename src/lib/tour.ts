@@ -38,7 +38,7 @@ export type TourEvent =
   | 'list-added'
   | 'item-added'
   | 'sitting-placed'
-  | 'goal-added'
+  | 'north-written'
   | 'finish'
 
 /**
@@ -76,10 +76,10 @@ export interface TourTarget {
  * then goes on - by itself after a beat long enough to read the line, or on
  * Next for the three steps where what appeared deserves a proper look.
  *
- * `view` and `target` move the spotlight for the caption. The goal step is
- * written in the North window and lives under the day's title; without
- * the relocation the person is told it "never shows progress" while looking
- * at a form, and never sees where it went.
+ * `target` moves the spotlight for the caption: North's step ends on Save,
+ * which is gone the moment it is pressed, and the caption points at the
+ * words it kept. A caption that took the shell to another tab went with the
+ * goal step it was built for, in v2.28.
  *
  * Deliberately outside the 150-word instructional budget the titles and
  * lines share, and bounded separately - see tour.test.ts. A caption for
@@ -90,8 +90,6 @@ export interface TourOutcome {
   text: string
   /** Wait for Next rather than moving on after a beat. */
   wait?: boolean
-  /** Switch the shell to this tab for the caption. */
-  view?: TourView
   /** Point at this for the caption instead of the step's own targets. */
   target?: string
 }
@@ -165,7 +163,9 @@ export const TOUR_EVENTS: Record<TourEvent, (ctx: TourContext) => boolean> = {
   // the library is not a shelf, it is a queue that lands on days.
   'sitting-placed': ({ before, now, today }) =>
     tasksOn(now, today).filter(t => t.libraryRef).length > tasksOn(before, today).filter(t => t.libraryRef).length,
-  'goal-added': ({ before, now }) => now.goals.length > before.goals.length,
+  // North's text kept, and changed: Save with nothing different is not a
+  // line written. Emptying the text is not one either.
+  'north-written': ({ before, now }) => !!now.picture && now.picture.text !== before.picture?.text,
 }
 
 /**
@@ -289,30 +289,26 @@ export const DESKTOP_STEPS: TourStep[] = [
   },
   {
     id: 'north',
-    title: 'One direction',
+    title: 'Your own words',
     text: 'Write a line of your own.',
-    // Six, and the last one present wins. An empty North is one line and
-    // Write; Write opens the field, and a line typed into it moves the ring
-    // to Save, which keeps the text and goes back to reading. Once the text
-    // is there, Add a goal stands at the top of the page; once that is
-    // pressed, the goal's editor opens where the line was, its box asks for
-    // a name while its Save waits for one, and the step ends on Save.
-    // Somebody who already has a text starts at Add a goal, which is the
-    // same walk with two steps fewer.
+    // Four, and the last one present wins. An empty North is one line and
+    // Write, and a North with a text has Edit where Write would be; either
+    // opens the field, and a line typed into it moves the ring to Save,
+    // which waits until something has changed. Save keeps the text and goes
+    // back to reading, and the step ends there. Until v2.28 a goal was
+    // written under the text as well - goals are retired, and North is the
+    // text.
     targets: [
+      { selector: '[data-tour="picture-edit"]', text: 'Click Edit.' },
       { selector: '[data-tour="picture-write"]', text: 'Click Write.' },
       { selector: '[data-tour="picture-field"]', typed: 'Now click Save.' },
       { selector: '[data-tour="picture-keep"]', text: 'Now click Save.' },
-      { selector: '[data-tour="goal-add"]', text: 'Click Add a goal. A goal never shows progress, only why.' },
-      { selector: '[data-tour="goal-field"]', text: 'Name it, then click Save.' },
-      { selector: '[data-tour="goal-save"]', text: 'Name it, then click Save.' },
     ],
     view: 'north',
-    event: 'goal-added',
+    event: 'north-written',
     outcome: {
-      text: 'It sits under the day now. Press that line for North, never a bar.',
-      view: 'day',
-      target: '[data-tour="north-line"]',
+      text: 'This comes back after sleep, before the day. Nothing here is scored.',
+      target: '[data-tour="north-text"]',
       wait: true,
     },
   },
@@ -407,9 +403,8 @@ export function markTourCreated(previous: AppData, next: AppData): AppData {
   }
   const templates = flag(next.templates, new Set(previous.templates.map(t => t.id)))
   const library = flag(next.library, new Set(previous.library.map(l => l.id)))
-  const goals = flag(next.goals, new Set(previous.goals.map(g => g.id)))
 
-  return changed ? { ...next, days, templates, library, goals } : next
+  return changed ? { ...next, days, templates, library } : next
 }
 
 /**
@@ -433,7 +428,6 @@ export function discardTourCreated(data: AppData): AppData {
     days,
     templates,
     library: data.library.filter(l => !l.tourCreated),
-    goals: data.goals.filter(g => !g.tourCreated),
   }
 }
 
@@ -453,6 +447,5 @@ export function keepTourCreated(data: AppData): AppData {
     days,
     templates: data.templates.map(strip),
     library: data.library.map(strip),
-    goals: data.goals.map(strip),
   }
 }

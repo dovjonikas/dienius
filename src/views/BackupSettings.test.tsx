@@ -105,23 +105,23 @@ test('a repo with no backup yet says so rather than offering to replace with not
  * bring.
  *
  * It counted tasks and days, and a restore replaces everything - so a cloud
- * copy holding an empty week over a device with a library and four goals read
+ * copy holding an empty week over a device with a library and a North text read
  * as the smaller of the two and said nothing about the books. The owner asked
  * whether the backup keeps North and the library; it always did, and this is
  * the screen that could not prove it.
  */
-test('the restore screen counts the library and the goals, and marks what would go', async () => {
+test('the restore screen counts the library and North, and marks what would go', async () => {
   setCloudBackupConfig({ repo: 'me/dienius-data', token: 'github_pat_x' })
   // The cloud copy has a day on it and nothing else.
   const copy = defaultData()
   copy.days['2026-08-20'] = { date: '2026-08-20', tasks: [{ id: 'a', title: 'From the cloud', done: false }] }
   cloud = JSON.stringify(copy)
 
-  // This device has a library and a goal, which the restore would replace.
+  // This device has a library and a North text, which the restore would replace.
   const list = actions.addLibraryList({ name: 'Books', unit: 'chapter' })
   actions.addLibraryItem(list.id, 'Sapiens')
   actions.addLibraryItem(list.id, 'Musashi')
-  actions.addGoal({ title: 'Be the dad worth looking up to' }, todayKey())
+  actions.setPicture('A first line\n\nFIRST HEADING\na line under it')
 
   render(<BackupSettings />)
   await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
@@ -130,8 +130,10 @@ test('the restore screen counts the library and the goals, and marks what would 
   const books = screen.getByRole('row', { name: /Library books/ })
   expect(books).toHaveTextContent('2')
   expect(books).toHaveTextContent('fewer')
-  const goals = screen.getByRole('row', { name: /Goals/ })
-  expect(goals).toHaveTextContent('fewer')
+  const north = screen.getByRole('row', { name: /North lines/ })
+  expect(north).toHaveTextContent('3')
+  expect(north).toHaveTextContent('fewer')
+  expect(screen.queryByRole('row', { name: /Goals/ })).toBeNull()
   // And a row that would not lose anything is not marked.
   expect(screen.getByRole('row', { name: /Tasks/ })).not.toHaveTextContent('fewer')
 })

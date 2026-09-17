@@ -301,7 +301,7 @@ test('the last backup is said in a person\'s words', () => {
  * A restore replaces everything, so the confirmation has to say everything.
  *
  * It counted tasks and days and nothing else, which meant a cloud copy
- * holding fourteen books and four goals over an empty week read as "empty" -
+ * holding fourteen books and a North text over an empty week read as "empty" -
  * and a restore about to wipe a library looked exactly like one that would
  * not. The whole plan is in the file; the screen that asks was the part that
  * could not see it.
@@ -313,11 +313,12 @@ test('a summary counts every part of the plan, not only the days', () => {
   data.library = [
     { id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'i', title: 'Sapiens' }, { id: 'j', title: 'Musashi' }] },
   ]
-  data.goals = [{ id: 'g', title: 'Be the dad worth looking up to', createdAt: '2026-09-01T08:00:00.000Z' }]
+  data.picture = { text: 'A first line\n\nFIRST HEADING\na line under it\n   \n---\na signature line' }
   data.backlog = [{ id: 'b', title: 'Physio' }]
 
   const s = summarise(data)
-  expect(s).toMatchObject({ tasks: 1, days: 1, templates: 1, books: 2, goals: 1, later: 1 })
+  // North counts the lines that hold words: a blank line, or one of spaces, is none.
+  expect(s).toMatchObject({ tasks: 1, days: 1, templates: 1, books: 2, north: 5, later: 1 })
   expect(s.categories).toBeGreaterThan(0)
 })
 
@@ -327,7 +328,7 @@ test('an empty plan is empty in every count, and says so in one word', () => {
   expect(s.tasks).toBe(0)
   expect(s.templates).toBe(0)
   expect(s.books).toBe(0)
-  expect(s.goals).toBe(0)
+  expect(s.north).toBe(0)
 })
 
 /**
@@ -338,14 +339,15 @@ test('an empty plan is empty in every count, and says so in one word', () => {
 test('the rows say which side is larger, and mark only the ones that would lose', () => {
   const here = defaultData()
   here.library = [{ id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'i', title: 'Sapiens' }] }]
-  here.goals = [{ id: 'g', title: 'A goal', createdAt: '2026-09-01T08:00:00.000Z' }]
+  here.picture = { text: 'A first line\nA second line' }
   const cloud = defaultData()
   cloud.days['2026-09-04'] = { date: '2026-09-04', tasks: [{ id: 'c', title: 'C', done: false }] }
 
   const rows = compareSummaries(summarise(here), summarise(cloud))
   const byLabel = Object.fromEntries(rows.map(r => [r.label, r]))
   expect(byLabel['Library books']).toMatchObject({ here: 1, cloud: 0, loses: true })
-  expect(byLabel['Goals']).toMatchObject({ here: 1, cloud: 0, loses: true })
+  expect(byLabel['North lines']).toMatchObject({ here: 2, cloud: 0, loses: true })
+  expect(byLabel['Goals']).toBeUndefined()
   // The cloud has a task and this device does not, which loses nothing.
   expect(byLabel['Tasks']).toMatchObject({ here: 0, cloud: 1, loses: false })
   expect(rows.every(r => typeof r.label === 'string')).toBe(true)

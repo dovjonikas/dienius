@@ -327,12 +327,12 @@ test('the sleep fields step by five minutes with the up and down arrows', async 
  * The count is the test. See CONVENTIONS section 21 and DECISIONS "A
  * setting has to earn its place".
  */
-test('Nudges is five rows: closing the day, when the evening starts, bringing a goal forward, North on the day and North after sleep', async () => {
+test('Nudges is four rows: closing the day, when the evening starts, North on the day and North after sleep', async () => {
   const { container } = await renderSettled()
   const nudges = container.querySelector('#settings-nudges') as HTMLElement
 
   const names = Array.from(nudges.querySelectorAll('.setting-name')).map(el => el.textContent)
-  expect(names).toEqual(['Close the day', 'Evening starts at', 'Bring a goal forward', 'North on the day', 'North after sleep'])
+  expect(names).toEqual(['Close the day', 'Evening starts at', 'North on the day', 'North after sleep'])
 })
 
 // The same shape as the row above it: on until switched off, and only off is
@@ -375,22 +375,9 @@ test('North on the day is on until switched off', async () => {
 
 test('the nudges that could only fire while you were already looking are gone from Settings', async () => {
   await renderSettled()
-  for (const gone of ['Nudge during focus work', 'Before a timed task', 'And on a Monday', 'North']) {
+  // Bring a goal forward went with goals in v2.28.
+  for (const gone of ['Nudge during focus work', 'Before a timed task', 'And on a Monday', 'North', 'Bring a goal forward']) {
     expect(screen.queryByText(gone)).not.toBeInTheDocument()
   }
 })
 
-// One switch, not two: it carries the slow-day card and the Monday card
-// together, because a person who does not want a goal brought forward does
-// not want it brought forward on a Monday either.
-test('bringing a goal forward is one switch, and turning it off leaves nothing else changed', async () => {
-  const user = userEvent.setup()
-  render(<SettingsView />)
-
-  const forward = screen.getByRole('switch', { name: 'Bring a goal forward' })
-  expect(forward).toHaveAttribute('aria-checked', 'true')
-  await user.click(forward)
-
-  expect(getData().settings.north).toEqual({ afterASlowDay: false })
-  expect(getData().settings.eveningClose).toEqual({ enabled: true, at: '21:30' })
-})

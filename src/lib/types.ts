@@ -870,13 +870,9 @@ export interface Settings {
    */
   eveningClose?: EveningCloseSettings
   /**
-   * The date key the North card was last dismissed on, or absent.
-   *
-   * In settings rather than under its own local key, because "I have read this
-   * today" is a fact about the person rather than about the device - the phone
-   * should not ask again about a morning already answered on the PC. The
-   * yesterday banner's own dismissal stays local: that one is about a list you
-   * are looking at, not about a thing you were told.
+   * The date key the goal card was last dismissed on, or absent. The card went
+   * with goals in v2.28 and nothing reads this; it is kept, and still synced,
+   * for the older devices and the files that carry it.
    */
   northDismissedOn?: string
   /**
@@ -951,60 +947,31 @@ export interface CalendarSubscription {
 export type WeekdayMap = Partial<Record<number, string>>
 
 /**
- * An implementation intention: a trigger decided on in advance, paired with
- * the one concrete thing to do when it happens. Deliberately just those two
- * strings plus an optional tag - nothing here is measured. No done flag, no
- * count of how often it fired: turning one of these into a task would
- * undo the reason it works, which is that the decision already happened
- * and there is nothing left to track.
+ * A rule under a goal - what pulls me off it: a trigger decided on in
+ * advance, and the one thing to do when it happens.
  *
- * A rule belongs to a goal, and that is the whole of what changed in v2.0.
- * It is also the reason the feature works at all: a list of rules filed on
- * its own is noise nobody opens, and the same lines sitting under the goal
- * they protect are armour. Rules used to surface one at a time on the day
- * view, chosen by day type and time of day; that machinery is gone, and so
- * are the `dayTypes`, `when` and `lastSurfaced` fields it needed. A payload
- * written before v2.0 still carries them and they ride along untouched -
- * the tables in `validate.ts` name what the app reads, not everything a
- * stored object is allowed to hold.
+ * Retired with goals in v2.28 - see DECISIONS "North is one text, goals
+ * retired". Nothing in the app reads or writes one any more. The type, its
+ * table in `validate.ts` and its sync entity stay, so a backup or an older
+ * device that still holds rules keeps every one of them: they load, merge
+ * and export as they always did, and nothing shows them.
  *
- * `color` went the same way after v2.19, and for the reason the owner asked
- * about it: nine swatches under the form whose whole effect was two pixels
- * of edge on one line of one screen. Nothing sorted, grouped or filtered by
- * it and the card that brings a rule forward never read it. A stored rule
- * that still carries one rides along like the rest. See DECISIONS.
+ * A payload from before v2.0 also carries `dayTypes`, `when` and
+ * `lastSurfaced`, and one from before v2.20 a `color`; they ride along
+ * untouched - the tables in `validate.ts` name what the app reads, not
+ * everything a stored object is allowed to hold.
  */
 export interface IfThenEntry extends Timestamped {
   id: string
   trigger: string
   action: string
   /**
-   * The goal this rule protects - a `Goal.id`.
-   *
-   * Optional, for two reasons that are not the same one twice. Every rule
-   * on disk predates the field, so absent has to keep meaning something;
-   * and a rule can legitimately sit unassigned for a while, because writing
-   * down what pulls you off course is worth doing the moment you notice it,
-   * and which goal it belongs under is not always obvious then. The North
-   * window gathers those into their own group and offers a goal for each,
-   * one at a time. Nothing is guessed at and nothing is auto-filed.
-   *
-   * A dangling id degrades rather than crashing, like every other id in
-   * this app: a rule pointing at a goal that no longer exists reads as
-   * unassigned, exactly as if the field were absent.
+   * The goal the rule was written under - a `Goal.id` - or absent for one
+   * that was never filed. A dangling id is not an error, like every other id
+   * in this app.
    */
   goalId?: string
 }
-
-/**
- * How many rules one goal can carry.
- *
- * Five, and the cap refuses rather than evicting - the same choice
- * `MAX_ACTIVE_GOALS` makes, for the same reason. A goal with fifteen rules
- * under it is a list again, and the entire point of moving them here was to
- * stop having a list.
- */
-export const MAX_RULES_PER_GOAL = 5
 
 /**
  * One line in the scratch stream - see lib/scratch.ts.
@@ -1104,76 +1071,35 @@ export interface LaterItem extends Timestamped {
 }
 
 /**
- * A direction, not a task.
+ * A goal, as North held one until v2.28: a title, why it matters, who it
+ * makes you, what you do to deserve it and what you do not.
  *
- * This is the one type in this app with no `done`, no progress, no due date
- * and no count, and every one of those absences is deliberate. See
- * docs/DECISIONS.md and `north.ts` for the whole argument; the short version
- * is that showing progress toward a goal reliably licenses stopping, while
- * restating *why* it matters does not. So a goal is asked to carry a reason
- * and never asked to carry a number.
- *
- * The four fields are four different questions, and everything after the
- * first is optional because a person who only has the first still has a
- * goal:
- *
- * - `title` is what you are doing, short and in the imperative.
- * - `why` is what it is for, in a sentence or two, in your own words.
- * - `identity` is who it makes you - "I am someone who ...". The most
- *   powerful of the three when it is true and the most embarrassing when it
- *   is invented, which is why nothing ever asks for it twice.
- * - `deserve` is what you do to deserve it: two to four concrete things
- *   done most days - "train four times a week", "apply to three places a
- *   day" - and never a wish. It is the bridge between the goal and a day,
- *   and the one line the Monday card carries. Nothing checks whether any
- *   of it happened; a list that could be ticked would be a scoreboard.
+ * Retired - see DECISIONS "North is one text, goals retired". North is one
+ * text, and nothing shows a goal. The type, its table in `validate.ts` and
+ * its sync entity stay, so every goal in a backup or on an older device is
+ * kept: `retireGoals` in north.ts moves the active ones' titles and whys
+ * into North's picture where the text has none, and archives them, once.
+ * Nothing is deleted, and every field here is still read from a file.
  */
 export interface Goal extends Timestamped {
   id: string
   title: string
   why?: string
   identity?: string
-  /** Trimmed, no blank lines, at most `MAX_DESERVE_LINES`. Absent rather than empty - see `cleanDeserve`. */
+  /** What you do to deserve it, a line each. */
   deserve?: string[]
-  /**
-   * The other half of the same goal: what the person it makes you does not do.
-   *
-   * Same shape and same cap as `deserve`, and paired with it on purpose -
-   * docs/RESEARCH-NORTH.md has the argument. It is a contrast held inside an
-   * approach goal, never a goal of its own, which is why nothing outside
-   * North reads it: the day view, the Monday card and the evening close all
-   * take `deserve` and none of them takes this.
-   */
+  /** The other half: what the person it makes you does not do. */
   avoid?: string[]
-  /** The date key it was written on. Its age is read from this - see `goalAge`. */
+  /** The date key it was written on. */
   createdAt: string
   /**
-   * The date key it was archived on. Present means it is no longer one of the
-   * active few - reached, outgrown, or simply not this year's.
-   *
-   * Archiving is not a soft delete and carries no verdict: nothing records
-   * *why* one was archived, because "achieved" and "abandoned" is exactly the
-   * scoring this whole feature refuses to do.
+   * The date key it was archived on: by hand until v2.28, and by
+   * `retireGoals` for every goal still active then.
    */
   archivedAt?: string
-  /**
-   * Made by the tour. "Start clean" at the end of it removes exactly the
-   * entities carrying this, and "Keep what I built" strips it, so it is only
-   * ever present while the question is still open. See lib/tour.ts.
-   */
+  /** Made by the tour, while the tour still asked for a goal. */
   tourCreated?: boolean
 }
-
-/** How many goals can be active at once. See `north.ts` for why it is four. */
-export const MAX_ACTIVE_GOALS = 4
-
-/**
- * How many lines "what I do to deserve this" holds. Four, and the form stops
- * offering a fifth rather than trimming it on save: a list of ten things done
- * every day is a routine pretending to be a reason, and the whole point of
- * the list is that it fits in a glance on a Monday morning.
- */
-export const MAX_DESERVE_LINES = 4
 
 /**
  * North: one text, in the person's own words, read every morning.
@@ -1201,13 +1127,17 @@ export interface Picture extends Timestamped {
 }
 
 /**
- * When the app is allowed to bring a goal forward on its own - see
- * `shouldSurfaceNorth` in `north.ts`. Both default on, both switchable off,
- * because a reminder somebody did not want is a reminder they learn to
+ * North's switches. The two under Nudges are carried only when they are
+ * off, because a reminder somebody did not want is a reminder they learn to
  * dismiss without reading.
  */
 export interface NorthSettings {
-  /** A quiet card after a day that got away - never a scolding, never a number. */
+  /**
+   * The switch for the card that brought a goal forward on a Monday and
+   * after a day that got away. The card and its row went with goals in
+   * v2.28 and nothing reads this. Still written and still required, because
+   * an older device's check refuses a plan without it.
+   */
   afterASlowDay: boolean
   /**
    * North's signature and headings on the day, each heading opening what is
@@ -1369,9 +1299,9 @@ export interface AppData {
    */
   library: LibraryList[]
   /**
-   * The big ones. Backfilled to empty exactly like `library` and `inbox`, and
-   * empty is the shipped state - this app has never assumed it knows what
-   * somebody is for.
+   * Goals, retired in v2.28 - see `Goal`. Backfilled to empty like
+   * `library`; nothing adds to it any more, and a plan that holds goals
+   * keeps them.
    */
   goals: Goal[]
   /**

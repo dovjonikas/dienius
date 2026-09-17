@@ -2,7 +2,6 @@ import { Fragment, useEffect, useId, useMemo, useState } from 'react'
 import { useAppData } from '../lib/store'
 import { addDays, formatWeekTitle, todayKey } from '../lib/dates'
 import { CopyJournalButton } from './CopyJournalButton'
-import { activeGoals, ageLabel } from '../lib/north'
 import { copyText } from '../lib/journal'
 import { planReading, readingGroups, readingLine, readingMarkdown, type BlockReading } from '../lib/planReading'
 import { COUNT_WINDOW_LONG, COUNT_WINDOW_SHORT, blockCounts, countGroups, type CountGroup } from '../lib/blockCounts'
@@ -31,7 +30,7 @@ const WEEKDAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
  *
  * The line this screen walks: a tracker that shows you your own week is
  * useful; a tracker that turns the week into a target is the thing this app
- * has refused to be since its first commit. So there are no goals here, no
+ * has refused to be since its first commit. So there are no targets here, no
  * percentages presented as scores, nothing red, and nothing that says a week
  * was bad. The bars are the shape of what happened. There was a streak here
  * until v2.7, kept off the day view and worded as a description rather than
@@ -184,8 +183,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
               at. */}
           {counts.length > 0 && <CountsSection groups={countGroups(counts)} />}
 
-          <NorthSection />
-
           {stats.library.length > 0 && (
             <div className="review-block">
               <h3>Read and watched</h3>
@@ -204,35 +201,6 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
         </>
       )}
     </section>
-  )
-}
-
-/**
- * The goals, at the bottom of a review, with their ages and nothing else.
- *
- * The one place in this app where looking back at a week and looking at a
- * direction sit on the same screen - and the whole discipline of it is that
- * the direction gets no number the week can move. An age cannot be earned or
- * lost; it is a fact about how long something has been true.
- */
-function NorthSection() {
-  const data = useAppData()
-  const today = todayKey()
-  const goals = activeGoals(data.goals)
-  if (goals.length === 0) return null
-
-  return (
-    <div className="review-block">
-      <h3>North</h3>
-      <ul className="review-north">
-        {goals.map(goal => (
-          <li key={goal.id}>
-            <span className="review-north-title">{goal.title}</span>
-            <span className="review-north-age">{ageLabel(goal, today)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   )
 }
 

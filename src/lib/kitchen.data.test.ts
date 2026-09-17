@@ -112,7 +112,6 @@ test('every field of a recipe survives export and re-import, and the file is the
 
 test('a backup from before Kitchen existed loads, with no recipes and nothing else changed', () => {
   const data = defaultData()
-  data.goals = [{ id: 'g', title: 'A goal title here', createdAt: '2026-09-01' }]
   data.picture = { text: 'a first line' }
   const old = JSON.parse(exportJson(data)) as Record<string, unknown>
   delete old.recipes

@@ -51,8 +51,8 @@ function TourTargets() {
       <input data-quick-add="" aria-label="Add a task" />
       <button type="button" data-tour="library-new" />
       {data.library.length > 0 && <input data-tour="library-add" aria-label="Add to Books" />}
-      <button type="button" data-tour="goal-add" />
-      {data.goals.length > 0 && <div data-tour="north-line">{data.goals[0].title}</div>}
+      <button type="button" data-tour="picture-write" />
+      {data.picture && <div data-tour="north-text">{data.picture.text}</div>}
       {ids.map(id => (
         <div key={id} data-task-id={id}>
           <button type="button" data-tour="task-menu" />
@@ -552,22 +552,21 @@ test('a sheet left open over the step gets its close button pointed at, and the 
 })
 
 /**
- * The goal is written in the North window and lives under the day's title.
- * The caption takes the person there and points at the line, because "it
- * never shows progress" said over a form is a claim, and said over the line
- * it turned into is a fact they can see.
+ * North is one text since v2.28, and its step ends when a line of it is
+ * saved. The caption stays on North and points at the words kept: Save,
+ * which the step lit, is gone the moment it is pressed.
  */
-test('writing a goal ends the north step, and the caption moves to the day and points at the North line', async () => {
+test('saving a line of North ends the north step, and the caption stays on North pointing at the words', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const { onNavigate } = renderTour()
   // North is the ninth step since the library became three.
   act(() => startTour('desktop', 9))
   expect(onNavigate).toHaveBeenLastCalledWith('north')
-  act(() => actions.addGoal({ title: 'Be someone who finishes things' }, TODAY))
+  act(() => actions.setPicture('A first line of my own.'))
   act(() => vi.advanceTimersByTime(250))
-  expect(onNavigate).toHaveBeenLastCalledWith('day')
-  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('It sits under the day now')
-  expect(document.querySelector('[data-tour="north-line"]')!.classList.contains('is-tour-target')).toBe(true)
+  expect(onNavigate).toHaveBeenLastCalledWith('north')
+  expect(screen.getByRole('dialog', { name: 'Tour' })).toHaveTextContent('This comes back after sleep')
+  expect(document.querySelector('[data-tour="north-text"]')!.classList.contains('is-tour-target')).toBe(true)
   act(() => vi.advanceTimersByTime(10_000))
   expect(getTourState().step).toBe(9)
   await user.click(screen.getByRole('button', { name: 'Next' }))
@@ -577,16 +576,16 @@ test('writing a goal ends the north step, and the caption moves to the day and p
 /**
  * Found on the first full walk after the captions were added: the moment
  * the library step ended, the shell went to the day view instead of
- * North, and the goal step sat on the wrong tab saying its control was
+ * North, and the step after it sat on the wrong tab saying its control was
  * not on the screen. For one render after a step advances the tick state
  * is still the last step's and the step is already the next one, and the
- * next one's relocation fired on the stale tick.
+ * next one's caption acted on the stale tick. The caption that moved tabs
+ * went with the goal step in v2.28; the guard stays, and so does this.
  */
-test('a caption that relocates belongs to its own step, and never fires as the step before it ends', async () => {
+test('a caption belongs to its own step, and never acts as the step before it ends', async () => {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const { onNavigate } = renderTour()
-  // The last library step, so the one after it is North and its caption is
-  // the one that relocates.
+  // The last library step, so the one after it is North.
   act(() => startTour('desktop', 8))
   let list!: ReturnType<typeof actions.addLibraryList>
   act(() => {

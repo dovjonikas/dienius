@@ -86,8 +86,12 @@ export function assistWith(event: TourEvent, today: string): boolean {
       if (!list || !item) return false
       return actions.scheduleLibraryItem(today, list.id, item.id)
     }
-    case 'goal-added': {
-      actions.addGoal({ title: 'Be someone who finishes things', why: 'Because starting was never the hard part' }, today)
+    case 'north-written': {
+      // A line of the text's picture, over whatever is already written, so
+      // the step's own event sees the text change and the caption has words
+      // to point at. Generic, like every word the tour writes.
+      const text = getData().picture?.text ?? ''
+      actions.setPicture(text ? `A first line of my own.\n\n${text}` : 'A first line of my own.')
       return true
     }
     // The two ends have nothing to do on anybody's behalf: one is a button

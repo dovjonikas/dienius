@@ -92,13 +92,19 @@ test('a finished day is not offered a push it does not need', () => {
   expect(screen.queryByRole('button', { name: /push to tomorrow/ })).toBeNull()
 })
 
-test('a goal is repeated back at the end, where the morning card would say why', () => {
+// North's signature is what the day ends on, since v2.28: the goal's name
+// stood here until goals were retired. No signature, nothing in its place.
+test("North's signature is said back at the end, and nothing when there is none", () => {
   finishedDay()
-  actions.addGoal({ title: 'Be someone who finishes things', why: 'Because starting was never the hard part' }, TODAY)
-  render(<EveningClose date={TODAY} />)
-  expect(screen.getByRole('complementary', { name: 'Closing the day' })).toHaveTextContent(
-    'Be someone who finishes things',
-  )
+  const first = render(<EveningClose date={TODAY} />)
+  expect(first.container.querySelector('.evening-close-north')).toBeNull()
+  first.unmount()
+
+  actions.setPicture('An introduction line.\n\nFIRST HEADING\na line under it\n---\nA signature line.\n\nA second signature paragraph.')
+  const { container } = render(<EveningClose date={TODAY} />)
+  const signature = container.querySelector('.evening-close-north')!
+  expect(signature.textContent).toBe('A signature line.\nA second signature paragraph.')
+  expect(screen.getByRole('complementary', { name: 'Closing the day' })).not.toHaveTextContent('An introduction line.')
 })
 
 /**

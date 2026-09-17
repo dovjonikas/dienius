@@ -19,7 +19,6 @@ import { TaskActionsSheet } from './TaskActionsSheet'
 import { TaskContextMenu } from './TaskContextMenu'
 import { TaskDetail } from './TaskDetail'
 import { YesterdayBanner } from './YesterdayBanner'
-import { NorthCard } from './NorthCard'
 import { EveningClose } from './EveningClose'
 import { offerUndo } from '../../lib/undo'
 import { TaskGapOffers } from './TaskGapOffers'
@@ -48,12 +47,6 @@ export interface DayViewProps {
    * the day view knows the line exists, not where the window is.
    */
   onOpenNorth: () => void
-  /**
-   * North's window after sleep is open over the day, so the goal card that
-   * comes forward on a Monday waits for it to close rather than standing
-   * under it as a second sheet.
-   */
-  holdNorthCard?: boolean
   /**
    * A task to open the details of, asked for from outside the day - the
    * note that became it, so far. Read once and handed back, so asking for
@@ -93,7 +86,7 @@ export interface DayViewProps {
  */
 const NOW_TICK_MS = 30_000
 
-export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTask, onOpenTaskDone, onOpenNote, onOpenKitchen }: DayViewProps) {
+export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskDone, onOpenNote, onOpenKitchen }: DayViewProps) {
   const data = useAppData()
   const [actionsSheetTaskId, setActionsSheetTaskId] = useState<string | null>(null)
   // Everything about one task that the row deliberately does not show - see
@@ -318,14 +311,6 @@ export function DayView({ date, onDateChange, onOpenNorth, holdNorthCard, openTa
         <EveningClose date={date} />
         <YesterdayBanner date={date} />
       </div>
-
-      {/* The goal that comes forward on a Monday or after a slow day, as a
-          sheet over the day - see NorthCard. It was the third card in the
-          row above until v2.6, and it took a fifth of a 768px screen away
-          from the day; a sheet moves nothing. Outside the row on purpose: a
-          wrapper with a fixed-position child in it is not :empty, and the
-          row's own height comes from that. */}
-      {isToday && !holdNorthCard && <NorthCard />}
 
       {/* docs/LAYOUT-WIDE.md section 5, build step 3: the capacity line and the
           timeline grid group into one region - the "picture of the day" - so

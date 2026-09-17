@@ -188,7 +188,7 @@ export function BackupSettings() {
             {/* Every part of the plan, both sides, because the press below
                 replaces all of it. Two sentences counting tasks and days
                 stood here until v2.17 - which meant a cloud copy holding a
-                library and four goals over an empty week read as "empty",
+                library and a North text over an empty week read as "empty",
                 and a restore about to wipe them looked exactly like one that
                 would not. See compareSummaries. */}
             <table className="backup-compare">

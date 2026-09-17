@@ -36,6 +36,21 @@ async function fill(page: Page, placeholder: string, value: string) {
   presses += 1
 }
 
+/** North's text as a week's owner writes it: a picture, headings, a signature. Generic lines. */
+const NORTH_TEXT = [
+  'First line here',
+  'Second line here',
+  '',
+  'FIRST HEADING',
+  'Be someone who finishes',
+  'Get strong and stay strong',
+  '',
+  'SECOND HEADING [morning]',
+  'Keep learning on purpose',
+  '---',
+  'A signature line',
+].join('\n')
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const WEEKDAYS = DAYS.slice(0, 5)
 const WEEKEND = DAYS.slice(5)
@@ -276,49 +291,23 @@ test('the week map, North, a full list and the backup form all take what is type
   })
   expect(sleep).toBe('23:00-07:00')
 
-  // --- North: a picture, three goals, and what each is worth ------------
+  // --- North: one text, with a picture, headings and a signature ----------
   await page.getByRole('button', { name: 'North', exact: true }).first().click()
-  // The text is written on the page itself, in its own field - an empty
-  // North is one line and Write - and Compose is for the goals under it.
-  // With no goal yet the goals wait behind one line, and the offer under it
-  // opens Compose on a blank goal.
+  // An empty North is one line and Write, and the whole text is written in
+  // its one field and kept with Save. Goals are retired since v2.28: the
+  // three goals this walk wrote are lines of the text now.
   await page.getByRole('main').getByRole('button', { name: 'Write', exact: true }).click()
-  await page.getByRole('textbox', { name: 'North' }).fill('First line here\n\nSecond line here')
-  await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
-  await page.getByRole('button', { name: 'Add a goal' }).click()
-
-  const goals = [
-    ['Be someone who finishes', 'Because half-done work is the thing that wears me out.', 'I am someone who ships.'],
-    ['Get strong and stay strong', 'Because everything else is easier when the body is.', 'I am someone who trains.'],
-    ['Keep learning on purpose', 'Because drifting is what happens by default.', 'I am someone who reads.'],
-  ]
-  for (let i = 0; i < goals.length; i++) {
-    // One goal at a time, in the editor that stands where its line will be:
-    // Add another goal, at the end of More, keeps this one and opens the next.
-    if (i > 0) await page.getByRole('button', { name: 'Add another goal' }).click()
-    const [what, why, who] = goals[i]
-    await page.getByRole('textbox', { name: 'Goal' }).fill(what)
-    await page.getByRole('button', { name: 'More', exact: true }).click()
-    await page.getByLabel('Why it matters').fill(why)
-    await page.getByLabel('Who it makes you').fill(who)
-    await page.getByLabel('What I do to deserve this').fill('One thing a day\nOne thing a week\nOne thing a month')
-    steps += 5
-  }
+  await page.getByRole('textbox', { name: 'North' }).fill(NORTH_TEXT)
+  steps += 1
   await page.getByRole('main').getByRole('button', { name: 'Save', exact: true }).click()
 
   const north = await page.evaluate(() => {
     const data = JSON.parse(localStorage.getItem('dienius:data') || '{}')
-    return {
-      picture: (data.picture?.text ?? '').length > 0,
-      goals: (data.goals ?? []).length,
-      deserve: (data.goals ?? []).map((g: { deserve?: string[] }) => (g.deserve ?? []).length),
-    }
+    return { text: data.picture?.text ?? '', goals: (data.goals ?? []).length }
   })
-  expect(north.picture).toBe(true)
-  expect(north.goals).toBe(3)
-  // Three lines each, which is what was typed - a textarea that quietly
-  // dropped the second and third would be invisible on screen.
-  expect(north.deserve).toEqual([3, 3, 3])
+  // Kept exactly as typed - the blank lines and the tag are the text's own.
+  expect(north.text).toBe(NORTH_TEXT)
+  expect(north.goals).toBe(0)
 
   // --- a list with twenty-one things on it ------------------------------
   await page.getByRole('button', { name: 'Library', exact: true }).first().click()

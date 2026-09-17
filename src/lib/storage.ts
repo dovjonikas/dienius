@@ -8,6 +8,7 @@ import { isLegacyTheme, isStoredTheme, validate, type StoredAppData, type Stored
 import { DEFAULT_CATEGORIES } from './categories'
 import { mergeOldJournal } from './journal'
 import { foldInbox } from './later'
+import { retireGoals } from './north'
 import { foldLegacySteps } from './stepsToNote'
 
 
@@ -20,10 +21,9 @@ const DEFAULT_PRESET_ID = 'dark'
 // actually needs during a long block. Duplicated here rather than imported
 // for the same reason DEFAULT_PRESET_ID is: this file only needs the literal
 // a fresh install starts with.
-// Both on. Unlike every other interruption in this app, these two are not
-// notifications and cannot arrive while somebody is doing something else -
-// they are a card on a page already being opened, and dismissing one takes a
-// single tap. See north.ts.
+// North's switches as a fresh plan has them: every one on. `afterASlowDay`
+// switched a card that went with goals in v2.28 and nothing reads it, but an
+// older device's check requires it - see NorthSettings.
 const DEFAULT_NORTH: Settings['north'] = { afterASlowDay: true }
 
 // On, at half nine, and it asks. Duplicated from eveningClose.ts for the same
@@ -228,7 +228,11 @@ function normalizeLoaded(data: StoredAppData): AppData {
   // the payload - see stepsToNote.ts. Here rather than at either caller,
   // because loadData and importJson both pass through this one gate.
   const folded = foldLegacySteps(data)
-  return foldInbox({
+  // One instant for both folds, so what either of them stamps carries the
+  // same time. Goals are retired after the inbox is folded and on the whole
+  // normalised plan - see retireGoals in north.ts.
+  const now = new Date().toISOString()
+  return retireGoals(foldInbox({
     ...folded,
     days: repairDuplicates(folded.days),
     ifThens: data.ifThens ?? [],
@@ -279,7 +283,7 @@ function normalizeLoaded(data: StoredAppData): AppData {
       // preference about a sound is not held to the plan's own standard.
       chime: readChimeSettings(data.settings.chime),
     },
-  }, new Date().toISOString())
+  }, now), now)
 }
 
 /**

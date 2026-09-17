@@ -36,7 +36,6 @@
 /** Every term that carries an explanation. The order is the reading order. */
 export const EXPLAIN_IDS = [
   'north',
-  'deserve',
   'key-task',
   'push',
   'ongoing',
@@ -74,11 +73,7 @@ export interface Explanation {
 export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   north: {
     term: 'North',
-    text: 'Your own words, read every morning, and under them the few things your days are for. Nothing here is scored, ticked or counted - it is here to be read, not worked through.',
-  },
-  deserve: {
-    term: 'What I do',
-    text: 'Two to four things you actually do, most days, that earn this goal, and the same few from the other side - what you do not do. Nothing counts either, and only the doing half reaches a Monday.',
+    text: 'Your own words, read every morning: who you are, the headings you live by, and the words you end on. Nothing here is scored, ticked or counted - it is here to be read, not worked through.',
   },
   'key-task': {
     term: 'Key task',

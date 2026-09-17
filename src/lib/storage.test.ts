@@ -1427,6 +1427,94 @@ test('a North text with headings, paragraphs and a signature passes validate and
   expect(loadData().picture?.text).toBe(text)
 })
 
+// --- goals retired, v2.28 -----------------------------------------------------
+//
+// North is one text and nothing shows a goal. A backup from before still
+// carries goals, and every field of them is read; where its text has no
+// picture part, the active goals' titles and whys become it - see
+// `retireGoals` in north.ts, which has the rule and its own tests.
+
+/** A backup from before v2.28: two active goals and an archived one, a rule, and no North text. */
+function backupWithGoals(picture?: string): string {
+  return JSON.stringify({
+    templates: [{ id: 't1', name: 'A template', color: '#a7c4f5', blocks: [{ id: 'bl1', time: '09:00', title: 'A block', minutes: 30 }] }],
+    days: { '2026-09-01': { date: '2026-09-01', tasks: [{ id: 'k1', title: 'A task', done: true, time: '09:00', minutes: 30 }] } },
+    settings: { theme: 'dark', enabledWidgets: ['day-plan'], north: { afterASlowDay: false, stripOnDay: false }, northDismissedOn: '2026-08-31' },
+    goals: [
+      {
+        id: 'g1',
+        title: 'A first goal',
+        why: 'a reason for it',
+        identity: 'someone who does it',
+        deserve: ['a thing done most days'],
+        avoid: ['a thing not done'],
+        createdAt: '2026-08-01',
+        updatedAt: '2026-08-01T08:00:00.000Z',
+      },
+      { id: 'g2', title: 'A second goal', createdAt: '2026-08-02' },
+      { id: 'g3', title: 'An archived goal', createdAt: '2026-07-01', archivedAt: '2026-07-20' },
+    ],
+    ifThens: [{ id: 'r1', trigger: 'a trigger', action: 'an action', goalId: 'g1' }],
+    library: [{ id: 'l1', name: 'Books', unit: 'chapter', items: [{ id: 'i1', title: 'A book', total: 10, progress: 2 }] }],
+    backlog: [{ id: 'b1', title: 'A later thing' }],
+    scratch: [{ id: 's1', text: 'A note', createdAt: '2026-09-01T08:00:00.000Z', date: '2026-09-01' }],
+    recipes: [{ id: 'c1', title: 'A recipe', text: 'INGREDIENTS\na thing\n\nSTEPS\ndo it', mealTypes: ['dinner'], kcal: 500 }],
+    ...(picture === undefined ? {} : { picture: { text: picture, updatedAt: '2026-08-01T08:00:00.000Z' } }),
+  })
+}
+
+test('an old backup with goals and no North text opens with the goals as its picture, and every goal and rule still in it', () => {
+  const imported = importJson(backupWithGoals())
+  expect(imported.picture?.text).toBe('A first goal\na reason for it\n\nA second goal')
+
+  expect(imported.goals.map(g => g.id)).toEqual(['g1', 'g2', 'g3'])
+  expect(imported.goals[0]).toMatchObject({
+    title: 'A first goal',
+    why: 'a reason for it',
+    identity: 'someone who does it',
+    deserve: ['a thing done most days'],
+    avoid: ['a thing not done'],
+    createdAt: '2026-08-01',
+  })
+  expect(imported.goals.every(g => g.archivedAt)).toBe(true)
+  expect(imported.goals[2].archivedAt).toBe('2026-07-20')
+  expect(imported.ifThens).toEqual([{ id: 'r1', trigger: 'a trigger', action: 'an action', goalId: 'g1' }])
+  // The settings the goals' cards had are still read, and change nothing.
+  expect(imported.settings.north).toEqual({ afterASlowDay: false, stripOnDay: false })
+  expect(imported.settings.northDismissedOn).toBe('2026-08-31')
+})
+
+test('an old backup whose North text has a picture part keeps the text exactly, and its goals archived', () => {
+  const text = 'A picture line\n\nFIRST HEADING\na line under it\n---\na signature line'
+  const imported = importJson(backupWithGoals(text))
+  expect(imported.picture).toEqual({ text, updatedAt: '2026-08-01T08:00:00.000Z' })
+  expect(imported.goals.every(g => g.archivedAt)).toBe(true)
+})
+
+test('the plan on this device is read the same way when the app opens', () => {
+  localStorage.setItem(STORAGE_KEY, backupWithGoals('FIRST HEADING\na line under it'))
+  const loaded = loadData()
+  expect(loaded.picture?.text).toBe('A first goal\na reason for it\n\nA second goal\n\nFIRST HEADING\na line under it')
+  expect(loaded.goals.every(g => g.archivedAt)).toBe(true)
+})
+
+/**
+ * The file a plan exports is the plan: importing it and exporting again
+ * gives back the same file, byte for byte, for a plan that came in with
+ * goals as much as for any other. Anything the load step changed on a second
+ * pass - a stamp, a key order, a goal moved twice - would show here.
+ */
+test('export then import gives back the same file, bit for bit, goals and all', () => {
+  const plan = importJson(backupWithGoals('FIRST HEADING\na line under it\n---\na signature line'))
+  const file = exportJson(plan)
+  const back = importJson(file)
+  expect(back).toEqual(plan)
+  expect(exportJson(back)).toBe(file)
+
+  localStorage.setItem(STORAGE_KEY, file)
+  expect(exportJson(loadData())).toBe(file)
+})
+
 test('validate rejects a picture that is not text, and the whole payload with it', () => {
   localStorage.setItem(
     STORAGE_KEY,

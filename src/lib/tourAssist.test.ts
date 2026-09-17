@@ -81,7 +81,7 @@ describe('doing a step on somebody behalf', () => {
     expect(assistWith('task-done', TODAY)).toBe(false)
   })
 
-  it('puts a book in a Books list and writes a goal', () => {
+  it('puts a book in a Books list and writes a line of North', () => {
     let before = getData()
     expect(assistWith('item-added', TODAY)).toBe(true)
     expect(TOUR_EVENTS['item-added'](ctx(before))).toBe(true)
@@ -98,8 +98,17 @@ describe('doing a step on somebody behalf', () => {
     expect(TOUR_EVENTS['item-added'](ctx(before))).toBe(true)
 
     before = getData()
-    expect(assistWith('goal-added', TODAY)).toBe(true)
-    expect(TOUR_EVENTS['goal-added'](ctx(before))).toBe(true)
+    expect(assistWith('north-written', TODAY)).toBe(true)
+    expect(TOUR_EVENTS['north-written'](ctx(before))).toBe(true)
+    expect(getData().picture?.text).toBe('A first line of my own.')
+
+    // Over a text already written, the line goes on top and nothing is lost.
+    actions.setPicture('FIRST HEADING\na line under it')
+    before = getData()
+    expect(assistWith('north-written', TODAY)).toBe(true)
+    expect(TOUR_EVENTS['north-written'](ctx(before))).toBe(true)
+    expect(getData().picture?.text).toBe('A first line of my own.\n\nFIRST HEADING\na line under it')
+    expect(getData().goals).toEqual([])
   })
 
   it('has nothing to do at either end of the tour', () => {

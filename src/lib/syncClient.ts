@@ -6,6 +6,7 @@ import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
 import { canSyncThroughGitHub, readSyncState, SyncConflictError, writeSyncState } from './githubSync'
 import { GitHubError } from './cloudBackup'
 import { dropDeletedFolds, foldInbox } from './later'
+import { retireGoals } from './north'
 
 /**
  * The sync client: pull on open, push shortly after every change, and never
@@ -288,7 +289,7 @@ async function runPull(): Promise<void> {
     }
     const now = new Date().toISOString()
     const merged = mergeStates(getData(), normaliseRemote(remote), now)
-    const folded = dropDeletedFolds(foldInbox(merged.data, now), normaliseRemote(remote).tombstones, now)
+    const folded = retireGoals(dropDeletedFolds(foldInbox(merged.data, now), normaliseRemote(remote).tombstones, now), now)
     const arrived = merged.applied > 0 || merged.deleted > 0
     if (arrived || folded !== merged.data) replaceState(folded)
     setStatus({ lastSyncedAt: now, ...(arrived ? { lastReceivedAt: now } : {}) })
@@ -419,10 +420,14 @@ async function runSync(attempt = 0): Promise<void> {
     // an older device's inbox into Later has to run here as well - before
     // the result is committed and before it goes back to the server, or the
     // server would hold a line under a name this device no longer reads.
-    // See later.ts.
-    const folded = dropDeletedFolds(
-      foldInbox(merged.data, now),
-      remote === null ? undefined : normaliseRemote(remote).tombstones,
+    // See later.ts. Goals an older device still holds active are retired
+    // here for the same reason - see retireGoals in north.ts.
+    const folded = retireGoals(
+      dropDeletedFolds(
+        foldInbox(merged.data, now),
+        remote === null ? undefined : normaliseRemote(remote).tombstones,
+        now,
+      ),
       now,
     )
     const arrived = merged.applied > 0 || merged.deleted > 0

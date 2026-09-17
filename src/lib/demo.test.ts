@@ -109,10 +109,13 @@ test('today is part-finished, with something carried and something untimed', () 
 
 test('the parts of the app that need data to say anything have some', () => {
   const data = buildDemoData(defaultData(), TODAY)
-  expect(data.goals.length).toBeGreaterThan(0)
+  // North is one text, with every part of it: a picture, headings and a
+  // signature. Goals and rules are retired, and the demo carries none.
+  expect(data.picture?.text).toMatch(/\n---\n/)
+  expect(data.goals).toEqual([])
   expect(data.library[0].items.length).toBeGreaterThan(1)
   expect(data.library[0].items.some(i => i.finished)).toBe(true)
-  expect(data.ifThens.length).toBeGreaterThan(0)
+  expect(data.ifThens).toEqual([])
   expect(data.backlog.length).toBeGreaterThan(0)
   expect(Object.keys(data.settings.weekdayTemplates)).toHaveLength(7)
 })

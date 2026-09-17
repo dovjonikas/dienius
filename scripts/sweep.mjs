@@ -297,20 +297,6 @@ const SCREENS = [
     },
   },
   {
-    // A goal's editor, open where its line was, with the rest of the goal
-    // and the rarer things at the end of More. The page shows a goal as its
-    // title alone, so this is the one screen that measures the fields, the
-    // rules and the examples in the empty boxes.
-    name: 'North (goal)',
-    go: async /** @param {Page} p */ p => {
-      await tab(p, 'North')
-      await p.getByRole('button', { name: /^Edit "/ }).first().click()
-      const more = p.getByRole('button', { name: 'More', exact: true })
-      if (await more.count()) await more.click()
-      await p.waitForTimeout(300)
-    },
-  },
-  {
     // The text's field, open on the sample's text: the drawing under the
     // field, the heading lines and the signature's mark drawn heavier, and
     // the grey line over it saying both rules.

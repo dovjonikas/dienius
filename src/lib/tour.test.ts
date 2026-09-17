@@ -142,7 +142,7 @@ test('a task added today ends the add step; one added yesterday does not', () =>
   expect(TOUR_EVENTS['task-added'](ctx(before, elsewhere))).toBe(false)
 })
 
-test('marking a task key, ticking one off, starting focus, adding a list, adding a goal', () => {
+test('marking a task key, ticking one off, starting focus, adding a list, writing North', () => {
   const before = withTasks([task('a')])
   expect(TOUR_EVENTS['key-marked'](ctx(before, withTasks([task('a', { highlight: true })])))).toBe(true)
   expect(TOUR_EVENTS['task-done'](ctx(before, withTasks([task('a', { done: true })])))).toBe(true)
@@ -154,8 +154,13 @@ test('marking a task key, ticking one off, starting focus, adding a list, adding
   expect(TOUR_EVENTS['item-added'](ctx(before, list))).toBe(false)
   const book = { ...before, library: [{ id: 'l', name: 'Books', unit: 'chapter', items: [{ id: 'd', title: 'Dune', total: 20 }] }] }
   expect(TOUR_EVENTS['item-added'](ctx(before, book))).toBe(true)
-  const goal = { ...before, goals: [{ id: 'g', title: 'Be strong', createdAt: TODAY }] }
-  expect(TOUR_EVENTS['goal-added'](ctx(before, goal))).toBe(true)
+  // North written, and changed: a Save with the same words, or the text
+  // emptied, is not a line written.
+  const written = { ...before, picture: { text: 'A first line' } }
+  expect(TOUR_EVENTS['north-written'](ctx(before, written))).toBe(true)
+  expect(TOUR_EVENTS['north-written'](ctx(written, { ...written, picture: { text: 'A first line' } }))).toBe(false)
+  expect(TOUR_EVENTS['north-written'](ctx(written, { ...before }))).toBe(false)
+  expect(TOUR_EVENTS['north-written'](ctx(written, { ...written, picture: { text: 'A first line\n\nA second line' } }))).toBe(true)
 })
 
 /**
@@ -204,7 +209,6 @@ test('whatever appears while the tour runs is flagged; what was already there is
   const after = withTasks([task('old'), task('new')], before)
   after.templates = [...before.templates, { id: 't-new', name: 'New', color: '#fff', blocks: [] }]
   after.library = [{ id: 'l', name: 'Books', unit: 'chapter', items: [] }]
-  after.goals = [{ id: 'g', title: 'Be strong', createdAt: TODAY }]
 
   const marked = markTourCreated(before, after)
   const tasks = marked.days[TODAY].tasks
@@ -213,7 +217,6 @@ test('whatever appears while the tour runs is flagged; what was already there is
   expect(marked.templates.find(t => t.id === 't-old')?.tourCreated).toBeUndefined()
   expect(marked.templates.find(t => t.id === 't-new')?.tourCreated).toBe(true)
   expect(marked.library[0].tourCreated).toBe(true)
-  expect(marked.goals[0].tourCreated).toBe(true)
 })
 
 test('a commit that adds nothing new comes back as the same object', () => {
@@ -231,10 +234,6 @@ test('Start clean removes the flagged entities and the day reference to a flagge
   data.days[TODAY].templateId = 't-new'
   data.days['2026-09-01'] = { date: '2026-09-01', tasks: [task('kept')], templateId: 't-old' }
   data.library = [{ id: 'l', name: 'Books', unit: 'chapter', items: [], tourCreated: true }]
-  data.goals = [
-    { id: 'g-old', title: 'Old', createdAt: TODAY },
-    { id: 'g-new', title: 'New', createdAt: TODAY, tourCreated: true },
-  ]
 
   const clean = discardTourCreated(data)
   expect(clean.days[TODAY].tasks.map(t => t.id)).toEqual(['old'])
@@ -243,18 +242,14 @@ test('Start clean removes the flagged entities and the day reference to a flagge
   expect(clean.days['2026-09-01'].templateId).toBe('t-old')
   expect(clean.templates.map(t => t.id)).toEqual(['t-old'])
   expect(clean.library).toEqual([])
-  expect(clean.goals.map(g => g.id)).toEqual(['g-old'])
 })
 
 test('Keep what I built strips the flags and leaves everything in place', () => {
   const data = withTasks([task('new', { tourCreated: true })])
   data.templates = [{ id: 't', name: 'New', color: '#fff', blocks: [], tourCreated: true }]
-  data.goals = [{ id: 'g', title: 'New', createdAt: TODAY, tourCreated: true }]
   const kept = keepTourCreated(data)
   expect(kept.days[TODAY].tasks[0]).toEqual(task('new'))
   expect(kept.templates[0].tourCreated).toBeUndefined()
-  expect(kept.goals[0].tourCreated).toBeUndefined()
-  expect(kept.goals).toHaveLength(1)
 })
 
 // --- the targets are real ----------------------------------------------------
@@ -352,10 +347,25 @@ test('the focus step points at the running card and explains its own absence', (
   expect(step.absent).toMatch(/running/)
 })
 
-/** The goal is written in the North window and lives under the day's title; the caption goes there to show it. */
-test('the north step relocates its caption to the day, onto the North line', () => {
+/**
+ * North is one text since v2.28, and its step writes a line of it: Write or
+ * Edit, the field, then Save - which is gone once pressed, so the caption
+ * points at the words it kept. No goal is asked for anywhere in the tour.
+ */
+test('the north step ends on saving the text, and its caption points at the words kept', () => {
   const step = DESKTOP_STEPS.find(s => s.id === 'north')!
-  expect(step.outcome).toMatchObject({ view: 'day', target: '[data-tour="north-line"]', wait: true })
+  expect(step.targets.map(t => t.selector)).toEqual([
+    '[data-tour="picture-edit"]',
+    '[data-tour="picture-write"]',
+    '[data-tour="picture-field"]',
+    '[data-tour="picture-keep"]',
+  ])
+  expect(step.event).toBe('north-written')
+  expect(step.outcome).toEqual({ text: expect.any(String), target: '[data-tour="north-text"]', wait: true })
+  for (const s of [...DESKTOP_STEPS, ...MOBILE_STEPS]) {
+    const words = [s.title, s.text, s.outcome?.text ?? '', ...s.targets.flatMap(t => [t.selector, t.text ?? '', t.typed ?? ''])]
+    expect(words.join(' '), s.id).not.toMatch(/goal/i)
+  }
 })
 
 /**

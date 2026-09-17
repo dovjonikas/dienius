@@ -313,7 +313,7 @@ export function DayHeader({
 
   // The wide masthead: two rows laid on the day's column and the task
   // column - see .day-header in styles.css. Over the day, its name, its date
-  // and the time on one line, and under them the goal's line; over the
+  // and the time on one line, and under them North's line; over the
   // tasks, what the day came from and its doors, and under them how far the
   // day has come and which panes are showing. There are no arrows at this
   // width: the month in the rail is the way to another day.

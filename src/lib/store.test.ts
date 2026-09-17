@@ -3,7 +3,7 @@ import { actions, getData, getSaveOk, subscribe } from './store'
 import { defaultData, loadData, STORAGE_KEY } from './storage'
 import { dayScore } from '../widgets/day-plan/score'
 import { PRESETS } from './themes'
-import { MAX_RULES_PER_GOAL, type AppData } from './types'
+import type { AppData } from './types'
 
 beforeEach(() => {
   localStorage.clear()
@@ -532,85 +532,6 @@ test('state persists to localStorage', () => {
   actions.addTask('2026-09-01', 'Persist me')
   const raw = localStorage.getItem('dienius:data')!
   expect(raw).toContain('Persist me')
-})
-
-test('addIfThen adds an entry, and a rule is a trigger and an answer and nothing else', () => {
-  const entry = actions.addIfThen({
-    trigger: 'I get home and the kitchen is a mess',
-    action: 'I set a timer for ten minutes and do only the sink',
-  })
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0]).toMatchObject({
-    trigger: 'I get home and the kitchen is a mess',
-    action: 'I set a timer for ten minutes and do only the sink',
-  })
-  expect(entry?.id).toBeTruthy()
-  // The colour tag went in the wave after v2.19: nine swatches whose whole
-  // effect was two pixels of edge on one line of one screen. DECISIONS has
-  // the reading.
-  expect(getData().ifThens[0]).not.toHaveProperty('color')
-})
-
-test('updateIfThen replaces the entry with the same id in place', () => {
-  const entry = actions.addIfThen({ trigger: 'Old trigger', action: 'Old action' })!
-  actions.updateIfThen({ ...entry, trigger: 'New trigger', action: 'New action' })
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0]).toMatchObject({ trigger: 'New trigger', action: 'New action' })
-})
-
-test('deleteIfThen removes only the matching entry', () => {
-  const a = actions.addIfThen({ trigger: 'Trigger A', action: 'Action A' })!
-  actions.addIfThen({ trigger: 'Trigger B', action: 'Action B' })
-  actions.deleteIfThen(a.id)
-  expect(getData().ifThens).toHaveLength(1)
-  expect(getData().ifThens[0].trigger).toBe('Trigger B')
-})
-
-/**
- * A rule belongs to a goal now, and the cap on how many one goal can carry
- * refuses rather than evicting. These replace the two tests that covered the
- * old day-type and time-of-day scoping and the rotation's `lastSurfaced`
- * bookkeeping, both of which went with the day view's surfacing.
- */
-test('addIfThen files a rule under a goal, and leaves goalId undefined when none is given', () => {
-  const goal = actions.addGoal({ title: 'Ship something' }, '2026-09-01')
-  const filed = actions.addIfThen({ trigger: 'I stall', action: 'I open today', goalId: goal!.id })
-  expect(getData().ifThens.find(e => e.id === filed!.id)?.goalId).toBe(goal!.id)
-
-  actions.addIfThen({ trigger: 'Unfiled trigger', action: 'Unfiled action' })
-  expect(getData().ifThens.find(e => e.trigger === 'Unfiled trigger')?.goalId).toBeUndefined()
-})
-
-test('addIfThen refuses a sixth rule under one goal rather than dropping the oldest', () => {
-  const goal = actions.addGoal({ title: 'Be strong at forty' }, '2026-09-01')!
-  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
-    expect(actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: goal.id })).not.toBeNull()
-  }
-  expect(actions.addIfThen({ trigger: 'One too many', action: 'Nope', goalId: goal.id })).toBeNull()
-  expect(getData().ifThens).toHaveLength(MAX_RULES_PER_GOAL)
-  expect(getData().ifThens[0].trigger).toBe('Trigger 0')
-})
-
-test('assignIfThenGoal files an unfiled rule, and takes it back out again', () => {
-  const goal = actions.addGoal({ title: 'Ship something' }, '2026-09-01')!
-  const rule = actions.addIfThen({ trigger: 'I stall', action: 'I open today' })!
-
-  expect(actions.assignIfThenGoal(rule.id, goal.id)).toBe(true)
-  expect(getData().ifThens[0].goalId).toBe(goal.id)
-
-  expect(actions.assignIfThenGoal(rule.id, undefined)).toBe(true)
-  expect(getData().ifThens[0].goalId).toBeUndefined()
-})
-
-test('assignIfThenGoal refuses to overfill a goal, and leaves the rule where it was', () => {
-  const goal = actions.addGoal({ title: 'Be strong at forty' }, '2026-09-01')!
-  for (let i = 0; i < MAX_RULES_PER_GOAL; i++) {
-    actions.addIfThen({ trigger: `Trigger ${i}`, action: `Action ${i}`, goalId: goal.id })
-  }
-  const spare = actions.addIfThen({ trigger: 'Spare', action: 'Waiting' })!
-
-  expect(actions.assignIfThenGoal(spare.id, goal.id)).toBe(false)
-  expect(getData().ifThens.find(e => e.id === spare.id)?.goalId).toBeUndefined()
 })
 
 test('setTheme updates the mode and leaves the rest of settings, and the rest of theme, untouched', () => {

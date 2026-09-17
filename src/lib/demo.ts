@@ -8,7 +8,7 @@ import { weekdayOf } from './repeats'
  * The point of a demo is not to show every feature; it is to show what the app
  * looks like in use, which is a different thing. So this is a fortnight of one
  * person's ordinary life - some days went well, one went badly, a book is
- * half read, two goals sit behind it all - rather than a tour of the feature
+ * half read, a North text sits behind it all - rather than a tour of the feature
  * list. An empty app cannot make its own case, and neither can one stuffed
  * with every control switched on.
  *
@@ -196,11 +196,10 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
     ...base,
     templates: [work, rest],
     days,
-    // The picture over the goals: a few lines in the first person, the way
-    // the North window asks for it, headings - a line in capitals, see
-    // lib/northSections.ts - one of them for the morning and one for the
-    // evening (lib/northLine.ts), and a signature. Sample copy, like the
-    // goals.
+    // North: a picture of a few lines in the first person, headings - a
+    // line in capitals, see lib/northSections.ts - one of them for the
+    // morning and one for the evening (lib/northLine.ts), and a signature.
+    // Sample copy. No goals and no rules: both are retired since v2.28.
     picture: {
       text:
         'I wake before the house does and the first hour is mine.\n' +
@@ -220,48 +219,6 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         '---\n' +
         'A good day is an ordinary one that went to plan.',
     },
-    goals: [
-      {
-        id: 'demo-goal-1',
-        title: 'Ship something people keep using',
-        why: 'Because everything I have built so far was rented.',
-        identity: 'Someone who finishes.',
-        deserve: ['open the editor before the inbox', 'ship one small thing every Friday'],
-        createdAt: addDays(today, -60),
-      },
-      {
-        id: 'demo-goal-2',
-        title: 'Be strong at forty',
-        why: 'My father stopped moving at fifty and never started again.',
-        deserve: ['train three mornings a week', 'walk after lunch', 'in bed by eleven'],
-        createdAt: addDays(today, -34),
-      },
-    ],
-    // Each one under the goal it protects - that is the whole of what a rule
-    // is for. The trigger and the action are written without "If" and "then"
-    // in the strings: the line puts those in itself, and the sample data
-    // carried them for two versions, so the demo read "If If I open the
-    // laptop" wherever a rule was drawn.
-    ifThens: [
-      {
-        id: 'demo-if-1',
-        goalId: 'demo-goal-1',
-        trigger: 'I open the laptop and do not know what to do',
-        action: 'I open today and do the first unticked thing',
-      },
-      {
-        id: 'demo-if-2',
-        goalId: 'demo-goal-1',
-        trigger: 'it is past ten and I am still scrolling',
-        action: 'the phone goes in the other room',
-      },
-      {
-        id: 'demo-if-3',
-        goalId: 'demo-goal-2',
-        trigger: 'I am too tired to train properly',
-        action: 'I go anyway and do half of it',
-      },
-    ],
     // Nothing has been written here since v2.7 - see LaterItem.
     inbox: [],
     // Later, under its wire name: undated, in the order they would be

@@ -2,7 +2,7 @@ import { commit, getData } from './core'
 import { readChimeSettings } from '../chime'
 import type { ChimeSettings, Settings, SleepWindow, ThemeState } from '../types'
 
-/** Everything under Settings that is not a goal, a calendar or a rule: theme, density, sleep, the day view's own switches. */
+/** Everything under Settings that is not North or a calendar: theme, density, sleep, the day view's own switches. */
 export const settingsActions = {
   /**
    * Sets the light/dark/system mode without touching which preset is
