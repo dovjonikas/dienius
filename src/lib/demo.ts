@@ -304,6 +304,97 @@ export function buildDemoData(base: AppData, today = todayKey(), nowMinutes = mi
         ],
       },
     ],
+    // Kitchen: four everyday recipes, sample copy like the rest. Three are
+    // written the way the page reads best - a line before the headings, then
+    // INGREDIENTS and STEPS - and one is a single paragraph with no heading,
+    // which is shown as it was typed. Two have been cooked, two not yet.
+    recipes: [
+      {
+        id: 'demo-recipe-1',
+        title: 'Overnight oats',
+        text:
+          'Made the night before and eaten cold.\n' +
+          '\n' +
+          'INGREDIENTS\n' +
+          '50 g oats\n' +
+          '150 ml milk\n' +
+          '2 tbsp yoghurt\n' +
+          'A handful of berries\n' +
+          '\n' +
+          'STEPS\n' +
+          'Stir the oats, milk and yoghurt together in a jar.\n' +
+          'Leave it in the fridge overnight.\n' +
+          'Put the berries on top in the morning.',
+        mealTypes: ['breakfast', 'snack'],
+        kcal: 380,
+        protein: 18,
+        carbs: 55,
+        fat: 9,
+        servings: 1,
+        minutes: 5,
+        cooked: 6,
+      },
+      {
+        id: 'demo-recipe-2',
+        title: 'Chicken and rice bowl',
+        text:
+          'INGREDIENTS\n' +
+          '2 chicken breasts\n' +
+          '150 g rice\n' +
+          '1 cucumber\n' +
+          'Soy sauce\n' +
+          '\n' +
+          'STEPS\n' +
+          'Cook the rice.\n' +
+          'Season the chicken and cook it in a hot pan, about six minutes a side.\n' +
+          'Slice the chicken and the cucumber.\n' +
+          'Share the rice between two bowls and put everything on top.',
+        mealTypes: ['lunch', 'post-gym'],
+        kcal: 610,
+        protein: 45,
+        carbs: 70,
+        fat: 14,
+        servings: 2,
+        minutes: 30,
+        cooked: 4,
+      },
+      {
+        id: 'demo-recipe-3',
+        title: 'Lentil soup',
+        text:
+          'Keeps for three days, and better on the second.\n' +
+          '\n' +
+          'INGREDIENTS\n' +
+          '250 g red lentils\n' +
+          '1 onion\n' +
+          '2 carrots\n' +
+          '1 litre stock\n' +
+          '\n' +
+          'STEPS\n' +
+          'Chop the onion and the carrots and soften them in a little oil.\n' +
+          'Add the lentils and the stock and simmer for twenty-five minutes.\n' +
+          'Blend half of it and stir it back in.',
+        mealTypes: ['lunch', 'dinner'],
+        kcal: 420,
+        protein: 22,
+        carbs: 60,
+        fat: 8,
+        servings: 4,
+        minutes: 45,
+      },
+      {
+        id: 'demo-recipe-4',
+        title: 'Banana toast',
+        text: 'Toast a slice of bread, spread it with peanut butter and slice a banana over it.',
+        mealTypes: ['pre-gym', 'snack'],
+        kcal: 330,
+        protein: 11,
+        carbs: 45,
+        fat: 12,
+        servings: 1,
+        minutes: 5,
+      },
+    ],
     settings: {
       ...base.settings,
       weekdayTemplates: { 1: work.id, 2: work.id, 3: work.id, 4: work.id, 5: work.id, 0: rest.id, 6: rest.id },

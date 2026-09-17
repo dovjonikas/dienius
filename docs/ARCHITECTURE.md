@@ -50,6 +50,8 @@ AppData
 ├── goals: Goal[]                directions, never measured - see §6
 ├── picture?: Picture            who I am becoming: one text, one entity - see §6
 ├── categories: Category[]      what a day is made of; the owner's, not the app's
+├── recipes: Recipe[]            Kitchen: title + one text, meal types?, macros?,
+│                                servings?, minutes?, cooked? - never summed
 ├── ifThens: IfThenEntry[]       trigger + action under a goal, never measured
 ├── backlog: LaterItem[]         Later: something to do on no day, in the owner's order
 │                                (the field keeps its wire name - see section 7)
@@ -220,7 +222,7 @@ src/
     types.ts           AppData and everything in it - start here
     storage.ts         localStorage boundary, load/save, migrations, export/import
     validate.ts        the deep type guard, as tables: one per entity, a field and what it may hold
-    store.ts           the facade: `actions` spread from the eleven areas below core.ts
+    store.ts           the facade: `actions` spread from the twelve areas below core.ts
     store/
       core.ts          the one object, commit(), the subscriptions, dayOf/withDay
       days.ts          tasks and the day: details, pushes, the grid's moves, replan
@@ -233,6 +235,7 @@ src/
       settings.ts      theme, density, sleep schedules, reminders, the day view's switches
       ifThen.ts        the rules under a goal, and the cap that refuses
       categories.ts    the category list, and the delete that moves what it would orphan
+      kitchen.ts       recipes: written, rewritten, cooked once more, let go
       lifecycle.ts     import, snapshot restore, the tour's two endings
     later.ts           the fold: an older payload's inbox into the top of Later, once, with tombstones
     planReading.ts     where the plan and the week disagreed: one line of facts per template block
@@ -268,6 +271,7 @@ src/
     shortcuts.ts       the keyboard layer and its two safety rules
     install.ts         holds the one beforeinstallprompt event
     library.ts         units, progress, tracks, the typed-line parser, what the queue moves on to
+    kitchen.ts         recipes: the words for the meals, and what a form's input becomes when saved
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     useClickAway.ts    closes a popover on a press outside it or Escape
@@ -587,6 +591,7 @@ erases the other's morning. Every entity therefore carries its own
 | Later item | `backlog:<id>` | The list is called Later on screen since v2.7; the kind keeps the wire name an older device's tombstones carry |
 | Inbox item | `inbox:<id>` | Nothing writes one since v2.7; the kind stays so a tombstone for a folded line still matches on an older device |
 | Scratch note | `scratch:<id>` | |
+| Recipe | `recipe:<id>` | Cooking one on the phone and editing another on the PC are two edits to two things |
 | Category | `category:<id>` | Renaming Health on the laptop and recolouring Meals on the phone are two edits to two things. This is exactly why the list is in `AppData` rather than in `Settings`: at a settings field's grain one of those two would simply vanish |
 | Settings field | `setting:<field>` | So a theme on the PC and a sleep schedule on the phone do not fight |
 

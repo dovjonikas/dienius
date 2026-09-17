@@ -1,4 +1,4 @@
-import type { AppData, Category, DayPlan, Goal, IfThenEntry, InboxItem, LaterItem, LibraryItem, LibraryList, ScratchNote, Task, Template } from './types'
+import type { AppData, Category, DayPlan, Goal, IfThenEntry, InboxItem, LaterItem, LibraryItem, LibraryList, Recipe, ScratchNote, Task, Template } from './types'
 import { PICTURE_KEY, SYNCED_SETTINGS, collectEntities, idOf, keyFor, kindOf, pruneTombstones, type EntityKey } from './syncEntities'
 
 /**
@@ -194,6 +194,7 @@ function rebuild(local: AppData, remote: AppData, winner: Map<EntityKey, 'local'
     backlog: mergeList<LaterItem>('backlog', winner, local.backlog, remote.backlog),
     scratch: mergeList<ScratchNote>('scratch', winner, local.scratch, remote.scratch),
     categories: mergeList<Category>('category', winner, local.categories, remote.categories),
+    recipes: mergeList<Recipe>('recipe', winner, local.recipes, remote.recipes),
     ...mergeSettings(local, remote, winner),
   }
   // The one singleton. Absent when the winning side has none, or when the
@@ -222,7 +223,7 @@ function orderTasks(tasks: Task[], localDay: DayPlan | undefined, remoteDay: Day
 }
 
 function mergeList<T extends { id: string }>(
-  kind: 'template' | 'goal' | 'ifthen' | 'inbox' | 'backlog' | 'scratch' | 'category',
+  kind: 'template' | 'goal' | 'ifthen' | 'inbox' | 'backlog' | 'scratch' | 'category' | 'recipe',
   winner: Map<EntityKey, 'local' | 'remote' | 'deleted'>,
   localList: T[],
   remoteList: T[],
@@ -294,7 +295,7 @@ export function isSyncableState(x: unknown): x is AppData {
   if (typeof s.days !== 'object' || s.days === null || Array.isArray(s.days)) return false
   if (!Array.isArray(s.templates)) return false
   if (typeof s.settings !== 'object' || s.settings === null) return false
-  for (const field of ['library', 'goals', 'ifThens', 'inbox', 'backlog', 'scratch', 'categories'] as const) {
+  for (const field of ['library', 'goals', 'ifThens', 'inbox', 'backlog', 'scratch', 'categories', 'recipes'] as const) {
     if (s[field] !== undefined && !Array.isArray(s[field])) return false
   }
   if (s.tombstones !== undefined && (typeof s.tombstones !== 'object' || s.tombstones === null)) return false
@@ -319,6 +320,7 @@ export function normaliseRemote(remote: AppData): AppData {
     backlog: remote.backlog ?? [],
     scratch: remote.scratch ?? [],
     categories: remote.categories ?? [],
+    recipes: remote.recipes ?? [],
     tombstones: remote.tombstones ?? {},
     settingsUpdatedAt: remote.settingsUpdatedAt ?? {},
   }
@@ -326,7 +328,7 @@ export function normaliseRemote(remote: AppData): AppData {
 
 /** Only used by the tests and by the client's own logging. */
 export function entityKinds(): string[] {
-  return ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'setting']
+  return ['task', 'day', 'template', 'list', 'item', 'goal', 'ifthen', 'inbox', 'backlog', 'scratch', 'category', 'recipe', 'setting']
 }
 
 export { idOf, kindOf }

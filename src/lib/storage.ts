@@ -151,6 +151,7 @@ export function defaultData(): AppData {
     // the tour's sandbox seed, and a shared array would let one of those
     // hand the module's own list to a store that then edits it in place.
     categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
+    recipes: [],
   }
 }
 
@@ -244,6 +245,9 @@ function normalizeLoaded(data: StoredAppData): AppData {
     // because deleting down to nothing is not reachable through the editor
     // and a payload that says so is saying something deliberate.
     categories: data.categories ?? DEFAULT_CATEGORIES.map(c => ({ ...c })),
+    // Kitchen, since v2.27: a backup from before it has no recipes, which is
+    // what an absent list means.
+    recipes: data.recipes ?? [],
     settings: {
       // Spread first, then normalise. Listing every field by name meant an
       // optional one added later was silently dropped on load: the value was

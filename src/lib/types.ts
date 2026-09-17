@@ -1248,6 +1248,73 @@ export interface Category extends Timestamped {
   color?: string
 }
 
+/**
+ * The meals a recipe can be for, in the order Kitchen offers them. A recipe
+ * may be for several - overnight oats are breakfast and a snack - and for
+ * none. The ids are what a file holds; the words on the screen are
+ * `MEAL_TYPE_LABELS` in lib/kitchen.ts.
+ */
+export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'pre-gym', 'post-gym', 'snack'] as const
+
+export type MealType = (typeof MEAL_TYPES)[number]
+
+/**
+ * How large a number on a recipe may be before a file carrying it is not
+ * somebody's recipe. Generous: they exist so a hand-edited backup cannot put
+ * a number in a line that no layout can hold, not to judge a meal.
+ */
+export const RECIPE_LIMITS = {
+  kcal: 100_000,
+  /** Protein, carbs and fat, in grams. */
+  grams: 10_000,
+  servings: 1_000,
+  minutes: 100_000,
+  cooked: 100_000,
+} as const
+
+/**
+ * A recipe, in Kitchen - since v2.27. docs/RESEARCH-KITCHEN.md has why it is
+ * shaped this way.
+ *
+ * An entity of its own in a top-level list, and not a `LibraryList`: a
+ * library list is built on units a person counts through, and a recipe has
+ * nothing to count through. It is a name and one free text, read by North's
+ * rule - a line in capitals is a heading, and INGREDIENTS and STEPS are drawn
+ * as a list and as numbered steps - and everything else is information a
+ * person adds when they have it. Absent is "not given", never nought.
+ *
+ * Nothing is added up. The numbers are per serving and belong to the recipe;
+ * no day, week or goal ever sums them, and nothing compares them with a
+ * target.
+ */
+export interface Recipe extends Timestamped {
+  id: string
+  /** The name, trimmed, never empty. */
+  title: string
+  /** Everything else about it, as typed: the two ends trimmed, nothing inside. Never empty. */
+  text: string
+  /** Which meals it is for, in `MEAL_TYPES` order, each once. Absent rather than empty. */
+  mealTypes?: MealType[]
+  /** Per serving. A whole number. */
+  kcal?: number
+  /** Grams per serving, to one decimal. */
+  protein?: number
+  /** Grams per serving, to one decimal. */
+  carbs?: number
+  /** Grams per serving, to one decimal. */
+  fat?: number
+  /** How many servings the text makes. A whole number from one. */
+  servings?: number
+  /** How long it takes, start to plate. A whole number from one. */
+  minutes?: number
+  /**
+   * How many times Done was pressed in Cook. Absent until the first. A fact
+   * about the recipe, shown beside it; nothing reads it as a score, and no
+   * date is kept with it, so nothing can say how long ago.
+   */
+  cooked?: number
+}
+
 export interface AppData {
   templates: Template[]
   days: Record<string, DayPlan>
@@ -1306,6 +1373,13 @@ export interface AppData {
    * before this existed. Nothing on disk is recoloured or renamed by that.
    */
   categories: Category[]
+  /**
+   * Kitchen's recipes, since v2.27 - see `Recipe`. A top-level list like
+   * `library` and `goals`, for the same reason: content the person authors,
+   * one sync entity per recipe. Backfilled to empty, which is every backup
+   * written before Kitchen existed and the shipped state.
+   */
+  recipes: Recipe[]
   /**
    * When each synced settings field last changed - see `SYNCED_SETTINGS`. A
    * map rather than a field on `Settings`, because a boolean has nowhere to

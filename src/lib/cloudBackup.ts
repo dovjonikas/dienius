@@ -96,6 +96,8 @@ export interface StateSummary {
   categories: number
   /** Later, still called `backlog` in the file - see LaterItem in types.ts. */
   later: number
+  /** Kitchen's recipes. */
+  recipes: number
   /** The latest date key with anything on it, or null on an empty plan. */
   newest: string | null
 }
@@ -402,6 +404,7 @@ export function summarise(data: AppData): StateSummary {
     goals: data.goals.length,
     categories: data.categories.length,
     later: data.backlog.length,
+    recipes: data.recipes.length,
     newest: dates.at(-1) ?? null,
   }
 }
@@ -438,6 +441,7 @@ export function compareSummaries(here: StateSummary, cloud: StateSummary): Summa
     row('Goals', 'goals'),
     row('Categories', 'categories', false),
     row('Later', 'later'),
+    row('Recipes', 'recipes'),
   ]
 }
 

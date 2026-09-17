@@ -6,8 +6,52 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.26, done - North that holds the eye. Kitchen is next,
-as v2.27.
+**Last updated:** v2.27, in progress - Kitchen.
+
+## v2.27 - Kitchen
+
+Queued during v2.25 (the brief is under v2.25, "Queued after North") and
+begun when v2.26 closed, under the same word to go on without stopping. A
+recipe library that looks and feels like the Library with data of its own,
+recipes read by North's heading rule through one shared parser, Cook with the
+screen kept awake, and meal blocks on the day and in templates that point at
+a recipe or a kind of meal. No calorie goals, totals, progress or verdict;
+no scaling, no parsed amounts, no shopping list. Generic recipes only in the
+demo, the tests and the pictures. `docs/RESEARCH-KITCHEN.md` has the why.
+Seven stages: the model; the shared parser; the list with its filters and
+search; a recipe's page, adding and editing; Cook; the day and templates; the
+phone, the pictures and the last tests.
+
+### Stage 1 - the model: done
+
+- **`Recipe`** (`lib/types.ts`): an id, a title and one text, required; meal
+  types (`MEAL_TYPES`: breakfast, lunch, dinner, pre-gym, post-gym, snack,
+  several allowed), kcal, protein, carbs and fat per serving, servings,
+  minutes and times cooked, each optional and absent rather than nought.
+  `AppData.recipes` is a top-level list, backfilled to empty.
+- **What a form's input becomes** (`cleanRecipe` in `lib/kitchen.ts`): name
+  and text trimmed at their ends and both required; meal types this app has,
+  in its order, once each; kcal whole and grams to a tenth, from nought;
+  servings and minutes whole from one; anything else left out.
+  `RECIPE_LIMITS` bounds the numbers.
+- **The guard** (`validate.ts`): a `RECIPE` table, so a file with a wrong
+  recipe anywhere is refused whole.
+- **Sync**: one entity per recipe at `recipe:<id>`, stamped by the diff,
+  tombstoned when removed, merged recipe by recipe; `isSyncableState` and
+  `normaliseRemote` know the list.
+- **The restore's summary** counts recipes, and a restore that would bring
+  fewer marks the row.
+- **Actions** (`store/kitchen.ts`): `addRecipe`, `updateRecipe` (the form's
+  whole input, keeping times cooked), `markCooked` and `removeRecipe`.
+- **Demo**: four everyday recipes, three with INGREDIENTS and STEPS, one a
+  plain paragraph.
+- ARCHITECTURE has the entity, the field and the two files;
+  `docs/RESEARCH-KITCHEN.md` is written.
+
+New tests: `kitchen.data.test.ts` (the guard, the file both ways, a backup
+from before Kitchen, stamps and tombstones, two merges, the syncable shape,
+the summary) and `store/kitchen.store.test.ts` (saving, the optional fields,
+an edit, cooking, removing).
 
 ## v2.26 - North that holds the eye
 

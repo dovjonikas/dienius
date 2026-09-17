@@ -3,6 +3,7 @@ import { categoryActions } from './store/categories'
 import { dayActions } from './store/days'
 import { goalActions } from './store/goals'
 import { ifThenActions } from './store/ifThen'
+import { kitchenActions } from './store/kitchen'
 import { laterActions } from './store/later'
 import { libraryActions } from './store/library'
 import { lifecycleActions } from './store/lifecycle'
@@ -20,16 +21,16 @@ export type { RolloverResult } from './store/days'
  * and the handful of reads and subscriptions beside it.
  *
  * It was one 1600-line file until v1.10, a flat list of ninety-odd actions
- * that read fine and grew by a dozen every wave. It is eleven files now, one per
+ * that read fine and grew by a dozen every wave. It is twelve files now, one per
  * area of the data - the day, the library, templates, goals, Later, scratch,
- * calendars, settings, if-then rules, categories, and the whole-state
+ * calendars, settings, if-then rules, categories, Kitchen, and the whole-state
  * writes - each importing the same two things from `store/core.ts`: the
  * state through `getData()`, and the one way to change it, `commit()`.
  *
  * This file is the seam that made the split invisible: every import of
  * `actions` in the app and the tests is unchanged, and the spread below is
  * the whole of what it does. An action name that appears in two areas would
- * be a bug the spread hides, so `store.test.ts` checks the eleven objects for
+ * be a bug the spread hides, so `store.test.ts` checks the twelve objects for
  * overlap.
  */
 export const actions = {
@@ -43,11 +44,12 @@ export const actions = {
   ...settingsActions,
   ...ifThenActions,
   ...categoryActions,
+  ...kitchenActions,
   ...lifecycleActions,
   resetForTests,
 }
 
-/** The eleven areas, exported so the overlap check can see them one at a time. */
+/** The twelve areas, exported so the overlap check can see them one at a time. */
 export const AREAS = {
   dayActions,
   libraryActions,
@@ -59,5 +61,6 @@ export const AREAS = {
   settingsActions,
   ifThenActions,
   categoryActions,
+  kitchenActions,
   lifecycleActions,
 }

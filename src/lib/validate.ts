@@ -1,4 +1,4 @@
-import type { DayPlan, IfThenEntry, Settings, SleepProfile, SleepWindow, Template, ThemeState } from './types'
+import { MEAL_TYPES, RECIPE_LIMITS, type DayPlan, type IfThenEntry, type Settings, type SleepProfile, type SleepWindow, type Template, type ThemeState } from './types'
 
 /**
  * The shape a stored payload has to have before any of it is trusted.
@@ -51,6 +51,10 @@ const oneOf = (values: readonly string[]): Check => x => typeof x === 'string' &
 /** A whole number in a range: never fractional, never negative unless said so. */
 const wholeNumber = (min: number, max = Number.POSITIVE_INFINITY): Check => x =>
   typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max
+
+/** Any finite number in a range, fractions included. */
+const amountIn = (min: number, max: number): Check => x =>
+  typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max
 
 /** A string with a length cap - a backup is an untrusted document. */
 const text = (min: number, max: number): Check => x => typeof x === 'string' && x.length >= min && x.length <= max
@@ -429,6 +433,24 @@ const GOAL = record({
 // One text. `updatedAt` rides along unnamed like every other timestamp.
 const PICTURE = record({ text: string })
 
+// A recipe - Kitchen, since v2.27. The numbers are bounded by RECIPE_LIMITS
+// so a hand-edited file cannot put a figure in a line no layout holds; the
+// grams may carry a decimal and kcal may too in a file, though the form
+// writes it whole. The count of times cooked is a count like any other.
+const RECIPE = record({
+  id: string,
+  title: string,
+  text: string,
+  mealTypes: optional(listOf(oneOf(MEAL_TYPES))),
+  kcal: optional(amountIn(0, RECIPE_LIMITS.kcal)),
+  protein: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  carbs: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  fat: optional(amountIn(0, RECIPE_LIMITS.grams)),
+  servings: optional(wholeNumber(1, RECIPE_LIMITS.servings)),
+  minutes: optional(wholeNumber(0, RECIPE_LIMITS.minutes)),
+  cooked: optional(wholeNumber(0, RECIPE_LIMITS.cooked)),
+})
+
 const LIBRARY_ITEM = record({
   id: string,
   title: string,
@@ -555,9 +577,10 @@ export interface StoredAppData {
   goals?: AppDataLists['goals']
   categories?: AppDataLists['categories']
   picture?: import('./types').Picture
+  recipes?: AppDataLists['recipes']
 }
 
-type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories'>
+type AppDataLists = Pick<import('./types').AppData, 'inbox' | 'backlog' | 'scratch' | 'library' | 'goals' | 'categories' | 'recipes'>
 
 // Templates, days and settings are required: a payload without them is not
 // a plan. A shape check on those three alone once let {"templates":[{}],
@@ -576,6 +599,7 @@ const STORED_APP_DATA = record({
   goals: optional(listOf(GOAL)),
   categories: optional(listOf(CATEGORY)),
   picture: optional(PICTURE),
+  recipes: optional(listOf(RECIPE)),
 })
 
 export function validate(x: unknown): x is StoredAppData {
