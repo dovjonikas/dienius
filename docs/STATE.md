@@ -6,8 +6,8 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.28, in progress - North is one text. Rotating shifts are
-queued after it.
+**Last updated:** v2.28, done - North is one text, goals retired, on cards on
+one screen. Next: rotating shifts.
 
 ## v2.28 - North is one text
 
@@ -30,6 +30,10 @@ the rail as a whole fits a 1080p screen without scrolling. Six stages: the
 audit; the migration and goals out of use with DECISIONS; the page; the
 morning window and the evening signature; the rail; the phone, the pictures
 and the last tests. Rotating shifts are queued after it.
+
+After the fifth stage the owner asked for the page itself to fit one screen,
+on clean cards with a small shadow, premium and dark, which replaced the
+brief's 640px column with no frames - see "After stage 5" below.
 
 ### Stage 1 - every reader of goals: done
 
@@ -220,6 +224,37 @@ Changed tests: the page's type test holds the cards' sizes and no longer
 the single column, the no-frame guard went with the column, and the North
 walk measures a heading's air inside its card and the cards abreast on a
 wide window (`north.e2e.ts`).
+
+### Stage 6 - the phone, the pictures and the last tests: done
+
+- **The phone**, walked in both themes: the day's line, the signature under
+  it after nine and the North fold under both; the evening close ending on
+  the signature; the window after sleep with the picture as typed and the
+  signature; North's cards stacked one under another.
+- **Pictures** in the dark and the light theme: North's page on a 1920 by 1080
+  screen, the day at twenty to ten, the rail with five templates and eight
+  headings, and the phone's North, evening and window after sleep.
+- **The brief's tests, and where each lives:** an old backup with goals
+  opening with them as its picture and nothing lost (`storage.test.ts`, and
+  a remote and a poll in `syncClient.test.ts`); no goal on a screen and no
+  goal reader outside the data layer, read from the source
+  (`goalsRetired.test.ts`); the parser's picture, headings and signature -
+  all three, no headings, only a picture, only a signature
+  (`northSections.test.ts`); the window after sleep holding the picture and
+  the signature (`App.test.tsx`) and the evening's signature under the day's
+  line and at the end of the close (`NorthLine.test.tsx`,
+  `EveningClose.test.tsx`, `north-line.e2e.ts`); the rail fitting 1920 by
+  1080 with nothing scrolled, its picture attached (`rail.e2e.ts`); export
+  then import bit for bit (`storage.test.ts`); and generic text only, the
+  privacy guard.
+- **Gates:** 2959 unit tests; 112 browser walks passed and 14
+  skipped; the sweep on every screen, desktop and phone, the precision pass,
+  the keyboard pass and the text-scale pass at 0 findings; the privacy guard
+  clean.
+
+New tests: the day ending on North's signature on both screens - under the
+day's line after nine and at the end of the card that closes the day, and
+neither before (`north-line.e2e.ts`).
 
 ## After v2.27 - one line everywhere
 

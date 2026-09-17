@@ -197,3 +197,26 @@ test('on the phone the line and the fold stand together, with more air under the
   await expect(fold).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('group', { name: 'North' }).getByRole('button', { name: 'FIRST HEADING' })).toBeVisible()
 })
+
+/**
+ * The end of the day, v2.28, on both screens: from 21:00 the signature
+ * stands under the day's line, and the card that closes the day ends on it
+ * too. Before 21:00 neither shows it. The picture is never on the day.
+ */
+test("the day ends on North's signature: under the day's line after nine, and at the end of the card that closes it", async ({ page }) => {
+  await openFreshAt(page, wednesdayAt(20, 30))
+  await stampWorkingDay(page)
+  await writeNorth(page, 'A picture line.\n\nTHE DAY\na line for the day\n---\nA signature line.')
+
+  // Half past eight: the day's line alone, and no card yet.
+  await expect(page.locator('.north-line-words')).toHaveText('a line for the day')
+  await expect(page.locator('.north-line-signature')).toHaveCount(0)
+
+  // Twenty to ten: the evening close is out, and the signature is in both places.
+  await reopenAt(page, wednesdayAt(21, 40))
+  await expect(page.locator('.north-line-text .north-line-signature')).toHaveText('A signature line.')
+  const card = page.getByLabel('Closing the day')
+  await expect(card).toBeVisible()
+  await expect(card.locator('.evening-close-north')).toHaveText('A signature line.')
+  await expect(page.getByText('A picture line.')).toHaveCount(0)
+})
