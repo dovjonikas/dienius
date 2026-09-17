@@ -191,6 +191,8 @@ test('base64 survives text past Latin-1', () => {
 // --- when it pushes --------------------------------------------------------------
 
 test('nothing goes over the wire with no repo and token', async () => {
+  // Nothing saved on the device either: the reset reads what is.
+  localStorage.removeItem('dienius:cloud-backup')
   resetCloudBackupForTests()
   markDirtyForTests()
   expect(await requestCloudBackup('manual')).toBe(false)
@@ -393,4 +395,30 @@ test('a conflict that survives the retry says what happened, not who did it', ()
   expect(said).not.toMatch(/another device/i)
   expect(said).toMatch(/changed between reading it and writing it/)
   expect(said).toMatch(/something else is writing to that repo/)
+})
+
+/**
+ * Which day the last copy was made on is read on the device's own calendar.
+ * It was the first ten characters of the copy's instant, which is the date in
+ * UTC: a copy made at half past midnight here was dated the day before, and
+ * the next open pushed a "new day" copy for a day that had one. Found in the
+ * audit for rotating shifts, which looked at every date read in the app.
+ */
+test("a copy made just after midnight is today's, and the next open pushes no new-day copy", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(2026, 8, 17, 13, 0))
+  try {
+    const halfPastMidnight = new Date(2026, 8, 17, 0, 30).toISOString()
+    localStorage.setItem(
+      'dienius:cloud-backup',
+      JSON.stringify({ repo: 'quicasha/dienius-data', token: 'github_pat_secret', lastBackupAt: halfPastMidnight }),
+    )
+    resetCloudBackupForTests()
+    setCloudBackupConfig({ repo: 'quicasha/dienius-data', token: 'github_pat_secret' })
+    startCloudBackup()
+    await new Promise(resolve => setTimeout(resolve, 150))
+    expect(calls).toHaveLength(0)
+  } finally {
+    vi.useRealTimers()
+  }
 })

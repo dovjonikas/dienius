@@ -5,7 +5,7 @@ import { validate } from './validate'
 import { importJson } from './storage'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
-import { todayKey } from './dates'
+import { dateKey, todayKey } from './dates'
 
 /**
  * The third copy: a full snapshot of the plan in a private GitHub repo.
@@ -201,8 +201,10 @@ export function startCloudBackup(): void {
   })
   // The first open of a new day fixes yesterday: a copy whose date is
   // before today means the day that just ended has never been backed up in
-  // its final state.
-  const lastDate = config.lastBackupAt ? config.lastBackupAt.slice(0, 10) : null
+  // its final state. The date is the device's own, like today's: the first
+  // ten characters of the instant were its date in UTC, which put a copy
+  // made just after midnight here on the day before.
+  const lastDate = config.lastBackupAt ? dateKey(new Date(config.lastBackupAt)) : null
   if (isCloudBackupOn() && lastDate !== todayKey()) {
     dirty = true
     void requestCloudBackup('new-day')
@@ -509,7 +511,9 @@ export function resetCloudBackupForTests(): void {
   stopCommitWatch?.()
   stopCommitWatch = null
   started = false
-  config = { ...EMPTY_CONFIG }
+  // Read again from the device, the way the module reads it when it loads, so
+  // a test can say what the last copy was.
+  config = loadConfig()
   status = { phase: 'off', lastBackupAt: null, message: null }
   listeners.clear()
 }
