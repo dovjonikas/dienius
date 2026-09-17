@@ -1,0 +1,1610 @@
+{
+  "2026-09-28": {
+    "date": "2026-09-28",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "journal": "A line written on the day.",
+    "tasks": [
+      {
+        "title": "Commute",
+        "time": "08:15",
+        "minutes": 30,
+        "done": true,
+        "fromTemplate": true,
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-1"
+        }
+      },
+      {
+        "title": "A thing added by hand",
+        "done": false
+      }
+    ]
+  },
+  "2026-09-30": {
+    "date": "2026-09-30",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "done": false,
+        "repeat": "daily"
+      }
+    ]
+  },
+  "2026-10-01": {
+    "date": "2026-10-01",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-3"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-8"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-02": {
+    "date": "2026-10-02",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-4"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-03": {
+    "date": "2026-10-03",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-04": {
+    "date": "2026-10-04",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-10"
+        },
+        "time": "10:00",
+        "title": "Long walk",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 90,
+        "fromBlock": {
+          "title": "Long walk",
+          "time": "10:00",
+          "minutes": 90
+        },
+        "highlight": true
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-05": {
+    "date": "2026-10-05",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-1"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-5"
+        },
+        "time": "09:00",
+        "title": "Deep work",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 120,
+        "category": "work",
+        "fromBlock": {
+          "title": "Deep work",
+          "time": "09:00",
+          "minutes": 120,
+          "category": "work"
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-7"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-06": {
+    "date": "2026-10-06",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "sleepProfileId": "default",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "title": "Shift",
+        "time": "06:30",
+        "minutes": 690,
+        "done": false,
+        "fromTemplate": true,
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-07": {
+    "date": "2026-10-07",
+    "templateId": "week-a",
+    "dayType": "night",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-6"
+        },
+        "time": "22:00",
+        "title": "Night block",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 480,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Night block",
+          "time": "22:00",
+          "minutes": 480
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-08": {
+    "date": "2026-10-08",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-3"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-8"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-09": {
+    "date": "2026-10-09",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-4"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-10": {
+    "date": "2026-10-10",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-11": {
+    "date": "2026-10-11",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-10"
+        },
+        "time": "10:00",
+        "title": "Long walk",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 90,
+        "fromBlock": {
+          "title": "Long walk",
+          "time": "10:00",
+          "minutes": 90
+        },
+        "highlight": true
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-12": {
+    "date": "2026-10-12",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-1"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-5"
+        },
+        "time": "09:00",
+        "title": "Deep work",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 120,
+        "category": "work",
+        "fromBlock": {
+          "title": "Deep work",
+          "time": "09:00",
+          "minutes": 120,
+          "category": "work"
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-7"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-13": {
+    "date": "2026-10-13",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-14": {
+    "date": "2026-10-14",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-15": {
+    "date": "2026-10-15",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-3"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-8"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-16": {
+    "date": "2026-10-16",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-4"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-17": {
+    "date": "2026-10-17",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-18": {
+    "date": "2026-10-18",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-10"
+        },
+        "time": "10:00",
+        "title": "Long walk",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 90,
+        "fromBlock": {
+          "title": "Long walk",
+          "time": "10:00",
+          "minutes": 90
+        },
+        "highlight": true
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-19": {
+    "date": "2026-10-19",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-1"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-5"
+        },
+        "time": "09:00",
+        "title": "Deep work",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 120,
+        "category": "work",
+        "fromBlock": {
+          "title": "Deep work",
+          "time": "09:00",
+          "minutes": 120,
+          "category": "work"
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-7"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-20": {
+    "date": "2026-10-20",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-21": {
+    "date": "2026-10-21",
+    "templateId": "week-a",
+    "dayType": "night",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-6"
+        },
+        "time": "22:00",
+        "title": "Night block",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 480,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Night block",
+          "time": "22:00",
+          "minutes": 480
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-22": {
+    "date": "2026-10-22",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-3"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-8"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-23": {
+    "date": "2026-10-23",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-4"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-24": {
+    "date": "2026-10-24",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-25": {
+    "date": "2026-10-25",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-10"
+        },
+        "time": "10:00",
+        "title": "Long walk",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 90,
+        "fromBlock": {
+          "title": "Long walk",
+          "time": "10:00",
+          "minutes": 90
+        },
+        "highlight": true
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-26": {
+    "date": "2026-10-26",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-1"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-5"
+        },
+        "time": "09:00",
+        "title": "Deep work",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 120,
+        "category": "work",
+        "fromBlock": {
+          "title": "Deep work",
+          "time": "09:00",
+          "minutes": 120,
+          "category": "work"
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-7"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-27": {
+    "date": "2026-10-27",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-2"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-28": {
+    "date": "2026-10-28",
+    "templateId": "week-a",
+    "dayType": "night",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-6"
+        },
+        "time": "22:00",
+        "title": "Night block",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 480,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Night block",
+          "time": "22:00",
+          "minutes": 480
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-29": {
+    "date": "2026-10-29",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-3"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-8"
+        },
+        "time": "18:30",
+        "title": "Training",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 60,
+        "category": "health",
+        "fromBlock": {
+          "title": "Training",
+          "time": "18:30",
+          "minutes": 60,
+          "category": "health"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-30": {
+    "date": "2026-10-30",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-4"
+        },
+        "time": "08:15",
+        "title": "Commute",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 30,
+        "fromBlock": {
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-10-31": {
+    "date": "2026-10-31",
+    "templateId": "day-b",
+    "dayType": "shift",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-1"
+        },
+        "time": "06:00",
+        "title": "Shift",
+        "done": false,
+        "fromTemplate": true,
+        "core": true,
+        "minutes": 720,
+        "unbounded": true,
+        "fromBlock": {
+          "title": "Shift",
+          "time": "06:00",
+          "minutes": 720
+        }
+      },
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "day-b",
+          "blockId": "d-2"
+        },
+        "time": "19:00",
+        "title": "Dinner",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 40,
+        "category": "meals",
+        "fromBlock": {
+          "title": "Dinner",
+          "time": "19:00",
+          "minutes": 40,
+          "category": "meals"
+        }
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  },
+  "2026-11-01": {
+    "date": "2026-11-01",
+    "templateId": "week-a",
+    "dayType": "full",
+    "autoApplied": true,
+    "tasks": [
+      {
+        "origin": {
+          "type": "template",
+          "sourceId": "week-a",
+          "blockId": "wk-10"
+        },
+        "time": "10:00",
+        "title": "Long walk",
+        "done": false,
+        "fromTemplate": true,
+        "minutes": 90,
+        "fromBlock": {
+          "title": "Long walk",
+          "time": "10:00",
+          "minutes": 90
+        },
+        "highlight": true
+      },
+      {
+        "title": "Stretch",
+        "time": "07:00",
+        "minutes": 10,
+        "repeat": "daily",
+        "repeatOf": "rep-src",
+        "origin": {
+          "type": "repeat",
+          "sourceId": "rep-src"
+        },
+        "done": false
+      }
+    ]
+  }
+}

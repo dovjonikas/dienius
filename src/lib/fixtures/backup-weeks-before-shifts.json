@@ -1,0 +1,94 @@
+{
+  "templates": [
+    {
+      "id": "week-a",
+      "name": "A week",
+      "color": "#8ab6f9",
+      "kind": "week",
+      "type": "full",
+      "weekDays": {
+        "3": { "type": "night", "sleepProfileId": "late" },
+        "6": { "type": "rest" }
+      },
+      "blocks": [
+        { "id": "wk-1", "time": "08:15", "title": "Commute", "minutes": 30, "weekday": 1, "groupId": "g-commute" },
+        { "id": "wk-2", "time": "08:15", "title": "Commute", "minutes": 30, "weekday": 2, "groupId": "g-commute" },
+        { "id": "wk-3", "time": "08:15", "title": "Commute", "minutes": 30, "weekday": 4, "groupId": "g-commute" },
+        { "id": "wk-4", "time": "08:15", "title": "Commute", "minutes": 30, "weekday": 5, "groupId": "g-commute" },
+        { "id": "wk-5", "time": "09:00", "title": "Deep work", "minutes": 120, "weekday": 1, "core": true, "category": "work" },
+        { "id": "wk-6", "time": "22:00", "title": "Night block", "minutes": 480, "weekday": 3, "core": true, "unbounded": true },
+        { "id": "wk-7", "time": "18:30", "title": "Training", "minutes": 60, "weekday": 1, "category": "health", "groupId": "g-train" },
+        { "id": "wk-8", "time": "18:30", "title": "Training", "minutes": 60, "weekday": 4, "category": "health", "groupId": "g-train" },
+        { "id": "wk-9", "title": "Read", "minutes": 30, "weekday": 6, "note": "A note on the block", "noteExpanded": true },
+        { "id": "wk-10", "time": "10:00", "title": "Long walk", "minutes": 90, "weekday": 0, "highlight": true }
+      ]
+    },
+    {
+      "id": "day-b",
+      "name": "A day",
+      "color": "#f9d48a",
+      "type": "shift",
+      "sleepProfileId": "late",
+      "blocks": [
+        { "id": "d-1", "time": "06:00", "title": "Shift", "minutes": 720, "core": true, "unbounded": true },
+        { "id": "d-2", "time": "19:00", "title": "Dinner", "minutes": 40, "category": "meals" }
+      ]
+    }
+  ],
+  "days": {
+    "2026-09-28": {
+      "date": "2026-09-28",
+      "templateId": "week-a",
+      "dayType": "full",
+      "autoApplied": true,
+      "journal": "A line written on the day.",
+      "tasks": [
+        {
+          "id": "old-1",
+          "title": "Commute",
+          "time": "08:15",
+          "minutes": 30,
+          "done": true,
+          "fromTemplate": true,
+          "origin": { "type": "template", "sourceId": "week-a", "blockId": "wk-1" }
+        },
+        { "id": "old-2", "title": "A thing added by hand", "done": false }
+      ]
+    },
+    "2026-09-30": {
+      "date": "2026-09-30",
+      "autoApplied": true,
+      "tasks": [{ "id": "rep-src", "title": "Stretch", "time": "07:00", "minutes": 10, "done": false, "repeat": "daily" }]
+    },
+    "2026-10-06": {
+      "date": "2026-10-06",
+      "templateId": "day-b",
+      "dayType": "shift",
+      "sleepProfileId": "default",
+      "tasks": [
+        {
+          "id": "hand-shift",
+          "title": "Shift",
+          "time": "06:30",
+          "minutes": 690,
+          "done": false,
+          "fromTemplate": true,
+          "origin": { "type": "template", "sourceId": "day-b", "blockId": "d-1" }
+        }
+      ]
+    }
+  },
+  "settings": {
+    "theme": { "presetId": "dark", "mode": "dark", "overrides": {} },
+    "sleepProfiles": [
+      { "id": "default", "name": "Sleep schedule", "window": { "start": "23:00", "end": "07:00" } },
+      { "id": "late", "name": "Late", "window": { "start": "08:00", "end": "15:00" } }
+    ],
+    "weekdayTemplates": { "0": "week-a", "1": "week-a", "2": "week-a", "3": "week-a", "4": "week-a", "5": "week-a", "6": "day-b" }
+  },
+  "categories": [
+    { "id": "work", "label": "Work", "color": "#8ab6f9" },
+    { "id": "health", "label": "Health", "color": "#9fd8a8" },
+    { "id": "meals", "label": "Meals", "color": "#f9d48a" }
+  ]
+}
