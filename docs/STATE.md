@@ -6,8 +6,58 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.27, done - Kitchen, and one line everywhere after it.
-Queued: North as one text (goals retired), then rotating shifts.
+**Last updated:** v2.28, in progress - North is one text. Rotating shifts are
+queued after it.
+
+## v2.28 - North is one text
+
+The owner's final North model, replacing every earlier North brief: goals
+are retired, and North is one text in the three parts the shared parser
+already reads - the picture before the first heading, the headings with
+their lines, and the signature after `---`. Old goals are still read from a
+file, and a plan whose text has no picture takes the active goals' titles
+and whys as its picture, so nothing is lost. Every reader of goals is
+replaced by the text or taken out, and the dead code with it. The page: a
+small quiet North with Edit, the picture larger in the text's ink, headings
+bold with their lines under them, the signature last after a large gap, about
+640px and no frames, one field for all of it. The window after sleep shows
+the picture and the signature. The day's top keeps its line from under the
+headings; after 21:00 and on the evening close the signature stands under
+it, and nothing when there is none. The rail's North is compact: a small
+North, one line per heading cut with an ellipsis, a card on a hover or a
+tap, the whole section folding with one press remembered on the device - and
+the rail as a whole fits a 1080p screen without scrolling. Six stages: the
+audit; the migration and goals out of use with DECISIONS; the page; the
+morning window and the evening signature; the rail; the phone, the pictures
+and the last tests. Rotating shifts are queued after it.
+
+### Stage 1 - every reader of goals: done
+
+What reads a goal or a rule today, and what becomes of it. Found by
+searching the source for the goal and rule types, their lists, their
+helpers and every goal-shaped word in copy, tests, gates and docs.
+
+| Reader | What it reads | Becomes |
+|---|---|---|
+| `widgets/day-plan/NorthLine.tsx` | the day's goal title, with its why and identity, where the text has nothing for the day | taken out: no text for the day, no line |
+| `widgets/day-plan/NorthCard.tsx`, mounted in `DayView` | a goal, its why, identity, a deserve line and a rule, on a Monday and after a slow day | taken out: the window after sleep brings the picture every morning, and a second card over the day would say it again |
+| `lib/north.ts` `northPrompt`, `wasSlowDay`, `hasStuckTask`, `deserveForWeek`, `weekNumber`, `ruleForDay` | the card's choice of goal and line | taken out with the card |
+| Settings, Nudges: Bring a goal forward (`north.afterASlowDay`), and `northDismissedOn` | the card's switch and its dismissal | the row taken out; both fields kept, unread, for files and older devices |
+| `widgets/day-plan/EveningClose.tsx` | the first active goal's title under the close | the signature, and nothing when there is none |
+| `views/ReviewView.tsx` North section | active goals with their ages at a review's foot | taken out |
+| `views/north/NorthView.tsx` with `NorthGoals.tsx`, `GoalRules.tsx`, `RuleText.tsx` | the goal lines at the top, the goal editor and More, the rules under a goal ("What pulls me off this"), archiving | taken out, the three files deleted |
+| `lib/store/goals.ts` | `addGoal`, `updateGoal`, `archiveGoal`, `restoreGoal`, `deleteGoal`, `composeNorth`, `dismissNorth` | taken out; `setPicture` and `setNorthSettings` stay, as North's |
+| `lib/store/ifThen.ts` | the rules' actions | taken out |
+| `lib/north.ts` goal helpers | `activeGoals`, `archivedGoals`, `canAddGoal`, `goalAge`, `goalForDay`, `ageLabel`, `rulesForGoal`, `unfiledRules`, `canAddRule`, `cleanDeserve`, `cleanAvoid`, `applyNorthDraft` | taken out; `dayNumber` (the day's line) and `withPicture` stay |
+| `lib/tour.ts`, `lib/tourAssist.ts` | the tour's goal step, its event and its assist, goals in the tour's own clean-up | the step taken out; the tour ends on North's text |
+| `lib/demo.ts`, `scripts/sample-day.js` | two and four sample goals, three sample rules | taken out; the pictures stay |
+| `lib/explain.ts`, the palette's North line, the shortcut card | the `deserve` explanation; "the few things the days are for" | the explanation taken out; the North words reworded to the text |
+| `lib/cloudBackup.ts` | a Goals row in the restore's summary | taken out |
+| `views/SettingsView.tsx` | "goals" in the delete-everything sentence | reworded |
+| `lib/search.ts` | nothing | nothing to do |
+| The data: `types.ts` `Goal`, `IfThenEntry`, `AppData.goals`, `AppData.ifThens`; `validate.ts`; `storage.ts`; `syncEntities.ts`, `syncMerge.ts` | the entities, their guard, their sync | kept, so an old file and an older device keep every goal and rule; the migration runs in `normalizeLoaded` |
+| Gates and tests | the sweep's North (goal), the tour and week-rehearsal walks, `NorthCard`, `north.test.ts` goal helpers, Review's, Evening close's, Settings', Explain's and the tour's goal tests | changed or taken out with their readers |
+| Docs | DAILY's "The goal at the top" and "And what pulls you off them", ARCHITECTURE section 6, DESIGN's North notes | rewritten as the stages reach them |
 
 ## After v2.27 - one line everywhere
 
