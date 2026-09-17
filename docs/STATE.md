@@ -6,8 +6,49 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.28, done - North is one text, goals retired, on cards on
-one screen. Next: rotating shifts.
+**Last updated:** v2.29, in progress - rotating shifts, stage 1 of 10 done.
+
+## v2.29 - Rotating shifts
+
+The owner's brief for rotating factory shifts: kinds of day with their own
+shape and sleep, routines like the gym on fixed weekdays at a time that
+follows the kind of day, a month's schedule entered in a few minutes by taps
+or a cycle, a preview before it is applied, one rule for what crosses
+midnight, daylight saving counted right, and a template's sleep seen and set on
+its timeline. Correctness over speed: design and a test plan first. Ten
+stages; docs/RESEARCH-SHIFTS.md is the design, and each stage changes it first
+when the design has to change.
+
+### Stage 1 - the audit, the design and the test plan: done
+
+- **The audit** read every reader of day types, templates, week templates,
+  sleep schedules, stamping, the weekday map, repeats and replan, and every
+  place a time crosses midnight or a date is stepped. RESEARCH-SHIFTS section 1
+  lists what exists, what was fixed, and what waits for its stage.
+- **Fixed at once**, each with a test and its own commit: taking a template off a
+  day wiped what was written on it and the rest of the day (`02412cd`); a task
+  moved onto a day was dropped by a stamp of another template (`b777eff`);
+  Review's month skipped the month after a short one (`bb845bb`); the cloud
+  backup read the day of its last copy in UTC (`d14b517`).
+- **The design**: a kind is a day template with a letter; the roster is the
+  stamps; a routine is written once with a time per kind and never guesses one;
+  a block belongs to the date it starts on and a sleep to the date it ends on;
+  a block is on the wall clock and its real length is computed; conflicts
+  against the kind's blocks, yesterday's continuation and both sleeps; Apply is
+  one previewed, idempotent commit that asks about hand edits; only optional
+  fields and new lists, so an older device still reads the plan.
+- **The test plan**: a unit test per rule, seven property invariants over
+  400-day stretches with fast-check, the switch nights of 2026 to 2028 and 29
+  February 2028, a migration fixture compared day by day, a test that an older
+  version's validation accepts every new field, and browser walks on both
+  screens. DECISIONS: "Rotating shifts: a kind is a template, the roster is the
+  stamps, and a sleep belongs to the day it wakes into".
+
+New tests (with the fixes): stamping nothing keeps everything besides the
+template, and a moved-in task stays through another stamp
+(`stamping.test.ts`); a month back and forward is the month it started on
+(`ReviewView.test.tsx`); a copy made just after midnight is today's
+(`cloudBackup.test.ts`).
 
 ## v2.28 - North is one text
 
@@ -3951,6 +3992,16 @@ devices. It waits here.
   and a permission flow that asks at a moment that makes sense, which is a
   piece of work of its own. See DECISIONS "A setting has to earn its
   place".
+- **What the rotating-shifts audit found that is not that feature's**, found
+  in v2.29's stage 1 (docs/RESEARCH-SHIFTS.md section 1.3) and left for
+  their own time: the week editor cannot mark a block core, so a week column
+  typed shift, night or rest scores nothing; deleting a sleep schedule
+  leaves it on week overrides; the Library's "Add to template" offers week
+  templates and adds a block with no weekday; deleting a template leaves
+  weekday-map entries behind, and Stamp week then counts days it cannot
+  stamp; an imported calendar event with a duration is not cut at midnight,
+  one cut is reused for every repeat, and a multi-day all-day event shows on
+  its first day only.
 
 ### Asked for, and now built
 

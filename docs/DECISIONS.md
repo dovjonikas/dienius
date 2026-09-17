@@ -3970,3 +3970,60 @@ from above on a white card is no light at all. No accent, no border, no
 number: the dark is carried by the ground, the plate and the type. Writing
 is the one field on a card of its own at the page width, so a typed line
 stays a line that can be read across.
+
+## Rotating shifts: a kind is a template, the roster is the stamps, and a sleep belongs to the day it wakes into
+
+v2.29, stage 1, from the owner's brief for rotating factory shifts - the
+hardest thing asked of the app, and asked to be right rather than quick.
+docs/RESEARCH-SHIFTS.md holds the whole design and the test plan; this is
+what was decided and why.
+
+**A day kind is a day template with a letter.** Rest, day shift, night shift
+and after nights each already have everything a template has - blocks, a day
+type, a sleep schedule, a colour, a name - so a kind is one optional field on
+a template, a letter and a place in the tap cycle. A `DayKind` entity would
+name, colour and order a template a second time. After nights is not a fifth
+day type: a new value there would fail an older device's validation, and the
+type only drives the score, which rest or shift already answers.
+
+**The roster is the stamps.** A date's kind is the kind template stamped on
+it, and nothing else holds it, so one kind per date is structural and the
+roster already syncs, backs up, restores and outranks the weekday map. A
+roster map beside the days would be a second answer to "what is this day",
+right until it disagreed with the first. Past dates are drawn and never
+changed, the rule every stamp that acts on a stretch already keeps.
+
+**A routine is written once, with a time per kind.** A top-level list; on a
+date with a kind it puts one real task on the day - at its kind's time when
+that time is free, and with no time otherwise, saying whether it needs a time
+or what it runs into. It never guesses a time. Its identity is its routine id
+on the task, not a new task origin, for the same reason as the day type: an
+older device must still be able to read everything this version writes.
+
+**One rule for midnight: a date owns its waking day.** A block belongs to the
+date it starts on - the night shift from 22:00 to 06:00 is Tuesday's - and a
+sleep to the date it ends on, the day you wake into. The second half is the
+owner's own rotation answered: owned by the day it starts, the night before a
+first day shift would come from the rest day's schedule and end an hour after
+the shift began, and the night after the after-nights day would have no sleep
+at all. Owned by the day it ends, both are right, and a kind's sleep means what
+a person means - "on a day shift I get up at five". On a plan where two days
+share a schedule, which is every plan today, nothing changes.
+
+**A block is on the wall clock; its real length is computed.** The night shift
+ends at 06:00 whatever the clocks do, so a block's time and length are its
+start and its end on the clock face, and the time that really passes - nine
+hours from 22:00 on 24 October 2026, seven from 22:00 on 28 March 2026 - comes
+from the device's time zone wherever an amount is meant. A routine at a time
+the clock skips needs a time rather than being moved to one.
+
+**Apply is one commit, idempotent, previewed, and asks about hand edits.** A
+change of kind on a date somebody changed by hand - something done, moved,
+deleted or placed by hand - names what would go and asks, the way replan asks;
+what was added by hand always stays.
+
+**Four defects the audit found were fixed first**, each with a test: taking a
+template off a day wiped the day; a task moved onto a day was dropped by a
+stamp of another template; Review's month skipped the month after a short one;
+the cloud backup read the day of its last copy in UTC. The first two are paths
+the roster walks on its first day.
