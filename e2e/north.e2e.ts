@@ -130,32 +130,39 @@ test('a heading opens on a hover without moving the page, or on a tap where ther
     await expect(first).toHaveAttribute('aria-expanded', 'false')
   }
 
-  // And on the day: the signature and the headings, never the introduction.
-  // Beside the day on a desktop, where a resting pointer shows what a heading
-  // holds; on the phone one folded line that says North - the signature is
-  // the day's own line's since v2.26 - a tap opening the headings and a tap
-  // on one its words.
+  // And on the day: the headings and the signature, never the introduction.
+  // Beside the day on a desktop, where a resting pointer shows a heading's
+  // lines on a card beside it and moves nothing; on the phone one folded
+  // line that says North - the signature is the day's own line's since
+  // v2.26 - a tap opening the headings and a tap on one its card.
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Today', exact: true }).click()
+  const card = page.locator('.north-heading-card .north-paragraph')
   if (info.project.name === 'phone') {
     const north = page.getByRole('group', { name: 'North' })
     await north.getByRole('button', { name: 'North', exact: true }).tap()
     const heading = north.getByRole('button', { name: 'FIRST HEADING' })
     await heading.tap()
-    const words = north.locator('.north-section').first().locator('.north-paragraph')
-    await expect(words).toHaveText(['a line under it', 'a second paragraph under it'])
-    await expect(words.nth(1)).toBeVisible()
+    await expect(card).toHaveText(['a line under it', 'a second paragraph under it'])
+    await expect(card.nth(1)).toBeInViewport()
     await heading.tap()
-    await expect(words.first()).toBeHidden()
+    await expect(card).toHaveCount(0)
   } else {
     const north = page.getByRole('region', { name: 'North' })
     await expect(north.getByText('a signature line')).toBeVisible()
-    const words = north.locator('.north-section').first().locator('.north-paragraph')
-    await expect(words.first()).toBeHidden()
-    await north.getByRole('button', { name: 'FIRST HEADING' }).hover()
-    await expect(words).toHaveText(['a line under it', 'a second paragraph under it'])
-    await expect(words.nth(1)).toBeVisible()
+    await expect(card).toHaveCount(0)
+    const next = page.locator('.rail > .north-day ~ *').first()
+    const nextAtRest = await next.boundingBox()
+    const heading = north.getByRole('button', { name: 'FIRST HEADING' })
+    await heading.hover()
+    await expect(card).toHaveText(['a line under it', 'a second paragraph under it'])
+    await expect(card.nth(1)).toBeInViewport()
+    // Beside the heading, over the day, and nothing in the rail moved.
+    const at = await heading.boundingBox()
+    const cardBox = await page.locator('.north-heading-card').boundingBox()
+    expect(cardBox!.x).toBeGreaterThan(at!.x + at!.width)
+    expect(await next.boundingBox()).toEqual(nextAtRest)
     await page.mouse.move(700, 5)
-    await expect(words.first()).toBeHidden()
+    await expect(card).toHaveCount(0)
   }
   await expect(page.getByText('First line here')).toHaveCount(0)
 })

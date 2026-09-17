@@ -1,5 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NorthDay } from './NorthDay'
 import { actions } from '../../lib/store'
@@ -13,42 +15,94 @@ beforeEach(() => {
 })
 
 /**
- * North on the day: the signature as one quiet line and the headings as a
- * quiet list, each opening what it holds, and never the introduction - that
- * is met in the window after sleep and on the page. Beside the day where
- * there is a rail; folded to one line with the signature where there is
- * not. Every line here is a generic one.
+ * North beside the day: a small North, the headings as they were written,
+ * each showing a small card of its lines beside it - on a resting pointer or
+ * on a press - and the signature under them. Never the introduction: that is
+ * met in the window after sleep and on the page. Beside the day where there
+ * is a rail; folded under the day's top where there is not. Every line here
+ * is a generic one.
  */
 
-const TEXT = 'a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING\na line under the second\n---\na signature line'
+const TEXT =
+  'a line before any heading\n\nFIRST HEADING\na line under it\n\na second paragraph under it\nSECOND HEADING [evening]\na line under the second\n---\na signature line'
 
-test('the signature and the headings stand on the day, and the introduction never does', () => {
+const card = () => document.querySelector('.north-heading-card')
+const cardLines = () => [...(card()?.querySelectorAll('.north-paragraph') ?? [])].map(p => p.textContent)
+
+test('a small North, the headings as written and the signature under them stand on the day, and the introduction never does', () => {
   actions.setPicture(TEXT)
   render(<NorthDay date={DATE} />)
   const north = screen.getByRole('region', { name: 'North' })
-  expect(within(north).getByText('a signature line')).toBeInTheDocument()
+  expect(within(north).getByRole('heading', { name: 'North' })).toBeInTheDocument()
   expect(within(north).getAllByRole('button').map(b => b.textContent)).toEqual(['FIRST HEADING', 'SECOND HEADING'])
+  expect(within(north).getByText('a signature line')).toBeInTheDocument()
+  // The signature closes the section, after the headings.
+  const signature = within(north).getByText('a signature line')
+  expect(within(north).getAllByRole('button')[1].compareDocumentPosition(signature) & 4).toBe(4)
   expect(screen.queryByText('a line before any heading')).toBeNull()
+  expect(north.textContent).not.toMatch(/\[evening\]/)
 })
 
-test('a press opens every paragraph a heading holds, and a second press closes them', async () => {
-  const user = userEvent.setup()
+test("a resting pointer shows a heading's lines on a card, and leaving takes them away", () => {
   actions.setPicture(TEXT)
   render(<NorthDay date={DATE} />)
   const first = screen.getByRole('button', { name: 'FIRST HEADING' })
-  expect(first).toHaveAttribute('aria-expanded', 'false')
-  await user.click(first)
+  expect(card()).toBeNull()
+
+  fireEvent.pointerEnter(first, { pointerType: 'mouse' })
+  expect(cardLines()).toEqual(['a line under it', 'a second paragraph under it'])
   expect(first).toHaveAttribute('aria-expanded', 'true')
-  const body = document.getElementById(first.getAttribute('aria-controls') ?? '')
-  expect([...(body?.querySelectorAll('.north-paragraph') ?? [])].map(p => p.textContent)).toEqual([
-    'a line under it',
-    'a second paragraph under it',
-  ])
-  await user.click(first)
-  expect(first).toHaveAttribute('aria-expanded', 'false')
+  expect(first).toHaveAttribute('aria-describedby', card()!.id)
+
+  fireEvent.pointerLeave(first, { pointerType: 'mouse' })
+  expect(card()).toBeNull()
 })
 
-test('a signature with no heading is the one line, and a heading with no signature is the list alone', () => {
+test('a press shows the card and keeps it, and a second press, a press elsewhere or Escape puts it away', async () => {
+  const user = userEvent.setup()
+  actions.setPicture(TEXT)
+  render(
+    <>
+      <NorthDay date={DATE} />
+      <p>elsewhere</p>
+    </>,
+  )
+  const first = screen.getByRole('button', { name: 'FIRST HEADING' })
+  await user.click(first)
+  expect(cardLines()).toEqual(['a line under it', 'a second paragraph under it'])
+  await user.click(first)
+  expect(card()).toBeNull()
+
+  await user.click(first)
+  expect(card()).not.toBeNull()
+  await user.click(screen.getByText('elsewhere'))
+  expect(card()).toBeNull()
+
+  await user.click(first)
+  expect(card()).not.toBeNull()
+  await user.keyboard('{Escape}')
+  expect(card()).toBeNull()
+})
+
+test('the card is a layer out of the flow that takes no press, so nothing under it moves', () => {
+  const css = readFileSync(join(__dirname, '../../styles.css'), 'utf8').replace(/\r\n/g, '\n')
+  const rule = css.match(/\n\.north-heading-card \{([^}]*)\}/)?.[1] ?? ''
+  expect(rule).toMatch(/position:\s*fixed/)
+  expect(rule).toMatch(/pointer-events:\s*none/)
+  expect(rule).toMatch(/background:\s*var\(--surface-raised\)/)
+  // And a heading is written as typed: nothing in the stylesheet tracks it.
+  const heading = css.match(/\n\.north-day-heading \{([^}]*)\}/)?.[1] ?? ''
+  expect(heading).not.toMatch(/letter-spacing|text-transform/)
+})
+
+test('a heading with nothing under it is words and not a control', () => {
+  actions.setPicture('FIRST HEADING\nSECOND HEADING\na line under the second')
+  render(<NorthDay date={DATE} />)
+  expect(screen.getAllByRole('button').map(b => b.textContent)).toEqual(['SECOND HEADING'])
+  expect(screen.getByText('FIRST HEADING').tagName).toBe('SPAN')
+})
+
+test('a signature with no heading is North and the signature, and a heading with no signature is North and the list', () => {
   actions.setPicture('a line before any heading\n---\na signature line')
   const { rerender } = render(<NorthDay date={DATE} />)
   expect(screen.getByText('a signature line')).toBeInTheDocument()
@@ -82,29 +136,29 @@ test('every heading stands in the list, however many the text has', () => {
   expect(screen.getAllByRole('button')).toHaveLength(40)
 })
 
-test('the day changing under it closes what was open', async () => {
+test('the day changing under it puts away a card that was out', async () => {
   const user = userEvent.setup()
   actions.setPicture(TEXT)
   const { rerender } = render(<NorthDay date={DATE} />)
   await user.click(screen.getByRole('button', { name: 'FIRST HEADING' }))
-  expect(screen.getByRole('button', { name: 'FIRST HEADING' })).toHaveAttribute('aria-expanded', 'true')
+  expect(card()).not.toBeNull()
   rerender(<NorthDay date="2026-09-06" />)
+  expect(card()).toBeNull()
   expect(screen.getByRole('button', { name: 'FIRST HEADING' })).toHaveAttribute('aria-expanded', 'false')
 })
 
 // --- folded, where there is no rail ------------------------------------------------
 
 /**
- * On the phone, and in a window too narrow for the rail, North on the day
- * is one line under the day's title: the signature, and a press on it opens
- * the headings under it; a second press folds them again. Without a
- * signature the line says North.
+ * On the phone, and in a window too narrow for the rail, North on the day is
+ * the word North under the day's top, and a press on it opens the headings
+ * under it; a press on a heading opens its card. The signature is the day's
+ * own line's to say (NorthLine).
  */
-test('folded, it is one line that says North, and a press opens the headings under it', async () => {
+test('folded, it is one line that says North, a press opens the headings, and a press on one its card', async () => {
   const user = userEvent.setup()
   actions.setPicture(TEXT)
   render(<NorthDay date={DATE} folded />)
-  // The signature is the day's own line's to say since v2.26 - see NorthLine.
   expect(screen.queryByText('a signature line')).toBeNull()
   const line = screen.getByRole('button', { name: 'North' })
   expect(line).toHaveAttribute('aria-expanded', 'false')
@@ -112,12 +166,12 @@ test('folded, it is one line that says North, and a press opens the headings und
 
   await user.click(line)
   expect(line).toHaveAttribute('aria-expanded', 'true')
-  expect(screen.getByRole('button', { name: 'FIRST HEADING' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'FIRST HEADING' }))
-  expect(screen.getByText('a line under it')).toBeInTheDocument()
+  expect(cardLines()).toEqual(['a line under it', 'a second paragraph under it'])
 
   await user.click(line)
   expect(screen.queryByRole('button', { name: 'FIRST HEADING' })).toBeNull()
+  expect(card()).toBeNull()
   expect(screen.queryByText('a line before any heading')).toBeNull()
 })
 

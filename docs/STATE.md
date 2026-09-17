@@ -92,6 +92,33 @@ the press, the same date, the morning and the evening, the signature alone,
 the goal where the text has nothing) and its wholeness and place in
 `e2e/north-line.e2e.ts`.
 
+### Stage 3 - the rail: done
+
+- **Beside the day** (`NorthDay`): a small North in the rail's label style,
+  the headings as they were typed - the reading ink at the interface size,
+  no tracking, no longer a menu of sections - and the signature under them.
+  A heading with nothing under it is words, not a control.
+- **The card.** A pointer resting on a heading, or the focus on it, shows a
+  small card of its lines beside it over the day, its first line level with
+  the heading's words; leaving takes it away. A press shows it and keeps it,
+  and a second press, a press anywhere else or Escape puts it away. The card
+  is a layer fixed to the window and takes no press, so nothing under it
+  moves - the rail's old way, laying the words out over the rail and fading
+  what followed, is gone. Placed by `northCardPlacement.ts`: beside the
+  heading, under it where there is no room beside, above it where the screen
+  ends, never past the window's edge.
+- **On a phone** the folded North opens the headings, and a press on one
+  opens the same card under it.
+- The rail's box is a step wider than its column and gives the step back as
+  padding, so the ground under a heading can reach out past its words without
+  scrolling the rail sideways - the sweep's first run found the 8px.
+
+Changed tests: `NorthDay.test.tsx` is rewritten for the card (the pointer,
+the press and its three ways away, the layer, a bare heading, the folded
+card); `e2e/north.e2e.ts` hovers a rail heading for its card and checks that
+nothing in the rail moved, and taps one on the phone; `scripts/sweep.mjs`'s
+Today (North open) presses the new heading. New: `northCardPlacement.test.ts`.
+
 ## v2.25 - the design pass
 
 Asked for in one message the evening v2.24 closed: the app should feel like

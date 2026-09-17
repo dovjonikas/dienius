@@ -257,15 +257,16 @@ const SCREENS = [
   { name: 'Review week', go: /** @param {Page} p */ p => tab(p, 'Review') },
   { name: 'Review month', go: async /** @param {Page} p */ p => { await tab(p, 'Review'); await press(p, 'Month') } },
   {
-    // North on the day with a heading open: in the rail on a desktop, a
-    // press opening its words in the column; on the phone, the folded line
-    // under the day's title pressed first. The words are painted only then.
+    // North on the day with a heading's card out: in the rail on a desktop,
+    // a press showing its lines on a card beside it; on the phone, the
+    // folded line under the day's top pressed first and the card under the
+    // heading. The card is painted only then.
     name: 'Today (North open)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Today')
       const line = p.locator('button.north-day-line')
       if (await line.count()) await line.first().click()
-      await p.locator('.north-day .north-heading-toggle').first().click()
+      await p.locator('.north-day button.north-day-heading').first().click()
       await p.waitForTimeout(300)
     },
   },

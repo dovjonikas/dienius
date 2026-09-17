@@ -1148,6 +1148,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .journal-overlay,
   .nav-rail.is-open,
   .north-card,
+  .north-heading-card,
   .north-line-more,
   .north-window,
   .note-reader,
@@ -1191,6 +1192,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .journal-overlay,
   .nav-rail.is-open,
   .north-card,
+  .north-heading-card,
   .north-line-more,
   .north-window,
   .note-reader,
@@ -7360,9 +7362,16 @@ button.danger:focus-visible {
 
   .day-notices { grid-area: notices; }
 
+  /* A scroller, so anything reaching past its edges would scroll it sideways:
+     the ground under a North heading reaches out past the heading's words
+     the way every quiet row's does. So the rail's box is a step wider on
+     each side than its column and gives the step back as padding - the
+     words stand on the column's edges, and the grounds have room. */
   .rail {
     grid-area: rail;
     min-height: 0;
+    margin-inline: calc(var(--s2) * -1);
+    padding-inline: var(--s2);
     overflow-y: auto;
   }
 
@@ -10580,80 +10589,114 @@ button.task-library:hover { color: var(--text); }
 
 .north-line-more[hidden] { display: none; }
 
-/* North on the day - see NorthDay. In the rail, where there is one, between
-   the templates and what is next: the signature as one quiet line and the
-   headings as a quiet list in the rail's small tracked register, with no
-   card, no edge and no ground. The words under a heading open the way they
-   do on the North page - the same component and the same stylesheet rules -
-   in the day's own smaller type. */
+/* North beside the day - see NorthDay. In the rail, where there is one,
+   between the templates and what is next: a small North, the headings as
+   they were written, and the signature under them, with no card, no edge and
+   no ground. A heading is written the way it was typed, in the reading ink
+   at the interface size - not tracked small in the secondary ink, which read
+   as a menu of sections rather than as the person's own words. */
 .north-day {
   display: flex;
   flex-direction: column;
-  gap: var(--s3);
+  gap: var(--s2);
   min-width: 0;
 }
 
 .rail > .north-day { margin-top: var(--s6); }
 
-.north-day .north-paragraph {
+.north-day-label { margin: 0; }
+
+.north-day-headings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s0);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The ground under the pointer, and while the card is out, reaches past the
+   words rather than pushing them in. */
+.north-day-heading {
+  display: block;
+  width: calc(100% + var(--s2) * 2);
+  min-height: 0;
+  margin: 0 calc(var(--s2) * -1);
+  padding: var(--s1) var(--s2);
+  border: none;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
+  line-height: var(--lh-ui);
+  text-align: left;
+  overflow-wrap: anywhere;
+  transition: background var(--dur-fast) var(--ease);
+}
+
+.north-day-heading[aria-expanded='true'],
+button.north-day-heading:hover { background: var(--fill); }
+
+.north-day-heading:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A heading with nothing under it is words, not a control. */
+.north-day-heading.is-bare { color: var(--muted); }
+
+.north-day-signature { margin-top: var(--s2); }
+
+.north-day-signature > .north-paragraph {
+  margin: 0;
+  color: var(--muted);
   font-size: var(--t-sm);
   line-height: var(--lh-read);
 }
 
-.north-day .north-paragraph + .north-paragraph { margin-top: var(--s2); }
+.north-day-signature > .north-paragraph + .north-paragraph { margin-top: var(--s2); }
 
-.north-day-signature > .north-paragraph { color: var(--muted); }
-
-.north-day .north-sections { gap: var(--s2); }
-
-.north-day .north-heading {
-  color: var(--muted);
-  font-size: var(--t-xs);
-  font-weight: var(--w-strong);
-  letter-spacing: 0.14em;
-  line-height: var(--lh-ui);
+/* A heading's card: its lines on a layer beside the heading, or under it on a
+   phone - see northCardPlacement.ts. Fixed to the window, out of the flow,
+   so nothing under it moves, and pointer-transparent, because nothing on it
+   is to be pressed. Its first line is level with the heading's words. */
+.north-heading-card {
+  position: fixed;
+  z-index: 66;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - var(--s4) * 2));
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  --ground: var(--surface-raised);
+  box-shadow: var(--e2);
+  pointer-events: none;
 }
 
-.north-day .north-section-text::before { height: var(--s1); }
-
-/* While a heading's words are laid out over the rail, what follows North in
-   the rail steps back with the headings after it, as the page does - the
-   words stand on the rail's ground, and a label half under them read as two
-   texts painted over each other. */
-@media (hover: hover) and (pointer: fine) {
-  .rail:has(> .north-day .north-section.can-preview:hover) > .north-day ~ *,
-  .rail:has(> .north-day .north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-day ~ * {
-    opacity: 0;
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .rail > .north-day ~ * {
-      transition:
-        opacity var(--dur) var(--ease),
-        background-color var(--dur) var(--ease),
-        border-color var(--dur) var(--ease),
-        color var(--dur) var(--ease),
-        box-shadow var(--dur) var(--ease);
-    }
-
-    .rail:has(> .north-day .north-section.can-preview:hover) > .north-day ~ *,
-    .rail:has(> .north-day .north-section.can-preview > .north-heading > .north-heading-toggle:focus-visible) > .north-day ~ * {
-      transition-delay: var(--dur-fast);
-    }
-  }
+.north-heading-card > .north-paragraph {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: var(--lh-read);
+  white-space: pre-line;
 }
 
-/* Where there is no rail: one line under the day's title, in the header's
-   own row, and a press on it opens the headings under it in the flow - a
-   press may move the day where a hover may not. The line is the signature
-   in the second ink, or the word North where the text has none.
+.north-heading-card > .north-paragraph + .north-paragraph { margin-top: var(--s2); }
 
-   A step under the goal's line rather than a hair: both lines are presses,
-   and on a finger each one's target is 44px tall around its middle. Two
-   pixels apart, the two middles were 21px apart, so the signature's target
-   reached over the middle of the goal's and a press on the goal opened the
-   headings - the phone sweep's "control covered". Eight apart, each target
-   stops short of the other's middle. */
+@media (prefers-reduced-motion: no-preference) {
+  .north-heading-card { animation: popover-in var(--dur-fast) var(--ease) both; }
+}
+
+/* Where there is no rail: the word North under the day's top, in the
+   header's own row, and a press on it opens the headings under it in the
+   flow - a press may move the day where a hover may not. A heading's card
+   opens under the heading. The signature is the day's line's to say.
+
+   A step under the day's line rather than a hair: both are presses, and on
+   a finger each one's target is 44px tall around its middle, so eight
+   pixels apart each target stops short of the other's middle. */
 .north-day.is-folded {
   flex: 1 1 100%;
   order: 10;
@@ -10661,7 +10704,10 @@ button.task-library:hover { color: var(--text); }
   margin-top: var(--s2);
 }
 
+.north-day.is-folded > .north-day-headings { margin-top: var(--s1); }
+
 .north-day-line {
+  align-self: flex-start;
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -10669,9 +10715,9 @@ button.task-library:hover { color: var(--text); }
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
-  line-height: var(--lh-read);
+  font-weight: var(--w-medium);
+  line-height: var(--lh-ui);
   text-align: left;
-  overflow-wrap: anywhere;
 }
 
 button.north-day-line { cursor: pointer; }
@@ -10684,6 +10730,11 @@ button.north-day-line:focus-visible {
 
 @media (hover: hover) and (pointer: fine) {
   button.north-day-line:hover { color: var(--text); }
+}
+
+/* On a finger a heading is a finger tall. */
+@media (pointer: coarse) {
+  .north-day-heading { min-height: var(--touch); display: flex; align-items: center; }
 }
 
 /* The peek: a bubble hanging under the line's left end, with an arrow up
