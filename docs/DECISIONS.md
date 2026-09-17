@@ -3745,3 +3745,71 @@ not an aside. Edit is the page's action and stands where every page keeps
 its action, at the right of the title's row, its word on the column's edge;
 the row keeps its height while the field is open, so going from reading to
 writing still moves no line of the introduction.
+
+## Kitchen: recipes are their own, read by North's rule, and never added up
+
+v2.27, from one brief queued during the design pass: a recipe library that
+looks and feels like the Library with data of its own, recipes read the way
+North's text is read, a way to cook from one, and meal blocks that point at
+recipes. Seven stages. docs/RESEARCH-KITCHEN.md has the evidence behind the
+parts that have any.
+
+**A recipe is an entity, not a library list.** The Library is built on units
+counted through - a total, a position, a pace - and a recipe has none of
+them. `Recipe` is a top-level list in `AppData` by CONVENTIONS 7: one sync
+entity per recipe at `recipe:<id>`, a table in the guard, carried whole by a
+backup, and absent from every file written before it, which loads as an
+empty Kitchen. What it shares with the Library is the look - the page, the
+chips, one card of quiet rows, the empty state - built from the Library's
+own classes, with nothing of the Library's changed.
+
+**A name and one text.** Ingredients and steps are not fields: a recipe
+arrives pasted, and a form of rows is a form nobody fills twice. The
+structure comes from North's rule, which now lives in `lib/headings.ts` as
+the one parser both texts go through - North passes its two tags and its
+signature in, a recipe passes nothing and reads two headings on top:
+INGREDIENTS as a list and STEPS as numbered steps, known as the whole
+heading with or without a colon, so SAUCE INGREDIENTS stays a heading over
+its paragraphs rather than a guess. Nothing parses an amount out of a line.
+
+**The numbers are information on a recipe.** Kcal, protein, carbs and fat
+for a serving, servings and minutes, each optional and absent rather than
+nought. No day, week or goal reads them; there are no targets, totals, bars
+or colours - calorie tracking is associated with eating disorder symptoms,
+and this app refuses scores anyway. A row shows kcal and protein, the two a
+choice for after the gym is made on; the page shows all four.
+
+**Kitchen is the seventh view, at the end of the rail.** Its own key, 7, so
+every key a hand knows still reaches what it did. Eight items in the phone's
+bar ran off a 320px screen at 44px each; under 376px each keeps its height
+and gives up a few pixels of width.
+
+**Cook is larger, tickable and awake, and forgets.** Over everything like
+Focus, a step larger, each ingredient and step a line to tick - a mark on
+the place in the recipe, which is what a kitchen full of interruptions takes
+from the head - with the screen kept awake through the Screen Wake Lock API
+where the browser has it and silently not where it does not. The ticks live
+in the screen and go with it: stored, they would be a half-cooked recipe
+waiting next time. Done adds one to times cooked, with no date beside it, so
+nothing can say how long ago or keep a streak; Close counts nothing.
+
+**A meal points at a recipe, or leaves a kind of meal open.** `recipeId` or
+`mealType` on a template block and a task, read only in the built-in Meals
+category, by its id - a category the owner made for food is theirs, and a
+rule that guessed from a name would guess wrong. The card names the recipe
+and a press opens it, or says "Lunch recipes" and opens Kitchen on lunch.
+Stamping copies both like the category and echoes them in `fromBlock`, so a
+recipe chosen on the day survives the day being opened and a block given a
+recipe later reaches the days still holding what it gave. A recipe removed
+on another device degrades to the kind of meal, or to nothing. Choosing a
+recipe in Kitchen does not write back to the day: the brief asked for the
+choosing, and a second way to set a meal's recipe would be a second door.
+
+**One question, asked where it fits.** The same select everywhere a meal is
+set up: no recipe, a kind of meal, or a recipe by name. In a template's add
+row it replaces the library question for a meal - a meal does not read
+through a list, and the two together pushed Add a block onto a line of its
+own - unless a list is already chosen, which stays in sight. On a meal
+block's row it stands on a line of its own under the row: inside it, it was
+one more control on the meals' rows only, and every column of those rows
+stood left of the same column on the rows around them.

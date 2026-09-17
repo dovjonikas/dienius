@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.27, in progress - Kitchen.
+**Last updated:** v2.27, done - Kitchen. Nothing is queued.
 
 ## v2.27 - Kitchen
 
@@ -204,6 +204,31 @@ the fields through a backup and the guard (`kitchen.data.test.ts`),
 `mealLink`, the card's press, the detail sheet and the select
 (`views/kitchen/MealOnDay.test.tsx`), both editors (`TemplatesView.test.tsx`,
 `WeekTemplateEditor.test.tsx`), and a card opening Kitchen in `App.test.tsx`.
+
+### Stage 7 - the phone, the pictures and the last tests: done
+
+- **The phone**, walked in `e2e/kitchen.e2e.ts` on both projects (the phone
+  runs the file): the meals wrap inside the screen with nothing running off
+  it, and every line in Cook is a finger tall. The pictures in both themes,
+  desktop and phone - the list, a recipe's page, Cook with lines ticked, the
+  form, and a meal's card on the day - found nothing to change.
+- **The last tests**: a recipe written from nothing, read back as a list and
+  numbered steps, found by its meal and by a word inside it, cooked with the
+  screen asked to stay awake and let go of on Done, and counted; a meal on the
+  day opening its recipe, and a kind of meal opening Kitchen on it.
+- **The brief's data promises**, and where each is held: a new entity by
+  CONVENTIONS 7 with sync, the guard, export and import both ways
+  (`kitchen.data.test.ts`); a backup without Kitchen importing cleanly (the
+  same file); the demo's four generic recipes; generic text only in the tests
+  and the pictures (the privacy guard, and every line in these files).
+- `docs/DAILY.md` has Kitchen; DECISIONS has "Kitchen: recipes are their own,
+  read by North's rule, and never added up"; `docs/RESEARCH-KITCHEN.md` was
+  written in stage 1 and still says what was built.
+
+Changed tests: `playwright.config.ts` gives the phone `kitchen.e2e.ts`. New:
+`e2e/kitchen.e2e.ts`.
+
+v2.27 is done.
 
 ## v2.26 - North that holds the eye
 
