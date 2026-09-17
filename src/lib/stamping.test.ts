@@ -74,6 +74,43 @@ test('stamping null removes template tasks but keeps manual tasks', () => {
   expect(cleared['2026-09-01'].tasks.map(t => t.title)).toEqual(['Manual'])
 })
 
+/**
+ * Erasing a stamp takes the template off the day and nothing else. Found in
+ * the audit for rotating shifts, where a date's kind is its stamp and
+ * clearing a kind goes through this path: the day came back as its date and
+ * its hand-written tasks, and its journal, its sleep schedule, its skipped
+ * repeats, its low day, its replan mark and its time away went with the
+ * template.
+ */
+test('stamping null keeps everything the day had besides the template', () => {
+  const stamped = applyStamps({}, [workDay], { '2026-09-01': 't1' })
+  const day: DayPlan = {
+    ...stamped['2026-09-01'],
+    journal: 'A line written on the day.',
+    sleepProfileId: 'shift',
+    repeatSkips: ['r1'],
+    autoApplied: true,
+    lowDay: true,
+    replannedOn: '2026-09-01',
+    away: '14:00',
+    updatedAt: '2026-09-01T08:00:00.000Z',
+    tasks: [...stamped['2026-09-01'].tasks, { id: 'm1', title: 'Manual', done: false }],
+  }
+  const cleared = applyStamps({ '2026-09-01': day }, [workDay], { '2026-09-01': null })['2026-09-01']
+  expect(cleared).toEqual({
+    date: '2026-09-01',
+    journal: 'A line written on the day.',
+    sleepProfileId: 'shift',
+    repeatSkips: ['r1'],
+    autoApplied: true,
+    lowDay: true,
+    replannedOn: '2026-09-01',
+    away: '14:00',
+    updatedAt: '2026-09-01T08:00:00.000Z',
+    tasks: [{ id: 'm1', title: 'Manual', done: false }],
+  })
+})
+
 test('does not mutate the input days object', () => {
   const days: Record<string, DayPlan> = {}
   applyStamps(days, [workDay], { '2026-09-01': 't1' })

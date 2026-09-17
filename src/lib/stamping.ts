@@ -257,7 +257,13 @@ export function applyStamps(
     const existing = next[date] ?? { date, tasks: [] }
     const manual = existing.tasks.filter(t => !t.fromTemplate)
     if (templateId === null) {
-      next[date] = { date, tasks: manual }
+      // Only the template comes off: its tasks, its id and the day type it
+      // gave. Everything else on the day is the day's own - what was written
+      // on it, its sleep, its skipped repeats, its low day, its replan mark,
+      // its time away - and taking a template off is not a reason to lose
+      // any of it. It did until v2.28's audit.
+      const { templateId: _template, dayType: _type, ...rest } = existing
+      next[date] = { ...rest, date, tasks: manual }
       continue
     }
     const template = templates.find(t => t.id === templateId)
