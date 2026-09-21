@@ -3930,22 +3930,28 @@ select:focus {
    Real toggle buttons with real names (aria-label plus title), sized to a
    comfortable target, reading as a row of colour rather than a form control -
    picking one is meant to cost a glance, not a decision. */
-/* Four pixels on the left: the chosen dot's ring is a box-shadow, drawn
-   outside the box at no cost to layout, and the task pane is a scroller -
-   `overflow-y: auto` makes `overflow-x` auto with it - which clips anything
-   past its edge. The inset was here once for exactly this, and the v2.4 pass
-   took it out so the dots would share a left edge with the capture field and
-   the cards; the first dot's ring lost its left side and the owner saw it.
-   With the ring's own width in hand its outer edge sits on the column's
-   edge, which is the alignment that reads as one, and the sweep measures it
-   now. */
+/* The colours on the edge their row starts on, where the field over them
+   and the controls under them start, and the chosen dot's ring outside it -
+   a box-shadow, drawn outside the box at no cost to layout, the way a focus
+   ring stands outside its control. The eye reads the colours: inset by the
+   ring's width, they stood four pixels in from everything else, and the
+   owner saw it in the week editor's form. The space above and below is the
+   ring's, so a row under a row does not cut it. */
 .category-picker {
   display: flex;
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
-  padding: var(--s1) 0 var(--s1) var(--s1);
+  padding: var(--s1) 0;
 }
+
+/* The one exception: the quick add on the day stands at the task pane's edge,
+   and the pane is a scroller - `overflow-y: auto` makes `overflow-x` auto
+   with it - which cuts anything past it. The v2.4 pass took the inset out so
+   the dots would share a left edge with the capture field, the first dot's
+   ring lost its left side and the owner saw it; here the ring's outer edge
+   stands on the column's edge instead, and the sweep measures it. */
+.quick-add-block .category-picker { padding-left: var(--s1); }
 
 /* Unselected swatches sit back at a little over half strength, so the chosen
    one wins on colour without the row changing shape. It used to win on size
@@ -4038,9 +4044,9 @@ select:focus {
   flex: 1 0 100%;
 }
 
-/* The picker's inset is for the chosen swatch's ring; the sheet under it
-   stands on the row's own edge, where the row's other lines start. */
-.category-picker > .category-quick { margin-left: calc(var(--s1) * -1); }
+/* The quick add's picker is inset for its ring; the sheet under it stands
+   on the row's own edge, where the row's other lines start. */
+.quick-add-block .category-picker > .category-quick { margin-left: calc(var(--s1) * -1); }
 
 .category-quick-foot {
   display: flex;
@@ -5014,12 +5020,9 @@ button.primary {
 }
 
 /* The dots start where the time control above them starts and where
-   Delete template under them does: the form's left edge. The picker's inset
-   is room for the chosen dot's ring at a scroller's clipped edge - see
-   .category-picker - and this row has none; the ring stands in the card's
-   padding the way a focus ring would, and the colours line up. They stood
-   6px in, a near miss the eye catches and cannot name. */
-.block-add-marks > .category-picker { padding-left: 0; }
+   Delete template under them does: the form's left edge - see
+   .category-picker. They stood 6px in, a near miss the eye catches and
+   cannot name. */
 
 
 /* The row's own button, and only it: written as a descendant, it reached the
@@ -9126,11 +9129,8 @@ button.danger:focus-visible {
 .block-add-field > .library-binding > .library-binding-label { flex: 0 0 auto; min-width: var(--field-label-w); }
 
 /* The dots start on the answers' edge, where the day switches under them
-   start. The picker's inset is room for the chosen dot's ring at a
-   column's clipped edge - see .category-picker - and a labelled row has no
-   such edge: the ring stands in the gap after the label, the way a focus
-   ring stands outside its control, and the colours themselves line up. */
-.block-add-field > .category-picker { padding-left: 0; }
+   start - see .category-picker; the chosen one's ring stands in the gap after
+   the label. */
 
 /* The form's last line: what the press will do at the answers' edge, and
    the press at the form's right edge - a status and its action on one row,

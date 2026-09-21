@@ -267,7 +267,10 @@ corner lines up with another" has the why.
 - **The week form's answers start on one edge**: the dots, the list (its label
   had no column width), the day switches, the presets and "Adds to Wed", which
   now shares the last line with Add a block. On a phone every answer is under
-  its label. The day editor's dots stand on its edge too.
+  its label. Every category picker stands its colours on its edge now - the
+  day editor's, the routine form's, the task sheet's, a scratch note's - with
+  the chosen one's ring outside it; the day's quick add, at the task pane's
+  scroller edge, keeps the ring's inset, the one exception.
 - **An empty page is framed as a full one**: Kitchen at the shelf's width with
   no recipes, North with a page's title and Write where Edit stands, the
   Library with New list at its title (Something else is gone), every empty
