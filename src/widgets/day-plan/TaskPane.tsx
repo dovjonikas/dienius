@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import type { LibraryList, Task } from '../../lib/types'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
+import { routineNotes } from '../../lib/shiftDay'
 import { isFirstRun } from '../../lib/onboarding'
 import { enterDemoMode, isDemoMode } from '../../lib/demoMode'
 import { startTour } from '../../lib/tourState'
@@ -127,10 +128,15 @@ export function TaskPane({
     setSizeEditingId(null)
   }
 
+  // Why a routine on this day has no time, where it has none - rotating
+  // shifts, stage 9. Worked out once for the list, not per row.
+  const notes = routineNotes(data, date, todayKey())
+
   /** The props every row gets the same way, open or done. */
   function rowProps(task: Task) {
     return {
       task,
+      routineNote: !task.time && task.routineId ? notes.get(task.routineId) : undefined,
       isFullDay,
       sizeEditingId,
       sizeDraft,

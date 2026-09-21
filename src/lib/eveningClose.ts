@@ -148,6 +148,29 @@ function atMinutes(at: string): number {
  * says "Push 3 to tomorrow"; it does not say that leaving them is a problem,
  * because it is not one.
  */
-export function pushableAtClose(day: DayPlan | undefined): number {
-  return (day?.tasks ?? []).filter(t => !t.done).length
+export function pushableAtClose(day: DayPlan | undefined, leave: readonly string[] = []): number {
+  return (day?.tasks ?? []).filter(t => !t.done && !leave.includes(t.id)).length
+}
+
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/**
+ * What on a day is still tonight's at `nowMinutes`: a timed task that has not
+ * started yet, and one that is happening now. Neither is unfinished - rotating
+ * shifts, v2.29 stage 9. The card shows from half past nine, and on a
+ * night-shift day the shift starts at ten; offering to push it to tomorrow was
+ * offering to move the one thing the evening is for.
+ *
+ * The ids, for the push to leave where they are - the same `leave` the push
+ * already takes for last night's shift still running after midnight.
+ */
+export function stillAhead(day: DayPlan | undefined, nowMinutes: number): string[] {
+  return (day?.tasks ?? [])
+    .filter(t => {
+      if (t.done || !t.time || !CLOCK.test(t.time)) return false
+      const [h, m] = t.time.split(':').map(Number)
+      const start = h * 60 + m
+      return start >= nowMinutes || (t.minutes !== undefined && start + t.minutes > nowMinutes)
+    })
+    .map(t => t.id)
 }

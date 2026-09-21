@@ -532,7 +532,59 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   },
+  // The morning after a night shift, rotating shifts stage 9: the shift's
+  // last hours at the top of the day's grid and of the week's column. Last,
+  // because the shift stays on yesterday for every screen after these; and
+  // the page is opened again on it, so the audit goes back in.
+  {
+    name: 'Today (after a night shift)',
+    go: async /** @param {Page} p */ p => {
+      await nightShiftYesterday(p)
+      await p.addScriptTag({ content: AUDIT })
+      await tab(p, 'Today')
+      await p.waitForTimeout(300)
+    },
+  },
+  {
+    name: 'Calendar week (after a night shift)',
+    go: async /** @param {Page} p */ p => {
+      await nightShiftYesterday(p)
+      await p.addScriptTag({ content: AUDIT })
+      await tab(p, 'Calendar')
+      await press(p, 'Week')
+      await p.waitForTimeout(300)
+    },
+  },
 ]
+
+/**
+ * Last night's shift on yesterday - 22:00 for eight hours, in the plan the page
+ * holds - and the page opened again, so the morning after draws its
+ * continuation. Rotating shifts, stage 9.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function nightShiftYesterday(page) {
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('dienius:data') ?? '{}')
+    const now = new Date()
+    const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    const date = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`
+    const day = d.days[date] ?? { date, tasks: [] }
+    if (!day.tasks.some((/** @type {{ id: string }} */ t) => t.id === 'night-shift')) {
+      day.tasks.push({ id: 'night-shift', title: 'Night shift', time: '22:00', minutes: 480, done: false, category: 'core' })
+    }
+    d.days[date] = day
+    localStorage.setItem('dienius:data', JSON.stringify(d))
+    // A focus session or a timer an earlier screen left running stands its
+    // bar over the page on every screen after it; this one is the morning
+    // after a night shift and nothing else.
+    localStorage.removeItem('dienius:clock-tools')
+  })
+  await page.reload()
+  await page.waitForSelector('nav')
+}
+
 
 /** @typedef {{ size: string, theme: string, screen: string }} Where */
 /** @type {{ size: string, theme: string, screen: string, kind: string, detail: string }[]} */

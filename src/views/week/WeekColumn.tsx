@@ -3,7 +3,7 @@ import type { Category, Template } from '../../lib/types'
 import type { DayStat } from '../../lib/dayStats'
 import type { Interval } from '../../widgets/day-plan/capacity'
 import { formatDuration } from '../../widgets/day-plan/capacity'
-import { formatTimeRange } from '../../widgets/day-plan/timelineLayout'
+import { formatClock, formatTimeRange } from '../../widgets/day-plan/timelineLayout'
 import { categoryColor } from '../../lib/categories'
 import { shortWeekday } from '../../lib/dates'
 import type { DayEvent } from '../../lib/calendars'
@@ -155,7 +155,15 @@ export function WeekColumn({
             aria-label={`${template.name} on ${shortWeekday(day.date)}. Choose a different template`}
             onClick={() => setStampOpen(o => !o)}
           >
-            <span className="template-chip-dot" aria-hidden="true" />
+            {/* A kind of day as its letter, where the dot stands - see
+                the day's masthead. */}
+            {template.dayKind ? (
+              <span className="kind-mark" aria-hidden="true">
+                {template.dayKind.letter}
+              </span>
+            ) : (
+              <span className="template-chip-dot" aria-hidden="true" />
+            )}
             <span className="week-col-template-name">{template.name}</span>
           </button>
         ) : weekdayTemplateId ? (
@@ -286,6 +294,26 @@ export function WeekColumn({
               </div>
             )
           })}
+
+        {/* Last night's shift, running on into this morning - rotating
+            shifts, stage 9. It is the day it starts on, and a block there;
+            here it is what it is still doing, drawn from midnight to where it
+            ends and under the day's own blocks. Not a button: nothing to
+            press or to drag, because it is yesterday's. */}
+        {day.carried.map(c => (
+          <div
+            key={`carried-${c.task.id}`}
+            className="week-carried"
+            style={{
+              top: `${c.topPercent}%`,
+              height: `${c.heightPercent}%`,
+              ['--block' as string]: categoryColor(c.task.category, categories),
+            } as React.CSSProperties}
+          >
+            <span className="week-block-title">{c.task.title}</span>
+            <span className="week-block-time">until {formatClock(c.endMinutes)}</span>
+          </div>
+        ))}
 
         {showNow && <div className="week-now" aria-hidden="true" style={{ top: `${nowPercent}%` }} />}
 

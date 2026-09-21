@@ -1,4 +1,4 @@
-import { beforeEach, expect, test } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { EveningClose } from './EveningClose'
@@ -84,6 +84,33 @@ test('unfinished work is one offer that can be ignored, and gone once taken', as
   await user.click(screen.getByRole('button', { name: 'Push 2 to tomorrow' }))
   expect(screen.queryByRole('button', { name: /push to tomorrow/ })).toBeNull()
   expect(getData().days[TODAY].tasks.filter(t => !t.done)).toHaveLength(0)
+})
+
+test("what has not started yet stays tonight's - a night shift is not pushed to tomorrow at half past nine", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  vi.setSystemTime(new Date(`${TODAY}T21:40:00`))
+  try {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    actions.resetForTests({
+      ...defaultData(),
+      days: {
+        [TODAY]: {
+          date: TODAY,
+          tasks: [
+            { id: 'paper', title: 'Paperwork', done: false },
+            { id: 'shift', title: 'Night shift', time: '22:00', minutes: 480, done: false },
+          ],
+        },
+      },
+    })
+    actions.setEveningClose({ ...DEFAULT_EVENING_CLOSE, at: '21:30' })
+    render(<EveningClose date={TODAY} />)
+
+    await user.click(screen.getByRole('button', { name: 'Push 1 to tomorrow' }))
+    expect(getData().days[TODAY].tasks.map(t => t.id)).toEqual(['shift'])
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 test('a finished day is not offered a push it does not need', () => {

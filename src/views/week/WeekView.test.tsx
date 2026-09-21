@@ -340,3 +340,19 @@ test('with nothing written in the week the copy button is greyed, not gone', () 
   renderWeek()
   expect(screen.getByRole('button', { name: 'Copy week journal' })).toBeDisabled()
 })
+
+// Rotating shifts, v2.29 stage 9 - docs/RESEARCH-SHIFTS.md section 3.3. The
+// shift is Monday's, where it starts; the morning after, Tuesday's column
+// carries its last hours at the top, named for what they are, and they are
+// not a block of Tuesday's - nothing there to press or to drag.
+test("the morning after a night shift, the next column carries the shift's last hours", () => {
+  actions.addTask(MON, 'Night shift', '22:00')
+  actions.setTaskMinutes(MON, getData().days[MON].tasks[0].id, 480)
+  renderWeek()
+
+  const carried = column(TUE).querySelector('.week-carried')
+  expect(carried?.textContent).toContain('Night shift')
+  expect(carried?.textContent).toContain('until 06:00')
+  expect(within(column(TUE)).queryByRole('button', { name: /Night shift/ })).toBeNull()
+  expect(column(MON).querySelector('.week-carried')).toBeNull()
+})

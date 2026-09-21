@@ -942,3 +942,31 @@ test('a candidate that starts where a block ends is not a clash', () => {
   const { container } = render(<TimelineGrid tasks={LONG_DAY} ghostKey="day" isWide />)
   expect((container.querySelector('.timeline-ghost') as HTMLElement).className).not.toContain('timeline-ghost-clash')
 })
+
+// Rotating shifts, v2.29 stage 9 - docs/RESEARCH-SHIFTS.md section 3.3.
+test("last night's shift runs on at the top of the morning, named for yesterday and not one of the day's tasks", () => {
+  render(<TimelineGrid tasks={[anchor('Walk', '10:00', 30)]} carried={[{ id: 'n', title: 'Night shift', end: 360 }]} />)
+  expect(screen.getByText('Night shift, from yesterday')).toBeInTheDocument()
+  expect(screen.getByText('until 06:00')).toBeInTheDocument()
+  // Not a block of the day's: nothing to press, drag or tick.
+  expect(screen.queryByRole('button', { name: /Night shift/ })).toBeNull()
+})
+
+// A wide day is fitted to the room it has, and a full one is drawn at nought
+// pixels a minute, where only a block's floor keeps a block on the page. Last
+// night's shift is kept there on a block's floor with the rest - it vanished
+// the first time it was drawn on a full day, an empty morning at nought
+// pixels a minute taking the shift's last hours with it.
+test("last night's shift keeps a block's room when a full day is fitted to the screen", () => {
+  // Eight blocks and a short window: their floors alone take the room.
+  const height = window.innerHeight
+  Object.defineProperty(window, 'innerHeight', { value: 300, configurable: true })
+  try {
+    const day = ['08', '09', '10', '11', '12', '13', '14', '15'].map(h => anchor(`Block ${h}`, `${h}:00`, 30))
+    render(<TimelineGrid tasks={day} carried={[{ id: 'n', title: 'Night shift', end: 360 }]} isWide />)
+    const band = screen.getByText('Night shift, from yesterday').closest('.timeline-carried') as HTMLElement
+    expect(parseFloat(band.style.height)).toBeGreaterThanOrEqual(32)
+  } finally {
+    Object.defineProperty(window, 'innerHeight', { value: height, configurable: true })
+  }
+})

@@ -6,6 +6,7 @@ import {
   DEFAULT_EVENING_CLOSE,
   eveningSummary,
   pushableAtClose,
+  stillAhead,
   shouldClose,
 } from '../../lib/eveningClose'
 import { requestCloudBackup } from '../../lib/cloudBackup'
@@ -57,7 +58,10 @@ export function EveningClose({ date }: { date: string }) {
   if (!open || !summary) return null
 
   const { signature } = parseNorth(data.picture?.text ?? '')
-  const unfinished = pushableAtClose(day)
+  // What is still tonight's - a shift that starts at ten, a class running now -
+  // is not unfinished, and the push leaves it where it is.
+  const ahead = stillAhead(day, nowMinutes)
+  const unfinished = pushableAtClose(day, ahead)
 
   function close() {
     rememberDismissed(date)
@@ -101,7 +105,7 @@ export function EveningClose({ date }: { date: string }) {
             type="button"
             className="evening-close-push"
             onClick={() => {
-              actions.rolloverUnfinished(date)
+              actions.rolloverUnfinished(date, ahead)
               setPushOffered(true)
             }}
           >

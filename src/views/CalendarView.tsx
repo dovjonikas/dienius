@@ -700,7 +700,21 @@ export function CalendarView({
                         setOpenDate(cell.key)
                       }}
                     >
-                      <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
+                      {/* The date, and a kind of day as its letter right
+                          after it on the date it is stamped on, the way the
+                          roster drew it - a rota read as letters, not only as
+                          colours. One line, so the letter goes wherever the
+                          number does: to the left edge on a wide screen,
+                          centred on a phone. In the roster the letter is the
+                          cell's whole word, below. */}
+                      <span className="cell-head">
+                        <span className="cell-num" aria-hidden="true">{Number(cell.key.slice(8))}</span>
+                        {!roster && template?.dayKind && (
+                          <span className="kind-mark cell-kind-mark" aria-hidden="true">
+                            {template.dayKind.letter}
+                          </span>
+                        )}
+                      </span>
                       {/* The letter, where the day's lines would start: in the
                           roster a date is read as its kind, and the lines are
                           what it will be made of once it is applied. */}

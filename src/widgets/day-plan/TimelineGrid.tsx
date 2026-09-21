@@ -26,6 +26,7 @@ import {
   sleepBandsIn,
   sleepSentence,
   widenToHold,
+  type TimelineAnchorBlock,
 } from './timelineLayout'
 import { useAvailableGridHeight } from './useAvailableGridHeight'
 import { usePointerCoarse } from '../../lib/viewport'
@@ -411,6 +412,14 @@ export interface TimelineGridProps {
    */
   hideHours?: boolean
   /**
+   * Last night's blocks still running this morning - rotating shifts, v2.29
+   * stage 9, and docs/RESEARCH-SHIFTS.md section 3.3. Drawn at the top of the
+   * day from midnight to where each ends, named for what it is - "Night shift,
+   * from yesterday" - and not a block of this day's: nothing to press, drag or
+   * tick, because it is yesterday's task.
+   */
+  carried?: { id: string; title: string; end: number; color?: string }[]
+  /**
    * The day's own type, if it has one - decides which of `sleep`'s two
    * windows the grid's greyed sleep band and every position on it are
    * measured against, exactly the way `computeCapacity` already picks
@@ -510,11 +519,12 @@ export function TimelineGrid({
   clashIds,
   ghostKey,
   hideHours = false,
+  carried = [],
 }: TimelineGridProps) {
   // A day with nothing anchored still gets a grid - see emptyDayLayout.
   // The alternative is a blank column beside a full task list, with nowhere
   // to drop any of it.
-  const derived = computeTimelineLayout(tasks, sleepProfileId, sleep)
+  const derived = computeTimelineLayout(tasks, sleepProfileId, sleep, carried)
   const layout = derived.displayWindow ? derived : emptyDayLayout(sleepProfileId, sleep)
   const isEmptyDay = derived.displayWindow === null
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -649,6 +659,30 @@ export function TimelineGrid({
   const openGap = gaps.find(g => g.startMinutes === openGapStart)
   const sleepWords = sleepSentence(wakingDayFor(sleepProfileId, sleep))
 
+  // Last night's blocks in the vertical map beside the day's own, so the
+  // continuation keeps a block's floor when a wide day is fitted to its room.
+  // A full day is fitted at nought pixels a minute, where an empty morning is
+  // nothing, and the shift's last hours went with it the first time one was
+  // drawn on one. They are not the day's blocks anywhere else - not in its
+  // gaps, its columns or its hour labels.
+  const carriedBlocks: TimelineAnchorBlock[] = carried
+    .map(c => Math.min(c.end, window.end))
+    .filter(end => end > window.start)
+    .map((end, i) => ({
+      id: `carried-${i}`,
+      title: '',
+      time: '00:00',
+      minutes: end - window.start,
+      sized: true,
+      startMinutes: window.start,
+      endMinutes: end,
+      clippedEnd: false,
+      clippedStart: false,
+      column: 0,
+      columns: 1,
+    }))
+  const measured = carriedBlocks.length > 0 ? [...carriedBlocks, ...anchors] : anchors
+
   // At the wide breakpoint, draw denser than the phone's own fixed density
   // whenever there is real, measured room to use it - see
   // chooseWidePxPerMinute's own doc comment and fix-fill-viewport-height-
@@ -694,7 +728,7 @@ export function TimelineGrid({
   const pxPerMinute = isWide
     ? fitPxPerMinute(
         window,
-        anchors,
+        measured,
         floors,
         Math.max(0, (availableHeightPx ?? 0) - GRID_SCROLL_PADDING_PX),
         MAX_PX_PER_MINUTE_WIDE,
@@ -702,7 +736,7 @@ export function TimelineGrid({
       )
     : PX_PER_MINUTE
 
-  const vertical = computeVerticalLayout(window, anchors, { pxPerMinute, ...floors })
+  const vertical = computeVerticalLayout(window, measured, { pxPerMinute, ...floors })
   const heightPx = Math.round(vertical.totalHeightPx)
   const labelledMarks = legibleHourLabels(marks, vertical.topPx, MIN_HOUR_LABEL_GAP_PX, anchors)
   // A minute inside sleep, not at its edge - see the hour rules below.
@@ -822,6 +856,24 @@ export function TimelineGrid({
                 the actual boundary time is said once, in real text, by the
                 visually-hidden sentence below the grid - this label names
                 what the shape is, that sentence states when it is. */}
+            {/* Last night's shift, running on into this morning: from the top
+                of the drawn day to where it ends, under the day's own blocks. */}
+            {carried.map(c => {
+              const top = vertical.topPx(window.start)
+              const bottom = vertical.topPx(Math.min(c.end, window.end))
+              if (bottom <= top) return null
+              return (
+                <div
+                  key={`carried-${c.id}`}
+                  className="timeline-carried"
+                  style={{ top: `${top}px`, height: `${bottom - top}px`, ...(c.color ? { ['--cat' as string]: c.color } : {}) } as React.CSSProperties}
+                >
+                  <span className="timeline-carried-title">{c.title}, from yesterday</span>
+                  <span className="timeline-carried-until">until {formatClock(c.end)}</span>
+                </div>
+              )
+            })}
+
             {sleepBands.map(band => {
               const bandTop = vertical.topPx(band.start)
               const bandHeightPx = vertical.topPx(band.end) - bandTop
@@ -1164,6 +1216,13 @@ export function TimelineGrid({
           the setting is still true regardless of what today's anchors leave
           room to show. */}
       {sleepWords && <p className="visually-hidden">{sleepWords}</p>}
+      {/* The continuation in words, for the same reason the sleep is: the
+          layer it is drawn on is decorative and hidden from a reader. */}
+      {carried.length > 0 && (
+        <p className="visually-hidden">
+          {carried.map(c => `${c.title}, from yesterday, until ${formatClock(c.end)}.`).join(' ')}
+        </p>
+      )}
 
       {unsizedAnchorCount > 0 && (
         <p className="timeline-note">Gaps are not shown - not every timed task above has a size yet.</p>

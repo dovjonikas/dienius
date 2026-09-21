@@ -188,7 +188,15 @@ export function DayHeader({
   // What the day came from.
   const chip = template && (
     <span className="day-template" style={{ ['--chip' as string]: template.color } as React.CSSProperties}>
-      <span className="template-chip-dot" aria-hidden="true" />
+      {/* A kind of day as its letter, where the dot stands - the roster
+          draws a date by its letter, and the day it makes says the same. */}
+      {template.dayKind ? (
+        <span className="kind-mark" aria-hidden="true">
+          {template.dayKind.letter}
+        </span>
+      ) : (
+        <span className="template-chip-dot" aria-hidden="true" />
+      )}
       {template.name}
     </span>
   )

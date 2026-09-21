@@ -364,10 +364,17 @@ export function computeTimelineLayout(
   tasks: Task[],
   sleepProfileId?: string,
   sleep?: SleepSettings,
+  /**
+   * Last night's blocks still running this morning, by where each ends on this
+   * day's clock - rotating shifts, v2.29 stage 9. Not this day's tasks, and not
+   * laid out as blocks; they open the drawn day at midnight so the grid can
+   * draw them at its top (docs/RESEARCH-SHIFTS.md section 3.3).
+   */
+  carried: readonly { end: number }[] = [],
 ): TimelineLayout {
   const anchors = tasks.filter(isAnchor).slice().sort((a, b) => a.time!.localeCompare(b.time!))
 
-  if (anchors.length === 0) {
+  if (anchors.length === 0 && carried.length === 0) {
     return { window: null, displayWindow: null, anchors: [], gaps: [], unsizedAnchorCount: 0, sleepBands: [] }
   }
 
@@ -377,9 +384,12 @@ export function computeTimelineLayout(
   const effectiveEndsForWindow = anchors.map((a, i) =>
     a.minutes !== undefined ? starts[i] + a.minutes : starts[i],
   )
+  // Midnight to where each of last night's blocks ends, beside the day's own.
+  const drawnStarts = [...starts, ...carried.map(() => 0)]
+  const drawnEnds = [...effectiveEndsForWindow, ...carried.map(c => Math.min(DAY_MINUTES, c.end))]
   const window: Interval = {
-    start: Math.max(0, Math.min(...starts) - DISPLAY_BUFFER_MINUTES),
-    end: Math.min(DAY_MINUTES, Math.max(...effectiveEndsForWindow) + DISPLAY_BUFFER_MINUTES),
+    start: Math.max(0, Math.min(...drawnStarts) - DISPLAY_BUFFER_MINUTES),
+    end: Math.min(DAY_MINUTES, Math.max(...drawnEnds) + DISPLAY_BUFFER_MINUTES),
   }
 
   const blocks: TimelineAnchorBlock[] = anchors.map((task, i) => {
@@ -418,12 +428,14 @@ export function computeTimelineLayout(
 
   assignColumns(blocks)
 
-  const gaps = unsizedAnchorCount > 0 ? [] : computeInteriorGaps(anchors, window)
+  // No gaps offered on a day whose only thing is last night's shift: the
+  // interior between blocks is the day's own, and it has none yet.
+  const gaps = unsizedAnchorCount > 0 || anchors.length === 0 ? [] : computeInteriorGaps(anchors, window)
 
   const waking = windowFor(sleepProfileId, sleep)
   const displayWindow = extendTowardSleepBoundary(window, waking, {
-    start: Math.min(...starts),
-    end: Math.max(...effectiveEndsForWindow),
+    start: Math.min(...drawnStarts),
+    end: Math.max(...drawnEnds),
   })
   const sleepBands = sleepBandsIn(displayWindow, wakingDayFor(sleepProfileId, sleep))
 

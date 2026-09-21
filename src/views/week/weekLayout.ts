@@ -41,9 +41,25 @@ export interface WeekBlock {
   lanes: number
 }
 
+/**
+ * Last night's block, still running on this date - rotating shifts, v2.29
+ * stage 9, and docs/RESEARCH-SHIFTS.md section 3.3. It is the date it starts
+ * on, and a block there; on the date after, it is drawn from midnight to
+ * where it ends, and it is not one of the day's blocks.
+ */
+export interface WeekCarried {
+  task: Task
+  /** Where it ends, on this date's clock. */
+  endMinutes: number
+  topPercent: number
+  heightPercent: number
+}
+
 export interface WeekDayLayout {
   date: string
   blocks: WeekBlock[]
+  /** Last night's blocks running on into this date - see WeekCarried. */
+  carried: WeekCarried[]
   /** Tasks with no time. They are counted in the footer, never drawn on the grid. */
   untimed: Task[]
   /** The day's own waking window, which may be narrower than the shared axis. */
@@ -74,7 +90,14 @@ export interface WeekLayout {
  * the axis stretches to cover it. A 05:00 flight is exactly the sort of thing
  * somebody opens a week view to look at.
  */
-export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sleep: SleepSettings, sleepFor?: SleepFor): Interval {
+export function sharedWindow(
+  days: DayPlan[] | undefined[],
+  dates: string[],
+  sleep: SleepSettings,
+  sleepFor?: SleepFor,
+  carriedFor?: CarriedFor,
+  openAtMidnight = true,
+): Interval {
   let start = Infinity
   let end = -Infinity
   dates.forEach((date, i) => {
@@ -82,6 +105,10 @@ export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sle
     const w = windowOf(date, sleep, sleepFor)
     start = Math.min(start, w.start)
     end = Math.max(end, w.end)
+    // Last night's shift runs from this date's midnight, so the axis opens
+    // there - the same stretch a 05:00 flight gets, for the same reason -
+    // where the caller has the room for the whole clock. See WeekView.
+    if (openAtMidnight && (carriedFor?.(date) ?? []).length > 0) start = 0
     for (const task of day?.tasks ?? []) {
       if (!isAnchor(task)) continue
       const from = timeToMinutes(task.time!)
@@ -104,6 +131,15 @@ export function sharedWindow(days: DayPlan[] | undefined[], dates: string[], sle
  */
 export type SleepFor = (date: string) => { profileId: string | undefined; sleep: SleepSettings }
 
+/**
+ * Each date's share of last night's blocks, by where each ends on its clock -
+ * `carriedInto` in lib/shiftDay.ts, which the week view hands in. Without one
+ * nothing is carried, which is all a test with no plan needs.
+ */
+export type CarriedFor = (date: string) => { task: Task; end: number }[]
+
+const DAY_MINUTES = 24 * 60
+
 function windowOf(date: string, sleep: SleepSettings, sleepFor: SleepFor | undefined): Interval {
   const own = sleepFor?.(date)
   return own ? windowFor(own.profileId, own.sleep) : windowFor(undefined, sleep)
@@ -114,9 +150,18 @@ export function computeWeekLayout(
   days: Record<string, DayPlan>,
   sleep: SleepSettings,
   sleepFor?: SleepFor,
+  carriedFor?: CarriedFor,
+  opts: {
+    /**
+     * Whether a carried block opens the axis at midnight. A phone's three
+     * columns keep their waking axis instead and draw what of the
+     * continuation it reaches - see WeekView.
+     */
+    openAtMidnight?: boolean
+  } = {},
 ): WeekLayout {
   const plans = dates.map(d => days[d])
-  const window = sharedWindow(plans, dates, sleep, sleepFor)
+  const window = sharedWindow(plans, dates, sleep, sleepFor, carriedFor, opts.openAtMidnight ?? true)
   const span = window.end - window.start
 
   return {
@@ -145,6 +190,18 @@ export function computeWeekLayout(
         window: own,
         wakeTopPercent: clamp(((own.start - window.start) / span) * 100),
         wakeHeightPercent: clamp(((own.end - own.start) / span) * 100),
+        carried: (carriedFor?.(date) ?? [])
+          .map(({ task, end }) => {
+            const endMinutes = Math.min(DAY_MINUTES, end)
+            return {
+              task,
+              endMinutes,
+              topPercent: clamp(((0 - window.start) / span) * 100),
+              heightPercent: clamp(((endMinutes - Math.max(0, window.start)) / span) * 100),
+            }
+          })
+          // What ended before the axis begins has nothing on it to draw.
+          .filter(c => c.heightPercent > 0),
         blocks: laned.map(b => ({
           ...b,
           topPercent: clamp(((b.startMinutes - window.start) / span) * 100),

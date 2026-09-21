@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { carriedInto, runningOn, sleepOn } from '../../lib/shiftDay'
+import { categoryColor } from '../../lib/categories'
 import { awayOn, awaySince } from '../../lib/away'
 import { ownedSleep } from '../../lib/wakingDay'
 import { realMinutes } from '../../lib/wallClock'
@@ -403,6 +404,12 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
               isWide={isWide}
               sleepProfileId={daySleepProfileId}
               events={events}
+              carried={carriedInto(data, date).map(c => ({
+                id: c.task.id,
+                title: c.task.title,
+                end: c.end,
+                color: c.task.category ? categoryColor(c.task.category, data.categories) : undefined,
+              }))}
               onOpenTaskDetails={setDetailTaskId}
               onTaskContextMenu={(taskId, x, y) => setContextMenu({ taskId, x, y })}
               sleep={sleep}

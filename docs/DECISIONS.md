@@ -4065,6 +4065,50 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## The morning after a night shift, and a kind by its letter
+
+v2.29 stage 9, from docs/RESEARCH-SHIFTS.md sections 3.3 and 5.
+
+**Last night's shift is yesterday's, and the morning shows what it is still
+doing.** A block belongs to the date it starts on, so the day after draws the
+shift's last hours at the top of its grid as a band named for yesterday, never
+as a block of today's: there is nothing on it to tick, push or drag, because
+none of that is today's to do. The week does the same in the next column.
+
+**The band keeps a block's room.** A wide day is fitted to one screen, and a
+full one is drawn at nought pixels a minute where only a block's floor keeps a
+block on the page; the band was drawn from the minutes and disappeared on the
+first full day it met. It is measured with the day's blocks now, and has their
+floor.
+
+**The drawn day opens at midnight.** Both on the day and in the week, whenever
+something is carried - the same stretch a 05:00 flight already gets. A week of
+day shifts with one night in it is drawn over the whole clock, which is what
+that week is.
+
+**A phone's week keeps its waking axis.** Three columns fitted to a phone
+gave the whole clock nine pixels an hour: the phone's sweep found twenty-four
+blocks drawn under the one before them and two hour labels on top of each
+other. A floor of room per hour was tried and taken out again - it made the
+ordinary week scroll on a small phone, which the week is built never to do.
+On a phone the week opens at midnight for nothing, draws what of a
+continuation its waking axis reaches, and leaves the rest to the day, which
+draws all of it.
+
+**A kind is its letter everywhere its date is drawn.** The roster lays a
+month out as letters; the day, the week and the month drew the same dates as a
+template's dot and name, so a rota came back as colours. The letter stands
+where the dot stood, and in the month right after the date.
+
+**The app does not guess, so it says why.** A routine that lands with no time
+says why in the time's place, in the time's register - it needs one on this
+kind, or its time runs into a block or into sleep, or the clock skips it that
+night. That is the whole of what section 5's conflicts show on a day.
+
+**The evening close pushes only what is behind it.** From half past nine on a
+night-shift day the shift has not begun; a block running now has not ended.
+Both are tonight's, and the close leaves them where they are.
+
 ## Every start corner lines up with another
 
 Between the eighth and the ninth stage of rotating shifts, three messages from

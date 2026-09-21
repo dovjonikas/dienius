@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_EVENING_CLOSE, eveningSummary, isEnough, pushableAtClose, shouldClose } from './eveningClose'
+import { DEFAULT_EVENING_CLOSE, eveningSummary, isEnough, pushableAtClose, shouldClose, stillAhead } from './eveningClose'
 import type { DayPlan, Task } from './types'
 
 const DATE = '2026-09-01'
@@ -147,5 +147,26 @@ describe('the offer to push', () => {
     expect(pushableAtClose(day([{ done: true }, {}, {}]))).toBe(2)
     expect(pushableAtClose(day([{ done: true }]))).toBe(0)
     expect(pushableAtClose(undefined)).toBe(0)
+  })
+
+  // Rotating shifts, v2.29 stage 9: the card shows from half past nine, and on
+  // a night-shift day the shift starts at ten. What has not started yet, and
+  // what is still happening, is not unfinished - it is tonight's.
+  it('leaves out what is still to come tonight, and what is happening now', () => {
+    const night = day([{ title: 'Paperwork' }, { title: 'Night shift', time: '22:00', minutes: 480 }, { title: 'Class', time: '21:00', minutes: 90 }, { title: 'Walk', time: '17:00', minutes: 30 }, { title: 'Dinner', time: '23:00', done: true }])
+    // At 21:40: the shift has not begun, the class is running, and the walk
+    // and the paperwork are what did not happen.
+    expect(stillAhead(night, 21 * 60 + 40)).toEqual(['t1', 't2'])
+    expect(pushableAtClose(night, stillAhead(night, 21 * 60 + 40))).toBe(2)
+    // Once the class is over it is unfinished like anything else.
+    expect(stillAhead(night, 22 * 60 + 40)).toEqual(['t1'])
+    expect(stillAhead(undefined, 21 * 60)).toEqual([])
+  })
+
+  // A time with no length is still a time: "22:00 Call home" at 21:40 has not
+  // happened yet whatever it takes, and it is not what the day failed to do.
+  it('leaves out a task later tonight that has a time and no length', () => {
+    const evening = day([{ title: 'Call home', time: '22:00' }, { title: 'Walk', time: '17:00' }])
+    expect(stillAhead(evening, 21 * 60 + 40)).toEqual(['t0'])
   })
 })

@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 8 of 10 done, and an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts, stage 9 of 10 done, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,48 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 9 - the day, the week and the month with kinds: done
+
+- **The morning after a night shift** draws the shift's last hours at the top
+  of the day's grid - "Night shift, from yesterday", "until 06:00" - and at the
+  top of the next column in the week. Not a block of the day's: nothing to
+  press, drag or tick. The drawn day, and the week's axis on a wide screen,
+  open at midnight for it, and on a wide day fitted to one screen the band keeps
+  a block's floor.
+- **A kind is its letter** in the day's masthead chip and the week's column
+  chip, where the dot stood, and right after the date in the month.
+- **A routine with no time says why**, in the time's place on its row: "Needs a
+  time on Day shift", "Runs into On shift", "Runs into sleep", "The clock skips
+  03:30 that night".
+- **The evening close** leaves a task still to come tonight, and one running
+  now, off what it offers to push.
+- **A phone's week keeps its waking axis** and draws what of a continuation
+  that axis reaches; the day draws all of it. Opened at midnight, three columns
+  fitted to a phone gave an hour nine pixels, and the phone's sweep found
+  twenty-four blocks covered and two hour labels on each other. A floor of room
+  per hour was tried first and made the ordinary week scroll on a small phone.
+- The morning after a night shift was the first screen the precision pass saw
+  yesterday's notice on, and its Dismiss stood its word 12px in from the
+  notice's edge; it stands on it now.
+- Found in passing, and left for its own task: a running Focus session's bar
+  squeezes a phone's week to about a hundred pixels, where every block and hour
+  label lands on the next. The sweep's two new screens clear a session an
+  earlier screen left running, since they measure the morning after a night
+  shift and nothing else.
+
+New tests: `Continuation.test.tsx`, `RoutineNotes.test.tsx` and
+`KindLetters.test.tsx`; the carried band in `timelineLayout.test.ts` and
+`TimelineGrid.test.tsx` - the last on a full day fitted to a short window,
+which is how the band was found missing in the first picture; the week's in
+`weekLayout.test.ts` and `WeekView.test.tsx`; `stillAhead` in
+`eveningClose.test.ts` and `EveningClose.test.tsx`. A mutation pass broke
+twenty rules; four lived at first - a task later tonight with no length,
+"Runs into sleep", the skipped clock, and a routine at its time given a note -
+and each has its test now. Precision, sweep and text scale have the morning
+after a night shift on the day and in the week. The new styles are drawn the
+new way: the category's edge as a shadow inside the box, no pixel floor, and
+the tight leading token - the design ratchet caught all three.
 
 ### Between stages 8 and 9 - every start corner on another: done
 

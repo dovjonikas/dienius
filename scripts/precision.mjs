@@ -100,6 +100,11 @@ const SCREENS = [
   { name: 'Kitchen (to a template)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Add to template', exact: true }).click() } },
   { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },
   { name: 'Settings', go: p => tab(p, 'Settings') },
+  // The morning after a night shift, rotating shifts stage 9: the shift's
+  // last hours at the top of the day's grid and of the week's column. The
+  // shift stays on yesterday for every screen after these.
+  { name: 'Today (after a night shift)', go: async p => { await nightShiftYesterday(p); await tab(p, 'Today') } },
+  { name: 'Calendar week (after a night shift)', go: async p => { await nightShiftYesterday(p); await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Week', exact: true }).click() } },
   // The owner's own case: nothing in the library yet, so the list's answer is
   // the worded New list rather than a select. Last, because it empties the
   // demo's library for every screen after it in the same context.
@@ -108,6 +113,35 @@ const SCREENS = [
 
 /** @param {Page} p @param {string} name */
 const tab = (p, name) => p.getByRole('navigation', { name: 'Views' }).getByRole('button', { name, exact: true }).click()
+
+/**
+ * Last night's shift on yesterday - 22:00 for eight hours, in the plan the page
+ * holds - and the page opened again, so the morning after draws its
+ * continuation. Rotating shifts, stage 9.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function nightShiftYesterday(page) {
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('dienius:demo') ?? '{}')
+    const now = new Date()
+    const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+    const date = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`
+    const day = d.days[date] ?? { date, tasks: [] }
+    if (!day.tasks.some((/** @type {{ id: string }} */ t) => t.id === 'night-shift')) {
+      day.tasks.push({ id: 'night-shift', title: 'Night shift', time: '22:00', minutes: 480, done: false, category: 'core' })
+    }
+    d.days[date] = day
+    localStorage.setItem('dienius:demo', JSON.stringify(d))
+    // A focus session or a timer an earlier screen left running stands its
+    // bar over the page on every screen after it; this one is the morning
+    // after a night shift and nothing else.
+    localStorage.removeItem('dienius:clock-tools')
+  })
+  await page.reload()
+  await page.waitForSelector('nav')
+}
+
 
 /** @param {Page} page */
 const measure = page => page.evaluate(([offCentre, rhythm, nearMiss]) => {

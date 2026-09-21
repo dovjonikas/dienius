@@ -4,7 +4,7 @@ import { addDays, formatWeekTitle, shortWeekday, todayKey, weekOf } from '../../
 import { CopyJournalButton } from '../CopyJournalButton'
 import { weekdayOf } from '../../lib/repeats'
 import { dayStat } from '../../lib/dayStats'
-import { sleepOn } from '../../lib/shiftDay'
+import { carriedInto, sleepOn } from '../../lib/shiftDay'
 import { categoryColor } from '../../lib/categories'
 import { formatDuration } from '../../widgets/day-plan/capacity'
 import { currentMinutes, formatClock } from '../../widgets/day-plan/timelineLayout'
@@ -122,9 +122,18 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
 
   const calendarCache = useCalendarCache()
 
+  // Last night's shift on the morning after, at the top of that column -
+  // rotating shifts, stage 9, and RESEARCH-SHIFTS section 3.3.
+  const carriedFor = useMemo(() => (day: string) => carriedInto(data, day), [data])
+
+  // The whole clock is opened for it on a wide screen only. Three columns
+  // fitted to a phone gave the whole clock nine pixels an hour, and the
+  // blocks and the hour labels piled on each other; there the week keeps its
+  // waking axis and draws what of the continuation that axis reaches, and the
+  // day draws all of it.
   const layout = useMemo(
-    () => computeWeekLayout(visible, data.days, { profiles: data.settings.sleepProfiles }, sleepFor),
-    [visible, data.days, data.settings.sleepProfiles, sleepFor],
+    () => computeWeekLayout(visible, data.days, { profiles: data.settings.sleepProfiles }, sleepFor, carriedFor, { openAtMidnight: isWide }),
+    [visible, data.days, data.settings.sleepProfiles, sleepFor, carriedFor, isWide],
   )
 
   const detailTask = detailDate && detailTaskId

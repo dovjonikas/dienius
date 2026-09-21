@@ -967,3 +967,16 @@ test('a candidate running past the end grows it at the back', () => {
 test('a candidate with no length takes a moment rather than a stretch', () => {
   expect(widenToHold(DRAWN, 240, undefined)).toEqual({ start: 240, end: 1320 })
 })
+
+// Rotating shifts, v2.29 stage 9 - docs/RESEARCH-SHIFTS.md section 3.3. Last
+// night's block still running this morning is drawn at the top of the day, so
+// the drawn day opens at midnight when there is one - and a day with nothing
+// of its own but last night's shift is still a day with something to draw.
+test("last night's block running on this morning opens the drawn day at midnight", () => {
+  const layout = computeTimelineLayout([anchor('Walk', '10:00', 30)], undefined, undefined, [{ end: 360 }])
+  expect(layout.displayWindow!.start).toBe(0)
+
+  const alone = computeTimelineLayout([], undefined, undefined, [{ end: 360 }])
+  expect(alone.displayWindow!.start).toBe(0)
+  expect(alone.displayWindow!.end).toBeGreaterThanOrEqual(360)
+})

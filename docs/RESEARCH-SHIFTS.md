@@ -386,6 +386,33 @@ today - the result is identical.
 - **Conflicts** (section 5) and **the property tests** (section 8) read the
   same busy time the day view draws, from one function.
 
+**Stage 9, as built.**
+
+- The day's grid takes last night's blocks as `carried` (`carriedInto`,
+  shiftDay.ts) and opens the drawn day at midnight for them. The band runs from
+  the top to where each ends, "Night shift, from yesterday" and "until 06:00",
+  in a done block's quiet with the category's edge; nothing on it is pressed,
+  dragged or ticked, and the same words are said once in a sentence a reader
+  hears, since the layer it is drawn on is decorative. It is in the vertical
+  map beside the day's own blocks with a block's floor: a wide day is fitted to
+  its room, a full one at nought pixels a minute, and there an empty morning -
+  and the shift's last hours with it - was nothing.
+- The week takes the same, per column, and on a wide screen its shared axis
+  opens at midnight when a column carries one; the band stands at the top of
+  the morning's column, the block in the evening's. A phone's three columns
+  keep their waking axis - the whole clock fitted to a phone is nine pixels an
+  hour - and draw what of the continuation that axis reaches.
+- A kind is its letter wherever its date is drawn: in the day's masthead chip
+  and the week's column chip where the dot stood, and right after the date in
+  the month. The start date only, by the midnight rule.
+- A routine's task with no time says why, in the time's place
+  (`routineNotes`): "Needs a time on Day shift", "Runs into On shift" or
+  "Runs into sleep", and "The clock skips 03:30 that night". Section 5's
+  conflicts on the day are this.
+- The evening close offers to push only what is behind it: a timed task that
+  has not started yet (with a length or without) or is running now is
+  tonight's, not unfinished (`stillAhead`, eveningClose.ts).
+
 ### 3.4 Clock values past midnight
 
 - A block's `time` is its start on its own date's clock, `00:00` to `23:59`, as

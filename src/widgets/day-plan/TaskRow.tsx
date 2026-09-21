@@ -38,6 +38,12 @@ export interface TaskRowProps {
   task: Task
   isFullDay: boolean
   /**
+   * Why a routine's task has no time on this day - "Needs a time on Day
+   * shift", "Runs into On shift" - worked out by the list from the day's
+   * kind (`routineNotes`). Absent for everything else.
+   */
+  routineNote?: string
+  /**
    * True while this row is playing its finishing animation on the way down
    * to the Done section - see `DONE_LEAVE_MS` in `DayView.tsx`, which owns
    * both the timing and which row it applies to. Purely a class on the card;
@@ -126,6 +132,7 @@ export interface TaskRowProps {
 export function TaskRow({
   task,
   isFullDay,
+  routineNote,
   leaving = false,
   active = false,
   onFocus,
@@ -345,6 +352,10 @@ export function TaskRow({
         </label>
         <div className="task-meta">
           {task.time && <span className="task-time">{task.time}</span>}
+          {/* Where a routine has no time, why - it needs one on this kind of
+              day, or its time runs into something. In the time's place, since
+              it is the answer to where the time went. */}
+          {routineNote && <span className="task-routine-note">{routineNote}</span>}
           {/* The category, named rather than left as colour alone - the edge
               carries it at a glance, this carries it for anyone who cannot
               use the colour, and both say the same thing. */}

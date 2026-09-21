@@ -271,6 +271,33 @@ function place(routine: Routine, date: string, kind: Template, busy: Busy[]): Pl
  * date by hand (`routineSkips`). A date with no kind has none: the roster is
  * what routines follow.
  */
+/**
+ * Why each routine on a date has no time there, in the words the day says it -
+ * rotating shifts, v2.29 stage 9, and section 2.3. The app never guesses a
+ * time, so a routine that landed without one has to say why: its kind has no
+ * time for it, its time runs into something, or the clock skips its time that
+ * night. Keyed by routine id; a routine at its time has no entry, and a date
+ * with no kind has none at all. Read the way composition placed them - the
+ * date's kind and the busy time around it - so the day says what the rule did.
+ */
+export function routineNotes(data: AppData, date: string, today?: string): Map<string, string> {
+  const notes = new Map<string, string>()
+  const kind = kindOnDate(data, date)
+  if (!kind) return notes
+  const kindOf: KindOf = on => kindOnDate(data, on)
+  for (const placement of placeRoutines(data, date, kind, busyOn(data, date, kindOf, today))) {
+    if (!('reason' in placement)) continue
+    if ('into' in placement) {
+      notes.set(placement.routine.id, `Runs into ${placement.into.kind === 'sleep' ? 'sleep' : placement.into.title}`)
+    } else if (placement.reason === 'clock-skips') {
+      notes.set(placement.routine.id, `The clock skips ${placement.routine.times[kind.id]} that night`)
+    } else {
+      notes.set(placement.routine.id, `Needs a time on ${kind.name}`)
+    }
+  }
+  return notes
+}
+
 export function placeRoutines(data: AppData, date: string, kind: Template | undefined, busy: Busy[]): Placement[] {
   if (!kind) return []
   const weekday = weekdayOf(date)

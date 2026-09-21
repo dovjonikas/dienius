@@ -204,3 +204,42 @@ test('a click above the top does not land before it', () => {
   const window = { start: 7 * 60, end: 23 * 60 }
   expect(timeAtPercent(-20, window)).toBe('07:00')
 })
+
+// Rotating shifts, v2.29 stage 9 - docs/RESEARCH-SHIFTS.md section 3.3. A
+// block belongs to the date it starts on, so Monday's night shift is drawn in
+// Monday's column; what runs on past midnight stands at the top of Tuesday's,
+// and the axis opens at midnight so that there is room for it.
+test("last night's block runs on at the top of the next column, and the axis opens at midnight", () => {
+  const night = task({ title: 'Night shift', time: '22:00', minutes: 480 })
+  const carriedFor = (date: string) => (date === TUE ? [{ task: night, end: 360 }] : [])
+  const layout = computeWeekLayout(WEEK, days({ [MON]: [night] }), SLEEP, undefined, carriedFor)
+  expect(layout.window.start).toBe(0)
+  const [on] = layout.days[1].carried
+  expect(on.task.title).toBe('Night shift')
+  expect(on.endMinutes).toBe(360)
+  expect(on.topPercent).toBe(0)
+  expect(on.heightPercent).toBeCloseTo((360 / layout.window.end) * 100)
+  expect(layout.days[0].carried).toEqual([])
+})
+
+// A phone's three columns keep their waking axis: the whole clock fitted to
+// a phone left an hour nine pixels. What of the continuation that axis
+// reaches is drawn; a shift that ended before it begins is the day's to show.
+test('a week that does not open at midnight draws the continuation only where its axis reaches', () => {
+  const night = task({ title: 'Night shift', time: '22:00', minutes: 480 })
+  const late = task({ title: 'Late shift', time: '23:00', minutes: 540 })
+  const ended = computeWeekLayout(WEEK, days({ [MON]: [night] }), SLEEP, undefined, date => (date === TUE ? [{ task: night, end: 360 }] : []), { openAtMidnight: false })
+  expect(ended.window.start).toBe(7 * 60)
+  expect(ended.days[1].carried).toEqual([])
+
+  const reaching = computeWeekLayout(WEEK, days({ [MON]: [late] }), SLEEP, undefined, date => (date === TUE ? [{ task: late, end: 480 }] : []), { openAtMidnight: false })
+  const [on] = reaching.days[1].carried
+  expect(on.topPercent).toBe(0)
+  expect(on.heightPercent).toBeCloseTo((60 / (reaching.window.end - reaching.window.start)) * 100)
+})
+
+test('a week with nothing carried keeps its waking axis', () => {
+  const layout = computeWeekLayout(WEEK, {}, SLEEP, undefined, () => [])
+  expect(layout.window).toEqual({ start: 7 * 60, end: 23 * 60 })
+  expect(layout.days.every(d => d.carried.length === 0)).toBe(true)
+})

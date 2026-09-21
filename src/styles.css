@@ -2050,6 +2050,50 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   mask-image: none;
 }
 
+/* Last night's shift, running on into the morning - rotating shifts, v2.29
+   stage 9, and docs/RESEARCH-SHIFTS.md section 3.3. A block's shape in the
+   quiet a done block has, because it is not one of today's: the category's
+   wash at the done strength and its edge down the left, where the blocks
+   stand, from the top of the drawn day to where it ends. The edge is a
+   shadow inside the box rather than a border - a new thing is not drawn
+   the retired way - and the words stand where a block's do, the edge's
+   width and a block's padding in. Nothing to press: no ground under the
+   pointer, and the pointer goes through it. */
+.timeline-carried {
+  position: absolute;
+  left: var(--timeline-gutter);
+  /* Where a block's right edge stands: a column is drawn 4px short of its
+     share, the gap between two blocks side by side - see TimelineGrid. */
+  right: var(--s1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: var(--s0);
+  padding: 6px var(--s2) 6px var(--s3);
+  overflow: hidden;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--cat, var(--muted)) 12%, var(--surface));
+  box-shadow: inset var(--s1) 0 0 var(--cat, var(--muted));
+  color: var(--text);
+  font-size: var(--t-sm);
+  pointer-events: none;
+  /* Over the sleep wash drawn after it on the same layer: it is what the
+     night was spent doing, not the ground under it. */
+  z-index: 1;
+}
+
+.timeline-carried-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-carried-until {
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Same quiet register as .timeline-gap-label just below - muted, small,
    tabular numerals where it matters. left margin clears GUTTER_PX (the
    hour-label column in TimelineGrid.tsx) so "Sleep" never sits under an
@@ -4354,6 +4398,15 @@ select:focus {
   letter-spacing: 0.01em;
 }
 
+/* Why a routine has no time on this day, in the time's place and its
+   register - rotating shifts, v2.29 stage 9: "Needs a time on Day shift",
+   "Runs into Night shift". The answer to where the time went, said as
+   quietly as the time would have been. */
+.task-routine-note {
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
 /* The title carries the card - one clear step above everything under it, so
    what the task actually is arrives first and the rest reads as annotation.
    Allowed to wrap onto a second line rather than truncate: a task whose name
@@ -5744,6 +5797,14 @@ button.danger {
 /* Forty-two of these in a seven-column grid. Proportional digits put the 1s
    half a character narrower than the 8s, so a column of dates leans. */
 .cell-num { font-size: var(--t-sm); font-weight: var(--w-strong); font-variant-numeric: tabular-nums; }
+
+/* The date and a kind's letter on one line, the letter right after the
+   number at the week chip's small size - see .week-col-template. */
+.cell-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+}
 
 /* A stamped cell: a wash of the template's colour in the theme's own
    surface, and a strip of it along the top. It used to be the colour
@@ -10523,6 +10584,12 @@ button.task-recipe:focus-visible {
 
 .yesterday-dismiss:hover { color: var(--text); background: color-mix(in srgb, var(--border) 45%, transparent); }
 
+/* Dismiss's word on the notice's right edge, the ground under the pointer
+   reaching past it - a quiet word at a row's end, npm run precision. The
+   notice only stands on a day whose yesterday left something, and the
+   morning after a night shift was the first screen the pass saw it on. */
+.yesterday-actions > .yesterday-dismiss:last-child { margin-right: calc(var(--s3) * -1); }
+
 /* Seven rows, one per weekday, each a name and a dropdown. A grid rather
    than seven setting-rows: this is one decision made seven times, and
    drawing it as seven separate settings would make a week look like seven
@@ -12296,6 +12363,16 @@ main:has(.week) > .calendar {
   white-space: nowrap;
 }
 
+/* A kind's letter where the dot stands, at the small size: the column head
+   is a line of 11px words, and a tile taller than their line would make the
+   one chip with a kind taller than the six beside it - at 16px it was, by a
+   pixel. The month's date draws the same small tile. */
+.week-col-template > .kind-mark,
+.cell-kind-mark {
+  width: 14px;
+  height: 14px;
+}
+
 /* The offer, not the label: this day has no template and the weekday plan
    names one. Outlined rather than filled, because it is a suggestion. */
 .week-col-template.is-offer {
@@ -12486,6 +12563,36 @@ main:has(.week) > .calendar {
 .week-block.is-done .week-block-title { text-decoration: line-through; }
 
 .week-block.is-key { box-shadow: inset 0 0 0 1px var(--accent); }
+
+/* Last night's shift at the top of the morning's column - rotating shifts,
+   v2.29 stage 9. A block's shape in a done block's quiet, since it is the
+   day before's: the wash at the done strength, the category's edge down the
+   left as a shadow inside the box, the title and where it ends. No floor:
+   it is not a target, and a shift that ended at half past midnight is the
+   sliver it is. Not a button, and the pointer is plain over it. Its own size
+   container, so its second line goes the way a block's does, and a z-index
+   for the context that makes - the blocks' own, and it comes first among
+   them. */
+.week-carried {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* The words where a block's stand: its 2px edge, then its 3px in. */
+  padding: 1px 3px 1px calc(var(--s0) + 3px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-radius: var(--r-mark);
+  background: color-mix(in srgb, var(--block, var(--muted)) 12%, var(--surface));
+  box-shadow: inset var(--s0) 0 0 var(--block, var(--muted));
+  color: color-mix(in srgb, var(--muted) 70%, var(--text));
+  font-size: var(--t-xs);
+  line-height: var(--lh-tight);
+  cursor: default;
+  container-type: size;
+  z-index: 1;
+}
 
 .week-block-title {
   display: block;
