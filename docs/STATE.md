@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 8 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts, stage 8 of 10 done, and an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,39 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Between stages 8 and 9 - every start corner on another: done
+
+Three messages from the owner with pictures - the week editor's add form, the
+empty pages seen as somebody new, and the Library's new list - and the rule
+they share: every start corner stands on another. DECISIONS "Every start
+corner lines up with another" has the why.
+
+- **The week form's answers start on one edge**: the dots, the list (its label
+  had no column width), the day switches, the presets and "Adds to Wed", which
+  now shares the last line with Add a block. On a phone every answer is under
+  its label. The day editor's dots stand on its edge too.
+- **An empty page is framed as a full one**: Kitchen at the shelf's width with
+  no recipes, North with a page's title and Write where Edit stands, the
+  Library with New list at its title (Something else is gone), every empty
+  line at the reading width, and every title row one control tall - the day's
+  on a first visit and the calendar's were 4.5px and 4px off every other.
+- **The new list's form takes the item panel's label column**, its sentences'
+  fields to the right edge and its short form four letters wide.
+- **A quiet button at a row's end stands its word on the edge**: the Library's
+  Edit, every template's Edit, the Deletes of the template editor, the item
+  panel and the task sheet, and the roster's Throw it away.
+
+`npm run precision` has three checks more - a form's answers, a quiet word at
+a row's end, and the frame across the pages empty and full (`--frame` runs it
+alone) - and eight screens more; each was run against its defect put back and
+caught it. The row check no longer counts an empty box, which has no centre:
+six of the week grid's seven column feet are empty. Sweep, keys and text scale
+have the new list's form, and keys and text scale the week editor. New tests:
+North's Write where Edit stands and its title until there are words, the
+Library's New list on an empty page, and the week form's sentence and button
+on one line. Changed tests: five in `LibraryView.test.tsx` open the form by
+New list rather than Something else.
 
 ### Stage 8 - a template's sleep, set where the template is built: done
 

@@ -252,6 +252,16 @@ own size and grow to 44px on a finger through an overlay, as they do today.
 - Focused: the ground stays, and a halo of `--ring` stands around the field -
   the one accent on a form besides its primary button.
 - A label sits above a field, `--s1` away, in the label style.
+- **A form of several questions hangs its answers off one edge.** Either
+  every label stands in one column at the left, or every label stands over
+  its answer - one way for the whole form - and every answer starts where
+  every other one starts: the dots, a list, the day switches, a field. A sentence's field takes the row to the form's right edge, where
+  its last button ends; a field for four letters or a number is as wide as
+  they are. On a phone every answer goes under its label, all of them, so
+  the form keeps one edge there too. Where a set of dots is an answer, the
+  colours stand on the edge and the chosen one's ring stands outside it, the
+  way a focus ring does - except at a scroller's edge, which would cut the
+  ring. `npm run precision` measures it.
 - A multi-line field grows with its text; a writing surface (North) has no
   ground at all and reads at `--t-read` and `--lh-read`.
 - A select is a field with a chevron; a stepper is a field with quiet minus
@@ -271,6 +281,12 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
 - **Destructive** is the secondary or quiet kind with `--danger` ink; its
   second press, armed, fills with `--danger` and `--on-danger` ink.
 - **An icon button** is the quiet kind, square.
+- **A quiet button at either end of a row stands its word on the row's
+  edge.** It has no ground, so to the eye it is its word: the padding goes
+  outside the edge and the ground under the pointer reaches past it. Edit at
+  the end of a card's head, Delete at the start of a form's last row, Back at
+  the start of a page. A mark in a square - a cross, an arrow - is the square.
+  `npm run precision` measures it.
 - **A chip** is a choice: `--fill`, `--r-pill`, `--control-h`; chosen, the
   accent ground. A template's chip, chosen, takes the template's own colour
   at 22% instead, since the chip is that template.
@@ -333,10 +349,18 @@ Three kinds, all `--control-h` tall, `--s4` inside, `--r-control`, `--t-sm` at
 ## Empty states
 
 One quiet line and at most one action, where the content would have begun:
-the line in `--t-sm` and `--muted`, the action a secondary button `--s3`
-under it. No card around it, no illustration, no second offer. A first run
-that has more to say says it once, in that shape, and lets the first action
-lead to the rest.
+the line in `--t-sm` and `--muted` at the reading width, the action a
+secondary button `--s3` under it. No card around it, no illustration, no
+second offer. A first run that has more to say says it once, in that shape,
+and lets the first action lead to the rest.
+
+An empty page is framed exactly as it will be once something is in it: the
+same title, the page's own action at the right of it - New template, New
+list, New recipe, Write - and the same column, so nothing moves when the
+first thing arrives. The line under the title is the page's empty state;
+starters, where a page has them, are offers under the line, never a second
+door to the page's action. `npm run precision` measures the frame across
+the pages, empty and full.
 
 ## The page
 
@@ -345,7 +369,11 @@ lead to the rest.
   with the page's action at the right of the same row and the content
   `--s6` under it. North's is the one exception, asked for: `--t-sm` in the
   secondary ink, smaller than the words it heads, because on that page the
-  text is the thing.
+  text is the thing - and only over its words. With nothing written there is
+  nothing to be quieter than, and an empty North has a page's title like
+  every other. Every title row is one control tall, whatever stands in it,
+  so every page's title stands at one height: a 44px arrow hangs its extra
+  above and below the row rather than making it taller.
 - **Two widths.** `--page-w` (840px) for the pages that are lists and forms -
   Templates, Library, Review, Settings - and `--read-w` (640px) for reading
   and writing - the journal's page. Today, the week and the month use the

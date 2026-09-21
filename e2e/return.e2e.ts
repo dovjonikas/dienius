@@ -64,7 +64,7 @@ test('every row that Return adds to says so, and does it', async ({ page }) => {
 
   // --- the library's add line ------------------------------------------
   await page.getByRole('navigation').getByRole('button', { name: 'Library' }).click()
-  // An empty library offers to start one rather than showing New list.
+  // An empty library offers a starter as well as New list.
   await page.getByRole('button', { name: 'Start a Books list' }).click()
 
   const add = page.getByRole('textbox', { name: 'Add to Books' })

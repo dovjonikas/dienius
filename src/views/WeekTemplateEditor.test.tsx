@@ -397,6 +397,24 @@ test('the switches open on the column being worked in, and each one is its own a
   expect(switchedOn()).toEqual(['Saturday'])
 })
 
+// What the press will do stands on the press's row - docs/DESIGN.md, where
+// actions stand. The sentence was a line of its own at the labels' edge and
+// the button alone on a line under it, and the owner reported the foot of the
+// form taking room it did not need.
+test("the sentence that says which days and the button that adds share the form's last line", async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newWeek(user)
+
+  const said = screen.getByText('Adds to Wed')
+  const add = screen.getByRole('button', { name: 'Add a block' })
+  expect(said.parentElement).toBe(add.parentElement)
+  expect(said.parentElement?.lastElementChild).toBe(add)
+  // Nothing else on the line: the switches and the presets are the rows
+  // above it.
+  expect(said.parentElement?.children).toHaveLength(2)
+})
+
 test('a preset sets the switches, and shows what it set', async () => {
   const user = userEvent.setup()
   render(<TemplatesView />)

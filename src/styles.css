@@ -5013,11 +5013,13 @@ button.primary {
   gap: var(--s2);
 }
 
-/* The second level is the qualifying half, so it reads as one: pushed in to
-   the width of the time control above it, and set at the smaller size. */
-/* The qualifying half, at the qualifying height. Everything here was between
-   28px and 44px, which put three baselines in one row. */
-.block-add-marks { padding-left: var(--s0); }
+/* The dots start where the time control above them starts and where
+   Delete template under them does: the form's left edge. The picker's inset
+   is room for the chosen dot's ring at a scroller's clipped edge - see
+   .category-picker - and this row has none; the ring stands in the card's
+   padding the way a focus ring would, and the colours line up. They stood
+   6px in, a near miss the eye catches and cannot name. */
+.block-add-marks > .category-picker { padding-left: 0; }
 
 
 /* The row's own button, and only it: written as a descendant, it reached the
@@ -5037,13 +5039,6 @@ button.primary {
   color: var(--muted);
   font-size: var(--t-xs);
   font-weight: var(--w-medium);
-}
-
-.block-add-where {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s2) var(--s3);
 }
 
 
@@ -5232,7 +5227,9 @@ button.core-toggle.active {
   margin-top: var(--s3);
 }
 
-.template-editor-actions > .delete-template { margin-right: auto; }
+/* Its word on the form's left edge, where the name and the add row start -
+   a quiet word at a row's end, npm run precision. */
+.template-editor-actions > .delete-template { margin-right: auto; margin-left: calc(var(--s4) * -1); }
 
 /* On a phone the three do not fit one line. The delete takes a line of its
    own above, still at the left and still first to Tab to, and Cancel and
@@ -5258,6 +5255,11 @@ button.core-toggle.active {
 }
 
 .template-card .dot { width: 14px; height: 14px; border-radius: var(--r-round); flex-shrink: 0; }
+
+/* Edit's word on the card's right edge, where the page's New template ends
+   over it, and the ground under the pointer reaching past - a quiet word at
+   a row's end, as North's Edit stands. npm run precision measures it. */
+.template-card > .btn-quiet:last-child { margin-right: calc(var(--s4) * -1); }
 
 /* A kind of day where the dot goes - rotating shifts, docs/RESEARCH-SHIFTS.md
    section 2.1. The letter the roster draws on a date, on the template's colour
@@ -5372,6 +5374,13 @@ button.danger {
   font-size: var(--t-glyph);
 }
 
+/* The target is 44px and the bar is one control tall, like every page's
+   title row: the arrows hang their extra four pixels above and below it,
+   where nothing is drawn, rather than making the bar 44px and standing the
+   month's name 4px lower than every other page's title - npm run precision,
+   the frame. */
+.calendar-bar .calendar-nav > button { margin-block: calc((var(--control-h) - var(--touch)) / 2); }
+
 .calendar-nav button:hover:not(:disabled) { color: var(--text); }
 
 .calendar-nav button:focus-visible {
@@ -5465,6 +5474,10 @@ button.danger {
 /* What a tap does at the left, what is waiting at the right, on one line. */
 .roster-line { margin: 0; max-width: var(--read-w); }
 .roster-waiting { margin: 0 0 0 auto; }
+
+/* Throw it away's word on the bar's right edge, where the arrows over it
+   end - a quiet word at a row's end, npm run precision. */
+.roster-bar-said > .btn-quiet:last-child { margin-right: calc(var(--s4) * -1); }
 
 /* The cycle, on its own card under the bar: the kinds to press in order, the
    sequence as it stands, the day it starts on and the one press that fills. */
@@ -7793,11 +7806,16 @@ button.danger:focus-visible {
      start of the second row with nothing beside it. The arrows are gone
      from this width: the month in the rail is the way to another day, and
      the left and right keys still take a step. */
+  /* The first row is one control tall even with no control in it, so the
+     day's name stands at the height every page's title stands at. On a
+     first visit there is no chip and no door yet, and the row was the day
+     line's own 28px: "Today" stood 4.5px higher than it does on a planned
+     day and than every other page's title - npm run precision, the frame. */
   .day-header {
     grid-area: header;
     display: grid;
     grid-template-columns: subgrid;
-    grid-template-rows: auto auto;
+    grid-template-rows: minmax(var(--control-h), auto) auto;
     align-items: center;
     row-gap: var(--s2);
     min-width: 0;
@@ -8475,34 +8493,59 @@ button.danger:focus-visible {
   gap: var(--s3);
 }
 
-.library-empty p { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
+/* The reading width, like every empty page's line: at 60ch the sentence
+   broke one or two words short of its end and left them alone on a second
+   line. */
+.library-empty p { margin: 0; max-width: var(--read-w); color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
 
 .library-starters { display: flex; flex-wrap: wrap; gap: var(--s3); }
+
+/* The page's one label column, for the item's panel and the new list's form
+   alike - see .library-detail. */
+.library { --field-label-w: 84px; }
 
 .library-new {
   display: flex;
   flex-direction: column;
-  gap: var(--s4);
+  gap: var(--s3);
   padding: var(--s4);
   border-radius: var(--r-card);
   background: var(--surface);
 }
 
-/* Three answers, in the order somebody gives them: what the list is called,
-   what one thing in it is, and the short form of that word. Rows rather
-   than a wrapping row of three, because the unit's chips are wider than the
-   other two fields together: the row broke after two, and the name's field
-   was left stretched down a 62px column of nothing beside them. The short
-   form sits under the unit rather than beside the name, which is also where
-   it comes from - typing a unit fills it.
+/* Four questions, in the order somebody answers them - a quick start, what
+   the list is called, what one thing in it is and the short form of that
+   word - on the item panel's rows: the word in the label column, the answer
+   after it. The short form is under the unit, which is also where it comes
+   from: typing a unit fills it.
 
-   Each box is as wide as what goes in it. A four-character short form in a
-   207px field was the same lie as a full-width box for one word. */
-.library-new-fields { display: flex; flex-direction: column; gap: var(--s4); }
-.library-new-fields .field { max-width: 280px; }
-.library-new-fields .field-unit { max-width: none; }
-.library-new-fields .field-unit input { max-width: 280px; }
-.library-new-fields .field-short { max-width: 96px; }
+   A sentence's box takes the row to the form's right edge, where Save ends,
+   the way the panel's Pace and Link do; the short form's is as wide as four
+   letters, the way the panel's page numbers are as wide as theirs. */
+.library-new-row > .library-presets,
+.library-new-answers { flex: 1 1 0; min-width: 0; }
+
+.library-new-name > input { flex: 1 1 16ch; min-width: 0; }
+
+/* The unit's two answers, the chips and the box for the rest, stacked in the
+   one column; its label stands level with the first of them. Two classes,
+   because the row's own centring is written after this and would win. */
+.library-detail-row.library-new-unit { align-items: flex-start; }
+
+.library-new-unit > .field-label {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-h);
+}
+
+.library-new-answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.library-new-short { flex: 0 0 auto; width: calc(var(--s8) * 3); }
+
 .library-new-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
 
 /* One field and its label, stacked. The same shape the sleep window fields
@@ -8674,10 +8717,15 @@ button.danger:focus-visible {
   .library-list-unit { white-space: normal; overflow: visible; }
 }
 
-/* A quiet button one control tall. */
+/* A quiet button one control tall, its word on the card's right edge -
+   where Save ends in the form above it and every row's last box ends - and
+   the ground under the pointer reaching past it, the way North's Edit
+   stands. It stood its padding in from the edge, and the owner saw its word
+   end 12px short of the Save button over it. */
 .library-list-edit {
   flex: 0 0 auto;
   min-height: var(--control-h);
+  margin-right: calc(var(--s3) * -1);
   padding: 0 var(--s3);
   border: none;
   border-radius: var(--r-control);
@@ -9067,12 +9115,49 @@ button.danger:focus-visible {
 .block-add-field > .explain,
 .block-add-field > .core-toggle { margin-left: auto; }
 
-/* The form's own button, on a line with nothing else on it. At the right,
-   where this app puts the one action a surface is for. */
+/* The list's label and the recipes' take the column's width, like
+   Category's and Add to's, and stand the same gap off their answer. It was
+   the one label without the width: its list started 20px left of the dots
+   above it and 16px left of the day switches under it, and the owner saw
+   it at once - every start corner lines up with another start corner. Only
+   in a row of the form; the day editor's binding stands mid-row among the
+   marks, where a label's column would be a hole. */
+.block-add-field > .library-binding { column-gap: var(--s3); }
+.block-add-field > .library-binding > .library-binding-label { flex: 0 0 auto; min-width: var(--field-label-w); }
+
+/* The dots start on the answers' edge, where the day switches under them
+   start. The picker's inset is room for the chosen dot's ring at a
+   column's clipped edge - see .category-picker - and a labelled row has no
+   such edge: the ring stands in the gap after the label, the way a focus
+   ring stands outside its control, and the colours themselves line up. */
+.block-add-field > .category-picker { padding-left: 0; }
+
+/* The form's last line: what the press will do at the answers' edge, and
+   the press at the form's right edge - a status and its action on one row,
+   docs/DESIGN.md. */
 .block-add-do {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--s2);
+  align-items: center;
+  gap: var(--s3);
+}
+
+.block-add-do > .wt-add-summary { margin: 0 0 0 calc(var(--field-label-w) + var(--s3)); }
+.block-add-do > .btn-secondary { margin-left: auto; }
+
+/* On a phone every answer stands under its label, on the form's own edge.
+   The dots and the day switches do not fit beside theirs at 390px and broke
+   under them; the list's New list did fit, and stood beside its label - so
+   the form had two edges again, one line in three. The list's wrapper steps
+   aside so its label can take a line of its own and its answer share the
+   next with Ongoing, at the right where it stands on a wide screen. The
+   presets drop the indent with the switches - see .wt-presets - and the
+   sentence goes with both. */
+@media (max-width: 599px) {
+  .block-add-label,
+  .wt-add-to > .explain { flex-basis: 100%; }
+  .block-add-field > .library-binding { display: contents; }
+  .block-add-field > .library-binding > .library-binding-label { flex-basis: 100%; }
+  .block-add-do > .wt-add-summary { margin-left: 0; }
 }
 
 /* Folded, while a block is open: the form's own button, a secondary one at
@@ -9405,6 +9490,10 @@ button.danger:focus-visible {
 }
 
 .task-detail-done { margin-left: auto; }
+
+/* Delete's word on the sheet's left edge, where every field's label stands -
+   a quiet word at a row's end, npm run precision. */
+.task-detail-foot > .btn-danger:first-child { margin-left: calc(var(--s4) * -1); }
 
 .task-detail-field {
   display: flex;
@@ -10545,7 +10634,7 @@ button.task-recipe:focus-visible {
 
 .review-range { color: var(--text); font-size: var(--t-md); font-weight: var(--w-strong); }
 
-.review-empty { margin: 0; max-width: 60ch; color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
+.review-empty { margin: 0; max-width: var(--read-w); color: var(--muted); font-size: var(--t-sm); line-height: var(--lh-ui); }
 
 /* Four figures across, dropping to two on a phone. Same shape as the day
    digest, which is the other place in this app that states a few numbers
@@ -11276,6 +11365,20 @@ button.north-day-line:focus-visible {
   font-weight: var(--w-medium);
 }
 
+/* With no words yet there is nothing for the name to be quieter than, and an
+   empty North is framed like every other empty page: the name a page's title,
+   Write at the right of it, the line a section's space under both. The owner
+   went through the pages as somebody new to them and North was the one
+   whose title, button and line were each drawn another way. */
+.north-view.is-empty .north-view-head { margin-bottom: var(--s6); }
+
+.north-view.is-empty .north-view-head h2 {
+  color: var(--text);
+  font-size: var(--t-lg);
+  font-weight: var(--w-strong);
+  line-height: var(--lh-tight);
+}
+
 /* A paragraph of North's words wherever it is drawn - a heading's card on
    the day, the window after sleep, a card on the page - in one voice: the
    same ink, a paragraph's air between two of them, and the person's own line
@@ -11428,17 +11531,17 @@ button.north-day-line:focus-visible {
   animation: north-arrive calc((var(--dur-fast) + var(--dur)) / 2) var(--ease);
 }
 
-/* An empty North: one line saying what the page is for and the one button
-   that starts it - no field and no edge until somebody asks to write. The
-   line in the writing's size, where the first written line will stand. */
+/* An empty North: one line saying what the page is for - no field and no
+   edge until somebody asks to write. An empty page's line, in the register
+   every other one has; it was the writing's size, and beside the empty
+   Kitchen's line it read as a different app. */
 .north-invite-line {
   margin: 0;
+  max-width: var(--read-w);
   color: var(--muted);
-  font-size: var(--t-read);
-  line-height: calc(var(--lh-read) + 0.1);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
 }
-
-.north-invite-line + .north-actions { margin-top: var(--s4); }
 
 /* The page's two rules, said once in one calm grey line under the field,
    in sentence case. */
@@ -14357,7 +14460,7 @@ main:has(.week) > .calendar {
   align-items: center;
   gap: var(--s2);
   flex-wrap: wrap;
-  /* The card's own gap spaces this from the fields. A margin here was added
+  /* The form's own gap spaces this from the fields. A margin here was added
      to it, so the presets sat 28px above the form while every other gap in
      the card was 16. */
   font-size: var(--t-sm);
@@ -14525,8 +14628,9 @@ main:has(.week) > .calendar {
      a full-width box, so a panel of six rows started its controls at two
      different places and none of the labels lined up with each other. Every
      row is the same shape now: the word on the left in one column, the
-     control on the right starting where every other control starts. */
-  --field-label-w: 84px;
+     control on the right starting where every other control starts. The
+     column is the page's, --field-label-w on .library, which the new
+     list's form hangs its answers off too. */
   flex: 1 0 100%;
   display: flex;
   flex-direction: column;
@@ -14631,7 +14735,9 @@ main:has(.week) > .calendar {
   flex-wrap: wrap;
 }
 
-.library-detail-actions > .library-detail-delete { margin-right: auto; }
+/* Its word on the panel's left edge, where the labels stand - a quiet word
+   at a row's end, npm run precision. It stood 17px in from Link over it. */
+.library-detail-actions > .library-detail-delete { margin-right: auto; margin-left: calc(var(--s4) * -1); }
 
 .library-detail-note { margin: 0; font-size: var(--t-sm); }
 
@@ -14703,6 +14809,10 @@ main:has(.week) > .calendar {
   .library-item-main { flex: 1 0 100%; }
   .library-item-open .library-item-count { min-width: 0; text-align: left; }
   .library-detail-row .field-label { min-width: 0; flex: 1 0 100%; }
+  /* Over its answers, the unit's label is a label's own height again: level
+     with the chips beside them it was a control tall, and over them that
+     stood it a control's height off them. */
+  .library-new-unit > .field-label { min-height: 0; }
   /* The labels stand over their fields here, so the picker starts where the
      fields do - at the left - rather than a label's width in. */
   .library-detail-pick { margin-left: 0; }
@@ -16509,12 +16619,9 @@ main:has(.week) > .calendar {
 
 /* What the press will do. A line rather than a count next to the switches,
    because the question it answers is "which days" and the answer is the
-   days. */
-/* The switches and the sentence about them are one thing, so Add a block
-   stays on the first line beside them rather than being pushed under. */
-.wt-where-main { display: flex; flex-direction: column; gap: var(--s1); flex: 1 1 auto; min-width: 0; }
-
-.wt-add-summary { margin: var(--s1) 0 0; color: var(--muted); font-size: var(--t-sm); }
+   days. It stands beside the press, on the form's last line - see
+   .block-add-do. */
+.wt-add-summary { color: var(--muted); font-size: var(--t-sm); }
 
 @media (pointer: coarse) {
   .wt-copy-panel .chip,

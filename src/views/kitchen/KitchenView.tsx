@@ -115,7 +115,11 @@ export function KitchenView({ meal: startMeal, recipeId }: { meal?: MealType; re
 
   if (recipes.length === 0) {
     return (
-      <section className="library kitchen" aria-label="Kitchen">
+      // The shelf's width with nothing on it yet, so the page's name and New
+      // recipe stand where they will stand once the first recipe is there.
+      // At the page width the first recipe moved both by 160px, and an empty
+      // Kitchen began 160px right of an empty North beside it in the rail.
+      <section className="library kitchen kitchen-shelf" aria-label="Kitchen">
         {header}
         <div className="library-empty">
           <p>The recipes you cook, with what goes in them and how. Add the first one to start.</p>

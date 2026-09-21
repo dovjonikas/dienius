@@ -299,6 +299,14 @@ const SCREENS = [
     },
   },
   {
+    // The new list's form, on the page's one label column.
+    name: 'Library (a new list)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Library')
+      await press(p, 'New list')
+    },
+  },
+  {
     // A list's settings, for the row of colour dots and the chosen one's
     // ring on the wash they sit on.
     name: 'Library (list settings)',

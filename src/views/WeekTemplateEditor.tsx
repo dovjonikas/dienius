@@ -840,88 +840,86 @@ export function WeekTemplateEditor({ draft, onChange, onSave, onCancel, onDelete
 
         <div className="block-add-group">
         <span className="block-add-heading">Where</span>
-        <div className="block-add-where">
-          <div className="wt-where-main">
-          {/* Seven switches, not a list of named answers. A rotation of
-              Mon/Thu, Tue/Fri, Wed/Sat has no name, and naming every
-              combination is thirty-one chips - so the days themselves are
-              the control and the names become presets on top of it. See
-              DECISIONS, where the old argument and what overturned it both
-              stand. */}
-          <div className="wt-add-to" role="group" aria-label="Add to">
-            <Explain id="add-to">
-              <span className="muted">Add to</span>
-            </Explain>
-            <div className="wt-day-toggles">
-              {WEEK.map(({ day, label, short }) => (
-                <button
-                  key={day}
-                  type="button"
-                  className={addDays.includes(day) ? 'wt-day-toggle is-on' : 'wt-day-toggle'}
-                  aria-pressed={addDays.includes(day)}
-                  aria-label={label}
-                  data-tip={label}
-                  onClick={() => toggleAddDay(day)}
-                >
-                  {/* The initial to read, the day to hear: two of these are
-                      T and two are S, which is fine on a row somebody is
-                      pointing at and useless to anybody who is not. */}
-                  <span aria-hidden="true">{short[0]}</span>
-                </button>
-              ))}
-            </div>
-            {/* The fourth of the old named scopes, converted the same way
-                the other three were. Without it, going from Weekdays to one
-                Thursday block is four switches off - which the week
-                editor&apos;s own browser walk caught the moment the switches
-                landed. Named for the day so it cannot be read as the switch
-                beside it. */}
-            <div className="wt-presets">
-            <button
-              type="button"
-              className="chip"
-              onClick={() => setAddDays([activeDay])}
-            >
-              Just one day
-            </button>
-            {PRESETS.map(({ key, label, days }) => (
+        {/* Seven switches, not a list of named answers. A rotation of
+            Mon/Thu, Tue/Fri, Wed/Sat has no name, and naming every
+            combination is thirty-one chips - so the days themselves are
+            the control and the names become presets on top of it. See
+            DECISIONS, where the old argument and what overturned it both
+            stand. */}
+        <div className="wt-add-to" role="group" aria-label="Add to">
+          <Explain id="add-to">
+            <span className="muted">Add to</span>
+          </Explain>
+          <div className="wt-day-toggles">
+            {WEEK.map(({ day, label, short }) => (
               <button
-                key={key}
+                key={day}
                 type="button"
-                className="chip"
-                // Not aria-pressed: a preset is a press that sets the
-                // switches, and the switches are what holds the answer. A
-                // preset that looked selected would be a second place the
-                // same fact is kept - CONVENTIONS section 23.
-                onClick={() => setAddDays(days)}
+                className={addDays.includes(day) ? 'wt-day-toggle is-on' : 'wt-day-toggle'}
+                aria-pressed={addDays.includes(day)}
+                aria-label={label}
+                data-tip={label}
+                onClick={() => toggleAddDay(day)}
               >
-                {label}
+                {/* The initial to read, the day to hear: two of these are
+                    T and two are S, which is fine on a row somebody is
+                    pointing at and useless to anybody who is not. */}
+                <span aria-hidden="true">{short[0]}</span>
               </button>
             ))}
-            </div>
           </div>
-
-          {/* What the press will actually do, so nobody counts switches with
-              their eyes. */}
-          <p className="wt-add-summary" role="status">
-            {addsToLine(addDays)}
-          </p>
+          {/* The fourth of the old named scopes, converted the same way
+              the other three were. Without it, going from Weekdays to one
+              Thursday block is four switches off - which the week
+              editor&apos;s own browser walk caught the moment the switches
+              landed. Named for the day so it cannot be read as the switch
+              beside it. */}
+          <div className="wt-presets">
+          <button
+            type="button"
+            className="chip"
+            onClick={() => setAddDays([activeDay])}
+          >
+            Just one day
+          </button>
+          {PRESETS.map(({ key, label, days }) => (
+            <button
+              key={key}
+              type="button"
+              className="chip"
+              // Not aria-pressed: a preset is a press that sets the
+              // switches, and the switches are what holds the answer. A
+              // preset that looked selected would be a second place the
+              // same fact is kept - CONVENTIONS section 23.
+              onClick={() => setAddDays(days)}
+            >
+              {label}
+            </button>
+          ))}
           </div>
-
         </div>
         </div>
 
-        {/* At the end of the form, which is where a form's own button goes.
-            It used to sit at the right of the Where line, level with the day
-            switches and a preset away from them, and the owner reported
-            having to hunt for it. Nothing else is on this line, so there is
-            nothing for it to be lost among.
+        {/* The form's last line: what the press will do, and the press. The
+            sentence stands on the answers' edge under the presets, so nobody
+            counts switches with their eyes; the button stands on the form's
+            right edge, where a form's own button goes.
+
+            It was two lines - the sentence at the labels' edge and the button
+            alone on a line under it - and the owner reported the foot of the
+            form taking room it did not need. Before that the button sat at
+            the right of the Where line, level with the day switches and a
+            preset away from them, and the owner had to hunt for it; the last
+            line of the form is where it was moved to then and where it stays.
 
             The tooltip that said Return does this too has gone to the title
             field's own edge, where it is readable without a pointer resting
             on anything - CONVENTIONS 23. The button is not its double: it is
             the answer for somebody who has never tried Return. */}
         <div className="block-add-do">
+          <p className="wt-add-summary" role="status">
+            {addsToLine(addDays)}
+          </p>
           <button
             className="btn-secondary"
             disabled={!blockTitle.trim() || addDays.length === 0}

@@ -76,8 +76,19 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
   if (lists.length === 0) {
     return (
       <section className="library">
+        {/* New list at the right of the page's name on an empty page as
+            well, where Templates keeps New template and Kitchen New recipe
+            with nothing made yet. It was here only once a list existed, and
+            an empty Library was the one page whose way to make a thing stood
+            in its body instead - as Something else, the third starter, which
+            is this button and has gone with its move. */}
         <div className="library-header">
           <h2>Library</h2>
+          {!newListOpen && (
+            <button type="button" className="btn-primary" data-tour="library-new" onClick={() => setNewListOpen(true)}>
+              New list
+            </button>
+          )}
         </div>
         {newListOpen ? (
           <NewListForm onDone={() => setNewListOpen(false)} />
@@ -98,9 +109,6 @@ export function LibraryView({ onOpenDay }: { onOpenDay?: (date: string) => void 
                   Start a {starter.name} list
                 </button>
               ))}
-              <button type="button" className="btn-secondary" onClick={() => setNewListOpen(true)}>
-                Something else
-              </button>
             </div>
           </div>
         )}
@@ -202,13 +210,20 @@ function NewListForm({ onDone }: { onDone: () => void }) {
     onDone()
   }
 
+  // One label column, the item panel's: each question's word at the left,
+  // every answer starting where every other one starts, a text's box to the
+  // form's right edge where Save ends and a short form's as wide as four
+  // letters. The form was a stack - Quick start a caption inside its own row
+  // and three labels over boxes of three widths - and the owner found it
+  // "scattered": five left edges for its answers and four right ones.
   return (
     <div className="library-new">
       {/* The three that kept being typed by hand, beside the form rather than
           instead of it. The form was never hard; it was three decisions in a
           row at the moment somebody had one idea. */}
-      <div className="library-presets">
-        <span className="muted">Quick start</span>
+      <div className="library-detail-row library-new-row">
+        <span className="field-label">Quick start</span>
+        <div className="library-presets">
         {LIST_PRESETS.map(preset => (
           <button
             key={preset.name}
@@ -231,19 +246,21 @@ function NewListForm({ onDone }: { onDone: () => void }) {
             <span className="library-preset-unit">{unitPlural(preset)}</span>
           </button>
         ))}
+        </div>
       </div>
-      <div className="library-new-fields">
-        <label className="field">
-          <span className="field-label">List name</span>
-          <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="Courses" />
-        </label>
-        {/* Singular, because that is the form somebody thinks in when naming
-            it, and the plural is derivable from it far more often than the
-            other way round. */}
-        <div className="field field-unit">
-          <span className="field-label">One of them is a</span>
-          {/* The words lists are usually counted in, as chips, and a box for
-              the rest. Typing was never hard; choosing is one press. */}
+      <label className="library-detail-row library-new-row library-new-name">
+        <span className="field-label">List name</span>
+        <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="Courses" />
+      </label>
+      {/* Singular, because that is the form somebody thinks in when naming
+          it, and the plural is derivable from it far more often than the
+          other way round. */}
+      <div className="library-detail-row library-new-row library-new-unit">
+        <span className="field-label">One of them is a</span>
+        {/* The words lists are usually counted in, as chips, and a box for
+            the rest under them, in the one answer's column. Typing was never
+            hard; choosing is one press. */}
+        <div className="library-new-answers">
           <div className="duration-chips library-unit-chips" role="group" aria-label="One of them is a">
             {UNIT_SUGGESTIONS.map(word => (
               <button
@@ -259,19 +276,20 @@ function NewListForm({ onDone }: { onDone: () => void }) {
           </div>
           <input value={unit} onChange={e => pickUnit(e.target.value)} placeholder="or type one" aria-label="Another unit" />
         </div>
-        <label className="field field-short">
-          <span className="field-label">Short form</span>
-          <input
-            value={short}
-            onChange={e => {
-              setShortTouched(true)
-              setShort(e.target.value)
-            }}
-            placeholder="ls"
-            maxLength={4}
-          />
-        </label>
       </div>
+      <label className="library-detail-row library-new-row">
+        <span className="field-label">Short form</span>
+        <input
+          className="library-new-short"
+          value={short}
+          onChange={e => {
+            setShortTouched(true)
+            setShort(e.target.value)
+          }}
+          placeholder="ls"
+          maxLength={4}
+        />
+      </label>
       <div className="library-new-actions">
         <button type="button" className="btn-quiet" onClick={onDone}>
           Cancel

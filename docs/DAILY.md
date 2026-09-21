@@ -52,9 +52,9 @@ them:
    else. If it reads or watches something, point it at a Library list here
    too - that is section 5, and a week is where it earns its keep.
 2. **Add to** is seven switches - M T W T F S S - and the block lands on
-   every one you have turned on. The line under them says where that is.
-   **Weekdays**, **Weekend**, **All days** and **Only** *(whichever column
-   you are on)* set the switches for you. They stay as you left them, so a
+   every one you have turned on. The last line, beside **Add a block**, says
+   where that is. **Just one day** *(the column you are on)*, **Weekdays**,
+   **Weekend** and **All days** set the switches for you. They stay as you left them, so a
    rotation is set once and the next block in it is a title and Return.
 3. Blocks you added together are treated as one thing. Removing one takes it
    off every day it is on - unless you switch the choice above the columns to
@@ -203,7 +203,7 @@ Only if you read, or watch, or work through courses. The point of it: the
 block on your template says "a reading session", the list says which book,
 and finishing one moves the block on to the next by itself.
 
-1. **Library → Start a Books list** (or Something else, for a different unit
+1. **Library → Start a Books list** (or **New list**, for a different unit
    - lessons, songs, episodes). **More than one list is the point**: a single
    queue stalls, because everything in it sits behind whatever is at the
    front. Three shorter ones - the heavy reading, the work reading, and the

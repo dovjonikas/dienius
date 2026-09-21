@@ -39,6 +39,8 @@ const SCREENS = [
   { name: 'Calendar (what Apply will do)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await tab(p, 'Calendar'); await p.getByRole('button', { name: 'Roster', exact: true }).click(); const cells = await p.locator('.cell:not(.outside)').all(); for (const cell of cells.slice(20, 23)) await cell.click(); await p.getByRole('button', { name: 'Apply', exact: true }).click() } },
   { name: 'Templates (a routine)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('textbox', { name: 'Letter on the roster' }).fill('D'); await p.getByRole('button', { name: 'Save template' }).click(); await p.getByRole('button', { name: 'New routine' }).click() } },
   { name: 'Library', go: p => tab(p, 'Library') },
+  { name: 'Library (a new list)', go: async p => { await tab(p, 'Library'); await p.getByRole('button', { name: 'New list' }).click() } },
+  { name: 'Templates (a week)', go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: 'New template' }).click(); await p.getByRole('button', { name: /^A week/ }).click() } },
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },

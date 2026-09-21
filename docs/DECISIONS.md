@@ -4065,6 +4065,61 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## Every start corner lines up with another
+
+Between the eighth and the ninth stage of rotating shifts, three messages from
+the owner, each with a picture. The week editor's add form: the dots, the
+library list and the day switches under their three labels stood at three
+different edges, and Add a block and the editor's Cancel and Save took a line
+each at the foot of it; the owner asked for everything clean, every corner
+matched, everywhere - at the least, every start corner on another start
+corner. Then the empty pages, gone through as somebody new would: North's name
+was a caption with Write under its line, where the empty Kitchen beside it in
+the rail had a title with New recipe at its right, and began 160px further in.
+Then the Library's form for a new list: a caption inside the first row and
+three labels over boxes of three widths, which the owner called scattered.
+
+**A form of several questions has one label column.** The label's width is the
+form's, every answer starts on one edge after it, a sentence's field runs to
+the right edge where the form's last button ends, and a field for four letters
+is as wide as four letters. On a phone every answer goes under its label, all
+of them - the dots and the switches already had to, and one answer beside its
+label made two edges again. The new list's form takes the item panel's column,
+the one on the same page.
+
+**The colours stand on the edge, and a chosen one's ring outside it.** The
+dots were inset by their ring's width so that a chosen first dot's ring stood
+on the edge; the owner read the colours, and the colours stood a ring's width
+in. A ring outside the edge is what a focus ring already is. Where the edge is
+a scroller's, which cuts what crosses it - the quick add on the day - the ring
+still stands on it.
+
+**What a press will do stands on the press's row.** The week form's "Adds to
+Wed" and Add a block share its last line, the sentence on the answers' edge
+and the button on the form's right edge: a line less at the foot, and the
+editor's Cancel and Save come up with it.
+
+**An empty page is framed as a full one.** The same title, the page's action
+at the right of it, the same column, so nothing moves when the first thing
+arrives. Kitchen with no recipes takes the shelf's width. North with no words
+has a page's title and Write where Edit will stand; its quiet name stays, and
+only over the words it was made quiet for. The Library shows New list on an
+empty page too, and Something else - the same form under another name, the
+third of its starters - is gone. Every title row is one control tall, so
+every title stands at one height: the calendar's arrows keep their 44px target
+and hang it outside the row.
+
+**A quiet button at the end of a row stands its word on the edge.** It has no
+ground, so its word is its edge to the eye. North's Edit and Kitchen's Back
+already stood that way; the Library's Edit, every template's Edit, three
+Deletes at the start of a form's last row and the roster's Throw it away did
+not.
+
+**Measured, not looked at.** npm run precision has three checks more - a
+form's answers on one edge, a quiet word at a row's end, and the frame across
+every page empty and full - and eight screens more. Each was run against its
+own defect put back, and caught it.
+
 ## A template's sleep is set over its picture, and written with the template
 
 v2.29 stage 8, from docs/RESEARCH-SHIFTS.md section 7.

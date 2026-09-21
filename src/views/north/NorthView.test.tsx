@@ -300,6 +300,28 @@ test("Edit stands at the right of the page's name, not after the words, and ther
   expect(screen.queryByRole('button', { name: 'Start the day' })).toBeNull()
 })
 
+// An empty North is framed like every other empty page: its action, Write,
+// at the right of the page's name where Edit stands on a text, and the name
+// a page's title rather than the quiet one it is over words. The owner went
+// through the pages as somebody new to them and North was the one whose
+// button stood under its line instead.
+test("an empty page has Write where Edit stands, and its name is a page's title until there are words", async () => {
+  const user = userEvent.setup()
+  const { container } = render(<NorthView />)
+  const write = screen.getByRole('button', { name: 'Write' })
+  const title = container.querySelector('.north-view-head > .north-view-title') as HTMLElement
+  expect(write.parentElement).toBe(title)
+  expect(title.lastElementChild).toBe(write)
+  expect(container.querySelector('.north-view')).toHaveClass('is-empty')
+  expect(cssRule('.north-view.is-empty .north-view-head h2')).toMatch(/font-size:\s*var\(--t-lg\)/)
+
+  await user.click(write)
+  await user.type(screen.getByRole('textbox'), 'a first line')
+  await user.click(screen.getByRole('button', { name: 'Save' }))
+  expect(container.querySelector('.north-view')).not.toHaveClass('is-empty')
+  expect(title.lastElementChild).toBe(screen.getByRole('button', { name: 'Edit' }))
+})
+
 // The row Edit stands in is kept while the field is open, one control tall
 // whether Edit is drawn or not, so nothing under it moves when it goes.
 test('while the field is open Edit is gone and its row is kept, and an empty page has no Edit', async () => {

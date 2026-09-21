@@ -30,6 +30,17 @@ test('an empty library offers starters and has made none of them', () => {
   expect(getData().library).toEqual([])
 })
 
+// Where every page keeps its action, with nothing made yet as well - the
+// owner went through the empty pages as somebody new and found the Library
+// the one whose way to make a thing stood somewhere else, as a third
+// starter that was this button under another name.
+test("an empty library has New list at its title, and no second door to the same form", () => {
+  render(<LibraryView />)
+  const header = screen.getByRole('heading', { name: 'Library' }).parentElement!
+  expect(within(header).getByRole('button', { name: 'New list' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Something else' })).toBeNull()
+})
+
 test('tapping a starter creates that list, counted in its own unit', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
@@ -44,7 +55,7 @@ test('tapping a starter creates that list, counted in its own unit', async () =>
 test('a list of a kind nobody shipped can be built by hand, with the unit a chip and the short form suggested', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
-  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.type(screen.getByLabelText('List name'), 'Courses')
   await user.click(within(screen.getByRole('group', { name: 'One of them is a' })).getByRole('button', { name: 'lesson' }))
   expect(screen.getByLabelText('Short form')).toHaveValue('ls')
@@ -55,7 +66,7 @@ test('a list of a kind nobody shipped can be built by hand, with the unit a chip
 test('a unit typed by hand suggests its own short form, until the short form is typed', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
-  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.type(screen.getByLabelText('List name'), 'Swimming')
   await user.type(screen.getByLabelText('Another unit'), 'lap')
   expect(screen.getByLabelText('Short form')).toHaveValue('la')
@@ -69,7 +80,7 @@ test('a unit typed by hand suggests its own short form, until the short form is 
 test('a list with no name or no unit cannot be created', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
-  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.type(screen.getByLabelText('List name'), 'Courses')
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
 })
@@ -588,7 +599,7 @@ test('the loud row says what will take it, and only when something will', async 
 test('one press makes three empty lanes, in three colours', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
-  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
 
   const lists = getData().library
@@ -601,7 +612,7 @@ test('one press makes three empty lanes, in three colours', async () => {
 test('pressing the preset twice is pressing it once', async () => {
   const user = userEvent.setup()
   render(<LibraryView />)
-  await user.click(screen.getByRole('button', { name: 'Something else' }))
+  await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))
   await user.click(screen.getByRole('button', { name: 'New list' }))
   await user.click(screen.getByRole('button', { name: /Three reading lanes/ }))

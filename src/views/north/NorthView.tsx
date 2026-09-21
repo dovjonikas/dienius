@@ -15,10 +15,12 @@ import { NorthSection } from './NorthSection'
  * page. See DECISIONS "North is a text" for where it came from.
  *
  * An empty North is one line and one button rather than a field waiting on
- * the page. Write, or Edit on a text that exists, opens one textarea with
- * the whole text in it, and nothing is written until Save; Cancel drops
- * what was typed. One door: the field Compose carried for the same text
- * until v2.22 was a second way to one thing.
+ * the page, framed like every other page with nothing in it yet: the page's
+ * name as a page's title, Write at the right of it, the line under both.
+ * Write, or Edit on a text that exists, opens one textarea with the whole
+ * text in it, and nothing is written until Save; Cancel drops what was
+ * typed. One door: the field Compose carried for the same text until v2.22
+ * was a second way to one thing.
  *
  * ## No goals
  *
@@ -57,34 +59,51 @@ export function NorthView() {
   const text = data.picture?.text ?? ''
 
   return (
-    <section className="north-view" aria-label="North">
+    // Framed like every other page until there are words to frame: the
+    // name is a page's title then, and quieter than the words only once
+    // they are here - see .north-view.is-empty.
+    <section className={text === '' ? 'north-view is-empty' : 'north-view'} aria-label="North">
       <header className="north-view-head">
-        {/* Edit at the right of the page's name, where every page keeps its
-            action (docs/DESIGN.md, the frame), rather than after the words.
-            The row keeps its height while the field is open, so going from
-            reading to writing moves no line under it. */}
+        {/* The page's action at the right of the page's name, where every
+            page keeps it (docs/DESIGN.md, the frame): Edit on a text, Write
+            on none. Write stood under the empty page's line until the owner
+            went through the pages as somebody new to them and found it the
+            one page whose button was somewhere else. The row keeps its
+            height while the field is open, so going from reading to writing
+            moves no line under it. */}
         <div className="north-view-title">
           <h2>
             <Explain id="north">North</Explain>
           </h2>
-          {!editing && text !== '' && (
-            <button
-              ref={openerRef}
-              type="button"
-              className="btn-quiet"
-              data-tour="picture-edit"
-              onClick={() => setEditing(true)}
-            >
-              Edit
-            </button>
-          )}
+          {!editing &&
+            (text !== '' ? (
+              <button
+                ref={openerRef}
+                type="button"
+                className="btn-quiet"
+                data-tour="picture-edit"
+                onClick={() => setEditing(true)}
+              >
+                Edit
+              </button>
+            ) : (
+              <button
+                ref={openerRef}
+                type="button"
+                className="btn-primary"
+                data-tour="picture-write"
+                onClick={() => setEditing(true)}
+              >
+                Write
+              </button>
+            ))}
         </div>
       </header>
 
       {editing ? (
         <NorthEditor text={text} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />
       ) : text === '' ? (
-        <NorthInvite openerRef={openerRef} onWrite={() => setEditing(true)} />
+        <NorthInvite />
       ) : (
         <NorthText text={text} />
       )}
@@ -93,27 +112,18 @@ export function NorthView() {
 }
 
 /**
- * An empty North: one line saying what the page is for, and the one button
- * that starts it. Not a field waiting on the page - an empty box with an
- * edge is a form somebody is asked to fill, and a page nobody has written
- * yet is an invitation. The line says what the text is for and nothing
- * about what to put in it.
+ * An empty North: one line saying what the page is for, where the words will
+ * begin - an empty state like every other page's, docs/DESIGN.md. The button
+ * that starts it is the page's action, Write, at the right of the page's
+ * name. Not a field waiting on the page - an empty box with an edge is a
+ * form somebody is asked to fill, and a page nobody has written yet is an
+ * invitation. The line says what the text is for and nothing about what to
+ * put in it.
  */
-function NorthInvite({
-  onWrite,
-  openerRef,
-}: {
-  onWrite: () => void
-  openerRef: React.Ref<HTMLButtonElement>
-}) {
+function NorthInvite() {
   return (
     <div className="north-invite">
       <p className="north-invite-line">Write the words you want to start each day with.</p>
-      <div className="north-actions">
-        <button ref={openerRef} type="button" className="btn-primary" data-tour="picture-write" onClick={onWrite}>
-          Write
-        </button>
-      </div>
     </div>
   )
 }

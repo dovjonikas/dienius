@@ -315,7 +315,9 @@ test('the week map, North, a full list and the backup form all take what is type
   const nameField = page.getByLabel('List name')
   if (await nameField.count()) {
     await nameField.fill('Reading')
-    await page.getByRole('button', { name: 'chapter' }).click()
+    // Exactly the chip: the quick start's Three reading lanes chapters has
+    // the word in its name too.
+    await page.getByRole('button', { name: 'chapter', exact: true }).click()
     await page.getByRole('button', { name: 'Save' }).click()
   }
   const add = page.getByLabel(/^Add to /).first()
