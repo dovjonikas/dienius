@@ -316,3 +316,27 @@ test('a month back and then forward is the month it started on, whatever the mon
     vi.useRealTimers()
   }
 })
+
+/**
+ * The counts run back from today, not over the stretch on screen, so a week
+ * with nothing in it yet - a Monday morning - still has them. The week's empty
+ * line used to take the whole page, and every Monday the last seven and thirty
+ * days went with it. Found when the suite ran on a Monday.
+ */
+test('on a week with nothing planned yet, the counts of the last 7 and 30 days still stand', () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  // A Monday, with the days worth counting in the week before it.
+  vi.setSystemTime(new Date(2026, 8, 21, 12, 0))
+  try {
+    const days: Record<string, DayPlan> = {}
+    for (const date of ['2026-09-20', '2026-09-18']) days[date] = { date, templateId: 't1', tasks: [stamped('b1', { done: true })] }
+    actions.resetForTests({ ...defaultData(), templates: [work], days })
+    render(<ReviewView />)
+
+    expect(screen.getByText(/Nothing was planned this week/)).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'How many times' })
+    expect(within(table).getByRole('rowheader', { name: 'Deep work 09:00' })).toBeInTheDocument()
+  } finally {
+    vi.useRealTimers()
+  }
+})

@@ -127,9 +127,15 @@ export function ReviewView({ onOpenDay }: { onOpenDay?: (date: string) => void }
       {stats.plannedDays === 0 ? (
         // A quiet empty state, not a prompt. Nothing was planned; that is a
         // fact about a week, not a failing to be corrected.
-        <p className="review-empty">
-          Nothing was planned {range === 'week' ? 'this week' : 'this month'} - it fills in as days are used.
-        </p>
+        <>
+          <p className="review-empty">
+            Nothing was planned {range === 'week' ? 'this week' : 'this month'} - it fills in as days are used.
+          </p>
+          {/* The counts run back from today rather than over the stretch on
+              screen, so an empty week still has them - on a Monday morning the
+              last seven and thirty days are exactly what there is to read. */}
+          {counts.length > 0 && <CountsSection groups={countGroups(counts)} />}
+        </>
       ) : (
         <>
           <dl className="review-figures">
