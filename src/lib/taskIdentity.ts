@@ -152,6 +152,11 @@ export function dedupeTasks(tasks: Task[]): Task[] {
  * the same template, or the weekday map will stamp that template when the day
  * is first opened. A repeat series is not counted here - `willRepeatOnto`
  * below answers that, because it needs the repeat rules.
+ *
+ * A night's task is the one exception to the second and third (section 10 of
+ * RESEARCH-SHIFTS): a template gives a date its night's hours through the
+ * date before it, never its own stamp, so only a day already holding it will
+ * have it.
  */
 export function willReceive(
   day: DayPlan | undefined,
@@ -159,6 +164,7 @@ export function willReceive(
   mappedTemplateId: string | undefined,
 ): boolean {
   if (dayHas(day, task)) return true
+  if (task.nightOf !== undefined) return false
   const origin = originFor(task)
   if (origin.type !== 'template' || !origin.sourceId) return false
   if (day?.templateId === origin.sourceId) return true

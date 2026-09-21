@@ -1,7 +1,7 @@
 import { addDays } from './dates'
 import { isDayKind, kindOnDate } from './dayKinds'
 import { weekdayOf } from './repeats'
-import { applyStamps, columnFor } from './stamping'
+import { applyStamps, columnFor, isNightBlock } from './stamping'
 import { originFor } from './taskIdentity'
 import { ROUTINE_LIMITS, type AppData, type DayPlan, type Routine, type SleepWindow, type Task, type Template, type TemplateBlock } from './types'
 import { ownedSleep, type WakingDay } from './wakingDay'
@@ -48,6 +48,31 @@ export type Placement =
 export interface Composition {
   day: DayPlan
   placements: Placement[]
+  /**
+   * The date after, as this date's night leaves it, where a change of kind
+   * took a night's hours off it or put them on - section 10. Absent where the
+   * date after is not touched.
+   */
+  nextDay?: DayPlan
+}
+
+/** A date changed by what the dates around it changed, and which of them - section 10.2a. */
+export interface Following {
+  date: string
+  after: string[]
+}
+
+/** What applying a roster does, date by date: the plan it makes, and how each date in it came to change. */
+export interface RosterApplied {
+  plan: AppData
+  /** The dates of the draft whose own composition changed, in order, each with where its routines went. */
+  composed: { date: string; kind: Template | undefined; placements: Placement[] }[]
+  /**
+   * Every other date that changed: the date after a night that changed, and the
+   * dates around a changed kind whose routines moved. A date of the draft that
+   * was already what the draft says and took a changed night's hours is one.
+   */
+  following: Following[]
 }
 
 /** What on a date was changed by hand, counted the way the question about it names them - section 6.3. */
@@ -177,27 +202,38 @@ export function runningOn(data: AppData, date: string, nowMinutes: number): { ta
 }
 
 /**
- * The timed blocks a date's kind puts on its clock.
+ * The timed blocks a date's kind puts on the clock, each with its start in
+ * minutes from the date's own midnight: its night's blocks are on the date
+ * after's clock, a day on (section 10).
  *
- * A date that already carries its kind is read from what is on it, because
- * that is what will happen: a shift moved by hand is where it was moved, and
- * one deleted or set aside is not on the clock. A date the draft is about to
- * give a kind is read from the kind's template, which is exactly what the
- * stamp will write - so a preview and the plan after Apply read the same.
+ * A date that already carries its kind is read from what is on it, and its
+ * night from what is on the date after, because that is what will happen: a
+ * shift moved by hand is where it was moved, and one deleted or set aside is
+ * not on the clock. Last night's tasks on the date are the night before's and
+ * not its own. A date the draft is about to give a kind is read from the
+ * kind's template, which is exactly what the stamp will write - so a preview
+ * and the plan after Apply read the same.
  */
-function kindBlocksOn(data: AppData, date: string, kind: Template): { title: string; time: string; minutes?: number }[] {
+function kindBlocksOn(data: AppData, date: string, kind: Template): { title: string; start: number; minutes?: number }[] {
   const blocks = columnFor(kind, date).blocks
   const day = data.days[date]
   if (day?.templateId !== kind.id) {
-    return blocks.filter((b): b is TemplateBlock & { time: string } => b.time !== undefined && CLOCK.test(b.time))
+    return blocks
+      .filter((b): b is TemplateBlock & { time: string } => b.time !== undefined && CLOCK.test(b.time))
+      .map(b => ({ title: b.title, start: timeToMinutes(b.time) + (isNightBlock(b) ? DAY_MINUTES : 0), minutes: b.minutes }))
   }
   const ids = new Set(blocks.map(b => b.id))
-  return day.tasks
-    .filter(t => {
-      const origin = originFor(t)
-      return origin.type === 'template' && origin.sourceId === kind.id && !!origin.blockId && ids.has(origin.blockId)
-    })
-    .filter((t): t is Task & { time: string } => isAnchor(t) && CLOCK.test(t.time!))
+  const timed = (t: Task): t is Task & { time: string } => {
+    const origin = originFor(t)
+    if (origin.type !== 'template' || origin.sourceId !== kind.id || !origin.blockId || !ids.has(origin.blockId)) return false
+    return isAnchor(t) && CLOCK.test(t.time!)
+  }
+  const own = day.tasks.filter(t => !t.nightOf).filter(timed)
+  const night = (data.days[addDays(date, 1)]?.tasks ?? []).filter(t => t.nightOf === date).filter(timed)
+  return [
+    ...own.map(t => ({ title: t.title, start: timeToMinutes(t.time), minutes: t.minutes })),
+    ...night.map(t => ({ title: t.title, start: timeToMinutes(t.time) + DAY_MINUTES, minutes: t.minutes })),
+  ]
 }
 
 /**
@@ -205,7 +241,8 @@ function kindBlocksOn(data: AppData, date: string, kind: Template): { title: str
  * in order - section 5.
  *
  * - The blocks of the date's kind, from their start to their end on the wall
- *   clock. A block with a time and no length takes its start minute.
+ *   clock, its night's on the date after's (section 10). A block with a time
+ *   and no length takes its start minute.
  * - What is still running of the blocks of the two dates before: a night
  *   shift is its start date's, and after midnight it is busy time here without
  *   being a task here.
@@ -228,10 +265,9 @@ export function busyOn(data: AppData, date: string, kindOf: KindOf, today?: stri
     const kind = kindOf(on)
     if (!kind) continue
     for (const block of kindBlocksOn(data, on, kind)) {
-      const start = timeToMinutes(block.time)
       busy.push({
-        start: wallInstant(on, start),
-        end: wallInstant(on, start + Math.max(1, block.minutes ?? 1)),
+        start: wallInstant(on, block.start),
+        end: wallInstant(on, block.start + Math.max(1, block.minutes ?? 1)),
         reason: { kind: 'block', title: block.title },
       })
     }
@@ -408,20 +444,27 @@ function withRoutineTasks(day: DayPlan, placements: Placement[]): DayPlan {
  * Then the routines, measured against busy time with this date as `kind` and
  * every other date as `kindOf` says. The day comes back as the same object when
  * nothing about it changes, which is how Apply knows to leave it alone.
+ *
+ * A stamp reaches the date after as well, where the kind taken off or given
+ * has hours after its midnight (section 10): that date comes back as
+ * `nextDay`, for the caller to write with the day.
  */
 export function composeDay(data: AppData, date: string, kind: Template | undefined, kindOf: KindOf, today?: string): Composition {
   const existing = data.days[date] ?? { date, tasks: [] }
   const stamped = data.templates.find(t => t.id === existing.templateId)
-  let day = existing
+  const after = addDays(date, 1)
+  let days = data.days
   if (kind && existing.templateId !== kind.id) {
-    day = applyStamps({ [date]: existing }, data.templates, { [date]: kind.id }, data.library)[date]
+    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: kind.id }, data.library)
   } else if (!kind && stamped && isDayKind(stamped)) {
-    day = applyStamps({ [date]: existing }, data.templates, { [date]: null }, data.library)[date]
+    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: null }, data.library)
   }
-  const composing = { ...data, days: { ...data.days, [date]: day } }
+  const day = days === data.days ? existing : days[date]
+  const nextDay = days[after] !== data.days[after] ? days[after] : undefined
+  const composing = { ...data, days: { ...days, [date]: day } }
   const asDrafted: KindOf = on => (on === date ? kind : kindOf(on))
   const placements = placeRoutines(composing, date, kind, busyOn(composing, date, asDrafted, today))
-  return { day: withRoutineTasks(day, placements), placements }
+  return { day: withRoutineTasks(day, placements), placements, ...(nextDay ? { nextDay } : {}) }
 }
 
 /**
@@ -438,6 +481,11 @@ export function composeDay(data: AppData, date: string, kind: Template | undefin
  * - A date whose composition changes nothing keeps its own object, and a
  *   roster that changes nothing returns the plan itself: applying the same
  *   roster twice is applying it once.
+ * - The dates are composed in order, each against the plan as the ones before
+ *   it left it, so a date takes the night before it and a night is never
+ *   written over.
+ * - A date whose kind changes puts its night on the date after, and the dates
+ *   around it follow it (`followNeighbours`, section 10.2a).
  */
 export function applyRoster(
   data: AppData,
@@ -445,6 +493,19 @@ export function applyRoster(
   today: string,
   opts: { reach?: 'ahead' | 'any' } = {},
 ): AppData {
+  return rosterApplied(data, draft, today, opts).plan
+}
+
+/**
+ * `applyRoster`, saying what it did - the one function behind both Apply and
+ * its preview, so the preview says what Apply writes (section 10.2a).
+ */
+export function rosterApplied(
+  data: AppData,
+  draft: Record<string, string | null>,
+  today: string,
+  opts: { reach?: 'ahead' | 'any' } = {},
+): RosterApplied {
   const drafted = new Map<string, Template | undefined>()
   for (const date of Object.keys(draft).sort()) {
     if (date < today && opts.reach !== 'any') continue
@@ -459,15 +520,71 @@ export function applyRoster(
   const kindOf: KindOf = date => (drafted.has(date) ? drafted.get(date) : kindOnDate(data, date))
 
   let days = data.days
-  for (const [date, kind] of drafted) {
-    const before = data.days[date]
-    const { day } = composeDay(data, date, kind, kindOf, today)
-    const unchanged = before ? day === before : !day.templateId && day.tasks.length === 0
-    if (unchanged) continue
+  const put = (date: string, day: DayPlan) => {
     if (days === data.days) days = { ...data.days }
     days[date] = day
   }
-  return days === data.days ? data : { ...data, days }
+  const composed: RosterApplied['composed'] = []
+  const turned: string[] = []
+  for (const [date, kind] of drafted) {
+    const plan = days === data.days ? data : { ...data, days }
+    const before = days[date]
+    const { day, placements, nextDay } = composeDay(plan, date, kind, kindOf, today)
+    const unchanged = before ? day === before : !day.templateId && day.tasks.length === 0
+    if (!unchanged) {
+      put(date, day)
+      composed.push({ date, kind, placements })
+    }
+    if (nextDay) put(addDays(date, 1), nextDay)
+    if (kindOnDate(data, date)?.id !== kind?.id) turned.push(date)
+  }
+  const plan = followNeighbours(days === data.days ? data : { ...data, days }, turned, today, new Set(drafted.keys()))
+
+  // Every other date the plan changed, and the changed kinds next to it.
+  const own = new Set(composed.map(c => c.date))
+  const following: Following[] = []
+  for (const date of Object.keys(plan.days).sort()) {
+    if (own.has(date) || plan.days[date] === data.days[date]) continue
+    following.push({ date, after: turned.filter(on => [-2, -1, 1].includes(daysBetween(date, on))) })
+  }
+  return { plan, composed, following }
+}
+
+/**
+ * The dates around those whose kind changed, made to agree with it - section
+ * 10.2a. The day before, whose evening ends in a changed date's sleep and
+ * whose late routines reach into its blocks, and the two after, whose
+ * mornings its blocks and its night run into. Each that has a kind and is
+ * today or ahead is composed again with the kind it has, which stamps nothing
+ * and moves only a routine's task still as its rule left it. `skip` holds
+ * dates a caller composes itself. The plan itself where nothing changes.
+ */
+export function followNeighbours(data: AppData, changed: string[], today: string, skip: Set<string> = new Set()): AppData {
+  const around = new Set<string>()
+  for (const date of changed) {
+    for (const offset of [-1, 1, 2]) {
+      const on = addDays(date, offset)
+      if (on >= today && !skip.has(on) && !changed.includes(on)) around.add(on)
+    }
+  }
+  let plan = data
+  for (const date of [...around].sort()) {
+    const kind = kindOnDate(plan, date)
+    if (!kind) continue
+    const reading = plan
+    const { day } = composeDay(reading, date, kind, on => kindOnDate(reading, on), today)
+    if (day !== plan.days[date]) plan = { ...plan, days: { ...plan.days, [date]: day } }
+  }
+  return plan
+}
+
+/** Whole days from `from` to `to`, on the calendar. */
+function daysBetween(from: string, to: string): number {
+  const [a, b] = [from, to].map(date => {
+    const [y, m, d] = date.split('-').map(Number)
+    return Date.UTC(y, m - 1, d)
+  })
+  return Math.round((b - a) / 86_400_000)
 }
 
 /**
@@ -480,6 +597,9 @@ export function applyRoster(
  *   rule gave, or it is a routine's task that arrived by hand;
  * - **deleted**: a block of the kind, or a routine on this weekday, with no
  *   task on the day and no skip.
+ *
+ * The kind's night is the date's, on the date after (section 10): its tasks
+ * there are counted here, and not as the date after's.
  *
  * A task written by hand is not counted: it stays through any change of kind.
  * A block added to the kind after the date was stamped reads as deleted from
@@ -495,17 +615,22 @@ export function handEdits(data: AppData, date: string): HandEdits {
 
   if (kind) {
     const blocks = columnFor(kind, date).blocks
-    const own = day.tasks.filter(t => {
+    const ofKind = (t: Task) => {
       const origin = originFor(t)
       return origin.type === 'template' && origin.sourceId === kind.id
-    })
-    for (const task of own) {
+    }
+    // The date's own, without last night's; and its night's, on the date
+    // after - section 10.
+    const own = day.tasks.filter(t => !t.nightOf && ofKind(t))
+    const night = (data.days[addDays(date, 1)]?.tasks ?? []).filter(t => t.nightOf === date && ofKind(t))
+    for (const task of [...own, ...night]) {
       const block = blocks.find(b => b.id === originFor(task).blockId)
       if (task.done) edits.done++
       else if (movedFromBlock(task, block)) edits.moved++
     }
     for (const block of blocks) {
-      if (!own.some(t => originFor(t).blockId === block.id)) edits.deleted++
+      const standing = isNightBlock(block) ? night : own
+      if (!standing.some(t => originFor(t).blockId === block.id)) edits.deleted++
     }
     const weekday = weekdayOf(date)
     const skipped = new Set(day.routineSkips ?? [])

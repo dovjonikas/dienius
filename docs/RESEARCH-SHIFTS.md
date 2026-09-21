@@ -817,3 +817,126 @@ continuation, which the day and the week's own tests hold.
 9. **The day, the week and the month with kinds**: letters, colours,
    continuation, routines that need a time, conflicts on the day.
 10. **The phone, pictures, browser walks and the last tests.**
+
+---
+
+## 10. After v2.29: the night's own hours
+
+The owner, once v2.29 was done: a gym day is always that weekday, at the time
+the kind of day gives it - a routine, and so it is. And the same with food,
+because on a night shift lunch is not lunch. And all of it without being told
+twice: a date is given its kind, and what follows from it follows, **the days
+after it included** - the hardest part, in the owner's words. A review of every
+door a kind reaches a date by, for all three.
+
+### 10.1 What holds already
+
+- **A routine is its weekdays, at each kind's time** (section 2.3). Every door
+  that gives a date a kind composes it - the roster, a kind stamped by hand from
+  the rail or the month, the weekday map - so the gym is on its weekdays at the
+  day shift's time on a day shift, the night's on a night, and needs a time,
+  said on the day, where its kind has none. **An ordinary day is a kind too**:
+  a date with no kind gets no routines, so a rota's days off and its ordinary
+  days are kinds of their own, with a letter, and the routine has a time on
+  them.
+- **Meals are each kind's own.** A meal is a block on a kind's template, with
+  its kind of meal and its recipes from Kitchen; each date takes the recipe its
+  place in the block's walk gives it, through the same stamp every door uses.
+  So a day shift's template has its lunch at noon, and a night shift's has
+  none, and a meal before the shift instead - "lunch is not lunch" is a
+  template each, not a rule about lunch.
+
+- **Tonight's sleep is tomorrow's** (section 3.2): the bedtime that closes a
+  date comes from the next date's kind, so the evening before an early shift
+  ends early without being told.
+- **Last night runs into this morning** (section 3.3): a night shift's hours
+  after midnight are the next date's busy time, drawn at the top of its
+  morning, and what is running at one in the morning is the night shift.
+- **A routine is measured against the dates around its own** (section 5): the
+  blocks of the two dates before, the sleep it wakes from, tonight's, and what
+  a late routine reaches past midnight.
+
+### 10.2 What did not: the hours after a night's midnight
+
+A block belongs to the date it starts on (section 3). A night shift's meal at
+01:00 and the drive home at 07:00 start after midnight, so by that rule they are
+the next date's - and nothing on the next date knows whether the night before was
+worked. Written in the night kind's template they land at 01:00 on the night's own
+date, the morning before the shift, when the person is asleep after a day shift;
+written in the templates of the kinds that follow a night, they land after a day
+shift as well, since the first night of a run follows one. A rota of two days
+and two nights had no way to say "the night shift eats at one" at all.
+
+**The fix: a template can hold the hours after its midnight.** A block on a day
+template can be marked **after midnight**: its time is on the next date's clock,
+and it belongs to the night of the date the template is on. It is written where
+it belongs - "Night meal, 01:00, after midnight" in the night shift - and:
+
+1. A date given the template gets its ordinary blocks, and the **next date** gets
+   its after-midnight blocks, as that date's tasks, each marked with the night it
+   belongs to (`Task.nightOf`, the date whose template put it there). They
+   happen on the next date, so that date draws them, ticks them and counts them -
+   Review counts a block on the date it starts on, unchanged.
+2. A date whose template changes, or goes, takes its night's tasks off the next
+   date with it and gives the next date the new template's. A task of the night
+   that somebody ticked or changed is a hand edit of the night's date (section
+   6.3), and changing that date's kind asks first.
+3. The next date's own template never touches them: its stamp keeps every task
+   another night put there, the way it keeps what was written by hand.
+4. They are the next date's busy time like any timed block there, so a routine on
+   the next date runs into them.
+5. Routines stay on their own date. A routine during a night shift runs into the
+   shift; its hours are the template's to hold.
+6. A week template's blocks are a weekday's own and are not offered it.
+7. A task of the night pushed, moved or carried on to another date is that
+   date's own from then on, and loses the mark: it is no longer the night's
+   to take away.
+8. Review, the block counts and the plan reading find a night's block on the
+   date after the one it was stamped on.
+
+### 10.2a What did not either: the dates around a date whose kind changes
+
+Composition measured a date against its neighbours (10.1), but only a date
+being composed was measured. A date given a kind by itself - one tap on a
+Monday - changed what the days around it are made of and left them as they
+were: a gym at six on the Tuesday after a Monday made a night shift kept its
+six o'clock under the shift's last hour, and the day showed nothing, since a
+routine's task with a time says nothing about where it went.
+
+**The fix: a kind reaches the dates around it.**
+
+9. When a date's kind changes - by the roster, a kind stamped by hand, or the
+   weekday map - the dates around it that have a kind are composed again: the
+   day before, whose evening ends in the changed date's sleep and whose late
+   routines reach into its blocks, and the two after, whose mornings its blocks
+   and its night run into. Their kind is not changed and nothing is stamped on
+   them; only a routine's task still as its rule left it moves, and one ticked,
+   moved or written by hand stays. A date behind today is not touched.
+10. The preview names the days that follow, and Apply is what it named: both
+    come from one function.
+11. A date the weekday map will give a template with hours after its midnight is
+    given it when the date after it is opened, if it has not been opened yet, so
+    its night is on that date whichever of the two is opened first. Only the
+    one date before, and only today or ahead.
+
+`TemplateBlock.afterMidnight` and `Task.nightOf` are optional fields: absent is
+"not after midnight" and "the date's own", every block and task written before
+them reads that way, and an older version carries them untouched (the validator
+lets a field it does not name ride along).
+
+### 10.3 Stages
+
+1. **This section** and DECISIONS.
+2. **The data and composition**, one stage, since two fields nothing writes are
+   not a stage anyone could see: the fields, validation, export and import,
+   sync; the stamp writes a template's night onto the next date, every door
+   through it; the dates around a changed kind follow it; the hand edits count
+   the night; the preview names the days that follow; property tests: nothing
+   duplicated, applying twice is applying once, nothing written by hand lost,
+   and every night's task standing for a block of its night, with nights in the
+   generator.
+3. **The editor and the day**: "After midnight" on a block, the template's
+   picture drawing it past 24:00, and the day marking a task as last night's.
+4. **A guide for another agent** - how the plan is kept and read, the rota above
+   all - and a contract a program reading the backup can rely on; the phone,
+   pictures, the gates.

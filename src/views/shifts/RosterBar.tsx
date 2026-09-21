@@ -41,8 +41,9 @@ function weekWords(week: RosterPreview['weeks'][number]): string {
  * **Apply says what it will do first** - section 6.1, and lib/rosterPreview.ts:
  * the weeks, the letter each date would take, what it would cost in routines
  * with no time or routines running into something, and every day that was
- * changed by hand, each with the way to leave it alone. Nothing reaches the
- * plan until that press; the bar says how much is waiting until then.
+ * changed by hand, each with the way to leave it alone - and the days next to
+ * the draft that follow it (section 10.2a). Nothing reaches the plan until
+ * that press; the bar says how much is waiting until then.
  */
 export function RosterBar({
   kinds,
@@ -79,6 +80,10 @@ export function RosterBar({
   const [leftOut, setLeftOut] = useState<string[]>([])
   // Thrown away while the preview was open, there is nothing left to say.
   const showingPreview = applying && waiting > 0
+  // The days next to the draft that follow it - a night's hours on the
+  // morning after, routines measured again - while a date they follow is
+  // still going ahead: one left alone takes its followers with it.
+  const following = preview.following.filter(f => f.after.some(date => !leftOut.includes(date)))
   const last = readCycle()
   const [sequence, setSequence] = useState<string[]>(last?.kinds.filter(id => kinds.some(k => k.id === id)) ?? [])
   const [from, setFrom] = useState(monthStart > today ? monthStart : today)
@@ -197,6 +202,12 @@ export function RosterBar({
               {preview.unchanged > 0 && (
                 <p className="muted roster-line">
                   {preview.unchanged} {preview.unchanged === 1 ? 'day is' : 'days are'} already what the roster says, and stay as they are.
+                </p>
+              )}
+              {following.length > 0 && (
+                <p className="muted roster-line">
+                  {following.length === 1 ? 'A day next to these follows them' : 'The days next to these follow them'}:{' '}
+                  {following.map(f => formatDayShort(f.date)).join(', ')}.
                 </p>
               )}
               <p className="muted roster-line">What you added by hand stays on every day either way.</p>

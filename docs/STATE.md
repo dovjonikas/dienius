@@ -6,7 +6,67 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.31, the night's own hours, stage 2 of 4 done. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.31 - the night's own hours, and the days after a change
+
+The owner, once v2.29 was done: the gym is always its weekday at the time its
+kind of day gives it, food the same, because on a night shift lunch is not
+lunch, and all of it automatic - "the hardest part is that it has to take into
+account which days come after". docs/RESEARCH-SHIFTS.md section 10 has the
+review of every door and the design; DECISIONS "A night's hours land on the
+morning after, and a kind reaches the dates around it" has why.
+
+1. The design.
+2. The data and composition.
+3. The editor and the day.
+4. A guide for another agent, and a contract for a program reading the backup.
+
+### Stage 1 - the design: done
+
+Section 10 of RESEARCH-SHIFTS: what already held (routines per kind through
+every door, meals as each kind's blocks, tonight's sleep from tomorrow's kind,
+last night's shift as this morning's busy time), and the two gaps - a night's
+hours after midnight had nowhere to be written, and a date given a kind left
+the days around it as they were.
+
+### Stage 2 - the data and composition: done
+
+- **`TemplateBlock.afterMidnight` and `Task.nightOf`**, optional in the guard,
+  carried by v2.28's frozen copy, kept by a backup byte for byte.
+- **The stamp writes a night onto the date after** (`stampNight` in
+  stamping.ts, behind every door): the night's tasks marked with the night,
+  kept through the date after's own stamp, taken off with a change of the
+  night's template, matched by block on a re-stamp so a tick survives, a task
+  of the block pushed there by hand taken for the night's rather than doubled,
+  key tasks shared with the date's three, a meal's recipe walking by the
+  night's date - at the stamp and when the day is opened.
+- **Busy time, hand edits and the readers find the night on the date after**:
+  a routine on the morning after runs into the night's drive home; ticking the
+  night meal is a hand edit of the night's date, not of the morning's; the
+  block counts and the plan reading count a night's block on its night.
+- **A kind reaches the dates around it** (`followNeighbours`): the day before
+  and the two after are composed again whenever a date's kind changes - by the
+  roster, a kind stamped by hand, an ordinary template stamped over a kind, or
+  the weekday map - and only a routine's task still as its rule left it moves.
+  Applying is composed date by date against the plan the dates before left, so
+  a night is never written over.
+- **The preview says it**: `rosterApplied` is the one function behind Apply
+  and its preview; the preview names "the days next to these" that follow,
+  and a day left alone takes its followers with it.
+- **The weekday map opens the night first**: the date after a night the map is
+  about to stamp gets its night whichever of the two is opened first.
+- **A task carried to another date by hand loses the mark** - push, the
+  evening's push, a move, a replan, a low day all go through `arrivingByHand`
+  - and the evening's push no longer takes a date stamped with a night's
+  template for one that will receive that night's task.
+- Tests: nightHours, nightCompose and nightStore (43), the roster bar's line,
+  and the property tests with nights in the generator - invariant 1 now says
+  exactly what a date the roster was not asked about may take from its
+  neighbours, 2 covers the dates that follow, and 8 is new: every night's task
+  stands for a block after midnight of the template on the date before it, and
+  each such block stands once. 200 runs each, green. Every new rule was broken
+  on purpose once and a test failed for it.
 
 ## v2.30 - Kitchen, as it was meant
 

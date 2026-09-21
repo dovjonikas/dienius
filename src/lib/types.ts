@@ -163,6 +163,18 @@ export interface TemplateBlock {
    * arrive unmarked rather than dropping them.
    */
   highlight?: boolean
+  /**
+   * One of the hours after the template's midnight - docs/RESEARCH-SHIFTS.md
+   * section 10. Its time is on the next date's clock, and a stamp puts it on
+   * the next date, as a task marked with the night it belongs to
+   * (`Task.nightOf`): a night shift's meal at one in the morning is written
+   * in the night shift, and lands on the morning after it and on no other.
+   *
+   * Absent is an ordinary block, which is every block written before it. An
+   * older version carries it untouched - the guard lets a field it does not
+   * name ride along - and stamps the block onto the date itself.
+   */
+  afterMidnight?: boolean
 }
 
 /**
@@ -429,6 +441,19 @@ export interface Task extends Timestamped {
    * moved or pushed there - carries none, so it is left where it was put.
    */
   fromRoutine?: { title?: string; time?: string; minutes: number; category?: CategoryId }
+  /**
+   * The night this task belongs to: the date whose template put it here, the
+   * day before this one - docs/RESEARCH-SHIFTS.md section 10 and
+   * `TemplateBlock.afterMidnight`. It is this date's task in every other way:
+   * drawn, ticked and counted here. What the mark changes is whose it is to
+   * take away. A stamp of this date keeps it, the way it keeps what was written
+   * by hand, and a change of the night's own template takes it off with the
+   * rest of that template's tasks.
+   *
+   * Absent is the date's own task. A task of the night pushed, moved or carried
+   * on to another date loses the mark there: it is that date's own from then on.
+   */
+  nightOf?: string
   /**
    * Free text the owner attached to this task - see the task detail sheet -
    * or, on a task a template stamped, what the block had to say. Absent and

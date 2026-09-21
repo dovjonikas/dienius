@@ -1,6 +1,6 @@
 import { addDays } from './dates'
 import { tasksForBlocks } from './planReading'
-import { columnFor } from './stamping'
+import { columnFor, tasksOfStamp } from './stamping'
 import type { AppData } from './types'
 
 /**
@@ -59,7 +59,8 @@ export function blockCounts(data: AppData, today: string): BlockCount[] {
     if (!template) continue
 
     const blocks = columnFor(template, date).blocks
-    const matched = tasksForBlocks(blocks, day.tasks, template.id)
+    // Its night's blocks are on the date after - see tasksOfStamp.
+    const matched = tasksForBlocks(blocks, tasksOfStamp(data.days, date), template.id)
     for (const block of blocks) {
       const key = `${template.id}:${block.id}`
       let count = counts.get(key)

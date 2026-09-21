@@ -1,3 +1,4 @@
+import { addDays } from './dates'
 import { currentItem } from './library'
 import { blockRecipeIds, recipeForDate } from './kitchen'
 import { originFor } from './taskIdentity'
@@ -152,8 +153,9 @@ export function refreshFromTemplate(
         time: block.time,
         minutes: block.minutes,
         category: block.category,
-        // The recipe this date gets from the block's walk - v2.30.
-        recipeId: recipeForDate(blockRecipeIds(block), day.date),
+        // The recipe this date gets from the block's walk - v2.30. A night's
+        // task walks by its night's date, as its stamp did.
+        recipeId: recipeForDate(blockRecipeIds(block), task.nightOf ?? day.date),
         mealType: block.mealType,
       }
       /** @returns the block's value where the day is still carrying the old one. */
@@ -247,6 +249,12 @@ function capHighlights(tasks: Task[], budget: number): Task[] {
  * that a stamp never reaches backwards belongs to the doors that act on a
  * stretch of days without being asked day by day - `planWeekStamp` and the
  * weekday map in `ensureDay.ts` - and it is written down in both.
+ *
+ * A date's template reaches one date further than the date: its blocks after
+ * midnight land on the date after it, as that date's tasks marked with the
+ * night (`stampNight`, and section 10 of RESEARCH-SHIFTS). So stamping a
+ * date can write the date after it, and a date's own stamp keeps every task
+ * the night before put there.
  */
 export function applyStamps(
   days: Record<string, DayPlan>,
@@ -257,6 +265,11 @@ export function applyStamps(
   const next = { ...days }
   for (const [date, templateId] of Object.entries(stamps)) {
     const existing = next[date] ?? { date, tasks: [] }
+    // Last night's hours are the night's, whatever template put them here and
+    // whatever this date is stamped with - section 10 of RESEARCH-SHIFTS. A
+    // stamp keeps them the way it keeps what was written by hand, and they
+    // stand for nothing of this date's own.
+    const lastNight = (t: Task) => !!t.nightOf && t.nightOf !== date
     // What this stamp replaces is the day's own template's tasks, and nothing
     // else. A task that names the template it came from belongs to that
     // template: one moved onto this day from another day's template is not
@@ -264,7 +277,7 @@ export function applyStamps(
     // nothing - which it was until v2.28's audit found it. A template task
     // from before origins existed is read as the day's own, as it always was.
     const manual = existing.tasks.filter(t => {
-      if (!t.fromTemplate) return true
+      if (!t.fromTemplate || lastNight(t)) return true
       const origin = originFor(t)
       return origin.type === 'template' && !!origin.sourceId && origin.sourceId !== existing.templateId
     })
@@ -276,6 +289,8 @@ export function applyStamps(
       // any of it. It did until v2.28's audit.
       const { templateId: _template, dayType: _type, ...rest } = existing
       next[date] = { ...rest, date, tasks: manual }
+      // And its night's hours with it, from the date after.
+      stampNight(next, date, undefined, [], library)
       continue
     }
     const template = templates.find(t => t.id === templateId)
@@ -290,85 +305,15 @@ export function applyStamps(
     // id; a block with no match arrives unchecked; a prior task with no
     // matching block does not come back.
     const priorTemplateTasks =
-      existing.templateId === templateId ? existing.tasks.filter(t => t.fromTemplate) : []
+      existing.templateId === templateId ? existing.tasks.filter(t => t.fromTemplate && !lastNight(t)) : []
     // Anything on the day carrying this template's identity, however it got
     // here. This is the set a re-stamp must not duplicate.
-    const carried = existing.tasks.filter(t => originFor(t).type === 'template' && originFor(t).sourceId === templateId)
+    const carried = existing.tasks.filter(t => !lastNight(t) && originFor(t).type === 'template' && originFor(t).sourceId === templateId)
     const pool = [...new Set([...priorTemplateTasks, ...carried])]
 
     const column = columnFor(template, date)
 
-    const templateTasks: Task[] = column.blocks.map(b => {
-      const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
-      const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
-      const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
-      const bound = b.libraryListId ? boundTo(library.find(l => l.id === b.libraryListId)) : undefined
-      return {
-        // A matched task keeps its own id, so anything pointing at it - a
-        // focus session, an undo offer - still resolves after a re-stamp.
-        id: match?.id ?? crypto.randomUUID(),
-        origin: { type: 'template', sourceId: templateId, blockId: b.id },
-        time: b.time,
-        title: bound?.title ?? b.title,
-        libraryRef: bound?.ref,
-        done: match?.done ?? false,
-        fromTemplate: true,
-        // Core, minutes, unbounded and category all come from the template's
-        // current block, not the matched prior task - the same rule stamping
-        // already applies to title and time, so editing a block's size (or
-        // its colour, or whether it is a standing task) and re-stamping
-        // updates the day the same way editing its title does.
-        core: b.core,
-        minutes: b.minutes,
-        unbounded: b.unbounded,
-        category: b.category,
-        // A meal's recipe, or the kind of meal it leaves open - Kitchen. From
-        // the block, like the category, and echoed with it below, so a
-        // recipe somebody chose on the day survives the day being opened.
-        // A meal's recipe: this date's in the block's walk - v2.30.
-        recipeId: recipeForDate(blockRecipeIds(b), date),
-        mealType: b.mealType,
-        // What was handed over, kept beside it - see Task.fromBlock. It is
-        // what lets a day opened later tell "the block changed its mind"
-        // from "somebody moved this", for the fields where the two look
-        // identical the moment after a stamp.
-        fromBlock: {
-          title: bound?.title ?? b.title,
-          time: b.time,
-          minutes: b.minutes,
-          category: b.category,
-          recipeId: recipeForDate(blockRecipeIds(b), date),
-          mealType: b.mealType,
-        },
-        // State a day earned, kept: whether it was one of the day's key
-        // tasks, how far it has been carried. Editing a template is a
-        // statement about its shape, not permission to erase what happened on
-        // a day it was stamped onto.
-        //
-        // The note the day actually earned, and the block's own behind it.
-        // Before this, `match?.note` on a fresh day was nothing, so a template
-        // could carry a recipe and never deliver it.
-        //
-        // `match?.note ?? b.note` alone was not enough, and the test that
-        // says so is in stamping.test.ts: after one stamp the day's note IS
-        // the block's text, so a second stamp could no longer tell a day
-        // somebody wrote on from a day the template had filled, and editing
-        // the block reached neither. `templateNote` is what the block gave
-        // last time, so a note that still matches it is the block's to
-        // replace and anything else is the day's to keep.
-        note: ownNote(match) ?? b.note,
-        templateNote: b.note,
-        // Travels with the note it is about: a block whose recipe is the
-        // reason you look at the card says so on every day it stamps.
-        noteExpanded: b.noteExpanded,
-        // The same reading as the note, and the day wins in both directions:
-        // `toggleTaskHighlight` writes `false` rather than removing the
-        // field, so KEY taken off this morning's task is not handed back by
-        // the next stamp. Capped below, across the day.
-        highlight: match?.highlight ?? b.highlight,
-        pushCount: match?.pushCount,
-      }
-    })
+    const templateTasks: Task[] = column.blocks.filter(b => !isNightBlock(b)).map(b => stampedTask(b, templateId, pool, date, library))
     // dayType is copied from the template at this moment, not looked up
     // live later - see the field's doc comment in types.ts. Manual keeps
     // every task the template does not account for - including repeat
@@ -392,6 +337,137 @@ export function applyStamps(
       // this feature's to make.
       tasks: [...capped, ...kept],
     }
+    stampNight(next, date, templateId, column.blocks.filter(isNightBlock), library)
   }
   return next
+}
+
+/**
+ * The hours after a date's midnight, onto the date after it - section 10 of
+ * RESEARCH-SHIFTS. `blocks` are the night's blocks of the template now on
+ * `date`, none where it has none or was taken off; each lands as a task of
+ * the next date marked with the night. What the night put there before goes,
+ * unless it stands for one of these blocks still, which keeps its tick, its
+ * id and everything else a re-stamp keeps. A task of one of these blocks
+ * already on the next date by another way - pushed there by hand - is taken
+ * for the night's rather than doubled. Written into `next` in place; a date
+ * after with nothing to take and nothing to give is not touched, and not made.
+ */
+function stampNight(
+  next: Record<string, DayPlan>,
+  date: string,
+  templateId: string | undefined,
+  blocks: TemplateBlock[],
+  library: LibraryList[],
+): void {
+  const on = addDays(date, 1)
+  const day = next[on]
+  const ofNight = (t: Task) => t.nightOf === date
+  if (blocks.length === 0 && !day?.tasks.some(ofNight)) return
+  const target = day ?? { date: on, tasks: [] }
+  const ids = new Set(blocks.map(b => b.id))
+  const pool = target.tasks.filter(t => {
+    const origin = originFor(t)
+    if (origin.type !== 'template' || origin.sourceId !== templateId) return false
+    return ofNight(t) || (!t.nightOf && !!origin.blockId && ids.has(origin.blockId))
+  })
+  const tasks = blocks.map(b => ({ ...stampedTask(b, templateId!, pool, date, library), nightOf: date }))
+  const rest = target.tasks.filter(t => !ofNight(t) && !tasks.some(n => n.id === t.id))
+  const capped = capHighlights(tasks, MAX_HIGHLIGHTS - rest.filter(t => t.highlight).length)
+  next[on] = { ...target, tasks: [...capped, ...rest] }
+}
+
+/**
+ * The task a block stamps onto a day, keeping what the day earned on the task
+ * that already stood for it. The match is taken out of `pool`, so no task
+ * stands for two blocks. `date` is the date the template is on - for a
+ * night's block, the night's, which is also the date its recipe walks by.
+ */
+function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: string, library: LibraryList[]): Task {
+  const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
+  const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
+  const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
+  const bound = b.libraryListId ? boundTo(library.find(l => l.id === b.libraryListId)) : undefined
+  return {
+    // A matched task keeps its own id, so anything pointing at it - a
+    // focus session, an undo offer - still resolves after a re-stamp.
+    id: match?.id ?? crypto.randomUUID(),
+    origin: { type: 'template', sourceId: templateId, blockId: b.id },
+    time: b.time,
+    title: bound?.title ?? b.title,
+    libraryRef: bound?.ref,
+    done: match?.done ?? false,
+    fromTemplate: true,
+    // Core, minutes, unbounded and category all come from the template's
+    // current block, not the matched prior task - the same rule stamping
+    // already applies to title and time, so editing a block's size (or
+    // its colour, or whether it is a standing task) and re-stamping
+    // updates the day the same way editing its title does.
+    core: b.core,
+    minutes: b.minutes,
+    unbounded: b.unbounded,
+    category: b.category,
+    // A meal's recipe, or the kind of meal it leaves open - Kitchen. From
+    // the block, like the category, and echoed with it below, so a
+    // recipe somebody chose on the day survives the day being opened.
+    // A meal's recipe: this date's in the block's walk - v2.30.
+    recipeId: recipeForDate(blockRecipeIds(b), date),
+    mealType: b.mealType,
+    // What was handed over, kept beside it - see Task.fromBlock. It is
+    // what lets a day opened later tell "the block changed its mind"
+    // from "somebody moved this", for the fields where the two look
+    // identical the moment after a stamp.
+    fromBlock: {
+      title: bound?.title ?? b.title,
+      time: b.time,
+      minutes: b.minutes,
+      category: b.category,
+      recipeId: recipeForDate(blockRecipeIds(b), date),
+      mealType: b.mealType,
+    },
+    // State a day earned, kept: whether it was one of the day's key
+    // tasks, how far it has been carried. Editing a template is a
+    // statement about its shape, not permission to erase what happened on
+    // a day it was stamped onto.
+    //
+    // The note the day actually earned, and the block's own behind it.
+    // Before this, `match?.note` on a fresh day was nothing, so a template
+    // could carry a recipe and never deliver it.
+    //
+    // `match?.note ?? b.note` alone was not enough, and the test that
+    // says so is in stamping.test.ts: after one stamp the day's note IS
+    // the block's text, so a second stamp could no longer tell a day
+    // somebody wrote on from a day the template had filled, and editing
+    // the block reached neither. `templateNote` is what the block gave
+    // last time, so a note that still matches it is the block's to
+    // replace and anything else is the day's to keep.
+    note: ownNote(match) ?? b.note,
+    templateNote: b.note,
+    // Travels with the note it is about: a block whose recipe is the
+    // reason you look at the card says so on every day it stamps.
+    noteExpanded: b.noteExpanded,
+    // The same reading as the note, and the day wins in both directions:
+    // `toggleTaskHighlight` writes `false` rather than removing the
+    // field, so KEY taken off this morning's task is not handed back by
+    // the next stamp. Capped below, across the day.
+    highlight: match?.highlight ?? b.highlight,
+    pushCount: match?.pushCount,
+  }
+}
+
+/** Whether a block is one of its night's hours, stamped onto the date after - section 10 of RESEARCH-SHIFTS. */
+export function isNightBlock(block: TemplateBlock): boolean {
+  return block.afterMidnight === true
+}
+
+/**
+ * The tasks that stand for the blocks of the template stamped on `date`:
+ * the date's own, and its night's on the date after. Last night's tasks on
+ * `date` are the night before's and are left out. For a reader that asks how
+ * a template's blocks went - the block counts, the plan reading.
+ */
+export function tasksOfStamp(days: Record<string, DayPlan>, date: string): Task[] {
+  const own = (days[date]?.tasks ?? []).filter(t => !t.nightOf)
+  const night = (days[addDays(date, 1)]?.tasks ?? []).filter(t => t.nightOf === date)
+  return [...own, ...night]
 }

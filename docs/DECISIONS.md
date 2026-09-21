@@ -4065,6 +4065,71 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## A night's hours land on the morning after, and a kind reaches the dates around it
+
+After v2.29, at the owner's word: a gym day is always its weekday, at the time
+the kind of day gives it; the same with food, because on a night shift lunch
+is not lunch; and all of it automatic, with the hardest part named - a date's
+kind has to take into account the days that come after it.
+docs/RESEARCH-SHIFTS.md section 10 has the whole of it.
+
+A review of every door first. Most of it held: a routine is its weekdays at
+each kind's time through every door a kind arrives by; meals are blocks on each
+kind's template, with their recipes walking by the date; tonight's sleep is
+tomorrow's kind's; last night's shift is this morning's busy time. Two things
+did not hold, and both were about the days after.
+
+**A template can hold the hours after its midnight.** A block marked after
+midnight is written where it belongs - a night meal at one in the morning, in
+the night shift - and a stamp puts it on the date after, as that date's task,
+marked with the night it came from (`Task.nightOf`). It happens on the date
+after, so it is drawn, ticked and counted there. A stamp of that date keeps it,
+the way it keeps what was written by hand; a change of the night's own template
+takes it off with the rest of that template's tasks; ticking or moving it is a
+hand edit of the night's date, so changing that date's kind asks first; carried
+to another date by hand it is that date's own. Before this, a rota of two days
+and two nights had no way to say "the night shift eats at one": written in the
+night shift, the meal landed at one in the morning before the shift; written in
+the kinds that follow a night, it landed after a day shift as well, since the
+first night of a run follows one.
+
+Rejected: **a time past 24:00 on a block**, "25:00". Every reader of a time
+reads a clock of twenty-four hours, and section 3.4 already settled that a
+block's time is on its own date's clock. Rejected: **the night's tasks kept on
+the night's own date and drawn on the next one as its continuation**. The meal
+at one in the morning is ticked at one in the morning, on the day that is open
+then, and a continuation is drawn to be read, not pressed. Rejected: **the app
+turning the day after a night into an after-nights day by itself**. What that
+day is, is the owner's rota and the owner's kind of day (section 2.1); the app
+never changes a date's kind unasked.
+
+**A kind reaches the dates around it.** Composition always measured a date
+against its neighbours, but only a date being composed was measured, so a date
+given a kind by itself left the days around it as they were: a gym at six on
+the Tuesday after a Monday made a night shift kept its six o'clock under the
+shift's last hour, and said nothing, since a routine's task with a time says
+nothing about where it went. Now, when a date's kind changes - by the roster, a
+kind stamped by hand, the weekday map, or an ordinary template stamped over a
+kind - the day before and the two after are composed again with the kinds
+they have: nothing is stamped on them, and only a routine's task still carrying
+what its rule gave follows it, in exactly those fields. Those three because
+they are what a date's composition reads of its neighbours: the day before's
+evening ends in its sleep, and a night's blocks run into the two mornings
+after. A date behind today is not touched. The preview names the days that
+follow, and it is read from the same function Apply is (`rosterApplied`), so
+the two cannot say different things.
+
+**The weekday map opens the night first.** A date the map is about to give a
+template with hours after its midnight is given it when the date after is
+opened, if nobody has opened it yet - otherwise the morning after a night would
+have its night only once the night itself had been looked at. One date back,
+today or ahead, and no further.
+
+The data is two optional fields, `TemplateBlock.afterMidnight` and
+`Task.nightOf`, which every older device carries untouched. The first and
+second stages the section planned are one: two fields nothing writes are not a
+stage anyone could see.
+
 ## A phone's week keeps a line an hour, and scrolls inside itself
 
 After v2.29, at the owner's word: fix the phone week under a Focus bar. The

@@ -17,7 +17,8 @@ process.env.TZ = 'Europe/Vilnius'
 /**
  * Rotating shifts' composition held to its invariants over long stretches -
  * docs/RESEARCH-SHIFTS.md section 8.2. Each run builds four to six kinds with
- * random blocks (some past midnight, some untimed, some with no length),
+ * random blocks (some past midnight, some untimed, some with no length, some
+ * a night's hours on the date after - section 10),
  * random sleep schedules (overnight, daytime, equal times), random routines,
  * and lays two rosters from random cycles over a 400-day stretch starting
  * anywhere in 2026 to 2028, with hand edits between them - so a run crosses
@@ -49,6 +50,7 @@ const sleepWindow = fc.oneof(
 
 const blockShape = fc.record({
   time: fc.option(clock, { nil: undefined }),
+  night: fc.oneof({ weight: 3, arbitrary: fc.constant(false) }, { weight: 1, arbitrary: fc.constant(true) }),
   minutes: fc.option(fc.oneof(fc.integer({ min: 0, max: 720 }), fc.integer({ min: 300, max: 1440 })), { nil: undefined }),
 })
 
@@ -109,7 +111,13 @@ function build(s: Scenario): AppData {
       type: kind.type,
       sleepProfileId: kind.sleep === undefined ? undefined : (profiles[kind.sleep]?.id ?? 'deleted-schedule'),
       dayKind: { letter: String.fromCharCode(65 + i), order: i },
-      blocks: kind.blocks.map((b, j) => ({ id: `kind-${i}-block-${j}`, title: `Block ${i}.${j}`, time: b.time, minutes: b.minutes })),
+      blocks: kind.blocks.map((b, j) => ({
+        id: `kind-${i}-block-${j}`,
+        title: `Block ${i}.${j}`,
+        time: b.time,
+        minutes: b.minutes,
+        ...(b.night ? { afterMidnight: true } : {}),
+      })),
     }),
   )
   data.routines = s.routines.map((r, i) => ({
@@ -198,6 +206,41 @@ function composed({ dates, today, draft, before }: Run): string[] {
   return dates.filter(date => date >= today && (draft[date] === null || before.templates.some(t => t.id === draft[date])))
 }
 
+/**
+ * The dates around a date the second roster changed the kind of, which follow
+ * it - section 10.2a: the day before and the two after, in reach, with a kind,
+ * and not composed themselves.
+ */
+function followers(plan: Run): string[] {
+  const own = new Set(composed(plan))
+  const around = new Set<string>()
+  for (const date of turned(plan)) {
+    for (const offset of [-1, 1, 2]) {
+      const on = addDays(date, offset)
+      if (on >= plan.today && !own.has(on) && kindOnDate(plan.after, on)) around.add(on)
+    }
+  }
+  return [...around].sort()
+}
+
+/** The dates the second roster composed whose kind it changed. */
+function turned(plan: Run): string[] {
+  return composed(plan).filter(date => kindOnDate(plan.before, date)?.id !== kindOnDate(plan.after, date)?.id)
+}
+
+/**
+ * A day without what its neighbours may give it: last night's tasks, and the
+ * routine's tasks composing a date may touch - not ticked, and carrying what
+ * their rule gave, so they follow it in the fields still as it left them.
+ * What is left is what the roster had no business changing on a date it was
+ * not asked about: everything written by hand, and every tick.
+ */
+function ownPart(day: DayPlan | undefined, date: string): unknown {
+  // A date a night made, with nothing else on it, is the date as it was.
+  const { tasks, ...rest } = day ?? { date, tasks: [] }
+  return { ...rest, tasks: tasks.filter(t => !t.nightOf && !(t.routineId && !t.done && t.fromRoutine)) }
+}
+
 // --- the clock this file runs on ----------------------------------------------------------
 
 test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours", () => {
@@ -206,22 +249,34 @@ test("this file runs on Lithuania's clock: 25 October 2026 has twenty-five hours
 
 // --- the invariants ---------------------------------------------------------------------------
 
-test('1. every date in reach is exactly the kind the roster says, and nothing else is touched', () => {
+test("1. every date in reach is exactly the kind the roster says, nothing behind today is touched, and a date the roster was not asked about changes only by what its neighbours give it", () => {
   fc.assert(
     fc.property(scenario, s => {
-      const { dates, today, draft, before, after } = run(s)
+      const plan = run(s)
+      const { dates, today, draft, before, after } = plan
       const reach = new Set(dates.filter(d => d >= today))
+      // What may change on a date the roster was not asked about: the date
+      // after a changed kind takes its night, and the dates around follow it.
+      const given = new Set([...followers(plan), ...turned(plan).map(date => addDays(date, 1))])
+      const unasked = (date: string) => {
+        if (given.has(date)) expect(ownPart(after.days[date], date), date).toEqual(ownPart(before.days[date], date))
+        else expect(after.days[date], date).toBe(before.days[date])
+      }
       for (const date of dates) {
         const id = draft[date]
         const exists = id === null || before.templates.some(t => t.id === id)
-        if (!reach.has(date) || !exists) {
+        if (!reach.has(date)) {
           expect(after.days[date]).toBe(before.days[date])
-          continue
+        } else if (!exists) {
+          expect(kindOnDate(after, date)?.id).toBe(kindOnDate(before, date)?.id)
+          unasked(date)
+        } else {
+          expect(kindOnDate(after, date)?.id).toBe(id ?? undefined)
         }
-        expect(kindOnDate(after, date)?.id).toBe(id ?? undefined)
       }
       for (const date of Object.keys(after.days)) {
-        if (!reach.has(date)) expect(after.days[date]).toBe(before.days[date])
+        if (date < today) expect(after.days[date]).toBe(before.days[date])
+        else if (!reach.has(date)) unasked(date)
       }
     }),
     { numRuns: RUNS },
@@ -234,7 +289,7 @@ test("2. no routine task still as its rule left it runs into busy time, each is 
       const plan = run(s)
       const { after } = plan
       const kindOf: KindOf = date => kindOnDate(after, date)
-      for (const date of composed(plan)) {
+      for (const date of [...composed(plan), ...followers(plan)]) {
         const kind = kindOf(date)
         const tasks = (after.days[date]?.tasks ?? []).filter(ruleLeft)
         if (!kind) {
@@ -300,6 +355,33 @@ test('6. nothing written by hand is lost, through a roster and through a change 
         for (const task of before.days[date]?.tasks ?? []) {
           if (!task.id.startsWith('hand-')) continue
           expect(after.days[date]?.tasks.find(t => t.id === task.id), `${date} ${task.title}`).toEqual(task)
+        }
+      }
+    }),
+    { numRuns: RUNS },
+  )
+}, 300_000)
+
+test("8. a night's task stands for a block after midnight of the template on the date before it, and each such block stands once on the date after", () => {
+  fc.assert(
+    fc.property(scenario, s => {
+      const { dates, after } = run(s)
+      for (const date of [...dates, addDays(dates[dates.length - 1], 1)]) {
+        for (const task of after.days[date]?.tasks ?? []) {
+          if (task.nightOf === undefined) continue
+          expect(task.nightOf, `${date} ${task.title}`).toBe(addDays(date, -1))
+          const night = after.days[task.nightOf]
+          expect(originFor(task).sourceId).toBe(night?.templateId)
+          const template = after.templates.find(t => t.id === night?.templateId)
+          expect(template?.blocks.find(b => b.id === originFor(task).blockId)?.afterMidnight).toBe(true)
+        }
+      }
+      for (const date of dates) {
+        const template = after.templates.find(t => t.id === after.days[date]?.templateId)
+        const next = after.days[addDays(date, 1)]?.tasks ?? []
+        for (const block of template?.blocks.filter(b => b.afterMidnight) ?? []) {
+          const standing = next.filter(t => t.nightOf === date && originFor(t).blockId === block.id)
+          expect(standing, `${date} ${block.title}`).toHaveLength(1)
         }
       }
     }),

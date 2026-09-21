@@ -1,10 +1,10 @@
 import type { AppData, DayPlan } from './types'
-import { todayKey } from './dates'
+import { addDays, todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
-import { applyStamps, refreshFromTemplate } from './stamping'
+import { applyStamps, columnFor, isNightBlock, refreshFromTemplate } from './stamping'
 import { isDayKind, kindOnDate } from './dayKinds'
-import { composeDay } from './shiftDay'
+import { composeDay, followNeighbours } from './shiftDay'
 
 /**
  * Everything a day gets on its own, as a pure function of the state.
@@ -46,6 +46,33 @@ export interface EnsuredDay {
  * the replan sheet opens the day somebody chose in it.
  */
 export function ensuredDay(data: AppData, date: string, today: string = todayKey()): EnsuredDay | null {
+  // Last night's hours arrive with the night - section 10.2a of
+  // RESEARCH-SHIFTS. The date before, where the weekday map is about to give
+  // it a template with hours after its midnight and nobody has opened it yet,
+  // is opened first, so its night is on this date whichever of the two is
+  // opened first. The one date before, today or ahead, and no further: that
+  // date's own night-before is its own open's to bring.
+  const before = addDays(date, -1)
+  const night = before >= today && nightWaits(data, before) ? ensuredOne(data, before, today) : null
+  const own = ensuredOne(night ? { ...data, days: night.days } : data, date, today)
+  if (!night) return own
+  return own ? { days: own.days, changed: true } : { days: night.days, changed: true }
+}
+
+/**
+ * Whether a date nobody has opened will be given a template by the weekday
+ * map that puts hours on the date after it.
+ */
+function nightWaits(data: AppData, date: string): boolean {
+  const day = data.days[date]
+  if (day?.autoApplied || day?.templateId) return false
+  const mapped = data.settings.weekdayTemplates[weekdayOf(date)]
+  const template = mapped ? data.templates.find(t => t.id === mapped) : undefined
+  return !!template && columnFor(template, date).blocks.some(isNightBlock)
+}
+
+/** One date, opened - the whole of what `ensuredDay` did before a night could wait on the date before. */
+function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | null {
   const existing = data.days[date]
 
   /**
@@ -88,7 +115,10 @@ export function ensuredDay(data: AppData, date: string, today: string = todayKey
     // docs/RESEARCH-SHIFTS.md section 6.2.
     if (isDayKind(template)) {
       const composing = { ...data, days }
-      days = { ...days, [date]: composeDay(composing, date, template, on => kindOnDate(composing, on), today).day }
+      const composed = composeDay(composing, date, template, on => kindOnDate(composing, on), today)
+      days = { ...days, [date]: composed.day, ...(composed.nextDay ? { [addDays(date, 1)]: composed.nextDay } : {}) }
+      // A kind reaches the dates around it, and every door says so - section 10.2a.
+      days = followNeighbours({ ...data, days }, [date], today).days
     } else {
       days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
     }

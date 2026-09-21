@@ -1,4 +1,4 @@
-import { columnFor } from './stamping'
+import { columnFor, tasksOfStamp } from './stamping'
 import { originFor } from './taskIdentity'
 import { formatDuration, timeToMinutes } from '../widgets/day-plan/capacity'
 import type { AppData, Task, TemplateBlock } from './types'
@@ -178,7 +178,8 @@ export function planReading(data: AppData, dates: string[], today: string): Bloc
     if (!template) continue
 
     const blocks = columnFor(template, date).blocks
-    const matched = tasksForBlocks(blocks, day.tasks, template.id)
+    // Its night's blocks are on the date after - see tasksOfStamp.
+    const matched = tasksForBlocks(blocks, tasksOfStamp(data.days, date), template.id)
     for (const block of blocks) {
       const key = `${template.id}:${block.id}`
       let tally = tallies.get(key)

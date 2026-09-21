@@ -1,6 +1,6 @@
 import { weekOf } from './dates'
 import { isDayKind, kindOnDate } from './dayKinds'
-import { composeDay, handEdits, type HandEdits, type KindOf } from './shiftDay'
+import { handEdits, rosterApplied, type Following, type HandEdits } from './shiftDay'
 import type { AppData, Template } from './types'
 
 /**
@@ -14,9 +14,10 @@ import type { AppData, Template } from './types'
  * kind and composition would not change is counted and not listed - a preview
  * that lists thirty unchanged days hides the three that matter.
  *
- * It composes the same way `applyRoster` does, through `composeDay` and the
- * same `kindOf`, so what it promises is what Apply writes. Nothing here
- * touches the plan.
+ * It is read from `rosterApplied`, the function `applyRoster` is, so what it
+ * promises is what Apply writes - the days that follow the draft included
+ * (section 10.2a): a night's hours on the morning after it, and the routines
+ * of the dates around a changed kind. Nothing here touches the plan.
  */
 
 /** One date in the preview: what it would become, and what it would cost. */
@@ -50,39 +51,33 @@ export interface RosterPreview {
   changing: number
   /** How many dates the draft holds that would change nothing. */
   unchanged: number
+  /**
+   * The dates that would change without being the draft's to change: the day
+   * after a night that changes, and the dates around a changed kind whose
+   * routines move - each with the dates of the draft that move it.
+   */
+  following: Following[]
 }
 
 const counted = (hand: HandEdits) => hand.done + hand.moved + hand.deleted
 
 export function rosterPreview(data: AppData, draft: Record<string, string | null>, today: string): RosterPreview {
-  // The same reading of a draft as applyRoster's: a date behind today is not in
-  // reach, and an id that names no kind any more leaves its date alone.
-  const drafted = new Map<string, Template | undefined>()
-  for (const date of Object.keys(draft).sort()) {
-    if (date < today) continue
+  // Apply's own reading of the draft: a date behind today is not in reach, and
+  // an id that names no kind any more leaves its date alone - and neither is
+  // counted here at all.
+  const applied = rosterApplied(data, draft, today)
+  const following = applied.following
+  const reached = Object.keys(draft).filter(date => {
+    if (date < today) return false
     const id = draft[date]
-    if (id === null) {
-      drafted.set(date, undefined)
-      continue
-    }
-    const kind = data.templates.find(t => t.id === id)
-    if (kind && isDayKind(kind)) drafted.set(date, kind)
-  }
-  const kindOf: KindOf = date => (drafted.has(date) ? drafted.get(date) : kindOnDate(data, date))
+    return id === null || applied.plan.templates.some(t => t.id === id && isDayKind(t))
+  })
+  const unchanged = reached.filter(date => !applied.composed.some(c => c.date === date) && !following.some(f => f.date === date)).length
 
   const weeks = new Map<string, RosterPreviewWeek>()
-  let changing = 0
-  let unchanged = 0
+  const changing = applied.composed.length
 
-  for (const [date, kind] of drafted) {
-    const before = data.days[date]
-    const { day, placements } = composeDay(data, date, kind, kindOf, today)
-    const same = before ? day === before : !day.templateId && day.tasks.length === 0
-    if (same) {
-      unchanged++
-      continue
-    }
-    changing++
+  for (const { date, kind, placements } of applied.composed) {
 
     const entry: RosterPreviewDate = {
       date,
@@ -106,5 +101,5 @@ export function rosterPreview(data: AppData, draft: Record<string, string | null
     weeks.set(from, week)
   }
 
-  return { weeks: [...weeks.values()].sort((a, b) => a.from.localeCompare(b.from)), changing, unchanged }
+  return { weeks: [...weeks.values()].sort((a, b) => a.from.localeCompare(b.from)), changing, unchanged, following }
 }

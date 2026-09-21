@@ -266,3 +266,50 @@ test('with nothing left to do, Apply says so rather than offering a press that d
   expect(screen.getByRole('group', { name: 'What Apply will do' })).toHaveTextContent('Nothing to apply')
   expect(screen.queryByRole('button', { name: /^Apply \d/ })).toBeNull()
 })
+
+// --- the days next to the draft - section 10.2a ------------------------------------------------
+
+test('Apply names the days next to the draft that follow it, and a day left alone takes them with it', async () => {
+  const first = addDays(todayKey(), 1)
+  const second = addDays(todayKey(), 2)
+  const data = withShift()
+  data.templates = [
+    data.templates[0],
+    KIND('night', 'Night shift', 'N', 1, [
+      { id: 'shift', title: 'On shift', time: '22:00', minutes: 540 },
+      { id: 'home', title: 'Drive home', time: '07:00', minutes: 30, afterMidnight: true },
+    ]),
+  ]
+  // The first date carries a day shift somebody ticked; the second a day shift
+  // of its own, the morning a night on the first would land on.
+  data.days = {
+    [first]: {
+      date: first,
+      templateId: 'day',
+      tasks: [
+        {
+          id: 't1',
+          title: 'On shift',
+          time: '07:00',
+          minutes: 480,
+          done: true,
+          category: 'core',
+          origin: { type: 'template', sourceId: 'day', blockId: 'shift' },
+          fromBlock: { title: 'On shift', time: '07:00', minutes: 480, category: 'core' },
+        },
+      ],
+    },
+    [second]: { date: second, templateId: 'day', tasks: [] },
+  }
+  actions.resetForTests(data)
+
+  const user = await openRoster()
+  await user.click(cell(first))
+  await user.click(screen.getByRole('button', { name: 'Apply' }))
+  const preview = screen.getByRole('group', { name: 'What Apply will do' })
+  expect(preview).toHaveTextContent(/A day next to these follows them: /)
+
+  // Left alone, the night does not happen, and nothing follows it.
+  await user.click(within(preview).getByRole('button', { name: 'Leave it' }))
+  expect(preview).not.toHaveTextContent(/follows them/)
+})

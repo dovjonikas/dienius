@@ -59,13 +59,18 @@ export function leftByHand(day: DayPlan, leaving: Task[]): DayPlan {
 }
 
 /**
- * A routine's task arriving on another date by hand. It stays its routine's,
- * so no date holds two of it, but it is no longer where the rule put it: with
- * no echo, composing the date it landed on leaves it where it was put, and
- * never takes it away.
+ * A task arriving on another date by hand - moved, pushed, carried on by the
+ * evening's push, sent on by a replan or a low day; every one of those comes
+ * through here.
+ *
+ * A routine's task stays its routine's, so no date holds two of it, but it is
+ * no longer where the rule put it: with no echo, composing the date it landed
+ * on leaves it where it was put, and never takes it away. And a night's task
+ * is not the night's any more (section 10 of RESEARCH-SHIFTS): it is the new
+ * date's own, and the night's template changing does not take it away.
  */
 export function arrivingByHand(task: Task): Task {
-  if (!task.fromRoutine) return task
-  const { fromRoutine: _echo, ...rest } = task
+  if (!task.fromRoutine && task.nightOf === undefined) return task
+  const { fromRoutine: _echo, nightOf: _night, ...rest } = task
   return rest
 }

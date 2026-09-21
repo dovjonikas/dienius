@@ -2,7 +2,7 @@ import { commit, getData } from './core'
 import type { DayType, MealType, Template, TemplateKind, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
-import { applyRoster } from '../shiftDay'
+import { applyRoster, followNeighbours } from '../shiftDay'
 import { isDayKind } from '../dayKinds'
 import { todayKey } from '../dates'
 
@@ -39,6 +39,7 @@ export const templateActions = {
       note?: string
       noteExpanded?: boolean
       highlight?: boolean
+      afterMidnight?: boolean
     }[]
   }): Template {
     const data = getData()
@@ -67,6 +68,7 @@ export const templateActions = {
         note: b.note,
         noteExpanded: b.noteExpanded,
         highlight: b.highlight,
+        afterMidnight: b.afterMidnight,
       })),
     }
     commit({ ...data, templates: [...data.templates, template] })
@@ -111,7 +113,12 @@ export const templateActions = {
     }
     const stamped =
       Object.keys(plain).length > 0 ? { ...data, days: applyStamps(data.days, data.templates, plain, data.library) } : data
-    const next = Object.keys(kinds).length > 0 ? applyRoster(stamped, kinds, todayKey(), { reach: 'any' }) : stamped
+    const composed = Object.keys(kinds).length > 0 ? applyRoster(stamped, kinds, todayKey(), { reach: 'any' }) : stamped
+    // A kind an ordinary template stamped over is a kind that changed, and the
+    // dates around it follow it the way they follow the roster - section
+    // 10.2a of RESEARCH-SHIFTS.
+    const leftKind = Object.keys(plain).filter(date => kindOf(data.days[date]?.templateId))
+    const next = leftKind.length > 0 ? followNeighbours(composed, leftKind, todayKey(), new Set(Object.keys(kinds))) : composed
     if (next !== data) commit(next)
   },
 

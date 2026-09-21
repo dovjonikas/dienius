@@ -266,6 +266,10 @@ const TASK = record({
   // length.
   routineId: optional(string),
   fromRoutine: optional(FROM_ROUTINE),
+  // The night a task belongs to - section 10 of RESEARCH-SHIFTS. A date's
+  // text, held as loosely as `replannedOn`: it is only ever compared with a
+  // date, so one that names no date is a task no night takes away.
+  nightOf: optional(string),
   note: optional(string),
   templateNote: optional(string),
   fromBlock: optional(FROM_BLOCK),
@@ -319,6 +323,9 @@ const TEMPLATE_BLOCK = record({
   // there is no reading of it that is somebody's real data.
   weekday: optional(wholeNumber(0, 6)),
   groupId: optional(string),
+  // One of the hours after the template's midnight - section 10 of
+  // RESEARCH-SHIFTS.
+  afterMidnight: optional(boolean),
 })
 
 // A day template marked as a kind of day on the roster - rotating shifts,
