@@ -7,6 +7,11 @@ import { addDays, todayKey } from '../../lib/dates'
 import { routineNotes } from '../../lib/shiftDay'
 import type { AppData, Routine, Template } from '../../lib/types'
 
+// The skipped hour is Lithuania's: docs/RESEARCH-SHIFTS.md section 4.4. Pinned
+// as shiftDay.test.ts pins it, or the night the clocks change is an ordinary
+// night on a machine that runs in UTC - which is how it failed in the deploy.
+process.env.TZ = 'Europe/Vilnius'
+
 /**
  * A routine that lands on a day with no time says why - rotating shifts, v2.29
  * stage 9, and docs/RESEARCH-SHIFTS.md section 2.3. A kind with no time for it
@@ -59,6 +64,8 @@ test('a routine whose time runs into the night says it runs into sleep', () => {
 // why it has none. Set on the plan directly: the date is behind today, where
 // the roster does not reach.
 test('on the night the clock skips its time, a routine says so', () => {
+  // The zone took: half past three that night is not on Lithuania's clock.
+  expect(new Date(2026, 2, 29, 3, 30).getHours()).toBe(4)
   const data = getData()
   data.settings = { ...data.settings, sleepProfiles: [{ id: 'default', name: 'Nights', window: { start: '01:00', end: '02:00' } }] }
   data.routines = [ROUTINE({ id: 'early', title: 'Stretching', minutes: 20, times: { day: '03:30' } })]
