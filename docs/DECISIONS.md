@@ -4065,6 +4065,25 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## A phone's week keeps a line an hour, and scrolls inside itself
+
+After v2.29, at the owner's word: fix the phone week under a Focus bar. The
+week on a phone was fitted to whatever height the page left it, and a Focus
+session's bar left seventeen hours about a hundred pixels - every block drawn
+under the next, every hour label on the one after it. A floor of room per hour
+had been tried in stage 9 and taken out, because it made the page scroll, which
+the week is built never to do.
+
+Both hold now. Every hour keeps 16px, a line's room, and the shell is the
+window's height on the grid, so where there is not room for the hours at that
+the grid scrolls inside itself with its day names held at the top, and the page
+stays still - the rule the wide day's grid already had. On a 390x844 phone the
+week has the room and nothing changes; on a smaller one the week reads better
+than it did, its last hours a scroll away. The agenda is a list and scrolls
+the page as before. The phone's week still keeps its waking axis rather than
+opening at midnight for last night's shift: opened at midnight, the scroll
+would open on the night.
+
 ## The morning after a night shift, and a kind by its letter
 
 v2.29 stage 9, from docs/RESEARCH-SHIFTS.md sections 3.3 and 5.

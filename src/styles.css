@@ -12644,9 +12644,36 @@ main:has(.week) > .calendar {
 .week-foot-untimed { color: var(--faint); }
 
 /* Three columns on a phone, not seven - see NARROW_DAYS in WeekView.tsx.
-   Seven at 390px is 47px a column, which is a stripe rather than a block. */
+   Seven at 390px is 47px a column, which is a stripe rather than a block.
+
+   And every hour keeps a line's room, so the hour labels and the blocks never
+   land on each other; where the page leaves the week less than that - a
+   small phone, or a Focus session's bar over the page - the grid scrolls
+   inside itself, its day names held at the top, and the page does not:
+   CONVENTIONS section 4, the way the wide day's grid does it. Under a Focus
+   bar the whole clock of a week was fitted into about a hundred pixels and
+   every block and hour was drawn on the next. On a 390x844 phone the week has
+   the room and nothing here changes. */
 @media (max-width: 1023px) {
-  .week-grid { grid-template-columns: 36px repeat(3, minmax(0, 1fr)); }
+  .week-grid {
+    grid-template-columns: 36px repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(calc(var(--week-hours, 16) * var(--s4)), 1fr) auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .week-col-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg);
+  }
+
+  /* The page holds still and the grid scrolls within it: the shell is the
+     window's height on the grid, where elsewhere it is at least that, so the
+     grid has a height to fit and to scroll inside. Not the agenda, which is a
+     list and scrolls the page like any list. */
+  .app:has(.week-grid) { height: calc(100dvh - var(--nav-bar-h)); }
 }
 
 /* The 44px floor, paid for in layout rather than in height. On a touch screen

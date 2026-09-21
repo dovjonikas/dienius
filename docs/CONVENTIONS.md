@@ -153,6 +153,11 @@ v2.0, and nothing said so.
 - **Calendar → Month.** If something must give, reduce the detail in a cell.
   **Never raise cell height.**
 - **Calendar → Week.** Structurally guaranteed rather than tuned - see below.
+  On a phone every hour keeps a line's room, 16px, and where the page leaves
+  the grid less than that - a small phone, a Focus session's bar - **the
+  grid scrolls inside itself, its day names held at the top, and the page
+  does not**, the wide day's own rule below. Fitted without a floor, a
+  Focus bar left seventeen hours about a hundred pixels.
 - **The day view at the wide breakpoint** (≥1024px), where the whole day fits
   the window and the grid draws at whatever density that takes - *within the
   floors*. A sized anchor draws at least 32px, because that is what its box

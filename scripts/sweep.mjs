@@ -466,6 +466,21 @@ const SCREENS = [
       await p.waitForTimeout(400)
     },
   },
+  // The week on a phone with a Focus session's bar over the page, which is
+  // where the fitted week once drew every block and hour on the next. The
+  // session the screen before this one started is still running.
+  {
+    name: 'Calendar week (a focus running)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Today')
+      if ((await p.locator('.focus-bar').count()) === 0) {
+        const f = p.getByRole('button', { name: /^Focus/ }).first()
+        if (await f.count()) await f.click().catch(() => {})
+      }
+      await tab(p, 'Calendar')
+      await press(p, 'Week')
+    },
+  },
   // The three header popovers. Reachable from every tab and therefore on
   // screen more often than most of the list above. Notes and Journal were
   // tabs of the clock's panel until v2.7 and this list still opened the

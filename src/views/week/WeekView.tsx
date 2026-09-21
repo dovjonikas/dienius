@@ -277,7 +277,12 @@ export function WeekView({ date, onDateChange, onOpenDay, reading = 'grid' }: We
       {/* The arrows, the title, Today and Stamp week live in the calendar bar
           above - one row with the mode toggle rather than a second row of
           their own. On a phone that second row was a fifth of the grid. */}
-      <div className="week-grid">
+      {/* How many hours the shared axis spans, for the one rule that needs
+          it: on a phone every hour keeps a line's room - see .week-grid. */}
+      <div
+        className="week-grid"
+        style={{ ['--week-hours' as string]: (layout.window.end - layout.window.start) / 60 } as React.CSSProperties}
+      >
         {/* One axis for seven columns - see sharedWindow. Hours only, because
             a label on every block is what turns a week into a wall of text;
             the block says what, the axis says when. */}
