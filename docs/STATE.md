@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 9 of 10 done, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,32 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 10 - the phone, the walks, the guide and the last tests: done
+
+- **The walk** RESEARCH-SHIFTS section 8.4 asks for, in `e2e/shifts.e2e.ts`, on
+  the desktop and on the phone - the phone project runs it now. Four kinds
+  made on the Templates tab with their letters; a gym with a time on three of
+  them and none on the fourth; a month filled by a cycle; the preview naming a
+  routine that needs a time and one that runs into the shift; Apply; a day
+  shift ticked by hand and then made a night in the roster, the preview naming
+  it changed by hand, Apply, and Undo giving the day shift back tick and all.
+  Then one in the morning after a night: the shift's last hours at the top of
+  the day, and the night shift what is running. And the night the clocks go
+  back: a night shift stamped on 24 October has seven real hours left at one in
+  the morning, on the wall's six.
+- **The phone**: every screen of the feature is measured on the phone by the
+  sweep, keys and text scale, in both themes. The one thing it draws
+  differently - its week keeps the waking axis - is stage 9's.
+- **The guide**: DAILY.md has "Shifts, from a rota", and step 3 points a shift
+  worker there instead of at the weekday map.
+- The pictures of each screen, at 1366 and 390 in both themes, went to the
+  owner and are not kept in the repo, as Kitchen's were not.
+
+v2.29 is done. What it leaves: a running Focus session's bar squeezes a phone's
+week (offered as its own task in stage 9); and RESEARCH-SHIFTS section 6.5,
+a kind's template edited after dates were stamped, re-measures routines on the
+dates ahead through the ordinary template refresh and has no walk of its own.
 
 ### Stage 9 - the day, the week and the month with kinds: done
 

@@ -787,6 +787,15 @@ answer the hand-edit question, and undo. Then the day after a night shift at
 01:00 shows the continuation and the running shift; and a DST night stretch in
 the week view draws the long shift.
 
+As built in stage 10 (`e2e/shifts.e2e.ts`, both projects): the gym has a time
+on three kinds and none on the fourth, and its day-shift time runs into the
+shift, so the one preview names both; the hand edit is a tick, and Apply is
+taken over it rather than Leave it, so that Undo has something to give back.
+The switch night is read where it shows: a night shift stamped on 24 October
+2026 has seven real hours left at one in the morning, on the wall's six. The
+week draws by the wall's clock, so the same night there is the ordinary
+continuation, which the day and the week's own tests hold.
+
 ---
 
 ## 9. Stages

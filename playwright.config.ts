@@ -37,7 +37,9 @@ export default defineConfig({
     // because a text read every morning is read on whichever screen is in
     // hand - its line on the day as well as its page. Kitchen because a
     // recipe is cooked from whatever screen is propped up on the counter.
-    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
+    // Shifts because a rota arrives on a phone, a photograph from the
+    // employer, and is laid out there - docs/RESEARCH-SHIFTS.md section 8.4.
+    { name: 'phone', testMatch: /(tour|interrupt|journal|blocknote|palette|north|north-line|kitchen|shifts)\.e2e\.ts/, use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium', hasTouch: true } },
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4190 --strictPort',

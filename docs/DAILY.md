@@ -125,6 +125,9 @@ A **week template** fills all seven at once, because its Monday is not
 something you could sensibly put on a Wednesday. Clearing any one of its days
 clears the lot.
 
+Working shifts from a rota? The weekday is not what decides your days, so skip
+this and see **Shifts, from a rota** further down: the roster does this job.
+
 ## 4. Write down what the days are for
 
 **North** - the sixth icon in the rail, or the `6` key. It opens empty, on
@@ -445,6 +448,44 @@ Dragging a block onto the task list takes its time away and leaves it as
 something to do today with no hour on it.
 
 ---
+
+## Shifts, from a rota
+
+If your days follow a rota - day shifts, nights and days off, in a pattern
+your employer hands you - the app lays a month out from it and fills each day
+with the right kind.
+
+1. **Make each kind of day a template** (step 1), then give it a **letter on
+   the roster** in its editor: D for a day shift, N for nights, R for rest. A
+   template with a letter is a kind of day. Its sleep is set right over its
+   picture - a night shift's sleep is in the daytime - and if other templates
+   sleep on the same schedule, the line says which.
+2. **Routines** - the gym, a language, a walk - are written once, under the
+   templates on the Templates tab: which days, how long, and **a time on each
+   kind of day**. The gym at five on a day shift and at two after nights is one
+   routine. A kind with no time for it gets it with no time, and the day says
+   it needs one; a time that runs into the shift or into your sleep is not
+   moved somewhere the app guesses, and the day says what it runs into.
+3. **Calendar → Month → Roster.** A tap on a date walks it through the kinds,
+   and **Clear** takes a kind off. **Cycle** is for the part that repeats:
+   press the kinds in the order they come round - D D N N R R, say - pick the
+   date it starts on and **Fill to the end of the month**. The draft stays on
+   this device, and nothing reaches your plan until **Apply**.
+4. **Apply** says what it will do first, week by week: the letters, routines
+   that need a time or run into something, and days you changed by hand. A day
+   you changed by hand - a block ticked or moved, a routine deleted - is named,
+   with **Leave it** beside it. What you wrote yourself stays on every day
+   either way, and **Undo** takes the whole Apply back.
+
+**A night shift belongs to the evening it starts.** The next morning the day
+shows its last hours at the top - "Night shift, from yesterday", until six -
+and at one in the morning it is what is running. On a computer the week draws
+them in the next column's first hours; a phone's week keeps its waking hours,
+and the day has them. The day, the week and the month show each date's letter
+where a template's dot would be. The evening close from half past nine
+leaves a shift that has not started yet alone. And the two nights a year the
+clocks change, a night shift is an hour longer or shorter: the time it has
+left says so.
 
 ## Recipes, in Kitchen
 
