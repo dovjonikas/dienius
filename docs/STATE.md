@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 7 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts, stage 8 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,34 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 8 - a template's sleep, set where the template is built: done
+
+- **The sleep is set over the picture that draws it.** The day template's
+  timeline already drew the sleep its schedule brings; a row over it now holds
+  the two edges, Bedtime and Wake time, and the band and the summary under the
+  picture move the moment a time does - an hour earlier to bed is "Sleep 9h"
+  before anything is saved.
+- **It is the named schedule's**, which other templates may sleep on, so the row
+  says who: "Also used by Working day and Slow Sunday." It is written to the
+  schedule with the template on Save (`setSleepProfileWindow`), only when it
+  changed, and Cancel leaves it as it was - the editor keeps its one rule that
+  nothing is written until Save.
+- A row over the picture rather than pickers on the band's own edges, as
+  RESEARCH-SHIFTS section 7 first drew it: the band is a few pixels tall at an
+  hour, a field hung on it would cover the blocks it is there to be seen against,
+  and the row reads the way the rest of the editor does. The week editor keeps
+  its per-column schedule select; the kinds are day templates.
+- What crosses midnight was already drawn by section 3's rule since stage 4,
+  "(next day)" and all, in this picture as in the day's.
+
+New tests: three in `TemplatesView.test.tsx` - the two edges set and saved with
+the picture following at once, Cancel leaving the schedule alone, and a shared
+schedule naming who shares it. A mutation pass broke five rules; the one that
+lived at first - the wake time written as the bedtime - has its own assertion
+now. The suite waits fifteen seconds before it calls a test hung rather than
+vitest's five: the heaviest interaction tests take two or three seconds alone,
+and under the whole suite a different one crossed five on most runs.
 
 ### Stage 7 - preview, apply, change and undo: done
 

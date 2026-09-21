@@ -657,10 +657,12 @@ the new shift says so on the day and in the next preview. It is not moved.
 - The timeline draws the template's sleep as a darker band - the sleep the day
   wakes from at its start, and the same schedule's bedtime at its end - so the
   shape of a kind's day is seen with its sleep while it is built.
-- The band's two edges have time pickers beside them, so a schedule's bedtime
-  and wake time are set right there. The pickers edit the **named schedule**,
-  which other templates and days may share, and the editor says so when they do
-  ("also used by Rest").
+- The band's two edges are set right there: a row over the picture holds a
+  bedtime and a wake time (stage 8 put them in a row rather than on the band's
+  own edges, which at an hour are a few pixels apart and would cover the blocks
+  the band is seen against). They edit the **named schedule**, which other
+  templates and days may share, and the row says so when they do ("Also used by
+  Rest day."). Written with the template on Save, never before.
 - A sleep crossing midnight and a block crossing midnight are drawn by section
   3's rule, with "(next day)" on what ends after midnight.
 

@@ -4,7 +4,7 @@ import { categoryColor, defaultCategoryId, resolvedColor, type CategoryId } from
 import { actions, useAppData } from '../lib/store'
 import { PALETTE_COLORS } from '../lib/colors'
 import { starterTemplateInput, type StarterTemplate } from '../lib/starterTemplates'
-import type { Category, DayKindMark, DayType, LibraryList, MealType, Recipe, SleepProfile, Template } from '../lib/types'
+import type { Category, DayKindMark, DayType, LibraryList, MealType, Recipe, SleepProfile, SleepWindow, Template } from '../lib/types'
 import { formatDuration, parseMinutesInput, windowFor } from '../widgets/day-plan/capacity'
 import { StarterOffers } from '../widgets/onboarding/StarterOffers'
 import { TimePicker } from './TimePicker'
@@ -35,6 +35,12 @@ import { paletteColorName } from '../lib/colors'
 // palette, imports PALETTE_COLORS itself rather than this derived list, so
 // nothing outside this file has ever needed it.
 const TEMPLATE_COLORS = PALETTE_COLORS.map(c => c.value)
+
+/** Names as a sentence says them: one, two with an and, three with commas first. */
+function listWords(names: string[]): string {
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
 
 /** How many block titles a template card previews before it says "+n more". */
 const PREVIEW_BLOCKS = 4
@@ -145,6 +151,12 @@ interface Draft {
    * when it is marked, and the roster is where a cycle is arranged.
    */
   kindLetter: string
+  /**
+   * The sleep schedule's window as it is being set here, when it has been
+   * touched - rotating shifts, docs/RESEARCH-SHIFTS.md section 7. It belongs to
+   * the named schedule, not to the template, and is written to it on Save.
+   */
+  sleepWindow?: SleepWindow
   blocks: DraftBlock[]
 }
 
@@ -162,6 +174,8 @@ interface TemplateEditorProps {
   categories: Category[]
   /** Every recipe, for a meal block's recipe - Kitchen. */
   recipes: Recipe[]
+  /** Every template, to say which others sleep on the schedule set here. */
+  templates: Template[]
   onSave: (draft: Draft) => void
   onCancel: () => void
   /** Present for a template that exists: the one way to delete it, in here. */
@@ -172,8 +186,15 @@ interface TemplateEditorProps {
 // its own transient state (the current draft, and the in-progress block-add
 // fields) and lose all of it for free on unmount - no manual reset calls
 // needed on save or cancel the way a single shared state tree would need.
-function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, recipes, onSave, onCancel, onDelete }: TemplateEditorProps) {
+function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, recipes, templates, onSave, onCancel, onDelete }: TemplateEditorProps) {
   const [draft, setDraft] = useState<Draft>(initial)
+  // The schedule this template sleeps on, and the window it is being given.
+  const sleepProfile = sleepProfiles.find(p => p.id === draft.sleepProfileId) ?? sleepProfiles[0]
+  const sleepWindow = draft.sleepWindow ?? sleepProfile.window
+  // Who else sleeps on it: changing it here changes it for them.
+  const sharedWith = templates
+    .filter(t => t.id !== draft.id && (sleepProfiles.find(p => p.id === t.sleepProfileId) ?? sleepProfiles[0]).id === sleepProfile.id)
+    .map(t => t.name)
   // Closed on every open, including on a template that already carries a
   // type: the value is on the line above it either way, and what is hidden
   // is the question, not the answer.
@@ -464,12 +485,34 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           onChange={e => setDraft({ ...draft, kindLetter: cleanLetter(e.target.value) })}
         />
       </div>
+      {/* The sleep the day wakes from and goes back to, set right over the
+          picture that draws it - rotating shifts, section 7. It is the named
+          schedule's, which other templates may sleep on too, so the line says
+          who; it is written with the template on Save and not before. */}
+      <div className="template-sleep">
+        <span className="muted">Sleep</span>
+        <TimePicker
+          value={sleepWindow.start}
+          ariaLabel="Bedtime"
+          placeholder="23:00"
+          onChange={start => start && setDraft(d => ({ ...d, sleepWindow: { ...sleepWindow, start } }))}
+        />
+        <span className="muted" aria-hidden="true">to</span>
+        <TimePicker
+          value={sleepWindow.end}
+          ariaLabel="Wake time"
+          placeholder="07:00"
+          onChange={end => end && setDraft(d => ({ ...d, sleepWindow: { ...sleepWindow, end } }))}
+        />
+        {sharedWith.length > 0 && <span className="muted template-sleep-shared">Also used by {listWords(sharedWith)}.</span>}
+      </div>
       {/* The template as the day it makes, live - see TemplateTimeline. A
           list says what is on the day; only the picture says whether there
           is room for it, which is the question a template is about. */}
       <TemplateTimeline
         blocks={draft.blocks.map(drawable)}
         sleepProfileId={draft.sleepProfileId}
+        sleepWindow={draft.sleepWindow}
         color={draft.color}
         ghostKey={GHOST_KEY}
         onReshape={(blockId, patch) => {
@@ -924,6 +967,11 @@ export function TemplatesView() {
     // template: it is the one door that cleans a letter and refuses a week, and
     // a kind takes its place at the end of the cycle when it is first marked.
     // Written only when it changed, so an ordinary save stays one commit.
+    // The sleep set in the editor belongs to its schedule, shared or not.
+    const profile = data.settings.sleepProfiles.find(p => p.id === next.sleepProfileId) ?? data.settings.sleepProfiles[0]
+    if (next.sleepWindow && (next.sleepWindow.start !== profile.window.start || next.sleepWindow.end !== profile.window.end)) {
+      actions.setSleepProfileWindow(profile.id, next.sleepWindow)
+    }
     const markKind = (id: string, was: DayKindMark | undefined) => {
       const letter = cleanLetter(next.kindLetter)
       if (letter === (was?.letter ?? '')) return
@@ -1051,6 +1099,7 @@ export function TemplatesView() {
           libraryLists={data.library}
           categories={data.categories}
           recipes={data.recipes}
+          templates={data.templates}
           key={draft.id ?? 'new'}
           initial={draft}
           onSave={saveDraft}

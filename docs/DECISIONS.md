@@ -4065,6 +4065,22 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## A template's sleep is set over its picture, and written with the template
+
+v2.29 stage 8, from docs/RESEARCH-SHIFTS.md section 7.
+
+**Where the sleep is seen is where it is set.** A kind of day is its shape and
+its sleep together - a night shift is not a day shift moved - and the picture
+already drew both; asking for the sleep in Settings, four screens away, was
+asking somebody to hold one half in their head while they built the other.
+
+**It stays the schedule's, and says who else it belongs to.** Other templates
+may sleep on the same schedule, so the row names them. Copying the window into
+the template instead would have been a second answer to when this day sleeps.
+
+**Nothing is written until Save.** The picture moves at once, and Cancel is the
+way back, the editor's one rule for everything else in it.
+
 ## Applying a roster says what it will do, and every door composes
 
 v2.29 stage 7, from docs/RESEARCH-SHIFTS.md sections 6.1 to 6.4.

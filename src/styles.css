@@ -9963,6 +9963,17 @@ button.task-recipe:focus-visible {
   font-size: var(--t-xs);
 }
 
+/* A template's sleep, set over the picture that draws it - rotating shifts,
+   docs/RESEARCH-SHIFTS.md section 7. The word, the two times with "to"
+   between them, and who else sleeps on the same schedule, on one centre line
+   that wraps on a phone rather than squeezing a time field. */
+.template-sleep {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
 /* ------------------------------------------------------------------------
    Routines - rotating shifts, since v2.29, docs/RESEARCH-SHIFTS.md section
    2.3 and views/shifts/RoutinesSection.tsx.

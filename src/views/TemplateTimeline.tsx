@@ -1,4 +1,5 @@
 import { useAppData } from '../lib/store'
+import type { SleepWindow } from '../lib/types'
 
 import { TimelineGrid } from '../widgets/day-plan/TimelineGrid'
 import { useTimelineDrag } from '../widgets/day-plan/useTimelineDrag'
@@ -62,10 +63,22 @@ export interface TemplateTimelineProps {
    * TemplatesView, which hands the index in for exactly this.
    */
   onReshape?: (blockId: string, patch: { time?: string; minutes?: number }) => void
+  /**
+   * The schedule's window as it is being set in the editor, before it is
+   * saved - rotating shifts, stage 8. Given, the picture sleeps on this rather
+   * than on what the schedule holds, so moving a bedtime moves the band at once.
+   */
+  sleepWindow?: SleepWindow
 }
 
-export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact, ghostKey, onReshape }: TemplateTimelineProps) {
+export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compact, ghostKey, onReshape, sleepWindow }: TemplateTimelineProps) {
   const data = useAppData()
+  // The schedules, with the one being edited carrying the window from the
+  // editor rather than the one it was saved with.
+  const drawnOn = sleepProfileId ?? data.settings.sleepProfiles[0]?.id
+  const profiles = sleepWindow
+    ? data.settings.sleepProfiles.map(p => (p.id === drawnOn ? { ...p, window: sleepWindow } : p))
+    : data.settings.sleepProfiles
   const mine = weekday === undefined ? blocks : blocks.filter(b => b.weekday === weekday)
   const tasks = blocksAsTasks(blocks, weekday)
   // The same two gestures the day view has, on the same grid, through the
@@ -84,7 +97,7 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
   // The whole waking day, to the schedule's next sleep - past midnight for a
   // bedtime after it - so the sleep figure is the schedule's own sleep and not
   // a day less a waking window cut at midnight.
-  const window = wakingDayFor(sleepProfileId, { profiles: data.settings.sleepProfiles }).waking
+  const window = wakingDayFor(sleepProfileId, { profiles }).waking
   const summary = templateSummary(mine, window)
   const clashes = overlapsIn(mine)
 
@@ -106,7 +119,7 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
         categories={data.categories}
         templateColor={color}
         sleepProfileId={sleepProfileId}
-        sleep={{ profiles: data.settings.sleepProfiles }}
+        sleep={{ profiles }}
         clashIds={clashes.flatMap(c => c.ids)}
         ghostKey={ghostKey}
         hideHours={compact}

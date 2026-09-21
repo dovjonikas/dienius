@@ -1196,3 +1196,63 @@ test('the list says which templates are kinds, by the letter the roster draws', 
   expect(within(rows[0]).getByLabelText('A kind of day: N')).toHaveTextContent('N')
   expect(within(rows[1]).queryByLabelText(/^A kind of day/)).toBeNull()
 })
+
+// --- a template's sleep, set where the template is built - rotating shifts, v2.29 stage 8 ----------
+//
+// docs/RESEARCH-SHIFTS.md section 7. The timeline already draws the sleep the
+// template's schedule brings; its two edges are set right there now, and the
+// schedule they set is the named one other templates may share.
+
+test("a template's sleep is set where it is built, and saved to its schedule with the template", async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+
+  const bedtime = screen.getByRole('textbox', { name: 'Bedtime' })
+  const wake = screen.getByRole('textbox', { name: 'Wake time' })
+  expect(bedtime).toHaveValue('23:00')
+  expect(wake).toHaveValue('07:00')
+
+  await user.clear(bedtime)
+  await user.type(bedtime, '22:00')
+  await user.tab()
+  // The picture follows at once: an hour more sleep before anything is saved.
+  expect(screen.getByText(/Sleep 9h/)).toBeInTheDocument()
+  expect(getData().settings.sleepProfiles[0].window.start).toBe('23:00')
+
+  // And the other edge, the time the day wakes at.
+  await user.clear(wake)
+  await user.type(wake, '06:30')
+  await user.tab()
+  expect(screen.getByText(/Sleep 8h 30 min/)).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '22:00', end: '06:30' })
+})
+
+test("Cancel leaves a template's sleep schedule as it was", async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+
+  await user.clear(screen.getByRole('textbox', { name: 'Wake time' }))
+  await user.type(screen.getByRole('textbox', { name: 'Wake time' }), '09:30')
+  await user.tab()
+  await user.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(getData().settings.sleepProfiles[0].window).toEqual({ start: '23:00', end: '07:00' })
+})
+
+test('a schedule other templates share says so where its sleep is set', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#f5b0a7', blocks: [] })
+  actions.addTemplate({ name: 'Rest day', color: '#a7e3bd', blocks: [] })
+  actions.addTemplate({ name: 'Working day', color: '#a7c4f5', blocks: [] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+
+  // Every template here sleeps on the one schedule, so changing it here
+  // changes it for the other two.
+  expect(screen.getByText('Also used by Rest day and Working day.')).toBeInTheDocument()
+})

@@ -31,6 +31,11 @@ Three things worth knowing while you build:
   score counts only those, so a twelve-hour day is not scored like a Tuesday.
 - **You will edit these.** Nothing about a template is permanent, and
   changing one does not touch the days you already stamped from it.
+- **Its sleep is set right over its picture.** Bedtime and wake time sit above
+  the timeline, and the timeline moves as you change them. They belong to the
+  sleep schedule, so if other templates sleep on the same one, the line says
+  which - changing it changes it for them too. Nothing is saved until **Save
+  template**.
 
 Start with two: the ordinary working day, and whatever the other kind of day
 is - a shift, a day off, a Sunday. Add more when you notice a third kind.
