@@ -121,3 +121,32 @@ test('a time is kept only for a kind, so a template that stops being one leaves 
   await user.click(screen.getByRole('button', { name: 'Save routine' }))
   expect(getData().routines[0].times).toEqual({})
 })
+
+test('a routine whose rule changed offers to update the days ahead, and does nothing until the press', async () => {
+  const user = userEvent.setup()
+  render(<RoutinesSection />)
+  await writeGym(user)
+  await user.click(screen.getByRole('button', { name: 'Save routine' }))
+  // Nothing to offer: it is new, and no day was made from it.
+  expect(screen.queryByRole('button', { name: 'Update them' })).toBeNull()
+
+  await user.click(screen.getByRole('button', { name: 'Edit Training' }))
+  await user.clear(screen.getByRole('textbox', { name: 'Time on Day shift' }))
+  await user.type(screen.getByRole('textbox', { name: 'Time on Day shift' }), '18:00')
+  await user.click(screen.getByRole('button', { name: 'Save routine' }))
+
+  expect(screen.getByRole('status')).toHaveTextContent('Training changed')
+  await user.click(screen.getByRole('button', { name: 'Leave them' }))
+  expect(screen.queryByRole('button', { name: 'Update them' })).toBeNull()
+})
+
+test('a routine saved with the same rule offers nothing', async () => {
+  const user = userEvent.setup()
+  render(<RoutinesSection />)
+  await writeGym(user)
+  await user.click(screen.getByRole('button', { name: 'Save routine' }))
+
+  await user.click(screen.getByRole('button', { name: 'Edit Training' }))
+  await user.click(screen.getByRole('button', { name: 'Save routine' }))
+  expect(screen.queryByRole('button', { name: 'Update them' })).toBeNull()
+})

@@ -1,11 +1,12 @@
 import { beforeEach, expect, test } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { CalendarView } from '../CalendarView'
 import { actions, getData } from '../../lib/store'
 import { defaultData } from '../../lib/storage'
 import { addDays, monthEnd, todayKey } from '../../lib/dates'
 import { readCycle, readDraft } from '../../lib/rosterDraft'
+import { getUndo, runUndo } from '../../lib/undo'
 import type { AppData, Template } from '../../lib/types'
 
 /**
@@ -17,8 +18,8 @@ import type { AppData, Template } from '../../lib/types'
  * generic one.
  */
 
-const KIND = (id: string, name: string, letter: string, order: number): Template =>
-  ({ id, name, color: '#a7c4f5', blocks: [], dayKind: { letter, order } }) as Template
+const KIND = (id: string, name: string, letter: string, order: number, blocks: Template['blocks'] = []): Template =>
+  ({ id, name, color: '#a7c4f5', blocks, dayKind: { letter, order } }) as Template
 
 function plan(over: Partial<AppData> = {}): AppData {
   const data = defaultData()
@@ -167,4 +168,101 @@ test('the draft outlives a reload, says how many days are waiting, and can be th
   await again.click(screen.getByRole('button', { name: 'Throw it away' }))
   expect(readDraft().dates).toEqual({})
   expect(getData().days[date]).toBeUndefined()
+})
+
+// --- what Apply says first, and what it then does - section 6.1 and 6.2 -------------------------
+
+/** The kinds with something in them, and a routine with a time on one of them. */
+function withShift() {
+  const data = plan()
+  data.templates = [
+    KIND('day', 'Day shift', 'D', 0, [{ id: 'shift', title: 'On shift', time: '07:00', minutes: 480, category: 'core' }]),
+    KIND('night', 'Night shift', 'N', 1),
+  ]
+  data.routines = [{ id: 'gym', title: 'Training', minutes: 60, weekdays: [0, 1, 2, 3, 4, 5, 6], times: { day: '17:00' } } as AppData['routines'][number]]
+  return data
+}
+
+test('Apply says what it will do first, week by week, and then does it in one press', async () => {
+  actions.resetForTests(withShift())
+  const user = await openRoster()
+  const first = addDays(todayKey(), 1)
+  await user.click(cell(first))
+  await user.click(cell(addDays(todayKey(), 2)))
+
+  await user.click(screen.getByRole('button', { name: 'Apply' }))
+  const preview = screen.getByRole('group', { name: 'What Apply will do' })
+  expect(within(preview).getAllByRole('listitem')).toHaveLength(2)
+  expect(within(preview).getAllByRole('listitem')[0]).toHaveTextContent('D')
+  expect(within(preview).getAllByRole('listitem')[0]).toHaveTextContent('Day shift')
+
+  await user.click(screen.getByRole('button', { name: 'Apply 2 days' }))
+  expect(getData().days[first].templateId).toBe('day')
+  expect(getData().days[first].tasks.map(t => t.title)).toEqual(['On shift', 'Training'])
+  // The draft is spent, and the way back is offered.
+  expect(readDraft().dates).toEqual({})
+  expect(getUndo()?.label).toBe('Roster applied')
+
+  act(() => runUndo())
+  expect(getData().days[first]).toBeUndefined()
+})
+
+test('a day changed by hand is asked about, and Leave it leaves that day alone', async () => {
+  const first = addDays(todayKey(), 1)
+  const data = withShift()
+  data.days = {
+    [first]: {
+      date: first,
+      templateId: 'day',
+      tasks: [
+        {
+          id: 't1',
+          title: 'On shift',
+          time: '07:00',
+          minutes: 480,
+          done: true,
+          category: 'core',
+          origin: { type: 'template', sourceId: 'day', blockId: 'shift' },
+          fromBlock: { title: 'On shift', time: '07:00', minutes: 480, category: 'core' },
+        },
+      ],
+    },
+  }
+  actions.resetForTests(data)
+
+  const user = await openRoster()
+  // One tap walks it from the day shift it carries to the night shift, and
+  // another date goes with it.
+  await user.click(cell(first))
+  const second = addDays(todayKey(), 2)
+  await user.click(cell(second))
+
+  await user.click(screen.getByRole('button', { name: 'Apply' }))
+  const asked = screen.getByRole('listitem', { name: /changed by hand/ })
+  expect(asked).toHaveTextContent('1 done')
+  await user.click(within(asked).getByRole('button', { name: 'Leave it' }))
+
+  await user.click(screen.getByRole('button', { name: 'Apply 1 day' }))
+  // The day somebody had worked on is untouched, and still waiting.
+  expect(getData().days[first].templateId).toBe('day')
+  expect(getData().days[first].tasks[0].done).toBe(true)
+  expect(readDraft().dates).toEqual({ [first]: 'night' })
+  // The other date went ahead.
+  expect(getData().days[second].templateId).toBe('day')
+})
+
+test('with nothing left to do, Apply says so rather than offering a press that does nothing', async () => {
+  const first = addDays(todayKey(), 1)
+  // Kinds with nothing in them and no routines, so a date that already carries
+  // the kind the draft names is a date the roster would not change at all.
+  actions.resetForTests({ ...plan(), days: { [first]: { date: first, templateId: 'day', tasks: [] } } })
+  const user = await openRoster()
+  // Twice round the two kinds is back where it started: the draft says what
+  // the date already is.
+  await user.click(cell(first))
+  await user.click(cell(first))
+
+  await user.click(screen.getByRole('button', { name: 'Apply' }))
+  expect(screen.getByRole('group', { name: 'What Apply will do' })).toHaveTextContent('Nothing to apply')
+  expect(screen.queryByRole('button', { name: /^Apply \d/ })).toBeNull()
 })

@@ -401,7 +401,9 @@ export function composeDay(data: AppData, date: string, kind: Template | undefin
  * Lays a roster over the plan - a date's kind id, or null for no kind - and
  * returns the plan it makes. Pure; the store commits it once.
  *
- * - A date before `today` is not in reach: a lived day says what it was.
+ * - A date before `today` is not in reach: a lived day says what it was. A
+ *   stamp made by hand may reach one - somebody is looking at that date and
+ *   pressing a kind onto it - and says so with `reach: 'any'`.
  * - An id that names no kind any more - deleted since the draft was made -
  *   leaves its date as it is rather than guessing.
  * - Each date is composed against the draft's kinds for every date the draft
@@ -410,10 +412,15 @@ export function composeDay(data: AppData, date: string, kind: Template | undefin
  *   roster that changes nothing returns the plan itself: applying the same
  *   roster twice is applying it once.
  */
-export function applyRoster(data: AppData, draft: Record<string, string | null>, today: string): AppData {
+export function applyRoster(
+  data: AppData,
+  draft: Record<string, string | null>,
+  today: string,
+  opts: { reach?: 'ahead' | 'any' } = {},
+): AppData {
   const drafted = new Map<string, Template | undefined>()
   for (const date of Object.keys(draft).sort()) {
-    if (date < today) continue
+    if (date < today && opts.reach !== 'any') continue
     const id = draft[date]
     if (id === null) {
       drafted.set(date, undefined)

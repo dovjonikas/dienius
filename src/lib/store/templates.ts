@@ -2,6 +2,9 @@ import { commit, getData } from './core'
 import type { DayType, MealType, Template, TemplateKind, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
+import { applyRoster } from '../shiftDay'
+import { isDayKind } from '../dayKinds'
+import { todayKey } from '../dates'
 
 /** Templates: making them, stamping them onto dates, and the weekday map. */
 export const templateActions = {
@@ -83,9 +86,33 @@ export const templateActions = {
     commit({ ...data, templates: data.templates.filter(t => t.id !== id) })
   },
 
+  /**
+   * A template onto dates - the month's brush, the rail's chip, a week at a
+   * time. A kind of day is composed rather than stamped (rotating shifts,
+   * docs/RESEARCH-SHIFTS.md section 6.2): its blocks land the way any
+   * template's do and its routines land with them, so a kind means the same
+   * day whichever door it came through. Taking a kind off takes its routines
+   * with it. A hand reaches a day that is over, unlike the roster, because
+   * somebody is looking at that date while they press it.
+   */
   stamp(stamps: Record<string, string | null>): void {
     const data = getData()
-    commit({ ...data, days: applyStamps(data.days, data.templates, stamps, data.library) })
+    const kindOf = (id: string | null | undefined) => {
+      const template = id ? data.templates.find(t => t.id === id) : undefined
+      return template && isDayKind(template) ? template : undefined
+    }
+    const kinds: Record<string, string | null> = {}
+    const plain: Record<string, string | null> = {}
+    for (const [date, id] of Object.entries(stamps)) {
+      const arriving = kindOf(id)
+      const leaving = kindOf(data.days[date]?.templateId)
+      if (arriving || (!id && leaving)) kinds[date] = id
+      else plain[date] = id
+    }
+    const stamped =
+      Object.keys(plain).length > 0 ? { ...data, days: applyStamps(data.days, data.templates, plain, data.library) } : data
+    const next = Object.keys(kinds).length > 0 ? applyRoster(stamped, kinds, todayKey(), { reach: 'any' }) : stamped
+    if (next !== data) commit(next)
   },
 
   /**

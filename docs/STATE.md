@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.29 rotating shifts, stage 6 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.29 rotating shifts, stage 7 of 10 done. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.30 - Kitchen, as it was meant
 
@@ -256,6 +256,50 @@ tap's walk, a routine as it is kept, and the store's actions
 (`dayKinds.test.ts`). Changed tests: `isRoutine` is `hasIdentity` in
 `taskIdentity.test.ts`, and the goal readers' search counts the frozen
 validation as the data layer's own (`goalsRetired.test.ts`).
+
+### Stage 7 - preview, apply, change and undo: done
+
+- **Apply says what it will do first** (`lib/rosterPreview.ts`), week by week:
+  the letter each date would take, and under the week how many routines would
+  land with no time, how many would run into a shift or sleep, and how many days
+  were changed by hand. A date the roster would not change is counted and not
+  listed, because a preview that lists thirty unchanged days hides the three
+  that matter. It composes through `composeDay` with the same `kindOf` Apply
+  uses, so what it promises is what Apply writes.
+- **A day changed by hand is asked about, date by date** (section 6.3): "changed
+  by hand: 1 done, 2 taken off" with Leave it beside it. A date left alone stays
+  as it is and stays in the draft: a rota somebody typed in is not thrown away
+  by a decision about one day.
+- **Apply is one commit** (`actions.applyRoster`) over every date the draft holds,
+  and a draft that changes nothing writes nothing at all, which is what makes
+  applying the same month twice the same as applying it once. The way back is the
+  app's own undo bar, and it puts the draft back with the days.
+- **Every door that stamps a kind composes it** (section 6.2). The month's brush,
+  the rail's chip and a week all go through `actions.stamp`, which sends kinds
+  through `applyRoster` now - with the one thing a hand may do that a roster may
+  not, reach a day that is over, since somebody is looking at that date while
+  they press it - and the weekday map composes a mapped kind (`ensuredDay`) the
+  first time a day is opened. A kind means the same day whichever door it came
+  through, and taking a kind off takes its routines with it.
+- **A routine whose rule changed offers the days ahead, once** (section 6.4):
+  `followRoutines` makes every date from today on agree with the routines as they
+  are now, and only where they still say what the rule said - an instance moved,
+  renamed or ticked by hand keeps its change, and a date behind today is never
+  touched. Nothing follows without the press, and the press has its own undo.
+
+New tests: `lib/rosterPreview.test.ts` (the weeks and their letters, the past and
+a dangling kind left out, an unchanged date counted, the two numbers a week
+carries, and what was changed by hand), `lib/rosterApply.test.ts` (applying,
+applying twice, the undo, the reach, every door, and the days ahead following a
+routine that changed), three in `views/shifts/RosterMode.test.tsx` (the preview,
+Leave it, and nothing to apply) and two in `RoutinesSection.test.tsx` (the offer,
+and no offer where only a name changed). The precision pass caught the kind
+column in the preview moving a few pixels from row to row, since a day is not
+the same width in every week; it has a column of its own where there is room
+for one. A mutation pass broke twelve rules;
+one lived at first, applying the same month twice still writing, and the test
+for it watches for the write itself now, since a write that changes nothing is
+still a sync push.
 
 ### Stage 6 - the roster: the month, the taps, the cycle and a draft: done
 

@@ -287,6 +287,7 @@ src/
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
     rosterDraft.ts     rotating shifts: the month being laid out, kept on this device and never in the plan
+    rosterPreview.ts   rotating shifts: what applying a roster would do, week by week, before it is done
     routines.ts        rotating shifts: a routine as it is kept, and its task leaving a date by hand
     shiftDay.ts        rotating shifts: a date composed of its kind - busy time, routines placed, a roster applied, hand edits
     wallClock.ts       a time on a date's wall clock as an instant, how long a block really lasts, and where now is on a date's clock

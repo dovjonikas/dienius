@@ -189,6 +189,17 @@ const SCREENS = [
     },
   },
   {
+    name: 'Calendar (what Apply will do)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Calendar')
+      await p.getByRole('button', { name: 'Roster', exact: true }).click()
+      const cells = await p.locator('.cell:not(.outside)').all()
+      for (const cell of cells.slice(20, 24)) await cell.click()
+      await p.getByRole('button', { name: 'Apply', exact: true }).click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
     name: 'Calendar (a cycle)',
     go: async /** @param {Page} p */ p => {
       await tab(p, 'Calendar')

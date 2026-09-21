@@ -3,6 +3,8 @@ import { todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
 import { applyStamps, refreshFromTemplate } from './stamping'
+import { isDayKind, kindOnDate } from './dayKinds'
+import { composeDay } from './shiftDay'
 
 /**
  * Everything a day gets on its own, as a pure function of the state.
@@ -81,7 +83,15 @@ export function ensuredDay(data: AppData, date: string, today: string = todayKey
 
   let days = withRebind
   if (shouldStamp) {
-    days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
+    // A kind of day is composed, not stamped: the map is one of the doors a
+    // kind arrives through, and a kind without its routines is half a day -
+    // docs/RESEARCH-SHIFTS.md section 6.2.
+    if (isDayKind(template)) {
+      const composing = { ...data, days }
+      days = { ...days, [date]: composeDay(composing, date, template, on => kindOnDate(composing, on), today).day }
+    } else {
+      days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
+    }
   }
 
   const base = days[date] ?? { date, tasks: [] }

@@ -5501,6 +5501,128 @@ button.danger {
 
 .roster-cycle-date { width: auto; }
 
+/* What Apply will do, on the card the cycle uses - docs/RESEARCH-SHIFTS.md
+   section 6.1. A week at a time: its name and what it costs on one line, then
+   its dates, each with the letter it would take. */
+.roster-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+}
+
+.roster-preview-week {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* The week at the left, what it costs at the right, on one centre line. */
+.roster-preview-week-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+}
+
+.roster-preview-cost { font-size: var(--t-sm); }
+
+.roster-preview-dates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A date: its letter, the day, the kind it would become, and - where there is
+   one - what was changed by hand on it with the way to leave it alone. */
+.roster-preview-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  min-height: var(--control-h);
+  font-size: var(--t-sm);
+}
+
+/* The same mark the templates list and the roster's legend carry. */
+.roster-preview-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-mark);
+  background: color-mix(in srgb, var(--chip, var(--fill)) 22%, var(--surface));
+  color: var(--text);
+  font-size: var(--t-xs);
+  font-weight: var(--w-strong);
+  line-height: 1;
+}
+
+/* The day, in a column of its own width: "Mon, Sep 21" and "Wed, Sep 3" are
+   not the same width in a proportional face, and the kind beside them moved by
+   a few pixels from row to row for it - the one thing this app's own precision
+   pass is for. A column on a phone would leave the kind nowhere to go, so the
+   width starts where there is room for it. */
+.roster-preview-day {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 600px) {
+  .roster-preview-day { flex: 0 0 8rem; }
+}
+
+.roster-preview-kind { color: var(--muted); }
+
+/* What was changed by hand, and the answer to it, at the right of the row. */
+.roster-preview-hand {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+/* A date left alone reads as one: its own row goes quiet, and the tool beside
+   it carries the accent, so what is about to happen is visible at a glance. */
+.roster-preview-date.is-left .roster-preview-day,
+.roster-preview-date.is-left .roster-preview-kind,
+.roster-preview-date.is-left .roster-preview-letter { opacity: var(--faded); }
+
+.roster-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+/* The days ahead following a routine that changed - section 6.4. The words and
+   the two answers on one row, quiet: a day already stamped is somebody's. */
+.routines-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-card);
+  background: var(--surface);
+  --ground: var(--surface);
+}
+
+.routines-offer-said {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+}
+
 /* The letter a date carries in the roster, in the middle of the cell where
    the day's own lines stand the rest of the time: while a month is being laid
    out, the one thing a cell says is which kind of day it is. */

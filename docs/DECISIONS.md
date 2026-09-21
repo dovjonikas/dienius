@@ -4065,6 +4065,35 @@ stamp of another template; Review's month skipped the month after a short one;
 the cloud backup read the day of its last copy in UTC. The first two are paths
 the roster walks on its first day.
 
+## Applying a roster says what it will do, and every door composes
+
+v2.29 stage 7, from docs/RESEARCH-SHIFTS.md sections 6.1 to 6.4.
+
+**Apply previews, and the preview leaves out what does not change.** A month
+of letters rewrites days that already hold something, so Apply says first:
+week by week, the letter each date takes and what it costs - routines with no
+time, routines that run into a shift or sleep, days changed by hand. Dates
+that would not change are counted in one line rather than listed, because a
+list of thirty unchanged days hides the three that matter.
+
+**A day changed by hand is asked about rather than protected or overwritten.**
+Silently skipping it would leave a hole in the rota; silently rewriting it
+would take away an evening somebody had already moved. The question names
+what was changed, Leave it answers it for that date, and the date stays in the
+draft afterwards.
+
+**Every door that stamps a kind composes it.** A kind can reach a date from
+the month's brush, the rail's chip, a week at a time or the weekday map, and a
+kind that arrives with its blocks and none of its routines is half a day that
+looks whole. The one difference between a hand and the roster: a hand may
+stamp a day that is over, because somebody is looking at that date while they
+press it.
+
+**A routine's new rule is offered, never taken.** The days ahead were made
+from the old rule and may have been looked at since. The offer stands once,
+after the save that changed the rule; it moves only what still says what the
+rule said, and it has its own undo.
+
 ## The roster is a mode of the month, and its draft is the device's
 
 v2.29 stage 6, from docs/RESEARCH-SHIFTS.md section 2.5.

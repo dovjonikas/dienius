@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { actions, useAppData } from '../../lib/store'
+import { actions, getData, useAppData } from '../../lib/store'
 import { dayKinds } from '../../lib/dayKinds'
 import { addDays, shortWeekday, longWeekday } from '../../lib/dates'
 import { offerUndo } from '../../lib/undo'
@@ -18,6 +18,15 @@ const WEEK = [1, 2, 3, 4, 5, 6, 0]
 
 const dayName = (weekday: number) => longWeekday(addDays(A_SUNDAY, weekday))
 const dayShort = (weekday: number) => shortWeekday(addDays(A_SUNDAY, weekday))
+
+/** A routine's rule as one string, for telling a change of rule from a change of name. */
+function ruleOf(routine: Routine): string {
+  const times = Object.entries(routine.times)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([kind, time]) => `${kind}:${time}`)
+    .join(',')
+  return `${routine.minutes}|${[...routine.weekdays].sort((a, b) => a - b).join('')}|${times}`
+}
 
 /** What a routine is, in one line: its days, its length, and its time on each kind. */
 function routineLine(routine: Routine, kinds: Template[]): string {
@@ -45,6 +54,11 @@ function routineLine(routine: Routine, kinds: Template[]): string {
  * **A kind with no time is left with none.** The day says a routine needs a
  * time there; the app never borrows the time from another kind or finds a gap -
  * that would put a gym session inside a shift.
+ *
+ * **A rule that changed is offered to the days ahead, once** - section 6.4. The
+ * days already stamped from a routine are days somebody may have looked at, so
+ * nothing follows the new rule without the press; what follows it is only what
+ * still says what the rule said, and a date behind today is never touched.
  */
 export function RoutinesSection() {
   const data = useAppData()
@@ -55,6 +69,8 @@ export function RoutinesSection() {
   const [minutes, setMinutes] = useState(30)
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [times, setTimes] = useState<Record<string, string>>({})
+  /** The routine whose rule just changed, while the offer about it stands. */
+  const [changed, setChanged] = useState<string | null>(null)
 
   if (kinds.length === 0) return null
 
@@ -70,9 +86,25 @@ export function RoutinesSection() {
   function save() {
     if (!open) return
     const input = { title, category, minutes, weekdays, times }
-    if (open.id) actions.updateRoutine(open.id, input)
-    else actions.addRoutine(input)
+    if (open.id) {
+      // What the days were made from, and what they would be made from now.
+      // Compared after the write rather than before it, so the comparison is
+      // against what was actually kept - cleanRoutine drops a time for a kind
+      // that is no longer one, and that is not a change to offer.
+      const before = data.routines.find(r => r.id === open.id)
+      actions.updateRoutine(open.id, input)
+      const after = getData().routines.find(r => r.id === open.id)
+      setChanged(before && after && ruleOf(before) !== ruleOf(after) ? after.title : null)
+    } else {
+      actions.addRoutine(input)
+    }
     setOpen(null)
+  }
+
+  function follow() {
+    const { undo } = actions.followRoutines()
+    offerUndo('The days ahead follow it', undo)
+    setChanged(null)
   }
 
   function remove(routine: Routine) {
@@ -113,6 +145,20 @@ export function RoutinesSection() {
         </ul>
       )}
       {data.routines.length === 0 && !open && <p className="routines-none">Nothing yet.</p>}
+
+      {/* Offered where the routine was saved, and only until it is answered.
+          Neither answer is the loud one: a day already stamped is somebody's. */}
+      {changed && (
+        <div className="routines-offer" role="status">
+          <span className="routines-offer-said">{changed} changed. The days ahead can follow it.</span>
+          <button type="button" className="btn-secondary" onClick={follow}>
+            Update them
+          </button>
+          <button type="button" className="btn-quiet" onClick={() => setChanged(null)}>
+            Leave them
+          </button>
+        </div>
+      )}
 
       {open && (
         <div className="routines-form">

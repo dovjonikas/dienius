@@ -1,7 +1,27 @@
 import { useState } from 'react'
 import { readCycle } from '../../lib/rosterDraft'
-import { monthAndDay, monthEnd } from '../../lib/dates'
+import { formatDayShort, formatWeekTitle, monthAndDay, monthEnd, weekOf } from '../../lib/dates'
+import type { RosterPreview } from '../../lib/rosterPreview'
+import type { HandEdits } from '../../lib/shiftDay'
 import type { Template } from '../../lib/types'
+
+/** What was changed by hand on a date, in the words the question about it uses. */
+function handWords(hand: HandEdits): string {
+  const parts = []
+  if (hand.done > 0) parts.push(`${hand.done} done`)
+  if (hand.moved > 0) parts.push(`${hand.moved} moved`)
+  if (hand.deleted > 0) parts.push(`${hand.deleted} taken off`)
+  return parts.join(', ')
+}
+
+/** What a week costs, in one line, and nothing where it costs nothing. */
+function weekWords(week: RosterPreview['weeks'][number]): string {
+  const parts = []
+  if (week.needsTime > 0) parts.push(`${week.needsTime} ${week.needsTime === 1 ? 'routine needs' : 'routines need'} a time`)
+  if (week.runsInto > 0) parts.push(`${week.runsInto} ${week.runsInto === 1 ? 'runs' : 'run'} into something`)
+  if (week.handEdited > 0) parts.push(`${week.handEdited} ${week.handEdited === 1 ? 'day' : 'days'} changed by hand`)
+  return parts.join(' \u00b7 ')
+}
 
 /**
  * The roster's own bar in the month - rotating shifts, since v2.29, and
@@ -18,8 +38,11 @@ import type { Template } from '../../lib/types'
  * last one used is kept on the device, because next month's is usually the same
  * pattern moved on.
  *
- * Nothing here reaches the plan. What is laid out waits on this device until it
- * is applied, which is stage 7, and the bar says how much is waiting.
+ * **Apply says what it will do first** - section 6.1, and lib/rosterPreview.ts:
+ * the weeks, the letter each date would take, what it would cost in routines
+ * with no time or routines running into something, and every day that was
+ * changed by hand, each with the way to leave it alone. Nothing reaches the
+ * plan until that press; the bar says how much is waiting until then.
  */
 export function RosterBar({
   kinds,
@@ -27,10 +50,12 @@ export function RosterBar({
   clearing,
   today,
   monthStart,
+  preview,
   onLeave,
   onClearing,
   onFill,
   onThrowAway,
+  onApply,
 }: {
   kinds: Template[]
   /** How many dates the draft holds. */
@@ -40,12 +65,20 @@ export function RosterBar({
   today: string
   /** The first of the month on screen, where a cycle starts unless it is behind today. */
   monthStart: string
+  /** What applying the draft would do, as lib/rosterPreview.ts reads it. */
+  preview: RosterPreview
   onLeave: () => void
   onClearing: (next: boolean) => void
   onFill: (kinds: string[], from: string) => void
   onThrowAway: () => void
+  /** Applies every date the draft holds except the ones left alone. */
+  onApply: (leftOut: string[]) => void
 }) {
   const [cycling, setCycling] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [leftOut, setLeftOut] = useState<string[]>([])
+  // Thrown away while the preview was open, there is nothing left to say.
+  const showingPreview = applying && waiting > 0
   const last = readCycle()
   const [sequence, setSequence] = useState<string[]>(last?.kinds.filter(id => kinds.some(k => k.id === id)) ?? [])
   const [from, setFrom] = useState(monthStart > today ? monthStart : today)
@@ -81,11 +114,26 @@ export function RosterBar({
         <button type="button" className="roster-tool" aria-expanded={cycling} onClick={() => setCycling(c => !c)}>
           Cycle
         </button>
+        {/* Apply says what it will do before it does it - section 6.1. It is
+            the last thing in the row because it is the last thing done. */}
+        {waiting > 0 && (
+          <button
+            type="button"
+            className="btn-primary roster-apply"
+            aria-expanded={applying}
+            onClick={() => {
+              setApplying(open => !open)
+              setCycling(false)
+            }}
+          >
+            Apply
+          </button>
+        )}
       </div>
 
       <div className="roster-bar-row roster-bar-said">
         <p className="muted roster-line">
-          {clearing ? 'A tap takes the kind off a date.' : 'A tap walks a date through the kinds. Nothing reaches the plan until it is applied.'}
+          {clearing ? 'A tap takes the kind off a date.' : 'A tap walks a date through the kinds. Nothing reaches the plan until Apply.'}
         </p>
         <p className="muted roster-waiting" role="status">
           {waiting === 0 ? 'Nothing waiting yet.' : `${waiting} ${waiting === 1 ? 'day' : 'days'} waiting`}
@@ -96,6 +144,83 @@ export function RosterBar({
           </button>
         )}
       </div>
+
+      {showingPreview && (
+        <div className="roster-preview" role="group" aria-label="What Apply will do">
+          {preview.changing === 0 ? (
+            <p className="muted roster-line">Nothing to apply: every date is already what the roster says.</p>
+          ) : (
+            <>
+              {preview.weeks.map(week => (
+                <div key={week.from} className="roster-preview-week">
+                  <div className="roster-preview-week-head">
+                    <span className="routines-group-label">{formatWeekTitle(weekOf(week.from), { short: true })}</span>
+                    <span className="muted roster-preview-cost">{weekWords(week)}</span>
+                  </div>
+                  <ul className="roster-preview-dates">
+                    {week.dates.map(date => {
+                      const left = leftOut.includes(date.date)
+                      const said = [
+                        formatDayShort(date.date),
+                        date.kind?.name ?? 'No kind',
+                        date.hand ? `changed by hand: ${handWords(date.hand)}` : '',
+                        left ? 'left alone' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(', ')
+                      return (
+                        <li key={date.date} className={left ? 'roster-preview-date is-left' : 'roster-preview-date'} aria-label={said}>
+                          <span className="roster-preview-letter" style={{ ['--chip' as string]: date.kind?.color } as React.CSSProperties}>
+                            {date.letter ?? ''}
+                          </span>
+                          <span className="roster-preview-day">{formatDayShort(date.date)}</span>
+                          <span className="roster-preview-kind">{date.kind?.name ?? 'No kind'}</span>
+                          {date.hand && (
+                            <>
+                              <span className="roster-preview-hand">changed by hand: {handWords(date.hand)}</span>
+                              <button
+                                type="button"
+                                className={left ? 'roster-tool is-on' : 'roster-tool'}
+                                aria-pressed={left}
+                                onClick={() => setLeftOut(dates => (left ? dates.filter(d => d !== date.date) : [...dates, date.date]))}
+                              >
+                                Leave it
+                              </button>
+                            </>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+              {preview.unchanged > 0 && (
+                <p className="muted roster-line">
+                  {preview.unchanged} {preview.unchanged === 1 ? 'day is' : 'days are'} already what the roster says, and stay as they are.
+                </p>
+              )}
+              <p className="muted roster-line">What you added by hand stays on every day either way.</p>
+              <div className="roster-preview-actions">
+                <button type="button" className="btn-quiet" onClick={() => setApplying(false)}>
+                  Not now
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  disabled={preview.changing - leftOut.length === 0}
+                  onClick={() => {
+                    onApply(leftOut)
+                    setApplying(false)
+                    setLeftOut([])
+                  }}
+                >
+                  Apply {preview.changing - leftOut.length} {preview.changing - leftOut.length === 1 ? 'day' : 'days'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {cycling && (
         <div className="roster-cycle">

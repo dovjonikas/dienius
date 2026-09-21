@@ -15,6 +15,8 @@ import { hasJournal } from '../lib/journal'
 import { datesWithNotes } from '../lib/scratch'
 import { dayKinds, nextKind } from '../lib/dayKinds'
 import { clearDraft, cycleDates, kindAfterDraft, readDraft, writeCycle, writeDraft, type RosterDraft } from '../lib/rosterDraft'
+import { rosterPreview } from '../lib/rosterPreview'
+import { offerUndo } from '../lib/undo'
 import { RosterBar } from './shifts/RosterBar'
 
 
@@ -336,6 +338,29 @@ export function CalendarView({
     writeCycle({ kinds: sequence, from })
   }
 
+  /**
+   * The draft laid over the plan - docs/RESEARCH-SHIFTS.md section 6.2. The
+   * dates left alone in the preview stay in the draft: they are a rota
+   * somebody typed in, and Leave it is about this apply, not about the month.
+   * The way back puts the days and the draft where they were.
+   */
+  function applyDraft(leftOut: string[]) {
+    const before = draft
+    const applying = Object.fromEntries(Object.entries(draft.dates).filter(([date]) => !leftOut.includes(date)))
+    if (Object.keys(applying).length === 0) return
+    const { undo } = actions.applyRoster(applying)
+    const left = Object.fromEntries(Object.entries(draft.dates).filter(([date]) => leftOut.includes(date)))
+    if (Object.keys(left).length > 0) putDraft({ dates: left })
+    else {
+      setDraft({ dates: {} })
+      clearDraft()
+    }
+    offerUndo('Roster applied', () => {
+      undo()
+      putDraft(before)
+    })
+  }
+
   function throwDraftAway() {
     setDraft({ dates: {} })
     clearDraft()
@@ -513,9 +538,11 @@ export function CalendarView({
                 setRoster(false)
                 setClearing(false)
               }}
+              preview={rosterPreview(data, draft.dates, today)}
               onClearing={setClearing}
               onFill={fillCycle}
               onThrowAway={throwDraftAway}
+              onApply={applyDraft}
             />
           )}
 
