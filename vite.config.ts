@@ -37,5 +37,11 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
+    // Fifteen seconds before a test is called hung, not vitest's five. The
+    // heaviest interaction tests - a week built block by block, a note typed
+    // into a template - take two or three seconds on their own, and with two
+    // hundred files running side by side one of them crossed five on most full
+    // runs, a different one each time. A test that really hangs still fails.
+    testTimeout: 15_000,
   },
 })
