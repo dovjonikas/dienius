@@ -196,6 +196,51 @@ export function refreshFromTemplate(
 }
 
 /**
+ * A day holding each of its template's blocks and each of its routines once.
+ *
+ * Two devices composing a date apart - the roster applied on both before
+ * either had pulled the other's copy - leave the merge holding both sets of
+ * tasks under two sets of ids: every block twice, the gym twice, one of
+ * each ticked. Nothing stamps such a date again while its kind stays, so it
+ * stayed that way until the owner deleted the twins by hand. Opening the
+ * date puts it right: of the tasks standing for one block (by its template
+ * and block, and the night they came with) or for one routine, the one
+ * ticked is kept, else the one moved by hand, else the first; the rest go.
+ * A task written by hand stands for nothing and is never touched.
+ *
+ * Returns the day itself when there is nothing to fold, which is how the
+ * open knows nothing changed.
+ */
+export function onceEach(day: DayPlan): DayPlan {
+  const keyOf = (t: Task): string | undefined => {
+    if (t.routineId) return `routine:${t.routineId}`
+    const origin = originFor(t)
+    if (origin.type === 'template' && origin.sourceId && origin.blockId) return `block:${origin.sourceId}:${origin.blockId}:${t.nightOf ?? ''}`
+    return undefined
+  }
+  const rank = (t: Task): number => (t.done ? 2 : t.fromBlock || t.fromRoutine ? (movedByHand(t) ? 1 : 0) : 0)
+  const chosen = new Map<string, Task>()
+  for (const t of day.tasks) {
+    const key = keyOf(t)
+    if (!key) continue
+    const held = chosen.get(key)
+    if (!held || rank(t) > rank(held)) chosen.set(key, t)
+  }
+  const tasks = day.tasks.filter(t => {
+    const key = keyOf(t)
+    return !key || chosen.get(key) === t
+  })
+  return tasks.length === day.tasks.length ? day : { ...day, tasks }
+}
+
+/** Whether a task's time, length or title is not what its block or its rule last gave it. */
+function movedByHand(t: Task): boolean {
+  const gave = t.fromBlock ?? t.fromRoutine
+  if (!gave) return false
+  return t.time !== gave.time || t.minutes !== gave.minutes || (gave.title !== undefined && t.title !== gave.title)
+}
+
+/**
  * The note a day wrote for itself, as opposed to the one its template handed
  * it.
  *

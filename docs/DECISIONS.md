@@ -4637,3 +4637,30 @@ each day's task.
 **Matched by title, like a template by name.** Ids are the app's own
 bookkeeping and no file can know them; a routine of the same title is
 updated, and what the file does not say is left as it was.
+
+## A kind put on a date by hand, and a date opened again
+
+v2.38, the owner's report of 2026-09-23: a free day by the roster, a shift
+put on it by hand, and sometimes both days' blocks on the date, or the free
+day's not gone. Every door by which a kind reaches a date by hand - the
+rail's chip, the month's stamp bar, the week's chip - was walked in
+`handStamp.test.ts`, each rule broken on purpose to see its test go red,
+and two things were found.
+
+**An ordinary template over a kind left the kind's routines behind.** The
+kind's blocks went and the plain template's came, but the gym stayed at the
+kind's time on a date that was no kind any more. A date that leaves its kind
+is composed once more with no kind, the way a roster taking a kind off
+leaves a date: a routine's task still as its rule left it goes, one ticked
+or moved stays.
+
+**Two devices composing a date apart leave it with two of everything.** The
+roster applied on both before either had pulled the other's copy - which
+sync's own bug made likely (v2.34) - merged into a date with every block
+twice and the gym twice, under two sets of ids, one of each ticked. Nothing
+stamped such a date again while its kind stayed, so the twins stayed until
+they were deleted by hand. Opening a date now folds them (`onceEach`): of
+the tasks standing for one block, or for one routine, the ticked one is
+kept, else the one moved by hand, else the first. A task written by hand
+stands for nothing and is never touched. This is the repair that runs on
+every open, beside the one that carries a block's edits to its days.

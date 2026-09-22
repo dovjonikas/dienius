@@ -2,8 +2,8 @@ import { commit, getData } from './core'
 import type { DayType, MealType, Template, TemplateKind, WeekDayOverride } from '../types'
 import type { CategoryId } from '../categories'
 import { applyStamps } from '../stamping'
-import { applyRoster, followNeighbours } from '../shiftDay'
-import { isDayKind } from '../dayKinds'
+import { applyRoster, composeDay, followNeighbours } from '../shiftDay'
+import { isDayKind, kindOnDate } from '../dayKinds'
 import { todayKey } from '../dates'
 import { readTemplatesJson, type TemplatesImport } from '../templateJson'
 
@@ -129,11 +129,21 @@ export const templateActions = {
     const stamped =
       Object.keys(plain).length > 0 ? { ...data, days: applyStamps(data.days, data.templates, plain, data.library, data.recipes) } : data
     const composed = Object.keys(kinds).length > 0 ? applyRoster(stamped, kinds, todayKey(), { reach: 'any' }) : stamped
-    // A kind an ordinary template stamped over is a kind that changed, and the
-    // dates around it follow it the way they follow the roster - section
-    // 10.2a of RESEARCH-SHIFTS.
+    // A kind an ordinary template stamped over is a kind that changed: the
+    // date is no kind now, so its routines leave it - a task still as its
+    // rule left it goes, one ticked or moved stays, the way a roster taking
+    // a kind off leaves a date - and the dates around it follow it the way
+    // they follow the roster (section 10.2a of RESEARCH-SHIFTS). Without the
+    // first, the gym stayed on a date the kind had left, at the kind's time.
+    const today = todayKey()
     const leftKind = Object.keys(plain).filter(date => kindOf(data.days[date]?.templateId))
-    const next = leftKind.length > 0 ? followNeighbours(composed, leftKind, todayKey(), new Set(Object.keys(kinds))) : composed
+    let next = composed
+    for (const date of leftKind) {
+      const reading = next
+      const { day } = composeDay(reading, date, undefined, on => kindOnDate(reading, on), today)
+      if (day !== next.days[date]) next = { ...next, days: { ...next.days, [date]: day } }
+    }
+    if (leftKind.length > 0) next = followNeighbours(next, leftKind, today, new Set(Object.keys(kinds)))
     if (next !== data) commit(next)
   },
 

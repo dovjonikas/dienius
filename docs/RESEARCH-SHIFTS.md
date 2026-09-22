@@ -663,6 +663,14 @@ Changing such a date's kind asks first, the way replan asks, naming what would
 go: "Wednesday was changed by hand: 1 done, 2 moved. Apply Night shift anyway?
 What you added stays." Apply or Leave it, per date, in the preview.
 
+A kind put on a date by hand - the rail's chip, the month's stamp bar, the
+week's chip - is the same composition as the roster's, one date at a time,
+and the dates around it follow it. An ordinary template put on a date that
+had a kind takes the kind off it, routines included: the date is composed
+with no kind after the stamp (v2.38). And a date opened again holds each of
+its kind's blocks and each of its routines once, whatever two devices left
+on it (`onceEach`, v2.38).
+
 ### 6.4 Changing a routine
 
 Saving a routine with a different time, length or weekdays offers, once, to

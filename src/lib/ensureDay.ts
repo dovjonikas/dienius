@@ -2,7 +2,7 @@ import type { AppData, DayPlan } from './types'
 import { addDays, todayKey } from './dates'
 import { materialiseRepeats, weekdayOf } from './repeats'
 import { addWithoutDuplicates } from './taskIdentity'
-import { applyStamps, columnFor, isNightBlock, refreshFromTemplate } from './stamping'
+import { applyStamps, columnFor, isNightBlock, onceEach, refreshFromTemplate } from './stamping'
 import { isDayKind, kindOnDate } from './dayKinds'
 import { composeDay, followNeighbours } from './shiftDay'
 
@@ -88,7 +88,10 @@ function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | nu
    * Today and the days ahead only. A day that has been lived says what was
    * on it.
    */
-  const rebound = existing && date >= today ? refreshFromTemplate(existing, data.templates, data.library, data.recipes) : null
+  // And each block and each routine once - see onceEach - since two devices
+  // composing a date apart can leave it with two of everything.
+  const folded = existing && date >= today ? onceEach(existing) : existing
+  const rebound = folded && date >= today ? (refreshFromTemplate(folded, data.templates, data.library, data.recipes) ?? (folded !== existing ? folded : null)) : null
   const withRebind = rebound ? { ...data.days, [date]: rebound } : data.days
 
   if (existing?.autoApplied) return rebound ? { days: withRebind, changed: true } : null
