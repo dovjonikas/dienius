@@ -294,6 +294,8 @@ const TASK = record({
   // kind of half-trusted file this guard exists to refuse whole.
   fromNote: optional(string),
   setAside: optional(boolean),
+  // v2.35: a block that ends by itself, said not to have happened.
+  missed: optional(boolean),
   // A bare string like `time` above, for the same reason: a "9:30" typed by
   // hand into the latest-start field breaks one placement, not the whole
   // backup that carries it.
@@ -425,6 +427,8 @@ const CATEGORY = record({
   id: string,
   label: text(1, 40),
   color: optional(color),
+  // v2.35: whether its blocks end by themselves - see lib/selfEnding.ts.
+  endsItself: optional(boolean),
 })
 
 // A Later item. The list it sits in is still called `backlog` in the file -

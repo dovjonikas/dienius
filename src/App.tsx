@@ -15,7 +15,7 @@ import { FocusView } from './widgets/day-plan/FocusView'
 import { runningOn } from './lib/shiftDay'
 import { awayOn } from './lib/away'
 import { currentMinutes } from './widgets/day-plan/timelineLayout'
-import { actions as storeActions, getData } from './lib/store'
+import { actions as storeActions, getData, subscribe } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { requestCloudBackup } from './lib/cloudBackup'
 import { DemoBanner } from './views/DemoBanner'
@@ -211,6 +211,23 @@ export function App() {
     // interval every automatic reason goes through.
     void requestCloudBackup('new-day')
   }, [today])
+
+  // Blocks that end by themselves - a shift, the drive - are done once their
+  // end has passed: on open, each minute after, and straight after anything
+  // is written, so a day stamped with its morning already behind it opens
+  // with the morning's commute done. A write that ended nothing writes
+  // nothing, so the second pass stops there. The store holds the first for
+  // the page's first pull - see lib/selfEnding.ts.
+  useEffect(() => {
+    const end = () => storeActions.endSelfEndingBlocks()
+    end()
+    const id = setInterval(end, 60_000)
+    const off = subscribe(() => queueMicrotask(end))
+    return () => {
+      clearInterval(id)
+      off()
+    }
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.density = data.settings.density

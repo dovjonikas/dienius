@@ -109,8 +109,9 @@ test('the tour can be walked doing only what each card says', async ({ page, isM
   await expect(card).toContainText("That's the app")
   await card.getByRole('button', { name: 'Keep what I built' }).click()
   await expect(card).toHaveCount(0)
-  // Walk stayed ticked, folded into Done with the rest of what the tour made.
-  await expect(page.getByRole('button', { name: /^Done \d+$/ })).toContainText('1')
+  // Walk stayed ticked, folded into Done with the rest of what the tour made -
+  // and with the morning's commute, which ended by itself.
+  await expect(page.getByRole('button', { name: /^Done \d+$/ })).toContainText('2')
 })
 
 /**

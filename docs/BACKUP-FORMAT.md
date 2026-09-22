@@ -134,6 +134,7 @@ to the date it starts on** (section 4).
 | `repeatOf` | On a repeat's instance: its source's id. |
 | `pushCount` | How many times it has been pushed to the next day. |
 | `setAside` | Waiting aside, off the clock. |
+| `missed` | **v2.35.** A block that ends by itself - ongoing, or of a category that ends by itself - that did not happen. Not done, and the clock does not mark it done. |
 | `latest` | `HH:MM`, the latest it is worth starting at. |
 | `fromNote` | The id of the note it was made from. |
 | `tourCreated` | Made by the first-run tour. |
@@ -258,6 +259,7 @@ rule; one changed on the day is the person's.
 | `id` | Unique. |
 | `label` | Its name. |
 | `color` | `#rrggbb` where one was chosen; absent is the built-in pair for its id. |
+| `endsItself` | **v2.35.** Its blocks are done once their end has passed, like an ongoing block's. Absent: yes for `commute`, no for every other. |
 
 ### Recipe
 
@@ -312,3 +314,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.30 | `recipeIds` on a block. |
 | v2.31 | `afterMidnight` on a block, `nightOf` on a task. |
 | v2.32 | `followMeal` on a block; `mealWords` in the settings - `[{ word, meals }]`, the words a recipe's name starts with and the meals each says, read past anything malformed rather than refused. |
+| v2.35 | `missed` on a task, `endsItself` on a category: an ongoing block, and a block of a category that ends by itself, is marked done by the app once its end has passed, unless it was said not to have happened. |

@@ -87,7 +87,7 @@ export const EXPLANATIONS: Record<ExplainId, Explanation> = {
   },
   ongoing: {
     term: 'Ongoing',
-    text: 'A block that is simply running - work, a shift, being at a place - rather than a job to finish. It is never pushed to tomorrow and never asks to be ticked off.',
+    text: 'A block that is simply running - work, a shift, being at a place - rather than a job to finish. It is never pushed to tomorrow, and is done by itself when its time is over, unless you say it did not happen.',
   },
   focus: {
     term: 'Focus',

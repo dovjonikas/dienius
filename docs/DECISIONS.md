@@ -4533,3 +4533,33 @@ it cannot carry the token GitHub needs, nor make a PUT.
 still there, armed, and still stamped now - a roll-back that the next sync
 undid would be no roll-back - but it is no longer the first press, and it
 says that it replaces every device.
+
+## A block that is simply running ends by itself
+
+v2.35, the owner's brief of 2026-09-22, part 1. An ongoing block - a
+twelve-hour shift - and a Commute block are done once their end has passed,
+quietly, and count as done in the day's score. Ticked by hand before that,
+it is done and stays so; said not to have happened, it is not done and the
+clock never changes it. Any category can be told in Settings that its blocks
+end by themselves; Commute's do until it is told otherwise.
+
+**Written, not worked out on reading.** Done is read in a dozen places - the
+score, the review, the evening card, the push offer, the Done fold - and a
+second meaning kept beside the stored one would be a dozen chances to read
+the wrong one. So the app writes `done` itself: on open, every minute, and
+straight after anything else is written, which is what makes a day stamped
+at ten open with its eight o'clock commute already done. It is a write the
+app makes on its own, so it waits for the page's first pull like the day's
+own stamping (v2.34): a block the other device said did not happen is read
+before this one decides it did.
+
+**Unticking an ended block says it did not happen.** Otherwise the clock
+would tick it back a minute later, and a person who took the tick off would
+find it on again. A tick said again takes it back.
+
+**A week back, not the whole history.** The first open after this version
+closes the last seven days' shifts and commutes; older days are left as
+they were lived, so a month of the review does not change under anybody.
+
+**No length or no time, no end.** "Being at a place" with no hours has no
+moment to be over at, and is left for a person to tick.

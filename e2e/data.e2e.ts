@@ -41,7 +41,10 @@ test('export, erase, import: the day comes back exactly', async ({ page }) => {
   ])
   await chooser.setFiles(path)
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
-  await expect(page.getByRole('checkbox')).toHaveCount(9)
+  // Eight in the list and one folded into Done: the morning's commute ended
+  // at 08:45, and a commute ends by itself.
+  await expect(page.getByRole('checkbox')).toHaveCount(8)
+  await expect(page.getByRole('button', { name: /^Done \d+$/ })).toContainText('1')
   await expect(page.getByRole('checkbox', { name: 'Standup' })).toBeAttached()
 })
 

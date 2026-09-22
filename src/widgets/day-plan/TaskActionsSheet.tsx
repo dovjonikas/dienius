@@ -17,6 +17,13 @@ export interface TaskActionsSheetProps {
   onUnanchor: (taskId: string) => void
   onPush: (taskId: string) => void
   onSetOngoing: (taskId: string, ongoing: boolean) => void
+  /**
+   * Whether this block ends by itself - lib/selfEnding.ts - and so can be
+   * said not to have happened. Optional, like the doors below, so a caller
+   * written before it renders as it did.
+   */
+  endsItself?: boolean
+  onSetMissed?: (taskId: string, missed: boolean) => void
   onDelete: (taskId: string) => void
   /**
    * Opens everything about this task that is edited rather than acted on -
@@ -69,7 +76,7 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
  *   The only action a done task ever has left, since everything else above
  *   is gated on the task not being done.
  */
-export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, onDelete, onOpenDetails, onTime, onClose }: TaskActionsSheetProps) {
+export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onSetOngoing, endsItself = false, onSetMissed, onDelete, onOpenDetails, onTime, onClose }: TaskActionsSheetProps) {
   useRestoreFocus()
   const dialogRef = useRef<HTMLDivElement>(null)
   const anchor = isAnchor(task)
@@ -244,6 +251,34 @@ export function TaskActionsSheet({ task, tasks, onPlace, onUnanchor, onPush, onS
           {isUnbounded && (
             <button type="button" className="task-actions-row" onClick={() => setOngoing(false)}>
               Stop treating {task.title} as ongoing
+            </button>
+          )}
+
+          {/* A block that ends by itself is ticked by the clock; this is the
+              one thing to say instead - the shift called off - and the way
+              back from having said it. */}
+          {onSetMissed && task.missed && (
+            <button
+              type="button"
+              className="task-actions-row"
+              onClick={() => {
+                onSetMissed(task.id, false)
+                onClose()
+              }}
+            >
+              {task.title} happened after all
+            </button>
+          )}
+          {onSetMissed && endsItself && !task.missed && (
+            <button
+              type="button"
+              className="task-actions-row"
+              onClick={() => {
+                onSetMissed(task.id, true)
+                onClose()
+              }}
+            >
+              {task.title} did not happen
             </button>
           )}
 

@@ -3,6 +3,7 @@ import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { carriedInto, runningOn, sleepOn } from '../../lib/shiftDay'
 import { categoryColor } from '../../lib/categories'
+import { endsItself } from '../../lib/selfEnding'
 import { awayOn, awaySince } from '../../lib/away'
 import { ownedSleep } from '../../lib/wakingDay'
 import { realMinutes } from '../../lib/wallClock'
@@ -479,6 +480,8 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
           }}
           onPush={taskId => actions.pushTask(date, taskId)}
           onSetOngoing={(taskId, ongoing) => actions.setTaskUnbounded(date, taskId, ongoing)}
+          endsItself={endsItself(actionsSheetTask, data.categories)}
+          onSetMissed={(taskId, missed) => actions.setTaskMissed(date, taskId, missed)}
           onDelete={taskId => deleteWithUndo(taskId)}
           onOpenDetails={() => setDetailTaskId(actionsSheetTask.id)}
           onTime={() => clockTools.startStopwatch({ date, taskId: actionsSheetTask.id })}

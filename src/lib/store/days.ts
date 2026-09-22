@@ -9,6 +9,7 @@ import { ensuredDay } from '../ensureDay'
 import { addDays, todayKey } from '../dates'
 import { isPushable } from '../pushRules'
 import { arrivingByHand, leftByHand } from '../routines'
+import { endsItself, hasEnded, selfEnded } from '../selfEnding'
 import { applyPlan } from '../../widgets/day-plan/replan'
 import type { ReplanPlan } from '../../widgets/day-plan/replan'
 import type { ReturnOffer } from '../../widgets/day-plan/setAside'
@@ -69,9 +70,54 @@ export const dayActions = {
     const data = getData()
     const day = dayOf(date)
     const task = day.tasks.find(t => t.id === taskId)
-    const tasks = day.tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t))
+    // A block that ends by itself, unticked once its end has passed, did not
+    // happen - or the clock would tick it straight back. A tick says it did.
+    const missed = !!task && task.done && endsItself(task, data.categories) && hasEnded(task, date, new Date())
+    const tasks = day.tasks.map(t => {
+      if (t.id !== taskId) return t
+      const { missed: _said, ...rest } = t
+      return t.done ? { ...rest, done: false, ...(missed ? { missed: true } : {}) } : { ...rest, done: true }
+    })
     const library = task ? advanceForTask(data.library, task, !task.done, date) : data.library
     commit({ ...withDay(date, { ...day, tasks }), library })
+  },
+
+  /**
+   * Marks a block that ends by itself as not having happened, or takes that
+   * back. Not happened is not done, and the clock leaves it so; taken back,
+   * the clock marks it done once its end has passed, as if nothing had been
+   * said. Ticked by hand is `toggleTask`'s.
+   */
+  setTaskMissed(date: string, taskId: string, missed: boolean): void {
+    const data = getData()
+    const day = dayOf(date)
+    const task = day.tasks.find(t => t.id === taskId)
+    if (!task || !!task.missed === missed) return
+    const tasks = day.tasks.map(t => {
+      if (t.id !== taskId) return t
+      const { missed: _said, ...rest } = t
+      return missed ? { ...rest, done: false, missed: true } : rest
+    })
+    const library = task.done ? advanceForTask(data.library, task, false, date) : data.library
+    commit({ ...withDay(date, { ...day, tasks }), library })
+  },
+
+  /**
+   * Every block that ended by itself by `now` marked done - lib/selfEnding.ts.
+   * Called on open and each minute after; a minute that ended nothing writes
+   * nothing. Held for the page's first pull like the day's own stamping, so
+   * a block the other device marked as not having happened is read before
+   * this device decides it happened.
+   */
+  endSelfEndingBlocks(now: Date = new Date()): void {
+    if (laterIfHeld(() => dayActions.endSelfEndingBlocks(now))) return
+    const data = getData()
+    let library = data.library
+    const next = selfEnded(data, now, (task, date) => {
+      library = advanceForTask(library, task, true, date)
+    })
+    if (next === data) return
+    commit({ ...next, library })
   },
 
   /**

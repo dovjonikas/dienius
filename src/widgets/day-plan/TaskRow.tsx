@@ -256,6 +256,7 @@ export function TaskRow({
   if (catColor) classNames.push('task-cat')
   if (active) classNames.push('task-active')
   if (task.done) classNames.push('done')
+  if (task.missed) classNames.push('task-missed')
   if (leaving) classNames.push('task-leaving')
   if (atBound) classNames.push('task-maxed')
   if (task.highlight) classNames.push('task-key')
@@ -360,6 +361,9 @@ export function TaskRow({
         </label>
         <div className="task-meta">
           {task.time && <span className="task-time">{task.time}</span>}
+          {/* A block that ends by itself, said not to have happened - in the
+              words, since an unticked box alone reads as not yet. */}
+          {task.missed && <span className="task-missed-note">did not happen</span>}
           {/* Where a routine has no time, why - it needs one on this kind of
               day, or its time runs into something. In the time's place, since
               it is the answer to where the time went. */}

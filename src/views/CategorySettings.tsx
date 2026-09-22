@@ -10,6 +10,7 @@ import {
 } from '../lib/categories'
 import { categorySlice, categoryUsage } from '../lib/store/categories'
 import { offerUndo } from '../lib/undo'
+import { categoryEndsItself } from '../lib/selfEnding'
 import { useListReorder } from './useListReorder'
 import type { Category } from '../lib/types'
 
@@ -160,7 +161,7 @@ export function CategorySettings() {
             <CategoryForm
               onSave={patch => {
                 if (!patch.label || !patch.color) return
-                actions.addCategory({ label: patch.label, color: patch.color })
+                actions.addCategory({ label: patch.label, color: patch.color, endsItself: patch.endsItself })
                 setAdding(false)
               }}
               onCancel={() => setAdding(false)}
@@ -254,7 +255,7 @@ export function usageSentence(usage: { tasks: number; blocks: number; later: num
 
 interface CategoryFormProps {
   category?: Category
-  onSave: (patch: { label?: string; color?: string | null }) => void
+  onSave: (patch: { label?: string; color?: string | null; endsItself?: boolean }) => void
   onCancel: () => void
   /** Opens the delete panel in place of the editor. Absent while adding. */
   onDelete?: () => void
@@ -281,6 +282,9 @@ interface CategoryFormProps {
 function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }: CategoryFormProps) {
   const [label, setLabel] = useState(category?.label ?? '')
   const [color, setColor] = useState<string | null>(category?.color ?? null)
+  // Whether its blocks end by themselves - done once their time is over,
+  // the way a shift is. Commute's is yes until it is told otherwise.
+  const [endsSelf, setEndsSelf] = useState(category ? categoryEndsItself(category) : false)
   const canClear = category !== undefined && hasBuiltInColor(category.id)
   const readable = color === null || isCategoryColorReadable(color)
   const canSave = label.trim().length > 0 && readable && (canClear || color !== null)
@@ -344,6 +348,25 @@ function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }:
         )}
       </div>
 
+      <div className="field category-ends">
+        <span className="field-label">Ends by itself</span>
+        <div className="category-ends-row">
+        <button
+          type="button"
+          role="switch"
+          className="switch"
+          aria-checked={endsSelf}
+          aria-label="Its blocks end by themselves"
+          onClick={() => setEndsSelf((on: boolean) => !on)}
+        >
+          <span className="switch-thumb" aria-hidden="true" />
+        </button>
+        <span className="setting-state">
+          {endsSelf ? 'Its blocks are done once their time is over.' : 'Its blocks wait to be ticked.'}
+        </span>
+        </div>
+      </div>
+
       {/* The delete at the left, Cancel and Save at the right, Save last. */}
       <div className="category-form-actions">
         {onDelete && (
@@ -364,7 +387,7 @@ function CategoryForm({ category, onSave, onCancel, onDelete, lastOne = false }:
           type="button"
           className="btn-primary"
           disabled={!canSave}
-          onClick={() => onSave({ label, color })}
+          onClick={() => onSave({ label, color, endsItself: endsSelf })}
         >
           Save
         </button>

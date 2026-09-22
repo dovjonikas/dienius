@@ -6,7 +6,30 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.34 is done - an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md). Before it v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.35 is done - blocks that end by themselves, part 1 of the owner's four-part brief. Before it v2.34, an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md); v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the rest of the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.35 - Blocks that end by themselves
+
+The owner's four-part brief of 2026-09-22, part 1. An ongoing block - the
+twelve-hour shift - and a Commute block are done once their end has passed,
+quietly, and count as done in the day's score (`lib/selfEnding.ts`,
+`actions.endSelfEndingBlocks`). Ticked by hand before its end it is done and
+stays so; "did not happen", from the task's actions, is `Task.missed`: not
+done, and the clock never changes it; unticking an ended block says the
+same. Settings, Categories, a category's editor: "Ends by itself", on for
+Commute until it is told otherwise (`Category.endsItself`). The app ends
+what has ended on open, each minute, and straight after any write - held for
+the page's first pull - over the last seven days. DECISIONS "A block that is
+simply running ends by itself" has why.
+
+- **Tests**: `selfEnding.test.ts` (the end passes; ticked early and kept;
+  did not happen, never changed; yesterday's shift and last night's done
+  the next morning; Commute by default and a category by Settings; no time
+  or no length left alone; an ordinary block never; unticked after its end;
+  a week back; the score; nothing written when nothing ended),
+  `selfEndingScreens.test.tsx`, and `e2e/self-ending.e2e.ts` on the desktop
+  and the phone. The smoke, data and tour walks now count the morning's
+  commute in Done.
 
 ## v2.34 - An older copy is never written over a newer one
 

@@ -32,6 +32,17 @@ const MAX_LABEL = 40
  */
 export const categoryActions = {
   /**
+   * Whether a category's blocks end by themselves - see lib/selfEnding.ts.
+   * Stored as said, so Commute told no is no, and any other told yes is yes.
+   */
+  setCategoryEndsItself(id: string, endsItself: boolean): void {
+    const data = getData()
+    const category = data.categories.find(c => c.id === id)
+    if (!category || category.endsItself === endsItself) return
+    commit({ ...data, categories: data.categories.map(c => (c.id === id ? { ...c, endsItself } : c)) })
+  },
+
+  /**
    * A new one, at the end of the list.
    *
    * The colour is required, and that is not an oversight: a category the owner
@@ -39,12 +50,12 @@ export const categoryActions = {
    * no colour at all rather than "the built-in one". The editor does not offer
    * "no colour" for a new one either, and this refuses a call that tries.
    */
-  addCategory(input: { label: string; color: string }): Category | undefined {
+  addCategory(input: { label: string; color: string; endsItself?: boolean }): Category | undefined {
     const data = getData()
     const label = input.label.trim().slice(0, MAX_LABEL)
     if (!label) return undefined
     if (!isCategoryColorReadable(input.color)) return undefined
-    const category: Category = { id: crypto.randomUUID(), label, color: input.color }
+    const category: Category = { id: crypto.randomUUID(), label, color: input.color, ...(input.endsItself ? { endsItself: true } : {}) }
     commit({ ...data, categories: [...data.categories, category] })
     return category
   },
@@ -62,7 +73,7 @@ export const categoryActions = {
    * colour is a third thing that is neither what they chose nor what the app
    * would have chosen, and nothing would tell them it happened.
    */
-  updateCategory(id: string, patch: { label?: string; color?: string | null }): void {
+  updateCategory(id: string, patch: { label?: string; color?: string | null; endsItself?: boolean }): void {
     const data = getData()
     if (patch.color !== undefined && patch.color !== null && !isCategoryColorReadable(patch.color)) return
     commit({
@@ -71,7 +82,8 @@ export const categoryActions = {
         if (c.id !== id) return c
         const label = patch.label !== undefined ? patch.label.trim().slice(0, MAX_LABEL) || c.label : c.label
         const color = patch.color === undefined ? c.color : (patch.color ?? undefined)
-        return { ...c, label, color }
+        const endsItself = patch.endsItself === undefined ? c.endsItself : patch.endsItself
+        return { ...c, label, color, ...(endsItself === undefined ? {} : { endsItself }) }
       }),
     })
   },

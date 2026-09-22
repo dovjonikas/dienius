@@ -4437,6 +4437,24 @@ select:focus {
   font-size: var(--t-sm);
 }
 
+/* A block that did not happen: its words in the quiet ink, and said so on
+   the meta line. Not struck through - that is done's mark, and this is
+   not done. */
+.task-missed .task-title { color: var(--muted); }
+
+.task-missed-note {
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+/* The category's one switch, under its name and colour: the words that say
+   what it does beside it, on the same line. */
+.category-ends-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
 /* A night's task on the morning after says whose it is - section 10 of
    RESEARCH-SHIFTS: the night's letter on its own colour, the chip the day's
    masthead and the week's column already draw a kind with, and the words in

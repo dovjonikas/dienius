@@ -331,6 +331,14 @@ export interface Task extends Timestamped {
    */
   setAside?: boolean
   /**
+   * A block that ends by itself - see lib/selfEnding.ts - that did not
+   * happen: the shift called off, the drive not made. Not done, and never
+   * marked done by the clock while this is set. Set from the task's actions
+   * ("It did not happen"), or by unticking such a block after its end; a
+   * tick clears it. Absent means nothing was said.
+   */
+  missed?: boolean
+  /**
    * The latest clock time this block is worth starting at, when it has one.
    *
    * Optional and rarely set by hand: the rule for its kind covers almost
@@ -1334,6 +1342,13 @@ export interface Category extends Timestamped {
    * required - see `CategorySettings`, which does not offer "no colour" there.
    */
   color?: string
+  /**
+   * Whether this category's blocks end by themselves - done once their end
+   * has passed, the way an ongoing block is (lib/selfEnding.ts). Absent is
+   * Commute's yes and everybody else's no, so a plan written before this
+   * field needs nothing done to it.
+   */
+  endsItself?: boolean
 }
 
 /**

@@ -93,6 +93,10 @@ needs most:
   (one of the day's key tasks), `note`, and where it came from - `origin`
   (`template` with the template and block ids, `repeat`, or `manual`),
   `routineId` for a routine's task, `nightOf` for a night's (section 4.5).
+  Since v2.35 `done` on an ongoing block (`unbounded`) or a Commute block -
+  any category with `endsItself` - may have been written by the app once its
+  end passed rather than ticked by a person; `missed` is one said not to have
+  happened.
 - A **Template**: `name`, `blocks` (each with an optional `time`, `minutes`,
   `category` and the rest), `type` (`full`, `shift`, `night`, `rest`), a
   `sleepProfileId`, and `dayKind: { letter, order }` when it is a kind of day.
