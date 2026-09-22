@@ -988,3 +988,23 @@ decision looked at on a phone and on a desktop until it fits both.
   on the next day, the roster, the mark on the morning after, and the night
   taken away with its meal. The sweep and the precision check open a night
   shift's template, and their morning after carries the night's meal.
+
+### 10.5 Stage 4 and the first month, as built
+
+- **The guide and the contract**: docs/AGENT-GUIDE.md for another agent, and
+  docs/BACKUP-FORMAT.md for a program reading the backup, held to the guard
+  field by field by a test, with a backup recorded by the version before this
+  one kept byte for byte and its month opened as it was opened then.
+- **The first real month**, walked as a dry run (STATE, "Pirmas realus menuo,
+  dry run"), found three things and each was fixed at once. The roster's
+  cycle filled only to the end of the month it started in, so a rota could
+  not be carried into the next month without working out where the pattern
+  stood on its first day: it fills to the end of the month on screen now,
+  keeping its place, and opens where it started. The day's grid offered free
+  time across a daytime sleep. A template card had a separator in front of
+  nothing.
+- **Found and left to the owner**: the first night of a run wakes from an
+  ordinary night, which one Night shift kind with a daytime sleep cannot say.
+  The answer with no code is a kind of its own for the first night; a kind
+  whose sleep follows the kind before it is the feature that would make it
+  unnecessary, parked under the freeze.

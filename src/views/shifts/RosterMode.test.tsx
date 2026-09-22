@@ -313,3 +313,52 @@ test('Apply names the days next to the draft that follow it, and a day left alon
   await user.click(within(preview).getByRole('button', { name: 'Leave it' }))
   expect(preview).not.toHaveTextContent(/follows them/)
 })
+
+// Found in the first month's dry run: a rota that goes on past the month it
+// started in could not be carried on. The cycle, opened on the next month,
+// filled only to the end of the month it started in - nothing - and a start
+// moved into the new month began the pattern again from its first kind. It
+// now fills to the end of the month on screen, keeping its place from the day
+// it started, so next month's rota is one press.
+test("a cycle carries on into the month on screen, keeping its place from the day it started", async () => {
+  const user = await openRoster()
+  const today = todayKey()
+  await user.click(screen.getByRole('button', { name: 'Cycle' }))
+  const kinds = screen.getByRole('group', { name: 'The cycle' })
+  await user.click(within(kinds).getByRole('button', { name: /Day shift/ }))
+  await user.click(within(kinds).getByRole('button', { name: /Night shift/ }))
+  await user.click(within(kinds).getByRole('button', { name: /Night shift/ }))
+  await user.click(screen.getByRole('button', { name: 'Fill to the end of the month' }))
+
+  await user.click(screen.getByRole('button', { name: 'Next month' }))
+  await user.click(screen.getByRole('button', { name: 'Cycle' }))
+  expect(screen.getByLabelText('Starting on')).toHaveValue(today)
+  await user.click(screen.getByRole('button', { name: 'Fill to the end of the month' }))
+
+  const filled = readDraft().dates
+  const first = addDays(monthEnd(today), 1)
+  const pattern = ['day', 'night', 'night']
+  const place = (date: string) => Math.round((Date.parse(date) - Date.parse(today)) / 86_400_000) % 3
+  expect(filled[first]).toBe(pattern[place(first)])
+  expect(filled[monthEnd(first)]).toBe(pattern[place(monthEnd(first))])
+  expect(filled[addDays(monthEnd(first), 1)]).toBeUndefined()
+})
+
+test('opened again after a reload, the cycle starts where it started, so the next month is one press', async () => {
+  const today = todayKey()
+  const user = await openRoster()
+  await user.click(screen.getByRole('button', { name: 'Cycle' }))
+  const kinds = screen.getByRole('group', { name: 'The cycle' })
+  await user.click(within(kinds).getByRole('button', { name: /Day shift/ }))
+  await user.click(within(kinds).getByRole('button', { name: /Night shift/ }))
+  await user.click(screen.getByRole('button', { name: 'Fill to the end of the month' }))
+
+  cleanup()
+  const again = userEvent.setup()
+  render(<CalendarView onOpenDay={() => {}} />)
+  // The next month first, and the roster opened on it.
+  await again.click(screen.getByRole('button', { name: 'Next month' }))
+  await again.click(screen.getByRole('button', { name: 'Roster' }))
+  await again.click(screen.getByRole('button', { name: 'Cycle' }))
+  expect(screen.getByLabelText('Starting on')).toHaveValue(today)
+})

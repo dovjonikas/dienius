@@ -1,0 +1,2238 @@
+{
+  "templates": [
+    {
+      "id": "day",
+      "name": "Day shift",
+      "color": "#a7c4f5",
+      "blocks": [
+        {
+          "id": "d-shift",
+          "time": "06:00",
+          "title": "On shift",
+          "minutes": 720,
+          "category": "core",
+          "unbounded": true,
+          "core": true
+        },
+        {
+          "id": "d-lunch",
+          "time": "12:00",
+          "title": "Lunch",
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch"
+        }
+      ],
+      "dayKind": {
+        "letter": "D",
+        "order": 0
+      },
+      "type": "shift",
+      "sleepProfileId": "early",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "night",
+      "name": "Night shift",
+      "color": "#c9b3f0",
+      "blocks": [
+        {
+          "id": "n-dinner",
+          "time": "19:00",
+          "title": "Dinner",
+          "minutes": 30,
+          "category": "meal",
+          "recipeIds": [
+            "soup",
+            "rice"
+          ],
+          "recipeId": "soup"
+        },
+        {
+          "id": "n-shift",
+          "time": "21:00",
+          "title": "On shift",
+          "minutes": 600,
+          "category": "core",
+          "unbounded": true,
+          "core": true
+        }
+      ],
+      "dayKind": {
+        "letter": "N",
+        "order": 1
+      },
+      "type": "night",
+      "sleepProfileId": "day-sleep",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "after",
+      "name": "After nights",
+      "color": "#f9d48a",
+      "blocks": [],
+      "dayKind": {
+        "letter": "A",
+        "order": 2
+      },
+      "type": "rest",
+      "sleepProfileId": "day-sleep",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "rest",
+      "name": "Rest day",
+      "color": "#b8e0c8",
+      "blocks": [
+        {
+          "id": "r-breakfast",
+          "time": "09:00",
+          "title": "Breakfast",
+          "minutes": 20,
+          "category": "meal",
+          "recipeIds": [
+            "porridge"
+          ],
+          "recipeId": "porridge"
+        },
+        {
+          "id": "r-read",
+          "time": "20:00",
+          "title": "Reading",
+          "minutes": 30,
+          "category": "personal",
+          "libraryListId": "books"
+        }
+      ],
+      "dayKind": {
+        "letter": "R",
+        "order": 3
+      },
+      "type": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "errands",
+      "name": "Errands",
+      "color": "#a7e3bd",
+      "blocks": [
+        {
+          "id": "e-shop",
+          "time": "10:00",
+          "title": "Shopping",
+          "minutes": 60
+        }
+      ],
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  ],
+  "days": {
+    "2026-09-22": {
+      "date": "2026-09-22",
+      "tasks": [
+        {
+          "id": "2b92619d-5661-4f73-9d37-392085b03731",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "47ec650a-98d9-4282-8936-1b21ae6cc897",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": true,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "40e7e33c-0eaf-4328-81da-4b2545a12867",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "4495fd12-f4aa-4dd4-880c-0af2838a9a9e",
+          "title": "Call the garage",
+          "time": "18:30",
+          "done": false,
+          "origin": {
+            "type": "manual"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z",
+      "journal": "A generic line written on the day."
+    },
+    "2026-09-23": {
+      "date": "2026-09-23",
+      "tasks": [
+        {
+          "id": "c130652c-2e32-4557-a78b-71ff0549bb44",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "37de2b7e-2fa8-4865-a160-1c238210c938",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "0ff3ee5b-1510-435b-b092-3cbe7b8e9464",
+          "title": "Gym",
+          "done": false,
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "2cdbb0e8-fe33-4368-b706-7314ba4f9b37",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-24": {
+      "date": "2026-09-24",
+      "tasks": [
+        {
+          "id": "d983f937-8a52-4d40-b0d5-c9c3a9974f6f",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "soup",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "soup"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "d9faec62-5f85-4465-9daf-acab437ced82",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "de21dec2-b6e3-43b4-81df-079ed4061f6a",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-25": {
+      "date": "2026-09-25",
+      "tasks": [
+        {
+          "id": "5c1a60a9-ecc0-4214-bd0e-47837c2d0dcb",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "rice",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "rice"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "9af20222-bad1-44fc-bb35-5c48637ea8de",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "d4228288-27e5-4efa-9589-24a822f17162",
+          "title": "Gym",
+          "done": false,
+          "time": "16:00",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "16:00",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "00caebe7-3c7c-4dbb-804b-0d785ed2e590",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-26": {
+      "date": "2026-09-26",
+      "tasks": [
+        {
+          "id": "814ee796-f0bc-4b71-bb80-a23bea9e8b43",
+          "title": "Language practice",
+          "done": false,
+          "time": "17:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "17:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "after",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-27": {
+      "date": "2026-09-27",
+      "tasks": [
+        {
+          "id": "e59e8027-83ea-47b9-9a4b-cd50d74ce373",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "10767ae2-d94a-4946-8399-b86a94eb635d",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "7617d25a-7208-477e-8814-8d6199853b4c",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-28": {
+      "date": "2026-09-28",
+      "tasks": [
+        {
+          "id": "a0c38551-cdb0-405e-bc01-803913d195d7",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "81d15648-f651-481b-9c38-3351c7dac7e7",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "8f97cae0-2102-4bc9-bc7b-3f9c3d482d1e",
+          "title": "Gym",
+          "done": false,
+          "time": "10:30",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "10:30",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "12ab8c70-2643-4be5-9b3d-299e3cee0112",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-29": {
+      "date": "2026-09-29",
+      "tasks": [
+        {
+          "id": "7a068ed8-418a-4868-8814-dc8abd0cf2bb",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "0b403f28-d465-40a4-8220-001a431491c5",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "8b6387fb-7a64-4e4b-9b11-32ed9c403110",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-09-30": {
+      "date": "2026-09-30",
+      "tasks": [
+        {
+          "id": "da56e107-d577-451b-9616-14ade835da2a",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "5421acb7-c83a-4652-9755-08e9b2434aef",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "6f19a089-65e5-4a3a-9be1-8b1f7e72f9fd",
+          "title": "Gym",
+          "done": false,
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "5a200171-3809-46e1-8fbf-b4251891cd1b",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-01": {
+      "date": "2026-10-01",
+      "tasks": [
+        {
+          "id": "481b362a-b030-4e27-8b53-9837264ab1c5",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "rice",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "rice"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "3decc474-8fcb-447d-83d3-8b9bfcbda520",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "633cf02e-5006-4327-af9a-78a92d0d568d",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-02": {
+      "date": "2026-10-02",
+      "tasks": [
+        {
+          "id": "7bccd61b-c4b5-46eb-a670-67d277fd42bb",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "soup",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "soup"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "44da9814-d10d-4cba-93fa-cbc1b302b719",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "4dfe60ef-048b-4f10-81be-daf0897ab7c1",
+          "title": "Gym",
+          "done": false,
+          "time": "16:00",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "16:00",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "53914ff5-2be8-41ff-99ab-454010199f58",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-03": {
+      "date": "2026-10-03",
+      "tasks": [
+        {
+          "id": "bef8124a-b22f-4c0a-92a0-f8b7a9642bb7",
+          "title": "Language practice",
+          "done": false,
+          "time": "17:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "17:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "after",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-04": {
+      "date": "2026-10-04",
+      "tasks": [
+        {
+          "id": "dda534a5-b231-4011-8143-4d3b9a12d95f",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "ccc0e86f-3b80-4a72-8428-192b0eeaf6f2",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "142f467f-c56f-4f2c-b9cf-4b57bc8ecb63",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-05": {
+      "date": "2026-10-05",
+      "tasks": [
+        {
+          "id": "9f0a5a27-8a2c-4b46-a221-3b9c80685e89",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "9b2a4fc2-b7a3-4ea8-b40f-5abf9a064aa1",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "4120d0ae-b9ec-4949-9bc6-32656fdd7711",
+          "title": "Gym",
+          "done": false,
+          "time": "10:30",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "10:30",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "cecab414-b47f-4906-94e4-762c6b81db24",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-06": {
+      "date": "2026-10-06",
+      "tasks": [
+        {
+          "id": "06a7512c-3560-4b7e-a41c-9eaf9cc14932",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "3c903e71-725b-469f-a751-d1f2ce4ed9a4",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "0c18b93f-db29-419c-b7a6-7aee80485a52",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-07": {
+      "date": "2026-10-07",
+      "tasks": [
+        {
+          "id": "6804b437-0403-4673-9e15-732ab9ac2a80",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "3ae88ec3-1cbc-4dab-bf41-862bdcb1c890",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "8c5de737-8eeb-4b39-a633-ffb96c67d74a",
+          "title": "Gym",
+          "done": false,
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "5e5c3ef3-12e8-4b87-9413-6a293f5eafa0",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-08": {
+      "date": "2026-10-08",
+      "tasks": [
+        {
+          "id": "c7b678c0-d0c1-42ae-893d-de4c78fca3b0",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "soup",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "soup"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "40575827-f4a9-4064-8e9a-dec134e962a3",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "a61a3934-e688-46b6-bb4f-750768e41050",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-09": {
+      "date": "2026-10-09",
+      "tasks": [
+        {
+          "id": "5b215eda-557c-4a61-8981-a8e95fb4a086",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "rice",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "rice"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "f6def810-a348-45ba-af61-45a5f25069f3",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "993e7378-fa5b-4fbf-af5a-55a1eae621bc",
+          "title": "Gym",
+          "done": false,
+          "time": "16:00",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "16:00",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "52079842-7c72-4c58-8acf-1b929985157b",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-10": {
+      "date": "2026-10-10",
+      "tasks": [
+        {
+          "id": "be10f69e-e265-409b-8d0e-ee67967a4d02",
+          "title": "Language practice",
+          "done": false,
+          "time": "17:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "17:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "after",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-11": {
+      "date": "2026-10-11",
+      "tasks": [
+        {
+          "id": "d0b446a6-dbfb-456e-8e1d-9ac41c05a615",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "88cfa1f5-df81-4a56-95ab-f89f545cb8a7",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "ce99ecf5-f277-4731-b0b5-48bdc0de34e4",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-12": {
+      "date": "2026-10-12",
+      "tasks": [
+        {
+          "id": "47eaed96-30e1-42f2-abf3-392eb03e124f",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "d720599e-54a8-4ffd-b978-08b726e419a2",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "89ec49e3-18cd-4571-9d31-619fb6929b51",
+          "title": "Gym",
+          "done": false,
+          "time": "10:30",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "10:30",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "84847899-bbce-4e23-bc9e-6351748d0202",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-13": {
+      "date": "2026-10-13",
+      "tasks": [
+        {
+          "id": "1417c9c8-63a2-4d18-af63-5fb272cab9f6",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "99005c92-37df-4d44-9a1d-526c243938b0",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "9c7d278b-aaad-427a-99ea-7fbb1dab00fb",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-14": {
+      "date": "2026-10-14",
+      "tasks": [
+        {
+          "id": "41898bed-a32c-4473-94f7-44724bbb2d25",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-shift"
+          },
+          "time": "06:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 720,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "06:00",
+            "minutes": 720,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "59739f42-ce2f-48b6-ac0f-1a1af8390cd0",
+          "origin": {
+            "type": "template",
+            "sourceId": "day",
+            "blockId": "d-lunch"
+          },
+          "time": "12:00",
+          "title": "Lunch",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "mealType": "lunch",
+          "fromBlock": {
+            "title": "Lunch",
+            "time": "12:00",
+            "minutes": 30,
+            "category": "meal",
+            "mealType": "lunch"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "48fede2f-4faa-4e1d-90cf-86dbea0d6881",
+          "title": "Gym",
+          "done": false,
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "246680d1-ddc5-43a7-a50c-e12c4b882816",
+          "title": "Language practice",
+          "done": false,
+          "time": "20:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "20:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "day",
+      "dayType": "shift",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-15": {
+      "date": "2026-10-15",
+      "tasks": [
+        {
+          "id": "c5400f73-6d72-4e42-a3df-179f0163ca3c",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "rice",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "rice"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "8bbe1670-f93a-4ead-89ff-9836a58393bc",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "db7cedcc-f8a4-405e-a41b-9056830b5138",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-16": {
+      "date": "2026-10-16",
+      "tasks": [
+        {
+          "id": "2a9f71c6-9235-4c86-b9c8-ac222ca05b33",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-dinner"
+          },
+          "time": "19:00",
+          "title": "Dinner",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "meal",
+          "recipeId": "soup",
+          "fromBlock": {
+            "title": "Dinner",
+            "time": "19:00",
+            "minutes": 30,
+            "category": "meal",
+            "recipeId": "soup"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "9a201f78-e7db-4ab5-9a88-ad85da2e7f7e",
+          "origin": {
+            "type": "template",
+            "sourceId": "night",
+            "blockId": "n-shift"
+          },
+          "time": "21:00",
+          "title": "On shift",
+          "done": false,
+          "fromTemplate": true,
+          "core": true,
+          "minutes": 600,
+          "unbounded": true,
+          "category": "core",
+          "fromBlock": {
+            "title": "On shift",
+            "time": "21:00",
+            "minutes": 600,
+            "category": "core"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "b345b5e7-547b-43e4-9473-4c38fadedf83",
+          "title": "Gym",
+          "done": false,
+          "time": "16:00",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "16:00",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "6d7f8f73-8752-4002-988a-36cb7e85f46f",
+          "title": "Language practice",
+          "done": false,
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "night",
+      "dayType": "night",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-17": {
+      "date": "2026-10-17",
+      "tasks": [
+        {
+          "id": "a8ffe6c0-6b1a-42c5-9a8a-eec0c3bdcb6c",
+          "title": "Language practice",
+          "done": false,
+          "time": "17:00",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "17:00",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "after",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-18": {
+      "date": "2026-10-18",
+      "tasks": [
+        {
+          "id": "e76f186c-1a27-4415-b0ac-06ad9f4c6708",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "ef536d0f-bec7-428f-ac00-10b4b9c0cb32",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "fee0ee6d-8fe3-4044-8611-efad902f0860",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    "2026-10-19": {
+      "date": "2026-10-19",
+      "tasks": [
+        {
+          "id": "c61d95b1-2361-40db-9ec0-bf647a61c59d",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-breakfast"
+          },
+          "time": "09:00",
+          "title": "Breakfast",
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 20,
+          "category": "meal",
+          "recipeId": "porridge",
+          "fromBlock": {
+            "title": "Breakfast",
+            "time": "09:00",
+            "minutes": 20,
+            "category": "meal",
+            "recipeId": "porridge"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "468157ff-c934-4574-a908-e9fce22e47bc",
+          "origin": {
+            "type": "template",
+            "sourceId": "rest",
+            "blockId": "r-read"
+          },
+          "time": "20:00",
+          "title": "A first book",
+          "libraryRef": {
+            "listId": "books",
+            "itemId": "b1"
+          },
+          "done": false,
+          "fromTemplate": true,
+          "minutes": 30,
+          "category": "personal",
+          "fromBlock": {
+            "title": "A first book",
+            "time": "20:00",
+            "minutes": 30,
+            "category": "personal"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "5ba9c90a-2dfe-4d99-a309-d15f908eb3e2",
+          "title": "Gym",
+          "done": false,
+          "time": "10:30",
+          "minutes": 60,
+          "category": "health",
+          "routineId": "gym",
+          "fromRoutine": {
+            "title": "Gym",
+            "time": "10:30",
+            "minutes": 60,
+            "category": "health"
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "6e4d17da-dfef-4d20-b479-3d53603c1784",
+          "title": "Language practice",
+          "done": false,
+          "time": "11:30",
+          "minutes": 20,
+          "routineId": "lang",
+          "fromRoutine": {
+            "title": "Language practice",
+            "time": "11:30",
+            "minutes": 20
+          },
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "templateId": "rest",
+      "dayType": "rest",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  },
+  "settings": {
+    "theme": {
+      "presetId": "dark",
+      "overrides": {},
+      "mode": "system"
+    },
+    "timelineExpanded": false,
+    "dayLayoutFocus": "both",
+    "density": "comfortable",
+    "textScale": "m",
+    "sleepProfiles": [
+      {
+        "id": "default",
+        "name": "Nights",
+        "window": {
+          "start": "23:00",
+          "end": "07:00"
+        }
+      },
+      {
+        "id": "early",
+        "name": "Early",
+        "window": {
+          "start": "21:30",
+          "end": "05:00"
+        }
+      },
+      {
+        "id": "day-sleep",
+        "name": "Day sleep",
+        "window": {
+          "start": "08:00",
+          "end": "15:00"
+        }
+      }
+    ],
+    "weekdayTemplates": {
+      "6": "errands"
+    },
+    "north": {
+      "afterASlowDay": true
+    },
+    "eveningClose": {
+      "enabled": true,
+      "at": "21:30"
+    },
+    "chime": {
+      "profile": "soft",
+      "volume": 0.5,
+      "atStart": false
+    }
+  },
+  "ifThens": [],
+  "inbox": [],
+  "backlog": [],
+  "scratch": [],
+  "library": [
+    {
+      "id": "books",
+      "name": "Books",
+      "unit": "chapter",
+      "items": [
+        {
+          "id": "b1",
+          "title": "A first book",
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        },
+        {
+          "id": "b2",
+          "title": "A second book",
+          "updatedAt": "2026-09-22T06:00:00.000Z"
+        }
+      ],
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  ],
+  "goals": [],
+  "categories": [
+    {
+      "id": "core",
+      "label": "Deep work",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "routine",
+      "label": "Routine",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "health",
+      "label": "Health",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "meal",
+      "label": "Meals",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "commute",
+      "label": "Commute",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "personal",
+      "label": "Personal",
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "porridge",
+      "title": "Porridge",
+      "text": "Oats, milk, a pinch of salt.",
+      "mealTypes": [
+        "breakfast"
+      ],
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "soup",
+      "title": "Soup",
+      "text": "Vegetables and stock.",
+      "mealTypes": [
+        "lunch",
+        "dinner"
+      ],
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "rice",
+      "title": "Rice bowl",
+      "text": "Rice, beans, greens.",
+      "mealTypes": [
+        "lunch",
+        "dinner"
+      ],
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  ],
+  "routines": [
+    {
+      "id": "gym",
+      "title": "Gym",
+      "minutes": 60,
+      "weekdays": [
+        1,
+        3,
+        5
+      ],
+      "category": "health",
+      "times": {
+        "day": "17:00",
+        "night": "16:00",
+        "rest": "10:30"
+      },
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    },
+    {
+      "id": "lang",
+      "title": "Language practice",
+      "minutes": 20,
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "times": {
+        "day": "20:00",
+        "rest": "11:30",
+        "after": "17:00"
+      },
+      "updatedAt": "2026-09-22T06:00:00.000Z"
+    }
+  ],
+  "settingsUpdatedAt": {
+    "theme": "2026-09-22T06:00:00.000Z",
+    "sleepProfiles": "2026-09-22T06:00:00.000Z",
+    "weekdayTemplates": "2026-09-22T06:00:00.000Z",
+    "north": "2026-09-22T06:00:00.000Z",
+    "eveningClose": "2026-09-22T06:00:00.000Z",
+    "timelineExpanded": "2026-09-22T06:00:00.000Z",
+    "dayLayoutFocus": "2026-09-22T06:00:00.000Z",
+    "density": "2026-09-22T06:00:00.000Z",
+    "textScale": "2026-09-22T06:00:00.000Z",
+    "chime": "2026-09-22T06:00:00.000Z"
+  },
+  "tombstones": {}
+}

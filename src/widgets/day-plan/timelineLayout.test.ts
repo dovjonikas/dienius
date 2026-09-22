@@ -996,3 +996,22 @@ test("no gap is offered inside last night's shift, and the stretch after it ends
   expect(layout.gaps.map(g => [g.startMinutes, g.endMinutes])).toEqual([[450, 780]])
 })
 
+// Found in the first month's dry run: the morning after a second night shift
+// had the night's drive home at seven and the day's first routine at five in
+// the afternoon, with a daytime sleep between them - and the grid offered
+// "9h 30 min free" across the sleep. Sleep is not free time: a gap stops at
+// bedtime and starts again at waking.
+test('no gap is offered across a sleep: it stops at bedtime and starts again at waking', () => {
+  const sleep = {
+    profiles: [
+      { id: 'default', name: 'Nights', window: { start: '23:00', end: '07:00' } },
+      { id: 'day', name: 'Day sleep', window: { start: '08:00', end: '15:00' } },
+    ],
+    tonightProfileId: 'default',
+  }
+  const layout = computeTimelineLayout([anchor('home', '07:00', 30), anchor('lang', '17:00', 20)], 'day', sleep)
+  expect(layout.gaps.map(g => [g.startMinutes, g.endMinutes])).toEqual([
+    [450, 480],
+    [900, 1020],
+  ])
+})

@@ -4143,6 +4143,19 @@ the night's letter, and draws its block in the night's colour. And a false
 night's meal was on the morning, is gone: last night's hours are busy time in
 the grid's gaps.
 
+**Stage 4, and the first month walked.** Another agent gets a guide
+(docs/AGENT-GUIDE.md) and a program reading the backup gets a contract
+(docs/BACKUP-FORMAT.md) that a test holds to the guard field by field, so the
+contract cannot fall behind a field the backup gains. The first real month,
+walked as a dry run, found three things, fixed at once: the cycle now fills
+to the end of the month on screen keeping its place, since filling only the
+month it started in left every later month to be worked out by hand; the grid
+does not offer free time across a sleep; and a template card's separator no
+longer stands in front of nothing. The first night of a run waking from an
+ordinary night is the owner's to say with a kind of its own - a kind whose
+sleep followed the kind before it would be a new feature, and the freeze is
+three days away.
+
 ## A phone's week keeps a line an hour, and scrolls inside itself
 
 After v2.29, at the owner's word: fix the phone week under a Focus bar. The

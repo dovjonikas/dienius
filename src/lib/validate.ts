@@ -71,17 +71,23 @@ function isRecord(x: unknown): x is Record<string, unknown> {
  * from a newer build load on an older one. `also` is for the rule that is
  * about the object rather than one field in it.
  */
-const record = (fields: Record<string, Check>, also?: (x: Record<string, unknown>) => boolean): Check => {
+const record = (fields: Record<string, Check>, also?: (x: Record<string, unknown>) => boolean): Shape => {
   // The table is read once, here, not on every value: a twenty-megabyte
   // backup runs this a few hundred thousand times, and an entries array per
   // call was the difference between a second and five.
   const entries = Object.entries(fields)
-  return x => {
+  const check: Check = x => {
     if (!isRecord(x)) return false
     for (const [key, check] of entries) if (!check(x[key])) return false
     return also === undefined || also(x)
   }
+  // The names it reads, for the one reader of them: the test that holds
+  // docs/BACKUP-FORMAT.md to this guard - see BACKUP_SHAPES.
+  return Object.assign(check, { fields: Object.keys(fields) })
 }
+
+/** A record's check, with the names of the fields it reads. */
+type Shape = Check & { fields: readonly string[] }
 
 /** An object used as a map: every key and every value checked. */
 const mapOf = (key: Check, value: Check): Check => x =>
@@ -653,6 +659,30 @@ const STORED_APP_DATA = record({
   recipes: optional(listOf(RECIPE)),
   routines: optional(listOf(ROUTINE)),
 })
+
+/**
+ * The shapes a backup's contract writes down field by field -
+ * docs/BACKUP-FORMAT.md, by the heading each has there. A test holds the
+ * document to this guard: every field named here is written down there, so a
+ * field added to a backup cannot be left out of what a reader is told.
+ */
+export const BACKUP_SHAPES: Record<string, Shape> = {
+  AppData: STORED_APP_DATA,
+  DayPlan: DAY_PLAN,
+  Task: TASK,
+  TaskOrigin: ORIGIN,
+  'Task.fromBlock': FROM_BLOCK,
+  'Task.fromRoutine': FROM_ROUTINE,
+  Template: TEMPLATE,
+  TemplateBlock: TEMPLATE_BLOCK,
+  DayKindMark: DAY_KIND_MARK,
+  WeekDayOverride: WEEK_DAY_OVERRIDE,
+  Routine: ROUTINE,
+  SleepProfile: SLEEP_PROFILE,
+  SleepWindow: SLEEP_WINDOW,
+  Category: CATEGORY,
+  Recipe: RECIPE,
+}
 
 export function validate(x: unknown): x is StoredAppData {
   return STORED_APP_DATA(x)

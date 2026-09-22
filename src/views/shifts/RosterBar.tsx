@@ -70,7 +70,8 @@ export function RosterBar({
   preview: RosterPreview
   onLeave: () => void
   onClearing: (next: boolean) => void
-  onFill: (kinds: string[], from: string) => void
+  /** The cycle's kinds, the day it starts on - its place - and the last day it fills. */
+  onFill: (kinds: string[], from: string, until: string) => void
   onThrowAway: () => void
   /** Applies every date the draft holds except the ones left alone. */
   onApply: (leftOut: string[]) => void
@@ -86,7 +87,14 @@ export function RosterBar({
   const following = preview.following.filter(f => f.after.some(date => !leftOut.includes(date)))
   const last = readCycle()
   const [sequence, setSequence] = useState<string[]>(last?.kinds.filter(id => kinds.some(k => k.id === id)) ?? [])
-  const [from, setFrom] = useState(monthStart > today ? monthStart : today)
+  // Where the last cycle started, so the month after it carries it on in one
+  // press - the first month's dry run found the next month could not be
+  // filled without working out where the pattern stood on its first day.
+  // With none remembered, the first of the month on screen, or today.
+  const [from, setFrom] = useState(last?.from ?? (monthStart > today ? monthStart : today))
+  // It fills to the end of the month on screen, keeping its place from where
+  // it starts - or of the month it starts in, where that is later.
+  const until = monthEnd(from > monthStart ? from : monthStart)
   const letterOf = (id: string) => kinds.find(k => k.id === id)?.dayKind?.letter ?? '?'
 
   return (
@@ -270,14 +278,14 @@ export function RosterBar({
               className="btn-primary"
               disabled={sequence.length === 0}
               onClick={() => {
-                onFill(sequence, from)
+                onFill(sequence, from, until)
                 setCycling(false)
               }}
             >
               Fill to the end of the month
             </button>
           </div>
-          <p className="muted roster-line">It fills to {monthAndDay(monthEnd(from))}, and changes nothing behind today.</p>
+          <p className="muted roster-line">It fills to {monthAndDay(until)}, and changes nothing behind today.</p>
         </div>
       )}
     </div>

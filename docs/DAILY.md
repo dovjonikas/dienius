@@ -504,6 +504,15 @@ you put it. Apply names those days before it touches them. For the day after
 a last night shift, make a kind of its own - After nights, with its daytime
 sleep - so its morning sleeps and its gym comes later.
 
+**The first night of a run is a kind of its own.** A kind's sleep is the sleep
+its date wakes from: the second night wakes from the day sleep after the first,
+but the first night wakes from an ordinary night, after your last day shift.
+Make it First night, with its own letter and the ordinary sleep, and lay the
+cycle D D F N A R R R.
+
+**Next month is one press.** Open it, press Cycle and Fill to the end of the
+month: the cycle carries on from the day it started, in its place.
+
 ## Recipes, in Kitchen
 
 **Kitchen** - the pot in the rail, or the `7` key - is the recipes you

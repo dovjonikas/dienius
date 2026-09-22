@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { actions, useAppData } from '../lib/store'
-import { addDays, formatWeekTitle, monthEnd, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
+import { addDays, formatWeekTitle, monthGrid, todayKey, weekOf, type MonthCell } from '../lib/dates'
 import { dateFromArrow, tabStopFor } from '../lib/gridKeys'
 import { dayStat, keptEveryKeyTask } from '../lib/dayStats'
 import { cellLabel, cellPoints, resolveTemplate, taskState } from '../lib/calendarCell'
@@ -327,9 +327,13 @@ export function CalendarView({
     putDraft({ dates: { ...draft.dates, [date]: next.id } })
   }
 
-  /** A cycle's stretch, laid into the draft in one press: today onward, never behind it. */
-  function fillCycle(sequence: string[], from: string) {
-    const filled = cycleDates({ kinds: sequence, from }, monthEnd(from))
+  /**
+   * A cycle's stretch, laid into the draft in one press: today onward, never
+   * behind it, to `until` - the end of the month on screen - with every date
+   * in its place from the day the cycle starts.
+   */
+  function fillCycle(sequence: string[], from: string, until: string) {
+    const filled = cycleDates({ kinds: sequence, from }, until)
     const dates = { ...draft.dates }
     for (const [date, kind] of Object.entries(filled)) {
       if (date >= today) dates[date] = kind

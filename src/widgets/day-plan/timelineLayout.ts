@@ -430,7 +430,11 @@ export function computeTimelineLayout(
 
   // No gaps offered on a day whose only thing is last night's shift: the
   // interior between blocks is the day's own, and it has none yet.
-  const gaps = unsizedAnchorCount > 0 || anchors.length === 0 ? [] : computeInteriorGaps(anchors, window, carried)
+  // Sleep is not free time either: a gap stops at bedtime and starts again at
+  // waking. Found in the first month's dry run, on the morning after a night
+  // shift, where "9h 30 min free" ran across a daytime sleep.
+  const asleep = bandsOnDay(wakingDayFor(sleepProfileId, sleep))
+  const gaps = unsizedAnchorCount > 0 || anchors.length === 0 ? [] : computeInteriorGaps(anchors, window, carried, asleep)
 
   const waking = windowFor(sleepProfileId, sleep)
   const displayWindow = extendTowardSleepBoundary(window, waking, {
@@ -1149,7 +1153,12 @@ export function formatAnchorTimeRange(startMinutes: number, minutes: number): st
 // `end === window.end` by construction (`gapsInWindow` measures both from
 // the window's own bounds); no interior gap - which only ever spans between
 // two real anchors - can ever coincide with either.
-function computeInteriorGaps(anchors: Task[], window: Interval, carried: readonly { end: number }[] = []): TimelineGap[] {
+function computeInteriorGaps(
+  anchors: Task[],
+  window: Interval,
+  carried: readonly { end: number }[] = [],
+  asleep: readonly Interval[] = [],
+): TimelineGap[] {
   const rawIntervals = [
     ...anchors.map(a => {
       const start = timeToMinutes(a.time!)
@@ -1159,6 +1168,7 @@ function computeInteriorGaps(anchors: Task[], window: Interval, carried: readonl
     // after sit inside it, and no gap between them is offered - section 10 of
     // RESEARCH-SHIFTS.
     ...carried.map(c => ({ start: 0, end: c.end })),
+    ...asleep,
   ]
   const clipped = rawIntervals
     .map(interval => clipToWindow(interval, window))

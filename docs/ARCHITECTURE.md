@@ -41,13 +41,16 @@ AppData
 │   └── blocks: TemplateBlock[]  time?, title, minutes?, core?, category?,
 │                                unbounded?, libraryListId?, and on a meal
 │                                recipeIds? walked a day at a time (recipeId?
-│                                the first, for older devices) or mealType?
+│                                the first, for older devices) or mealType?,
+│                                afterMidnight? for a night's own hours, which
+│                                a stamp puts on the date after
 ├── days: Record<dateKey, DayPlan>
 │   └── DayPlan                  templateId?, dayType?, sleepProfileId?,
 │       │                        repeatSkips?, routineSkips?, autoApplied?,
 │       │                        away?, bestMoment?, replannedOn?, journal?
 │       └── tasks: Task[]        the one type most of the app is about;
-│                                routineId? and fromRoutine? on a routine's task
+│                                routineId? and fromRoutine? on a routine's task,
+│                                nightOf? on a night's task, naming its night
 ├── library: LibraryList[]       name + unit + items, colour?
 │   └── items: LibraryItem[]     title, total?, progress?, finished?,
 │                                track? (pages/movie/series), pace?, season?

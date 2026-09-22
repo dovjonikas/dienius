@@ -6,7 +6,93 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.31, the night's own hours, stage 3 of 4 done. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. Next: the whole app's UI made one (the owner's seven rules), then the freeze from 2026-09-28. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## Pirmas realus menuo, dry run
+
+The first real month, walked end to end in a browser on 2026-09-22 the way the
+owner would do it, with generic data only: an empty app, two sleep schedules,
+four kinds of day built in the template editor, two routines, a four-week rota
+laid by the roster's cycle across a month's end and the night the clocks go
+back, every kind of day looked at, one date changed, and the plan backed up and
+brought back by file and by the copy on GitHub. The same walk on a 1920x1080
+desktop and a 375x812 phone. What is worth keeping of it is in
+`e2e/night-hours.e2e.ts` and the tests named below.
+
+**The rota.** From Monday 5 October 2026, the cycle D D N N A R R R. Day shift:
+breakfast 05:15, on shift 06:00 to 18:00, lunch 12:00, sleep Early (21:30 to
+05:00). Night shift: dinner 19:00, on shift 21:00 to 07:00, the night meal at
+01:00 and the drive home at 07:00 both on the next day, sleep Day sleep (08:00
+to 15:00). After nights: dinner 18:00, sleep Day sleep. Rest day: breakfast,
+lunch and dinner, the ordinary sleep. The gym on Monday, Wednesday and Friday -
+18:30 on a day shift, 15:30 on a night, 16:00 after nights, 10:00 on a rest day
+- and a language practice every day, with no time after nights.
+
+### What worked
+
+- **Everything was entered by hand in the app**, with no file and no code: the
+  sleep schedules in Settings, the kinds and their blocks in the template
+  editor (Next day pressed on the night's two blocks, and the line under the
+  picture saying them), the routines with a time per kind.
+- **The roster**: the cycle filled October from the 5th, the preview said week
+  by week the letters and the one routine a week that needs a time, and Apply
+  wrote the dates and the night of the 31st onto the 1st of November.
+- **Every kind of day was what it should be.** The day shift's evening ended at
+  its own early bedtime. The second night's morning had last night's shift at
+  the top, the night meal inside it and the drive home, both marked "last
+  night" with N. After nights slept 08:00 to 15:00 with the gym at 16:00, and
+  the language practice said it needs a time. The night of 24 October ran
+  through the clocks going back, and its hours were on the 25th.
+- **The week** drew the kinds over its columns, each night's shift in the next
+  column's first hours, the night's meal and drive home in it.
+- **One date changed**: a rest day made after nights - the preview named it,
+  Apply changed it and nothing around it, Undo put it back.
+- **Backup by file**: exported (168 KB), everything erased, imported - every
+  day, template and routine exactly as it was, only sync's own stamps written
+  again, which an import is.
+- **The copy on GitHub**, with GitHub's answers played in the browser:
+  `data/state.json` was the plan byte for byte, and Restore from cloud brought
+  all 57 days back into an emptied app.
+
+### What got stuck, and was fixed at once
+
+1. **November could not be carried on.** The cycle filled only to the end of
+   the month it started in: on November it filled nothing, and a start moved
+   into November began the pattern again at D on the 1st - which should have
+   been N. It now fills to the end of the month on screen, keeping its place
+   from the day it started, and opens on that day after a reload, so the next
+   month is one press (RosterMode.test.tsx, the two tests on carrying on).
+2. **Free time across a sleep.** On the morning after a night the grid offered
+   "9h 30 min free" between the drive home and the afternoon's first routine,
+   across the daytime sleep. Sleep is busy time in the grid's gaps now
+   (timelineLayout.test.ts).
+3. **Free time inside last night's shift** - "5h 30 min free" between the night
+   meal and the drive home - found while building stage 3, fixed there.
+4. **A template card said "· Early"**, a separator in front of nothing
+   (TemplatesView.test.tsx).
+
+### What the owner decides - no programming, only choices
+
+1. **The first night of a run wakes from an ordinary night.** A kind's sleep is
+   the sleep its date wakes from, and one Night shift kind with Day sleep says
+   the first night's date slept 08:00 to 15:00 - after a day shift, whose
+   evening then has no bedtime at all (in the dry run, the Tuesday before the
+   first night showed 14h 20 min free). Make the first night a kind of its own
+   - First night, its own letter, the ordinary sleep - and the cycle D D F N A
+   R R R. From the second night on, a night wakes from the day sleep, as Night
+   shift says.
+2. **Colours.** A new template starts Blue; give each kind its own with the
+   swatch beside its name, so a month reads at a glance.
+3. **A routine's category** starts as the first one; choose Health for the gym.
+4. **Day types.** A kind is a Full day until Shift, Overnight or Rest is chosen,
+   and that decides what Review counts.
+
+### What is still missing
+
+Nothing stands between the owner and a real rota. What would make it smoother
+is one thing: a kind whose sleep follows the kind before it, so one Night shift
+would do for the first night and the rest. That is a new feature, and under the
+freeze it goes to BACKLOG's parking section.
 
 ## v2.31 - the night's own hours, and the days after a change
 
@@ -29,6 +115,27 @@ every door, meals as each kind's blocks, tonight's sleep from tomorrow's kind,
 last night's shift as this morning's busy time), and the two gaps - a night's
 hours after midnight had nowhere to be written, and a date given a kind left
 the days around it as they were.
+
+### Stage 4 - a guide for another agent, and the backup's contract: done
+
+- **docs/AGENT-GUIDE.md**: Dienius for another agent - what it is, where the
+  plan is kept and which copy to read, the plan's shape, the rota in full
+  (kinds, routines per kind, meals per kind, midnight, the night's own hours,
+  the days around a date, how a rota reaches the dates, what is never done
+  without the person, clock changes), reading one date, what a journal takes
+  from it, the words the app uses, and the repository's rules.
+- **docs/BACKUP-FORMAT.md**: the backup's contract - where and what, the seven
+  things a reader can rely on, every field of the fifteen shapes a reader
+  needs, the rules read out of the plan, and what each version added. v2.31's
+  two fields are marked.
+- **backupContract.test.ts** holds the contract to the code: the document names
+  every field the guard knows, under its shape (`BACKUP_SHAPES` in
+  validate.ts, each record's check carrying its field names); a backup recorded
+  by the code at 24f5099, the last before v2.31 - four weeks of a rota, two
+  routines, recipes, a reading block, a weekday map, a tick, a hand-written task
+  and a journal line - imports and exports again byte for byte; and opening
+  five weeks of it does exactly what opening them did then. Each of the four
+  broken on purpose once, and caught.
 
 ### Stage 3 - the editor and the day: done
 
