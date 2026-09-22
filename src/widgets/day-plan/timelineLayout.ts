@@ -430,7 +430,7 @@ export function computeTimelineLayout(
 
   // No gaps offered on a day whose only thing is last night's shift: the
   // interior between blocks is the day's own, and it has none yet.
-  const gaps = unsizedAnchorCount > 0 || anchors.length === 0 ? [] : computeInteriorGaps(anchors, window)
+  const gaps = unsizedAnchorCount > 0 || anchors.length === 0 ? [] : computeInteriorGaps(anchors, window, carried)
 
   const waking = windowFor(sleepProfileId, sleep)
   const displayWindow = extendTowardSleepBoundary(window, waking, {
@@ -1149,11 +1149,17 @@ export function formatAnchorTimeRange(startMinutes: number, minutes: number): st
 // `end === window.end` by construction (`gapsInWindow` measures both from
 // the window's own bounds); no interior gap - which only ever spans between
 // two real anchors - can ever coincide with either.
-function computeInteriorGaps(anchors: Task[], window: Interval): TimelineGap[] {
-  const rawIntervals = anchors.map(a => {
-    const start = timeToMinutes(a.time!)
-    return { start, end: start + a.minutes! }
-  })
+function computeInteriorGaps(anchors: Task[], window: Interval, carried: readonly { end: number }[] = []): TimelineGap[] {
+  const rawIntervals = [
+    ...anchors.map(a => {
+      const start = timeToMinutes(a.time!)
+      return { start, end: start + a.minutes! }
+    }),
+    // Last night's shift is not free time: a night's own hours on the morning
+    // after sit inside it, and no gap between them is offered - section 10 of
+    // RESEARCH-SHIFTS.
+    ...carried.map(c => ({ start: 0, end: c.end })),
+  ]
   const clipped = rawIntervals
     .map(interval => clipToWindow(interval, window))
     .filter((interval): interval is Interval => interval !== null)

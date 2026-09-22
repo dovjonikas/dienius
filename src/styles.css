@@ -4407,6 +4407,18 @@ select:focus {
   font-size: var(--t-sm);
 }
 
+/* A night's task on the morning after says whose it is - section 10 of
+   RESEARCH-SHIFTS: the night's letter on its own colour, the chip the day's
+   masthead and the week's column already draw a kind with, and the words in
+   the routine note's register beside it. */
+.task-night {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
 /* The title carries the card - one clear step above everything under it, so
    what the task actually is arrives first and the rest reads as annotation.
    Allowed to wrap onto a second line rather than truncate: a task whose name
@@ -5011,13 +5023,20 @@ button.primary {
    opens under a row keeps its buttons as they are everywhere else, which
    a descendant rule had stripped until this. A chosen Key or Ongoing keeps
    the accent's ground - .core-toggle.active outranks this. */
-.block-list li > button {
+.block-list li > button,
+.block-list .block-marks > button {
   flex-shrink: 0;
   border: none;
   background: none;
   color: var(--muted);
   font-size: var(--t-sm);
 }
+
+/* A block's marks: in the row itself on a wide screen, as they always were -
+   the box is not there, and its toggles are the row's own flex items. The
+   word that stands for them is a phone's. */
+.block-list .block-marks { display: contents; }
+.block-list .block-marks-toggle { display: none; }
 
 /* The cross that removes a block: a quiet square, its glyph at the glyph
    size, turning to the danger ink under the pointer. */
@@ -5047,7 +5066,8 @@ button.primary {
 
 @media (hover: hover) and (pointer: fine) {
   .block-list .block-library:hover { background-color: var(--fill); }
-  .block-list li > button.core-toggle:not(.active):hover { background: var(--fill); }
+  .block-list li > button.core-toggle:not(.active):hover,
+  .block-list .block-marks > button.core-toggle:not(.active):hover { background: var(--fill); }
 }
 
 /* Two levels. This was one row carrying a time, a title, a duration, six
@@ -6784,7 +6804,8 @@ button.danger {
 .north-day-caret,
 .kitchen-more-caret,
 .kitchen-back-caret,
-.recipes-field-caret {
+.recipes-field-caret,
+.block-marks-caret {
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
@@ -6796,7 +6817,8 @@ button.danger {
 .clock-sound-head[aria-expanded='true'] .clock-sound-caret,
 .north-day-line[aria-expanded='true'] .north-day-caret,
 .kitchen-more[aria-expanded='true'] .kitchen-more-caret,
-.recipes-field-summary[aria-expanded='true'] .recipes-field-caret {
+.recipes-field-summary[aria-expanded='true'] .recipes-field-caret,
+.block-marks-toggle[aria-expanded='true'] .block-marks-caret {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
 
@@ -13369,6 +13391,36 @@ main:has(.week) > .calendar {
   .block-list .core-toggle:first-of-type,
   .block-list .core-toggle + .core-toggle { margin-left: 0; }
   .block-list .block-remove { margin-left: auto; }
+
+  /* Four marks, the note and the cross are more than a phone's line, and the
+     line that wrapped left Note and the cross under the rest. So the marks
+     stand behind one word - the ones that are on, or "Marks" - on the line
+     with the note and the cross, and open as a line of their own above it:
+     a line with one job, never the tail of another. */
+  .block-list .block-marks { display: none; }
+  .block-list .block-marks.is-open {
+    display: flex;
+    flex: 1 0 100%;
+    gap: var(--s2);
+  }
+  .block-list .block-marks-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s2);
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: var(--control-h);
+    padding: 0 var(--s3);
+    border-radius: var(--r-pill);
+    background: var(--fill);
+  }
+  .block-list .block-marks-toggle.is-open { color: var(--text); }
+  .block-list .block-marks-words {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* Every select is a touch control too. The weekday map's seven dropdowns
@@ -17203,6 +17255,15 @@ main:has(.week) > .calendar {
 }
 
 .template-timeline-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The template's hours after midnight, said where its day's numbers are: the
+   morning after's, not drawn on this day - section 10 of RESEARCH-SHIFTS. */
+.template-timeline-night {
   margin: 0;
   color: var(--muted);
   font-size: var(--t-xs);

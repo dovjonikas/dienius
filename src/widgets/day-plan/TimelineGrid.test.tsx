@@ -970,3 +970,19 @@ test("last night's shift keeps a block's room when a full day is fitted to the s
     Object.defineProperty(window, 'innerHeight', { value: height, configurable: true })
   }
 })
+
+// A night's block on the morning after is the night's, and wears the night
+// template's colour rather than the day's - docs/RESEARCH-SHIFTS.md section 10:
+// "the colour they came from".
+test("a block with a template of its own takes that template's colour, and the rest the day's", () => {
+  const { container } = render(
+    <TimelineGrid
+      tasks={[anchor('Drive home', '07:00', 30), anchor('Walk', '10:00', 30)]}
+      templateColor="#a7c4f5"
+      templateColorFor={task => (task.title === 'Drive home' ? '#c9b3f0' : undefined)}
+    />,
+  )
+  const [home, walk] = [...container.querySelectorAll<HTMLElement>('.timeline-anchor')]
+  expect(home.style.background).toContain('201, 179, 240')
+  expect(walk.style.background).toContain('167, 196, 245')
+})

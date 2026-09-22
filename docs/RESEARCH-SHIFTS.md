@@ -937,6 +937,54 @@ lets a field it does not name ride along).
    generator.
 3. **The editor and the day**: "After midnight" on a block, the template's
    picture drawing it past 24:00, and the day marking a task as last night's.
+   As built (10.4), the picture says the night's hours rather than drawing
+   them, and the toggle is called Next day.
 4. **A guide for another agent** - how the plan is kept and read, the rota above
    all - and a contract a program reading the backup can rely on; the phone,
    pictures, the gates.
+
+### 10.4 Stage 3, as built
+
+The owner's words for it: the night's hours visible and editable where they
+live - on the next day's morning with a clear mark that they are the night's,
+and in the template editor as a plain toggle, not a field of its own with an
+explanation; nothing new in the calendar's grid; the 375px floor; and every
+decision looked at on a phone and on a desktop until it fits both.
+
+- **Next day**, a toggle on a block's row beside Core, Key and Ongoing, and on
+  the add row. Nothing to read beside it: what it does shows on the picture
+  above the moment it is pressed. A new block is not on the next day unless
+  asked, like Core and Ongoing. A week made from a day template brings every
+  block over as its own weekday's (rule 6).
+- **The picture is the template's own day.** A block on the next day is the
+  morning after's, and a drawing of it at one in the morning here would say it
+  happens the morning before the shift - the very thing section 10.2 fixed. So
+  it is said under the picture, in the line the day's numbers are in: "After
+  midnight: 01:00 Night meal, 07:00 Drive home". The day's numbers, the
+  overlaps and the hours the time field calls taken are the day's own, and
+  leave the night's out.
+- **A phone's row.** Core, Key, Ongoing and Next day, the note and the cross
+  are more than a 375px line, and the row that wrapped left Note and the cross
+  on a line of their own. On a phone the four marks stand behind one word on
+  the line with the note and the cross - the marks that are on ("Ongoing, Next
+  day"), or "Marks" - and open as a line of their own above it. A wide screen
+  keeps them in the row, as they were.
+- **The day marks a night's task.** Its row says "last night" beside the
+  night's letter on the kind's colour - the chip the day's masthead and the
+  week's column already draw a kind with - so the mark reads without the
+  colour and the colour without the words. A night template that is not a kind
+  gives the words alone. On the grid a night's block wears the night
+  template's colour rather than the morning's (TimelineGrid's
+  `templateColorFor`), the rule the grid always had: a block shows the colour
+  it came from.
+- **Found while looking**: with the night's meal at one and the drive home at
+  seven on the morning after, the grid offered "5h 30 min free" between them -
+  inside last night's shift. Last night's hours are busy time in the grid's
+  gaps now (`computeInteriorGaps`), and the stretch after the shift ends is
+  the day's own free time like any other.
+- **The calendar's grid is as it was.** The month and the week draw a night's
+  task as the date's task it is; the day's peek lists it without the mark.
+- A browser walk on both screens (`e2e/night-hours.e2e.ts`): the meal written
+  on the next day, the roster, the mark on the morning after, and the night
+  taken away with its meal. The sweep and the precision check open a night
+  shift's template, and their morning after carries the night's meal.

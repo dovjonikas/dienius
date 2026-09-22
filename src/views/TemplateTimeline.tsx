@@ -4,7 +4,7 @@ import type { SleepWindow } from '../lib/types'
 import { TimelineGrid } from '../widgets/day-plan/TimelineGrid'
 import { useTimelineDrag } from '../widgets/day-plan/useTimelineDrag'
 import { formatDuration, wakingDayFor } from '../widgets/day-plan/capacity'
-import { blocksAsTasks, overlapsIn, templateSummary, type DrawableBlock } from './templateDay'
+import { blocksAsTasks, nightLine, overlapsIn, templateSummary, type DrawableBlock } from './templateDay'
 
 /**
  * The template, drawn as the day it makes.
@@ -79,8 +79,13 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
   const profiles = sleepWindow
     ? data.settings.sleepProfiles.map(p => (p.id === drawnOn ? { ...p, window: sleepWindow } : p))
     : data.settings.sleepProfiles
-  const mine = weekday === undefined ? blocks : blocks.filter(b => b.weekday === weekday)
-  const tasks = blocksAsTasks(blocks, weekday)
+  const column = weekday === undefined ? blocks : blocks.filter(b => b.weekday === weekday)
+  // The picture is the template's own day. A block on the next day is the
+  // morning after's, and is said under it rather than drawn at its hour here
+  // - section 10 of RESEARCH-SHIFTS.
+  const mine = column.filter(b => !b.afterMidnight)
+  const night = nightLine(column)
+  const tasks = blocksAsTasks(mine)
   // The same two gestures the day view has, on the same grid, through the
   // same hook - bound to the draft rather than to a date. No tray here, so
   // no drop can take a time off; and no undo, because the editor's own
@@ -136,6 +141,7 @@ export function TemplateTimeline({ blocks, sleepProfileId, color, weekday, compa
           {drag.announcement}
         </p>
       )}
+      {night && !compact && <p className="template-timeline-night">{night}</p>}
       <p className="template-timeline-summary" role="status">
         {line}
       </p>

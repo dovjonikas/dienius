@@ -6,7 +6,7 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.31, the night's own hours, stage 2 of 4 done. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.31, the night's own hours, stage 3 of 4 done. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
 
 ## v2.31 - the night's own hours, and the days after a change
 
@@ -29,6 +29,26 @@ every door, meals as each kind's blocks, tonight's sleep from tomorrow's kind,
 last night's shift as this morning's busy time), and the two gaps - a night's
 hours after midnight had nowhere to be written, and a date given a kind left
 the days around it as they were.
+
+### Stage 3 - the editor and the day: done
+
+- **Next day** on a template block, beside Core, Key and Ongoing and on the add
+  row - a plain toggle, as asked. A week made from a day template brings every
+  block over as its own weekday's.
+- **The picture** says the night's hours in the line under it ("After
+  midnight: 01:00 Night meal, 07:00 Drive home") and leaves them out of the
+  day's numbers, its overlaps and the hours the time field calls taken.
+- **A phone's block row**: the four marks behind one word naming the ones that
+  are on, on the line with Note and the cross, opening as a line of their own.
+  Found by looking: Next day had pushed Note and the cross onto a third line.
+- **The morning after**: "last night" and the night's letter on the task's
+  row; the block in the night's colour on the grid. And a bug the pictures
+  showed: the grid offered "5h 30 min free" inside last night's shift, between
+  the night's meal and the drive home - last night's hours are busy time in
+  the grid's gaps now.
+- A walk on both screens, `e2e/night-hours.e2e.ts`; the sweep's and the
+  precision check's morning after carries the night's meal, and both open a
+  night shift's template. Every new rule broken on purpose once, and caught.
 
 ### Stage 2 - the data and composition: done
 

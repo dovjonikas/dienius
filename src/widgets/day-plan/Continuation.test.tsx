@@ -43,3 +43,34 @@ test('a morning with nothing carried into it draws no continuation', () => {
   render(<DayView date={today} onDateChange={() => {}} onOpenNorth={() => {}} />)
   expect(screen.queryByText(/from yesterday/)).toBeNull()
 })
+
+// The night's own hours on the morning after - section 10 - are drawn in the
+// night template's colour, not the morning's: the colour they came from.
+test("a night's block on the morning after wears the night's colour, and the morning's own the morning's", () => {
+  const today = todayKey()
+  const yesterday = addDays(today, -1)
+  actions.resetForTests({
+    ...defaultData(),
+    settings: { ...defaultData().settings, timelineExpanded: true },
+    templates: [
+      { id: 'night', name: 'Night shift', color: '#c9b3f0', blocks: [] },
+      { id: 'rest', name: 'Rest day', color: '#b8e0c8', blocks: [] },
+    ],
+    days: {
+      [yesterday]: { date: yesterday, templateId: 'night', tasks: [] },
+      [today]: {
+        date: today,
+        templateId: 'rest',
+        tasks: [
+          { id: 'h', title: 'Drive home', time: '07:00', minutes: 30, done: false, fromTemplate: true, nightOf: yesterday, origin: { type: 'template', sourceId: 'night', blockId: 'home' } },
+          { id: 'w', title: 'Walk', time: '15:00', minutes: 30, done: false },
+        ],
+      },
+    },
+  })
+  const { container } = render(<DayView date={today} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  const block = (title: string) =>
+    [...container.querySelectorAll<HTMLElement>('.timeline-anchor')].find(b => b.textContent?.includes(title))!
+  expect(block('Drive home').style.background).toContain('201, 179, 240')
+  expect(block('Walk').style.background).toContain('184, 224, 200')
+})

@@ -570,12 +570,27 @@ const SCREENS = [
       await p.waitForTimeout(300)
     },
   },
+  // The night shift's template in its editor, its meal on the next day: the
+  // toggle in the row, the word for the marks on a phone, and the line under
+  // the picture that says the night's hours - v2.31.
+  {
+    name: 'Template editor (a night shift)',
+    go: async /** @param {Page} p */ p => {
+      await nightShiftYesterday(p)
+      await p.addScriptTag({ content: AUDIT })
+      await tab(p, 'Templates')
+      await p.getByRole('button', { name: 'Edit Night shift' }).click()
+      await p.waitForTimeout(300)
+    },
+  },
 ]
 
 /**
  * Last night's shift on yesterday - 22:00 for eight hours, in the plan the page
  * holds - and the page opened again, so the morning after draws its
- * continuation. Rotating shifts, stage 9.
+ * continuation. Rotating shifts, stage 9. Since v2.31 the shift's template is
+ * stamped on yesterday with its meal at one on the next day, and the meal is
+ * on this morning, marked as last night's.
  *
  * @param {import('@playwright/test').Page} page
  */
@@ -585,11 +600,45 @@ async function nightShiftYesterday(page) {
     const now = new Date()
     const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
     const date = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
+    // A night shift's template with its meal at one on the next day - the
+    // night's own hours, section 10 of RESEARCH-SHIFTS - stamped on yesterday.
+    d.templates = d.templates ?? []
+    if (!d.templates.some((/** @type {{ id: string }} */ x) => x.id === 'sweep-night')) {
+      d.templates.push({
+        id: 'sweep-night',
+        name: 'Night shift',
+        color: '#c9b3f0',
+        type: 'night',
+        dayKind: { letter: 'N', order: 9 },
+        blocks: [
+          { id: 'shift', time: '22:00', title: 'Night shift', minutes: 480, category: 'core' },
+          { id: 'meal', time: '01:00', title: 'Night meal', minutes: 30, category: 'meal', afterMidnight: true },
+        ],
+      })
+    }
     const day = d.days[date] ?? { date, tasks: [] }
-    if (!day.tasks.some((/** @type {{ id: string }} */ t) => t.id === 'night-shift')) {
+    day.templateId = 'sweep-night'
+    if (!day.tasks.some((/** @type {{ id: string }} */ x) => x.id === 'night-shift')) {
       day.tasks.push({ id: 'night-shift', title: 'Night shift', time: '22:00', minutes: 480, done: false, category: 'core' })
     }
     d.days[date] = day
+    const morning = d.days[today] ?? { date: today, tasks: [] }
+    if (!morning.tasks.some((/** @type {{ id: string }} */ x) => x.id === 'night-meal')) {
+      morning.tasks.push({
+        id: 'night-meal',
+        title: 'Night meal',
+        time: '01:00',
+        minutes: 30,
+        done: false,
+        category: 'meal',
+        fromTemplate: true,
+        nightOf: date,
+        origin: { type: 'template', sourceId: 'sweep-night', blockId: 'meal' },
+      })
+    }
+    d.days[today] = morning
     localStorage.setItem('dienius:data', JSON.stringify(d))
     // A focus session or a timer an earlier screen left running stands its
     // bar over the page on every screen after it; this one is the morning

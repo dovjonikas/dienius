@@ -389,6 +389,7 @@ export function DayView({ date, onDateChange, onOpenNorth, openTask, onOpenTaskD
               tasks={day?.tasks ?? []}
               categories={data.categories}
               templateColor={template?.color}
+              templateColorFor={task => (task.nightOf ? data.templates.find(t => t.id === data.days[task.nightOf!]?.templateId)?.color : undefined)}
               onPlaceFloat={(taskId, time) => actions.placeFloat(date, taskId, time)}
               onAnchorPointerDown={drag.startDrag}
               onAnchorResizePointerDown={drag.startResize}

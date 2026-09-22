@@ -299,6 +299,13 @@ export interface TimelineGridProps {
    */
   templateColor?: string
   /**
+   * The colour of the template a task came from where that is not the day's
+   * own - a night's task on the morning after is the night shift's (section 10
+   * of RESEARCH-SHIFTS), and wears its colour. Undefined for a task that is
+   * the day's, which takes `templateColor`.
+   */
+  templateColorFor?: (task: Task) => string | undefined
+  /**
    * Called when the owner taps a float inside an open gap's picker, with
    * the float's own task id and the clock time it should be placed at -
    * see `computeTimelineLayout`'s gaps and docs/TIMELINE.md section 5.
@@ -502,6 +509,7 @@ export function TimelineGrid({
   tasks,
   categories = [],
   templateColor,
+  templateColorFor,
   onPlaceFloat,
   onAnchorPointerDown,
   onAnchorResizePointerDown,
@@ -1001,12 +1009,13 @@ export function TimelineGrid({
               // template colour exactly as every anchor used to, so nothing
               // already on disk is silently recoloured.
               const catColor = anchor.sized ? categoryColor(sourceTask?.category, categories) : undefined
+              const ownColor = (sourceTask && templateColorFor?.(sourceTask)) ?? templateColor
               const draggable = !!onAnchorPointerDown && !!sourceTask && !sourceTask.done
               const classNames = ['timeline-anchor']
               if (!anchor.sized) classNames.push('timeline-anchor-unsized')
               if (anchor.clippedEnd) classNames.push('timeline-anchor-clipped')
               if (catColor) classNames.push('timeline-anchor-cat')
-              else if (anchor.sized && templateColor) classNames.push('timeline-anchor-colored')
+              else if (anchor.sized && ownColor) classNames.push('timeline-anchor-colored')
               // Finished work reads as finished here too, not just in the
               // task list: the same muted fill and struck-through title, so
               // one look at the grid says how much of the day is behind you
@@ -1039,7 +1048,7 @@ export function TimelineGrid({
                     minHeight: `${minHeightPx}px`,
                     left: `calc(${GUTTER_PX}px + (100% - ${GUTTER_PX}px) * ${anchor.column * fraction})`,
                     width: `calc((100% - ${GUTTER_PX}px) * ${fraction} - 4px)`,
-                    background: catColor ? undefined : anchor.sized ? templateColor : undefined,
+                    background: catColor ? undefined : anchor.sized ? ownColor : undefined,
                     ...(catColor ? { ['--cat' as string]: catColor } : {}),
                   } as React.CSSProperties}
                   onPointerDown={draggable ? e => onAnchorPointerDown!(anchor.id, e) : undefined}

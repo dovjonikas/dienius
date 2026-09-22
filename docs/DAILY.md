@@ -487,6 +487,23 @@ leaves a shift that has not started yet alone. And the two nights a year the
 clocks change, a night shift is an hour longer or shorter: the time it has
 left says so.
 
+**What happens after midnight is written in the night shift.** A night meal at
+one and the drive home at seven are blocks in the night shift's template with
+**Next day** pressed on them (on a phone, under the block's **Marks**). They
+land on the morning after each night shift and on no other day, marked "last
+night" with the night's letter, in the night's colour. Change a night to
+another kind and its meal goes with it. The template's picture is the evening
+it starts on, so the line under it says the night's hours: "After midnight:
+01:00 Night meal".
+
+**A day is not planned alone.** Tonight's bedtime is tomorrow's kind's, last
+night's shift is this morning's busy time, and when you change one date's
+kind, the day before it and the two after are measured again: a routine that
+now runs into the new night says so, and one you moved or ticked stays where
+you put it. Apply names those days before it touches them. For the day after
+a last night shift, make a kind of its own - After nights, with its daytime
+sleep - so its morning sleeps and its gym comes later.
+
 ## Recipes, in Kitchen
 
 **Kitchen** - the pot in the rail, or the `7` key - is the recipes you

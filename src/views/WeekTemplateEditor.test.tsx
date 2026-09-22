@@ -973,3 +973,22 @@ test('a block that is not a meal is asked about no recipe, in the add row or in 
   await openBlock(user, 'Wednesday', 'Deep work')
   expect(openBlockPanel().queryByRole('button', { name: /^Recipes for / })).toBeNull()
 })
+
+// A week's blocks are each their weekday's own and are never put on the next
+// day (docs/RESEARCH-SHIFTS.md section 10), so a day template's block after
+// midnight comes into the week as its own day's, where the week shows it.
+test("a week started from a day template with a block on the next day keeps every block its own weekday's", async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Nights',
+    color: '#c9b3f0',
+    blocks: [{ title: 'On shift', time: '21:00' }, { title: 'Night meal', time: '01:00', afterMidnight: true }],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'New template' }))
+  await user.click(screen.getByRole('button', { name: 'Nights' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const week = getData().templates.find(t => t.name === 'Nights week')!
+  expect(week.blocks).toHaveLength(14)
+  expect(week.blocks.every(b => b.afterMidnight === undefined)).toBe(true)
+})

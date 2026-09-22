@@ -4130,6 +4130,19 @@ The data is two optional fields, `TemplateBlock.afterMidnight` and
 second stages the section planned are one: two fields nothing writes are not a
 stage anyone could see.
 
+**Stage 3, the editor and the day.** "Next day" is a toggle like Core and
+Ongoing, with nothing to read beside it, at the owner's word. The template's
+picture is its own day and says the night's hours in the line under it rather
+than drawing them at one in the morning, which would draw exactly the mistake
+the section fixed. On a phone the four marks, the note and the cross are more
+than a line, and the wrapped row left Note and the cross on a line of their
+own: the marks stand behind one word there, naming the ones that are on, and
+open as a line of their own. The day marks a night's task "last night" beside
+the night's letter, and draws its block in the night's colour. And a false
+"5h 30 min free" the morning's grid offered inside last night's shift, once the
+night's meal was on the morning, is gone: last night's hours are busy time in
+the grid's gaps.
+
 ## A phone's week keeps a line an hour, and scrolls inside itself
 
 After v2.29, at the owner's word: fix the phone week under a Focus bar. The

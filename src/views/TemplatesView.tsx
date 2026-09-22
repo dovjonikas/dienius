@@ -68,6 +68,21 @@ const DAY_TYPES: { value: DayType; label: string }[] = [
  * same parse, per keystroke, and a block with nothing readable in its time
  * simply floats rather than jumping to midnight.
  */
+/**
+ * The marks a block carries, in the order the row draws them - what the one
+ * word that stands for them on a phone says. Core only where the day type
+ * counts it. Empty where there are none.
+ */
+function marksWords(block: DraftBlock, withCore: boolean): string {
+  const on = [
+    withCore && block.core ? 'Core' : '',
+    block.highlight ? 'Key' : '',
+    block.unbounded ? 'Ongoing' : '',
+    block.afterMidnight ? 'Next day' : '',
+  ]
+  return on.filter(Boolean).join(', ')
+}
+
 function drawable(block: DraftBlock, index: number): DrawableBlock {
   const minutes = parseMinutesInput(block.minutes)
   return {
@@ -81,6 +96,7 @@ function drawable(block: DraftBlock, index: number): DrawableBlock {
     ...(minutes === undefined ? {} : { minutes }),
     category: block.category,
     core: block.core,
+    ...(block.afterMidnight ? { afterMidnight: true } : {}),
   }
 }
 
@@ -133,6 +149,11 @@ interface DraftBlock {
   noteExpanded?: boolean
   /** One of the day's three that matter - see TemplateBlock.highlight. */
   highlight?: boolean
+  /**
+   * On the next day's clock, after the template's midnight - see
+   * TemplateBlock.afterMidnight, and section 10 of RESEARCH-SHIFTS.
+   */
+  afterMidnight: boolean
 }
 
 interface Draft {
@@ -203,6 +224,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
   // removal rather than followed, because a panel that lands on a different
   // block than the one it was opened for is worse than one that shuts.
   const [noteOpen, setNoteOpen] = useState<number | null>(null)
+  // Which block's marks are open on a phone - see .block-marks.
+  const [marksOpen, setMarksOpen] = useState<number | null>(null)
   // Why a KEY press did nothing, said once and cleared by the next one. A
   // refusal with no reason is the app being obstinate.
   const [keyNote, setKeyNote] = useState<string | null>(null)
@@ -210,6 +233,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
   const [blockTitle, setBlockTitle] = useState('')
   const [blockCore, setBlockCore] = useState(false)
   const [blockUnbounded, setBlockUnbounded] = useState(false)
+  const [blockNight, setBlockNight] = useState(false)
   // What the next block draws from, answered before it exists - the shape
   // the week editor has always had and this one did not, so a reading block
   // here meant adding it first and then finding its row again.
@@ -238,7 +262,11 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
   // it, so its own blocks are the busy stretches - read through the same
   // conversion the picture above the list uses, so the hours the field calls
   // taken are exactly the ones the timeline draws.
-  const taken = useMemo(() => takenBlocks(blocksAsTasks(draft.blocks.map(drawable)), categories), [draft.blocks, categories])
+  // A block on the next day takes the next day's hours, not these.
+  const taken = useMemo(
+    () => takenBlocks(blocksAsTasks(draft.blocks.map(drawable).filter(b => !b.afterMidnight)), categories),
+    [draft.blocks, categories],
+  )
   const waking = windowFor(draft.sleepProfileId, { profiles: sleepProfiles })
 
   // Moves focus into the name field the moment the form appears, for both a
@@ -261,6 +289,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
           category: blockCategory,
           core: blockCore,
           unbounded: blockUnbounded,
+          afterMidnight: blockNight,
           minutes: blockMinutes.trim(),
           libraryListId: blockLibraryListId,
           // Only a meal carries one, whatever the add row was last asked.
@@ -272,6 +301,8 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
     setBlockTitle('')
     setBlockCore(false)
     setBlockUnbounded(false)
+    // Like Core and Ongoing: most of a night's blocks are its own evening's.
+    setBlockNight(false)
     // The binding is not cleared, the way the time and the category are
     // not: somebody adding a reading block is usually adding two.
     // A meal's recipe is, because breakfast, lunch and dinner are three.
@@ -280,6 +311,7 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
 
   function removeBlock(index: number) {
     setNoteOpen(null)
+    setMarksOpen(null)
     setDraft(d => ({ ...d, blocks: d.blocks.filter((_, i) => i !== index) }))
   }
 
@@ -352,6 +384,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
     setDraft(d => ({
       ...d,
       blocks: d.blocks.map((b, i) => (i === index ? { ...b, unbounded: !b.unbounded } : b)),
+    }))
+  }
+
+  function toggleBlockNight(index: number) {
+    setDraft(d => ({
+      ...d,
+      blocks: d.blocks.map((b, i) => (i === index ? { ...b, afterMidnight: !b.afterMidnight } : b)),
     }))
   }
 
@@ -573,6 +612,13 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
             {parseMinutesInput(b.minutes) !== undefined && (
               <span className="task-size">{formatDuration(parseMinutesInput(b.minutes)!)}</span>
             )}
+            {/* The block's marks. On a wide screen they stand in the row as
+                they always have (.block-marks is display: contents there). On
+                a phone four of them and the note and the cross are more than a
+                line holds, and a row that wrapped left Note and the cross on a
+                line of their own - so they sit behind one word that says which
+                are on, and open on the line above it. */}
+            <div id={`block-marks-${i}`} className={marksOpen === i ? 'block-marks is-open' : 'block-marks'}>
             {draft.type !== 'full' && (
               <button
                 type="button"
@@ -608,6 +654,30 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
               onClick={() => toggleBlockUnbounded(i)}
             >
               Ongoing
+            </button>
+            {/* After the template's midnight, on the next day's clock: it lands
+                on the morning after the date the template is on - a night
+                shift's meal at one - section 10 of RESEARCH-SHIFTS. */}
+            <button
+              type="button"
+              aria-pressed={b.afterMidnight}
+              aria-label={b.afterMidnight ? `${b.title} is on the next day` : `Put ${b.title} on the next day`}
+              className={b.afterMidnight ? 'core-toggle active' : 'core-toggle'}
+              onClick={() => toggleBlockNight(i)}
+            >
+              Next day
+            </button>
+            </div>
+            <button
+              type="button"
+              className={marksOpen === i ? 'block-marks-toggle is-open' : 'block-marks-toggle'}
+              aria-expanded={marksOpen === i}
+              aria-controls={`block-marks-${i}`}
+              aria-label={`Marks for ${b.title}: ${marksWords(b, draft.type !== 'full') || 'none'}`}
+              onClick={() => setMarksOpen(open => (open === i ? null : i))}
+            >
+              <span className="block-marks-words">{marksWords(b, draft.type !== 'full') || 'Marks'}</span>
+              <span className="block-marks-caret" aria-hidden="true" />
             </button>
             {/* The binding, per block rather than per template: one day has
                 a reading block and a language block, and they draw from
@@ -782,6 +852,17 @@ function TemplateEditor({ initial, sleepProfiles, libraryLists, categories, reci
             Ongoing
           </button>
         </Explain>
+        {/* A toggle like the two before it, and nothing to read beside it:
+            what it does is on the picture above the moment it is pressed. */}
+        <button
+          type="button"
+          aria-pressed={blockNight}
+          aria-label={blockNight ? 'The new block is on the next day' : 'Put the new block on the next day'}
+          className={blockNight ? 'core-toggle active' : 'core-toggle'}
+          onClick={() => setBlockNight(v => !v)}
+        >
+          Next day
+        </button>
         {/* And what it draws from, before it exists. The week editor has
             asked this on its add row since the feature shipped; this one
             only asked it afterwards, on the block row, so the answer came
@@ -870,6 +951,7 @@ export function TemplatesView() {
         category: b.category ?? defaultCategoryId(data.categories),
         core: b.core ?? false,
         unbounded: b.unbounded ?? false,
+        afterMidnight: b.afterMidnight ?? false,
         minutes: b.minutes !== undefined ? String(b.minutes) : '',
         libraryListId: b.libraryListId,
         recipeId: b.recipeId,
@@ -928,7 +1010,10 @@ export function TemplatesView() {
   function expandToWeek(from: Template) {
     setDraft(null)
     setAsking(false)
-    const blocks = from.blocks.flatMap(b => {
+    // A week's blocks are each their weekday's own and are not put on the
+    // next day (section 10 of RESEARCH-SHIFTS), so one that was comes over
+    // as its own day's, where the week's editor shows it.
+    const blocks = from.blocks.flatMap(({ afterMidnight: _night, ...b }) => {
       const groupId = crypto.randomUUID()
       return [1, 2, 3, 4, 5, 6, 0].map(weekday => ({ ...b, id: crypto.randomUUID(), weekday, groupId }))
     })
@@ -950,6 +1035,7 @@ export function TemplatesView() {
       category: b.category,
       core: b.core || undefined,
       unbounded: b.unbounded || undefined,
+      afterMidnight: b.afterMidnight || undefined,
       minutes: parseMinutesInput(b.minutes),
       libraryListId: b.libraryListId,
       // A meal's recipes travel only on a meal; a block recoloured out of
@@ -1173,11 +1259,18 @@ export function TemplatesView() {
                   preview cannot say: that it is a week, what kind of day it
                   makes, and which sleep schedule it carries. */}
               <span className="template-meta">
-                {t.kind === 'week' && 'A week'}
-                {t.type && t.type !== 'full' &&
-                  `${t.kind === 'week' ? ' · ' : ''}${DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type}`}
-                {t.sleepProfileId && data.settings.sleepProfiles.length > 1 &&
-                  ` · ${data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? ''}`}
+                {/* Joined, so a separator stands between two things and never
+                    in front of one: a full day with its own sleep said
+                    "· Early" until the first month's dry run found it. */}
+                {[
+                  t.kind === 'week' ? 'A week' : '',
+                  t.type && t.type !== 'full' ? (DAY_TYPES.find(d => d.value === t.type)?.label ?? t.type) : '',
+                  t.sleepProfileId && data.settings.sleepProfiles.length > 1
+                    ? (data.settings.sleepProfiles.find(p => p.id === t.sleepProfileId)?.name ?? '')
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </span>
             </div>
             {/* One control on the row. Delete is inside the editor since

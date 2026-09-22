@@ -86,3 +86,21 @@ test('the day says it on the routine itself', () => {
   expect(within(walk).getByText('17:00')).toBeInTheDocument()
   expect(walk.querySelector('.task-routine-note')).toBeNull()
 })
+
+// A night's task on the morning after says whose it is - section 10.
+test("a night's task says it is from last night, and a task of the day's own says nothing of the kind", () => {
+  const data = getData()
+  const night: Template = KIND('night', 'Night shift', 'N', 1, [
+    { id: 'on', title: 'Late shift', time: '22:00', minutes: 540 },
+    { id: 'meal', title: 'Night meal', time: '01:00', minutes: 30, afterMidnight: true },
+  ])
+  actions.resetForTests({ ...data, templates: [...data.templates, night] })
+  actions.applyRoster({ [DATE]: 'night' })
+  const next = addDays(DATE, 1)
+  render(<DayView date={next} onDateChange={() => {}} onOpenNorth={() => {}} />)
+  const meal = screen.getByRole('checkbox', { name: 'Night meal' }).closest('li')!
+  // The words, and the night's letter on its colour beside them.
+  expect(within(meal).getByText('last night')).toBeInTheDocument()
+  expect(meal.querySelector('.task-night-mark')?.textContent).toBe('N')
+  expect(screen.getAllByText('last night')).toHaveLength(1)
+})

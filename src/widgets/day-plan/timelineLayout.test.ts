@@ -980,3 +980,19 @@ test("last night's block running on this morning opens the drawn day at midnight
   expect(alone.displayWindow!.start).toBe(0)
   expect(alone.displayWindow!.end).toBeGreaterThanOrEqual(360)
 })
+
+// Last night's shift, still running, is not free time: the night's own hours
+// on the morning after - a meal at one, the drive home at seven - sit inside
+// it, and the grid offers no gap between them (docs/RESEARCH-SHIFTS.md
+// section 10). The stretch after it ends and before the day's next block is
+// free, and says so like any other.
+test("no gap is offered inside last night's shift, and the stretch after it ends is the day's own", () => {
+  const layout = computeTimelineLayout(
+    [anchor('meal', '01:00', 30), anchor('home', '07:00', 30), anchor('lunch', '13:00', 45)],
+    undefined,
+    undefined,
+    [{ end: 420 }],
+  )
+  expect(layout.gaps.map(g => [g.startMinutes, g.endMinutes])).toEqual([[450, 780]])
+})
+

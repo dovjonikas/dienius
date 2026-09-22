@@ -3,6 +3,7 @@ import type { LibraryList, Task } from '../../lib/types'
 import { actions, useAppData } from '../../lib/store'
 import { todayKey } from '../../lib/dates'
 import { routineNotes } from '../../lib/shiftDay'
+import { kindOnDate } from '../../lib/dayKinds'
 import { isFirstRun } from '../../lib/onboarding'
 import { enterDemoMode, isDemoMode } from '../../lib/demoMode'
 import { startTour } from '../../lib/tourState'
@@ -132,11 +133,21 @@ export function TaskPane({
   // shifts, stage 9. Worked out once for the list, not per row.
   const notes = routineNotes(data, date, todayKey())
 
+  // Whose a night's task is - section 10 of RESEARCH-SHIFTS: the kind on the
+  // night it came from, by its letter, and no letter where that template is
+  // not a kind.
+  function lastNightOf(task: Task): { letter?: string; color?: string } | undefined {
+    if (!task.nightOf) return undefined
+    const kind = kindOnDate(data, task.nightOf)
+    return kind?.dayKind ? { letter: kind.dayKind.letter, color: kind.color } : {}
+  }
+
   /** The props every row gets the same way, open or done. */
   function rowProps(task: Task) {
     return {
       task,
       routineNote: !task.time && task.routineId ? notes.get(task.routineId) : undefined,
+      lastNight: lastNightOf(task),
       isFullDay,
       sizeEditingId,
       sizeDraft,

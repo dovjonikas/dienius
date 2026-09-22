@@ -44,6 +44,13 @@ export interface TaskRowProps {
    */
   routineNote?: string
   /**
+   * Set on a night's task on the morning after - section 10 of RESEARCH-SHIFTS:
+   * the night shift's meal at one, put on this day by last night's kind. The
+   * row says whose it is, with the night's letter where its template is a
+   * kind. Absent for everything that is the day's own.
+   */
+  lastNight?: { letter?: string; color?: string }
+  /**
    * True while this row is playing its finishing animation on the way down
    * to the Done section - see `DONE_LEAVE_MS` in `DayView.tsx`, which owns
    * both the timing and which row it applies to. Purely a class on the card;
@@ -133,6 +140,7 @@ export function TaskRow({
   task,
   isFullDay,
   routineNote,
+  lastNight,
   leaving = false,
   active = false,
   onFocus,
@@ -356,6 +364,19 @@ export function TaskRow({
               day, or its time runs into something. In the time's place, since
               it is the answer to where the time went. */}
           {routineNote && <span className="task-routine-note">{routineNote}</span>}
+          {/* Last night's, on this morning: the night's letter and the words,
+              so the mark reads without the colour and the colour without the
+              words - section 10 of RESEARCH-SHIFTS. */}
+          {lastNight && (
+            <span className="task-night">
+              {lastNight.letter && (
+                <span className="kind-mark task-night-mark" aria-hidden="true" style={{ ['--chip' as string]: lastNight.color } as React.CSSProperties}>
+                  {lastNight.letter}
+                </span>
+              )}
+              last night
+            </span>
+          )}
           {/* The category, named rather than left as colour alone - the edge
               carries it at a glance, this carries it for anyone who cannot
               use the colour, and both say the same thing. */}

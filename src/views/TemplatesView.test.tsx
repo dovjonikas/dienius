@@ -1256,3 +1256,110 @@ test('a schedule other templates share says so where its sleep is set', async ()
   // changes it for the other two.
   expect(screen.getByText('Also used by Rest day and Working day.')).toBeInTheDocument()
 })
+
+// --- the hours after midnight - docs/RESEARCH-SHIFTS.md section 10 ----------------------------
+
+test('a block can be put on the next day, after midnight, and the template keeps it', async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Night shift',
+    color: '#c9b3f0',
+    blocks: [
+      { title: 'On shift', time: '22:00', minutes: 540 },
+      { title: 'Night meal', time: '01:00', minutes: 30 },
+    ],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  const toggle = screen.getByRole('button', { name: 'Put Night meal on the next day' })
+  expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await user.click(toggle)
+  expect(screen.getByRole('button', { name: 'Night meal is on the next day' })).toHaveAttribute('aria-pressed', 'true')
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const blocks = getData().templates[0].blocks
+  expect(blocks.find(b => b.title === 'Night meal')?.afterMidnight).toBe(true)
+  expect(blocks.find(b => b.title === 'On shift')?.afterMidnight).toBeUndefined()
+
+  // Opened again, it says so.
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  expect(screen.getByRole('button', { name: 'Night meal is on the next day' })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('a new block can be added on the next day, and the next block added is not, unless asked', async () => {
+  const user = userEvent.setup()
+  render(<TemplatesView />)
+  await newDayTemplate(user)
+  await user.type(screen.getByPlaceholderText('Template name'), 'Night shift')
+  await user.type(screen.getByPlaceholderText('09:00'), '07:00')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Drive home')
+  await user.click(screen.getByRole('button', { name: 'Put the new block on the next day' }))
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  expect(screen.getByRole('button', { name: 'Put the new block on the next day' })).toHaveAttribute('aria-pressed', 'false')
+  await user.type(screen.getByPlaceholderText('What happens'), 'Sleep')
+  await user.click(screen.getByRole('button', { name: 'Add a block' }))
+  await user.click(screen.getByRole('button', { name: 'Save template' }))
+  const [home, sleep] = getData().templates[0].blocks
+  expect(home).toMatchObject({ title: 'Drive home', time: '07:00', afterMidnight: true })
+  expect(sleep.afterMidnight).toBeUndefined()
+})
+
+test("the hours a template's night fills are not called taken on its own day", async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({ name: 'Night shift', color: '#c9b3f0', blocks: [{ title: 'Night meal', time: '01:00', minutes: 60, category: 'health', afterMidnight: true }] })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  await user.click(screen.getByRole('button', { name: 'Block time: pick from a list' }))
+  // One in the morning is the next day's, and the template's own is free.
+  const hours = within(screen.getByRole('listbox', { name: 'Hour' }))
+  expect(hours.getByRole('option', { name: '01' })).toBeInTheDocument()
+})
+
+// On a phone the marks stand behind one word, so the note and the cross keep
+// their line - the layout is the stylesheet's; this is the wiring under it.
+test("a block's marks are said in one word that opens them, naming the ones that are on", async () => {
+  const user = userEvent.setup()
+  actions.addTemplate({
+    name: 'Night shift',
+    color: '#c9b3f0',
+    type: 'night',
+    blocks: [
+      { title: 'On shift', time: '22:00', minutes: 540, unbounded: true },
+      { title: 'Night meal', time: '01:00', minutes: 30, afterMidnight: true, highlight: true },
+      { title: 'Stretch', time: '20:00' },
+    ],
+  })
+  render(<TemplatesView />)
+  await user.click(screen.getByRole('button', { name: 'Edit Night shift' }))
+  const meal = screen.getByRole('button', { name: 'Marks for Night meal: Key, Next day' })
+  expect(meal).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.getByRole('button', { name: 'Marks for On shift: Ongoing' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Marks for Stretch: none' })).toHaveTextContent('Marks')
+
+  await user.click(meal)
+  expect(meal).toHaveAttribute('aria-expanded', 'true')
+  expect(document.getElementById(meal.getAttribute('aria-controls')!)).toHaveClass('is-open')
+  // A mark changed says so on the word at once.
+  await user.click(screen.getByRole('button', { name: 'Night meal is on the next day' }))
+  expect(screen.getByRole('button', { name: 'Marks for Night meal: Key' })).toBeInTheDocument()
+})
+
+// Found in the first month's dry run: a full day with a sleep schedule of its
+// own said "· Early", its separator standing in front of nothing.
+test("a template's card joins what it says with separators between, and none in front", () => {
+  const data = defaultData()
+  data.settings = {
+    ...data.settings,
+    sleepProfiles: [
+      { id: 'default', name: 'Nights', window: { start: '23:00', end: '07:00' } },
+      { id: 'early', name: 'Early', window: { start: '21:30', end: '05:00' } },
+    ],
+  }
+  data.templates = [
+    { id: 'a', name: 'Day shift', color: '#a7c4f5', sleepProfileId: 'early', blocks: [{ id: 'b', title: 'On shift' }] },
+    { id: 'c', name: 'Night shift', color: '#c9b3f0', type: 'night', sleepProfileId: 'early', blocks: [{ id: 'd', title: 'On shift' }] },
+  ]
+  actions.resetForTests(data)
+  const { container } = render(<TemplatesView />)
+  const metas = [...container.querySelectorAll('.template-meta')].map(m => m.textContent)
+  expect(metas).toEqual(['Early', 'Overnight · Early'])
+})

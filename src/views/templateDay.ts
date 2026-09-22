@@ -59,6 +59,19 @@ export function blocksAsTasks(blocks: DrawableBlock[], weekday?: number): Task[]
     })
 }
 
+/**
+ * The hours after a template's midnight, said in one line under its picture -
+ * section 10 of RESEARCH-SHIFTS. The picture is the template's own day, and a
+ * block on the next day belongs to the morning after, so it is said rather
+ * than drawn: by time, the untimed after them. Null where there is none.
+ */
+export function nightLine(blocks: DrawableBlock[]): string | null {
+  const night = blocks.filter(b => b.afterMidnight)
+  if (night.length === 0) return null
+  const sorted = [...night].sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'))
+  return `After midnight: ${sorted.map(b => (b.time ? `${b.time} ${b.title}` : b.title)).join(', ')}`
+}
+
 export interface TemplateOverlap {
   /** The stretch they share. */
   from: string

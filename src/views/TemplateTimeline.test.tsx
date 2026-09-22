@@ -172,3 +172,27 @@ test('a press that never moved changes nothing', () => {
   fireEvent.pointerUp(document, { pointerId: 1, clientX: 102, clientY: 103 })
   expect(onReshape).not.toHaveBeenCalled()
 })
+
+// --- the hours after midnight - docs/RESEARCH-SHIFTS.md section 10 ----------------------------
+
+test("a block on the next day is not drawn on the template's own day, and the line under the picture says when it is", () => {
+  const { container } = render(
+    <TemplateTimeline
+      blocks={[
+        block({ time: '22:00', minutes: 540, title: 'On shift' }),
+        block({ time: '07:00', minutes: 30, title: 'Drive home', afterMidnight: true }),
+        block({ time: '01:00', minutes: 30, title: 'Night meal', afterMidnight: true }),
+      ]}
+    />,
+  )
+  expect(screen.getByText('After midnight: 01:00 Night meal, 07:00 Drive home')).toBeInTheDocument()
+  expect(container.querySelector('.timeline-grid-wrap')?.textContent ?? '').not.toContain('Night meal')
+  // The day's own numbers are the day's own: the shift from 22:00 to the
+  // bedtime, and nothing of the morning after.
+  expect(screen.getByText(/^Timed 1h - /)).toBeInTheDocument()
+})
+
+test('a template with nothing after midnight says nothing about it', () => {
+  render(<TemplateTimeline blocks={[block({ time: '09:00', minutes: 60 })]} />)
+  expect(screen.queryByText(/^After midnight/)).toBeNull()
+})
