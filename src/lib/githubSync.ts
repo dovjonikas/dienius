@@ -1,4 +1,4 @@
-import { getCloudBackupConfig, isCloudBackupOn, fromBase64, toBase64, GitHubError } from './cloudBackup'
+import { isCloudBackupOn, putRepoFile, readRepoFile, GitHubError, type PutOptions } from './cloudBackup'
 
 /**
  * The same repo the backup already writes to, used as a place two devices can
@@ -62,18 +62,6 @@ export function canSyncThroughGitHub(): boolean {
   return isCloudBackupOn()
 }
 
-function apiUrl(path: string): string {
-  return `https://api.github.com/repos/${getCloudBackupConfig().repo}/contents/${path}`
-}
-
-function headers(): Record<string, string> {
-  return {
-    Authorization: `Bearer ${getCloudBackupConfig().token}`,
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  }
-}
-
 /** What a read hands back: the state, and the version it was read at. */
 export interface GitHubSyncRead {
   /** `null` where the file does not exist yet, which is every first sync. */
@@ -91,14 +79,12 @@ export interface GitHubSyncRead {
  * a plan the other device has already moved on from.
  */
 export async function readSyncState(): Promise<GitHubSyncRead> {
-  const res = await fetch(apiUrl(SYNC_PATH), { headers: headers(), cache: 'no-store' })
-  if (res.status === 404) return { state: null, sha: null }
-  if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} reading the shared plan.`)
-  const body = (await res.json()) as { sha?: unknown; content?: unknown }
-  const sha = typeof body.sha === 'string' ? body.sha : null
-  if (typeof body.content !== 'string') return { state: null, sha }
+  // Through the backup's reader, which also reads a file past a megabyte -
+  // see readRepoFile. The shared plan is compact JSON, but it grows too.
+  const { sha, text } = await readRepoFile(SYNC_PATH)
+  if (text === null || text === '') return { state: null, sha }
   try {
-    const state = JSON.parse(fromBase64(body.content)) as unknown
+    const state = JSON.parse(text) as unknown
     lastSeen = stable(state)
     return { state, sha }
   } catch {
@@ -120,27 +106,31 @@ export async function readSyncState(): Promise<GitHubSyncRead> {
  * newer sha would delete whatever they just did. The conflict goes back to
  * the caller, which pulls, merges, and tries again.
  */
-export async function writeSyncState(state: unknown, sha: string | null): Promise<void> {
+export async function writeSyncState(state: unknown, sha: string | null, options: PutOptions = {}): Promise<{ written: boolean; sha: string | null }> {
   const same = stable(state)
-  if (same === lastSeen) return
-  const res = await fetch(apiUrl(SYNC_PATH), {
-    method: 'PUT',
-    headers: { ...headers(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: `Dienius sync ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
-      content: toBase64(JSON.stringify(state)),
-      ...(sha ? { sha } : {}),
-    }),
-  })
-  if (res.ok) {
-    lastSeen = same
-    return
+  if (same === lastSeen) return { written: false, sha }
+  let next: string | null
+  try {
+    next = await putRepoFile(
+      SYNC_PATH,
+      JSON.stringify(state),
+      `Dienius sync ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`,
+      sha,
+      // The push made as the page goes: the browser carries it past the page
+      // where the plan is small enough for it to be allowed to.
+      options,
+    )
+  } catch (err) {
+    // 409 is the lock; 422 is what the Contents API answers when a create is
+    // sent for a path that has appeared since, which is the same race seen
+    // from the other end.
+    if (err instanceof GitHubError && (err.status === 409 || err.status === 422)) {
+      throw new SyncConflictError('The other device wrote while this one was merging.')
+    }
+    throw err instanceof GitHubError ? new GitHubError(err.status, `GitHub answered ${err.status} writing the shared plan.`) : err
   }
-  // 409 is the lock; 422 is what the Contents API answers when a create is
-  // sent for a path that has appeared since, which is the same race seen from
-  // the other end.
-  if (res.status === 409 || res.status === 422) {
-    throw new SyncConflictError('The other device wrote while this one was merging.')
-  }
-  throw new GitHubError(res.status, `GitHub answered ${res.status} writing the shared plan.`)
+  // Nothing sent: the page is going and the browser would not carry it.
+  if (next === null && options.onlyIfCarried) return { written: false, sha }
+  lastSeen = same
+  return { written: true, sha: next }
 }

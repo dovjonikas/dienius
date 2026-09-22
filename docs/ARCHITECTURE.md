@@ -373,6 +373,7 @@ e2e/                   Playwright against the production build - CONVENTIONS §1
   smoke.e2e.ts         a first day end to end, and the reading plan from the palette
   tour.e2e.ts          the naive walk, on a desktop and on a phone
   sync.e2e.ts          two browser contexts through the real server: one task, then a tick against an edit with a delete between them
+  sync-github.e2e.ts   a desktop and a phone through a repo held in the test: the phone closed straight after a change, and the first connection asked on a phone
   demo.e2e.ts          the sample fortnight's first screen: fits, one notice, part-lived
   replan.e2e.ts        the three doors: something came up, shift the rest, away and back
   lowday.e2e.ts        a low day: the key task at 40%, the mark under the date, the routine where it was
@@ -530,22 +531,28 @@ Three copies, and each covers a loss the other two do not:
 |---|---|---|---|
 | **Sync** (`syncClient.ts`, section below) | A server you host, reached from your devices | Two devices agreeing, live, all day | Survive both devices and the server going at once; work with no server |
 | **Snapshots** (`snapshots.ts`) | IndexedDB on this device, seven kept | This device's own last week - the mistake you did not see coming | Leave the device |
-| **Cloud backup** (`cloudBackup.ts`) | A private GitHub repo you own | Off-site, readable with a browser, on any device that reaches github.com - with sync off, on a phone with no VPN | Merge; it is a copy, whole, and restoring it replaces |
+| **Cloud backup** (`cloudBackup.ts`) | A private GitHub repo you own | Off-site, readable with a browser, on any device that reaches github.com - with sync off, on a phone with no VPN | Sync: it merges into its own file and never into a device's plan |
 
 The cloud copy is written through GitHub's Contents API with nothing in
 between: `data/state.json` is the latest plan, `data/history/YYYY-MM-DD.json`
 that day's last copy, so a history accumulates one file a day and can be
-opened on GitHub. Every write sends the file's current `sha`, the API's own
-optimistic lock; a conflict (another device wrote in between) is answered by
-reading the new sha and writing once more. It pushes after the evening
+opened on GitHub. Since v2.34 every write is the merge of what the file
+holds and what this device holds, per entity, sent over the `sha` that was
+read; a conflict (another device wrote in between) is answered by reading
+and merging again, so no device's backup is ever older than the one before
+it. It was this device's whole plan written over the file, and the phone's
+morning backup put last night's copy over the desktop's (docs/SYNC-AUDIT.md,
+path 2). Reads ask for the Contents API's object form and fetch the file raw
+past a megabyte, where the ordinary form is refused. It pushes after the evening
 close, on the first open of a new day (fixing yesterday in its final state),
 and on a button, spaced by ten minutes for the automatic two, never for the
 button. The repo name and the fine-grained token (Contents read and write on
 that one repo) live under `dienius:cloud-backup` on this device only - not
 in `AppData`, so in no export, no sync payload and no snapshot, and a test
 holds each absence. Restore reads the copy, describes it beside what is here
-("340 tasks across 41 days, newest 4 Sept" against "empty"), and replaces
-only on an armed second press.
+("340 tasks across 41 days, newest 4 Sept" against "empty"), and offers two
+presses: Bring back what is missing, which merges the copy in per entity and
+touches nothing newer, and - armed, second - Replace everything.
 
 ### Sync
 
@@ -620,6 +627,30 @@ going out against the state coming in, and stamps whatever actually changed.
 It is O(entities) on a store of a few hundred, it cannot be forgotten, and it
 is right for actions that do not exist yet. See `syncEntities.ts`.
 
+### A stamp is never behind what the device has seen
+
+The stamp is `stampNow()` from `clock.ts`, not the device's clock: at least a
+millisecond after the newest stamp this device has read - in its own plan as
+it loaded, or in any plan sync brought in - and corrected by GitHub's clock,
+read off the commit every write makes, when the two differ by more than two
+seconds. On the device's own clock, a desktop five minutes slow stamped an
+edit made after seeing the phone's version as older than it, and the next
+sync undid the edit on both devices (docs/SYNC-AUDIT.md, path 6).
+
+### The first connection, and the first pull
+
+A device records when it joined (`dienius:sync-device`). Until then its first
+round trip writes nothing over a shared plan that exists: with nothing of its
+own it takes that plan whole, through `replaceState` so nothing is stamped;
+with a plan of its own it sets `status.choice`, and `chooseFirstSync` takes
+or merges when answered. The first device there goes up as it is.
+
+On a page that has just loaded, the store's own writes - a day stamping its
+template as it opens - wait for the first pull (`holdAutomaticWrites` in
+`store/core.ts`, released by the sync client after its first round trip, at
+most `FIRST_PULL_WAIT_MS`). A day stamped before the pull came back was a
+second copy of a day the other device had already opened.
+
 ### Deletion needs a tombstone
 
 Without one, deleting a task on the phone and syncing means the PC - which
@@ -639,9 +670,12 @@ absent after is a deletion, whoever caused it.
   restorable on the other, which is not what they are for.
 - **The timer and stopwatch** (`clockTools.ts`), for the reason they are not
   in a backup either: a countdown is not state worth moving.
-- **The sync settings themselves** - URL, token, enabled. Syncing the address
-  of the sync server is circular, and a token is a device's own credential.
-  They live under `dienius:sync` in `localStorage`.
+- **The sync settings themselves** - URL, token, enabled, route. Syncing the
+  address of the sync server is circular, and a token is a device's own
+  credential. They live under `dienius:sync` in `localStorage`, and what the
+  device knows about its own syncing - when it joined, last pulled and pushed,
+  and since when a change is owed - under `dienius:sync-device`. GitHub's
+  clock, as far as this device has learned it, is `dienius:clock-offset`.
 
 The North card's dismissal *does* sync - `settings.northDismissedOn` -
 because "I have read this today" is a fact about the person, not the device.
@@ -654,15 +688,21 @@ Note the interaction with a **snapshot restore**. Restoring goes through
 it removes is tombstoned. Left with the snapshot's own old timestamps it would
 lose the next merge to whichever device still held the newer version, and would
 silently undo itself seconds later. A restore is a decision about what the plan
-should be, not an old copy arriving late.
+should be, not an old copy arriving late. That is also why it is the second
+press on the cloud copy since v2.34, and `actions.mergeBackup` the first:
+with sync on, a replacement wins on every device.
 
 ### Two devices at once
 
-There is no locking and there is not going to be. Two overlapping round trips
-can end with the second write landing on a state that never saw the first, and
-that is allowed, because nothing is ever lost *locally*: the device whose
-change was overwritten still has it and puts it back on its next sync. The
-worst case is a change that takes two syncs to arrive, not one that disappears.
+A server of your own has no locking. Two overlapping round trips there can end
+with the second write landing on a state that never saw the first, and that
+is allowed, because nothing is ever lost *locally*: the device whose change
+was overwritten still has it and puts it back on its next sync. The worst case
+is a change that takes two syncs to arrive, not one that disappears.
+
+Through GitHub a write names the version it read, and a refusal starts the
+round trip again: read, merge, write. Two refusals in a row wait for the next
+round trip and say so, rather than write as fast as the repo allows.
 
 ### Conservatism
 

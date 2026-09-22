@@ -95,15 +95,19 @@ The plan lives in `localStorage` on the device, as one JSON object; a few device
 
 - **Export and import** - Settings has a plain JSON backup, both ways. A backup from any earlier version still imports
 - **Daily snapshots** - a full copy once a day in IndexedDB, the last seven kept, restorable from Settings
-- **A copy on GitHub** - Settings → Backup takes a private repo and a fine-grained token, and writes the whole plan there as JSON after the day closes and on the first open of a new day. The token stays on the device. On a new phone, the same two fields and Restore from cloud bring everything back, after showing what it would replace
-- **Sync between your devices** - optional, through a small server you host. Below
+- **A copy on GitHub** - Settings → Backup takes a private repo and a fine-grained token, and writes the whole plan there as JSON after the day closes and on the first open of a new day. The token stays on the device. Each copy is merged into the one before it, so no device's backup is older than another's; Restore from cloud first brings back what is missing and touches nothing newer
+- **Sync between your devices** - optional, through the same GitHub repo or a small server you host. A phone joining takes the computer's plan, or asks which to keep; nothing older is ever written over something newer - see [docs/SYNC.md](docs/SYNC.md). Below
 
 Deleting a task or a note, removing a library item, stamping a template, moving a block to another day and a replan can each be undone for five seconds.
 
 <details>
 <summary><strong>Sync between your devices</strong></summary>
 
-There is no hosted service and no account. You run a server of under three hundred lines on a machine you own, and your devices copy changes through it.
+There is no hosted service and no account.
+
+**Through your GitHub repo** there is nothing to run. With the backup's repo and token on both devices: Settings → Sync → Your GitHub repo → Turn on, on the computer first. A phone with nothing of its own takes the computer's plan; one with a plan of its own asks which to keep before anything is written. Each change goes up a few seconds after it is made, and every open, return and minute on screen reads what the other device left. Settings → Sync shows when this device last pulled and pushed, what waits to go, and says so when it is behind. How it works, and what to do when a device shows an older copy: [docs/SYNC.md](docs/SYNC.md).
+
+**Or a server of your own**, of under three hundred lines, on a machine you own.
 
 ```bash
 node server/sync-server.mjs

@@ -3,10 +3,12 @@ import {
   formatSyncedAt,
   getSyncConfig,
   getSyncStatus,
+  markJoinedForTests,
   POLL_WHILE_VISIBLE_MS,
   pullOnly,
   resetSyncForTests,
   setSyncConfig,
+  startSync,
   syncNow,
 } from './syncClient'
 import { actions, getData } from './store'
@@ -42,6 +44,10 @@ function serverHolding(state: AppData | null) {
 beforeEach(() => {
   localStorage.clear()
   resetSyncForTests()
+  // Every device here has synced before: what these hold is a round trip's
+  // judgement, not the first connection's question, which
+  // syncTwoDevices.test.ts walks with two devices.
+  markJoinedForTests()
   resetGitHubSyncForTests()
   actions.resetForTests(defaultData())
   fetchMock = vi.fn()
@@ -589,6 +595,55 @@ test('an open screen asks once a minute; a hidden one does not', async () => {
     await vi.advanceTimersByTimeAsync(POLL_WHILE_VISIBLE_MS + 10)
     expect(reads()).toBe(readsAfterSwitchOn + 1)
     Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+// --- nothing fails in silence, and nothing waits long -----------------------
+// docs/SYNC-AUDIT.md, paths 7 and 9.
+
+test('a pull that fails says so, rather than leaving the last good line up', async () => {
+  repoHolding(null)
+  turnOnThroughGitHub()
+  await syncNow()
+  fetchMock.mockImplementation(() => Promise.reject(new TypeError('Failed to fetch')))
+
+  await pullOnly()
+
+  expect(getSyncStatus().pullError).toMatch(/Cannot reach GitHub/)
+})
+
+test('a sync that keeps losing the race to the other device says that, not that GitHub is out of reach', async () => {
+  actions.addTask(DATE, 'Call the bank')
+  repoHolding(null, [409, 409, 409, 409])
+  turnOnThroughGitHub()
+  await syncNow()
+
+  expect(getSyncStatus().message).toMatch(/other device/i)
+  expect(getSyncStatus().message).not.toMatch(/Cannot reach/)
+})
+
+test('on a phone a change goes up within three seconds', async () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('coarse'),
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+  }))
+  try {
+    const repo = repoHolding(null)
+    turnOnThroughGitHub()
+    startSync()
+    await vi.runOnlyPendingTimersAsync()
+    const before = repo.written.length
+
+    actions.addTask(DATE, 'Call the bank')
+    await vi.advanceTimersByTimeAsync(3000)
+
+    expect(repo.written.length).toBe(before + 1)
+    expect(JSON.stringify(repo.written.at(-1))).toContain('Call the bank')
   } finally {
     vi.useRealTimers()
   }

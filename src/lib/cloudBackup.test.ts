@@ -18,7 +18,6 @@ import {
   compareSummaries,
   summarise,
   toBase64,
-  writeFile,
   GitHubError,
 } from './cloudBackup'
 import { actions, getData } from './store'
@@ -375,16 +374,19 @@ test('nothing is marked as losing when the two copies agree', () => {
  * do not have.
  */
 test('every read of the file goes to GitHub rather than to the browser cache', async () => {
-  stored.set('data/state.json', { sha: 'sha-old', content: '{}' })
+  stored.set(STATE_PATH, { sha: 'sha-old', content: '{}' })
   putAnswers = [409]
+  markDirtyForTests()
 
-  await writeFile('data/state.json', '{"a":1}', 'write')
+  await requestCloudBackup('manual')
 
-  const gets = calls.filter(c => c.method === 'GET')
+  const gets = calls.filter(c => c.method === 'GET' && c.url.endsWith(STATE_PATH))
   expect(gets.length).toBe(2)
-  for (const get of gets) expect(get.cache).toBe('no-store')
+  for (const get of calls.filter(c => c.method === 'GET')) expect(get.cache).toBe('no-store')
   // And it did write again, with the sha the second read gave it.
-  expect(calls.filter(c => c.method === 'PUT').length).toBe(2)
+  const puts = calls.filter(c => c.method === 'PUT' && c.url.endsWith(STATE_PATH))
+  expect(puts.length).toBe(2)
+  expect(puts[1].body!.sha).toBe('sha-old')
 })
 
 test('a conflict that survives the retry says what happened, not who did it', () => {

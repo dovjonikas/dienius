@@ -287,10 +287,13 @@ means: set it up separately on each device you use.
 
 ## 8. Two devices, if you have a second one
 
-Optional, and unrelated to step 5. Sync needs a small server you run
-yourself - a PC at home, reached from the phone. `server/sync-server.mjs`
-in the repo, and **Settings → Sync** for the address and token it prints.
-Skip this entirely if one browser is where you plan; nothing degrades.
+Optional. Sync goes through the same GitHub repo as the backup - nothing to
+run - or through a small server of your own (`server/sync-server.mjs`).
+**Settings → Sync → Your GitHub repo → Turn on**, on the computer first, then
+on the phone; a phone with nothing of its own takes the computer's plan, and
+one with a plan of its own asks which to keep. How it works, and what to do
+if a device shows an older copy: [SYNC.md](SYNC.md). Skip this entirely if
+one browser is where you plan; nothing degrades.
 
 ---
 
@@ -682,8 +685,11 @@ first, in the words you wrote.
   kept, so this morning's is the newest. It replaces everything, and it says
   what it holds before it does.
 - **Something is wrong since yesterday or before** - Settings → Backup →
-  **Restore from cloud**. It reads the copy on GitHub, tells you what is in
-  it and what is here, and replaces only on the second press.
+  **Restore from cloud**. It reads the copy on GitHub and tells you what is
+  in it and what is here. **Bring back what is missing** adds what the copy
+  has and this plan does not, and touches nothing newer; **Replace
+  everything** is the second, armed press, and with sync on it replaces
+  your other device too.
 - **You want one specific day back and nothing else** - open
   `data/history/YYYY-MM-DD.json` on github.com, download it, and
   Settings → General → **Import backup**. Same thing: it replaces everything,

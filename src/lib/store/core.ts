@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { AppData, DayPlan } from '../types'
 import { loadData, saveData } from '../storage'
 import { stampChanges } from '../syncEntities'
+import { resetClockForTests, sawPlan, stampNow } from '../clock'
 import { isTourRunning } from '../tourState'
 import { markTourCreated } from '../tour'
 
@@ -18,6 +19,9 @@ import { markTourCreated } from '../tour'
  */
 
 let data: AppData = loadData()
+// Every stamp from here on is after every stamp in the plan as it loaded -
+// see clock.ts.
+sawPlan(data)
 let saveOk = true
 const listeners = new Set<() => void>()
 
@@ -36,7 +40,10 @@ export function commit(next: AppData): void {
   // While the tour runs, whatever appears is flagged as its doing - by the
   // same diff, for the same reason: no action has to know the tour exists.
   const marked = isTourRunning() ? markTourCreated(previous, next) : next
-  data = stampChanges(previous, marked, new Date().toISOString())
+  // From the clock that is never behind anything this device has seen, and
+  // is on GitHub's where GitHub has said - see clock.ts. The device's own
+  // clock let an edit made after seeing the other device's lose to it.
+  data = stampChanges(previous, marked, stampNow())
   saveOk = saveData(data)
   listeners.forEach(fn => fn())
   onCommit.forEach(fn => fn())
@@ -57,12 +64,44 @@ export function onStateCommitted(fn: () => void): () => void {
 /**
  * Replaces the whole state without stamping - the one write that must not
  * look like a local edit. Used by the sync merge, whose result already
- * carries the right timestamps from both sides, and by a snapshot restore.
+ * carries the right timestamps from both sides, and by a backup merged in.
+ *
+ * `owed` says the result holds something the shared copy does not, so the
+ * commit watchers hear of it - sync pushes it, the backup marks itself
+ * changed - without anything in it being stamped as new.
  */
-export function replaceState(next: AppData): void {
+export function replaceState(next: AppData, options: { owed?: boolean } = {}): void {
   data = next
+  sawPlan(next)
   saveOk = saveData(data)
   listeners.forEach(fn => fn())
+  if (options.owed) onCommit.forEach(fn => fn())
+}
+
+/**
+ * A wait on the writes the store makes on its own - a day stamping its
+ * template as it is opened - while something says they must wait. Sync
+ * holds them until the page's first pull has come back, so that a day is
+ * stamped on what the other device already did to it rather than beside
+ * it (docs/SYNC-AUDIT.md, path 8). Registered rather than imported: the
+ * store knows nothing about sync.
+ */
+export interface AutomaticHold {
+  held: () => boolean
+  then: (fn: () => void) => void
+}
+
+let automaticHold: AutomaticHold | null = null
+
+export function holdAutomaticWrites(hold: AutomaticHold | null): void {
+  automaticHold = hold
+}
+
+/** Runs `fn` once the hold is off and says true, or says false when nothing holds it. */
+export function laterIfHeld(fn: () => void): boolean {
+  if (!automaticHold?.held()) return false
+  automaticHold.then(fn)
+  return true
 }
 
 export function getData(): AppData {
@@ -86,6 +125,8 @@ export function useAppData(): AppData {
 export function resetForTests(next: AppData): void {
   data = next
   saveOk = true
+  resetClockForTests()
+  sawPlan(next)
   listeners.forEach(fn => fn())
 }
 

@@ -6,7 +6,62 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** v2.33 is done - templates and a roster as JSON, imported with a preview and exported the same every time (docs/TEMPLATE-JSON.md). Before it Kitchen v2.32. One look's stage 3, one frame, is done too. Next: sync, first, because it is data - the owner's report of the phone writing an older copy over the desktop's; then the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** v2.34 is done - an older copy is never written over a newer one: sync diagnosed path by path (docs/SYNC-AUDIT.md), fixed, and written down for the owner (docs/SYNC.md). Before it v2.33, templates and a roster as JSON (docs/TEMPLATE-JSON.md), and Kitchen v2.32. One look's stage 3, one frame, is done too. Next: the four-part brief of the evening of 2026-09-22 (ongoing blocks that end themselves, Kitchen's map and waiting recipe names, routines in the JSON, the Library's and North's pastes), then the rest of one look, then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.34 - An older copy is never written over a newer one
+
+The owner's report of 2026-09-22: the phone sometimes wrote its old copy over
+the desktop's. The wish with it: the desktop is the main device; a phone
+joining through GitHub takes everything and writes nothing over it; after
+that both push after every change and pull on every open, return and wake.
+docs/SYNC-AUDIT.md is the diagnosis - ten paths, each with the test that
+reproduced it before its fix - and docs/SYNC.md is how it works now and what
+to do on seeing an old copy. DECISIONS "An older copy is never written over a
+newer one" has why.
+
+- **The route no longer forgets itself.** A device switched on through
+  GitHub read as "a server of your own" after its first reload, and synced
+  nothing from then on; `via` is read back with the rest.
+- **The backup merges, one way.** Each write to `data/state.json` and the
+  day's file is the merge of the file and this device, over the sha read,
+  read and merged again on a refusal - never this device's whole plan over
+  it. The merge goes to the file only. When the file held changes this
+  device never saw and sync is off here, Backup and Sync say in red that the
+  two plans do not see each other.
+- **The first connection asks.** Nothing of its own: the shared plan is
+  taken whole, stamping nothing. A plan of its own: Take from GitHub
+  (recommended) or Merge, with both sides described, and nothing written
+  until then. Devices that synced before are asked once.
+- **Stamps from `lib/clock.ts`**: never behind any stamp this device has
+  read, and on GitHub's clock, from the commit every write makes, where it
+  differs by more than two seconds.
+- **A day waits for the first pull.** On a page that has just loaded the
+  store's own writes - a day stamping its template - wait for the first
+  pull, at most five seconds, not at all offline.
+- **Pushes**: three seconds after a change on a phone, eight on a computer;
+  a round trip as the page is hidden; as it is closed, one write with
+  `keepalive` over the version last read, where the plan fits; what is owed
+  remembered and sent first on the next open.
+- **Restore from cloud** offers Bring back what is missing first - a merge,
+  nothing newer touched - and Replace everything second, armed, saying it
+  replaces every device. Its note said the opposite of what happened.
+- **Visible**: Settings, Sync shows the last pull and push, what waits to
+  go and whether GitHub holds anything this device has not taken, and says
+  "This device is behind GitHub. Press Pull." when it may be; a failed pull
+  is said, never swallowed; while sync fails or waits for an answer, one
+  line says so at the top of every screen.
+- **A plan past a megabyte** is read in the Contents API's object form and
+  raw, where the ordinary form is refused - which had read as a token
+  GitHub would not take.
+- **Tests**: `syncTwoDevices.test.ts` - two storages, the app loaded afresh
+  for each open, the repo in memory with GitHub's lock, thirteen tests
+  through every path; `clock.test.ts`; additions to `syncClient.test.ts`,
+  `SyncSettings.test.tsx` and `BackupSettings.test.tsx`; `e2e/sync-github.e2e.ts`,
+  a desktop and an iPhone-sized phone against one repo, the phone's tab
+  closed straight after a change.
+- **For the owner, once**: after this version each device that synced
+  before asks which plan it keeps. On the desktop, Merge; on the phone, Take
+  from GitHub.
 
 ## v2.33 - Templates and a roster as JSON
 

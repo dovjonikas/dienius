@@ -49,7 +49,7 @@ is the private GitHub repo the backup writes to:
 
 | File | What it is |
 |---|---|
-| `data/state.json` | The whole plan, the latest copy. Start here. |
+| `data/state.json` | The whole plan, the latest copy - since v2.34 the merge of every device's backups, so never older than any of them. Start here. |
 | `data/history/YYYY-MM-DD.json` | That day's last copy of the whole plan. One file a day. |
 | `data/sync.json` | Sync's own machinery. Not for reading. |
 
@@ -63,8 +63,10 @@ has changed, when the evening closes, when a new day starts, and whenever
 "Back up now" is pressed. A device that is off writes nothing.
 
 **Reading is safe; writing into these files is not.** The app never reads
-them on its own. It reads `state.json` only when the person presses Restore
-and confirms, and it writes over all of them on its next backup. So:
+them into the plan on its own. It reads `state.json` when the person presses
+Restore, and on every backup, to merge its own plan into it - an edit made
+there by hand loses to the device's own version of the same thing, and
+anything removed there by hand comes back. So:
 
 - Never edit `data/*.json` expecting the plan to change. It will not, and the
   edit is gone at the next backup.

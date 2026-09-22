@@ -85,11 +85,62 @@ test('restore describes both copies first, replaces only on the armed second pre
 
   await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
   await screen.findByRole('group', { name: 'Restore from cloud' })
-  await userEvent.click(screen.getByRole('button', { name: 'Replace what is here with the cloud copy' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Replace everything here' }))
   expect(getData().days[todayKey()].tasks[0].title).toBe('Mine')
   await userEvent.click(screen.getByRole('button', { name: 'Replace?' }))
   expect(getData().days['2026-08-20'].tasks.map(t => t.title)).toEqual(['From the cloud', 'Also'])
   expect(getData().days[todayKey()]).toBeUndefined()
+})
+
+/**
+ * The first press on a restore brings back what is missing, one entity at a
+ * time, and touches nothing newer - docs/SYNC-AUDIT.md, path 5. Replacing
+ * everything is still there, second and armed.
+ */
+test('Bring back what is missing keeps what is here and adds what only the backup has', async () => {
+  setCloudBackupConfig({ repo: 'me/dienius-data', token: 'github_pat_x' })
+  const copy = defaultData()
+  copy.days['2026-08-20'] = {
+    date: '2026-08-20',
+    tasks: [{ id: 'a', title: 'From the cloud', done: false, updatedAt: '2026-08-20T08:00:00.000Z' }],
+    updatedAt: '2026-08-20T08:00:00.000Z',
+  }
+  cloud = JSON.stringify(copy)
+  actions.addTask(todayKey(), 'Mine')
+
+  render(<BackupSettings />)
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+  await screen.findByRole('group', { name: 'Restore from cloud' })
+  await userEvent.click(screen.getByRole('button', { name: 'Bring back what is missing' }))
+
+  expect(getData().days[todayKey()].tasks.map(t => t.title)).toEqual(['Mine'])
+  expect(getData().days['2026-08-20'].tasks.map(t => t.title)).toEqual(['From the cloud'])
+  expect(screen.queryByRole('group', { name: 'Restore from cloud' })).toBeNull()
+})
+
+test('with sync on, replacing everything says that it replaces the other device too', async () => {
+  cloud = JSON.stringify(defaultData())
+  setCloudBackupConfig({ repo: 'someone/dienius-data', token: 'fine' })
+  setSyncConfig({ url: '', token: '', enabled: true, via: 'github' })
+  render(<BackupSettings />)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Restore from cloud' }))
+  await screen.findByRole('group', { name: 'Restore from cloud' })
+
+  expect(screen.getByRole('note')).toHaveTextContent(/every device/)
+  expect(screen.getByRole('note')).not.toHaveTextContent(/merges the shared plan into it/)
+})
+
+test('another device backing up to the same repo with sync off here is said in red', async () => {
+  localStorage.setItem(
+    'dienius:cloud-backup',
+    JSON.stringify({ repo: 'someone/plans', token: 'fine', lastBackupAt: null, othersUnseenAt: '2026-09-22T06:00:00.000Z' }),
+  )
+  resetCloudBackupForTests()
+  render(<BackupSettings />)
+
+  const warning = screen.getByText(/Another device backs up to this repo, and sync is off here/)
+  expect(warning.closest('.sync-status-bad')).not.toBeNull()
 })
 
 test('a repo with no backup yet says so rather than offering to replace with nothing', async () => {

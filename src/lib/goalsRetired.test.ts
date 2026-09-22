@@ -78,5 +78,7 @@ test('the load step retires goals, and so does every sync merge', () => {
   const storage = FILES.find(f => f.path === 'lib/storage.ts')!.text
   const sync = FILES.find(f => f.path === 'lib/syncClient.ts')!.text
   expect(storage).toMatch(/return retireGoals\(foldInbox\(/)
-  expect(withoutComments(sync).match(/retireGoals\(/g)).toHaveLength(2)
+  // Every door a remote plan comes in through: the minute's pull, the round
+  // trip, and the first connection taking the shared plan whole.
+  expect(withoutComments(sync).match(/retireGoals\(/g)).toHaveLength(3)
 })

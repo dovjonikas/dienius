@@ -19,7 +19,9 @@ down here fails the build. Fields new in v2.31 are marked **v2.31**.
   for whoever opens the file; it is not part of the plan and is dropped on the
   way in.
 - **The GitHub copy** writes the same text, without `about`:
-  - `data/state.json` - the latest copy;
+  - `data/state.json` - the latest copy: since v2.34 the merge of what the
+    file held and what the device backing up holds, per entity, so it is
+    never older than any device's last backup;
   - `data/history/YYYY-MM-DD.json` - that day's last copy, one file a day;
   - `data/sync.json` - sync's own machinery, not a plan.
 - **When**: at most every ten minutes while something changed, when the

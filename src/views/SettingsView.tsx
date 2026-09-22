@@ -23,6 +23,9 @@ import { CalendarSettings } from './CalendarSettings'
 
 type SectionId = 'general' | 'sleep' | 'week' | 'json' | 'categories' | 'kitchen' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
+/** A section Settings can be opened at, from outside it. */
+export type SettingsSection = SectionId
+
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
  * numbering (0 = Sunday), so nothing anywhere has to translate between a
@@ -83,7 +86,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
 /** How far down the viewport a section heading has to be before the list stops calling it current. */
 const SECTION_ACTIVE_OFFSET_PX = 120
 
-export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void } = {}) {
+export function SettingsView({ onShowShortcuts, openAt }: { onShowShortcuts?: () => void; openAt?: SettingsSection } = {}) {
   // Two facts the browser owns rather than the store: whether an install
   // offer is currently held (Chromium fires it when it feels like it, and
   // withdraws it after an install), and whether this page is already running
@@ -212,6 +215,13 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
     setSection(id)
     document.getElementById(`settings-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  // Opened at a section from outside - the sync line at the top of the app.
+  useEffect(() => {
+    if (!openAt) return
+    setSection(openAt)
+    document.getElementById(`settings-${openAt}`)?.scrollIntoView({ block: 'start' })
+  }, [openAt])
 
   // Keeps the marker honest when the page is scrolled by hand rather than
   // through the list. Plain geometry on a scroll event rather than an

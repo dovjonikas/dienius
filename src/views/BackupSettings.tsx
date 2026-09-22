@@ -97,7 +97,18 @@ export function BackupSettings() {
     }
   }
 
-  function restore() {
+  // The first press: what the backup has and this plan does not, one entity
+  // at a time, and nothing newer touched - docs/SYNC-AUDIT.md, path 5.
+  function bringBack() {
+    if (!preview) return
+    actions.mergeBackup(preview.data)
+    setPreview(null)
+    setArmed(false)
+  }
+
+  // The second, armed one: everything here replaced, stamped as a change made
+  // now, so that it wins the next sync - on every device.
+  function replaceAll() {
     if (!preview) return
     actions.restoreState(preview.data)
     setPreview(null)
@@ -177,6 +188,16 @@ export function BackupSettings() {
           {line.text}
         </p>
 
+        {/* Two devices backing up here with sync off: each copy is merged now,
+            so neither is lost, but the two plans still never meet - see
+            cloudBackup.ts, othersUnseenAt. Said on both sections. */}
+        {status.othersUnseenAt && !getSyncConfig().enabled && (
+          <p className="sync-status sync-status-bad">
+            Another device backs up to this repo, and sync is off here, so the two plans do not see each other. Turn
+            sync on, on both devices.
+          </p>
+        )}
+
         {previewError && (
           <p className="sync-status sync-status-bad" role="status">
             {previewError}
@@ -229,15 +250,20 @@ export function BackupSettings() {
             {/* The one confusion this section has caused in practice. Sync
                 and Backup share a repo, and with sync on the shared plan is
                 already on this device - so pressing Restore to "get the
-                other device's changes" puts back an older copy instead, and
-                a day cleared elsewhere walks back in. The owner did exactly
-                that in the first week. Said here, at the press, rather than
-                in the description above it. */}
+                other device's changes" put back an older copy instead, and a
+                day cleared elsewhere walked back in. The owner did exactly
+                that in the first week. It said the next sync would merge the
+                shared plan into the restored copy, which was the opposite of
+                what happened: a replacement is stamped now and wins on every
+                device. Said here, at the press, rather than in the
+                description above it. */}
             {getSyncConfig().enabled && (
               <p className="backup-preview-line backup-preview-warn" role="note">
-                Sync is on, so this device already has the shared plan. What is above is the backup, an older copy.
-                Restoring puts that older copy back and the next sync merges the shared plan into it. To bring another
-                device's changes here, Sync now in the section below does that without replacing anything.
+                Sync is on, so this device already has the shared plan, and the backup is an older copy of it. Bring
+                back what is missing adds only what the backup has and this plan does not, and changes nothing newer.
+                Replace everything puts the backup back on every device, and undoes there too what was done since. To
+                bring another device's changes here, Sync now in the section below does that without replacing
+                anything.
               </p>
             )}
             <div className="sync-actions">
@@ -247,10 +273,13 @@ export function BackupSettings() {
               <button
                 type="button"
                 className={armed ? 'btn-danger is-armed' : 'btn-danger'}
-                onClick={() => (armed ? restore() : setArmed(true))}
+                onClick={() => (armed ? replaceAll() : setArmed(true))}
                 onBlur={() => setArmed(false)}
               >
-                {armed ? 'Replace?' : 'Replace what is here with the cloud copy'}
+                {armed ? 'Replace?' : 'Replace everything here'}
+              </button>
+              <button type="button" className="primary" onClick={bringBack}>
+                Bring back what is missing
               </button>
             </div>
           </div>

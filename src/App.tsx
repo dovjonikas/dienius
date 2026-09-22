@@ -19,6 +19,8 @@ import { actions as storeActions, getData } from './lib/store'
 import { snapshotToday } from './lib/snapshots'
 import { requestCloudBackup } from './lib/cloudBackup'
 import { DemoBanner } from './views/DemoBanner'
+import { SyncBanner } from './views/SyncBanner'
+import type { SettingsSection } from './views/SettingsView'
 import { Tour } from './views/tour/Tour'
 import { isTourRunning, startTour } from './lib/tourState'
 import { leaveTour } from './lib/tourExit'
@@ -228,6 +230,16 @@ export function App() {
   function openKitchen(opening: { recipeId?: string; meal?: MealType } = {}) {
     setKitchenOpening(current => ({ ...opening, key: current.key + 1 }))
     setView('kitchen')
+  }
+
+  // Settings, opened on one of its sections - the sync line's button. A key
+  // for the same reason Kitchen has one: a second press while Settings is
+  // already open scrolls to the section again.
+  const [settingsOpening, setSettingsOpening] = useState<{ key: number; at?: SettingsSection }>({ key: 0 })
+
+  function openSettingsAt(at: SettingsSection) {
+    setSettingsOpening(current => ({ at, key: current.key + 1 }))
+    setView('settings')
   }
 
   /**
@@ -650,6 +662,7 @@ export function App() {
           it a state instead of a screen is that the rest of the app keeps
           working while it runs. */}
       <DemoBanner />
+      <SyncBanner onOpen={() => openSettingsAt('sync')} />
       <FocusBar onExpand={() => setFocusExpanded(true)} />
       <main className={view === 'day' ? 'main-day' : ''}>
         {view === 'day' &&
@@ -683,7 +696,7 @@ export function App() {
         {view === 'library' && <LibraryView onOpenDay={openDay} />}
         {view === 'review' && <ReviewView onOpenDay={openDay} />}
         {view === 'settings' && (
-          <SettingsView onShowShortcuts={() => setShortcutsOpen(true)} />
+          <SettingsView key={settingsOpening.key} openAt={settingsOpening.at} onShowShortcuts={() => setShortcutsOpen(true)} />
         )}
       </main>
       {/* Both mounted at the root, outside <main>, so neither is torn down by

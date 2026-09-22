@@ -1,4 +1,4 @@
-import { commit, dayOf, getData, withDay } from './core'
+import { commit, dayOf, getData, laterIfHeld, withDay } from './core'
 import { advanceForTask } from './library'
 import type { DayPlan, LibraryRef, MealType, Repeat, Task } from '../types'
 import { MAX_HIGHLIGHTS } from '../types'
@@ -99,6 +99,9 @@ export const dayActions = {
    * without writing it - see `applyReplan` below, which is the other caller.
    */
   ensureDay(date: string): boolean {
+    // Not before the page's first pull has come back, with sync on: the
+    // other device may already have opened this day - see laterIfHeld.
+    if (laterIfHeld(() => void dayActions.ensureDay(date))) return false
     const data = getData()
     const ensured = ensuredDay(data, date)
     if (!ensured) return false

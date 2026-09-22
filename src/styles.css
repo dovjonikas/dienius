@@ -11932,6 +11932,22 @@ button.north-day-line:focus-visible {
 
 .sync-fields + .sync-actions { margin-top: 0; }
 
+/* What this device last did, one fact a line: the names in one column and
+   what they say beside them - one label column, the way a form has one. */
+.sync-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: var(--s4);
+  row-gap: var(--s1);
+  margin: var(--s3) 0 0;
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+.sync-facts dt { color: var(--muted); }
+
+.sync-facts dd { margin: 0; min-width: 0; color: var(--text); }
+
 /* The two summaries a restore is decided on, and the armed button under
    them - inside the block, in the same quiet register as the status line. */
 /* Both copies, part by part, before a press that replaces all of it.
@@ -12993,6 +13009,11 @@ main:has(.week) > .calendar {
   background: var(--accent);
   flex-shrink: 0;
 }
+
+/* Sync's line is the demo's line with the danger ink's mark: it is there
+   because something waits on a person - an answer, or a failure to look
+   at. */
+.sync-banner-mark { background: var(--danger); }
 
 /* A basis the short phone sentence fits in beside its button, so the banner
    is one row there too rather than a paragraph with a button under it. */

@@ -4480,3 +4480,56 @@ example and a person or an agent can change it by eye; and the same plan is
 the same text every time, so exported, imported and exported again it is
 equal character for character - which the contract's example itself is held
 to by a test.
+
+## An older copy is never written over a newer one
+
+v2.34, docs/SYNC-AUDIT.md and docs/SYNC.md. The owner's report: the phone
+sometimes wrote its old copy over the desktop's. Nine paths were found, and
+each has a test that failed before its fix. The choices worth writing down:
+
+**The first connection asks, and "Take from GitHub" is always the
+recommended answer.** A device with nothing of its own takes the shared plan
+whole without asking; one with a plan of its own is asked before anything
+is written. The recommendation could have followed the facts - recommend
+Merge where this device changed something more recently - and it would have
+been wrong exactly where it matters: a phone opened this morning has
+stamped this morning's day, so it always looks newer. The owner's rule is
+that the desktop is the main device and the phone takes; the question
+describes both sides, and the desktop answers Merge. Devices that synced
+before v2.34 are asked once, because nothing recorded which of them joined
+first.
+
+**The backup merges into its file and never into the plan.** A backup that
+also brought the file's changes into the device would be a second sync with
+none of sync's care - no first-connection question, no waiting for the day.
+So the merge goes one way: the file ends up with at least what every device
+sent it, and a device's own plan is only changed by sync. What the file held
+that this device had never seen is noted and, with sync off here, said in
+red.
+
+**Stamps from a clock that is never behind what it has seen.** A hybrid
+logical clock rather than a server's: GitHub will not say what time it is
+except in the commit it makes, so that is used where it comes - to correct a
+device more than two seconds out - and the floor does the rest. A stamp
+more than a day ahead of now is not taken as a floor, so one device with its
+date a year out cannot drag every stamp after it a year out too.
+
+**The day waits for the first pull, at most five seconds.** Deterministic
+task ids for a stamped template would have let two devices stamp the same
+day into the same tasks - and then the one opened later, with nothing
+ticked, would have won over the one with everything ticked, since its stamp
+is newer. Waiting for the pull is what keeps the phone from stamping a day
+the desktop already has, and five seconds is a ceiling nobody should meet:
+a pull takes about one.
+
+**Three seconds on a phone, eight on a computer.** Thirty kept the repo's
+history short and let a change sit unsent for half a minute on a device that
+is put away seconds after the last tap. The push on leaving goes with
+`keepalive` where the plan fits the 64 KB a browser allows; the rest is
+remembered and sent first on the next open. `sendBeacon` was not an option:
+it cannot carry the token GitHub needs, nor make a PUT.
+
+**Restore brings back first, and replaces second.** Replacing everything is
+still there, armed, and still stamped now - a roll-back that the next sync
+undid would be no roll-back - but it is no longer the first press, and it
+says that it replaces every device.

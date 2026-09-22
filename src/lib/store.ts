@@ -13,7 +13,7 @@ import { templateActions } from './store/templates'
 import { resetForTests } from './store/core'
 
 export { MAX_PUSHES } from './pushRules'
-export { getData, getSaveOk, onStateCommitted, replaceState, subscribe, useAppData } from './store/core'
+export { getData, getSaveOk, holdAutomaticWrites, onStateCommitted, replaceState, subscribe, useAppData } from './store/core'
 export type { RolloverResult } from './store/days'
 
 /**

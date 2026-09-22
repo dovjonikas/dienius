@@ -6,6 +6,8 @@ import { importJson } from './storage'
 import { isDemoMode } from './demoMode'
 import { isTourSandbox } from './tourMode'
 import { dateKey, todayKey } from './dates'
+import { isSyncableState, mergeStates, normaliseRemote } from './syncMerge'
+import { sawServerTime } from './clock'
 
 /**
  * The third copy: a full snapshot of the plan in a private GitHub repo.
@@ -36,10 +38,18 @@ import { dateKey, todayKey } from './dates'
  *
  * Two files in the repo: `data/state.json`, the latest copy, and
  * `data/history/YYYY-MM-DD.json`, that day's last copy - a history for
- * free, one file a day, browsable on GitHub. Every write goes through the
- * Contents API's own optimistic lock: the file's current `sha` is sent with
- * the update, and a mismatch (another device wrote in between) is answered
- * by reading the new sha and writing once more.
+ * free, one file a day, browsable on GitHub.
+ *
+ * **A copy is never older than the one it replaces.** Each write is the
+ * merge of what the file holds and what this device holds, one entity at a
+ * time, written over the version that was read (the Contents API's sha); a
+ * refusal means another device wrote in between, and is answered by reading
+ * and merging again. It was this device's whole plan, written over whatever
+ * was there - so the phone, backing up on its first open of the morning,
+ * put last night's copy over the desktop's evening one (docs/SYNC-AUDIT.md,
+ * path 2). And a backup is never a sync: the merge goes to the file, never
+ * into this device's plan. What the file held that this device had never
+ * seen is only noted, as `othersUnseenAt`, for Settings to say.
  */
 
 const CONFIG_KEY = 'dienius:cloud-backup'
@@ -58,6 +68,13 @@ export interface CloudBackupConfig {
   token: string
   /** ISO instant of the last successful push, or null. */
   lastBackupAt: string | null
+  /**
+   * When the last backup found changes in the file this device had never
+   * seen - another device backing up to the same repo - or null when it
+   * found none. With sync off here, that is two plans that do not meet,
+   * and Settings says so in red (docs/SYNC-AUDIT.md, path 3).
+   */
+  othersUnseenAt: string | null
 }
 
 export type CloudBackupPhase = 'off' | 'idle' | 'working' | 'error' | 'offline'
@@ -67,6 +84,8 @@ export interface CloudBackupStatus {
   lastBackupAt: string | null
   /** A sentence somebody can act on. Never a status code alone. */
   message: string | null
+  /** See `CloudBackupConfig.othersUnseenAt`. */
+  othersUnseenAt: string | null
 }
 
 /** Why a push was asked for - only the reason that matters for spacing. */
@@ -110,13 +129,14 @@ export interface StateSummary {
   newest: string | null
 }
 
-const EMPTY_CONFIG: CloudBackupConfig = { repo: '', token: '', lastBackupAt: null }
+const EMPTY_CONFIG: CloudBackupConfig = { repo: '', token: '', lastBackupAt: null, othersUnseenAt: null }
 
 let config: CloudBackupConfig = loadConfig()
 let status: CloudBackupStatus = {
   phase: config.repo && config.token ? 'idle' : 'off',
   lastBackupAt: config.lastBackupAt,
   message: null,
+  othersUnseenAt: config.othersUnseenAt,
 }
 const listeners = new Set<() => void>()
 let dirty = false
@@ -136,6 +156,7 @@ function loadConfig(): CloudBackupConfig {
       repo: typeof p.repo === 'string' ? p.repo : '',
       token: typeof p.token === 'string' ? p.token : '',
       lastBackupAt: typeof p.lastBackupAt === 'string' ? p.lastBackupAt : null,
+      othersUnseenAt: typeof p.othersUnseenAt === 'string' ? p.othersUnseenAt : null,
     }
   } catch {
     return { ...EMPTY_CONFIG }
@@ -244,16 +265,18 @@ async function push(): Promise<boolean> {
     return false
   }
   setStatus({ phase: 'working', message: null })
-  const data = getData()
-  const json = JSON.stringify(data, null, 2)
   const today = todayKey()
   try {
-    await writeFile(STATE_PATH, json, `Dienius backup ${today}`)
-    await writeFile(historyPath(today), json, `Dienius ${today}`)
+    const latest = await writeMerged(STATE_PATH, `Dienius backup ${today}`, getData())
+    // The day's file from the same merge, merged once more with whatever
+    // that file already holds - two devices backing up on one day each
+    // leave the day's copy at least as whole as the other's.
+    await writeMerged(historyPath(today), `Dienius ${today}`, latest.data)
     dirty = false
-    config = { ...config, lastBackupAt: new Date().toISOString() }
+    const at = new Date().toISOString()
+    config = { ...config, lastBackupAt: at, othersUnseenAt: latest.unseen ? at : null }
     saveConfig()
-    setStatus({ phase: 'idle', lastBackupAt: config.lastBackupAt, message: null })
+    setStatus({ phase: 'idle', lastBackupAt: at, message: null, othersUnseenAt: config.othersUnseenAt })
     return true
   } catch (err) {
     setStatus({ phase: 'error', message: describeFailure(err) })
@@ -298,45 +321,127 @@ function headers(): Record<string, string> {
   }
 }
 
-/**
- * The file's current sha, or null when it does not exist yet.
- *
- * `no-store`, and it is the difference between the retry below working and
- * being theatre. GitHub sends `Cache-Control: private, max-age=60` on a
- * Contents response, so a plain re-read inside that minute can be answered
- * out of the browser's own cache with the sha that was just refused - and a
- * second write carrying it is certain to be refused as well. Re-reading has
- * to actually read.
- */
-async function shaOf(path: string): Promise<string | null> {
-  const res = await fetch(apiUrl(path), { headers: headers(), cache: 'no-store' })
-  if (res.status === 404) return null
-  if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} reading ${path}`)
-  const body = (await res.json()) as { sha?: unknown }
-  return typeof body.sha === 'string' ? body.sha : null
+/** What a file in the repo holds, and the version it was read at. */
+export interface RepoFile {
+  /** `null` where the file does not exist yet. */
+  sha: string | null
+  text: string | null
 }
 
 /**
- * Writes one file, creating or updating it. The current sha is read first
- * and sent with the update - the Contents API's own optimistic lock. A 409
- * or 422 means the file moved under us (another device wrote it since the
- * read), and the honest answer is to read the new sha and write once more;
- * a second conflict is reported, not hidden.
+ * Reads one file with the version it is at.
+ *
+ * `no-store`, and it is the difference between a retry working and being
+ * theatre. GitHub sends `Cache-Control: private, max-age=60` on a Contents
+ * response, so a plain re-read inside that minute can be answered out of the
+ * browser's own cache with the sha that was just refused - and a second
+ * write carrying it is certain to be refused as well. Re-reading has to
+ * actually read.
+ *
+ * Asked for as the "object" form, which answers for a file of any size up
+ * to 100 MB: past one megabyte the ordinary form is refused outright, with a
+ * 403 that read here as a token GitHub would not take, while the object form
+ * still sends the sha and leaves the content out - which is then fetched
+ * raw. A plan grows past a megabyte in a few months of blocks.
  */
-export async function writeFile(path: string, content: string, message: string): Promise<void> {
-  let sha = await shaOf(path)
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(apiUrl(path), {
-      method: 'PUT',
-      headers: { ...headers(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, content: toBase64(content), ...(sha ? { sha } : {}) }),
-    })
-    if (res.ok) return
-    if ((res.status === 409 || res.status === 422) && attempt === 0) {
-      sha = await shaOf(path)
-      continue
+export async function readRepoFile(path: string): Promise<RepoFile> {
+  const res = await fetch(apiUrl(path), { headers: { ...headers(), Accept: 'application/vnd.github.object+json' }, cache: 'no-store' })
+  if (res.status === 404) return { sha: null, text: null }
+  if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} reading ${path}`)
+  const body = (await res.json()) as { sha?: unknown; content?: unknown; encoding?: unknown; size?: unknown }
+  const sha = typeof body.sha === 'string' ? body.sha : null
+  if (typeof body.content === 'string' && body.content !== '' && body.encoding !== 'none') {
+    return { sha, text: fromBase64(body.content) }
+  }
+  if (body.size === 0) return { sha, text: '' }
+  return { sha, text: await readFile(path) }
+}
+
+/**
+ * How a write may travel. `keepalive` asks the browser to carry the request
+ * past the page where it is small enough to be allowed; `onlyIfCarried`
+ * sends nothing where it is not - a request the page will not live to see
+ * answered is only worth making if the browser takes it over.
+ */
+export interface PutOptions {
+  keepalive?: boolean
+  onlyIfCarried?: boolean
+}
+
+/**
+ * Writes one file over the version that was read - `sha` null to create it
+ * - and learns GitHub's clock from the commit it makes (see clock.ts).
+ * Resolves to the file's new sha when GitHub says it, or null - and to null
+ * without writing when `onlyIfCarried` could not be kept. Throws a
+ * GitHubError on a refusal, 409 and 422 included: which of those to answer
+ * by reading again is the caller's to decide.
+ */
+export async function putRepoFile(
+  path: string,
+  content: string,
+  message: string,
+  sha: string | null,
+  options: PutOptions = {},
+): Promise<string | null> {
+  const body = JSON.stringify({ message, content: toBase64(content), ...(sha ? { sha } : {}) })
+  const carried = options.keepalive === true && body.length < KEEPALIVE_MAX_CHARS
+  if (options.onlyIfCarried && !carried) return null
+  const sentAt = Date.now()
+  const res = await fetch(apiUrl(path), {
+    method: 'PUT',
+    headers: { ...headers(), 'Content-Type': 'application/json' },
+    body,
+    ...(carried ? { keepalive: true } : {}),
+  })
+  if (!res.ok) throw new GitHubError(res.status, `GitHub answered ${res.status} writing ${path}`)
+  try {
+    const answer = (await res.json()) as { content?: { sha?: unknown }; commit?: { committer?: { date?: unknown } } }
+    const date = answer.commit?.committer?.date
+    if (typeof date === 'string') sawServerTime(date, sentAt, Date.now())
+    return typeof answer.content?.sha === 'string' ? answer.content.sha : null
+  } catch {
+    // An answer without a commit in it says nothing about the clock, nor
+    // about the version now there.
+    return null
+  }
+}
+
+/** A request the browser may carry past the page is capped at 64 KB, body and all. */
+const KEEPALIVE_MAX_CHARS = 60_000
+
+/**
+ * One file written as the merge of what it holds and `base`, over the
+ * version that was read; a refusal - another device wrote in between - is
+ * answered once by reading and merging again, and a second is reported.
+ * Returns what was written, and whether the file held anything `base` had
+ * not: a change from somewhere else.
+ *
+ * A file that is not a plan is written over: a backup that refused to run
+ * because its own file had been broken by hand would be no backup at all.
+ */
+async function writeMerged(path: string, message: string, base: AppData): Promise<{ data: AppData; unseen: boolean }> {
+  for (let attempt = 0; ; attempt++) {
+    const file = await readRepoFile(path)
+    const there = parsePlan(file.text)
+    const merged = there ? mergeStates(base, normaliseRemote(there), new Date().toISOString()) : null
+    const data = merged ? merged.data : base
+    try {
+      await putRepoFile(path, JSON.stringify(data, null, 2), message, file.sha)
+      return { data, unseen: merged !== null && (merged.applied > 0 || merged.deleted > 0) }
+    } catch (err) {
+      if (err instanceof GitHubError && (err.status === 409 || err.status === 422) && attempt === 0) continue
+      throw err
     }
-    throw new GitHubError(res.status, `GitHub answered ${res.status} writing ${path}`)
+  }
+}
+
+function parsePlan(text: string | null): AppData | null {
+  if (!text) return null
+  try {
+    const parsed: unknown = JSON.parse(text)
+    return isSyncableState(parsed) ? parsed : null
+  } catch {
+    return null
   }
 }
 
@@ -518,7 +623,7 @@ export function resetCloudBackupForTests(): void {
   // Read again from the device, the way the module reads it when it loads, so
   // a test can say what the last copy was.
   config = loadConfig()
-  status = { phase: 'off', lastBackupAt: null, message: null }
+  status = { phase: 'off', lastBackupAt: null, message: null, othersUnseenAt: config.othersUnseenAt }
   listeners.clear()
 }
 

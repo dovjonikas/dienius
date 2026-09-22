@@ -1,6 +1,7 @@
-import { commit, getData } from './core'
+import { commit, getData, replaceState } from './core'
 import type { AppData } from '../types'
 import { importJson } from '../storage'
+import { mergeStates, normaliseRemote } from '../syncMerge'
 import { discardTourCreated, keepTourCreated } from '../tour'
 
 /** Whole-state writes: a backup coming in, a snapshot coming back, the tour's two endings. */
@@ -25,6 +26,23 @@ export const lifecycleActions = {
    */
   restoreState(next: AppData): void {
     commit(next)
+  },
+
+  /**
+   * Brings back from a copy - the backup on GitHub - whatever this plan does
+   * not have, one entity at a time: what the copy holds a newer version of,
+   * and what is missing here without having been deleted here. Nothing newer
+   * here is touched, and nothing is stamped, so the next sync treats what
+   * came back exactly as old as it is.
+   *
+   * The first press on a restore since v2.34. `restoreState` - everything
+   * replaced, stamped now - is the second, armed one: with sync on it wins
+   * on every device, and what was done since the copy is undone there too
+   * (docs/SYNC-AUDIT.md, path 5).
+   */
+  mergeBackup(copy: AppData): void {
+    const merged = mergeStates(getData(), normaliseRemote(copy), new Date().toISOString())
+    replaceState(merged.data, { owed: true })
   },
 
   /** The tour's "Start clean": what it made goes, nothing else moves. */
