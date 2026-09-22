@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { openFreshAt, quickAdd, reopenAt, tick } from './app'
 
@@ -19,7 +20,15 @@ import { openFreshAt, quickAdd, reopenAt, tick } from './app'
  * date; and at the end nothing gone and nothing doubled.
  */
 
-const OWNERS_FILE = 'D:/Claude Code/Interactive_Journal/state/dienius-templates.json'
+/** Where the file is: a line in owners-file.local at the repo's root, which git ignores, or the environment. Never written here. */
+function ownersFilePath(): string | undefined {
+  const fromEnv = process.env.DIENIUS_OWNERS_FILE
+  if (fromEnv) return fromEnv
+  const pointer = join(__dirname, '../owners-file.local')
+  return existsSync(pointer) ? readFileSync(pointer, 'utf8').trim() : undefined
+}
+
+const OWNERS_FILE = ownersFilePath() ?? ''
 
 test.use({ timezoneId: 'Europe/Vilnius' })
 test.skip(!existsSync(OWNERS_FILE), 'the owner\'s templates file is not on this machine')

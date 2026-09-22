@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { actions, getData } from './store'
 import { defaultData } from './storage'
@@ -19,8 +20,20 @@ import { kindOnDate } from './dayKinds'
  * kind, a week's roster - and nothing here names what the file says.
  */
 
-const OWNERS_FILE = 'D:/Claude Code/Interactive_Journal/state/dienius-templates.json'
-const here = existsSync(OWNERS_FILE)
+/**
+ * Where the file is: a line in owners-file.local at the repo's root, which git
+ * ignores, or DIENIUS_OWNERS_FILE in the environment. The path names the
+ * owner's own machine, so it is never written here.
+ */
+function ownersFilePath(): string | undefined {
+  const fromEnv = process.env.DIENIUS_OWNERS_FILE
+  if (fromEnv) return fromEnv
+  const pointer = join(__dirname, '../../owners-file.local')
+  return existsSync(pointer) ? readFileSync(pointer, 'utf8').trim() : undefined
+}
+
+const OWNERS_FILE = ownersFilePath() ?? ''
+const here = OWNERS_FILE !== '' && existsSync(OWNERS_FILE)
 
 const TODAY = '2026-09-23'
 
