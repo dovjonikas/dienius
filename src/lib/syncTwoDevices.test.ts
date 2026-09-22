@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AppData } from './types'
 
 /**
@@ -545,4 +545,108 @@ test('a plan past a megabyte still syncs and still backs up', async () => {
   expect(m.backup.getCloudBackupStatus().phase).toBe('idle')
   expect(titlesOn(repo.plan())).toHaveLength(13)
   expect(titlesOn(repo.plan(BACKUP))).toHaveLength(13)
+})
+
+// --- 11. On the real clock ------------------------------------------------------------
+
+/**
+ * The same rules with the clock left alone - the overnight brief of
+ * 2026-09-23, stage 4: stamps written by the devices themselves, a few
+ * milliseconds apart, and the later change winning on both, in both
+ * directions; and a backup brought back after a sync touching nothing the
+ * sync made newer.
+ */
+describe('on the real clock', () => {
+  beforeEach(() => {
+    vi.useRealTimers()
+  })
+
+  const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  test('a change made later on either device wins on both', async () => {
+    const desk = device('desk')
+    const phone = device('phone')
+    let m = await openOn(desk)
+    m.store.actions.addTask(DAY, 'Book the dentist')
+    await turnOnSync(m)
+
+    m = await openOn(phone)
+    await turnOnSync(m)
+    const id = m.store.getData().days[DAY].tasks[0].id
+    await pause(5)
+    m.store.actions.setTaskTitle(DAY, id, 'Book the dentist for Monday')
+    await m.sync.syncNow()
+
+    m = await openOn(desk)
+    await startApp(m)
+    expect(titlesOn(m.store.getData())).toEqual(['Book the dentist for Monday'])
+    await pause(5)
+    m.store.actions.setTaskTitle(DAY, id, 'Book the dentist for Tuesday')
+    await m.sync.syncNow()
+
+    m = await openOn(phone)
+    await startApp(m)
+    expect(titlesOn(m.store.getData())).toEqual(['Book the dentist for Tuesday'])
+    expect(titlesOn(repo.plan())).toEqual(['Book the dentist for Tuesday'])
+  })
+
+  test('two devices changing the same day apart both keep their own change, and neither loses the other', async () => {
+    const desk = device('desk')
+    const phone = device('phone')
+    let m = await openOn(desk)
+    m.store.actions.addTask(DAY, 'Book the dentist')
+    await turnOnSync(m)
+    m = await openOn(phone)
+    await turnOnSync(m)
+
+    // Apart: the desktop ticks, the phone adds, neither having seen the other.
+    m = await openOn(desk)
+    await startApp(m)
+    m.store.actions.toggleTask(DAY, m.store.getData().days[DAY].tasks[0].id)
+    await pause(5)
+    const deskCopy = desk
+    m = await openOn(phone)
+    m.store.actions.addTask(DAY, 'Water the plants')
+    await startApp(m)
+    m = await openOn(deskCopy)
+    await startApp(m)
+
+    expect(titlesOn(m.store.getData())).toEqual(['Book the dentist', 'Water the plants'])
+    expect(m.store.getData().days[DAY].tasks.find(t => t.title === 'Book the dentist')?.done).toBe(true)
+    m = await openOn(phone)
+    await startApp(m)
+    expect(titlesOn(m.store.getData())).toEqual(['Book the dentist', 'Water the plants'])
+    expect(m.store.getData().days[DAY].tasks.find(t => t.title === 'Book the dentist')?.done).toBe(true)
+  })
+
+  test('a backup brought back after a sync changes nothing the sync made newer', async () => {
+    const desk = device('desk')
+    const phone = device('phone')
+    let m = await openOn(desk)
+    m.store.actions.addTask(DAY, 'Book the dentist')
+    await turnOnSync(m)
+    await m.backup.requestCloudBackup('manual')
+
+    // After the backup: the task renamed and ticked, and synced.
+    await pause(5)
+    const id = m.store.getData().days[DAY].tasks[0].id
+    m.store.actions.setTaskTitle(DAY, id, 'Book the dentist for Monday')
+    m.store.actions.toggleTask(DAY, id)
+    await m.sync.syncNow()
+
+    // The phone joins, and brings the backup back on top of what it took.
+    m = await openOn(phone)
+    await turnOnSync(m)
+    const preview = await m.backup.previewRestore()
+    m.store.actions.mergeBackup(preview.data)
+    await m.sync.syncNow()
+
+    for (const d of [phone, desk]) {
+      m = await openOn(d)
+      await startApp(m)
+      const task = m.store.getData().days[DAY].tasks.find(t => t.id === id)
+      expect(task, d.name).toMatchObject({ title: 'Book the dentist for Monday', done: true })
+      expect(titlesOn(m.store.getData())).toEqual(['Book the dentist for Monday'])
+    }
+  })
 })
