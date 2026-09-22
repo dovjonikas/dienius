@@ -32,7 +32,9 @@ The screens, as the navigation names them:
   streak.
 - **North** - the person's own text, read every morning. Nothing counts it.
 - **Kitchen** - recipes, by meal. A meal block on a template holds recipes and
-  walks through them a day at a time.
+  walks through them a day at a time, or follows a meal and walks every
+  recipe of it. Many recipes can be pasted at once, and a name's first word -
+  "Lunch: ..." - chooses its meals by the words in Settings.
 - **Settings** - themes, sleep schedules, categories, sync, the copy on
   GitHub, export and import.
 
@@ -145,7 +147,9 @@ recipes from Kitchen or the kind of meal. So "lunch" is not a rule the app
 knows; it is a block on the day shift's template at noon, and the night
 shift's template has none - it has a meal before the shift and one in the
 night instead. Each date a meal block lands on takes the next recipe in its
-list, by the date.
+list, by the date. A block that follows its meal - Follow Lunch in the
+editor - walks every Lunch recipe Kitchen has when the date is stamped, so a
+recipe given Lunch later joins it with nothing else to do.
 
 ### 4.4 Midnight
 

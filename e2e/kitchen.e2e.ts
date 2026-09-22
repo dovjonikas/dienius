@@ -24,7 +24,7 @@ test('a recipe is written, read as a list and steps, and found by its meal and i
   await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: 'Kitchen', exact: true }).click()
 
   // Empty: what Kitchen is for, and the way to start.
-  await expect(page.getByText('The recipes you cook, with what goes in them and how. Add the first one to start.')).toBeVisible()
+  await expect(page.getByText('The recipes you cook, with what goes in them and how. Add the first one to start, or paste many at once.')).toBeVisible()
   await page.getByRole('button', { name: 'New recipe' }).click()
   await page.getByRole('textbox', { name: 'Name' }).fill('A simple soup')
   await page.getByRole('textbox', { name: 'Recipe' }).fill(
@@ -72,7 +72,7 @@ test('a recipe is written, read as a list and steps, and found by its meal and i
   }
 
   // A recipe's page reads it and edits it; there is nothing to cook from.
-  await page.getByRole('button', { name: /A simple soup/ }).click()
+  await page.getByRole('button', { name: /^A simple soup/ }).click()
   await expect(page.getByText('Dinner', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cook', exact: true })).toHaveCount(0)
 })

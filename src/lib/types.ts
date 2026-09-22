@@ -119,6 +119,15 @@ export interface TemplateBlock {
    */
   mealType?: MealType
   /**
+   * On a meal block with a `mealType`: the block walks every recipe Kitchen
+   * has for that meal, in the order of their names - the ones added later
+   * too - rather than a list chosen once. Kitchen, v2.32. The task a date gets
+   * carries the recipe and the meal both, so a recipe removed since leaves
+   * the meal to choose on the day. An older device reads the block as its
+   * `mealType` alone: a meal chosen on the day.
+   */
+  followMeal?: boolean
+  /**
    * What this block says when it arrives on a day - the recipe, the four
    * things the routine is, the weight to start the set at.
    *
@@ -1018,6 +1027,16 @@ export interface Settings {
    * moment it is written.
    */
   calendars?: CalendarSubscription[]
+  /**
+   * The words a recipe's name can start with to say which meals it is for -
+   * "Lunch: a bean bowl" is lunch - Kitchen, v2.32, lib/mealWords.ts. Each
+   * word, and the meals it says; a word may say none, and a name that starts
+   * with it still sorts by it. Absent until somebody changes the list in
+   * Settings, and read as the six meals' own names until then. Read through
+   * `mealWordsOf`, which passes over anything malformed rather than
+   * refusing the file - see the note beside `SETTINGS` in validate.ts.
+   */
+  mealWords?: MealWord[]
 }
 
 /**
@@ -1326,6 +1345,12 @@ export interface Category extends Timestamped {
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'pre-gym', 'post-gym', 'snack'] as const
 
 export type MealType = (typeof MEAL_TYPES)[number]
+
+/** A word a recipe's name can start with, and the meals it says - see `Settings.mealWords`. */
+export interface MealWord {
+  word: string
+  meals: MealType[]
+}
 
 /**
  * How large a number on a recipe may be before a file carrying it is not

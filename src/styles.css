@@ -1151,6 +1151,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
 
 /* A sheet and a popover stand on the raised ground since v2.25. */
 .task-detail,
+.meals-picker-panel,
 .swatch-picker-panel {
   --ground: var(--surface-raised);
 }
@@ -1172,6 +1173,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .floating-clock,
   .gap-picker,
   .journal-overlay,
+  .meals-picker-panel,
   .nav-rail.is-open,
   .north-heading-card,
   .north-window,
@@ -1214,6 +1216,7 @@ h3 { font-size: var(--t-md); color: var(--muted); margin: 0 0 var(--s2); font-we
   .floating-clock,
   .gap-picker,
   .journal-overlay,
+  .meals-picker-panel,
   .nav-rail.is-open,
   .north-heading-card,
   .north-window,
@@ -3674,11 +3677,16 @@ textarea:focus {
    a dark surface. appearance:none takes the native arrow with it, so the
    caret is drawn back on as a background image - a plain two-line chevron
    that inherits the text colour through a currentColor-coloured mask would
-   need a wrapper element, and a data URI here keeps it to one rule. */
+   need a wrapper element, and a data URI here keeps it to one rule.
+
+   One control tall, exactly - one look, rule 3: its line is centred in the
+   height rather than padded out of it. Padded, it was a line and two steps,
+   40px beside every 36px button and field it stands in a row with. */
 select {
   min-width: 0;
   min-height: var(--control-h);
-  padding: var(--s2) var(--s8) var(--s2) var(--s3);
+  height: var(--control-h);
+  padding: 0 var(--s8) 0 var(--s3);
   border: 1px solid transparent;
   border-radius: var(--r-control);
   background-color: var(--fill);
@@ -6821,6 +6829,7 @@ button.danger {
 .kitchen-more-caret,
 .kitchen-back-caret,
 .recipes-field-caret,
+.meals-picker-caret,
 .block-marks-caret {
   flex: 0 0 auto;
   width: 8px;
@@ -6834,6 +6843,7 @@ button.danger {
 .north-day-line[aria-expanded='true'] .north-day-caret,
 .kitchen-more[aria-expanded='true'] .kitchen-more-caret,
 .recipes-field-summary[aria-expanded='true'] .recipes-field-caret,
+.meals-picker-line[aria-expanded='true'] .meals-picker-caret,
 .block-marks-toggle[aria-expanded='true'] .block-marks-caret {
   transform: rotate(-135deg) translate(-2px, -2px);
 }
@@ -8587,6 +8597,14 @@ button.danger:focus-visible {
   font-size: var(--t-lg);
 }
 
+/* Two actions at the header's right, the primary last: Kitchen's Paste many
+   and New recipe. */
+.library-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
 /* An empty library: its sentence and the offers under it, where the lists
    would begin, with no card round them - docs/DESIGN.md, empty states. */
 .library-empty {
@@ -9729,6 +9747,11 @@ button.danger:focus-visible {
 .task-recipe {
   flex-shrink: 0;
   padding: 0 var(--s2);
+  /* One height for the three, whatever the face: a line of the interface
+     and a hairline round it, which a button among them needs for its ring
+     when open. Left to the face's own "normal" line, a mark was 17px on one
+     system and 15 on another. */
+  border: var(--hairline) solid transparent;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--border) 50%, transparent);
   /* A step toward the content ink rather than plain --muted. These three sit
@@ -9739,17 +9762,13 @@ button.danger:focus-visible {
   color: color-mix(in srgb, var(--muted) 78%, var(--text));
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
+  line-height: var(--lh-ui);
   white-space: nowrap;
 }
 
 /* It is a button now, so it has to stop inheriting a button's own metrics -
    the row's marks are one height and this is one of them. */
-button.task-note-mark {
-  border: 1px solid transparent;
-  min-height: 0;
-  font-family: inherit;
-  line-height: inherit;
-}
+button.task-note-mark { min-height: 0; }
 
 button.task-note-mark.is-open {
   border-color: color-mix(in srgb, var(--muted) 40%, transparent);
@@ -9914,8 +9933,6 @@ button.task-note-mark.is-open {
    the 44px overlay every other small control here gets. */
 button.task-library {
   min-height: 0;
-  border: none;
-  font: inherit;
   font-size: var(--t-xs);
   font-variant-numeric: tabular-nums;
 }
@@ -9928,8 +9945,6 @@ button.task-library:hover { color: var(--text); }
    itself does not clip, so the finger's overlay around it is whole. */
 button.task-recipe {
   min-height: 0;
-  border: none;
-  font: inherit;
   font-size: var(--t-xs);
   cursor: pointer;
 }
@@ -15046,8 +15061,14 @@ main:has(.week) > .calendar {
    page's own width. */
 .kitchen-shelf { max-width: calc(var(--page-w) + var(--read-w) / 2); }
 
-/* The search across the page, under the chips. */
-.kitchen-search { width: 100%; }
+/* The search across the page, under the chips, and Select at its end - v2.32. */
+.kitchen-find {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.kitchen-search { flex: 1 1 auto; min-width: 0; width: 100%; }
 
 .kitchen-sections {
   display: flex;
@@ -15091,26 +15112,49 @@ main:has(.week) > .calendar {
 /* A card: North's plate - the surface, the small shadow, in a dark theme the
    light along its top - with a kitchen's own mark, the Meals category's colour
    down its left edge and a breath of it in the ground, the way a meal block is
-   drawn on the day. Nothing about it says anything about a number. */
+   drawn on the day. Nothing about it says anything about a number.
+
+   Two presses in one card since v2.32: the name and its lines open the
+   recipe, and the meals under them change in place. The card is the surface
+   and the two stand on its one left line. */
 .kitchen-card {
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--s1);
   min-width: 0;
-  padding: var(--s4);
-  border: 0;
   border-radius: var(--r-card);
   background: color-mix(in srgb, var(--cat, var(--surface)) 6%, var(--surface));
   --ground: var(--surface);
   box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent);
   color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
   transition: background var(--dur-fast) var(--ease);
 }
+
+/* The name and its lines: the whole card above its meals is the press that
+   opens it. */
+.kitchen-card-open {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s1);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s4) var(--s4) var(--s1);
+  border: 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.kitchen-card-open:focus-visible { outline: none; }
+
+/* The meals under the lines, on the card's left line, and the room under them
+   the card's own. */
+.kitchen-card > .meals-picker,
+.kitchen-card-foot { padding: 0 var(--s4) var(--s2); }
 
 :root:not([data-theme='light']) .kitchen-card {
   background:
@@ -15120,13 +15164,335 @@ main:has(.week) > .calendar {
 }
 
 /* Under the pointer the ground deepens, and nothing moves. */
-.kitchen-card:hover {
+.kitchen-card:has(.kitchen-card-open:hover) {
   background: color-mix(in srgb, var(--cat, var(--surface)) 11%, var(--surface));
 }
 
-.kitchen-card:focus-visible {
-  outline: none;
-  box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent), 0 0 0 3px var(--ring);
+/* The ring is the card's: the press inside it is the whole card above its
+   meals. Drawn as an outline, the way every focus ring here is - a shadow is
+   elevation. */
+.kitchen-card:has(.kitchen-card-open:focus-visible) {
+  outline: 3px solid var(--ring);
+  outline-offset: 0;
+}
+
+/* Picked, while Select is on: the accent's ring round the card, and its mark
+   filled. The meals stay said in the card's foot, where their line was, so a
+   card is the same height picking as reading. */
+.kitchen-card.is-picked {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  box-shadow: var(--e2), inset 3px 0 0 var(--cat, transparent), 0 0 0 var(--stroke) var(--accent);
+}
+
+.kitchen-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-height: var(--control-h);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+.kitchen-card-mark {
+  flex: 0 0 auto;
+  width: var(--s4);
+  height: var(--s4);
+  border-radius: var(--r-round);
+  box-shadow: inset 0 0 0 var(--stroke) var(--muted);
+}
+
+.kitchen-card.is-picked .kitchen-card-mark {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 var(--stroke) var(--accent);
+}
+
+/* Select's bar, in the search's place - v2.32: how many are picked at its
+   left, the meal and what to do with it at its right. Two rows on a phone,
+   each one row: the count and Pick all, then the meal and its three presses. */
+.kitchen-picked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: var(--control-h);
+}
+
+.kitchen-picked-count,
+.kitchen-picked-meal {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+
+.kitchen-picked-words {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+
+.kitchen-picked-count > .btn-quiet { margin-left: var(--s1); }
+
+/* Each press one word on one line, and the meal's select takes what is left. */
+.kitchen-picked-meal > button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+  .kitchen-picked { flex-direction: column; align-items: stretch; }
+  .kitchen-picked-count { justify-content: space-between; }
+  /* At the row's end, Pick all's word stands on its edge. */
+  .kitchen-picked-count > .btn-quiet { margin-right: calc(var(--s4) * -1); }
+  .kitchen-picked-meal > select { flex: 1 1 auto; min-width: 0; }
+}
+
+/* A set of meals chosen in place - MealsPicker, v2.32. The line is a quiet
+   word with the caret everything that folds carries, its words on the edge
+   of whatever it stands in, the ground under the pointer reaching past them;
+   the six open under it on a small layer. */
+.meals-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.meals-picker-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  max-width: calc(100% + var(--s2) * 2);
+  min-height: var(--control-h);
+  margin-left: calc(var(--s2) * -1);
+  padding: 0 var(--s2);
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+  text-align: left;
+}
+
+.meals-picker-line:hover,
+.meals-picker-line[aria-expanded='true'] { background: var(--fill); color: var(--text); }
+
+.meals-picker-line:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.meals-picker-line.is-none { color: var(--faint); }
+
+.meals-picker-words {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meals-picker-panel {
+  position: absolute;
+  top: 100%;
+  left: calc(var(--s2) * -1);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s1);
+  width: 16rem;
+  max-width: calc(100vw - var(--s4) * 2);
+  margin-top: var(--s1);
+  padding: var(--s2);
+  border-radius: var(--r-card);
+  background: var(--surface-raised);
+  box-shadow: var(--e2);
+}
+
+/* Near the window's right edge the layer opens leftwards from the line's
+   end, so it never reaches past the window. */
+.meals-picker-panel.is-end {
+  right: calc(var(--s2) * -1);
+  left: auto;
+}
+
+.meals-picker-option {
+  min-height: var(--control-h);
+  padding: 0 var(--s3);
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--fill);
+  color: var(--text);
+  font-size: var(--t-sm);
+  text-align: left;
+}
+
+.meals-picker-option:hover { background: var(--fill-strong); }
+.meals-picker-option[aria-pressed='true'] { background: var(--accent-dim); }
+
+.meals-picker-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .meals-picker-line,
+  .meals-picker-option { min-height: var(--touch); }
+}
+
+/* Paste many - v2.32: under the field, a row for every recipe it reads, each
+   its box, its name, its numbers, its meals and what saving it will do - one
+   row on a wide screen, and on a phone the name over the rest, each part on
+   the name's left line. */
+/* One grid for the whole list, each row a row of it, so the numbers, the
+   meals and what saving does stand in columns down the list. */
+.kitchen-paste-rows {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  column-gap: var(--s3);
+  row-gap: var(--s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kitchen-paste-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-areas: "check name numbers meals state";
+  align-items: center;
+  min-height: var(--control-h);
+}
+
+.kitchen-paste-check { grid-area: check; margin: 0; }
+
+.kitchen-paste-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: var(--w-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kitchen-paste-numbers {
+  grid-area: numbers;
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kitchen-paste-row > .meals-picker { grid-area: meals; }
+
+.kitchen-paste-state {
+  grid-area: state;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--t-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kitchen-paste-row.is-out .kitchen-paste-name { color: var(--muted); }
+
+.kitchen-paste-count {
+  margin: 0 auto 0 0;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+
+@media (max-width: 599px) {
+  .kitchen-paste-rows {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: var(--s3);
+  }
+  .kitchen-paste-row {
+    grid-template-areas:
+      "check name name"
+      ". numbers meals"
+      ". state state";
+  }
+}
+
+/* Kitchen in Settings - v2.32: a word, its meals and Delete on one row, the
+   word's field as wide as a word. */
+.meal-words {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0 0 var(--s3);
+  padding: 0;
+  list-style: none;
+}
+
+.meal-words-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.meal-words-word {
+  flex: 0 1 10rem;
+  min-width: 0;
+}
+
+.meal-words-row > .meals-picker { flex: 1 1 auto; margin-left: var(--s2); }
+
+/* Delete on the row's centre line and its word on the row's end - it stands
+   under a setting's words elsewhere, at their top. */
+.meal-words-row > .setting-remove {
+  align-self: center;
+  margin-top: 0;
+  margin-right: calc(var(--s2) * -1);
+}
+
+.meal-words-add { align-self: flex-start; }
+
+/* The walk a block that follows its meal takes, and the switch that makes it
+   follow - v2.32: the words at the left, the switch at the row's right. */
+.recipes-field-follow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: var(--control-h);
+}
+
+.recipes-field-follow-words {
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: var(--lh-ui);
+}
+
+/* A meal's All: the first of its chips, and the one that is a press rather
+   than a thing chosen - no fill of its own, the quiet button's ground under
+   the pointer. */
+.recipes-field-options > .recipes-field-whole {
+  background: none;
+  color: var(--muted);
+  font-weight: var(--w-medium);
+}
+
+.recipes-field-options > .recipes-field-whole:hover:not(:disabled) {
+  background: var(--fill);
+  color: var(--text);
+}
+
+/* With every recipe of the meal in the walk there is nothing to add: the
+   word in the faint ink rather than the muted one faded, which fell to 2.3:1
+   on the light theme - under the 3:1 a control that cannot be pressed keeps.
+   The same for Pick all with every card picked. */
+.recipes-field-options > .recipes-field-whole:disabled,
+.kitchen-picked-count > .btn-quiet:disabled {
+  opacity: 1;
+  color: var(--faint);
 }
 
 .kitchen-card-title {
@@ -16602,6 +16968,7 @@ main:has(.week) > .calendar {
 .wt-col-foot .setting-select {
   max-width: 100%;
   min-height: var(--s6);
+  height: var(--s6);
   padding: 0 var(--s6) 0 var(--s2);
   font-size: var(--t-xs);
 }

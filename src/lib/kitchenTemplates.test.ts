@@ -141,3 +141,78 @@ test('a recipe added to a template as a new meal block is a meal at its time and
   actions.resetForTests(plan([weekday([meal({ id: 'walk', category: 'health' })])]))
   expect(actions.addRecipeToTemplate('weekday', 'r1', { blockId: 'walk' })).toBe(false)
 })
+
+// --- a block that follows its meal - v2.32 ---------------------------------------------------------
+
+const MEALS: Recipe[] = [
+  { id: 'l1', title: 'A lentil soup', text: '', mealTypes: ['lunch'] },
+  { id: 'l2', title: 'A bean bowl', text: '', mealTypes: ['lunch', 'dinner'] },
+  { id: 'd1', title: 'A rice dish', text: '', mealTypes: ['dinner'] },
+]
+const STEW: Recipe = { id: 'l3', title: 'A chickpea stew', text: '', mealTypes: ['lunch'] }
+
+function follows(meal_: 'lunch' | 'breakfast' = 'lunch'): Template {
+  return weekday([meal({ recipeIds: undefined, recipeId: undefined, mealType: meal_, followMeal: true })])
+}
+
+test('a block that follows its meal walks every recipe Kitchen has for it, in the order of their names', () => {
+  const block = { mealType: 'lunch' as const, followMeal: true }
+  expect(blockRecipeIds(block, MEALS)).toEqual(['l2', 'l1'])
+  // With no recipes to read it has none of its own.
+  expect(blockRecipeIds(block)).toEqual([])
+  // A list it was given before stays out of it while it follows.
+  expect(blockRecipeIds({ ...block, recipeIds: ['d1'] }, MEALS)).toEqual(['l2', 'l1'])
+  // A mark with no meal is no mark: the list is the block's again.
+  expect(blockRecipeIds({ followMeal: true, recipeIds: ['d1'] }, MEALS)).toEqual(['d1'])
+})
+
+test("what a meal's field writes for a block that follows is its meal and the mark, and nothing else", () => {
+  expect(mealFields({ mealType: 'lunch', follow: true })).toEqual({ recipeIds: undefined, recipeId: undefined, mealType: 'lunch', followMeal: true })
+  expect(mealRecipesOf({ mealType: 'lunch', followMeal: true })).toEqual({ mealType: 'lunch', follow: true })
+  // Recipes chosen take the meal and the mark away; a meal left to the day has no mark.
+  expect(mealFields({ recipeIds: ['l1'], mealType: 'lunch', follow: true })).toEqual({ recipeIds: ['l1'], recipeId: 'l1', mealType: undefined, followMeal: undefined })
+  expect(mealFields({ mealType: 'lunch' })).toEqual({ recipeIds: undefined, recipeId: undefined, mealType: 'lunch', followMeal: undefined })
+  expect(mealFields({ follow: true })).toEqual({ recipeIds: undefined, recipeId: undefined, mealType: undefined, followMeal: undefined })
+})
+
+test('stamping a block that follows gives each date its recipe and the meal both, and a recipe added later joins the walk', () => {
+  const days = applyStamps({}, [follows()], { '2026-09-14': 'weekday', '2026-09-15': 'weekday' }, [], MEALS)
+  expect(days['2026-09-14'].tasks[0]).toMatchObject({ recipeId: recipeForDate(['l2', 'l1'], '2026-09-14'), mealType: 'lunch' })
+  expect(days['2026-09-15'].tasks[0].recipeId).toBe(recipeForDate(['l2', 'l1'], '2026-09-15'))
+
+  // The stew is added to Kitchen as a lunch; the date whose turn it is gets it.
+  const three = ['l2', 'l3', 'l1']
+  const date = ['2026-09-14', '2026-09-15', '2026-09-16'].find(d => recipeForDate(three, d) === 'l3')!
+  expect(applyStamps({}, [follows()], { [date]: 'weekday' }, [], [...MEALS, STEW])[date].tasks[0].recipeId).toBe('l3')
+})
+
+test("a day still holding what a block that follows gave it takes its date's recipe once the meal's recipes change", () => {
+  const days = applyStamps({}, [follows()], { '2026-09-14': 'weekday' }, [], MEALS)
+  const refreshed = refreshFromTemplate(days['2026-09-14'], [follows()], [], [...MEALS, STEW])
+  expect((refreshed ?? days['2026-09-14']).tasks[0].recipeId).toBe(recipeForDate(['l2', 'l3', 'l1'], '2026-09-14'))
+})
+
+test("a recipe added to a block that follows is given the block's meal, and the block goes on following", () => {
+  actions.resetForTests(plan([follows('breakfast')]))
+  expect(actions.addRecipeToTemplate('weekday', 'r3', { blockId: 'breakfast' })).toBe(true)
+  const block = getData().templates[0].blocks[0]
+  expect(block).toMatchObject({ mealType: 'breakfast', followMeal: true })
+  expect(block.recipeIds).toBeUndefined()
+  expect(getData().recipes.find(r => r.id === 'r3')!.mealTypes).toEqual(['breakfast'])
+})
+
+test('removing a recipe leaves a block that follows as it was', () => {
+  actions.resetForTests({ ...plan([follows()]), recipes: MEALS })
+  actions.removeRecipe('l1')
+  const block = getData().templates[0].blocks[0]
+  expect(block).toMatchObject({ mealType: 'lunch', followMeal: true })
+  expect(block.recipeIds).toBeUndefined()
+})
+
+test("a block that follows passes the guard and an older device's, and a mark that is not true or false is refused", () => {
+  const file = JSON.parse(exportJson(plan([follows()])))
+  expect(validate(file)).toBe(true)
+  expect(validateV228(file)).toBe(true)
+  file.templates[0].blocks[0].followMeal = 'yes'
+  expect(validate(file)).toBe(false)
+})

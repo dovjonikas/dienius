@@ -112,7 +112,7 @@ export const templateActions = {
       else plain[date] = id
     }
     const stamped =
-      Object.keys(plain).length > 0 ? { ...data, days: applyStamps(data.days, data.templates, plain, data.library) } : data
+      Object.keys(plain).length > 0 ? { ...data, days: applyStamps(data.days, data.templates, plain, data.library, data.recipes) } : data
     const composed = Object.keys(kinds).length > 0 ? applyRoster(stamped, kinds, todayKey(), { reach: 'any' }) : stamped
     // A kind an ordinary template stamped over is a kind that changed, and the
     // dates around it follow it the way they follow the roster - section

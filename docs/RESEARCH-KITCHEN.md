@@ -182,11 +182,103 @@ date the same meal, a skipped day), stamping and the echo, the picker, Add to
 template, and nothing left of Cook. The phone and both themes are walked and
 pictured at the end, with generic recipes only.
 
-## 7. What is left out, on purpose
+## 7. v2.32: many recipes at once, and the meals a name says
+
+The owner had about thirty recipes already written in Kitchen's own shape - a
+first line of numbers, INGREDIENTS, STEPS - and each one was a trip through New
+recipe: open it, paste, choose the meals, save. With thirty that is an hour of
+pressing. The brief asked for four things, and what was decided for each is
+below.
+
+### 7.1 Paste many
+
+- **One field for all of them**, on a page of its own beside New recipe
+  (`PasteMany`, `lib/recipeImport.ts`). A line that starts `NAME:` begins a
+  recipe and its words are the name; a line of `---` ends one. After a `---`,
+  the first line of the next piece is its name when it is neither a heading
+  nor a line of numbers - a piece that opens on its numbers has no name, and
+  its row says to give it a `NAME:` line. Each piece is read the way New
+  recipe reads a recipe: the numbers by `recipeNumbers`, the lists by
+  `readRecipe` when it is shown.
+- **The list before the press**, read on every keystroke: each recipe's name,
+  its kcal and protein, the meals its name says, and what saving it will do -
+  New, or Updates the one in Kitchen. Every row has its box, and its meals are
+  changed in the row. One Save saves every ticked row; the whole import is one
+  undo.
+- **No second copy, ever.** A name Kitchen already has - the same words,
+  whatever their case, accents or spacing - writes over that recipe, keeping
+  its id, which every block that walks it holds. The store keeps the rule too,
+  so no import makes two recipes of one name however it is called. Written
+  over, a recipe takes the pasted text and the numbers the text says; a number
+  the text says nothing about, and every meal it has been given since, stay:
+  the same text pasted twice changes nothing a second time, and never takes a
+  meal away. A name pasted twice in one text is saved once, from the later
+  piece, and the earlier row says so.
+
+### 7.2 A name says its meals
+
+- **A first word and a colon** - "Lunch: a bean bowl" - chooses the meals that
+  word says, by a list Settings keeps (`Settings.mealWords`,
+  `lib/mealWords.ts`). A word can say several meals, or none; the word stays in
+  the name, so Kitchen's cards sort by it. Compared without case, and a space
+  and a hyphen the same, so "Pre gym:" is "Pre-gym:".
+- **In Paste many and in New recipe.** In the form the meals are chosen when
+  the word is typed or changed, More opens so they are seen, and a press on
+  them after is kept while the word stays.
+- **The list starts as the six meals' own names**, each for itself. The brief
+  gave the owner's own words - which of them say two meals, which say none -
+  and those are the owner's way of naming their food, which the public repo
+  does not carry (the same rule as North's text): they are written in Settings
+  once, in a minute, and travel with the settings to every device.
+
+### 7.3 Meals changed on the card, and many at once
+
+- **On a card, in place.** Under a card's lines are its meals; a press opens
+  the six on a small layer, each switched at once, and the recipe is not
+  opened (`MealsPicker`). The same control changes a pasted row's meals and a
+  word's meals in Settings.
+- **Select**, beside the search: a press picks a card rather than opening it,
+  and the bar in the search's place gives one meal to every picked recipe, or
+  takes it off them, in one press. Pick all picks every card on the page. A
+  card is the same height picking as reading: its meals stay said where their
+  line was.
+
+### 7.4 A meal block that follows its meal
+
+- **All Lunch** in the template editor's recipe picker adds every Lunch recipe
+  the block does not walk yet, in one press, after the ones it does.
+- **Follow Lunch**, a switch that appears after it, makes the block walk every
+  recipe Kitchen has for Lunch in the order of their names - the ones given
+  Lunch later too (`TemplateBlock.followMeal` with its `mealType`). The walk
+  is worked out when a day is stamped, from Kitchen as it is then, so nothing
+  is kept in step and nothing is written when a recipe is added. A day already
+  holding what the block gave it takes its date's recipe of the new walk when
+  it is opened, the way it follows a list that changed. The task carries the
+  recipe and the meal both, so a recipe removed since leaves the meal to choose
+  on the day.
+- **Following, the walk is the meal's.** It has no way out one at a time: a
+  recipe pressed makes it a list again, the meal's recipes and that one, and so
+  does switching the following off. A recipe added from its own page to a
+  block that follows is given the block's meal, and the block goes on
+  following. An older device reads the block as its meal alone - a meal chosen
+  on the day.
+
+### 7.5 Tests
+
+Each rule has a unit test: the parting and the naming of pieces, thirty
+generic recipes read and saved, a second paste that updates and never copies,
+an update that keeps its numbers and meals, the meal words and Settings' list,
+the form's name choosing its meals, the card's meals, Select, All and Follow,
+a block that follows through the stamp, the refresh and the guard. The e2e
+walks thirty on a 375px phone and on the desktop, Select on both, and a block
+that follows Lunch taking a recipe given Lunch after it was set. Generic
+recipes only.
+
+## 8. What is left out, on purpose
 
 Calorie or macro goals, day or week totals, progress bars and any verdict (section 3); scaling
 servings and parsing ingredient amounts (section 2); shopping lists; tags of one's own beyond the
-six meals, which cover what was asked. Each is a feature of its own with its own costs, and none was
+six meals, which cover what was asked - a name's first word says meals, it is not a tag. Each is a feature of its own with its own costs, and none was
 asked for yet.
 
 ---

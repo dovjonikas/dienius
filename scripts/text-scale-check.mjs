@@ -28,6 +28,9 @@ const BASE = `http://localhost:${PORT}/dienius/`
 const FIXED = new Date('2026-09-16T12:00:00Z')
 
 /** @typedef {import('@playwright/test').Page} Page */
+/** Kitchen v2.32's Paste many, filled: two generic recipes and a piece with no name. */
+const PASTED = ['NAME: Lunch: A bean bowl', '520 kcal, 38 g protein', 'INGREDIENTS', 'beans', 'rice', 'STEPS', 'Cook the rice.', 'NAME: A plain porridge', '380 kcal', '---', '450 kcal', 'INGREDIENTS', 'water'].join('\n')
+
 /** @type {{ name: string, go: (p: Page) => Promise<unknown> }[]} */
 const SCREENS = [
   { name: 'Today', go: p => tab(p, 'Today') },
@@ -44,6 +47,9 @@ const SCREENS = [
   { name: 'Review', go: p => tab(p, 'Review') },
   { name: 'North', go: p => tab(p, 'North') },
   { name: 'Kitchen', go: p => tab(p, 'Kitchen') },
+  { name: 'Kitchen (paste many)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: 'Paste many', exact: true }).click(); await p.getByRole('textbox', { name: 'Recipes' }).fill(PASTED) } },
+  { name: "Kitchen (a card's meals)", go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /^Meals for Overnight oats/ }).first().click() } },
+  { name: 'Kitchen (select)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: 'Select', exact: true }).click(); await p.locator('.kitchen-card-open').nth(0).click(); await p.locator('.kitchen-card-open').nth(1).click() } },
   { name: 'Kitchen (a recipe)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click() } },
   { name: 'Kitchen (to a template)', go: async p => { await tab(p, 'Kitchen'); await p.getByRole('button', { name: /Overnight oats/ }).first().click(); await p.getByRole('button', { name: 'Add to template', exact: true }).click() } },
   { name: "Templates (a meal's recipes)", go: async p => { await tab(p, 'Templates'); await p.getByRole('button', { name: /^Edit Working day/ }).first().click(); await p.getByRole('button', { name: /^Recipes for Lunch: / }).first().click(); await p.getByRole('button', { name: 'Overnight oats', exact: true }).first().click() } },

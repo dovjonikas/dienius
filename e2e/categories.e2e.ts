@@ -28,7 +28,7 @@ test('a category is made with a picked colour, used on a task, and deleted onto 
   await page.getByRole('group', { name: 'Colour', exact: true }).getByRole('button', { name: 'Green' }).click()
   await page.getByRole('button', { name: 'Save' }).click()
 
-  await expect(page.getByText('Gym')).toBeVisible()
+  await expect(page.getByText('Gym', { exact: true })).toBeVisible()
 
   // Back to the day, and the new one is offered where the next task's colour
   // is chosen - the swatch row is the list, so this is the whole of what
@@ -56,7 +56,7 @@ test('a category is made with a picked colour, used on a task, and deleted onto 
   await dialog.getByRole('button', { name: 'Personal' }).click()
   await dialog.getByRole('button', { name: 'Delete and move' }).click()
 
-  await expect(page.getByText('Gym')).toHaveCount(0)
+  await expect(page.getByText('Gym', { exact: true })).toHaveCount(0)
 
   await page.getByRole('navigation').getByRole('button', { name: 'Today' }).click()
   await expect(card(page, 'Squats')).toContainText('Personal')

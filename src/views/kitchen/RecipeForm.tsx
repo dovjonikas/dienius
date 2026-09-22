@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { actions } from '../../lib/store'
+import { actions, useAppData } from '../../lib/store'
 import { MEAL_TYPE_LABELS, type RecipeInput } from '../../lib/kitchen'
+import { mealWordsOf, mealsFromName, namePrefix } from '../../lib/mealWords'
 import { clearRecipeNumber, recipeNumbers, writeRecipeNumber } from '../../lib/recipeNumbers'
 import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
 
@@ -36,6 +37,12 @@ const NUMBER_LABELS: Record<NumberName, string> = {
  * of the text. A field the text says nothing about is filled by hand, as
  * before. lib/recipeNumbers.ts reads and writes the numbers.
  *
+ * **A name can say its meals**, since v2.32: a name typed with a first word
+ * and a colon - "Lunch: a bean bowl" - chooses the meals that word says in
+ * Settings (lib/mealWords.ts), and More opens so they are seen. Chosen when
+ * the word is typed or changed, and not again while it stays, so a press on
+ * the chips after it is kept.
+ *
  * Save waits, in its place, until there is a name; Cancel is
  * always beside it. Ctrl or Cmd with Enter is Save and Escape is Cancel, the
  * way North's field works. What the fields hold becomes a recipe through
@@ -54,6 +61,7 @@ export function RecipeForm({
   onCancel: () => void
   onDelete?: () => void
 }) {
+  const words = mealWordsOf(useAppData().settings)
   const [title, setTitle] = useState(recipe?.title ?? '')
   const [text, setText] = useState(recipe?.text ?? '')
   const [meals, setMeals] = useState<MealType[]>(recipe?.mealTypes ?? [])
@@ -95,6 +103,17 @@ export function RecipeForm({
     }
     const made = actions.addRecipe(input())
     if (made) onSaved(made.id)
+  }
+
+  /** The name as typed, and the meals a first word typed or changed says. */
+  function changeTitle(next: string) {
+    setTitle(next)
+    const now = namePrefix(next)?.toLocaleLowerCase()
+    if (now === undefined || now === namePrefix(title)?.toLocaleLowerCase()) return
+    const said = mealsFromName(next, words)
+    if (said === undefined) return
+    setMeals(said)
+    setMore(true)
   }
 
   /** The text as typed, and every number it says read into its field. */
@@ -169,7 +188,7 @@ export function RecipeForm({
       >
         <label className="field">
           <span className="field-label">Name</span>
-          <input ref={nameRef} value={title} onChange={e => setTitle(e.target.value)} />
+          <input ref={nameRef} value={title} onChange={e => changeTitle(e.target.value)} />
         </label>
 
         <label className="field">

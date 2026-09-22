@@ -1,6 +1,7 @@
 import { commit, getData } from './core'
 import { readChimeSettings } from '../chime'
-import type { ChimeSettings, Settings, SleepWindow, ThemeState } from '../types'
+import { cleanMealWords } from '../mealWords'
+import type { ChimeSettings, MealWord, Settings, SleepWindow, ThemeState } from '../types'
 
 /** Everything under Settings that is not North or a calendar: theme, density, sleep, the day view's own switches. */
 export const settingsActions = {
@@ -119,6 +120,16 @@ export const settingsActions = {
   setEveningClose(eveningClose: Settings['eveningClose']): void {
     const data = getData()
     commit({ ...data, settings: { ...data.settings, eveningClose } })
+  },
+
+  /**
+   * The words a recipe's name can start with, and the meals each says -
+   * Kitchen, v2.32, lib/mealWords.ts. Written the way `cleanMealWords` keeps
+   * them: trimmed, a word said twice kept the first time.
+   */
+  setMealWords(words: readonly MealWord[]): void {
+    const data = getData()
+    commit({ ...data, settings: { ...data.settings, mealWords: cleanMealWords(words) } })
   },
 
   /**

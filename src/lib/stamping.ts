@@ -4,7 +4,7 @@ import { blockRecipeIds, recipeForDate } from './kitchen'
 import { originFor } from './taskIdentity'
 import { weekdayOf } from './repeats'
 import { MAX_HIGHLIGHTS } from './types'
-import type { DayPlan, LibraryList, Task, Template, TemplateBlock } from './types'
+import type { DayPlan, LibraryList, Recipe, Task, Template, TemplateBlock } from './types'
 
 /**
  * The blocks a given date takes from a template, and the day type and sleep
@@ -109,6 +109,7 @@ export function refreshFromTemplate(
   day: DayPlan,
   templates: Template[],
   library: LibraryList[],
+  recipes: readonly Recipe[] = [],
 ): DayPlan | null {
   let changed = false
   const tasks = day.tasks.map(task => {
@@ -155,7 +156,7 @@ export function refreshFromTemplate(
         category: block.category,
         // The recipe this date gets from the block's walk - v2.30. A night's
         // task walks by its night's date, as its stamp did.
-        recipeId: recipeForDate(blockRecipeIds(block), task.nightOf ?? day.date),
+        recipeId: recipeForDate(blockRecipeIds(block, recipes), task.nightOf ?? day.date),
         mealType: block.mealType,
       }
       /** @returns the block's value where the day is still carrying the old one. */
@@ -261,6 +262,7 @@ export function applyStamps(
   templates: Template[],
   stamps: Record<string, string | null>,
   library: LibraryList[] = [],
+  recipes: readonly Recipe[] = [],
 ): Record<string, DayPlan> {
   const next = { ...days }
   for (const [date, templateId] of Object.entries(stamps)) {
@@ -290,7 +292,7 @@ export function applyStamps(
       const { templateId: _template, dayType: _type, ...rest } = existing
       next[date] = { ...rest, date, tasks: manual }
       // And its night's hours with it, from the date after.
-      stampNight(next, date, undefined, [], library)
+      stampNight(next, date, undefined, [], library, recipes)
       continue
     }
     const template = templates.find(t => t.id === templateId)
@@ -313,7 +315,7 @@ export function applyStamps(
 
     const column = columnFor(template, date)
 
-    const templateTasks: Task[] = column.blocks.filter(b => !isNightBlock(b)).map(b => stampedTask(b, templateId, pool, date, library))
+    const templateTasks: Task[] = column.blocks.filter(b => !isNightBlock(b)).map(b => stampedTask(b, templateId, pool, date, library, recipes))
     // dayType is copied from the template at this moment, not looked up
     // live later - see the field's doc comment in types.ts. Manual keeps
     // every task the template does not account for - including repeat
@@ -337,7 +339,7 @@ export function applyStamps(
       // this feature's to make.
       tasks: [...capped, ...kept],
     }
-    stampNight(next, date, templateId, column.blocks.filter(isNightBlock), library)
+    stampNight(next, date, templateId, column.blocks.filter(isNightBlock), library, recipes)
   }
   return next
 }
@@ -359,6 +361,7 @@ function stampNight(
   templateId: string | undefined,
   blocks: TemplateBlock[],
   library: LibraryList[],
+  recipes: readonly Recipe[] = [],
 ): void {
   const on = addDays(date, 1)
   const day = next[on]
@@ -371,7 +374,7 @@ function stampNight(
     if (origin.type !== 'template' || origin.sourceId !== templateId) return false
     return ofNight(t) || (!t.nightOf && !!origin.blockId && ids.has(origin.blockId))
   })
-  const tasks = blocks.map(b => ({ ...stampedTask(b, templateId!, pool, date, library), nightOf: date }))
+  const tasks = blocks.map(b => ({ ...stampedTask(b, templateId!, pool, date, library, recipes), nightOf: date }))
   const rest = target.tasks.filter(t => !ofNight(t) && !tasks.some(n => n.id === t.id))
   const capped = capHighlights(tasks, MAX_HIGHLIGHTS - rest.filter(t => t.highlight).length)
   next[on] = { ...target, tasks: [...capped, ...rest] }
@@ -383,7 +386,7 @@ function stampNight(
  * stands for two blocks. `date` is the date the template is on - for a
  * night's block, the night's, which is also the date its recipe walks by.
  */
-function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: string, library: LibraryList[]): Task {
+function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: string, library: LibraryList[], recipes: readonly Recipe[]): Task {
   const byBlock = pool.findIndex(t => originFor(t).blockId === b.id)
   const matchIndex = byBlock >= 0 ? byBlock : pool.findIndex(t => t.title === b.title && t.time === b.time)
   const match = matchIndex >= 0 ? pool.splice(matchIndex, 1)[0] : undefined
@@ -411,7 +414,7 @@ function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: s
     // the block, like the category, and echoed with it below, so a
     // recipe somebody chose on the day survives the day being opened.
     // A meal's recipe: this date's in the block's walk - v2.30.
-    recipeId: recipeForDate(blockRecipeIds(b), date),
+    recipeId: recipeForDate(blockRecipeIds(b, recipes), date),
     mealType: b.mealType,
     // What was handed over, kept beside it - see Task.fromBlock. It is
     // what lets a day opened later tell "the block changed its mind"
@@ -422,7 +425,7 @@ function stampedTask(b: TemplateBlock, templateId: string, pool: Task[], date: s
       time: b.time,
       minutes: b.minutes,
       category: b.category,
-      recipeId: recipeForDate(blockRecipeIds(b), date),
+      recipeId: recipeForDate(blockRecipeIds(b, recipes), date),
       mealType: b.mealType,
     },
     // State a day earned, kept: whether it was one of the day's key

@@ -88,7 +88,7 @@ function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | nu
    * Today and the days ahead only. A day that has been lived says what was
    * on it.
    */
-  const rebound = existing && date >= today ? refreshFromTemplate(existing, data.templates, data.library) : null
+  const rebound = existing && date >= today ? refreshFromTemplate(existing, data.templates, data.library, data.recipes) : null
   const withRebind = rebound ? { ...data.days, [date]: rebound } : data.days
 
   if (existing?.autoApplied) return rebound ? { days: withRebind, changed: true } : null
@@ -120,7 +120,7 @@ function ensuredOne(data: AppData, date: string, today: string): EnsuredDay | nu
       // A kind reaches the dates around it, and every door says so - section 10.2a.
       days = followNeighbours({ ...data, days }, [date], today).days
     } else {
-      days = applyStamps(days, data.templates, { [date]: template.id }, data.library)
+      days = applyStamps(days, data.templates, { [date]: template.id }, data.library, data.recipes)
     }
   }
 

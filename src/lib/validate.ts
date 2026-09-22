@@ -316,6 +316,7 @@ const TEMPLATE_BLOCK = record({
   recipeId: optional(string),
   recipeIds: optional(listOf(string)),
   mealType: optional(oneOf(MEAL_TYPES)),
+  followMeal: optional(boolean),
   note: optional(string),
   noteExpanded: optional(boolean),
   steps: optional(listOf(TEMPLATE_STEP)),

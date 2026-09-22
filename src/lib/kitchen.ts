@@ -155,37 +155,54 @@ export function isMealCategory(category: string | undefined): boolean {
 
 /**
  * What a meal is given from Kitchen: the recipes it walks, in the order they
- * come round, or a kind of meal left to the day to choose from. Neither is a
- * meal with no recipe.
+ * come round; a kind of meal left to the day to choose from; or, on a
+ * template's block, a kind of meal whose every recipe it walks (`follow`,
+ * v2.32). None of them is a meal with no recipe.
  */
 export interface MealRecipes {
   recipeIds?: string[]
   mealType?: MealType
+  /** With `mealType`: walk every recipe Kitchen has for it, the ones added later too. */
+  follow?: boolean
 }
 
+/** A block's recipe fields, as the functions below read them. */
+type MealBlock = { recipeIds?: string[]; recipeId?: string; mealType?: MealType; followMeal?: boolean }
+
 /**
- * The recipes a template's meal block walks - v2.30: its list, or the one
- * recipe a block was given before there were lists.
+ * The recipes a template's meal block walks: every recipe Kitchen has for its
+ * meal, in the order of their names, when it follows the meal - v2.32; else
+ * its list - v2.30 - or the one recipe a block was given before there were
+ * lists. Following reads the recipes given, and with none given it has none.
  */
-export function blockRecipeIds(block: { recipeIds?: string[]; recipeId?: string }): string[] {
+export function blockRecipeIds(block: MealBlock, recipes: readonly Recipe[] = []): string[] {
+  if (block.followMeal && block.mealType) return recipesForMeal(recipes, block.mealType).map(r => r.id)
   if (block.recipeIds?.length) return block.recipeIds
   return block.recipeId ? [block.recipeId] : []
 }
 
 /** What a block holds, as the recipes field reads it. */
-export function mealRecipesOf(block: { recipeIds?: string[]; recipeId?: string; mealType?: MealType }): MealRecipes {
+export function mealRecipesOf(block: MealBlock): MealRecipes {
+  if (block.followMeal && block.mealType) return { mealType: block.mealType, follow: true }
   const recipeIds = blockRecipeIds(block)
   return { ...(recipeIds.length > 0 ? { recipeIds } : {}), ...(block.mealType ? { mealType: block.mealType } : {}) }
 }
 
 /**
  * What a meal's field writes onto a block: every recipe field said, so a block
- * given recipes loses its kind of meal and the other way round. `recipeId` is
- * the first of the list, for a device on an older version.
+ * given recipes loses its kind of meal and the other way round, and the mark
+ * that it follows its meal goes with the meal. `recipeId` is the first of the
+ * list, for a device on an older version.
  */
-export function mealFields(value: MealRecipes): { recipeIds: string[] | undefined; recipeId: string | undefined; mealType: MealType | undefined } {
+export function mealFields(value: MealRecipes): {
+  recipeIds: string[] | undefined
+  recipeId: string | undefined
+  mealType: MealType | undefined
+  followMeal: true | undefined
+} {
   const ids = value.recipeIds?.length ? value.recipeIds : undefined
-  return { recipeIds: ids, recipeId: ids?.[0], mealType: ids ? undefined : value.mealType }
+  const mealType = ids ? undefined : value.mealType
+  return { recipeIds: ids, recipeId: ids?.[0], mealType, followMeal: mealType && value.follow ? true : undefined }
 }
 
 /**

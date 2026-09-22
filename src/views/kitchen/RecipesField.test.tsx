@@ -59,7 +59,9 @@ test('opened, it is Kitchen in small: the recipes by meal, and a press adds one 
   await user.click(screen.getByRole('button', { name: /No recipe/ }))
 
   const breakfast = screen.getByRole('group', { name: 'Breakfast' })
+  // The section's own All first, since v2.32, then its recipes.
   expect(within(breakfast).getAllByRole('button').map(b => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
+    'All Breakfast',
     'Overnight oats',
     'Scrambled eggs on toast',
   ])
@@ -123,4 +125,60 @@ test('on a day one recipe is chosen, and choosing it closes the field', async ()
   await user.click(within(screen.getByRole('group', { name: 'Lunch' })).getByRole('button', { name: 'Lentil soup' }))
   expect(onChange).toHaveBeenLastCalledWith({ recipeIds: ['soup'] })
   expect(screen.queryByRole('searchbox')).toBeNull()
+})
+
+// --- a meal's every recipe at once, and a block that follows its meal - v2.32 ---------------------
+
+test("All Breakfast gives the block every breakfast recipe in one press, after the ones it walks, each once", async () => {
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  render(<Harness start={{ recipeIds: ['soup', 'eggs'] }} onChange={onChange} />)
+  await user.click(screen.getByRole('button', { name: /Lentil soup and 1 more/ }))
+  await user.click(screen.getByRole('button', { name: 'All Breakfast' }))
+  expect(onChange).toHaveBeenLastCalledWith({ recipeIds: ['soup', 'eggs', 'oats'] })
+  // Nothing to add once they are all in.
+  expect(screen.getByRole('button', { name: 'All Breakfast' })).toBeDisabled()
+  // No meal to add for the recipes with none.
+  expect(screen.queryByRole('button', { name: /All No meal/ })).toBeNull()
+})
+
+test('after All Lunch the block can follow Lunch, and then the recipes added to Lunch later join it by themselves', async () => {
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  render(<Harness onChange={onChange} />)
+  await user.click(screen.getByRole('button', { name: /No recipe/ }))
+  // No meal to follow until one is chosen whole.
+  expect(screen.queryByRole('switch')).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'All Lunch' }))
+  const follow = screen.getByRole('switch', { name: 'Follow Lunch' })
+  expect(follow).toHaveAttribute('aria-checked', 'false')
+  await user.click(follow)
+  expect(onChange).toHaveBeenLastCalledWith({ mealType: 'lunch', follow: true })
+  expect(screen.getByRole('switch', { name: 'Follow Lunch' })).toHaveAttribute('aria-checked', 'true')
+  // The walk is the meal's recipes, not a list to take things out of.
+  expect(screen.queryByRole('button', { name: /^Take .* out$/ })).toBeNull()
+  expect(screen.getByText('Every Lunch recipe in turn, the ones added later too')).toBeInTheDocument()
+
+  // Off again, it is the list the meal has now, to change by hand.
+  await user.click(screen.getByRole('switch', { name: 'Follow Lunch' }))
+  expect(onChange).toHaveBeenLastCalledWith({ recipeIds: ['soup'] })
+})
+
+test("a block that follows its meal says so on its line, and a kind of meal for the day is not pressed for it", async () => {
+  const user = userEvent.setup()
+  render(<Harness start={{ mealType: 'breakfast', follow: true }} />)
+  const line = screen.getByRole('button', { name: 'Recipes for Breakfast: Every Breakfast recipe, in turn' })
+  await user.click(line)
+  expect(screen.getByRole('switch', { name: 'Follow Breakfast' })).toHaveAttribute('aria-checked', 'true')
+  const kinds = within(screen.getByRole('group', { name: 'Or choose on the day' }))
+  expect(kinds.getByRole('button', { name: 'Breakfast' })).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('a recipe pressed while the block follows its meal makes the walk a list again, the meal and the one pressed', async () => {
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  render(<Harness start={{ mealType: 'breakfast', follow: true }} onChange={onChange} />)
+  await user.click(screen.getByRole('button', { name: /Every Breakfast recipe/ }))
+  await user.click(within(screen.getByRole('group', { name: 'Lunch' })).getByRole('button', { name: 'Lentil soup' }))
+  expect(onChange).toHaveBeenLastCalledWith({ recipeIds: ['oats', 'eggs', 'soup'] })
 })

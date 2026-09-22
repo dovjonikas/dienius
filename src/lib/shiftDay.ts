@@ -455,9 +455,9 @@ export function composeDay(data: AppData, date: string, kind: Template | undefin
   const after = addDays(date, 1)
   let days = data.days
   if (kind && existing.templateId !== kind.id) {
-    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: kind.id }, data.library)
+    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: kind.id }, data.library, data.recipes)
   } else if (!kind && stamped && isDayKind(stamped)) {
-    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: null }, data.library)
+    days = applyStamps({ ...data.days, [date]: existing }, data.templates, { [date]: null }, data.library, data.recipes)
   }
   const day = days === data.days ? existing : days[date]
   const nextDay = days[after] !== data.days[after] ? days[after] : undefined

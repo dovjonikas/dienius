@@ -6,7 +6,52 @@ got here, and what is still owed. Read it, then
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for where the code lives. Those three
 should leave you able to start without re-reading the repo.
 
-**Last updated:** one look, stage 2 of the whole app's UI made one: one grid, five type sizes, one corner. Next: Kitchen v2.32, many recipes at once (the owner's newest brief), then the rest of one look - the frame, the scrolling, the rows - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+**Last updated:** Kitchen v2.32 is done - many recipes pasted at once, a name that says its meals, meals changed on a card and for many at once, and a meal block that follows its meal. Before it, one look's stage 2: one grid, five type sizes, one corner. Next: the rest of one look - the frame, the scrolling, the rows - then the freeze from 2026-09-28. v2.31, the night's own hours, is done, all four stages, with the first real month walked as a dry run. v2.29 rotating shifts is done, all ten stages, with an owner's pass on edges between stages 8 and 9. v2.30 (Kitchen as it was meant) is done, all six stages.
+
+## v2.32 - Kitchen: many recipes at once
+
+The owner's brief of 2026-09-22: about thirty recipes already written in
+Kitchen's own shape - a line of numbers, INGREDIENTS, STEPS - and each one a
+trip through New recipe. RESEARCH-KITCHEN.md section 7 is the design, and
+DECISIONS "Many recipes at once, and a name that says its meals" the three
+choices that look unusual. Done in one stage, with its tests, its docs and
+both screens looked at.
+
+- **Paste many**, beside New recipe (`PasteMany`, `lib/recipeImport.ts`). A
+  line that starts `NAME:` begins a recipe, a line of `---` ends one; each
+  piece is read the way New recipe reads one. Before the press, a list: each
+  name, its kcal and protein, its meals, and New or Updates the one in
+  Kitchen, with a box and the meals to change in each row. One Save; one
+  undo. A name Kitchen has is written over and never copied - the store holds
+  that too - and an update keeps the numbers its text does not say and every
+  meal it has been given.
+- **A name says its meals.** "Lunch: a bean bowl" is lunch by the words in
+  Settings, Kitchen (`Settings.mealWords`, `lib/mealWords.ts`), which start as
+  the six meals' own names; a word may say several meals or none. Read in
+  Paste many and in New recipe, where a press on the meals after is kept.
+- **Meals on a card, in place** (`MealsPicker`), and **Select**: cards picked,
+  one meal given to all of them or taken off them in one press.
+- **All Lunch and Follow Lunch** in a meal block's recipes: every Lunch recipe
+  in one press, and a block that follows Lunch walks every Lunch recipe
+  Kitchen has when a date is stamped, the ones added later too
+  (`TemplateBlock.followMeal`). The stamp reads Kitchen now, so every stamping
+  door hands it the recipes.
+- **One look's shared Select**, found by Select's bar: every `select` is one
+  control tall (36px, 44 on a finger), its line centred - it was 40 beside
+  36px buttons in every row it stood in.
+- **The backup**: `followMeal` on a block and `mealWords` in the settings,
+  written into docs/BACKUP-FORMAT.md; `mealWords` is read past anything
+  malformed rather than refused, and travels with the settings.
+- **Tests**: the parting and naming of pieces, thirty generic recipes read and
+  saved, a second paste that updates and never copies, the meal words and
+  Settings' list, the form's name, the card's meals, Select, All and Follow, a
+  block that follows through the stamp, the refresh and the guard; e2e on a
+  375px phone and the desktop (`e2e/kitchen-many.e2e.ts`). The sweep, keys,
+  precision and text-size gates walk Paste many, a card's meals and Select.
+
+**What the owner does by hand, once:** Settings, Kitchen - write their own
+first words and the meals each says (a word for two meals, a word that says
+none). Then Kitchen, Paste many - paste the recipes, look down the list, Save.
 
 ## One look - the whole app made one (in progress)
 
@@ -27,11 +72,16 @@ docs/DESIGN-AUDIT.md holds the findings, screen by screen.
   a 1080p window; the journal on a phone is the bottom sheet the task opens in,
   since as a card its month's days were under a finger's 44px; a roster
   letter on a phone's month is the interface size, whole at every text size.
+- **Between the stages, Kitchen v2.32** (above), a brief of its own that went
+  first because features stop at the freeze. It brought one shared fix of
+  this pass with it: every select one control tall. And one fix to stage 2: a
+  task's three marks lost the pixel above and below that made them 17px, and
+  on another system's face they were 15 - they are a line of the interface
+  and a hairline now, one height everywhere.
 - **Next:** the frame (rule 7) and the scrolling (rule 6), then the rows that
   wrap (5), the left lines (2), the stretched fields (4) and the rows' heights
   (3); the after pictures; an e2e per screen at both sizes for the scrolling.
-  After Kitchen v2.32, which came in as a brief of its own and goes first -
-  it is a feature, and features stop at the freeze.
+  Kitchen's new screens are in the sweep, so they are held to the same.
 
 ## Pirmas realus menuo, dry run
 

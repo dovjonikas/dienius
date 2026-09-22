@@ -286,6 +286,8 @@ src/
     northSections.ts   what North adds to it: the two tags and the signature
     recipeText.ts      what a recipe adds: INGREDIENTS as a list, STEPS as numbered steps
     recipeNumbers.ts   kcal, protein, carbs, fat, servings and minutes read from a recipe's text, and written back
+    recipeImport.ts    many recipes pasted at once: the text in pieces by NAME: and ---, each a row of what saving it will do
+    mealWords.ts       the meals a recipe's name says by its first word, from the list Settings keeps
     librarySeed.ts     the three reading lanes, on request from the palette - see its own comment
     libraryPrefs.ts    which lists are folded, and what each was last counted in, per device
     dayKinds.ts        rotating shifts: what a kind of day is, the kinds in order, a date's kind, the tap's next
@@ -325,7 +327,7 @@ src/
     CalendarView, TemplatesView, LibraryView, ReviewView, SettingsView
     north/             North: the page that reads the text, the one field that writes it, and the window after sleep
     shifts/            rotating shifts: the routines under the templates, timed per kind of day
-    kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page with Add to template, the form, and the recipes field every meal shares - Kitchen in small
+    kitchen/           Kitchen: the cards in sections by meal with the chips and search, a recipe's page with Add to template, the form, and the recipes field every meal shares - Kitchen in small; Paste many, Select, and the meals changed in place on a card (MealsPicker)
     CommandPalette, ShortcutsOverlay
     NavRail, NavIcons  the way between the six views: a rail on a desktop, a bar on a phone
     BlockNote.tsx      a template block's note and steps, in either editor
@@ -342,7 +344,7 @@ src/
     ColorSwatchPicker  one colour from eight, without eight of them on screen
     WeekTemplateEditor seven columns of one template, and the card's preview of it
     TimeColumns        the two scrolling columns inside the time picker
-    BackupSettings, SyncSettings, CalendarSettings, CategorySettings   Settings sections
+    BackupSettings, SyncSettings, CalendarSettings, CategorySettings, MealWordSettings   Settings sections
     week/              the week view - see section 11
     DemoBanner         the line that says none of this is real
     TimePicker         the one time control in the app

@@ -114,6 +114,9 @@ export const SYNCED_SETTINGS = [
   // anyway, because "I want the quiet bell" is about the person and a per-device
   // tier of settings for one number would be a whole mechanism for a doubt.
   'chime',
+  // How a recipe's name says its meals - Kitchen, v2.32. About the person's
+  // own way of naming their food, not the device.
+  'mealWords',
 ] as const
 
 /**

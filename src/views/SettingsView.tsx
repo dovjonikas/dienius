@@ -15,11 +15,12 @@ import { AppearanceControls } from './AppearanceControls'
 import { TimePicker } from './TimePicker'
 import { DEFAULT_EVENING_CLOSE } from '../lib/eveningClose'
 import { CategorySettings } from './CategorySettings'
+import { MealWordSettings } from './MealWordSettings'
 import { SyncSettings } from './SyncSettings'
 import { BackupSettings } from './BackupSettings'
 import { CalendarSettings } from './CalendarSettings'
 
-type SectionId = 'general' | 'sleep' | 'week' | 'categories' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
+type SectionId = 'general' | 'sleep' | 'week' | 'categories' | 'kitchen' | 'nudges' | 'calendars' | 'backup' | 'sync' | 'appearance'
 
 /**
  * Monday first, because a week does. The values are `Date.getDay()`'s own
@@ -63,6 +64,8 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   // belongs with the things that shape a day rather than with the things
   // that interrupt one.
   { id: 'categories', label: 'Categories' },
+  // With Categories: what a day's meals are made of, written once.
+  { id: 'kitchen', label: 'Kitchen' },
   { id: 'nudges', label: 'Nudges' },
   { id: 'calendars', label: 'Calendars' },
   // Near the bottom on purpose. Backup and sync are set up once and then
@@ -546,6 +549,8 @@ export function SettingsView({ onShowShortcuts }: { onShowShortcuts?: () => void
           </div>
 
           <CategorySettings />
+
+          <MealWordSettings />
 
           <div className="settings-group" id="settings-nudges">
             <h3>Nudges</h3>

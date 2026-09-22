@@ -48,7 +48,10 @@ function sections(): [string, string[]][] {
 test('with no recipes the page says what Kitchen is for, and draws no chips and no field', () => {
   render(<KitchenView />)
   expect(screen.getByRole('heading', { level: 2, name: 'Kitchen' })).toBeInTheDocument()
-  expect(screen.getByText('The recipes you cook, with what goes in them and how. Add the first one to start.')).toBeInTheDocument()
+  expect(screen.getByText('The recipes you cook, with what goes in them and how. Add the first one to start, or paste many at once.')).toBeInTheDocument()
+  // Both ways in stand on the empty page, where they stand on a full one.
+  expect(screen.getByRole('button', { name: 'New recipe' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Paste many' })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Meal' })).toBeNull()
   expect(screen.queryByRole('searchbox')).toBeNull()
 })
@@ -83,7 +86,7 @@ test("a card is the recipe's name, how long and how many servings, its kcal and 
     },
   ])
   render(<KitchenView />)
-  const card = screen.getByRole('button', { name: /Chicken and rice bowl/ })
+  const card = screen.getByRole('button', { name: /^Chicken and rice bowl/ })
   expect(within(card).getByText('30 min · 2 servings')).toBeInTheDocument()
   expect(within(card).getByText('610 kcal · 45 g protein')).toBeInTheDocument()
   expect(within(card).getByText('2 chicken breasts · 150 g rice · 1 cucumber')).toBeInTheDocument()
@@ -193,7 +196,7 @@ test('a recipe with no heading reads as it was typed', async () => {
   const user = userEvent.setup()
   seed([{ title: 'Banana toast', text: 'Toast the bread.\nSlice a banana over it.\n\nEat it warm.' }])
   render(<KitchenView />)
-  await user.click(screen.getByRole('button', { name: /Banana toast/ }))
+  await user.click(screen.getByRole('button', { name: /^Banana toast/ }))
   expect(screen.getAllByText(/Toast the bread|Eat it warm/).map(p => p.textContent)).toEqual(['Toast the bread.\nSlice a banana over it.', 'Eat it warm.'])
   expect(screen.queryByRole('list')).toBeNull()
 })
@@ -204,12 +207,12 @@ test('Kitchen on the page goes back to the cards as they were left - the same me
   render(<KitchenView />)
   await user.click(screen.getByRole('button', { name: 'Snack' }))
   await user.type(screen.getByRole('searchbox', { name: 'Search recipes' }), 'oats')
-  await user.click(screen.getByRole('button', { name: /Overnight oats/ }))
+  await user.click(screen.getByRole('button', { name: /^Overnight oats/ }))
 
   await user.click(screen.getByRole('button', { name: 'Kitchen' }))
   expect(screen.getByRole('button', { name: 'Snack' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('searchbox', { name: 'Search recipes' })).toHaveValue('oats')
-  expect(screen.getByRole('button', { name: /Overnight oats/ })).toHaveFocus()
+  expect(screen.getByRole('button', { name: /^Overnight oats/ })).toHaveFocus()
 })
 
 test('opened on a recipe, Kitchen starts on its page', () => {

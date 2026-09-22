@@ -148,6 +148,9 @@ async function press(page, name) {
 /** `pointerOnly`: the surface only exists where there is a pointer to rest on it, so the phone run skips it. */
 /** @typedef {{ name: string, go: (page: Page) => Promise<unknown>, pointerOnly?: boolean }} Screen */
 
+/** Kitchen v2.32's Paste many, filled: two generic recipes and a piece with no name. */
+const PASTED = ['NAME: Lunch: A bean bowl', '520 kcal, 38 g protein', 'INGREDIENTS', 'beans', 'rice', 'STEPS', 'Cook the rice.', 'NAME: A plain porridge', '380 kcal', '---', '450 kcal', 'INGREDIENTS', 'water'].join('\n')
+
 /** One screen: how to get to it, and what it is called in the report. */
 /** @type {Screen[]} */
 const SCREENS = [
@@ -420,6 +423,36 @@ const SCREENS = [
       await tab(p, 'Kitchen')
       await p.getByRole('button', { name: /Overnight oats/ }).first().click()
       await p.getByRole('button', { name: 'Add to template', exact: true }).click()
+      await p.waitForTimeout(200)
+    },
+  },
+  // v2.32: many recipes pasted at once - the rows under the field, one with
+  // no name to save - a card's meals open in place, and Select with two cards
+  // picked and its bar in the search's place.
+  {
+    name: 'Kitchen (paste many)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await press(p, 'Paste many')
+      await p.getByRole('textbox', { name: 'Recipes' }).fill(PASTED)
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: "Kitchen (a card's meals)",
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await p.getByRole('button', { name: /^Meals for Overnight oats/ }).first().click()
+      await p.waitForTimeout(200)
+    },
+  },
+  {
+    name: 'Kitchen (select)',
+    go: async /** @param {Page} p */ p => {
+      await tab(p, 'Kitchen')
+      await press(p, 'Select')
+      await p.locator('.kitchen-card-open').nth(0).click()
+      await p.locator('.kitchen-card-open').nth(1).click()
       await p.waitForTimeout(200)
     },
   },

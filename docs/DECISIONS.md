@@ -4420,3 +4420,37 @@ sheet's Done stands under it.
 **Add to template makes a new block only on a day template.** On a week a block
 belongs to a weekday, and the week's editor is where that is said; a week with
 no meal block says so.
+
+## Many recipes at once, and a name that says its meals
+
+Kitchen v2.32, docs/RESEARCH-KITCHEN.md section 7. Three choices here look
+unusual.
+
+**The same name is the same recipe.** An import never makes a second recipe of
+a name Kitchen has - compared without case, accents or spacing - and writes
+over the one there, keeping its id. The alternative, a copy for every paste,
+is what an importer usually does, and with thirty recipes pasted twice it is
+sixty to clean up by hand. The cost is that two different dishes cannot share a
+name; a name is how a person finds a recipe, so two that share one were already
+a problem. Written over, a recipe keeps what the text does not say - a number
+typed by hand, a meal given on its card - so a second paste is never a loss.
+
+**The words a name starts with are Settings', and start as the meals' own
+names.** The brief gave a list of its own - which words say two meals, which
+say none. That list is how one person names their food, and the repo is
+public, so it is not a default: the app starts with the six meals' names, and
+the owner writes their own words in Settings once. The cost is a minute of
+typing, once, on one device; the list travels with the settings.
+
+**A block that follows its meal is worked out when a day is stamped, not kept
+as a list.** Writing the meal's recipes onto every following block whenever a
+recipe changed would give an older device a list to walk, but every recipe
+added would rewrite templates on every device, and two devices adding recipes
+at once would argue through sync about a list neither person wrote. Worked out
+from Kitchen at the stamp, it needs nothing kept in step. The cost: an older
+device reads the block as a meal to choose on the day. Nobody is on one for
+long, since the app updates itself.
+
+Kitchen went before the rest of the one-look pass. It came in as a brief of its
+own, with thirty recipes waiting, and it is a feature - features stop at the
+freeze on 2026-09-28, where the look can still be finished as the pass it is.

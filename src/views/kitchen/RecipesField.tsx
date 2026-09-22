@@ -5,8 +5,9 @@ import { MEAL_TYPES, type MealType, type Recipe } from '../../lib/types'
 
 export type { MealRecipes } from '../../lib/kitchen'
 
-/** The one line a meal's field says: its recipe, its first and how many more, its kind of meal, or no recipe. */
+/** The one line a meal's field says: its recipe, its first and how many more, its kind of meal, the meal it follows, or no recipe. */
 export function recipesSummary(value: MealRecipes, recipes: readonly Recipe[]): string {
+  if (value.follow && value.mealType) return `Every ${MEAL_TYPE_LABELS[value.mealType]} recipe, in turn`
   const chosen = (value.recipeIds ?? []).flatMap(id => recipes.filter(r => r.id === id))
   if (chosen.length === 1) return chosen[0].title
   if (chosen.length > 1) return `${chosen[0].title} and ${chosen.length - 1} more`
@@ -37,6 +38,15 @@ export function recipesSummary(value: MealRecipes, recipes: readonly Recipe[]): 
  * The line names itself - "Recipes for Dinner: Lentil soup and 2 more" - so a
  * screen reader hears what the meal holds; the word beside it on a form is for
  * the eye.
+ *
+ * **A meal's every recipe at once**, v2.32: on a template's block each meal's
+ * section has All and its name - All Lunch - which adds every recipe of that
+ * meal the block does not walk yet, in one press. After it, the block can
+ * follow the meal instead of keeping the list: every recipe Kitchen has for
+ * the meal, in the order of their names, the ones given that meal later too
+ * (`TemplateBlock.followMeal`). Following, the walk is the meal's and has no
+ * way out one at a time; a recipe pressed makes it a list again, and so does
+ * switching the following off.
  */
 export function RecipesField({
   id,
@@ -58,8 +68,14 @@ export function RecipesField({
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  // The meal whose every recipe was last added here, which the block may now follow.
+  const [wholeMeal, setWholeMeal] = useState<MealType | null>(null)
   const panelId = useId()
-  const chosen = (value.recipeIds ?? []).filter(recipeId => recipes.some(r => r.id === recipeId))
+  const following = !single && value.follow && value.mealType ? value.mealType : null
+  const chosen = following
+    ? recipesForMeal(recipes, following).map(r => r.id)
+    : (value.recipeIds ?? []).filter(recipeId => recipes.some(r => r.id === recipeId))
+  const followable = following ?? (single ? null : wholeMeal)
   const sections = recipeSections(searchRecipes(recipesForMeal(recipes, 'all'), query), 'all')
   const summary = recipesSummary(value, recipes)
 
@@ -79,8 +95,20 @@ export function RecipesField({
   }
 
   function leaveToDay(meal: MealType) {
-    onChange(value.mealType === meal ? {} : { mealType: meal })
+    onChange(value.mealType === meal && !following ? {} : { mealType: meal })
     if (single) close()
+  }
+
+  /** Every recipe of a meal the block does not walk yet, after the ones it does. */
+  function addWhole(meal: MealType) {
+    const missing = recipesForMeal(recipes, meal).filter(r => !chosen.includes(r.id)).map(r => r.id)
+    onChange({ recipeIds: [...chosen, ...missing] })
+    setWholeMeal(meal)
+  }
+
+  function follow(meal: MealType) {
+    if (following) onChange(chosen.length > 0 ? { recipeIds: chosen } : {})
+    else onChange({ mealType: meal, follow: true })
   }
 
   return (
@@ -109,7 +137,37 @@ export function RecipesField({
             onChange={e => setQuery(e.target.value)}
           />
 
-          {!single && chosen.length > 0 && (
+          {followable && (
+            <div className="recipes-field-follow">
+              <span className="recipes-field-follow-words">
+                {following
+                  ? `Every ${MEAL_TYPE_LABELS[following]} recipe in turn, the ones added later too`
+                  : `Follow ${MEAL_TYPE_LABELS[followable]}: recipes given ${MEAL_TYPE_LABELS[followable]} later join by themselves`}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                className="switch"
+                aria-checked={following !== null}
+                aria-label={`Follow ${MEAL_TYPE_LABELS[followable]}`}
+                onClick={() => follow(followable)}
+              >
+                <span className="switch-thumb" aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          {!single && following && chosen.length > 0 && (
+            <ol className="recipes-field-walk" aria-label="Walked in this order">
+              {chosen.map(recipeId => (
+                <li key={recipeId} className="recipes-field-walk-item">
+                  <span className="recipes-field-walk-title">{recipes.find(r => r.id === recipeId)!.title}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+
+          {!single && !following && chosen.length > 0 && (
             <ol className="recipes-field-walk" aria-label="Walked in this order">
               {chosen.map(recipeId => {
                 const title = recipes.find(r => r.id === recipeId)!.title
@@ -138,6 +196,18 @@ export function RecipesField({
                     {section.label}
                   </span>
                   <div className="duration-chips recipes-field-options">
+                    {/* The meal's every recipe at once: the section's first
+                        choice, a press rather than a thing chosen. */}
+                    {!single && section.meal !== 'none' && (
+                      <button
+                        type="button"
+                        className="recipes-field-whole"
+                        disabled={recipesForMeal(recipes, section.meal).every(r => chosen.includes(r.id))}
+                        onClick={() => addWhole(section.meal as MealType)}
+                      >
+                        All {section.label}
+                      </button>
+                    )}
                     {section.recipes.map(recipe => (
                       <button
                         key={recipe.id}
@@ -169,8 +239,8 @@ export function RecipesField({
                 <button
                   key={meal}
                   type="button"
-                  className={value.mealType === meal ? 'is-on' : ''}
-                  aria-pressed={value.mealType === meal}
+                  className={value.mealType === meal && !following ? 'is-on' : ''}
+                  aria-pressed={value.mealType === meal && !following}
                   onClick={() => leaveToDay(meal)}
                 >
                   {MEAL_TYPE_LABELS[meal]}

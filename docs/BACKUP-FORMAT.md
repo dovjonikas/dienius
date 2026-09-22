@@ -204,6 +204,7 @@ rule; one changed on the day is the person's.
 | `recipeIds` | A meal's recipes, walked a date at a time. |
 | `recipeId` | The first of `recipeIds`, for versions before the walk. |
 | `mealType` | A meal's kind of meal. |
+| `followMeal` | **v2.32.** With `mealType`: the block walks every recipe Kitchen has for that meal, in the order of their names, worked out when a date is stamped. Absent: its list, or its meal to choose on the day. |
 | `weekday` | On a week template: its weekday, 0 is Sunday. |
 | `groupId` | On a week template: blocks added to several weekdays together. |
 | `afterMidnight` | **v2.31.** After the template's midnight: its time is on the next date's clock, and a stamp puts it on **the date after** the template's date, as a task with `nightOf`. Shown in the editor as **Next day**. Absent: on the template's own date. |
@@ -308,3 +309,4 @@ docs/RESEARCH-SHIFTS.md has each with its reason.
 | v2.29 | `dayKind` on a template, `routines`, `routineId` and `fromRoutine` on a task, `routineSkips` on a day. |
 | v2.30 | `recipeIds` on a block. |
 | v2.31 | `afterMidnight` on a block, `nightOf` on a task. |
+| v2.32 | `followMeal` on a block; `mealWords` in the settings - `[{ word, meals }]`, the words a recipe's name starts with and the meals each says, read past anything malformed rather than refused. |
